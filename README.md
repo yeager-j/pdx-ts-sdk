@@ -126,6 +126,54 @@ localization `.yml`.
   hasCountryFlag("some_vanilla_flag"); // raw strings still work
   ```
 
+## Testing mod logic
+
+Because triggers and effects are recorded as plain ASTs, mod logic can be
+interpreted outside the game — unit tests for event chains, with no game
+launch and no console. The edit-test loop this replaces is "launch,
+console-fire, squint"; the capability is impossible in raw PDXScript.
+
+```ts
+const world = fixture(
+  {
+    globalFlags: [globals.lattice_awake],
+    countries: [
+      { name: "player", flags: [flags.heard_the_hum], planets: [{ name: "alpha" }, { name: "beta" }] },
+      { name: "rival" },
+    ],
+  },
+  { events: [humReturns, declareFrom(aftershock, "country")] }
+);
+
+world.fire(humReturns, world.country(0), { arms: [40] }); // random_list arms are forced, never rolled
+world.advance(30); // a discrete-event queue drain: delivers due fires, ages nothing else
+
+expect(world.fired).toContainEvent(aftershock, { day: 30, from: world.country(0) });
+expect(world.country(0).has(resonanceTheory)).toBe(true);
+```
+
+Assertions take objects, not id strings, and `world.fired` is a rich log that
+doubles as the failure trace. For triggers, `evaluate`/`explain` answer "why
+doesn't my `potential` pass" by naming the failing subcondition:
+
+```
+✗ AND
+  ✓ has_global_flag = lattice_awake — set globally
+  ✓ has_country_flag = heard_the_hum — set on country "player"
+  ✗ NOT
+    ✓ has_country_flag = pacifist_path — set on country "player"
+```
+
+An interpreter is a second implementation of the game's semantics, so it is
+whitelist-only: every implemented trigger, effect, iterator, and scope link
+carries a one-line defense against the real game's behavior, and anything
+else throws with a coverage summary. A test can only pass through semantics
+someone consciously modeled — nothing is evaluated silently.
+
+Status: the model passed its gated probe (`design/testing-probe/` is the
+design record, [docs/verdict-testing-probe.md](docs/verdict-testing-probe.md)
+the verdict); the API has not landed in `src/` yet.
+
 ## Generated types
 
 `src/generated/` is produced by `tools/codegen` from the vendored
@@ -183,8 +231,9 @@ validated by a gated, hand-written probe before the emitter was built —
 `design/effects-probe/` is the design record and
 [docs/verdict-effects-probe.md](docs/verdict-effects-probe.md) the verdict;
 [docs/handoff-effects-followups.md](docs/handoff-effects-followups.md) tracks
-the follow-up work. Next slice: the mod-testing evaluator
-([docs/handoff-mod-testing.md](docs/handoff-mod-testing.md)) — fixtures,
-`evaluate`/`explain` for triggers, and a `world` that fires events and
-advances a delay queue — then the PDXScript parser unlocking patches, real
-identifier namespaces, and the load-order linter.
+the follow-up work. The mod-testing evaluator
+([docs/handoff-mod-testing.md](docs/handoff-mod-testing.md)) passed its own
+gated probe the same way —
+[docs/verdict-testing-probe.md](docs/verdict-testing-probe.md) — and awaits
+implementation. Then the PDXScript parser, unlocking patches, real identifier
+namespaces, and the load-order linter.
