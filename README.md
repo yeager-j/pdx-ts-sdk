@@ -11,7 +11,7 @@ PDXScript.
 ## Quickstart
 
 ```ts
-import { and, hasCountryFlag, Mod, not } from "@pdx-ts/sdk";
+import { and, eventTarget, hasCountryFlag, hasOwner, Mod, not } from "@pdx-ts/sdk";
 
 const mod = new Mod({
   name: "Hello Galaxy",
@@ -42,22 +42,74 @@ mod.defineTechnology({
 await mod.synth("./out");
 ```
 
+Events work the same way — except effect blocks are closures that really run,
+once, at build time, recording into a typed scope object:
+
+```ts
+const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
+
+const aftershock = mod.definePlanetEvent({
+  id: 2,
+  from: "country", // the FROM contract: fire sites are checked against it
+  title: "Aftershock",
+  isTriggeredOnly: true,
+  immediate: (planet, ctx) => {
+    planet.within(ctx.from, (country) => {
+      country.addResource({ resource: "influence", amount: 50 });
+    });
+  },
+  options: [{ name: "Noted." }],
+});
+
+mod.defineCountryEvent({
+  id: 1,
+  title: "The Hum Returns",
+  isTriggeredOnly: true,
+  immediate: (country, ctx) => {
+    country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+      planet.saveEventTargetAs(stormWorld); // scope-checked at the save site
+      planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
+    });
+    country
+      .if(hasCountryFlag("heard_the_hum"), (c) => {
+        c.within(stormWorld, (planet) => planet.addDeposit("d_minerals_1"));
+      })
+      .else((c) => c.log("the hum went unheard"));
+  },
+  options: [{ name: "Fascinating." }],
+});
+```
+
 `synth` writes a complete, launcher-ready mod folder: `descriptor.mod`,
-namespaced `common/technology/*.txt`, and BOM-prefixed localization `.yml`.
+namespaced `common/technology/*.txt` and `events/*.txt`, and BOM-prefixed
+localization `.yml`.
 
 ## Design pillars
 
 - **Triggers are expression trees.** `potential` takes a declarative condition
   built from combinators (`and`, `or`, `not`) and trigger builders
   (`hasCountryFlag`, `hasTechnology`, ...). Each builder returns an AST node.
-- **Scope safety via types.** Triggers are branded with the scopes they are
-  valid in. Passing a planet-scoped trigger to a country-scoped block
-  (like a technology `potential`) is a compile error. All 41 scopes and the
-  scope of every trigger are generated, not hand-maintained.
+- **Effects are recorded closures.** An event's `immediate` receives a scope
+  object whose methods append AST nodes; at runtime every scope object is one
+  scope-agnostic recorder, and the generated per-scope interfaces are what
+  restrict which effects exist where. Scope changes hand the closure a new
+  scope object (`everyOwnedPlanet` gives a `PlanetScope`), so the #1 modder
+  error — wrong-scope effects — is a compile error.
+- **Scope safety via types.** Triggers and effects are branded with the scopes
+  they are valid in. Passing a planet-scoped trigger to a country-scoped block
+  (like a technology `potential`) is a compile error. All 41 scopes, the scope
+  of every trigger, and the scope set of every effect are generated, not
+  hand-maintained. Event targets declare their scope once
+  (`eventTarget<"planet">(...)`) and every save site enforces it; events
+  declare the scope they expect `FROM` to be, and every fire site proves it
+  with a witness (`from: ctx.self`).
 - **Two kinds of time.** A plain TypeScript `if` branches at _build_ time —
   use it freely to generate variants. Triggers describe _in-game_ conditions;
   using one in a TS `if` is a compile error (and a runtime error with an
-  explanatory message if forced).
+  explanatory message if forced). In-game branching inside effects is
+  `scope.if(trigger, body).elseIf(...).else(...)`, and the chain throws if
+  effects are recorded between its links — PDXScript associates `else` with
+  the preceding `if` purely by position.
 - **Cross-references are objects.** `prerequisites: [theory]` instead of
   `"tech_x"` strings: typos become compile errors, "find usages" works, and
   localization keys ride along on the object.
@@ -97,6 +149,13 @@ rules track 4.x scope renames the game's dump has not caught up with, adding
 `carrier` to 164 triggers and replacing `pop` with `pop_group` on 70 — which is
 why the rules win where the two conflict.
 
+Today codegen emits 1054 of 1082 triggers and 976 of 1058 effects — the
+effects as 87 interfaces clustered by scope set (so each signature is emitted
+once, not per scope) plus a serialization meta table that drives the one
+runtime recorder — and the 21-kind event table derived from `type[event]`'s
+subtypes. Nothing is dropped silently: every skipped rule is reported with a
+named reason.
+
 Every deliberate departure from a mechanical reading of the rules lives in one
 audited file, `tools/codegen/overlay.ts`. What the rules cannot supply at all —
 which technologies or edicts actually exist, and the FIOS/LIOS load-order table —
@@ -118,7 +177,14 @@ PDXScript, reviewable in PRs.
 
 ## Status
 
-Prototype: the technologies vertical, with types generated from
-cwtools-stellaris-config. Next slices (see design notes): events with
-recorded-closure effects and typed scopes/`iff()`, then the PDXScript parser
-unlocking patches, real identifier namespaces, and the load-order linter.
+Prototype: the technologies and events/effects verticals, with types generated
+from cwtools-stellaris-config. The recorded-closure effects model was
+validated by a gated, hand-written probe before the emitter was built —
+`design/effects-probe/` is the design record and
+[docs/verdict-effects-probe.md](docs/verdict-effects-probe.md) the verdict;
+[docs/handoff-effects-followups.md](docs/handoff-effects-followups.md) tracks
+the follow-up work. Next slice: the mod-testing evaluator
+([docs/handoff-mod-testing.md](docs/handoff-mod-testing.md)) — fixtures,
+`evaluate`/`explain` for triggers, and a `world` that fires events and
+advances a delay queue — then the PDXScript parser unlocking patches, real
+identifier namespaces, and the load-order linter.
