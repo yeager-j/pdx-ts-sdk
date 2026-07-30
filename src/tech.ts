@@ -1,31 +1,23 @@
-import { block, kv, list, quoted, scalar, type PdxEntry } from "./ast.ts";
-import type { Trigger } from "./triggers.ts";
+import { block, kv, list, quoted, scalar, type PdxEntry, type PdxScalar } from "./ast.ts";
+import { refId, type TechnologyCategoryRef, type TechnologyRef } from "./generated/refs.ts";
+import type { TechnologyFields } from "./generated/technology.ts";
 
 /** A reference to a technology — ours or vanilla's — usable wherever the game expects a tech id. */
-export interface TechRef {
-  readonly id: string;
-}
+export type TechRef = TechnologyRef;
 
-export type ResearchArea = "physics" | "society" | "engineering";
-
-export interface TechnologyDef<Id extends string = string> {
+export interface TechnologyDef<Id extends string = string> extends TechnologyFields {
   /** Full tech id including the mod prefix, e.g. "hello_galaxy_tech_crystal_resonance". */
   id: Id;
-  /** English display name; emitted to localization under the tech id. */
-  name: string;
-  /** English description; emitted to localization under `<id>_desc`. */
-  description?: string;
-  cost: number;
-  area: ResearchArea;
-  tier: number;
-  category: string;
-  /** Pass Technology objects for mod techs; raw strings are the escape hatch for vanilla ids. */
-  prerequisites?: (TechRef | string)[];
-  weight?: number;
-  startTech?: boolean;
-  isRare?: boolean;
-  /** Country-scope condition for the tech appearing in the research pool. */
-  potential?: Trigger<"country">;
+}
+
+type Category = TechnologyDef["category"];
+
+function categories(value: Category): (TechnologyCategoryRef | string)[] {
+  return Array.isArray(value) ? value : [value];
+}
+
+function tierValue(value: TechnologyDef["tier"]): string | number {
+  return typeof value === "number" ? value : refId(value);
 }
 
 export class Technology implements TechRef {
@@ -39,17 +31,23 @@ export class Technology implements TechRef {
 
   toEntries(): PdxEntry {
     const def = this.def;
-    const body: PdxEntry[] = [
-      kv("cost", def.cost),
-      kv("area", def.area),
-      kv("tier", def.tier),
-      list("category", [scalar(def.category)]),
-    ];
+    const body: PdxEntry[] = [];
+    if (def.cost !== undefined) {
+      body.push(kv("cost", def.cost));
+    }
+    body.push(kv("area", def.area));
+    body.push(kv("tier", tierValue(def.tier)));
+    body.push(
+      list(
+        "category",
+        categories(def.category).map((category): PdxScalar => scalar(refId(category)))
+      )
+    );
     if (def.prerequisites !== undefined && def.prerequisites.length > 0) {
       body.push(
         list(
           "prerequisites",
-          def.prerequisites.map((p) => quoted(typeof p === "string" ? p : p.id))
+          def.prerequisites.map((p) => quoted(refId(p)))
         )
       );
     }

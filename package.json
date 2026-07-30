@@ -9,6 +9,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "codegen": "node tools/codegen/index.ts",
+    "codegen:check": "node tools/codegen/index.ts && git diff --exit-code src/generated",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -1,0 +1,135 @@
+/** Emitters for the small supporting modules: scopes, enums, and references. */
+
+import { camelCase, docComment, pascalCase } from "../naming.ts";
+import { EXTRA_SCOPES } from "../overlay.ts";
+import type { Emitter } from "./types.ts";
+
+export function canonicalScopes(scopes: ReadonlyMap<string, readonly string[]>): string[] {
+  const names = [...scopes.keys()].map((name) => name.toLowerCase().replaceAll(" ", "_"));
+  return [...new Set([...names, ...EXTRA_SCOPES])].sort();
+}
+
+export function emitScopes(names: readonly string[]): string {
+  const members = names.map((name) => `  | ${JSON.stringify(name)}`).join("\n");
+  return (
+    docComment([
+      "Every scope the game evaluates script in.",
+      "",
+      "Canonical names come from `scopes.cwt`; the aliases the game also answers to",
+      "(`galactic_object` for `system`, say) are normalised away at generation time.",
+    ]) + `export type ScopeName =\n${members};\n`
+  );
+}
+
+export function emitEnums(emitter: Emitter): string {
+  const chunks: string[] = [];
+  for (const name of [...emitter.usedEnums].sort()) {
+    const values = emitter.rules.enums.get(name) ?? [];
+    const members = values.map((value) => `  | ${JSON.stringify(value)}`).join("\n");
+    chunks.push(
+      docComment([`\`enum[${name}]\`.`]) + `export type ${pascalCase(name)} =\n${members};\n`
+    );
+  }
+  return chunks.join("\n");
+}
+
+/**
+ * Value sets are names the script invents rather than names a content type
+ * defines: `set_country_flag = heard_the_hum` brings `heard_the_hum` into
+ * existence, and `has_country_flag` can then read it.
+ *
+ * The rules record which set each rule draws from — `value[country_flag]` versus
+ * `value[planet_flag]` — so each set gets its own branded type. The brand is
+ * optional, so a raw string still assigns and vanilla flags keep working, but a
+ * name declared as a planet flag will not typecheck as a country flag.
+ */
+export function emitValueSets(emitter: Emitter): string {
+  const declarations = [...emitter.usedValueSets]
+    .sort()
+    .map((name) => {
+      const type = emitter.valueSetTypeName(name);
+      return (
+        docComment([`A name belonging to \`value[${name}]\`.`]) +
+        `export type ${type} = ValueSetMember<${JSON.stringify(name)}>;\n\n` +
+        docComment([
+          `Declares ${name} names, so they autocomplete and cannot be`,
+          "confused with a name from another set.",
+        ]) +
+        `export const ${camelCase(name)}s = declare<${JSON.stringify(name)}>();\n`
+      );
+    })
+    .join("\n");
+
+  return (
+    "declare const valueSetBrand: unique symbol;\n\n" +
+    docComment([
+      "A name belonging to one of the game's value sets.",
+      "",
+      "The brand is optional so a raw string still assigns — vanilla and other",
+      "mods' names have to keep working — but two different sets are not",
+      "interchangeable once a name has been declared as belonging to one.",
+    ]) +
+    "export type ValueSetMember<T extends string> = string & {\n" +
+    "  readonly [valueSetBrand]?: T;\n" +
+    "};\n\n" +
+    docComment([
+      "Builds a lookup of names belonging to a single value set.",
+      "",
+      "The keys are the names themselves, so `flags.heard_the_hum` autocompletes",
+      "and a typo is a compile error rather than a condition that never fires.",
+    ]) +
+    "function declare<T extends string>() {\n" +
+    "  return <const Names extends readonly string[]>(\n" +
+    "    ...names: Names\n" +
+    "  ): { readonly [K in Names[number]]: ValueSetMember<T> } => {\n" +
+    "    const entries = names.map((name) => [name, name] as const);\n" +
+    "    return Object.fromEntries(entries) as {\n" +
+    "      readonly [K in Names[number]]: ValueSetMember<T>;\n" +
+    "    };\n" +
+    "  };\n" +
+    "}\n\n" +
+    declarations
+  );
+}
+
+export function emitRefs(emitter: Emitter): string {
+  const aliases = [...emitter.usedRefs]
+    .sort()
+    .map(
+      (name) =>
+        docComment([`A reference to a \`<${name}>\`.`]) +
+        `export type ${pascalCase(name)}Ref = TypedRef<${JSON.stringify(name)}>;\n`
+    )
+    .join("\n");
+
+  return (
+    "declare const refBrand: unique symbol;\n\n" +
+    docComment([
+      "A reference to a key defined by some content type.",
+      "",
+      "The rules say a field holds a `<technology>`, but which technologies exist is",
+      "decided by the game install, not by the rules — so the brand is optional and a",
+      "raw id string still assigns. When the parser slice lands it can narrow these to",
+      "real unions without breaking a single caller.",
+    ]) +
+    "export interface TypedRef<T extends string> {\n" +
+    "  readonly id: string;\n" +
+    "  readonly [refBrand]?: T;\n" +
+    "}\n\n" +
+    docComment([
+      "Resolves a reference to the id the game expects, passing plain values through.",
+      "",
+      "Some rules are overloaded between a reference and a literal — `has_building`",
+      "accepts both `<building>` and a bool — so this has to handle either.",
+    ]) +
+    "export function refId<T extends string | number | boolean>(\n" +
+    "  value: TypedRef<string> | T\n" +
+    "): string | T {\n" +
+    '  if (typeof value === "object") {\n' +
+    "    return value.id;\n" +
+    "  }\n" +
+    "  return value;\n" +
+    "}\n\n" +
+    aliases
+  );
+}

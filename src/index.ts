@@ -1,21 +1,14 @@
 export type { PdxEntry, PdxOp, PdxScalar, PdxValue } from "./ast.ts";
 export { block, cmp, kv, list, quoted, scalar } from "./ast.ts";
 export { serializeEntries } from "./serialize.ts";
-export type { ScopeName, Trigger } from "./triggers.ts";
-export {
-  always,
-  and,
-  anyCountry,
-  hasCountryFlag,
-  hasGlobalFlag,
-  hasPlanetFlag,
-  hasTechnology,
-  isAi,
-  not,
-  or,
-  yearsPassed,
-} from "./triggers.ts";
-export type { ResearchArea, TechRef, TechnologyDef } from "./tech.ts";
+export type { ScopeName } from "./generated/scopes.ts";
+export * from "./generated/enums.ts";
+export { refId, type TypedRef } from "./generated/refs.ts";
+export * from "./generated/refs.ts";
+export * from "./generated/value-sets.ts";
+export * from "./triggers.ts";
+export type { TechnologyFields } from "./generated/technology.ts";
+export type { TechRef, TechnologyDef } from "./tech.ts";
 export { Technology } from "./tech.ts";
 export type { ModConfig, PrefixedId } from "./mod.ts";
 export { Mod } from "./mod.ts";

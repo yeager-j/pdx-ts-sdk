@@ -1,4 +1,12 @@
-import { and, hasCountryFlag, Mod, not } from "../../src/index.ts";
+import { and, countryFlags, hasCountryFlag, Mod, not } from "../../src/index.ts";
+
+/**
+ * Flags this mod sets and reads.
+ *
+ * Declaring them buys autocomplete and, because each value set is branded, a
+ * planet flag passed to `hasCountryFlag` is a compile error.
+ */
+const flags = countryFlags("hello_galaxy_heard_the_hum", "hello_galaxy_pacifist_path");
 
 export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
   const mod = new Mod({
@@ -12,7 +20,7 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
   const resonanceTheory = mod.defineTechnology({
     id: "hello_galaxy_tech_resonance_theory",
     name: "Crystal Resonance Theory",
-    description: "The lattice hums at frequencies we are only beginning to hear.",
+    desc: "The lattice hums at frequencies we are only beginning to hear.",
     cost: 2000,
     area: "physics",
     tier: 2,
@@ -23,7 +31,7 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
   mod.defineTechnology({
     id: "hello_galaxy_tech_resonance_weapons",
     name: "Resonance Disruptors",
-    description: "Weaponized harmonics that shatter hulls from within.",
+    desc: "Weaponized harmonics that shatter hulls from within.",
     cost: 6000,
     area: "physics",
     tier: 3,
@@ -32,8 +40,8 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
     isRare: true,
     weight: 70,
     potential: and(
-      hasCountryFlag("hello_galaxy_heard_the_hum"),
-      not(hasCountryFlag("hello_galaxy_pacifist_path"))
+      hasCountryFlag(flags.hello_galaxy_heard_the_hum),
+      not(hasCountryFlag(flags.hello_galaxy_pacifist_path))
     ),
   });
 

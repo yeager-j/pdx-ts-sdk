@@ -50,8 +50,8 @@ export class Mod<const P extends string = string> {
     const tech = new Technology(def);
     this.technologies.push(tech);
     this.registerLoc(def.id, def.name);
-    if (def.description !== undefined) {
-      this.registerLoc(`${def.id}_desc`, def.description);
+    if (def.desc !== undefined) {
+      this.registerLoc(`${def.id}_desc`, def.desc);
     }
     return tech;
   }
