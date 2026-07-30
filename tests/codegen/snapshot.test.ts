@@ -13,6 +13,15 @@ function declaration(name: string): string {
   return source.slice(start, end + 2);
 }
 
+function argsInterface(name: string): string {
+  const start = source.indexOf(`export interface ${name} {`);
+  if (start === -1) {
+    throw new Error(`${name} is not in the generated triggers`);
+  }
+  const end = source.indexOf("\n}\n", start);
+  return source.slice(start, end + 2);
+}
+
 describe("emitted trigger signatures", () => {
   it("bool: an omitted argument means yes", () => {
     expect(declaration("isAi")).toMatchInlineSnapshot(`
@@ -50,6 +59,54 @@ describe("emitted trigger signatures", () => {
     expect(declaration("anyCountry")).toMatchInlineSnapshot(`
       "export function anyCountry(condition: Trigger<"country">): Trigger<ScopeName> {
         return trigger([block("any_country", [...condition.entries])]);
+      }"
+    `);
+  });
+
+  it("clause + comparison fields: a nested trigger hole and an operator-or-literal count", () => {
+    expect(argsInterface("CountOwnedPopGroupArgs")).toMatchInlineSnapshot(`
+      "export interface CountOwnedPopGroupArgs {
+        limit?: Trigger<"pop_group">;
+        count: number | readonly [PdxOp, number] | "all";
+      }"
+    `);
+    expect(declaration("countOwnedPopGroup")).toMatchInlineSnapshot(`
+      "export function countOwnedPopGroup(
+        args: CountOwnedPopGroupArgs
+      ): Trigger<
+        "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
+      > {
+        const entries: PdxEntry[] = [];
+        if (args.limit !== undefined) {
+          entries.push(block("limit", [...args.limit.entries]));
+        }
+        entries.push(
+          typeof args.count === "object"
+            ? cmp("count", args.count[0], args.count[1])
+            : kv("count", args.count)
+        );
+        return trigger([block("count_owned_pop_group", entries)]);
+      }"
+    `);
+  });
+
+  it("splice + fields: the trigger splice becomes an implicit conditions argument", () => {
+    expect(argsInterface("CalcTrueIfArgs")).toMatchInlineSnapshot(`
+      "export interface CalcTrueIfArgs {
+        amount: number | readonly [PdxOp, number];
+        conditions: Trigger<ScopeName>;
+      }"
+    `);
+    expect(declaration("calcTrueIf")).toMatchInlineSnapshot(`
+      "export function calcTrueIf(args: CalcTrueIfArgs): Trigger<ScopeName> {
+        const entries: PdxEntry[] = [];
+        entries.push(
+          typeof args.amount === "object"
+            ? cmp("amount", args.amount[0], args.amount[1])
+            : kv("amount", args.amount)
+        );
+        entries.push(...args.conditions.entries);
+        return trigger([block("calc_true_if", entries)]);
       }"
     `);
   });

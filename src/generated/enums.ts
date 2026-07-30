@@ -2,6 +2,18 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: enums.cwt
 
+/** `enum[add_deposit_type]`. */
+export type AddDepositType = "random" | "random_blocker" | "random_nonblocker";
+
+/** `enum[aggro_range_measure_from]`. */
+export type AggroRangeMeasureFrom = "self" | "return_point";
+
+/** `enum[agreement_subject_expand]`. */
+export type AgreementSubjectExpand = "can_expand" | "can_expand_with_tithe" | "cannot_expand";
+
+/** `enum[agreement_war]`. */
+export type AgreementWar = "none" | "defensive" | "offensive" | "all";
+
 /** `enum[ai_attitude_behaviour]`. */
 export type AiAttitudeBehaviour =
   "attack" | "weaken" | "alliance" | "vassalize" | "trade" | "coexist";
@@ -43,6 +55,14 @@ export type EnvoyTask =
 /** `enum[federation_setting]`. */
 export type FederationSetting = "research_sharing" | "failed_vote_half_price";
 
+/** `enum[federation_succession_term]`. */
+export type FederationSuccessionTerm =
+  "status_change" | "years_10" | "years_20" | "years_30" | "years_40";
+
+/** `enum[federation_succession_type]`. */
+export type FederationSuccessionType =
+  "strongest" | "diplomatic_weight" | "rotation" | "challenge" | "random" | "tech" | "fleet";
+
 /** `enum[fleet_order]`. */
 export type FleetOrder =
   | "move_to_system_point_order"
@@ -80,6 +100,9 @@ export type FleetOrder =
   | "initiate_cosmic_storm_order"
   | "terraform_fleet_order";
 
+/** `enum[fleet_stance]`. */
+export type FleetStance = "aggressive" | "passive" | "evasive";
+
 /** `enum[galaxy_setup_value]`. */
 export type GalaxySetupValue =
   | "num_empires"
@@ -105,20 +128,38 @@ export type GalaxySetupValue =
   | "logistics_planet_deficit_costs"
   | "num_nomad_empires";
 
+/** `enum[gender]`. */
+export type Gender = "female" | "male" | "indeterminable";
+
 /** `enum[genders_not_set]`. */
 export type GendersNotSet = "male" | "female" | "indeterminable" | "not_set" | "random";
+
+/** `enum[growth_stance]`. */
+export type GrowthStance = "controlled" | "excessive" | "none";
 
 /** `enum[hyperlane_euclidean]`. */
 export type HyperlaneEuclidean = "hyperlane" | "euclidean";
 
+/** `enum[mia_type]`. */
+export type MiaType = "mia_return_home" | "mia_emergency_ftl" | "mia_fleet_eaten";
+
+/** `enum[mission_status]`. */
+export type MissionStatus = "success" | "stop";
+
 /** `enum[opinion_level]`. */
 export type OpinionLevel = "terrible" | "poor" | "neutral" | "good" | "excellent";
+
+/** `enum[optimisation_batch]`. */
+export type OptimisationBatch = "begin" | "end";
 
 /** `enum[patron_contact_state]`. */
 export type PatronContactState = "none" | "in_progress" | "completed";
 
 /** `enum[planet_resource_compare_type]`. */
 export type PlanetResourceCompareType = "produces" | "upkeep" | "balance";
+
+/** `enum[refresh_portraits]`. */
+export type RefreshPortraits = "planet" | "room" | "character" | "all";
 
 /** `enum[relative_power_category]`. */
 export type RelativePowerCategory = "all" | "fleet" | "technology" | "economy";
@@ -187,8 +228,23 @@ export type SpecimenType = "aesthetic_wonder" | "historical_item" | "xeno_geolog
 /** `enum[specimens_rarity]`. */
 export type SpecimensRarity = "common" | "rare" | "epic" | "exceptional";
 
+/** `enum[system_direction]`. */
+export type SystemDirection = "left" | "right" | "corewards" | "rimwards";
+
 /** `enum[technology_area]`. */
 export type TechnologyArea = "engineering" | "society" | "physics";
 
 /** `enum[trade_type]`. */
 export type TradeType = "market_buy" | "market_sell" | "not_set";
+
+/** `enum[trigger_custom_progress]`. */
+export type TriggerCustomProgress = "normal" | "simplified" | "clamped";
+
+/** `enum[truce_type]`. */
+export type TruceType = "war" | "liberation" | "alliance" | "guarantee" | "none";
+
+/** `enum[tutorial_level]`. */
+export type TutorialLevel = "0" | "1" | "2" | "full" | "medium" | "none";
+
+/** `enum[war_side]`. */
+export type WarSide = "attackers" | "defenders";

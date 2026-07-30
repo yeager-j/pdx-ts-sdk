@@ -7,6 +7,28 @@ export { refId, type TypedRef } from "./generated/refs.ts";
 export * from "./generated/refs.ts";
 export * from "./generated/value-sets.ts";
 export * from "./triggers.ts";
+export {
+  eventTarget,
+  makeScope,
+  type EventTarget,
+  type IfChain,
+  type Modifier,
+  type RandomListArm,
+  type ScopeRef,
+  type StructuralEffects,
+} from "./effect-core.ts";
+export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
+export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
+export type {
+  DefinedEvent,
+  EventCtx,
+  EventDef,
+  EventOption,
+  EventRef,
+  FireEventArgs,
+  UndeclaredFrom,
+  WitnessedFireEventArgs,
+} from "./events.ts";
 export type { TechnologyFields } from "./generated/technology.ts";
 export type { TechRef, TechnologyDef } from "./tech.ts";
 export { Technology } from "./tech.ts";

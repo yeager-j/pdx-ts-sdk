@@ -10,9 +10,12 @@ import path from "node:path";
 import { format, resolveConfig } from "prettier";
 
 import { loadRules, scopeIndex } from "./cwt/rules.ts";
+import { emitEffects } from "./emit/effects.ts";
+import { emitEvents } from "./emit/events.ts";
+import type { SkippedRule } from "./emit/shape.ts";
 import { canonicalScopes, emitEnums, emitRefs, emitScopes, emitValueSets } from "./emit/support.ts";
 import { emitTechnology } from "./emit/technology.ts";
-import { emitTriggers, type SkippedTrigger } from "./emit/triggers.ts";
+import { emitTriggers } from "./emit/triggers.ts";
 import { Emitter } from "./emit/types.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
@@ -101,6 +104,10 @@ async function main(): Promise<void> {
   const triggers = emitTriggers(emitter, docs.triggers, index);
   const triggerUsage = emitter.endFile();
 
+  emitter.beginFile();
+  const effects = emitEffects(emitter, docs.effects, index);
+  const effectUsage = emitter.endFile();
+
   const technologyType = rules.contentTypes.get("technology");
   const technologyFields = rules.bodies.get("technology");
   if (technologyType === undefined || technologyFields === undefined) {
@@ -159,6 +166,36 @@ async function main(): Promise<void> {
       'import { refId } from "./refs.ts";\n\n' +
       triggers.code
   );
+  await write(
+    "effects.ts",
+    header(commit, ["effects.cwt", "aliases.cwt", "script-docs/v4.4.1/effects.log"]) +
+      'import type { PdxOp } from "../ast.ts";\n' +
+      'import type { Modifier, StructuralEffects } from "../effect-core.ts";\n' +
+      'import type { Trigger } from "../trigger-core.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n' +
+      importList(
+        "./enums.ts",
+        effectUsage.enums.map((name) => emitter.enumTypeName(name))
+      ) +
+      importList(
+        "./refs.ts",
+        effectUsage.refs.map((name) => emitter.refTypeName(name))
+      ) +
+      importList(
+        "./value-sets.ts",
+        effectUsage.valueSets.map((name) => emitter.valueSetTypeName(name))
+      ) +
+      "\n" +
+      effects.interfaces
+  );
+  await write("effect-meta.ts", header(commit, ["effects.cwt", "aliases.cwt"]) + effects.meta);
+  const events = emitEvents(emitter);
+  await write(
+    "events.ts",
+    header(commit, ["events/events.cwt"]) +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      events.code
+  );
 
   console.log(`cwtools-stellaris-config @ ${commit.slice(0, 12)}`);
   console.log(
@@ -173,10 +210,18 @@ async function main(): Promise<void> {
       ` (${[...triggers.byShape].map(([kind, n]) => `${kind} ${n}`).join(", ")})`
   );
   console.log(
+    `effects: ${effects.emitted} emitted of ${rules.effects.size} declared` +
+      ` (${[...effects.byShape].map(([kind, n]) => `${kind} ${n}`).join(", ")}` +
+      `; clusters ${effects.clusterCount})`
+  );
+  console.log(
     `technology: ${technology.emittedFields.length} of ${technologyFields.length} rule fields`
   );
+  console.log(`event kinds: ${events.kinds}`);
 
   reportSection("Triggers not emitted", summarise(triggers.skipped));
+  reportSection("Effects not emitted", summarise(effects.skipped));
+  reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
   reportSection("Technology fields modelled but not yet emitted", technology.unemittedFields);
   reportSection("Technology fields the emitter could not type", technology.unsupported);
 }
@@ -188,7 +233,7 @@ function importList(from: string, names: readonly string[]): string {
   return `import type { ${[...new Set(names)].sort().join(", ")} } from ${JSON.stringify(from)};\n`;
 }
 
-function summarise(skipped: readonly SkippedTrigger[]): string[] {
+function summarise(skipped: readonly SkippedRule[]): string[] {
   const grouped = new Map<string, string[]>();
   for (const entry of skipped) {
     grouped.set(entry.reason, [...(grouped.get(entry.reason) ?? []), entry.name]);

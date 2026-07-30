@@ -73,6 +73,8 @@ export interface RuleField {
   readonly docs: readonly string[];
   readonly scope: ScopeContext | null;
   readonly line: number;
+  /** `==` marks a comparison field, written in script as `count > 4`. */
+  readonly comparison: boolean;
 }
 
 const BRACKETED = /^([a-z_]+)\[([^\]]*)\]$/;
@@ -190,7 +192,11 @@ export function classifyBlock(block: CwtBlock, resolve?: SingleAliasResolver): R
 function classifyKey(text: string): FieldKey {
   const bracketed = BRACKETED.exec(text);
   if (bracketed === null) {
-    return { kind: "name", name: text };
+    // A key spelled `int`, `scalar`, or `<resource>` is a key FILTER — it
+    // matches any key of that type (`random_list`'s weights are `int = {...}`).
+    // Only words the classifier does not recognise are literal field names.
+    const type = classifyScalar(text);
+    return type.kind === "literal" ? { kind: "name", name: text } : { kind: "computed", type };
   }
   if (bracketed[1] === "alias_name") {
     return { kind: "aliasName", category: bracketed[2]! };
@@ -215,6 +221,7 @@ function toField(
     docs: node.docs,
     scope: scopeOf(node.options),
     line: node.line,
+    comparison: node.op === "==",
   };
 }
 

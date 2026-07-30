@@ -35,6 +35,7 @@ import type {
   SpecimenType,
   TechnologyArea,
   TradeType,
+  TriggerCustomProgress,
 } from "./enums.ts";
 import {
   refId,
@@ -1356,7 +1357,7 @@ export function bioshipCanGrow(value: boolean = true): Trigger<"ship"> {
 
 export interface BranchOfficeValueArgs {
   who: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -1370,7 +1371,11 @@ export function branchOfficeValue(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("branch_office_value", entries)]);
 }
 
@@ -1382,6 +1387,28 @@ export function branchOfficeValue(
  */
 export function builtOnPlanet(value: boolean = true): Trigger<"megastructure"> {
   return trigger([kv("built_on_planet", value)]);
+}
+
+export interface CalcTrueIfArgs {
+  amount: number | readonly [PdxOp, number];
+  conditions: Trigger<ScopeName>;
+}
+
+/**
+ * Returns true if the specified number of sub-triggers return true
+ * ```
+ * calc_true_if = { amount = 2/variable <trigger> <trigger> <trigger> }
+ * ```
+ */
+export function calcTrueIf(args: CalcTrueIfArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  entries.push(
+    typeof args.amount === "object"
+      ? cmp("amount", args.amount[0], args.amount[1])
+      : kv("amount", args.amount)
+  );
+  entries.push(...args.conditions.entries);
+  return trigger([block("calc_true_if", entries)]);
 }
 
 /**
@@ -1608,7 +1635,7 @@ export function canResearchTechnology(value: TechnologyRef | string): Trigger<"c
 
 export interface CanResearchTierArgs {
   area: TechnologyArea;
-  tier: number;
+  tier: number | readonly [PdxOp, number];
 }
 
 /**
@@ -1620,7 +1647,9 @@ export interface CanResearchTierArgs {
 export function canResearchTier(args: CanResearchTierArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("area", args.area));
-  entries.push(kv("tier", args.tier));
+  entries.push(
+    typeof args.tier === "object" ? cmp("tier", args.tier[0], args.tier[1]) : kv("tier", args.tier)
+  );
   return trigger([block("can_research_tier", entries)]);
 }
 
@@ -1706,7 +1735,7 @@ export function categoryLastPickedTradition(
 
 export interface CheckGalaxySetupValueArgs {
   setting: GalaxySetupValue;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -1719,13 +1748,17 @@ export interface CheckGalaxySetupValueArgs {
 export function checkGalaxySetupValue(args: CheckGalaxySetupValueArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
   entries.push(kv("setting", args.setting));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("check_galaxy_setup_value", entries)]);
 }
 
 export interface CheckModifierValueArgs {
   modifier: "alias_keys_field[modifier]";
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -1756,7 +1789,11 @@ export function checkModifierValue(
 > {
   const entries: PdxEntry[] = [];
   entries.push(kv("modifier", args.modifier));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("check_modifier_value", entries)]);
 }
 
@@ -1782,7 +1819,7 @@ export function checkPopFactionParameter(
 
 export interface CheckVariableArgs {
   which: Variable;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -1826,8 +1863,113 @@ export function checkVariable(
 > {
   const entries: PdxEntry[] = [];
   entries.push(kv("which", args.which));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("check_variable", entries)]);
+}
+
+export interface CheckVariableArithmeticArgs {
+  which: number | readonly [PdxOp, number];
+  add?: number | readonly [PdxOp, number];
+  subtract?: number | readonly [PdxOp, number];
+  multiply?: number | readonly [PdxOp, number];
+  divide?: number | readonly [PdxOp, number];
+  modulo?: number | readonly [PdxOp, number];
+  /** Specify >/< on the value or variable fields */
+  value: number | readonly [PdxOp, number];
+}
+
+/**
+ * Checks a variable for the scope if a certain amount of arithmetic is done to it (note: the variable's value is not changed by this trigger)
+ * ```
+ * check_variable_arithmetic = {
+ * 	which = <variable>
+ * 	add/subtract/multiply/divide/modulo = <float>/<variable>/<scope.variable>/trigger:<trigger> (note: this line can be repeated as many times as desired)
+ * 	value <=> <float>/<variable>/<scope.variable>/trigger:<trigger> (the value to compare against)
+ * }
+ * ```
+ */
+export function checkVariableArithmetic(
+  args: CheckVariableArithmeticArgs
+): Trigger<
+  | "agreement"
+  | "ambient_object"
+  | "archaeological_site"
+  | "army"
+  | "astral_rift"
+  | "bypass"
+  | "carrier"
+  | "colony"
+  | "country"
+  | "deposit"
+  | "espionage_asset"
+  | "espionage_operation"
+  | "federation"
+  | "first_contact"
+  | "fleet"
+  | "leader"
+  | "megastructure"
+  | "planet"
+  | "pop_faction"
+  | "pop_group"
+  | "sector"
+  | "ship"
+  | "ship_growth_stage"
+  | "situation"
+  | "species"
+  | "spy_network"
+  | "starbase"
+  | "system"
+  | "war"
+> {
+  const entries: PdxEntry[] = [];
+  entries.push(
+    typeof args.which === "object"
+      ? cmp("which", args.which[0], args.which[1])
+      : kv("which", args.which)
+  );
+  if (args.add !== undefined) {
+    entries.push(
+      typeof args.add === "object" ? cmp("add", args.add[0], args.add[1]) : kv("add", args.add)
+    );
+  }
+  if (args.subtract !== undefined) {
+    entries.push(
+      typeof args.subtract === "object"
+        ? cmp("subtract", args.subtract[0], args.subtract[1])
+        : kv("subtract", args.subtract)
+    );
+  }
+  if (args.multiply !== undefined) {
+    entries.push(
+      typeof args.multiply === "object"
+        ? cmp("multiply", args.multiply[0], args.multiply[1])
+        : kv("multiply", args.multiply)
+    );
+  }
+  if (args.divide !== undefined) {
+    entries.push(
+      typeof args.divide === "object"
+        ? cmp("divide", args.divide[0], args.divide[1])
+        : kv("divide", args.divide)
+    );
+  }
+  if (args.modulo !== undefined) {
+    entries.push(
+      typeof args.modulo === "object"
+        ? cmp("modulo", args.modulo[0], args.modulo[1])
+        : kv("modulo", args.modulo)
+    );
+  }
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
+  return trigger([block("check_variable_arithmetic", entries)]);
 }
 
 /**
@@ -1849,6 +1991,52 @@ export function cityGraphicalCulture(value: GraphicalCultureRef | string): Trigg
  */
 export function civicsCount(op: PdxOp, value: number): Trigger<"country"> {
   return trigger([cmp("civics_count", op, value)]);
+}
+
+export interface ClosestSystemArgs {
+  minSteps?: number | readonly [PdxOp, number];
+  maxSteps?: number | readonly [PdxOp, number];
+  useBypasses?: boolean;
+  limit?: Trigger<"system">;
+  conditions: Trigger<"system">;
+}
+
+/**
+ * Finds the closest system within the given hyperlane steps and limit = { <triggers> }. If this system does not exist, it returns false. If it does exist, it is checked against the triggers outside of the limit = {}.
+ * ```
+ * closest_system = {
+ * 	limit = { <triggers> }
+ * 	min_steps = 2
+ * 	max_steps = 20
+ * 	use_bypasses = yes/no (default: no)
+ * 	<triggers>
+ * }
+ * ```
+ */
+export function closestSystem(args: ClosestSystemArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.minSteps !== undefined) {
+    entries.push(
+      typeof args.minSteps === "object"
+        ? cmp("min_steps", args.minSteps[0], args.minSteps[1])
+        : kv("min_steps", args.minSteps)
+    );
+  }
+  if (args.maxSteps !== undefined) {
+    entries.push(
+      typeof args.maxSteps === "object"
+        ? cmp("max_steps", args.maxSteps[0], args.maxSteps[1])
+        : kv("max_steps", args.maxSteps)
+    );
+  }
+  if (args.useBypasses !== undefined) {
+    entries.push(kv("use_bypasses", args.useBypasses));
+  }
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(...args.conditions.entries);
+  return trigger([block("closest_system", entries)]);
 }
 
 /**
@@ -1934,6 +2122,19 @@ export function compareDistance(
   return trigger([block("compare_distance", entries)]);
 }
 
+export interface ConditionalTooltipArgs {
+  trigger: Trigger<ScopeName>;
+  conditions: Trigger<ScopeName>;
+}
+
+/** The enclosed trigger will be completely ignored if the condition in "trigger" isn't true. Useful to hide part of tooltips that are not relevant. */
+export function conditionalTooltip(args: ConditionalTooltipArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  entries.push(block("trigger", [...args.trigger.entries]));
+  entries.push(...args.conditions.entries);
+  return trigger([block("conditional_tooltip", entries)]);
+}
+
 /**
  * Returns the number of planets within the current country's borders that are habitable but have not been colonized
  * ```
@@ -1994,6 +2195,195 @@ export function councilLegitimacy(op: PdxOp, value: number): Trigger<"country"> 
   return trigger([cmp("council_legitimacy", op, value)]);
 }
 
+export interface CountActiveFirstContactArgs {
+  limit?: Trigger<"first_contact">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each active (non-completed) first contact that this country is engaging in - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_active_first_contact = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countActiveFirstContact(args: CountActiveFirstContactArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_active_first_contact", entries)]);
+}
+
+export interface CountAgreementArgs {
+  limit?: Trigger<"agreement">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each agreement - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_agreement = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countAgreement(args: CountAgreementArgs): Trigger<"country" | "no_scope"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_agreement", entries)]);
+}
+
+export interface CountAmbientObjectArgs {
+  limit?: Trigger<"ambient_object">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every ambient object in the game - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_ambient_object = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countAmbientObject(args: CountAmbientObjectArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_ambient_object", entries)]);
+}
+
+export interface CountArchaeologicalSiteArgs {
+  limit?: Trigger<"archaeological_site">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every archaeological sites - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_archaeological_site = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countArchaeologicalSite(args: CountArchaeologicalSiteArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_archaeological_site", entries)]);
+}
+
+export interface CountAssociateArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each associate member of the federation - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_associate = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countAssociate(args: CountAssociateArgs): Trigger<"federation"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_associate", entries)]);
+}
+
+export interface CountAstralRiftArgs {
+  limit?: Trigger<"astral_rift">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every astral rift - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_astral_rift = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countAstralRift(args: CountAstralRiftArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_astral_rift", entries)]);
+}
+
+export interface CountAttackerArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all attackers in the current war - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_attacker = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countAttacker(args: CountAttackerArgs): Trigger<"war"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_attacker", entries)]);
+}
+
 /**
  * Count all currently available contracts to the scoped country
  * ```
@@ -2002,6 +2392,114 @@ export function councilLegitimacy(op: PdxOp, value: number): Trigger<"country"> 
  */
 export function countAvailableContracts(op: PdxOp, value: number): Trigger<"country"> {
   return trigger([cmp("count_available_contracts", op, value)]);
+}
+
+export interface CountAvailableDebrisArgs {
+  limit?: Trigger<"debris">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all debris belong to available special projects of the scoped country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_available_debris = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countAvailableDebris(args: CountAvailableDebrisArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_available_debris", entries)]);
+}
+
+export interface CountBypassArgs {
+  limit?: Trigger<"bypass">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every bypass - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_bypass = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countBypass(args: CountBypassArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_bypass", entries)]);
+}
+
+export interface CountBypassInSystemArgs {
+  limit?: Trigger<"bypass">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every bypass in the scoped galactic object. - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_bypass_in_system = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countBypassInSystem(args: CountBypassInSystemArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_bypass_in_system", entries)]);
+}
+
+export interface CountCombatantFleetArgs {
+  limit?: Trigger<"fleet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each fleet this fleet is in combat with - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_combatant_fleet = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countCombatantFleet(args: CountCombatantFleetArgs): Trigger<"fleet"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_combatant_fleet", entries)]);
 }
 
 /**
@@ -2015,10 +2513,342 @@ export function countContractsInProgress(op: PdxOp, value: number): Trigger<"cou
   return trigger([cmp("count_contracts_in_progress", op, value)]);
 }
 
+export interface CountControlledColonyArgs {
+  limit?: Trigger<"colony">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each colony controlled by the current empire - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_controlled_colony = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countControlledColony(args: CountControlledColonyArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_controlled_colony", entries)]);
+}
+
+export interface CountControlledFleetArgs {
+  limit?: Trigger<"fleet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each fleet controlled by the country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_controlled_fleet = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countControlledFleet(args: CountControlledFleetArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_controlled_fleet", entries)]);
+}
+
+export interface CountControlledPlanetArgs {
+  limit?: Trigger<"planet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each inhabited planet controlled by the current empire - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_controlled_planet = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countControlledPlanet(args: CountControlledPlanetArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_controlled_planet", entries)]);
+}
+
+export interface CountControlledShipArgs {
+  limit?: Trigger<"ship">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each ship in the fleet or controlled by the country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_controlled_ship = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countControlledShip(args: CountControlledShipArgs): Trigger<"country" | "fleet"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_controlled_ship", entries)]);
+}
+
+export interface CountCosmicStormArgs {
+  limit?: Trigger<"storm">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all cosmic storms in the galaxy - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_cosmic_storm = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countCosmicStorm(args: CountCosmicStormArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_cosmic_storm", entries)]);
+}
+
+export interface CountCosmicStormEndPositionArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all systems valid to be a storms end position - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_cosmic_storm_end_position = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countCosmicStormEndPosition(
+  args: CountCosmicStormEndPositionArgs
+): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_cosmic_storm_end_position", entries)]);
+}
+
+export interface CountCosmicStormStartPositionArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all systems valid to be a storms start position - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_cosmic_storm_start_position = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countCosmicStormStartPosition(
+  args: CountCosmicStormStartPositionArgs
+): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_cosmic_storm_start_position", entries)]);
+}
+
+export interface CountCouncilMemberArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each member of the galactic council - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_council_member = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countCouncilMember(args: CountCouncilMemberArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_council_member", entries)]);
+}
+
+export interface CountCountryArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all countries - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_country = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countCountry(args: CountCountryArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_country", entries)]);
+}
+
+export interface CountCountryNeighborToSystemArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all countries that own system 1 jump away from current system (bypasses included) - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_country_neighbor_to_system = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countCountryNeighborToSystem(
+  args: CountCountryNeighborToSystemArgs
+): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_country_neighbor_to_system", entries)]);
+}
+
+export interface CountDefenderArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all defenders in the current war - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_defender = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countDefender(args: CountDefenderArgs): Trigger<"war"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_defender", entries)]);
+}
+
+export interface CountDepositArgs {
+  limit?: Trigger<"deposit">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each deposit on the planet - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_deposit = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countDeposit(
+  args: CountDepositArgs
+): Trigger<"carrier" | "colony" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_deposit", entries)]);
+}
+
 export interface CountDepositsArgs {
   type?: DepositRef | string;
   category?: DepositCategoryRef | string;
-  count: number;
+  count: number | readonly [PdxOp, number];
 }
 
 /**
@@ -2037,7 +2867,11 @@ export function countDeposits(
   if (args.category !== undefined) {
     entries.push(kv("category", refId(args.category)));
   }
-  entries.push(kv("count", args.count));
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
   return trigger([block("count_deposits", entries)]);
 }
 
@@ -2052,6 +2886,532 @@ export function countEndCycleSystems(op: PdxOp, value: number): Trigger<ScopeNam
   return trigger([cmp("count_end_cycle_systems", op, value)]);
 }
 
+export interface CountEnslavedSpeciesArgs {
+  limit?: Trigger<"species">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Check if any of the species with enslaved pops <on the planet/in the country> meet the specified criteria - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_enslaved_species = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countEnslavedSpecies(
+  args: CountEnslavedSpeciesArgs
+): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_enslaved_species", entries)]);
+}
+
+export interface CountEnvoyArgs {
+  limit?: Trigger<"leader">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each envoy available to the country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_envoy = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countEnvoy(args: CountEnvoyArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_envoy", entries)]);
+}
+
+export interface CountEspionageAssetArgs {
+  limit?: Trigger<"espionage_asset">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each espionage asset - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_espionage_asset = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countEspionageAsset(
+  args: CountEspionageAssetArgs
+): Trigger<"espionage_operation" | "no_scope" | "spy_network"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_espionage_asset", entries)]);
+}
+
+export interface CountEspionageOperationArgs {
+  limit?: Trigger<"espionage_operation">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each espionage operation - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_espionage_operation = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countEspionageOperation(
+  args: CountEspionageOperationArgs
+): Trigger<"country" | "no_scope" | "spy_network"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_espionage_operation", entries)]);
+}
+
+export interface CountExactSpeciesArgs {
+  limit?: Trigger<"species">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Counts the number of species in the scope that fulfill the specified criteria, counting sub-species as unique.
+ * ```
+ * count_exact_species = { count > 4 limit = { <triggers> } }
+ * ```
+ */
+export function countExactSpecies(
+  args: CountExactSpeciesArgs
+): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_exact_species", entries)]);
+}
+
+export interface CountExhibitArgs {
+  limit?: Trigger<"exhibit">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every exhibit - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_exhibit = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countExhibit(args: CountExhibitArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_exhibit", entries)]);
+}
+
+export interface CountExistingSpeciesTraitsArgs {
+  limit?: Trigger<"species_trait">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all existing species traits in the game - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_existing_species_traits = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countExistingSpeciesTraits(
+  args: CountExistingSpeciesTraitsArgs
+): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_existing_species_traits", entries)]);
+}
+
+export interface CountFederationArgs {
+  limit?: Trigger<"federation">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each federation - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_federation = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countFederation(args: CountFederationArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_federation", entries)]);
+}
+
+export interface CountFederationAllyArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all countries in a federation with the scoped country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_federation_ally = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countFederationAlly(args: CountFederationAllyArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_federation_ally", entries)]);
+}
+
+export interface CountFirstContactArgs {
+  limit?: Trigger<"first_contact">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each first contact (both active and complete) that this country is engaging in - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_first_contact = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countFirstContact(args: CountFirstContactArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_first_contact", entries)]);
+}
+
+export interface CountFleetInOrbitArgs {
+  limit?: Trigger<"fleet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each fleet orbiting the current planet/starbase/megastructure - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_fleet_in_orbit = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countFleetInOrbit(
+  args: CountFleetInOrbitArgs
+): Trigger<"carrier" | "megastructure" | "planet" | "ship" | "starbase"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_fleet_in_orbit", entries)]);
+}
+
+export interface CountFleetInSystemArgs {
+  limit?: Trigger<"fleet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each fleet in the current system - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_fleet_in_system = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countFleetInSystem(args: CountFleetInSystemArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_fleet_in_system", entries)]);
+}
+
+export interface CountGalaxyFleetArgs {
+  limit?: Trigger<"fleet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each fleet in the entire game - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_galaxy_fleet = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countGalaxyFleet(args: CountGalaxyFleetArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_galaxy_fleet", entries)]);
+}
+
+export interface CountGalaxyPlanetArgs {
+  limit?: Trigger<"planet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each planet ANYWHERE in the game; warning: resource intensive! - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_galaxy_planet = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countGalaxyPlanet(args: CountGalaxyPlanetArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_galaxy_planet", entries)]);
+}
+
+export interface CountGalaxySectorArgs {
+  limit?: Trigger<"sector">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all sectors in the game - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_galaxy_sector = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countGalaxySector(args: CountGalaxySectorArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_galaxy_sector", entries)]);
+}
+
+export interface CountGalaxySpeciesArgs {
+  limit?: Trigger<"species">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Check if any species in the galaxy meet the specified criteria - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_galaxy_species = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countGalaxySpecies(args: CountGalaxySpeciesArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_galaxy_species", entries)]);
+}
+
+export interface CountGalcomMemberArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each member of the galactic community - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_galcom_member = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countGalcomMember(args: CountGalcomMemberArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_galcom_member", entries)]);
+}
+
+export interface CountGroundCombatAttackerArgs {
+  limit?: Trigger<"army">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each army currently attacking the planet in ground combat - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_ground_combat_attacker = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countGroundCombatAttacker(
+  args: CountGroundCombatAttackerArgs
+): Trigger<"carrier" | "colony" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_ground_combat_attacker", entries)]);
+}
+
+export interface CountGroundCombatDefenderArgs {
+  limit?: Trigger<"army">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each army currently defending the planet in ground combat - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_ground_combat_defender = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countGroundCombatDefender(
+  args: CountGroundCombatDefenderArgs
+): Trigger<"carrier" | "colony" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_ground_combat_defender", entries)]);
+}
+
 /**
  * Count all contracts issued by the scoped country (either available to be picked up or in progress by someone)
  * ```
@@ -2062,8 +3422,1317 @@ export function countIssuedContracts(op: PdxOp, value: number): Trigger<"country
   return trigger([cmp("count_issued_contracts", op, value)]);
 }
 
+export interface CountIssuedMissionArgs {
+  limit?: Trigger<"mission">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each mission that the current country has issued - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_issued_mission = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countIssuedMission(args: CountIssuedMissionArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_issued_mission", entries)]);
+}
+
+export interface CountJobPopGroupArgs {
+  limit?: Trigger<"pop_group">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each group that contains this job - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_job_pop_group = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countJobPopGroup(args: CountJobPopGroupArgs): Trigger<"pop_job"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_job_pop_group", entries)]);
+}
+
+export interface CountMegastructureArgs {
+  limit?: Trigger<"megastructure">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each megastructure - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_megastructure = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countMegastructure(args: CountMegastructureArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_megastructure", entries)]);
+}
+
+export interface CountMemberArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each member of the federation - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_member = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countMember(args: CountMemberArgs): Trigger<"federation"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_member", entries)]);
+}
+
+export interface CountMoonArgs {
+  limit?: Trigger<"planet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each moon of the planet - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_moon = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countMoon(args: CountMoonArgs): Trigger<"carrier" | "colony" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_moon", entries)]);
+}
+
+export interface CountNeighborCountryArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all neighbor countries - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_neighbor_country = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countNeighborCountry(args: CountNeighborCountryArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_neighbor_country", entries)]);
+}
+
+export interface CountNeighborSystemArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all a system's neighboring systems by hyperlane - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_neighbor_system = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countNeighborSystem(args: CountNeighborSystemArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_neighbor_system", entries)]);
+}
+
+export interface CountNeighborSystemEuclideanArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all a system's neighboring systems (by closeness, not by hyperlanes) - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_neighbor_system_euclidean = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countNeighborSystemEuclidean(
+  args: CountNeighborSystemEuclideanArgs
+): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_neighbor_system_euclidean", entries)]);
+}
+
+export interface CountObservedPreFtlWithinBorderArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all pre-ftl countries with an observation post around their capital within the country's or sector's borders - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_observed_pre_ftl_within_border = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countObservedPreFtlWithinBorder(
+  args: CountObservedPreFtlWithinBorderArgs
+): Trigger<"country" | "sector"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_observed_pre_ftl_within_border", entries)]);
+}
+
+export interface CountOrbitalStationArgs {
+  limit?: Trigger<"fleet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each orbital station owned by the current country or in the current system - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_orbital_station = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOrbitalStation(args: CountOrbitalStationArgs): Trigger<"country" | "system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_orbital_station", entries)]);
+}
+
+export interface CountOwnedArmyArgs {
+  limit?: Trigger<"army">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each army that is owned by the country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_army = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedArmy(args: CountOwnedArmyArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_army", entries)]);
+}
+
+export interface CountOwnedColonyArgs {
+  limit?: Trigger<"colony">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each colony owned by the current empire - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_colony = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedColony(args: CountOwnedColonyArgs): Trigger<"country" | "sector"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_colony", entries)]);
+}
+
+export interface CountOwnedContractArgs {
+  limit?: Trigger<"mission">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each contract a country has - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_contract = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedContract(args: CountOwnedContractArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_contract", entries)]);
+}
+
+export interface CountOwnedDesignArgs {
+  limit?: Trigger<"design">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all designs owned by the current country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_design = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedDesign(args: CountOwnedDesignArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_design", entries)]);
+}
+
+export interface CountOwnedFleetArgs {
+  limit?: Trigger<"fleet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each fleet owned by the country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_fleet = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedFleet(args: CountOwnedFleetArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_fleet", entries)]);
+}
+
+export interface CountOwnedLeaderArgs {
+  limit?: Trigger<"leader">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each leader that is owned by the country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_leader = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedLeader(args: CountOwnedLeaderArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_leader", entries)]);
+}
+
+export interface CountOwnedMegastructureArgs {
+  limit?: Trigger<"megastructure">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each owned megastructure - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_megastructure = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedMegastructure(args: CountOwnedMegastructureArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_megastructure", entries)]);
+}
+
+export interface CountOwnedMissionArgs {
+  limit?: Trigger<"mission">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each mission a country has - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_mission = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedMission(args: CountOwnedMissionArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_mission", entries)]);
+}
+
+export interface CountOwnedNonprimaryStarbaseArgs {
+  limit?: Trigger<"starbase">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every owned non-primary starbase (e.g. orbital rings), not including juggernauts - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_nonprimary_starbase = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedNonprimaryStarbase(
+  args: CountOwnedNonprimaryStarbaseArgs
+): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_nonprimary_starbase", entries)]);
+}
+
+export interface CountOwnedPlanetArgs {
+  limit?: Trigger<"planet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each inhabited planet owned by the current empire - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_planet = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedPlanet(args: CountOwnedPlanetArgs): Trigger<"country" | "sector"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_planet", entries)]);
+}
+
+export interface CountOwnedPopAmountArgs {
+  limit?: Trigger<"pop_group">;
+  count: number | readonly [PdxOp, number];
+}
+
+/**
+ * Sums all amounts - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_pop_amount = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedPopAmount(
+  args: CountOwnedPopAmountArgs
+): Trigger<
+  "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
+> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_pop_amount", entries)]);
+}
+
+export interface CountOwnedPopGroupArgs {
+  limit?: Trigger<"pop_group">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all owned groups - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_pop_group = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedPopGroup(
+  args: CountOwnedPopGroupArgs
+): Trigger<
+  "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
+> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_pop_group", entries)]);
+}
+
+export interface CountOwnedPopJobArgs {
+  limit?: Trigger<"pop_job">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all owned jobs - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_pop_job = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedPopJob(
+  args: CountOwnedPopJobArgs
+): Trigger<"carrier" | "colony" | "country" | "planet" | "sector" | "ship" | "system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_pop_job", entries)]);
+}
+
+export interface CountOwnedPopSpeciesArgs {
+  limit?: Trigger<"species">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each species of a country's owned pops - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_pop_species = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedPopSpecies(args: CountOwnedPopSpeciesArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_pop_species", entries)]);
+}
+
+export interface CountOwnedSectorArgs {
+  limit?: Trigger<"sector">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every owned sector - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_sector = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedSector(args: CountOwnedSectorArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_sector", entries)]);
+}
+
+export interface CountOwnedShipArgs {
+  limit?: Trigger<"ship">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each ship in the fleet or controlled by the country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_ship = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedShip(args: CountOwnedShipArgs): Trigger<"country" | "fleet"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_ship", entries)]);
+}
+
+export interface CountOwnedSpeciesArgs {
+  limit?: Trigger<"species">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Check if any of the species <on the planet/in the country> meet the specified criteria - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_species = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedSpecies(
+  args: CountOwnedSpeciesArgs
+): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_species", entries)]);
+}
+
+export interface CountOwnedStarbaseArgs {
+  limit?: Trigger<"starbase">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every owned primary starbase - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_starbase = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedStarbase(args: CountOwnedStarbaseArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_starbase", entries)]);
+}
+
+export interface CountOwnedStormInfluenceFieldArgs {
+  limit?: Trigger<"cosmic_storm_influence_field">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all influence fields owned by a country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_storm_influence_field = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedStormInfluenceField(
+  args: CountOwnedStormInfluenceFieldArgs
+): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_storm_influence_field", entries)]);
+}
+
+export interface CountOwnedWorkforceArgs {
+  limit?: Trigger<"pop_job">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Sums all workforce - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_owned_workforce = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countOwnedWorkforce(
+  args: CountOwnedWorkforceArgs
+): Trigger<"carrier" | "colony" | "country" | "planet" | "sector" | "ship" | "system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_owned_workforce", entries)]);
+}
+
+export interface CountPlanetArmyArgs {
+  limit?: Trigger<"army">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each army on the planet (not in ground combat), regardless of owner. - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_planet_army = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countPlanetArmy(
+  args: CountPlanetArmyArgs
+): Trigger<"carrier" | "colony" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_planet_army", entries)]);
+}
+
+export interface CountPlanetWithinBorderArgs {
+  limit?: Trigger<"planet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each planet within the current empire's borders - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_planet_within_border = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countPlanetWithinBorder(args: CountPlanetWithinBorderArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_planet_within_border", entries)]);
+}
+
+export interface CountPlayableCountryArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all playable countries - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_playable_country = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countPlayableCountry(args: CountPlayableCountryArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_playable_country", entries)]);
+}
+
+export interface CountPoolLeaderArgs {
+  limit?: Trigger<"leader">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each leader that is recruitable for the country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_pool_leader = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countPoolLeader(args: CountPoolLeaderArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_pool_leader", entries)]);
+}
+
+export interface CountPopFactionArgs {
+  limit?: Trigger<"pop_faction">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all the country's pop_group factions - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_pop_faction = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countPopFaction(args: CountPopFactionArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_pop_faction", entries)]);
+}
+
+export interface CountPotentialWarParticipantsArgs {
+  limit?: Trigger<"country">;
+  attacker: string;
+  defender: string;
+  side: string;
+  count: number | readonly [PdxOp, number];
+}
+
+/**
+ * Checks the amount of potential war participants in a specific war that meet the specified criteria
+ * ```
+ * count_potential_war_participants = { attacker = <target> defender = <target> side = <target> limit = { <triggers> } count > 2/variable
+ * ```
+ */
+export function countPotentialWarParticipants(
+  args: CountPotentialWarParticipantsArgs
+): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(kv("attacker", args.attacker));
+  entries.push(kv("defender", args.defender));
+  entries.push(kv("side", args.side));
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_potential_war_participants", entries)]);
+}
+
+export interface CountPreFtlWithinBorderArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all pre-ftl countries within the country's or sector's borders - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_pre_ftl_within_border = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countPreFtlWithinBorder(
+  args: CountPreFtlWithinBorderArgs
+): Trigger<"country" | "sector"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_pre_ftl_within_border", entries)]);
+}
+
+export interface CountRelationArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all relations - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_relation = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countRelation(args: CountRelationArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_relation", entries)]);
+}
+
+export interface CountRimSystemArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all rim systems - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_rim_system = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countRimSystem(args: CountRimSystemArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_rim_system", entries)]);
+}
+
+export interface CountRivalCountryArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all countries rivalled by the scoped country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_rival_country = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countRivalCountry(args: CountRivalCountryArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_rival_country", entries)]);
+}
+
+export interface CountShipInSystemArgs {
+  limit?: Trigger<"ship">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each ship in the current system - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_ship_in_system = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countShipInSystem(args: CountShipInSystemArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_ship_in_system", entries)]);
+}
+
+export interface CountShipSizeInSystemArgs {
+  limit?: Trigger<"ship">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Checks the sum of the ship_size's size_multiplier of every ship present in the scoped system.Checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * Checks whether the enclosed triggers return true for X/all of them
+ * count_ship_size_in_system = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countShipSizeInSystem(args: CountShipSizeInSystemArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_ship_size_in_system", entries)]);
+}
+
+export interface CountSituationArgs {
+  limit?: Trigger<"situation">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each situation a country is experiencing - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_situation = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSituation(args: CountSituationArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_situation", entries)]);
+}
+
+export interface CountSpeciesArgs {
+  limit?: Trigger<"species">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Counts the number of species in the scope that fulfill the specified criteria, not counting sub-species as unique.
+ * ```
+ * count_species = { count > 4 limit = { <triggers> } }
+ * ```
+ */
+export function countSpecies(
+  args: CountSpeciesArgs
+): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_species", entries)]);
+}
+
+export interface CountSpeciesPopGroupArgs {
+  limit?: Trigger<"pop_group">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each pop_group that belongs to this species; warning: resource-intensive! - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_species_pop_group = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSpeciesPopGroup(args: CountSpeciesPopGroupArgs): Trigger<"species"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_species_pop_group", entries)]);
+}
+
+export interface CountSpeciesTraitsArgs {
+  limit?: Trigger<"species_trait">;
+  category?: string;
+  cost?: number | readonly [PdxOp, number];
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Checks the number of unique traits within the set parameters on a species or pop_group
+ * ```
+ * count_species_traits = { limit = {} category = <category> cost < = > <trait cost> | count < 2 }
+ * ```
+ */
+export function countSpeciesTraits(args: CountSpeciesTraitsArgs): Trigger<"pop_group" | "species"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  if (args.category !== undefined) {
+    entries.push(kv("category", args.category));
+  }
+  if (args.cost !== undefined) {
+    entries.push(
+      typeof args.cost === "object"
+        ? cmp("cost", args.cost[0], args.cost[1])
+        : kv("cost", args.cost)
+    );
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_species_traits", entries)]);
+}
+
+export interface CountSpynetworkArgs {
+  limit?: Trigger<"spy_network">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each spynetwork - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_spynetwork = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSpynetwork(args: CountSpynetworkArgs): Trigger<"country" | "no_scope"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_spynetwork", entries)]);
+}
+
 export interface CountStarbaseBuildingsArgs {
-  count: number;
+  count: number | readonly [PdxOp, number];
   type?: StarbaseBuildingRef | string;
   includeBeingConstructed?: boolean;
 }
@@ -2078,7 +4747,11 @@ export function countStarbaseBuildings(
   args: CountStarbaseBuildingsArgs
 ): Trigger<"country" | "starbase" | "system"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("count", args.count));
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
   if (args.type !== undefined) {
     entries.push(kv("type", refId(args.type)));
   }
@@ -2088,8 +4761,62 @@ export function countStarbaseBuildings(
   return trigger([block("count_starbase_buildings", entries)]);
 }
 
+export interface CountStarbaseInNetworkArgs {
+  limit?: Trigger<"starbase">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every starbase in the same waystation network as the scoped starbase. - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_starbase_in_network = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countStarbaseInNetwork(args: CountStarbaseInNetworkArgs): Trigger<"starbase"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_starbase_in_network", entries)]);
+}
+
+export interface CountStarbaseInSystemArgs {
+  limit?: Trigger<"starbase">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every starbase in the scoped galactic object. - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_starbase_in_system = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countStarbaseInSystem(args: CountStarbaseInSystemArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_starbase_in_system", entries)]);
+}
+
 export interface CountStarbaseModulesArgs {
-  count: number;
+  count: number | readonly [PdxOp, number];
   type?: StarbaseModuleRef | string;
   includeBeingConstructed?: boolean;
 }
@@ -2104,7 +4831,11 @@ export function countStarbaseModules(
   args: CountStarbaseModulesArgs
 ): Trigger<"country" | "starbase" | "system"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("count", args.count));
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
   if (args.type !== undefined) {
     entries.push(kv("type", refId(args.type)));
   }
@@ -2115,7 +4846,7 @@ export function countStarbaseModules(
 }
 
 export interface CountStarbaseSizesArgs {
-  count: number;
+  count: number | readonly [PdxOp, number];
   starbaseSize: ShipSizeStarbaseRef | string;
 }
 
@@ -2130,9 +4861,370 @@ export interface CountStarbaseSizesArgs {
  */
 export function countStarbaseSizes(args: CountStarbaseSizesArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("count", args.count));
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
   entries.push(kv("starbase_size", refId(args.starbaseSize)));
   return trigger([block("count_starbase_sizes", entries)]);
+}
+
+export interface CountSubjectArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all subjects of the scoped country - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_subject = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSubject(args: CountSubjectArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_subject", entries)]);
+}
+
+export interface CountSystemArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all systems - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystem(args: CountSystemArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system", entries)]);
+}
+
+export interface CountSystemAddedToStormArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all systems added to the storm - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_added_to_storm = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemAddedToStorm(args: CountSystemAddedToStormArgs): Trigger<"storm"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_added_to_storm", entries)]);
+}
+
+export interface CountSystemAmbientObjectArgs {
+  limit?: Trigger<"ambient_object">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every ambient object in the solar system - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_ambient_object = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemAmbientObject(args: CountSystemAmbientObjectArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_ambient_object", entries)]);
+}
+
+export interface CountSystemInCosmicStormInfluenceFieldArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all systems in a cosmic storm influence field - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_in_cosmic_storm_influence_field = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemInCosmicStormInfluenceField(
+  args: CountSystemInCosmicStormInfluenceFieldArgs
+): Trigger<"cosmic_storm_influence_field"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_in_cosmic_storm_influence_field", entries)]);
+}
+
+export interface CountSystemMegastructureArgs {
+  limit?: Trigger<"megastructure">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each megastructure in system - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_megastructure = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemMegastructure(args: CountSystemMegastructureArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_megastructure", entries)]);
+}
+
+export interface CountSystemPlanetArgs {
+  limit?: Trigger<"planet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each planet (colony or not) in the current system - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_planet = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemPlanet(args: CountSystemPlanetArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_planet", entries)]);
+}
+
+export interface CountSystemPlanetColonyArgs {
+  limit?: Trigger<"colony">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each planet colony in the current system - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_planet_colony = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemPlanetColony(args: CountSystemPlanetColonyArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_planet_colony", entries)]);
+}
+
+export interface CountSystemRemovedFromStormArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all systems removed from storm - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_removed_from_storm = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemRemovedFromStorm(
+  args: CountSystemRemovedFromStormArgs
+): Trigger<"storm"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_removed_from_storm", entries)]);
+}
+
+export interface CountSystemShipColonyArgs {
+  limit?: Trigger<"colony">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each ship colony in the current system - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_ship_colony = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemShipColony(args: CountSystemShipColonyArgs): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_ship_colony", entries)]);
+}
+
+export interface CountSystemWithAuraArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through every system with an Aura - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_with_aura = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemWithAura(args: CountSystemWithAuraArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_with_aura", entries)]);
+}
+
+export interface CountSystemWithinBorderArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all systems within the country's or sector's borders - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_within_border = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemWithinBorder(
+  args: CountSystemWithinBorderArgs
+): Trigger<"country" | "sector"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_within_border", entries)]);
+}
+
+export interface CountSystemWithinStormArgs {
+  limit?: Trigger<"system">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all systems within the storm - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_system_within_storm = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countSystemWithinStorm(args: CountSystemWithinStormArgs): Trigger<"storm"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_system_within_storm", entries)]);
 }
 
 /**
@@ -2145,9 +5237,38 @@ export function countSystemsWithAura(op: PdxOp, value: number): Trigger<"country
   return trigger([cmp("count_systems_with_aura", op, value)]);
 }
 
+export interface CountTargetingSituationArgs {
+  limit?: Trigger<"situation">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each situation that is targeting the current planet - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_targeting_situation = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countTargetingSituation(
+  args: CountTargetingSituationArgs
+): Trigger<"carrier" | "colony" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_targeting_situation", entries)]);
+}
+
 export interface CountTechOptionsArgs {
   area: ResearchArea;
-  count: number;
+  count: number | readonly [PdxOp, number];
 }
 
 /**
@@ -2159,8 +5280,72 @@ export interface CountTechOptionsArgs {
 export function countTechOptions(args: CountTechOptionsArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("area", args.area));
-  entries.push(kv("count", args.count));
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
   return trigger([block("count_tech_options", entries)]);
+}
+
+export interface CountTraitAvailableForSpeciesArgs {
+  limit?: Trigger<"species_trait">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all species traits and check if scope species doesn't have this trait. checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * traits_available_for_species = { trait_has_all_tags = { organic positive } } - checks whether the enclosed triggers return true for X/all of them
+ * count_trait_available_for_species = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countTraitAvailableForSpecies(
+  args: CountTraitAvailableForSpeciesArgs
+): Trigger<"leader" | "pop_group" | "species"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_trait_available_for_species", entries)]);
+}
+
+export interface CountTraitOfSpeciesArgs {
+  limit?: Trigger<"species_trait">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through each trait that the scoped species has. checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * trait_of_species = { trait_has_all_tags = { positive } } - checks whether the enclosed triggers return true for X/all of them
+ * count_trait_of_species = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countTraitOfSpecies(
+  args: CountTraitOfSpeciesArgs
+): Trigger<"leader" | "pop_group" | "species"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_trait_of_species", entries)]);
 }
 
 /**
@@ -2173,6 +5358,32 @@ export function countUnlockedActiveAccords(op: PdxOp, value: number): Trigger<"c
   return trigger([cmp("count_unlocked_active_accords", op, value)]);
 }
 
+export interface CountUsedNavalCapArgs {
+  limit?: Trigger<"fleet">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Checks used naval cap by the scoped country or fleet's controlled ships which fulfill the specified criteria.
+ * ```
+ * count_used_naval_cap = { limit = { <triggers> } count < 6 }
+ * ```
+ */
+export function countUsedNavalCap(
+  args: CountUsedNavalCapArgs
+): Trigger<"country" | "fleet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_used_naval_cap", entries)]);
+}
+
 /**
  * Count all contracts visible to the scoped country (ie available and in progress)
  * ```
@@ -2181,6 +5392,86 @@ export function countUnlockedActiveAccords(op: PdxOp, value: number): Trigger<"c
  */
 export function countVisibleContracts(op: PdxOp, value: number): Trigger<"country"> {
   return trigger([cmp("count_visible_contracts", op, value)]);
+}
+
+export interface CountWarArgs {
+  limit?: Trigger<"war">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all wars the country is engaged in - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_war = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countWar(args: CountWarArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_war", entries)]);
+}
+
+export interface CountWarParticipantArgs {
+  limit?: Trigger<"country">;
+  count: number | readonly [PdxOp, number] | "all";
+}
+
+/**
+ * Iterate through all war participants - checks whether the enclosed triggers return true for X/all of them
+ * ```
+ * count_war_participant = {
+ * 	count = <num/all/variable>
+ * 	limit = { <triggers> }
+ * }
+ * ```
+ */
+export function countWarParticipant(args: CountWarParticipantArgs): Trigger<"war"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_war_participant", entries)]);
+}
+
+export interface CountWarParticipantsArgs {
+  limit?: Trigger<"country">;
+  side: string;
+  count: number | readonly [PdxOp, number];
+}
+
+/**
+ * Checks the number of participants in the war on a specific side that meet the specified criteria
+ * ```
+ * count_war_participants = { limit = { <triggers> } side = target count < 4/variable
+ * ```
+ */
+export function countWarParticipants(args: CountWarParticipantsArgs): Trigger<"war"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(kv("side", args.side));
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
+  return trigger([block("count_war_participants", entries)]);
 }
 
 /**
@@ -2211,6 +5502,89 @@ export function currentSituationApproach(value: string): Trigger<"situation"> {
  */
 export function currentStage(value: string): Trigger<"situation"> {
   return trigger([kv("current_stage", value)]);
+}
+
+export interface CustomProgressArgs {
+  currentValCoeff?: number | readonly [PdxOp, number];
+  finalValCoeff?: number | readonly [PdxOp, number];
+  mode?: TriggerCustomProgress;
+  conditions: Trigger<ScopeName>;
+}
+
+/**
+ * Adjusts progress of triggers inside it
+ * ```
+ * custom_progress = {
+ * 	...
+ * 	current_val_coeff = 0.5
+ * 	final_val_coeff = 0.5
+ * 	mode = <normal/simplified/clamped>
+ * }
+ * ```
+ */
+export function customProgress(args: CustomProgressArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.currentValCoeff !== undefined) {
+    entries.push(
+      typeof args.currentValCoeff === "object"
+        ? cmp("current_val_coeff", args.currentValCoeff[0], args.currentValCoeff[1])
+        : kv("current_val_coeff", args.currentValCoeff)
+    );
+  }
+  if (args.finalValCoeff !== undefined) {
+    entries.push(
+      typeof args.finalValCoeff === "object"
+        ? cmp("final_val_coeff", args.finalValCoeff[0], args.finalValCoeff[1])
+        : kv("final_val_coeff", args.finalValCoeff)
+    );
+  }
+  if (args.mode !== undefined) {
+    entries.push(kv("mode", args.mode));
+  }
+  entries.push(...args.conditions.entries);
+  return trigger([block("custom_progress", entries)]);
+}
+
+export interface CustomTooltipFailArgs {
+  text: string;
+  conditions: Trigger<ScopeName>;
+}
+
+/**
+ * Shows custom text only when the associated trigger fails
+ * ```
+ * custom_tooltip_fail = {
+ * 	text = <text>
+ * 	<triggers>
+ * }
+ * ```
+ */
+export function customTooltipFail(args: CustomTooltipFailArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  entries.push(kv("text", args.text));
+  entries.push(...args.conditions.entries);
+  return trigger([block("custom_tooltip_fail", entries)]);
+}
+
+export interface CustomTooltipSuccessArgs {
+  text: string;
+  conditions: Trigger<ScopeName>;
+}
+
+/**
+ * Shows custom text only when the associated trigger passes
+ * ```
+ * custom_tooltip_success = {
+ * 	text = <text>
+ * 	<triggers>
+ * }
+ * ```
+ */
+export function customTooltipSuccess(args: CustomTooltipSuccessArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  entries.push(kv("text", args.text));
+  entries.push(...args.conditions.entries);
+  return trigger([block("custom_tooltip_success", entries)]);
 }
 
 /** Checks Cutholoids presence scaling in game setup */
@@ -2271,17 +5645,17 @@ export function diplomacyWeight(op: PdxOp, value: number): Trigger<"country"> {
 export interface DistanceArgs {
   source?: "no_scope" | string;
   /** Must use >= or will create error log entry */
-  minDistance?: number;
+  minDistance?: number | readonly [PdxOp, number];
   /** Must use <= or will create error log entry */
-  maxDistance?: number;
+  maxDistance?: number | readonly [PdxOp, number];
   /** Euclidean means the shortest distance from A to B, "as the crow flies" (hyperlane by default) */
   type?: HyperlaneEuclidean;
   /** Whether to use bypasses (wormholes/gateways) when evaluating distance (yes by default). Caligula's note: I think it is no by default. If it is "yes", it requires bypass_empire to work */
   useBypasses?: boolean;
   /** Determines what bypass can be used. This parameter is ignored if uses_bypass=false. If unset, bypasses will be ignored. It will check the bypasses available to the specified country. To check all possible bypasses, use e.g. the global event country. */
   bypassEmpire?: string;
-  minJumps?: number;
-  maxJumps?: number;
+  minJumps?: number | readonly [PdxOp, number];
+  maxJumps?: number | readonly [PdxOp, number];
   sameSolarSystem?: boolean;
 }
 
@@ -2323,10 +5697,18 @@ export function distance(
     entries.push(kv("source", args.source));
   }
   if (args.minDistance !== undefined) {
-    entries.push(kv("min_distance", args.minDistance));
+    entries.push(
+      typeof args.minDistance === "object"
+        ? cmp("min_distance", args.minDistance[0], args.minDistance[1])
+        : kv("min_distance", args.minDistance)
+    );
   }
   if (args.maxDistance !== undefined) {
-    entries.push(kv("max_distance", args.maxDistance));
+    entries.push(
+      typeof args.maxDistance === "object"
+        ? cmp("max_distance", args.maxDistance[0], args.maxDistance[1])
+        : kv("max_distance", args.maxDistance)
+    );
   }
   if (args.type !== undefined) {
     entries.push(kv("type", args.type));
@@ -2338,10 +5720,18 @@ export function distance(
     entries.push(kv("bypass_empire", args.bypassEmpire));
   }
   if (args.minJumps !== undefined) {
-    entries.push(kv("min_jumps", args.minJumps));
+    entries.push(
+      typeof args.minJumps === "object"
+        ? cmp("min_jumps", args.minJumps[0], args.minJumps[1])
+        : kv("min_jumps", args.minJumps)
+    );
   }
   if (args.maxJumps !== undefined) {
-    entries.push(kv("max_jumps", args.maxJumps));
+    entries.push(
+      typeof args.maxJumps === "object"
+        ? cmp("max_jumps", args.maxJumps[0], args.maxJumps[1])
+        : kv("max_jumps", args.maxJumps)
+    );
   }
   if (args.sameSolarSystem !== undefined) {
     entries.push(kv("same_solar_system", args.sameSolarSystem));
@@ -2374,7 +5764,7 @@ export function distanceToCorePercent(op: PdxOp, value: number): Trigger<ScopeNa
 
 export interface DistanceToEmpireArgs {
   who: string;
-  distance: number;
+  distance: number | readonly [PdxOp, number];
   useBypasses?: boolean;
   type?: HyperlaneEuclidean;
 }
@@ -2395,7 +5785,11 @@ export function distanceToEmpire(
 ): Trigger<"carrier" | "colony" | "fleet" | "planet" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("distance", args.distance));
+  entries.push(
+    typeof args.distance === "object"
+      ? cmp("distance", args.distance[0], args.distance[1])
+      : kv("distance", args.distance)
+  );
   if (args.useBypasses !== undefined) {
     entries.push(kv("use_bypasses", args.useBypasses));
   }
@@ -2403,6 +5797,46 @@ export function distanceToEmpire(
     entries.push(kv("type", args.type));
   }
   return trigger([block("distance_to_empire", entries)]);
+}
+
+export interface ElseArgs {
+  limit?: Trigger<ScopeName>;
+  conditions: Trigger<ScopeName>;
+}
+
+/**
+ * Evaluates the triggers if the display_triggers of preceding 'if' or 'else_if' is not met
+ * ```
+ * if = { limit = { <display_triggers> } <triggers> }
+ *  else = { <triggers> }
+ * ```
+ */
+export function else_(args: ElseArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(...args.conditions.entries);
+  return trigger([block("else", entries)]);
+}
+
+export interface ElseIfArgs {
+  limit: Trigger<ScopeName>;
+  conditions: Trigger<ScopeName>;
+}
+
+/**
+ * Evaluates the enclosed triggers if the display_triggers of the preceding `if` or `else_if` is not met and its own display_trigger of the limit is met
+ * ```
+ * if = { limit = { <display_triggers> } <triggers> }
+ * else_if = { limit = { <display_triggers> } <triggers> }
+ * ```
+ */
+export function elseIf(args: ElseIfArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  entries.push(block("limit", [...args.limit.entries]));
+  entries.push(...args.conditions.entries);
+  return trigger([block("else_if", entries)]);
 }
 
 /**
@@ -2467,7 +5901,7 @@ export function endGameYearsPassed(op: PdxOp, value: number): Trigger<ScopeName>
 
 export interface EnvoyOpinionChangeArgs {
   who: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -2479,7 +5913,11 @@ export interface EnvoyOpinionChangeArgs {
 export function envoyOpinionChange(args: EnvoyOpinionChangeArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("envoy_opinion_change", entries)]);
 }
 
@@ -2779,7 +6217,7 @@ export interface FreeJobsOfTypeArgs {
   category?: PopCategoryRef | string;
   /** default = no */
   includeDeprioritizedJobs?: boolean;
-  value?: number;
+  value?: number | readonly [PdxOp, number];
 }
 
 /**
@@ -2807,7 +6245,11 @@ export function freeJobsOfType(
     entries.push(kv("include_deprioritized_jobs", args.includeDeprioritizedJobs));
   }
   if (args.value !== undefined) {
-    entries.push(kv("value", args.value));
+    entries.push(
+      typeof args.value === "object"
+        ? cmp("value", args.value[0], args.value[1])
+        : kv("value", args.value)
+    );
   }
   return trigger([block("free_jobs_of_type", entries)]);
 }
@@ -2884,7 +6326,7 @@ export function gender(value: GendersNotSet): Trigger<"leader"> {
 
 export interface GetAttunementPointsForArgs {
   patron: PatronTypeRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
   /** (default = no, authorize negative attunement) */
   negative?: boolean;
 }
@@ -2902,7 +6344,11 @@ export interface GetAttunementPointsForArgs {
 export function getAttunementPointsFor(args: GetAttunementPointsForArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("patron", refId(args.patron)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   if (args.negative !== undefined) {
     entries.push(kv("negative", args.negative));
   }
@@ -2950,7 +6396,7 @@ export function graphicalCulture(
 
 export interface HabitabilityArgs {
   who: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -2964,7 +6410,11 @@ export function habitability(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("habitability", entries)]);
 }
 
@@ -3502,7 +6952,7 @@ export function hasCivic(
 
 export interface HasCivicInSlotArgs {
   civic: CivicOrOriginCivicRef | string;
-  index: number;
+  index: number | readonly [PdxOp, number];
 }
 
 /**
@@ -3514,7 +6964,11 @@ export interface HasCivicInSlotArgs {
 export function hasCivicInSlot(args: HasCivicInSlotArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("civic", refId(args.civic)));
-  entries.push(kv("index", args.index));
+  entries.push(
+    typeof args.index === "object"
+      ? cmp("index", args.index[0], args.index[1])
+      : kv("index", args.index)
+  );
   return trigger([block("has_civic_in_slot", entries)]);
 }
 
@@ -3719,7 +7173,7 @@ export function hasCountryFlag(value: CountryFlag): Trigger<"country"> {
 
 export interface HasCountryResourceArgs {
   type: ResourceRef | string;
-  amount: number;
+  amount: number | readonly [PdxOp, number];
 }
 
 /**
@@ -3731,7 +7185,11 @@ export interface HasCountryResourceArgs {
 export function hasCountryResource(args: HasCountryResourceArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("type", refId(args.type)));
-  entries.push(kv("amount", args.amount));
+  entries.push(
+    typeof args.amount === "object"
+      ? cmp("amount", args.amount[0], args.amount[1])
+      : kv("amount", args.amount)
+  );
   return trigger([block("has_country_resource", entries)]);
 }
 
@@ -4352,7 +7810,7 @@ export function hasIntel(args: HasIntelArgs): Trigger<"country"> {
 export interface HasIntelLevelArgs {
   who: string;
   category: IntelCategoryRef | string;
-  level: number;
+  level: number | readonly [PdxOp, number];
 }
 
 /**
@@ -4365,14 +7823,18 @@ export function hasIntelLevel(args: HasIntelLevelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
   entries.push(kv("category", refId(args.category)));
-  entries.push(kv("level", args.level));
+  entries.push(
+    typeof args.level === "object"
+      ? cmp("level", args.level[0], args.level[1])
+      : kv("level", args.level)
+  );
   return trigger([block("has_intel_level", entries)]);
 }
 
 export interface HasIntelReportArgs {
   who: string;
   category: IntelCategoryRef | string;
-  level: number;
+  level: number | readonly [PdxOp, number];
 }
 
 /**
@@ -4385,7 +7847,11 @@ export function hasIntelReport(args: HasIntelReportArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
   entries.push(kv("category", refId(args.category)));
-  entries.push(kv("level", args.level));
+  entries.push(
+    typeof args.level === "object"
+      ? cmp("level", args.level[0], args.level[1])
+      : kv("level", args.level)
+  );
   return trigger([block("has_intel_report", entries)]);
 }
 
@@ -4634,6 +8100,34 @@ export function hasModifier(
   return trigger([kv("has_modifier", refId(value))]);
 }
 
+export interface HasMonthlyIncomeArgs {
+  resource?: ResourceRef | string;
+  type?: ResourceRef | string;
+  value: number | readonly [PdxOp, number];
+}
+
+/**
+ * Checks the country's monthly income of a specific resource
+ * ```
+ * has_monthly_income = { resource = engineering_research  value < 20 }
+ * ```
+ */
+export function hasMonthlyIncome(args: HasMonthlyIncomeArgs): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  if (args.resource !== undefined) {
+    entries.push(kv("resource", refId(args.resource)));
+  }
+  if (args.type !== undefined) {
+    entries.push(kv("type", refId(args.type)));
+  }
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
+  return trigger([block("has_monthly_income", entries)]);
+}
+
 /**
  * Checks the subject's current monthly loyalty gain/loss.
  * ```
@@ -4809,9 +8303,9 @@ export function hasOwner(
 }
 
 export interface HasPassedResolutionArgs {
-  days?: number;
-  months?: number;
-  years?: number;
+  days?: number | readonly [PdxOp, number];
+  months?: number | readonly [PdxOp, number];
+  years?: number | readonly [PdxOp, number];
 }
 
 /**
@@ -4823,13 +8317,25 @@ export interface HasPassedResolutionArgs {
 export function hasPassedResolution(args: HasPassedResolutionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   if (args.days !== undefined) {
-    entries.push(kv("days", args.days));
+    entries.push(
+      typeof args.days === "object"
+        ? cmp("days", args.days[0], args.days[1])
+        : kv("days", args.days)
+    );
   }
   if (args.months !== undefined) {
-    entries.push(kv("months", args.months));
+    entries.push(
+      typeof args.months === "object"
+        ? cmp("months", args.months[0], args.months[1])
+        : kv("months", args.months)
+    );
   }
   if (args.years !== undefined) {
-    entries.push(kv("years", args.years));
+    entries.push(
+      typeof args.years === "object"
+        ? cmp("years", args.years[0], args.years[1])
+        : kv("years", args.years)
+    );
   }
   return trigger([block("has_passed_resolution", entries)]);
 }
@@ -5718,7 +9224,7 @@ export function hostHasDlc(value: string): Trigger<ScopeName> {
 export interface HostileMilitaryPowerArgs {
   who: string;
   safetyBuffer?: boolean;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -5734,7 +9240,11 @@ export function hostileMilitaryPower(args: HostileMilitaryPowerArgs): Trigger<"s
   if (args.safetyBuffer !== undefined) {
     entries.push(kv("safety_buffer", args.safetyBuffer));
   }
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("hostile_military_power", entries)]);
 }
 
@@ -5748,6 +9258,24 @@ export function idealPlanetClass(
   value: PlanetClassRef | string | string
 ): Trigger<"country" | "pop_group" | "species"> {
   return trigger([kv("ideal_planet_class", refId(value))]);
+}
+
+export interface IfArgs {
+  limit: Trigger<ScopeName>;
+  conditions: Trigger<ScopeName>;
+}
+
+/**
+ * Evaluates the triggers if the display_triggers of the limit are met
+ * ```
+ * if = { limit = { <display_triggers> } <triggers> }
+ * ```
+ */
+export function if_(args: IfArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  entries.push(block("limit", [...args.limit.entries]));
+  entries.push(...args.conditions.entries);
+  return trigger([block("if", entries)]);
 }
 
 /**
@@ -5802,7 +9330,7 @@ export function innerRadius(op: PdxOp, value: number): Trigger<"system"> {
 
 export interface IntelArgs {
   who: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -5814,7 +9342,11 @@ export interface IntelArgs {
 export function intel(args: IntelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("intel", entries)]);
 }
 
@@ -8668,10 +12200,10 @@ export function loggedInToPdxAccount(value: boolean = true): Trigger<ScopeName> 
 export interface MarketResourcePriceArgs {
   resource: ResourceRef | string;
   /** Default = 1; basically a mult factor */
-  amount?: number;
+  amount?: number | readonly [PdxOp, number];
   /** market_buy/market_sell/not_set (i.e. price without market fees) */
   tradeType?: TradeType;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -8689,12 +12221,20 @@ export function marketResourcePrice(args: MarketResourcePriceArgs): Trigger<"cou
   const entries: PdxEntry[] = [];
   entries.push(kv("resource", refId(args.resource)));
   if (args.amount !== undefined) {
-    entries.push(kv("amount", args.amount));
+    entries.push(
+      typeof args.amount === "object"
+        ? cmp("amount", args.amount[0], args.amount[1])
+        : kv("amount", args.amount)
+    );
   }
   if (args.tradeType !== undefined) {
     entries.push(kv("trade_type", args.tradeType));
   }
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("market_resource_price", entries)]);
 }
 
@@ -8787,7 +12327,7 @@ export function nameListCategory(value: string): Trigger<"dlc_recommendation"> {
 
 export interface NbPopExactSpeciesArgs {
   species: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -8804,7 +12344,11 @@ export function nbPopExactSpecies(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("species", args.species));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("nb_pop_exact_species", entries)]);
 }
 
@@ -8863,7 +12407,7 @@ export function numAscensionPerks(op: PdxOp, value: number): Trigger<"country"> 
 
 export interface NumAssignedJobsArgs {
   job: JobRef | string | "unemployed";
-  value: number;
+  value: number | readonly [PdxOp, number];
   /** default: no */
   automatedWorkforce?: boolean;
 }
@@ -8879,7 +12423,11 @@ export function numAssignedJobs(
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("job", refId(args.job)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   if (args.automatedWorkforce !== undefined) {
     entries.push(kv("automated_workforce", args.automatedWorkforce));
   }
@@ -8908,7 +12456,7 @@ export function numAsteroidBelts(op: PdxOp, value: number): Trigger<"system"> {
 
 export interface NumBuildingsArgs {
   type: "any" | BuildingRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
   category?: string;
   disabled?: "any" | boolean;
   inConstruction?: "any" | boolean;
@@ -8926,7 +12474,11 @@ export function numBuildings(
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("type", refId(args.type)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   if (args.category !== undefined) {
     entries.push(kv("category", args.category));
   }
@@ -8954,7 +12506,7 @@ export function numCandidateSupported(op: PdxOp, value: number): Trigger<"leader
 
 export interface NumClaimsOnSystemArgs {
   target: string;
-  count: number;
+  count: number | readonly [PdxOp, number];
 }
 
 /**
@@ -8966,7 +12518,11 @@ export interface NumClaimsOnSystemArgs {
 export function numClaimsOnSystem(args: NumClaimsOnSystemArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("target", args.target));
-  entries.push(kv("count", args.count));
+  entries.push(
+    typeof args.count === "object"
+      ? cmp("count", args.count[0], args.count[1])
+      : kv("count", args.count)
+  );
   return trigger([block("num_claims_on_system", entries)]);
 }
 
@@ -9138,7 +12694,7 @@ export function numDeposits(op: PdxOp, value: number): Trigger<"carrier" | "plan
 
 export interface NumDistrictsArgs {
   type: "any" | DistrictRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9152,7 +12708,11 @@ export function numDistricts(
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("type", refId(args.type)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("num_districts", entries)]);
 }
 
@@ -9257,7 +12817,7 @@ export function numFallenEmpiresSetting(op: PdxOp, value: number): Trigger<Scope
 
 export interface NumFavorsArgs {
   target: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9272,7 +12832,11 @@ export interface NumFavorsArgs {
 export function numFavors(args: NumFavorsArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("target", args.target));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("num_favors", entries)]);
 }
 
@@ -9288,7 +12852,7 @@ export function numFleets(op: PdxOp, value: number): Trigger<"country"> {
 
 export interface NumFreeDistrictsArgs {
   type: "any" | DistrictRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9302,7 +12866,11 @@ export function numFreeDistricts(
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("type", refId(args.type)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("num_free_districts", entries)]);
 }
 
@@ -9361,7 +12929,7 @@ export function numInsightTechs(op: PdxOp, value: number): Trigger<"country"> {
 
 export interface NumKilledShipsArgs {
   target: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9373,7 +12941,11 @@ export interface NumKilledShipsArgs {
 export function numKilledShips(args: NumKilledShipsArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("target", args.target));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("num_killed_ships", entries)]);
 }
 
@@ -9451,6 +13023,43 @@ export function numNegativeTraits(
   value: number
 ): Trigger<"country" | "leader" | "pop_group" | "species"> {
   return trigger([cmp("num_negative_traits", op, value)]);
+}
+
+export interface NumNeighborSystemsArgs {
+  limit?: Trigger<"system">;
+  minDistance?: number | readonly [PdxOp, number];
+  maxDistance?: number | readonly [PdxOp, number];
+}
+
+/**
+ * Checks the number of neighbor systems within a specific distance
+ * ```
+ * num_neighbor_systems = {
+ * 	max_distance = 1
+ * 	limit = <triggers>
+ * }
+ * ```
+ */
+export function numNeighborSystems(args: NumNeighborSystemsArgs): Trigger<ScopeName> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  if (args.minDistance !== undefined) {
+    entries.push(
+      typeof args.minDistance === "object"
+        ? cmp("min_distance", args.minDistance[0], args.minDistance[1])
+        : kv("min_distance", args.minDistance)
+    );
+  }
+  if (args.maxDistance !== undefined) {
+    entries.push(
+      typeof args.maxDistance === "object"
+        ? cmp("max_distance", args.maxDistance[0], args.maxDistance[1])
+        : kv("max_distance", args.maxDistance)
+    );
+  }
+  return trigger([block("num_neighbor_systems", entries)]);
 }
 
 /**
@@ -9550,7 +13159,7 @@ export function numPlanetsInSystem(op: PdxOp, value: number): Trigger<"system"> 
 export interface NumPopsAssignedToJobArgs {
   /** (if not specified, check total number) */
   popGroup: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9565,7 +13174,11 @@ export interface NumPopsAssignedToJobArgs {
 export function numPopsAssignedToJob(args: NumPopsAssignedToJobArgs): Trigger<"pop_job"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("pop_group", args.popGroup));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("num_pops_assigned_to_job", entries)]);
 }
 
@@ -9633,8 +13246,8 @@ export function numResearchedTechs(op: PdxOp, value: number): Trigger<"country">
 }
 
 export interface NumResearchedTechsOfTierArgs {
-  value: number;
-  tier: number;
+  value: number | readonly [PdxOp, number];
+  tier: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9645,8 +13258,14 @@ export interface NumResearchedTechsOfTierArgs {
  */
 export function numResearchedTechsOfTier(args: NumResearchedTechsOfTierArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("value", args.value));
-  entries.push(kv("tier", args.tier));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
+  entries.push(
+    typeof args.tier === "object" ? cmp("tier", args.tier[0], args.tier[1]) : kv("tier", args.tier)
+  );
   return trigger([block("num_researched_techs_of_tier", entries)]);
 }
 
@@ -9682,7 +13301,7 @@ export function numShips(op: PdxOp, value: number): Trigger<"country" | "fleet" 
 
 export interface NumShipsInDebrisArgs {
   shipSize: ShipSizeRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9694,7 +13313,11 @@ export interface NumShipsInDebrisArgs {
 export function numShipsInDebris(args: NumShipsInDebrisArgs): Trigger<"debris"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("ship_size", refId(args.shipSize)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("num_ships_in_debris", entries)]);
 }
 
@@ -9754,7 +13377,7 @@ export function numSupportIndependence(op: PdxOp, value: number): Trigger<"count
 
 export interface NumTakenPlanetsArgs {
   target: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9766,7 +13389,11 @@ export interface NumTakenPlanetsArgs {
 export function numTakenPlanets(args: NumTakenPlanetsArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("target", args.target));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("num_taken_planets", entries)]);
 }
 
@@ -9882,7 +13509,7 @@ export function numWaystationPacts(op: PdxOp, value: number): Trigger<"country">
 
 export interface NumZonesArgs {
   type: "any" | ZoneRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9896,7 +13523,11 @@ export function numZones(
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("type", refId(args.type)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("num_zones", entries)]);
 }
 
@@ -9912,7 +13543,7 @@ export function offWarExhaustionSum(op: PdxOp, value: number): Trigger<"country"
 
 export interface OpinionArgs {
   who: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -9924,7 +13555,11 @@ export interface OpinionArgs {
 export function opinion(args: OpinionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("opinion", entries)]);
 }
 
@@ -9947,7 +13582,7 @@ export function opinionLevel(args: OpinionLevelArgs): Trigger<"country"> {
 }
 
 export interface OpposingEthicsDivergenceArgs {
-  steps: number;
+  steps: number | readonly [PdxOp, number];
   who: string;
 }
 
@@ -9961,7 +13596,11 @@ export function opposingEthicsDivergence(
   args: OpposingEthicsDivergenceArgs
 ): Trigger<"country" | "pop_group"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("steps", args.steps));
+  entries.push(
+    typeof args.steps === "object"
+      ? cmp("steps", args.steps[0], args.steps[1])
+      : kv("steps", args.steps)
+  );
   entries.push(kv("who", args.who));
   return trigger([block("opposing_ethics_divergence", entries)]);
 }
@@ -10060,11 +13699,43 @@ export function planetGarrisonStrength(
   return trigger([cmp("planet_garrison_strength", op, value)]);
 }
 
+export interface PlanetHappinessAboveThresholdArgs {
+  limit?: Trigger<"planet">;
+  threshold: number | readonly [PdxOp, number];
+  value: number | readonly [PdxOp, number];
+}
+
+/**
+ * Checks if a planet's happiness is past a given threshold. Can be used in a scoped system, then it returns the sum of every planets' happiness past the given threshold.
+ * ```
+ * planet_happiness_above_threshold = { threshold = 0.5 limit = { is_owned_by = root } value > 0 }
+ * ```
+ */
+export function planetHappinessAboveThreshold(
+  args: PlanetHappinessAboveThresholdArgs
+): Trigger<"planet" | "system"> {
+  const entries: PdxEntry[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+  }
+  entries.push(
+    typeof args.threshold === "object"
+      ? cmp("threshold", args.threshold[0], args.threshold[1])
+      : kv("threshold", args.threshold)
+  );
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
+  return trigger([block("planet_happiness_above_threshold", entries)]);
+}
+
 export interface PlanetResourceCompareArgs {
   /** Default: Balance */
   type?: PlanetResourceCompareType;
   resource: ResourceRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10085,7 +13756,11 @@ export function planetResourceCompare(
     entries.push(kv("type", args.type));
   }
   entries.push(kv("resource", refId(args.resource)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("planet_resource_compare", entries)]);
 }
 
@@ -10113,6 +13788,39 @@ export function planetStability(
   value: number
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   return trigger([cmp("planet_stability", op, value)]);
+}
+
+export interface PopAmountPercentageArgs {
+  limit: Trigger<"pop_group">;
+  /** (optional: specifies pops to exclude from the calculation) */
+  exclude?: Trigger<"pop_group">;
+  percentage: number | readonly [PdxOp, number];
+}
+
+/**
+ * Checks the percentage of pops in the scope that fulfill the specified criteria
+ * ```
+ * pop_amount_percentage = {
+ * 	percentage > 0.74/variable
+ * 	limit = { <triggers> }
+ * 	exclude = { <triggers> } (optional: specifies pop groups to exclude from the calculation)
+ * }
+ * ```
+ */
+export function popAmountPercentage(
+  args: PopAmountPercentageArgs
+): Trigger<"carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship"> {
+  const entries: PdxEntry[] = [];
+  entries.push(block("limit", [...args.limit.entries]));
+  if (args.exclude !== undefined) {
+    entries.push(block("exclude", [...args.exclude.entries]));
+  }
+  entries.push(
+    typeof args.percentage === "object"
+      ? cmp("percentage", args.percentage[0], args.percentage[1])
+      : kv("percentage", args.percentage)
+  );
+  return trigger([block("pop_amount_percentage", entries)]);
 }
 
 /**
@@ -10177,7 +13885,7 @@ export function popHasHappiness(value: boolean = true): Trigger<"pop_group"> {
 
 export interface PopMaintenanceCostArgs {
   resource: ResourceRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10189,7 +13897,11 @@ export interface PopMaintenanceCostArgs {
 export function popMaintenanceCost(args: PopMaintenanceCostArgs): Trigger<"pop_group"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("resource", refId(args.resource)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("pop_maintenance_cost", entries)]);
 }
 
@@ -10225,7 +13937,7 @@ export function recentlyLostWar(value: boolean = true): Trigger<"country"> {
 
 export interface RelativeEncryptionDecryptionArgs {
   target?: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10244,7 +13956,11 @@ export function relativeEncryptionDecryption(
   if (args.target !== undefined) {
     entries.push(kv("target", args.target));
   }
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("relative_encryption_decryption", entries)]);
 }
 
@@ -10269,7 +13985,7 @@ export interface ResourceExpensesCompareArgs {
   resource: ResourceRef | string;
   /** Optional; if not provided, will use sum for all Categories */
   category?: EconomicCategoryRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10288,13 +14004,17 @@ export function resourceExpensesCompare(args: ResourceExpensesCompareArgs): Trig
   if (args.category !== undefined) {
     entries.push(kv("category", refId(args.category)));
   }
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("resource_expenses_compare", entries)]);
 }
 
 export interface ResourceIncomeCompareArgs {
   resource: ResourceRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10309,7 +14029,11 @@ export interface ResourceIncomeCompareArgs {
 export function resourceIncomeCompare(args: ResourceIncomeCompareArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("resource", refId(args.resource)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("resource_income_compare", entries)]);
 }
 
@@ -10317,7 +14041,7 @@ export interface ResourceIncomeToExpenditureBalanceRatioArgs {
   resource?: ResourceRef | string;
   /** Optional; if not provided, will use sum for all Categories */
   category?: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10340,7 +14064,11 @@ export function resourceIncomeToExpenditureBalanceRatio(
   if (args.category !== undefined) {
     entries.push(kv("category", args.category));
   }
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("resource_income_to_expenditure_balance_ratio", entries)]);
 }
 
@@ -10348,7 +14076,7 @@ export interface ResourceRevenueCompareArgs {
   /** Optional; if not provided, will use sum for all Categories */
   category?: EconomicCategoryRef | string;
   resource: ResourceRef | string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10367,15 +14095,19 @@ export function resourceRevenueCompare(args: ResourceRevenueCompareArgs): Trigge
     entries.push(kv("category", refId(args.category)));
   }
   entries.push(kv("resource", refId(args.resource)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("resource_revenue_compare", entries)]);
 }
 
 export interface ResourceStockpileCompareArgs {
   resource: ResourceRef | string;
-  value: number;
-  mult?: number;
-  multiplier?: number;
+  value: number | readonly [PdxOp, number];
+  mult?: number | readonly [PdxOp, number];
+  multiplier?: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10393,12 +14125,24 @@ export function resourceStockpileCompare(
 ): Trigger<"country" | "ship"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("resource", refId(args.resource)));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   if (args.mult !== undefined) {
-    entries.push(kv("mult", args.mult));
+    entries.push(
+      typeof args.mult === "object"
+        ? cmp("mult", args.mult[0], args.mult[1])
+        : kv("mult", args.mult)
+    );
   }
   if (args.multiplier !== undefined) {
-    entries.push(kv("multiplier", args.multiplier));
+    entries.push(
+      typeof args.multiplier === "object"
+        ? cmp("multiplier", args.multiplier[0], args.multiplier[1])
+        : kv("multiplier", args.multiplier)
+    );
   }
   return trigger([block("resource_stockpile_compare", entries)]);
 }
@@ -10668,7 +14412,7 @@ export function support(op: PdxOp, value: number): Trigger<"leader" | "pop_facti
 
 export interface TechUnlockedRatioArgs {
   who: string;
-  ratio: number;
+  ratio: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10680,7 +14424,11 @@ export interface TechUnlockedRatioArgs {
 export function techUnlockedRatio(args: TechUnlockedRatioArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("ratio", args.ratio));
+  entries.push(
+    typeof args.ratio === "object"
+      ? cmp("ratio", args.ratio[0], args.ratio[1])
+      : kv("ratio", args.ratio)
+  );
   return trigger([block("tech_unlocked_ratio", entries)]);
 }
 
@@ -10706,7 +14454,7 @@ export function text(value: string): Trigger<ScopeName> {
 
 export interface TheirOpinionArgs {
   who: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10718,7 +14466,11 @@ export interface TheirOpinionArgs {
 export function theirOpinion(args: TheirOpinionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("their_opinion", entries)]);
 }
 
@@ -10750,7 +14502,7 @@ export interface TimedFlagDaysLeftArgs {
     | AgreementFlag
     | SituationFlag
     | AstralRiftFlag;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10794,7 +14546,11 @@ export function timedFlagDaysLeft(
 > {
   const entries: PdxEntry[] = [];
   entries.push(kv("flag", args.flag));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("timed_flag_days_left", entries)]);
 }
 
@@ -10810,7 +14566,7 @@ export function triumphDaysLeft(op: PdxOp, value: number): Trigger<"country"> {
 
 export interface TrustArgs {
   who: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10822,7 +14578,11 @@ export interface TrustArgs {
 export function trust(args: TrustArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("trust", entries)]);
 }
 
@@ -10985,7 +14745,7 @@ export function voidwormsScaling(op: PdxOp, value: number): Trigger<ScopeName> {
 
 export interface WarBegunNumFleetsGoneMiaArgs {
   who: string;
-  value: number;
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -10997,7 +14757,11 @@ export interface WarBegunNumFleetsGoneMiaArgs {
 export function warBegunNumFleetsGoneMia(args: WarBegunNumFleetsGoneMiaArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("war_begun_num_fleets_gone_mia", entries)]);
 }
 
@@ -11062,8 +14826,8 @@ export function wouldJoinWar(args: WouldJoinWarArgs): Trigger<"country"> {
 }
 
 export interface YearsOfPeaceArgs {
-  delay?: number;
-  value: number;
+  delay?: number | readonly [PdxOp, number];
+  value: number | readonly [PdxOp, number];
 }
 
 /**
@@ -11075,9 +14839,17 @@ export interface YearsOfPeaceArgs {
 export function yearsOfPeace(args: YearsOfPeaceArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
   if (args.delay !== undefined) {
-    entries.push(kv("delay", args.delay));
+    entries.push(
+      typeof args.delay === "object"
+        ? cmp("delay", args.delay[0], args.delay[1])
+        : kv("delay", args.delay)
+    );
   }
-  entries.push(kv("value", args.value));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], args.value[1])
+      : kv("value", args.value)
+  );
   return trigger([block("years_of_peace", entries)]);
 }
 

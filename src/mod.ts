@@ -2,6 +2,9 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { kv } from "./ast.ts";
+import { buildEvent, type DefinedEvent, type EventDef } from "./events.ts";
+import type { ScopeName } from "./generated/scopes.ts";
 import { serializeEntries } from "./serialize.ts";
 import { Technology, type TechnologyDef } from "./tech.ts";
 
@@ -24,6 +27,8 @@ const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 export class Mod<const P extends string = string> {
   readonly config: ModConfig<P>;
   private readonly technologies: Technology[] = [];
+  private readonly events: DefinedEvent<ScopeName, ScopeName | undefined>[] = [];
+  private readonly eventIds = new Set<number>();
   private readonly loc = new Map<string, string>();
 
   constructor(config: ModConfig<P>) {
@@ -56,6 +61,41 @@ export class Mod<const P extends string = string> {
     return tech;
   }
 
+  /**
+   * Defines a country event. The full id is `${prefix}.${def.id}` — the mod
+   * prefix already satisfies the event-namespace grammar, so it doubles as
+   * the namespace. Title/desc/option localization rides along, and the
+   * event's closures record eagerly, here.
+   */
+  defineCountryEvent<From extends ScopeName | undefined = undefined>(
+    def: EventDef<"country", From>
+  ): DefinedEvent<"country", From> {
+    return this.defineEventOf("country_event", "country", def);
+  }
+
+  /** Defines a planet event; see {@link defineCountryEvent}. */
+  definePlanetEvent<From extends ScopeName | undefined = undefined>(
+    def: EventDef<"planet", From>
+  ): DefinedEvent<"planet", From> {
+    return this.defineEventOf("planet_event", "planet", def);
+  }
+
+  private defineEventOf<S extends ScopeName, From extends ScopeName | undefined>(
+    kind: "country_event" | "planet_event",
+    scope: S,
+    def: EventDef<S, From>
+  ): DefinedEvent<S, From> {
+    if (this.eventIds.has(def.id)) {
+      throw new Error(`Duplicate event id "${this.config.prefix}.${def.id}"`);
+    }
+    this.eventIds.add(def.id);
+    const event = buildEvent(kind, scope, this.config.prefix, def, {
+      register: (key, text) => this.registerLoc(key, text),
+    });
+    this.events.push(event);
+    return event;
+  }
+
   private registerLoc(key: string, text: string): void {
     if (this.loc.has(key)) {
       throw new Error(`Duplicate localization key "${key}"`);
@@ -76,6 +116,12 @@ export class Mod<const P extends string = string> {
       files.set(
         `common/technology/${prefix}_technology.txt`,
         serializeEntries(this.technologies.map((t) => t.toEntries()))
+      );
+    }
+    if (this.events.length > 0) {
+      files.set(
+        `events/${prefix}_events.txt`,
+        serializeEntries([kv("namespace", prefix), ...this.events.map((event) => event.entry)])
       );
     }
     files.set(`localisation/english/${prefix}_l_english.yml`, this.renderLocalization());

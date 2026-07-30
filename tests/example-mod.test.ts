@@ -9,6 +9,7 @@ describe("hello-galaxy example mod", () => {
     expect([...files.keys()]).toEqual([
       "descriptor.mod",
       "common/technology/hello_galaxy_technology.txt",
+      "events/hello_galaxy_events.txt",
       "localisation/english/hello_galaxy_l_english.yml",
     ]);
   });

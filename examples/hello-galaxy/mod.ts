@@ -1,4 +1,13 @@
-import { and, countryFlags, hasCountryFlag, Mod, not } from "../../src/index.ts";
+import {
+  and,
+  countryFlags,
+  eventTarget,
+  hasCountryFlag,
+  hasOwner,
+  isAtWar,
+  Mod,
+  not,
+} from "../../src/index.ts";
 
 /**
  * Flags this mod sets and reads.
@@ -67,6 +76,57 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
       weight: 100 - 10 * tier,
     });
   }
+
+  // The event chain: a country event whose immediate runs in-game control
+  // flow, saves an event target on a planet, and fires a follow-up that reads
+  // the firing country back through FROM. Every scope transition is
+  // compile-checked; recording happens right here, at define time.
+  const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
+
+  const aftershock = mod.definePlanetEvent({
+    id: 2,
+    from: "country",
+    title: "Aftershock",
+    desc: "The crystal hum lingers over this world.",
+    isTriggeredOnly: true,
+    immediate: (planet, ctx) => {
+      planet.within(ctx.from, (country) => {
+        country.addResource({ resource: "influence", amount: 50 });
+      });
+    },
+    options: [{ name: "Noted." }],
+  });
+
+  mod.defineCountryEvent({
+    id: 1,
+    title: "The Hum Returns",
+    desc: "Deep in the lattice, something answers back.",
+    isTriggeredOnly: true,
+    immediate: (country, ctx) => {
+      country.randomList([
+        {
+          weight: 60,
+          do: (c) => c.setCountryFlag(flags.hello_galaxy_heard_the_hum),
+        },
+        {
+          weight: 40,
+          modifiers: [{ factor: 2, when: isAtWar() }],
+          do: (c) => {
+            c.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+              planet.saveEventTargetAs(stormWorld);
+              planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
+            });
+          },
+        },
+      ]);
+      country
+        .if(hasCountryFlag(flags.hello_galaxy_heard_the_hum), (c) => {
+          c.within(stormWorld, (planet) => planet.addDeposit("d_minerals_1"));
+        })
+        .else((c) => c.log("the hum went unheard"));
+    },
+    options: [{ name: "Fascinating." }],
+  });
 
   return mod;
 }

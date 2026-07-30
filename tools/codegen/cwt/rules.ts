@@ -12,6 +12,7 @@ import { EXTRA_SCOPES } from "../overlay.ts";
 import {
   classify,
   classifyBlock,
+  findOption,
   scopeOf,
   supportedScopesOf,
   type RuleField,
@@ -42,10 +43,23 @@ export interface AliasDecl {
   readonly comparison: boolean;
 }
 
+/**
+ * One `subtype[...]` declaration with the options that ride on it. For the
+ * event type these carry the whole event-kind table: `## group = event_type`,
+ * `## type_key_filter = country_event`, `## push_scope = country`.
+ */
+export interface ContentSubtype {
+  readonly name: string;
+  readonly group: string | null;
+  readonly keyFilter: string | null;
+  readonly pushScope: string | null;
+  readonly displayName: string | null;
+}
+
 export interface ContentType {
   readonly name: string;
   readonly path: string | null;
-  readonly subtypes: readonly string[];
+  readonly subtypes: readonly ContentSubtype[];
   readonly localisation: readonly { key: string; pattern: string; required: boolean }[];
 }
 
@@ -69,6 +83,8 @@ const RULE_FILES = [
   "triggers.cwt",
   "effects.cwt",
   "common/technologies_consolidated.cwt",
+  "events/events.cwt",
+  "events/event_namespaces.cwt",
 ] as const;
 
 const ALIAS_KEY = /^alias\[([a-z_]+):(.+)\]$/;
@@ -192,7 +208,22 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
         path: pathNode?.value.kind === "scalar" ? pathNode.value.text : null,
         subtypes: inner.flatMap((node) => {
           const subtype = BRACKET_KEY.exec(node.key.text);
-          return subtype !== null && subtype[1] === "subtype" ? [subtype[2]!] : [];
+          if (subtype === null || subtype[1] !== "subtype") {
+            return [];
+          }
+          const scalarOption = (name: string): string | null => {
+            const option = findOption(node.options, name);
+            return option?.value?.kind === "scalar" ? option.value.text : null;
+          };
+          return [
+            {
+              name: subtype[2]!,
+              group: scalarOption("group"),
+              keyFilter: scalarOption("type_key_filter"),
+              pushScope: scopeOf(node.options)?.this ?? null,
+              displayName: scalarOption("display_name"),
+            },
+          ];
         }),
         localisation: localisation === undefined ? [] : readLocalisation(localisation),
       });

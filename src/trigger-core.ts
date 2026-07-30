@@ -21,7 +21,9 @@ export interface Trigger<in S extends ScopeName = ScopeName> {
 const POISON_MESSAGE =
   "A trigger is a description of an in-game condition, not a build-time boolean. " +
   "A plain TypeScript 'if' branches at BUILD time and cannot see game state. " +
-  "Use the trigger where a condition block is expected (e.g. a technology's 'potential').";
+  "Use the trigger where a condition block is expected (a technology's 'potential', " +
+  "an effect's 'limit'), or for in-game branching inside an effect closure use " +
+  "scope.if(trigger, (s) => ...).elseIf(...).else(...).";
 
 export function trigger<S extends ScopeName>(entries: PdxEntry[]): Trigger<S> {
   return Object.assign(

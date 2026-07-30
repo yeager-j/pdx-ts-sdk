@@ -51,6 +51,9 @@ export type AiPersonalityRef = TypedRef<"ai_personality">;
 /** A reference to a `<ambient_object>`. */
 export type AmbientObjectRef = TypedRef<"ambient_object">;
 
+/** A reference to a `<anomaly_category>`. */
+export type AnomalyCategoryRef = TypedRef<"anomaly_category">;
+
 /** A reference to a `<archaeological_site_type>`. */
 export type ArchaeologicalSiteTypeRef = TypedRef<"archaeological_site_type">;
 
@@ -59,6 +62,15 @@ export type ArmyRef = TypedRef<"army">;
 
 /** A reference to a `<ascension_perk>`. */
 export type AscensionPerkRef = TypedRef<"ascension_perk">;
+
+/** A reference to a `<asset_selector.room>`. */
+export type AssetSelectorRoomRef = TypedRef<"asset_selector.room">;
+
+/** A reference to a `<asteroid_belt_type>`. */
+export type AsteroidBeltTypeRef = TypedRef<"asteroid_belt_type">;
+
+/** A reference to a `<astral_action.uses_custom_cooldown>`. */
+export type AstralActionUsesCustomCooldownRef = TypedRef<"astral_action.uses_custom_cooldown">;
 
 /** A reference to a `<astral_rift>`. */
 export type AstralRiftRef = TypedRef<"astral_rift">;
@@ -105,6 +117,9 @@ export type ComponentTemplateRef = TypedRef<"component_template">;
 /** A reference to a `<councilor>`. */
 export type CouncilorRef = TypedRef<"councilor">;
 
+/** A reference to a `<country_card_categories>`. */
+export type CountryCardCategoriesRef = TypedRef<"country_card_categories">;
+
 /** A reference to a `<country_focus_cards>`. */
 export type CountryFocusCardsRef = TypedRef<"country_focus_cards">;
 
@@ -114,14 +129,35 @@ export type CountryTypeRef = TypedRef<"country_type">;
 /** A reference to a `<crisis_level>`. */
 export type CrisisLevelRef = TypedRef<"crisis_level">;
 
+/** A reference to a `<crisis_objective>`. */
+export type CrisisObjectiveRef = TypedRef<"crisis_objective">;
+
+/** A reference to a `<crisis_path>`. */
+export type CrisisPathRef = TypedRef<"crisis_path">;
+
+/** A reference to a `<decision>`. */
+export type DecisionRef = TypedRef<"decision">;
+
+/** A reference to a `<deed>`. */
+export type DeedRef = TypedRef<"deed">;
+
 /** A reference to a `<deposit>`. */
 export type DepositRef = TypedRef<"deposit">;
+
+/** A reference to a `<deposit.blocker>`. */
+export type DepositBlockerRef = TypedRef<"deposit.blocker">;
 
 /** A reference to a `<deposit_category>`. */
 export type DepositCategoryRef = TypedRef<"deposit_category">;
 
+/** A reference to a `<diplomatic_action>`. */
+export type DiplomaticActionRef = TypedRef<"diplomatic_action">;
+
 /** A reference to a `<district>`. */
 export type DistrictRef = TypedRef<"district">;
+
+/** A reference to a `<dust_clouds>`. */
+export type DustCloudsRef = TypedRef<"dust_clouds">;
 
 /** A reference to a `<economic_category>`. */
 export type EconomicCategoryRef = TypedRef<"economic_category">;
@@ -140,6 +176,12 @@ export type EspionageOperationRef = TypedRef<"espionage_operation">;
 
 /** A reference to a `<ethic>`. */
 export type EthicRef = TypedRef<"ethic">;
+
+/** A reference to a `<event>`. */
+export type EventRef = TypedRef<"event">;
+
+/** A reference to a `<event.fleet>`. */
+export type EventFleetRef = TypedRef<"event.fleet">;
 
 /** A reference to a `<event_chain>`. */
 export type EventChainRef = TypedRef<"event_chain">;
@@ -161,6 +203,9 @@ export type FirstContactStageRef = TypedRef<"first_contact_stage">;
 
 /** A reference to a `<galaxy_shape>`. */
 export type GalaxyShapeRef = TypedRef<"galaxy_shape">;
+
+/** A reference to a `<global_ship_design>`. */
+export type GlobalShipDesignRef = TypedRef<"global_ship_design">;
 
 /** A reference to a `<government>`. */
 export type GovernmentRef = TypedRef<"government">;
@@ -192,6 +237,9 @@ export type MegastructureRef = TypedRef<"megastructure">;
 /** A reference to a `<menace_perk>`. */
 export type MenacePerkRef = TypedRef<"menace_perk">;
 
+/** A reference to a `<message_type>`. */
+export type MessageTypeRef = TypedRef<"message_type">;
+
 /** A reference to a `<migration_control>`. */
 export type MigrationControlRef = TypedRef<"migration_control">;
 
@@ -207,11 +255,20 @@ export type MissionContractRef = TypedRef<"mission.contract">;
 /** A reference to a `<mission_category>`. */
 export type MissionCategoryRef = TypedRef<"mission_category">;
 
+/** A reference to a `<model_entity>`. */
+export type ModelEntityRef = TypedRef<"model_entity">;
+
+/** A reference to a `<modifier>`. */
+export type ModifierRef = TypedRef<"modifier">;
+
 /** A reference to a `<notification_modifier>`. */
 export type NotificationModifierRef = TypedRef<"notification_modifier">;
 
 /** A reference to a `<observation_station_mission>`. */
 export type ObservationStationMissionRef = TypedRef<"observation_station_mission">;
+
+/** A reference to a `<on_action>`. */
+export type OnActionRef = TypedRef<"on_action">;
 
 /** A reference to a `<opinion_modifier>`. */
 export type OpinionModifierRef = TypedRef<"opinion_modifier">;
@@ -221,6 +278,12 @@ export type PatronTypeRef = TypedRef<"patron_type">;
 
 /** A reference to a `<planet_class>`. */
 export type PlanetClassRef = TypedRef<"planet_class">;
+
+/** A reference to a `<planet_class.habitable_planet>`. */
+export type PlanetClassHabitablePlanetRef = TypedRef<"planet_class.habitable_planet">;
+
+/** A reference to a `<planet_class_random_list>`. */
+export type PlanetClassRandomListRef = TypedRef<"planet_class_random_list">;
 
 /** A reference to a `<planet_modifier>`. */
 export type PlanetModifierRef = TypedRef<"planet_modifier">;
@@ -267,11 +330,20 @@ export type ResolutionCategoryRef = TypedRef<"resolution_category">;
 /** A reference to a `<resource>`. */
 export type ResourceRef = TypedRef<"resource">;
 
+/** A reference to a `<resource_converter>`. */
+export type ResourceConverterRef = TypedRef<"resource_converter">;
+
+/** A reference to a `<scripted_effect>`. */
+export type ScriptedEffectRef = TypedRef<"scripted_effect">;
+
 /** A reference to a `<sector_type>`. */
 export type SectorTypeRef = TypedRef<"sector_type">;
 
 /** A reference to a `<ship_categories>`. */
 export type ShipCategoriesRef = TypedRef<"ship_categories">;
+
+/** A reference to a `<ship_category>`. */
+export type ShipCategoryRef = TypedRef<"ship_category">;
 
 /** A reference to a `<ship_size>`. */
 export type ShipSizeRef = TypedRef<"ship_size">;
@@ -285,6 +357,12 @@ export type SituationTypeRef = TypedRef<"situation_type">;
 /** A reference to a `<slavery_type>`. */
 export type SlaveryTypeRef = TypedRef<"slavery_type">;
 
+/** A reference to a `<solar_system_initializer>`. */
+export type SolarSystemInitializerRef = TypedRef<"solar_system_initializer">;
+
+/** A reference to a `<sound_effect>`. */
+export type SoundEffectRef = TypedRef<"sound_effect">;
+
 /** A reference to a `<special_project>`. */
 export type SpecialProjectRef = TypedRef<"special_project">;
 
@@ -297,8 +375,14 @@ export type SpeciesArchetypeRef = TypedRef<"species_archetype">;
 /** A reference to a `<species_class>`. */
 export type SpeciesClassRef = TypedRef<"species_class">;
 
+/** A reference to a `<species_named_list>`. */
+export type SpeciesNamedListRef = TypedRef<"species_named_list">;
+
 /** A reference to a `<specimen>`. */
 export type SpecimenRef = TypedRef<"specimen">;
+
+/** A reference to a `<sprite>`. */
+export type SpriteRef = TypedRef<"sprite">;
 
 /** A reference to a `<star_class>`. */
 export type StarClassRef = TypedRef<"star_class">;
@@ -327,6 +411,9 @@ export type TechnologyCategoryRef = TypedRef<"technology_category">;
 /** A reference to a `<technology_tier>`. */
 export type TechnologyTierRef = TypedRef<"technology_tier">;
 
+/** A reference to a `<timeline_events>`. */
+export type TimelineEventsRef = TypedRef<"timeline_events">;
+
 /** A reference to a `<tradable_action>`. */
 export type TradableActionRef = TypedRef<"tradable_action">;
 
@@ -345,8 +432,14 @@ export type TraitLeaderTraitRef = TypedRef<"trait.leader_trait">;
 /** A reference to a `<trait.species_trait>`. */
 export type TraitSpeciesTraitRef = TypedRef<"trait.species_trait">;
 
+/** A reference to a `<variable>`. */
+export type VariableRef = TypedRef<"variable">;
+
 /** A reference to a `<war_goal>`. */
 export type WarGoalRef = TypedRef<"war_goal">;
 
 /** A reference to a `<zone>`. */
 export type ZoneRef = TypedRef<"zone">;
+
+/** A reference to a `<zone_slots>`. */
+export type ZoneSlotsRef = TypedRef<"zone_slots">;

@@ -7,30 +7,27 @@
  * with no scope in either source is skipped and reported, never guessed at.
  */
 
-import { isOptional, type RuleField, type RuleType } from "../cwt/model.ts";
+import { isOptional } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
-import { HAND_WRITTEN_TRIGGERS, UNIVERSAL_SCOPES } from "../overlay.ts";
+import { HAND_WRITTEN_TRIGGERS } from "../overlay.ts";
+import {
+  mergeFields,
+  scopeType,
+  type ArgField,
+  type ClauseCategory,
+  type SkippedRule,
+} from "./shape.ts";
 import { Emitter, type TsValue } from "./types.ts";
 
-export interface SkippedTrigger {
-  readonly name: string;
-  readonly reason: string;
-}
+const TRIGGER_CLAUSES = new Set<ClauseCategory>(["trigger"]);
 
 export interface TriggerEmission {
   readonly code: string;
   readonly emitted: number;
   readonly byShape: ReadonlyMap<string, number>;
-  readonly skipped: readonly SkippedTrigger[];
-}
-
-interface ArgField {
-  readonly name: string;
-  readonly value: TsValue;
-  readonly optional: boolean;
-  readonly docs: readonly string[];
+  readonly skipped: readonly SkippedRule[];
 }
 
 type Shape =
@@ -40,51 +37,6 @@ type Shape =
   /** A block whose entire content is a nested trigger, i.e. a scope change. */
   | { readonly kind: "wrapper"; readonly scope: string }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
-
-function scopeType(scopes: readonly string[], index: ReadonlyMap<string, string>): string | null {
-  if (scopes.some((scope) => UNIVERSAL_SCOPES.has(scope))) {
-    return "ScopeName";
-  }
-  const canonical = scopes.map((scope) => index.get(scope));
-  if (canonical.some((scope) => scope === undefined)) {
-    return null;
-  }
-  return [...new Set(canonical as string[])]
-    .sort()
-    .map((scope) => JSON.stringify(scope))
-    .join(" | ");
-}
-
-/** Merges the repeated keys an overloaded rule produces into one field each. */
-function mergeFields(emitter: Emitter, fields: readonly RuleField[]): ArgField[] | null {
-  const grouped = new Map<string, { types: RuleType[]; optional: boolean; docs: string[] }>();
-  for (const field of fields) {
-    if (field.key.kind !== "name") {
-      return null;
-    }
-    const existing = grouped.get(field.key.name);
-    if (existing === undefined) {
-      grouped.set(field.key.name, {
-        types: [field.type],
-        optional: isOptional(field.cardinality),
-        docs: [...field.docs],
-      });
-      continue;
-    }
-    existing.types.push(field.type);
-    existing.optional ||= isOptional(field.cardinality);
-    existing.docs.push(...field.docs);
-  }
-  const merged: ArgField[] = [];
-  for (const [name, group] of grouped) {
-    const value = emitter.unionFor(group.types);
-    if (value === null) {
-      return null;
-    }
-    merged.push({ name, value, optional: group.optional, docs: group.docs });
-  }
-  return merged;
-}
 
 function shapeOf(emitter: Emitter, declarations: readonly AliasDecl[]): Shape | string {
   if (declarations.some((declaration) => declaration.comparison)) {
@@ -108,23 +60,65 @@ function shapeOf(emitter: Emitter, declarations: readonly AliasDecl[]): Shape | 
   if (body.kind !== "block") {
     return "unreachable";
   }
-  const splices = body.fields.filter((field) => field.key.kind === "aliasName");
-  if (splices.length > 0) {
-    if (body.fields.length > splices.length || body.bare.length > 0) {
-      return "scope change with extra rule fields";
-    }
-    const pushed = declaration.scope?.this;
-    if (pushed === undefined || pushed === null) {
-      return "scope change with no push_scope annotation";
-    }
-    const scope = emitter.canonicalScope(pushed);
-    return scope === null
-      ? `push_scope names no known scope (${pushed})`
-      : { kind: "wrapper", scope };
+  if (body.bare.length > 0) {
+    return "block with bare values";
   }
-  const fields = mergeFields(emitter, body.fields);
-  if (fields === null || fields.length === 0 || body.bare.length > 0) {
-    return "block with rule fields the emitter cannot type";
+  const splices = body.fields.filter((field) => field.key.kind === "aliasName");
+  const named = body.fields.filter((field) => field.key.kind !== "aliasName");
+  const pushedRaw = declaration.scope?.this ?? null;
+
+  if (splices.length > 0) {
+    const categories = new Set(
+      splices.map((splice) => (splice.key.kind === "aliasName" ? splice.key.category : ""))
+    );
+    if (categories.size !== 1 || !categories.has("trigger")) {
+      return `splices a category the emitter cannot type (${[...categories].sort().join(", ")})`;
+    }
+    if (named.length === 0) {
+      if (pushedRaw === null) {
+        return "scope change with no push_scope annotation";
+      }
+      const scope = emitter.canonicalScope(pushedRaw);
+      return scope === null
+        ? `push_scope names no known scope (${pushedRaw})`
+        : { kind: "wrapper", scope };
+    }
+    // A splice alongside named fields (`calc_true_if = { amount == int ... }`):
+    // the splice becomes an implicit `conditions` clause argument.
+    const fields = mergeFields(emitter, named, pushedRaw, TRIGGER_CLAUSES);
+    if (typeof fields === "string") {
+      return fields;
+    }
+    if (fields.some((field) => field.name === "conditions")) {
+      return 'a rule field is already named "conditions"';
+    }
+    let scope: string | null = null;
+    if (pushedRaw !== null) {
+      scope = emitter.canonicalScope(pushedRaw);
+      if (scope === null) {
+        return `push_scope names no known scope (${pushedRaw})`;
+      }
+    }
+    return {
+      kind: "fields",
+      fields: [
+        ...fields,
+        {
+          name: "conditions",
+          value: { kind: "clause", category: "trigger", scope, splice: true },
+          optional: splices.every((splice) => isOptional(splice.cardinality)),
+          docs: [],
+        },
+      ],
+    };
+  }
+
+  const fields = mergeFields(emitter, named, pushedRaw, TRIGGER_CLAUSES);
+  if (typeof fields === "string") {
+    return fields;
+  }
+  if (fields.length === 0) {
+    return "block with no typeable fields";
   }
   return { kind: "fields", fields };
 }
@@ -176,6 +170,37 @@ function emitWrapper(
   );
 }
 
+function memberType(field: ArgField, outerScope: string): string {
+  const value = field.value;
+  switch (value.kind) {
+    case "scalar":
+      return value.value.type;
+    case "clause":
+      return `Trigger<${value.scope === null ? outerScope : JSON.stringify(value.scope)}>`;
+    case "comparison": {
+      const literals = value.literals.map((literal) => JSON.stringify(literal));
+      return ["number", "readonly [PdxOp, number]", ...literals].join(" | ");
+    }
+  }
+}
+
+function pushCode(field: ArgField, access: string): string {
+  const key = JSON.stringify(field.name);
+  switch (field.value.kind) {
+    case "scalar":
+      return `entries.push(kv(${key}, ${field.value.value.toScalar(access)}));`;
+    case "clause":
+      return field.value.splice
+        ? `entries.push(...${access}.entries);`
+        : `entries.push(block(${key}, [...${access}.entries]));`;
+    case "comparison":
+      return (
+        `entries.push(typeof ${access} === "object" ` +
+        `? cmp(${key}, ${access}[0], ${access}[1]) : kv(${key}, ${access}));`
+      );
+  }
+}
+
 function emitFields(
   fn: string,
   key: string,
@@ -188,14 +213,14 @@ function emitFields(
     .map(
       (field) =>
         docComment(field.docs, "  ") +
-        `  ${camelCase(field.name)}${field.optional ? "?" : ""}: ${field.value.type};\n`
+        `  ${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(field, scope)};\n`
     )
     .join("");
   const pushes = fields
     .map((field) => {
       const access = `args.${camelCase(field.name)}`;
-      const push = `    entries.push(kv(${JSON.stringify(field.name)}, ${field.value.toScalar(access)}));\n`;
-      return field.optional ? `  if (${access} !== undefined) {\n  ${push}  }\n` : push.slice(2);
+      const push = `    ${pushCode(field, access)}\n`;
+      return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
     })
     .join("");
   return (
@@ -228,7 +253,7 @@ export function emitTriggers(
   docs: ReadonlyMap<string, DocEntry>,
   scopeIndex: ReadonlyMap<string, string>
 ): TriggerEmission {
-  const skipped: SkippedTrigger[] = [];
+  const skipped: SkippedRule[] = [];
   const byShape = new Map<string, number>();
   const chunks: string[] = [];
   let emitted = 0;

@@ -147,6 +147,15 @@ export type EspionageOperationFlag = ValueSetMember<"espionage_operation_flag">;
  */
 export const espionageOperationFlags = declare<"espionage_operation_flag">();
 
+/** A name belonging to `value[exiled_leader]`. */
+export type ExiledLeader = ValueSetMember<"exiled_leader">;
+
+/**
+ * Declares exiled_leader names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const exiledLeaders = declare<"exiled_leader">();
+
 /** A name belonging to `value[federation_flag]`. */
 export type FederationFlag = ValueSetMember<"federation_flag">;
 
@@ -182,6 +191,15 @@ export type FleetFlag = ValueSetMember<"fleet_flag">;
  * confused with a name from another set.
  */
 export const fleetFlags = declare<"fleet_flag">();
+
+/** A name belonging to `value[global_event_target]`. */
+export type GlobalEventTarget = ValueSetMember<"global_event_target">;
+
+/**
+ * Declares global_event_target names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const globalEventTargets = declare<"global_event_target">();
 
 /** A name belonging to `value[global_flag]`. */
 export type GlobalFlag = ValueSetMember<"global_flag">;
@@ -264,6 +282,15 @@ export type RelationFlag = ValueSetMember<"relation_flag">;
  */
 export const relationFlags = declare<"relation_flag">();
 
+/** A name belonging to `value[saved_leader]`. */
+export type SavedLeader = ValueSetMember<"saved_leader">;
+
+/**
+ * Declares saved_leader names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const savedLeaders = declare<"saved_leader">();
+
 /** A name belonging to `value[sector_flag]`. */
 export type SectorFlag = ValueSetMember<"sector_flag">;
 
@@ -335,6 +362,15 @@ export type StormFlag = ValueSetMember<"storm_flag">;
  * confused with a name from another set.
  */
 export const stormFlags = declare<"storm_flag">();
+
+/** A name belonging to `value[timeline_event_id]`. */
+export type TimelineEventId = ValueSetMember<"timeline_event_id">;
+
+/**
+ * Declares timeline_event_id names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const timelineEventIds = declare<"timeline_event_id">();
 
 /** A name belonging to `value[variable]`. */
 export type Variable = ValueSetMember<"variable">;
