@@ -178,13 +178,15 @@ the verdict); the API has not landed in `src/` yet.
 
 PDXScript overrides are whole-object replacement, so changing one field of a
 vanilla technology means re-emitting the complete object — which requires
-parsing the game's own files. The parser surfaces a vanilla definition as a
+parsing the game's own files. `stellaris.load()` locates the local install
+(Steam defaults per platform, `STELLARIS_PATH` to override), parses it with
+results cached by content hash, and surfaces each vanilla definition as a
 typed object; a patch is a plain TypeScript transform over it:
 
 ```ts
-const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
+const vanilla = stellaris.load();
 
-patchTechnology(geneTailoring, (t) => ({
+mod.patchTechnology(vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"), (t) => ({
   cost: t.cost.value * 2, // cost is @tier3cost1 in the file — .value bakes visibly
   prerequisites: [...t.prerequisites, myNewTech],
 }));
@@ -200,15 +202,23 @@ the file's own field order. Unknown `@variables`, invalid enum values, and
 unknown ids all fail at parse time with file and line — never a silent
 widening to `string`.
 
-Status: the model passed its gated probe (`design/parser-probe/` is the
-design record, [docs/verdict-parser-probe.md](docs/verdict-parser-probe.md)
-the verdict), and the parser has landed as
+The headline is what happens at `synth()`: the patch is emitted into a file
+whose name is *computed from the parsed enumeration* to byte-sort after
+every surviving file defining the key — no `zz_` cargo cult — and the build
+fails loudly when no winning name exists or when the registry's override
+rule is unverified (the per-registry rule table pins its evidence to
+Stellaris 4.4.6 and refuses its open cells by name; a version-drifted
+install refuses until explicitly accepted). "Launched the game and the
+override didn't take" becomes a build error. The v1 claim is exactly
+"provably beats vanilla" — wins against third-party mods await playset
+enumeration and are stated as unverified in every emitted header.
+
+Status: landed in `src/` ([docs/verdict-patches.md](docs/verdict-patches.md)
+is the verdict). The parser it builds on is
 [@pdx-ts/pdxscript](packages/pdxscript/README.md) — a standalone,
-publishable workspace package the SDK now builds on (one AST, one
-serializer). It is gated by a per-claim suite, a round-trip fixpoint over
-the entire vanilla `common/` tree, a tree differential against jomini, and
-fast-check property tests. The typed patch surface (`patchTechnology`) has
-not landed in `src/` yet.
+publishable workspace package (one AST, one serializer), gated by a
+per-claim suite, a round-trip fixpoint over the entire vanilla `common/`
+tree, a tree differential against jomini, and fast-check property tests.
 
 ## Generated types
 
