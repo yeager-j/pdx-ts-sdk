@@ -1,11 +1,9 @@
+import { block, cmp, kv, quoted, serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { block, cmp, kv, quoted } from "../src/ast.ts";
-import { serializeEntries } from "../src/serialize.ts";
-
-describe("serializeEntries", () => {
+describe("serialize", () => {
   it("serializes scalars, booleans, and comparisons", () => {
-    const text = serializeEntries([
+    const text = serialize([
       block("tech_example", [
         kv("cost", 2000),
         kv("is_rare", true),
@@ -27,7 +25,7 @@ describe("serializeEntries", () => {
   });
 
   it("indents nested blocks with tabs", () => {
-    const text = serializeEntries([
+    const text = serialize([
       block("potential", [block("OR", [kv("has_country_flag", "flag_a"), kv("is_ai", true)])]),
     ]);
     expect(text).toMatchInlineSnapshot(`
@@ -42,7 +40,7 @@ describe("serializeEntries", () => {
   });
 
   it("quotes strings only when forced or containing special characters", () => {
-    const text = serializeEntries([
+    const text = serialize([
       kv("bare", "tech_lasers"),
       kv("scoped", "event_target:the_system"),
       kv("forced", quoted("tech_lasers")),
@@ -61,7 +59,7 @@ describe("serializeEntries", () => {
   });
 
   it("separates top-level definitions with a blank line", () => {
-    const text = serializeEntries([
+    const text = serialize([
       block("tech_a", [kv("cost", 100)]),
       block("tech_b", [kv("cost", 200)]),
     ]);
@@ -69,10 +67,10 @@ describe("serializeEntries", () => {
   });
 
   it("serializes empty blocks inline", () => {
-    expect(serializeEntries([block("potential", [])])).toBe("potential = {}\n");
+    expect(serialize([block("potential", [])])).toBe("potential = {}\n");
   });
 
   it("rejects numbers that would need exponent notation", () => {
-    expect(() => serializeEntries([kv("cost", 1e21)])).toThrow(/exponent notation/);
+    expect(() => serialize([kv("cost", 1e21)])).toThrow(/exponent notation/);
   });
 });

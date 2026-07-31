@@ -15,7 +15,8 @@
  * a real file demands it.
  */
 
-import type { PdxOp } from "../../src/ast.ts";
+import type { PdxOp } from "@pdx-ts/pdxscript";
+
 import { PdxSyntaxError, tokenize, type Token } from "./lexer.ts";
 
 export type ParsedScalar =

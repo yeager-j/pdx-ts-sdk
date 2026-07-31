@@ -1,6 +1,6 @@
+import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { serializeEntries } from "../src/serialize.ts";
 import { Technology } from "../src/tech.ts";
 import { and, hasCountryFlag, hasTechnology, not } from "../src/triggers.ts";
 
@@ -26,7 +26,7 @@ describe("Technology", () => {
       isRare: true,
       potential: and(hasCountryFlag("chosen_ones"), not(hasTechnology(base))),
     });
-    expect(serializeEntries([tech.toEntries()])).toMatchInlineSnapshot(`
+    expect(serialize([tech.toEntries()])).toMatchInlineSnapshot(`
       "mymod_tech_advanced = {
       	cost = 4000
       	area = physics
@@ -57,7 +57,7 @@ describe("Technology", () => {
       tier: 1,
       category: "statecraft",
     });
-    expect(serializeEntries([tech.toEntries()])).toBe(
+    expect(serialize([tech.toEntries()])).toBe(
       "mymod_tech_minimal = {\n\tcost = 100\n\tarea = society\n\ttier = 1\n\tcategory = { statecraft }\n}\n"
     );
   });

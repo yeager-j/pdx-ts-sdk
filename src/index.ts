@@ -1,6 +1,6 @@
-export type { PdxEntry, PdxOp, PdxScalar, PdxValue } from "./ast.ts";
-export { block, cmp, kv, list, quoted, scalar } from "./ast.ts";
-export { serializeEntries } from "./serialize.ts";
+export type { PdxEntry, PdxOp, PdxScalar, PdxValue } from "@pdx-ts/pdxscript";
+export { block, cmp, kv, list, quoted, scalar } from "@pdx-ts/pdxscript";
+export { serialize } from "@pdx-ts/pdxscript";
 export type { ScopeName } from "./generated/scopes.ts";
 export * from "./generated/enums.ts";
 export { refId, type TypedRef } from "./generated/refs.ts";

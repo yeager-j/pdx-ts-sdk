@@ -4,7 +4,8 @@
 // From: aliases.cwt
 // From: script-docs/v4.4.1/effects.log
 
-import type { PdxOp } from "../ast.ts";
+import type { PdxOp } from "@pdx-ts/pdxscript";
+
 import type { Modifier, StructuralEffects } from "../effect-core.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type {

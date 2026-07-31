@@ -1,4 +1,5 @@
-import type { PdxEntry } from "./ast.ts";
+import type { PdxEntry } from "@pdx-ts/pdxscript";
+
 import type { ScopeName } from "./generated/scopes.ts";
 
 declare const scopeBrand: unique symbol;

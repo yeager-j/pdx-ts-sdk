@@ -148,7 +148,7 @@ async function main(): Promise<void> {
   await write(
     "triggers.ts",
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
-      'import { block, cmp, kv, type PdxEntry, type PdxOp } from "../ast.ts";\n' +
+      'import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";\n' +
       'import { trigger, type Trigger } from "../trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(
@@ -169,7 +169,7 @@ async function main(): Promise<void> {
   await write(
     "effects.ts",
     header(commit, ["effects.cwt", "aliases.cwt", "script-docs/v4.4.1/effects.log"]) +
-      'import type { PdxOp } from "../ast.ts";\n' +
+      'import type { PdxOp } from "@pdx-ts/pdxscript";\n' +
       'import type { Modifier, StructuralEffects } from "../effect-core.ts";\n' +
       'import type { Trigger } from "../trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +

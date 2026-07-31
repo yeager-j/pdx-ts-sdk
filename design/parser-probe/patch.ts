@@ -7,7 +7,8 @@
  * everything `TechnologyFields` does not model.
  */
 
-import { quoted, scalar, type PdxEntry, type PdxValue } from "../../src/ast.ts";
+import { quoted, scalar, type PdxEntry, type PdxValue } from "@pdx-ts/pdxscript";
+
 import type { ResearchArea } from "../../src/generated/enums.ts";
 import { refId, type TechnologyCategoryRef, type TechnologyRef } from "../../src/generated/refs.ts";
 import type { Trigger } from "../../src/trigger-core.ts";
@@ -59,11 +60,14 @@ function patchValues(patch: TechnologyPatch): Map<string, PdxValue> {
     values.set("area", scalar(patch.area));
   }
   if (patch.category !== undefined) {
-    values.set("category", { kind: "list", items: patch.category.map((c) => scalar(refId(c))) });
+    values.set("category", {
+      kind: "container",
+      items: patch.category.map((c) => scalar(refId(c))),
+    });
   }
   if (patch.prerequisites !== undefined) {
     values.set("prerequisites", {
-      kind: "list",
+      kind: "container",
       items: patch.prerequisites.map((p) => quoted(refId(p))),
     });
   }
@@ -74,7 +78,7 @@ function patchValues(patch: TechnologyPatch): Map<string, PdxValue> {
     values.set("is_rare", scalar(patch.isRare));
   }
   if (patch.potential !== undefined) {
-    values.set("potential", { kind: "block", entries: [...patch.potential.entries] });
+    values.set("potential", { kind: "container", items: [...patch.potential.entries] });
   }
   return values;
 }
@@ -94,7 +98,7 @@ export function patchTechnology<T extends ParsedTechnology>(
         if (value !== undefined) {
           if (!substituted.has(entry.key)) {
             substituted.add(entry.key);
-            body.push({ key: entry.key, op: "=", value });
+            body.push({ kind: "entry", key: entry.key, op: "=", value });
           }
           continue;
         }
@@ -102,10 +106,10 @@ export function patchTechnology<T extends ParsedTechnology>(
       }
       for (const [key, value] of values) {
         if (!substituted.has(key)) {
-          body.push({ key, op: "=", value });
+          body.push({ kind: "entry", key, op: "=", value });
         }
       }
-      return { key: tech.id, op: "=", value: { kind: "block", entries: body } };
+      return { kind: "entry", key: tech.id, op: "=", value: { kind: "container", items: body } };
     },
   };
 }

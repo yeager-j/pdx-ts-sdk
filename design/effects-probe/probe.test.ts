@@ -1,7 +1,6 @@
+import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import type { PdxEntry } from "../../src/ast.ts";
-import { serializeEntries } from "../../src/serialize.ts";
 import { isAtWar } from "../../src/triggers.ts";
 import { makeScope } from "./effect-core.ts";
 import { aftershock, humReturns } from "./probe.ts";
@@ -73,7 +72,7 @@ country_event = {
 
 describe("effects probe", () => {
   it("round-trips the recorded closures to the hand-written golden", () => {
-    expect(serializeEntries([aftershock.entry, humReturns.entry])).toBe(GOLDEN);
+    expect(serialize([aftershock.entry, humReturns.entry])).toBe(GOLDEN);
   });
 
   it("throws when effects are recorded between if chain links", () => {

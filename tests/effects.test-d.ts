@@ -4,9 +4,9 @@
  * emitted surface.
  */
 
+import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, it } from "vitest";
 
-import type { PdxEntry } from "../src/ast.ts";
 import { eventTarget, makeScope } from "../src/effect-core.ts";
 import { planetFlags } from "../src/generated/value-sets.ts";
 import { isAtWar } from "../src/triggers.ts";

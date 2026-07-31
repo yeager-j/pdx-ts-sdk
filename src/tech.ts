@@ -1,4 +1,5 @@
-import { block, kv, list, quoted, scalar, type PdxEntry, type PdxScalar } from "./ast.ts";
+import { block, kv, list, quoted, scalar, type PdxEntry, type PdxScalar } from "@pdx-ts/pdxscript";
+
 import { refId, type TechnologyCategoryRef, type TechnologyRef } from "./generated/refs.ts";
 import type { TechnologyFields } from "./generated/technology.ts";
 

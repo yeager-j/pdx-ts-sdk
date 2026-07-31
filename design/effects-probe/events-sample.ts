@@ -8,7 +8,8 @@
  * definition order, exactly like `prerequisites: [theory]` already does.
  */
 
-import { block, kv, type PdxEntry } from "../../src/ast.ts";
+import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
+
 import type { ScopeName } from "../../src/generated/scopes.ts";
 import type { Trigger } from "../../src/trigger-core.ts";
 import { makeScope, scopeRef, type EventCtx, type EventRef } from "./effect-core.ts";

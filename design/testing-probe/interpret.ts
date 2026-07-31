@@ -11,7 +11,8 @@
  * because every generated leaf trigger records exactly one entry.
  */
 
-import type { PdxEntry, PdxScalar } from "../../src/ast.ts";
+import type { PdxEntry, PdxScalar } from "@pdx-ts/pdxscript";
+
 import { makeScope } from "../../src/effect-core.ts";
 import { EFFECT_META } from "../../src/generated/effect-meta.ts";
 import type { ScopeObjOf } from "../../src/generated/effects.ts";
@@ -33,6 +34,7 @@ import {
   EFFECT_SEMANTICS,
   EVENT_TARGET_PREFIX,
   InterpreterError,
+  itemsAsEntries,
   ITERATOR_SEMANTICS,
   LINK_SEMANTICS,
   resolveEventTarget,
@@ -79,11 +81,15 @@ function renderScalar(scalar: PdxScalar): string {
       return String(scalar.value);
     case "str":
       return scalar.value;
+    case "var":
+      return scalar.name;
+    case "math":
+      return scalar.source;
   }
 }
 
 function renderCondition(entry: PdxEntry): string {
-  if (entry.value.kind === "block" || entry.value.kind === "list") {
+  if (entry.value.kind === "container") {
     return `${entry.key} ${entry.op} { ... }`;
   }
   return `${entry.key} ${entry.op} ${renderScalar(entry.value)}`;
@@ -94,8 +100,8 @@ function unimplementedTriggerKeys(entries: readonly PdxEntry[], found: Set<strin
   for (const entry of entries) {
     const combinator = COMBINATOR_SEMANTICS[entry.key];
     if (combinator !== undefined) {
-      if (entry.value.kind === "block") {
-        unimplementedTriggerKeys(entry.value.entries, found);
+      if (entry.value.kind === "container") {
+        unimplementedTriggerKeys(itemsAsEntries(entry.value.items, entry.key), found);
       }
       continue;
     }
@@ -119,10 +125,12 @@ function combine(mode: "all" | "any" | "none", children: readonly Explanation[])
 function explainEntry(entry: PdxEntry, scope: EntityId, ex: ExecCtx): Explanation {
   const combinator = COMBINATOR_SEMANTICS[entry.key];
   if (combinator !== undefined) {
-    if (entry.value.kind !== "block") {
+    if (entry.value.kind !== "container") {
       throw new InterpreterError(`${entry.key}: expected a block. ${coverageSummary()}`);
     }
-    const children = entry.value.entries.map((child) => explainEntry(child, scope, ex));
+    const children = itemsAsEntries(entry.value.items, entry.key).map((child) =>
+      explainEntry(child, scope, ex)
+    );
     return {
       kind: combinator.mode,
       label: entry.key,
@@ -177,8 +185,8 @@ export function explain<S extends SimScopeName>(
 
 function collectTriggerKeys(entries: readonly PdxEntry[], found: Set<string>): void {
   for (const entry of entries) {
-    if (COMBINATOR_SEMANTICS[entry.key] !== undefined && entry.value.kind === "block") {
-      collectTriggerKeys(entry.value.entries, found);
+    if (COMBINATOR_SEMANTICS[entry.key] !== undefined && entry.value.kind === "container") {
+      collectTriggerKeys(itemsAsEntries(entry.value.items, entry.key), found);
     } else {
       found.add(entry.key);
     }
@@ -237,12 +245,12 @@ const REAL_EFFECT_KEYS = new Set(
 );
 
 function requireBlock(entry: PdxEntry): readonly PdxEntry[] {
-  if (entry.value.kind !== "block") {
+  if (entry.value.kind !== "container") {
     throw new InterpreterError(
       `${entry.key}: expected a block, got a ${entry.value.kind}. ${coverageSummary()}`
     );
   }
-  return entry.value.entries;
+  return itemsAsEntries(entry.value.items, entry.key);
 }
 
 function applyFire(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
@@ -274,8 +282,8 @@ function applyFire(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
           `testing SDK defaults random to zero, so a recorded one is deliberate and ` +
           `unsupported here. ${coverageSummary()}`
       );
-    } else if (field.key === "scopes" && field.value.kind === "block") {
-      for (const scopeField of field.value.entries) {
+    } else if (field.key === "scopes" && field.value.kind === "container") {
+      for (const scopeField of itemsAsEntries(field.value.items, entry.key)) {
         if (scopeField.key !== "from" || scopeField.value.kind !== "str") {
           throw new InterpreterError(
             `${entry.key} scopes override "${scopeField.key}" is not modeled. ${coverageSummary()}`

@@ -1,11 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { kv, serialize } from "@pdx-ts/pdxscript";
 
-import { kv } from "./ast.ts";
 import { buildEvent, type DefinedEvent, type EventDef } from "./events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
-import { serializeEntries } from "./serialize.ts";
 import { Technology, type TechnologyDef } from "./tech.ts";
 
 export interface ModConfig<P extends string = string> {
@@ -115,13 +114,13 @@ export class Mod<const P extends string = string> {
     if (this.technologies.length > 0) {
       files.set(
         `common/technology/${prefix}_technology.txt`,
-        serializeEntries(this.technologies.map((t) => t.toEntries()))
+        serialize(this.technologies.map((t) => t.toEntries()))
       );
     }
     if (this.events.length > 0) {
       files.set(
         `events/${prefix}_events.txt`,
-        serializeEntries([kv("namespace", prefix), ...this.events.map((event) => event.entry)])
+        serialize([kv("namespace", prefix), ...this.events.map((event) => event.entry)])
       );
     }
     files.set(`localisation/english/${prefix}_l_english.yml`, this.renderLocalization());

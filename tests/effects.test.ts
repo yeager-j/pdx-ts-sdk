@@ -1,9 +1,8 @@
+import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import type { PdxEntry } from "../src/ast.ts";
 import { eventTarget, makeScope } from "../src/effect-core.ts";
 import { countryFlags } from "../src/generated/value-sets.ts";
-import { serializeEntries } from "../src/serialize.ts";
 import { hasOwner, isAtWar } from "../src/triggers.ts";
 
 const flags = countryFlags("effects_test_flag");
@@ -24,7 +23,7 @@ describe("the effect recorder over generated meta", () => {
       .else((c) => c.log("peace held"));
     country.addResource({ resource: "influence", amount: 50 });
 
-    expect(serializeEntries(sink)).toBe(`every_owned_planet = {
+    expect(serialize(sink)).toBe(`every_owned_planet = {
 	limit = {
 		has_owner = yes
 	}
@@ -65,7 +64,7 @@ add_resource = {
       },
     ]);
 
-    expect(serializeEntries(sink)).toBe(`random_list = {
+    expect(serialize(sink)).toBe(`random_list = {
 	60 = {
 		set_country_flag = effects_test_flag
 	}

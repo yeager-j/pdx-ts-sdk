@@ -14,7 +14,8 @@
  * technology `prerequisites` already do.
  */
 
-import { block, kv, type PdxEntry } from "./ast.ts";
+import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
+
 import { makeScope, scopeRef, type ScopeRef } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { EventKindKey } from "./generated/events.ts";

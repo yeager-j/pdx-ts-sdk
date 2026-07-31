@@ -15,9 +15,9 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { serializeEntries } from "../../src/serialize.ts";
 import { emitEntries, lowerEntries } from "./emit.ts";
 import { TECH_FILE, VARS_FILE } from "./fixture.ts";
 import { PdxSyntaxError } from "./lexer.ts";
@@ -123,15 +123,15 @@ const STELLARIS_DIR = join(
 
 describe("parser probe", () => {
   it("round-trips the fixture tech to the hand-written golden", () => {
-    expect(serializeEntries([geneForging.toEntries()])).toBe(GOLDEN_ROUNDTRIP);
+    expect(serialize([geneForging.toEntries()])).toBe(GOLDEN_ROUNDTRIP);
   });
 
   it("emits the patched tech with exactly the two intended changes", () => {
-    expect(serializeEntries([patched.toEntries()])).toBe(GOLDEN_PATCHED);
+    expect(serialize([patched.toEntries()])).toBe(GOLDEN_PATCHED);
   });
 
   it("re-emission is a fixpoint: parse the emission, emit again, byte-equal", () => {
-    const emitted = serializeEntries([geneForging.toEntries()]);
+    const emitted = serialize([geneForging.toEntries()]);
     const reparsed = parseSource(emitted, "emitted.txt");
     expect(emitEntries(reparsed.entries)).toBe(emitted);
   });

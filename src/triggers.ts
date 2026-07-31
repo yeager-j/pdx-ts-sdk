@@ -8,7 +8,8 @@
  * operands" or "this one infers the scope intersection of its arguments".
  */
 
-import { block } from "./ast.ts";
+import { block } from "@pdx-ts/pdxscript";
+
 import type { ScopeName } from "./generated/scopes.ts";
 import { trigger, type Trigger } from "./trigger-core.ts";
 

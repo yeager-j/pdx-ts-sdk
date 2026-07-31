@@ -13,7 +13,8 @@
  * untyped position fails loudly instead of recording garbage.
  */
 
-import { block, cmp, kv, type PdxEntry, type PdxOp } from "./ast.ts";
+import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
+
 import { EFFECT_META, type EffectFieldMeta } from "./generated/effect-meta.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import { EVENT_KINDS } from "./generated/events.ts";

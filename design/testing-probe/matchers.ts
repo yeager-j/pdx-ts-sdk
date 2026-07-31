@@ -10,9 +10,9 @@
  *   explain tree, so it names the failing subcondition.
  */
 
+import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { expect } from "vitest";
 
-import type { PdxEntry } from "../../src/ast.ts";
 import { explainFor, renderExplanation } from "./interpret.ts";
 import type { Country, FiredRecord, Planet } from "./state.ts";
 import { containsFired, renderFiredRecords } from "./world.ts";

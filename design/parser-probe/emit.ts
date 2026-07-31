@@ -3,14 +3,17 @@
  * the shared serializer — the probe deliberately has no serializer of its
  * own; one emitter for authored and parsed content is a thesis point.
  *
- * `var` scalars lower to bare strings (`@t3cost` passes the serializer's
- * BARE_STRING unquoted, so a reference re-emits as a reference). `math` has
- * no lowering: `@[ ... ]` cannot survive the serializer's quoting rules, so
- * emitting it throws loudly — its semantics are deferred, never mangled.
+ * `var` scalars lower to the AST's first-class `var` node, which re-emits as
+ * the bare `@name` — a reference stays a reference. (The probe originally
+ * lowered vars to bare strings, leaning on the old serializer's BARE_STRING;
+ * the shared AST grew a `var` node when it moved to @pdx-ts/pdxscript, whose
+ * symmetric quoting rule would promote such strings.) `math` keeps the
+ * probe's recorded decision: emitting it here throws loudly — though the
+ * package it fed now carries `@[ ... ]` verbatim end to end.
  */
 
-import type { PdxEntry, PdxScalar, PdxValue } from "../../src/ast.ts";
-import { serializeEntries } from "../../src/serialize.ts";
+import { serialize, type PdxEntry, type PdxScalar, type PdxValue } from "@pdx-ts/pdxscript";
+
 import type { ParsedEntry, ParsedScalar, ParsedValue } from "./parser.ts";
 
 function lowerScalar(scalar: ParsedScalar): PdxScalar {
@@ -22,7 +25,7 @@ function lowerScalar(scalar: ParsedScalar): PdxScalar {
     case "bool":
       return { kind: "bool", value: scalar.value };
     case "var":
-      return { kind: "str", value: scalar.name, quoted: false };
+      return { kind: "var", name: scalar.name };
     case "math":
       throw new Error(
         `Cannot emit inline math ${scalar.source}: @[ ... ] semantics are deferred — ` +
@@ -33,16 +36,16 @@ function lowerScalar(scalar: ParsedScalar): PdxScalar {
 
 function lowerValue(value: ParsedValue): PdxValue {
   if (value.kind === "block") {
-    return { kind: "block", entries: value.entries.map(lowerEntry) };
+    return { kind: "container", items: value.entries.map(lowerEntry) };
   }
   if (value.kind === "list") {
-    return { kind: "list", items: value.items.map(lowerScalar) };
+    return { kind: "container", items: value.items.map(lowerScalar) };
   }
   return lowerScalar(value);
 }
 
 export function lowerEntry(entry: ParsedEntry): PdxEntry {
-  return { key: entry.key, op: entry.op, value: lowerValue(entry.value) };
+  return { kind: "entry", key: entry.key, op: entry.op, value: lowerValue(entry.value) };
 }
 
 export function lowerEntries(entries: readonly ParsedEntry[]): PdxEntry[] {
@@ -50,5 +53,5 @@ export function lowerEntries(entries: readonly ParsedEntry[]): PdxEntry[] {
 }
 
 export function emitEntries(entries: readonly ParsedEntry[]): string {
-  return serializeEntries(lowerEntries(entries));
+  return serialize(lowerEntries(entries));
 }

@@ -11,7 +11,8 @@
  * scope), so it is asserted to the per-scope interface. Consumers never cast.
  */
 
-import { block, kv, type PdxEntry } from "../../src/ast.ts";
+import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
+
 import type { ScopeName } from "../../src/generated/scopes.ts";
 import type { Trigger } from "../../src/trigger-core.ts";
 import type { KnownScope, ScopeObjOf } from "./scopes-sample.ts";

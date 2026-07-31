@@ -4,7 +4,8 @@
 // From: aliases.cwt
 // From: script-docs/v4.4.1/triggers.log
 
-import { block, cmp, kv, type PdxEntry, type PdxOp } from "../ast.ts";
+import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
+
 import { trigger, type Trigger } from "../trigger-core.ts";
 import type {
   AiAttitudeBehaviour,

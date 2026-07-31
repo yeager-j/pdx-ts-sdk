@@ -11,7 +11,8 @@
  * iterators (fixture relations), and scope links (navigation).
  */
 
-import type { PdxEntry, PdxScalar } from "../../src/ast.ts";
+import type { PdxEntry, PdxItem, PdxScalar } from "@pdx-ts/pdxscript";
+
 import {
   countryState,
   describeEntity,
@@ -33,20 +34,50 @@ export interface ExecCtx {
 
 export class InterpreterError extends Error {}
 
+/**
+ * Narrows container items to entries, loudly: authored SDK content never
+ * records bare items, so one appearing here is an interpreter gap.
+ */
+export function itemsAsEntries(items: readonly PdxItem[], where: string): readonly PdxEntry[] {
+  return items.map((item) => {
+    if (item.kind !== "entry") {
+      throw new InterpreterError(
+        `${where}: bare ${item.kind} items are not modeled. ${coverageSummary()}`
+      );
+    }
+    return item;
+  });
+}
+
 function scalarOf(entry: PdxEntry): PdxScalar {
-  if (entry.value.kind === "block" || entry.value.kind === "list") {
+  if (entry.value.kind === "container") {
     throw new InterpreterError(
-      `${entry.key}: expected a scalar value, got a ${entry.value.kind}. ${coverageSummary()}`
+      `${entry.key}: expected a scalar value, got a container. ${coverageSummary()}`
     );
   }
   return entry.value;
+}
+
+function renderScalar(value: PdxScalar): string {
+  switch (value.kind) {
+    case "bool":
+      return value.value ? "yes" : "no";
+    case "num":
+      return String(value.value);
+    case "str":
+      return value.value;
+    case "var":
+      return value.name;
+    case "math":
+      return value.source;
+  }
 }
 
 function stringArg(entry: PdxEntry): string {
   const value = scalarOf(entry);
   if (value.kind !== "str") {
     throw new InterpreterError(
-      `${entry.key}: expected a name, got ${String(value.value)}. ${coverageSummary()}`
+      `${entry.key}: expected a name, got ${renderScalar(value)}. ${coverageSummary()}`
     );
   }
   return value.value;
@@ -59,7 +90,7 @@ function stringArg(entry: PdxEntry): string {
 function numberArg(entry: PdxEntry): number {
   const value = scalarOf(entry);
   if (value.kind !== "num") {
-    const rendered = value.kind === "bool" ? (value.value ? "yes" : "no") : value.value;
+    const rendered = renderScalar(value);
     throw new InterpreterError(
       `${entry.key} ${entry.op} ${rendered}: expected a number — the numeric v1 line evaluates ` +
         `literals and fixture-stored numbers only; script values and variables are out. ` +
@@ -73,7 +104,7 @@ function boolArg(entry: PdxEntry): boolean {
   const value = scalarOf(entry);
   if (value.kind !== "bool") {
     throw new InterpreterError(
-      `${entry.key}: expected yes/no, got ${String(value.value)}. ${coverageSummary()}`
+      `${entry.key}: expected yes/no, got ${renderScalar(value)}. ${coverageSummary()}`
     );
   }
   return value.value;
@@ -190,12 +221,12 @@ export interface EffectImpl {
 }
 
 function blockEntries(entry: PdxEntry): readonly PdxEntry[] {
-  if (entry.value.kind !== "block") {
+  if (entry.value.kind !== "container") {
     throw new InterpreterError(
       `${entry.key}: expected a block, got a ${entry.value.kind}. ${coverageSummary()}`
     );
   }
-  return entry.value.entries;
+  return itemsAsEntries(entry.value.items, entry.key);
 }
 
 export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {

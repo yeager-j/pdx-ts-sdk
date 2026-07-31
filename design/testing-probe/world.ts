@@ -17,7 +17,8 @@
  * on the one path production cannot check.
  */
 
-import type { PdxEntry } from "../../src/ast.ts";
+import type { PdxEntry } from "@pdx-ts/pdxscript";
+
 import type { DefinedEvent, EventRef } from "../../src/events.ts";
 import type { ScopeName } from "../../src/generated/scopes.ts";
 import { applyEffectEntries, type ForcedArms } from "./interpret.ts";
@@ -33,7 +34,7 @@ import {
   type SimScopeName,
   type WorldState,
 } from "./state.ts";
-import { coverageSummary, InterpreterError, type ExecCtx } from "./whitelist.ts";
+import { coverageSummary, InterpreterError, itemsAsEntries, type ExecCtx } from "./whitelist.ts";
 
 export { DAYS_PER_MONTH, DAYS_PER_YEAR, type ForcedArms } from "./interpret.ts";
 
@@ -81,14 +82,16 @@ interface HarnessFireOpts extends ForcedArms {
 }
 
 function immediateEntriesOf(event: SimEvent): readonly PdxEntry[] | undefined {
-  if (event.entry.value.kind !== "block") {
+  if (event.entry.value.kind !== "container") {
     return undefined;
   }
-  const immediate = event.entry.value.entries.find((entry) => entry.key === "immediate");
-  if (immediate === undefined || immediate.value.kind !== "block") {
+  const immediate = event.entry.value.items.find(
+    (item): item is PdxEntry => item.kind === "entry" && item.key === "immediate"
+  );
+  if (immediate === undefined || immediate.value.kind !== "container") {
     return undefined;
   }
-  return immediate.value.entries;
+  return itemsAsEntries(immediate.value.items, "immediate");
 }
 
 export class World {

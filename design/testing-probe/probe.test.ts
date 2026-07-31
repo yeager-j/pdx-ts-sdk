@@ -12,10 +12,9 @@
  * fixture.
  */
 
+import { kv, serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { kv } from "../../src/ast.ts";
-import { serializeEntries } from "../../src/serialize.ts";
 import { trigger } from "../../src/trigger-core.ts";
 import { isAtWar, numOwnedPlanets } from "../../src/triggers.ts";
 import { evaluate, explain, renderExplanation, run } from "./interpret.ts";
@@ -133,7 +132,7 @@ function makeWorld(): World {
 
 describe("testing probe", () => {
   it("round-trips the probe mod to the hand-written golden", () => {
-    expect(serializeEntries([aftershock.entry, humReturns.entry])).toBe(GOLDEN_MOD);
+    expect(serialize([aftershock.entry, humReturns.entry])).toBe(GOLDEN_MOD);
   });
 
   it("evaluate and explain name the one failing subcondition", () => {

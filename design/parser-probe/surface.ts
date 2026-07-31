@@ -14,7 +14,8 @@
  * unknown technology id all throw with file and line.
  */
 
-import { type PdxEntry } from "../../src/ast.ts";
+import { type PdxEntry } from "@pdx-ts/pdxscript";
+
 import type { ResearchArea } from "../../src/generated/enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef } from "../../src/generated/refs.ts";
 import { trigger, type Trigger } from "../../src/trigger-core.ts";
@@ -135,7 +136,12 @@ export class ParsedTechnology {
   }
 
   toEntries(): PdxEntry {
-    return { key: this.id, op: "=", value: { kind: "block", entries: lowerEntries(this.body) } };
+    return {
+      kind: "entry",
+      key: this.id,
+      op: "=",
+      value: { kind: "container", items: lowerEntries(this.body) },
+    };
   }
 }
 
