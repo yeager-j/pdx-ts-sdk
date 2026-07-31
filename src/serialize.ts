@@ -1,6 +1,7 @@
 import type { PdxEntry, PdxScalar, PdxValue } from "./ast.ts";
 
-const BARE_STRING = /^[A-Za-z0-9_.:@-]+$/;
+// `/` is empirically bare: vanilla writes `script = technologies/...` unquoted.
+const BARE_STRING = /^[A-Za-z0-9_.:@/-]+$/;
 
 function serializeScalar(scalar: PdxScalar): string {
   switch (scalar.kind) {
