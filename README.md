@@ -174,6 +174,37 @@ Status: the model passed its gated probe (`design/testing-probe/` is the
 design record, [docs/verdict-testing-probe.md](docs/verdict-testing-probe.md)
 the verdict); the API has not landed in `src/` yet.
 
+## Patching vanilla
+
+PDXScript overrides are whole-object replacement, so changing one field of a
+vanilla technology means re-emitting the complete object — which requires
+parsing the game's own files. The parser surfaces a vanilla definition as a
+typed object; a patch is a plain TypeScript transform over it:
+
+```ts
+const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
+
+patchTechnology(geneTailoring, (t) => ({
+  cost: t.cost.value * 2, // cost is @tier3cost1 in the file — .value bakes visibly
+  prerequisites: [...t.prerequisites, myNewTech],
+}));
+```
+
+Numbers parse as value-plus-provenance: `cost` in the file is the scripted
+variable `@tier3cost1`, so `t.cost * 2` is a compile error — take `.value`
+to bake the resolved number, or pass the whole object through and the
+reference re-emits as `@tier3cost1`. Fields the type model does not cover
+(`weight_modifier`, `technology_swap`, `ai_weight`, ...) are carried through
+in original order and re-emitted complete; a patched field keeps its slot in
+the file's own field order. Unknown `@variables`, invalid enum values, and
+unknown ids all fail at parse time with file and line — never a silent
+widening to `string`.
+
+Status: the model passed its gated probe (`design/parser-probe/` is the
+design record, [docs/verdict-parser-probe.md](docs/verdict-parser-probe.md)
+the verdict — including a parse → emit → re-parse fixpoint over the real
+install's technology tree); the parser has not landed in `src/` yet.
+
 ## Generated types
 
 `src/generated/` is produced by `tools/codegen` from the vendored
@@ -235,5 +266,8 @@ the follow-up work. The mod-testing evaluator
 ([docs/handoff-mod-testing.md](docs/handoff-mod-testing.md)) passed its own
 gated probe the same way —
 [docs/verdict-testing-probe.md](docs/verdict-testing-probe.md) — and awaits
-implementation. Then the PDXScript parser, unlocking patches, real identifier
-namespaces, and the load-order linter.
+implementation. The PDXScript parser passed its round-trip-fidelity probe
+([docs/verdict-parser-probe.md](docs/verdict-parser-probe.md)): a vanilla
+technology unifies with the typed model and survives parse → typed surface →
+patch → re-emit. Next: the parser implementation in `src/`, unlocking
+patches, real identifier namespaces, and the load-order linter.
