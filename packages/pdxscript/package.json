@@ -1,0 +1,21 @@
+{
+  "name": "@pdx-ts/pdxscript",
+  "version": "0.0.0",
+  "description": "Parser and serializer for PDXScript, the Clausewitz engine script format (Stellaris-tested): order-preserving, duplicate-preserving, semantic round-trip",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "paradox",
+    "pdxscript",
+    "clausewitz",
+    "stellaris",
+    "parser",
+    "modding"
+  ]
+}

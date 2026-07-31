@@ -1,0 +1,123 @@
+/**
+ * The PDXScript AST.
+ *
+ * The shape follows the grammar (see GRAMMAR.md), not the uses: a braced
+ * value is one node — a container of items, each item a scalar or a
+ * `key op value` entry. "List" and "block" are not node kinds; they are
+ * renderings the serializer derives from what a container holds. This is the
+ * design the strict list/block split could not survive contact with:
+ * vanilla's `prerequisites = { tech_stingers OR = { ... } }` mixes both in
+ * one container, and here that is ordinary data, not an error.
+ *
+ * Two scalar kinds carry constructs whose *semantics* live outside this
+ * package: `var` is an `@name` reference (resolution against scripted
+ * variables is game knowledge), and `math` is an `@[ ... ]` expression
+ * carried verbatim. Both re-serialize exactly; neither is interpreted.
+ *
+ * Entries carry an optional source line — the parser always sets it,
+ * hand-built trees omit it, and tree comparisons ignore it.
+ */
+
+export type PdxOp = "=" | ">" | "<" | ">=" | "<=" | "!=";
+
+export type PdxScalar =
+  | { kind: "str"; value: string; quoted: boolean }
+  | { kind: "num"; value: number }
+  | { kind: "bool"; value: boolean }
+  | { kind: "var"; name: string }
+  | { kind: "math"; source: string };
+
+export interface PdxContainer {
+  readonly kind: "container";
+  /**
+   * A scalar immediately preceding the braces at value position: `hsv` in
+   * `color = hsv { 0.63 0.13 0.5 }`. Open-ended (`rgb`, `hsv360`, `hex`,
+   * `LIST`, ...) — the rule is positional, not a name list.
+   */
+  readonly header?: string;
+  readonly items: readonly PdxItem[];
+}
+
+export interface PdxEntry {
+  readonly kind: "entry";
+  readonly key: string;
+  readonly op: PdxOp;
+  readonly value: PdxValue;
+  /** 1-based source line; set by the parser, absent on hand-built trees. */
+  readonly line?: number;
+}
+
+export type PdxItem = PdxEntry | PdxScalar | PdxContainer;
+
+export type PdxValue = PdxScalar | PdxContainer;
+
+/**
+ * Something the parser recognised as malformed but repaired the way the game
+ * does — shipped vanilla files contain each of these. Never dropped silently:
+ * strict callers fail when `diagnostics` is non-empty.
+ */
+export interface PdxDiagnostic {
+  readonly kind: "stray-closing-brace" | "unclosed-at-eof" | "operator-less-entry";
+  readonly fileName: string;
+  readonly line: number;
+  readonly text: string;
+}
+
+/** A parsed source file: its name (for diagnostics) and its top-level entries. */
+export interface PdxDocument {
+  readonly fileName: string;
+  readonly entries: readonly PdxEntry[];
+  readonly diagnostics: readonly PdxDiagnostic[];
+}
+
+export function scalar(value: string | number | boolean): PdxScalar {
+  switch (typeof value) {
+    case "string":
+      return { kind: "str", value, quoted: false };
+    case "number":
+      return { kind: "num", value };
+    case "boolean":
+      return { kind: "bool", value };
+  }
+}
+
+export function quoted(value: string): PdxScalar {
+  return { kind: "str", value, quoted: true };
+}
+
+/** An `@name` reference. Emits bare; resolving it is the caller's business. */
+export function varRef(name: string): PdxScalar {
+  return { kind: "var", name };
+}
+
+/** An `@[ ... ]` expression, carried verbatim. */
+export function inlineMath(source: string): PdxScalar {
+  return { kind: "math", source };
+}
+
+export function container(items: readonly PdxItem[], header?: string): PdxContainer {
+  return { kind: "container", header, items };
+}
+
+export function entry(key: string, op: PdxOp, value: PdxValue): PdxEntry {
+  return { kind: "entry", key, op, value };
+}
+
+export function kv(key: string, value: string | number | boolean | PdxValue): PdxEntry {
+  const isNode = typeof value === "object" && value !== null && "kind" in value;
+  return entry(key, "=", isNode ? value : scalar(value));
+}
+
+export function cmp(key: string, op: PdxOp, value: number): PdxEntry {
+  return entry(key, op, scalar(value));
+}
+
+/** Sugar for the common all-entries container: `key = { a = 1 b = 2 }`. */
+export function block(key: string, entries: readonly PdxEntry[]): PdxEntry {
+  return kv(key, container(entries));
+}
+
+/** Sugar for the common all-scalars container: `key = { a b c }`. */
+export function list(key: string, items: readonly PdxScalar[]): PdxEntry {
+  return kv(key, container(items));
+}
