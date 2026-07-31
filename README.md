@@ -202,8 +202,13 @@ widening to `string`.
 
 Status: the model passed its gated probe (`design/parser-probe/` is the
 design record, [docs/verdict-parser-probe.md](docs/verdict-parser-probe.md)
-the verdict — including a parse → emit → re-parse fixpoint over the real
-install's technology tree); the parser has not landed in `src/` yet.
+the verdict), and the parser has landed as
+[@pdx-ts/pdxscript](packages/pdxscript/README.md) — a standalone,
+publishable workspace package the SDK now builds on (one AST, one
+serializer). It is gated by a per-claim suite, a round-trip fixpoint over
+the entire vanilla `common/` tree, a tree differential against jomini, and
+fast-check property tests. The typed patch surface (`patchTechnology`) has
+not landed in `src/` yet.
 
 ## Generated types
 
@@ -267,7 +272,9 @@ the follow-up work. The mod-testing evaluator
 gated probe the same way —
 [docs/verdict-testing-probe.md](docs/verdict-testing-probe.md) — and awaits
 implementation. The PDXScript parser passed its round-trip-fidelity probe
-([docs/verdict-parser-probe.md](docs/verdict-parser-probe.md)): a vanilla
-technology unifies with the typed model and survives parse → typed surface →
-patch → re-emit. Next: the parser implementation in `src/`, unlocking
-patches, real identifier namespaces, and the load-order linter.
+([docs/verdict-parser-probe.md](docs/verdict-parser-probe.md)) and then
+landed as [@pdx-ts/pdxscript](packages/pdxscript/README.md), the workspace
+package the SDK's AST and serializer now come from — validated against the
+entire vanilla `common/` tree and differential-tested against jomini. Next:
+the typed patch surface (`patchTechnology`), real identifier namespaces, and
+the load-order linter, all consumers of the parsed model.
