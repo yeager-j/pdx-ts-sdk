@@ -1,8 +1,20 @@
 # Handoff: one emitter, many registries
 
-The API-breadth phase. Written after the patches slice landed and passed its
-in-game calibration (2026-07-31), for whoever generalizes the content-type
-codegen before `defineTradition`, `defineEdict`, and the rest get built.
+> **Implemented 2026-07-31.** Content sources now come from one explicit
+> manifest, `emit/content-type.ts` emits types plus runtime field metadata, and
+> one generic content module backs generated `Mod.defineX` methods for
+> technologies, buildings, traditions, tradition categories, agendas, and
+> edicts.
+> Agenda then proved the next reusable shape: effect closures are inferred
+> generically from the CWT alias category, and duplicate localization patterns
+> are collapsed with an explicit codegen report. Edict then added reusable
+> economic-resource and triggered-modifier shapes without introducing a
+> registry-name branch. Curated allowlists remain the quality gate; omitted
+> fields are still reported per registry.
+
+The API-breadth phase. Originally written after the patches slice landed and
+passed its in-game calibration (2026-07-31), before the content-type codegen
+was generalized.
 
 Read [verdict-patches.md](verdict-patches.md) for the state of the world and
 [verdict-effects-probe.md](verdict-effects-probe.md) for the precedent that
@@ -12,10 +24,10 @@ move to content types.
 
 ## The problem
 
-`vendor/cwtools-stellaris-config/config/common/` holds **130 rule files** —
-one per content family. The SDK loads exactly one
-(`technologies_consolidated.cwt`, via the pinned `RULE_FILES` allowlist in
-`tools/codegen/cwt/rules.ts`), and emits it through a **bespoke emitter**
+`vendor/cwtools-stellaris-config/config/common/` currently holds **129 top-level
+rule files**, declaring 213 content types. The SDK originally loaded exactly
+one (`technologies_consolidated.cwt`, via the pinned `RULE_FILES` allowlist in
+`tools/codegen/cwt/rules.ts`) and emitted it through a **bespoke emitter**
 (`tools/codegen/emit/technology.ts`). If the second content type gets a
 second emitter file, the eightieth gets an eightieth, and "flesh out the
 API" becomes O(registries) handwork — the exact treadmill the design doc
@@ -31,14 +43,14 @@ about what a field lowering means.
 `emit/technology.ts` is ~183 lines, and almost all of it is already
 general-purpose machinery wearing a technology-shaped name:
 
-| Function | What it does | Technology-specific? |
-| --- | --- | --- |
-| `flatten` | folds `subtype[…]` blocks into optional fields with the predicate in TSDoc | no — pure rule-shape |
-| `mergeByName` | groups overloaded rule keys | no |
-| `pickDeclaration` | picks the first declaration the SDK can type | no |
-| `memberType` | trigger-block / bare-refs / scalar lowering via `Emitter.valueFor`/`unionFor` | no |
-| `localisationMembers` | loc slots from the cwt `localisation = { ... }` block | no — driven by `ContentType.localisation` |
-| interface name, docs header | `TechnologyFields`, `type[technology]` | trivially parameterizable |
+| Function                    | What it does                                                                  | Technology-specific?                      |
+| --------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------- |
+| `flatten`                   | folds `subtype[…]` blocks into optional fields with the predicate in TSDoc    | no — pure rule-shape                      |
+| `mergeByName`               | groups overloaded rule keys                                                   | no                                        |
+| `pickDeclaration`           | picks the first declaration the SDK can type                                  | no                                        |
+| `memberType`                | trigger-block / bare-refs / scalar lowering via `Emitter.valueFor`/`unionFor` | no                                        |
+| `localisationMembers`       | loc slots from the cwt `localisation = { ... }` block                         | no — driven by `ContentType.localisation` |
+| interface name, docs header | `TechnologyFields`, `type[technology]`                                        | trivially parameterizable                 |
 
 The genuinely per-type content is **three overlay entries**:
 `TECHNOLOGY_EMITTED_FIELDS` (which fields the runtime writer can emit),
@@ -60,13 +72,21 @@ treadmill wearing runtime clothes.
 const ascension = mod.defineTradition({
   id: "pp_mod_tradition_ascension",
   name: "Synthetic Ascension",
-  category: "pp_mod_tradition_category_machines",
   possible: hasAuthority("auth_machine_intelligence"),
   modifier: { pop_growth_speed: 0.1 },
 });
+
+mod.defineTraditionCategory({
+  id: "pp_mod_tradition_category_machines",
+  name: "Machine Futures",
+  treeTemplate: "tree_template_5",
+  adoptionBonus: ascension,
+  finishBonus: ascension,
+  traditions: [ascension],
+});
 ```
 
-with the marginal cost of the *n*-th content type being: **one manifest
+with the marginal cost of the _n_-th content type being: **one manifest
 entry** (cwt source file, type name), **overlay rows** where the type is
 genuinely weird, and **goldens** — no new emitter file, no new writer
 class, no new `Mod` method written by hand.
@@ -84,7 +104,7 @@ allowlist stays a hand-synced contract between two files that cannot see
 each other.
 
 **B. Generated field table, one generic writer (the deep-module move).**
-Codegen emits, per type, not just the interface but a *field manifest* —
+Codegen emits, per type, not just the interface but a _field manifest_ —
 data, not code:
 
 ```ts
@@ -106,7 +126,7 @@ Per-type classes shrink to a thin branded wrapper (something must still
 `implements TechRef`), or disappear into a generic `DefinedContent<T>`.
 
 B is the recommendation this handoff argues for — the allowlist becomes
-*derivable* (a field is emittable iff its shape has a lowering), the
+_derivable_ (a field is emittable iff its shape has a lowering), the
 runtime and the types can no longer disagree, and the per-type cost drops
 to overlay rows. The risk to respect: a generic writer that starts
 accreting `if (type === "technology")` branches is worse than eighty
@@ -116,16 +136,16 @@ feel expensive.
 
 ## What you already have for free
 
-|  |  |
-| --- | --- |
-| The near-generic emitter | `tools/codegen/emit/technology.ts` — see audit table above |
-| Scalar/ref/enum lowering | `Emitter.valueFor`/`unionFor` (`emit/types.ts`), shared by triggers and effects already |
-| Output-folder + loc slots per type | `ContentType.path` and `.localisation`, parsed from the cwt `type[...]` block |
-| The weight-block shape | `randomList`'s arm modifiers (`{ factor, when: Trigger }` as data) — `weight_modifier`/`ai_weight` on definitions are the same lowering without the closure |
-| Codegen-at-scale precedent | effects clustering (87 clusters, 41 interfaces) — including how to report what was skipped |
-| Generated methods on a hand-written class | `src/events.ts` module augmentation onto generated scope interfaces — the pattern if `Mod.defineX` methods end up generated |
-| The overlay discipline | `tools/codegen/overlay.ts` + drift baseline; per-type rows slot straight in |
-| Byte-stable conformance oracle | `tests/tech.test.ts`, `tests/example-mod.test.ts` goldens — the generic writer must reproduce them before touching a second type |
+|                                           |                                                                                                                                                             |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The near-generic emitter                  | `tools/codegen/emit/technology.ts` — see audit table above                                                                                                  |
+| Scalar/ref/enum lowering                  | `Emitter.valueFor`/`unionFor` (`emit/types.ts`), shared by triggers and effects already                                                                     |
+| Output-folder + loc slots per type        | `ContentType.path` and `.localisation`, parsed from the cwt `type[...]` block                                                                               |
+| The weight-block shape                    | `randomList`'s arm modifiers (`{ factor, when: Trigger }` as data) — `weight_modifier`/`ai_weight` on definitions are the same lowering without the closure |
+| Codegen-at-scale precedent                | effects clustering (87 clusters, 41 interfaces) — including how to report what was skipped                                                                  |
+| Generated methods on a hand-written class | `src/events.ts` module augmentation onto generated scope interfaces — the pattern if `Mod.defineX` methods end up generated                                 |
+| The overlay discipline                    | `tools/codegen/overlay.ts` + drift baseline; per-type rows slot straight in                                                                                 |
+| Byte-stable conformance oracle            | `tests/tech.test.ts`, `tests/example-mod.test.ts` goldens — the generic writer must reproduce them before touching a second type                            |
 
 ## The open questions
 
@@ -142,7 +162,7 @@ subtypes; traditions (`tradition_swap` filtering), edicts, and civics lean
 harder on subtyping. Discriminated unions are the honest encoding and a
 real emitter complication. A recorded judgment either way beats drift.
 
-**3. Swap authoring.** `technology_swap`/`tradition_swap` as *new content*
+**3. Swap authoring.** `technology_swap`/`tradition_swap` as _new content_
 is a mini-definition nested in a definition — its own name, trigger, loc,
 and field overrides. Not sketched anywhere. It is data-shaped (no
 closures), so it should fall out of the same field-manifest machinery if
@@ -158,7 +178,7 @@ sugar. Whichever wins, duplicate-id and prefix guards are generic already.
 **5. How `RULE_FILES` grows.** The pinned eight-file allowlist was right
 for one type; at eighty it needs a policy. Load-all-report-unparseable
 matches the no-silent-caps convention, but note the technology rules came
-from a hand-*consolidated* cwt file — check whether `traditions.cwt` (and
+from a hand-_consolidated_ cwt file — check whether `traditions.cwt` (and
 friends) parse cleanly with the existing reader or whether consolidation
 was load-bearing.
 

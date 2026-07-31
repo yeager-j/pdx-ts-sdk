@@ -7,8 +7,8 @@
  */
 
 import type { ResearchArea } from "../../src/generated/enums.ts";
+import type { TechnologyDef } from "../../src/generated/technology.ts";
 import { isPlanet } from "../../src/generated/triggers.ts";
-import type { TechnologyDef } from "../../src/tech.ts";
 import { patchTechnology } from "./patch.ts";
 import { chimericGrafts, geneForging } from "./probe.ts";
 

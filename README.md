@@ -11,7 +11,7 @@ PDXScript.
 ## Quickstart
 
 ```ts
-import { and, eventTarget, hasCountryFlag, hasOwner, Mod, not } from "@pdx-ts/sdk";
+import { and, eventTarget, hasAuthority, hasCountryFlag, hasOwner, Mod, not } from "@pdx-ts/sdk";
 
 const mod = new Mod({
   name: "Hello Galaxy",
@@ -40,6 +40,60 @@ mod.defineTechnology({
 });
 
 await mod.synth("./out");
+```
+
+The same generated content module backs buildings, agendas, edicts, and
+traditions. Effect blocks use the same scope-checked recorder as events, and
+defined content can be passed directly through cross-registry references:
+
+```ts
+const agenda = mod.defineAgenda({
+  id: "hello_galaxy_agenda_machine_futures",
+  name: "Machine Futures",
+  agendaCost: 1000,
+  effect: (country) => {
+    country.addResource({ resource: "unity", amount: 500 });
+  },
+});
+
+const ascension = mod.defineTradition({
+  id: "hello_galaxy_tradition_ascension",
+  name: "Synthetic Ascension",
+  unlocksAgenda: agenda,
+  possible: hasAuthority("auth_machine_intelligence"),
+  modifier: { pop_growth_speed: 0.1 },
+});
+
+mod.defineTraditionCategory({
+  id: "hello_galaxy_tradition_category_machines",
+  name: "Machine Futures",
+  treeTemplate: "tree_template_5",
+  adoptionBonus: ascension,
+  finishBonus: ascension,
+  traditions: [ascension],
+});
+
+mod.defineEdict({
+  id: "hello_galaxy_edict_machine_mobilization",
+  name: "Machine Mobilization",
+  length: 3600,
+  icon: "GFX_edict_machine_mobilization",
+  resources: [
+    {
+      category: "edicts",
+      upkeep: { amounts: { unity: 2 } },
+    },
+  ],
+  triggeredCountryModifier: [
+    {
+      when: hasAuthority("auth_machine_intelligence"),
+      modifiers: { country_naval_cap_mult: 0.1 },
+    },
+  ],
+  effect: (country) => {
+    country.setCountryFlag("machine_mobilization_active");
+  },
+});
 ```
 
 Events work the same way — except effect blocks are closures that really run,
@@ -81,8 +135,8 @@ mod.defineCountryEvent({
 ```
 
 `synth` writes a complete, launcher-ready mod folder: `descriptor.mod`,
-namespaced `common/technology/*.txt` and `events/*.txt`, and BOM-prefixed
-localization `.yml`.
+namespaced files under each populated `common/` registry, `events/*.txt`, and
+BOM-prefixed localization `.yml`.
 
 ## Design pillars
 
@@ -138,7 +192,11 @@ const world = fixture(
   {
     globalFlags: [globals.lattice_awake],
     countries: [
-      { name: "player", flags: [flags.heard_the_hum], planets: [{ name: "alpha" }, { name: "beta" }] },
+      {
+        name: "player",
+        flags: [flags.heard_the_hum],
+        planets: [{ name: "alpha" }, { name: "beta" }],
+      },
       { name: "rival" },
     ],
   },
@@ -186,10 +244,13 @@ typed object; a patch is a plain TypeScript transform over it:
 ```ts
 const vanilla = stellaris.load();
 
-mod.patchTechnology(vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"), (t) => ({
-  cost: t.cost.value * 2, // cost is @tier3cost1 in the file — .value bakes visibly
-  prerequisites: [...t.prerequisites, myNewTech],
-}));
+mod.patchTechnology(
+  vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
+  (t) => ({
+    cost: t.cost.value * 2, // cost is @tier3cost1 in the file — .value bakes visibly
+    prerequisites: [...t.prerequisites, myNewTech],
+  })
+);
 ```
 
 Numbers parse as value-plus-provenance: `cost` in the file is the scripted
@@ -203,7 +264,7 @@ unknown ids all fail at parse time with file and line — never a silent
 widening to `string`.
 
 The headline is what happens at `synth()`: the patch is emitted into a file
-whose name is *computed from the parsed enumeration* to byte-sort after
+whose name is _computed from the parsed enumeration_ to byte-sort after
 every surviving file defining the key — no `zz_` cargo cult — and the build
 fails loudly when no winning name exists or when the registry's override
 rule is unverified (the per-registry rule table pins its evidence to
@@ -246,9 +307,10 @@ why the rules win where the two conflict.
 Today codegen emits 1054 of 1082 triggers and 976 of 1058 effects — the
 effects as 87 interfaces clustered by scope set (so each signature is emitted
 once, not per scope) plus a serialization meta table that drives the one
-runtime recorder — and the 21-kind event table derived from `type[event]`'s
-subtypes. Nothing is dropped silently: every skipped rule is reported with a
-named reason.
+runtime recorder — the 21-kind event table derived from `type[event]`'s
+subtypes, and six content registries from one content emitter. Nothing is
+dropped silently: every skipped rule or content field is reported with a named
+reason.
 
 Every deliberate departure from a mechanical reading of the rules lives in one
 audited file, `tools/codegen/overlay.ts`. What the rules cannot supply at all —
@@ -271,8 +333,9 @@ PDXScript, reviewable in PRs.
 
 ## Status
 
-Prototype: the technologies and events/effects verticals, with types generated
-from cwtools-stellaris-config. The recorded-closure effects model was
+Prototype: technologies, buildings, agendas, edicts, traditions/categories,
+and events/effects, with types and content-writer metadata generated from
+cwtools-stellaris-config. The recorded-closure effects model was
 validated by a gated, hand-written probe before the emitter was built —
 `design/effects-probe/` is the design record and
 [docs/verdict-effects-probe.md](docs/verdict-effects-probe.md) the verdict;

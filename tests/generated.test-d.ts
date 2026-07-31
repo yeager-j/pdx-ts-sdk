@@ -2,8 +2,8 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import type { EdictRef, TechnologyRef } from "../src/generated/refs.ts";
 import type { ScopeName } from "../src/generated/scopes.ts";
+import type { TechnologyDef } from "../src/generated/technology.ts";
 import { countryFlags, planetFlags, type CountryFlag } from "../src/generated/value-sets.ts";
-import type { TechnologyDef } from "../src/tech.ts";
 import {
   anyTraitOfSpecies,
   hasCountryFlag,

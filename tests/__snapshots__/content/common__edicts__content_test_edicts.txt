@@ -1,0 +1,68 @@
+content_test_edict_machine_mobilization = {
+	length = 3600
+	icon = GFX_edict_machine_mobilization
+	is_wartime_edict = yes
+	edict_lock_in_months = 12
+	edict_cap_usage = 1
+	resources = {
+		category = edicts
+		cost = {
+			unity = 100
+		}
+		upkeep = {
+			trigger = {
+				has_authority = auth_machine_intelligence
+			}
+			unity = 2
+			multiplier = 1
+			multiplier = 2
+		}
+	}
+	unity_cost_mult = 0.9
+	modifier = {
+		country_ship_build_speed_mult = 0.1
+	}
+	triggered_country_modifier = {
+		potential = {
+			has_authority = auth_machine_intelligence
+		}
+		key = content_test_machine_mobilization_modifier
+		show_if_not_potential = no
+		not_potential_override_text_key = content_test_requires_machine_authority
+		modifier = {
+			country_command_limit_add = 1
+		}
+		country_naval_cap_mult = 0.1
+		description = content_test_machine_mobilization_modifier_desc
+		description_parameters = {
+			amount = 10%
+		}
+		show_only_custom_tooltip = no
+		custom_tooltip = content_test_machine_mobilization_modifier_tooltip
+		mult = 1
+		mult = 2
+		multiplier = 0.5
+	}
+	relay_network_modifier = {
+		country_unity_produces_mult = 0.05
+	}
+	potential = {
+		has_authority = auth_machine_intelligence
+	}
+	allow = {
+		has_authority = auth_machine_intelligence
+	}
+	prerequisites = { tech_global_production_strategy }
+	show_tech_unlock_if = {
+		has_authority = auth_machine_intelligence
+	}
+	ai_weight = {
+		base = 50
+	}
+	effect = {
+		set_country_flag = content_test_machine_mobilization_active
+	}
+	on_disabled = {
+		remove_country_flag = content_test_machine_mobilization_active
+	}
+}

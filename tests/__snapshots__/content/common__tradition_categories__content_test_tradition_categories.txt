@@ -1,0 +1,12 @@
+content_test_tradition_category_machines = {
+	tree_template = tree_template_5
+	adoption_bonus = content_test_tradition_ascension
+	finish_bonus = content_test_tradition_ascension
+	traditions = { content_test_tradition_ascension }
+	potential = {
+		has_authority = auth_machine_intelligence
+	}
+	ai_weight = {
+		base = 50
+	}
+}

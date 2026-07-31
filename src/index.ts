@@ -19,6 +19,21 @@ export {
 } from "./effect-core.ts";
 export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
+export type { BuildingDef, BuildingFields, DefinedBuilding } from "./generated/building.ts";
+export type { AgendaDef, AgendaFields, DefinedAgenda } from "./generated/agenda.ts";
+export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";
+export type { DefinedTechnology, TechnologyDef, TechnologyFields } from "./generated/technology.ts";
+export type {
+  DefinedTraditionCategory,
+  TraditionCategoryDef,
+  TraditionCategoryFields,
+} from "./generated/tradition-category.ts";
+export type {
+  DefinedTradition,
+  TraditionDef,
+  TraditionFields,
+  TraditionSwapDef,
+} from "./generated/tradition.ts";
 export type {
   DefinedEvent,
   EventCtx,
@@ -29,9 +44,15 @@ export type {
   UndeclaredFrom,
   WitnessedFireEventArgs,
 } from "./events.ts";
-export type { TechnologyFields } from "./generated/technology.ts";
-export type { TechRef, TechnologyDef } from "./tech.ts";
-export { Technology } from "./tech.ts";
+export type {
+  DefinedContent,
+  EconomicResourceBlock,
+  EconomicResourceOperation,
+  EffectBlock,
+  ModifierBlock,
+  TriggeredModifier,
+  WeightBlock,
+} from "./content.ts";
 export type { ModConfig, PrefixedId } from "./mod.ts";
 export { Mod } from "./mod.ts";
 export * as stellaris from "./stellaris/index.ts";

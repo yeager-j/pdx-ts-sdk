@@ -1,13 +1,14 @@
 /**
- * Loads the `.cwt` files this spike consumes into a single rule set.
+ * Loads the `.cwt` files codegen consumes into a single rule set.
  *
- * Only the inputs the technology and trigger emitters need are read; the rest
- * parse fine but nothing consumes them yet.
+ * Trigger/effect infrastructure is fixed; content registry sources come from
+ * the explicit public-interface manifest.
  */
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import { CONTENT_MANIFEST } from "../content-manifest.ts";
 import { EXTRA_SCOPES } from "../overlay.ts";
 import {
   classify,
@@ -63,6 +64,12 @@ export interface ContentType {
   readonly localisation: readonly { key: string; pattern: string; required: boolean }[];
 }
 
+export interface ContentBody {
+  readonly fields: readonly RuleField[];
+  /** Scope inherited by fields without their own replace/push annotation. */
+  readonly scope: ScopeContext | null;
+}
+
 export interface RuleSet {
   readonly enums: ReadonlyMap<string, readonly string[]>;
   /** Canonical scope name -> every alias the game answers to. */
@@ -72,7 +79,7 @@ export interface RuleSet {
   readonly effects: ReadonlyMap<string, readonly AliasDecl[]>;
   readonly contentTypes: ReadonlyMap<string, ContentType>;
   /** Top-level rule bodies keyed by content type, e.g. `technology = { ... }`. */
-  readonly bodies: ReadonlyMap<string, readonly RuleField[]>;
+  readonly bodies: ReadonlyMap<string, ContentBody>;
   readonly diagnostics: readonly CwtDiagnostic[];
 }
 
@@ -82,10 +89,10 @@ const RULE_FILES = [
   "scopes.cwt",
   "triggers.cwt",
   "effects.cwt",
-  "common/technologies_consolidated.cwt",
   "events/events.cwt",
   "events/event_namespaces.cwt",
-] as const;
+  ...CONTENT_MANIFEST.map((entry) => entry.source),
+].filter((file, index, files) => files.indexOf(file) === index);
 
 const ALIAS_KEY = /^alias\[([a-z_]+):(.+)\]$/;
 const BRACKET_KEY = /^([a-z_]+)\[(.+)\]$/;
@@ -183,11 +190,19 @@ function readLocalisation(block: CwtAssignment): ContentType["localisation"] {
   if (block.value.kind !== "block") {
     return [];
   }
-  return assignments(block.value.nodes).map((entry) => ({
-    key: entry.key.text,
-    pattern: entry.value.kind === "scalar" ? entry.value.text : "",
-    required: entry.options.some((option) => option.name === "required"),
-  }));
+  return assignments(block.value.nodes).flatMap((entry) => {
+    const subtype = BRACKET_KEY.exec(entry.key.text);
+    if (subtype !== null && subtype[1] === "subtype") {
+      return readLocalisation(entry);
+    }
+    return [
+      {
+        key: entry.key.text,
+        pattern: entry.value.kind === "scalar" ? entry.value.text : "",
+        required: entry.options.some((option) => option.name === "required"),
+      },
+    ];
+  });
 }
 
 function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentType>): void {
@@ -235,7 +250,7 @@ function readBodies(
   nodes: readonly CwtNode[],
   known: ReadonlyMap<string, ContentType>,
   singleAliases: ReadonlyMap<string, CwtValue>,
-  into: Map<string, readonly RuleField[]>
+  into: Map<string, ContentBody>
 ): void {
   for (const entry of assignments(nodes)) {
     if (!known.has(entry.key.text) || entry.value.kind !== "block") {
@@ -243,7 +258,10 @@ function readBodies(
     }
     const block = classifyBlock(entry.value, resolverFor(singleAliases));
     if (block.kind === "block") {
-      into.set(entry.key.text, block.fields);
+      into.set(entry.key.text, {
+        fields: block.fields,
+        scope: scopeOf(entry.options),
+      });
     }
   }
 }
@@ -254,7 +272,7 @@ export function loadRules(root: string): RuleSet {
   const triggers = new Map<string, AliasDecl[]>();
   const effects = new Map<string, AliasDecl[]>();
   const contentTypes = new Map<string, ContentType>();
-  const bodies = new Map<string, readonly RuleField[]>();
+  const bodies = new Map<string, ContentBody>();
   const singleAliases = new Map<string, CwtValue>();
   const diagnostics: CwtDiagnostic[] = [];
 

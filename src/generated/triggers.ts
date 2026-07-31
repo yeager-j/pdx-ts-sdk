@@ -12,6 +12,7 @@ import type {
   AnyOrBool,
   AnyOrNoneOrBool,
   AwarenessLevel,
+  BuildingCategory,
   CarrierType,
   ColossusStatu,
   CrisisType,
@@ -12458,7 +12459,7 @@ export function numAsteroidBelts(op: PdxOp, value: number): Trigger<"system"> {
 export interface NumBuildingsArgs {
   type: "any" | BuildingRef | string;
   value: number | readonly [PdxOp, number];
-  category?: string;
+  category?: BuildingCategory;
   disabled?: "any" | boolean;
   inConstruction?: "any" | boolean;
   ownerType?: "normal" | "corporate" | "subject_holding";

@@ -1,0 +1,30 @@
+content_test_agenda_machine_futures = {
+	agenda_cost = 1000
+	agenda_cooldown = 3600
+	potential = {
+		has_authority = auth_machine_intelligence
+	}
+	allow = {
+		has_authority = auth_machine_intelligence
+	}
+	initial_effect_custom_loc = content_test_agenda_machine_futures_initial
+	init_effect = {
+		set_country_flag = content_test_machine_agenda_started
+	}
+	modifier = {
+		country_unity_produces_mult = 0.1
+	}
+	finish_modifier = agenda_defensive_focus_finish
+	effect = {
+		add_resource = {
+			unity = 500
+		}
+	}
+	ai_weight = {
+		base = 25
+		modifier = {
+			factor = 2
+			has_authority = auth_machine_intelligence
+		}
+	}
+}

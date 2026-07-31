@@ -1,0 +1,13 @@
+﻿l_english:
+ council_agenda_content_test_agenda_machine_futures_name:0 "Machine Futures"
+ council_agenda_content_test_agenda_machine_futures_desc:0 "Direct the council toward synthetic ascension."
+ edict_content_test_edict_machine_mobilization:0 "Machine Mobilization"
+ edict_content_test_edict_machine_mobilization_desc:0 "Redirect the economy toward immediate expansion."
+ content_test_building_lab_1:0 "Experimental Lab"
+ content_test_building_lab_1_desc:0 "A proving ground for impossible ideas."
+ content_test_tradition_ascension:0 "Synthetic Ascension"
+ content_test_tradition_ascension_delayed:0 "The flesh is a temporary constraint."
+ content_test_tradition_ascension_desc:0 "Our people approach mechanical perfection."
+ content_test_tradition_ascension_servitor:0 "Custodian Ascension"
+ content_test_tradition_category_machines:0 "Machine Futures"
+ content_test_tradition_category_machines_desc:0 "Choose the shape of tomorrow."

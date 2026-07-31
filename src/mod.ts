@@ -3,13 +3,20 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { kv, serialize } from "@pdx-ts/pdxscript";
 
+import { ContentAuthoring } from "./content.ts";
 import { StaleRuleTableError, VanillaPathCollisionError } from "./errors.ts";
 import { buildEvent, type DefinedEvent, type EventDef } from "./events.ts";
+import {
+  CONTENT_REGISTRIES,
+  GeneratedContentMethods,
+  type ContentDefMap,
+  type ContentTypeName,
+  type DefinedContentMap,
+} from "./generated/content-registry.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { normalizeLogicalPath } from "./resolver/path-order.ts";
 import { collectVarRefs, planPatchEmission, type PatchPlan } from "./resolver/plan.ts";
 import { SUPPORTED_STELLARIS_BUILD } from "./resolver/rules.ts";
-import { Technology, type TechnologyDef } from "./tech.ts";
 import {
   patchTechnology as transformTechnology,
   type PatchedTechnology,
@@ -35,47 +42,36 @@ export interface ModConfig<P extends string = string> {
   acceptGameVersion?: string;
 }
 
-/** An id namespaced under the mod prefix P, e.g. `hello_galaxy_${string}`. */
-export type PrefixedId<P extends string> = `${P}_${string}`;
+export type { PrefixedId } from "./generated/content-registry.ts";
 
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 
-export class Mod<const P extends string = string> {
+export class Mod<const P extends string = string> extends GeneratedContentMethods<P> {
   readonly config: ModConfig<P>;
-  private readonly technologies: Technology[] = [];
+  private readonly content: ContentAuthoring;
   private readonly patches: PatchedTechnology[] = [];
   private readonly events: DefinedEvent<ScopeName, ScopeName | undefined>[] = [];
   private readonly eventIds = new Set<number>();
   private readonly loc = new Map<string, string>();
 
   constructor(config: ModConfig<P>) {
+    super();
     if (!PREFIX_PATTERN.test(config.prefix)) {
       throw new Error(
         `Mod prefix "${config.prefix}" must be lowercase snake_case ([a-z][a-z0-9_]*)`
       );
     }
     this.config = config;
+    this.content = new ContentAuthoring(config.prefix, CONTENT_REGISTRIES, (entries) =>
+      this.registerLocEntries(entries)
+    );
   }
 
-  defineTechnology(def: TechnologyDef<PrefixedId<P>>): Technology {
-    // The id type already requires the prefix; this guard remains for callers
-    // that erased P to plain string (e.g. a Mod built from runtime config).
-    if (!def.id.startsWith(`${this.config.prefix}_`)) {
-      throw new Error(
-        `Technology id "${def.id}" must start with the mod prefix "${this.config.prefix}_" ` +
-          `so it cannot collide with vanilla or other mods`
-      );
-    }
-    if (this.technologies.some((t) => t.id === def.id)) {
-      throw new Error(`Duplicate technology id "${def.id}"`);
-    }
-    const tech = new Technology(def);
-    this.technologies.push(tech);
-    this.registerLoc(def.id, def.name);
-    if (def.desc !== undefined) {
-      this.registerLoc(`${def.id}_desc`, def.desc);
-    }
-    return tech;
+  protected defineGeneratedContent<K extends ContentTypeName>(
+    type: K,
+    def: ContentDefMap<P>[K]
+  ): DefinedContentMap<P>[K] {
+    return this.content.define(type, def) as unknown as DefinedContentMap<P>[K];
   }
 
   /**
@@ -142,14 +138,27 @@ export class Mod<const P extends string = string> {
   }
 
   private registerLoc(key: string, text: string): void {
-    if (this.loc.has(key)) {
-      throw new Error(`Duplicate localization key "${key}"`);
+    this.registerLocEntries([[key, text]]);
+  }
+
+  private registerLocEntries(entries: readonly (readonly [string, string])[]): void {
+    const pending = new Set<string>();
+    for (const [key] of entries) {
+      if (this.loc.has(key) || pending.has(key)) {
+        throw new Error(`Duplicate localization key "${key}"`);
+      }
+      pending.add(key);
     }
-    if (text.includes('"')) {
-      console.warn(`Localization "${key}": Paradox yml has no quote escaping; replacing " with '`);
-      text = text.replaceAll('"', "'");
+    for (const [key, source] of entries) {
+      let text = source;
+      if (text.includes('"')) {
+        console.warn(
+          `Localization "${key}": Paradox yml has no quote escaping; replacing " with '`
+        );
+        text = text.replaceAll('"', "'");
+      }
+      this.loc.set(key, text);
     }
-    this.loc.set(key, text);
   }
 
   /**
@@ -179,14 +188,15 @@ export class Mod<const P extends string = string> {
     // technology file can only define prefixed keys, but its *name* competes
     // for path order and must not be chosen again for the patch file.
     const ownTechPath = `common/technology/${prefix}_technology.txt`;
+    const technologyEntries = this.content.entries("technology");
     const enumeration: VanillaFile[] = [
       ...origin.files.filter((file) => file.path.startsWith("common/technology/")),
-      ...(this.technologies.length > 0
+      ...(technologyEntries.length > 0
         ? [
             {
               path: normalizeLogicalPath(ownTechPath),
-              sha256: sha256Hex(serialize(this.technologies.map((t) => t.toEntries()))),
-              keys: this.technologies.map((t) => t.id),
+              sha256: sha256Hex(serialize(technologyEntries)),
+              keys: this.content.ids("technology"),
             },
           ]
         : []),
@@ -225,11 +235,8 @@ export class Mod<const P extends string = string> {
     const { prefix } = this.config;
     const files = new Map<string, string>();
     files.set("descriptor.mod", this.renderDescriptor());
-    if (this.technologies.length > 0) {
-      files.set(
-        `common/technology/${prefix}_technology.txt`,
-        serialize(this.technologies.map((t) => t.toEntries()))
-      );
+    for (const [relPath, contents] of this.content.render()) {
+      files.set(relPath, contents);
     }
     if (this.events.length > 0) {
       files.set(

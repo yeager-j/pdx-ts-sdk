@@ -9,12 +9,13 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { format, resolveConfig } from "prettier";
 
-import { loadRules, scopeIndex } from "./cwt/rules.ts";
+import { CONTENT_MANIFEST } from "./content-manifest.ts";
+import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
+import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
 import type { SkippedRule } from "./emit/shape.ts";
 import { canonicalScopes, emitEnums, emitRefs, emitScopes, emitValueSets } from "./emit/support.ts";
-import { emitTechnology } from "./emit/technology.ts";
 import { emitTriggers } from "./emit/triggers.ts";
 import { Emitter } from "./emit/types.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
@@ -108,14 +109,23 @@ async function main(): Promise<void> {
   const effects = emitEffects(emitter, docs.effects, index);
   const effectUsage = emitter.endFile();
 
-  const technologyType = rules.contentTypes.get("technology");
-  const technologyFields = rules.bodies.get("technology");
-  if (technologyType === undefined || technologyFields === undefined) {
-    throw new Error("technologies_consolidated.cwt no longer declares type[technology]");
+  const contents: Array<{
+    manifest: (typeof CONTENT_MANIFEST)[number];
+    type: ContentType;
+    emission: ContentEmission;
+    usage: ReturnType<Emitter["endFile"]>;
+  }> = [];
+  for (const manifest of CONTENT_MANIFEST) {
+    const type = rules.contentTypes.get(manifest.type);
+    const body = rules.bodies.get(manifest.type);
+    if (type === undefined || body === undefined) {
+      throw new Error(`${manifest.source} no longer declares type[${manifest.type}] and its body`);
+    }
+    emitter.beginFile();
+    const emission = emitContentType(emitter, type, body);
+    const usage = emitter.endFile();
+    contents.push({ manifest, type, emission, usage });
   }
-  emitter.beginFile();
-  const technology = emitTechnology(emitter, technologyType, technologyFields);
-  const technologyUsage = emitter.endFile();
 
   await write(
     "scopes.ts",
@@ -130,20 +140,51 @@ async function main(): Promise<void> {
     "value-sets.ts",
     header(commit, ["value sets referenced across the rule files"]) + emitValueSets(emitter)
   );
+  for (const content of contents) {
+    const runtimeTypes = [
+      "ContentField",
+      "ContentLocalisation",
+      "DefinedContent",
+      "EconomicResourceBlock",
+      "EffectBlock",
+      "ModifierBlock",
+      "TriggeredModifier",
+      "WeightBlock",
+    ].filter((name) => content.emission.code.includes(name));
+    await write(
+      `${content.manifest.type.replaceAll("_", "-")}.ts`,
+      header(commit, [content.manifest.source]) +
+        importList("../content.ts", runtimeTypes) +
+        (content.emission.code.includes("Trigger<")
+          ? 'import type { Trigger } from "../trigger-core.ts";\n'
+          : "") +
+        (content.emission.code.includes("ScopeName")
+          ? 'import type { ScopeName } from "./scopes.ts";\n'
+          : "") +
+        importList(
+          "./enums.ts",
+          content.usage.enums.map((name) => emitter.enumTypeName(name))
+        ) +
+        importList(
+          "./refs.ts",
+          content.usage.refs.map((name) => emitter.refTypeName(name))
+        ) +
+        importList(
+          "./value-sets.ts",
+          content.usage.valueSets.map((name) => emitter.valueSetTypeName(name))
+        ) +
+        "\n" +
+        content.emission.code
+    );
+  }
   await write(
-    "technology.ts",
-    header(commit, ["common/technologies_consolidated.cwt"]) +
-      'import type { Trigger } from "../trigger-core.ts";\n' +
-      importList(
-        "./enums.ts",
-        technologyUsage.enums.map((name) => emitter.enumTypeName(name))
-      ) +
-      importList(
-        "./refs.ts",
-        technologyUsage.refs.map((name) => emitter.refTypeName(name))
-      ) +
-      "\n" +
-      technology.code
+    "content-registry.ts",
+    header(
+      commit,
+      CONTENT_MANIFEST.map((entry) => entry.source).filter(
+        (source, index, sources) => sources.indexOf(source) === index
+      )
+    ) + contentRegistry(contents)
   );
   await write(
     "triggers.ts",
@@ -214,16 +255,117 @@ async function main(): Promise<void> {
       ` (${[...effects.byShape].map(([kind, n]) => `${kind} ${n}`).join(", ")}` +
       `; clusters ${effects.clusterCount})`
   );
-  console.log(
-    `technology: ${technology.emittedFields.length} of ${technologyFields.length} rule fields`
-  );
+  for (const content of contents) {
+    console.log(
+      `${content.manifest.type}: ${content.emission.emittedFields.length} curated fields emitted`
+    );
+  }
   console.log(`event kinds: ${events.kinds}`);
 
   reportSection("Triggers not emitted", summarise(triggers.skipped));
   reportSection("Effects not emitted", summarise(effects.skipped));
   reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
-  reportSection("Technology fields modelled but not yet emitted", technology.unemittedFields);
-  reportSection("Technology fields the emitter could not type", technology.unsupported);
+  for (const content of contents) {
+    reportSection(
+      `${content.manifest.type} fields modelled but not yet emitted`,
+      content.emission.unemittedFields
+    );
+    reportSection(
+      `${content.manifest.type} fields the emitter could not lower`,
+      content.emission.unsupported
+    );
+    reportSection(
+      `${content.manifest.type} localization aliases collapsed`,
+      content.emission.localisationAliases
+    );
+  }
+}
+
+function contentRegistry(
+  contents: readonly {
+    manifest: (typeof CONTENT_MANIFEST)[number];
+    type: ContentType;
+    emission: ContentEmission;
+  }[]
+): string {
+  const imports = contents
+    .map((content) => {
+      const file = `./${content.manifest.type.replaceAll("_", "-")}.ts`;
+      const values = [content.emission.fieldsConstant, content.emission.localisationConstant];
+      const types = [`${content.emission.typeName}Def`, `Defined${content.emission.typeName}`];
+      return (
+        `import { ${values.join(", ")} } from ${JSON.stringify(file)};\n` +
+        `import type { ${types.join(", ")} } from ${JSON.stringify(file)};\n`
+      );
+    })
+    .join("");
+  const descriptors = contents
+    .map((content) => {
+      const sourcePath = content.type.path;
+      if (sourcePath === null || !sourcePath.startsWith("game/")) {
+        throw new Error(`type[${content.manifest.type}] has unusable path ${sourcePath}`);
+      }
+      const outputDir = sourcePath.slice("game/".length);
+      const fileStem = path.posix.basename(outputDir);
+      return (
+        "  {\n" +
+        `    type: ${JSON.stringify(content.manifest.type)},\n` +
+        `    outputDir: ${JSON.stringify(outputDir)},\n` +
+        `    fileStem: ${JSON.stringify(fileStem)},\n` +
+        `    fields: ${content.emission.fieldsConstant},\n` +
+        `    localisation: ${content.emission.localisationConstant},\n` +
+        "  },\n"
+      );
+    })
+    .join("");
+  const defMap = contents
+    .map(
+      (content) =>
+        `  ${JSON.stringify(content.manifest.type)}: ${content.emission.typeName}Def<PrefixedId<P>>;\n`
+    )
+    .join("");
+  const definedMap = contents
+    .map(
+      (content) =>
+        `  ${JSON.stringify(content.manifest.type)}: Defined${content.emission.typeName}<PrefixedId<P>>;\n`
+    )
+    .join("");
+  const methods = contents
+    .map((content) => {
+      const method = `define${content.emission.typeName}`;
+      const key = JSON.stringify(content.manifest.type);
+      const article = /^[aeiou]/i.test(content.manifest.type) ? "an" : "a";
+      return (
+        `  /** Defines ${article} ${content.manifest.type.replaceAll("_", " ")} in this mod. */\n` +
+        `  ${method}(def: ContentDefMap<P>[${key}]): DefinedContentMap<P>[${key}] {\n` +
+        `    return this.defineGeneratedContent(${key}, def);\n` +
+        "  }\n"
+      );
+    })
+    .join("\n");
+  return (
+    'import type { ContentRegistryDescriptor } from "../content.ts";\n' +
+    imports +
+    "\n" +
+    "export type PrefixedId<P extends string> = `${P}_${string}`;\n\n" +
+    "export const CONTENT_REGISTRIES = [\n" +
+    descriptors +
+    "] as const satisfies readonly ContentRegistryDescriptor[];\n\n" +
+    'export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];\n\n' +
+    "export interface ContentDefMap<P extends string> {\n" +
+    defMap +
+    "}\n\n" +
+    "export interface DefinedContentMap<P extends string> {\n" +
+    definedMap +
+    "}\n\n" +
+    "export abstract class GeneratedContentMethods<const P extends string> {\n" +
+    "  protected abstract defineGeneratedContent<K extends ContentTypeName>(\n" +
+    "    type: K,\n" +
+    "    def: ContentDefMap<P>[K]\n" +
+    "  ): DefinedContentMap<P>[K];\n\n" +
+    methods +
+    "}\n"
+  );
 }
 
 function importList(from: string, names: readonly string[]): string {

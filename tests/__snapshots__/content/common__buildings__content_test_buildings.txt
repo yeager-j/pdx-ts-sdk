@@ -1,0 +1,19 @@
+content_test_building_lab_1 = {
+	base_buildtime = 360
+	category = research
+	capital = yes
+	capital_tier = 2
+	can_demolish = no
+	can_build = yes
+	is_capped_by_modifier = yes
+	allow = {
+		is_capital = yes
+	}
+	planet_modifier = {
+		planet_jobs_engineering_research_produces_mult = 0.1
+	}
+	show_in_tech = tech_basic_science_lab_1
+	upgrades = { content_test_building_lab_2 }
+	prerequisites = { tech_basic_science_lab_1 }
+	convert_to = { building_ruined_lab }
+}

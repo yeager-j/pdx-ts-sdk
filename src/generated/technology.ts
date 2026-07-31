@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/technologies_consolidated.cwt
 
+import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { ResearchArea } from "./enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./refs.ts";
@@ -16,9 +17,9 @@ export interface TechnologyFields {
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
   /**
-   * Only for technologies that are `start`.
-   * Only for technologies that are not `start`.
-   * Only for technologies that are not `start`.
+   * Only when technology subtype `start` applies.
+   * Only when technology subtype not `start` applies.
+   * Only when technology subtype not `start` applies.
    */
   cost?: number;
   area: ResearchArea;
@@ -28,9 +29,42 @@ export interface TechnologyFields {
   startTech?: boolean;
   isRare?: boolean;
   /**
-   * Only for technologies that are `start`.
-   * Only for technologies that are not `start`.
+   * Only when technology subtype `start` applies.
+   * Only when technology subtype not `start` applies.
    */
   weight?: number;
   potential?: Trigger<"country">;
 }
+
+export interface TechnologyDef<Id extends string = string> extends TechnologyFields {
+  /** Full content id, including the mod prefix. */
+  id: Id;
+}
+
+export type DefinedTechnology<Id extends string = string> = DefinedContent<
+  "technology",
+  TechnologyDef<Id>
+>;
+
+export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
+  { key: "cost", member: "cost", shape: "value", conversion: "identity" },
+  { key: "area", member: "area", shape: "value", conversion: "identity" },
+  { key: "tier", member: "tier", shape: "value", conversion: "ref" },
+  { key: "category", member: "category", shape: "valueList", conversion: "ref" },
+  {
+    key: "prerequisites",
+    member: "prerequisites",
+    shape: "valueList",
+    conversion: "ref",
+    quoted: true,
+  },
+  { key: "start_tech", member: "startTech", shape: "value", conversion: "identity" },
+  { key: "is_rare", member: "isRare", shape: "value", conversion: "identity" },
+  { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+  { key: "potential", member: "potential", shape: "trigger" },
+];
+
+export const TECHNOLOGY_LOCALISATION: readonly ContentLocalisation[] = [
+  { member: "name", pattern: "$", required: true },
+  { member: "desc", pattern: "$_desc", required: false },
+];

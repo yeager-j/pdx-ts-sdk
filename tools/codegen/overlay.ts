@@ -133,15 +133,276 @@ export const FIELD_WIDENINGS = new Map<string, FieldWidening>([
  *
  * Slot *names* come straight from the rules — `name` and `desc` — which also
  * matches how the rest of the script surface reads, since `desc` is the key
- * events use for their description. Only the requiredness is ours: the rules
- * mark neither slot required, but `defineTechnology` unconditionally emits a
- * localisation entry under the tech id, so a technology has to have a name.
+ * events use for their description. Only the requiredness is ours: definitions
+ * need a display name even where the rules do not mark the slot required.
  *
- * `desc` stays optional. A tech with no `_desc` key does render a raw key in
- * game, but that is a lint to grow, not a reason to block generating placeholder
- * technologies in a loop.
+ * Description/flavor/effects slots stay optional. Missing tooltip text is a
+ * lint to grow, not a reason to block generated placeholder content.
  */
-export const REQUIRED_LOCALISATION = new Set(["technology.name"]);
+export const REQUIRED_LOCALISATION = new Set([
+  "technology.name",
+  "building.name",
+  "tradition.name",
+  "tradition_category.name",
+  "agenda.name",
+  "edict.name",
+]);
+
+/**
+ * Content fields admitted to the public authoring interface, in emission order.
+ *
+ * A rule being mechanically typeable is not evidence that the SDK lowers it
+ * correctly. Every registry therefore starts with a reviewed allowlist, while
+ * codegen reports every modeled field left out.
+ */
+export const CONTENT_EMITTED_FIELDS: Readonly<Record<string, readonly string[]>> = {
+  technology: [
+    "cost",
+    "area",
+    "tier",
+    "category",
+    "prerequisites",
+    "start_tech",
+    "is_rare",
+    "weight",
+    "potential",
+  ],
+  building: [
+    "base_buildtime",
+    "category",
+    "capital",
+    "capital_tier",
+    "can_demolish",
+    "can_be_ruined",
+    "can_be_disabled",
+    "can_build",
+    "is_capped_by_modifier",
+    "allow",
+    "potential",
+    "planet_modifier",
+    "show_in_tech",
+    "upgrades",
+    "prerequisites",
+    "convert_to",
+  ],
+  tradition: [
+    "unlocks_agenda",
+    "modifier",
+    "possible",
+    "custom_tooltip",
+    "custom_tooltip_with_modifiers",
+    "tradition_swap",
+    "ai_weight",
+  ],
+  tradition_category: [
+    "tree_template",
+    "adoption_bonus",
+    "finish_bonus",
+    "traditions",
+    "potential",
+    "ai_weight",
+  ],
+  agenda: [
+    "agenda_cost",
+    "agenda_cooldown",
+    "potential",
+    "allow",
+    "initial_effect_custom_loc",
+    "init_effect",
+    "modifier",
+    "finish_modifier",
+    "effect",
+    "ai_weight",
+  ],
+  edict: [
+    "length",
+    "icon",
+    "is_wartime_edict",
+    "edict_lock_in_months",
+    "edict_cap_usage",
+    "resources",
+    "unity_cost_mult",
+    "modifier",
+    "triggered_country_modifier",
+    "relay_network_modifier",
+    "potential",
+    "allow",
+    "prerequisites",
+    "show_tech_unlock_if",
+    "ai_weight",
+    "effect",
+    "on_disabled",
+  ],
+};
+
+export type ContentFieldShape =
+  | "value"
+  | "valueList"
+  | "trigger"
+  | "effect"
+  | "economicResources"
+  | "triggeredModifierBlock"
+  | "modifierBlock"
+  | "weightBlock"
+  | "nested";
+
+export interface ContentFieldOverride {
+  readonly shape: ContentFieldShape;
+  readonly quoted?: boolean;
+  readonly reason: string;
+}
+
+/**
+ * Lowerings that cannot be inferred solely from the CWT value type.
+ *
+ * Modifier and weight blocks contain alias splices rather than ordinary
+ * fields. The quoted technology prerequisite list preserves the SDK's existing
+ * byte contract. Tradition swaps are nested definitions with their own
+ * localization identity.
+ */
+export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+  [
+    "technology.prerequisites",
+    {
+      shape: "valueList",
+      quoted: true,
+      reason: "Technology prerequisites are conventionally quoted and existing goldens require it.",
+    },
+  ],
+  [
+    "building.planet_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "tradition.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "tradition.ai_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "tradition.tradition_swap",
+    {
+      shape: "nested",
+      reason:
+        "A tradition swap is a repeated nested definition with its own identity and localization.",
+    },
+  ],
+  [
+    "tradition_category.ai_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "agenda.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "agenda.ai_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "edict.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "edict.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "edict.triggered_country_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
+    },
+  ],
+  [
+    "edict.relay_network_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "edict.ai_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+]);
+
+export interface NestedContentDefinition {
+  readonly typeName: string;
+  readonly identityKey: string;
+  readonly localisationType: string;
+  readonly fields: readonly string[];
+}
+
+export const NESTED_CONTENT_DEFINITIONS = new Map<string, NestedContentDefinition>([
+  [
+    "tradition.tradition_swap",
+    {
+      typeName: "TraditionSwap",
+      identityKey: "name",
+      localisationType: "swapped_tradition",
+      fields: [
+        "inherit_icon",
+        "inherit_name",
+        "inherit_effects",
+        "unlocks_agenda",
+        "custom_tooltip",
+        "custom_tooltip_with_modifiers",
+        "modifier",
+        "weight",
+        "trigger",
+      ],
+    },
+  ],
+]);
+
+export const NESTED_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+  [
+    "tradition.tradition_swap.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "Nested modifier_clause is the same open modifier-name map as its parent.",
+    },
+  ],
+  [
+    "tradition.tradition_swap.weight",
+    {
+      shape: "weightBlock",
+      reason: "Nested modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+]);
 
 /**
  * Bool triggers take `(value = true)` rather than a required argument.
@@ -150,22 +411,3 @@ export const REQUIRED_LOCALISATION = new Set(["technology.name"]);
  * common case should be `isAi()`.
  */
 export const BOOL_TRIGGERS_DEFAULT_TRUE = true;
-
-/**
- * Technology fields the SDK's emitter can write today.
- *
- * The rules model 26 fields; `Technology.toEntries()` writes these. Everything
- * else is reported by codegen as modelled-but-unemitted rather than dropped, so
- * the gap stays visible.
- */
-export const TECHNOLOGY_EMITTED_FIELDS = [
-  "cost",
-  "area",
-  "tier",
-  "category",
-  "prerequisites",
-  "start_tech",
-  "is_rare",
-  "weight",
-  "potential",
-] as const;

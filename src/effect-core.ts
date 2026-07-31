@@ -74,7 +74,8 @@ export interface Modifier<S extends ScopeName> {
   readonly when: Trigger<S>;
 }
 
-function modifierEntry(modifier: Modifier<ScopeName>): PdxEntry {
+/** SDK-internal shared lowering for a `modifier_rule` row. */
+export function modifierEntry(modifier: Modifier<ScopeName>): PdxEntry {
   const entries: PdxEntry[] = [];
   if (modifier.factor !== undefined) {
     entries.push(kv("factor", modifier.factor));

@@ -27,6 +27,21 @@ export type AnyOrNoneOrBool = "any" | "none" | "yes" | "no";
 /** `enum[awareness_level]`. */
 export type AwarenessLevel = "none" | "low" | "medium" | "high" | "full";
 
+/** `enum[building_category]`. */
+export type BuildingCategory =
+  | "planet_buildings"
+  | "army"
+  | "manufacturing"
+  | "government"
+  | "pop_assembly"
+  | "resource"
+  | "resources"
+  | "unity"
+  | "research"
+  | "trade"
+  | "amenity"
+  | "amenities";
+
 /** `enum[carrier_type]`. */
 export type CarrierType = "planet" | "ship";
 

@@ -1,12 +1,17 @@
 import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { Technology } from "../src/tech.ts";
+import { Mod } from "../src/mod.ts";
 import { and, hasCountryFlag, hasTechnology, not } from "../src/triggers.ts";
 
 describe("Technology", () => {
   it("emits vanilla-convention PDXScript", () => {
-    const base = new Technology({
+    const mod = new Mod({
+      name: "Technology test",
+      prefix: "mymod",
+      supportedVersion: "4.4.*",
+    });
+    const base = mod.defineTechnology({
       id: "mymod_tech_base",
       name: "Base Tech",
       cost: 1000,
@@ -14,7 +19,7 @@ describe("Technology", () => {
       tier: 2,
       category: "particles",
     });
-    const tech = new Technology({
+    const tech = mod.defineTechnology({
       id: "mymod_tech_advanced",
       name: "Advanced Tech",
       cost: 4000,
@@ -49,7 +54,12 @@ describe("Technology", () => {
   });
 
   it("omits optional fields that were not provided", () => {
-    const tech = new Technology({
+    const mod = new Mod({
+      name: "Technology test",
+      prefix: "mymod",
+      supportedVersion: "4.4.*",
+    });
+    const tech = mod.defineTechnology({
       id: "mymod_tech_minimal",
       name: "Minimal",
       cost: 100,

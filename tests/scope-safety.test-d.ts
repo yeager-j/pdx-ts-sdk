@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
+import type { TechnologyDef } from "../src/generated/technology.ts";
 import { Mod } from "../src/mod.ts";
-import type { TechnologyDef } from "../src/tech.ts";
 import {
   and,
   hasCountryFlag,
