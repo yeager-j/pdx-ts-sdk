@@ -1,0 +1,7 @@
+tech_fake_farming = {
+	cost = @fake_t1cost
+	area = society
+	tier = 1
+	category = { biology }
+	start_tech = yes
+}
