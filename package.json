@@ -8,7 +8,18 @@
   ],
   "main": "dist/src/index.js",
   "exports": {
-    ".": "./dist/src/index.js"
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./testing": {
+      "types": "./src/testing/index.ts",
+      "default": "./dist/src/testing/index.js"
+    },
+    "./testing/matchers": {
+      "types": "./src/testing/matchers.ts",
+      "default": "./dist/src/testing/matchers.js"
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

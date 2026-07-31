@@ -1,0 +1,11 @@
+pdx_hardening_building_marker = {
+	base_buildtime = 360
+	category = research
+	icon = building_research_lab_1
+	building_sets = { research }
+	can_build = yes
+	planet_modifier = {
+		planet_jobs_society_research_produces_mult = 0.01
+	}
+	prerequisites = { pdx_hardening_tech_marker }
+}

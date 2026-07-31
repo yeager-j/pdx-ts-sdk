@@ -70,6 +70,15 @@ export interface ContentBody {
   readonly scope: ScopeContext | null;
 }
 
+export interface OnActionDecl {
+  readonly name: string;
+  readonly eventType: string | null;
+  readonly scopes: ReadonlyMap<string, string>;
+  readonly docs: readonly string[];
+  readonly file: string;
+  readonly line: number;
+}
+
 export interface RuleSet {
   readonly enums: ReadonlyMap<string, readonly string[]>;
   /** Canonical scope name -> every alias the game answers to. */
@@ -80,6 +89,7 @@ export interface RuleSet {
   readonly contentTypes: ReadonlyMap<string, ContentType>;
   /** Top-level rule bodies keyed by content type, e.g. `technology = { ... }`. */
   readonly bodies: ReadonlyMap<string, ContentBody>;
+  readonly onActions: readonly OnActionDecl[];
   readonly diagnostics: readonly CwtDiagnostic[];
 }
 
@@ -91,6 +101,7 @@ const RULE_FILES = [
   "effects.cwt",
   "events/events.cwt",
   "events/event_namespaces.cwt",
+  "on_actions.cwt",
   ...CONTENT_MANIFEST.map((entry) => entry.source),
 ].filter((file, index, files) => files.indexOf(file) === index);
 
@@ -266,6 +277,37 @@ function readBodies(
   }
 }
 
+function readOnActions(nodes: readonly CwtNode[], file: string, into: OnActionDecl[]): void {
+  for (const outer of assignments(nodes)) {
+    if (outer.key.text !== "on_actions" || outer.value.kind !== "block") {
+      continue;
+    }
+    for (const node of outer.value.nodes) {
+      if (node.kind !== "value" || node.value.kind !== "scalar") {
+        continue;
+      }
+      const eventType = findOption(node.options, "event_type");
+      const replaceScopes = findOption(node.options, "replace_scopes");
+      const scopes = new Map<string, string>();
+      if (replaceScopes?.value?.kind === "block") {
+        for (const scope of assignments(replaceScopes.value.nodes)) {
+          if (scope.value.kind === "scalar") {
+            scopes.set(scope.key.text.toLowerCase(), scope.value.text);
+          }
+        }
+      }
+      into.push({
+        name: node.value.text,
+        eventType: eventType?.value?.kind === "scalar" ? eventType.value.text : null,
+        scopes,
+        docs: node.docs,
+        file,
+        line: node.line,
+      });
+    }
+  }
+}
+
 export function loadRules(root: string): RuleSet {
   const enums = new Map<string, string[]>();
   const scopes = new Map<string, string[]>();
@@ -273,6 +315,7 @@ export function loadRules(root: string): RuleSet {
   const effects = new Map<string, AliasDecl[]>();
   const contentTypes = new Map<string, ContentType>();
   const bodies = new Map<string, ContentBody>();
+  const onActions: OnActionDecl[] = [];
   const singleAliases = new Map<string, CwtValue>();
   const diagnostics: CwtDiagnostic[] = [];
 
@@ -287,9 +330,10 @@ export function loadRules(root: string): RuleSet {
     readAliases(parsed.nodes, relative, "effect", singleAliases, effects);
     readContentTypes(parsed.nodes, contentTypes);
     readBodies(parsed.nodes, contentTypes, singleAliases, bodies);
+    readOnActions(parsed.nodes, relative, onActions);
   }
 
-  return { enums, scopes, triggers, effects, contentTypes, bodies, diagnostics };
+  return { enums, scopes, triggers, effects, contentTypes, bodies, onActions, diagnostics };
 }
 
 /**

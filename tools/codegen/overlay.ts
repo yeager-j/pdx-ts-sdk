@@ -157,6 +157,7 @@ export const REQUIRED_LOCALISATION = new Set([
  */
 export const CONTENT_EMITTED_FIELDS: Readonly<Record<string, readonly string[]>> = {
   technology: [
+    "icon",
     "cost",
     "area",
     "tier",
@@ -170,6 +171,8 @@ export const CONTENT_EMITTED_FIELDS: Readonly<Record<string, readonly string[]>>
   building: [
     "base_buildtime",
     "category",
+    "icon",
+    "building_sets",
     "capital",
     "capital_tier",
     "can_demolish",

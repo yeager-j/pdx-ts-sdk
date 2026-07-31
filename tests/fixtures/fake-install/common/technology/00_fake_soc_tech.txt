@@ -5,3 +5,12 @@ tech_fake_farming = {
 	category = { biology }
 	start_tech = yes
 }
+
+tech_gene_tailoring = {
+	cost = 4000
+	area = society
+	tier = 3
+	category = { biology }
+	prerequisites = { tech_genome_mapping }
+	weight = 65
+}

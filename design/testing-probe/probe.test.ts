@@ -15,12 +15,11 @@
 import { kv, serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import { evaluate, explain, renderExplanation, run } from "../../src/testing/interpret.ts";
+import { installMatchers } from "../../src/testing/matchers.ts";
+import { declareFrom, fixture, renderFired, type World } from "../../src/testing/world.ts";
 import { trigger } from "../../src/trigger-core.ts";
 import { isAtWar, numOwnedPlanets } from "../../src/triggers.ts";
-import { evaluate, explain, renderExplanation, run } from "./interpret.ts";
-
-import "./matchers.ts";
-
 import {
   aftershock,
   flags,
@@ -29,7 +28,8 @@ import {
   resonancePotential,
   resonanceTheory,
 } from "./probe-mod.ts";
-import { declareFrom, fixture, renderFired, type World } from "./world.ts";
+
+installMatchers();
 
 // The PDXScript the probe mod records — hand-written from the example mod's
 // golden plus the give_technology follow-up, before the recorder ran.
@@ -107,11 +107,12 @@ const GOLDEN_EXPLAIN = `✗ AND
     ✓ has_country_flag = tp_pacifist_path — set on country "player"`;
 
 // The rich fired log after the whole chain has run: the harness fire on day
-// 0, then one delayed aftershock per owned planet delivered on day 30, both
-// carrying the firing country as FROM.
+// 0, then one delayed aftershock per owned planet delivered last-enqueued-first
+// on day 30, both carrying the firing country as FROM. The order was corrected
+// after the Stellaris 4.4.6 hardening calibration.
 const GOLDEN_FIRED = `[day 0] testing_probe.1 @ country(0) "player" via harness
-[day 30] testing_probe.2 @ planet(0.0) "alpha" from country(0) "player" via effect
-[day 30] testing_probe.2 @ planet(0.1) "beta" from country(0) "player" via effect`;
+[day 30] testing_probe.2 @ planet(0.1) "beta" from country(0) "player" via effect
+[day 30] testing_probe.2 @ planet(0.0) "alpha" from country(0) "player" via effect`;
 
 function makeWorld(): World {
   return fixture(

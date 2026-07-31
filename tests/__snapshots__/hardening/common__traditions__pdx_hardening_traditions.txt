@@ -1,0 +1,9 @@
+pdx_hardening_tradition_marker = {
+	unlocks_agenda = pdx_hardening_agenda_marker
+	modifier = {
+		country_unity_produces_mult = 0.01
+	}
+	possible = {
+		has_authority = auth_democratic
+	}
+}

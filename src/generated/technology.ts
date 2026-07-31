@@ -16,6 +16,7 @@ export interface TechnologyFields {
   name: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
+  icon?: string;
   /**
    * Only when technology subtype `start` applies.
    * Only when technology subtype not `start` applies.
@@ -47,6 +48,7 @@ export type DefinedTechnology<Id extends string = string> = DefinedContent<
 >;
 
 export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
+  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
   { key: "cost", member: "cost", shape: "value", conversion: "identity" },
   { key: "area", member: "area", shape: "value", conversion: "identity" },
   { key: "tier", member: "tier", shape: "value", conversion: "ref" },

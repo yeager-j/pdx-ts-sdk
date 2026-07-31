@@ -188,6 +188,11 @@ launch and no console. The edit-test loop this replaces is "launch,
 console-fire, squint"; the capability is impossible in raw PDXScript.
 
 ```ts
+import { declareFrom, fixture } from "@pdx-ts/sdk/testing";
+import { installMatchers } from "@pdx-ts/sdk/testing/matchers";
+
+installMatchers();
+
 const world = fixture(
   {
     globalFlags: [globals.lattice_awake],
@@ -228,9 +233,19 @@ carries a one-line defense against the real game's behavior, and anything
 else throws with a coverage summary. A test can only pass through semantics
 someone consciously modeled — nothing is evaluated silently.
 
-Status: the model passed its gated probe (`design/testing-probe/` is the
+The evaluator is published from `@pdx-ts/sdk/testing`; Vitest integration is
+separate at `@pdx-ts/sdk/testing/matchers`, so importing the evaluator has no
+matcher side effect and the main SDK entry does not depend on Vitest. The model
+first passed its gated probe (`design/testing-probe/` remains the executable
 design record, [docs/verdict-testing-probe.md](docs/verdict-testing-probe.md)
-the verdict); the API has not landed in `src/` yet.
+the verdict) before the implementation moved into `src/testing/`.
+
+The [hardening example](examples/hardening/) is the integration corpus: every
+current content registry, typed `on_game_start_country` registration, an
+event/effect chain, and a transformed vanilla technology. Its
+[calibration record](examples/hardening/calibration/README.md) contains the
+Stellaris 4.4.6 operator checkpoint; generated files and evaluator tests do not
+substitute for that in-game evidence.
 
 ## Patching vanilla
 
@@ -304,13 +319,13 @@ rules track 4.x scope renames the game's dump has not caught up with, adding
 `carrier` to 164 triggers and replacing `pop` with `pop_group` on 70 — which is
 why the rules win where the two conflict.
 
-Today codegen emits 1054 of 1082 triggers and 976 of 1058 effects — the
-effects as 87 interfaces clustered by scope set (so each signature is emitted
-once, not per scope) plus a serialization meta table that drives the one
-runtime recorder — the 21-kind event table derived from `type[event]`'s
-subtypes, and six content registries from one content emitter. Nothing is
-dropped silently: every skipped rule or content field is reported with a named
-reason.
+Today codegen emits 1054 of 1082 triggers, 976 of 1058 effects, and 372 typed
+on-action references — the effects as 87 interfaces clustered by scope set (so
+each signature is emitted once, not per scope) plus a serialization meta table
+that drives the one runtime recorder — the 21-kind event table derived from
+`type[event]`'s subtypes, and six content registries from one content emitter.
+Nothing is dropped silently: every skipped rule, unrepresentable on-action, or
+content field is reported with a named reason.
 
 Every deliberate departure from a mechanical reading of the rules lives in one
 audited file, `tools/codegen/overlay.ts`. What the rules cannot supply at all —
@@ -343,11 +358,12 @@ validated by a gated, hand-written probe before the emitter was built —
 the follow-up work. The mod-testing evaluator
 ([docs/handoff-mod-testing.md](docs/handoff-mod-testing.md)) passed its own
 gated probe the same way —
-[docs/verdict-testing-probe.md](docs/verdict-testing-probe.md) — and awaits
-implementation. The PDXScript parser passed its round-trip-fidelity probe
+[docs/verdict-testing-probe.md](docs/verdict-testing-probe.md) — and is now
+implemented under `src/testing/`; its
+final real-game semantics checkpoint is tracked by the
+[hardening calibration](examples/hardening/calibration/README.md). The
+PDXScript parser passed its round-trip-fidelity probe
 ([docs/verdict-parser-probe.md](docs/verdict-parser-probe.md)) and then
 landed as [@pdx-ts/pdxscript](packages/pdxscript/README.md), the workspace
 package the SDK's AST and serializer now come from — validated against the
-entire vanilla `common/` tree and differential-tested against jomini. Next:
-the typed patch surface (`patchTechnology`), real identifier namespaces, and
-the load-order linter, all consumers of the parsed model.
+entire vanilla `common/` tree and differential-tested against jomini.

@@ -1,0 +1,3 @@
+Object with key: tech_gene_tailoring already exists, using the one at file: common/technology/00_soc_tech_pdx_hardening_patch.txt
+Undefined event target: pdx_hardening_chain_planet, file: events/pdx_hardening_events.txt
+Invalid context switch [event_target:pdx_hardening_chain_planet] from United Nations of Earth [country], file: events/pdx_hardening_events.txt

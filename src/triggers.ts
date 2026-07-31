@@ -30,7 +30,9 @@ export function or<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
   return trigger([
     block(
       "OR",
-      triggers.flatMap((t) => [...t.entries])
+      triggers.flatMap((operand) =>
+        operand.entries.length === 1 ? [...operand.entries] : [block("AND", [...operand.entries])]
+      )
     ),
   ]);
 }

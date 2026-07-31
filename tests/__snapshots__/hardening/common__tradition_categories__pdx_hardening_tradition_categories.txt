@@ -1,0 +1,6 @@
+pdx_hardening_tradition_category_marker = {
+	tree_template = tree_template_5
+	adoption_bonus = pdx_hardening_tradition_marker
+	finish_bonus = pdx_hardening_tradition_marker
+	traditions = { pdx_hardening_tradition_marker }
+}

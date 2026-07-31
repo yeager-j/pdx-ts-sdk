@@ -38,6 +38,8 @@ export interface EventRef<
   readonly scope: S;
   /** The full id, e.g. `hello_galaxy.2`. */
   readonly id: string;
+  /** Runtime copy of the declared FROM contract for registration and testing. */
+  readonly from: ScopeName | undefined;
   readonly [eventFromBrand]?: From;
 }
 
@@ -173,7 +175,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     entries.push(block("option", optionEntries));
   });
 
-  return { kind: "event-ref", scope, id, entry: block(kind, entries) };
+  return { kind: "event-ref", scope, id, from: def.from, entry: block(kind, entries) };
 }
 
 // ---------------------------------------------------------------------------

@@ -19,6 +19,8 @@ export {
 } from "./effect-core.ts";
 export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
+export { onActions } from "./generated/on-actions.ts";
+export type { OnActionRef } from "./on-actions.ts";
 export type { BuildingDef, BuildingFields, DefinedBuilding } from "./generated/building.ts";
 export type { AgendaDef, AgendaFields, DefinedAgenda } from "./generated/agenda.ts";
 export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";

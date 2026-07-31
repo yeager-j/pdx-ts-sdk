@@ -9,14 +9,14 @@
 import { expect } from "vitest";
 
 import { countryFlags, planetFlags } from "../../src/generated/value-sets.ts";
+import { evaluate } from "../../src/testing/interpret.ts";
+
+import "../../src/testing/matchers.ts";
+
+import type { Country, Planet } from "../../src/testing/state.ts";
+import { declareFrom, fixture, type World } from "../../src/testing/world.ts";
 import { hasCountryFlag } from "../../src/triggers.ts";
-import { evaluate } from "./interpret.ts";
-
-import "./matchers.ts";
-
 import { aftershock, humReturns } from "./probe-mod.ts";
-import type { Country, Planet } from "./state.ts";
-import { declareFrom, fixture, type World } from "./world.ts";
 
 const countryFlag = countryFlags("tp_neg_country_flag");
 const planetFlag = planetFlags("tp_neg_planet_flag");

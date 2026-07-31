@@ -14,6 +14,7 @@ import {
   type DefinedContentMap,
 } from "./generated/content-registry.ts";
 import type { ScopeName } from "./generated/scopes.ts";
+import { OnActionAuthoring, type OnActionRef } from "./on-actions.ts";
 import { normalizeLogicalPath } from "./resolver/path-order.ts";
 import { collectVarRefs, planPatchEmission, type PatchPlan } from "./resolver/plan.ts";
 import { SUPPORTED_STELLARIS_BUILD } from "./resolver/rules.ts";
@@ -52,6 +53,7 @@ export class Mod<const P extends string = string> extends GeneratedContentMethod
   private readonly patches: PatchedTechnology[] = [];
   private readonly events: DefinedEvent<ScopeName, ScopeName | undefined>[] = [];
   private readonly eventIds = new Set<number>();
+  private readonly onActions: OnActionAuthoring;
   private readonly loc = new Map<string, string>();
 
   constructor(config: ModConfig<P>) {
@@ -65,6 +67,7 @@ export class Mod<const P extends string = string> extends GeneratedContentMethod
     this.content = new ContentAuthoring(config.prefix, CONTENT_REGISTRIES, (entries) =>
       this.registerLocEntries(entries)
     );
+    this.onActions = new OnActionAuthoring((event) => this.events.includes(event));
   }
 
   protected defineGeneratedContent<K extends ContentTypeName>(
@@ -135,6 +138,18 @@ export class Mod<const P extends string = string> extends GeneratedContentMethod
     });
     this.events.push(event);
     return event;
+  }
+
+  /**
+   * Registers one of this mod's events on a generated Stellaris on-action.
+   * The hook is the only inference source: its scope and FROM metadata decide
+   * which event contract is accepted.
+   */
+  on<S extends ScopeName, From extends ScopeName | undefined>(
+    hook: OnActionRef<S, From>,
+    event: DefinedEvent<NoInfer<S>, NoInfer<From>>
+  ): void {
+    this.onActions.register(hook, event);
   }
 
   private registerLoc(key: string, text: string): void {
@@ -243,6 +258,10 @@ export class Mod<const P extends string = string> extends GeneratedContentMethod
         `events/${prefix}_events.txt`,
         serialize([kv("namespace", prefix), ...this.events.map((event) => event.entry)])
       );
+    }
+    const renderedOnActions = this.onActions.render();
+    if (renderedOnActions !== undefined) {
+      files.set(`common/on_actions/${prefix}_on_actions.txt`, renderedOnActions);
     }
     files.set(`localisation/english/${prefix}_l_english.yml`, this.renderLocalization());
 

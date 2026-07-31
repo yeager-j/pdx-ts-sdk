@@ -1,0 +1,79 @@
+namespace = pdx_hardening
+
+country_event = {
+	id = pdx_hardening.4
+	hide_window = yes
+	is_triggered_only = yes
+	immediate = {
+		log = PDX_HARDENING_ORDER_C
+	}
+}
+
+country_event = {
+	id = pdx_hardening.2
+	hide_window = yes
+	is_triggered_only = yes
+	immediate = {
+		log = PDX_HARDENING_ORDER_A
+		from = {
+			log = PDX_HARDENING_FROM_OVERRIDE_IS_PLANET
+		}
+		country_event = {
+			id = pdx_hardening.4
+			days = 0
+		}
+	}
+}
+
+country_event = {
+	id = pdx_hardening.3
+	hide_window = yes
+	is_triggered_only = yes
+	immediate = {
+		log = PDX_HARDENING_ORDER_B
+	}
+}
+
+country_event = {
+	id = pdx_hardening.5
+	hide_window = yes
+	is_triggered_only = yes
+	immediate = {
+		log = PDX_HARDENING_EXPIRY_PROBE_STARTED
+		event_target:pdx_hardening_chain_planet = {
+			log = PDX_HARDENING_TARGET_STILL_AVAILABLE_AFTER_CHAIN
+		}
+	}
+}
+
+country_event = {
+	id = pdx_hardening.1
+	hide_window = yes
+	is_triggered_only = yes
+	immediate = {
+		if = {
+			limit = {
+				num_owned_planets >= 1
+			}
+			log = PDX_HARDENING_ENTRY
+			set_country_flag = pdx_hardening_entry_fired
+			every_owned_planet = {
+				save_event_target_as = pdx_hardening_chain_planet
+			}
+			event_target:pdx_hardening_chain_planet = {
+				log = PDX_HARDENING_TARGET_AVAILABLE_IN_ENTRY
+			}
+			country_event = {
+				id = pdx_hardening.2
+				days = 1
+				scopes = {
+					from = event_target:pdx_hardening_chain_planet
+				}
+			}
+			country_event = {
+				id = pdx_hardening.3
+				days = 1
+			}
+		}
+	}
+}

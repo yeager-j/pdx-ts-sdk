@@ -11,6 +11,7 @@ import type {
 import type { Trigger } from "../trigger-core.ts";
 import type { BuildingCategory } from "./enums.ts";
 import type { BuildingRef, TechnologyRef } from "./refs.ts";
+import type { BuildingSet } from "./value-sets.ts";
 
 /**
  * A building, as the game's rules describe it.
@@ -23,6 +24,9 @@ export interface BuildingFields {
   desc?: string;
   baseBuildtime?: number;
   category?: BuildingCategory;
+  icon?: string;
+  /** used to match with a planet class' building set, can be assigned to multiple sets. Used to remove from construction lists */
+  buildingSets?: BuildingSet[];
   capital?: boolean;
   /** Only when building subtype `capital` applies. */
   capitalTier?: number;
@@ -58,6 +62,8 @@ export type DefinedBuilding<Id extends string = string> = DefinedContent<
 export const BUILDING_FIELDS: readonly ContentField[] = [
   { key: "base_buildtime", member: "baseBuildtime", shape: "value", conversion: "identity" },
   { key: "category", member: "category", shape: "value", conversion: "identity" },
+  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
+  { key: "building_sets", member: "buildingSets", shape: "valueList", conversion: "identity" },
   { key: "capital", member: "capital", shape: "value", conversion: "identity" },
   { key: "capital_tier", member: "capitalTier", shape: "value", conversion: "identity" },
   { key: "can_demolish", member: "canDemolish", shape: "value", conversion: "identity" },

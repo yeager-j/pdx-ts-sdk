@@ -146,3 +146,18 @@ Acceptance results:
 - The fixture spec deliberately models only what the whitelist touches
   (countries, planets, flags, techs, resources, deposits). Growing it should
   stay demand-driven — the ontology trap is real.
+
+## Stellaris 4.4.6 calibration correction (2026-07-31)
+
+The hardening corpus reached the real game and corrected two probe assumptions:
+
+- delayed events scheduled for the same day deliver last-enqueued-first, not
+  FIFO; the observed order was `B`, `A`, then the zero-day cascade `C`;
+- `save_event_target_as` remained available while recording the fire effect
+  (so an explicit `scopes = { from = event_target:... }` override resolved and
+  arrived as a planet), but the saved target itself was unavailable in the
+  delayed event. Delayed delivery starts a new target lifetime.
+
+The production queue and target model now follow those observations. The
+original probe's FIFO and world-long-target assumptions are retained above as
+the design findings the game invalidated.

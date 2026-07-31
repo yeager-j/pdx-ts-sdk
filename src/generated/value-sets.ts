@@ -75,6 +75,15 @@ export type AstralRiftFlag = ValueSetMember<"astral_rift_flag">;
  */
 export const astralRiftFlags = declare<"astral_rift_flag">();
 
+/** A name belonging to `value[building_set]`. */
+export type BuildingSet = ValueSetMember<"building_set">;
+
+/**
+ * Declares building_set names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const buildingSets = declare<"building_set">();
+
 /** A name belonging to `value[carrier_flag]`. */
 export type CarrierFlag = ValueSetMember<"carrier_flag">;
 

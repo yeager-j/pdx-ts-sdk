@@ -1,0 +1,6 @@
+pdx_hardening_agenda_marker = {
+	agenda_cost = 1000
+	effect = {
+		log = PDX_HARDENING_AGENDA
+	}
+}

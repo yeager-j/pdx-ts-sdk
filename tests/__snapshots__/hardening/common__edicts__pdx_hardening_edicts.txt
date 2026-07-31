@@ -1,0 +1,20 @@
+pdx_hardening_edict_marker = {
+	length = 360
+	icon = GFX_edict_type_time
+	resources = {
+		category = edicts
+		upkeep = {
+			unity = 1
+		}
+	}
+	triggered_country_modifier = {
+		potential = {
+			has_authority = auth_democratic
+		}
+		country_unity_produces_mult = 0.01
+	}
+	prerequisites = { pdx_hardening_tech_marker }
+	effect = {
+		log = PDX_HARDENING_EDICT
+	}
+}

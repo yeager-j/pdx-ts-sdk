@@ -1,4 +1,4 @@
-import { serialize } from "@pdx-ts/pdxscript";
+import { kv, serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -10,6 +10,7 @@ import {
   isAi,
   not,
   or,
+  trigger,
   yearsPassed,
 } from "../src/triggers.ts";
 
@@ -38,6 +39,24 @@ describe("trigger builders", () => {
       }
       "
     `);
+  });
+
+  it("preserves a multi-entry operand as an AND group inside OR", () => {
+    const multiEntry = trigger<"country">([
+      kv("has_country_flag", "ascended"),
+      kv("has_global_flag", "crisis_active"),
+    ]);
+    const condition = or(multiEntry, yearsPassed(">=", 50));
+
+    expect(serialize([...condition.entries])).toBe(
+      "OR = {\n" +
+        "\tAND = {\n" +
+        "\t\thas_country_flag = ascended\n" +
+        "\t\thas_global_flag = crisis_active\n" +
+        "\t}\n" +
+        "\tyears_passed >= 50\n" +
+        "}\n"
+    );
   });
 
   it("accepts tech references by object", () => {

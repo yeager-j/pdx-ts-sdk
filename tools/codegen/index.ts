@@ -14,6 +14,7 @@ import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
+import { emitOnActions } from "./emit/on-actions.ts";
 import type { SkippedRule } from "./emit/shape.ts";
 import { canonicalScopes, emitEnums, emitRefs, emitScopes, emitValueSets } from "./emit/support.ts";
 import { emitTriggers } from "./emit/triggers.ts";
@@ -237,6 +238,8 @@ async function main(): Promise<void> {
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.code
   );
+  const onActions = emitOnActions(rules);
+  await write("on-actions.ts", header(commit, ["on_actions.cwt"]) + onActions.code);
 
   console.log(`cwtools-stellaris-config @ ${commit.slice(0, 12)}`);
   console.log(
@@ -261,10 +264,14 @@ async function main(): Promise<void> {
     );
   }
   console.log(`event kinds: ${events.kinds}`);
+  console.log(
+    `on-actions: ${onActions.emitted} emitted (${onActions.noScope} scopeless and currently rejected)`
+  );
 
   reportSection("Triggers not emitted", summarise(triggers.skipped));
   reportSection("Effects not emitted", summarise(effects.skipped));
   reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
+  reportSection("On-actions not emitted", onActions.skipped);
   for (const content of contents) {
     reportSection(
       `${content.manifest.type} fields modelled but not yet emitted`,
