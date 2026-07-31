@@ -72,8 +72,10 @@ Consequences the SDK encodes:
 
 ## Per-rule confidence, encoded
 
-The rule table carries the spike's verdicts and refuses on open cells — the
-overlay discipline applied to override semantics:
+The rule table carries the spike's verdicts in three states — **verified**
+(cites an oracle run), **assumed** (a recorded judgment call, pending an
+observable), and **refused** (genuinely undetermined) — the overlay
+discipline applied to override semantics:
 
 | Registry | Rule | Assert wins? |
 | --- | --- | --- |
@@ -82,7 +84,7 @@ overlay discipline applied to override semantics:
 | Scripted effects/triggers | last-wins (`r1,r4`) | yes; parameter behavior open |
 | Events | first-wins — sort *before* (`r8–r10`) | yes (when patching events lands) |
 | Scripted constants | first-wins, cross-source settled (`r19`) | yes |
-| Megastructures | last-wins, but merge-vs-replace **inconclusive** | **refuse** |
+| Megastructures | last-wins (`r8`); whole-object **assumed** — the spike's observable couldn't discriminate merge-vs-replace, and Jackson's call (2026-07-31, spike + modding experience) is that they behave like technologies until proven otherwise | yes, flagged `assumed` |
 | Ship components | duplicate winner **undetermined** | **refuse** |
 | Localization | layer-ordered, filename irrelevant (`r13–r16`) | different mechanism; `replace/` policy stands |
 
@@ -139,10 +141,12 @@ drift.
 
 **Claiming wins beyond the evidence.** The whole point of the confidence
 table is that "probably wins" is indistinguishable from "wins" until a
-player loads the game. A linter that asserts a megastructure override, or
+player loads the game. A linter that asserts a ship-component override, or
 a win against an unenumerated third mod, manufactures the exact false
 confidence the evaluator probe was designed to avoid. Refuse loudly; the
-error message cites the open cell.
+error message cites the open cell. (Assumptions are different from guesses:
+an `assumed` cell is a named judgment call with a paper trail, and the
+in-game calibration list is where it eventually graduates to verified.)
 
 ## Suggested first probe
 
@@ -157,10 +161,10 @@ win-assertion).
 > proves it sorts after `00_soc_tech.txt` and every other file defining the
 > key. A second, adversarial fixture: a synthetic "vanilla" tree where the
 > key's last definition lives in `zz_zz_late.txt` — the computed name must
-> beat it or the build must fail with the reason. A third: attempt to patch
-> a megastructure — the build refuses, citing the inconclusive cell and the
-> spike. Golden-pin the emitted file name, the emitted content, and both
-> error messages.
+> beat it or the build must fail with the reason. A third: exercise the
+> refusal path through the rule table — a ship-component win-assertion
+> refuses, citing the undetermined cell and the spike. Golden-pin the
+> emitted file name, the emitted content, and both error messages.
 
 **Gate — the model holds iff:** the patched emission is complete and
 byte-stable; the winning filename is computed from parsed reality and the
