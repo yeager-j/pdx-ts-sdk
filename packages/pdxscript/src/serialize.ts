@@ -5,15 +5,32 @@
  * bare only if re-lexing it would yield the same single `str` token
  * (`isBareToken` for the character class, `classifyUnquoted` to reject text
  * that would come back as a bool, num, or var). Anything unrepresentable —
- * a key or header that cannot render bare, an exponent-notation number —
- * throws rather than emitting output that reads back differently.
+ * a key or header that cannot render bare, an exponent-notation number, a
+ * string whose raw content would terminate its own quotes — throws rather
+ * than emitting output that reads back differently.
  */
 
-import type { PdxContainer, PdxEntry, PdxItem, PdxScalar } from "./ast.ts";
+import type { PdxContainer, PdxItem, PdxParamBlock, PdxScalar } from "./ast.ts";
 import { classifyUnquoted, isBareToken } from "./lexer.ts";
 
 function isBareString(value: string): boolean {
   return isBareToken(value) && classifyUnquoted(value).kind === "str";
+}
+
+/** True when emitting `value` between quotes would terminate the string early. */
+function hasUnescapedQuote(value: string): boolean {
+  let index = 0;
+  while (index < value.length) {
+    if (value[index] === "\\") {
+      index += 2;
+      continue;
+    }
+    if (value[index] === '"') {
+      return true;
+    }
+    index += 1;
+  }
+  return false;
 }
 
 function scalarText(scalar: PdxScalar): string {
@@ -29,6 +46,12 @@ function scalarText(scalar: PdxScalar): string {
     }
     case "str":
       if (scalar.quoted || !isBareString(scalar.value)) {
+        if (hasUnescapedQuote(scalar.value)) {
+          throw new Error(
+            `Cannot serialize string ${JSON.stringify(scalar.value)}: ` +
+              "it contains an unescaped quote (content is emitted raw; see GRAMMAR.md)"
+          );
+        }
         return `"${scalar.value}"`;
       }
       return scalar.value;
@@ -42,6 +65,10 @@ function scalarText(scalar: PdxScalar): string {
   }
 }
 
+function isScalar(item: PdxItem): item is PdxScalar {
+  return item.kind !== "entry" && item.kind !== "container" && item.kind !== "param";
+}
+
 function containerText(container: PdxContainer, depth: number): string {
   let head = "";
   if (container.header !== undefined) {
@@ -53,12 +80,25 @@ function containerText(container: PdxContainer, depth: number): string {
   if (container.items.length === 0) {
     return `${head}{}`;
   }
-  if (container.items.every((item) => item.kind !== "entry" && item.kind !== "container")) {
-    return `${head}{ ${container.items.map((item) => scalarText(item as PdxScalar)).join(" ")} }`;
+  if (container.items.every(isScalar)) {
+    return `${head}{ ${container.items.map(scalarText).join(" ")} }`;
   }
   const indent = "\t".repeat(depth);
   const body = container.items.map((item) => serializeItem(item, depth + 1)).join("\n");
   return `${head}{\n${body}\n${indent}}`;
+}
+
+function paramText(param: PdxParamBlock, depth: number): string {
+  if (!isBareToken(param.name)) {
+    throw new Error(`Cannot serialize parameter name ${JSON.stringify(param.name)}`);
+  }
+  const indent = "\t".repeat(depth);
+  const open = `[[${param.negated ? "!" : ""}${param.name}]`;
+  if (param.items.length === 0) {
+    return `${open}\n${indent}]`;
+  }
+  const body = param.items.map((item) => serializeItem(item, depth + 1)).join("\n");
+  return `${open}\n${body}\n${indent}]`;
 }
 
 function serializeItem(item: PdxItem, depth: number): string {
@@ -76,9 +116,12 @@ function serializeItem(item: PdxItem, depth: number): string {
   if (item.kind === "container") {
     return `${indent}${containerText(item, depth)}`;
   }
+  if (item.kind === "param") {
+    return `${indent}${paramText(item, depth)}`;
+  }
   return `${indent}${scalarText(item)}`;
 }
 
-export function serialize(entries: readonly PdxEntry[]): string {
-  return entries.map((entry) => serializeItem(entry, 0)).join("\n\n") + "\n";
+export function serialize(items: readonly PdxItem[]): string {
+  return items.map((item) => serializeItem(item, 0)).join("\n\n") + "\n";
 }

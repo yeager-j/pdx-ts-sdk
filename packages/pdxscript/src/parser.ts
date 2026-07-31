@@ -2,25 +2,22 @@
  * Recursive-descent parser for PDXScript. See GRAMMAR.md for the grammar,
  * the disambiguation rules, and the repair policy.
  *
+ * The top level is a container body without braces — one item loop serves
+ * the file, `{ ... }` containers, and `[[NAME] ... ]` parameter blocks.
+ *
  * Malformed-but-shipped input (stray `}`, unclosed containers at EOF,
  * top-level operator-less `foo{...}`) is repaired the way the game repairs
  * it, with a diagnostic per repair — never silently. Everything else that
  * cannot be read throws a `PdxSyntaxError` carrying `file:line`.
  */
 
-import type {
-  PdxContainer,
-  PdxDiagnostic,
-  PdxDocument,
-  PdxEntry,
-  PdxItem,
-  PdxOp,
-  PdxValue,
-} from "./ast.ts";
+import type { PdxContainer, PdxDiagnostic, PdxDocument, PdxItem, PdxOp, PdxValue } from "./ast.ts";
 import { classifyUnquoted, PdxSyntaxError, tokenize, type Token } from "./lexer.ts";
 
 /** Fuzz-proofing: error on absurd nesting instead of overflowing the stack. */
 const MAX_DEPTH = 1000;
+
+type Closer = "rbrace" | "rbracket" | "eof";
 
 function classify(token: Token): PdxItem & PdxValue {
   if (token.quoted) {
@@ -58,56 +55,116 @@ class Parser {
     this.diagnostics.push({ kind, fileName: this.fileName, line, text });
   }
 
-  parseTopLevel(): PdxEntry[] {
-    const entries: PdxEntry[] = [];
-    while (this.peek().kind !== "eof") {
-      if (this.peek().kind === "rbrace") {
-        this.repair("stray-closing-brace", this.peek().line, "}");
+  parseTopLevel(): PdxItem[] {
+    return this.parseItems("eof", 1, 0);
+  }
+
+  /**
+   * The shared item loop. `closer` distinguishes the three body kinds: a
+   * container ends at `}` (EOF is repaired), a parameter block ends at `]`
+   * (EOF is a hard error), the top level ends at EOF (a stray `}` is
+   * repaired and skipped).
+   */
+  private parseItems(closer: Closer, openLine: number, depth: number): PdxItem[] {
+    if (depth > MAX_DEPTH) {
+      this.fail(`Nesting exceeds ${MAX_DEPTH} levels`, openLine);
+    }
+    const items: PdxItem[] = [];
+    for (;;) {
+      const next = this.peek();
+      if (next.kind === "eof") {
+        if (closer === "rbrace") {
+          this.repair("unclosed-at-eof", openLine, "{");
+        }
+        if (closer === "rbracket") {
+          this.fail("Unterminated [[ parameter block", openLine);
+        }
+        return items;
+      }
+      if (next.kind === closer) {
+        this.advance();
+        return items;
+      }
+      if (next.kind === "rbrace") {
+        // Only reachable at top level (containers consume their own `}`).
+        this.repair("stray-closing-brace", next.line, "}");
         this.advance();
         continue;
       }
-      entries.push(this.parseEntry());
+      if (next.kind === "rbracket") {
+        this.fail("Unexpected ']'", next.line);
+      }
+      if (next.kind === "lbrace") {
+        this.advance();
+        items.push({ kind: "container", items: this.parseItems("rbrace", next.line, depth + 1) });
+        continue;
+      }
+      if (next.kind === "param-open") {
+        this.advance();
+        const negated = next.text.startsWith("!");
+        items.push({
+          kind: "param",
+          name: negated ? next.text.slice(1) : next.text,
+          negated,
+          items: this.parseItems("rbracket", next.line, depth + 1),
+        });
+        continue;
+      }
+      if (next.kind === "math") {
+        this.advance();
+        items.push({ kind: "math", source: next.text });
+        continue;
+      }
+      if (next.kind === "op") {
+        this.fail(`Expected a key or value but found '${next.text}'`, next.line);
+      }
+      items.push(this.parseScalarLed(closer, depth));
     }
-    return entries;
   }
 
-  private parseEntry(): PdxEntry {
-    const key = this.advance();
-    if (key.kind !== "identifier") {
-      this.fail(`Expected a key but found ${describe(key)}`, key.line);
-    }
+  /** An identifier was peeked: entry, operator-less repair, or bare scalar. */
+  private parseScalarLed(closer: Closer, depth: number): PdxItem {
+    const first = this.advance();
     const next = this.peek();
-    if (next.kind === "lbrace") {
-      this.repair("operator-less-entry", key.line, key.text);
+    if (next.kind === "op") {
       this.advance();
       return {
         kind: "entry",
-        key: key.text,
-        op: "=",
-        value: this.parseContainerBody(next.line, 1),
-        line: key.line,
+        key: first.text,
+        op: next.text as PdxOp,
+        value: this.parseValue(depth),
+        line: first.line,
       };
     }
-    if (next.kind !== "op") {
-      this.fail(`Expected an operator after '${key.text}' but found ${describe(next)}`, next.line);
+    // Same-line only: `foo {` on one line is the shipped missing-`=` defect;
+    // a `{` on a later line is a bare container item after a bare scalar
+    // (which is exactly what the serializer emits for that tree).
+    if (next.kind === "lbrace" && closer === "eof" && next.line === first.line) {
+      this.repair("operator-less-entry", first.line, first.text);
+      this.advance();
+      return {
+        kind: "entry",
+        key: first.text,
+        op: "=",
+        value: { kind: "container", items: this.parseItems("rbrace", next.line, depth + 1) },
+        line: first.line,
+      };
     }
-    this.advance();
-    return {
-      kind: "entry",
-      key: key.text,
-      op: next.text as PdxOp,
-      value: this.parseValue(1),
-      line: key.line,
-    };
+    return classify(first);
   }
 
   private parseValue(depth: number): PdxValue {
     const token = this.advance();
     if (token.kind === "identifier") {
-      if (!token.quoted && this.peek().kind === "lbrace") {
+      // Header form (`hsv { ... }`) is same-line only, so a scalar value
+      // followed by a bare container item on the next line stays two nodes.
+      if (!token.quoted && this.peek().kind === "lbrace" && this.peek().line === token.line) {
         const open = this.advance();
-        const body = this.parseContainerBody(open.line, depth);
-        return { ...body, header: token.text };
+        return {
+          kind: "container",
+          header: token.text,
+          items: this.parseItems("rbrace", open.line, depth + 1),
+        };
       }
       return classify(token);
     }
@@ -117,52 +174,10 @@ class Parser {
     if (token.kind !== "lbrace") {
       this.fail(`Expected a value but found ${describe(token)}`, token.line);
     }
-    return this.parseContainerBody(token.line, depth);
-  }
-
-  private parseContainerBody(openLine: number, depth: number): PdxContainer {
-    if (depth > MAX_DEPTH) {
-      this.fail(`Nesting exceeds ${MAX_DEPTH} levels`, openLine);
-    }
-    const items: PdxItem[] = [];
-    for (;;) {
-      const next = this.peek();
-      if (next.kind === "eof") {
-        this.repair("unclosed-at-eof", openLine, "{");
-        break;
-      }
-      if (next.kind === "rbrace") {
-        this.advance();
-        break;
-      }
-      if (next.kind === "lbrace") {
-        this.advance();
-        items.push(this.parseContainerBody(next.line, depth + 1));
-        continue;
-      }
-      if (next.kind === "math") {
-        this.advance();
-        items.push({ kind: "math", source: next.text });
-        continue;
-      }
-      if (next.kind === "op") {
-        this.fail(`Expected a key or value but found ${describe(next)}`, next.line);
-      }
-      const first = this.advance();
-      if (this.peek().kind === "op") {
-        const op = this.advance();
-        items.push({
-          kind: "entry",
-          key: first.text,
-          op: op.text as PdxOp,
-          value: this.parseValue(depth + 1),
-          line: first.line,
-        });
-        continue;
-      }
-      items.push(classify(first));
-    }
-    return { kind: "container", items };
+    return {
+      kind: "container",
+      items: this.parseItems("rbrace", token.line, depth + 1),
+    } satisfies PdxContainer;
   }
 }
 
@@ -172,6 +187,6 @@ function describe(token: Token): string {
 
 export function parse(source: string, fileName = "<input>"): PdxDocument {
   const parser = new Parser(tokenize(source, fileName), fileName);
-  const entries = parser.parseTopLevel();
-  return { fileName, entries, diagnostics: parser.diagnostics };
+  const items = parser.parseTopLevel();
+  return { fileName, items, diagnostics: parser.diagnostics };
 }

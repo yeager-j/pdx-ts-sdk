@@ -6,7 +6,8 @@
  * Claims marked (jomini) were mined from the jomini crate's test suite and
  * the pdx.tools syntax-tour post — battle-tested corners from shipped game
  * files, adapted for this API (jomini is MIT; inputs are quirk-shaped, not
- * copied text).
+ * copied text). Claims marked (corpus) were forced by the vanilla sweep:
+ * constructs the plan missed until reality produced them.
  *
  * Property tests (corpus fixpoint, the jomini differential, fast-check
  * properties) live in their own files; this one is the TDD driver loop, and
@@ -39,8 +40,21 @@ function clean(source: string): PdxDocument {
   return document;
 }
 
+function entryAt(document: PdxDocument, index: number): PdxEntry {
+  const item = document.items[index]!;
+  if (item.kind !== "entry") {
+    throw new Error(`Expected an entry at ${index}, got ${item.kind}`);
+  }
+  return item;
+}
+
+/** Item keys, with null standing in for bare (non-entry) items. */
+function keys(document: PdxDocument): (string | null)[] {
+  return document.items.map((item) => (item.kind === "entry" ? item.key : null));
+}
+
 function first(source: string): PdxEntry {
-  return clean(source).entries[0]!;
+  return entryAt(clean(source), 0);
 }
 
 function value(source: string): PdxValue {
@@ -49,14 +63,14 @@ function value(source: string): PdxValue {
 
 /** Round trip: parse, serialize, return the text. */
 function emitted(source: string): string {
-  return serialize(parse(source, "claims.txt").entries);
+  return serialize(parse(source, "claims.txt").items);
 }
 
 /** Semantic fixpoint: the re-parse of the emission equals the original tree. */
 function expectFixpoint(source: string): void {
   const original = parse(source, "claims.txt");
-  const reparsed = parse(serialize(original.entries), "claims.txt");
-  expect(withoutLines(reparsed.entries)).toEqual(withoutLines(original.entries));
+  const reparsed = parse(serialize(original.items), "claims.txt");
+  expect(withoutLines(reparsed.items)).toEqual(withoutLines(original.items));
 }
 
 describe("lexer", () => {
@@ -65,27 +79,26 @@ describe("lexer", () => {
   });
 
   it("drops # comments to end of line, including inline after a value", () => {
-    const document = clean("a = 1 # trailing\n# whole line\nb = 2");
-    expect(document.entries.map((entry) => entry.key)).toEqual(["a", "b"]);
+    expect(keys(clean("a = 1 # trailing\n# whole line\nb = 2"))).toEqual(["a", "b"]);
   });
 
   it("drops a comment adjacent to a token without whitespace: foo=abc#def (jomini)", () => {
     const document = clean("foo=abc#def\nbar=qux");
-    expect(document.entries[0]!.value).toEqual({ kind: "str", value: "abc", quoted: false });
-    expect(document.entries[1]!.key).toBe("bar");
+    expect(entryAt(document, 0).value).toEqual({ kind: "str", value: "abc", quoted: false });
+    expect(entryAt(document, 1).key).toBe("bar");
   });
 
   it("drops a comment that ends the file with no trailing newline (jomini)", () => {
-    expect(clean("foo = a\n# bee").entries).toHaveLength(1);
+    expect(clean("foo = a\n# bee").items).toHaveLength(1);
   });
 
   it("lexes a BOM followed by only a comment as an empty document (jomini)", () => {
-    expect(clean("﻿#hello").entries).toEqual([]);
+    expect(clean("﻿#hello").items).toEqual([]);
   });
 
   it("treats semicolons as trivia: a = 1;; b = 2; (jomini — vanilla gfx files)", () => {
     const document = clean("a = 1;; b = 2;");
-    expect(document.entries.map((entry) => entry.value)).toEqual([
+    expect(document.items.map((item) => (item.kind === "entry" ? item.value : null))).toEqual([
       { kind: "num", value: 1 },
       { kind: "num", value: 2 },
     ]);
@@ -94,7 +107,7 @@ describe("lexer", () => {
   it("lexes CRLF sources identically to LF", () => {
     const lf = clean("a = 1\nb = {\n\tc = 2\n}\n");
     const crlf = clean("a = 1\r\nb = {\r\n\tc = 2\r\n}\r\n");
-    expect(withoutLines(crlf.entries)).toEqual(withoutLines(lf.entries));
+    expect(withoutLines(crlf.items)).toEqual(withoutLines(lf.items));
   });
 
   it('captures quoted strings raw, honoring \\" only for termination (jomini)', () => {
@@ -111,7 +124,6 @@ describe("lexer", () => {
       value: "line one\nline\ttwo",
       quoted: true,
     });
-    expect(first('a = "x\ny"\nb = 2')).toBeDefined();
   });
 
   it("throws on an unterminated quoted string, with file:line", () => {
@@ -140,6 +152,13 @@ describe("lexer", () => {
     expect(() => parse("a = @[ 1 -", "claims.txt")).toThrow(/claims\.txt:1/);
   });
 
+  it("lexes escaped inline math @\\[ ... ] as one verbatim token (corpus — scripted_effects)", () => {
+    expect(value("v = @\\[( 72 * $PROGRESS$ )]")).toEqual({
+      kind: "math",
+      source: "@\\[( 72 * $PROGRESS$ )]",
+    });
+  });
+
   it("splits braces adjacent to tokens: a={b}", () => {
     expect(value("a={b}")).toEqual({
       kind: "container",
@@ -149,8 +168,12 @@ describe("lexer", () => {
 
   it('starts a token immediately after a closing quote: "foo"="bar"3="x" (jomini)', () => {
     const document = clean('"foo"="bar"3="1444.11.11"');
-    expect(document.entries.map((entry) => entry.key)).toEqual(["foo", "3"]);
-    expect(document.entries[1]!.value).toEqual({ kind: "str", value: "1444.11.11", quoted: true });
+    expect(keys(document)).toEqual(["foo", "3"]);
+    expect(entryAt(document, 1).value).toEqual({
+      kind: "str",
+      value: "1444.11.11",
+      quoted: true,
+    });
   });
 
   it("keeps | : . - $ inside unquoted tokens: value:x|JOB|y| scope:a.b (jomini — Stellaris script values)", () => {
@@ -172,14 +195,28 @@ describe("lexer", () => {
   });
 });
 
-describe("parser: entries", () => {
-  it("parses a file as a sequence of entries, order preserved", () => {
-    expect(clean("b = 1\n\na = 2").entries.map((entry) => entry.key)).toEqual(["b", "a"]);
+describe("parser: top level", () => {
+  it("parses a file as a sequence of items, order preserved", () => {
+    expect(keys(clean("b = 1\n\na = 2"))).toEqual(["b", "a"]);
+  });
+
+  it("parses a top-level bare scalar list (corpus — vanilla job_tags)", () => {
+    expect(clean("food\nminerals\nenergy").items).toEqual([
+      { kind: "str", value: "food", quoted: false },
+      { kind: "str", value: "minerals", quoted: false },
+      { kind: "str", value: "energy", quoted: false },
+    ]);
+  });
+
+  it("parses a top-level anonymous container (corpus — vanilla gamesetup_settings)", () => {
+    const document = clean("{\tcategories = { x }\n}");
+    expect(document.items).toHaveLength(1);
+    expect(document.items[0]!.kind).toBe("container");
   });
 
   it("preserves duplicate keys in order", () => {
     const document = clean("m = 1\nm = 2\nm = 3");
-    expect(document.entries.map((entry) => entry.value)).toEqual([
+    expect(document.items.map((item) => (item.kind === "entry" ? item.value : null))).toEqual([
       { kind: "num", value: 1 },
       { kind: "num", value: 2 },
       { kind: "num", value: 3 },
@@ -209,9 +246,9 @@ describe("parser: entries", () => {
 
   it("records the 1-based source line on every entry", () => {
     const document = clean("a = 1\nb = {\n\tc = 2\n}");
-    expect(document.entries[0]!.line).toBe(1);
-    expect(document.entries[1]!.line).toBe(2);
-    const body = document.entries[1]!.value;
+    expect(entryAt(document, 0).line).toBe(1);
+    expect(entryAt(document, 1).line).toBe(2);
+    const body = entryAt(document, 1).value;
     if (body.kind === "container" && body.items[0]!.kind === "entry") {
       expect(body.items[0]!.line).toBe(3);
     } else {
@@ -248,6 +285,10 @@ describe("parser: scalars", () => {
 
   it("classifies plus-signed numbers as num: +0.10 (jomini — Stellaris)", () => {
     expect(value("pop_happiness = +0.10")).toEqual({ kind: "num", value: 0.1 });
+  });
+
+  it("normalizes -0 to 0 (corpus — vanilla writes it; String(-0) would break the fixpoint)", () => {
+    expect(value("min = -0")).toEqual({ kind: "num", value: 0 });
   });
 
   it("classifies date-like tokens (2200.01.01) as str", () => {
@@ -305,8 +346,7 @@ describe("parser: containers", () => {
   });
 
   it("preserves empty anonymous containers as items (documented jomini divergence)", () => {
-    const parsed = value("h = { {} {} }");
-    expect(parsed).toEqual({
+    expect(value("h = { {} {} }")).toEqual({
       kind: "container",
       items: [
         { kind: "container", items: [] },
@@ -317,14 +357,13 @@ describe("parser: containers", () => {
 
   it("parses nested containers to arbitrary depth (within the guard)", () => {
     const document = clean("a = { b = { c = { d = 1 } } }");
-    expect(serialize(document.entries)).toBe(
+    expect(serialize(document.items)).toBe(
       "a = {\n\tb = {\n\t\tc = {\n\t\t\td = 1\n\t\t}\n\t}\n}\n"
     );
   });
 
   it("parses bare container items: { { 0 1 } { 2 3 } }", () => {
-    const parsed = value("p = { { 0 1 } { 2 3 } }");
-    expect(parsed).toEqual({
+    expect(value("p = { { 0 1 } { 2 3 } }")).toEqual({
       kind: "container",
       items: [
         {
@@ -367,8 +406,8 @@ describe("parser: containers", () => {
 
   it("parses name = rgb followed by another key as the plain scalar rgb (jomini)", () => {
     const document = clean("name = rgb\ntype = 4713");
-    expect(document.entries[0]!.value).toEqual({ kind: "str", value: "rgb", quoted: false });
-    expect(document.entries[1]!.key).toBe("type");
+    expect(entryAt(document, 0).value).toEqual({ kind: "str", value: "rgb", quoted: false });
+    expect(entryAt(document, 1).key).toBe("type");
   });
 
   it("keeps scalar-then-container at item position as two bare items", () => {
@@ -380,10 +419,50 @@ describe("parser: containers", () => {
   });
 });
 
+describe("parser: parameter blocks (corpus — Stellaris scripted_effects)", () => {
+  it("parses [[NAME] ... ] and [[!NAME] ... ] as param items", () => {
+    const parsed = value("e = { [[POP_GROUP] $POP_GROUP$ = { x = 1 } ] [[!POP_GROUP] y = 2 ] }");
+    expect(parsed.kind).toBe("container");
+    if (parsed.kind === "container") {
+      expect(parsed.items.map((item) => item.kind)).toEqual(["param", "param"]);
+      const positive = parsed.items[0]!;
+      const negative = parsed.items[1]!;
+      if (positive.kind === "param" && negative.kind === "param") {
+        expect(positive.name).toBe("POP_GROUP");
+        expect(positive.negated).toBe(false);
+        expect(positive.items[0]!.kind).toBe("entry");
+        expect(negative.name).toBe("POP_GROUP");
+        expect(negative.negated).toBe(true);
+      } else {
+        expect.unreachable();
+      }
+    }
+  });
+
+  it("keeps $NAME$ substitution tokens as ordinary scalars", () => {
+    const parsed = value("e = { [[X] $X$ = yes ] }");
+    if (parsed.kind === "container" && parsed.items[0]!.kind === "param") {
+      const inner = parsed.items[0]!.items[0]!;
+      expect(inner.kind === "entry" && inner.key).toBe("$X$");
+    } else {
+      expect.unreachable();
+    }
+  });
+
+  it("serializes param blocks multiline with the closing bracket at parent indent", () => {
+    expect(emitted("e = { [[X] a = 1 ] }")).toBe("e = {\n\t[[X]\n\t\ta = 1\n\t]\n}\n");
+  });
+
+  it("throws on an unterminated parameter block, with file:line", () => {
+    expect(() => parse("e = { [[X] a = 1", "claims.txt")).toThrow(/parameter block/);
+    expect(() => parse("e = { [[X", "claims.txt")).toThrow(/claims\.txt:1/);
+  });
+});
+
 describe("parser: repair diagnostics", () => {
   it("skips a stray closing brace and records a diagnostic (jomini — EU4 verona.txt)", () => {
     const document = parse('color = { 121 163 114 } } army_names = { "Armata" }', "verona.txt");
-    expect(document.entries.map((entry) => entry.key)).toEqual(["color", "army_names"]);
+    expect(keys(document)).toEqual(["color", "army_names"]);
     expect(document.diagnostics).toEqual([
       { kind: "stray-closing-brace", fileName: "verona.txt", line: 1, text: "}" },
     ]);
@@ -391,7 +470,7 @@ describe("parser: repair diagnostics", () => {
 
   it("auto-closes unterminated containers at EOF with a diagnostic naming the opening line (jomini — HOI4)", () => {
     const document = parse("names = {\n\tordered = { 1 = { x = 1 } }", "division.txt");
-    expect(document.entries).toHaveLength(1);
+    expect(document.items).toHaveLength(1);
     expect(document.diagnostics).toEqual([
       { kind: "unclosed-at-eof", fileName: "division.txt", line: 1, text: "{" },
     ]);
@@ -399,8 +478,8 @@ describe("parser: repair diagnostics", () => {
 
   it("reads a top-level operator-less foo{...} as foo = {...} with a diagnostic (jomini)", () => {
     const document = parse("foo{bar=qux}", "old.txt");
-    expect(withoutLines(document.entries)).toEqual(
-      withoutLines(parse("foo = { bar = qux }", "old.txt").entries)
+    expect(withoutLines(document.items)).toEqual(
+      withoutLines(parse("foo = { bar = qux }", "old.txt").items)
     );
     expect(document.diagnostics).toEqual([
       { kind: "operator-less-entry", fileName: "old.txt", line: 1, text: "foo" },
@@ -429,7 +508,7 @@ describe("serializer", () => {
     expect(serialize([kv("a", container([]))])).toBe("a = {}\n");
   });
 
-  it("separates top-level entries with a blank line and ends with a newline", () => {
+  it("separates top-level items with a blank line and ends with a newline", () => {
     expect(serialize([kv("a", 1), kv("b", 2)])).toBe("a = 1\n\nb = 2\n");
   });
 
@@ -463,6 +542,10 @@ describe("serializer", () => {
   it("re-emits escaped-quote content verbatim (raw round-trip) (jomini)", () => {
     const source = 'n = "a \\"b\\" c"\n';
     expect(emitted(source)).toBe(source);
+  });
+
+  it("throws on a string whose raw content would terminate its own quotes", () => {
+    expect(() => serialize([kv("a", scalar('say "hi"'))])).toThrow(/unescaped quote/);
   });
 
   it("renders var scalars as the bare @name", () => {
@@ -528,7 +611,7 @@ describe("round trip", () => {
 
   it("serialize is byte-stable on its own output", () => {
     const once = emitted(NASTY_FIXTURE);
-    expect(serialize(parse(once, "claims.txt").entries)).toBe(once);
+    expect(serialize(parse(once, "claims.txt").items)).toBe(once);
   });
 
   it("round-trips the nasty fixture: variables, swaps, six modifiers, OR-prerequisites", () => {
@@ -536,11 +619,15 @@ describe("round trip", () => {
     expect(parse(NASTY_FIXTURE, "claims.txt").diagnostics).toEqual([]);
   });
 
+  it("round-trips parameter blocks (corpus)", () => {
+    expectFixpoint("e = { [[POP_GROUP] $POP_GROUP$ = { x = 1 } ] [[!POP_GROUP] y = 2 ] }");
+  });
+
   it("round-trips repaired input in its repaired form (jomini)", () => {
     const repaired = parse("color = { 1 2 } } foo{bar=1}", "repair.txt");
     expect(repaired.diagnostics).toHaveLength(2);
-    const reparsed = parse(serialize(repaired.entries), "repair.txt");
+    const reparsed = parse(serialize(repaired.items), "repair.txt");
     expect(reparsed.diagnostics).toEqual([]);
-    expect(withoutLines(reparsed.entries)).toEqual(withoutLines(repaired.entries));
+    expect(withoutLines(reparsed.items)).toEqual(withoutLines(repaired.items));
   });
 });

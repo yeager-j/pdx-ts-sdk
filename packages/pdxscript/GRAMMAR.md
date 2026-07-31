@@ -6,18 +6,28 @@ statements with `;`, the format treats it as whitespace) can appear between
 any two tokens and is dropped. A leading UTF-8 BOM is stripped.
 
 ```
-file       = entry* EOF
+file       = item* EOF               (a container body without braces)
 entry      = KEY op value
 op         = "=" | ">" | "<" | ">=" | "<=" | "!="
 value      = SCALAR container        (header form: hsv { 0.63 0.13 0.5 })
            | SCALAR | MATH | container
 container  = "{" item* "}"
-item       = entry | container | SCALAR | MATH
+param      = "[[" "!"? NAME "]" item* "]"
+item       = entry | container | param | SCALAR | MATH
 
 KEY        = unquoted token (`@name` keys define variables) | quoted string
 SCALAR     = quoted string | unquoted token
-MATH       = "@[" any characters "]"        (verbatim, single token)
+MATH       = ("@[" | "@\[") any characters "]"   (verbatim, single token —
+             the escaped form defers evaluation until after $PARAM$
+             substitution in scripted effects)
 ```
+
+The top level really is `item*`, not `entry*`: vanilla ships all-scalar files
+(`job_tags/00_tags.txt` is a bare word list) and anonymous top-level
+containers (`gamesetup_settings.txt`). Parameter blocks (`[[POP_GROUP] ... ]`,
+negated `[[!POP_GROUP] ... ]`) appear throughout Stellaris
+`common/scripted_effects`; the `$NAME$` substitution tokens inside them are
+ordinary unquoted scalars.
 
 ## Token classification
 
@@ -34,7 +44,9 @@ A quoted token is always `str` (so `"yes"` is a string, not a bool).
 Date-like tokens (`2200.01.01`) are strings — date semantics are the game's,
 not the syntax's. `|`, `:`, `.`, `-`, `$`, and non-ASCII bytes stay inside
 unquoted tokens (Stellaris script values:
-`value:job_weights_research_modifier|JOB|head_researcher|`).
+`value:job_weights_research_modifier|JOB|head_researcher|`). `-0` (vanilla
+writes it) normalizes to `0` at parse — `String(-0)` is `"0"`, and negative
+zero is semantically zero here.
 
 Quoted strings: no escape *processing*, but `\` skips the next character when
 scanning for the closing quote, so `"Joe \"Captain\" Rogers"` is one token.
@@ -49,12 +61,15 @@ concern. Quotes may span lines and contain arbitrary bytes.
   a bare scalar item, `OR = { ... }` an entry item, one container holds both.
   Bare items may be quoted (`paradoxplaza_store_url ""` — shipped Stellaris
   DLC metadata with a missing `=`).
-- **Header containers:** at *value position*, a scalar immediately followed
-  by `{` forms one headed container: `color = hsv { 0.63 0.13 0.5 }`. The
-  rule is positional and open-ended (`rgb` incl. 4-component, `hsv360`,
-  `hex`, `LIST`, `cylindrical`, ...) — same rule as jomini. `name = rgb`
-  followed by anything but `{` is the plain scalar `rgb`. At *item position*
-  a scalar then a container stays two bare items.
+- **Header containers:** at *value position*, a scalar followed by `{` on
+  the *same line* forms one headed container:
+  `color = hsv { 0.63 0.13 0.5 }`. The rule is positional and open-ended
+  (`rgb` incl. 4-component, `hsv360`, `hex`, `LIST`, `cylindrical`, ...) —
+  jomini's rule plus the same-line constraint, which keeps a scalar value
+  followed by a bare container item on the next line unambiguous (property
+  testing found the fusion). `name = rgb` followed by anything but a
+  same-line `{` is the plain scalar `rgb`. At *item position* a scalar then
+  a container stays two bare items.
 - **`@[` vs `@name`:** `@` followed by `[` opens an inline-math token that
   runs verbatim to the first `]`. Any other `@` token is a `var` scalar (or a
   variable-defining key, when in key position).
@@ -67,9 +82,11 @@ the same — parse succeeds, and each repair is recorded as a diagnostic
 
 - **Stray closing brace** (`color = { 121 163 114 } } army_names = ...`,
   EU4 `verona.txt`): skipped.
-- **Unclosed containers at EOF** (HOI4 division-name files): auto-closed,
-  reported once with the opening line.
-- **Operator-less entry at top level** (`foo{bar=qux}`, older-game files):
+- **Unclosed containers at EOF** (Stellaris ships one:
+  `scripted_loc_ruloc.txt` is missing its final `}`): auto-closed, reported
+  with the opening line.
+- **Operator-less entry at top level** (Stellaris ships one:
+  `named_colors/01_trait_colors.txt` line 65, `trait_bg_active_glow {`):
   read as `foo = { ... }`.
 
 Hard errors (`PdxSyntaxError`, always `file:line`): unterminated quote,
@@ -109,9 +126,10 @@ inline; repaired input re-emits in repaired form.
 - **`?=` and `==`**: not Stellaris operators (CK3/Vic3/Imperator territory).
   Both lex as errors today; adding them is a one-line lexer change when a
   sibling game is in scope.
-- **EU4 `[[param] ...]` macro syntax and save-file constructs** (`EU4txt`
-  magic, container-as-key templates): out of scope — this package parses
-  game-definition files.
+- **Save-file constructs** (`EU4txt` magic, container-as-key templates):
+  out of scope — this package parses game-definition files. (Parameter
+  blocks were originally scoped out as EU4-only; the vanilla sweep found
+  them all over Stellaris `common/scripted_effects`, so they are in.)
 - **Comment preservation**: out of scope for 0.x; the AST leaves room
   (trivia would attach to entries) but no API pretends it exists.
 - **Encodings**: the API takes a decoded string; callers own file reading.

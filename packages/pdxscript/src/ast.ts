@@ -47,7 +47,20 @@ export interface PdxEntry {
   readonly line?: number;
 }
 
-export type PdxItem = PdxEntry | PdxScalar | PdxContainer;
+/**
+ * A `[[NAME] ... ]` parameter block: its items apply only when the scripted
+ * effect/trigger is invoked with NAME defined (`[[!NAME]` when undefined).
+ * Stellaris `common/scripted_effects` uses these; the `$NAME$` substitution
+ * tokens inside are ordinary `str` scalars.
+ */
+export interface PdxParamBlock {
+  readonly kind: "param";
+  readonly name: string;
+  readonly negated: boolean;
+  readonly items: readonly PdxItem[];
+}
+
+export type PdxItem = PdxEntry | PdxScalar | PdxContainer | PdxParamBlock;
 
 export type PdxValue = PdxScalar | PdxContainer;
 
@@ -63,10 +76,14 @@ export interface PdxDiagnostic {
   readonly text: string;
 }
 
-/** A parsed source file: its name (for diagnostics) and its top-level entries. */
+/**
+ * A parsed source file. The top level is a container body without braces:
+ * usually all entries, but vanilla ships all-scalar files (`job_tags`) and
+ * anonymous top-level containers (`gamesetup_settings`) too.
+ */
 export interface PdxDocument {
   readonly fileName: string;
-  readonly entries: readonly PdxEntry[];
+  readonly items: readonly PdxItem[];
   readonly diagnostics: readonly PdxDiagnostic[];
 }
 

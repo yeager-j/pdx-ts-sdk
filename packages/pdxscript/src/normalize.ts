@@ -4,7 +4,7 @@
  * tests compare trees with lines stripped.
  */
 
-import type { PdxEntry, PdxItem, PdxValue } from "./ast.ts";
+import type { PdxItem, PdxValue } from "./ast.ts";
 
 function stripValue(value: PdxValue): PdxValue {
   if (value.kind === "container") {
@@ -24,10 +24,18 @@ function stripItem(item: PdxItem): PdxItem {
   if (item.kind === "container") {
     return stripValue(item);
   }
+  if (item.kind === "param") {
+    return {
+      kind: "param",
+      name: item.name,
+      negated: item.negated,
+      items: item.items.map(stripItem),
+    };
+  }
   return item;
 }
 
 /** The same tree without source lines, for structural equality. */
-export function withoutLines(entries: readonly PdxEntry[]): readonly PdxEntry[] {
-  return entries.map((entry) => stripItem(entry) as PdxEntry);
+export function withoutLines(items: readonly PdxItem[]): readonly PdxItem[] {
+  return items.map(stripItem);
 }

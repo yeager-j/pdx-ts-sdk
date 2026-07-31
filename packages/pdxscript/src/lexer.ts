@@ -11,11 +11,16 @@
 
 import type { PdxScalar } from "./ast.ts";
 
-export type TokenKind = "identifier" | "op" | "lbrace" | "rbrace" | "math" | "eof";
+export type TokenKind =
+  "identifier" | "op" | "lbrace" | "rbrace" | "math" | "param-open" | "rbracket" | "eof";
 
 export interface Token {
   readonly kind: TokenKind;
-  /** Identifiers: the raw text. Operators: the operator. Math: the `@[ ... ]` source verbatim. */
+  /**
+   * Identifiers: the raw text. Operators: the operator. Math: the `@[ ... ]`
+   * source verbatim. Param-open: the text between `[[` and `]`, negation
+   * bang included.
+   */
   readonly text: string;
   readonly quoted: boolean;
   readonly line: number;
@@ -44,6 +49,8 @@ const TERMINATORS = new Set([
   ";",
   "{",
   "}",
+  "[",
+  "]",
   "=",
   "<",
   ">",
@@ -73,7 +80,10 @@ export function classifyUnquoted(text: string): PdxScalar {
     return { kind: "bool", value: text === "yes" };
   }
   if (NUMBER.test(text)) {
-    return { kind: "num", value: Number(text) };
+    const value = Number(text);
+    // Vanilla writes `-0`; String(-0) is "0", so normalize at parse to keep
+    // the round trip a fixpoint. Negative zero is semantically zero here.
+    return { kind: "num", value: value === 0 ? 0 : value };
   }
   if (text.startsWith("@")) {
     return { kind: "var", name: text };
@@ -153,13 +163,32 @@ export function tokenize(source: string, fileName: string): Token[] {
       index = cursor + 1;
       continue;
     }
-    if (char === "@" && text[index + 1] === "[") {
+    // Inline math: `@[ ... ]`, or `@\[ ... ]` — the escaped form defers
+    // evaluation until after $PARAM$ substitution in scripted effects.
+    if (
+      char === "@" &&
+      (text[index + 1] === "[" || (text[index + 1] === "\\" && text[index + 2] === "["))
+    ) {
       const end = text.indexOf("]", index);
       if (end === -1) {
         throw new PdxSyntaxError("Unterminated @[ inline math", fileName, line);
       }
       tokens.push({ kind: "math", text: text.slice(index, end + 1), quoted: false, line });
       index = end + 1;
+      continue;
+    }
+    if (char === "[" && text[index + 1] === "[") {
+      const end = text.indexOf("]", index);
+      if (end === -1) {
+        throw new PdxSyntaxError("Unterminated [[ parameter block", fileName, line);
+      }
+      tokens.push({ kind: "param-open", text: text.slice(index + 2, end), quoted: false, line });
+      index = end + 1;
+      continue;
+    }
+    if (char === "]") {
+      tokens.push({ kind: "rbracket", text: "]", quoted: false, line });
+      index += 1;
       continue;
     }
     const operator = operatorAt(text, index);
