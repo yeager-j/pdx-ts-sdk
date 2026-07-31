@@ -3,9 +3,19 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { kv, serialize } from "@pdx-ts/pdxscript";
 
+import { StaleRuleTableError, VanillaPathCollisionError } from "./errors.ts";
 import { buildEvent, type DefinedEvent, type EventDef } from "./events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
+import { normalizeLogicalPath } from "./resolver/path-order.ts";
+import { collectVarRefs, planPatchEmission, type PatchPlan } from "./resolver/plan.ts";
+import { SUPPORTED_STELLARIS_BUILD } from "./resolver/rules.ts";
 import { Technology, type TechnologyDef } from "./tech.ts";
+import {
+  patchTechnology as transformTechnology,
+  type PatchedTechnology,
+  type TechnologyPatch,
+} from "./vanilla/patch.ts";
+import { sha256Hex, type ParsedTechnology, type VanillaFile } from "./vanilla/surface.ts";
 
 export interface ModConfig<P extends string = string> {
   /** Display name shown in the launcher. */
@@ -16,6 +26,13 @@ export interface ModConfig<P extends string = string> {
   /** Game version pattern, e.g. "4.0.*". */
   supportedVersion: string;
   tags?: string[];
+  /**
+   * Acknowledges a game build the rule table is not verified against.
+   * Patch emission refuses when the loaded install's version differs from
+   * the table's pin; setting this to that exact version proceeds anyway —
+   * an explicit, per-version acceptance, never a blanket one.
+   */
+  acceptGameVersion?: string;
 }
 
 /** An id namespaced under the mod prefix P, e.g. `hello_galaxy_${string}`. */
@@ -26,6 +43,7 @@ const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 export class Mod<const P extends string = string> {
   readonly config: ModConfig<P>;
   private readonly technologies: Technology[] = [];
+  private readonly patches: PatchedTechnology[] = [];
   private readonly events: DefinedEvent<ScopeName, ScopeName | undefined>[] = [];
   private readonly eventIds = new Set<number>();
   private readonly loc = new Map<string, string>();
@@ -58,6 +76,34 @@ export class Mod<const P extends string = string> {
       this.registerLoc(`${def.id}_desc`, def.desc);
     }
     return tech;
+  }
+
+  /**
+   * Patches a vanilla technology by transform: the closure receives the
+   * parsed definition and returns the fields to change; everything else is
+   * carried through, so the emission is always the complete object. The
+   * patch targets the vanilla key on purpose — no prefix — and the emitted
+   * file's name is computed at render time to provably win the override
+   * (see resolver/plan.ts).
+   */
+  patchTechnology<T extends ParsedTechnology>(
+    tech: T,
+    patch: (tech: T) => TechnologyPatch
+  ): PatchedTechnology {
+    if (this.patches.some((existing) => existing.id === tech.id)) {
+      throw new Error(`Duplicate patch for technology "${tech.id}"`);
+    }
+    const origin = this.patches[0]?.source.origin;
+    if (origin !== undefined && origin.manifestKey !== tech.origin.manifestKey) {
+      throw new Error(
+        `Patch for "${tech.id}" comes from a different vanilla load than earlier patches ` +
+          `(manifest ${tech.origin.manifestKey.slice(0, 12)} vs ${origin.manifestKey.slice(0, 12)}); ` +
+          `patch one mod from one view`
+      );
+    }
+    const patched = transformTechnology(tech, patch);
+    this.patches.push(patched);
+    return patched;
   }
 
   /**
@@ -106,6 +152,74 @@ export class Mod<const P extends string = string> {
     this.loc.set(key, text);
   }
 
+  /**
+   * The patch emission plan — computed filename, file content, and the win
+   * assertions backing it — or undefined when nothing is patched. Pure and
+   * idempotent; `render()` calls it and tests can too.
+   */
+  patchPlan(): PatchPlan | undefined {
+    if (this.patches.length === 0) {
+      return undefined;
+    }
+    const { prefix } = this.config;
+    const origin = this.patches[0]!.source.origin;
+    if (
+      origin.gameVersion !== undefined &&
+      origin.gameVersion !== SUPPORTED_STELLARIS_BUILD &&
+      this.config.acceptGameVersion !== origin.gameVersion
+    ) {
+      throw new StaleRuleTableError(
+        `the install is Stellaris ${origin.gameVersion} but the rule table is verified against ` +
+          `${SUPPORTED_STELLARIS_BUILD} — re-verify the oracle runs, or set ` +
+          `acceptGameVersion: "${origin.gameVersion}" to proceed on the stale table`
+      );
+    }
+
+    // The mod's own files are part of the surviving enumeration too: its
+    // technology file can only define prefixed keys, but its *name* competes
+    // for path order and must not be chosen again for the patch file.
+    const ownTechPath = `common/technology/${prefix}_technology.txt`;
+    const enumeration: VanillaFile[] = [
+      ...origin.files.filter((file) => file.path.startsWith("common/technology/")),
+      ...(this.technologies.length > 0
+        ? [
+            {
+              path: normalizeLogicalPath(ownTechPath),
+              sha256: sha256Hex(serialize(this.technologies.map((t) => t.toEntries()))),
+              keys: this.technologies.map((t) => t.id),
+            },
+          ]
+        : []),
+    ];
+
+    return planPatchEmission({
+      registry: "technologies",
+      patches: this.patches.map((patched) => {
+        const entry = patched.toEntries();
+        // A file-local @variable referenced by the emission must be
+        // re-declared in the patch file; globals resolve cross-file (r1).
+        const fileLocals = origin.localVariables(patched.source.sourceFile);
+        const locals = new Map<string, number>();
+        for (const name of collectVarRefs(entry)) {
+          const value = fileLocals.get(name);
+          if (value !== undefined) {
+            locals.set(name, value);
+          }
+        }
+        return {
+          key: patched.id,
+          sourceFile: patched.source.sourceFile,
+          sourceSha256: patched.source.sourceSha256,
+          entry,
+          locals,
+        };
+      }),
+      enumeration,
+      reservedPaths: [ownTechPath],
+      prefix,
+    });
+  }
+
   /** Render every generated file to memory as relative path -> content. */
   render(): Map<string, string> {
     const { prefix } = this.config;
@@ -124,6 +238,24 @@ export class Mod<const P extends string = string> {
       );
     }
     files.set(`localisation/english/${prefix}_l_english.yml`, this.renderLocalization());
+
+    const plan = this.patchPlan();
+    if (plan !== undefined) {
+      files.set(plan.relPath, plan.content);
+      // Never emit at a path vanilla occupies: a same-path collision replaces
+      // the whole vanilla file (the spike's r6 run killed two techs that way).
+      const vanillaPaths = new Set<string>(
+        this.patches[0]!.source.origin.files.map((file) => file.path)
+      );
+      for (const relPath of files.keys()) {
+        if (relPath !== "descriptor.mod" && vanillaPaths.has(normalizeLogicalPath(relPath))) {
+          throw new VanillaPathCollisionError(
+            `this mod would emit ${relPath}, a path vanilla already occupies — a same-path ` +
+              `collision silently replaces the entire vanilla file`
+          );
+        }
+      }
+    }
     return files;
   }
 

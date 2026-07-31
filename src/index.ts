@@ -34,3 +34,32 @@ export type { TechRef, TechnologyDef } from "./tech.ts";
 export { Technology } from "./tech.ts";
 export type { ModConfig, PrefixedId } from "./mod.ts";
 export { Mod } from "./mod.ts";
+export * as stellaris from "./stellaris/index.ts";
+export {
+  InstallNotFoundError,
+  LogicalPathError,
+  NoWinningFilenameError,
+  PdxSdkError,
+  StaleRuleTableError,
+  SwapPatchError,
+  UnverifiedRegistryError,
+  VanillaPathCollisionError,
+} from "./errors.ts";
+export {
+  compareLogicalPaths,
+  normalizeLogicalPath,
+  type LogicalPath,
+} from "./resolver/path-order.ts";
+export { REGISTRY_RULES, SUPPORTED_STELLARIS_BUILD, type RegistryRow } from "./resolver/rules.ts";
+export type { PatchPlan, WinAssertion } from "./resolver/plan.ts";
+export {
+  anyOf,
+  ParsedTechnology,
+  VanillaView,
+  viewFromFiles,
+  type AnyOf,
+  type ParsedNumber,
+  type Prerequisite,
+  type VanillaFile,
+} from "./vanilla/surface.ts";
+export type { PatchedTechnology, TechnologyPatch } from "./vanilla/patch.ts";
