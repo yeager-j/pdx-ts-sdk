@@ -47,13 +47,15 @@ Landed: `technology`, `building`, `tradition`, `tradition_category`,
 `bombardment_stance`, `archaeological_site_type`, `global_ship_design`,
 `utility_component_template`, `weapon_component_template`,
 `strike_craft_component_template`, `scripted_loc`, `situation_type`,
-`static_modifier`.
+`static_modifier`, `councilor`, `economic_category`, `civic_or_origin`.
 
-Blocked, each on a named cause:
-
-- [ ] `civic_or_origin` — needs [alias categories](#parse-non-triggereffect-cwt-alias-categories)
-- [ ] `councilor` — needs [the drift block resolved](#resolve-the-malformed-option-drift-block)
-- [ ] `economic_category` — same drift block
+Nothing is blocked any more: alias categories unblocked `civic_or_origin` and
+the malformed-option drift block unblocked `councilor` and
+`economic_category`. `civic_or_origin` is one type with `subtype[civic]` /
+`subtype[origin]` split by `is_origin`, so there is no separate `civic`
+registry to expose; its `potential`/`possible` lower onto the shared
+`GovernmentTriggerBlock` rather than a `Trigger`, since the game reads that
+position as the requirements DSL and not a script condition tree.
 
 Not yet attempted:
 

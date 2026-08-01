@@ -1,0 +1,14 @@
+content_test_economic_category_research = {
+	use_for_ai_budget = yes
+	modifier_category = economic_unit
+	add_unscaled_value_to_tooltip = no
+	generate_add_modifiers = { produces }
+	generate_mult_modifiers = { produces upkeep }
+	triggered_cost_modifier = {
+		key = content_test_economic_category_research
+		modifier_types = { mult }
+		trigger = {
+			always = yes
+		}
+	}
+}

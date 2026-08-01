@@ -1,0 +1,46 @@
+content_test_civic_meritocracy = {
+	playable = {
+		always = yes
+	}
+	ai_playable = {
+		always = yes
+	}
+	potential = {
+		authority = {
+			value = auth_democratic
+		}
+		civics = {
+			NOT = {
+				value = content_test_civic_incompatible
+			}
+		}
+	}
+	possible = {
+		OR = {
+			authority = {
+				value = auth_democratic
+			}
+		}
+		OR = {
+			text = content_test_meritocracy_oligarchic
+			authority = {
+				value = auth_oligarchic
+			}
+		}
+	}
+	modifier = {
+		country_unity_produces_mult = 0.05
+	}
+	swap_type = {
+		name = content_test_civic_meritocracy_swap
+		trigger = {
+			always = yes
+		}
+		modifier = {
+			country_unity_produces_mult = 0.1
+		}
+	}
+	cost = 1
+	pickable_at_start = yes
+	can_build_ruler_ship = no
+}

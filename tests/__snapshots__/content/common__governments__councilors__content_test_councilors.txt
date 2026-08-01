@@ -1,0 +1,30 @@
+content_test_councilor_chancellor = {
+	leader_class = { leader_class_official }
+	possible = {
+		always = yes
+	}
+	is_leader_possible = {
+		always = yes
+	}
+	civic = content_test_civic_meritocracy
+	modifier = {
+		country_unity_produces_mult = 0.02
+	}
+	triggered_country_modifier = {
+		potential = {
+			has_authority = auth_machine_intelligence
+		}
+		country_unity_produces_mult = 0.01
+	}
+	ai_priority = 10
+	optional = {
+		always = yes
+	}
+	ai_hiring_weight = {
+		base = 1
+		modifier = {
+			factor = 2
+			always = yes
+		}
+	}
+}

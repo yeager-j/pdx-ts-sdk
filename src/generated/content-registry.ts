@@ -18,6 +18,8 @@
 // From: common/archaeology.cwt
 // From: common/situations.cwt
 // From: common/scripted_loc.cwt
+// From: common/governments.cwt
+// From: common/economic_categories.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -63,11 +65,29 @@ import {
   type DefinedCasusBelli,
 } from "./casus-belli.ts";
 import {
+  CIVIC_OR_ORIGIN_FIELDS,
+  CIVIC_OR_ORIGIN_LOCALISATION,
+  type CivicOrOriginDef,
+  type DefinedCivicOrOrigin,
+} from "./civic-or-origin.ts";
+import {
+  COUNCILOR_FIELDS,
+  COUNCILOR_LOCALISATION,
+  type CouncilorDef,
+  type DefinedCouncilor,
+} from "./councilor.ts";
+import {
   DECISION_FIELDS,
   DECISION_LOCALISATION,
   type DecisionDef,
   type DefinedDecision,
 } from "./decision.ts";
+import {
+  ECONOMIC_CATEGORY_FIELDS,
+  ECONOMIC_CATEGORY_LOCALISATION,
+  type DefinedEconomicCategory,
+  type EconomicCategoryDef,
+} from "./economic-category.ts";
 import { EDICT_FIELDS, EDICT_LOCALISATION, type DefinedEdict, type EdictDef } from "./edict.ts";
 import {
   GLOBAL_SHIP_DESIGN_FIELDS,
@@ -318,6 +338,27 @@ export const CONTENT_REGISTRIES = [
     localisation: SCRIPTED_LOC_LOCALISATION,
     keyedBy: { keyword: "defined_text", nameField: "name" },
   },
+  {
+    type: "councilor",
+    outputDir: "common/governments/councilors",
+    fileStem: "councilors",
+    fields: COUNCILOR_FIELDS,
+    localisation: COUNCILOR_LOCALISATION,
+  },
+  {
+    type: "economic_category",
+    outputDir: "common/economic_categories",
+    fileStem: "economic_categories",
+    fields: ECONOMIC_CATEGORY_FIELDS,
+    localisation: ECONOMIC_CATEGORY_LOCALISATION,
+  },
+  {
+    type: "civic_or_origin",
+    outputDir: "common/governments/civics",
+    fileStem: "civics",
+    fields: CIVIC_OR_ORIGIN_FIELDS,
+    localisation: CIVIC_OR_ORIGIN_LOCALISATION,
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -346,6 +387,9 @@ export interface ContentDefMap<P extends string> {
   archaeological_site_type: ArchaeologicalSiteTypeDef<PrefixedId<P>>;
   situation_type: SituationTypeDef<PrefixedId<P>>;
   scripted_loc: ScriptedLocDef<PrefixedId<P>>;
+  councilor: CouncilorDef<PrefixedId<P>>;
+  economic_category: EconomicCategoryDef<PrefixedId<P>>;
+  civic_or_origin: CivicOrOriginDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -372,6 +416,9 @@ export interface DefinedContentMap<P extends string> {
   archaeological_site_type: DefinedArchaeologicalSiteType<PrefixedId<P>>;
   situation_type: DefinedSituationType<PrefixedId<P>>;
   scripted_loc: DefinedScriptedLoc<PrefixedId<P>>;
+  councilor: DefinedCouncilor<PrefixedId<P>>;
+  economic_category: DefinedEconomicCategory<PrefixedId<P>>;
+  civic_or_origin: DefinedCivicOrOrigin<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -519,5 +566,24 @@ export abstract class GeneratedContentMethods<const P extends string> {
   /** Defines a scripted loc in this mod. */
   defineScriptedLoc(def: ContentDefMap<P>["scripted_loc"]): DefinedContentMap<P>["scripted_loc"] {
     return this.defineGeneratedContent("scripted_loc", def);
+  }
+
+  /** Defines a councilor in this mod. */
+  defineCouncilor(def: ContentDefMap<P>["councilor"]): DefinedContentMap<P>["councilor"] {
+    return this.defineGeneratedContent("councilor", def);
+  }
+
+  /** Defines an economic category in this mod. */
+  defineEconomicCategory(
+    def: ContentDefMap<P>["economic_category"]
+  ): DefinedContentMap<P>["economic_category"] {
+    return this.defineGeneratedContent("economic_category", def);
+  }
+
+  /** Defines a civic or origin in this mod. */
+  defineCivicOrOrigin(
+    def: ContentDefMap<P>["civic_or_origin"]
+  ): DefinedContentMap<P>["civic_or_origin"] {
+    return this.defineGeneratedContent("civic_or_origin", def);
   }
 }

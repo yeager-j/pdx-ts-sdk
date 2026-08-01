@@ -93,6 +93,15 @@ export type CarrierFlag = ValueSetMember<"carrier_flag">;
  */
 export const carrierFlags = declare<"carrier_flag">();
 
+/** A name belonging to `value[climate_label]`. */
+export type ClimateLabel = ValueSetMember<"climate_label">;
+
+/**
+ * Declares climate_label names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const climateLabels = declare<"climate_label">();
+
 /** A name belonging to `value[cluster_id]`. */
 export type ClusterId = ValueSetMember<"cluster_id">;
 

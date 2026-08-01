@@ -554,6 +554,89 @@ function defineContentExample(): Mod<"content_test"> {
     default: "content_test_scripted_loc_flavor_text_default",
   });
 
+  mod.defineCouncilor({
+    id: "content_test_councilor_chancellor",
+    name: "Chancellor",
+    desc: "Presides over the ruling council.",
+    leaderClass: ["leader_class_official"],
+    // Country/leader scope triggers, per the CWT's own `## replace_scopes`.
+    possible: always(),
+    isLeaderPossible: always(),
+    civic: "content_test_civic_meritocracy",
+    modifier: (m) => m.country.unity.produces.mult(0.02),
+    triggeredCountryModifier: [
+      {
+        when: hasAuthority("auth_machine_intelligence"),
+        modifiers: (m) => m.country.unity.produces.mult(0.01),
+      },
+    ],
+    aiPriority: 10,
+    optional: always(),
+    // aiHiringWeight runs in leader scope — always() is the only trigger valid
+    // there among the ones this file already imports.
+    aiHiringWeight: {
+      base: 1,
+      modifiers: [{ factor: 2, when: always() }],
+    },
+  });
+
+  mod.defineEconomicCategory({
+    id: "content_test_economic_category_research",
+    useForAiBudget: true,
+    modifierCategory: "economic_unit",
+    addUnscaledValueToTooltip: false,
+    generateAddModifiers: ["produces"],
+    generateMultModifiers: ["produces", "upkeep"],
+    triggeredCostModifier: [
+      {
+        key: "content_test_economic_category_research",
+        modifierTypes: ["mult"],
+        // No `## replace_scopes` on this trigger, so it must hold at every
+        // scope — only a scope-agnostic trigger like always() type-checks.
+        trigger: always(),
+      },
+    ],
+  });
+
+  mod.defineCivicOrOrigin({
+    id: "content_test_civic_meritocracy",
+    name: "Meritocracy",
+    desc: "Leadership is earned, not inherited.",
+    // no_scope AND triggers — real Triggers, not government_trigger, per the
+    // CWT's own `## replace_scopes = { this = no_scope root = no_scope }`.
+    playable: always(),
+    aiPlayable: always(),
+    // The government_trigger requirements DSL: a plain data object, not a
+    // Trigger — the game reads potential/possible against empire setup, not
+    // as a script condition tree.
+    potential: {
+      authority: { value: "auth_democratic" },
+      civics: { not: [{ values: ["content_test_civic_incompatible"] }] },
+    },
+    possible: {
+      or: [
+        { authority: { value: "auth_democratic" } },
+        { text: "content_test_meritocracy_oligarchic", authority: { value: "auth_oligarchic" } },
+      ],
+    },
+    modifier: (m) => m.country.unity.produces.mult(0.05),
+    cost: 1,
+    pickableAtStart: true,
+    canBuildRulerShip: false,
+    swapType: [
+      {
+        name: "content_test_civic_meritocracy_swap",
+        // Neither trigger nor modifier has a `## replace_scopes` inside
+        // swap_type, so both stay scope-agnostic: always() for the trigger,
+        // and unchecked() for the recorder, since a ScopeName modifier
+        // closure's `m` is too wide a union for the checked trie API to
+        // resolve through every scope's recorder at once.
+        trigger: always(),
+        modifier: (m) => m.unchecked("country_unity_produces_mult", 0.1),
+      },
+    ],
+  });
+
   return mod;
 }
 

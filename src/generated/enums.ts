@@ -63,6 +63,10 @@ export type ComponentTag = string;
 /** `enum[crisis_type]`. */
 export type CrisisType = "prethoryn" | "unbidden" | "contingency" | "synth_queen" | "all" | "any";
 
+/** `enum[customize_species_editor_header]`. */
+export type CustomizeSpeciesEditorHeader =
+  "TYPE_HEADER_01" | "TYPE_HEADER_02" | "TYPE_HEADER_03" | "TYPE_HEADER_04";
+
 /** `enum[dlc]`. */
 export type Dlc =
   | "Plantoids Species Pack"
@@ -97,6 +101,12 @@ export type Dlc =
   | "Infernals Species Pack"
   | "Vipra the Vapor Species Portrait"
   | "Nomads";
+
+/** `enum[economic_modifier_category]`. */
+export type EconomicModifierCategory = "cost" | "produces" | "upkeep" | "logistics";
+
+/** `enum[economic_modifier_type]`. */
+export type EconomicModifierType = "mult" | "add";
 
 /** `enum[election_type]`. */
 export type ElectionType = "none" | "oligarchic" | "democratic";
