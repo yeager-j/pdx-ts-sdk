@@ -76,6 +76,36 @@ approaches are exactly this shape.
 
 Blocks the situations registry outright and caps four others.
 
+**Design settled 2026-08-01.** The game spells these three ways, but only two
+matter to an author:
+
+1. keyed container — `stages = { stage_1 = { ... } }`, id is the key
+2. repeated siblings with a name field — `approach = { name = approach_a ... }`
+3. repeated siblings with no id at all — `text = { trigger = { ... } ... }`
+
+1 and 2 are the same thing spelled differently: a named, ordered collection
+whose name is both identity and localization key. `99_README_SITUATIONS.txt`
+confirms they localize identically — a stage's key and an approach's `name` each
+take an optional `<key>_desc`. This is the same distinction `name_field` already
+draws one level up, where a top-level registry keys either by the entry key or
+by a keyword with the id in a body field, so the model reuses that concept
+rather than inventing a second one.
+
+So 1 and 2 both author as a record keyed by id, and 3 as an array:
+
+```ts
+stages: { stage_1: { ... } },                    // emits stage_1 = { ... }
+approaches: { approach_a: { ... } },             // emits approach = { name = approach_a ... }
+text: [{ trigger: ..., localizationKey: ... }],  // genuinely a list
+```
+
+The record form is what makes the id structural rather than just another field:
+it cannot be omitted, it cannot collide, the mod prefix applies at one point the
+way it already does for top-level ids, and localization rides the key for both
+spellings instead of two separate stories. Insertion order carries the "list
+your stages in the correct order" requirement, and the mod-prefix rule keeps
+every key non-integer-like, which is the one case JS would reorder.
+
 ### Fix the scalar-versus-block field picker
 
 Three registries have hit the same defect: `opinion_modifier.opinion`/`decay`/
