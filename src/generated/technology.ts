@@ -4,8 +4,9 @@
 
 import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
-import type { ResearchArea } from "./enums.ts";
+import type { ResearchArea, TechAiType } from "./enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./refs.ts";
+import type { FeatureFlag, TechWeightGroup } from "./value-sets.ts";
 
 /**
  * A technology, as the game's rules describe it.
@@ -16,6 +17,9 @@ export interface TechnologyFields {
   name: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
+  area: ResearchArea;
+  tier: TechnologyTierRef | string | number;
+  category: (TechnologyCategoryRef | string)[] | TechnologyCategoryRef | string;
   icon?: string;
   /**
    * Only when technology subtype `start` applies.
@@ -23,18 +27,44 @@ export interface TechnologyFields {
    * Only when technology subtype not `start` applies.
    */
   cost?: number;
-  area: ResearchArea;
-  tier: TechnologyTierRef | string | number;
-  category: (TechnologyCategoryRef | string)[] | TechnologyCategoryRef | string;
-  prerequisites?: (TechnologyRef | string)[];
-  startTech?: boolean;
-  isRare?: boolean;
   /**
    * Only when technology subtype `start` applies.
    * Only when technology subtype not `start` applies.
    */
   weight?: number;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Only when technology subtype not `start` applies.
+   */
+  isCustomTech1?: boolean;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Only when technology subtype not `start` applies.
+   */
+  isCustomTech2?: boolean;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Only when technology subtype not `start` applies.
+   */
+  isCustomTech3?: boolean;
+  /** Only when technology subtype not `start` applies. */
+  levels?: number;
+  prerequisites?: (TechnologyRef | string)[];
   potential?: Trigger<"country">;
+  gateway?: string;
+  /** Only when technology subtype `repeatable` applies. */
+  costPerLevel?: number;
+  /** a weight group increases the chances of a technology appearing - if another tech of a similar group is picked. */
+  weightGroups?: TechWeightGroup[];
+  startTech?: boolean;
+  isReverseEngineerable?: boolean;
+  aiUpdateType?: TechAiType;
+  isRare?: boolean;
+  isDangerous?: boolean;
+  isInsight?: boolean;
+  featureFlags?: FeatureFlag[];
+  /** Only when technology subtype `start` applies. */
+  startingPotential?: Trigger<"country">;
 }
 
 export interface TechnologyDef<Id extends string = string> extends TechnologyFields {
@@ -48,11 +78,16 @@ export type DefinedTechnology<Id extends string = string> = DefinedContent<
 >;
 
 export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
-  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
-  { key: "cost", member: "cost", shape: "value", conversion: "identity" },
   { key: "area", member: "area", shape: "value", conversion: "identity" },
   { key: "tier", member: "tier", shape: "value", conversion: "ref" },
   { key: "category", member: "category", shape: "valueList", conversion: "ref" },
+  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
+  { key: "cost", member: "cost", shape: "value", conversion: "identity" },
+  { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+  { key: "is_custom_tech_1", member: "isCustomTech1", shape: "value", conversion: "identity" },
+  { key: "is_custom_tech_2", member: "isCustomTech2", shape: "value", conversion: "identity" },
+  { key: "is_custom_tech_3", member: "isCustomTech3", shape: "value", conversion: "identity" },
+  { key: "levels", member: "levels", shape: "value", conversion: "identity" },
   {
     key: "prerequisites",
     member: "prerequisites",
@@ -60,10 +95,23 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
     conversion: "ref",
     quoted: true,
   },
-  { key: "start_tech", member: "startTech", shape: "value", conversion: "identity" },
-  { key: "is_rare", member: "isRare", shape: "value", conversion: "identity" },
-  { key: "weight", member: "weight", shape: "value", conversion: "identity" },
   { key: "potential", member: "potential", shape: "trigger" },
+  { key: "gateway", member: "gateway", shape: "value", conversion: "identity" },
+  { key: "cost_per_level", member: "costPerLevel", shape: "value", conversion: "identity" },
+  { key: "weight_groups", member: "weightGroups", shape: "valueList", conversion: "identity" },
+  { key: "start_tech", member: "startTech", shape: "value", conversion: "identity" },
+  {
+    key: "is_reverse_engineerable",
+    member: "isReverseEngineerable",
+    shape: "value",
+    conversion: "identity",
+  },
+  { key: "ai_update_type", member: "aiUpdateType", shape: "value", conversion: "identity" },
+  { key: "is_rare", member: "isRare", shape: "value", conversion: "identity" },
+  { key: "is_dangerous", member: "isDangerous", shape: "value", conversion: "identity" },
+  { key: "is_insight", member: "isInsight", shape: "value", conversion: "identity" },
+  { key: "feature_flags", member: "featureFlags", shape: "valueList", conversion: "identity" },
+  { key: "starting_potential", member: "startingPotential", shape: "trigger" },
 ];
 
 export const TECHNOLOGY_LOCALISATION: readonly ContentLocalisation[] = [

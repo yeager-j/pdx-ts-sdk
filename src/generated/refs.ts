@@ -111,8 +111,15 @@ export type ColonizationControlRef = TypedRef<"colonization_control">;
 /** A reference to a `<colony_type>`. */
 export type ColonyTypeRef = TypedRef<"colony_type">;
 
+/** A reference to a `<component_set>`. */
+export type ComponentSetRef = TypedRef<"component_set">;
+
 /** A reference to a `<component_template>`. */
 export type ComponentTemplateRef = TypedRef<"component_template">;
+
+/** A reference to a `<component_template.utility_component_template>`. */
+export type ComponentTemplateUtilityComponentTemplateRef =
+  TypedRef<"component_template.utility_component_template">;
 
 /** A reference to a `<councilor>`. */
 export type CouncilorRef = TypedRef<"councilor">;
@@ -312,6 +319,9 @@ export type PreFtlAgeRef = TypedRef<"pre_ftl_age">;
 /** A reference to a `<precursors>`. */
 export type PrecursorsRef = TypedRef<"precursors">;
 
+/** A reference to a `<projectile>`. */
+export type ProjectileRef = TypedRef<"projectile">;
+
 /** A reference to a `<psionic_aura>`. */
 export type PsionicAuraRef = TypedRef<"psionic_aura">;
 
@@ -333,11 +343,20 @@ export type ResourceRef = TypedRef<"resource">;
 /** A reference to a `<resource_converter>`. */
 export type ResourceConverterRef = TypedRef<"resource_converter">;
 
+/** A reference to a `<scripted_action>`. */
+export type ScriptedActionRef = TypedRef<"scripted_action">;
+
 /** A reference to a `<scripted_effect>`. */
 export type ScriptedEffectRef = TypedRef<"scripted_effect">;
 
+/** A reference to a `<scripted_trigger>`. */
+export type ScriptedTriggerRef = TypedRef<"scripted_trigger">;
+
 /** A reference to a `<sector_type>`. */
 export type SectorTypeRef = TypedRef<"sector_type">;
+
+/** A reference to a `<ship_behavior>`. */
+export type ShipBehaviorRef = TypedRef<"ship_behavior">;
 
 /** A reference to a `<ship_categories>`. */
 export type ShipCategoriesRef = TypedRef<"ship_categories">;
@@ -359,6 +378,9 @@ export type SlaveryTypeRef = TypedRef<"slavery_type">;
 
 /** A reference to a `<solar_system_initializer>`. */
 export type SolarSystemInitializerRef = TypedRef<"solar_system_initializer">;
+
+/** A reference to a `<sound>`. */
+export type SoundRef = TypedRef<"sound">;
 
 /** A reference to a `<sound_effect>`. */
 export type SoundEffectRef = TypedRef<"sound_effect">;
@@ -401,6 +423,9 @@ export type StaticModifierRef = TypedRef<"static_modifier">;
 
 /** A reference to a `<storm_types>`. */
 export type StormTypesRef = TypedRef<"storm_types">;
+
+/** A reference to a `<target_type>`. */
+export type TargetTypeRef = TypedRef<"target_type">;
 
 /** A reference to a `<technology>`. */
 export type TechnologyRef = TypedRef<"technology">;

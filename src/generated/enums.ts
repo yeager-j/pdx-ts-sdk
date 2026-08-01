@@ -187,6 +187,9 @@ export type PatronContactState = "none" | "in_progress" | "completed";
 /** `enum[planet_resource_compare_type]`. */
 export type PlanetResourceCompareType = "produces" | "upkeep" | "balance";
 
+/** `enum[point_defence_target]`. */
+export type PointDefenceTarget = "missile" | "strike_craft";
+
 /** `enum[refresh_portraits]`. */
 export type RefreshPortraits = "planet" | "room" | "character" | "all";
 
@@ -260,6 +263,12 @@ export type SpecimensRarity = "common" | "rare" | "epic" | "exceptional";
 /** `enum[system_direction]`. */
 export type SystemDirection = "left" | "right" | "corewards" | "rimwards";
 
+/** `enum[target_focus]`. */
+export type TargetFocus = "single" | "spread";
+
+/** `enum[tech_ai_type]`. */
+export type TechAiType = "all" | "military";
+
 /** `enum[technology_area]`. */
 export type TechnologyArea = "engineering" | "society" | "physics";
 
@@ -290,3 +299,6 @@ export type WeaponSlotSize =
   | "titanic"
   | "engulf"
   | "any";
+
+/** `enum[weapon_type2]`. */
+export type WeaponType2 = "instant" | "point_defence" | "missile" | "planet_killer" | "engulf";

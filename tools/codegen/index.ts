@@ -326,10 +326,7 @@ async function main(): Promise<void> {
   reportSection("Enums widened to string (rules declare no values)", valuelessEnums(emitter));
   for (const content of contents) {
     const type = content.registry;
-    const { emitted, lowerable } = content.emission.coverage;
-    const percent = lowerable === 0 ? 100 : Math.round((emitted / lowerable) * 100);
-    console.log(`\n${type} field coverage: ${emitted}/${lowerable} lowerable (${percent}%)`);
-    reportSection(`${type} fields awaiting review`, content.emission.reviewQueue);
+    console.log(`\n${type}: ${content.emission.emittedFields.length} fields emitted`);
     reportSection(`${type} fields declined`, content.emission.declinedFields);
     reportSection(`${type} fields blocked on emitter machinery`, content.emission.machineryBacklog);
     reportSection(

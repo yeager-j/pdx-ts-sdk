@@ -165,6 +165,15 @@ export type ExiledLeader = ValueSetMember<"exiled_leader">;
  */
 export const exiledLeaders = declare<"exiled_leader">();
 
+/** A name belonging to `value[feature_flag]`. */
+export type FeatureFlag = ValueSetMember<"feature_flag">;
+
+/**
+ * Declares feature_flag names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const featureFlags = declare<"feature_flag">();
+
 /** A name belonging to `value[federation_flag]`. */
 export type FederationFlag = ValueSetMember<"federation_flag">;
 
@@ -372,6 +381,15 @@ export type StormFlag = ValueSetMember<"storm_flag">;
  */
 export const stormFlags = declare<"storm_flag">();
 
+/** A name belonging to `value[tech_weight_group]`. */
+export type TechWeightGroup = ValueSetMember<"tech_weight_group">;
+
+/**
+ * Declares tech_weight_group names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const techWeightGroups = declare<"tech_weight_group">();
+
 /** A name belonging to `value[timeline_event_id]`. */
 export type TimelineEventId = ValueSetMember<"timeline_event_id">;
 
@@ -380,6 +398,15 @@ export type TimelineEventId = ValueSetMember<"timeline_event_id">;
  * confused with a name from another set.
  */
 export const timelineEventIds = declare<"timeline_event_id">();
+
+/** A name belonging to `value[upgrade_path]`. */
+export type UpgradePath = ValueSetMember<"upgrade_path">;
+
+/**
+ * Declares upgrade_path names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const upgradePaths = declare<"upgrade_path">();
 
 /** A name belonging to `value[variable]`. */
 export type Variable = ValueSetMember<"variable">;

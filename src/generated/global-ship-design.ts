@@ -3,7 +3,13 @@
 // From: common/global_ship_designs.cwt
 
 import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
-import type { ShipSizeRef } from "./refs.ts";
+import type {
+  ComponentTemplateUtilityComponentTemplateRef,
+  CountryTypeRef,
+  GlobalShipDesignRef,
+  ScriptedTriggerRef,
+  ShipSizeRef,
+} from "./refs.ts";
 
 /**
  * A global_ship_design, as the game's rules describe it.
@@ -11,7 +17,22 @@ import type { ShipSizeRef } from "./refs.ts";
  */
 export interface GlobalShipDesignFields {
   shipSize?: ShipSizeRef | string;
+  hideSize?: boolean;
+  upgradesTo?: GlobalShipDesignRef | string;
+  newbornShipDesign?: GlobalShipDesignRef | string;
+  creatureDesignerTemplate?: boolean;
+  customTradeWeight?: number;
   isEventDesign?: boolean;
+  useDesignName?: boolean;
+  regeneratesWhenDisabled?: boolean;
+  /** whether this design should be set to automatically upgrade its components (default: no) */
+  upgradeShipComponents?: boolean;
+  /** whether this design should be considered auto-generated, aka "auto-best" (default: no) */
+  autoGenDesign?: boolean;
+  countryType?: CountryTypeRef | string;
+  isSpecialBuildable?: boolean;
+  allowBuildableTrigger?: ScriptedTriggerRef | string;
+  requiredComponent?: (ComponentTemplateUtilityComponentTemplateRef | string)[];
 }
 
 export interface GlobalShipDesignDef<Id extends string = string> extends GlobalShipDesignFields {
@@ -26,7 +47,56 @@ export type DefinedGlobalShipDesign<Id extends string = string> = DefinedContent
 
 export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
   { key: "ship_size", member: "shipSize", shape: "value", conversion: "ref" },
+  { key: "hide_size", member: "hideSize", shape: "value", conversion: "identity" },
+  { key: "upgrades_to", member: "upgradesTo", shape: "value", conversion: "ref" },
+  { key: "newborn_ship_design", member: "newbornShipDesign", shape: "value", conversion: "ref" },
+  {
+    key: "creature_designer_template",
+    member: "creatureDesignerTemplate",
+    shape: "value",
+    conversion: "identity",
+  },
+  {
+    key: "custom_trade_weight",
+    member: "customTradeWeight",
+    shape: "value",
+    conversion: "identity",
+  },
   { key: "is_event_design", member: "isEventDesign", shape: "value", conversion: "identity" },
+  { key: "use_design_name", member: "useDesignName", shape: "value", conversion: "identity" },
+  {
+    key: "regenerates_when_disabled",
+    member: "regeneratesWhenDisabled",
+    shape: "value",
+    conversion: "identity",
+  },
+  {
+    key: "upgrade_ship_components",
+    member: "upgradeShipComponents",
+    shape: "value",
+    conversion: "identity",
+  },
+  { key: "auto_gen_design", member: "autoGenDesign", shape: "value", conversion: "identity" },
+  { key: "country_type", member: "countryType", shape: "value", conversion: "ref" },
+  {
+    key: "is_special_buildable",
+    member: "isSpecialBuildable",
+    shape: "value",
+    conversion: "identity",
+  },
+  {
+    key: "allow_buildable_trigger",
+    member: "allowBuildableTrigger",
+    shape: "value",
+    conversion: "ref",
+  },
+  {
+    key: "required_component",
+    member: "requiredComponent",
+    shape: "value",
+    conversion: "ref",
+    repeated: true,
+  },
 ];
 
 export const GLOBAL_SHIP_DESIGN_LOCALISATION: readonly ContentLocalisation[] = [];

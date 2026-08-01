@@ -16,7 +16,6 @@ import type { ContentBody, ContentType } from "../cwt/rules.ts";
 import { camelCase, docComment, pascalCase } from "../naming.ts";
 import {
   CONTENT_DECLINED_FIELDS,
-  CONTENT_EMITTED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   FIELD_WIDENINGS,
   NESTED_CONTENT_DEFINITIONS,
@@ -33,13 +32,10 @@ export interface ContentEmission {
   readonly fieldsConstant: string;
   readonly localisationConstant: string;
   readonly emittedFields: readonly string[];
-  /** Lowerable, not allowlisted, not declined — the work queue. */
-  readonly reviewQueue: readonly string[];
-  /** Lowerable, but reviewed and rejected, each with its reason. */
+  /** Refused outright by CONTENT_DECLINED_FIELDS, each with its reason. */
   readonly declinedFields: readonly string[];
-  /** Not lowerable: blocked on emitter machinery, not on review. */
+  /** Present in the rules but not expressible: blocked on emitter machinery. */
   readonly machineryBacklog: readonly string[];
-  readonly coverage: { readonly emitted: number; readonly lowerable: number };
   readonly unsupported: readonly string[];
   readonly localisationAliases: readonly string[];
 }
@@ -496,11 +492,8 @@ export function emitContentType(
   if (type.nameField !== null) {
     grouped.delete(type.nameField);
   }
-  const allowlist = CONTENT_EMITTED_FIELDS[type.name];
-  if (allowlist === undefined) {
-    throw new Error(`No curated field allowlist for type[${type.name}]`);
-  }
   const emittedFields: string[] = [];
+  const declinedFields: string[] = [];
   const unsupported: string[] = [];
   const nestedUnemitted: string[] = [];
   const nestedCode: string[] = [];
@@ -508,13 +501,17 @@ export function emitContentType(
   const members: string[] = [];
   const fieldMetadata: string[] = [];
 
-  for (const name of allowlist) {
-    const group = grouped.get(name);
-    if (group === undefined) {
-      unsupported.push(`${name} (no such rule field)`);
+  // Everything the emitter can lower is emitted, in the rules' own declaration
+  // order. The SDK's promise is that a mod author does not run out of API, so a
+  // field is in unless something objects: either the emitter cannot express it,
+  // or CONTENT_DECLINED_FIELDS refuses it outright.
+  for (const [name, group] of grouped) {
+    const path = `${type.name}.${name}`;
+    const declined = CONTENT_DECLINED_FIELDS.get(path);
+    if (declined !== undefined) {
+      declinedFields.push(`${path} — ${declined}`);
       continue;
     }
-    const path = `${type.name}.${name}`;
     const override = CONTENT_FIELD_OVERRIDES.get(path);
     if (override?.shape === "nested") {
       const config = NESTED_CONTENT_DEFINITIONS.get(path);
@@ -587,59 +584,14 @@ export function emitContentType(
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
     `${localisationMetadata(type, localisationPlan)};\n`;
 
-  // Every field the allowlist leaves out, sorted into "we have not reviewed
-  // this yet", "we decided against it", and "the emitter cannot express it".
-  // Only the last is mechanical, and telling them apart is the difference
-  // between a one-line overlay edit and extending the emitter — so the probe
-  // runs the real lowering rather than guessing from the rule shape.
-  //
-  // It runs on a throwaway Emitter: lowering records used enums, refs, and
-  // value sets, which decide what `enums.ts` and `refs.ts` declare and what
-  // each generated file imports. Probing on the live emitter would quietly
-  // widen generated output with types only unemitted fields reference.
-  const probe = new Emitter(emitter.rules);
-  const reviewQueue: string[] = [];
-  const declined: string[] = [];
-  const machinery: string[] = [...nestedUnemitted];
-  for (const [name, group] of grouped) {
-    if (allowlist.includes(name)) {
-      continue;
-    }
-    const path = `${type.name}.${name}`;
-    const override = CONTENT_FIELD_OVERRIDES.get(path);
-    const lowers =
-      override?.shape === "nested"
-        ? NESTED_CONTENT_DEFINITIONS.has(path)
-        : pickOrdinary(
-            probe,
-            group,
-            name,
-            body.scope,
-            override,
-            FIELD_WIDENINGS.get(path)?.extraType
-          ) !== null;
-    if (!lowers) {
-      machinery.push(path);
-      continue;
-    }
-    const reason = CONTENT_DECLINED_FIELDS.get(path);
-    if (reason !== undefined) {
-      declined.push(`${path} — ${reason}`);
-      continue;
-    }
-    reviewQueue.push(path);
-  }
-  const lowerable = emittedFields.length + reviewQueue.length + declined.length;
   return {
     code,
     typeName,
     fieldsConstant,
     localisationConstant,
     emittedFields,
-    reviewQueue: reviewQueue.sort(),
-    declinedFields: declined.sort(),
-    machineryBacklog: machinery.sort(),
-    coverage: { emitted: emittedFields.length, lowerable },
+    declinedFields: declinedFields.sort(),
+    machineryBacklog: [...nestedUnemitted, ...unsupported].sort(),
     unsupported,
     localisationAliases: [...localisationPlan.aliases, ...localisationAliases],
   };

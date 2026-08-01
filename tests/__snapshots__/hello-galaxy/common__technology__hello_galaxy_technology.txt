@@ -1,19 +1,18 @@
 hello_galaxy_tech_resonance_theory = {
-	cost = 2000
 	area = physics
 	tier = 2
 	category = { particles }
+	cost = 2000
 	weight = 100
 }
 
 hello_galaxy_tech_resonance_weapons = {
-	cost = 6000
 	area = physics
 	tier = 3
 	category = { particles }
-	prerequisites = { "hello_galaxy_tech_resonance_theory" "tech_lasers_2" }
-	is_rare = yes
+	cost = 6000
 	weight = 70
+	prerequisites = { "hello_galaxy_tech_resonance_theory" "tech_lasers_2" }
 	potential = {
 		AND = {
 			has_country_flag = hello_galaxy_heard_the_hum
@@ -22,49 +21,50 @@ hello_galaxy_tech_resonance_weapons = {
 			}
 		}
 	}
+	is_rare = yes
 }
 
 hello_galaxy_tech_amplifier_1 = {
-	cost = 2000
 	area = physics
 	tier = 2
 	category = { particles }
-	prerequisites = { "hello_galaxy_tech_resonance_theory" }
+	cost = 2000
 	weight = 90
+	prerequisites = { "hello_galaxy_tech_resonance_theory" }
 }
 
 hello_galaxy_tech_amplifier_2 = {
-	cost = 4000
 	area = physics
 	tier = 3
 	category = { particles }
-	prerequisites = { "hello_galaxy_tech_amplifier_1" }
+	cost = 4000
 	weight = 80
+	prerequisites = { "hello_galaxy_tech_amplifier_1" }
 }
 
 hello_galaxy_tech_amplifier_3 = {
-	cost = 8000
 	area = physics
 	tier = 4
 	category = { particles }
-	prerequisites = { "hello_galaxy_tech_amplifier_2" }
+	cost = 8000
 	weight = 70
+	prerequisites = { "hello_galaxy_tech_amplifier_2" }
 }
 
 hello_galaxy_tech_amplifier_4 = {
-	cost = 16000
 	area = physics
 	tier = 5
 	category = { particles }
-	prerequisites = { "hello_galaxy_tech_amplifier_3" }
+	cost = 16000
 	weight = 60
+	prerequisites = { "hello_galaxy_tech_amplifier_3" }
 }
 
 hello_galaxy_tech_amplifier_5 = {
-	cost = 32000
 	area = physics
 	tier = 5
 	category = { particles }
-	prerequisites = { "hello_galaxy_tech_amplifier_4" }
+	cost = 32000
 	weight = 50
+	prerequisites = { "hello_galaxy_tech_amplifier_4" }
 }

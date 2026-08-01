@@ -6,6 +6,7 @@ import type {
   ContentField,
   ContentLocalisation,
   DefinedContent,
+  EffectBlock,
   ModifierClosure,
   WeightBlock,
 } from "../content.ts";
@@ -78,6 +79,7 @@ export interface TraditionFields<Id extends string = string> {
   unlocksAgenda?: AgendaRef | string;
   modifier?: ModifierClosure<"country">;
   possible?: Trigger<"country">;
+  onEnabled?: EffectBlock<"country">;
   customTooltip?: string[];
   customTooltipWithModifiers?: string[];
   traditionSwap?: TraditionSwapDef<Id>[];
@@ -99,6 +101,7 @@ export const TRADITION_FIELDS: readonly ContentField[] = [
   { key: "unlocks_agenda", member: "unlocksAgenda", shape: "value", conversion: "ref" },
   { key: "modifier", member: "modifier", shape: "modifierBlock" },
   { key: "possible", member: "possible", shape: "trigger" },
+  { key: "on_enabled", member: "onEnabled", shape: "effect" },
   {
     key: "custom_tooltip",
     member: "customTooltip",

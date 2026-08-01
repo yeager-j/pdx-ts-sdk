@@ -2,9 +2,28 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/components.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
-import type { WeaponSlotSize } from "./enums.ts";
-import type { SpriteRef } from "./refs.ts";
+import type { ContentField, ContentLocalisation, DefinedContent, EffectBlock } from "../content.ts";
+import type { Trigger } from "../trigger-core.ts";
+import type {
+  ComponentTag,
+  PointDefenceTarget,
+  TargetFocus,
+  WeaponSlotSize,
+  WeaponType2,
+} from "./enums.ts";
+import type {
+  ComponentSetRef,
+  ComponentTemplateRef,
+  ModelEntityRef,
+  ProjectileRef,
+  ScriptedActionRef,
+  ShipBehaviorRef,
+  ShipSizeRef,
+  SpriteRef,
+  TargetTypeRef,
+  TechnologyRef,
+} from "./refs.ts";
+import type { UpgradePath } from "./value-sets.ts";
 
 /**
  * A weapon_component_template, as the game's rules describe it.
@@ -13,19 +32,208 @@ import type { SpriteRef } from "./refs.ts";
 export interface WeaponComponentTemplateFields {
   /** English text emitted to localization under `<id>`. */
   name?: string;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
-  size?: WeaponSlotSize;
   icon: SpriteRef | string;
+  iconFrame?: number;
+  prerequisites?: (TechnologyRef | string)[];
+  componentSet?: ComponentSetRef | string;
+  hidden?: boolean;
+  /** (DEPRECATED: use "potential" trigger instead) The ship class(es) that the component is restricted to. */
+  classRestriction?: string[];
+  upgradesTo?: ComponentTemplateRef | string;
+  /** For core components, components that have the same upgrade path are shown on the same row. */
+  upgradePath?: UpgradePath;
+  tags?: ComponentTag[];
+  aiTags?: ComponentTag[];
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  aiTagWeight?: number;
+  shipLimit?: number;
+  sizeRestriction?: (ShipSizeRef | string | "null")[];
+  blockedBy?: (ComponentTemplateRef | string)[];
+  customTooltip?: string;
+  shouldAiUse?: boolean;
+  validForCountry?: Trigger<"country">;
   /**
    * Only when weapon_component_template subtype `weapon_component_template` applies.
    * Only when weapon_component_template subtype `strike_craft_component_template` applies.
    * Only when weapon_component_template subtype `utility_component_template` applies.
    */
   power?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
+  size?: WeaponSlotSize;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  type?: WeaponType2;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  hideDamageValuesFromTooltip?: boolean;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  targetableShipSizes?: (ShipSizeRef | string | "null")[];
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  projectileGfx?: ProjectileRef | string;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  color?: number[];
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  canDestroyStars?: boolean;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  entity?: ModelEntityRef | string;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  useShipMainTarget?: boolean;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * only valid if component_set has affects_target_type = yes. affects_target_type Default yes
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
+  targetType?: TargetTypeRef | string;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * only valid if component_set has affects_target_focus = yes affects_target_focus Default = yes
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
+  targetFocus?: TargetFocus;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  firingArc?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  minRange?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  prioProjectile?: boolean;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  possible?: Trigger<"design">;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  staticRotation?: boolean;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  planetDestructionGfx?: string;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  hullDamage?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  armorDamage?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  shieldDamage?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  armorPenetration?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  shieldPenetration?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  sizeDamageFactor?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  collateralDamage?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  collateralRange?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  totalFireTime?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  range?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  accuracy?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  tracking?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  missileSpeed?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  missileEvasion?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  missileHealth?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  missileArmor?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  missileShield?: number;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  missileRetargetRange?: number;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   */
+  pointDefenceTargets?: PointDefenceTarget[];
+  /**
+   * apply effects to target on hit. Scope = ship (target), from = ship (shooter)
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   */
+  onHit?: EffectBlock<"ship">;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  weaponType?: WeaponType2;
+  /**
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
+  shipBehavior?: ShipBehaviorRef | string;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  count?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  regenerationPerDay?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  launchTime?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  cooldown?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  engagementRange?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  health?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  armor?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  shield?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  evasion?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  speed?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  rotationSpeed?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  acceleration?: number;
+  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
+  attackRange?: number;
+  /** Only when weapon_component_template subtype `utility_component_template` applies. */
+  isDefaultComponent?: boolean;
+  /** Only when weapon_component_template subtype `utility_component_template` applies. */
+  ftl?: boolean;
+  /** Only when weapon_component_template subtype `utility_component_template` applies. */
+  ftlInhibitor?: boolean;
+  /** Only when weapon_component_template subtype `utility_component_template` applies. */
+  jumpdrive?: boolean;
+  /** Only when weapon_component_template subtype `utility_component_template` applies. */
+  sensorRange?: number;
+  /** Only when weapon_component_template subtype `utility_component_template` applies. */
+  hyperlaneRange?: number;
+  /** Only when weapon_component_template subtype `utility_component_template` applies. */
+  scriptedAction?: (ScriptedActionRef | string)[];
+  potential?: Trigger<"design">;
+  showTechUnlockIf?: Trigger<"country">;
 }
 
 export interface WeaponComponentTemplateDef<
@@ -41,9 +249,135 @@ export type DefinedWeaponComponentTemplate<Id extends string = string> = Defined
 >;
 
 export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
-  { key: "size", member: "size", shape: "value", conversion: "identity" },
   { key: "icon", member: "icon", shape: "value", conversion: "ref" },
+  { key: "icon_frame", member: "iconFrame", shape: "value", conversion: "identity" },
+  { key: "prerequisites", member: "prerequisites", shape: "valueList", conversion: "ref" },
+  { key: "component_set", member: "componentSet", shape: "value", conversion: "ref" },
+  { key: "hidden", member: "hidden", shape: "value", conversion: "identity" },
+  {
+    key: "class_restriction",
+    member: "classRestriction",
+    shape: "valueList",
+    conversion: "identity",
+  },
+  { key: "upgrades_to", member: "upgradesTo", shape: "value", conversion: "ref" },
+  { key: "upgrade_path", member: "upgradePath", shape: "value", conversion: "identity" },
+  { key: "tags", member: "tags", shape: "valueList", conversion: "identity" },
+  { key: "ai_tags", member: "aiTags", shape: "valueList", conversion: "identity" },
+  { key: "ai_tag_weight", member: "aiTagWeight", shape: "value", conversion: "identity" },
+  { key: "ship_limit", member: "shipLimit", shape: "value", conversion: "identity" },
+  { key: "size_restriction", member: "sizeRestriction", shape: "valueList", conversion: "ref" },
+  { key: "blocked_by", member: "blockedBy", shape: "valueList", conversion: "ref" },
+  { key: "custom_tooltip", member: "customTooltip", shape: "value", conversion: "identity" },
+  { key: "should_ai_use", member: "shouldAiUse", shape: "value", conversion: "identity" },
+  { key: "valid_for_country", member: "validForCountry", shape: "trigger" },
   { key: "power", member: "power", shape: "value", conversion: "identity" },
+  { key: "size", member: "size", shape: "value", conversion: "identity" },
+  { key: "type", member: "type", shape: "value", conversion: "identity" },
+  {
+    key: "hide_damage_values_from_tooltip",
+    member: "hideDamageValuesFromTooltip",
+    shape: "value",
+    conversion: "identity",
+  },
+  {
+    key: "targetable_ship_sizes",
+    member: "targetableShipSizes",
+    shape: "valueList",
+    conversion: "ref",
+  },
+  { key: "projectile_gfx", member: "projectileGfx", shape: "value", conversion: "ref" },
+  { key: "color", member: "color", shape: "valueList", conversion: "identity" },
+  { key: "can_destroy_stars", member: "canDestroyStars", shape: "value", conversion: "identity" },
+  { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+  {
+    key: "use_ship_main_target",
+    member: "useShipMainTarget",
+    shape: "value",
+    conversion: "identity",
+  },
+  { key: "target_type", member: "targetType", shape: "value", conversion: "ref" },
+  { key: "target_focus", member: "targetFocus", shape: "value", conversion: "identity" },
+  { key: "firing_arc", member: "firingArc", shape: "value", conversion: "identity" },
+  { key: "min_range", member: "minRange", shape: "value", conversion: "identity" },
+  { key: "prio_projectile", member: "prioProjectile", shape: "value", conversion: "identity" },
+  { key: "possible", member: "possible", shape: "trigger" },
+  { key: "static_rotation", member: "staticRotation", shape: "value", conversion: "identity" },
+  {
+    key: "planet_destruction_gfx",
+    member: "planetDestructionGfx",
+    shape: "value",
+    conversion: "identity",
+  },
+  { key: "hull_damage", member: "hullDamage", shape: "value", conversion: "identity" },
+  { key: "armor_damage", member: "armorDamage", shape: "value", conversion: "identity" },
+  { key: "shield_damage", member: "shieldDamage", shape: "value", conversion: "identity" },
+  { key: "armor_penetration", member: "armorPenetration", shape: "value", conversion: "identity" },
+  {
+    key: "shield_penetration",
+    member: "shieldPenetration",
+    shape: "value",
+    conversion: "identity",
+  },
+  { key: "size_damage_factor", member: "sizeDamageFactor", shape: "value", conversion: "identity" },
+  { key: "collateral_damage", member: "collateralDamage", shape: "value", conversion: "identity" },
+  { key: "collateral_range", member: "collateralRange", shape: "value", conversion: "identity" },
+  { key: "total_fire_time", member: "totalFireTime", shape: "value", conversion: "identity" },
+  { key: "range", member: "range", shape: "value", conversion: "identity" },
+  { key: "accuracy", member: "accuracy", shape: "value", conversion: "identity" },
+  { key: "tracking", member: "tracking", shape: "value", conversion: "identity" },
+  { key: "missile_speed", member: "missileSpeed", shape: "value", conversion: "identity" },
+  { key: "missile_evasion", member: "missileEvasion", shape: "value", conversion: "identity" },
+  { key: "missile_health", member: "missileHealth", shape: "value", conversion: "identity" },
+  { key: "missile_armor", member: "missileArmor", shape: "value", conversion: "identity" },
+  { key: "missile_shield", member: "missileShield", shape: "value", conversion: "identity" },
+  {
+    key: "missile_retarget_range",
+    member: "missileRetargetRange",
+    shape: "value",
+    conversion: "identity",
+  },
+  {
+    key: "point_defence_targets",
+    member: "pointDefenceTargets",
+    shape: "valueList",
+    conversion: "identity",
+  },
+  { key: "on_hit", member: "onHit", shape: "effect", repeated: true },
+  { key: "weapon_type", member: "weaponType", shape: "value", conversion: "identity" },
+  { key: "ship_behavior", member: "shipBehavior", shape: "value", conversion: "ref" },
+  { key: "count", member: "count", shape: "value", conversion: "identity" },
+  {
+    key: "regeneration_per_day",
+    member: "regenerationPerDay",
+    shape: "value",
+    conversion: "identity",
+  },
+  { key: "launch_time", member: "launchTime", shape: "value", conversion: "identity" },
+  { key: "cooldown", member: "cooldown", shape: "value", conversion: "identity" },
+  { key: "engagement_range", member: "engagementRange", shape: "value", conversion: "identity" },
+  { key: "health", member: "health", shape: "value", conversion: "identity" },
+  { key: "armor", member: "armor", shape: "value", conversion: "identity" },
+  { key: "shield", member: "shield", shape: "value", conversion: "identity" },
+  { key: "evasion", member: "evasion", shape: "value", conversion: "identity" },
+  { key: "speed", member: "speed", shape: "value", conversion: "identity" },
+  { key: "rotation_speed", member: "rotationSpeed", shape: "value", conversion: "identity" },
+  { key: "acceleration", member: "acceleration", shape: "value", conversion: "identity" },
+  { key: "attack_range", member: "attackRange", shape: "value", conversion: "identity" },
+  {
+    key: "is_default_component",
+    member: "isDefaultComponent",
+    shape: "value",
+    conversion: "identity",
+  },
+  { key: "ftl", member: "ftl", shape: "value", conversion: "identity" },
+  { key: "ftl_inhibitor", member: "ftlInhibitor", shape: "value", conversion: "identity" },
+  { key: "jumpdrive", member: "jumpdrive", shape: "value", conversion: "identity" },
+  { key: "sensor_range", member: "sensorRange", shape: "value", conversion: "identity" },
+  { key: "hyperlane_range", member: "hyperlaneRange", shape: "value", conversion: "identity" },
+  { key: "scripted_action", member: "scriptedAction", shape: "valueList", conversion: "ref" },
+  { key: "potential", member: "potential", shape: "trigger" },
+  { key: "show_tech_unlock_if", member: "showTechUnlockIf", shape: "trigger" },
 ];
 
 export const WEAPON_COMPONENT_TEMPLATE_LOCALISATION: readonly ContentLocalisation[] = [

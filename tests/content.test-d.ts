@@ -235,12 +235,21 @@ describe("generated content authoring types", () => {
     });
   });
 
-  it("rejects fields outside the curated surface", () => {
+  it("rejects only what the emitter cannot express", () => {
+    // `onEnabled` used to be rejected because no one had added it to a curated
+    // list. It lowers cleanly and is now part of the surface. What stays out is
+    // what the emitter genuinely cannot lower.
     mod.defineTradition({
       id: "content_types_tradition_effect",
       name: "X",
-      // @ts-expect-error — effect closures remain reported, not silently admitted
       onEnabled: () => {},
+    });
+    mod.defineJob({
+      id: "content_types_job_unlowerable",
+      name: "X",
+      // @ts-expect-error — swappable_data nests its repeated entries two levels
+      // deep, which the nested-definition machinery cannot express yet
+      swappableData: {},
     });
     mod.defineAgenda({
       id: "content_types_agenda_localisation_alias",

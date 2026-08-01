@@ -17,7 +17,8 @@ import { locateInstall } from "../../src/stellaris/locate.ts";
 import { CONTENT_MANIFEST } from "../../tools/codegen/content-manifest.ts";
 import { conformance, readRegistryCorpus } from "../../tools/codegen/corpus.ts";
 import { loadRules } from "../../tools/codegen/cwt/rules.ts";
-import { CONTENT_EMITTED_FIELDS } from "../../tools/codegen/overlay.ts";
+import { emitContentType } from "../../tools/codegen/emit/content-type.ts";
+import { Emitter } from "../../tools/codegen/emit/types.ts";
 
 let installPath: string | undefined;
 try {
@@ -27,6 +28,7 @@ try {
 }
 
 const rules = loadRules("vendor/cwtools-stellaris-config/config");
+const emitter = new Emitter(rules);
 
 const reports = (installPath === undefined ? [] : CONTENT_MANIFEST).map((manifest) => {
   const entry = manifest as { type: string; keyword?: string; as?: string };
@@ -39,7 +41,14 @@ const reports = (installPath === undefined ? [] : CONTENT_MANIFEST).map((manifes
     entry.keyword ?? null,
     type?.nameField ?? null
   );
-  return conformance(registry, corpus, CONTENT_EMITTED_FIELDS[registry] ?? []);
+  const body = rules.bodies.get(entry.type);
+  emitter.beginFile();
+  const emitted =
+    type === undefined || body === undefined
+      ? []
+      : emitContentType(emitter, type, body, registry).emittedFields;
+  emitter.endFile();
+  return conformance(registry, corpus, emitted);
 });
 
 describe.skipIf(installPath === undefined)("corpus conformance", () => {

@@ -4,7 +4,6 @@ import { CONTENT_MANIFEST } from "../../tools/codegen/content-manifest.ts";
 import { loadRules } from "../../tools/codegen/cwt/rules.ts";
 import { emitContentType } from "../../tools/codegen/emit/content-type.ts";
 import { Emitter } from "../../tools/codegen/emit/types.ts";
-import { CONTENT_EMITTED_FIELDS } from "../../tools/codegen/overlay.ts";
 
 const rules = loadRules("vendor/cwtools-stellaris-config/config");
 const emitter = new Emitter(rules);
@@ -33,13 +32,15 @@ describe("content-type codegen", () => {
     );
   });
 
-  it("emits exactly each registry's curated field list", () => {
+  it("reports what it cannot lower rather than dropping it", () => {
+    // Under emit-everything, an unlowerable field is the machinery backlog, not
+    // an error — but it must stay visible in the report either way.
     for (const manifest of CONTENT_MANIFEST) {
       const registry = (manifest as { as?: string }).as ?? manifest.type;
-      expect(emissions.get(registry)?.emittedFields, registry).toEqual(
-        CONTENT_EMITTED_FIELDS[registry]
-      );
-      expect(emissions.get(registry)?.unsupported, registry).toEqual([]);
+      const emission = emissions.get(registry)!;
+      for (const line of emission.unsupported) {
+        expect(emission.machineryBacklog.join("\n"), registry).toContain(line.split(" (")[0]!);
+      }
     }
   });
 
@@ -137,49 +138,39 @@ describe("content-type codegen", () => {
     expect(job?.code).toContain('triggeredCountryModifier?: TriggeredModifier<"country">[];');
   });
 
-  it("sorts an omitted field into review, declined, or machinery", () => {
-    // A field the emitter can lower is waiting on review; one it cannot is
-    // waiting on the emitter. Keeping them apart is the point of the buckets:
-    // the first is an overlay edit, the second is a code change.
-    expect(emissions.get("building")?.reviewQueue).toContain("building.on_built");
-    expect(emissions.get("building")?.machineryBacklog).not.toContain("building.on_built");
-
-    expect(emissions.get("decision")?.machineryBacklog).toContain("decision.custom_tooltip");
-    expect(emissions.get("job")?.machineryBacklog).toContain("job.swappable_data");
-    expect(emissions.get("job")?.machineryBacklog).toContain("job.triggered_tags");
-    expect(emissions.get("job")?.machineryBacklog).toContain(
-      "job.triggered_planet_pop_group_modifier_for_species"
-    );
-
-    // Nested omissions are reported as machinery: the probe only lowers
-    // top-level fields.
-    expect(emissions.get("tradition")?.machineryBacklog).toContain(
-      "tradition.tradition_swap.on_enabled"
-    );
-  });
-
-  it("keeps declined fields out of the review queue, with their reason", () => {
-    const decision = emissions.get("decision");
-    expect(decision?.reviewQueue).not.toContain("decision.sound");
-    expect(decision?.declinedFields.join("\n")).toContain("decision.sound — cosmetic");
-
-    const job = emissions.get("job");
-    expect(job?.reviewQueue).not.toContain("job.auto_generate_description");
-    expect(job?.declinedFields.join("\n")).toContain("boolean[]");
-  });
-
-  it("reports coverage against what the emitter can lower", () => {
-    // Registries with nothing left to review are the finished state, and must
-    // stay at full coverage as the emitter grows.
-    for (const name of ["ascension_perk", "agenda", "edict"] as const) {
-      const emission = emissions.get(name);
-      expect(emission?.reviewQueue, name).toEqual([]);
-      expect(emission?.declinedFields, name).toEqual([]);
-      expect(emission?.coverage.emitted, name).toBe(emission?.coverage.lowerable);
+  it("emits every field the emitter can express", () => {
+    // The SDK's promise is that an author does not run out of API, so the only
+    // reasons a field is absent are mechanical (the emitter cannot lower it) or
+    // an explicit refusal. There is no third "not reviewed yet" state.
+    for (const registry of ["building", "technology", "job"] as const) {
+      const emission = emissions.get(registry)!;
+      const accounted = new Set([
+        ...emission.emittedFields.map((field) => `${registry}.${field}`),
+        ...emission.declinedFields.map((line) => line.split(" — ")[0]!),
+        ...emission.machineryBacklog,
+      ]);
+      for (const field of emission.machineryBacklog) {
+        expect(accounted.has(field), field).toBe(true);
+      }
+      expect(emission.emittedFields.length, registry).toBeGreaterThan(0);
     }
+    // building was capped at 18 curated fields; emitting everything expressible
+    // roughly doubles it.
+    expect(emissions.get("building")!.emittedFields.length).toBeGreaterThan(30);
+  });
 
-    // building is the opposite end: most of what it could emit is unreviewed.
-    const building = emissions.get("building");
-    expect(building?.coverage.emitted).toBeLessThan(building!.coverage.lowerable / 2);
+  it("honours an explicit refusal, with its reason", () => {
+    const job = emissions.get("job")!;
+    expect(job.emittedFields).not.toContain("auto_generate_description");
+    expect(job.declinedFields.join("\n")).toContain("boolean[]");
+  });
+
+  it("emits fields the curated list used to withhold", () => {
+    // Each of these lowers cleanly and was absent only because nobody had
+    // written it down. decision.sound in particular is set by 66 shipped
+    // decisions, so withholding it broke porting for no reason.
+    expect(emissions.get("building")!.emittedFields).toContain("on_built");
+    expect(emissions.get("building")!.emittedFields).toContain("on_destroy");
+    expect(emissions.get("decision")!.emittedFields).toContain("sound");
   });
 });

@@ -33,13 +33,12 @@ describe("Technology", () => {
     });
     expect(serialize([tech.toEntries()])).toMatchInlineSnapshot(`
       "mymod_tech_advanced = {
-      	cost = 4000
       	area = physics
       	tier = 3
       	category = { particles }
-      	prerequisites = { "mymod_tech_base" "tech_lasers_1" }
-      	is_rare = yes
+      	cost = 4000
       	weight = 85
+      	prerequisites = { "mymod_tech_base" "tech_lasers_1" }
       	potential = {
       		AND = {
       			has_country_flag = chosen_ones
@@ -48,6 +47,7 @@ describe("Technology", () => {
       			}
       		}
       	}
+      	is_rare = yes
       }
       "
     `);
@@ -68,7 +68,7 @@ describe("Technology", () => {
       category: "statecraft",
     });
     expect(serialize([tech.toEntries()])).toBe(
-      "mymod_tech_minimal = {\n\tcost = 100\n\tarea = society\n\ttier = 1\n\tcategory = { statecraft }\n}\n"
+      "mymod_tech_minimal = {\n\tarea = society\n\ttier = 1\n\tcategory = { statecraft }\n\tcost = 100\n}\n"
     );
   });
 });
