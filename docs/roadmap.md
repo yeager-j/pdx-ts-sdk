@@ -48,7 +48,13 @@ Landed: `technology`, `building`, `tradition`, `tradition_category`,
 `utility_component_template`, `weapon_component_template`,
 `strike_craft_component_template`, `scripted_loc`, `situation_type`,
 `static_modifier`, `councilor`, `economic_category`, `civic_or_origin`,
-`ship_size`.
+`ship_size`, `component_set`, `section_template`, `ambient_object`,
+`graphical_culture`, `starbase_level`, `species_class`.
+
+**33 registries, 26 of them at 100% real-corpus coverage.** The seven below
+100% are all held there by the same handful of unlowered fields — `resources`,
+`modifier`, `triggered_*_modifier` on the component templates and `building`,
+plus `inline_script`, which is its own cross-cutting item.
 
 Nothing is blocked any more: alias categories unblocked `civic_or_origin` and
 the malformed-option drift block unblocked `councilor` and
@@ -60,10 +66,6 @@ position as the requirements DSL and not a script condition tree.
 
 Not yet attempted:
 
-- [ ] `graphical_culture`, `species_class` (also needs alias categories),
-      `starbase_level`
-- [ ] `component_sets`, `section_templates`, `ambient_objects` — `name_field`
-      registries; the machinery exists, the entries do not
 - [ ] `component_tags`, `country_limits`, `scripted_variables` — no CWT type
       declared anywhere; each needs a deliberate call between an overlay entry,
       a raw-emit path, and explicit non-support

@@ -19,7 +19,9 @@ import {
   type EdictRef,
   type GovernmentTriggerBlock,
   type JobRef,
+  type ModifierClosure,
   type OpinionModifierRef,
+  type SectionTemplateFields,
   type TechnologyRef,
   type Trigger,
   type WarGoalRef,
@@ -465,6 +467,79 @@ describe("generated content authoring types", () => {
       id: "content_types_economic_category_bad",
       // @ts-expect-error — modifier_category is drawn from enum[scripted_modifier_category]
       modifierCategory: "nonsense",
+    });
+  });
+
+  it("requires an entity on ambient_object but leaves name/description optional", () => {
+    mod.defineAmbientObject({
+      id: "content_types_ambient_object_x",
+      entity: "some_entity",
+    });
+    // @ts-expect-error — entity has no default and must be supplied
+    mod.defineAmbientObject({
+      id: "content_types_ambient_object_missing_entity",
+    });
+  });
+
+  it("pins section_template's modifier/ship_modifier to ship scope", () => {
+    // Both fields carry `## replace_scopes = { this = ship root = ship }` and
+    // no scope-parameterized generic — the generated shape is exactly
+    // ModifierClosure<"ship">, not the wider ScopeName civic_or_origin's own
+    // (unscoped) swap_type.modifier needs.
+    expectTypeOf<SectionTemplateFields["modifier"]>().toEqualTypeOf<
+      ModifierClosure<"ship"> | undefined
+    >();
+    expectTypeOf<SectionTemplateFields["shipModifier"]>().toEqualTypeOf<
+      ModifierClosure<"ship"> | undefined
+    >();
+    mod.defineSectionTemplate({
+      id: "content_types_section_template_x",
+      entity: "some_entity",
+      modifier: (m) => m.unchecked("ship_hull_add", 10),
+    });
+  });
+
+  it("pins starbase_level's upgrade/downgrade triggers to starbase scope", () => {
+    mod.defineStarbaseLevel({
+      id: "content_types_starbase_level_x",
+      shipSize: "ship_size_starbase_i",
+      upgradePossible: always(),
+      // @ts-expect-error — upgrade_possible replace_scopes to starbase; a
+      // country-only condition like hasAuthority does not hold there.
+      downgradePotential: hasAuthority("auth_democratic"),
+    });
+  });
+
+  it("types species_class's possible/possible_secondary as the government_trigger DSL, not a Trigger", () => {
+    mod.defineSpeciesClass({
+      id: "content_types_species_class_dsl",
+      name: "X",
+      possible: { authority: { value: "auth_democratic" } },
+      possibleSecondary: { or: [{ ethics: { value: "ethic_xenophile" } }] },
+    });
+    mod.defineSpeciesClass({
+      id: "content_types_species_class_dsl_rejects_trigger",
+      name: "X",
+      // @ts-expect-error — a Trigger is not a GovernmentTriggerBlock; the game
+      // does not read possible/possible_secondary as script conditions.
+      possible: hasAuthority("auth_democratic"),
+    });
+  });
+
+  it("keeps species_class's playable scope-agnostic like tradition_swap's trigger", () => {
+    // No `## replace_scopes` on playable, so it stays Trigger<ScopeName> —
+    // only a universal trigger like always() type-checks.
+    mod.defineSpeciesClass({
+      id: "content_types_species_class_playable",
+      name: "X",
+      playable: always(),
+    });
+    mod.defineSpeciesClass({
+      id: "content_types_species_class_playable_rejects_country_only",
+      name: "X",
+      // @ts-expect-error — hasAuthority only holds in country scope, not
+      // every scope playable's ScopeName type demands.
+      playable: hasAuthority("auth_democratic"),
     });
   });
 });

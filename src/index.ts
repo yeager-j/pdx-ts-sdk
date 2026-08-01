@@ -30,6 +30,11 @@ export type {
   DefinedAgreementPreset,
 } from "./generated/agreement-preset.ts";
 export type {
+  AmbientObjectDef,
+  AmbientObjectFields,
+  DefinedAmbientObject,
+} from "./generated/ambient-object.ts";
+export type {
   ArchaeologicalSiteTypeDef,
   ArchaeologicalSiteTypeFields,
   DefinedArchaeologicalSiteType,
@@ -56,6 +61,11 @@ export type {
   CivicOrOriginFields,
   DefinedCivicOrOrigin,
 } from "./generated/civic-or-origin.ts";
+export type {
+  ComponentSetDef,
+  ComponentSetFields,
+  DefinedComponentSet,
+} from "./generated/component-set.ts";
 export type { CouncilorDef, CouncilorFields, DefinedCouncilor } from "./generated/councilor.ts";
 export type { DecisionDef, DecisionFields, DefinedDecision } from "./generated/decision.ts";
 export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";
@@ -69,6 +79,11 @@ export type {
   GovernmentTriggerClause,
   GovernmentTriggerClauseGroup,
 } from "./generated/government-trigger.ts";
+export type {
+  DefinedGraphicalCulture,
+  GraphicalCultureDef,
+  GraphicalCultureFields,
+} from "./generated/graphical-culture.ts";
 export type { DefinedJob, JobDef, JobFields } from "./generated/job.ts";
 export type {
   DefinedOpinionModifier,
@@ -91,6 +106,21 @@ export type {
   ScriptedModifierDef,
   ScriptedModifierFields,
 } from "./generated/scripted-modifier.ts";
+export type {
+  DefinedSectionTemplate,
+  SectionTemplateDef,
+  SectionTemplateFields,
+} from "./generated/section-template.ts";
+export type {
+  DefinedSpeciesClass,
+  SpeciesClassDef,
+  SpeciesClassFields,
+} from "./generated/species-class.ts";
+export type {
+  DefinedStarbaseLevel,
+  StarbaseLevelDef,
+  StarbaseLevelFields,
+} from "./generated/starbase-level.ts";
 export type {
   DefinedStaticModifier,
   StaticModifierDef,

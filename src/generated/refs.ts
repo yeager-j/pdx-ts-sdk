@@ -135,6 +135,9 @@ export type ComponentSetRef = TypedRef<"component_set">;
 /** A reference to a `<component_set.required_component>`. */
 export type ComponentSetRequiredComponentRef = TypedRef<"component_set.required_component">;
 
+/** A reference to a `<component_slot_template>`. */
+export type ComponentSlotTemplateRef = TypedRef<"component_slot_template">;
+
 /** A reference to a `<component_template>`. */
 export type ComponentTemplateRef = TypedRef<"component_template">;
 
@@ -447,6 +450,9 @@ export type StarClassRef = TypedRef<"star_class">;
 
 /** A reference to a `<starbase_building>`. */
 export type StarbaseBuildingRef = TypedRef<"starbase_building">;
+
+/** A reference to a `<starbase_level>`. */
+export type StarbaseLevelRef = TypedRef<"starbase_level">;
 
 /** A reference to a `<starbase_module>`. */
 export type StarbaseModuleRef = TypedRef<"starbase_module">;

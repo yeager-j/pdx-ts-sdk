@@ -1,0 +1,7 @@
+component_set = {
+	key = content_test_component_set_reactor
+	is_core_component_set = yes
+	affects_target_type = yes
+	affects_target_focus = no
+	icon = GFX_component_set_reactor
+}

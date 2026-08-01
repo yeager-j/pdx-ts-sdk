@@ -651,6 +651,132 @@ function defineContentExample(): Mod<"content_test"> {
     ],
   });
 
+  mod.defineComponentSet({
+    id: "content_test_component_set_reactor",
+    name: "Reactor Boosters",
+    desc: "Auxiliary reactor components.",
+    shipDesc: "Ship-mounted reactor boosters.",
+    stationDesc: "Station-mounted reactor boosters.",
+    isCoreComponentSet: true,
+    affectsTargetType: true,
+    affectsTargetFocus: false,
+    icon: "GFX_component_set_reactor",
+  });
+
+  // name_field registry keyed by the repeated `ship_section_template` keyword,
+  // with `resources`/`modifier`/`ship_modifier` exercising the overlay's
+  // economicResources/modifierBlock shapes.
+  mod.defineSectionTemplate({
+    id: "content_test_section_template_core",
+    name: "Core Section",
+    shipSize: ["ship_size_corvette"],
+    fitsOnSlot: ["core"],
+    entity: "content_test_section_core_entity",
+    resources: [{ category: "ship_components", cost: { amounts: { alloys: 20 } } }],
+    componentSlot: [
+      {
+        name: "core_slot_1",
+        template: "content_test_component_slot_template",
+        locatorname: "$mesh_locator",
+      },
+    ],
+    smallUtilitySlots: 2,
+    // Both pinned to ship scope by `## replace_scopes = { this = ship root = ship }`.
+    // unchecked() names the flat modifier directly, same as civic_or_origin's
+    // swapType.modifier — the checked trie's per-scope shape is a separate
+    // concern from this registry's own wiring.
+    modifier: (m) => m.unchecked("ship_hull_add", 10),
+    shipModifier: (m) => m.unchecked("ship_hull_mult", 0.05),
+  });
+
+  mod.defineAmbientObject({
+    id: "content_test_ambient_object_wreck",
+    name: "Adrift Hulk",
+    entity: "content_test_ambient_wreck_entity",
+    selectable: true,
+    showName: true,
+    // `description`/`tooltip` are `localisation`-typed CWT fields with no `$`
+    // static id placeholder, so they hold an author-chosen localisation key
+    // rather than a slot the SDK auto-writes — hence the free-form names.
+    description: "content_test_ambient_object_wreck_description",
+    tooltip: "content_test_ambient_object_wreck_tooltip",
+  });
+
+  mod.defineGraphicalCulture({
+    id: "content_test_graphical_culture_synthetic",
+    hasCityGraphics: false,
+    fallback: "graphical_culture_01",
+    shipColor: true,
+    shipLighting: {
+      camLight1Dir: [1, 0, 0],
+      camLight2Dir: [0, 1, 0],
+      camLight3Dir: [0, 0, 1],
+      intensityNear: 1.2,
+      intensityFar: 0.6,
+    },
+    // Neither carries a `## replace_scopes`, unlike shipSelectionWeight below —
+    // only a scope-agnostic trigger like always() type-checks at every scope.
+    randomized: always(),
+    selectable: always(),
+    shipKinds: ["ship_categories_military"],
+    // `## replace_scopes = { this = species from = country }` pins this to
+    // species scope — always() is the only trigger this file already imports
+    // that holds there.
+    shipSelectionWeight: {
+      base: 10,
+      modifiers: [{ factor: 1.5, when: always() }],
+    },
+  });
+
+  mod.defineStarbaseLevel({
+    id: "content_test_starbase_level_outpost",
+    shipSize: "ship_size_starbase_i",
+    nextLevel: "content_test_starbase_level_starport",
+    levelWeight: 0,
+    showInOutliner: true,
+    collectsTrade: false,
+    potentialHomeBase: false,
+    specialConstruction: true,
+    portrait: "GFX_starbase_background_outpost",
+    // `## replace_scopes = { root = starbase this = starbase }` on both —
+    // always() is the only trigger this file already imports that holds at
+    // every scope, starbase included.
+    upgradePossible: always(),
+    downgradePotential: always(),
+    picture: { trigger: always(), picture: "GFX_starbase_outpost_view" },
+    moduleSlots: [2, "spinal_mount_1"],
+    buildingSlots: [1, "lower_1"],
+  });
+
+  mod.defineSpeciesClass({
+    id: "content_test_species_class_precursor",
+    name: "Precursor",
+    desc: "An ancient and enigmatic lineage.",
+    plural: "Precursors",
+    archetype: "ARCHETYPE_HUMANOID",
+    // playable carries no `## replace_scopes`, unlike possible/possibleSecondary
+    // below — always() is the widest trigger this file already imports.
+    playable: always(),
+    randomized: true,
+    graphicalCulture: "content_test_graphical_culture_synthetic",
+    // pop_group-scope modifier_clause, the same shape every other registry's
+    // `modifier` field uses; unchecked() names it directly, same reasoning as
+    // section_template's modifier/shipModifier above.
+    modifier: (m) => m.unchecked("bonus_pop_growth", 1),
+    // The government_trigger requirements DSL, not a Trigger — same shape and
+    // reasoning as civic_or_origin.potential/.possible (SDK-3).
+    possible: {
+      authority: { value: "auth_democratic" },
+    },
+    possibleSecondary: {
+      or: [{ ethics: { value: "ethic_xenophile" } }],
+    },
+    resources: [{ category: "species", cost: { amounts: { unity: 50 } } }],
+    ethicsToPrefer: ["ethic_xenophile"],
+    leaderAgeMin: 20,
+    leaderAgeMax: 80,
+  });
+
   return mod;
 }
 

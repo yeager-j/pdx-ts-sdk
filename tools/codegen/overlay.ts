@@ -748,6 +748,70 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "civic_or_origin.leader_background_job_weight.",
     },
   ],
+  [
+    "section_template.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "section_template.modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields. Vanilla " +
+        "never writes this field, but the rules declare it authorable.",
+    },
+  ],
+  [
+    "section_template.ship_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields. Vanilla " +
+        "never writes this field, but the rules declare it authorable.",
+    },
+  ],
+  [
+    "species_class.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "species_class.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "species_class.possible",
+    {
+      shape: "aliasStruct",
+      category: "government_trigger",
+      reason:
+        "`possible = { text? always? alias_name[government_trigger] }` is the same shape SDK-3 " +
+        "landed for civic_or_origin.potential/.possible, so it lowers onto the shared " +
+        "GovernmentTriggerBlock rather than a Trigger — the game reads this as the requirements " +
+        "DSL against empire setup (species_class.possible gates country-scoped citizenship), not " +
+        "a script condition tree.",
+    },
+  ],
+  [
+    "species_class.possible_secondary",
+    {
+      shape: "aliasStruct",
+      category: "government_trigger",
+      reason:
+        "Same shape and justification as species_class.possible — possible_secondary is the " +
+        "other government_trigger consumer species_consolidated.cwt declares alongside it.",
+    },
+  ],
 ]);
 
 export interface RepeatedStructDefinition {

@@ -21,6 +21,11 @@
 // From: common/scripted_loc.cwt
 // From: common/governments.cwt
 // From: common/economic_categories.cwt
+// From: common/section_templates.cwt
+// From: common/ambient_objects.cwt
+// From: common/graphical_cultures.cwt
+// From: common/starbases_consolidated.cwt
+// From: common/species_consolidated.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -35,6 +40,12 @@ import {
   type AgreementPresetDef,
   type DefinedAgreementPreset,
 } from "./agreement-preset.ts";
+import {
+  AMBIENT_OBJECT_FIELDS,
+  AMBIENT_OBJECT_LOCALISATION,
+  type AmbientObjectDef,
+  type DefinedAmbientObject,
+} from "./ambient-object.ts";
 import {
   ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
   ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
@@ -72,6 +83,12 @@ import {
   type DefinedCivicOrOrigin,
 } from "./civic-or-origin.ts";
 import {
+  COMPONENT_SET_FIELDS,
+  COMPONENT_SET_LOCALISATION,
+  type ComponentSetDef,
+  type DefinedComponentSet,
+} from "./component-set.ts";
+import {
   COUNCILOR_FIELDS,
   COUNCILOR_LOCALISATION,
   type CouncilorDef,
@@ -96,6 +113,12 @@ import {
   type DefinedGlobalShipDesign,
   type GlobalShipDesignDef,
 } from "./global-ship-design.ts";
+import {
+  GRAPHICAL_CULTURE_FIELDS,
+  GRAPHICAL_CULTURE_LOCALISATION,
+  type DefinedGraphicalCulture,
+  type GraphicalCultureDef,
+} from "./graphical-culture.ts";
 import { JOB_FIELDS, JOB_LOCALISATION, type DefinedJob, type JobDef } from "./job.ts";
 import {
   OPINION_MODIFIER_FIELDS,
@@ -116,6 +139,12 @@ import {
   type ScriptedModifierDef,
 } from "./scripted-modifier.ts";
 import {
+  SECTION_TEMPLATE_FIELDS,
+  SECTION_TEMPLATE_LOCALISATION,
+  type DefinedSectionTemplate,
+  type SectionTemplateDef,
+} from "./section-template.ts";
+import {
   SHIP_SIZE_FIELDS,
   SHIP_SIZE_LOCALISATION,
   type DefinedShipSize,
@@ -127,6 +156,18 @@ import {
   type DefinedSituationType,
   type SituationTypeDef,
 } from "./situation-type.ts";
+import {
+  SPECIES_CLASS_FIELDS,
+  SPECIES_CLASS_LOCALISATION,
+  type DefinedSpeciesClass,
+  type SpeciesClassDef,
+} from "./species-class.ts";
+import {
+  STARBASE_LEVEL_FIELDS,
+  STARBASE_LEVEL_LOCALISATION,
+  type DefinedStarbaseLevel,
+  type StarbaseLevelDef,
+} from "./starbase-level.ts";
 import {
   STATIC_MODIFIER_FIELDS,
   STATIC_MODIFIER_LOCALISATION,
@@ -373,6 +414,51 @@ export const CONTENT_REGISTRIES = [
     fields: CIVIC_OR_ORIGIN_FIELDS,
     localisation: CIVIC_OR_ORIGIN_LOCALISATION,
   },
+  {
+    type: "component_set",
+    outputDir: "common/component_sets",
+    fileStem: "component_sets",
+    fields: COMPONENT_SET_FIELDS,
+    localisation: COMPONENT_SET_LOCALISATION,
+    keyedBy: { keyword: "component_set", nameField: "key" },
+  },
+  {
+    type: "section_template",
+    outputDir: "common/section_templates",
+    fileStem: "section_templates",
+    fields: SECTION_TEMPLATE_FIELDS,
+    localisation: SECTION_TEMPLATE_LOCALISATION,
+    keyedBy: { keyword: "ship_section_template", nameField: "key" },
+  },
+  {
+    type: "ambient_object",
+    outputDir: "common/ambient_objects",
+    fileStem: "ambient_objects",
+    fields: AMBIENT_OBJECT_FIELDS,
+    localisation: AMBIENT_OBJECT_LOCALISATION,
+    keyedBy: { keyword: "ambient_object", nameField: "name" },
+  },
+  {
+    type: "graphical_culture",
+    outputDir: "common/graphical_culture",
+    fileStem: "graphical_culture",
+    fields: GRAPHICAL_CULTURE_FIELDS,
+    localisation: GRAPHICAL_CULTURE_LOCALISATION,
+  },
+  {
+    type: "starbase_level",
+    outputDir: "common/starbase_levels",
+    fileStem: "starbase_levels",
+    fields: STARBASE_LEVEL_FIELDS,
+    localisation: STARBASE_LEVEL_LOCALISATION,
+  },
+  {
+    type: "species_class",
+    outputDir: "common/species_classes",
+    fileStem: "species_classes",
+    fields: SPECIES_CLASS_FIELDS,
+    localisation: SPECIES_CLASS_LOCALISATION,
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -405,6 +491,12 @@ export interface ContentDefMap<P extends string> {
   councilor: CouncilorDef<PrefixedId<P>>;
   economic_category: EconomicCategoryDef<PrefixedId<P>>;
   civic_or_origin: CivicOrOriginDef<PrefixedId<P>>;
+  component_set: ComponentSetDef<PrefixedId<P>>;
+  section_template: SectionTemplateDef<PrefixedId<P>>;
+  ambient_object: AmbientObjectDef<PrefixedId<P>>;
+  graphical_culture: GraphicalCultureDef<PrefixedId<P>>;
+  starbase_level: StarbaseLevelDef<PrefixedId<P>>;
+  species_class: SpeciesClassDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -435,6 +527,12 @@ export interface DefinedContentMap<P extends string> {
   councilor: DefinedCouncilor<PrefixedId<P>>;
   economic_category: DefinedEconomicCategory<PrefixedId<P>>;
   civic_or_origin: DefinedCivicOrOrigin<PrefixedId<P>>;
+  component_set: DefinedComponentSet<PrefixedId<P>>;
+  section_template: DefinedSectionTemplate<PrefixedId<P>>;
+  ambient_object: DefinedAmbientObject<PrefixedId<P>>;
+  graphical_culture: DefinedGraphicalCulture<PrefixedId<P>>;
+  starbase_level: DefinedStarbaseLevel<PrefixedId<P>>;
+  species_class: DefinedSpeciesClass<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -606,5 +704,47 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["civic_or_origin"]
   ): DefinedContentMap<P>["civic_or_origin"] {
     return this.defineGeneratedContent("civic_or_origin", def);
+  }
+
+  /** Defines a component set in this mod. */
+  defineComponentSet(
+    def: ContentDefMap<P>["component_set"]
+  ): DefinedContentMap<P>["component_set"] {
+    return this.defineGeneratedContent("component_set", def);
+  }
+
+  /** Defines a section template in this mod. */
+  defineSectionTemplate(
+    def: ContentDefMap<P>["section_template"]
+  ): DefinedContentMap<P>["section_template"] {
+    return this.defineGeneratedContent("section_template", def);
+  }
+
+  /** Defines an ambient object in this mod. */
+  defineAmbientObject(
+    def: ContentDefMap<P>["ambient_object"]
+  ): DefinedContentMap<P>["ambient_object"] {
+    return this.defineGeneratedContent("ambient_object", def);
+  }
+
+  /** Defines a graphical culture in this mod. */
+  defineGraphicalCulture(
+    def: ContentDefMap<P>["graphical_culture"]
+  ): DefinedContentMap<P>["graphical_culture"] {
+    return this.defineGeneratedContent("graphical_culture", def);
+  }
+
+  /** Defines a starbase level in this mod. */
+  defineStarbaseLevel(
+    def: ContentDefMap<P>["starbase_level"]
+  ): DefinedContentMap<P>["starbase_level"] {
+    return this.defineGeneratedContent("starbase_level", def);
+  }
+
+  /** Defines a species class in this mod. */
+  defineSpeciesClass(
+    def: ContentDefMap<P>["species_class"]
+  ): DefinedContentMap<P>["species_class"] {
+    return this.defineGeneratedContent("species_class", def);
   }
 }

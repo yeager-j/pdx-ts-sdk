@@ -38,6 +38,7 @@ import type {
   ShipRarity,
   SituationApproach,
   SituationStage,
+  SpeciesRightsType,
   SpecimensRarity,
   SpecimenType,
   TechnologyArea,
@@ -12049,7 +12050,9 @@ export function lastChangedPolicy(value: PolicyRef | string): Trigger<"country">
  * last_changed_species_rights_type = <living_standard/citizenship/military_service/slavery/purge/colonization_control/population_control/migration_control/none>
  * ```
  */
-export function lastChangedSpeciesRightsType(value: string): Trigger<"leader" | "pop_group"> {
+export function lastChangedSpeciesRightsType(
+  value: SpeciesRightsType
+): Trigger<"leader" | "pop_group"> {
   return trigger([kv("last_changed_species_rights_type", value)]);
 }
 

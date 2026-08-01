@@ -1,0 +1,26 @@
+content_test_graphical_culture_synthetic = {
+	has_city_graphics = no
+	fallback = graphical_culture_01
+	ship_color = yes
+	ship_lighting = {
+		cam_light_1_dir = { 1 0 0 }
+		cam_light_2_dir = { 0 1 0 }
+		cam_light_3_dir = { 0 0 1 }
+		intensity_near = 1.2
+		intensity_far = 0.6
+	}
+	randomized = {
+		always = yes
+	}
+	selectable = {
+		always = yes
+	}
+	ship_kinds = { ship_categories_military }
+	ship_selection_weight = {
+		base = 10
+		modifier = {
+			factor = 1.5
+			always = yes
+		}
+	}
+}
