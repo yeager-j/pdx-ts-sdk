@@ -1,0 +1,9 @@
+content_test_ship_of_size_limit_titan = {
+	ship_types = { content_test_ship_size_synth_cruiser ship_size_titan }
+	base = 80
+	max = 1600
+	naval_cap_fraction = 0.1
+	show = {
+		is_scope_valid = yes
+	}
+}

@@ -542,4 +542,29 @@ describe("generated content authoring types", () => {
       playable: hasAuthority("auth_democratic"),
     });
   });
+
+  it("brands country_ship_of_size_limit.ship_types on the ship_size registry, not just any content ref", () => {
+    // `<ship_size>` in the CWT body — a defined ship_size or a raw vanilla
+    // string both work, same widening every other branded-ref list gets.
+    const shipSize = mod.defineShipSize({
+      id: "content_types_ship_size_for_limit",
+      name: "X",
+      class: "shipclass_military",
+    });
+    mod.defineCountryShipOfSizeLimit({
+      id: "content_types_ship_of_size_limit_x",
+      shipTypes: [shipSize, "ship_size_titan"],
+      base: 80,
+      show: always(),
+    });
+    const wrongBrand: TechnologyRef = { id: "tech_lasers_1" } as TechnologyRef;
+    mod.defineCountryShipOfSizeLimit({
+      id: "content_types_ship_of_size_limit_bad_ref",
+      // @ts-expect-error — a TechnologyRef is not a ShipSizeRef; the two
+      // brands must not be interchangeable even though both widen with string.
+      shipTypes: [wrongBrand],
+      base: 80,
+      show: always(),
+    });
+  });
 });

@@ -26,6 +26,7 @@
 // From: common/graphical_cultures.cwt
 // From: common/starbases_consolidated.cwt
 // From: common/species_consolidated.cwt
+// From: common/country_limits.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -94,6 +95,12 @@ import {
   type CouncilorDef,
   type DefinedCouncilor,
 } from "./councilor.ts";
+import {
+  COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS,
+  COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION,
+  type CountryShipOfSizeLimitDef,
+  type DefinedCountryShipOfSizeLimit,
+} from "./country-ship-of-size-limit.ts";
 import {
   DECISION_FIELDS,
   DECISION_LOCALISATION,
@@ -459,6 +466,13 @@ export const CONTENT_REGISTRIES = [
     fields: SPECIES_CLASS_FIELDS,
     localisation: SPECIES_CLASS_LOCALISATION,
   },
+  {
+    type: "country_ship_of_size_limit",
+    outputDir: "common/country_limits/ship_of_size_limits",
+    fileStem: "ship_of_size_limits",
+    fields: COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS,
+    localisation: COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION,
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -497,6 +511,7 @@ export interface ContentDefMap<P extends string> {
   graphical_culture: GraphicalCultureDef<PrefixedId<P>>;
   starbase_level: StarbaseLevelDef<PrefixedId<P>>;
   species_class: SpeciesClassDef<PrefixedId<P>>;
+  country_ship_of_size_limit: CountryShipOfSizeLimitDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -533,6 +548,7 @@ export interface DefinedContentMap<P extends string> {
   graphical_culture: DefinedGraphicalCulture<PrefixedId<P>>;
   starbase_level: DefinedStarbaseLevel<PrefixedId<P>>;
   species_class: DefinedSpeciesClass<PrefixedId<P>>;
+  country_ship_of_size_limit: DefinedCountryShipOfSizeLimit<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -746,5 +762,12 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["species_class"]
   ): DefinedContentMap<P>["species_class"] {
     return this.defineGeneratedContent("species_class", def);
+  }
+
+  /** Defines a country ship of size limit in this mod. */
+  defineCountryShipOfSizeLimit(
+    def: ContentDefMap<P>["country_ship_of_size_limit"]
+  ): DefinedContentMap<P>["country_ship_of_size_limit"] {
+    return this.defineGeneratedContent("country_ship_of_size_limit", def);
   }
 }

@@ -14,6 +14,7 @@ import {
   hasPlanetFlag,
   hasSituationFlag,
   isCapital,
+  isScopeValid,
   Mod,
 } from "../src/index.ts";
 
@@ -326,7 +327,7 @@ function defineContentExample(): Mod<"content_test"> {
     hideFromCountryList: true,
   });
 
-  mod.defineShipSize({
+  const shipSize = mod.defineShipSize({
     id: "content_test_ship_size_synth_cruiser",
     name: "Synthetic Cruiser",
     class: "shipclass_military",
@@ -777,6 +778,21 @@ function defineContentExample(): Mod<"content_test"> {
     leaderAgeMax: 80,
   });
 
+  mod.defineCountryShipOfSizeLimit({
+    // Modeled on the vanilla doa_ascendant_titan_ships_limit entry (real
+    // corpus, 100% field coverage): a branded ship_size ref alongside a raw
+    // vanilla ship_size string, both accepted by shipTypes. `show` carries no
+    // `## replace_scopes` in the rules, so it stays Trigger<ScopeName> —
+    // unlike vanilla's own `has_technology` (country-only), only a genuinely
+    // universal trigger like isScopeValid() type-checks here.
+    id: "content_test_ship_of_size_limit_titan",
+    shipTypes: [shipSize, "ship_size_titan"],
+    base: 80,
+    max: 1600,
+    navalCapFraction: 0.1,
+    show: isScopeValid(),
+  });
+
   return mod;
 }
 
@@ -790,6 +806,25 @@ describe("generated content registries", () => {
       );
     });
   }
+
+  it("writes country_ship_of_size_limit under its two-segment nested path", () => {
+    // country_limits.cwt declares `path = "game/common/country_limits/
+    // ship_of_size_limits"` — two segments below common/, same depth as the
+    // councilor/civic_or_origin registries already write under
+    // common/governments/. contentRegistry() derives outputDir/fileStem
+    // generically from the CWT path, so this should need no special case.
+    expect([...files.keys()]).toContain(
+      "common/country_limits/ship_of_size_limits/content_test_ship_of_size_limits.txt"
+    );
+    const rendered = files.get(
+      "common/country_limits/ship_of_size_limits/content_test_ship_of_size_limits.txt"
+    )!;
+    expect(rendered).toContain(
+      "ship_types = { content_test_ship_size_synth_cruiser ship_size_titan }"
+    );
+    expect(rendered).not.toContain("name =");
+    expect(rendered).not.toContain("desc =");
+  });
 
   it("lowers recorder paths, raw names, and unchecked names identically", () => {
     const mod = new Mod({

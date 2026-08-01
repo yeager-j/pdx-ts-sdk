@@ -90,4 +90,5 @@ export const CONTENT_MANIFEST = [
   { type: "graphical_culture", source: "common/graphical_cultures.cwt" },
   { type: "starbase_level", source: "common/starbases_consolidated.cwt" },
   { type: "species_class", source: "common/species_consolidated.cwt" },
+  { type: "country_ship_of_size_limit", source: "common/country_limits.cwt" },
 ] as const satisfies readonly ContentManifestEntry[];

@@ -634,4 +634,24 @@ describe("content-type codegen", () => {
     expect(speciesClass?.unsupported.join("\n")).not.toContain("possible");
     expect(speciesClass?.machineryBacklog).toEqual([]);
   });
+
+  it("lowers country_ship_of_size_limit.ship_types onto the branded ship_size ref", () => {
+    // `<ship_size>` in the CWT body is a ref to the registry SDK-7 landed
+    // (9fb2da8), so this must come out branded rather than bare `string[]` —
+    // the whole point of not treating it as a plain scalar list.
+    const countryShipOfSizeLimit = emissions.get("country_ship_of_size_limit");
+    expect(countryShipOfSizeLimit?.code).toContain("export interface CountryShipOfSizeLimitDef");
+    expect(countryShipOfSizeLimit?.code).toContain("shipTypes: (ShipSizeRef | string)[];");
+    expect(countryShipOfSizeLimit?.code).toContain("base: number;");
+    expect(countryShipOfSizeLimit?.code).toContain("max?: number;");
+    expect(countryShipOfSizeLimit?.code).toContain("navalCapFraction?: number;");
+    expect(countryShipOfSizeLimit?.code).toContain("show: Trigger<ScopeName>;");
+    // The CWT type declares no localisation for this registry at all.
+    expect(countryShipOfSizeLimit?.code).not.toContain("name?:");
+    expect(countryShipOfSizeLimit?.code).not.toContain("desc?:");
+    expect(countryShipOfSizeLimit?.code).toContain(
+      "COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION: readonly ContentLocalisation[] = [\n];"
+    );
+    expect(countryShipOfSizeLimit?.machineryBacklog).toEqual([]);
+  });
 });
