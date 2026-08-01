@@ -41,3 +41,15 @@ export function or<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
 export function not<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {
   return trigger([block("NOT", [...condition.entries])]);
 }
+
+/**
+ * The `target` scope link: a situation's (or spy network's, espionage
+ * operation's, agreement's) target. Its landing scope varies per definition
+ * (`output_scope = any`) and is declared nowhere the SDK can read, so — unlike
+ * the generated links — the author asserts it: `target<"planet">(hasOwner())`.
+ */
+export function target<S extends ScopeName>(
+  condition: Trigger<S>
+): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network"> {
+  return trigger([block("target", [...condition.entries])]);
+}

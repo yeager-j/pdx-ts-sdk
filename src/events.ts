@@ -21,6 +21,9 @@ import type { ScopeObjOf } from "./generated/effects.ts";
 import type { EventKindKey } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import type { Trigger } from "./trigger-core.ts";
+// The typed fire signatures for every event kind are generated into the
+// scope interfaces — this side-effect import is what loads the augmentation.
+import "./generated/event-fires.ts";
 
 declare const eventFromBrand: unique symbol;
 
@@ -202,41 +205,4 @@ export interface WitnessedFireEventArgs<
    * wrong-scope witness fails instead of unifying.
    */
   readonly from: ScopeRef<NoInfer<F>>;
-}
-
-// Typed fire methods for the common event kinds, merged into the generated
-// scope interfaces. The runtime encoder is registered for EVERY kind in
-// EVENT_KINDS (src/effect-core.ts); kinds without a typed signature here are
-// follow-up work — generating these overload pairs is tracked in the handoff.
-declare module "./generated/effects.ts" {
-  interface CountryScope {
-    /** Fires a country event for the scoped country, after any delay. */
-    countryEvent(args: FireEventArgs<"country", undefined>): void;
-    countryEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"country", F>): void;
-  }
-  interface PlanetScope {
-    /** Fires a planet event for the scoped planet, after any delay. */
-    planetEvent(args: FireEventArgs<"planet", undefined>): void;
-    planetEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"planet", F>): void;
-  }
-  interface ShipScope {
-    /** Fires a ship event for the scoped ship, after any delay. */
-    shipEvent(args: FireEventArgs<"ship", undefined>): void;
-    shipEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"ship", F>): void;
-  }
-  interface FleetScope {
-    /** Fires a fleet event for the scoped fleet, after any delay. */
-    fleetEvent(args: FireEventArgs<"fleet", undefined>): void;
-    fleetEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"fleet", F>): void;
-  }
-  interface SystemScope {
-    /** Fires a system event for the scoped system, after any delay. */
-    systemEvent(args: FireEventArgs<"system", undefined>): void;
-    systemEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"system", F>): void;
-  }
-  interface LeaderScope {
-    /** Fires a leader event for the scoped leader, after any delay. */
-    leaderEvent(args: FireEventArgs<"leader", undefined>): void;
-    leaderEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"leader", F>): void;
-  }
 }

@@ -2077,7 +2077,7 @@ export function colonyAgeYears(
  * ```
  */
 export function colonyType(
-  value: ColonyTypeRef | string | string
+  value: ColonyTypeRef | string
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   return trigger([kv("colony_type", refId(value))]);
 }
@@ -6394,7 +6394,7 @@ export function governorsSkillInSystem(op: PdxOp, value: number): Trigger<"syste
  * ```
  */
 export function graphicalCulture(
-  value: GraphicalCultureRef | string | string
+  value: GraphicalCultureRef | string
 ): Trigger<"country" | "megastructure" | "ship" | "species"> {
   return trigger([kv("graphical_culture", refId(value))]);
 }
@@ -7322,7 +7322,7 @@ export function hasDesignFlag(value: DesignFlag): Trigger<"design"> {
  * ```
  */
 export function hasDesignation(
-  value: ColonyTypeRef | string | string
+  value: ColonyTypeRef | string
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   return trigger([kv("has_designation", refId(value))]);
 }
@@ -7745,7 +7745,7 @@ export function hasHighestTechnologyScore(value: boolean = true): Trigger<"count
 }
 
 export interface HasHoldingArgs {
-  holding: "any" | "none" | BuildingCorporateRef | string | BuildingHoldingRef | string;
+  holding: "any" | "none" | BuildingCorporateRef | string | BuildingHoldingRef;
   owner: string;
 }
 
@@ -8405,7 +8405,7 @@ export function hasPickedAutoModHabitability(value: boolean = true): Trigger<"po
  * has_planet_class = pc_tundra/<scope>
  * ```
  */
-export function hasPlanetClass(value: PlanetClassRef | string | string): Trigger<"system"> {
+export function hasPlanetClass(value: PlanetClassRef | string): Trigger<"system"> {
   return trigger([kv("has_planet_class", refId(value))]);
 }
 
@@ -8863,7 +8863,7 @@ export function hasSpeciesFlag(value: SpeciesFlag): Trigger<"species"> {
  * has_specimen = <specimen_key/exhibit>
  * ```
  */
-export function hasSpecimen(value: SpecimenRef | string | string): Trigger<"country"> {
+export function hasSpecimen(value: SpecimenRef | string): Trigger<"country"> {
   return trigger([kv("has_specimen", refId(value))]);
 }
 
@@ -9260,7 +9260,7 @@ export function hostileMilitaryPower(args: HostileMilitaryPowerArgs): Trigger<"s
  * ```
  */
 export function idealPlanetClass(
-  value: PlanetClassRef | string | string
+  value: PlanetClassRef | string
 ): Trigger<"country" | "pop_group" | "species"> {
   return trigger([kv("ideal_planet_class", refId(value))]);
 }
@@ -9755,7 +9755,7 @@ export function isColony(value: boolean = true): Trigger<"carrier" | "colony" | 
  * ```
  */
 export function isConstructing(
-  value: "megastructure" | MegastructureRef | string | ShipSizeRef | string | ConstructionType
+  value: "megastructure" | MegastructureRef | string | ShipSizeRef | ConstructionType
 ): Trigger<"fleet" | "ship"> {
   return trigger([kv("is_constructing", refId(value))]);
 }
@@ -11046,7 +11046,7 @@ export function isPlanet(value: string): Trigger<"planet"> {
  * ```
  */
 export function isPlanetClass(
-  value: PlanetClassRef | string | string
+  value: PlanetClassRef | string
 ): Trigger<"carrier" | "colony" | "dlc_recommendation" | "planet" | "ship"> {
   return trigger([kv("is_planet_class", refId(value))]);
 }
@@ -11665,7 +11665,7 @@ export function isStar(value: boolean = true): Trigger<"carrier" | "planet" | "s
  * ```
  */
 export function isStarClass(
-  value: StarClassRef | string | string
+  value: StarClassRef | string
 ): Trigger<"carrier" | "planet" | "ship" | "system"> {
   return trigger([kv("is_star_class", refId(value))]);
 }
@@ -12269,9 +12269,7 @@ export function maxStarbaseCapacity(op: PdxOp, value: number): Trigger<"country"
  * member_of_faction = no/<pop faction scope>/isolationist
  * ```
  */
-export function memberOfFaction(
-  value: boolean | string | PopFactionRef | string
-): Trigger<"pop_group"> {
+export function memberOfFaction(value: boolean | string | PopFactionRef): Trigger<"pop_group"> {
   return trigger([kv("member_of_faction", refId(value))]);
 }
 
@@ -14309,14 +14307,14 @@ export function speciesHasHappinessWithOwner(value: string): Trigger<"species"> 
  * ```
  */
 export function speciesPortrait(
-  value: PortraitRef | string | PortraitGroupRef | string
+  value: PortraitRef | string | PortraitGroupRef
 ): Trigger<"country" | "pop_group" | "species"> {
   return trigger([kv("species_portrait", refId(value))]);
 }
 
 export interface StarbaseBuildableIsInQueueBeforeArgs {
-  first: StarbaseModuleRef | string | StarbaseBuildingRef | string;
-  second: StarbaseModuleRef | string | StarbaseBuildingRef | string;
+  first: StarbaseModuleRef | string | StarbaseBuildingRef;
+  second: StarbaseModuleRef | string | StarbaseBuildingRef;
 }
 
 /**

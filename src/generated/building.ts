@@ -8,11 +8,22 @@ import type {
   DefinedContent,
   EffectBlock,
   ModifierClosure,
+  WeightBlock,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { BuildingCategory } from "./enums.ts";
-import type { BuildingRef, TechnologyRef } from "./refs.ts";
+import type { BuildingRef, SpriteRef, TechnologyRef } from "./refs.ts";
 import type { BuildingSet } from "./value-sets.ts";
+
+export interface BuildingDesc {
+  trigger?: Trigger<"colony">;
+  text?: string;
+}
+
+export const BUILDING_DESC_FIELDS: readonly ContentField[] = [
+  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "text", member: "text", shape: "value", conversion: "identity" },
+];
 
 export interface BuildingTriggeredDesc {
   trigger?: Trigger<"colony">;
@@ -33,21 +44,22 @@ export interface BuildingFields {
   name: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
+  conditionalDesc?: BuildingDesc[];
   /** optional: default is no limit Mult by -1 to remove limit (still affected by is_capped_by_modifier = yes) */
-  districtLimit?: number;
-  ownerType?: "corporate";
-  ruinedIcon?: string;
+  districtLimit?: number | WeightBlock<"colony">;
+  ownerType?: "corporate" | "subject_holding";
+  ruinedIcon?: string | SpriteRef;
   /** used to match with a planet class' building set, can be assigned to multiple sets. Used to remove from construction lists */
   buildingSets?: BuildingSet[];
   baseBuildtime?: number;
   /** optional: default is no limit. Don't set base to less than 0, it will ignore it (for performance optimisation reasons) Mult by -1 to remove limit */
-  empireLimit?: number;
+  empireLimit?: number | WeightBlock<"country">;
   /** optional: default is no limit Mult by -1 to remove limit (still affected by is_capped_by_modifier = yes) */
-  planetLimit?: number;
+  planetLimit?: number | WeightBlock<"planet">;
   /** whether this building is exempt from being swapped into groups by the AI; default: no */
   exemptFromAiPlanetSpecialization?: boolean;
   category?: BuildingCategory;
-  icon?: string;
+  icon?: string | BuildingRef;
   capital?: boolean;
   canDemolish?: boolean;
   canBeRuined?: boolean;
@@ -72,6 +84,7 @@ export interface BuildingFields {
   onBuilt?: EffectBlock<"colony">;
   /** an action when enabled */
   onEnabled?: EffectBlock<"colony">;
+  customStormAiWeight?: WeightBlock<"colony">;
   /** an action when destroyed */
   onDestroy?: EffectBlock<"colony">;
   /** an action when repaired */
@@ -95,6 +108,8 @@ export interface BuildingFields {
   /** building(s) this can be upgraded to */
   upgrades?: (BuildingRef | string)[];
   prerequisites?: (TechnologyRef | string)[];
+  /** not used anymore unless you overwrite economic_plans to not be used. */
+  aiWeight?: WeightBlock<"colony">;
   /** lists candidates this can be converted to if destroy_trigger returns true (e.g. post-conquest) */
   convertTo?: (BuildingRef | string)[];
   /** Property on buildings which when added to the AI build queue will remove all non essential build tasks. */
@@ -116,13 +131,35 @@ export type DefinedBuilding<Id extends string = string> = DefinedContent<
 >;
 
 export const BUILDING_FIELDS: readonly ContentField[] = [
-  { key: "district_limit", member: "districtLimit", shape: "value", conversion: "identity" },
+  {
+    key: "desc",
+    member: "conditionalDesc",
+    shape: "struct",
+    fields: BUILDING_DESC_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "district_limit",
+    member: "districtLimit",
+    shape: "valueOrWeightBlock",
+    conversion: "identity",
+  },
   { key: "owner_type", member: "ownerType", shape: "value", conversion: "identity" },
-  { key: "ruined_icon", member: "ruinedIcon", shape: "value", conversion: "identity" },
+  { key: "ruined_icon", member: "ruinedIcon", shape: "value", conversion: "ref" },
   { key: "building_sets", member: "buildingSets", shape: "valueList", conversion: "identity" },
   { key: "base_buildtime", member: "baseBuildtime", shape: "value", conversion: "identity" },
-  { key: "empire_limit", member: "empireLimit", shape: "value", conversion: "identity" },
-  { key: "planet_limit", member: "planetLimit", shape: "value", conversion: "identity" },
+  {
+    key: "empire_limit",
+    member: "empireLimit",
+    shape: "valueOrWeightBlock",
+    conversion: "identity",
+  },
+  {
+    key: "planet_limit",
+    member: "planetLimit",
+    shape: "valueOrWeightBlock",
+    conversion: "identity",
+  },
   {
     key: "exempt_from_ai_planet_specialization",
     member: "exemptFromAiPlanetSpecialization",
@@ -130,7 +167,7 @@ export const BUILDING_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "category", member: "category", shape: "value", conversion: "identity" },
-  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
   { key: "capital", member: "capital", shape: "value", conversion: "identity" },
   { key: "can_demolish", member: "canDemolish", shape: "value", conversion: "identity" },
   { key: "can_be_ruined", member: "canBeRuined", shape: "value", conversion: "identity" },
@@ -168,6 +205,7 @@ export const BUILDING_FIELDS: readonly ContentField[] = [
   { key: "on_unqueued", member: "onUnqueued", shape: "effect" },
   { key: "on_built", member: "onBuilt", shape: "effect" },
   { key: "on_enabled", member: "onEnabled", shape: "effect" },
+  { key: "custom_storm_ai_weight", member: "customStormAiWeight", shape: "weightBlock" },
   { key: "on_destroy", member: "onDestroy", shape: "effect" },
   { key: "on_repaired", member: "onRepaired", shape: "effect" },
   { key: "show_in_tech", member: "showInTech", shape: "value", conversion: "ref", repeated: true },
@@ -193,6 +231,7 @@ export const BUILDING_FIELDS: readonly ContentField[] = [
   },
   { key: "upgrades", member: "upgrades", shape: "valueList", conversion: "ref" },
   { key: "prerequisites", member: "prerequisites", shape: "valueList", conversion: "ref" },
+  { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
   { key: "convert_to", member: "convertTo", shape: "valueList", conversion: "ref" },
   { key: "is_essential", member: "isEssential", shape: "value", conversion: "identity" },
   {

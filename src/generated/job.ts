@@ -32,22 +32,22 @@ export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
 
 export interface JobSwappableDataSwapType {
   trigger: Trigger<"planet">;
-  name?: string;
+  name?: string | JobRef;
   desc?: string;
   icon?: JobRef | string;
   buildingIcon?: BuildingRef | string;
   conditionString?: string;
-  weight: number;
+  weight: number | WeightBlock<"pop_group">;
 }
 
 export const JOB_SWAPPABLE_DATA_SWAP_TYPE_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger" },
-  { key: "name", member: "name", shape: "value", conversion: "identity" },
+  { key: "name", member: "name", shape: "value", conversion: "ref" },
   { key: "desc", member: "desc", shape: "value", conversion: "identity" },
   { key: "icon", member: "icon", shape: "value", conversion: "ref" },
   { key: "building_icon", member: "buildingIcon", shape: "value", conversion: "ref" },
   { key: "condition_string", member: "conditionString", shape: "value", conversion: "identity" },
-  { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+  { key: "weight", member: "weight", shape: "valueOrWeightBlock", conversion: "identity" },
 ];
 
 export interface JobSwappableData {

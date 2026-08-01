@@ -377,6 +377,12 @@ const STRUCTURAL: Record<string, ((sink: PdxEntry[]) => unknown) | undefined> = 
     sink.push(block(ref.path, child));
   },
 
+  target: (sink) => (body: (scope: unknown) => void) => {
+    const child: PdxEntry[] = [];
+    body(makeAnyScope(child));
+    sink.push(block("target", child));
+  },
+
   randomList: (sink) => weightedList("random_list", sink),
   lockedRandomList: (sink) => weightedList("locked_random_list", sink),
 
@@ -422,6 +428,30 @@ const STRUCTURAL: Record<string, ((sink: PdxEntry[]) => unknown) | undefined> = 
     sink.push(block("add_resource", entries));
   },
 };
+
+// The `target` scope link's landing scope varies per definition
+// (`output_scope = any` in links.cwt) and is declared nowhere the SDK can
+// read, so — unlike the generated links — the author asserts it. The method
+// exists only on the four scopes the link is valid in; the runtime entry in
+// STRUCTURAL is scope-agnostic like everything else.
+declare module "./generated/effects.ts" {
+  interface SituationScope {
+    /** Opens the situation's target as the asserted scope: `target = { ... }`. */
+    target<S2 extends ScopeName>(body: (scope: ScopeObjOf<S2>) => void): void;
+  }
+  interface SpyNetworkScope {
+    /** Opens the spy network's target country: `target = { ... }`. */
+    target<S2 extends ScopeName>(body: (scope: ScopeObjOf<S2>) => void): void;
+  }
+  interface EspionageOperationScope {
+    /** Opens the operation's target as the asserted scope: `target = { ... }`. */
+    target<S2 extends ScopeName>(body: (scope: ScopeObjOf<S2>) => void): void;
+  }
+  interface AgreementScope {
+    /** Opens the agreement's target as the asserted scope: `target = { ... }`. */
+    target<S2 extends ScopeName>(body: (scope: ScopeObjOf<S2>) => void): void;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Fire effects — one encoder per event kind, from the generated table

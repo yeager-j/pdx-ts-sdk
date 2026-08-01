@@ -25,6 +25,16 @@ import type {
 } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
+export interface SituationTypeDesc {
+  trigger?: Trigger<"situation">;
+  text?: string;
+}
+
+export const SITUATION_TYPE_DESC_FIELDS: readonly ContentField[] = [
+  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "text", member: "text", shape: "value", conversion: "identity" },
+];
+
 export interface SituationTypeTriggeredBlockedDesc {
   trigger?: Trigger<"situation">;
   text?: string;
@@ -36,11 +46,16 @@ export const SITUATION_TYPE_TRIGGERED_BLOCKED_DESC_FIELDS: readonly ContentField
 ];
 
 export interface SituationTypeOnMonthly {
-  events?: (EventScopelessRef | string | EventSituationRef | string)[];
+  events?: (EventScopelessRef | string | EventSituationRef)[];
+  randomEvents?: readonly {
+    weight: number;
+    event?: EventScopelessRef | string | EventSituationRef;
+  }[];
 }
 
 export const SITUATION_TYPE_ON_MONTHLY_FIELDS: readonly ContentField[] = [
   { key: "events", member: "events", shape: "valueList", conversion: "ref" },
+  { key: "random_events", member: "randomEvents", shape: "weightedEvents", conversion: "ref" },
 ];
 
 export interface SituationApproachFields {
@@ -60,7 +75,7 @@ export interface SituationApproachFields {
   customTooltipWithModifiers?: string;
   resources?: EconomicResourceBlock<"situation">[];
   onSelect?: EffectBlock<"situation">;
-  aiWeight?: number;
+  aiWeight?: number | WeightBlock<"situation">;
 }
 
 export const SITUATION_APPROACH_FIELDS: readonly ContentField[] = [
@@ -91,7 +106,7 @@ export const SITUATION_APPROACH_FIELDS: readonly ContentField[] = [
   },
   { key: "resources", member: "resources", shape: "economicResources", repeated: true },
   { key: "on_select", member: "onSelect", shape: "effect" },
-  { key: "ai_weight", member: "aiWeight", shape: "value", conversion: "identity" },
+  { key: "ai_weight", member: "aiWeight", shape: "valueOrWeightBlock", conversion: "identity" },
 ];
 
 export const SITUATION_APPROACH_LOCALISATION: readonly ContentLocalisation[] = [
@@ -104,16 +119,10 @@ export interface SituationStageFields {
   name: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
-  /**
-   * Only when SituationStage subtype not `dynamic_progress` applies.
-   * Only when SituationStage subtype not `dynamic_progress` applies.
-   */
-  end?: WeightBlock<"situation">;
-  /**
-   * Only when SituationStage subtype `dynamic_progress` applies.
-   * Only when SituationStage subtype `dynamic_progress` applies.
-   */
-  sectionWeight?: WeightBlock<"situation">;
+  /** Only when SituationStage subtype not `dynamic_progress` applies. */
+  end?: number | WeightBlock<"situation">;
+  /** Only when SituationStage subtype `dynamic_progress` applies. */
+  sectionWeight?: number | WeightBlock<"situation">;
   icon: SpriteRef | string;
   iconBackground: SpriteRef | string;
   /**
@@ -136,8 +145,13 @@ export interface SituationStageFields {
 }
 
 export const SITUATION_STAGE_FIELDS: readonly ContentField[] = [
-  { key: "end", member: "end", shape: "weightBlock" },
-  { key: "section_weight", member: "sectionWeight", shape: "weightBlock" },
+  { key: "end", member: "end", shape: "valueOrWeightBlock", conversion: "identity" },
+  {
+    key: "section_weight",
+    member: "sectionWeight",
+    shape: "valueOrWeightBlock",
+    conversion: "identity",
+  },
   { key: "icon", member: "icon", shape: "value", conversion: "ref" },
   { key: "icon_background", member: "iconBackground", shape: "value", conversion: "ref" },
   { key: "color", member: "color", shape: "value", conversion: "ref" },
@@ -181,6 +195,7 @@ export interface SituationTypeFields<Id extends string = string> {
   category?: SituationCategory;
   situationLogCategory?: SituationLogCategoryRef | string;
   title?: string;
+  conditionalDesc?: SituationTypeDesc[];
   activeTooltip?: string;
   overrideActiveTitle?: string;
   overrideActiveDesc?: string;
@@ -207,12 +222,9 @@ export interface SituationTypeFields<Id extends string = string> {
   startValue?: number;
   /** The value the situation progress is going to have when starting. Important for bidirectional situations. if it is lower than start_value, it will be changed to start_value */
   initialProgress?: number;
-  totalProgress?: WeightBlock<"situation">;
-  /**
-   * monodirectional/bidirectional (defaults to monodirectional)
-   * monodirectional/bidirectional (defaults to monodirectional)
-   */
-  progressDirection?: "monodirectional";
+  totalProgress?: number | WeightBlock<"situation">;
+  /** monodirectional/bidirectional (defaults to monodirectional) */
+  progressDirection?: "monodirectional" | "bidirectional";
   /**
    * Only for progress_direction = bidirectional - only affects progress towards completetion (right)
    * Only when situation_type subtype `bidirectional` applies.
@@ -256,6 +268,13 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     conversion: "ref",
   },
   { key: "title", member: "title", shape: "value", conversion: "identity" },
+  {
+    key: "desc",
+    member: "conditionalDesc",
+    shape: "struct",
+    fields: SITUATION_TYPE_DESC_FIELDS,
+    repeated: true,
+  },
   { key: "active_tooltip", member: "activeTooltip", shape: "value", conversion: "identity" },
   {
     key: "override_active_title",
@@ -340,7 +359,12 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
   },
   { key: "start_value", member: "startValue", shape: "value", conversion: "identity" },
   { key: "initial_progress", member: "initialProgress", shape: "value", conversion: "identity" },
-  { key: "total_progress", member: "totalProgress", shape: "weightBlock" },
+  {
+    key: "total_progress",
+    member: "totalProgress",
+    shape: "valueOrWeightBlock",
+    conversion: "identity",
+  },
   {
     key: "progress_direction",
     member: "progressDirection",

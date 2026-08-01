@@ -201,6 +201,25 @@ interface ContentWeightWithLocField extends ContentFieldBase {
 }
 
 /**
+ * A field CWT declares both as a bare scalar and as a modifier_rule block
+ * (`stages.end = 100` versus `end = { base = 100 modifier = { ... } }`),
+ * lowered by whichever form the author passes.
+ */
+interface ContentValueOrWeightField extends ContentFieldBase {
+  readonly shape: "valueOrWeightBlock";
+  readonly conversion: "identity" | "ref";
+}
+
+/**
+ * A block of `<weight> = <event>` rows (`random_events = { 100 = my_event.1
+ * 20 = 0 }`). An entry with no `event` emits the `0` nothing-happens arm.
+ */
+interface ContentWeightedEventsField extends ContentFieldBase {
+  readonly shape: "weightedEvents";
+  readonly conversion: "identity" | "ref";
+}
+
+/**
  * An anonymous, identity-less block: `text = { trigger = { ... } }` written N
  * times (shape 3), generalized down to whatever cardinality CWT declares — a
  * singular fixed-shape block like `forbidden_peace_offers` is just the N=0..1
@@ -252,6 +271,8 @@ export type ContentField =
   | ContentModifierField
   | ContentWeightField
   | ContentWeightWithLocField
+  | ContentValueOrWeightField
+  | ContentWeightedEventsField
   | ContentStructField
   | ContentRepeatedStructField;
 
@@ -468,6 +489,28 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
       case "weightBlockWithLoc":
         entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));
         break;
+      case "valueOrWeightBlock":
+        if (typeof value === "object") {
+          entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));
+        } else {
+          entries.push(kv(field.key, contentScalar(value, field.conversion, false)));
+        }
+        break;
+      case "weightedEvents": {
+        const arms = value as readonly { weight: number; event?: unknown }[];
+        entries.push(
+          block(
+            field.key,
+            arms.map((arm) =>
+              kv(
+                String(arm.weight),
+                arm.event === undefined ? 0 : contentScalar(arm.event, field.conversion, false)
+              )
+            )
+          )
+        );
+        break;
+      }
       case "struct": {
         if (field.wrapped) {
           const items = value as readonly Readonly<Record<string, unknown>>[];
@@ -665,6 +708,10 @@ export class ContentAuthoring {
       }
       const fieldPath = path === "" ? field.key : `${path}_${field.key}`;
       if (field.shape === "weightBlock" || field.shape === "weightBlockWithLoc") {
+        this.collectModifierDescs(ownerId, fieldPath, raw as WeightBlock<ScopeName>, localisation);
+        continue;
+      }
+      if (field.shape === "valueOrWeightBlock" && typeof raw === "object") {
         this.collectModifierDescs(ownerId, fieldPath, raw as WeightBlock<ScopeName>, localisation);
         continue;
       }

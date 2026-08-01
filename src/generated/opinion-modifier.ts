@@ -4,7 +4,6 @@
 
 import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
-import type { ScopeName } from "./scopes.ts";
 
 /**
  * An opinion_modifier, as the game's rules describe it.
@@ -13,17 +12,11 @@ import type { ScopeName } from "./scopes.ts";
 export interface OpinionModifierFields {
   /** English text emitted to localization under `<id>`. */
   name: string;
-  opinion: WeightBlock<"country">;
-  /**
-   * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
-   * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
-   */
-  decay?: WeightBlock<ScopeName>;
-  /**
-   * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
-   * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
-   */
-  growth?: WeightBlock<ScopeName>;
+  opinion: number | WeightBlock<"country">;
+  /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
+  decay?: number | WeightBlock<"country">;
+  /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
+  growth?: number | WeightBlock<"country">;
   /**
    * No by default
    * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
@@ -32,14 +25,12 @@ export interface OpinionModifierFields {
   /**
    * For use with accumulative if the base is negative
    * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
-   * For use with accumulative if the base is negative
    * Only when opinion_modifier subtype `block_triggered` applies.
    */
   min?: number;
   /**
    * For use with accumulative if the base is positive
    * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
-   * For use with accumulative if the base is positive
    * Only when opinion_modifier subtype `block_triggered` applies.
    */
   max?: number;
@@ -72,9 +63,9 @@ export type DefinedOpinionModifier<Id extends string = string> = DefinedContent<
 >;
 
 export const OPINION_MODIFIER_FIELDS: readonly ContentField[] = [
-  { key: "opinion", member: "opinion", shape: "weightBlock" },
-  { key: "decay", member: "decay", shape: "weightBlock" },
-  { key: "growth", member: "growth", shape: "weightBlock" },
+  { key: "opinion", member: "opinion", shape: "valueOrWeightBlock", conversion: "identity" },
+  { key: "decay", member: "decay", shape: "valueOrWeightBlock", conversion: "identity" },
+  { key: "growth", member: "growth", shape: "valueOrWeightBlock", conversion: "identity" },
   { key: "accumulative", member: "accumulative", shape: "value", conversion: "identity" },
   { key: "min", member: "min", shape: "value", conversion: "identity" },
   { key: "max", member: "max", shape: "value", conversion: "identity" },

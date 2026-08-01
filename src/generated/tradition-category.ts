@@ -5,6 +5,17 @@
 import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { TraditionRef } from "./refs.ts";
+import type { ScopeName } from "./scopes.ts";
+
+export interface TraditionCategoryDesc {
+  trigger?: Trigger<ScopeName>;
+  text?: string;
+}
+
+export const TRADITION_CATEGORY_DESC_FIELDS: readonly ContentField[] = [
+  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "text", member: "text", shape: "value", conversion: "identity" },
+];
 
 /**
  * A tradition_category, as the game's rules describe it.
@@ -15,6 +26,7 @@ export interface TraditionCategoryFields {
   name: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
+  conditionalDesc?: TraditionCategoryDesc[];
   treeTemplate: string;
   adoptionBonus: TraditionRef | string;
   finishBonus: TraditionRef | string;
@@ -34,6 +46,13 @@ export type DefinedTraditionCategory<Id extends string = string> = DefinedConten
 >;
 
 export const TRADITION_CATEGORY_FIELDS: readonly ContentField[] = [
+  {
+    key: "desc",
+    member: "conditionalDesc",
+    shape: "struct",
+    fields: TRADITION_CATEGORY_DESC_FIELDS,
+    repeated: true,
+  },
   { key: "tree_template", member: "treeTemplate", shape: "value", conversion: "identity" },
   { key: "adoption_bonus", member: "adoptionBonus", shape: "value", conversion: "ref" },
   { key: "finish_bonus", member: "finishBonus", shape: "value", conversion: "ref" },

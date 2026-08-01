@@ -84,15 +84,17 @@ export const HAND_WRITTEN_EFFECTS = new Set([
 ]);
 
 /**
- * The method names `StructuralEffects` in `src/effect-core.ts` hand-writes on
- * every scope interface. The scope-link pass must not emit a method by any of
- * these names: the generated interface member would merge with (or shadow) the
- * structural one and the runtime Proxy would dispatch the wrong table. Update
- * this list together with `StructuralEffects`.
+ * The method names `src/effect-core.ts` hand-writes onto the scope
+ * interfaces — `StructuralEffects` plus per-scope augmentations such as the
+ * author-asserted `target` link. The scope-link pass must not emit a method by
+ * any of these names: the generated interface member would merge with (or
+ * shadow) the structural one and the runtime Proxy would dispatch the wrong
+ * table. Update this list together with the `STRUCTURAL` table.
  */
 export const STRUCTURAL_EFFECT_METHODS = new Set([
   "if",
   "within",
+  "target",
   "randomList",
   "lockedRandomList",
   "random",
@@ -247,11 +249,26 @@ export type ContentFieldShape =
    * key — the same distinction `name_field` draws for top-level registries,
    * one level down. See docs/roadmap.md's "Repeated-struct field shape".
    */
-  | "repeatedStruct";
+  | "repeatedStruct"
+  /**
+   * A block of `<weight> = <event>` rows under computed integer keys
+   * (`random_events = { 100 = my_event.1  20 = 0 }`), with `0` as the
+   * nothing-happens arm. The computed key is invisible to the ordinary field
+   * model, so the shape must be requested.
+   */
+  | "weightedEvents";
 
 export interface ContentFieldOverride {
-  readonly shape: ContentFieldShape;
+  /** Omitted when the row only renames the authoring member. */
+  readonly shape?: ContentFieldShape;
   readonly quoted?: boolean;
+  /**
+   * Authoring member name, when the mechanically derived one collides with a
+   * localisation slot: `desc = { trigger text }` (the repeated block form of
+   * the `desc` key) is a different thing from the `desc` flavor-text member
+   * the localisation table claims, and both must stay authorable.
+   */
+  readonly member?: string;
   readonly reason: string;
 }
 
@@ -264,6 +281,38 @@ export interface ContentFieldOverride {
  * localization identity.
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+  [
+    "building.desc",
+    {
+      member: "conditionalDesc",
+      reason:
+        "The `desc` key's repeated trigger+text block form; the derived member collides with " +
+        "the `desc` flavor-text localisation slot, and `triggeredDesc` is already the building's " +
+        "own distinct triggered_desc key.",
+    },
+  ],
+  [
+    "tradition_category.desc",
+    {
+      member: "conditionalDesc",
+      reason:
+        "The `desc` key's repeated trigger+text block form; the derived member collides with " +
+        "the `desc` flavor-text localisation slot. Named like building.desc for consistency.",
+    },
+  ],
+  [
+    "situation_type.desc",
+    {
+      shape: "struct",
+      member: "conditionalDesc",
+      reason:
+        "The `desc` key's repeated trigger+text block form; the derived member collides with " +
+        "the `desc` flavor-text localisation slot. Named like building.desc for consistency. " +
+        "Unlike building's, situations' `desc` is also declared as a bare localisation scalar, " +
+        "which the localisation slot already covers — the struct shape pins the block form so " +
+        "first-wins picking cannot resurface the redundant scalar.",
+    },
+  ],
   [
     "technology.prerequisites",
     {
@@ -287,26 +336,12 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "tradition.ai_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
     "tradition.tradition_swap",
     {
       shape: "repeatedStruct",
       reason:
         "A tradition swap is a repeated-struct field: a named, ordered collection whose name " +
         "(name_field, one level down) is both identity and localization key.",
-    },
-  ],
-  [
-    "tradition_category.ai_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
     },
   ],
   [
@@ -325,13 +360,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "ascension_perk.ai_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
     "ascension_perk.tradition_swap",
     {
       shape: "repeatedStruct",
@@ -345,13 +373,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     {
       shape: "modifierBlock",
       reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "agenda.ai_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
     },
   ],
   [
@@ -385,13 +406,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "edict.ai_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
     "councilor.modifier",
     {
       shape: "modifierBlock",
@@ -407,25 +421,11 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "councilor.ai_hiring_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
     "decision.resources",
     {
       shape: "economicResources",
       reason:
         "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
-    },
-  ],
-  [
-    "decision.ai_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
     },
   ],
   [
@@ -505,38 +505,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "job.weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
-    "opinion_modifier.opinion",
-    {
-      shape: "weightBlock",
-      reason:
-        "opinion is declared twice, as a bare float and as a modifier_rule block; without the " +
-        "override the group picks the bare float and silently drops the gated adjustments.",
-    },
-  ],
-  [
-    "opinion_modifier.decay",
-    {
-      shape: "weightBlock",
-      reason:
-        "Same dual bare-float/modifier_rule declaration as opinion, gated to non-triggered subtypes.",
-    },
-  ],
-  [
-    "opinion_modifier.growth",
-    {
-      shape: "weightBlock",
-      reason:
-        "Same dual bare-float/modifier_rule declaration as opinion, gated to non-triggered subtypes.",
-    },
-  ],
-  [
     "casus_belli.proxy_war_resources",
     {
       shape: "economicResources",
@@ -545,88 +513,13 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "war_goal.ai_weight",
+    "situation_type.on_monthly.random_events",
     {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
-    "agreement_preset.overlord_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
-    "agreement_preset.subject_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
-    "bombardment_stance.kill_pop_chance",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
-    "bombardment_stance.planet_damage",
-    {
-      shape: "weightBlock",
+      shape: "weightedEvents",
       reason:
-        "Declared twice, as a bare float and as a modifier_rule block; without the override the " +
-        "group picks the bare float and silently drops the gated adjustments, same failure mode " +
-        "as opinion_modifier.opinion.",
-    },
-  ],
-  [
-    "bombardment_stance.ai_weight",
-    {
-      shape: "weightBlock",
-      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
-    "archaeological_site_type.weight",
-    {
-      shape: "weightBlock",
-      reason:
-        "Declared twice, as a modifier_rule block and as a bare int; without the override the " +
-        "group picks the bare int and silently drops the gated adjustments, same failure mode as " +
-        "opinion_modifier.opinion.",
-    },
-  ],
-  [
-    "situation_type.total_progress",
-    {
-      shape: "weightBlock",
-      reason:
-        "Declared twice, as a bare `value_int_field` scalar (an upstream CWT typo distinct from " +
-        "the usual `int_value_field`) and as a modifier_rule block; without the override the group " +
-        "picks the malformed bare scalar and silently drops the gated adjustments, same failure " +
-        "mode as opinion_modifier.opinion — the fourth occurrence the roadmap's scalar-versus-block " +
-        "picker section predicted.",
-    },
-  ],
-  [
-    "situation_type.monthly_progress",
-    {
-      shape: "weightBlockWithLoc",
-      reason:
-        "Splices `alias_name[modifier_rule_with_loc]`, not `modifier_rule` — the same base-plus-" +
-        "gated-Modifier shape, but `desc` is required per row rather than optional (no `## " +
-        "cardinality = 0..1` precedes it, unlike plain modifier_rule's `desc`). `complex_maths_enum` " +
-        "(add/subtract/factor/mult/multiply/divide/min/max/...) is declared with real values in " +
-        "modifier_rule.cwt's own `enums = { ... }` block, but only ever appears as a computed key " +
-        "(`enum[complex_maths_enum] = value_field`), never as a value type, so it never reaches " +
-        "`emitter.usedEnums` and cannot be mechanically derived the way an ordinary enum-typed field " +
-        "would be — same absence-of-a-value-position gap as the valueless enums `emitEnums` widens " +
-        "to `string`, just discovered from the key side instead. The operation set on `Modifier` is " +
-        "hand-curated in src/effect-core.ts from the grammar's declared members intersected with " +
-        "what the corpus actually uses, not derived here.",
+        "`int = <event.scopeless>` / `int = <event.situation>` computed keys: each row is a " +
+        "weight keyed to the event it fires, `0` the nothing-happens arm — the shape situations " +
+        "drive their monthly narrative with.",
     },
   ],
   [
@@ -746,44 +639,10 @@ export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverr
     },
   ],
   [
-    "tradition.tradition_swap.weight",
-    {
-      shape: "weightBlock",
-      reason: "Nested modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
     "ascension_perk.tradition_swap.modifier",
     {
       shape: "modifierBlock",
       reason: "Nested modifier_clause is the same open modifier-name map as its parent.",
-    },
-  ],
-  [
-    "ascension_perk.tradition_swap.weight",
-    {
-      shape: "weightBlock",
-      reason: "Nested modifier_rule blocks lower to a base plus gated Modifier rows.",
-    },
-  ],
-  [
-    "situation_type.stages.end",
-    {
-      shape: "weightBlock",
-      reason:
-        "Declared twice, as a bare int_value_field and as a modifier_rule block, gated to the " +
-        "not-dynamic_progress subtype; without the override the group picks the bare scalar and " +
-        "silently drops the gated adjustments, same failure mode as opinion_modifier.opinion.",
-    },
-  ],
-  [
-    "situation_type.stages.section_weight",
-    {
-      shape: "weightBlock",
-      reason:
-        "Declared twice, as a bare int_value_field and as a modifier_rule block, gated to the " +
-        "dynamic_progress subtype; without the override the group picks the bare scalar and " +
-        "silently drops the gated adjustments, same failure mode as opinion_modifier.opinion.",
     },
   ],
   [

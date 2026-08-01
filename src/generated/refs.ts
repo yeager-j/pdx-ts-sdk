@@ -42,11 +42,20 @@ export type AgreementTermRef = TypedRef<"agreement_term">;
 /** A reference to a `<agreement_term.discrete>`. */
 export type AgreementTermDiscreteRef = TypedRef<"agreement_term.discrete">;
 
+/** A reference to a `<agreement_term.discrete_number>`. */
+export type AgreementTermDiscreteNumberRef = TypedRef<"agreement_term.discrete_number">;
+
+/** A reference to a `<agreement_term.specialist_type>`. */
+export type AgreementTermSpecialistTypeRef = TypedRef<"agreement_term.specialist_type">;
+
 /** A reference to a `<agreement_term_value>`. */
 export type AgreementTermValueRef = TypedRef<"agreement_term_value">;
 
 /** A reference to a `<agreement_term_value.discrete>`. */
 export type AgreementTermValueDiscreteRef = TypedRef<"agreement_term_value.discrete">;
+
+/** A reference to a `<agreement_term_value.discrete_number>`. */
+export type AgreementTermValueDiscreteNumberRef = TypedRef<"agreement_term_value.discrete_number">;
 
 /** A reference to a `<agreement_term_value.resource>`. */
 export type AgreementTermValueResourceRef = TypedRef<"agreement_term_value.resource">;

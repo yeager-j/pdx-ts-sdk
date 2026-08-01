@@ -594,13 +594,12 @@ describe("generated content registries", () => {
     );
   });
 
-  it("overrides the dual bare/modifier_rule declaration for total_progress and section_weight", () => {
+  it("lowers the block form of a dual bare/modifier_rule declaration", () => {
     // total_progress (bare `value_int_field`, an upstream CWT typo, versus a
     // modifier_rule block) and stages' section_weight (bare int_value_field
-    // versus a modifier_rule block, gated to the dynamic_progress subtype) hit
-    // the same "declared twice" picker defect as opinion_modifier.opinion —
-    // without the weightBlock override the group would pick the bare scalar
-    // and silently drop the gated adjustments.
+    // versus a modifier_rule block, gated to the dynamic_progress subtype) are
+    // each declared twice; the union type keeps the block form's gated
+    // adjustments authorable.
     const mod = new Mod({
       name: "Section weights test",
       prefix: "sw_test",
@@ -625,6 +624,79 @@ describe("generated content registries", () => {
       "total_progress = {\n\t\tbase = 60000\n\t\tmodifier = {\n\t\t\tfactor = 2\n\t\t\talways = yes\n\t\t}\n\t}"
     );
     expect(rendered).toContain("section_weight = {\n\t\t\t\tbase = 25\n\t\t\t}");
+  });
+
+  it("lowers the scalar form of a dual bare/modifier_rule declaration", () => {
+    // Vanilla writes `end = 100` 254 times against 1 block, so the scalar form
+    // is the common case; it must serialize as a plain assignment, not as an
+    // empty weight block.
+    const mod = new Mod({
+      name: "Scalar end test",
+      prefix: "se_test",
+      supportedVersion: "4.4.*",
+    });
+    mod.defineSituationType({
+      id: "se_test_situation_plain",
+      name: "Plain Situation",
+      monthlyProgress: { base: 1 },
+      progressDirection: "bidirectional",
+      stages: {
+        se_test_situation_plain_stage: {
+          name: "Only Stage",
+          icon: "GFX_situation_stage_only",
+          iconBackground: "GFX_situation_stage_only_bg",
+          end: 100,
+        },
+      },
+    });
+    const rendered = mod.render().get("common/situations/se_test_situations.txt");
+    expect(rendered).toContain("end = 100");
+    expect(rendered).not.toContain("end = {");
+    expect(rendered).toContain("progress_direction = bidirectional");
+  });
+
+  it("emits conditionalDesc under the game's desc key", () => {
+    // The authoring member is renamed to dodge the desc flavor-text slot, but
+    // the serialized key is still `desc`, one block per entry.
+    const mod = new Mod({
+      name: "Conditional desc test",
+      prefix: "cd_test",
+      supportedVersion: "4.4.*",
+    });
+    mod.defineSituationType({
+      id: "cd_test_situation",
+      name: "Situation",
+      monthlyProgress: { base: 1 },
+      conditionalDesc: [
+        { trigger: always(), text: "cd_test_situation_desc_alt" },
+        { text: "cd_test_situation_desc_fallback" },
+      ],
+    });
+    const rendered = mod.render().get("common/situations/cd_test_situations.txt");
+    expect(rendered).toContain(
+      "desc = {\n\t\ttrigger = {\n\t\t\talways = yes\n\t\t}\n\t\ttext = cd_test_situation_desc_alt\n\t}"
+    );
+    expect(rendered).toContain("desc = {\n\t\ttext = cd_test_situation_desc_fallback\n\t}");
+  });
+
+  it("emits random_events as weight = event rows with 0 for the empty arm", () => {
+    const mod = new Mod({
+      name: "Random events test",
+      prefix: "re_test",
+      supportedVersion: "4.4.*",
+    });
+    mod.defineSituationType({
+      id: "re_test_situation",
+      name: "Situation",
+      monthlyProgress: { base: 1 },
+      onMonthly: {
+        randomEvents: [{ weight: 100, event: "re_test_event.1" }, { weight: 20 }],
+      },
+    });
+    const rendered = mod.render().get("common/situations/re_test_situations.txt");
+    expect(rendered).toContain(
+      "on_monthly = {\n\t\trandom_events = {\n\t\t\t100 = re_test_event.1\n\t\t\t20 = 0\n\t\t}\n\t}"
+    );
   });
 
   it("rejects an unprefixed nested definition before rendering", () => {

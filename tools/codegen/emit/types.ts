@@ -122,7 +122,9 @@ export class Emitter {
     if (values.some((value) => value === null)) {
       return null;
     }
-    const parts = [...new Set(values.map((value) => value!.type))];
+    // Split compound members (`XRef | string`) so `string` dedupes across
+    // arms instead of repeating in the joined union.
+    const parts = [...new Set(values.flatMap((value) => value!.type.split(" | ")))];
     const converts = new Set(values.map((value) => value!.toScalar("x")));
     if (converts.size > 1) {
       return { type: parts.join(" | "), toScalar: (e) => `refId(${e})` };

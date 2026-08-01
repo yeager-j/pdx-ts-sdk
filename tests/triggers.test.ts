@@ -11,6 +11,7 @@ import {
   not,
   or,
   owner,
+  target,
   trigger,
   yearsPassed,
 } from "../src/triggers.ts";
@@ -39,6 +40,16 @@ describe("trigger builders", () => {
       		is_ai = yes
       		has_country_flag = ascended
       	}
+      }
+      "
+    `);
+  });
+
+  it("emits the asserted target link as a navigation block", () => {
+    const condition = target<"country">(isAi());
+    expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
+      "target = {
+      	is_ai = yes
       }
       "
     `);

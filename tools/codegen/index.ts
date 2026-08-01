@@ -130,7 +130,7 @@ async function main(): Promise<void> {
   const triggerLinks = emitTriggerLinks(
     classifiedLinks,
     index,
-    new Set([...triggers.names, "trigger", "and", "or", "not", "nand", "nor"])
+    new Set([...triggers.names, "trigger", "and", "or", "not", "nand", "nor", "target"])
   );
 
   emitter.beginFile();
@@ -318,6 +318,22 @@ async function main(): Promise<void> {
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.code
   );
+  await write(
+    "event-methods.ts",
+    header(commit, ["events/events.cwt"]) +
+      'import type { DefinedEvent, EventDef } from "../events.ts";\n' +
+      'import { GeneratedContentMethods } from "./content-registry.ts";\n' +
+      'import type { EventKindKey } from "./events.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      events.methodsCode
+  );
+  await write(
+    "event-fires.ts",
+    header(commit, ["events/events.cwt", "effects.cwt"]) +
+      'import type { FireEventArgs, WitnessedFireEventArgs } from "../events.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      events.firesCode
+  );
   const onActions = emitOnActions(rules);
   await write("on-actions.ts", header(commit, ["on_actions.cwt"]) + onActions.code);
 
@@ -350,7 +366,10 @@ async function main(): Promise<void> {
   for (const content of contents) {
     console.log(`${content.registry}: ${content.emission.emittedFields.length} fields emitted`);
   }
-  console.log(`event kinds: ${events.kinds}`);
+  console.log(
+    `event kinds: ${events.kinds} (${events.defineMethods} define methods, ` +
+      `${events.fireMethods} typed fire methods)`
+  );
   console.log(
     `on-actions: ${onActions.emitted} emitted (${onActions.noScope} scopeless and currently rejected)`
   );
@@ -363,6 +382,10 @@ async function main(): Promise<void> {
   );
   reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
   reportSection("On-actions not emitted", onActions.skipped);
+  reportSection(
+    "Event kinds without full typing",
+    events.skipped.map((entry) => `${entry.name} — ${entry.reason}`)
+  );
   reportSection("Enums widened to string (rules declare no values)", valuelessEnums(emitter));
   for (const content of contents) {
     const type = content.registry;

@@ -501,7 +501,7 @@ export interface EffectsIn4Scopes023a {
    * ```
    */
   exportModifierDurationToVariable(args: {
-    modifier: ModifierRef | string | StaticModifierRef | string;
+    modifier: ModifierRef | string | StaticModifierRef;
     variable: Variable;
   }): void;
 }
@@ -557,7 +557,7 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   addHolding(args: {
-    holding: BuildingCorporateRef | string | BuildingHoldingRef | string;
+    holding: BuildingCorporateRef | string | BuildingHoldingRef;
     owner: string;
   }): void;
 
@@ -594,7 +594,7 @@ export interface EffectsIn4Scopes2b24 {
    * change_pc = { class = <class/random list> inherit_entity = yes }
    * ```
    */
-  changePc(value: PlanetClassRef | string | PlanetClassRandomListRef | string | string): void;
+  changePc(value: PlanetClassRef | string | PlanetClassRandomListRef): void;
 
   /**
    * Increases or reduces the size of the scoped planet by a specified amount
@@ -1006,7 +1006,7 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   removeHolding(args: {
-    holding: BuildingCorporateRef | string | BuildingHoldingRef | string;
+    holding: BuildingCorporateRef | string | BuildingHoldingRef;
     owner: string;
   }): void;
 
@@ -1183,7 +1183,7 @@ export interface EffectsIn4Scopes2b24 {
    * start_terraform_process = { class = <class/random list> inherit_entity = yes }
    * ```
    */
-  startTerraformProcess(value: PlanetClassRef | string | PlanetClassRandomListRef | string): void;
+  startTerraformProcess(value: PlanetClassRef | string | PlanetClassRandomListRef): void;
 
   /**
    * Starts terraforming progress of scoped planet
@@ -1192,7 +1192,7 @@ export interface EffectsIn4Scopes2b24 {
    * start_terraform_progress = { class = <class/random list> inherit_entity = yes }
    * ```
    */
-  startTerraformProgress(value: PlanetClassRef | string | PlanetClassRandomListRef | string): void;
+  startTerraformProgress(value: PlanetClassRef | string | PlanetClassRandomListRef): void;
 
   /** Stops terraforming process of scoped planet */
   stopTerraformProcess(value: string): void;
@@ -1521,7 +1521,7 @@ export interface EffectsIn5Scopesb6d1 {
    * set_graphical_culture = <key>
    * ```
    */
-  setGraphicalCulture(value: GraphicalCultureRef | string | string): void;
+  setGraphicalCulture(value: GraphicalCultureRef | string): void;
 }
 
 /** Effects valid in: astral_rift, carrier, planet, ship, system. */
@@ -1671,9 +1671,9 @@ export interface EffectsIn8Scopes39a9 {
     addTrait?: TraitRef | string;
     addTraitsAtStartOfList?: boolean;
     removeTrait?: TraitRef | string;
-    idealPlanetClass?: string | PlanetClassHabitablePlanetRef | string;
+    idealPlanetClass?: string | PlanetClassHabitablePlanetRef;
     changeScopedSpecies?: boolean;
-    portrait?: string | PortraitRef | string | PortraitGroupRef | string | "random";
+    portrait?: string | PortraitRef | PortraitGroupRef | "random";
     addRandomSpeciesTrait?: Trigger<
       "carrier" | "colony" | "country" | "leader" | "planet" | "pop_group" | "ship" | "species"
     >;
@@ -2317,8 +2317,8 @@ export interface EffectsInCarrierPlanetShip {
    * ```
    */
   setPlanetEntity(args: {
-    entity?: ModelEntityRef | string | string;
-    graphicalCulture?: GraphicalCultureRef | string | string;
+    entity?: ModelEntityRef | string;
+    graphicalCulture?: GraphicalCultureRef | string;
     picture?: string;
     atmosphereColor?: string;
     atmosphereIntensity?: number;
@@ -2661,7 +2661,7 @@ export interface EffectsInCountry {
    * add_ship_design = <target/last_created_design>
    * ```
    */
-  addShipDesign(value: GlobalShipDesignRef | string | string | "last_created_design"): void;
+  addShipDesign(value: GlobalShipDesignRef | string | "last_created_design"): void;
 
   /**
    * Adds static war exhaustion, scaled with value_for_planet_destruction, to owner of the battle location
@@ -2718,7 +2718,7 @@ export interface EffectsInCountry {
    * ```
    */
   addToVivarium(args: {
-    design?: GlobalShipDesignRef | string | string | "last_created_design";
+    design?: GlobalShipDesignRef | string | "last_created_design";
     rarity?: ShipRarity;
     amount?: number;
   }): void;
@@ -3473,7 +3473,7 @@ export interface EffectsInCountry {
    * ```
    */
   giveCullingRewards(args: {
-    design?: GlobalShipDesignRef | string | string | "last_created_design";
+    design?: GlobalShipDesignRef | string | "last_created_design";
     mult?: number;
   }): void;
 
@@ -5002,7 +5002,7 @@ export interface EffectsInCountry {
    * remove_ship_design = <target/last_created_design>
    * ```
    */
-  removeShipDesign(value: GlobalShipDesignRef | string | string | "last_created_design"): void;
+  removeShipDesign(value: GlobalShipDesignRef | string | "last_created_design"): void;
 
   /**
    * Removes specified specimen from the target country. This will destroy the specimen
@@ -5010,7 +5010,7 @@ export interface EffectsInCountry {
    * remove_specimen = <specimen_key/exhibit_target>
    * ```
    */
-  removeSpecimen(value: SpecimenRef | string | string): void;
+  removeSpecimen(value: SpecimenRef | string): void;
 
   /**
    * Replace a patron with another one, creating the patron relation if it does not yet exist, and setting the new patron to the replaced patron's position in the shroud plane.
@@ -5086,7 +5086,7 @@ export interface EffectsInCountry {
    * room_name_override = <room_name>
    * ```
    */
-  roomNameOverride(value: AssetSelectorRoomRef | string | "" | string): void;
+  roomNameOverride(value: AssetSelectorRoomRef | string | ""): void;
 
   /** Runs strategic data for AI */
   runAiStrategicData(value?: boolean): void;
@@ -7377,7 +7377,7 @@ export interface EffectsInFleetShip {
    * ```
    */
   setShipDesign(args: {
-    design?: GlobalShipDesignRef | string | string | "last_created_design";
+    design?: GlobalShipDesignRef | string | "last_created_design";
     randomExistingDesign?: ShipSizeRef | string;
   }): void;
 
@@ -7473,7 +7473,7 @@ export interface EffectsInLeader {
    * change_leader_portrait = <key or species event target>
    * ```
    */
-  changeLeaderPortrait(value: string | PortraitRef | string | PortraitGroupRef | string): void;
+  changeLeaderPortrait(value: string | PortraitRef | PortraitGroupRef): void;
 
   /**
    * Freezes the scoped leader's age. The 'no' case will disable the freeze granted by this effect.
@@ -8073,7 +8073,7 @@ export interface EffectsInPlanet {
   stealPlanetOutput(args: {
     planet: string;
     who: string;
-    resource?: ResourceRef | string | string | "all";
+    resource?: ResourceRef | string | "all";
     maxAmount?: number;
     percentage?: number;
     mode?: "steal" | "duplicate";
@@ -8634,7 +8634,7 @@ export interface EffectsInSpecies {
     sapient?: boolean;
     immortal?: boolean;
     canBeModified?: boolean | "scope_field";
-    portrait?: string | PortraitRef | string | PortraitGroupRef | string | "random";
+    portrait?: string | PortraitRef | PortraitGroupRef | "random";
     addTrait?: TraitSpeciesTraitRef | string;
     addTraitsAtStartOfList?: boolean;
     removeTrait?: TraitSpeciesTraitRef | string;
@@ -8648,9 +8648,7 @@ export interface EffectsInSpecies {
    * change_species_portrait = <key or species event target>
    * ```
    */
-  changeSpeciesPortrait(
-    value: string | PortraitRef | string | PortraitGroupRef | string | "random"
-  ): void;
+  changeSpeciesPortrait(value: string | PortraitRef | PortraitGroupRef | "random"): void;
 
   /**
    * Iterate through each pop_group that belongs to this species; warning: resource-intensive! - executes the enclosed effects on all of them for which the limit triggers return true

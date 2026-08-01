@@ -10,6 +10,7 @@ import {
   isAtWar,
   overlord,
   owner,
+  target,
   yearsPassed,
   type ScopeName,
   type Trigger,
@@ -17,6 +18,7 @@ import {
 
 function countrySlot(_t: Trigger<"country">): void {}
 function planetSlot(_t: Trigger<"planet">): void {}
+function situationSlot(_t: Trigger<"situation">): void {}
 
 describe("scope safety", () => {
   it("rejects a planet-scoped trigger where a country trigger is required", () => {
@@ -69,6 +71,14 @@ describe("scope safety", () => {
   it("rejects a scope link used outside its input scopes", () => {
     // @ts-expect-error — overlord only navigates from country scope
     planetSlot(overlord(isAtWar()));
+  });
+
+  it("checks the asserted target link's condition against the assertion", () => {
+    situationSlot(target<"country">(isAtWar()));
+    // @ts-expect-error — the author asserted a country target; a planet trigger does not fit
+    situationSlot(target<"country">(hasPlanetFlag("x")));
+    // @ts-expect-error — target only navigates from situation/spy_network/espionage_operation/agreement
+    countrySlot(target<"country">(isAtWar()));
   });
 
   it("poisons truthiness so triggers cannot be used in a build-time if", () => {

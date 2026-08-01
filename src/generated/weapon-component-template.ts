@@ -2,13 +2,20 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/components.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent, EffectBlock } from "../content.ts";
+import type {
+  ContentField,
+  ContentLocalisation,
+  DefinedContent,
+  EffectBlock,
+  WeightBlock,
+} from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type {
   AuraType,
   ComponentTag,
   PointDefenceTarget,
   TargetFocus,
+  UtilitySlotSize,
   WeaponSlotSize,
   WeaponType2,
 } from "./enums.ts";
@@ -22,13 +29,15 @@ import type {
   ShipBehaviorRef,
   ShipSizeRef,
   SpriteRef,
+  StaticModifierRef,
   TargetTypeRef,
   TechnologyRef,
 } from "./refs.ts";
+import type { ScopeName } from "./scopes.ts";
 import type { UpgradePath } from "./value-sets.ts";
 
 export interface WeaponComponentTemplateInjectedModifierModifier {
-  modifier: ModifierRef | string;
+  modifier: ModifierRef | string | StaticModifierRef;
   days?: number;
 }
 
@@ -345,6 +354,7 @@ export interface WeaponComponentTemplateFields {
   customTooltip?: string;
   shouldAiUse?: boolean;
   validForCountry?: Trigger<"country">;
+  aiWeight?: WeightBlock<ScopeName>;
   /**
    * Only when weapon_component_template subtype `weapon_component_template` applies.
    * Only when weapon_component_template subtype `strike_craft_component_template` applies.
@@ -356,7 +366,7 @@ export interface WeaponComponentTemplateFields {
    * Only when weapon_component_template subtype `strike_craft_component_template` applies.
    * Only when weapon_component_template subtype `utility_component_template` applies.
    */
-  size?: WeaponSlotSize;
+  size?: WeaponSlotSize | UtilitySlotSize;
   /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   type?: WeaponType2;
   /** Only when weapon_component_template subtype `weapon_component_template` applies. */
@@ -374,8 +384,6 @@ export interface WeaponComponentTemplateFields {
   canDestroyStars?: boolean;
   /**
    * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
    * Only when weapon_component_template subtype `strike_craft_component_template` applies.
    */
   entity?: ModelEntityRef | string;
@@ -575,6 +583,7 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   { key: "custom_tooltip", member: "customTooltip", shape: "value", conversion: "identity" },
   { key: "should_ai_use", member: "shouldAiUse", shape: "value", conversion: "identity" },
   { key: "valid_for_country", member: "validForCountry", shape: "trigger" },
+  { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
   { key: "power", member: "power", shape: "value", conversion: "identity" },
   { key: "size", member: "size", shape: "value", conversion: "identity" },
   { key: "type", member: "type", shape: "value", conversion: "identity" },

@@ -52,6 +52,19 @@ add_resource = {
 `);
   });
 
+  it("records the author-asserted target link", () => {
+    const sink: PdxEntry[] = [];
+    const situation = makeScope<"situation">(sink);
+    situation.target<"country">((country) => {
+      country.setCountryFlag(flags.effects_test_flag);
+    });
+
+    expect(serialize(sink)).toBe(`target = {
+	set_country_flag = effects_test_flag
+}
+`);
+  });
+
   it("records a scope link as a body-only block", () => {
     const sink: PdxEntry[] = [];
     const planet = makeScope<"planet">(sink);

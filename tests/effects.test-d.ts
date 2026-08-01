@@ -69,4 +69,12 @@ describe("generated effect scope safety", () => {
     // @ts-expect-error — overlord only navigates from country scope
     planet.overlord(() => {});
   });
+
+  it("exposes the asserted target link only where the game allows it", () => {
+    const situation = makeScope<"situation">(sink);
+    situation.target<"planet">((planet) => planet.destroyColony());
+    const planet = makeScope<"planet">(sink);
+    // @ts-expect-error — planets have no target link; it exists on situation/spy_network/espionage_operation/agreement
+    planet.target<"country">(() => {});
+  });
 });

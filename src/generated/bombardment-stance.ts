@@ -35,7 +35,7 @@ export interface BombardmentStanceFields {
   /** Will this stance attempt to abduct pops to your own planets instead of killing them? default = no */
   abductPops?: boolean;
   /** General scale of damage to planet, default = 1.0 */
-  planetDamage?: WeightBlock<ScopeName>;
+  planetDamage?: number | WeightBlock<"fleet">;
   /** General scale of damage to armies, default = 1.0 */
   armyDamage?: number;
   /** Chance that a pop_group is killed when planetary damage reaches 100%, default = 0 */
@@ -73,7 +73,12 @@ export const BOMBARDMENT_STANCE_FIELDS: readonly ContentField[] = [
   },
   { key: "accept_surrender", member: "acceptSurrender", shape: "value", conversion: "identity" },
   { key: "abduct_pops", member: "abductPops", shape: "value", conversion: "identity" },
-  { key: "planet_damage", member: "planetDamage", shape: "weightBlock" },
+  {
+    key: "planet_damage",
+    member: "planetDamage",
+    shape: "valueOrWeightBlock",
+    conversion: "identity",
+  },
   { key: "army_damage", member: "armyDamage", shape: "value", conversion: "identity" },
   { key: "kill_pop_chance", member: "killPopChance", shape: "weightBlock" },
   {

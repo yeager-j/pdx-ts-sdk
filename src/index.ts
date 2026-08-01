@@ -19,6 +19,7 @@ export {
   type StructuralEffects,
 } from "./effect-core.ts";
 export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
+export type { SituationTargetContract } from "./situations.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
 export { onActions } from "./generated/on-actions.ts";
 export type { OnActionRef } from "./on-actions.ts";

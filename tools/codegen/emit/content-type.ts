@@ -307,10 +307,8 @@ function lowerStruct(
     }
     const optional = group.every((inner) => isOptional(inner.cardinality));
     members.push(
-      docComment(
-        group.flatMap((inner) => inner.docs),
-        "  "
-      ) + `  ${camelCase(fieldName)}${optional ? "?" : ""}: ${lowered.memberType};\n`
+      docComment([...new Set(group.flatMap((inner) => inner.docs))], "  ") +
+        `  ${camelCase(fieldName)}${optional ? "?" : ""}: ${lowered.memberType};\n`
     );
     fieldMetadata.push(lowered.metadata);
     if (lowered.code !== undefined) {
@@ -398,6 +396,20 @@ function lowerOrdinary(
       metadata: metadata(field, name, "effect"),
     };
   }
+  if (requested === undefined && category === "modifier_rule") {
+    const scope = scopeType(emitter, field, inheritedScope);
+    return {
+      memberType: `WeightBlock<${scope}>`,
+      metadata: metadata(field, name, "weightBlock"),
+    };
+  }
+  if (requested === undefined && category === "modifier_rule_with_loc") {
+    const scope = scopeType(emitter, field, inheritedScope);
+    return {
+      memberType: `WeightBlockWithLoc<${scope}>`,
+      metadata: metadata(field, name, "weightBlockWithLoc"),
+    };
+  }
   if (requested === "economicResources") {
     const scope = scopeType(emitter, field, inheritedScope);
     const memberType = `EconomicResourceBlock<${scope}>`;
@@ -420,6 +432,27 @@ function lowerOrdinary(
   if (requested === "struct") {
     return lowerStruct(emitter, field, name, path, inheritedScope);
   }
+  if (requested === "weightedEvents") {
+    if (field.type.kind !== "block") {
+      return null;
+    }
+    // `int = 0` is the nothing-happens arm, authored by omitting `event`; the
+    // remaining computed-key declarations carry the firable event types.
+    const eventTypes = field.type.fields
+      .filter((inner) => inner.key.kind === "computed" && inner.key.type.kind === "int")
+      .map((inner) => inner.type)
+      .filter((type) => type.kind !== "literal");
+    const value = eventTypes.length === 0 ? null : emitter.unionFor(eventTypes);
+    if (value === null) {
+      return null;
+    }
+    return {
+      memberType: `readonly { weight: number; event?: ${value.type} }[]`,
+      metadata: metadata(field, name, "weightedEvents", [
+        `conversion: ${JSON.stringify(conversionFor(value))}`,
+      ]),
+    };
+  }
   const bare = bareValuesOf(field.type);
   if (bare !== null) {
     // A single bare block, rather than a bare scalar, is the "wrapped" spelling
@@ -441,6 +474,76 @@ function lowerOrdinary(
   return lowerValue(emitter, field, name, widening);
 }
 
+/**
+ * A field CWT declares twice — once as a bare scalar and once as a
+ * modifier_rule block — accepts both forms, lowered at runtime by which one
+ * the author passes. Picking either declaration alone is wrong in one
+ * direction: vanilla writes `stages.end = 100` 254 times against 1 block,
+ * while `opinion_modifier.opinion` needs the block's gated adjustments.
+ */
+function lowerDualWeight(
+  emitter: Emitter,
+  group: readonly RuleField[],
+  name: string,
+  inheritedScope: ScopeContext | null
+): LoweredField | null {
+  const weightArms = group.filter((field) => spliceCategory(field.type) === "modifier_rule");
+  const scalarArms = group.filter((field) => field.type.kind !== "block");
+  if (weightArms.length === 0 || scalarArms.length === 0) {
+    return null;
+  }
+  if (weightArms.length + scalarArms.length !== group.length) {
+    return null;
+  }
+  if (group.some((field) => isRepeated(field.cardinality))) {
+    return null;
+  }
+  const value = emitter.unionFor(scalarArms.map((field) => field.type));
+  if (value === null) {
+    return null;
+  }
+  const scope = scopeType(emitter, weightArms[0]!, inheritedScope);
+  return {
+    memberType: `${value.type} | WeightBlock<${scope}>`,
+    metadata: metadata(scalarArms[0]!, name, "valueOrWeightBlock", [
+      `conversion: ${JSON.stringify(conversionFor(value))}`,
+    ]),
+  };
+}
+
+/**
+ * A field declared several times as scalars is one field accepting the union —
+ * `progress_direction` is `monodirectional` in one subtype and `bidirectional`
+ * in the other, and first-wins picking made the second unreachable.
+ */
+function lowerScalarUnion(
+  emitter: Emitter,
+  group: readonly RuleField[],
+  name: string,
+  widening: string | undefined
+): LoweredField | null {
+  const boolish = (type: RuleType): boolean =>
+    type.kind === "literal" && (type.text === "yes" || type.text === "no");
+  if (group.some((field) => field.type.kind === "block" || boolish(field.type))) {
+    return null;
+  }
+  const repeated = group.map((field) => isRepeated(field.cardinality));
+  if (new Set(repeated).size > 1) {
+    return null;
+  }
+  const value = emitter.unionFor(group.map((field) => field.type));
+  if (value === null) {
+    return null;
+  }
+  const base = value.type + (widening === undefined ? "" : ` | ${widening}`);
+  return {
+    memberType: repeated[0]! ? arrayType(base) : base,
+    metadata: metadata(group[0]!, name, "value", [
+      `conversion: ${JSON.stringify(conversionFor(value))}`,
+    ]),
+  };
+}
+
 function pickOrdinary(
   emitter: Emitter,
   group: readonly RuleField[],
@@ -450,6 +553,16 @@ function pickOrdinary(
   widening: string | undefined,
   path: string
 ): LoweredField | null {
+  if (override?.shape === undefined && group.length > 1) {
+    const dual = lowerDualWeight(emitter, group, name, inheritedScope);
+    if (dual !== null) {
+      return dual;
+    }
+    const union = lowerScalarUnion(emitter, group, name, widening);
+    if (union !== null) {
+      return union;
+    }
+  }
   for (const field of group) {
     const lowered = lowerOrdinary(emitter, field, name, inheritedScope, override, widening, path);
     if (lowered !== null) {
@@ -686,10 +799,8 @@ function repeatedStructEmission(
     }
     const optional = group.every((field) => isOptional(field.cardinality));
     members.push(
-      docComment(
-        group.flatMap((field) => field.docs),
-        "  "
-      ) + `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
+      docComment([...new Set(group.flatMap((field) => field.docs))], "  ") +
+        `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
     );
     fieldMetadata.push(lowering.metadata);
     if (lowering.code !== undefined) {
@@ -803,11 +914,12 @@ export function emitContentType(
       declinedFields.push(`${path} — ${declined}`);
       continue;
     }
-    if (localisationMemberNames.has(camelCase(name))) {
-      unsupported.push(`${name} (collides with the "${camelCase(name)}" localization slot)`);
+    const override = CONTENT_FIELD_OVERRIDES.get(path);
+    const member = override?.member ?? camelCase(name);
+    if (localisationMemberNames.has(member)) {
+      unsupported.push(`${name} (collides with the "${member}" localization slot)`);
       continue;
     }
-    const override = CONTENT_FIELD_OVERRIDES.get(path);
     if (override?.shape === "repeatedStruct") {
       const config = REPEATED_STRUCT_DEFINITIONS.get(path);
       const nested =
@@ -820,10 +932,8 @@ export function emitContentType(
       }
       const optional = group.every((field) => isOptional(field.cardinality));
       members.push(
-        docComment(
-          group.flatMap((field) => field.docs),
-          "  "
-        ) + `  ${camelCase(name)}${optional ? "?" : ""}: ${nested.memberType};\n`
+        docComment([...new Set(group.flatMap((field) => field.docs))], "  ") +
+          `  ${camelCase(name)}${optional ? "?" : ""}: ${nested.memberType};\n`
       );
       extraCode.push(nested.code);
       fieldMetadata.push(nested.metadata);
@@ -851,12 +961,17 @@ export function emitContentType(
     }
     const optional = group.every((field) => isOptional(field.cardinality));
     members.push(
-      docComment(
-        group.flatMap((field) => field.docs),
-        "  "
-      ) + `  ${camelCase(name)}${optional ? "?" : ""}: ${lowered.memberType};\n`
+      docComment([...new Set(group.flatMap((field) => field.docs))], "  ") +
+        `  ${member}${optional ? "?" : ""}: ${lowered.memberType};\n`
     );
-    fieldMetadata.push(lowered.metadata);
+    fieldMetadata.push(
+      override?.member === undefined
+        ? lowered.metadata
+        : lowered.metadata.replace(
+            `member: ${JSON.stringify(camelCase(name))}`,
+            `member: ${JSON.stringify(member)}`
+          )
+    );
     if (lowered.code !== undefined) {
       extraCode.push(lowered.code);
     }

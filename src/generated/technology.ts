@@ -2,10 +2,11 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/technologies_consolidated.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
+import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { ResearchArea, TechAiType } from "./enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./refs.ts";
+import type { ScopeName } from "./scopes.ts";
 import type { FeatureFlag, TechWeightGroup } from "./value-sets.ts";
 
 export interface TechnologyTechnologySwap {
@@ -16,7 +17,7 @@ export interface TechnologyTechnologySwap {
   trigger?: Trigger<"country">;
   area?: ResearchArea;
   category?: (TechnologyCategoryRef | string)[];
-  weight?: number;
+  weight?: number | WeightBlock<ScopeName>;
 }
 
 export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
@@ -27,7 +28,7 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger" },
   { key: "area", member: "area", shape: "value", conversion: "identity" },
   { key: "category", member: "category", shape: "valueList", conversion: "ref" },
-  { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+  { key: "weight", member: "weight", shape: "valueOrWeightBlock", conversion: "identity" },
 ];
 
 /**
@@ -46,9 +47,8 @@ export interface TechnologyFields {
   /**
    * Only when technology subtype `start` applies.
    * Only when technology subtype not `start` applies.
-   * Only when technology subtype not `start` applies.
    */
-  cost?: number;
+  cost?: number | WeightBlock<ScopeName>;
   /**
    * Only when technology subtype `start` applies.
    * Only when technology subtype not `start` applies.
@@ -86,6 +86,8 @@ export interface TechnologyFields {
   isDangerous?: boolean;
   isInsight?: boolean;
   featureFlags?: FeatureFlag[];
+  weightModifier?: WeightBlock<"country">;
+  aiWeight?: WeightBlock<"country">;
   /** Only when technology subtype `start` applies. */
   startingPotential?: Trigger<"country">;
 }
@@ -105,7 +107,7 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
   { key: "tier", member: "tier", shape: "value", conversion: "ref" },
   { key: "category", member: "category", shape: "valueList", conversion: "ref" },
   { key: "icon", member: "icon", shape: "value", conversion: "identity" },
-  { key: "cost", member: "cost", shape: "value", conversion: "identity" },
+  { key: "cost", member: "cost", shape: "valueOrWeightBlock", conversion: "identity" },
   { key: "weight", member: "weight", shape: "value", conversion: "identity" },
   { key: "is_custom_tech_1", member: "isCustomTech1", shape: "value", conversion: "identity" },
   { key: "is_custom_tech_2", member: "isCustomTech2", shape: "value", conversion: "identity" },
@@ -141,6 +143,8 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
   { key: "is_dangerous", member: "isDangerous", shape: "value", conversion: "identity" },
   { key: "is_insight", member: "isInsight", shape: "value", conversion: "identity" },
   { key: "feature_flags", member: "featureFlags", shape: "valueList", conversion: "identity" },
+  { key: "weight_modifier", member: "weightModifier", shape: "weightBlock" },
+  { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
   { key: "starting_potential", member: "startingPotential", shape: "trigger" },
 ];
 

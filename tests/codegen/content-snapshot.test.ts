@@ -202,17 +202,19 @@ describe("content-type codegen", () => {
     expect(warGoal?.machineryBacklog.join("\n")).not.toContain("forbidden_peace_offers");
   });
 
-  it("overrides dual bare/modifier_rule declarations that would otherwise pick the wrong shape", () => {
+  it("accepts both forms of a dual bare/modifier_rule declaration", () => {
     // bombardment_stance.planet_damage and archaeological_site_type.weight are each
-    // declared twice — once as a bare number, once as a modifier_rule block. Without
-    // the weightBlock override the field group picks the bare declaration first and
-    // silently drops the gated adjustments, the same failure mode opinion_modifier hit.
+    // declared twice — once as a bare number, once as a modifier_rule block. Picking
+    // either alone is wrong in one direction (vanilla writes the scalar form almost
+    // exclusively; the block form carries the gated adjustments), so the group lowers
+    // to the union and the writer dispatches on what the author passes.
     const bombardmentStance = emissions.get("bombardment_stance");
-    expect(bombardmentStance?.code).toContain("planetDamage?: WeightBlock<ScopeName>;");
+    expect(bombardmentStance?.code).toContain('planetDamage?: number | WeightBlock<"fleet">;');
+    // A pure modifier_rule splice needs no overlay row either — it infers weightBlock.
     expect(bombardmentStance?.code).toContain('aiWeight: WeightBlock<"fleet">;');
 
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
-    expect(archaeologicalSiteType?.code).toContain('weight?: WeightBlock<"planet">;');
+    expect(archaeologicalSiteType?.code).toContain('weight?: number | WeightBlock<"planet">;');
   });
 
   it("lowers repeated siblings with no id (shape 3) as an anonymous struct list", () => {
@@ -307,27 +309,54 @@ describe("content-type codegen", () => {
     expect(situation?.code).toContain('onFirstEnter?: EffectBlock<"situation">;');
   });
 
-  it("overrides situations' dual bare/modifier_rule declarations, including inside stages", () => {
+  it("accepts both forms of situations' dual declarations, including inside stages", () => {
     // total_progress, and stages' end/section_weight, are each declared twice
     // — once as a bare (malformed, in total_progress's case) scalar, once as a
-    // modifier_rule block — the same failure mode opinion_modifier hit, this
-    // time recurring inside a repeated-struct field too.
+    // modifier_rule block. Vanilla writes `end = 100` 254 times against 1
+    // block, so typing away the scalar form was the wrong prescription: the
+    // group lowers to the union, recurring inside a repeated-struct field too.
     const situation = emissions.get("situation_type");
-    expect(situation?.code).toContain('totalProgress?: WeightBlock<"situation">;');
-    expect(situation?.code).toContain('end?: WeightBlock<"situation">;');
-    expect(situation?.code).toContain('sectionWeight?: WeightBlock<"situation">;');
+    expect(situation?.code).toContain('totalProgress?: number | WeightBlock<"situation">;');
+    expect(situation?.code).toContain('end?: number | WeightBlock<"situation">;');
+    expect(situation?.code).toContain('sectionWeight?: number | WeightBlock<"situation">;');
   });
 
-  it("declines a struct field that would collide with a localization member name", () => {
+  it("merges a field declared as different literals across subtypes into the union", () => {
+    // progress_direction is `monodirectional` in one subtype declaration and
+    // `bidirectional` in the other; first-wins picking had made the second —
+    // and the two fields it gates — unreachable through the typed API.
+    const situation = emissions.get("situation_type");
+    expect(situation?.code).toContain('progressDirection?: "monodirectional" | "bidirectional";');
+    expect(situation?.code).toContain("completeCategory?: SituationCategory;");
+  });
+
+  it("renames a struct field that would collide with a localization member name", () => {
     // building.desc (`single_alias_right[triggered_desc_clause]`, a repeated
     // trigger+text struct) would otherwise duplicate the `desc` flavor-text
-    // member the type's own localisation table already claims.
+    // member the type's own localisation table already claims, so the overlay
+    // renames its authoring member while the emitted key stays `desc`.
     const building = emissions.get("building");
-    expect(building?.code).not.toContain("export interface BuildingDesc ");
-    expect(building?.unsupported.join("\n")).toContain(
-      'desc (collides with the "desc" localization slot)'
-    );
-    // triggered_desc has no such collision and still lowers.
+    expect(building?.code).toContain("conditionalDesc?: BuildingDesc[];");
+    expect(building?.code).toContain('{ key: "desc", member: "conditionalDesc", shape: "struct"');
+    expect(building?.unsupported.join("\n")).not.toContain("localization slot");
+    // triggered_desc is the building's own distinct key and keeps its member.
     expect(building?.code).toContain("export interface BuildingTriggeredDesc");
+    expect(building?.code).toContain("triggeredDesc?: BuildingTriggeredDesc[];");
+
+    // situations' desc is also declared as a bare localisation scalar, which
+    // the slot already covers — the overlay pins the struct form.
+    const situation = emissions.get("situation_type");
+    expect(situation?.code).toContain("conditionalDesc?: SituationTypeDesc[];");
+  });
+
+  it("lowers random_events' computed weight keys as a weighted event list", () => {
+    const situation = emissions.get("situation_type");
+    expect(situation?.code).toContain(
+      "randomEvents?: readonly { weight: number; event?: EventScopelessRef | string | EventSituationRef }[];"
+    );
+    expect(situation?.code).toContain(
+      '{ key: "random_events", member: "randomEvents", shape: "weightedEvents", conversion: "ref" }'
+    );
+    expect(situation?.unsupported.join("\n")).not.toContain("random_events");
   });
 });

@@ -8,11 +8,12 @@ import { StaleRuleTableError, VanillaPathCollisionError } from "./errors.ts";
 import { buildEvent, type DefinedEvent, type EventDef } from "./events.ts";
 import {
   CONTENT_REGISTRIES,
-  GeneratedContentMethods,
   type ContentDefMap,
   type ContentTypeName,
   type DefinedContentMap,
 } from "./generated/content-registry.ts";
+import { GeneratedEventMethods } from "./generated/event-methods.ts";
+import type { EventKindKey } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { OnActionAuthoring, type OnActionRef } from "./on-actions.ts";
 import { normalizeLogicalPath } from "./resolver/path-order.ts";
@@ -47,7 +48,7 @@ export type { PrefixedId } from "./generated/content-registry.ts";
 
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 
-export class Mod<const P extends string = string> extends GeneratedContentMethods<P> {
+export class Mod<const P extends string = string> extends GeneratedEventMethods<P> {
   readonly config: ModConfig<P>;
   private readonly content: ContentAuthoring;
   private readonly patches: PatchedTechnology[] = [];
@@ -106,26 +107,28 @@ export class Mod<const P extends string = string> extends GeneratedContentMethod
   }
 
   /**
-   * Defines a country event. The full id is `${prefix}.${def.id}` — the mod
-   * prefix already satisfies the event-namespace grammar, so it doubles as
-   * the namespace. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, here.
+   * Defines a situation type, optionally declaring the scope its target is
+   * started with. CWT cannot express the target contract (`target` has
+   * `output_scope = any`), but every vanilla situation type is consistent
+   * about it across its start sites — declaring it here lets
+   * `startSituation` require a matching target ref, and the declaration
+   * rides the defined object. Emits nothing.
    */
-  defineCountryEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"country", From>
-  ): DefinedEvent<"country", From> {
-    return this.defineEventOf("country_event", "country", def);
+  override defineSituationType<T extends ScopeName | undefined = undefined>(
+    def: ContentDefMap<P>["situation_type"] & { targetScope?: T }
+  ): DefinedContentMap<P>["situation_type"] & { targetScope: T } {
+    const { targetScope, ...rest } = def;
+    const defined = super.defineSituationType(rest as ContentDefMap<P>["situation_type"]);
+    return Object.assign(defined, { targetScope: targetScope as T });
   }
 
-  /** Defines a planet event; see {@link defineCountryEvent}. */
-  definePlanetEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"planet", From>
-  ): DefinedEvent<"planet", From> {
-    return this.defineEventOf("planet_event", "planet", def);
-  }
-
-  private defineEventOf<S extends ScopeName, From extends ScopeName | undefined>(
-    kind: "country_event" | "planet_event",
+  /**
+   * The generated `defineXEvent` methods land here. The full id is
+   * `${prefix}.${def.id}` — the mod prefix already satisfies the
+   * event-namespace grammar, so it doubles as the namespace.
+   */
+  protected defineEventOf<S extends ScopeName, From extends ScopeName | undefined>(
+    kind: EventKindKey,
     scope: S,
     def: EventDef<S, From>
   ): DefinedEvent<S, From> {

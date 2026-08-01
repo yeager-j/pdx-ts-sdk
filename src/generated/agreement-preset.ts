@@ -6,7 +6,10 @@ import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } f
 import type { Trigger } from "../trigger-core.ts";
 import type {
   AgreementPresetRef,
+  AgreementTermDiscreteNumberRef,
   AgreementTermDiscreteRef,
+  AgreementTermSpecialistTypeRef,
+  AgreementTermValueDiscreteNumberRef,
   AgreementTermValueDiscreteRef,
   AgreementTermValueResourceRef,
   AgreementTermValueSpecialistTypeRef,
@@ -15,9 +18,17 @@ import type {
 
 export interface AgreementPresetTermDataDiscreteTerms {
   /** The term name, as defined in agreement_terms */
-  key: AgreementTermDiscreteRef | string;
+  key:
+    | AgreementTermDiscreteRef
+    | string
+    | AgreementTermDiscreteNumberRef
+    | AgreementTermSpecialistTypeRef;
   /** The term value to use, as defined in agreement_term_values */
-  value: AgreementTermValueDiscreteRef | string;
+  value:
+    | AgreementTermValueDiscreteRef
+    | string
+    | AgreementTermValueDiscreteNumberRef
+    | AgreementTermValueSpecialistTypeRef;
 }
 
 export const AGREEMENT_PRESET_TERM_DATA_DISCRETE_TERMS_FIELDS: readonly ContentField[] = [

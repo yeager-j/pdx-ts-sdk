@@ -75,6 +75,27 @@ describe("the FROM contract on the real event API", () => {
     });
   });
 
+  it("holds the FROM contract on a generated kind beyond the original two", () => {
+    const mod = makeMod();
+    const needsCountryFrom = mod.defineSituationEvent({
+      id: 20,
+      from: "country",
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+    mod.defineSituationEvent({
+      id: 21,
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (situation, ctx) => {
+        // @ts-expect-error — the target declared from: "country"; a situation witness does not satisfy it
+        situation.situationEvent({ id: needsCountryFrom, from: ctx.self });
+      },
+    });
+    // @ts-expect-error — a situation-scoped def does not fit defineCountryEvent
+    mod.defineCountryEvent({ id: 22, immediate: (s) => s.setSituationFlag("x") });
+  });
+
   it("makes an undeclared FROM unusable rather than any-typed", () => {
     const mod = makeMod();
     mod.defineCountryEvent({

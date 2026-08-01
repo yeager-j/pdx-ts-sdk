@@ -2,20 +2,21 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/scripted_loc.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
+import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
+import type { SpriteRef } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
 export interface ScriptedLocText {
-  weight?: number;
+  weight?: number | WeightBlock<ScopeName>;
   trigger?: Trigger<ScopeName>;
-  localizationKey: string;
+  localizationKey: string | SpriteRef;
 }
 
 export const SCRIPTED_LOC_TEXT_FIELDS: readonly ContentField[] = [
-  { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+  { key: "weight", member: "weight", shape: "valueOrWeightBlock", conversion: "identity" },
   { key: "trigger", member: "trigger", shape: "trigger" },
-  { key: "localization_key", member: "localizationKey", shape: "value", conversion: "identity" },
+  { key: "localization_key", member: "localizationKey", shape: "value", conversion: "ref" },
 ];
 
 /**
@@ -26,7 +27,7 @@ export interface ScriptedLocFields {
   random?: boolean;
   text?: ScriptedLocText[];
   value?: number;
-  default?: string;
+  default?: string | SpriteRef;
 }
 
 export interface ScriptedLocDef<Id extends string = string> extends ScriptedLocFields {
@@ -49,7 +50,7 @@ export const SCRIPTED_LOC_FIELDS: readonly ContentField[] = [
     repeated: true,
   },
   { key: "value", member: "value", shape: "value", conversion: "identity" },
-  { key: "default", member: "default", shape: "value", conversion: "identity" },
+  { key: "default", member: "default", shape: "value", conversion: "ref" },
 ];
 
 export const SCRIPTED_LOC_LOCALISATION: readonly ContentLocalisation[] = [];

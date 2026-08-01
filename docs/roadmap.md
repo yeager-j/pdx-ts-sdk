@@ -27,6 +27,14 @@ being equipped to build a mod of that size, not porting it.
       parses the installed game and measures each emitted interface against
       every shipped definition. Coverage is now "share of real field
       occurrences expressible", which predicts whether a mod is buildable.
+- [x] **Scope links.** 87 typed navigation links in both trigger and effect
+      position, generated from `links.cwt`; `target` is author-asserted plus
+      a declared contract on situations. See the machinery section.
+- [x] **Accept both scalar and block for dual declarations.** The picker
+      merges a scalar + `modifier_rule` group into `number | WeightBlock<S>`
+      and unions multi-literal declarations; retired ~24 overlay rows.
+- [x] **Event kinds generated.** All 20 scoped kinds get `defineXEvent` and
+      witnessed fire overloads from `EVENT_KINDS` + the effect rules.
 
 ## Registries
 
@@ -79,14 +87,19 @@ One classification feeds both positions (`tools/codegen/emit/links.ts`):
   `{ kind: "wrapper", fields: null }` meta shape, so `src/effect-core.ts`
   needed zero changes; the recorder Proxy already dispatched it.
 
-Not emitted, each named in the codegen report:
+Not emitted by codegen, each named in the report:
 
-- **`target` (`output_scope = any`) — explicitly gated on situations, do not
-  let this rot.** Its landing scope varies at runtime
-  (spy_network/espionage_operation/agreement/situation). When situations work
-  needs it: either thread `target` a real scope contract from the situation
-  side, or fall back to emitting an author-asserted generic
-  `target<S extends ScopeName>`.
+- **`target` (`output_scope = any`) — resolved 2026-08-01, both ways at
+  once.** The evidence settled it: CWT declares a situation's target nowhere,
+  vanilla's observed targets span country/planet/ship/star/system/starbase/
+  none (24% of `start_situation` calls pass no target at all, one passes a
+  `$TARGET$` macro), but every individual situation type is consistent about
+  its target kind. So navigation is **author-asserted** — the hand-written
+  `target<S>(condition)` trigger and the `target<S>(body)` method on the four
+  input scopes (runtime rides the STRUCTURAL table) — and the situation side
+  is **declared**: `targetScope` on `defineSituationType` (emits nothing)
+  makes `startSituation` require a matching `ScopeRef` witness via an
+  overload merged into the generated signature (`src/situations.ts`).
 - The 4 value links (`variable`, `script_value`, `modifier`, `trigger`) — RHS
   number producers, not navigation; they belong to a future script-value
   feature.
@@ -120,9 +133,9 @@ was 43% before landing, `text` its whole reason to exist), `war_goal`
 (87/87, was 95%), `agreement_preset` (56/56, was 83%, term_data's
 `discrete_terms`/`resource_terms` lower through CWT's other repeated-struct
 spelling — see "wrapped" below), `archaeological_site_type` (124/124, was
-89%). All four now report 100% corpus coverage. `situations` (out of scope —
-the registry itself is still not added) can now express both its `stages`
-(shape 1) and `approach` (shape 2) fields.
+89%). All four now report 100% corpus coverage. `situations` landed on top of
+it as `situation_type`, expressing both its `stages` (shape 1) and `approach`
+(shape 2) fields.
 
 The shape is inferred from CWT block structure, the same way `economicResources`
 and `trigger`/`effect` already are — no overlay row was needed for any of the
@@ -146,10 +159,12 @@ claims for the TS member `desc`. Both succeeding would emit the same
 interface property twice with different types, so the emitter now checks
 every ordinary field's derived member name against the localisation plan
 first and declines the collision (visible in the report as "collides with the
-... localization slot") rather than emit a broken duplicate. `building.desc`
-and `tradition_category.desc` both hit this and stay on the machinery
-backlog — a real but narrow gap, not a regression, since neither could lower
-at all before this landed.
+... localization slot") rather than emit a broken duplicate. **Resolved
+2026-08-01**: an overlay `member` rename maps the colliding key to a distinct
+authoring member — `building.desc`, `tradition_category.desc`, and
+`situation_type.desc` all author as `conditionalDesc` while emitting the
+game's `desc` key. (`triggeredDesc` was not an option: buildings carry a
+separate real `triggered_desc` key.)
 
 **Design settled 2026-08-01.** The game spells these three ways, but only two
 matter to an author:
@@ -200,61 +215,41 @@ cardinality = 0..inf { key = ... value = ... } }`. Internally this is
   holding N anonymous nested blocks rather than N sibling entries at the same
   level. The author-facing type is the same `T[]` either way.
 
-### Emit every field inside repeated structs
-
-The emit-everything flip stopped at the top level. A `repeatedStruct` field
-still takes a `REPEATED_STRUCT_DEFINITIONS` overlay entry carrying a
-hand-written `fields` array, and the emitter iterates it as an allowlist
-(`for (const name of config.fields)`). Its unemitted list is plain set
-subtraction with no capability probe, so curation is reported under "blocked on
-emitter machinery" — `tradition.tradition_swap.on_enabled` is withheld with
-nothing having tested whether it lowers.
-
-Part of the overlay entry is legitimate: `identityKey` and `keying` cannot be
-inferred, the same argument that makes the top-level keyword manifest-declared.
-The `fields` array is not. Run the same probe inside structs and emit what
-lowers.
-
-Do this BEFORE situations, whose `stages` and `approach` would otherwise each
-arrive with a fresh hand-curated field list.
-
 ### Accept both scalar and block where CWT declares a field twice
 
-Three registries have hit the same defect: `opinion_modifier.opinion`/`decay`/
-`growth`, `bombardment_stance.planet_damage`, `archaeological_site_type.weight`.
-Each is declared twice in CWT, once as a bare scalar and once as a
-`modifier_rule` block, and the picker keeps the scalar and silently drops the
-gated adjustments. Each needed a hand-written override.
+**Landed 2026-08-01.** A field group mixing a bare scalar with a
+`modifier_rule` block now lowers mechanically to `number | WeightBlock<S>`
+(runtime shape `valueOrWeightBlock`, dispatched by what the author passes),
+and a group of differing scalar literals lowers to their union — which made
+`progress_direction = bidirectional` (and the two fields its subtype gates)
+reachable for the first time. Pure `modifier_rule` splices now infer
+`WeightBlock`/`WeightBlockWithLoc` without overlay help, the same way
+`trigger`/`effect` splices always did.
 
-Six occurrences now, with `total_progress`, `stages.end`, and
-`stages.section_weight` from situations. Systematic, not coincidence.
+This retired ~24 overlay rows (the six known dual declarations plus every
+"modifier_rule blocks lower to a base plus gated Modifier rows" row) and
+surfaced dual fields nobody had catalogued: `approach.ai_weight`,
+`building.district_limit`/`empire_limit`/`planet_limit`,
+`technology.cost`/`weight`, `scripted_loc.text.weight`. `building.ai_weight`
+and `custom_storm_ai_weight` emit for the first time. The one upstream typo
+(`total_progress`'s `value_int_field`) is normalized in `classifyScalar`
+rather than overlaid.
 
-**"The block should win" was the wrong prescription, and situations proved it.**
-Overriding `stages.end` to `WeightBlock` typed away the scalar form, and vanilla
-writes `end = 100` **254 times against 1 block**; Dawn of Ascension writes 40
-scalars and no blocks. So an author must now spell the only form anyone uses as
-`end: { base: 100 }`. Picking either declaration is wrong in one direction or
-the other.
-
-Accept **both**: `number | WeightBlock<S>`, lowered by which one the author
-passes. That retires the six overrides without making the common case verbose.
-
-Note the corpus gate reported no problem here, because it only checks whether a
-field is PRESENT. Comparing the emitted type against real values is
-[shape conformance](#shape-conformance), which would have flagged a block-typed
-field whose 254 observed values are scalars.
+Note the corpus gate reported no problem here, because it only checks whether
+a field is PRESENT. Comparing the emitted type against real values is
+[shape conformance](#shape-conformance), which would have flagged a
+block-typed field whose 254 observed values are scalars.
 
 ### Make the corpus gate see inside nested blocks
 
-`readRegistryCorpus` walks one level of each definition and never descends into
-a repeated struct, so the gate is structurally blind to everything inside one.
-Fixing nested curation gained `tradition_swap.on_enabled` and tradition's
-coverage did not move, because the gate cannot see it.
-
-This matters most for situations, whose substance lives almost entirely inside
-`stages` and `approach`. Measured as-is, situations would report a high number
-derived from a handful of top-level fields while saying nothing about the parts
-that carry the content.
+**Landed with the corpus gate** (the repeated-struct descent shipped in the
+same change that landed the gate; this section predates it). The honest
+residue: plain `struct` fields (`on_monthly`, `triggered_blocked_desc`,
+`term_data`) still count as one opaque top-level key, and descent stops one
+level below a repeated struct — fixing either side alone would manufacture
+false "unexpressed" entries, since the emitter's `nestedEmittedFields`
+reporting is symmetric with the corpus walk. `CONTENT_REGISTRIES` already
+carries the full walkable field tree if this is ever worth finishing.
 
 ### Shape conformance
 
@@ -324,11 +319,14 @@ that load order from the vanilla install.
 
 ### Event kinds beyond country and planet
 
-`Mod` exposes `defineCountryEvent` and `definePlanetEvent`. DoA uses
-`country_event` (276), `situation_event` (74), `planet_event` (11),
-`fleet_event` (6), `observer_event` (5), `system_event` (1).
-`src/generated/events.ts` already generates `EVENT_KINDS` with each kind's
-scope, so these should be generated rather than hand-written.
+**Landed 2026-08-01.** All 20 scoped kinds generate `defineXEvent`
+(`GeneratedEventMethods` in `src/generated/event-methods.ts`, chained onto
+`GeneratedContentMethods` so `Mod` keeps one base) and the witnessed
+fire-overload pairs (`src/generated/event-fires.ts`, merged into the scope
+interfaces; receiving scopes come from each fire effect's own `## scopes`, so
+`observer_event` rides `UniversalEffects`). The runtime was already generic —
+`buildEvent` and the fire encoders never keyed on kind. The scopeless `event`
+kind is skipped and reported: its closures cannot be typed.
 
 ### Standalone localization API
 

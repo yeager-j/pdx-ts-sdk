@@ -11,7 +11,7 @@ import type {
   WeightBlock,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
-import type { SoundRef, TechnologyRef } from "./refs.ts";
+import type { DecisionRef, SoundEffectRef, SoundRef, TechnologyRef } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
 /**
@@ -26,8 +26,8 @@ export interface DecisionFields {
   ownedPlanetsOnly?: boolean;
   important?: boolean;
   enactmentTime?: number;
-  sound?: SoundRef | string;
-  icon?: string;
+  sound?: SoundRef | string | SoundEffectRef;
+  icon?: string | DecisionRef;
   resources?: EconomicResourceBlock<ScopeName>[];
   showTechUnlockIf?: Trigger<"country">;
   potential?: Trigger<ScopeName>;
@@ -56,7 +56,7 @@ export const DECISION_FIELDS: readonly ContentField[] = [
   { key: "important", member: "important", shape: "value", conversion: "identity" },
   { key: "enactment_time", member: "enactmentTime", shape: "value", conversion: "identity" },
   { key: "sound", member: "sound", shape: "value", conversion: "ref" },
-  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
   { key: "resources", member: "resources", shape: "economicResources", repeated: true },
   { key: "show_tech_unlock_if", member: "showTechUnlockIf", shape: "trigger" },
   { key: "potential", member: "potential", shape: "trigger" },

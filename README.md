@@ -247,6 +247,52 @@ subtrees collapse into 3,456 shared interfaces, so both the compiler and the
 editor stay fast — and the whole table regenerates from the vendored game
 dump with the same drift gates as every other generated type.
 
+## Situations and the target contract
+
+Situations are the one place the game's rules cannot say what a scope link
+lands on: a situation's `target` is whatever `start_situation` passed, and
+`links.cwt` types it `any`. The SDK splits the contract in two. Inside blocks,
+you assert it — `target<"planet">(...)` in triggers,
+`situation.target<"planet">((planet) => ...)` in effects. At start sites, you
+declare it once and every start is checked:
+
+```ts
+const uprising = mod.defineSituationType({
+  id: "mymod_situation_uprising",
+  name: "Machine Uprising",
+  targetScope: "planet", // compile-time only; emits nothing
+  monthlyProgress: { base: 2 },
+  onMonthly: {
+    randomEvents: [
+      { weight: 80, event: unrestEvent }, // 80 = mymod.3
+      { weight: 20 }, //                     20 = 0, the nothing-happens arm
+    ],
+  },
+  stages: {
+    mymod_uprising_start: {
+      name: "Rumblings",
+      icon: "GFX_stage_1",
+      iconBackground: "GFX_bg",
+      end: 50,
+    },
+    mymod_uprising_open_revolt: {
+      name: "Open Revolt",
+      icon: "GFX_stage_2",
+      iconBackground: "GFX_bg",
+    },
+  },
+});
+
+// Later, in any country-scoped effect closure:
+country.startSituation({ type: uprising, target: stormWorld }); // stormWorld: EventTarget<"planet">
+country.startSituation({ type: uprising, target: ctx.self }); // compile error: country is not planet
+```
+
+`stages` keys are stage ids (order preserved, mod prefix enforced), scalar and
+block forms of dual-declared fields like `end` both work, and every event kind
+the game declares has a generated `defineXEvent` plus a scope-checked fire
+method (`situation.situationEvent({ id: ... })`).
+
 ## Testing mod logic
 
 Because triggers and effects are recorded as plain ASTs, mod logic can be

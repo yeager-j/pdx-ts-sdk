@@ -333,6 +333,9 @@ export type TruceType = "war" | "liberation" | "alliance" | "guarantee" | "none"
 /** `enum[tutorial_level]`. */
 export type TutorialLevel = "0" | "1" | "2" | "full" | "medium" | "none";
 
+/** `enum[utility_slot_size]`. */
+export type UtilitySlotSize = "extra_large" | "large" | "medium" | "small" | "aux";
+
 /** `enum[war_goal_hide]`. */
 export type WarGoalHide = "never" | "always" | "no_cb";
 
