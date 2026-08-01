@@ -342,4 +342,16 @@ describe("generated content authoring types", () => {
       isLeaderPossible: hasAuthority("auth_democratic"),
     });
   });
+
+  it("restricts economic_category's modifier_category to the generated enum", () => {
+    mod.defineEconomicCategory({
+      id: "content_types_economic_category_x",
+      modifierCategory: "economic_unit",
+    });
+    mod.defineEconomicCategory({
+      id: "content_types_economic_category_bad",
+      // @ts-expect-error — modifier_category is drawn from enum[scripted_modifier_category]
+      modifierCategory: "nonsense",
+    });
+  });
 });

@@ -76,4 +76,5 @@ export const CONTENT_MANIFEST = [
     keyword: "defined_text",
   },
   { type: "councilor", source: "common/governments.cwt" },
+  { type: "economic_category", source: "common/economic_categories.cwt" },
 ] as const satisfies readonly ContentManifestEntry[];

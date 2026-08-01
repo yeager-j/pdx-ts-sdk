@@ -562,6 +562,24 @@ function defineContentExample(): Mod<"content_test"> {
     },
   });
 
+  mod.defineEconomicCategory({
+    id: "content_test_economic_category_research",
+    useForAiBudget: true,
+    modifierCategory: "economic_unit",
+    addUnscaledValueToTooltip: false,
+    generateAddModifiers: ["produces"],
+    generateMultModifiers: ["produces", "upkeep"],
+    triggeredCostModifier: [
+      {
+        key: "content_test_economic_category_research",
+        modifierTypes: ["mult"],
+        // No `## replace_scopes` on this trigger, so it must hold at every
+        // scope — only a scope-agnostic trigger like always() type-checks.
+        trigger: always(),
+      },
+    ],
+  });
+
   return mod;
 }
 

@@ -19,6 +19,7 @@
 // From: common/situations.cwt
 // From: common/scripted_loc.cwt
 // From: common/governments.cwt
+// From: common/economic_categories.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -75,6 +76,12 @@ import {
   type DecisionDef,
   type DefinedDecision,
 } from "./decision.ts";
+import {
+  ECONOMIC_CATEGORY_FIELDS,
+  ECONOMIC_CATEGORY_LOCALISATION,
+  type DefinedEconomicCategory,
+  type EconomicCategoryDef,
+} from "./economic-category.ts";
 import { EDICT_FIELDS, EDICT_LOCALISATION, type DefinedEdict, type EdictDef } from "./edict.ts";
 import {
   GLOBAL_SHIP_DESIGN_FIELDS,
@@ -319,6 +326,13 @@ export const CONTENT_REGISTRIES = [
     fields: COUNCILOR_FIELDS,
     localisation: COUNCILOR_LOCALISATION,
   },
+  {
+    type: "economic_category",
+    outputDir: "common/economic_categories",
+    fileStem: "economic_categories",
+    fields: ECONOMIC_CATEGORY_FIELDS,
+    localisation: ECONOMIC_CATEGORY_LOCALISATION,
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -347,6 +361,7 @@ export interface ContentDefMap<P extends string> {
   situation_type: SituationTypeDef<PrefixedId<P>>;
   scripted_loc: ScriptedLocDef<PrefixedId<P>>;
   councilor: CouncilorDef<PrefixedId<P>>;
+  economic_category: EconomicCategoryDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -373,6 +388,7 @@ export interface DefinedContentMap<P extends string> {
   situation_type: DefinedSituationType<PrefixedId<P>>;
   scripted_loc: DefinedScriptedLoc<PrefixedId<P>>;
   councilor: DefinedCouncilor<PrefixedId<P>>;
+  economic_category: DefinedEconomicCategory<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -518,5 +534,12 @@ export abstract class GeneratedContentMethods<const P extends string> {
   /** Defines a councilor in this mod. */
   defineCouncilor(def: ContentDefMap<P>["councilor"]): DefinedContentMap<P>["councilor"] {
     return this.defineGeneratedContent("councilor", def);
+  }
+
+  /** Defines an economic category in this mod. */
+  defineEconomicCategory(
+    def: ContentDefMap<P>["economic_category"]
+  ): DefinedContentMap<P>["economic_category"] {
+    return this.defineGeneratedContent("economic_category", def);
   }
 }

@@ -98,6 +98,12 @@ export type Dlc =
   | "Vipra the Vapor Species Portrait"
   | "Nomads";
 
+/** `enum[economic_modifier_category]`. */
+export type EconomicModifierCategory = "cost" | "produces" | "upkeep" | "logistics";
+
+/** `enum[economic_modifier_type]`. */
+export type EconomicModifierType = "mult" | "add";
+
 /** `enum[election_type]`. */
 export type ElectionType = "none" | "oligarchic" | "democratic";
 

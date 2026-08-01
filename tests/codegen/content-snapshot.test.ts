@@ -416,4 +416,14 @@ describe("content-type codegen", () => {
     expect(councilor?.code).toContain('triggeredCountryModifier?: TriggeredModifier<"country">[];');
     expect(councilor?.machineryBacklog).toEqual([]);
   });
+
+  it("generates economic_category without registry-specific code", () => {
+    // Same drift block as councilor (SDK-2), same source file.
+    const economicCategory = emissions.get("economic_category");
+    expect(economicCategory?.code).toContain("export interface EconomicCategoryDef");
+    expect(economicCategory?.code).toContain(
+      "triggeredCostModifier?: EconomicCategoryTriggeredCostModifier[];"
+    );
+    expect(economicCategory?.machineryBacklog).toEqual([]);
+  });
 });
