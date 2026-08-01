@@ -147,6 +147,9 @@ export const REQUIRED_LOCALISATION = new Set([
   "ascension_perk.name",
   "agenda.name",
   "edict.name",
+  "councilor.name",
+  "decision.name",
+  "job.name",
 ]);
 
 /**
@@ -246,6 +249,85 @@ export const CONTENT_EMITTED_FIELDS: Readonly<Record<string, readonly string[]>>
     "ai_weight",
     "effect",
     "on_disabled",
+  ],
+  councilor: [
+    "leader_class",
+    "possible",
+    "is_leader_possible",
+    "conditional_tooltip",
+    "civic",
+    "custom_unlock_title",
+    "modifier",
+    "triggered_country_modifier",
+    "custom_tooltip",
+    "custom_tooltip_with_modifiers",
+    "icon",
+    "ai_priority",
+    "optional",
+    "ai_hiring_weight",
+    "removed_climate_labels",
+    "added_climate_labels",
+    "removed_planet_types",
+    "added_planet_types",
+  ],
+  decision: [
+    "owned_planets_only",
+    "important",
+    "enactment_time",
+    "icon",
+    "resources",
+    "show_tech_unlock_if",
+    "potential",
+    "allow",
+    "abort_trigger",
+    "abort_effect",
+    "on_queued",
+    "on_unqueued",
+    "effect",
+    "ai_weight",
+    "prerequisites",
+  ],
+  job: [
+    "category",
+    "first_come_first_served",
+    "is_capped_by_modifier",
+    "can_be_automated",
+    "exempt_from_ai_amenity_prioritization",
+    "count_as_available_for_ai",
+    "can_set_priority",
+    "is_pre_sapient",
+    "ignores_sapience",
+    "ignores_favorite",
+    "purge",
+    "contributes_to_diplo_weight",
+    "tags",
+    "localized_tags",
+    "possible_precalc",
+    "possible",
+    "resources",
+    "overlord_resources",
+    "pop_group_modifier",
+    "country_modifier",
+    "planet_modifier",
+    "system_modifier",
+    "triggered_planet_pop_group_modifier_for_all",
+    "triggered_country_modifier",
+    "triggered_planet_modifier",
+    "triggered_system_modifier",
+    "weight",
+    "auto_trait_prio",
+  ],
+  economic_category: [
+    "parent",
+    "use_for_ai_budget",
+    "ai_use_parent_for_resources_upkeep",
+    "icon",
+    "modifier_category",
+    "add_unscaled_value_to_tooltip",
+    "scaled_value_key",
+    "hidden",
+    "generate_add_modifiers",
+    "generate_mult_modifiers",
   ],
 };
 
@@ -395,6 +477,126 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   ],
   [
     "edict.ai_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "councilor.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "councilor.triggered_country_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
+    },
+  ],
+  [
+    "councilor.ai_hiring_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "decision.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "decision.ai_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "job.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "job.overlord_resources",
+    {
+      shape: "economicResources",
+      reason:
+        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "job.pop_group_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "job.country_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "job.planet_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "job.system_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "job.triggered_planet_pop_group_modifier_for_all",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
+    },
+  ],
+  [
+    "job.triggered_country_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
+    },
+  ],
+  [
+    "job.triggered_planet_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
+    },
+  ],
+  [
+    "job.triggered_system_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
+    },
+  ],
+  [
+    "job.weight",
     {
       shape: "weightBlock",
       reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",

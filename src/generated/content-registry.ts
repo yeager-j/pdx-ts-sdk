@@ -6,6 +6,8 @@
 // From: common/ascension_perks.cwt
 // From: common/council_agendas.cwt
 // From: common/edicts.cwt
+// From: common/decisions.cwt
+// From: common/pop_jobs.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -26,7 +28,14 @@ import {
   type BuildingDef,
   type DefinedBuilding,
 } from "./building.ts";
+import {
+  DECISION_FIELDS,
+  DECISION_LOCALISATION,
+  type DecisionDef,
+  type DefinedDecision,
+} from "./decision.ts";
 import { EDICT_FIELDS, EDICT_LOCALISATION, type DefinedEdict, type EdictDef } from "./edict.ts";
+import { JOB_FIELDS, JOB_LOCALISATION, type DefinedJob, type JobDef } from "./job.ts";
 import {
   TECHNOLOGY_FIELDS,
   TECHNOLOGY_LOCALISATION,
@@ -98,6 +107,20 @@ export const CONTENT_REGISTRIES = [
     fields: EDICT_FIELDS,
     localisation: EDICT_LOCALISATION,
   },
+  {
+    type: "decision",
+    outputDir: "common/decisions",
+    fileStem: "decisions",
+    fields: DECISION_FIELDS,
+    localisation: DECISION_LOCALISATION,
+  },
+  {
+    type: "job",
+    outputDir: "common/pop_jobs",
+    fileStem: "pop_jobs",
+    fields: JOB_FIELDS,
+    localisation: JOB_LOCALISATION,
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -110,6 +133,8 @@ export interface ContentDefMap<P extends string> {
   ascension_perk: AscensionPerkDef<PrefixedId<P>>;
   agenda: AgendaDef<PrefixedId<P>>;
   edict: EdictDef<PrefixedId<P>>;
+  decision: DecisionDef<PrefixedId<P>>;
+  job: JobDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -120,6 +145,8 @@ export interface DefinedContentMap<P extends string> {
   ascension_perk: DefinedAscensionPerk<PrefixedId<P>>;
   agenda: DefinedAgenda<PrefixedId<P>>;
   edict: DefinedEdict<PrefixedId<P>>;
+  decision: DefinedDecision<PrefixedId<P>>;
+  job: DefinedJob<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -165,5 +192,15 @@ export abstract class GeneratedContentMethods<const P extends string> {
   /** Defines an edict in this mod. */
   defineEdict(def: ContentDefMap<P>["edict"]): DefinedContentMap<P>["edict"] {
     return this.defineGeneratedContent("edict", def);
+  }
+
+  /** Defines a decision in this mod. */
+  defineDecision(def: ContentDefMap<P>["decision"]): DefinedContentMap<P>["decision"] {
+    return this.defineGeneratedContent("decision", def);
+  }
+
+  /** Defines a job in this mod. */
+  defineJob(def: ContentDefMap<P>["job"]): DefinedContentMap<P>["job"] {
+    return this.defineGeneratedContent("job", def);
   }
 }

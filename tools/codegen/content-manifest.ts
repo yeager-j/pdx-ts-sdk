@@ -18,4 +18,6 @@ export const CONTENT_MANIFEST = [
   { type: "ascension_perk", source: "common/ascension_perks.cwt" },
   { type: "agenda", source: "common/council_agendas.cwt" },
   { type: "edict", source: "common/edicts.cwt" },
+  { type: "decision", source: "common/decisions.cwt" },
+  { type: "job", source: "common/pop_jobs.cwt" },
 ] as const satisfies readonly ContentManifestEntry[];

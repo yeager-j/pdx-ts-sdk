@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { hasAuthority, isCapital, Mod } from "../src/index.ts";
+import { always, canJoinFactions, hasAuthority, isCapital, Mod } from "../src/index.ts";
 
 function defineContentExample(): Mod<"content_test"> {
   const mod = new Mod({
@@ -179,6 +179,102 @@ function defineContentExample(): Mod<"content_test"> {
     ],
   });
 
+  mod.defineDecision({
+    id: "content_test_decision_machine_ascendancy",
+    name: "Pursue Machine Ascendancy",
+    desc: "Redirect national effort toward synthetic transcendence.",
+    ownedPlanetsOnly: true,
+    important: true,
+    enactmentTime: 360,
+    icon: "GFX_decision_machine_ascendancy",
+    resources: [
+      {
+        category: "decisions",
+        cost: { amounts: { unity: 500 } },
+      },
+    ],
+    showTechUnlockIf: hasAuthority("auth_machine_intelligence"),
+    // decision.potential/allow/abort_trigger carry no fixed scope in the rules — the
+    // decision's own scope varies by category (ship, planet, or country) — so only a
+    // scope-agnostic trigger like `always()` type-checks here.
+    potential: always(),
+    allow: always(),
+    abortTrigger: always(),
+    abortEffect: () => {},
+    onQueued: () => {},
+    onUnqueued: () => {},
+    effect: () => {},
+    aiWeight: { base: 50 },
+    prerequisites: ["tech_global_production_strategy"],
+  });
+
+  mod.defineJob({
+    id: "content_test_job_synthetic_technician",
+    name: "Synthetic Technician",
+    plural: "Synthetic Technicians",
+    desc: "Maintains the machine collective's growing infrastructure.",
+    effect: "content_test_job_synthetic_technician_effect_desc_text",
+    category: "worker",
+    firstComeFirstServed: false,
+    isCappedByModifier: true,
+    canBeAutomated: true,
+    exemptFromAiAmenityPrioritization: false,
+    countAsAvailableForAi: true,
+    canSetPriority: true,
+    isPreSapient: false,
+    ignoresSapience: false,
+    ignoresFavorite: false,
+    purge: "purge_processing",
+    contributesToDiploWeight: true,
+    tags: ["content_test_tag_machine"],
+    localizedTags: ["content_test_job_localized_tag"],
+    possiblePrecalc: "can_fill_worker_job",
+    possible: canJoinFactions(),
+    resources: [
+      {
+        category: "jobs",
+        produces: { amounts: { unity: 2 } },
+      },
+    ],
+    overlordResources: [
+      {
+        category: "jobs",
+        upkeep: { amounts: { energy: 1 } },
+      },
+    ],
+    popGroupModifier: (m) => m.country.unity.produces.mult(0.02),
+    countryModifier: (m) => m.country.unity.produces.mult(0.02),
+    planetModifier: (m) => m.planet.pop.assembly.mult(0.05),
+    systemModifier: (m) => m.system.storm.influence.add(1),
+    triggeredPlanetPopGroupModifierForAll: [
+      {
+        when: canJoinFactions(),
+        modifiers: (m) => m.country.unity.produces.mult(0.01),
+      },
+    ],
+    triggeredCountryModifier: [
+      {
+        when: hasAuthority("auth_machine_intelligence"),
+        modifiers: (m) => m.country.unity.produces.mult(0.01),
+      },
+    ],
+    triggeredPlanetModifier: [
+      {
+        when: isCapital(),
+        modifiers: (m) => m.planet.pop.assembly.mult(0.01),
+      },
+    ],
+    triggeredSystemModifier: {
+      when: always(),
+      modifiers: (m) => m.system.storm.influence.add(1),
+    },
+    weight: {
+      base: 10,
+      modifiers: [{ factor: 2, when: canJoinFactions() }],
+    },
+    autoTraitPrio: ["trait_thrifty"],
+  });
+
   return mod;
 }
 
@@ -194,6 +290,8 @@ describe("generated content registries", () => {
       "common/ascension_perks/content_test_ascension_perks.txt",
       "common/council_agendas/content_test_council_agendas.txt",
       "common/edicts/content_test_edicts.txt",
+      "common/decisions/content_test_decisions.txt",
+      "common/pop_jobs/content_test_pop_jobs.txt",
       "localisation/english/content_test_l_english.yml",
     ]);
   });

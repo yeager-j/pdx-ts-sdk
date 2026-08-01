@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import {
+  canJoinFactions,
   hasAuthority,
   hasCountryFlag,
   hasPlanetFlag,
@@ -8,7 +9,9 @@ import {
   Mod,
   type AgendaRef,
   type AscensionPerkRef,
+  type DecisionRef,
   type EdictRef,
+  type JobRef,
   type TechnologyRef,
   type Trigger,
 } from "../src/index.ts";
@@ -55,6 +58,17 @@ describe("generated content authoring types", () => {
       name: "X",
     });
     expectTypeOf(ascensionPerk).toExtend<AscensionPerkRef>();
+    const decision = mod.defineDecision({
+      id: "content_types_decision_x",
+      name: "X",
+      effect: () => {},
+    });
+    expectTypeOf(decision).toExtend<DecisionRef>();
+    const job = mod.defineJob({
+      id: "content_types_job_x",
+      name: "X",
+    });
+    expectTypeOf(job).toExtend<JobRef>();
   });
 
   it("does not invent a category field on traditions", () => {
@@ -69,6 +83,10 @@ describe("generated content authoring types", () => {
   it("enforces top-level and nested prefixes", () => {
     // @ts-expect-error — the building id must carry the inferred mod prefix
     mod.defineBuilding({ id: "other_building_x", name: "X" });
+    // @ts-expect-error — the decision id must carry the inferred mod prefix
+    mod.defineDecision({ id: "other_decision_x", name: "X", effect: () => {} });
+    // @ts-expect-error — the job id must carry the inferred mod prefix
+    mod.defineJob({ id: "other_job_x", name: "X" });
     mod.defineTradition({
       id: "content_types_tradition_with_swap",
       name: "X",
@@ -173,6 +191,31 @@ describe("generated content authoring types", () => {
         // @ts-expect-error — edict effects run in country, not planet, scope
         country.setPlanetFlag("planet_only");
       },
+    });
+    mod.defineDecision({
+      id: "content_types_decision_scoped",
+      name: "X",
+      effect: () => {},
+      showTechUnlockIf: hasAuthority("auth_democratic"),
+    });
+    mod.defineJob({
+      id: "content_types_job_scoped",
+      name: "X",
+      possible: canJoinFactions(),
+      countryModifier: (m) => {
+        m.country.unity.produces.mult(0.05);
+      },
+      planetModifier: (m) => {
+        // @ts-expect-error — federation-only modifier in colony scope
+        m.cohesion.ethics.penalty.mult(0.1);
+      },
+      triggeredCountryModifier: [
+        {
+          // @ts-expect-error — job triggered country modifiers run in country scope
+          when: hasPlanetFlag("planet_only"),
+          modifiers: (m) => m.country.unity.produces.mult(0.05),
+        },
+      ],
     });
   });
 

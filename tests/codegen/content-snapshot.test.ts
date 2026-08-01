@@ -97,9 +97,40 @@ describe("content-type codegen", () => {
     expect(agenda?.code).toContain("desc?: string;");
     expect(agenda?.code).not.toContain("councilAgendaName");
     expect(agenda?.localisationAliases).toEqual([
-      "agenda.localisation.council_agenda_name duplicates name at council_agenda_$_name",
-      "agenda.localisation.council_agenda_desc duplicates desc at council_agenda_$_desc",
+      "agenda.localisation.council_agenda_name (council_agenda_$_name) duplicates name at council_agenda_$_name",
+      "agenda.localisation.council_agenda_desc (council_agenda_$_desc) duplicates desc at council_agenda_$_desc",
     ]);
+  });
+
+  it("excludes localization patterns with no $ id placeholder rather than emit an unusable member", () => {
+    const job = emissions.get("job");
+    expect(job?.code).toContain("name: string;");
+    expect(job?.code).toContain("desc?: string;");
+    // Only one `desc` member survives even though the rules declare it twice.
+    expect(job?.code?.match(/\bdesc\??: string;/g)).toHaveLength(1);
+    expect(job?.code).not.toContain("conditionString");
+    expect(job?.localisationAliases).toEqual([
+      "job.localisation.desc (swappable_data/default/desc) has no `$` id placeholder — " +
+        "not a static <id>-keyed slot, excluded",
+      "job.localisation.condition_string (swappable_data/default/condition_string) has no " +
+        "`$` id placeholder — not a static <id>-keyed slot, excluded",
+    ]);
+  });
+
+  it("generates decisions and jobs without registry-specific code", () => {
+    const decision = emissions.get("decision");
+    expect(decision?.code).toContain("export interface DecisionDef");
+    expect(decision?.code).toContain("resources?: EconomicResourceBlock<ScopeName>[];");
+    expect(decision?.code).toContain("prerequisites?: (TechnologyRef | string)[];");
+    expect(decision?.code).toContain('shape: "economicResources"');
+
+    const job = emissions.get("job");
+    expect(job?.code).toContain("export interface JobDef");
+    expect(job?.code).toContain('possible?: Trigger<"pop_group">;');
+    expect(job?.code).toContain('countryModifier?: ModifierClosure<"country">;');
+    expect(job?.code).toContain('planetModifier?: ModifierClosure<"colony">;');
+    expect(job?.code).toContain('resources?: EconomicResourceBlock<"colony">[];');
+    expect(job?.code).toContain('triggeredCountryModifier?: TriggeredModifier<"country">[];');
   });
 
   it("reports representative omitted fields for every registry", () => {
@@ -114,5 +145,12 @@ describe("content-type codegen", () => {
     expect(emissions.get("ascension_perk")?.unemittedFields).toEqual([]);
     expect(emissions.get("agenda")?.unemittedFields).toEqual([]);
     expect(emissions.get("edict")?.unemittedFields).toEqual([]);
+    expect(emissions.get("decision")?.unemittedFields).toContain("decision.custom_tooltip");
+    expect(emissions.get("decision")?.unemittedFields).toContain("decision.sound");
+    expect(emissions.get("job")?.unemittedFields).toContain("job.swappable_data");
+    expect(emissions.get("job")?.unemittedFields).toContain(
+      "job.triggered_planet_pop_group_modifier_for_species"
+    );
+    expect(emissions.get("job")?.unemittedFields).toContain("job.triggered_tags");
   });
 });

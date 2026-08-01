@@ -155,6 +155,14 @@ export type GrowthStance = "controlled" | "excessive" | "none";
 /** `enum[hyperlane_euclidean]`. */
 export type HyperlaneEuclidean = "hyperlane" | "euclidean";
 
+/** `enum[job_trigger]`. */
+export type JobTrigger =
+  | "can_fill_ruler_job"
+  | "can_fill_specialist_job"
+  | "can_fill_worker_job"
+  | "can_fill_drone_job"
+  | "can_fill_precursor_job";
+
 /** `enum[mia_type]`. */
 export type MiaType = "mia_return_home" | "mia_emergency_ftl" | "mia_fleet_eaten";
 

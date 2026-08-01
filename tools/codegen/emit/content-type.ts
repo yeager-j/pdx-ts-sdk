@@ -275,20 +275,61 @@ interface LocalisationPlan {
   readonly aliases: readonly string[];
 }
 
+/**
+ * Collapses declared localisation entries onto one member per TS field name.
+ *
+ * A pattern with no `$` id placeholder is not a static `<id>`-keyed slot at
+ * all — CWT also uses this position for data-path pointers like `job`'s
+ * `condition_string = swappable_data/default/condition_string`, meaning "read
+ * this nested field's value instead of a localisation key". The SDK's writer
+ * only knows how to substitute an id into `$`, so those entries are excluded
+ * outright rather than emitted as a member no definition could satisfy
+ * correctly.
+ *
+ * Two distinct collisions occur among what remains: the same *pattern*
+ * declared under two keys (`council_agenda_name` and `name` both writing
+ * `council_agenda_$_name`), and the same *member* name declared with two
+ * patterns. Emitting one interface member per surviving entry means either
+ * collision left standing would be a duplicate TypeScript property, so the
+ * first-declared entry wins and the rest collapse to aliases.
+ */
 function planLocalisation(type: ContentType): LocalisationPlan {
   const byPattern = new Map<string, ContentType["localisation"][number]>();
+  const byMember = new Map<string, ContentType["localisation"][number]>();
   const aliases: string[] = [];
+  const collapse = (
+    dropped: ContentType["localisation"][number],
+    canonical: ContentType["localisation"][number]
+  ): void => {
+    aliases.push(
+      `${type.name}.localisation.${dropped.key} (${dropped.pattern}) duplicates ` +
+        `${canonical.key} at ${canonical.pattern}`
+    );
+  };
+
   for (const entry of type.localisation) {
-    const canonical = byPattern.get(entry.pattern);
-    if (canonical === undefined) {
-      byPattern.set(entry.pattern, entry);
+    if (!entry.pattern.includes("$")) {
+      aliases.push(
+        `${type.name}.localisation.${entry.key} (${entry.pattern}) has no ` +
+          "`$` id placeholder — not a static <id>-keyed slot, excluded"
+      );
       continue;
     }
-    aliases.push(
-      `${type.name}.localisation.${entry.key} duplicates ${canonical.key} at ${entry.pattern}`
-    );
+    const member = camelCase(entry.key);
+    const patternMatch = byPattern.get(entry.pattern);
+    if (patternMatch !== undefined) {
+      collapse(entry, patternMatch);
+      continue;
+    }
+    const memberMatch = byMember.get(member);
+    if (memberMatch !== undefined) {
+      collapse(entry, memberMatch);
+      continue;
+    }
+    byPattern.set(entry.pattern, entry);
+    byMember.set(member, entry);
   }
-  return { entries: [...byPattern.values()], aliases };
+  return { entries: [...byMember.values()], aliases };
 }
 
 function localisationMembers(type: ContentType, plan = planLocalisation(type)): string {

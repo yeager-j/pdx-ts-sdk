@@ -1,0 +1,76 @@
+content_test_job_synthetic_technician = {
+	category = worker
+	first_come_first_served = no
+	is_capped_by_modifier = yes
+	can_be_automated = yes
+	exempt_from_ai_amenity_prioritization = no
+	count_as_available_for_ai = yes
+	can_set_priority = yes
+	is_pre_sapient = no
+	ignores_sapience = no
+	ignores_favorite = no
+	purge = purge_processing
+	contributes_to_diplo_weight = yes
+	tags = { content_test_tag_machine }
+	localized_tags = { content_test_job_localized_tag }
+	possible_precalc = can_fill_worker_job
+	possible = {
+		can_join_factions = yes
+	}
+	resources = {
+		category = jobs
+		produces = {
+			unity = 2
+		}
+	}
+	overlord_resources = {
+		category = jobs
+		upkeep = {
+			energy = 1
+		}
+	}
+	pop_group_modifier = {
+		country_unity_produces_mult = 0.02
+	}
+	country_modifier = {
+		country_unity_produces_mult = 0.02
+	}
+	planet_modifier = {
+		planet_pop_assembly_mult = 0.05
+	}
+	system_modifier = {
+		system_storm_influence_add = 1
+	}
+	triggered_planet_pop_group_modifier_for_all = {
+		potential = {
+			can_join_factions = yes
+		}
+		country_unity_produces_mult = 0.01
+	}
+	triggered_country_modifier = {
+		potential = {
+			has_authority = auth_machine_intelligence
+		}
+		country_unity_produces_mult = 0.01
+	}
+	triggered_planet_modifier = {
+		potential = {
+			is_capital = yes
+		}
+		planet_pop_assembly_mult = 0.01
+	}
+	triggered_system_modifier = {
+		potential = {
+			always = yes
+		}
+		system_storm_influence_add = 1
+	}
+	weight = {
+		base = 10
+		modifier = {
+			factor = 2
+			can_join_factions = yes
+		}
+	}
+	auto_trait_prio = { trait_thrifty }
+}

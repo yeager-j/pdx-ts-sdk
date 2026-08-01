@@ -1,0 +1,32 @@
+content_test_decision_machine_ascendancy = {
+	owned_planets_only = yes
+	important = yes
+	enactment_time = 360
+	icon = GFX_decision_machine_ascendancy
+	resources = {
+		category = decisions
+		cost = {
+			unity = 500
+		}
+	}
+	show_tech_unlock_if = {
+		has_authority = auth_machine_intelligence
+	}
+	potential = {
+		always = yes
+	}
+	allow = {
+		always = yes
+	}
+	abort_trigger = {
+		always = yes
+	}
+	abort_effect = {}
+	on_queued = {}
+	on_unqueued = {}
+	effect = {}
+	ai_weight = {
+		base = 50
+	}
+	prerequisites = { tech_global_production_strategy }
+}
