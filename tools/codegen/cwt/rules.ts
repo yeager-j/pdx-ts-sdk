@@ -158,6 +158,14 @@ const RULE_FILES = [
   "on_actions.cwt",
   "modifiers.cwt",
   "modifier_categories.cwt",
+  // Loaded ahead of their registries (councilor, economic_category,
+  // civic_or_origin): both carry an upstream `## default: no` typo the parser
+  // reports as a malformed option, and those three diagnostics are recorded
+  // in the drift baseline deliberately — the gate still fails on any NEW
+  // malformed option. Loading governments.cwt here also feeds the
+  // government_trigger alias category through loadRules proper.
+  "common/governments.cwt",
+  "common/economic_categories.cwt",
   ...CONTENT_MANIFEST.map((entry) => entry.source),
 ].filter((file, index, files) => files.indexOf(file) === index);
 

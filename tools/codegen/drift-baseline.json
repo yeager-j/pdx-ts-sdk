@@ -49,6 +49,9 @@
     "aliases.cwt:194 ## default: no",
     "aliases.cwt:231 ## default: no",
     "aliases.cwt:43 ## default: no",
+    "common/economic_categories.cwt:21 ## default: no",
+    "common/governments.cwt:479 ## default: no",
+    "common/governments.cwt:482 ## default: no",
     "triggers.cwt:3508 ## default: yes"
   ],
   "unknownScopes": [

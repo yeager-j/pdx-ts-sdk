@@ -99,7 +99,7 @@ export type Dlc =
   | "Nomads";
 
 /** `enum[election_type]`. */
-export type ElectionType = "none" | "democratic" | "oligarchic";
+export type ElectionType = "none" | "oligarchic" | "democratic";
 
 /** `enum[envoy_task]`. */
 export type EnvoyTask =

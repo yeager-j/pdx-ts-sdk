@@ -68,8 +68,10 @@ describe("alias category reading", () => {
 
   it("finds government_trigger's fifteen members in governments.cwt", () => {
     expect(governmentTrigger.size).toBe(15);
-    // Not loaded through loadRules: the file the drift gate cannot take yet.
-    expect(rules.aliasCategories.get("government_trigger")!.size).toBe(0);
+    // governments.cwt is loaded through loadRules since its three malformed
+    // `## default: no` options were deliberately recorded in the drift
+    // baseline, so the category reaches the rule set proper too.
+    expect(rules.aliasCategories.get("government_trigger")!.size).toBe(15);
   });
 });
 
