@@ -15,6 +15,7 @@ import {
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
 import { camelCase, docComment, pascalCase } from "../naming.ts";
 import {
+  CONTENT_DECLINED_FIELDS,
   CONTENT_EMITTED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   FIELD_WIDENINGS,
@@ -32,7 +33,13 @@ export interface ContentEmission {
   readonly fieldsConstant: string;
   readonly localisationConstant: string;
   readonly emittedFields: readonly string[];
-  readonly unemittedFields: readonly string[];
+  /** Lowerable, not allowlisted, not declined — the work queue. */
+  readonly reviewQueue: readonly string[];
+  /** Lowerable, but reviewed and rejected, each with its reason. */
+  readonly declinedFields: readonly string[];
+  /** Not lowerable: blocked on emitter machinery, not on review. */
+  readonly machineryBacklog: readonly string[];
+  readonly coverage: { readonly emitted: number; readonly lowerable: number };
   readonly unsupported: readonly string[];
   readonly localisationAliases: readonly string[];
 }
@@ -569,19 +576,59 @@ export function emitContentType(
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
     `${localisationMetadata(type, localisationPlan)};\n`;
 
-  const unemitted = [
-    ...[...grouped.keys()]
-      .filter((name) => !allowlist.includes(name))
-      .map((name) => `${type.name}.${name}`),
-    ...nestedUnemitted,
-  ].sort();
+  // Every field the allowlist leaves out, sorted into "we have not reviewed
+  // this yet", "we decided against it", and "the emitter cannot express it".
+  // Only the last is mechanical, and telling them apart is the difference
+  // between a one-line overlay edit and extending the emitter — so the probe
+  // runs the real lowering rather than guessing from the rule shape.
+  //
+  // It runs on a throwaway Emitter: lowering records used enums, refs, and
+  // value sets, which decide what `enums.ts` and `refs.ts` declare and what
+  // each generated file imports. Probing on the live emitter would quietly
+  // widen generated output with types only unemitted fields reference.
+  const probe = new Emitter(emitter.rules);
+  const reviewQueue: string[] = [];
+  const declined: string[] = [];
+  const machinery: string[] = [...nestedUnemitted];
+  for (const [name, group] of grouped) {
+    if (allowlist.includes(name)) {
+      continue;
+    }
+    const path = `${type.name}.${name}`;
+    const override = CONTENT_FIELD_OVERRIDES.get(path);
+    const lowers =
+      override?.shape === "nested"
+        ? NESTED_CONTENT_DEFINITIONS.has(path)
+        : pickOrdinary(
+            probe,
+            group,
+            name,
+            body.scope,
+            override,
+            FIELD_WIDENINGS.get(path)?.extraType
+          ) !== null;
+    if (!lowers) {
+      machinery.push(path);
+      continue;
+    }
+    const reason = CONTENT_DECLINED_FIELDS.get(path);
+    if (reason !== undefined) {
+      declined.push(`${path} — ${reason}`);
+      continue;
+    }
+    reviewQueue.push(path);
+  }
+  const lowerable = emittedFields.length + reviewQueue.length + declined.length;
   return {
     code,
     typeName,
     fieldsConstant,
     localisationConstant,
     emittedFields,
-    unemittedFields: unemitted,
+    reviewQueue: reviewQueue.sort(),
+    declinedFields: declined.sort(),
+    machineryBacklog: machinery.sort(),
+    coverage: { emitted: emittedFields.length, lowerable },
     unsupported,
     localisationAliases: [...localisationPlan.aliases, ...localisationAliases],
   };

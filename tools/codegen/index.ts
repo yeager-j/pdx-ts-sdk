@@ -293,10 +293,13 @@ async function main(): Promise<void> {
   reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
   reportSection("On-actions not emitted", onActions.skipped);
   for (const content of contents) {
-    reportSection(
-      `${content.manifest.type} fields modelled but not yet emitted`,
-      content.emission.unemittedFields
-    );
+    const { type } = content.manifest;
+    const { emitted, lowerable } = content.emission.coverage;
+    const percent = lowerable === 0 ? 100 : Math.round((emitted / lowerable) * 100);
+    console.log(`\n${type} field coverage: ${emitted}/${lowerable} lowerable (${percent}%)`);
+    reportSection(`${type} fields awaiting review`, content.emission.reviewQueue);
+    reportSection(`${type} fields declined`, content.emission.declinedFields);
+    reportSection(`${type} fields blocked on emitter machinery`, content.emission.machineryBacklog);
     reportSection(
       `${content.manifest.type} fields the emitter could not lower`,
       content.emission.unsupported

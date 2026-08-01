@@ -133,24 +133,49 @@ describe("content-type codegen", () => {
     expect(job?.code).toContain('triggeredCountryModifier?: TriggeredModifier<"country">[];');
   });
 
-  it("reports representative omitted fields for every registry", () => {
-    expect(emissions.get("technology")?.unemittedFields).toContain("technology.technology_swap");
-    expect(emissions.get("building")?.unemittedFields).toContain("building.on_built");
-    expect(emissions.get("tradition")?.unemittedFields).toContain(
-      "tradition.tradition_swap.on_enabled"
-    );
-    expect(emissions.get("tradition_category")?.unemittedFields).toContain(
-      "tradition_category.desc"
-    );
-    expect(emissions.get("ascension_perk")?.unemittedFields).toEqual([]);
-    expect(emissions.get("agenda")?.unemittedFields).toEqual([]);
-    expect(emissions.get("edict")?.unemittedFields).toEqual([]);
-    expect(emissions.get("decision")?.unemittedFields).toContain("decision.custom_tooltip");
-    expect(emissions.get("decision")?.unemittedFields).toContain("decision.sound");
-    expect(emissions.get("job")?.unemittedFields).toContain("job.swappable_data");
-    expect(emissions.get("job")?.unemittedFields).toContain(
+  it("sorts an omitted field into review, declined, or machinery", () => {
+    // A field the emitter can lower is waiting on review; one it cannot is
+    // waiting on the emitter. Keeping them apart is the point of the buckets:
+    // the first is an overlay edit, the second is a code change.
+    expect(emissions.get("building")?.reviewQueue).toContain("building.on_built");
+    expect(emissions.get("building")?.machineryBacklog).not.toContain("building.on_built");
+
+    expect(emissions.get("decision")?.machineryBacklog).toContain("decision.custom_tooltip");
+    expect(emissions.get("job")?.machineryBacklog).toContain("job.swappable_data");
+    expect(emissions.get("job")?.machineryBacklog).toContain("job.triggered_tags");
+    expect(emissions.get("job")?.machineryBacklog).toContain(
       "job.triggered_planet_pop_group_modifier_for_species"
     );
-    expect(emissions.get("job")?.unemittedFields).toContain("job.triggered_tags");
+
+    // Nested omissions are reported as machinery: the probe only lowers
+    // top-level fields.
+    expect(emissions.get("tradition")?.machineryBacklog).toContain(
+      "tradition.tradition_swap.on_enabled"
+    );
+  });
+
+  it("keeps declined fields out of the review queue, with their reason", () => {
+    const decision = emissions.get("decision");
+    expect(decision?.reviewQueue).not.toContain("decision.sound");
+    expect(decision?.declinedFields.join("\n")).toContain("decision.sound — cosmetic");
+
+    const job = emissions.get("job");
+    expect(job?.reviewQueue).not.toContain("job.auto_generate_description");
+    expect(job?.declinedFields.join("\n")).toContain("boolean[]");
+  });
+
+  it("reports coverage against what the emitter can lower", () => {
+    // Registries with nothing left to review are the finished state, and must
+    // stay at full coverage as the emitter grows.
+    for (const name of ["ascension_perk", "agenda", "edict"] as const) {
+      const emission = emissions.get(name);
+      expect(emission?.reviewQueue, name).toEqual([]);
+      expect(emission?.declinedFields, name).toEqual([]);
+      expect(emission?.coverage.emitted, name).toBe(emission?.coverage.lowerable);
+    }
+
+    // building is the opposite end: most of what it could emit is unreviewed.
+    const building = emissions.get("building");
+    expect(building?.coverage.emitted).toBeLessThan(building!.coverage.lowerable / 2);
   });
 });

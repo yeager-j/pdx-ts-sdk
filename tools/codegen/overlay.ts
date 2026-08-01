@@ -331,6 +331,28 @@ export const CONTENT_EMITTED_FIELDS: Readonly<Record<string, readonly string[]>>
   ],
 };
 
+/**
+ * Fields the emitter can lower but that review has decided not to emit, with
+ * the reason.
+ *
+ * {@link CONTENT_EMITTED_FIELDS} is a queue that shrinks: a field absent from
+ * it usually means "not reviewed yet", and codegen reports those so they can be
+ * worked down. A permanent decision is different in kind, and recording it here
+ * keeps it out of that queue instead of re-surfacing every run for someone to
+ * re-litigate.
+ *
+ * Only for fields that lower successfully. A field the emitter cannot lower is
+ * detected mechanically and belongs in no list.
+ */
+export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
+  ["decision.sound", "cosmetic; no authoring value and the id space is unmodelled"],
+  [
+    "job.auto_generate_description",
+    "CWT declares `cardinality = 0..inf` on a bare bool, which lowers to a " +
+      "nonsensical `boolean[]` — an upstream authoring quirk, not a real list field",
+  ],
+]);
+
 export type ContentFieldShape =
   | "value"
   | "valueList"
