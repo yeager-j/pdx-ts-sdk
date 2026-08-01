@@ -201,6 +201,13 @@ export interface ContentRegistryDescriptor {
   readonly fileStem: string;
   readonly fields: readonly ContentField[];
   readonly localisation: readonly ContentLocalisation[];
+  /**
+   * Set when the registry keys entries by a repeated keyword instead of by the
+   * id — `utility_component_template = { key = "..." }` rather than
+   * `my_id = { ... }`. `keyword` is the literal top-level key and `nameField`
+   * the body field the id moves into.
+   */
+  readonly keyedBy?: { readonly keyword: string; readonly nameField: string };
 }
 
 /** A definition registered with a mod and usable as a typed cross-reference. */
@@ -415,7 +422,13 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
 }
 
 function toEntry(def: ContentDef, descriptor: ContentRegistryDescriptor): PdxEntry {
-  return block(def.id, fieldEntries(def as Readonly<Record<string, unknown>>, descriptor.fields));
+  const fields = fieldEntries(def as Readonly<Record<string, unknown>>, descriptor.fields);
+  if (descriptor.keyedBy === undefined) {
+    return block(def.id, fields);
+  }
+  // The id leads the body: vanilla writes `key` first in every one of these,
+  // and a definition whose id is buried mid-block is needlessly hard to read.
+  return block(descriptor.keyedBy.keyword, [kv(descriptor.keyedBy.nameField, def.id), ...fields]);
 }
 
 class ContentDefinition<K extends string, D extends ContentDef> implements DefinedContent<K, D> {

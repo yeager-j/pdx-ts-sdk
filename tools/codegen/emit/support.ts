@@ -25,12 +25,36 @@ export function emitEnums(emitter: Emitter): string {
   const chunks: string[] = [];
   for (const name of [...emitter.usedEnums].sort()) {
     const values = emitter.rules.enums.get(name) ?? [];
+    if (values.length === 0) {
+      // `enum[component_tag]` is declared with no members: the values come from
+      // the game's own content files, not the rules. A union of nothing is
+      // `never`, which would make every field of this type unsatisfiable, and
+      // an empty alias body is not even parseable — so it widens to `string`,
+      // reported by emitEnumsReport so the looseness stays visible.
+      chunks.push(
+        docComment([
+          `\`enum[${name}]\`.`,
+          "",
+          "The rules declare this enum with no values — its members come from " +
+            "content files rather than from `enums.cwt` — so it cannot narrow " +
+            "beyond `string`.",
+        ]) + `export type ${pascalCase(name)} = string;\n`
+      );
+      continue;
+    }
     const members = values.map((value) => `  | ${JSON.stringify(value)}`).join("\n");
     chunks.push(
       docComment([`\`enum[${name}]\`.`]) + `export type ${pascalCase(name)} =\n${members};\n`
     );
   }
   return chunks.join("\n");
+}
+
+/** Enums referenced by generated types that the rules declare with no values. */
+export function valuelessEnums(emitter: Emitter): readonly string[] {
+  return [...emitter.usedEnums]
+    .filter((name) => (emitter.rules.enums.get(name) ?? []).length === 0)
+    .sort();
 }
 
 /**

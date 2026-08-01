@@ -13,3 +13,4 @@ yarn-error.log*
 .vscode/*
 .DS_Store
 design/effects-probe/latency-sim.ts
+.claude/worktrees/

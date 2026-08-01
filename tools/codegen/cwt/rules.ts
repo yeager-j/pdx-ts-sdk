@@ -60,6 +60,19 @@ export interface ContentSubtype {
 export interface ContentType {
   readonly name: string;
   readonly path: string | null;
+  /**
+   * The body field carrying the definition's id, when the top-level key is a
+   * repeated keyword instead — `utility_component_template = { key = "..." }`
+   * rather than `my_id = { ... }`.
+   *
+   * The keyword itself is NOT recoverable from here. Some types declare it as
+   * `## type_key_filter`, but `section_template` and `ambient_object` declare
+   * nothing while vanilla writes `ship_section_template` and `ambient_object`,
+   * so it comes from the overlay.
+   */
+  readonly nameField: string | null;
+  /** Type-level `## type_key_filter`, when the type declares exactly one. */
+  readonly keyFilter: string | null;
   readonly subtypes: readonly ContentSubtype[];
   readonly localisation: readonly { key: string; pattern: string; required: boolean }[];
 }
@@ -283,9 +296,15 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
       const inner = assignments(entry.value.nodes);
       const pathNode = inner.find((node) => node.key.text === "path");
       const localisation = inner.find((node) => node.key.text === "localisation");
+      // Written both quoted and bare across the rule files: `name_field = "key"`
+      // in components.cwt, `name_field = name` in global_ship_designs.cwt.
+      const nameFieldNode = inner.find((node) => node.key.text === "name_field");
+      const typeKeyFilter = findOption(entry.options, "type_key_filter");
       into.set(match[2]!, {
         name: match[2]!,
         path: pathNode?.value.kind === "scalar" ? pathNode.value.text : null,
+        nameField: nameFieldNode?.value.kind === "scalar" ? nameFieldNode.value.text : null,
+        keyFilter: typeKeyFilter?.value?.kind === "scalar" ? typeKeyFilter.value.text : null,
         subtypes: inner.flatMap((node) => {
           const subtype = BRACKET_KEY.exec(node.key.text);
           if (subtype === null || subtype[1] !== "subtype") {

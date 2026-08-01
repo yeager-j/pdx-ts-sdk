@@ -8,6 +8,8 @@
 // From: common/edicts.cwt
 // From: common/decisions.cwt
 // From: common/pop_jobs.cwt
+// From: common/global_ship_designs.cwt
+// From: common/components.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -35,7 +37,19 @@ import {
   type DefinedDecision,
 } from "./decision.ts";
 import { EDICT_FIELDS, EDICT_LOCALISATION, type DefinedEdict, type EdictDef } from "./edict.ts";
+import {
+  GLOBAL_SHIP_DESIGN_FIELDS,
+  GLOBAL_SHIP_DESIGN_LOCALISATION,
+  type DefinedGlobalShipDesign,
+  type GlobalShipDesignDef,
+} from "./global-ship-design.ts";
 import { JOB_FIELDS, JOB_LOCALISATION, type DefinedJob, type JobDef } from "./job.ts";
+import {
+  STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS,
+  STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
+  type DefinedStrikeCraftComponentTemplate,
+  type StrikeCraftComponentTemplateDef,
+} from "./strike-craft-component-template.ts";
 import {
   TECHNOLOGY_FIELDS,
   TECHNOLOGY_LOCALISATION,
@@ -54,6 +68,18 @@ import {
   type DefinedTradition,
   type TraditionDef,
 } from "./tradition.ts";
+import {
+  UTILITY_COMPONENT_TEMPLATE_FIELDS,
+  UTILITY_COMPONENT_TEMPLATE_LOCALISATION,
+  type DefinedUtilityComponentTemplate,
+  type UtilityComponentTemplateDef,
+} from "./utility-component-template.ts";
+import {
+  WEAPON_COMPONENT_TEMPLATE_FIELDS,
+  WEAPON_COMPONENT_TEMPLATE_LOCALISATION,
+  type DefinedWeaponComponentTemplate,
+  type WeaponComponentTemplateDef,
+} from "./weapon-component-template.ts";
 
 export type PrefixedId<P extends string> = `${P}_${string}`;
 
@@ -121,6 +147,38 @@ export const CONTENT_REGISTRIES = [
     fields: JOB_FIELDS,
     localisation: JOB_LOCALISATION,
   },
+  {
+    type: "global_ship_design",
+    outputDir: "common/global_ship_designs",
+    fileStem: "global_ship_designs",
+    fields: GLOBAL_SHIP_DESIGN_FIELDS,
+    localisation: GLOBAL_SHIP_DESIGN_LOCALISATION,
+    keyedBy: { keyword: "ship_design", nameField: "name" },
+  },
+  {
+    type: "utility_component_template",
+    outputDir: "common/component_templates",
+    fileStem: "component_templates",
+    fields: UTILITY_COMPONENT_TEMPLATE_FIELDS,
+    localisation: UTILITY_COMPONENT_TEMPLATE_LOCALISATION,
+    keyedBy: { keyword: "utility_component_template", nameField: "key" },
+  },
+  {
+    type: "weapon_component_template",
+    outputDir: "common/component_templates",
+    fileStem: "component_templates",
+    fields: WEAPON_COMPONENT_TEMPLATE_FIELDS,
+    localisation: WEAPON_COMPONENT_TEMPLATE_LOCALISATION,
+    keyedBy: { keyword: "weapon_component_template", nameField: "key" },
+  },
+  {
+    type: "strike_craft_component_template",
+    outputDir: "common/component_templates",
+    fileStem: "component_templates",
+    fields: STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS,
+    localisation: STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
+    keyedBy: { keyword: "strike_craft_component_template", nameField: "key" },
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -135,6 +193,10 @@ export interface ContentDefMap<P extends string> {
   edict: EdictDef<PrefixedId<P>>;
   decision: DecisionDef<PrefixedId<P>>;
   job: JobDef<PrefixedId<P>>;
+  global_ship_design: GlobalShipDesignDef<PrefixedId<P>>;
+  utility_component_template: UtilityComponentTemplateDef<PrefixedId<P>>;
+  weapon_component_template: WeaponComponentTemplateDef<PrefixedId<P>>;
+  strike_craft_component_template: StrikeCraftComponentTemplateDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -147,6 +209,10 @@ export interface DefinedContentMap<P extends string> {
   edict: DefinedEdict<PrefixedId<P>>;
   decision: DefinedDecision<PrefixedId<P>>;
   job: DefinedJob<PrefixedId<P>>;
+  global_ship_design: DefinedGlobalShipDesign<PrefixedId<P>>;
+  utility_component_template: DefinedUtilityComponentTemplate<PrefixedId<P>>;
+  weapon_component_template: DefinedWeaponComponentTemplate<PrefixedId<P>>;
+  strike_craft_component_template: DefinedStrikeCraftComponentTemplate<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -202,5 +268,33 @@ export abstract class GeneratedContentMethods<const P extends string> {
   /** Defines a job in this mod. */
   defineJob(def: ContentDefMap<P>["job"]): DefinedContentMap<P>["job"] {
     return this.defineGeneratedContent("job", def);
+  }
+
+  /** Defines a global ship design in this mod. */
+  defineGlobalShipDesign(
+    def: ContentDefMap<P>["global_ship_design"]
+  ): DefinedContentMap<P>["global_ship_design"] {
+    return this.defineGeneratedContent("global_ship_design", def);
+  }
+
+  /** Defines an utility component template in this mod. */
+  defineUtilityComponentTemplate(
+    def: ContentDefMap<P>["utility_component_template"]
+  ): DefinedContentMap<P>["utility_component_template"] {
+    return this.defineGeneratedContent("utility_component_template", def);
+  }
+
+  /** Defines a weapon component template in this mod. */
+  defineWeaponComponentTemplate(
+    def: ContentDefMap<P>["weapon_component_template"]
+  ): DefinedContentMap<P>["weapon_component_template"] {
+    return this.defineGeneratedContent("weapon_component_template", def);
+  }
+
+  /** Defines a strike craft component template in this mod. */
+  defineStrikeCraftComponentTemplate(
+    def: ContentDefMap<P>["strike_craft_component_template"]
+  ): DefinedContentMap<P>["strike_craft_component_template"] {
+    return this.defineGeneratedContent("strike_craft_component_template", def);
   }
 }

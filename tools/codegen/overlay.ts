@@ -160,6 +160,10 @@ export const REQUIRED_LOCALISATION = new Set([
  * codegen reports every modeled field left out.
  */
 export const CONTENT_EMITTED_FIELDS: Readonly<Record<string, readonly string[]>> = {
+  global_ship_design: ["ship_size", "is_event_design"],
+  utility_component_template: ["size", "icon", "power"],
+  weapon_component_template: ["size", "icon", "power"],
+  strike_craft_component_template: ["size", "icon", "power"],
   technology: [
     "icon",
     "cost",

@@ -15,6 +15,7 @@ import type {
   BuildingCategory,
   CarrierType,
   ColossusStatu,
+  ComponentTag,
   CrisisType,
   ElectionType,
   EnvoyTask,
@@ -8656,7 +8657,7 @@ export function hasRival(value: string): Trigger<"country"> {
  * has_role = gunship
  * ```
  */
-export function hasRole(value: string): Trigger<"design" | "ship_growth_stage"> {
+export function hasRole(value: ComponentTag): Trigger<"design" | "ship_growth_stage"> {
   return trigger([kv("has_role", value)]);
 }
 
@@ -11106,7 +11107,7 @@ export function isPreferredPatron(value: PatronTypeRef | string): Trigger<"count
  * is_preferred_weapons = weapon_type_energy
  * ```
  */
-export function isPreferredWeapons(value: string): Trigger<"country"> {
+export function isPreferredWeapons(value: ComponentTag): Trigger<"country"> {
   return trigger([kv("is_preferred_weapons", value)]);
 }
 

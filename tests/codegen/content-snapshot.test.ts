@@ -15,10 +15,13 @@ const emissions = new Map(
     if (type === undefined || body === undefined) {
       throw new Error(`Missing fixture rules for ${manifest.type}`);
     }
+    // Keyed by registry, not CWT type: three keywords share
+    // type[component_template] and each is its own registry.
+    const registry = (manifest as { as?: string }).as ?? manifest.type;
     emitter.beginFile();
-    const emission = emitContentType(emitter, type, body);
+    const emission = emitContentType(emitter, type, body, registry);
     emitter.endFile();
-    return [manifest.type, emission] as const;
+    return [registry, emission] as const;
   })
 );
 
@@ -32,10 +35,11 @@ describe("content-type codegen", () => {
 
   it("emits exactly each registry's curated field list", () => {
     for (const manifest of CONTENT_MANIFEST) {
-      expect(emissions.get(manifest.type)?.emittedFields).toEqual(
-        CONTENT_EMITTED_FIELDS[manifest.type]
+      const registry = (manifest as { as?: string }).as ?? manifest.type;
+      expect(emissions.get(registry)?.emittedFields, registry).toEqual(
+        CONTENT_EMITTED_FIELDS[registry]
       );
-      expect(emissions.get(manifest.type)?.unsupported).toEqual([]);
+      expect(emissions.get(registry)?.unsupported, registry).toEqual([]);
     }
   });
 

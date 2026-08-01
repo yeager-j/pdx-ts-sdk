@@ -9,7 +9,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { format, resolveConfig } from "prettier";
 
-import { CONTENT_MANIFEST } from "./content-manifest.ts";
+import { CONTENT_MANIFEST, type ContentManifestEntry } from "./content-manifest.ts";
 import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
@@ -17,7 +17,14 @@ import { emitEvents } from "./emit/events.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
 import type { SkippedRule } from "./emit/shape.ts";
-import { canonicalScopes, emitEnums, emitRefs, emitScopes, emitValueSets } from "./emit/support.ts";
+import {
+  canonicalScopes,
+  emitEnums,
+  emitRefs,
+  emitScopes,
+  emitValueSets,
+  valuelessEnums,
+} from "./emit/support.ts";
 import { emitTriggers } from "./emit/triggers.ts";
 import { Emitter } from "./emit/types.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
@@ -115,6 +122,10 @@ async function main(): Promise<void> {
 
   const contents: Array<{
     manifest: (typeof CONTENT_MANIFEST)[number];
+    /** Registry name: the CWT type unless the manifest renames it via `as`. */
+    registry: string;
+    /** Top-level keyword, for registries CWT marks with `name_field`. */
+    keyword: string | undefined;
     type: ContentType;
     emission: ContentEmission;
     usage: ReturnType<Emitter["endFile"]>;
@@ -125,10 +136,30 @@ async function main(): Promise<void> {
     if (type === undefined || body === undefined) {
       throw new Error(`${manifest.source} no longer declares type[${manifest.type}] and its body`);
     }
+    const entry: ContentManifestEntry = manifest;
+    const registry = entry.as ?? entry.type;
+    const keyword = entry.keyword;
+    // A keyword the rules do declare must match what the manifest claims;
+    // silence here would emit a top-level key the game quietly ignores.
+    if (keyword !== undefined && type.nameField === null) {
+      throw new Error(`type[${manifest.type}] declares no name_field, so it has no keyword`);
+    }
+    if (keyword === undefined && type.nameField !== null) {
+      throw new Error(
+        `type[${manifest.type}] declares name_field=${type.nameField}, so the manifest ` +
+          "entry needs the keyword its entries are written under"
+      );
+    }
+    if (type.keyFilter !== null && keyword !== undefined && keyword !== type.keyFilter) {
+      throw new Error(
+        `type[${manifest.type}] declares ## type_key_filter = ${type.keyFilter} but the ` +
+          `manifest claims keyword ${keyword}`
+      );
+    }
     emitter.beginFile();
-    const emission = emitContentType(emitter, type, body);
+    const emission = emitContentType(emitter, type, body, registry);
     const usage = emitter.endFile();
-    contents.push({ manifest, type, emission, usage });
+    contents.push({ manifest, registry, keyword, type, emission, usage });
   }
 
   await write(
@@ -167,7 +198,7 @@ async function main(): Promise<void> {
       "WeightBlock",
     ].filter((name) => content.emission.code.includes(name));
     await write(
-      `${content.manifest.type.replaceAll("_", "-")}.ts`,
+      `${content.registry.replaceAll("_", "-")}.ts`,
       header(commit, [content.manifest.source]) +
         importList("../content.ts", runtimeTypes) +
         (content.emission.code.includes("Trigger<")
@@ -280,7 +311,7 @@ async function main(): Promise<void> {
   );
   for (const content of contents) {
     console.log(
-      `${content.manifest.type}: ${content.emission.emittedFields.length} curated fields emitted`
+      `${content.registry}: ${content.emission.emittedFields.length} curated fields emitted`
     );
   }
   console.log(`event kinds: ${events.kinds}`);
@@ -292,8 +323,9 @@ async function main(): Promise<void> {
   reportSection("Effects not emitted", summarise(effects.skipped));
   reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
   reportSection("On-actions not emitted", onActions.skipped);
+  reportSection("Enums widened to string (rules declare no values)", valuelessEnums(emitter));
   for (const content of contents) {
-    const { type } = content.manifest;
+    const type = content.registry;
     const { emitted, lowerable } = content.emission.coverage;
     const percent = lowerable === 0 ? 100 : Math.round((emitted / lowerable) * 100);
     console.log(`\n${type} field coverage: ${emitted}/${lowerable} lowerable (${percent}%)`);
@@ -301,11 +333,11 @@ async function main(): Promise<void> {
     reportSection(`${type} fields declined`, content.emission.declinedFields);
     reportSection(`${type} fields blocked on emitter machinery`, content.emission.machineryBacklog);
     reportSection(
-      `${content.manifest.type} fields the emitter could not lower`,
+      `${content.registry} fields the emitter could not lower`,
       content.emission.unsupported
     );
     reportSection(
-      `${content.manifest.type} localization aliases collapsed`,
+      `${content.registry} localization aliases collapsed`,
       content.emission.localisationAliases
     );
   }
@@ -314,13 +346,15 @@ async function main(): Promise<void> {
 function contentRegistry(
   contents: readonly {
     manifest: (typeof CONTENT_MANIFEST)[number];
+    registry: string;
+    keyword: string | undefined;
     type: ContentType;
     emission: ContentEmission;
   }[]
 ): string {
   const imports = contents
     .map((content) => {
-      const file = `./${content.manifest.type.replaceAll("_", "-")}.ts`;
+      const file = `./${content.registry.replaceAll("_", "-")}.ts`;
       const values = [content.emission.fieldsConstant, content.emission.localisationConstant];
       const types = [`${content.emission.typeName}Def`, `Defined${content.emission.typeName}`];
       return (
@@ -333,17 +367,21 @@ function contentRegistry(
     .map((content) => {
       const sourcePath = content.type.path;
       if (sourcePath === null || !sourcePath.startsWith("game/")) {
-        throw new Error(`type[${content.manifest.type}] has unusable path ${sourcePath}`);
+        throw new Error(`type[${content.registry}] has unusable path ${sourcePath}`);
       }
       const outputDir = sourcePath.slice("game/".length);
       const fileStem = path.posix.basename(outputDir);
       return (
         "  {\n" +
-        `    type: ${JSON.stringify(content.manifest.type)},\n` +
+        `    type: ${JSON.stringify(content.registry)},\n` +
         `    outputDir: ${JSON.stringify(outputDir)},\n` +
         `    fileStem: ${JSON.stringify(fileStem)},\n` +
         `    fields: ${content.emission.fieldsConstant},\n` +
         `    localisation: ${content.emission.localisationConstant},\n` +
+        (content.keyword === undefined
+          ? ""
+          : `    keyedBy: { keyword: ${JSON.stringify(content.keyword)}, ` +
+            `nameField: ${JSON.stringify(content.type.nameField)} },\n`) +
         "  },\n"
       );
     })
@@ -351,22 +389,22 @@ function contentRegistry(
   const defMap = contents
     .map(
       (content) =>
-        `  ${JSON.stringify(content.manifest.type)}: ${content.emission.typeName}Def<PrefixedId<P>>;\n`
+        `  ${JSON.stringify(content.registry)}: ${content.emission.typeName}Def<PrefixedId<P>>;\n`
     )
     .join("");
   const definedMap = contents
     .map(
       (content) =>
-        `  ${JSON.stringify(content.manifest.type)}: Defined${content.emission.typeName}<PrefixedId<P>>;\n`
+        `  ${JSON.stringify(content.registry)}: Defined${content.emission.typeName}<PrefixedId<P>>;\n`
     )
     .join("");
   const methods = contents
     .map((content) => {
       const method = `define${content.emission.typeName}`;
-      const key = JSON.stringify(content.manifest.type);
-      const article = /^[aeiou]/i.test(content.manifest.type) ? "an" : "a";
+      const key = JSON.stringify(content.registry);
+      const article = /^[aeiou]/i.test(content.registry) ? "an" : "a";
       return (
-        `  /** Defines ${article} ${content.manifest.type.replaceAll("_", " ")} in this mod. */\n` +
+        `  /** Defines ${article} ${content.registry.replaceAll("_", " ")} in this mod. */\n` +
         `  ${method}(def: ContentDefMap<P>[${key}]): DefinedContentMap<P>[${key}] {\n` +
         `    return this.defineGeneratedContent(${key}, def);\n` +
         "  }\n"

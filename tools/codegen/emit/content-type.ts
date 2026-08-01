@@ -481,10 +481,21 @@ function nestedEmission(
 
 export function emitContentType(
   emitter: Emitter,
-  type: ContentType,
-  body: ContentBody
+  cwtType: ContentType,
+  body: ContentBody,
+  registry: string = cwtType.name
 ): ContentEmission {
+  // One CWT type can back several registries — three keywords share
+  // `type[component_template]`. Renaming once here makes every downstream
+  // name, allowlist key, and overlay path follow the registry instead.
+  const type: ContentType = registry === cwtType.name ? cwtType : { ...cwtType, name: registry };
   const grouped = mergeByName(body.fields, type.name);
+  // CWT lists the name field among the body's fields, but the writer emits it
+  // from the definition's id. Dropping it here keeps it out of the authoring
+  // interface, where it would be a second, contradictable way to set the id.
+  if (type.nameField !== null) {
+    grouped.delete(type.nameField);
+  }
   const allowlist = CONTENT_EMITTED_FIELDS[type.name];
   if (allowlist === undefined) {
     throw new Error(`No curated field allowlist for type[${type.name}]`);
@@ -556,7 +567,7 @@ export function emitContentType(
     docComment([
       `${indefiniteArticle(type.name)} ${type.name}, as the game's rules describe it.`,
       "",
-      `Generated from \`type[${type.name}]\` at \`${type.path}\`.`,
+      `Generated from \`type[${cwtType.name}]\` at \`${type.path}\`.`,
     ]) +
     `export interface ${typeName}Fields${fieldsGeneric} {\n` +
     localisationMembers(type, localisationPlan) +

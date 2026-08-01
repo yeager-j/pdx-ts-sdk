@@ -48,6 +48,12 @@ export type CarrierType = "planet" | "ship";
 /** `enum[colossus_statu]`. */
 export type ColossusStatu = "charging" | "firing";
 
+/**
+ * `enum[component_tag]`.
+ * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ */
+export type ComponentTag = string;
+
 /** `enum[crisis_type]`. */
 export type CrisisType = "prethoryn" | "unbidden" | "contingency" | "synth_queen" | "all" | "any";
 
@@ -271,3 +277,16 @@ export type TutorialLevel = "0" | "1" | "2" | "full" | "medium" | "none";
 
 /** `enum[war_side]`. */
 export type WarSide = "attackers" | "defenders";
+
+/** `enum[weapon_slot_size]`. */
+export type WeaponSlotSize =
+  | "extra_large"
+  | "large"
+  | "medium"
+  | "small"
+  | "torpedo"
+  | "point_defence"
+  | "planet_killer"
+  | "titanic"
+  | "engulf"
+  | "any";
