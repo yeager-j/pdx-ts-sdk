@@ -47,14 +47,25 @@ export type {
   WitnessedFireEventArgs,
 } from "./events.ts";
 export type {
+  CustomModifiers,
   DefinedContent,
   EconomicResourceBlock,
   EconomicResourceOperation,
   EffectBlock,
   ModifierBlock,
+  ModifierClosure,
   TriggeredModifier,
   WeightBlock,
 } from "./content.ts";
+export type {
+  ModifierBlockByScope,
+  ModifierRecorderByScope,
+  ModifierSetter,
+  ScopedModifierBlock,
+  ScopedModifierRecorder,
+  UniversalModifiers,
+  UnscopedModifierRecorder,
+} from "./generated/modifiers.ts";
 export type { ModConfig, PrefixedId } from "./mod.ts";
 export { Mod } from "./mod.ts";
 export * as stellaris from "./stellaris/index.ts";

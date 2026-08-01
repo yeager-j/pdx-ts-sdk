@@ -61,7 +61,7 @@ const ascension = mod.defineTradition({
   name: "Synthetic Ascension",
   unlocksAgenda: agenda,
   possible: hasAuthority("auth_machine_intelligence"),
-  modifier: { pop_growth_speed: 0.1 },
+  modifier: (m) => m.planet.pop.assembly.mult(0.1),
 });
 
 mod.defineTraditionCategory({
@@ -87,7 +87,7 @@ mod.defineEdict({
   triggeredCountryModifier: [
     {
       when: hasAuthority("auth_machine_intelligence"),
-      modifiers: { country_naval_cap_mult: 0.1 },
+      modifiers: (m) => m.country.naval.cap.mult(0.1),
     },
   ],
   effect: (country) => {
@@ -179,6 +179,54 @@ BOM-prefixed localization `.yml`.
   hasCountryFlag(planetFlags("surveyed").surveyed); // wrong kind: compile error
   hasCountryFlag("some_vanilla_flag"); // raw strings still work
   ```
+
+- **Modifiers are typed paths.** All 45,501 modifier names the game knows,
+  scope-checked and discoverable segment by segment — see the next section.
+
+## Every modifier, discoverable
+
+Stellaris 4.4 knows **45,501** modifier keys. Most are generated at game load —
+every economic category × resource × produces/upkeep/cost, every ship size ×
+combat stat — so no wiki page lists them all, and nobody keeps them in their
+head. In raw PDXScript a misspelled modifier is not an error; it is a bonus
+that silently never applies.
+
+The SDK generates the complete set from the game's own modifier dump, joins it
+with the scope tables, and types modifiers as paths:
+
+```ts
+modifier: (m) => m.country.unity.produces.mult(0.01),
+// emits: country_unity_produces_mult = 0.01
+```
+
+Each `.` completes from a small menu — the largest menu in the entire tree has
+369 entries — so the editor answers instantly where a flat 45k-key type took
+seconds. Every segment is checked: a typo anywhere in the path is a compile
+error, and so is a modifier used outside its scope — a federation-only
+modifier in a country block, or a country economy modifier on a building's
+planet block. A name that is also a prefix of longer names is both callable
+and traversable: `m.bonus.pop.growth(0.1)` and `m.bonus.pop.growth.mult(0.05)`
+are different modifiers, and both complete.
+
+Flat names still work when you already know them:
+
+```ts
+modifier: (m) => {
+  m.raw("country_unity_produces_mult", 0.01); // checked against all 45,501 names
+  m.unchecked("another_mods_modifier", 0.5); // arbitrary strings, explicitly
+},
+```
+
+`raw` is checked against the full name set plus anything you declare:
+declaration-merge `CustomModifiers` to register your own scripted modifiers,
+including template patterns (``readonly [k: `mymod_${string}`]: number``)
+that admit a whole generated family at once. `unchecked` is the honest
+escape for names computed at build time.
+
+Under the hood the names form a 111,401-node path trie whose identical
+subtrees collapse into 3,456 shared interfaces, so both the compiler and the
+editor stay fast — and the whole table regenerates from the vendored game
+dump with the same drift gates as every other generated type.
 
 ## Testing mod logic
 

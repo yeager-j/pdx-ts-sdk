@@ -1,7 +1,7 @@
 content_test_tradition_ascension = {
 	unlocks_agenda = content_test_agenda_machine_futures
 	modifier = {
-		pop_growth_speed = 0.1
+		planet_pop_assembly_mult = 0.1
 	}
 	possible = {
 		has_authority = auth_machine_intelligence

@@ -196,8 +196,9 @@ function lowerOrdinary(
 ): LoweredField | null {
   const requested = override?.shape;
   if (requested === "modifierBlock") {
+    const scope = scopeType(emitter, field, inheritedScope);
     return {
-      memberType: "ModifierBlock",
+      memberType: `ModifierClosure<${scope}>`,
       metadata: metadata(field, name, "modifierBlock"),
     };
   }

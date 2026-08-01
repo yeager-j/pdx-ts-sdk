@@ -12,6 +12,8 @@
 
 import type { CwtDiagnostic } from "./cwt/parser.ts";
 import { scopeIndex, type RuleSet } from "./cwt/rules.ts";
+import { joinModifierScopes } from "./emit/modifiers.ts";
+import type { ModifierDocs } from "./logs/modifier-docs.ts";
 import type { DocDump } from "./logs/trigger-docs.ts";
 import { UNIVERSAL_SCOPES } from "./overlay.ts";
 
@@ -25,6 +27,16 @@ export interface NameDrift {
 export interface DriftReport {
   readonly triggers: NameDrift;
   readonly effects: NameDrift;
+  /**
+   * Concrete `modifiers.cwt` names the game's dump does not list. There is no
+   * `docsOnly` counterpart: the dump legitimately holds tens of thousands of
+   * generated names the curated file only describes as templates.
+   */
+  readonly modifiers: { readonly rulesOnly: readonly string[] };
+  /** Categories either modifier source names that `modifier_categories.cwt` lacks. */
+  readonly unknownModifierCategories: readonly string[];
+  /** Dumped modifier names the category join left without a single scope. */
+  readonly unscopedModifierNames: readonly string[];
   /** `## …` annotations upstream wrote in a shape the parser cannot read. */
   readonly malformedOptions: readonly string[];
   /** Scopes named by either source that `scopes.cwt` does not define. */
@@ -71,7 +83,7 @@ function describeScopes(scopes: Set<string> | null): string {
   return scopes === null ? "any" : [...scopes].sort().join(" ");
 }
 
-export function reconcile(rules: RuleSet, docs: DocDump): DriftReport {
+export function reconcile(rules: RuleSet, docs: DocDump, modifierDocs: ModifierDocs): DriftReport {
   const index = scopeIndex(rules);
   const unknown = new Set<string>();
   const conflicts: string[] = [];
@@ -87,6 +99,15 @@ export function reconcile(rules: RuleSet, docs: DocDump): DriftReport {
   for (const entry of [...docs.triggers.values(), ...docs.effects.values()]) {
     note(entry.scopes);
   }
+  for (const tokens of rules.modifierCategories.values()) {
+    note(tokens.map((token) => token.toLowerCase()));
+  }
+
+  const modifierJoin = joinModifierScopes(
+    rules,
+    modifierDocs,
+    (token) => index.get(token.toLowerCase()) ?? null
+  );
 
   for (const [name, declarations] of rules.triggers) {
     const declared = declarations.flatMap((d) => d.supportedScopes ?? []);
@@ -111,6 +132,11 @@ export function reconcile(rules: RuleSet, docs: DocDump): DriftReport {
   return {
     triggers: driftBetween(rules.triggers.keys(), docs.triggers.keys()),
     effects: driftBetween(rules.effects.keys(), docs.effects.keys()),
+    modifiers: {
+      rulesOnly: diff(rules.modifierDecls.keys(), new Set(modifierDocs.modifiers.keys())),
+    },
+    unknownModifierCategories: modifierJoin.unknownCategories,
+    unscopedModifierNames: modifierJoin.unscoped,
     malformedOptions: rules.diagnostics.map(describeDiagnostic).sort(),
     unknownScopes: [...unknown].sort(),
     scopeConflicts: conflicts.sort(),
@@ -138,6 +164,21 @@ export function compareToBaseline(report: DriftReport, baseline: DriftReport): s
     ...compareList("trigger only in docs", report.triggers.docsOnly, baseline.triggers.docsOnly),
     ...compareList("effect only in rules", report.effects.rulesOnly, baseline.effects.rulesOnly),
     ...compareList("effect only in docs", report.effects.docsOnly, baseline.effects.docsOnly),
+    ...compareList(
+      "modifier only in rules",
+      report.modifiers.rulesOnly,
+      baseline.modifiers.rulesOnly
+    ),
+    ...compareList(
+      "unknown modifier category",
+      report.unknownModifierCategories,
+      baseline.unknownModifierCategories
+    ),
+    ...compareList(
+      "unscoped modifier name",
+      report.unscopedModifierNames,
+      baseline.unscopedModifierNames
+    ),
     ...compareList("malformed option", report.malformedOptions, baseline.malformedOptions),
     ...compareList("unknown scope", report.unknownScopes, baseline.unknownScopes),
     ...compareList("scope conflict", report.scopeConflicts, baseline.scopeConflicts),

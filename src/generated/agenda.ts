@@ -7,7 +7,7 @@ import type {
   ContentLocalisation,
   DefinedContent,
   EffectBlock,
-  ModifierBlock,
+  ModifierClosure,
   WeightBlock,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
@@ -28,7 +28,7 @@ export interface AgendaFields {
   allow?: Trigger<"country">;
   initialEffectCustomLoc?: string;
   initEffect?: EffectBlock<"country">;
-  modifier?: ModifierBlock;
+  modifier?: ModifierClosure<"country">;
   finishModifier?: StaticModifierRef | string;
   effect?: EffectBlock<"country">;
   aiWeight?: WeightBlock<"country">;

@@ -58,6 +58,17 @@ describe("content-type codegen", () => {
     expect(agenda?.code).toContain('shape: "effect"');
   });
 
+  it("carries each modifier field's scope into its recorder closure", () => {
+    expect(emissions.get("building")?.code).toContain(
+      'planetModifier?: ModifierClosure<"colony">;'
+    );
+    expect(emissions.get("tradition")?.code).toContain('modifier?: ModifierClosure<"country">;');
+    expect(emissions.get("agenda")?.code).toContain('modifier?: ModifierClosure<"country">;');
+    expect(emissions.get("edict")?.code).toContain(
+      'relayNetworkModifier?: ModifierClosure<"country">;'
+    );
+  });
+
   it("emits reusable economic and triggered-modifier blocks", () => {
     const edict = emissions.get("edict");
     expect(edict?.code).toContain('resources?: EconomicResourceBlock<"country">[];');

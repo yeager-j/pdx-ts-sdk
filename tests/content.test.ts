@@ -19,7 +19,7 @@ function defineContentExample(): Mod<"content_test"> {
     allow: hasAuthority("auth_machine_intelligence"),
     initialEffectCustomLoc: "content_test_agenda_machine_futures_initial",
     initEffect: (country) => country.setCountryFlag("content_test_machine_agenda_started"),
-    modifier: { country_unity_produces_mult: 0.1 },
+    modifier: (m) => m.country.unity.produces.mult(0.1),
     finishModifier: "agenda_defensive_focus_finish",
     effect: (country) => country.addResource({ resource: "unity", amount: 500 }),
     aiWeight: {
@@ -49,15 +49,15 @@ function defineContentExample(): Mod<"content_test"> {
       },
     ],
     unityCostMult: 0.9,
-    modifier: { country_ship_build_speed_mult: 0.1 },
+    modifier: (m) => m.starbase.shipyard.build.speed.mult(0.1),
     triggeredCountryModifier: [
       {
         when: hasAuthority("auth_machine_intelligence"),
         key: "content_test_machine_mobilization_modifier",
         showIfNotPotential: false,
         notPotentialOverrideTextKey: "content_test_requires_machine_authority",
-        modifier: { country_command_limit_add: 1 },
-        modifiers: { country_naval_cap_mult: 0.1 },
+        modifier: (m) => m.command.limit.add(1),
+        modifiers: (m) => m.country.naval.cap.mult(0.1),
         description: "content_test_machine_mobilization_modifier_desc",
         descriptionParameters: { amount: "10%" },
         showOnlyCustomTooltip: false,
@@ -66,7 +66,7 @@ function defineContentExample(): Mod<"content_test"> {
         multiplier: 0.5,
       },
     ],
-    relayNetworkModifier: { country_unity_produces_mult: 0.05 },
+    relayNetworkModifier: (m) => m.country.unity.produces.mult(0.05),
     potential: hasAuthority("auth_machine_intelligence"),
     allow: hasAuthority("auth_machine_intelligence"),
     prerequisites: ["tech_global_production_strategy"],
@@ -88,7 +88,7 @@ function defineContentExample(): Mod<"content_test"> {
     canBuild: true,
     isCappedByModifier: true,
     allow: isCapital(),
-    planetModifier: { planet_jobs_engineering_research_produces_mult: 0.1 },
+    planetModifier: (m) => m.planet.jobs.engineering.research.produces.mult(0.1),
     showInTech: ["tech_basic_science_lab_1"],
     upgrades: ["content_test_building_lab_2"],
     prerequisites: ["tech_basic_science_lab_1"],
@@ -101,7 +101,7 @@ function defineContentExample(): Mod<"content_test"> {
     flavor: "The flesh is a temporary constraint.",
     effects: "Our people approach mechanical perfection.",
     unlocksAgenda: agenda,
-    modifier: { pop_growth_speed: 0.1 },
+    modifier: (m) => m.planet.pop.assembly.mult(0.1),
     possible: hasAuthority("auth_machine_intelligence"),
     customTooltip: ["content_test_ascension_tooltip"],
     traditionSwap: [
@@ -109,7 +109,7 @@ function defineContentExample(): Mod<"content_test"> {
         id: "content_test_tradition_ascension_servitor",
         name: "Custodian Ascension",
         inheritIcon: true,
-        modifier: { pop_happiness: 0.05 },
+        modifier: (m) => m.pop.happiness(0.05),
         weight: {
           base: 10,
           modifiers: [
@@ -165,6 +165,29 @@ describe("generated content registries", () => {
       );
     });
   }
+
+  it("lowers recorder paths, raw names, and unchecked names identically", () => {
+    const mod = new Mod({
+      name: "Recorder test",
+      prefix: "rec_test",
+      supportedVersion: "4.4.*",
+    });
+    mod.defineTradition({
+      id: "rec_test_tradition",
+      name: "X",
+      modifier: (m) => {
+        m.country.unity.produces.mult(0.01);
+        m.bonus.pop.growth(0.1);
+        m.raw("country_energy_produces_mult", 0.02);
+        m.unchecked("someone_elses_modifier", 0.03);
+      },
+    });
+    const rendered = mod.render().get("common/traditions/rec_test_traditions.txt");
+    expect(rendered).toContain("country_unity_produces_mult = 0.01");
+    expect(rendered).toContain("bonus_pop_growth = 0.1");
+    expect(rendered).toContain("country_energy_produces_mult = 0.02");
+    expect(rendered).toContain("someone_elses_modifier = 0.03");
+  });
 
   it("rejects an unprefixed nested definition before rendering", () => {
     const mod = new Mod({

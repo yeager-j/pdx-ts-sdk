@@ -41,7 +41,9 @@ export function defineHardening(vanilla: VanillaView) {
     buildingSets: ["research"],
     canBuild: true,
     prerequisites: [markerTechnology],
-    planetModifier: { planet_jobs_society_research_produces_mult: 0.01 },
+    planetModifier: (m) => {
+      m.planet.jobs.society.research.produces.mult(0.01);
+    },
   });
 
   const agenda = mod.defineAgenda({
@@ -58,7 +60,9 @@ export function defineHardening(vanilla: VanillaView) {
     effects: "The SDK seams remain observable.",
     unlocksAgenda: agenda,
     possible: hasAuthority("auth_democratic"),
-    modifier: { country_unity_produces_mult: 0.01 },
+    modifier: (m) => {
+      m.country.unity.produces.mult(0.01);
+    },
   });
 
   mod.defineTraditionCategory({
@@ -86,7 +90,9 @@ export function defineHardening(vanilla: VanillaView) {
     triggeredCountryModifier: [
       {
         when: hasAuthority("auth_democratic"),
-        modifiers: { country_unity_produces_mult: 0.01 },
+        modifiers: (m) => {
+          m.country.unity.produces.mult(0.01);
+        },
       },
     ],
     prerequisites: [markerTechnology],

@@ -120,7 +120,7 @@ describe("generated content authoring types", () => {
         {
           // @ts-expect-error — edict triggered modifiers run in country scope
           when: hasPlanetFlag("planet_only"),
-          modifiers: { country_naval_cap_mult: 0.1 },
+          modifiers: (m) => m.country.naval.cap.mult(0.1),
         },
       ],
       effect: (country) => {
@@ -172,14 +172,14 @@ describe("generated content authoring types", () => {
     void technology;
   });
 
-  it("keeps modifier blocks numeric and weight conditions scoped", () => {
+  it("keeps modifier recorders numeric and weight conditions scoped", () => {
     mod.defineTradition({
       id: "content_types_tradition_modifier",
       name: "X",
-      modifier: {
-        pop_growth_speed: 0.1,
+      modifier: (m) => {
+        m.planet.pop.assembly.mult(0.1);
         // @ts-expect-error — modifier values serialize as numeric assignments
-        pop_happiness: "high",
+        m.pop.happiness("high");
       },
     });
     expectTypeOf(hasAuthority("auth_democratic")).toExtend<Trigger<"country">>();

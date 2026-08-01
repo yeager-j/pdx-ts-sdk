@@ -44,16 +44,29 @@ Only the inputs codegen reads:
   and still the only source of the usage examples that become TSDoc.
 - `script-docs/v4.4.1/scopes.log` — the scope-link dump, used to confirm every
   scope either source names is a scope the game actually has.
+- `script-docs/v4.4.1/modifiers.log` (4.1 MB) — the game's dump of every
+  modifier name with its categories. The only source that lists the *generated*
+  names (economic-category products like `country_unity_produces_mult`, and the
+  per-ship-size stats), so it is the primary input for the scoped modifier-key
+  types; `modifiers.cwt` + `modifier_categories.cwt` supply the category → scope
+  join and the drift cross-check.
 
-Deliberately excluded: `modifiers.log` (4.1 MB) and `localizations.log`, which
-nothing reads yet, along with the fork's `script-files/`, its older `script-docs`
-versions, and the 20 other game-version directories.
+Deliberately excluded: `localizations.log`, which nothing reads yet, along with
+the fork's `script-files/`, its older `script-docs` versions, and the 20 other
+game-version directories.
 
-### Known upstream defect
+### Known upstream defects
 
 `config/common/leader_classes.cwt:13` has an unmatched `"` (`desc = description"`),
 so that one file does not parse. Nothing reads it, and the parser is right to
 refuse it rather than guess. Worth an upstream issue.
+
+`config/modifiers.cwt:541-542` files the two `situation_nomad_economy_*` rows
+under a category `Country` that `modifier_categories.cwt` does not define (the
+real category is `Countries`), and the game's dump does not list those names at
+all. Both facts are recorded in `tools/codegen/drift-baseline.json` as
+`unknownModifierCategories` and `modifiers.rulesOnly`. Also worth an upstream
+issue.
 
 ## Updating
 

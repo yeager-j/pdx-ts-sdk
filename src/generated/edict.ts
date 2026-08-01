@@ -9,6 +9,7 @@ import type {
   EconomicResourceBlock,
   EffectBlock,
   ModifierBlock,
+  ModifierClosure,
   TriggeredModifier,
   WeightBlock,
 } from "../content.ts";
@@ -34,9 +35,9 @@ export interface EdictFields {
   /** cost multiplier for a specific ambition ( 0.1 = 90% discount of the total unity cost etc). */
   unityCostMult?: number;
   /** a list of modifiers. */
-  modifier?: ModifierBlock;
+  modifier?: ModifierClosure<"country">;
   triggeredCountryModifier?: TriggeredModifier<"country">[];
-  relayNetworkModifier?: ModifierBlock;
+  relayNetworkModifier?: ModifierClosure<"country">;
   /** country trigger to decide whether the edict should be shown. */
   potential?: Trigger<"country">;
   /** country trigger to decide if whether this edict can be activated. */

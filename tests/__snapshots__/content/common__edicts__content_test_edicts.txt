@@ -20,7 +20,7 @@ content_test_edict_machine_mobilization = {
 	}
 	unity_cost_mult = 0.9
 	modifier = {
-		country_ship_build_speed_mult = 0.1
+		starbase_shipyard_build_speed_mult = 0.1
 	}
 	triggered_country_modifier = {
 		potential = {
@@ -30,7 +30,7 @@ content_test_edict_machine_mobilization = {
 		show_if_not_potential = no
 		not_potential_override_text_key = content_test_requires_machine_authority
 		modifier = {
-			country_command_limit_add = 1
+			command_limit_add = 1
 		}
 		country_naval_cap_mult = 0.1
 		description = content_test_machine_mobilization_modifier_desc

@@ -1,12 +1,42 @@
 {
   "triggers": {
-    "rulesOnly": ["<scripted_trigger>", "has_automation_setting", "situation_progress_percent"],
-    "docsOnly": ["and", "hidden_trigger", "nand", "nor", "not", "or"]
+    "rulesOnly": [
+      "<scripted_trigger>",
+      "has_automation_setting",
+      "situation_progress_percent"
+    ],
+    "docsOnly": [
+      "and",
+      "hidden_trigger",
+      "nand",
+      "nor",
+      "not",
+      "or"
+    ]
   },
   "effects": {
-    "rulesOnly": ["<scripted_effect>", "ai_trade_facility", "run_in_ai_mode"],
-    "docsOnly": ["hidden_effect"]
+    "rulesOnly": [
+      "<scripted_effect>",
+      "ai_trade_facility",
+      "run_in_ai_mode"
+    ],
+    "docsOnly": [
+      "hidden_effect"
+    ]
   },
+  "modifiers": {
+    "rulesOnly": [
+      "biological_logistic_growth_mult",
+      "lithoid_logistic_growth_mult",
+      "situation_nomad_economy_max_progress_add",
+      "situation_nomad_economy_max_progress_mult",
+      "starbase_collected_colony_resources_add"
+    ]
+  },
+  "unknownModifierCategories": [
+    "Country"
+  ],
+  "unscopedModifierNames": [],
   "malformedOptions": [
     "aliases.cwt:120 ## default: no",
     "aliases.cwt:157 ## default: no",
@@ -15,7 +45,10 @@
     "aliases.cwt:43 ## default: no",
     "triggers.cwt:3508 ## default: yes"
   ],
-  "unknownScopes": ["galactic_community", "pop"],
+  "unknownScopes": [
+    "galactic_community",
+    "pop"
+  ],
   "scopeConflicts": [
     "any_deposit: rules say [carrier colony planet ship], docs say [colony planet ship]",
     "any_enslaved_species: rules say [carrier colony country planet ship], docs say [colony country planet ship]",
@@ -250,5 +283,9 @@
     "total_workforce_with_job_tag: rules say [carrier colony planet ship], docs say [colony planet ship]",
     "uses_district_set: rules say [carrier colony planet ship], docs say [colony planet ship]"
   ],
-  "unscopedTriggers": ["cosmic_storm_influence_value", "has_pop_flag", "pop_has_ethic"]
+  "unscopedTriggers": [
+    "cosmic_storm_influence_value",
+    "has_pop_flag",
+    "pop_has_ethic"
+  ]
 }

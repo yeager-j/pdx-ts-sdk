@@ -16,12 +16,51 @@ import {
 
 import { makeScope, modifierEntry, type Modifier } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
+import type { ScopedModifierBlock, ScopedModifierRecorder } from "./generated/modifiers.ts";
 import { refId, type TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import type { Trigger } from "./trigger-core.ts";
 
-/** Open Stellaris modifier names and the numeric values assigned to them. */
-export type ModifierBlock = Readonly<Record<string, number>>;
+/**
+ * The declared escape hatch for modifier names the generated tables cannot
+ * know: scripted modifiers this or another mod defines. Declaration-merge the
+ * names in and `raw()` accepts them — including template patterns, which admit
+ * a whole generated family at once:
+ *
+ *     declare module "@pdx-ts/sdk" {
+ *       interface CustomModifiers {
+ *         readonly my_scripted_modifier?: number;
+ *         readonly [k: `mymod_${string}`]: number | undefined;
+ *       }
+ *     }
+ */
+export interface CustomModifiers {}
+
+/**
+ * The known modifier names for scope `S`, as one flat interface.
+ *
+ * This types `raw()`'s name parameter, never an authoring position: a flat
+ * 45k-property type makes the editor build one enormous completion menu, which
+ * is exactly what {@link ModifierClosure}'s path recorder exists to avoid.
+ */
+export type ModifierBlock<S extends ScopeName = ScopeName> = ScopedModifierBlock<S>;
+
+/**
+ * Records the modifiers a definition applies, scope-checked segment by segment.
+ *
+ * The traversed path spells the game's flat modifier name — the closure below
+ * emits `country_unity_produces_mult = 0.01`:
+ *
+ *     modifier: (m) => m.country.unity.produces.mult(0.01)
+ *
+ * Each `.` completes from a small menu instead of one 45k-entry list, and a
+ * typo in any segment is a compile error. Escape hatches: `m.raw(name, value)`
+ * checks a flat name against every known name plus {@link CustomModifiers};
+ * `m.unchecked(name, value)` accepts any string.
+ */
+export type ModifierClosure<S extends ScopeName = ScopeName> = (
+  m: ScopedModifierRecorder<S>
+) => void;
 
 /** One cost/production/upkeep/logistics arm inside an economic `resources` block. */
 export interface EconomicResourceOperation<S extends ScopeName> {
@@ -70,10 +109,10 @@ export interface TriggeredModifier<S extends ScopeName> {
   readonly showIfNotPotential?: boolean;
   /** Replacement text shown when the potential fails. */
   readonly notPotentialOverrideTextKey?: string;
-  /** Modifier names nested under an explicit `modifier` block. */
-  readonly modifier?: ModifierBlock;
-  /** Modifier names spliced directly into the triggered-modifier block. */
-  readonly modifiers?: ModifierBlock;
+  /** Modifiers nested under an explicit `modifier` block. */
+  readonly modifier?: ModifierClosure<S>;
+  /** Modifiers spliced directly into the triggered-modifier block. */
+  readonly modifiers?: ModifierClosure<S>;
   /** Optional localization key describing the modifier. */
   readonly description?: string;
   /** Values substituted into the description localization. */
@@ -186,11 +225,38 @@ function contentScalar(value: unknown, conversion: "identity" | "ref", quote: bo
   return scalar(converted as string | number | boolean);
 }
 
-function modifierEntries(value: ModifierBlock): PdxEntry[] {
-  return Object.entries(value).map(([name, amount]) => kv(name, amount));
+/**
+ * The recorder behind {@link ModifierClosure}: property access extends the
+ * path, a call joins it with `_` into the flat name the game reads. One proxy
+ * shape serves every scope — the generated recorder interfaces are the only
+ * thing keeping paths honest, exactly like the effect recorder.
+ */
+function modifierRecorder(record: (name: string, amount: number) => void): unknown {
+  const node = (path: readonly string[]): unknown =>
+    new Proxy(() => undefined, {
+      get(_target, prop) {
+        if (typeof prop !== "string") {
+          return undefined;
+        }
+        if (path.length === 0 && (prop === "raw" || prop === "unchecked")) {
+          return (name: string, amount: number) => record(name, amount);
+        }
+        return node([...path, prop]);
+      },
+      apply(_target, _thisArg, args) {
+        record(path.join("_"), args[0] as number);
+      },
+    });
+  return node([]);
 }
 
-function modifierBlock(key: string, value: ModifierBlock): PdxEntry {
+function modifierEntries(closure: ModifierClosure): PdxEntry[] {
+  const entries: PdxEntry[] = [];
+  closure(modifierRecorder((name, amount) => entries.push(kv(name, amount))) as never);
+  return entries;
+}
+
+function modifierBlock(key: string, value: ModifierClosure): PdxEntry {
   return block(key, modifierEntries(value));
 }
 
@@ -328,7 +394,7 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
         break;
       }
       case "modifierBlock":
-        entries.push(modifierBlock(field.key, value as ModifierBlock));
+        entries.push(modifierBlock(field.key, value as ModifierClosure));
         break;
       case "weightBlock":
         entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));

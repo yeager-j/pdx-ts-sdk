@@ -6,7 +6,7 @@ import type {
   ContentField,
   ContentLocalisation,
   DefinedContent,
-  ModifierBlock,
+  ModifierClosure,
   WeightBlock,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
@@ -28,7 +28,7 @@ export interface TraditionSwapDef<Id extends string = string> {
   customTooltip?: string[];
   customTooltipWithModifiers?: string[];
   /** accepts only country modifiers */
-  modifier?: ModifierBlock;
+  modifier?: ModifierClosure<"country">;
   /** this determines the chances of a tradition swap appearing for a given empire IF multiple swaps are potential. */
   weight?: WeightBlock<"country">;
   trigger?: Trigger<"country">;
@@ -76,7 +76,7 @@ export interface TraditionFields<Id extends string = string> {
   /** English text emitted to localization under `<id>_desc`. */
   effects?: string;
   unlocksAgenda?: AgendaRef | string;
-  modifier?: ModifierBlock;
+  modifier?: ModifierClosure<"country">;
   possible?: Trigger<"country">;
   customTooltip?: string[];
   customTooltipWithModifiers?: string[];

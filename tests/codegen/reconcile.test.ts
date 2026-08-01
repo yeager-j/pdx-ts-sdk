@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { loadRules } from "../../tools/codegen/cwt/rules.ts";
+import { parseModifierDocs } from "../../tools/codegen/logs/modifier-docs.ts";
 import { parseTriggerDocs } from "../../tools/codegen/logs/trigger-docs.ts";
 import { compareToBaseline, reconcile, type DriftReport } from "../../tools/codegen/reconcile.ts";
 
@@ -13,6 +14,7 @@ const docs = parseTriggerDocs(
   readFileSync(`${DOCS}/triggers.log`, "utf8"),
   readFileSync(`${DOCS}/effects.log`, "utf8")
 );
+const modifierDocs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
 const baseline = JSON.parse(
   readFileSync("tools/codegen/drift-baseline.json", "utf8")
 ) as DriftReport;
@@ -43,12 +45,12 @@ describe("the two rule sources", () => {
   });
 
   it("still match the recorded drift baseline", () => {
-    expect(compareToBaseline(reconcile(rules, docs), baseline)).toEqual([]);
+    expect(compareToBaseline(reconcile(rules, docs, modifierDocs), baseline)).toEqual([]);
   });
 });
 
 describe("the drift gate", () => {
-  const report = reconcile(rules, docs);
+  const report = reconcile(rules, docs, modifierDocs);
 
   it("names a trigger that appeared in only one source", () => {
     const injected: DriftReport = {
@@ -73,6 +75,16 @@ describe("the drift gate", () => {
     );
   });
 
+  it("names a curated modifier the game's dump stopped listing", () => {
+    const injected: DriftReport = {
+      ...baseline,
+      modifiers: { rulesOnly: [...baseline.modifiers.rulesOnly, "has_new_modifier"] },
+    };
+    expect(compareToBaseline(report, injected)).toEqual([
+      "  - modifier only in rules: has_new_modifier",
+    ]);
+  });
+
   it("catches a scope named by either source that scopes.cwt does not define", () => {
     expect(compareToBaseline(report, { ...baseline, unknownScopes: ["made_up"] })).toEqual([
       ...baseline.unknownScopes.map((scope) => `  + unknown scope: ${scope}`),
@@ -91,7 +103,7 @@ describe("the drift gate", () => {
 });
 
 describe("where the fork and the game's dump disagree", () => {
-  const report = reconcile(rules, docs);
+  const report = reconcile(rules, docs, modifierDocs);
 
   it("is almost entirely the 4.x scope renames the dump has not caught up with", () => {
     const parsed = report.scopeConflicts.map((line) => {

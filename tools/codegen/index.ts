@@ -14,11 +14,13 @@ import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
+import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
 import type { SkippedRule } from "./emit/shape.ts";
 import { canonicalScopes, emitEnums, emitRefs, emitScopes, emitValueSets } from "./emit/support.ts";
 import { emitTriggers } from "./emit/triggers.ts";
 import { Emitter } from "./emit/types.ts";
+import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
 import { compareToBaseline, reconcile, type DriftReport } from "./reconcile.ts";
@@ -97,8 +99,9 @@ async function main(): Promise<void> {
     readFileSync(`${DOCS}/effects.log`, "utf8")
   );
   const links = parseScopeLinks(readFileSync(`${DOCS}/scopes.log`, "utf8"));
+  const modifierDocs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
 
-  checkDrift(reconcile(rules, docs), rebaseline);
+  checkDrift(reconcile(rules, docs, modifierDocs), rebaseline);
 
   const emitter = new Emitter(rules);
   const index = scopeIndex(rules);
@@ -141,6 +144,16 @@ async function main(): Promise<void> {
     "value-sets.ts",
     header(commit, ["value sets referenced across the rule files"]) + emitValueSets(emitter)
   );
+  const modifiers = emitModifiers(
+    joinModifierScopes(rules, modifierDocs, (token) => emitter.canonicalScope(token))
+  );
+  await write(
+    "modifiers.ts",
+    header(commit, ["script-docs/v4.4.1/modifiers.log", "modifier_categories.cwt"]) +
+      'import type { CustomModifiers } from "../content.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      modifiers.code
+  );
   for (const content of contents) {
     const runtimeTypes = [
       "ContentField",
@@ -149,6 +162,7 @@ async function main(): Promise<void> {
       "EconomicResourceBlock",
       "EffectBlock",
       "ModifierBlock",
+      "ModifierClosure",
       "TriggeredModifier",
       "WeightBlock",
     ].filter((name) => content.emission.code.includes(name));
@@ -248,6 +262,12 @@ async function main(): Promise<void> {
       ` | enums emitted: ${emitter.usedEnums.size}` +
       ` | refs emitted: ${emitter.usedRefs.size}` +
       ` | value sets emitted: ${emitter.usedValueSets.size}`
+  );
+  console.log(
+    `modifiers: ${modifiers.names} names emitted` +
+      ` (${modifiers.universal} universal, ${modifiers.groups} scope-set groups,` +
+      ` ${modifiers.scopes} scopes, ${modifiers.trieTypes} path types;` +
+      ` ${rules.modifierTemplates.length} cwt template rows)`
   );
   console.log(
     `triggers: ${triggers.emitted} emitted of ${rules.triggers.size} declared` +

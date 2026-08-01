@@ -6,7 +6,7 @@ import type {
   ContentField,
   ContentLocalisation,
   DefinedContent,
-  ModifierBlock,
+  ModifierClosure,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { BuildingCategory } from "./enums.ts";
@@ -39,7 +39,7 @@ export interface BuildingFields {
   allow?: Trigger<"colony">;
   /** trigger for displaying building in construction list */
   potential?: Trigger<"colony">;
-  planetModifier?: ModifierBlock;
+  planetModifier?: ModifierClosure<"colony">;
   /** don't know whether it have quantity limit */
   showInTech?: (TechnologyRef | string)[];
   /** building(s) this can be upgraded to */

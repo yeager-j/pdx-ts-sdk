@@ -90,6 +90,12 @@ export interface RuleSet {
   /** Top-level rule bodies keyed by content type, e.g. `technology = { ... }`. */
   readonly bodies: ReadonlyMap<string, ContentBody>;
   readonly onActions: readonly OnActionDecl[];
+  /** Modifier category -> raw `supported_scopes` tokens (`any` means every scope). */
+  readonly modifierCategories: ReadonlyMap<string, readonly string[]>;
+  /** Concrete modifier names `modifiers.cwt` declares, with their categories. */
+  readonly modifierDecls: ReadonlyMap<string, readonly string[]>;
+  /** Templated `modifiers.cwt` rows (`<ship_size>_…`) the game expands from content. */
+  readonly modifierTemplates: readonly string[];
   readonly diagnostics: readonly CwtDiagnostic[];
 }
 
@@ -102,6 +108,8 @@ const RULE_FILES = [
   "events/events.cwt",
   "events/event_namespaces.cwt",
   "on_actions.cwt",
+  "modifiers.cwt",
+  "modifier_categories.cwt",
   ...CONTENT_MANIFEST.map((entry) => entry.source),
 ].filter((file, index, files) => files.indexOf(file) === index);
 
@@ -165,6 +173,52 @@ function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): voi
           : []
       );
       into.set(entry.key.text, aliases);
+    }
+  }
+}
+
+function readModifierCategories(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
+  for (const outer of assignments(nodes)) {
+    if (outer.key.text !== "modifier_categories" || outer.value.kind !== "block") {
+      continue;
+    }
+    for (const entry of assignments(outer.value.nodes)) {
+      if (entry.value.kind !== "block") {
+        continue;
+      }
+      const scopes = assignments(entry.value.nodes).flatMap((node) =>
+        node.key.text === "supported_scopes" && node.value.kind === "block"
+          ? node.value.nodes.flatMap((item) =>
+              item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
+            )
+          : []
+      );
+      into.set(entry.key.text, scopes);
+    }
+  }
+}
+
+function readModifierDecls(
+  nodes: readonly CwtNode[],
+  into: Map<string, string[]>,
+  templates: string[]
+): void {
+  for (const outer of assignments(nodes)) {
+    if (outer.key.text !== "modifiers" || outer.value.kind !== "block") {
+      continue;
+    }
+    for (const entry of assignments(outer.value.nodes)) {
+      if (entry.value.kind !== "block") {
+        continue;
+      }
+      if (entry.key.text.includes("<") || entry.key.text.includes("[")) {
+        templates.push(entry.key.text);
+        continue;
+      }
+      const categories = entry.value.nodes.flatMap((item) =>
+        item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
+      );
+      into.set(entry.key.text, categories);
     }
   }
 }
@@ -316,6 +370,9 @@ export function loadRules(root: string): RuleSet {
   const contentTypes = new Map<string, ContentType>();
   const bodies = new Map<string, ContentBody>();
   const onActions: OnActionDecl[] = [];
+  const modifierCategories = new Map<string, string[]>();
+  const modifierDecls = new Map<string, string[]>();
+  const modifierTemplates: string[] = [];
   const singleAliases = new Map<string, CwtValue>();
   const diagnostics: CwtDiagnostic[] = [];
 
@@ -331,9 +388,23 @@ export function loadRules(root: string): RuleSet {
     readContentTypes(parsed.nodes, contentTypes);
     readBodies(parsed.nodes, contentTypes, singleAliases, bodies);
     readOnActions(parsed.nodes, relative, onActions);
+    readModifierCategories(parsed.nodes, modifierCategories);
+    readModifierDecls(parsed.nodes, modifierDecls, modifierTemplates);
   }
 
-  return { enums, scopes, triggers, effects, contentTypes, bodies, onActions, diagnostics };
+  return {
+    enums,
+    scopes,
+    triggers,
+    effects,
+    contentTypes,
+    bodies,
+    onActions,
+    modifierCategories,
+    modifierDecls,
+    modifierTemplates,
+    diagnostics,
+  };
 }
 
 /**
