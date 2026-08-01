@@ -32,6 +32,12 @@ export interface ContentEmission {
   readonly fieldsConstant: string;
   readonly localisationConstant: string;
   readonly emittedFields: readonly string[];
+  /**
+   * Dotted paths lowered inside a repeated-struct field, e.g.
+   * `tradition_swap.on_enabled` — invisible to `emittedFields`, which only
+   * names the owning field itself (`tradition_swap`).
+   */
+  readonly nestedEmittedFields: readonly string[];
   /** Refused outright by CONTENT_DECLINED_FIELDS, each with its reason. */
   readonly declinedFields: readonly string[];
   /** Present in the rules but not expressible: blocked on emitter machinery. */
@@ -83,6 +89,27 @@ function structBlockOf(
     return { block: type, wrapped: false };
   }
   return null;
+}
+
+/**
+ * Finds the single wildcard-keyed block declaration inside a block type, the
+ * shape CWT uses for a keyed collection: `stages = { scalar = { icon = ... } }`
+ * says "any scalar key maps to this block", not a field literally named
+ * `scalar` — `classifyKey` reads that as a `computed` key rather than a `name`
+ * one, so `mergeByName` (which only keeps `name` keys) sees nothing there.
+ *
+ * Ambiguous input — no such declaration, or more than one — declines rather
+ * than guessing which one is the record's real shape.
+ */
+function wildcardBlockOf(type: RuleType): BlockType | null {
+  if (type.kind !== "block") {
+    return null;
+  }
+  const candidates = type.fields.filter(
+    (field): field is RuleField & { readonly type: BlockType } =>
+      field.key.kind === "computed" && field.type.kind === "block"
+  );
+  return candidates.length === 1 ? candidates[0]!.type : null;
 }
 
 function spliceCategory(type: RuleType): string | null {
@@ -431,6 +458,27 @@ interface LocalisationPlan {
 }
 
 /**
+ * The identity-localisation convention for a repeated-struct field with no
+ * vendored `type[...]` of its own: the record key doubles as a required
+ * localisation key (`$`), with an optional `<key>_desc` (`$_desc`). Shaped as
+ * a `ContentType` so it flows through `planLocalisation`/`localisationMembers`
+ * unchanged rather than needing a second code path.
+ */
+function syntheticIdentityLocalisation(typeName: string): ContentType {
+  return {
+    name: typeName,
+    path: null,
+    nameField: null,
+    keyFilter: null,
+    subtypes: [],
+    localisation: [
+      { key: "name", pattern: "$", required: true },
+      { key: "desc", pattern: "$_desc", required: false },
+    ],
+  };
+}
+
+/**
  * Collapses declared localisation entries onto one member per TS field name.
  *
  * A pattern with no `$` id placeholder is not a static `<id>`-keyed slot at
@@ -543,6 +591,8 @@ function repeatedStructEmission(
   readonly declinedFields: readonly string[];
   /** Present in the struct's rules but not expressible, or a member-name collision. */
   readonly unsupported: readonly string[];
+  /** Dotted paths successfully lowered, e.g. `situation.stages.icon`. */
+  readonly emittedFields: readonly string[];
   readonly localisationAliases: readonly string[];
 } | null {
   if (ownerField.type.kind !== "block") {
@@ -552,7 +602,14 @@ function repeatedStructEmission(
   if (keying === "siblings" && config.identityKey === undefined) {
     return null;
   }
-  const grouped = mergeByName(ownerField.type.fields, config.typeName);
+  // "container" (`stages = { stage_1 = { ... } }`) has no sibling fields of
+  // its own to merge — the record's per-entry shape lives one level further
+  // in, behind the wildcard key CWT uses to say "any key maps to this block".
+  const bodyType = keying === "container" ? wildcardBlockOf(ownerField.type) : ownerField.type;
+  if (bodyType === null) {
+    return null;
+  }
+  const grouped = mergeByName(bodyType.fields, config.typeName);
   // The record key already carries the identity value — written into
   // identityKey inside each sibling block, or (for "container") the block's
   // own key — so it is not an ordinary member, the same reason the top level
@@ -562,7 +619,19 @@ function repeatedStructEmission(
   }
 
   const typeName = config.typeName;
-  const localisationType = emitter.rules.contentTypes.get(config.localisationType);
+  // Some repeated-struct fields have their own vendored `type[...]` carrying
+  // the identity's localisation patterns (tradition_swap borrows
+  // `type[swapped_tradition]`). Others — situations' `stages` and `approach`
+  // — have no such type; CWT only ever types the identity value itself as
+  // `localisation` inline, never as a sibling `type[...]` block. Falling back
+  // to the same `$` required / `$_desc` optional convention the vendored
+  // types themselves use keeps this generic rather than situations-specific:
+  // any future repeated-struct field lacking a dedicated type gets the same
+  // convention `99_README_SITUATIONS.txt` documents for both of situations'.
+  const localisationType =
+    config.localisationType === undefined
+      ? syntheticIdentityLocalisation(typeName)
+      : emitter.rules.contentTypes.get(config.localisationType);
   const localisationPlan =
     localisationType === undefined ? null : planLocalisation(localisationType);
   // A struct field can share a name with the struct's own localisation slot
@@ -577,6 +646,7 @@ function repeatedStructEmission(
   const fieldMetadata: string[] = [];
   const declinedFields: string[] = [];
   const unsupported: string[] = [];
+  const emittedFields: string[] = [];
   const extraCode: string[] = [];
 
   // Everything the struct's rules declare is emitted, in the rules'
@@ -621,6 +691,7 @@ function repeatedStructEmission(
     if (lowering.unsupported !== undefined) {
       unsupported.push(...lowering.unsupported);
     }
+    emittedFields.push(fieldPath);
   }
 
   if (localisationType === undefined) {
@@ -666,6 +737,7 @@ function repeatedStructEmission(
     metadata: metadataValue,
     declinedFields,
     unsupported,
+    emittedFields,
     localisationAliases,
   };
 }
@@ -688,6 +760,7 @@ export function emitContentType(
     grouped.delete(type.nameField);
   }
   const emittedFields: string[] = [];
+  const nestedEmittedFields: string[] = [];
   const declinedFields: string[] = [];
   const unsupported: string[] = [];
   const extraCode: string[] = [];
@@ -750,6 +823,7 @@ export function emitContentType(
       needsId = true;
       declinedFields.push(...nested.declinedFields);
       unsupported.push(...nested.unsupported);
+      nestedEmittedFields.push(...nested.emittedFields);
       localisationAliases.push(...nested.localisationAliases);
       emittedFields.push(name);
       continue;
@@ -821,6 +895,7 @@ export function emitContentType(
     fieldsConstant,
     localisationConstant,
     emittedFields,
+    nestedEmittedFields,
     declinedFields: declinedFields.sort(),
     machineryBacklog: [...unsupported].sort(),
     unsupported,

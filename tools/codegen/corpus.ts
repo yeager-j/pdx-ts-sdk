@@ -18,14 +18,78 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { parse } from "@pdx-ts/pdxscript";
+import { parse, type PdxContainer } from "@pdx-ts/pdxscript";
 
 export interface RegistryCorpus {
   /** Definitions found, across every file at the registry's path. */
   readonly definitions: number;
   readonly files: number;
-  /** Top-level field key -> how many definitions write it. */
+  /**
+   * Field key -> how many definitions write it. A nested field inside a
+   * repeated-struct field (see {@link RepeatedStructField}) is reported under
+   * a dotted path (`stages.icon`, `approach.on_select`) alongside the owning
+   * field's own top-level occurrence, so coverage inside the struct is visible
+   * and attributable instead of collapsing into the single top-level key.
+   */
   readonly occurrences: ReadonlyMap<string, number>;
+}
+
+/**
+ * Identifies one of a registry's repeated-struct fields (see
+ * `docs/roadmap.md`'s "Repeated-struct field shape") so the corpus reader can
+ * descend into it. Mirrors `REPEATED_STRUCT_DEFINITIONS`' `keying` /
+ * `identityKey` exactly — the two are meant to be built from the same overlay
+ * entries, not redefine the split.
+ */
+export interface RepeatedStructField {
+  /** The top-level field key, e.g. "stages" or "approach". */
+  readonly field: string;
+  readonly keying: "container" | "siblings";
+  /** Required for "siblings" — the body field carrying the id, skipped when descending. */
+  readonly identityKey?: string;
+}
+
+/**
+ * Adds one occurrence of every nested field found inside a repeated-struct
+ * field to `seen`, deduplicated exactly like the top level: a definition
+ * writing `icon` in two different stages, or the same field in two `approach`
+ * blocks, still counts once.
+ *
+ * "container" (`stages = { stage_1 = { icon = ... } }`): the outer container's
+ * items are themselves id-keyed blocks, so descend once more into each and
+ * report their fields under `<field>.<name>`.
+ *
+ * "siblings" (`approach = { name = approach_a icon = ... }`): the container
+ * passed in already holds the entry's own fields directly — the caller is
+ * invoked once per occurrence, since duplicate keys at the top level (several
+ * `approach = { ... }` blocks) already arrive as separate items. The identity
+ * field itself is skipped, the same reason the top level drops `nameField`.
+ */
+function descendRepeatedStruct(
+  value: PdxContainer,
+  struct: RepeatedStructField,
+  seen: Set<string>
+): void {
+  if (struct.keying === "container") {
+    for (const sub of value.items) {
+      if (sub.kind !== "entry" || sub.value.kind !== "container") {
+        continue;
+      }
+      for (const leaf of sub.value.items) {
+        if (leaf.kind !== "entry") {
+          continue;
+        }
+        seen.add(`${struct.field}.${leaf.key}`);
+      }
+    }
+    return;
+  }
+  for (const leaf of value.items) {
+    if (leaf.kind !== "entry" || leaf.key === struct.identityKey) {
+      continue;
+    }
+    seen.add(`${struct.field}.${leaf.key}`);
+  }
 }
 
 export interface ConformanceReport {
@@ -46,12 +110,17 @@ export interface ConformanceReport {
  * definition keyed by its id. Where the rules set `name_field`, the top-level
  * key is a repeated keyword instead and the id sits in a body field — so only
  * entries under that keyword count, and the name field is not a field.
+ *
+ * `repeatedStructFields` names this registry's repeated-struct fields (if
+ * any), so their contents are visible too instead of collapsing into one
+ * opaque top-level key — see {@link descendRepeatedStruct}.
  */
 export function readRegistryCorpus(
   root: string,
   registryPath: string,
   keyword: string | null,
-  nameField: string | null
+  nameField: string | null,
+  repeatedStructFields: readonly RepeatedStructField[] = []
 ): RegistryCorpus {
   const dir = path.join(root, registryPath);
   let names: string[];
@@ -60,6 +129,7 @@ export function readRegistryCorpus(
   } catch {
     return { definitions: 0, files: 0, occurrences: new Map() };
   }
+  const structByField = new Map(repeatedStructFields.map((field) => [field.field, field]));
   const occurrences = new Map<string, number>();
   let definitions = 0;
   for (const name of names) {
@@ -75,12 +145,19 @@ export function readRegistryCorpus(
       // Count each key once per definition: a definition repeating `modifier`
       // twice is still one definition that uses `modifier`, and weighting by
       // repetition would let one verbose entry dominate the coverage figure.
+      // The same rule applies one level down inside a repeated-struct field:
+      // two stages both writing `icon` still count as one definition using
+      // `stages.icon`.
       const seen = new Set<string>();
       for (const field of item.value.items) {
         if (field.kind !== "entry" || field.key === nameField) {
           continue;
         }
         seen.add(field.key);
+        const struct = structByField.get(field.key);
+        if (struct !== undefined && field.value.kind === "container") {
+          descendRepeatedStruct(field.value, struct, seen);
+        }
       }
       for (const key of seen) {
         occurrences.set(key, (occurrences.get(key) ?? 0) + 1);

@@ -15,10 +15,15 @@ import { describe, expect, it } from "vitest";
 
 import { locateInstall } from "../../src/stellaris/locate.ts";
 import { CONTENT_MANIFEST } from "../../tools/codegen/content-manifest.ts";
-import { conformance, readRegistryCorpus } from "../../tools/codegen/corpus.ts";
+import {
+  conformance,
+  readRegistryCorpus,
+  type RepeatedStructField,
+} from "../../tools/codegen/corpus.ts";
 import { loadRules } from "../../tools/codegen/cwt/rules.ts";
 import { emitContentType } from "../../tools/codegen/emit/content-type.ts";
 import { Emitter } from "../../tools/codegen/emit/types.ts";
+import { REPEATED_STRUCT_DEFINITIONS } from "../../tools/codegen/overlay.ts";
 
 let installPath: string | undefined;
 try {
@@ -30,6 +35,17 @@ try {
 const rules = loadRules("vendor/cwtools-stellaris-config/config");
 const emitter = new Emitter(rules);
 
+/** This registry's repeated-struct fields, straight from the same overlay the emitter reads. */
+function repeatedStructFieldsOf(registry: string): readonly RepeatedStructField[] {
+  return [...REPEATED_STRUCT_DEFINITIONS]
+    .filter(([path]) => path.startsWith(`${registry}.`))
+    .map(([path, config]) => ({
+      field: path.slice(registry.length + 1),
+      keying: config.keying ?? "siblings",
+      identityKey: config.identityKey,
+    }));
+}
+
 const reports = (installPath === undefined ? [] : CONTENT_MANIFEST).map((manifest) => {
   const entry = manifest as { type: string; keyword?: string; as?: string };
   const registry = entry.as ?? entry.type;
@@ -39,15 +55,24 @@ const reports = (installPath === undefined ? [] : CONTENT_MANIFEST).map((manifes
     installPath!,
     registryPath,
     entry.keyword ?? null,
-    type?.nameField ?? null
+    type?.nameField ?? null,
+    repeatedStructFieldsOf(registry)
   );
   const body = rules.bodies.get(entry.type);
   emitter.beginFile();
-  const emitted =
+  const emission =
     type === undefined || body === undefined
-      ? []
-      : emitContentType(emitter, type, body, registry).emittedFields;
+      ? null
+      : emitContentType(emitter, type, body, registry);
   emitter.endFile();
+  // Nested paths come back prefixed with the registry (`situation_type.stages.icon`,
+  // matching the dotted paths CONTENT_DECLINED_FIELDS/CONTENT_FIELD_OVERRIDES use)
+  // — strip that prefix so they line up with the corpus's own unprefixed dotted
+  // paths (`stages.icon`).
+  const emitted = [
+    ...(emission?.emittedFields ?? []),
+    ...(emission?.nestedEmittedFields ?? []).map((path) => path.slice(registry.length + 1)),
+  ];
   return conformance(registry, corpus, emitted);
 });
 
