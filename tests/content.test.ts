@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { always, canJoinFactions, hasAuthority, isCapital, Mod } from "../src/index.ts";
+import {
+  always,
+  canGoMia,
+  canJoinFactions,
+  hasAuthority,
+  hasPlanetFlag,
+  isCapital,
+  Mod,
+} from "../src/index.ts";
 
 function defineContentExample(): Mod<"content_test"> {
   const mod = new Mod({
@@ -308,6 +316,103 @@ function defineContentExample(): Mod<"content_test"> {
     category: "country",
   });
 
+  const casusBelli = mod.defineCasusBelli({
+    id: "content_test_casus_belli_manufactured_grievance",
+    name: "Manufactured Grievance",
+    hint: "Fabricate a pretext for war.",
+    potential: hasAuthority("auth_machine_intelligence"),
+    isValid: always(),
+    showNotification: true,
+    proxyWarResources: [{ category: "physics_research", cost: { amounts: { unity: 50 } } }],
+    onProxyWarStart: (country) => country.setCountryFlag("content_test_proxy_war_started"),
+    showInDiplomacy: true,
+    aggregatedMessageKey: "content_test_casus_belli_aggregated",
+  });
+
+  mod.defineWarGoal({
+    id: "content_test_war_goal_liberation",
+    name: "Liberation",
+    desc: "Free the occupied systems.",
+    casusBelli,
+    hide: "no_cb",
+    cedeClaims: "yes",
+    threatMultiplier: 1.5,
+    surrenderAcceptance: 10,
+    warExhaustion: 1.2,
+    potential: hasAuthority("auth_machine_intelligence"),
+    possible: always(),
+    allowedPeaceOffers: ["status_quo", "surrender"],
+    onStatusQuo: (country) => country.setCountryFlag("content_test_status_quo"),
+    aiWeight: {
+      base: 5,
+      modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
+    },
+    destroyStarbases: true,
+  });
+
+  mod.defineAgreementPreset({
+    id: "content_test_agreement_preset_tribute",
+    name: "Tribute",
+    desc: "A modest tribute agreement.",
+    flavor: "Coin for peace.",
+    icon: "GFX_agreement_preset_tribute",
+    overlordWeight: {
+      base: 10,
+      modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
+    },
+    subjectWeight: { base: -5 },
+    potential: hasAuthority("auth_machine_intelligence"),
+    hidden: false,
+    shouldAiUseForProposals: true,
+    canPresetBeChanged: true,
+  });
+
+  mod.defineBombardmentStance({
+    id: "content_test_bombardment_stance_scorched_earth",
+    name: "Scorched Earth",
+    desc: "Bombard with no restraint.",
+    trigger: canGoMia(),
+    default: false,
+    stopWhenArmiesDead: false,
+    acceptSurrender: false,
+    planetDamage: { base: 1.5 },
+    armyDamage: 1.2,
+    killPopChance: {
+      base: 0.1,
+      modifiers: [{ factor: 2, when: always() }],
+    },
+    minPopsToKillPop: 5,
+    aiWeight: { base: 1 },
+  });
+
+  mod.defineArchaeologicalSiteType({
+    id: "content_test_archaeological_site_type_derelict",
+    name: "Derelict Outpost",
+    desc: "The ruins of a forgotten station.",
+    picture: "GFX_archaeological_site_derelict",
+    situationLogCategory: "arch_site",
+    maxInstances: 3,
+    notificationDuration: 30,
+    weight: {
+      base: 10,
+      modifiers: [{ factor: 2, when: hasPlanetFlag("content_test_archaeological_planet_flag") }],
+    },
+    stages: 3,
+    potential: canGoMia(),
+    allow: canGoMia(),
+    visible: hasAuthority("auth_machine_intelligence"),
+    onRollFailed: () => {},
+    onCreate: () => {},
+    onVisible: (country) => country.setCountryFlag("content_test_site_visible"),
+  });
+
+  mod.defineScriptedLoc({
+    id: "content_test_scripted_loc_flavor_text",
+    random: false,
+    value: 1,
+    default: "content_test_scripted_loc_flavor_text_default",
+  });
+
   return mod;
 }
 
@@ -327,6 +432,12 @@ describe("generated content registries", () => {
       "common/pop_jobs/content_test_pop_jobs.txt",
       "common/opinion_modifiers/content_test_opinion_modifiers.txt",
       "common/scripted_modifiers/content_test_scripted_modifiers.txt",
+      "common/casus_belli/content_test_casus_belli.txt",
+      "common/war_goals/content_test_war_goals.txt",
+      "common/agreement_presets/content_test_agreement_presets.txt",
+      "common/bombardment_stances/content_test_bombardment_stances.txt",
+      "common/archaeological_site_types/content_test_archaeological_site_types.txt",
+      "common/scripted_loc/content_test_scripted_loc.txt",
       "localisation/english/content_test_l_english.yml",
     ]);
   });

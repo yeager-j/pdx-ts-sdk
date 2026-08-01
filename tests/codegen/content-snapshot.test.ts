@@ -173,4 +173,41 @@ describe("content-type codegen", () => {
     expect(emissions.get("building")!.emittedFields).toContain("on_destroy");
     expect(emissions.get("decision")!.emittedFields).toContain("sound");
   });
+
+  it("generates casus_belli and war_goal without registry-specific code", () => {
+    const casusBelli = emissions.get("casus_belli");
+    expect(casusBelli?.code).toContain("export interface CasusBelliDef");
+    expect(casusBelli?.code).toContain("proxyWarResources?: EconomicResourceBlock<ScopeName>[];");
+    expect(casusBelli?.code).toContain('shape: "economicResources"');
+
+    const warGoal = emissions.get("war_goal");
+    expect(warGoal?.code).toContain("export interface WarGoalDef");
+    expect(warGoal?.code).toContain("casusBelli: CasusBelliRef | string;");
+    expect(warGoal?.code).toContain('aiWeight?: WeightBlock<"country">;');
+    expect(warGoal?.machineryBacklog.join("\n")).toContain("forbidden_peace_offers");
+  });
+
+  it("overrides dual bare/modifier_rule declarations that would otherwise pick the wrong shape", () => {
+    // bombardment_stance.planet_damage and archaeological_site_type.weight are each
+    // declared twice — once as a bare number, once as a modifier_rule block. Without
+    // the weightBlock override the field group picks the bare declaration first and
+    // silently drops the gated adjustments, the same failure mode opinion_modifier hit.
+    const bombardmentStance = emissions.get("bombardment_stance");
+    expect(bombardmentStance?.code).toContain("planetDamage?: WeightBlock<ScopeName>;");
+    expect(bombardmentStance?.code).toContain('aiWeight: WeightBlock<"fleet">;');
+
+    const archaeologicalSiteType = emissions.get("archaeological_site_type");
+    expect(archaeologicalSiteType?.code).toContain('weight?: WeightBlock<"planet">;');
+  });
+
+  it("keys agreement_preset and scripted_loc registries without hiding their blocked fields", () => {
+    const agreementPreset = emissions.get("agreement_preset");
+    expect(agreementPreset?.code).toContain("export interface AgreementPresetDef");
+    expect(agreementPreset?.code).toContain('overlordWeight?: WeightBlock<"country">;');
+    expect(agreementPreset?.machineryBacklog.join("\n")).toContain("term_data");
+
+    const scriptedLoc = emissions.get("scripted_loc");
+    expect(scriptedLoc?.code).toContain("export interface ScriptedLocDef");
+    expect(scriptedLoc?.machineryBacklog.join("\n")).toContain("text");
+  });
 });

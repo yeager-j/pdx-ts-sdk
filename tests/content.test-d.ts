@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import {
+  canGoMia,
   canJoinFactions,
   hasAuthority,
   hasCountryFlag,
@@ -8,13 +9,18 @@ import {
   isCapital,
   Mod,
   type AgendaRef,
+  type AgreementPresetRef,
+  type ArchaeologicalSiteTypeRef,
   type AscensionPerkRef,
+  type BombardmentStanceRef,
+  type CasusBelliRef,
   type DecisionRef,
   type EdictRef,
   type JobRef,
   type OpinionModifierRef,
   type TechnologyRef,
   type Trigger,
+  type WarGoalRef,
 } from "../src/index.ts";
 
 describe("generated content authoring types", () => {
@@ -81,6 +87,44 @@ describe("generated content authoring types", () => {
       category: "country",
     });
     expectTypeOf(scriptedModifier).toExtend<{ readonly id: string }>();
+    const casusBelli = mod.defineCasusBelli({
+      id: "content_types_casus_belli_x",
+      name: "X",
+      showNotification: true,
+    });
+    expectTypeOf(casusBelli).toExtend<CasusBelliRef>();
+    const warGoal = mod.defineWarGoal({
+      id: "content_types_war_goal_x",
+      name: "X",
+      casusBelli,
+    });
+    expectTypeOf(warGoal).toExtend<WarGoalRef>();
+    const agreementPreset = mod.defineAgreementPreset({
+      id: "content_types_agreement_preset_x",
+      name: "X",
+    });
+    expectTypeOf(agreementPreset).toExtend<AgreementPresetRef>();
+    const bombardmentStance = mod.defineBombardmentStance({
+      id: "content_types_bombardment_stance_x",
+      name: "X",
+      trigger: canGoMia(),
+      default: false,
+      aiWeight: { base: 1 },
+    });
+    expectTypeOf(bombardmentStance).toExtend<BombardmentStanceRef>();
+    const archaeologicalSiteType = mod.defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_x",
+      name: "X",
+      stages: 1,
+      allow: canGoMia(),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+    });
+    expectTypeOf(archaeologicalSiteType).toExtend<ArchaeologicalSiteTypeRef>();
+    const scriptedLoc = mod.defineScriptedLoc({
+      id: "content_types_scripted_loc_x",
+    });
+    expectTypeOf(scriptedLoc).toExtend<{ readonly id: string }>();
   });
 
   it("does not invent a category field on traditions", () => {
@@ -103,6 +147,31 @@ describe("generated content authoring types", () => {
     mod.defineOpinionModifier({ id: "other_opinion_modifier_x", name: "X", opinion: { base: 1 } });
     // @ts-expect-error — the scripted modifier id must carry the inferred mod prefix
     mod.defineScriptedModifier({ id: "other_scripted_modifier_x", category: "country" });
+    // @ts-expect-error — the casus belli id must carry the inferred mod prefix
+    mod.defineCasusBelli({ id: "other_casus_belli_x", name: "X", showNotification: true });
+    // @ts-expect-error — the war goal id must carry the inferred mod prefix
+    mod.defineWarGoal({ id: "other_war_goal_x", name: "X", casusBelli: "some_casus_belli" });
+    // @ts-expect-error — the agreement preset id must carry the inferred mod prefix
+    mod.defineAgreementPreset({ id: "other_agreement_preset_x", name: "X" });
+    mod.defineBombardmentStance({
+      // @ts-expect-error — the bombardment stance id must carry the inferred mod prefix
+      id: "other_bombardment_stance_x",
+      name: "X",
+      trigger: canGoMia(),
+      default: false,
+      aiWeight: { base: 1 },
+    });
+    mod.defineArchaeologicalSiteType({
+      // @ts-expect-error — the archaeological site type id must carry the inferred mod prefix
+      id: "other_archaeological_site_type_x",
+      name: "X",
+      stages: 1,
+      allow: canGoMia(),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+    });
+    // @ts-expect-error — the scripted loc id must carry the inferred mod prefix
+    mod.defineScriptedLoc({ id: "other_scripted_loc_x" });
     mod.defineTradition({
       id: "content_types_tradition_with_swap",
       name: "X",
@@ -243,6 +312,41 @@ describe("generated content authoring types", () => {
       },
       // @ts-expect-error — the opinion modifier's own trigger runs in country scope
       trigger: hasPlanetFlag("planet_only"),
+    });
+    mod.defineCasusBelli({
+      id: "content_types_casus_belli_scoped",
+      name: "X",
+      showNotification: true,
+      // @ts-expect-error — casus belli triggers run in country scope
+      potential: hasPlanetFlag("planet_only"),
+    });
+    mod.defineWarGoal({
+      id: "content_types_war_goal_scoped",
+      name: "X",
+      casusBelli: "some_casus_belli",
+      // @ts-expect-error — war goal ai_weight gates run in country scope
+      aiWeight: { modifiers: [{ factor: 2, when: hasPlanetFlag("planet_only") }] },
+    });
+    mod.defineBombardmentStance({
+      id: "content_types_bombardment_stance_scoped",
+      name: "X",
+      // @ts-expect-error — bombardment stance triggers run in fleet scope
+      trigger: hasCountryFlag("country_only"),
+      default: false,
+      aiWeight: { base: 1 },
+    });
+    mod.defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_scoped",
+      name: "X",
+      stages: 1,
+      allow: canGoMia(),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+      weight: {
+        base: 1,
+        // @ts-expect-error — archaeological site weight gates run in planet scope
+        modifiers: [{ factor: 2, when: hasCountryFlag("country_only") }],
+      },
     });
   });
 

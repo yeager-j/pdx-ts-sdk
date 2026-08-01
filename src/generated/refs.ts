@@ -370,6 +370,9 @@ export type ShipSizeRef = TypedRef<"ship_size">;
 /** A reference to a `<ship_size.starbase>`. */
 export type ShipSizeStarbaseRef = TypedRef<"ship_size.starbase">;
 
+/** A reference to a `<situation_log_category>`. */
+export type SituationLogCategoryRef = TypedRef<"situation_log_category">;
+
 /** A reference to a `<situation_type>`. */
 export type SituationTypeRef = TypedRef<"situation_type">;
 

@@ -1,0 +1,20 @@
+content_test_casus_belli_manufactured_grievance = {
+	potential = {
+		has_authority = auth_machine_intelligence
+	}
+	is_valid = {
+		always = yes
+	}
+	show_notification = yes
+	proxy_war_resources = {
+		category = physics_research
+		cost = {
+			unity = 50
+		}
+	}
+	on_proxy_war_start = {
+		set_country_flag = content_test_proxy_war_started
+	}
+	show_in_diplomacy = yes
+	aggregated_message_key = content_test_casus_belli_aggregated
+}

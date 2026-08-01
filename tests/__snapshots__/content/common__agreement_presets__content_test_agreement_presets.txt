@@ -1,0 +1,19 @@
+content_test_agreement_preset_tribute = {
+	icon = GFX_agreement_preset_tribute
+	overlord_weight = {
+		base = 10
+		modifier = {
+			factor = 2
+			has_authority = auth_machine_intelligence
+		}
+	}
+	subject_weight = {
+		base = -5
+	}
+	potential = {
+		has_authority = auth_machine_intelligence
+	}
+	hidden = no
+	should_ai_use_for_proposals = yes
+	can_preset_be_changed = yes
+}

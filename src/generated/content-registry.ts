@@ -12,6 +12,11 @@
 // From: common/components.cwt
 // From: common/modifiers.cwt
 // From: common/scripted_modifiers.cwt
+// From: common/casus_belli_and_war_goals.cwt
+// From: common/agreements.cwt
+// From: common/bombardment_stances.cwt
+// From: common/archaeology.cwt
+// From: common/scripted_loc.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -21,17 +26,41 @@ import {
   type DefinedAgenda,
 } from "./agenda.ts";
 import {
+  AGREEMENT_PRESET_FIELDS,
+  AGREEMENT_PRESET_LOCALISATION,
+  type AgreementPresetDef,
+  type DefinedAgreementPreset,
+} from "./agreement-preset.ts";
+import {
+  ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
+  ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
+  type ArchaeologicalSiteTypeDef,
+  type DefinedArchaeologicalSiteType,
+} from "./archaeological-site-type.ts";
+import {
   ASCENSION_PERK_FIELDS,
   ASCENSION_PERK_LOCALISATION,
   type AscensionPerkDef,
   type DefinedAscensionPerk,
 } from "./ascension-perk.ts";
 import {
+  BOMBARDMENT_STANCE_FIELDS,
+  BOMBARDMENT_STANCE_LOCALISATION,
+  type BombardmentStanceDef,
+  type DefinedBombardmentStance,
+} from "./bombardment-stance.ts";
+import {
   BUILDING_FIELDS,
   BUILDING_LOCALISATION,
   type BuildingDef,
   type DefinedBuilding,
 } from "./building.ts";
+import {
+  CASUS_BELLI_FIELDS,
+  CASUS_BELLI_LOCALISATION,
+  type CasusBelliDef,
+  type DefinedCasusBelli,
+} from "./casus-belli.ts";
 import {
   DECISION_FIELDS,
   DECISION_LOCALISATION,
@@ -52,6 +81,12 @@ import {
   type DefinedOpinionModifier,
   type OpinionModifierDef,
 } from "./opinion-modifier.ts";
+import {
+  SCRIPTED_LOC_FIELDS,
+  SCRIPTED_LOC_LOCALISATION,
+  type DefinedScriptedLoc,
+  type ScriptedLocDef,
+} from "./scripted-loc.ts";
 import {
   SCRIPTED_MODIFIER_FIELDS,
   SCRIPTED_MODIFIER_LOCALISATION,
@@ -88,6 +123,12 @@ import {
   type DefinedUtilityComponentTemplate,
   type UtilityComponentTemplateDef,
 } from "./utility-component-template.ts";
+import {
+  WAR_GOAL_FIELDS,
+  WAR_GOAL_LOCALISATION,
+  type DefinedWarGoal,
+  type WarGoalDef,
+} from "./war-goal.ts";
 import {
   WEAPON_COMPONENT_TEMPLATE_FIELDS,
   WEAPON_COMPONENT_TEMPLATE_LOCALISATION,
@@ -207,6 +248,49 @@ export const CONTENT_REGISTRIES = [
     fields: SCRIPTED_MODIFIER_FIELDS,
     localisation: SCRIPTED_MODIFIER_LOCALISATION,
   },
+  {
+    type: "casus_belli",
+    outputDir: "common/casus_belli",
+    fileStem: "casus_belli",
+    fields: CASUS_BELLI_FIELDS,
+    localisation: CASUS_BELLI_LOCALISATION,
+  },
+  {
+    type: "war_goal",
+    outputDir: "common/war_goals",
+    fileStem: "war_goals",
+    fields: WAR_GOAL_FIELDS,
+    localisation: WAR_GOAL_LOCALISATION,
+  },
+  {
+    type: "agreement_preset",
+    outputDir: "common/agreement_presets",
+    fileStem: "agreement_presets",
+    fields: AGREEMENT_PRESET_FIELDS,
+    localisation: AGREEMENT_PRESET_LOCALISATION,
+  },
+  {
+    type: "bombardment_stance",
+    outputDir: "common/bombardment_stances",
+    fileStem: "bombardment_stances",
+    fields: BOMBARDMENT_STANCE_FIELDS,
+    localisation: BOMBARDMENT_STANCE_LOCALISATION,
+  },
+  {
+    type: "archaeological_site_type",
+    outputDir: "common/archaeological_site_types",
+    fileStem: "archaeological_site_types",
+    fields: ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
+    localisation: ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
+  },
+  {
+    type: "scripted_loc",
+    outputDir: "common/scripted_loc",
+    fileStem: "scripted_loc",
+    fields: SCRIPTED_LOC_FIELDS,
+    localisation: SCRIPTED_LOC_LOCALISATION,
+    keyedBy: { keyword: "defined_text", nameField: "name" },
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -227,6 +311,12 @@ export interface ContentDefMap<P extends string> {
   strike_craft_component_template: StrikeCraftComponentTemplateDef<PrefixedId<P>>;
   opinion_modifier: OpinionModifierDef<PrefixedId<P>>;
   scripted_modifier: ScriptedModifierDef<PrefixedId<P>>;
+  casus_belli: CasusBelliDef<PrefixedId<P>>;
+  war_goal: WarGoalDef<PrefixedId<P>>;
+  agreement_preset: AgreementPresetDef<PrefixedId<P>>;
+  bombardment_stance: BombardmentStanceDef<PrefixedId<P>>;
+  archaeological_site_type: ArchaeologicalSiteTypeDef<PrefixedId<P>>;
+  scripted_loc: ScriptedLocDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -245,6 +335,12 @@ export interface DefinedContentMap<P extends string> {
   strike_craft_component_template: DefinedStrikeCraftComponentTemplate<PrefixedId<P>>;
   opinion_modifier: DefinedOpinionModifier<PrefixedId<P>>;
   scripted_modifier: DefinedScriptedModifier<PrefixedId<P>>;
+  casus_belli: DefinedCasusBelli<PrefixedId<P>>;
+  war_goal: DefinedWarGoal<PrefixedId<P>>;
+  agreement_preset: DefinedAgreementPreset<PrefixedId<P>>;
+  bombardment_stance: DefinedBombardmentStance<PrefixedId<P>>;
+  archaeological_site_type: DefinedArchaeologicalSiteType<PrefixedId<P>>;
+  scripted_loc: DefinedScriptedLoc<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -342,5 +438,41 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["scripted_modifier"]
   ): DefinedContentMap<P>["scripted_modifier"] {
     return this.defineGeneratedContent("scripted_modifier", def);
+  }
+
+  /** Defines a casus belli in this mod. */
+  defineCasusBelli(def: ContentDefMap<P>["casus_belli"]): DefinedContentMap<P>["casus_belli"] {
+    return this.defineGeneratedContent("casus_belli", def);
+  }
+
+  /** Defines a war goal in this mod. */
+  defineWarGoal(def: ContentDefMap<P>["war_goal"]): DefinedContentMap<P>["war_goal"] {
+    return this.defineGeneratedContent("war_goal", def);
+  }
+
+  /** Defines an agreement preset in this mod. */
+  defineAgreementPreset(
+    def: ContentDefMap<P>["agreement_preset"]
+  ): DefinedContentMap<P>["agreement_preset"] {
+    return this.defineGeneratedContent("agreement_preset", def);
+  }
+
+  /** Defines a bombardment stance in this mod. */
+  defineBombardmentStance(
+    def: ContentDefMap<P>["bombardment_stance"]
+  ): DefinedContentMap<P>["bombardment_stance"] {
+    return this.defineGeneratedContent("bombardment_stance", def);
+  }
+
+  /** Defines an archaeological site type in this mod. */
+  defineArchaeologicalSiteType(
+    def: ContentDefMap<P>["archaeological_site_type"]
+  ): DefinedContentMap<P>["archaeological_site_type"] {
+    return this.defineGeneratedContent("archaeological_site_type", def);
+  }
+
+  /** Defines a scripted loc in this mod. */
+  defineScriptedLoc(def: ContentDefMap<P>["scripted_loc"]): DefinedContentMap<P>["scripted_loc"] {
+    return this.defineGeneratedContent("scripted_loc", def);
   }
 }

@@ -151,6 +151,11 @@ export const REQUIRED_LOCALISATION = new Set([
   "decision.name",
   "job.name",
   "opinion_modifier.name",
+  "casus_belli.name",
+  "war_goal.name",
+  "agreement_preset.name",
+  "bombardment_stance.name",
+  "archaeological_site_type.name",
 ]);
 
 /**
@@ -465,6 +470,69 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       shape: "weightBlock",
       reason:
         "Same dual bare-float/modifier_rule declaration as opinion, gated to non-triggered subtypes.",
+    },
+  ],
+  [
+    "casus_belli.proxy_war_resources",
+    {
+      shape: "economicResources",
+      reason:
+        "Same category-plus-economic_template-splice shape as job.resources, repeated 0..inf.",
+    },
+  ],
+  [
+    "war_goal.ai_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "agreement_preset.overlord_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "agreement_preset.subject_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "bombardment_stance.kill_pop_chance",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "bombardment_stance.planet_damage",
+    {
+      shape: "weightBlock",
+      reason:
+        "Declared twice, as a bare float and as a modifier_rule block; without the override the " +
+        "group picks the bare float and silently drops the gated adjustments, same failure mode " +
+        "as opinion_modifier.opinion.",
+    },
+  ],
+  [
+    "bombardment_stance.ai_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "archaeological_site_type.weight",
+    {
+      shape: "weightBlock",
+      reason:
+        "Declared twice, as a modifier_rule block and as a bare int; without the override the " +
+        "group picks the bare int and silently drops the gated adjustments, same failure mode as " +
+        "opinion_modifier.opinion.",
     },
   ],
 ]);

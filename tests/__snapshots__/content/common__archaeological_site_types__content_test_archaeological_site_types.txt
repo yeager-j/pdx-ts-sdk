@@ -1,0 +1,29 @@
+content_test_archaeological_site_type_derelict = {
+	picture = GFX_archaeological_site_derelict
+	desc = "The ruins of a forgotten station."
+	situation_log_category = arch_site
+	max_instances = 3
+	notification_duration = 30
+	weight = {
+		base = 10
+		modifier = {
+			factor = 2
+			has_planet_flag = content_test_archaeological_planet_flag
+		}
+	}
+	stages = 3
+	potential = {
+		can_go_mia = yes
+	}
+	allow = {
+		can_go_mia = yes
+	}
+	visible = {
+		has_authority = auth_machine_intelligence
+	}
+	on_roll_failed = {}
+	on_create = {}
+	on_visible = {
+		set_country_flag = content_test_site_visible
+	}
+}

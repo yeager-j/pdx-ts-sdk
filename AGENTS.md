@@ -67,27 +67,41 @@ The content system is deliberately generic. Adding a registry such as `ascension
 generate `AscensionPerkDef`, `DefinedAscensionPerk`, and `Mod.defineAscensionPerk` without a new
 emitter, writer class, or type-name conditional.
 
+Every field the emitter can lower is emitted automatically — there is no curated field allowlist to
+maintain. A field being mechanically typeable is still not proof the SDK lowers it *correctly*, but
+that risk is caught by evidence (the corpus conformance gate below and the tests you add), not by
+pre-review of a list.
+
 1. Find the CWT `type[...]` declaration and its source file under
    `vendor/cwtools-stellaris-config/config/`. Confirm the declared `path` is the Stellaris output
-   directory you expect.
-2. Add the type and source file to the explicit allowlist in
-   `tools/codegen/content-manifest.ts`.
-3. Add a reviewed field allowlist to `CONTENT_EMITTED_FIELDS` in `tools/codegen/overlay.ts`. A
-   field being mechanically typeable is not proof that the SDK lowers it correctly.
-4. Add only the necessary overlay entries:
+   directory you expect. If the rules mark the type `name_field = "..."`, the entries are keyed by a
+   repeated top-level keyword rather than by id; work out that keyword (checking any
+   `type_key_filter` the rules declare) — you will need it in the next step.
+2. Add the type and source file to the explicit allowlist in `tools/codegen/content-manifest.ts`,
+   with a `keyword` for `name_field` registries.
+3. Run `npm run codegen` and read its report. Add overlay rows only where the emitted shape is
+   actually wrong or the rules need help:
    - `REQUIRED_LOCALISATION` for localization the authoring API should require
    - `FIELD_WIDENINGS` for intentional ergonomic input forms
-   - `CONTENT_FIELD_OVERRIDES` when the field shape cannot be inferred correctly
+   - `CONTENT_FIELD_OVERRIDES` when the field shape cannot be inferred correctly — including a field
+     the rules declare twice (once as a bare scalar, once as a `modifier_rule` block), where the
+     generic picker silently keeps the bare form and drops the gated adjustments
    - nested-definition metadata only when the CWT field is genuinely a nested content definition
-5. Run codegen and inspect its report and generated files. Fix the generic model when a shape is
+   - `CONTENT_DECLINED_FIELDS`, the only way to keep a field the emitter *can* lower out of the
+     authoring surface. It should stay nearly empty and needs a real reason, not "not reviewed yet".
+4. Re-run codegen and inspect its report and generated files. Fix the generic model when a shape is
    reusable. Do not add `if (type === "...")` branches to the generic writer or emitter.
-6. Export the new generated public types from `src/index.ts`.
-7. Add all three kinds of evidence:
+5. Export the new generated public types from `src/index.ts`.
+6. Add all four kinds of evidence:
    - codegen coverage in `tests/codegen/content-snapshot.test.ts`
+   - corpus coverage in `tests/codegen/corpus-conformance.test.ts` — it parses the real installed
+     game and measures the emitted interface against every shipped definition. A field the emitter
+     invents with zero real precedent is worth verifying by hand against the vendored rules; a
+     registry parsing to zero definitions means the path or keyword is wrong.
    - compile-time API and scope/reference safety in `tests/content.test-d.ts`
    - runtime serialization coverage and file snapshots in `tests/content.test.ts` and
      `tests/__snapshots__/content/`
-8. Add or update a README example when the new registry introduces an authoring pattern users
+7. Add or update a README example when the new registry introduces an authoring pattern users
    would not infer from existing content types.
 
 Use the generated naming rather than adding hand-written aliases: a snake-case type such as

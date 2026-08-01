@@ -45,6 +45,9 @@ export type BuildingCategory =
 /** `enum[carrier_type]`. */
 export type CarrierType = "planet" | "ship";
 
+/** `enum[cede_claim]`. */
+export type CedeClaim = "yes" | "occupied_only" | "no";
+
 /** `enum[colossus_statu]`. */
 export type ColossusStatu = "charging" | "firing";
 
@@ -184,6 +187,9 @@ export type OptimisationBatch = "begin" | "end";
 /** `enum[patron_contact_state]`. */
 export type PatronContactState = "none" | "in_progress" | "completed";
 
+/** `enum[peace_offer]`. */
+export type PeaceOffer = "status_quo" | "surrender" | "demand_surrender";
+
 /** `enum[planet_resource_compare_type]`. */
 export type PlanetResourceCompareType = "produces" | "upkeep" | "balance";
 
@@ -308,6 +314,9 @@ export type TruceType = "war" | "liberation" | "alliance" | "guarantee" | "none"
 
 /** `enum[tutorial_level]`. */
 export type TutorialLevel = "0" | "1" | "2" | "full" | "medium" | "none";
+
+/** `enum[war_goal_hide]`. */
+export type WarGoalHide = "never" | "always" | "no_cb";
 
 /** `enum[war_side]`. */
 export type WarSide = "attackers" | "defenders";

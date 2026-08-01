@@ -1,0 +1,6 @@
+defined_text = {
+	name = content_test_scripted_loc_flavor_text
+	random = no
+	value = 1
+	default = content_test_scripted_loc_flavor_text_default
+}

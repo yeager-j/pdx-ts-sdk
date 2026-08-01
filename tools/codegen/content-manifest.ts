@@ -64,4 +64,14 @@ export const CONTENT_MANIFEST = [
   },
   { type: "opinion_modifier", source: "common/modifiers.cwt" },
   { type: "scripted_modifier", source: "common/scripted_modifiers.cwt" },
+  { type: "casus_belli", source: "common/casus_belli_and_war_goals.cwt" },
+  { type: "war_goal", source: "common/casus_belli_and_war_goals.cwt" },
+  { type: "agreement_preset", source: "common/agreements.cwt" },
+  { type: "bombardment_stance", source: "common/bombardment_stances.cwt" },
+  { type: "archaeological_site_type", source: "common/archaeology.cwt" },
+  {
+    type: "scripted_loc",
+    source: "common/scripted_loc.cwt",
+    keyword: "defined_text",
+  },
 ] as const satisfies readonly ContentManifestEntry[];

@@ -23,12 +23,32 @@ export { onActions } from "./generated/on-actions.ts";
 export type { OnActionRef } from "./on-actions.ts";
 export type { AgendaDef, AgendaFields, DefinedAgenda } from "./generated/agenda.ts";
 export type {
+  AgreementPresetDef,
+  AgreementPresetFields,
+  DefinedAgreementPreset,
+} from "./generated/agreement-preset.ts";
+export type {
+  ArchaeologicalSiteTypeDef,
+  ArchaeologicalSiteTypeFields,
+  DefinedArchaeologicalSiteType,
+} from "./generated/archaeological-site-type.ts";
+export type {
   AscensionPerkDef,
   AscensionPerkFields,
   AscensionPerkSwapDef,
   DefinedAscensionPerk,
 } from "./generated/ascension-perk.ts";
+export type {
+  BombardmentStanceDef,
+  BombardmentStanceFields,
+  DefinedBombardmentStance,
+} from "./generated/bombardment-stance.ts";
 export type { BuildingDef, BuildingFields, DefinedBuilding } from "./generated/building.ts";
+export type {
+  CasusBelliDef,
+  CasusBelliFields,
+  DefinedCasusBelli,
+} from "./generated/casus-belli.ts";
 export type { DecisionDef, DecisionFields, DefinedDecision } from "./generated/decision.ts";
 export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";
 export type { DefinedJob, JobDef, JobFields } from "./generated/job.ts";
@@ -37,6 +57,11 @@ export type {
   OpinionModifierDef,
   OpinionModifierFields,
 } from "./generated/opinion-modifier.ts";
+export type {
+  DefinedScriptedLoc,
+  ScriptedLocDef,
+  ScriptedLocFields,
+} from "./generated/scripted-loc.ts";
 export type {
   DefinedScriptedModifier,
   ScriptedModifierDef,
@@ -54,6 +79,7 @@ export type {
   TraditionFields,
   TraditionSwapDef,
 } from "./generated/tradition.ts";
+export type { DefinedWarGoal, WarGoalDef, WarGoalFields } from "./generated/war-goal.ts";
 export type {
   DefinedEvent,
   EventCtx,

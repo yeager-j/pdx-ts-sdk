@@ -1,0 +1,23 @@
+content_test_bombardment_stance_scorched_earth = {
+	trigger = {
+		can_go_mia = yes
+	}
+	default = no
+	stop_when_armies_dead = no
+	accept_surrender = no
+	planet_damage = {
+		base = 1.5
+	}
+	army_damage = 1.2
+	kill_pop_chance = {
+		base = 0.1
+		modifier = {
+			factor = 2
+			always = yes
+		}
+	}
+	min_pops_to_kill_pop = 5
+	ai_weight = {
+		base = 1
+	}
+}

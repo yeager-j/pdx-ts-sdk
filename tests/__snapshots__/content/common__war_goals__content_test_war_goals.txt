@@ -1,0 +1,26 @@
+content_test_war_goal_liberation = {
+	casus_belli = content_test_casus_belli_manufactured_grievance
+	hide = no_cb
+	cede_claims = "yes"
+	threat_multiplier = 1.5
+	surrender_acceptance = 10
+	war_exhaustion = 1.2
+	potential = {
+		has_authority = auth_machine_intelligence
+	}
+	possible = {
+		always = yes
+	}
+	allowed_peace_offers = { status_quo surrender }
+	on_status_quo = {
+		set_country_flag = content_test_status_quo
+	}
+	ai_weight = {
+		base = 5
+		modifier = {
+			factor = 2
+			has_authority = auth_machine_intelligence
+		}
+	}
+	destroy_starbases = yes
+}
