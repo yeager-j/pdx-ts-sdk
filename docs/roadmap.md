@@ -63,6 +63,30 @@ Not yet attempted:
 
 ## Machinery
 
+### Scope links
+
+**Largest remaining gap, and it is not a registry.** `owner = { ... }` appears
+**8062 times** across vanilla's `common/`, in both trigger and effect position:
+
+```
+owner = { is_subject = no }                                   # trigger
+owner = { country_event = { id = doa_ascension_event.8 } }    # effect
+```
+
+Nothing in `tools/codegen` reads `links.cwt`, no `owner` exists in the generated
+triggers or effects, and `effect-core.ts` has no scope-link concept. List-shaped
+transitions like `everyOwnedPlanet` exist and work; single-link navigation does
+not.
+
+This corrects the day-one survey, which concluded the expression layer held up.
+That was based on spot-checking effect _names_ — every one resolved — and never
+checked scope _navigation_.
+
+Five of Dawn of Ascension's seven situations need it, and so does a large share
+of every other registry's trigger blocks. It should be sized before any more
+registry work: a registry that lands at high field coverage can still be
+unusable if its triggers cannot leave the definition's own scope.
+
 ### Repeated-struct field shape
 
 **Landed 2026-08-01.** A field that repeats, each occurrence an anonymous
