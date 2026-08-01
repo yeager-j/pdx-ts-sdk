@@ -7,12 +7,16 @@ import {
   hasCountryFlag,
   hasGlobalFlag,
   hasPlanetFlag,
+  isAtWar,
+  overlord,
+  owner,
   yearsPassed,
   type ScopeName,
   type Trigger,
 } from "../src/triggers.ts";
 
 function countrySlot(_t: Trigger<"country">): void {}
+function planetSlot(_t: Trigger<"planet">): void {}
 
 describe("scope safety", () => {
   it("rejects a planet-scoped trigger where a country trigger is required", () => {
@@ -48,6 +52,23 @@ describe("scope safety", () => {
   it("keeps universal triggers universal under combinators", () => {
     const combined = and(hasGlobalFlag("x"), yearsPassed(">", 5));
     expectTypeOf(combined).toExtend<Trigger<ScopeName>>();
+  });
+
+  it("accepts a scope link wherever one of its input scopes is required", () => {
+    // owner's condition runs in country scope; the result is valid in planet
+    // (and 24 other) scopes, so it fits a planet slot by contravariance.
+    planetSlot(owner(isAtWar()));
+    countrySlot(owner(hasCountryFlag("x")));
+  });
+
+  it("rejects a condition outside the link's output scope", () => {
+    // @ts-expect-error — owner lands in country scope; has_planet_flag is planet-scoped
+    planetSlot(owner(hasPlanetFlag("ideal_world")));
+  });
+
+  it("rejects a scope link used outside its input scopes", () => {
+    // @ts-expect-error — overlord only navigates from country scope
+    planetSlot(overlord(isAtWar()));
   });
 
   it("poisons truthiness so triggers cannot be used in a build-time if", () => {

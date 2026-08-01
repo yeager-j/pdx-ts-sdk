@@ -74,4 +74,19 @@ describe("emitted effect signatures", () => {
           shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },"
     `);
   });
+
+  it("scope link: a body-only closure typed to the link's output scope", () => {
+    expect(signature("owner")).toMatchInlineSnapshot(
+      `"owner(body: (scope: CountryScope) => void): void;"`
+    );
+    expect(signature("capitalScope")).toMatchInlineSnapshot(
+      `"capitalScope(body: (scope: ColonyScope) => void): void;"`
+    );
+  });
+
+  it("scope link meta: a field-less wrapper the runtime already dispatches", () => {
+    expect(metaEntry("owner")).toMatchInlineSnapshot(
+      `"owner: { key: "owner", shape: { kind: "wrapper", fields: null } },"`
+    );
+  });
 });

@@ -83,6 +83,27 @@ export interface ContentBody {
   readonly scope: ScopeContext | null;
 }
 
+/**
+ * One entry of `links.cwt`'s `links = { ... }` table. A static scope link
+ * (`owner = { is_at_war = yes }`) navigates from any of its input scopes to its
+ * output scope; `type = value` entries produce numbers instead, and
+ * `from_data = yes` entries take a data-driven second half (`parameter:x`).
+ */
+export interface LinkDecl {
+  readonly name: string;
+  readonly docs: readonly string[];
+  /** Raw scope tokens; `all` means valid everywhere. */
+  readonly inputScopes: readonly string[];
+  /** Raw scope token; `any` is runtime-polymorphic. Value links have none. */
+  readonly outputScope: string | null;
+  /** Absent `type` in the rules means `scope`. */
+  readonly type: "scope" | "value";
+  readonly fromData: boolean;
+  readonly prefix: string | null;
+  readonly file: string;
+  readonly line: number;
+}
+
 export interface OnActionDecl {
   readonly name: string;
   readonly eventType: string | null;
@@ -99,6 +120,8 @@ export interface RuleSet {
   readonly triggers: ReadonlyMap<string, readonly AliasDecl[]>;
   /** Loaded only so the drift gate covers effects too; nothing emits them yet. */
   readonly effects: ReadonlyMap<string, readonly AliasDecl[]>;
+  /** Scope links from `links.cwt`, the `owner = { ... }` navigation table. */
+  readonly links: ReadonlyMap<string, LinkDecl>;
   readonly contentTypes: ReadonlyMap<string, ContentType>;
   /** Top-level rule bodies keyed by content type, e.g. `technology = { ... }`. */
   readonly bodies: ReadonlyMap<string, ContentBody>;
@@ -116,6 +139,7 @@ const RULE_FILES = [
   "aliases.cwt",
   "enums.cwt",
   "scopes.cwt",
+  "links.cwt",
   "triggers.cwt",
   "effects.cwt",
   "events/events.cwt",
@@ -186,6 +210,42 @@ function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): voi
           : []
       );
       into.set(entry.key.text, aliases);
+    }
+  }
+}
+
+function readLinks(nodes: readonly CwtNode[], file: string, into: Map<string, LinkDecl>): void {
+  for (const outer of assignments(nodes)) {
+    if (outer.key.text !== "links" || outer.value.kind !== "block") {
+      continue;
+    }
+    for (const entry of assignments(outer.value.nodes)) {
+      if (entry.value.kind !== "block") {
+        continue;
+      }
+      const fields = assignments(entry.value.nodes);
+      const scalar = (name: string): string | null => {
+        const field = fields.find((node) => node.key.text === name);
+        return field?.value.kind === "scalar" ? field.value.text : null;
+      };
+      const inputScopes = fields.flatMap((node) =>
+        node.key.text === "input_scopes" && node.value.kind === "block"
+          ? node.value.nodes.flatMap((item) =>
+              item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
+            )
+          : []
+      );
+      into.set(entry.key.text, {
+        name: entry.key.text,
+        docs: entry.docs,
+        inputScopes,
+        outputScope: scalar("output_scope"),
+        type: scalar("type") === "value" ? "value" : "scope",
+        fromData: scalar("from_data") === "yes",
+        prefix: scalar("prefix"),
+        file,
+        line: entry.line,
+      });
     }
   }
 }
@@ -386,6 +446,7 @@ export function loadRules(root: string): RuleSet {
   const scopes = new Map<string, string[]>();
   const triggers = new Map<string, AliasDecl[]>();
   const effects = new Map<string, AliasDecl[]>();
+  const links = new Map<string, LinkDecl>();
   const contentTypes = new Map<string, ContentType>();
   const bodies = new Map<string, ContentBody>();
   const onActions: OnActionDecl[] = [];
@@ -402,6 +463,7 @@ export function loadRules(root: string): RuleSet {
     readSingleAliases(parsed.nodes, singleAliases);
     readEnums(parsed.nodes, enums);
     readScopes(parsed.nodes, scopes);
+    readLinks(parsed.nodes, relative, links);
     readAliases(parsed.nodes, relative, "trigger", singleAliases, triggers);
     readAliases(parsed.nodes, relative, "effect", singleAliases, effects);
     readContentTypes(parsed.nodes, contentTypes);
@@ -416,6 +478,7 @@ export function loadRules(root: string): RuleSet {
     scopes,
     triggers,
     effects,
+    links,
     contentTypes,
     bodies,
     onActions,

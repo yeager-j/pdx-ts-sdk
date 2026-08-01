@@ -28,6 +28,8 @@ export interface TriggerEmission {
   readonly emitted: number;
   readonly byShape: ReadonlyMap<string, number>;
   readonly skipped: readonly SkippedRule[];
+  /** Every emitted function name, for the scope-link collision guard. */
+  readonly names: ReadonlySet<string>;
 }
 
 type Shape =
@@ -256,6 +258,7 @@ export function emitTriggers(
   const skipped: SkippedRule[] = [];
   const byShape = new Map<string, number>();
   const chunks: string[] = [];
+  const names = new Set<string>();
   let emitted = 0;
 
   for (const key of [...emitter.rules.triggers.keys()].sort()) {
@@ -288,9 +291,10 @@ export function emitTriggers(
       continue;
     }
     chunks.push(emitOne(key, shape, scope, tsDoc(declarations, doc)));
+    names.add(safeIdentifier(camelCase(key)));
     byShape.set(shape.kind, (byShape.get(shape.kind) ?? 0) + 1);
     emitted += 1;
   }
 
-  return { code: chunks.join("\n"), emitted, byShape, skipped };
+  return { code: chunks.join("\n"), emitted, byShape, skipped, names };
 }

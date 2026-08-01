@@ -10,6 +10,7 @@ import {
   isAi,
   not,
   or,
+  owner,
   trigger,
   yearsPassed,
 } from "../src/triggers.ts";
@@ -24,6 +25,19 @@ describe("trigger builders", () => {
       		any_country = {
       			is_ai = yes
       		}
+      	}
+      }
+      "
+    `);
+  });
+
+  it("emits a scope link as one navigation block", () => {
+    const condition = owner(and(isAi(), hasCountryFlag("ascended")));
+    expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
+      "owner = {
+      	AND = {
+      		is_ai = yes
+      		has_country_flag = ascended
       	}
       }
       "

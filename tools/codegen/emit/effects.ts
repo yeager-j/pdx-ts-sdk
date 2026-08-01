@@ -21,7 +21,8 @@ import type { RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
-import { FIRE_EFFECTS, HAND_WRITTEN_EFFECTS } from "../overlay.ts";
+import { FIRE_EFFECTS, HAND_WRITTEN_EFFECTS, STRUCTURAL_EFFECT_METHODS } from "../overlay.ts";
+import type { ClassifiedLink } from "./links.ts";
 import {
   canonicalScopeSet,
   mergeFields,
@@ -44,6 +45,8 @@ export interface EffectEmission {
   readonly clusterCount: number;
   /** Rules overloaded between a block and a scalar, emitted scalar-only. */
   readonly scalarOnly: readonly string[];
+  /** Scope-link methods folded into the clusters alongside the effects. */
+  readonly linkEmitted: number;
 }
 
 type EffectShape =
@@ -274,7 +277,8 @@ function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefined): s
 export function emitEffects(
   emitter: Emitter,
   docs: ReadonlyMap<string, DocEntry>,
-  scopeIndex: ReadonlyMap<string, string>
+  scopeIndex: ReadonlyMap<string, string>,
+  links: readonly ClassifiedLink[]
 ): EffectEmission {
   const skipped: SkippedRule[] = [];
   const scalarOnly: string[] = [];
@@ -333,6 +337,43 @@ export function emitEffects(
     cluster.effects.push(effect);
     clusters.set(clusterKey, cluster);
     byShape.set(resolved.kind, (byShape.get(resolved.kind) ?? 0) + 1);
+  }
+
+  // Scope links join the same clusters as ordinary wrapper effects, so the
+  // interfaces, ScopeMap, and EFFECT_META carry them with no special casing.
+  // A name collision is a hard error, not a skip: the link method would merge
+  // with an existing interface member and the Proxy would dispatch wrongly.
+  const effectCount = [...clusters.values()].reduce(
+    (sum, cluster) => sum + cluster.effects.length,
+    0
+  );
+
+  const takenMethods = new Set([
+    ...STRUCTURAL_EFFECT_METHODS,
+    ...[...FIRE_EFFECTS].map((key) => camelCase(key)),
+    ...[...clusters.values()].flatMap((cluster) => cluster.effects.map((effect) => effect.method)),
+  ]);
+  for (const link of links) {
+    if (takenMethods.has(link.method)) {
+      throw new Error(
+        `scope link "${link.key}" would emit method "${link.method}", which the effect ` +
+          "surface already carries — rename via the overlay before generating"
+      );
+    }
+    const scopes = canonicalScopeSet(link.inputScopes, scopeIndex);
+    if (scopes === null) {
+      throw new Error(`scope link "${link.key}" passed classification with an unknown scope`);
+    }
+    const effect: EmittedEffect = {
+      method: link.method,
+      key: link.key,
+      shape: { kind: "wrapper", scope: link.outputScope, fields: null },
+      docs: link.docs,
+    };
+    const clusterKey = scopes === "universal" ? "universal" : scopes.join("|");
+    const cluster = clusters.get(clusterKey) ?? { scopes, effects: [] };
+    cluster.effects.push(effect);
+    clusters.set(clusterKey, cluster);
   }
 
   const sortedClusters = [...clusters.values()].sort((left, right) =>
@@ -408,14 +449,14 @@ export function emitEffects(
     metaEntries +
     "};\n";
 
-  const emitted = sortedClusters.reduce((sum, cluster) => sum + cluster.effects.length, 0);
   return {
     interfaces,
     meta,
-    emitted,
+    emitted: effectCount,
     byShape,
     skipped,
     clusterCount: sortedClusters.length,
     scalarOnly,
+    linkEmitted: links.length,
   };
 }

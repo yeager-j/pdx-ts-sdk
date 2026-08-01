@@ -14,6 +14,7 @@ import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
+import { classifyLinks, emitTriggerLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
 import type { SkippedRule } from "./emit/shape.ts";
@@ -81,7 +82,13 @@ function checkDrift(report: DriftReport, rebaseline: boolean): void {
     console.log(`Rebaselined drift: ${BASELINE}`);
     return;
   }
-  const baseline = JSON.parse(readFileSync(BASELINE, "utf8")) as DriftReport;
+  // A baseline written before a join existed reads as that join being empty,
+  // so adding a join reports its entire current state as drift to review
+  // instead of crashing on the missing field.
+  const baseline = {
+    links: { rulesOnly: [], docsOnly: [] },
+    ...(JSON.parse(readFileSync(BASELINE, "utf8")) as Partial<DriftReport>),
+  } as DriftReport;
   const differences = compareToBaseline(report, baseline);
   if (differences.length === 0) {
     return;
@@ -108,7 +115,7 @@ async function main(): Promise<void> {
   const links = parseScopeLinks(readFileSync(`${DOCS}/scopes.log`, "utf8"));
   const modifierDocs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
 
-  checkDrift(reconcile(rules, docs, modifierDocs), rebaseline);
+  checkDrift(reconcile(rules, docs, modifierDocs, links), rebaseline);
 
   const emitter = new Emitter(rules);
   const index = scopeIndex(rules);
@@ -116,8 +123,18 @@ async function main(): Promise<void> {
   const triggers = emitTriggers(emitter, docs.triggers, index);
   const triggerUsage = emitter.endFile();
 
+  const dumpLinks = new Map(links.map((link) => [link.name, link]));
+  const classifiedLinks = classifyLinks(emitter, dumpLinks, index);
+  // The hand exports of src/triggers.ts share the links file's export
+  // namespace through its `export *`, so they count as taken names too.
+  const triggerLinks = emitTriggerLinks(
+    classifiedLinks,
+    index,
+    new Set([...triggers.names, "trigger", "and", "or", "not", "nand", "nor"])
+  );
+
   emitter.beginFile();
-  const effects = emitEffects(emitter, docs.effects, index);
+  const effects = emitEffects(emitter, docs.effects, index, classifiedLinks.links);
   const effectUsage = emitter.endFile();
 
   const contents: Array<{
@@ -255,8 +272,22 @@ async function main(): Promise<void> {
       triggers.code
   );
   await write(
+    "links.ts",
+    header(commit, ["links.cwt", "script-docs/v4.4.1/scopes.log"]) +
+      'import { block } from "@pdx-ts/pdxscript";\n' +
+      'import { trigger, type Trigger } from "../trigger-core.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      triggerLinks.code
+  );
+  await write(
     "effects.ts",
-    header(commit, ["effects.cwt", "aliases.cwt", "script-docs/v4.4.1/effects.log"]) +
+    header(commit, [
+      "effects.cwt",
+      "aliases.cwt",
+      "links.cwt",
+      "script-docs/v4.4.1/effects.log",
+      "script-docs/v4.4.1/scopes.log",
+    ]) +
       'import type { PdxOp } from "@pdx-ts/pdxscript";\n' +
       'import type { Modifier, StructuralEffects } from "../effect-core.ts";\n' +
       'import type { Trigger } from "../trigger-core.ts";\n' +
@@ -276,7 +307,10 @@ async function main(): Promise<void> {
       "\n" +
       effects.interfaces
   );
-  await write("effect-meta.ts", header(commit, ["effects.cwt", "aliases.cwt"]) + effects.meta);
+  await write(
+    "effect-meta.ts",
+    header(commit, ["effects.cwt", "aliases.cwt", "links.cwt"]) + effects.meta
+  );
   const events = emitEvents(emitter);
   await write(
     "events.ts",
@@ -290,10 +324,13 @@ async function main(): Promise<void> {
   console.log(`cwtools-stellaris-config @ ${commit.slice(0, 12)}`);
   console.log(
     `\nscopes: ${canonicalScopes(rules.scopes).length}` +
-      ` | scope links read: ${links.length}` +
       ` | enums emitted: ${emitter.usedEnums.size}` +
       ` | refs emitted: ${emitter.usedRefs.size}` +
       ` | value sets emitted: ${emitter.usedValueSets.size}`
+  );
+  console.log(
+    `scope links: ${triggerLinks.emitted} trigger fns, ${effects.linkEmitted} effect methods` +
+      ` emitted of ${rules.links.size} declared`
   );
   console.log(
     `modifiers: ${modifiers.names} names emitted` +
@@ -320,6 +357,10 @@ async function main(): Promise<void> {
 
   reportSection("Triggers not emitted", summarise(triggers.skipped));
   reportSection("Effects not emitted", summarise(effects.skipped));
+  reportSection(
+    "Scope links not emitted",
+    classifiedLinks.skipped.map((entry) => `${entry.name} — ${entry.reason}`)
+  );
   reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
   reportSection("On-actions not emitted", onActions.skipped);
   reportSection("Enums widened to string (rules declare no values)", valuelessEnums(emitter));

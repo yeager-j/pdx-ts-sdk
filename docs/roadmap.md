@@ -35,7 +35,7 @@ Landed: `technology`, `building`, `tradition`, `tradition_category`,
 `scripted_modifier`, `casus_belli`, `war_goal`, `agreement_preset`,
 `bombardment_stance`, `archaeological_site_type`, `global_ship_design`,
 `utility_component_template`, `weapon_component_template`,
-`strike_craft_component_template`, `scripted_loc`.
+`strike_craft_component_template`, `scripted_loc`, `situation_type`.
 
 Blocked, each on a named cause:
 
@@ -46,10 +46,6 @@ Blocked, each on a named cause:
       of the definition; `mergeByName` only tracks fields whose key kind is
       `"name"`, so the splice is invisible to the field model. Needs a
       top-level unkeyed `ModifierClosure` merged with ordinary members.
-- [ ] `situations` — [repeated structs](#repeated-struct-field-shape) landed and
-      support both its `stages` (shape 1) and `approach` (shape 2) fields;
-      adding the registry itself is still undone. Seven in DoA, 96–519 lines
-      each, and the spine of the mod.
 
 Not yet attempted:
 
@@ -65,27 +61,52 @@ Not yet attempted:
 
 ### Scope links
 
-**Largest remaining gap, and it is not a registry.** `owner = { ... }` appears
-**8062 times** across vanilla's `common/`, in both trigger and effect position:
+**Landed 2026-08-01.** `owner = { ... }` — single-link scope navigation, legal
+in both trigger and effect position — appears **8062 times** across vanilla's
+`common/`. Codegen now reads `links.cwt` (93 declared links) and emits the
+static scope links as **87 trigger functions** (`src/generated/links.ts`,
+re-exported through `src/triggers.ts`) and **87 effect methods** folded into
+the generated scope-interface clusters and `EFFECT_META`.
 
-```
-owner = { is_subject = no }                                   # trigger
-owner = { country_event = { id = doa_ascension_event.8 } }    # effect
-```
+One classification feeds both positions (`tools/codegen/emit/links.ts`):
 
-Nothing in `tools/codegen` reads `links.cwt`, no `owner` exists in the generated
-triggers or effects, and `effect-core.ts` has no scope-link concept. List-shaped
-transitions like `everyOwnedPlanet` exist and work; single-link navigation does
-not.
+- Trigger position: free wrapper functions with input/output reversed relative
+  to a `push_scope` iterator — the condition runs in the link's _output_ scope,
+  the result is valid in its _input_ scopes:
+  `owner(isAtWar())` is a `Trigger<"planet" | "ship" | …25 input scopes>`.
+- Effect position: body-only closure methods —
+  `planet.owner((country) => …)` emits `owner = { … }`. They ride the existing
+  `{ kind: "wrapper", fields: null }` meta shape, so `src/effect-core.ts`
+  needed zero changes; the recorder Proxy already dispatched it.
 
-This corrects the day-one survey, which concluded the expression layer held up.
-That was based on spot-checking effect _names_ — every one resolved — and never
-checked scope _navigation_.
+Not emitted, each named in the codegen report:
 
-Five of Dawn of Ascension's seven situations need it, and so does a large share
-of every other registry's trigger blocks. It should be sized before any more
-registry work: a registry that lands at high field coverage can still be
-unusable if its triggers cannot leave the definition's own scope.
+- **`target` (`output_scope = any`) — explicitly gated on situations, do not
+  let this rot.** Its landing scope varies at runtime
+  (spy_network/espionage_operation/agreement/situation). When situations work
+  needs it: either thread `target` a real scope contract from the situation
+  side, or fall back to emitting an author-asserted generic
+  `target<S extends ScopeName>`.
+- The 4 value links (`variable`, `script_value`, `modifier`, `trigger`) — RHS
+  number producers, not navigation; they belong to a future script-value
+  feature.
+- `pop_faction_parameter` — data-driven (`from_data`, `parameter:` prefix).
+
+Special scope references (`root`, `this`, `from`×4, `prev`×4) are deliberately
+excluded: they are dump-only positional references with "Output Scope:
+various", not links, and typing `root` needs definition-context threading — a
+separate design. `ScopeRef` + `within` + `ctx.self` keep covering `this`,
+`from`, and event targets.
+
+The drift gate now joins `links.cwt` against the dump's `scopes.log` (`links`
+in `drift-baseline.json`); the one genuine drift is `pop_group`, a real link
+the dump omits. The testing interpreter is deliberately untouched — a link
+reached in a world test fails loudly via the whitelist, and
+`resolveScopePath` in `src/testing/interpret.ts` is the extension point.
+
+This corrected the day-one survey, which concluded the expression layer held
+up. That was based on spot-checking effect _names_ — every one resolved — and
+never checked scope _navigation_.
 
 ### Repeated-struct field shape
 

@@ -158,6 +158,24 @@ BOM-prefixed localization `.yml`.
   (`eventTarget<"planet">(...)`) and every save site enforces it; events
   declare the scope they expect `FROM` to be, and every fire site proves it
   with a witness (`from: ctx.self`).
+- **Scope links navigate single relationships.** The game's 87 navigation
+  links (`owner`, `capital_scope`, `solar_system`, ...) are generated for both
+  positions: in a trigger, `owner(...)` wraps a condition that runs in the
+  link's target scope; in an effect closure, `planet.owner((country) => ...)`
+  hands the body the target scope's object. Both directions are scope-checked —
+  using a link outside its input scopes, or a wrong-scope condition inside
+  one, is a compile error.
+
+  ```ts
+  // trigger position: valid wherever the game allows `owner = { ... }`
+  potential: owner(not(isAtWar())),
+
+  // effect position: emits owner = { add_resource = { energy = 100 } }
+  immediate: (planet) => {
+    planet.owner((country) => country.addResource({ resource: "energy", amount: 100 }));
+  },
+  ```
+
 - **Two kinds of time.** A plain TypeScript `if` branches at _build_ time —
   use it freely to generate variants. Triggers describe _in-game_ conditions;
   using one in a TS `if` is a compile error (and a runtime error with an

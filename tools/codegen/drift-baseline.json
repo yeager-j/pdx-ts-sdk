@@ -24,6 +24,12 @@
       "hidden_effect"
     ]
   },
+  "links": {
+    "rulesOnly": [
+      "pop_group"
+    ],
+    "docsOnly": []
+  },
   "modifiers": {
     "rulesOnly": [
       "biological_logistic_growth_mult",

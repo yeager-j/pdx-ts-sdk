@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { loadRules } from "../../tools/codegen/cwt/rules.ts";
 import { parseModifierDocs } from "../../tools/codegen/logs/modifier-docs.ts";
+import { parseScopeLinks } from "../../tools/codegen/logs/scopes.ts";
 import { parseTriggerDocs } from "../../tools/codegen/logs/trigger-docs.ts";
+import { SPECIAL_SCOPE_PATHS } from "../../tools/codegen/overlay.ts";
 import { compareToBaseline, reconcile, type DriftReport } from "../../tools/codegen/reconcile.ts";
 
 const CONFIG = "vendor/cwtools-stellaris-config/config";
@@ -15,6 +17,7 @@ const docs = parseTriggerDocs(
   readFileSync(`${DOCS}/effects.log`, "utf8")
 );
 const modifierDocs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
+const dumpLinks = parseScopeLinks(readFileSync(`${DOCS}/scopes.log`, "utf8"));
 const baseline = JSON.parse(
   readFileSync("tools/codegen/drift-baseline.json", "utf8")
 ) as DriftReport;
@@ -45,12 +48,47 @@ describe("the two rule sources", () => {
   });
 
   it("still match the recorded drift baseline", () => {
-    expect(compareToBaseline(reconcile(rules, docs, modifierDocs), baseline)).toEqual([]);
+    expect(compareToBaseline(reconcile(rules, docs, modifierDocs, dumpLinks), baseline)).toEqual(
+      []
+    );
+  });
+});
+
+describe("the scope-link join", () => {
+  const report = reconcile(rules, docs, modifierDocs, dumpLinks);
+
+  it("reads every links.cwt entry, static and data-driven", () => {
+    expect(rules.links.size).toBe(93);
+    const statics = [...rules.links.values()].filter(
+      (link) => link.type === "scope" && !link.fromData
+    );
+    expect(statics).toHaveLength(88);
+  });
+
+  it("records only pop_group as genuine drift", () => {
+    expect(report.links).toEqual({ rulesOnly: ["pop_group"], docsOnly: [] });
+  });
+
+  it("excludes the dump's special scope references rather than reporting them", () => {
+    const dumpNames = new Set(dumpLinks.map((link) => link.name));
+    for (const path of SPECIAL_SCOPE_PATHS) {
+      expect(dumpNames.has(path)).toBe(true);
+      expect(report.links.docsOnly).not.toContain(path);
+    }
+  });
+
+  it("excludes value and from_data links by their own markers", () => {
+    for (const name of ["variable", "script_value", "modifier", "trigger"]) {
+      expect(rules.links.get(name)?.type).toBe("value");
+      expect(report.links.rulesOnly).not.toContain(name);
+    }
+    expect(rules.links.get("pop_faction_parameter")?.fromData).toBe(true);
+    expect(report.links.rulesOnly).not.toContain("pop_faction_parameter");
   });
 });
 
 describe("the drift gate", () => {
-  const report = reconcile(rules, docs, modifierDocs);
+  const report = reconcile(rules, docs, modifierDocs, dumpLinks);
 
   it("names a trigger that appeared in only one source", () => {
     const injected: DriftReport = {
@@ -103,7 +141,7 @@ describe("the drift gate", () => {
 });
 
 describe("where the fork and the game's dump disagree", () => {
-  const report = reconcile(rules, docs, modifierDocs);
+  const report = reconcile(rules, docs, modifierDocs, dumpLinks);
 
   it("is almost entirely the 4.x scope renames the dump has not caught up with", () => {
     const parsed = report.scopeConflicts.map((line) => {

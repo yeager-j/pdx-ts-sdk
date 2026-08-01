@@ -2,7 +2,9 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: effects.cwt
 // From: aliases.cwt
+// From: links.cwt
 // From: script-docs/v4.4.1/effects.log
+// From: script-docs/v4.4.1/scopes.log
 
 import type { PdxOp } from "@pdx-ts/pdxscript";
 
@@ -193,6 +195,12 @@ import type {
   WarFlag,
 } from "./value-sets.ts";
 
+/** Effects valid in: ambient_object, archaeological_site, carrier, colony, debris, fleet, megastructure, planet, ship, starbase, system. */
+export interface EffectsIn11Scopes2089 {
+  /** Scopes from an object (e.g. planet) in star system view to the arc site in the same location. */
+  archaeologicalSite(body: (scope: ArchaeologicalSiteScope) => void): void;
+}
+
 /** Effects valid in: ambient_object, astral_rift, carrier, colony, debris, fleet, megastructure, planet, ship, starbase, system. */
 export interface EffectsIn11Scopes5713 {
   /**
@@ -216,6 +224,42 @@ export interface EffectsIn12Scopes3d16 {
     modifier: "alias_keys_field[modifier]";
     variable: Variable;
   }): void;
+}
+
+/** Effects valid in: archaeological_site, army, carrier, colony, deposit, leader, megastructure, planet, pop_group, pop_job, ship, starbase. */
+export interface EffectsIn12Scopes9dad {
+  /** Scopes from an object to its colony. */
+  colony(body: (scope: ColonyScope) => void): void;
+
+  /** Scopes from an object to the planet it is on. */
+  planet(body: (scope: PlanetScope) => void): void;
+
+  /** Scopes from an object to the owner of the planet it is on. */
+  planetOwner(body: (scope: CountryScope) => void): void;
+}
+
+/** Effects valid in: archaeological_site, army, carrier, colony, country, debris, fleet, megastructure, planet, ship, spy_network, starbase, system. */
+export interface EffectsIn13Scopesa2e3 {
+  /** Scopes from an object to its owner if it exists, or to the owner of the space it is in otherwise. Works on all objects visible in star system view that can have an owner */
+  ownerOrSpaceOwner(body: (scope: CountryScope) => void): void;
+}
+
+/** Effects valid in: ambient_object, archaeological_site, army, carrier, colony, country, debris, fleet, megastructure, planet, ship, spy_network, starbase, system. */
+export interface EffectsIn14Scopes86f5 {
+  /** Scopes from an object to the owner of the space it is in. Works on all objects visible in star system view. */
+  spaceOwner(body: (scope: CountryScope) => void): void;
+}
+
+/** Effects valid in: ambient_object, archaeological_site, astral_rift, bypass, carrier, colony, debris, first_contact, fleet, megastructure, planet, ship, starbase, system. */
+export interface EffectsIn14Scopesed72 {
+  /** Scopes from an object to the primary star (planet scope) of the system it is in. */
+  star(body: (scope: PlanetScope) => void): void;
+}
+
+/** Effects valid in: archaeological_site, army, astral_rift, carrier, colony, country, espionage_operation, federation, first_contact, fleet, leader, planet, pop_faction, ship, spy_network. */
+export interface EffectsIn15Scopesa620 {
+  /** Scopes from an object to its leader, e.g. country->ruler, fleet->admiral/scientist, sector->governor, army->general, arc site->scientist... */
+  leader(body: (scope: LeaderScope) => void): void;
 }
 
 /** Effects valid in: army, carrier, colony, country, federation, first_contact, fleet, leader, megastructure, planet, pop_faction, sector, ship, system, war. */
@@ -261,6 +305,45 @@ export interface EffectsIn16Scopes674a {
    * ```
    */
   removeModifier(value: StaticModifierRef | string): void;
+}
+
+/** Effects valid in: ambient_object, archaeological_site, army, bypass, carrier, colony, debris, deposit, first_contact, fleet, leader, megastructure, planet, pop_group, sector, ship, starbase, system. */
+export interface EffectsIn18Scopes5ba6 {
+  /** Scopes from an object to the sector it is in. For leaders, scopes to the sector the leader is currently located in, not necessarily the one they are assigned to as a governor. */
+  sector(body: (scope: SectorScope) => void): void;
+}
+
+/** Effects valid in: ambient_object, archaeological_site, army, astral_rift, bypass, carrier, colony, country, debris, deposit, first_contact, fleet, leader, megastructure, planet, pop_group, ship, starbase, system. */
+export interface EffectsIn19Scopesf9f7 {
+  /** Scopes from an object to the solar system it is in. */
+  solarSystem(body: (scope: SystemScope) => void): void;
+
+  /** Scopes from an object to the primary star (planet scope) of the system it is in. */
+  systemStar(body: (scope: PlanetScope) => void): void;
+}
+
+/** Effects valid in: agreement, archaeological_site, army, carrier, colony, country, debris, deposit, espionage_operation, first_contact, fleet, leader, megastructure, mission, planet, pop_faction, pop_group, sector, ship, situation, species, spy_network, starbase, system. */
+export interface EffectsIn24Scopes1dab {
+  /** Scopes to the main species of the owner of the current object. Works in every scope that 'owner' would work in. */
+  ownerSpecies(body: (scope: SpeciesScope) => void): void;
+}
+
+/** Effects valid in: agreement, archaeological_site, army, astral_rift, bypass, carrier, colony, country, debris, deposit, espionage_operation, first_contact, fleet, leader, megastructure, mission, planet, pop_faction, pop_group, sector, ship, situation, spy_network, starbase, system. */
+export interface EffectsIn25Scopesf4df {
+  /** Scopes to the heir of a country (or the heir of the object's owner). */
+  heir(body: (scope: LeaderScope) => void): void;
+
+  /** Scopes to the owner of the current object. */
+  owner(body: (scope: CountryScope) => void): void;
+
+  /** Scopes to the ruler of a country (or the ruler of the object's owner). */
+  ruler(body: (scope: LeaderScope) => void): void;
+}
+
+/** Effects valid in: agreement, archaeological_site, army, astral_rift, bypass, carrier, colony, country, debris, deposit, espionage_operation, first_contact, fleet, leader, megastructure, mission, planet, pop_faction, pop_group, sector, ship, situation, species, spy_network, starbase, system. */
+export interface EffectsIn26Scopesc5a2 {
+  /** Scopes to the main species of the owner of the current object. Works in every scope that 'owner' would work in. */
+  ownerMainSpecies(body: (scope: SpeciesScope) => void): void;
 }
 
 /** Effects valid in: agreement, ambient_object, archaeological_site, army, astral_rift, bypass, carrier, colony, country, deposit, espionage_asset, espionage_operation, federation, first_contact, fleet, leader, megastructure, planet, pop_faction, pop_group, sector, ship, ship_growth_stage, situation, species, spy_network, starbase, system, war. */
@@ -1129,6 +1212,39 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   validatePlanetBuildingsAndDistricts(value?: boolean): void;
+
+  /** Scopes from a planet to the species currently being assembled on it. */
+  assemblingSpecies(body: (scope: SpeciesScope) => void): void;
+
+  /** Scopes from a planet to the owner of a branch office. */
+  branchOfficeOwner(body: (scope: CountryScope) => void): void;
+
+  /** Scopes from a planet to the species currently declining on it. */
+  decliningSpecies(body: (scope: SpeciesScope) => void): void;
+
+  /** Scopes from a planet to the species currently growing (not assembling) on it. */
+  growingSpecies(body: (scope: SpeciesScope) => void): void;
+
+  /** Scopes to the last deposit added to the current planet */
+  lastAddedDeposit(body: (scope: DepositScope) => void): void;
+
+  /** Scopes from a planet to the mining station in orbit of it. */
+  miningStation(body: (scope: FleetScope) => void): void;
+
+  /** Scopes from a planet to the observation outpost in orbit of it. */
+  observationOutpost(body: (scope: FleetScope) => void): void;
+
+  /** Scopes from a planet to the owner of the observation outpost in orbit of it. */
+  observationOutpostOwner(body: (scope: CountryScope) => void): void;
+
+  /** Scopes from a planet to the orbital defence station (orbital ring, starbase) orbiting the planet */
+  orbitalDefence(body: (scope: FleetScope) => void): void;
+
+  /** Scopes from a planet to the station (mining station, research station, observation outpost) orbiting it. */
+  orbitalStation(body: (scope: FleetScope) => void): void;
+
+  /** Scopes from a planet to the research station in orbit of it. */
+  researchStation(body: (scope: FleetScope) => void): void;
 }
 
 /** Effects valid in: army, fleet, leader, ship. */
@@ -1140,6 +1256,12 @@ export interface EffectsIn4Scopes4fbd {
    * ```
    */
   unassignLeader(value: string): void;
+}
+
+/** Effects valid in: country, leader, pop_group, species. */
+export interface EffectsIn4Scopes50ac {
+  /** Scopes to a species' home planet. */
+  homePlanet(body: (scope: PlanetScope) => void): void;
 }
 
 /** Effects valid in: army, country, fleet, leader. */
@@ -1246,6 +1368,9 @@ export interface EffectsIn5Scopes3588 {
     args: { limit?: Trigger<"species">; weights?: readonly Modifier<"species">[] },
     body: (scope: SpeciesScope) => void
   ): void;
+
+  /** Scopes from an object to its unhappiest pop group. */
+  unhappiestPop(body: (scope: PopGroupScope) => void): void;
 }
 
 /** Effects valid in: carrier, megastructure, planet, ship, starbase. */
@@ -1329,6 +1454,9 @@ export interface EffectsIn5Scopes92b5 {
     radius: readonly Modifier<"carrier" | "colony" | "planet" | "ship" | "starbase">[];
     isTimedInfluenceField?: "yes";
   }): void;
+
+  /** Scopes from a starbase to its station ship or from a colony to its carrier ship. */
+  ship(body: (scope: ShipScope) => void): void;
 }
 
 /** Effects valid in: carrier, colony, fleet, planet, ship. */
@@ -1418,6 +1546,12 @@ export interface EffectsIn6Scopes6eb9 {
   addThreat(args: { who: string; amount: number }): void;
 }
 
+/** Effects valid in: army, country, leader, pop_group, ship, species. */
+export interface EffectsIn6Scopes9308 {
+  /** Scopes from an object to its species. */
+  species(body: (scope: SpeciesScope) => void): void;
+}
+
 /** Effects valid in: astral_rift, carrier, colony, deposit, planet, ship. */
 export interface EffectsIn6Scopescfa2 {
   /**
@@ -1438,6 +1572,30 @@ export interface EffectsIn7Scopes04e0 {
    * ```
    */
   assignLeader(value: string): void;
+}
+
+/** Effects valid in: carrier, colony, debris, fleet, planet, ship, starbase. */
+export interface EffectsIn7Scopes60b1 {
+  /** Scopes from an object to the empire controlling it (not necessarily the owner: a country occupying a planet is its controller). */
+  controller(body: (scope: CountryScope) => void): void;
+}
+
+/** Effects valid in: army, astral_rift, colony, fleet, leader, ship, starbase. */
+export interface EffectsIn7Scopes623d {
+  /** Scopes from a ship, starbase, astral rift or leader to its fleet, or from an army to the fleet its army transport is part of. */
+  fleet(body: (scope: FleetScope) => void): void;
+}
+
+/** Effects valid in: army, carrier, colony, fleet, planet, ship, starbase. */
+export interface EffectsIn7Scopes6877 {
+  /** Scopes to the planet the current object is in orbit of. */
+  orbit(body: (scope: PlanetScope) => void): void;
+}
+
+/** Effects valid in: carrier, colony, fleet, planet, ship, starbase, system. */
+export interface EffectsIn7Scopes8ca5 {
+  /** Scopes from a solar system or planet to that system's starbase. Alternatively, scopes from a fleet or ship that is a starbase to its matching starbase scope. */
+  starbase(body: (scope: StarbaseScope) => void): void;
 }
 
 /** Effects valid in: carrier, colony, country, planet, sector, ship, system. */
@@ -1900,6 +2058,9 @@ export interface EffectsInArchaeologicalSite {
     months?: number;
     years?: number;
   }): void;
+
+  /** Scopes from an arc site to the fleet whose leader is currently investigating it. */
+  excavatorFleet(body: (scope: FleetScope) => void): void;
 }
 
 /** Effects valid in: archaeological_site, astral_rift, first_contact. */
@@ -1968,6 +2129,9 @@ export interface EffectsInArmy {
    * ```
    */
   setTimedArmyFlag(args: { flag: ArmyFlag; days?: number; months?: number; years?: number }): void;
+
+  /** Scopes from an army to the planet that spawned it. */
+  spawnerPlanet(body: (scope: PlanetScope) => void): void;
 }
 
 /** Effects valid in: army, country, fleet. */
@@ -1979,6 +2143,12 @@ export interface EffectsInArmyCountryFleet {
    * ```
    */
   setLeader(value: ExiledLeader | "last_created_leader" | string): void;
+}
+
+/** Effects valid in: army, pop_group. */
+export interface EffectsInArmyPopGroup {
+  /** Scopes from an army to the pop_group that spawned it. */
+  popGroup(body: (scope: PopGroupScope) => void): void;
 }
 
 /** Effects valid in: astral_rift. */
@@ -2022,6 +2192,9 @@ export interface EffectsInAstralRift {
     onRollFailed?: EventRef | string;
     failProbability?: number;
   }): void;
+
+  /** Scopes from an astral rift to the country whose leader is exploring, or has explored it. */
+  explorer(body: (scope: CountryScope) => void): void;
 }
 
 /** Effects valid in: astral_rift, espionage_operation. */
@@ -2085,6 +2258,9 @@ export interface EffectsInBypass {
    * ```
    */
   renewBypassLock(value?: boolean): void;
+
+  /** Scopes from a bypass to the country who locked it. */
+  lockCountry(body: (scope: CountryScope) => void): void;
 }
 
 /** Effects valid in: bypass, system. */
@@ -2159,6 +2335,12 @@ export interface EffectsInCarrierPlanetShip {
 
   /** Sets terraforming progress to scoped planet, finishes the terraformation, if enough progress is reached */
   setTerraformProgress(value: number): void;
+}
+
+/** Effects valid in: colony. */
+export interface EffectsInColony {
+  /** Scopes from a colony to its carrier. */
+  carrier(body: (scope: CarrierScope) => void): void;
 }
 
 /** Effects valid in: cosmic_storm_influence_field. */
@@ -5485,6 +5667,30 @@ export interface EffectsInCountry {
    * ```
    */
   win(value?: boolean): void;
+
+  /** Scopes from a country to the federation it is a member of. */
+  alliance(body: (scope: FederationScope) => void): void;
+
+  /** Scopes from a country to the federation it is an associate of. */
+  associatedFederation(body: (scope: FederationScope) => void): void;
+
+  /** Scopes from a country to its built species. */
+  builtSpecies(body: (scope: SpeciesScope) => void): void;
+
+  /** Scopes from an empire to its capital colony. */
+  capitalScope(body: (scope: ColonyScope) => void): void;
+
+  /** Scopes from an empire to the primary star (planet scope) of its capital's system. */
+  capitalStar(body: (scope: PlanetScope) => void): void;
+
+  /** Scopes from a country to the federation it is a member of. */
+  federation(body: (scope: FederationScope) => void): void;
+
+  /** Scopes from a country to its founding species. */
+  founderSpecies(body: (scope: SpeciesScope) => void): void;
+
+  /** Scopes from a country to its overlord. */
+  overlord(body: (scope: CountryScope) => void): void;
 }
 
 /** Effects valid in: country, federation. */
@@ -6314,6 +6520,12 @@ export interface EffectsInEspionageOperation {
   unassignEspionageAsset(value: EspionageAssetRef | string): void;
 }
 
+/** Effects valid in: espionage_operation, leader. */
+export interface EffectsInEspionageOperationLeader {
+  /** Scopes from an espionage operation or spymaster envoy to its spy network. */
+  spynetwork(body: (scope: SpyNetworkScope) => void): void;
+}
+
 /** Effects valid in: espionage_operation, no_scope, spy_network. */
 export interface EffectsInEspionageOperationNoScopeSpyNetwork {
   /**
@@ -6615,6 +6827,9 @@ export interface EffectsInFederation {
     months?: number;
     years?: number;
   }): void;
+
+  /** Scopes from a federation to the empire leading it. */
+  federationLeader(body: (scope: CountryScope) => void): void;
 }
 
 /** Effects valid in: first_contact. */
@@ -6666,6 +6881,12 @@ export interface EffectsInFirstContact {
     months?: number;
     years?: number;
   }): void;
+
+  /** Scopes from a first contact site to the country that the owner of the site is seeking to establish communications with. */
+  contactCountry(body: (scope: CountryScope) => void): void;
+
+  /** Scopes from a first contact site to the equivalent one that the contact_country has on the site's owner. */
+  reverseFirstContact(body: (scope: FirstContactScope) => void): void;
 }
 
 /** Effects valid in: fleet. */
@@ -6979,6 +7200,15 @@ export interface EffectsInFleet {
     resetKilledShipDesigns?: boolean;
     resetKilledShipStockpile?: boolean;
   }): void;
+
+  /** Scopes to the country that dealt the corresponding ranked damage to the fleet. Can be null. Use the record_damaging_country = yes setting to make the fleet record */
+  firstDamagingCountry(body: (scope: CountryScope) => void): void;
+
+  /** Scopes to the country that dealt the corresponding ranked damage to the fleet. Can be null. Use the record_damaging_country = yes setting to make the fleet record */
+  secondDamagingCountry(body: (scope: CountryScope) => void): void;
+
+  /** Scopes to the country that dealt the corresponding ranked damage to the fleet. Can be null. Use the record_damaging_country = yes setting to make the fleet record */
+  thirdDamagingCountry(body: (scope: CountryScope) => void): void;
 }
 
 /** Effects valid in: fleet, megastructure, ship. */
@@ -7396,6 +7626,21 @@ export interface EffectsInLeader {
    * ```
    */
   setYearsServed(value: string): void;
+
+  /** Scopes from a leader to their background planet. */
+  backgroundPlanet(body: (scope: PlanetScope) => void): void;
+
+  /** Scopes to the leader's country of origin */
+  creator(body: (scope: CountryScope) => void): void;
+
+  /** Scopes from an envoy to the empire it is appointed to. */
+  envoyLocationCountry(body: (scope: CountryScope) => void): void;
+}
+
+/** Effects valid in: leader, pop_faction, pop_group. */
+export interface EffectsInLeaderPopFactionPopGroup {
+  /** Scopes from an object to its pop faction. */
+  popFaction(body: (scope: PopFactionScope) => void): void;
 }
 
 /** Effects valid in: leader, pop_group, species. */
@@ -7601,6 +7846,12 @@ export interface EffectsInLeaderPopGroupSpecies {
   }): void;
 }
 
+/** Effects valid in: leader, system. */
+export interface EffectsInLeaderSystem {
+  /** Scopes to the astral rift in the same system. */
+  astralRift(body: (scope: AstralRiftScope) => void): void;
+}
+
 /** Effects valid in: megastructure. */
 export interface EffectsInMegastructure {
   /**
@@ -7709,6 +7960,9 @@ export interface EffectsInMission {
    * ```
    */
   setMissionFlag(value: MissionFlag): void;
+
+  /** Scopes from a mission to its issuer. */
+  issuer(body: (scope: CountryScope) => void): void;
 }
 
 /** Effects valid in: planet. */
@@ -7829,6 +8083,9 @@ export interface EffectsInPlanet {
 
   /** if a planet has trigger_megastructure_icon = yes then the map icon for the star will show a megastructure icon */
   triggerMegastructureIcon(value?: boolean): void;
+
+  /** Scopes from an object to its army leader, e.g. planet->general */
+  armyLeader(body: (scope: LeaderScope) => void): void;
 }
 
 /** Effects valid in: planet, starbase. */
@@ -8178,6 +8435,9 @@ export interface EffectsInSector {
     months?: number;
     years?: number;
   }): void;
+
+  /** Scopes from a sector to its capital colony. */
+  sectorCapital(body: (scope: ColonyScope) => void): void;
 }
 
 /** Effects valid in: ship. */
@@ -8270,6 +8530,12 @@ export interface EffectsInShip {
    * ```
    */
   transferResourceStockpile(args: { target: string; mult?: VariableRef | string }): void;
+
+  /** Scopes to the ship's design */
+  design(body: (scope: DesignScope) => void): void;
+
+  /** Scopes to the ship's current growth stage inside the ship's design */
+  shipGrowthStage(body: (scope: ShipGrowthStageScope) => void): void;
 }
 
 /** Effects valid in: situation. */
@@ -8897,6 +9163,9 @@ export interface EffectsInStorm {
    * ```
    */
   setStormFlag(value: StormFlag): void;
+
+  /** Scopes from a cosmic storm to the galactic object that it is heading towards. */
+  targetSystem(body: (scope: SystemScope) => void): void;
 }
 
 /** Effects valid in: system. */
@@ -9554,6 +9823,12 @@ export interface EffectsInSystem {
 
   /** Unsets a storm on a system */
   unsetCosmicStorm(value?: boolean): void;
+
+  /** If scoped system contains a Psionic Aura, scopes to the country who generated the aura (can be different from the system owner). */
+  auraOwner(body: (scope: CountryScope) => void): void;
+
+  /** Scopes from a galactic object to an influence field with the galactic object as center */
+  stormInfluenceField(body: (scope: CosmicStormInfluenceFieldScope) => void): void;
 }
 
 /** Effects valid in: war. */
@@ -9724,6 +9999,15 @@ export interface EffectsInWar {
    * ```
    */
   setWarFlag(value: WarFlag): void;
+
+  /** Scopes from a war to its main attacker. */
+  attacker(body: (scope: CountryScope) => void): void;
+
+  /** Scopes from a war to its main defender. */
+  defender(body: (scope: CountryScope) => void): void;
+
+  /** If scoped war was generated from a proxy war, scopes to the country who started the proxy war. */
+  instigator(body: (scope: CountryScope) => void): void;
 }
 
 /** Effects valid in every scope. */
@@ -11377,12 +11661,60 @@ export interface UniversalEffects {
     random?: number;
     growthCategory?: string;
   }): void;
+
+  /** Scopes to the Custodian empire of the Galactic Community. */
+  galacticCustodian(body: (scope: CountryScope) => void): void;
+
+  /** Scopes to the ruling empire of the Galactic Imperium. */
+  galacticEmperor(body: (scope: CountryScope) => void): void;
+
+  /** Scopes to the last ambient object that was created anywhere in the game. */
+  lastCreatedAmbientObject(body: (scope: AmbientObjectScope) => void): void;
+
+  /** Scopes to the last army that was created anywhere in the game. */
+  lastCreatedArmy(body: (scope: ArmyScope) => void): void;
+
+  /** Scopes to the last storm that was created anywhere in the game. */
+  lastCreatedCosmicStorm(body: (scope: StormScope) => void): void;
+
+  /** Scopes to the last storm influence field that was created anywhere in the game. */
+  lastCreatedCosmicStormInfluenceField(body: (scope: CosmicStormInfluenceFieldScope) => void): void;
+
+  /** Scopes to the last country that was created anywhere in the game. */
+  lastCreatedCountry(body: (scope: CountryScope) => void): void;
+
+  /** Scopes to the last created ship design */
+  lastCreatedDesign(body: (scope: DesignScope) => void): void;
+
+  /** Scopes to the last fleet that was created anywhere in the game. */
+  lastCreatedFleet(body: (scope: FleetScope) => void): void;
+
+  /** Scopes to the last leader that was created anywhere in the game. */
+  lastCreatedLeader(body: (scope: LeaderScope) => void): void;
+
+  /** Scopes to the last pop_group faction that was created anywhere in the game. */
+  lastCreatedPopFaction(body: (scope: PopFactionScope) => void): void;
+
+  /** Scopes to the last ship that was created anywhere in the game. */
+  lastCreatedShip(body: (scope: ShipScope) => void): void;
+
+  /** Scopes to the last species that was created anywhere in the game. */
+  lastCreatedSpecies(body: (scope: SpeciesScope) => void): void;
+
+  /** Scopes to the last fleet that was created anywhere in the game. */
+  lastCreatedSystem(body: (scope: SystemScope) => void): void;
+
+  /** Sets the scope to no scope (empty scope used for certain generalized behavior). */
+  noScope(body: (scope: NoScopeScope) => void): void;
 }
 
 /** The effects recordable in agreement scope. */
 export interface AgreementScope
   extends
     StructuralEffects<"agreement">,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsInAgreement,
     UniversalEffects {}
@@ -11394,7 +11726,12 @@ export interface AllianceScope extends StructuralEffects<"alliance">, UniversalE
 export interface AmbientObjectScope
   extends
     StructuralEffects<"ambient_object">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
     EffectsIn29Scopes878c,
     EffectsInAmbientObject,
     EffectsInAmbientObjectFleet,
@@ -11404,6 +11741,17 @@ export interface AmbientObjectScope
 export interface ArchaeologicalSiteScope
   extends
     StructuralEffects<"archaeological_site">,
+    EffectsIn11Scopes2089,
+    EffectsIn12Scopes9dad,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
+    EffectsIn15Scopesa620,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsInArchaeologicalSite,
     EffectsInArchaeologicalSiteAstralRiftFirstContact,
@@ -11415,16 +11763,29 @@ export interface ArmyScope
   extends
     StructuralEffects<"army">,
     EffectsIn12Scopes3d16,
+    EffectsIn12Scopes9dad,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes4fbd,
     EffectsIn4Scopes7e34,
     EffectsIn5Scopes6c98,
+    EffectsIn6Scopes9308,
     EffectsIn7Scopes04e0,
+    EffectsIn7Scopes623d,
+    EffectsIn7Scopes6877,
     EffectsIn8Scopescb47,
     EffectsIn9Scopesd3d6,
     EffectsInArmy,
     EffectsInArmyCountryFleet,
+    EffectsInArmyPopGroup,
     UniversalEffects {}
 
 /** The effects recordable in astral_rift scope. */
@@ -11432,11 +11793,17 @@ export interface AstralRiftScope
   extends
     StructuralEffects<"astral_rift">,
     EffectsIn11Scopes5713,
+    EffectsIn14Scopesed72,
+    EffectsIn15Scopesa620,
     EffectsIn16Scopes674a,
+    EffectsIn19Scopesf9f7,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn5Scopes9031,
     EffectsIn5Scopese102,
     EffectsIn6Scopescfa2,
+    EffectsIn7Scopes623d,
     EffectsInArchaeologicalSiteAstralRiftFirstContact,
     EffectsInAstralRift,
     EffectsInAstralRiftEspionageOperation,
@@ -11447,6 +11814,11 @@ export interface AstralRiftScope
 export interface BypassScope
   extends
     StructuralEffects<"bypass">,
+    EffectsIn14Scopesed72,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsInBypass,
     EffectsInBypassSystem,
@@ -11456,10 +11828,21 @@ export interface BypassScope
 export interface CarrierScope
   extends
     StructuralEffects<"carrier">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
+    EffectsIn12Scopes9dad,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes2b24,
     EffectsIn5Scopes3588,
@@ -11472,6 +11855,9 @@ export interface CarrierScope
     EffectsIn6Scopes6eb9,
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
+    EffectsIn7Scopes60b1,
+    EffectsIn7Scopes6877,
+    EffectsIn7Scopes8ca5,
     EffectsIn7Scopesdd2e,
     EffectsIn8Scopes39a9,
     EffectsIn8Scopes75eb,
@@ -11485,9 +11871,20 @@ export interface CarrierScope
 export interface ColonyScope
   extends
     StructuralEffects<"colony">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
+    EffectsIn12Scopes9dad,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes2b24,
     EffectsIn5Scopes3588,
@@ -11497,12 +11894,17 @@ export interface ColonyScope
     EffectsIn6Scopes6eb9,
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
+    EffectsIn7Scopes60b1,
+    EffectsIn7Scopes623d,
+    EffectsIn7Scopes6877,
+    EffectsIn7Scopes8ca5,
     EffectsIn7Scopesdd2e,
     EffectsIn8Scopes39a9,
     EffectsIn8Scopes75eb,
     EffectsIn8Scopescb47,
     EffectsIn9Scopes5f8a,
     EffectsIn9Scopesd3d6,
+    EffectsInColony,
     UniversalEffects {}
 
 /** The effects recordable in cosmic_storm_influence_field scope. */
@@ -11518,16 +11920,25 @@ export interface CountryScope
   extends
     StructuralEffects<"country">,
     EffectsIn12Scopes3d16,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes023a,
+    EffectsIn4Scopes50ac,
     EffectsIn4Scopes7e34,
     EffectsIn5Scopes3588,
     EffectsIn5Scopes6c98,
     EffectsIn5Scopes979f,
     EffectsIn5Scopesb6d1,
     EffectsIn6Scopes6eb9,
+    EffectsIn6Scopes9308,
     EffectsIn7Scopes04e0,
     EffectsIn7Scopesdd2e,
     EffectsIn8Scopes39a9,
@@ -11551,7 +11962,17 @@ export interface CountryScope
 export interface DebrisScope
   extends
     StructuralEffects<"debris">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
+    EffectsIn7Scopes60b1,
     EffectsInDebris,
     EffectsInDebrisShip,
     UniversalEffects {}
@@ -11560,6 +11981,12 @@ export interface DebrisScope
 export interface DepositScope
   extends
     StructuralEffects<"deposit">,
+    EffectsIn12Scopes9dad,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn6Scopescfa2,
     EffectsInDeposit,
@@ -11585,10 +12012,15 @@ export interface EspionageAssetScope
 export interface EspionageOperationScope
   extends
     StructuralEffects<"espionage_operation">,
+    EffectsIn15Scopesa620,
     EffectsIn16Scopes674a,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsInAstralRiftEspionageOperation,
     EffectsInEspionageOperation,
+    EffectsInEspionageOperationLeader,
     EffectsInEspionageOperationNoScopeSpyNetwork,
     EffectsInEspionageOperationSpyNetwork,
     UniversalEffects {}
@@ -11600,6 +12032,7 @@ export interface ExhibitScope extends StructuralEffects<"exhibit">, UniversalEff
 export interface FederationScope
   extends
     StructuralEffects<"federation">,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
     EffectsIn29Scopes878c,
@@ -11611,7 +12044,14 @@ export interface FederationScope
 export interface FirstContactScope
   extends
     StructuralEffects<"first_contact">,
+    EffectsIn14Scopesed72,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsInArchaeologicalSiteAstralRiftFirstContact,
     EffectsInArchaeologicalSiteFirstContact,
@@ -11622,10 +12062,20 @@ export interface FirstContactScope
 export interface FleetScope
   extends
     StructuralEffects<"fleet">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes023a,
     EffectsIn4Scopes4fbd,
@@ -11633,6 +12083,10 @@ export interface FleetScope
     EffectsIn5Scopes9550,
     EffectsIn5Scopesb6d1,
     EffectsIn7Scopes04e0,
+    EffectsIn7Scopes60b1,
+    EffectsIn7Scopes623d,
+    EffectsIn7Scopes6877,
+    EffectsIn7Scopes8ca5,
     EffectsIn8Scopescb47,
     EffectsIn9Scopes5f8a,
     EffectsIn9Scopesd3d6,
@@ -11649,26 +12103,49 @@ export interface LeaderScope
   extends
     StructuralEffects<"leader">,
     EffectsIn12Scopes3d16,
+    EffectsIn12Scopes9dad,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes4fbd,
+    EffectsIn4Scopes50ac,
     EffectsIn4Scopes7e34,
     EffectsIn5Scopes6c98,
+    EffectsIn6Scopes9308,
+    EffectsIn7Scopes623d,
     EffectsIn8Scopes39a9,
     EffectsIn8Scopescb47,
     EffectsIn9Scopesd3d6,
+    EffectsInEspionageOperationLeader,
     EffectsInLeader,
+    EffectsInLeaderPopFactionPopGroup,
     EffectsInLeaderPopGroupSpecies,
+    EffectsInLeaderSystem,
     UniversalEffects {}
 
 /** The effects recordable in megastructure scope. */
 export interface MegastructureScope
   extends
     StructuralEffects<"megastructure">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
+    EffectsIn12Scopes9dad,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn5Scopes5d7d,
     EffectsIn5Scopesb6d1,
@@ -11682,6 +12159,9 @@ export interface MegastructureScope
 export interface MissionScope
   extends
     StructuralEffects<"mission">,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsInCountryMission,
     EffectsInMission,
     UniversalEffects {}
@@ -11700,10 +12180,21 @@ export interface NoScopeScope
 export interface PlanetScope
   extends
     StructuralEffects<"planet">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
+    EffectsIn12Scopes9dad,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes023a,
     EffectsIn4Scopes2b24,
@@ -11717,6 +12208,9 @@ export interface PlanetScope
     EffectsIn6Scopes6eb9,
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
+    EffectsIn7Scopes60b1,
+    EffectsIn7Scopes6877,
+    EffectsIn7Scopes8ca5,
     EffectsIn7Scopesdd2e,
     EffectsIn8Scopes39a9,
     EffectsIn8Scopes75eb,
@@ -11736,10 +12230,15 @@ export interface PopFactionScope
   extends
     StructuralEffects<"pop_faction">,
     EffectsIn12Scopes3d16,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn8Scopes75eb,
+    EffectsInLeaderPopFactionPopGroup,
     EffectsInPopFaction,
     EffectsInPopFactionPopGroup,
     UniversalEffects {}
@@ -11749,13 +12248,23 @@ export interface PopGroupScope
   extends
     StructuralEffects<"pop_group">,
     EffectsIn12Scopes3d16,
+    EffectsIn12Scopes9dad,
     EffectsIn16Scopes674a,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes023a,
+    EffectsIn4Scopes50ac,
     EffectsIn5Scopes6c98,
     EffectsIn5Scopes979f,
+    EffectsIn6Scopes9308,
     EffectsIn8Scopes39a9,
+    EffectsInArmyPopGroup,
     EffectsInCountryPopGroup,
+    EffectsInLeaderPopFactionPopGroup,
     EffectsInLeaderPopGroupSpecies,
     EffectsInPopFactionPopGroup,
     EffectsInPopGroup,
@@ -11763,13 +12272,17 @@ export interface PopGroupScope
 
 /** The effects recordable in pop_job scope. */
 export interface PopJobScope
-  extends StructuralEffects<"pop_job">, EffectsInPopJob, UniversalEffects {}
+  extends StructuralEffects<"pop_job">, EffectsIn12Scopes9dad, EffectsInPopJob, UniversalEffects {}
 
 /** The effects recordable in sector scope. */
 export interface SectorScope
   extends
     StructuralEffects<"sector">,
     EffectsIn15Scopesee16,
+    EffectsIn18Scopes5ba6,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn7Scopesdd2e,
     EffectsIn8Scopes75eb,
@@ -11781,10 +12294,21 @@ export interface SectorScope
 export interface ShipScope
   extends
     StructuralEffects<"ship">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
+    EffectsIn12Scopes9dad,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
+    EffectsIn15Scopesa620,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes2b24,
     EffectsIn4Scopes4fbd,
@@ -11798,8 +12322,13 @@ export interface ShipScope
     EffectsIn5Scopesb6d1,
     EffectsIn5Scopese102,
     EffectsIn6Scopes6eb9,
+    EffectsIn6Scopes9308,
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
+    EffectsIn7Scopes60b1,
+    EffectsIn7Scopes623d,
+    EffectsIn7Scopes6877,
+    EffectsIn7Scopes8ca5,
     EffectsIn7Scopesdd2e,
     EffectsIn8Scopes39a9,
     EffectsIn8Scopes75eb,
@@ -11821,6 +12350,9 @@ export interface ShipGrowthStageScope
 export interface SituationScope
   extends
     StructuralEffects<"situation">,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsInSituation,
     UniversalEffects {}
@@ -11830,7 +12362,11 @@ export interface SpeciesScope
   extends
     StructuralEffects<"species">,
     EffectsIn12Scopes3d16,
+    EffectsIn24Scopes1dab,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
+    EffectsIn4Scopes50ac,
+    EffectsIn6Scopes9308,
     EffectsIn8Scopes39a9,
     EffectsInLeaderPopGroupSpecies,
     EffectsInSpecies,
@@ -11843,7 +12379,13 @@ export interface SpeciesTraitScope extends StructuralEffects<"species_trait">, U
 export interface SpyNetworkScope
   extends
     StructuralEffects<"spy_network">,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn15Scopesa620,
     EffectsIn16Scopes674a,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsInCountryNoScopeSpyNetwork,
     EffectsInEspionageOperationNoScopeSpyNetwork,
@@ -11858,12 +12400,26 @@ export interface StarScope extends StructuralEffects<"star">, UniversalEffects {
 export interface StarbaseScope
   extends
     StructuralEffects<"starbase">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
+    EffectsIn12Scopes9dad,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
     EffectsIn16Scopes674a,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn5Scopes5d7d,
     EffectsIn5Scopes92b5,
     EffectsIn5Scopesb6d1,
+    EffectsIn7Scopes60b1,
+    EffectsIn7Scopes623d,
+    EffectsIn7Scopes6877,
+    EffectsIn7Scopes8ca5,
     EffectsIn9Scopes5f8a,
     EffectsIn9Scopesd3d6,
     EffectsInPlanetStarbase,
@@ -11877,18 +12433,29 @@ export interface StormScope extends StructuralEffects<"storm">, EffectsInStorm, 
 export interface SystemScope
   extends
     StructuralEffects<"system">,
+    EffectsIn11Scopes2089,
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
+    EffectsIn13Scopesa2e3,
+    EffectsIn14Scopes86f5,
+    EffectsIn14Scopesed72,
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a,
+    EffectsIn18Scopes5ba6,
+    EffectsIn19Scopesf9f7,
+    EffectsIn24Scopes1dab,
+    EffectsIn25Scopesf4df,
+    EffectsIn26Scopesc5a2,
     EffectsIn29Scopes878c,
     EffectsIn5Scopese102,
     EffectsIn6Scopes6eb9,
+    EffectsIn7Scopes8ca5,
     EffectsIn7Scopesdd2e,
     EffectsIn8Scopes75eb,
     EffectsIn9Scopes5f8a,
     EffectsInBypassSystem,
     EffectsInCountrySystem,
+    EffectsInLeaderSystem,
     EffectsInPlanetSystem,
     EffectsInSystem,
     UniversalEffects {}

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: effects.cwt
 // From: aliases.cwt
+// From: links.cwt
 
 export type EffectFieldKind = "value" | "comparison" | "trigger" | "effect" | "modifiers";
 
@@ -460,8 +461,16 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  alliance: { key: "alliance", shape: { kind: "wrapper", fields: null } },
+  archaeologicalSite: { key: "archaeological_site", shape: { kind: "wrapper", fields: null } },
+  armyLeader: { key: "army_leader", shape: { kind: "wrapper", fields: null } },
+  assemblingSpecies: { key: "assembling_species", shape: { kind: "wrapper", fields: null } },
   assignEspionageAsset: { key: "assign_espionage_asset", shape: { kind: "value" } },
   assignLeader: { key: "assign_leader", shape: { kind: "value" } },
+  associatedFederation: { key: "associated_federation", shape: { kind: "wrapper", fields: null } },
+  astralRift: { key: "astral_rift", shape: { kind: "wrapper", fields: null } },
+  attacker: { key: "attacker", shape: { kind: "wrapper", fields: null } },
+  auraOwner: { key: "aura_owner", shape: { kind: "wrapper", fields: null } },
   autoFollowFleet: { key: "auto_follow_fleet", shape: { kind: "value" } },
   autoMoveToPlanet: {
     key: "auto_move_to_planet",
@@ -475,6 +484,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  backgroundPlanet: { key: "background_planet", shape: { kind: "wrapper", fields: null } },
   beginEventChain: {
     key: "begin_event_chain",
     shape: {
@@ -485,7 +495,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  branchOfficeOwner: { key: "branch_office_owner", shape: { kind: "wrapper", fields: null } },
   break_: { key: "break", shape: { kind: "bool" } },
+  builtSpecies: { key: "built_species", shape: { kind: "wrapper", fields: null } },
   calculateModifier: { key: "calculate_modifier", shape: { kind: "bool" } },
   cancelContract: {
     key: "cancel_contract",
@@ -499,6 +511,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   cancelResolution: { key: "cancel_resolution", shape: { kind: "value" } },
   cancelTerraformation: { key: "cancel_terraformation", shape: { kind: "bool" } },
+  capitalScope: { key: "capital_scope", shape: { kind: "wrapper", fields: null } },
+  capitalStar: { key: "capital_star", shape: { kind: "wrapper", fields: null } },
+  carrier: { key: "carrier", shape: { kind: "wrapper", fields: null } },
   ceilingVariable: { key: "ceiling_variable", shape: { kind: "value" } },
   changeBackgroundEthic: { key: "change_background_ethic", shape: { kind: "value" } },
   changeBackgroundJob: { key: "change_background_job", shape: { kind: "value" } },
@@ -600,6 +615,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  colony: { key: "colony", shape: { kind: "wrapper", fields: null } },
   completeCrisisObjective: { key: "complete_crisis_objective", shape: { kind: "value" } },
   completeDeed: { key: "complete_deed", shape: { kind: "value" } },
   completeSpecialProject: {
@@ -614,6 +630,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   completeTutorialStep: { key: "complete_tutorial_step", shape: { kind: "value" } },
   conquer: { key: "conquer", shape: { kind: "value" } },
+  contactCountry: { key: "contact_country", shape: { kind: "wrapper", fields: null } },
+  controller: { key: "controller", shape: { kind: "wrapper", fields: null } },
   convertToSpecialist: { key: "convert_to_specialist", shape: { kind: "value" } },
   copyEthosAndAuthority: { key: "copy_ethos_and_authority", shape: { kind: "value" } },
   copyFlagsAndVariablesFrom: { key: "copy_flags_and_variables_from", shape: { kind: "value" } },
@@ -797,13 +815,16 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  creator: { key: "creator", shape: { kind: "wrapper", fields: null } },
   customTooltip: { key: "custom_tooltip", shape: { kind: "value" } },
   damageArmy: { key: "damage_army", shape: { kind: "value" } },
   damageShip: { key: "damage_ship", shape: { kind: "value" } },
   dateDistortion: { key: "date_distortion", shape: { kind: "bool" } },
   deactivateFogMachine: { key: "deactivate_fog_machine", shape: { kind: "bool" } },
   debugBreak: { key: "debug_break", shape: { kind: "bool" } },
+  decliningSpecies: { key: "declining_species", shape: { kind: "wrapper", fields: null } },
   decreaseCouncilSize: { key: "decrease_council_size", shape: { kind: "bool" } },
+  defender: { key: "defender", shape: { kind: "wrapper", fields: null } },
   deleteDimensionalFleet: { key: "delete_dimensional_fleet", shape: { kind: "value" } },
   deleteFleet: { key: "delete_fleet", shape: { kind: "value" } },
   deleteFleetNavalCap: {
@@ -819,6 +840,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   deleteMegastructure: { key: "delete_megastructure", shape: { kind: "value" } },
   deleteShip: { key: "delete_ship", shape: { kind: "value" } },
+  design: { key: "design", shape: { kind: "wrapper", fields: null } },
   destroyAmbientObject: { key: "destroy_ambient_object", shape: { kind: "value" } },
   destroyAndSpawnDebrisFor: { key: "destroy_and_spawn_debris_for", shape: { kind: "value" } },
   destroyArchaeologicalSite: { key: "destroy_archaeological_site", shape: { kind: "value" } },
@@ -927,6 +949,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   endgameTelemetry: { key: "endgame_telemetry", shape: { kind: "value" } },
   endRivalry: { key: "end_rivalry", shape: { kind: "value" } },
   endTruce: { key: "end_truce", shape: { kind: "value" } },
+  envoyLocationCountry: { key: "envoy_location_country", shape: { kind: "wrapper", fields: null } },
   establishBranchOffice: { key: "establish_branch_office", shape: { kind: "value" } },
   establishCommunications: { key: "establish_communications", shape: { kind: "value" } },
   establishCommunicationsNoMessage: {
@@ -1351,8 +1374,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "every_war_participant",
     shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
   },
+  excavatorFleet: { key: "excavator_fleet", shape: { kind: "wrapper", fields: null } },
   exileLeaderAs: { key: "exile_leader_as", shape: { kind: "value" } },
   expireSiteEvent: { key: "expire_site_event", shape: { kind: "value" } },
+  explorer: { key: "explorer", shape: { kind: "wrapper", fields: null } },
   exportModifierDurationToVariable: {
     key: "export_modifier_duration_to_variable",
     shape: {
@@ -1415,6 +1440,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  federation: { key: "federation", shape: { kind: "wrapper", fields: null } },
+  federationLeader: { key: "federation_leader", shape: { kind: "wrapper", fields: null } },
   fillAstralRiftEventPool: { key: "fill_astral_rift_event_pool", shape: { kind: "bool" } },
   finishAllResearches: { key: "finish_all_researches", shape: { kind: "bool" } },
   finishAstralRift: { key: "finish_astral_rift", shape: { kind: "bool" } },
@@ -1425,6 +1452,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   finishSite: { key: "finish_site", shape: { kind: "value" } },
   finishTerraformation: { key: "finish_terraformation", shape: { kind: "bool" } },
   finishUpgrade: { key: "finish_upgrade", shape: { kind: "bool" } },
+  firstDamagingCountry: { key: "first_damaging_country", shape: { kind: "wrapper", fields: null } },
+  fleet: { key: "fleet", shape: { kind: "wrapper", fields: null } },
   fleetActionResearchSpecialProject: {
     key: "fleet_action_research_special_project",
     shape: {
@@ -1442,7 +1471,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   forceRemoveCivicByIndex: { key: "force_remove_civic_by_index", shape: { kind: "value" } },
   forceShowDiplomacy: { key: "force_show_diplomacy", shape: { kind: "value" } },
   forceShowEspionage: { key: "force_show_espionage", shape: { kind: "value" } },
+  founderSpecies: { key: "founder_species", shape: { kind: "wrapper", fields: null } },
   freezeLeaderAge: { key: "freeze_leader_age", shape: { kind: "bool" } },
+  galacticCustodian: { key: "galactic_custodian", shape: { kind: "wrapper", fields: null } },
+  galacticEmperor: { key: "galactic_emperor", shape: { kind: "wrapper", fields: null } },
   getGalaxySetupValue: {
     key: "get_galaxy_setup_value",
     shape: {
@@ -1499,8 +1531,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   goToNextPreFtlAge: { key: "go_to_next_pre_ftl_age", shape: { kind: "bool" } },
+  growingSpecies: { key: "growing_species", shape: { kind: "wrapper", fields: null } },
   guaranteeCountry: { key: "guarantee_country", shape: { kind: "value" } },
+  heir: { key: "heir", shape: { kind: "wrapper", fields: null } },
+  homePlanet: { key: "home_planet", shape: { kind: "wrapper", fields: null } },
   increaseCouncilSize: { key: "increase_council_size", shape: { kind: "bool" } },
+  instigator: { key: "instigator", shape: { kind: "wrapper", fields: null } },
   integrateSpecies: { key: "integrate_species", shape: { kind: "bool" } },
   issueContract: {
     key: "issue_contract",
@@ -1513,6 +1549,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  issuer: { key: "issuer", shape: { kind: "wrapper", fields: null } },
   joinWar: { key: "join_war", shape: { kind: "value" } },
   joinWarOnSide: {
     key: "join_war_on_side",
@@ -1566,6 +1603,32 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  lastAddedDeposit: { key: "last_added_deposit", shape: { kind: "wrapper", fields: null } },
+  lastCreatedAmbientObject: {
+    key: "last_created_ambient_object",
+    shape: { kind: "wrapper", fields: null },
+  },
+  lastCreatedArmy: { key: "last_created_army", shape: { kind: "wrapper", fields: null } },
+  lastCreatedCosmicStorm: {
+    key: "last_created_cosmic_storm",
+    shape: { kind: "wrapper", fields: null },
+  },
+  lastCreatedCosmicStormInfluenceField: {
+    key: "last_created_cosmic_storm_influence_field",
+    shape: { kind: "wrapper", fields: null },
+  },
+  lastCreatedCountry: { key: "last_created_country", shape: { kind: "wrapper", fields: null } },
+  lastCreatedDesign: { key: "last_created_design", shape: { kind: "wrapper", fields: null } },
+  lastCreatedFleet: { key: "last_created_fleet", shape: { kind: "wrapper", fields: null } },
+  lastCreatedLeader: { key: "last_created_leader", shape: { kind: "wrapper", fields: null } },
+  lastCreatedPopFaction: {
+    key: "last_created_pop_faction",
+    shape: { kind: "wrapper", fields: null },
+  },
+  lastCreatedShip: { key: "last_created_ship", shape: { kind: "wrapper", fields: null } },
+  lastCreatedSpecies: { key: "last_created_species", shape: { kind: "wrapper", fields: null } },
+  lastCreatedSystem: { key: "last_created_system", shape: { kind: "wrapper", fields: null } },
+  leader: { key: "leader", shape: { kind: "wrapper", fields: null } },
   leaveAlliance: {
     key: "leave_alliance",
     shape: {
@@ -1589,6 +1652,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  lockCountry: { key: "lock_country", shape: { kind: "wrapper", fields: null } },
   lockStormInPlace: { key: "lock_storm_in_place", shape: { kind: "bool" } },
   log: { key: "log", shape: { kind: "value" } },
   logError: { key: "log_error", shape: { kind: "value" } },
@@ -1597,6 +1661,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: { kind: "fields", fields: [{ prop: "target", key: "target", kind: "value" }] },
   },
   mergeSpecies: { key: "merge_species", shape: { kind: "bool" } },
+  miningStation: { key: "mining_station", shape: { kind: "wrapper", fields: null } },
   modifySpecies: {
     key: "modify_species",
     shape: {
@@ -1656,7 +1721,16 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   mutateSpecies: { key: "mutate_species", shape: { kind: "bool" } },
+  noScope: { key: "no_scope", shape: { kind: "wrapper", fields: null } },
+  observationOutpost: { key: "observation_outpost", shape: { kind: "wrapper", fields: null } },
+  observationOutpostOwner: {
+    key: "observation_outpost_owner",
+    shape: { kind: "wrapper", fields: null },
+  },
   openShroudTab: { key: "open_shroud_tab", shape: { kind: "bool" } },
+  orbit: { key: "orbit", shape: { kind: "wrapper", fields: null } },
+  orbitalDefence: { key: "orbital_defence", shape: { kind: "wrapper", fields: null } },
+  orbitalStation: { key: "orbital_station", shape: { kind: "wrapper", fields: null } },
   orderedActiveFirstContact: {
     key: "ordered_active_first_contact",
     shape: {
@@ -2870,6 +2944,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   orderForcedReturn: { key: "order_forced_return", shape: { kind: "bool" } },
+  overlord: { key: "overlord", shape: { kind: "wrapper", fields: null } },
   ownedFleetListTooltip: {
     key: "owned_fleet_list_tooltip",
     shape: { kind: "fields", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
@@ -2886,6 +2961,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "owned_pop_faction_list_tooltip",
     shape: { kind: "fields", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
   },
+  owner: { key: "owner", shape: { kind: "wrapper", fields: null } },
+  ownerMainSpecies: { key: "owner_main_species", shape: { kind: "wrapper", fields: null } },
+  ownerOrSpaceOwner: { key: "owner_or_space_owner", shape: { kind: "wrapper", fields: null } },
+  ownerSpecies: { key: "owner_species", shape: { kind: "wrapper", fields: null } },
   passDebrisOwnership: {
     key: "pass_debris_ownership",
     shape: { kind: "fields", fields: [{ prop: "owner", key: "owner", kind: "value" }] },
@@ -2906,6 +2985,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "perform_astral_action_unlock_check",
     shape: { kind: "bool" },
   },
+  planet: { key: "planet", shape: { kind: "wrapper", fields: null } },
+  planetOwner: { key: "planet_owner", shape: { kind: "wrapper", fields: null } },
   playSound: { key: "play_sound", shape: { kind: "value" } },
   popChangeEthic: {
     key: "pop_change_ethic",
@@ -2919,6 +3000,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  popFaction: { key: "pop_faction", shape: { kind: "wrapper", fields: null } },
   popForceAddEthic: {
     key: "pop_force_add_ethic",
     shape: {
@@ -2931,6 +3013,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  popGroup: { key: "pop_group", shape: { kind: "wrapper", fields: null } },
   popRemoveEthic: {
     key: "pop_remove_ethic",
     shape: {
@@ -4246,6 +4329,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   rerollDeposits: { key: "reroll_deposits", shape: { kind: "bool" } },
   rerollPlanetModifiers: { key: "reroll_planet_modifiers", shape: { kind: "bool" } },
   rerollRandom: { key: "reroll_random", shape: { kind: "bool" } },
+  researchStation: { key: "research_station", shape: { kind: "wrapper", fields: null } },
   resetCurrentStage: { key: "reset_current_stage", shape: { kind: "bool" } },
   resetEventChainCounter: {
     key: "reset_event_chain_counter",
@@ -4263,6 +4347,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   restoreCountryBackupData: { key: "restore_country_backup_data", shape: { kind: "bool" } },
   returnFromMia: { key: "return_from_mia", shape: { kind: "value" } },
   returnLeaderFromExile: { key: "return_leader_from_exile", shape: { kind: "value" } },
+  reverseFirstContact: { key: "reverse_first_contact", shape: { kind: "wrapper", fields: null } },
   revertAccords: { key: "revert_accords", shape: { kind: "value" } },
   rollAiPreferredPatron: { key: "roll_ai_preferred_patron", shape: { kind: "bool" } },
   roomNameOverride: { key: "room_name_override", shape: { kind: "value" } },
@@ -4278,6 +4363,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   ruinBuilding: { key: "ruin_building", shape: { kind: "value" } },
+  ruler: { key: "ruler", shape: { kind: "wrapper", fields: null } },
   runAiStrategicData: { key: "run_ai_strategic_data", shape: { kind: "bool" } },
   runAiStrategicWarData: { key: "run_ai_strategic_war_data", shape: { kind: "bool" } },
   runInAiMode: { key: "run_in_ai_mode", shape: { kind: "bool" } },
@@ -4304,6 +4390,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   scalePopAmount: { key: "scale_pop_amount", shape: { kind: "value" } },
+  secondDamagingCountry: {
+    key: "second_damaging_country",
+    shape: { kind: "wrapper", fields: null },
+  },
+  sector: { key: "sector", shape: { kind: "wrapper", fields: null } },
+  sectorCapital: { key: "sector_capital", shape: { kind: "wrapper", fields: null } },
   selectDecision: {
     key: "select_decision",
     shape: { kind: "fields", fields: [{ prop: "name", key: "name", kind: "value" }] },
@@ -5204,6 +5296,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   setYearsServed: { key: "set_years_served", shape: { kind: "value" } },
   shiftEthic: { key: "shift_ethic", shape: { kind: "value" } },
+  ship: { key: "ship", shape: { kind: "wrapper", fields: null } },
+  shipGrowthStage: { key: "ship_growth_stage", shape: { kind: "wrapper", fields: null } },
+  solarSystem: { key: "solar_system", shape: { kind: "wrapper", fields: null } },
+  spaceOwner: { key: "space_owner", shape: { kind: "wrapper", fields: null } },
   spawnCustomDebris: {
     key: "spawn_custom_debris",
     shape: {
@@ -5219,6 +5315,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  spawnerPlanet: { key: "spawner_planet", shape: { kind: "wrapper", fields: null } },
   spawnPsionicAura: {
     key: "spawn_psionic_aura",
     shape: {
@@ -5269,6 +5366,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  species: { key: "species", shape: { kind: "wrapper", fields: null } },
+  spynetwork: { key: "spynetwork", shape: { kind: "wrapper", fields: null } },
+  star: { key: "star", shape: { kind: "wrapper", fields: null } },
+  starbase: { key: "starbase", shape: { kind: "wrapper", fields: null } },
   startAstralActionCooldown: { key: "start_astral_action_cooldown", shape: { kind: "value" } },
   startSituation: {
     key: "start_situation",
@@ -5350,6 +5451,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  stormInfluenceField: { key: "storm_influence_field", shape: { kind: "wrapper", fields: null } },
   subtractVariable: {
     key: "subtract_variable",
     shape: {
@@ -5360,6 +5462,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  systemStar: { key: "system_star", shape: { kind: "wrapper", fields: null } },
+  targetSystem: { key: "target_system", shape: { kind: "wrapper", fields: null } },
+  thirdDamagingCountry: { key: "third_damaging_country", shape: { kind: "wrapper", fields: null } },
   tooltip: { key: "tooltip", shape: { kind: "wrapper", fields: null } },
   transferCarrier: {
     key: "transfer_carrier",
@@ -5406,6 +5511,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   triggerMegastructureIcon: { key: "trigger_megastructure_icon", shape: { kind: "bool" } },
   unassignEspionageAsset: { key: "unassign_espionage_asset", shape: { kind: "value" } },
   unassignLeader: { key: "unassign_leader", shape: { kind: "value" } },
+  unhappiestPop: { key: "unhappiest_pop", shape: { kind: "wrapper", fields: null } },
   unlockCouncilSelection: { key: "unlock_council_selection", shape: { kind: "bool" } },
   unlockCouncilSlots: { key: "unlock_council_slots", shape: { kind: "value" } },
   unlockExhibit: { key: "unlock_exhibit", shape: { kind: "value" } },

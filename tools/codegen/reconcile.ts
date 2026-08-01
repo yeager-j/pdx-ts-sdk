@@ -14,8 +14,9 @@ import type { CwtDiagnostic } from "./cwt/parser.ts";
 import { scopeIndex, type RuleSet } from "./cwt/rules.ts";
 import { joinModifierScopes } from "./emit/modifiers.ts";
 import type { ModifierDocs } from "./logs/modifier-docs.ts";
+import type { ScopeLink } from "./logs/scopes.ts";
 import type { DocDump } from "./logs/trigger-docs.ts";
-import { UNIVERSAL_SCOPES } from "./overlay.ts";
+import { SPECIAL_SCOPE_PATHS, UNIVERSAL_SCOPES } from "./overlay.ts";
 
 export interface NameDrift {
   /** Declared in the `.cwt` rules but absent from the game's doc dump. */
@@ -27,6 +28,12 @@ export interface NameDrift {
 export interface DriftReport {
   readonly triggers: NameDrift;
   readonly effects: NameDrift;
+  /**
+   * Static scope links only. Value and `from_data` links are excluded by their
+   * own declared markers (the game never dumps them), and the dump's special
+   * scope references (`root`, `prev`, …) are excluded from the other side.
+   */
+  readonly links: NameDrift;
   /**
    * Concrete `modifiers.cwt` names the game's dump does not list. There is no
    * `docsOnly` counterpart: the dump legitimately holds tens of thousands of
@@ -83,7 +90,12 @@ function describeScopes(scopes: Set<string> | null): string {
   return scopes === null ? "any" : [...scopes].sort().join(" ");
 }
 
-export function reconcile(rules: RuleSet, docs: DocDump, modifierDocs: ModifierDocs): DriftReport {
+export function reconcile(
+  rules: RuleSet,
+  docs: DocDump,
+  modifierDocs: ModifierDocs,
+  dumpLinks: readonly ScopeLink[]
+): DriftReport {
   const index = scopeIndex(rules);
   const unknown = new Set<string>();
   const conflicts: string[] = [];
@@ -101,6 +113,16 @@ export function reconcile(rules: RuleSet, docs: DocDump, modifierDocs: ModifierD
   }
   for (const tokens of rules.modifierCategories.values()) {
     note(tokens.map((token) => token.toLowerCase()));
+  }
+
+  const staticLinks = [...rules.links.values()].filter(
+    (link) => link.type === "scope" && !link.fromData
+  );
+  for (const link of staticLinks) {
+    note(link.inputScopes.map((scope) => scope.toLowerCase()));
+    if (link.outputScope !== null) {
+      note([link.outputScope.toLowerCase()]);
+    }
   }
 
   const modifierJoin = joinModifierScopes(
@@ -132,6 +154,10 @@ export function reconcile(rules: RuleSet, docs: DocDump, modifierDocs: ModifierD
   return {
     triggers: driftBetween(rules.triggers.keys(), docs.triggers.keys()),
     effects: driftBetween(rules.effects.keys(), docs.effects.keys()),
+    links: driftBetween(
+      staticLinks.map((link) => link.name),
+      dumpLinks.map((link) => link.name).filter((name) => !SPECIAL_SCOPE_PATHS.has(name))
+    ),
     modifiers: {
       rulesOnly: diff(rules.modifierDecls.keys(), new Set(modifierDocs.modifiers.keys())),
     },
@@ -164,6 +190,8 @@ export function compareToBaseline(report: DriftReport, baseline: DriftReport): s
     ...compareList("trigger only in docs", report.triggers.docsOnly, baseline.triggers.docsOnly),
     ...compareList("effect only in rules", report.effects.rulesOnly, baseline.effects.rulesOnly),
     ...compareList("effect only in docs", report.effects.docsOnly, baseline.effects.docsOnly),
+    ...compareList("link only in rules", report.links.rulesOnly, baseline.links.rulesOnly),
+    ...compareList("link only in docs", report.links.docsOnly, baseline.links.docsOnly),
     ...compareList(
       "modifier only in rules",
       report.modifiers.rulesOnly,

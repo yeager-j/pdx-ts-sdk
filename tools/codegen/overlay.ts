@@ -25,6 +25,28 @@ export const UNIVERSAL_SCOPES = new Set(["all", "any"]);
 export const EXTRA_SCOPES = ["no_scope"];
 
 /**
+ * Scope *references* the game's scope dump lists alongside the real links.
+ *
+ * `links.cwt` deliberately omits them: they are not navigation from one scope
+ * kind to another but positional references into the evaluation context, with
+ * "Output Scope: various". Typing them needs definition-context threading that
+ * is a separate design, so the link join excludes them instead of recording
+ * them as drift.
+ */
+export const SPECIAL_SCOPE_PATHS = new Set([
+  "root",
+  "this",
+  "from",
+  "fromfrom",
+  "fromfromfrom",
+  "fromfromfromfrom",
+  "prev",
+  "prevprev",
+  "prevprevprev",
+  "prevprevprevprev",
+]);
+
+/**
  * Structural triggers the SDK models by hand rather than generating.
  *
  * These are not conditions, they are the shape of the condition tree, and the
@@ -59,6 +81,25 @@ export const HAND_WRITTEN_EFFECTS = new Set([
   "save_event_target_as",
   "save_global_event_target_as",
   "add_resource",
+]);
+
+/**
+ * The method names `StructuralEffects` in `src/effect-core.ts` hand-writes on
+ * every scope interface. The scope-link pass must not emit a method by any of
+ * these names: the generated interface member would merge with (or shadow) the
+ * structural one and the runtime Proxy would dispatch the wrong table. Update
+ * this list together with `StructuralEffects`.
+ */
+export const STRUCTURAL_EFFECT_METHODS = new Set([
+  "if",
+  "within",
+  "randomList",
+  "lockedRandomList",
+  "random",
+  "whileLoop",
+  "saveEventTargetAs",
+  "saveGlobalEventTargetAs",
+  "addResource",
 ]);
 
 /**

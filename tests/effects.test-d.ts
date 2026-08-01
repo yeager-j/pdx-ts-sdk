@@ -48,4 +48,25 @@ describe("generated effect scope safety", () => {
       planet.destroyColony();
     });
   });
+
+  it("types a scope link's body to the link's output scope", () => {
+    const planet = makeScope<"planet">(sink);
+    planet.owner((country) => {
+      country.everyOwnedPlanet({}, (owned) => owned.destroyColony());
+    });
+  });
+
+  it("rejects an out-of-scope effect inside a link's body", () => {
+    const planet = makeScope<"planet">(sink);
+    planet.owner((country) => {
+      // @ts-expect-error — the link lands in country scope; destroy_colony is not valid there
+      country.destroyColony();
+    });
+  });
+
+  it("rejects a scope link outside its input scopes", () => {
+    const planet = makeScope<"planet">(sink);
+    // @ts-expect-error — overlord only navigates from country scope
+    planet.overlord(() => {});
+  });
 });

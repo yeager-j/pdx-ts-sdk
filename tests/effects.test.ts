@@ -52,6 +52,23 @@ add_resource = {
 `);
   });
 
+  it("records a scope link as a body-only block", () => {
+    const sink: PdxEntry[] = [];
+    const planet = makeScope<"planet">(sink);
+    planet.owner((country) => {
+      country.setCountryFlag(flags.effects_test_flag);
+      country.addResource({ resource: "influence", amount: 10 });
+    });
+
+    expect(serialize(sink)).toBe(`owner = {
+	set_country_flag = effects_test_flag
+	add_resource = {
+		influence = 10
+	}
+}
+`);
+  });
+
   it("records weighted arms with modifiers through randomList", () => {
     const sink: PdxEntry[] = [];
     const country = makeScope<"country">(sink);
