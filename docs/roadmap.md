@@ -144,13 +144,31 @@ from CWT alone:
   singular fixed-shape block just falls out of the general mechanism.
 - **A second CWT spelling of "repeated, no id."** Besides repeating a named
   field directly (`text = { ... }` written N times), CWT sometimes wraps the
-  repetition as a bare anonymous block declared repeatable *inside* a singular
+  repetition as a bare anonymous block declared repeatable _inside_ a singular
   container field — `agreement_preset.term_data.discrete_terms = { ##
-  cardinality = 0..inf { key = ... value = ... } }`. Internally this is
+cardinality = 0..inf { key = ... value = ... } }`. Internally this is
   "wrapped": the container field's own cardinality is irrelevant, the
   repetition lives on the bare declaration, and the writer emits one field
   holding N anonymous nested blocks rather than N sibling entries at the same
   level. The author-facing type is the same `T[]` either way.
+
+### Emit every field inside repeated structs
+
+The emit-everything flip stopped at the top level. A `repeatedStruct` field
+still takes a `REPEATED_STRUCT_DEFINITIONS` overlay entry carrying a
+hand-written `fields` array, and the emitter iterates it as an allowlist
+(`for (const name of config.fields)`). Its unemitted list is plain set
+subtraction with no capability probe, so curation is reported under "blocked on
+emitter machinery" — `tradition.tradition_swap.on_enabled` is withheld with
+nothing having tested whether it lowers.
+
+Part of the overlay entry is legitimate: `identityKey` and `keying` cannot be
+inferred, the same argument that makes the top-level keyword manifest-declared.
+The `fields` array is not. Run the same probe inside structs and emit what
+lowers.
+
+Do this BEFORE situations, whose `stages` and `approach` would otherwise each
+arrive with a fresh hand-curated field list.
 
 ### Fix the scalar-versus-block field picker
 
