@@ -173,7 +173,7 @@ lowers.
 Do this BEFORE situations, whose `stages` and `approach` would otherwise each
 arrive with a fresh hand-curated field list.
 
-### Fix the scalar-versus-block field picker
+### Accept both scalar and block where CWT declares a field twice
 
 Three registries have hit the same defect: `opinion_modifier.opinion`/`decay`/
 `growth`, `bombardment_stance.planet_damage`, `archaeological_site_type.weight`.
@@ -181,10 +181,23 @@ Each is declared twice in CWT, once as a bare scalar and once as a
 `modifier_rule` block, and the picker keeps the scalar and silently drops the
 gated adjustments. Each needed a hand-written override.
 
-Three occurrences is systematic, not coincidence: when a group holds both, the
-block is the richer form and should win. Fixing it retires three overrides and
-prevents a fourth. The corpus gate cannot catch this class — both forms lower
-and both produce legal-looking output.
+Six occurrences now, with `total_progress`, `stages.end`, and
+`stages.section_weight` from situations. Systematic, not coincidence.
+
+**"The block should win" was the wrong prescription, and situations proved it.**
+Overriding `stages.end` to `WeightBlock` typed away the scalar form, and vanilla
+writes `end = 100` **254 times against 1 block**; Dawn of Ascension writes 40
+scalars and no blocks. So an author must now spell the only form anyone uses as
+`end: { base: 100 }`. Picking either declaration is wrong in one direction or
+the other.
+
+Accept **both**: `number | WeightBlock<S>`, lowered by which one the author
+passes. That retires the six overrides without making the common case verbose.
+
+Note the corpus gate reported no problem here, because it only checks whether a
+field is PRESENT. Comparing the emitted type against real values is
+[shape conformance](#shape-conformance), which would have flagged a block-typed
+field whose 254 observed values are scalars.
 
 ### Make the corpus gate see inside nested blocks
 
