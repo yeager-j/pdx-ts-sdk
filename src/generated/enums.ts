@@ -288,6 +288,21 @@ export type ShipOwnerType = "country" | "federation" | "galactic_community" | "g
 /** `enum[ship_rarity]`. */
 export type ShipRarity = "common" | "rare" | "epic" | "exceptional" | "highest";
 
+/**
+ * `enum[situation_approach]`.
+ * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ */
+export type SituationApproach = string;
+
+/** `enum[situation_category]`. */
+export type SituationCategory = "positive" | "negative" | "neutral";
+
+/**
+ * `enum[situation_stage]`.
+ * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ */
+export type SituationStage = string;
+
 /** `enum[specimen_type]`. */
 export type SpecimenType = "aesthetic_wonder" | "historical_item" | "xeno_geology";
 

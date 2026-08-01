@@ -16,6 +16,7 @@
 // From: common/agreements.cwt
 // From: common/bombardment_stances.cwt
 // From: common/archaeology.cwt
+// From: common/situations.cwt
 // From: common/scripted_loc.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
@@ -93,6 +94,12 @@ import {
   type DefinedScriptedModifier,
   type ScriptedModifierDef,
 } from "./scripted-modifier.ts";
+import {
+  SITUATION_TYPE_FIELDS,
+  SITUATION_TYPE_LOCALISATION,
+  type DefinedSituationType,
+  type SituationTypeDef,
+} from "./situation-type.ts";
 import {
   STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS,
   STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
@@ -284,6 +291,13 @@ export const CONTENT_REGISTRIES = [
     localisation: ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
   },
   {
+    type: "situation_type",
+    outputDir: "common/situations",
+    fileStem: "situations",
+    fields: SITUATION_TYPE_FIELDS,
+    localisation: SITUATION_TYPE_LOCALISATION,
+  },
+  {
     type: "scripted_loc",
     outputDir: "common/scripted_loc",
     fileStem: "scripted_loc",
@@ -316,6 +330,7 @@ export interface ContentDefMap<P extends string> {
   agreement_preset: AgreementPresetDef<PrefixedId<P>>;
   bombardment_stance: BombardmentStanceDef<PrefixedId<P>>;
   archaeological_site_type: ArchaeologicalSiteTypeDef<PrefixedId<P>>;
+  situation_type: SituationTypeDef<PrefixedId<P>>;
   scripted_loc: ScriptedLocDef<PrefixedId<P>>;
 }
 
@@ -340,6 +355,7 @@ export interface DefinedContentMap<P extends string> {
   agreement_preset: DefinedAgreementPreset<PrefixedId<P>>;
   bombardment_stance: DefinedBombardmentStance<PrefixedId<P>>;
   archaeological_site_type: DefinedArchaeologicalSiteType<PrefixedId<P>>;
+  situation_type: DefinedSituationType<PrefixedId<P>>;
   scripted_loc: DefinedScriptedLoc<PrefixedId<P>>;
 }
 
@@ -469,6 +485,13 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["archaeological_site_type"]
   ): DefinedContentMap<P>["archaeological_site_type"] {
     return this.defineGeneratedContent("archaeological_site_type", def);
+  }
+
+  /** Defines a situation type in this mod. */
+  defineSituationType(
+    def: ContentDefMap<P>["situation_type"]
+  ): DefinedContentMap<P>["situation_type"] {
+    return this.defineGeneratedContent("situation_type", def);
   }
 
   /** Defines a scripted loc in this mod. */

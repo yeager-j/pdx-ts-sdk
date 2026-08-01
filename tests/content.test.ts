@@ -419,6 +419,79 @@ function defineContentExample(): Mod<"content_test"> {
     onVisible: (country) => country.setCountryFlag("content_test_site_visible"),
   });
 
+  mod.defineSituationType({
+    id: "content_test_situation_machine_uprising",
+    name: "Machine Uprising",
+    desc: "The machines stir beneath the surface.",
+    category: "negative",
+    potential: hasAuthority("auth_machine_intelligence"),
+    onStart: (situation) => situation.addSituationProgress(5),
+    onProgressComplete: () => {},
+    onFail: () => {},
+    abortTrigger: always(),
+    modifier: (m) => m.country.unity.produces.mult(0.02),
+    targetModifier: (m) => m.pop.happiness(0.05),
+    triggeredModifier: [
+      {
+        when: hasAuthority("auth_machine_intelligence"),
+        modifiers: (m) => m.country.unity.produces.mult(-0.05),
+      },
+    ],
+    startValue: 0,
+    permanent: false,
+    // stages = { stage_1 = { ... } stage_2 = { ... } } — a keyed container
+    // (repeated-struct's "container" keying), id order preserved exactly as
+    // declared here.
+    stages: {
+      content_test_situation_machine_uprising_stage_unrest: {
+        name: "Rising Unrest",
+        icon: "GFX_situation_stage_unrest",
+        iconBackground: "GFX_situation_stage_unrest_bg",
+        end: { base: 40 },
+        onFirstEnter: (situation) => situation.addSituationProgress(1),
+        modifier: (m) => m.country.unity.produces.mult(0.01),
+      },
+      content_test_situation_machine_uprising_stage_revolt: {
+        name: "Open Revolt",
+        desc: "The machines have taken up arms.",
+        icon: "GFX_situation_stage_revolt",
+        iconBackground: "GFX_situation_stage_revolt_bg",
+        end: { base: 100, modifiers: [{ factor: 1.5, when: always() }] },
+        potential: always(),
+        triggeredModifier: [
+          {
+            when: hasAuthority("auth_machine_intelligence"),
+            modifiers: (m) => m.country.unity.produces.mult(-0.05),
+          },
+        ],
+      },
+    },
+    // approach = { name = ... } repeated sibling blocks — repeated-struct's
+    // "siblings" keying, the same shape tradition_swap already exercises.
+    approach: {
+      content_test_situation_machine_uprising_approach_negotiate: {
+        name: "Negotiate",
+        icon: "GFX_situation_approach_negotiate",
+        iconBackground: "GFX_situation_approach_negotiate_bg",
+        default: true,
+        allow: always(),
+        onSelect: (situation) => situation.addSituationProgress(-2),
+        modifier: (m) => m.country.unity.produces.mult(0.02),
+        resources: [{ category: "situations", cost: { amounts: { unity: 100 } } }],
+        aiWeight: 5,
+      },
+      content_test_situation_machine_uprising_approach_purge: {
+        name: "Purge",
+        desc: "Meet the uprising with force.",
+        icon: "GFX_situation_approach_purge",
+        iconBackground: "GFX_situation_approach_purge_bg",
+        potential: always(),
+        onSelect: () => {},
+        targetModifier: (m) => m.pop.happiness(-0.1),
+      },
+    },
+  });
+
   mod.defineScriptedLoc({
     id: "content_test_scripted_loc_flavor_text",
     random: false,
@@ -473,6 +546,68 @@ describe("generated content registries", () => {
     expect(rendered).toContain("someone_elses_modifier = 0.03");
   });
 
+  it("emits stages as one keyed container and approach as repeated siblings", () => {
+    // The two repeated-struct keyings read very differently on the wire:
+    // "container" collapses every stage into one `stages = { ... }` block
+    // keyed by id, in declaration order, while "siblings" repeats `approach`
+    // itself once per entry with the id written into a `name` field inside
+    // each block. Getting them backwards would still parse — only the shape
+    // of the output would be wrong — so this checks the literal text.
+    const rendered = files.get("common/situations/content_test_situations.txt")!;
+    const stagesBlock = rendered.match(/stages = \{([\s\S]*)\n\}\n?$/)?.[1];
+    expect(stagesBlock).toBeDefined();
+    // One `stages` key, holding both stage ids as its own entries.
+    expect(rendered.match(/^\tstages = \{/gm)).toHaveLength(1);
+    expect(stagesBlock).toContain("content_test_situation_machine_uprising_stage_unrest = {");
+    expect(stagesBlock).toContain("content_test_situation_machine_uprising_stage_revolt = {");
+    // Declaration order survives into the emitted block.
+    expect(
+      stagesBlock!.indexOf("content_test_situation_machine_uprising_stage_unrest")
+    ).toBeLessThan(stagesBlock!.indexOf("content_test_situation_machine_uprising_stage_revolt"));
+
+    // Two sibling `approach = { name = ... }` blocks, not one `approach`
+    // container keyed by id.
+    expect(rendered.match(/^\tapproach = \{/gm)).toHaveLength(2);
+    expect(rendered).toContain(
+      "approach = {\n\t\tname = content_test_situation_machine_uprising_approach_negotiate"
+    );
+    expect(rendered).toContain(
+      "approach = {\n\t\tname = content_test_situation_machine_uprising_approach_purge"
+    );
+  });
+
+  it("overrides the dual bare/modifier_rule declaration for total_progress and section_weight", () => {
+    // total_progress (bare `value_int_field`, an upstream CWT typo, versus a
+    // modifier_rule block) and stages' section_weight (bare int_value_field
+    // versus a modifier_rule block, gated to the dynamic_progress subtype) hit
+    // the same "declared twice" picker defect as opinion_modifier.opinion —
+    // without the weightBlock override the group would pick the bare scalar
+    // and silently drop the gated adjustments.
+    const mod = new Mod({
+      name: "Section weights test",
+      prefix: "sw_test",
+      supportedVersion: "4.4.*",
+    });
+    mod.defineSituationType({
+      id: "sw_test_situation_dynamic",
+      name: "Dynamic Progress Situation",
+      totalProgress: { base: 60_000, modifiers: [{ factor: 2, when: always() }] },
+      stages: {
+        sw_test_situation_dynamic_stage_only: {
+          name: "Only Stage",
+          icon: "GFX_situation_stage_only",
+          iconBackground: "GFX_situation_stage_only_bg",
+          sectionWeight: { base: 25 },
+        },
+      },
+    });
+    const rendered = mod.render().get("common/situations/sw_test_situations.txt");
+    expect(rendered).toContain(
+      "total_progress = {\n\t\tbase = 60000\n\t\tmodifier = {\n\t\t\tfactor = 2\n\t\t\talways = yes\n\t\t}\n\t}"
+    );
+    expect(rendered).toContain("section_weight = {\n\t\t\t\tbase = 25\n\t\t\t}");
+  });
+
   it("rejects an unprefixed nested definition before rendering", () => {
     const mod = new Mod({
       name: "Content test",
@@ -514,5 +649,52 @@ describe("generated content registries", () => {
         traditionSwap: { content_test_swap_shared: { name: "Second" } },
       })
     ).toThrow('Duplicate tradition.tradition_swap id "content_test_swap_shared"');
+  });
+
+  it('applies the same mod-prefix and duplicate-id rules to "container" keying', () => {
+    // stages is repeated-struct's first "container" consumer — its record key
+    // IS the block's own key rather than a body field, a different code path
+    // through the writer than "siblings" (tradition_swap, approach) already
+    // exercises, so it needs its own direct check rather than relying on
+    // approach's coverage to stand in for it.
+    const mod = new Mod({
+      name: "Content test",
+      prefix: "content_test",
+      supportedVersion: "4.4.*",
+    });
+    const runtimeConfigured: Mod<string> = mod;
+    expect(() =>
+      runtimeConfigured.defineSituationType({
+        id: "content_test_situation_x",
+        name: "X",
+        stages: {
+          othermod_stage: { name: "Wrong namespace", icon: "GFX_x", iconBackground: "GFX_x_bg" },
+        },
+      })
+    ).toThrow(/must start with the mod prefix "content_test_"/);
+    mod.defineSituationType({
+      id: "content_test_situation_y",
+      name: "Y",
+      stages: {
+        content_test_situation_stage_shared: {
+          name: "First",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+        },
+      },
+    });
+    expect(() =>
+      mod.defineSituationType({
+        id: "content_test_situation_z",
+        name: "Z",
+        stages: {
+          content_test_situation_stage_shared: {
+            name: "Second",
+            icon: "GFX_x",
+            iconBackground: "GFX_x_bg",
+          },
+        },
+      })
+    ).toThrow('Duplicate situation_type.stages id "content_test_situation_stage_shared"');
   });
 });

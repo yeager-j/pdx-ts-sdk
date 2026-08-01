@@ -69,6 +69,7 @@ export const CONTENT_MANIFEST = [
   { type: "agreement_preset", source: "common/agreements.cwt" },
   { type: "bombardment_stance", source: "common/bombardment_stances.cwt" },
   { type: "archaeological_site_type", source: "common/archaeology.cwt" },
+  { type: "situation_type", source: "common/situations.cwt" },
   {
     type: "scripted_loc",
     source: "common/scripted_loc.cwt",

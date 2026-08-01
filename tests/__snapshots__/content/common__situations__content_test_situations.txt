@@ -1,0 +1,97 @@
+content_test_situation_machine_uprising = {
+	category = negative
+	potential = {
+		has_authority = auth_machine_intelligence
+	}
+	on_start = {
+		add_situation_progress = 5
+	}
+	on_fail = {}
+	on_progress_complete = {}
+	abort_trigger = {
+		always = yes
+	}
+	modifier = {
+		country_unity_produces_mult = 0.02
+	}
+	target_modifier = {
+		pop_happiness = 0.05
+	}
+	triggered_modifier = {
+		potential = {
+			has_authority = auth_machine_intelligence
+		}
+		country_unity_produces_mult = -0.05
+	}
+	approach = {
+		name = content_test_situation_machine_uprising_approach_negotiate
+		icon = GFX_situation_approach_negotiate
+		icon_background = GFX_situation_approach_negotiate_bg
+		default = yes
+		allow = {
+			always = yes
+		}
+		modifier = {
+			country_unity_produces_mult = 0.02
+		}
+		resources = {
+			category = situations
+			cost = {
+				unity = 100
+			}
+		}
+		on_select = {
+			add_situation_progress = -2
+		}
+		ai_weight = 5
+	}
+	approach = {
+		name = content_test_situation_machine_uprising_approach_purge
+		icon = GFX_situation_approach_purge
+		icon_background = GFX_situation_approach_purge_bg
+		potential = {
+			always = yes
+		}
+		target_modifier = {
+			pop_happiness = -0.1
+		}
+		on_select = {}
+	}
+	start_value = 0
+	permanent = no
+	stages = {
+		content_test_situation_machine_uprising_stage_unrest = {
+			end = {
+				base = 40
+			}
+			icon = GFX_situation_stage_unrest
+			icon_background = GFX_situation_stage_unrest_bg
+			on_first_enter = {
+				add_situation_progress = 1
+			}
+			modifier = {
+				country_unity_produces_mult = 0.01
+			}
+		}
+		content_test_situation_machine_uprising_stage_revolt = {
+			end = {
+				base = 100
+				modifier = {
+					factor = 1.5
+					always = yes
+				}
+			}
+			icon = GFX_situation_stage_revolt
+			icon_background = GFX_situation_stage_revolt_bg
+			potential = {
+				always = yes
+			}
+			triggered_modifier = {
+				potential = {
+					has_authority = auth_machine_intelligence
+				}
+				country_unity_produces_mult = -0.05
+			}
+		}
+	}
+}

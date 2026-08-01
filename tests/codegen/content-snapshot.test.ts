@@ -256,6 +256,68 @@ describe("content-type codegen", () => {
     expect(agreementPreset?.machineryBacklog.join("\n")).not.toContain("term_data");
   });
 
+  it("generates situations' stages (container keying) and approach (siblings keying)", () => {
+    // situations is repeated-struct's first "container" consumer: stages =
+    // { stage_1 = { ... } } keys each entry by its own block key rather than a
+    // body field, distinct from approach's siblings shape (tradition_swap's
+    // shape) which carries its id in a body field ("name").
+    const situation = emissions.get("situation_type");
+    expect(situation?.code).toContain("export interface SituationStageFields");
+    expect(situation?.code).toContain('shape: "repeatedStruct"');
+    expect(situation?.code).toContain('keying: "container"');
+    expect(situation?.code).toContain("fields: SITUATION_STAGE_FIELDS");
+    expect(situation?.code).toContain("stages?: Readonly<Record<Id, SituationStageFields>>;");
+    // "container" keying carries no identityKey member in its metadata — the
+    // record key IS the block's own key, not a body field.
+    expect(situation?.code).not.toMatch(/keying: "container"[^}]*identityKey/);
+
+    expect(situation?.code).toContain("export interface SituationApproachFields");
+    expect(situation?.code).toContain('keying: "siblings"');
+    expect(situation?.code).toContain('identityKey: "name"');
+    expect(situation?.code).toContain("fields: SITUATION_APPROACH_FIELDS");
+    expect(situation?.code).toContain("approach?: Readonly<Record<Id, SituationApproachFields>>;");
+  });
+
+  it("falls back to the identity-localisation convention when no CWT type carries it", () => {
+    // Neither stages nor approach has a vendored type[...] the way
+    // tradition_swap borrows type[swapped_tradition] — CWT only ever types the
+    // identity value itself as `localisation` inline. 99_README_SITUATIONS.txt
+    // documents the same convention regardless: the key/name is required
+    // localised text, with an optional `<key>_desc`.
+    const situation = emissions.get("situation_type");
+    expect(situation?.code).toContain(
+      "export const SITUATION_STAGE_LOCALISATION: readonly ContentLocalisation[] = [\n" +
+        '  { member: "name", pattern: "$", required: true },\n' +
+        '  { member: "desc", pattern: "$_desc", required: false },\n' +
+        "];"
+    );
+    expect(situation?.code).toContain(
+      "export const SITUATION_APPROACH_LOCALISATION: readonly ContentLocalisation[] = [\n" +
+        '  { member: "name", pattern: "$", required: true },\n' +
+        '  { member: "desc", pattern: "$_desc", required: false },\n' +
+        "];"
+    );
+  });
+
+  it("lowers situation fields nested inside stages and approach without registry-specific code", () => {
+    const situation = emissions.get("situation_type");
+    expect(situation?.code).toContain('modifier?: ModifierClosure<"country">;');
+    expect(situation?.code).toContain('onSelect?: EffectBlock<"situation">;');
+    expect(situation?.code).toContain('resources?: EconomicResourceBlock<"situation">[];');
+    expect(situation?.code).toContain('onFirstEnter?: EffectBlock<"situation">;');
+  });
+
+  it("overrides situations' dual bare/modifier_rule declarations, including inside stages", () => {
+    // total_progress, and stages' end/section_weight, are each declared twice
+    // — once as a bare (malformed, in total_progress's case) scalar, once as a
+    // modifier_rule block — the same failure mode opinion_modifier hit, this
+    // time recurring inside a repeated-struct field too.
+    const situation = emissions.get("situation_type");
+    expect(situation?.code).toContain('totalProgress?: WeightBlock<"situation">;');
+    expect(situation?.code).toContain('end?: WeightBlock<"situation">;');
+    expect(situation?.code).toContain('sectionWeight?: WeightBlock<"situation">;');
+  });
+
   it("declines a struct field that would collide with a localization member name", () => {
     // building.desc (`single_alias_right[triggered_desc_clause]`, a repeated
     // trigger+text struct) would otherwise duplicate the `desc` flavor-text

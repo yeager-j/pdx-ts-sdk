@@ -27,6 +27,7 @@ import type {
   RefreshPortraits,
   ResearchArea,
   ShipRarity,
+  SituationApproach,
   SpecimensRarity,
   SpecimenType,
   SystemDirection,
@@ -8303,7 +8304,7 @@ export interface EffectsInSituation {
    * set_situation_approach = <approach> (name field of the approach)
    * ```
    */
-  setSituationApproach(value: string): void;
+  setSituationApproach(value: SituationApproach): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped situation

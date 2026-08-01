@@ -199,6 +199,12 @@ export type EventRef = TypedRef<"event">;
 /** A reference to a `<event.fleet>`. */
 export type EventFleetRef = TypedRef<"event.fleet">;
 
+/** A reference to a `<event.scopeless>`. */
+export type EventScopelessRef = TypedRef<"event.scopeless">;
+
+/** A reference to a `<event.situation>`. */
+export type EventSituationRef = TypedRef<"event.situation">;
+
 /** A reference to a `<event_chain>`. */
 export type EventChainRef = TypedRef<"event_chain">;
 
@@ -276,6 +282,9 @@ export type ModelEntityRef = TypedRef<"model_entity">;
 
 /** A reference to a `<modifier>`. */
 export type ModifierRef = TypedRef<"modifier">;
+
+/** A reference to a `<named_color>`. */
+export type NamedColorRef = TypedRef<"named_color">;
 
 /** A reference to a `<notification_modifier>`. */
 export type NotificationModifierRef = TypedRef<"notification_modifier">;

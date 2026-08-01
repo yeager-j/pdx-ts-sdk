@@ -263,6 +263,39 @@ describe("generated content authoring types", () => {
     void technology;
   });
 
+  it("scopes situations' repeated-struct fields per their own push_scope, not the body default", () => {
+    // situation_type's body defaults every unmarked field to "situation"
+    // scope, but potential replace_scopes to "country" at the top level while
+    // staying "situation" inside both stages ("container" keying) and
+    // approach ("siblings" keying) — so a country-scoped trigger fits the top
+    // level but not either nested field. Both keyings need their own check,
+    // not just the top level.
+    mod.defineSituationType({
+      id: "content_types_situation_scoped",
+      name: "X",
+      // Valid here — potential replace_scopes to country.
+      potential: hasAuthority("auth_democratic"),
+      stages: {
+        content_types_situation_scoped_stage: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — stage potential runs in situation scope, not country
+          potential: hasAuthority("auth_democratic"),
+        },
+      },
+      approach: {
+        content_types_situation_scoped_approach: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — approach allow runs in situation scope, not country
+          allow: hasAuthority("auth_democratic"),
+        },
+      },
+    });
+  });
+
   it("keeps modifier recorders numeric and weight conditions scoped", () => {
     mod.defineTradition({
       id: "content_types_tradition_modifier",

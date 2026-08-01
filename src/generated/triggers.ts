@@ -34,6 +34,8 @@ import type {
   ScopeTypeToken,
   ShipOwnerType,
   ShipRarity,
+  SituationApproach,
+  SituationStage,
   SpecimensRarity,
   SpecimenType,
   TechnologyArea,
@@ -1680,7 +1682,7 @@ export function canSetPolicy(args: CanSetPolicyArgs): Trigger<"country"> {
  * can_set_situation_approach = <approach> (name field of the approach)
  * ```
  */
-export function canSetSituationApproach(value: string): Trigger<"situation"> {
+export function canSetSituationApproach(value: SituationApproach): Trigger<"situation"> {
   return trigger([kv("can_set_situation_approach", value)]);
 }
 
@@ -5493,7 +5495,7 @@ export function currentAwarenessLevel(value: AwarenessLevel): Trigger<"country">
  * current_situation_approach = <approach> (name field of the approach)
  * ```
  */
-export function currentSituationApproach(value: string): Trigger<"situation"> {
+export function currentSituationApproach(value: SituationApproach): Trigger<"situation"> {
   return trigger([kv("current_situation_approach", value)]);
 }
 
@@ -5503,7 +5505,7 @@ export function currentSituationApproach(value: string): Trigger<"situation"> {
  * current_stage = <stage> (name defined in situation's stages)
  * ```
  */
-export function currentStage(value: string): Trigger<"situation"> {
+export function currentStage(value: SituationStage): Trigger<"situation"> {
   return trigger([kv("current_stage", value)]);
 }
 

@@ -550,6 +550,68 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "opinion_modifier.opinion.",
     },
   ],
+  [
+    "situation_type.total_progress",
+    {
+      shape: "weightBlock",
+      reason:
+        "Declared twice, as a bare `value_int_field` scalar (an upstream CWT typo distinct from " +
+        "the usual `int_value_field`) and as a modifier_rule block; without the override the group " +
+        "picks the malformed bare scalar and silently drops the gated adjustments, same failure " +
+        "mode as opinion_modifier.opinion — the fourth occurrence the roadmap's scalar-versus-block " +
+        "picker section predicted.",
+    },
+  ],
+  [
+    "situation_type.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "situation_type.target_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "situation_type.triggered_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_situation_clause combines a potential trigger with an open " +
+        "modifier-name map, the same shape as the ordinary triggered_modifier_clause.",
+    },
+  ],
+  [
+    "situation_type.triggered_target_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_situation_clause combines a potential trigger with an open " +
+        "modifier-name map, the same shape as the ordinary triggered_modifier_clause.",
+    },
+  ],
+  [
+    "situation_type.stages",
+    {
+      shape: "repeatedStruct",
+      reason:
+        "A keyed container (`stages = { stage_1 = { ... } } `): a named, ordered collection whose " +
+        "key is both identity and localization key, per 99_README_SITUATIONS.txt.",
+    },
+  ],
+  [
+    "situation_type.approach",
+    {
+      shape: "repeatedStruct",
+      reason:
+        "Repeated siblings carrying a name field (`approach = { name = approach_a ... }`), the " +
+        "same shape tradition_swap already exercises.",
+    },
+  ],
 ]);
 
 export interface RepeatedStructDefinition {
@@ -564,7 +626,15 @@ export interface RepeatedStructDefinition {
   readonly keying?: "siblings" | "container";
   /** Required when `keying` is "siblings" (the default); unused for "container". */
   readonly identityKey?: string;
-  readonly localisationType: string;
+  /**
+   * The vendored `type[...]` carrying the identity's localisation patterns
+   * (`swapped_tradition` for `tradition.tradition_swap`). Omit when CWT
+   * declares no such type — situations' `stages` and `approach` only type the
+   * identity value itself as `localisation` inline — and the emitter falls
+   * back to the same `$` required / `$_desc` optional convention those
+   * vendored types themselves use.
+   */
+  readonly localisationType?: string;
 }
 
 export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinition>([
@@ -582,6 +652,20 @@ export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinit
       typeName: "AscensionPerkSwap",
       identityKey: "name",
       localisationType: "swapped_ascension_perk",
+    },
+  ],
+  [
+    "situation_type.stages",
+    {
+      typeName: "SituationStage",
+      keying: "container",
+    },
+  ],
+  [
+    "situation_type.approach",
+    {
+      typeName: "SituationApproach",
+      identityKey: "name",
     },
   ],
 ]);
@@ -613,6 +697,91 @@ export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverr
     {
       shape: "weightBlock",
       reason: "Nested modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "situation_type.stages.end",
+    {
+      shape: "weightBlock",
+      reason:
+        "Declared twice, as a bare int_value_field and as a modifier_rule block, gated to the " +
+        "not-dynamic_progress subtype; without the override the group picks the bare scalar and " +
+        "silently drops the gated adjustments, same failure mode as opinion_modifier.opinion.",
+    },
+  ],
+  [
+    "situation_type.stages.section_weight",
+    {
+      shape: "weightBlock",
+      reason:
+        "Declared twice, as a bare int_value_field and as a modifier_rule block, gated to the " +
+        "dynamic_progress subtype; without the override the group picks the bare scalar and " +
+        "silently drops the gated adjustments, same failure mode as opinion_modifier.opinion.",
+    },
+  ],
+  [
+    "situation_type.stages.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "Nested modifier_clause is the same open modifier-name map as the top level's.",
+    },
+  ],
+  [
+    "situation_type.stages.target_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "Nested modifier_clause is the same open modifier-name map as the top level's.",
+    },
+  ],
+  [
+    "situation_type.stages.triggered_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason: "Nested triggered_modifier_by_situation_clause is the same shape as the top level's.",
+    },
+  ],
+  [
+    "situation_type.stages.triggered_target_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason: "Nested triggered_modifier_by_situation_clause is the same shape as the top level's.",
+    },
+  ],
+  [
+    "situation_type.approach.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "Nested modifier_clause is the same open modifier-name map as the top level's.",
+    },
+  ],
+  [
+    "situation_type.approach.target_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "Nested modifier_clause is the same open modifier-name map as the top level's.",
+    },
+  ],
+  [
+    "situation_type.approach.triggered_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason: "Nested triggered_modifier_by_situation_clause is the same shape as the top level's.",
+    },
+  ],
+  [
+    "situation_type.approach.triggered_target_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason: "Nested triggered_modifier_by_situation_clause is the same shape as the top level's.",
+    },
+  ],
+  [
+    "situation_type.approach.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics, " +
+        "the same shape as job.resources.",
     },
   ],
 ]);
