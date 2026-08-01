@@ -191,6 +191,20 @@ interface ContentModifierField extends ContentFieldBase {
   readonly shape: "modifierBlock";
 }
 
+/**
+ * A modifier clause spliced unkeyed into the definition's own body.
+ *
+ * `static_modifier` declares `alias_name[modifier] = alias_match_left[modifier]`
+ * at the top level of its rule, so vanilla writes the modifier names at the
+ * block root next to the metadata keys — `empire_base = { max_rivalries = 3 }`,
+ * with no `modifier = { ... }` wrapper. Carries no `key` because the game reads
+ * none, and no `repeated` because one closure records every row.
+ */
+interface ContentInlineModifiersField {
+  readonly shape: "inlineModifiers";
+  readonly member: string;
+}
+
 interface ContentWeightField extends ContentFieldBase {
   readonly shape: "weightBlock";
 }
@@ -284,6 +298,7 @@ export type ContentField =
   | ContentEconomicResourcesField
   | ContentTriggeredModifierField
   | ContentModifierField
+  | ContentInlineModifiersField
   | ContentWeightField
   | ContentWeightWithLocField
   | ContentValueOrWeightField
@@ -526,6 +541,9 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
       case "modifierBlock":
         entries.push(modifierBlock(field.key, value as ModifierClosure));
         break;
+      case "inlineModifiers":
+        entries.push(...modifierEntries(value as ModifierClosure));
+        break;
       case "weightBlock":
       case "weightBlockWithLoc":
         entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));
@@ -752,7 +770,9 @@ export class ContentAuthoring {
   ): void {
     for (const field of fields) {
       const raw = def[field.member];
-      if (raw === undefined) {
+      // An unkeyed splice has no key to build a path from, and nothing inside
+      // it carries an identity or localisation of its own.
+      if (raw === undefined || field.shape === "inlineModifiers") {
         continue;
       }
       const fieldPath = path === "" ? field.key : `${path}_${field.key}`;

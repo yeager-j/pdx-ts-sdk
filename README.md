@@ -242,8 +242,28 @@ including template patterns (``readonly [k: `mymod_${string}`]: number``)
 that admit a whole generated family at once. `unchecked` is the honest
 escape for names computed at build time.
 
+Where the rules pin no scope, every path is legal instead of none. A static
+modifier is the clearest case: its body _is_ the modifier grammar, spliced in
+with no enclosing key, so the rows land at the definition's root exactly as
+vanilla writes them.
+
+```ts
+mod.defineStaticModifier({
+  id: "hello_galaxy_synthetic_surge",
+  name: "Synthetic Surge",
+  modifiers: (m) => {
+    m.country.unity.produces.mult(0.15);
+    m.planet.jobs.alloys.produces.mult(0.1);
+  },
+});
+// emits: hello_galaxy_synthetic_surge = {
+//          country_unity_produces_mult = 0.15
+//          planet_jobs_alloys_produces_mult = 0.1
+//        }
+```
+
 Under the hood the names form a 111,401-node path trie whose identical
-subtrees collapse into 3,456 shared interfaces, so both the compiler and the
+subtrees collapse into 3,457 shared interfaces, so both the compiler and the
 editor stay fast — and the whole table regenerates from the vendored game
 dump with the same drift gates as every other generated type.
 

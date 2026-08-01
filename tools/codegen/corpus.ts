@@ -167,22 +167,34 @@ export function readRegistryCorpus(
   return { definitions, files: names.length, occurrences };
 }
 
+/**
+ * Measures the emitted interface against the corpus.
+ *
+ * `spliced` names keys the interface admits without enumerating them: an alias
+ * category spliced unkeyed into the definition body (`static_modifier`'s
+ * modifier names) is one authoring member covering thousands of legal keys. They
+ * count as covered, but never as `invented` — the emitter did not claim each
+ * one individually, so "the corpus never writes it" says nothing about whether
+ * the shape was read correctly.
+ */
 export function conformance(
   registry: string,
   corpus: RegistryCorpus,
-  emitted: readonly string[]
+  emitted: readonly string[],
+  spliced: ReadonlySet<string> = new Set()
 ): ConformanceReport {
   const emittedSet = new Set(emitted);
+  const expressible = (field: string): boolean => emittedSet.has(field) || spliced.has(field);
   const invented = emitted.filter((field) => !corpus.occurrences.has(field)).sort();
   const unexpressed = [...corpus.occurrences]
-    .filter(([field]) => !emittedSet.has(field))
+    .filter(([field]) => !expressible(field))
     .map(([field, count]) => ({ field, count }))
     .sort((a, b) => b.count - a.count || a.field.localeCompare(b.field));
   let total = 0;
   let covered = 0;
   for (const [field, count] of corpus.occurrences) {
     total += count;
-    if (emittedSet.has(field)) {
+    if (expressible(field)) {
       covered += count;
     }
   }

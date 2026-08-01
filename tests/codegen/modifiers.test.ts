@@ -53,6 +53,9 @@ describe("the modifier scope join", () => {
     expect(join.groups.size).toBe(29);
     expect(emission.scopes).toBe(19);
     expect(emission.names).toBe(45501);
-    expect(emission.trieTypes).toBe(3456);
+    // 3456 per-scope path types plus exactly one for the any-scope root: every
+    // subtree below it is one a per-scope root already emitted, so the recorder
+    // for unscoped positions costs a single interface.
+    expect(emission.trieTypes).toBe(3457);
   });
 });

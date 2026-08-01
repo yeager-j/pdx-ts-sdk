@@ -45901,15 +45901,58 @@ export interface ModifierBlockByScope {
 }
 
 /**
+ * Every modifier name the tables know, for positions the rules leave
+ * unscoped — a `static_modifier` body, a situation's `target_modifier`.
+ */
+export interface AnyScopeModifierBlock
+  extends
+    UniversalModifiers,
+    CustomModifiers,
+    Modifiers_Army_Colony_Country_Planet_Sector_System,
+    Modifiers_AstralRift,
+    Modifiers_Colony_Country_Deposit_Planet_Sector_Ship_System,
+    Modifiers_Colony_Country_Design_Fleet_Sector_Ship_Starbase_System,
+    Modifiers_Colony_Country_Federation,
+    Modifiers_Colony_Country_Federation_Fleet,
+    Modifiers_Colony_Country_Federation_Fleet_Sector_Ship_Starbase_System,
+    Modifiers_Colony_Country_Federation_Fleet_System,
+    Modifiers_Colony_Country_Federation_Leader,
+    Modifiers_Colony_Country_Federation_Planet_Sector_Ship_Starbase_System,
+    Modifiers_Colony_Country_Federation_PopFaction,
+    Modifiers_Colony_Country_Fleet_Megastructure_Sector_Ship_Starbase_System,
+    Modifiers_Colony_Country_Fleet_Sector_Ship_Starbase_System,
+    Modifiers_Colony_Country_Megastructure_Planet_Sector_Ship_Starbase_System,
+    Modifiers_Colony_Country_Planet_PopGroup_Sector_Species_System,
+    Modifiers_Colony_Country_Planet_Sector_Ship_Starbase_System,
+    Modifiers_Colony_Country_Planet_Sector_Species_System,
+    Modifiers_Colony_Country_Planet_Sector_Starbase_System,
+    Modifiers_Colony_Country_Planet_Sector_System,
+    Modifiers_Country,
+    Modifiers_Country_Fleet,
+    Modifiers_Country_Fleet_Leader_Planet_Sector_Ship_Starbase_System,
+    Modifiers_Country_Fleet_Sector_Ship_Starbase_System,
+    Modifiers_Country_Leader,
+    Modifiers_Country_Megastructure,
+    Modifiers_Country_Megastructure_Sector_Starbase_System,
+    Modifiers_Country_Sector_Starbase_System,
+    Modifiers_Country_SpyNetwork,
+    Modifiers_Federation {}
+
+/**
  * The modifier keys valid in scope `S`.
  * These flat interfaces exist for `raw()`'s name union and never type an
  * object-literal position: one interface with every valid name makes the
  * editor build a 45k-entry completion menu, which is why authoring goes
  * through the recorder paths below instead.
+ * An unconstrained `S` means the rules pin no scope, not that the value must
+ * satisfy all of them at once — distributing there would intersect the
+ * per-scope key sets down to nothing, so it resolves to every known name.
  */
-export type ScopedModifierBlock<S extends ScopeName> = S extends keyof ModifierBlockByScope
-  ? ModifierBlockByScope[S]
-  : Readonly<Record<string, number>>;
+export type ScopedModifierBlock<S extends ScopeName> = [ScopeName] extends [S]
+  ? AnyScopeModifierBlock
+  : S extends keyof ModifierBlockByScope
+    ? ModifierBlockByScope[S]
+    : Readonly<Record<string, number>>;
 
 /** Records one modifier assignment; the traversed path spells the flat name. */
 export interface ModifierSetter {
@@ -67372,6 +67415,377 @@ interface ModifierPath3455 {
   readonly xeno: ModifierPath234;
   readonly zone: ModifierPath1723;
 }
+interface ModifierPath3456 {
+  readonly AIANOM: ModifierPath1727;
+  readonly ALPHA: ModifierPath1728;
+  readonly ANCREL: ModifierPath1729;
+  readonly ARID: ModifierPath1730;
+  readonly AST: ModifierPath1734;
+  readonly ASTRAL: ModifierPath1735;
+  readonly ATM: ModifierPath1736;
+  readonly BACKWARDS: ModifierPath1737;
+  readonly BAR: ModifierPath1738;
+  readonly BARR: ModifierPath1739;
+  readonly BIOLOGICAL: ModifierPath245;
+  readonly BLACK: ModifierPath1741;
+  readonly BREACHSEALER: ModifierPath1726;
+  readonly CARBON: ModifierPath1742;
+  readonly CHTHONIAN: ModifierPath1743;
+  readonly COLD: ModifierPath1744;
+  readonly CON: ModifierPath1745;
+  readonly CONT: ModifierPath1746;
+  readonly CRYSTAL: ModifierPath1747;
+  readonly CRYSTALLINE: ModifierPath1748;
+  readonly DATA: ModifierPath1749;
+  readonly DES: ModifierPath1750;
+  readonly DIAMOND: ModifierPath1751;
+  readonly DIMENSIONAL: ModifierPath1752;
+  readonly DISTAR: ModifierPath1755;
+  readonly ELECTRIC: ModifierPath1756;
+  readonly EXPLODING: ModifierPath1757;
+  readonly FEN: ModifierPath1758;
+  readonly FIBROUS: ModifierPath1759;
+  readonly FRBR: ModifierPath1760;
+  readonly FROZ: ModifierPath1761;
+  readonly FROZEN: ModifierPath1762;
+  readonly GAEA: ModifierPath1763;
+  readonly GAIA: ModifierPath1764;
+  readonly GAS: ModifierPath1766;
+  readonly GASEOUS: ModifierPath1767;
+  readonly GEN: ModifierPath1771;
+  readonly GEOCENTRIC: ModifierPath1772;
+  readonly GEOLOGICAL: ModifierPath1773;
+  readonly GLIMPSE: ModifierPath1774;
+  readonly GREAT: ModifierPath1776;
+  readonly GREATEST: ModifierPath1777;
+  readonly HAB: ModifierPath1778;
+  readonly HBL: ModifierPath1780;
+  readonly HOLE: ModifierPath1781;
+  readonly ICY: ModifierPath1782;
+  readonly INFERNAL: ModifierPath1783;
+  readonly INTEMPORAL: ModifierPath1784;
+  readonly INVISIBLE: ModifierPath1785;
+  readonly IRASSIA: ModifierPath1725;
+  readonly LAYERED: ModifierPath1759;
+  readonly LEVELED: ModifierPath1726;
+  readonly LIFE: ModifierPath1787;
+  readonly LITHOID: ModifierPath245;
+  readonly MACHINE: ModifierPath1790;
+  readonly MAGMA: ModifierPath1791;
+  readonly MISSING: ModifierPath1792;
+  readonly MOLTEN: ModifierPath1794;
+  readonly MYSTERIOUS: ModifierPath1795;
+  readonly NANO: ModifierPath1796;
+  readonly NUKE: ModifierPath1785;
+  readonly OBSIDIAN: ModifierPath1785;
+  readonly OPTICAL: ModifierPath1797;
+  readonly ORBITAL: ModifierPath1798;
+  readonly PLANET: ModifierPath1799;
+  readonly PLASMA: ModifierPath1800;
+  readonly POISONED: ModifierPath1759;
+  readonly PROJ: ModifierPath1801;
+  readonly PULSATING: ModifierPath1803;
+  readonly RADIOACTIVE: ModifierPath1785;
+  readonly RAINBOW: ModifierPath1804;
+  readonly RAPID: ModifierPath1805;
+  readonly ROBOT: ModifierPath247;
+  readonly SEA: ModifierPath1806;
+  readonly SHEARING: ModifierPath1807;
+  readonly SINGING: ModifierPath1785;
+  readonly SOLARPUNK: ModifierPath1726;
+  readonly SPONTANEOUS: ModifierPath1808;
+  readonly STAR: ModifierPath1798;
+  readonly STORMS: ModifierPath1816;
+  readonly SUBGLACIAL: ModifierPath1817;
+  readonly SUN: ModifierPath1818;
+  readonly SUPERMASSIVE: ModifierPath1819;
+  readonly SURVIVAL: ModifierPath1821;
+  readonly TEMPORAL: ModifierPath1822;
+  readonly THE: ModifierPath1823;
+  readonly TIYANKI: ModifierPath1824;
+  readonly TOX: ModifierPath1826;
+  readonly TROP: ModifierPath1827;
+  readonly TUTORIAL: ModifierPath1726;
+  readonly UBUME: ModifierPath1828;
+  readonly UHB: ModifierPath1830;
+  readonly UNIQUE: ModifierPath1832;
+  readonly VAPOR: ModifierPath1833;
+  readonly VENDING: ModifierPath1834;
+  readonly VULTAUMAR: ModifierPath1725;
+  readonly WAT: ModifierPath1785;
+  readonly WENKWORT: ModifierPath1726;
+  readonly YUHTAAN: ModifierPath1725;
+  readonly abandoned: ModifierPath1836;
+  readonly add: ModifierPath263;
+  readonly aerostat: ModifierPath1837;
+  readonly aesthetic: ModifierPath17;
+  readonly alien: ModifierPath1839;
+  readonly all: ModifierPath266;
+  readonly arc: ModifierPath268;
+  readonly arkship: ModifierPath1843;
+  readonly armies: ModifierPath31;
+  readonly army: ModifierPath44;
+  readonly artificial: ModifierPath1847;
+  readonly artillery: ModifierPath1850;
+  readonly ascension: ModifierPath270;
+  readonly ast: ModifierPath1855;
+  readonly asteroid: ModifierPath1856;
+  readonly astral: ModifierPath237;
+  readonly atomic: ModifierPath1857;
+  readonly attached: ModifierPath1860;
+  readonly attunement: ModifierPath1;
+  readonly auto: ModifierPath272;
+  readonly battle: ModifierPath1856;
+  readonly beacon: ModifierPath1856;
+  readonly bioadaptive: ModifierPath1861;
+  readonly biological: ModifierPath273;
+  readonly biomorphosis: ModifierPath274;
+  readonly bioship: ModifierPath1862;
+  readonly blank: ModifierPath275;
+  readonly bonus: ModifierPath277;
+  readonly branch: ModifierPath282;
+  readonly brawler: ModifierPath1850;
+  readonly breach: ModifierPath49;
+  readonly buffer: ModifierPath1863;
+  readonly building: ModifierPath283;
+  readonly but: ModifierPath1866;
+  readonly capital: ModifierPath286;
+  readonly cargo: ModifierPath1837;
+  readonly carrier: ModifierPath1850;
+  readonly catapult: ModifierPath288;
+  readonly category: ModifierPath293;
+  readonly citizen: ModifierPath298;
+  readonly clone: ModifierPath300;
+  readonly cohesion: ModifierPath2729;
+  readonly collision: ModifierPath1867;
+  readonly colony: ModifierPath303;
+  readonly command: ModifierPath304;
+  readonly commander: ModifierPath1869;
+  readonly commercial: ModifierPath305;
+  readonly component: ModifierPath306;
+  readonly composer: ModifierPath310;
+  readonly conduit: ModifierPath312;
+  readonly corrupt: ModifierPath1870;
+  readonly cosmic: ModifierPath1872;
+  readonly council: ModifierPath317;
+  readonly councilor: ModifierPath1998;
+  readonly counter: ModifierPath321;
+  readonly country: ModifierPath2000;
+  readonly cradle: ModifierPath402;
+  readonly crashed: ModifierPath2001;
+  readonly create: ModifierPath2002;
+  readonly crimson: ModifierPath2003;
+  readonly crystal: ModifierPath2005;
+  readonly custom: ModifierPath404;
+  readonly cyborg: ModifierPath406;
+  readonly cybrex: ModifierPath2006;
+  readonly cycle: ModifierPath409;
+  readonly daily: ModifierPath411;
+  readonly damage: ModifierPath2068;
+  readonly dangerous: ModifierPath412;
+  readonly debris: ModifierPath2071;
+  readonly debuffer: ModifierPath1863;
+  readonly deep: ModifierPath414;
+  readonly defensive: ModifierPath417;
+  readonly delegate: ModifierPath2731;
+  readonly deposit: ModifierPath421;
+  readonly difficulty: ModifierPath422;
+  readonly dimensional: ModifierPath423;
+  readonly diplo: ModifierPath2073;
+  readonly diplomacy: ModifierPath31;
+  readonly disco: ModifierPath2081;
+  readonly district: ModifierPath476;
+  readonly divided: ModifierPath479;
+  readonly dyson: ModifierPath480;
+  readonly eater: ModifierPath482;
+  readonly edict: ModifierPath483;
+  readonly edicts: ModifierPath31;
+  readonly election: ModifierPath485;
+  readonly emergency: ModifierPath486;
+  readonly emissions: ModifierPath1867;
+  readonly empire: ModifierPath490;
+  readonly encampment: ModifierPath492;
+  readonly enemy: ModifierPath495;
+  readonly energy: ModifierPath2082;
+  readonly engineering: ModifierPath496;
+  readonly entropy: ModifierPath2085;
+  readonly envoy: ModifierPath2087;
+  readonly envoys: ModifierPath42;
+  readonly espionage: ModifierPath2091;
+  readonly evasion: ModifierPath2093;
+  readonly experimental: ModifierPath503;
+  readonly explosive: ModifierPath1850;
+  readonly external: ModifierPath505;
+  readonly extra: ModifierPath510;
+  readonly faction: ModifierPath512;
+  readonly fake: ModifierPath515;
+  readonly federation: ModifierPath2740;
+  readonly find: ModifierPath519;
+  readonly first: ModifierPath521;
+  readonly fleet: ModifierPath2094;
+  readonly force: ModifierPath2096;
+  readonly founder: ModifierPath526;
+  readonly fractalized: ModifierPath2097;
+  readonly fungal: ModifierPath2098;
+  readonly g: ModifierPath2099;
+  readonly gaia: ModifierPath2100;
+  readonly gateway: ModifierPath2101;
+  readonly gdf: ModifierPath528;
+  readonly gravity: ModifierPath2102;
+  readonly gunship: ModifierPath1850;
+  readonly habitability: ModifierPath531;
+  readonly habitat: ModifierPath535;
+  readonly hatch: ModifierPath1867;
+  readonly heal: ModifierPath2105;
+  readonly heir: ModifierPath2107;
+  readonly historical: ModifierPath64;
+  readonly horizontal: ModifierPath307;
+  readonly hostile: ModifierPath2143;
+  readonly impact: ModifierPath1856;
+  readonly infernal: ModifierPath2144;
+  readonly inhabited: ModifierPath2145;
+  readonly insight: ModifierPath412;
+  readonly instrument: ModifierPath537;
+  readonly intel: ModifierPath2146;
+  readonly irassian: ModifierPath2006;
+  readonly irregular: ModifierPath2147;
+  readonly job: ModifierPath693;
+  readonly knight: ModifierPath694;
+  readonly l: ModifierPath2099;
+  readonly large: ModifierPath509;
+  readonly lava: ModifierPath2148;
+  readonly leader: ModifierPath2150;
+  readonly leaders: ModifierPath31;
+  readonly league: ModifierPath2151;
+  readonly lgate: ModifierPath2084;
+  readonly life: ModifierPath2152;
+  readonly lithoid: ModifierPath273;
+  readonly living: ModifierPath2153;
+  readonly logistic: ModifierPath242;
+  readonly lost: ModifierPath2154;
+  readonly m: ModifierPath2099;
+  readonly max: ModifierPath703;
+  readonly medium: ModifierPath509;
+  readonly megastructure: ModifierPath2215;
+  readonly megastructures: ModifierPath2218;
+  readonly mining: ModifierPath708;
+  readonly mod: ModifierPath2222;
+  readonly modify: ModifierPath709;
+  readonly monthly: ModifierPath2224;
+  readonly moon: ModifierPath2225;
+  readonly mountain: ModifierPath1856;
+  readonly mutation: ModifierPath713;
+  readonly mysterious: ModifierPath2226;
+  readonly naval: ModifierPath716;
+  readonly negative: ModifierPath2230;
+  readonly nomadic: ModifierPath717;
+  readonly num: ModifierPath719;
+  readonly object: ModifierPath2231;
+  readonly official: ModifierPath1869;
+  readonly on: ModifierPath2236;
+  readonly op: ModifierPath2239;
+  readonly operation: ModifierPath2271;
+  readonly operations: ModifierPath31;
+  readonly organic: ModifierPath406;
+  readonly origin: ModifierPath1867;
+  readonly outgassing: ModifierPath1835;
+  readonly owned: ModifierPath722;
+  readonly paragon: ModifierPath2272;
+  readonly pc: ModifierPath744;
+  readonly peculiar: ModifierPath2273;
+  readonly physics: ModifierPath496;
+  readonly planet: ModifierPath2275;
+  readonly planetary: ModifierPath1255;
+  readonly pop: ModifierPath1423;
+  readonly proxy: ModifierPath1424;
+  readonly psionic: ModifierPath1426;
+  readonly quantum: ModifierPath2276;
+  readonly rare: ModifierPath412;
+  readonly reanimated: ModifierPath2277;
+  readonly refugee: ModifierPath1339;
+  readonly relay: ModifierPath2278;
+  readonly relics: ModifierPath189;
+  readonly research: ModifierPath390;
+  readonly resolution: ModifierPath1454;
+  readonly resolutions: ModifierPath189;
+  readonly restored: ModifierPath1458;
+  readonly rivalries: ModifierPath154;
+  readonly robotic: ModifierPath406;
+  readonly ruler: ModifierPath2279;
+  readonly s: ModifierPath2099;
+  readonly salvage: ModifierPath1460;
+  readonly scavenge: ModifierPath1461;
+  readonly science: ModifierPath1465;
+  readonly scientist: ModifierPath1869;
+  readonly screen: ModifierPath1850;
+  readonly sector: ModifierPath1467;
+  readonly senate: ModifierPath2282;
+  readonly ship: ModifierPath2336;
+  readonly shipclass: ModifierPath2345;
+  readonly ships: ModifierPath1523;
+  readonly shipsize: ModifierPath2496;
+  readonly shipyard: ModifierPath1856;
+  readonly shroud: ModifierPath2497;
+  readonly signal: ModifierPath2231;
+  readonly slave: ModifierPath1674;
+  readonly small: ModifierPath509;
+  readonly society: ModifierPath496;
+  readonly sol: ModifierPath2498;
+  readonly solar: ModifierPath1856;
+  readonly space: ModifierPath2501;
+  readonly specialist: ModifierPath1684;
+  readonly species: ModifierPath2502;
+  readonly specimens: ModifierPath15;
+  readonly spires: ModifierPath2504;
+  readonly split: ModifierPath2507;
+  readonly spy: ModifierPath2509;
+  readonly star: ModifierPath2510;
+  readonly starbase: ModifierPath2548;
+  readonly starbases: ModifierPath204;
+  readonly starlit: ModifierPath2085;
+  readonly station: ModifierPath2549;
+  readonly stations: ModifierPath219;
+  readonly stolen: ModifierPath2232;
+  readonly storm: ModifierPath2552;
+  readonly storms: ModifierPath1837;
+  readonly strange: ModifierPath2553;
+  readonly strike: ModifierPath1691;
+  readonly subject: ModifierPath1692;
+  readonly subjects: ModifierPath233;
+  readonly subspecies: ModifierPath1693;
+  readonly system: ModifierPath1694;
+  readonly t: ModifierPath2099;
+  readonly tech: ModifierPath1695;
+  readonly tectonic: ModifierPath2554;
+  readonly terminal: ModifierPath1837;
+  readonly terraform: ModifierPath45;
+  readonly terraforming: ModifierPath1696;
+  readonly terrestial: ModifierPath2555;
+  readonly the: ModifierPath2557;
+  readonly time: ModifierPath2559;
+  readonly titanic: ModifierPath509;
+  readonly tomb: ModifierPath2560;
+  readonly trade: ModifierPath1708;
+  readonly tradition: ModifierPath1710;
+  readonly transmitter: ModifierPath1838;
+  readonly treasure: ModifierPath1711;
+  readonly unemployment: ModifierPath1712;
+  readonly unlicensed: ModifierPath1714;
+  readonly vertical: ModifierPath307;
+  readonly veto: ModifierPath1715;
+  readonly voidworm: ModifierPath2564;
+  readonly voidworms: ModifierPath1717;
+  readonly vultaum: ModifierPath2006;
+  readonly waystation: ModifierPath1718;
+  readonly weapon: ModifierPath2574;
+  readonly whisperers: ModifierPath1722;
+  readonly wormhole: ModifierPath2084;
+  readonly writing: ModifierPath1856;
+  readonly x: ModifierPath2099;
+  readonly xeno: ModifierPath234;
+  readonly yuht: ModifierPath2575;
+  readonly zone: ModifierPath1723;
+}
 
 /**
  * Records modifiers valid in `army` scope: each path segment completes
@@ -67615,7 +68029,27 @@ export interface UnscopedModifierRecorder {
   unchecked(name: string, value: number): void;
 }
 
-/** The modifier recorder for scope `S`. */
-export type ScopedModifierRecorder<S extends ScopeName> = S extends keyof ModifierRecorderByScope
-  ? ModifierRecorderByScope[S]
-  : UnscopedModifierRecorder;
+/**
+ * Records any known modifier, for positions the rules leave unscoped.
+ * The paths of every scope at once — `m.country.unity.produces.mult(0.15)`
+ * and `m.planet.jobs.alloys.produces.mult(0.1)` both resolve here.
+ */
+export interface AnyScopeModifierRecorder extends ModifierPath3456 {
+  /** Sets a modifier by its flat name, checked against every known name. */
+  raw(name: keyof AnyScopeModifierBlock & string, value: number): void;
+  /** Sets a modifier by an arbitrary, unchecked name. */
+  unchecked(name: string, value: number): void;
+}
+
+/**
+ * The modifier recorder for scope `S`.
+ * An unconstrained `S` is checked first and without distributing: it means
+ * the rules pin no scope, so every path is legal. Distributing it instead
+ * would produce a union of every per-scope recorder with no member in
+ * common — not even `raw`, whose name parameter would intersect to `never`.
+ */
+export type ScopedModifierRecorder<S extends ScopeName> = [ScopeName] extends [S]
+  ? AnyScopeModifierRecorder
+  : S extends keyof ModifierRecorderByScope
+    ? ModifierRecorderByScope[S]
+    : UnscopedModifierRecorder;

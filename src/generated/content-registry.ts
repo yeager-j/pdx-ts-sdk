@@ -101,6 +101,12 @@ import {
   type SituationTypeDef,
 } from "./situation-type.ts";
 import {
+  STATIC_MODIFIER_FIELDS,
+  STATIC_MODIFIER_LOCALISATION,
+  type DefinedStaticModifier,
+  type StaticModifierDef,
+} from "./static-modifier.ts";
+import {
   STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS,
   STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
   type DefinedStrikeCraftComponentTemplate,
@@ -249,6 +255,13 @@ export const CONTENT_REGISTRIES = [
     localisation: OPINION_MODIFIER_LOCALISATION,
   },
   {
+    type: "static_modifier",
+    outputDir: "common/static_modifiers",
+    fileStem: "static_modifiers",
+    fields: STATIC_MODIFIER_FIELDS,
+    localisation: STATIC_MODIFIER_LOCALISATION,
+  },
+  {
     type: "scripted_modifier",
     outputDir: "common/scripted_modifiers",
     fileStem: "scripted_modifiers",
@@ -324,6 +337,7 @@ export interface ContentDefMap<P extends string> {
   weapon_component_template: WeaponComponentTemplateDef<PrefixedId<P>>;
   strike_craft_component_template: StrikeCraftComponentTemplateDef<PrefixedId<P>>;
   opinion_modifier: OpinionModifierDef<PrefixedId<P>>;
+  static_modifier: StaticModifierDef<PrefixedId<P>>;
   scripted_modifier: ScriptedModifierDef<PrefixedId<P>>;
   casus_belli: CasusBelliDef<PrefixedId<P>>;
   war_goal: WarGoalDef<PrefixedId<P>>;
@@ -349,6 +363,7 @@ export interface DefinedContentMap<P extends string> {
   weapon_component_template: DefinedWeaponComponentTemplate<PrefixedId<P>>;
   strike_craft_component_template: DefinedStrikeCraftComponentTemplate<PrefixedId<P>>;
   opinion_modifier: DefinedOpinionModifier<PrefixedId<P>>;
+  static_modifier: DefinedStaticModifier<PrefixedId<P>>;
   scripted_modifier: DefinedScriptedModifier<PrefixedId<P>>;
   casus_belli: DefinedCasusBelli<PrefixedId<P>>;
   war_goal: DefinedWarGoal<PrefixedId<P>>;
@@ -447,6 +462,13 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["opinion_modifier"]
   ): DefinedContentMap<P>["opinion_modifier"] {
     return this.defineGeneratedContent("opinion_modifier", def);
+  }
+
+  /** Defines a static modifier in this mod. */
+  defineStaticModifier(
+    def: ContentDefMap<P>["static_modifier"]
+  ): DefinedContentMap<P>["static_modifier"] {
+    return this.defineGeneratedContent("static_modifier", def);
   }
 
   /** Defines a scripted modifier in this mod. */

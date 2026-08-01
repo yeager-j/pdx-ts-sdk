@@ -11,6 +11,7 @@
  * rather than in a threshold nobody can justify.
  */
 
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { locateInstall } from "../../src/stellaris/locate.ts";
@@ -22,7 +23,9 @@ import {
 } from "../../tools/codegen/corpus.ts";
 import { loadRules } from "../../tools/codegen/cwt/rules.ts";
 import { emitContentType } from "../../tools/codegen/emit/content-type.ts";
+import { joinModifierScopes } from "../../tools/codegen/emit/modifiers.ts";
 import { Emitter } from "../../tools/codegen/emit/types.ts";
+import { parseModifierDocs } from "../../tools/codegen/logs/modifier-docs.ts";
 import { REPEATED_STRUCT_DEFINITIONS } from "../../tools/codegen/overlay.ts";
 
 let installPath: string | undefined;
@@ -34,6 +37,27 @@ try {
 
 const rules = loadRules("vendor/cwtools-stellaris-config/config");
 const emitter = new Emitter(rules);
+
+/**
+ * Every modifier name the SDK's generated surface knows, from the same join
+ * `emitModifiers` runs. A registry that splices `alias_name[modifier]` unkeyed
+ * into its body admits all of them as top-level keys, so coverage has to
+ * resolve the category rather than read a field list.
+ */
+const MODIFIER_NAMES = (() => {
+  const join = joinModifierScopes(
+    rules,
+    parseModifierDocs(
+      readFileSync("vendor/cwtools-stellaris-config/script-docs/v4.4.1/modifiers.log", "utf8")
+    ),
+    (token) => emitter.canonicalScope(token)
+  );
+  return new Set([...join.universal, ...[...join.groups.values()].flat()]);
+})();
+
+function splicedKeysOf(categories: readonly string[]): ReadonlySet<string> {
+  return categories.includes("modifier") ? MODIFIER_NAMES : new Set<string>();
+}
 
 /** This registry's repeated-struct fields, straight from the same overlay the emitter reads. */
 function repeatedStructFieldsOf(registry: string): readonly RepeatedStructField[] {
@@ -73,7 +97,7 @@ const reports = (installPath === undefined ? [] : CONTENT_MANIFEST).map((manifes
     ...(emission?.emittedFields ?? []),
     ...(emission?.nestedEmittedFields ?? []).map((path) => path.slice(registry.length + 1)),
   ];
-  return conformance(registry, corpus, emitted);
+  return conformance(registry, corpus, emitted, splicedKeysOf(emission?.inlineSplices ?? []));
 });
 
 describe.skipIf(installPath === undefined)("corpus conformance", () => {

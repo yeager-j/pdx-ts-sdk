@@ -8,6 +8,7 @@
 import {
   isOptional,
   isRepeated,
+  type FieldKey,
   type RuleField,
   type RuleType,
   type ScopeContext,
@@ -40,6 +41,13 @@ export interface ContentEmission {
   readonly nestedEmittedFields: readonly string[];
   /** Refused outright by CONTENT_DECLINED_FIELDS, each with its reason. */
   readonly declinedFields: readonly string[];
+  /**
+   * Alias categories spliced unkeyed at the definition's top level, each
+   * lowered to one authoring member. Their legal keys are the category's
+   * members rather than anything `emittedFields` can name, so a consumer
+   * measuring coverage has to resolve the category itself.
+   */
+  readonly inlineSplices: readonly string[];
   /** Present in the rules but not expressible: blocked on emitter machinery. */
   readonly machineryBacklog: readonly string[];
   readonly unsupported: readonly string[];
@@ -211,6 +219,63 @@ function mergeByName(fields: readonly RuleField[], typeName: string): Map<string
     grouped.set(field.key.name, [...(grouped.get(field.key.name) ?? []), field]);
   }
   return grouped;
+}
+
+type AliasNameField = RuleField & { readonly key: Extract<FieldKey, { kind: "aliasName" }> };
+
+/**
+ * The alias categories a definition body splices unkeyed at its own top level.
+ *
+ * `static_modifier` is declared `{ alias_name[modifier] = alias_match_left[modifier]
+ * icon = filepath … }` — the modifier grammar *is* the body, so vanilla writes
+ * `empire_base = { max_rivalries = 3 }` with the modifier names at the block
+ * root, beside the metadata keys. {@link mergeByName} keeps only `name` keys,
+ * so without this the splice is invisible to the field model and the registry
+ * would emit a definition that can set an icon but never a modifier.
+ */
+function topLevelSplices(fields: readonly RuleField[], typeName: string): AliasNameField[] {
+  return flatten(fields, typeName).filter(
+    (field): field is AliasNameField => field.key.kind === "aliasName"
+  );
+}
+
+interface LoweredSplice {
+  readonly member: string;
+  readonly memberType: string;
+  readonly metadata: string;
+  readonly docs: readonly string[];
+}
+
+/**
+ * Lowers one top-level splice to a single authoring member whose entries the
+ * writer emits at the block root rather than under a key.
+ *
+ * Only `modifier` lowers today, as `ModifierClosure` — the same closure every
+ * keyed `modifier = { ... }` field already authors, spliced instead of wrapped,
+ * exactly as `TriggeredModifier.modifiers` already does one level down. Every
+ * other category a body splices this way (`game_rule`'s `trigger`,
+ * `script_value`'s `modifier_rule`, `deposit`'s `resources_template_optional`)
+ * belongs to a type the manifest does not expose; returning `null` reports the
+ * splice rather than inventing a member name and a shape for it.
+ */
+function lowerTopLevelSplice(
+  emitter: Emitter,
+  field: AliasNameField,
+  inheritedScope: ScopeContext | null
+): LoweredSplice | null {
+  if (field.key.category !== "modifier") {
+    return null;
+  }
+  const scope = scopeType(emitter, field, inheritedScope);
+  return {
+    member: "modifiers",
+    memberType: `ModifierClosure<${scope}>`,
+    metadata: `{ member: "modifiers", shape: "inlineModifiers" }`,
+    docs: [
+      "Modifiers written directly into the definition body, with no enclosing key.",
+      ...field.docs,
+    ],
+  };
 }
 
 function constantCase(name: string): string {
@@ -938,11 +1003,13 @@ export function emitContentType(
   const emittedFields: string[] = [];
   const nestedEmittedFields: string[] = [];
   const declinedFields: string[] = [];
+  const inlineSplices: string[] = [];
   const unsupported: string[] = [];
   const extraCode: string[] = [];
   const localisationAliases: string[] = [];
   const members: string[] = [];
   const fieldMetadata: string[] = [];
+  const emittedMembers = new Set<string>();
   // Only a repeatedStruct field's Readonly<Record<Id, ...>> member type actually
   // references Id — a plain struct field (no identity) never does, so the owner
   // type should not carry an unused Id generic just because a struct happened
@@ -1000,6 +1067,7 @@ export function emitContentType(
       unsupported.push(...nested.unsupported);
       nestedEmittedFields.push(...nested.emittedFields);
       localisationAliases.push(...nested.localisationAliases);
+      emittedMembers.add(camelCase(name));
       emittedFields.push(name);
       continue;
     }
@@ -1036,7 +1104,38 @@ export function emitContentType(
     if (lowered.unsupported !== undefined) {
       unsupported.push(...lowered.unsupported);
     }
+    emittedMembers.add(member);
     emittedFields.push(name);
+  }
+
+  // Emitted ahead of the named fields, matching both the rules' declaration
+  // order and how vanilla writes these files: `empire_base` opens with its
+  // modifier rows and closes with `icon`.
+  const spliceMembers: string[] = [];
+  const spliceMetadata: string[] = [];
+  for (const splice of topLevelSplices(body.fields, type.name)) {
+    const category = splice.key.category;
+    const lowered = lowerTopLevelSplice(emitter, splice, body.scope);
+    if (lowered === null) {
+      unsupported.push(
+        `alias_name[${category}] (spliced unkeyed at the top level; that category has ` +
+          "no authoring member)"
+      );
+      continue;
+    }
+    if (emittedMembers.has(lowered.member) || localisationMemberNames.has(lowered.member)) {
+      unsupported.push(
+        `alias_name[${category}] (spliced unkeyed at the top level; its "${lowered.member}" ` +
+          "member is already taken)"
+      );
+      continue;
+    }
+    spliceMembers.push(
+      docComment(lowered.docs, "  ") + `  ${lowered.member}?: ${lowered.memberType};\n`
+    );
+    spliceMetadata.push(lowered.metadata);
+    emittedMembers.add(lowered.member);
+    inlineSplices.push(category);
   }
 
   const typeName = pascalCase(type.name);
@@ -1053,6 +1152,7 @@ export function emitContentType(
     ]) +
     `export interface ${typeName}Fields${fieldsGeneric} {\n` +
     localisationMembers(type, localisationPlan) +
+    spliceMembers.join("") +
     members.join("") +
     "}\n\n" +
     `export interface ${typeName}Def<Id extends string = string> extends ${fieldsReference} {\n` +
@@ -1064,7 +1164,7 @@ export function emitContentType(
     `  ${typeName}Def<Id>\n` +
     ">;\n\n" +
     `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
-    fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
+    [...spliceMetadata, ...fieldMetadata].map((entry) => `  ${entry},\n`).join("") +
     "];\n\n" +
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
     `${localisationMetadata(type, localisationPlan)};\n`;
@@ -1077,6 +1177,7 @@ export function emitContentType(
     emittedFields,
     nestedEmittedFields,
     declinedFields: declinedFields.sort(),
+    inlineSplices,
     machineryBacklog: [...unsupported].sort(),
     unsupported,
     localisationAliases: [...localisationPlan.aliases, ...localisationAliases],

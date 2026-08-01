@@ -258,16 +258,30 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
 
   code +=
     docComment([
+      "Every modifier name the tables know, for positions the rules leave",
+      "unscoped — a `static_modifier` body, a situation's `target_modifier`.",
+    ]) +
+    "export interface AnyScopeModifierBlock extends UniversalModifiers, CustomModifiers, " +
+    `${[...groupNames.values()].join(", ")} {}\n\n`;
+
+  code +=
+    docComment([
       "The modifier keys valid in scope `S`.",
       "",
       "These flat interfaces exist for `raw()`'s name union and never type an",
       "object-literal position: one interface with every valid name makes the",
       "editor build a 45k-entry completion menu, which is why authoring goes",
       "through the recorder paths below instead.",
+      "",
+      "An unconstrained `S` means the rules pin no scope, not that the value must",
+      "satisfy all of them at once — distributing there would intersect the",
+      "per-scope key sets down to nothing, so it resolves to every known name.",
     ]) +
-    "export type ScopedModifierBlock<S extends ScopeName> = S extends keyof ModifierBlockByScope\n" +
-    "  ? ModifierBlockByScope[S]\n" +
-    "  : Readonly<Record<string, number>>;\n\n";
+    "export type ScopedModifierBlock<S extends ScopeName> = [ScopeName] extends [S]\n" +
+    "  ? AnyScopeModifierBlock\n" +
+    "  : S extends keyof ModifierBlockByScope\n" +
+    "    ? ModifierBlockByScope[S]\n" +
+    "    : Readonly<Record<string, number>>;\n\n";
 
   code +=
     docComment(["Records one modifier assignment; the traversed path spells the flat name."]) +
@@ -284,6 +298,10 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
     ];
     rootNames.set(scope, trie.emit(trieOf(names)));
   }
+  // The unscoped root: every name at once. Its subtrees are overwhelmingly the
+  // ones the per-scope roots already emitted, so the DAG dedup absorbs almost
+  // all of it.
+  const anyScopeRoot = trie.emit(trieOf([...join.universal, ...[...join.groups.values()].flat()]));
   code += trie.lines.join("\n") + "\n\n";
 
   for (const scope of scopes) {
@@ -318,9 +336,31 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
     "}\n\n";
 
   code +=
-    docComment(["The modifier recorder for scope `S`."]) +
-    "export type ScopedModifierRecorder<S extends ScopeName> =\n" +
-    "  S extends keyof ModifierRecorderByScope\n" +
+    docComment([
+      "Records any known modifier, for positions the rules leave unscoped.",
+      "",
+      "The paths of every scope at once — `m.country.unity.produces.mult(0.15)`",
+      "and `m.planet.jobs.alloys.produces.mult(0.1)` both resolve here.",
+    ]) +
+    `export interface AnyScopeModifierRecorder extends ${anyScopeRoot} {\n` +
+    "  /** Sets a modifier by its flat name, checked against every known name. */\n" +
+    "  raw(name: keyof AnyScopeModifierBlock & string, value: number): void;\n" +
+    "  /** Sets a modifier by an arbitrary, unchecked name. */\n" +
+    "  unchecked(name: string, value: number): void;\n" +
+    "}\n\n";
+
+  code +=
+    docComment([
+      "The modifier recorder for scope `S`.",
+      "",
+      "An unconstrained `S` is checked first and without distributing: it means",
+      "the rules pin no scope, so every path is legal. Distributing it instead",
+      "would produce a union of every per-scope recorder with no member in",
+      "common — not even `raw`, whose name parameter would intersect to `never`.",
+    ]) +
+    "export type ScopedModifierRecorder<S extends ScopeName> = [ScopeName] extends [S]\n" +
+    "  ? AnyScopeModifierRecorder\n" +
+    "  : S extends keyof ModifierRecorderByScope\n" +
     "    ? ModifierRecorderByScope[S]\n" +
     "    : UnscopedModifierRecorder;\n";
 

@@ -308,6 +308,24 @@ function defineContentExample(): Mod<"content_test"> {
     months: 12,
   });
 
+  // The modifier rows land at the block root, next to the metadata keys —
+  // static_modifier splices `alias_name[modifier]` unkeyed at its top level.
+  mod.defineStaticModifier({
+    id: "content_test_static_modifier_synthetic_surge",
+    name: "Synthetic Surge",
+    desc: "Machine empires push their production past its rated limits.",
+    modifiers: (m) => {
+      m.country.unity.produces.mult(0.15);
+      m.planet.jobs.alloys.produces.mult(0.1);
+    },
+    icon: "gfx/interface/icons/modifiers/mod_synthetic_surge.dds",
+    iconFrame: 2,
+    important: true,
+    customTooltip: "content_test_static_modifier_synthetic_surge_tt",
+    showOnlyCustomTooltip: false,
+    hideFromCountryList: true,
+  });
+
   mod.defineScriptedModifier({
     id: "content_test_scripted_modifier_synthetic_output",
     name: "Synthetic Output",
@@ -705,6 +723,49 @@ describe("generated content registries", () => {
     const rendered = mod.render().get("common/situations/re_test_situations.txt");
     expect(rendered).toContain(
       "on_monthly = {\n\t\trandom_events = {\n\t\t\t100 = re_test_event.1\n\t\t\t20 = 0\n\t\t}\n\t}"
+    );
+  });
+
+  it("splices a static modifier's rows at the block root, with no enclosing key", () => {
+    // static_modifier declares alias_name[modifier] at the top level of its
+    // rule, so the modifier names sit next to the metadata keys — writing them
+    // under a `modifier = { ... }` block would produce a file the game reads as
+    // a static modifier with no effect at all.
+    const mod = new Mod({
+      name: "Static modifier test",
+      prefix: "sm_test",
+      supportedVersion: "4.4.*",
+    });
+    mod.defineStaticModifier({
+      id: "sm_test_surge",
+      name: "Surge",
+      modifiers: (m) => {
+        m.country.unity.produces.mult(0.15);
+        m.planet.jobs.alloys.produces.mult(0.1);
+      },
+      icon: "gfx/interface/icons/modifiers/mod_surge.dds",
+    });
+    const rendered = mod.render().get("common/static_modifiers/sm_test_static_modifiers.txt")!;
+    expect(rendered).toContain(
+      "sm_test_surge = {\n\tcountry_unity_produces_mult = 0.15\n" +
+        "\tplanet_jobs_alloys_produces_mult = 0.1\n" +
+        "\ticon = gfx/interface/icons/modifiers/mod_surge.dds\n}"
+    );
+    expect(rendered).not.toContain("modifier = {");
+    expect(rendered).not.toContain("modifiers = {");
+  });
+
+  it("emits a static modifier with no modifiers as an empty body", () => {
+    // Vanilla ships plenty of these (`player_empire`, `empire_size`): the
+    // registry's other fields must not depend on the splice being present.
+    const mod = new Mod({
+      name: "Static modifier test",
+      prefix: "sm_test",
+      supportedVersion: "4.4.*",
+    });
+    mod.defineStaticModifier({ id: "sm_test_marker", name: "Marker" });
+    expect(mod.render().get("common/static_modifiers/sm_test_static_modifiers.txt")).toBe(
+      "sm_test_marker = {}\n"
     );
   });
 

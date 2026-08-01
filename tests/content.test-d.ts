@@ -275,6 +275,44 @@ describe("generated content authoring types", () => {
     mod.defineScriptedModifier({ id: "content_types_scripted_modifier_bad", category: "nonsense" });
   });
 
+  it("records any scope's modifier path in a static modifier's unkeyed splice", () => {
+    // static_modifier's body is the modifier grammar itself and CWT pins no
+    // scope to it, so the recorder has to admit every scope's paths. The
+    // distributed reading would be a union of every per-scope recorder with no
+    // member in common — not even `raw`, whose name parameter would intersect
+    // to `never`.
+    mod.defineStaticModifier({
+      id: "content_types_static_modifier_any_scope",
+      name: "X",
+      modifiers: (m) => {
+        m.country.unity.produces.mult(0.1);
+        m.planet.jobs.alloys.produces.mult(0.1);
+        m.raw("ship_weapon_damage", 0.1);
+        m.unchecked("othermod_invented_mult", 0.1);
+      },
+    });
+    mod.defineStaticModifier({
+      id: "content_types_static_modifier_bad_path",
+      name: "X",
+      // @ts-expect-error — a typo in any path segment is still a compile error
+      modifiers: (m) => m.country.unity.produses.mult(0.1),
+    });
+    mod.defineStaticModifier({
+      id: "content_types_static_modifier_bad_raw",
+      name: "X",
+      // @ts-expect-error — raw() is checked against every known modifier name
+      modifiers: (m) => m.raw("not_a_real_modifier_name", 0.1),
+    });
+    // A scoped modifier field keeps its own narrower recorder: widening the
+    // unconstrained case must not widen the constrained ones with it.
+    mod.defineTradition({
+      id: "content_types_tradition_scoped_modifier",
+      name: "X",
+      // @ts-expect-error — cohesion applies in federation scope, not country
+      modifier: (m) => m.cohesion.ethics.penalty.mult(0.1),
+    });
+  });
+
   it("keeps content reference brands distinct", () => {
     const building = mod.defineBuilding({
       id: "content_types_building_brand",

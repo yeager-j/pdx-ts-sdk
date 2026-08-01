@@ -391,6 +391,10 @@ async function main(): Promise<void> {
     const type = content.registry;
     console.log(`\n${type}: ${content.emission.emittedFields.length} fields emitted`);
     reportSection(`${type} fields declined`, content.emission.declinedFields);
+    reportSection(
+      `${type} alias categories spliced unkeyed at the top level`,
+      content.emission.inlineSplices
+    );
     reportSection(`${type} fields blocked on emitter machinery`, content.emission.machineryBacklog);
     reportSection(
       `${content.registry} fields the emitter could not lower`,

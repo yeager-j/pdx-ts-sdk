@@ -63,6 +63,7 @@ export const CONTENT_MANIFEST = [
     as: "strike_craft_component_template",
   },
   { type: "opinion_modifier", source: "common/modifiers.cwt" },
+  { type: "static_modifier", source: "common/modifiers.cwt" },
   { type: "scripted_modifier", source: "common/scripted_modifiers.cwt" },
   { type: "casus_belli", source: "common/casus_belli_and_war_goals.cwt" },
   { type: "war_goal", source: "common/casus_belli_and_war_goals.cwt" },

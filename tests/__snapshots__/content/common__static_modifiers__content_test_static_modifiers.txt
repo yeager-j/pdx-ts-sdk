@@ -1,0 +1,10 @@
+content_test_static_modifier_synthetic_surge = {
+	country_unity_produces_mult = 0.15
+	planet_jobs_alloys_produces_mult = 0.1
+	icon_frame = 2
+	icon = gfx/interface/icons/modifiers/mod_synthetic_surge.dds
+	important = yes
+	custom_tooltip = content_test_static_modifier_synthetic_surge_tt
+	show_only_custom_tooltip = no
+	hide_from_country_list = yes
+}

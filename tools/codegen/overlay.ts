@@ -224,6 +224,9 @@ export const REQUIRED_LOCALISATION = new Set([
   "decision.name",
   "job.name",
   "opinion_modifier.name",
+  // All 3096 shipped static modifiers carry a localised name: the game shows
+  // it wherever the modifier is applied, so an unnamed one is a visible bug.
+  "static_modifier.name",
   "casus_belli.name",
   "war_goal.name",
   "agreement_preset.name",

@@ -380,6 +380,52 @@ describe("content-type codegen", () => {
     expect(job?.machineryBacklog.join("\n")).not.toContain("possible_pre_triggers");
   });
 
+  it("lowers a top-level unkeyed modifier splice into one authoring member", () => {
+    // static_modifier's rule is `{ alias_name[modifier] = alias_match_left[modifier]
+    // icon = filepath ... }` — the modifier grammar is the body itself, which
+    // mergeByName cannot see because the key is a splice rather than a name.
+    // Without it the registry could set an icon and a tooltip but never a
+    // modifier, which is the whole point of a static modifier.
+    const staticModifier = emissions.get("static_modifier");
+    expect(staticModifier?.inlineSplices).toEqual(["modifier"]);
+    expect(staticModifier?.code).toContain("modifiers?: ModifierClosure<ScopeName>;");
+    expect(staticModifier?.code).toContain('{ member: "modifiers", shape: "inlineModifiers" }');
+    // No `key`: the game reads none, and the writer splices the rows at the
+    // block root next to the metadata keys, the way vanilla writes them.
+    expect(staticModifier?.code).not.toContain(
+      'member: "modifiers", shape: "inlineModifiers", key'
+    );
+    expect(staticModifier?.unsupported.join("\n")).not.toContain("alias_name");
+    // The metadata leads with the splice, matching both the rules' declaration
+    // order and vanilla's files.
+    const fields = staticModifier?.code.slice(
+      staticModifier.code.indexOf("STATIC_MODIFIER_FIELDS")
+    );
+    expect(fields?.indexOf("inlineModifiers")).toBeLessThan(fields!.indexOf('key: "icon"'));
+  });
+
+  it("reports a top-level splice it has no authoring member for", () => {
+    // Only `modifier` lowers. A body splicing any other category must surface
+    // in the report rather than silently losing the whole clause.
+    const type = rules.contentTypes.get("static_modifier")!;
+    const body = rules.bodies.get("static_modifier")!;
+    const spliced = {
+      ...body,
+      fields: body.fields.map((field) =>
+        field.key.kind === "aliasName"
+          ? { ...field, key: { kind: "aliasName", category: "fleet_action" } as const }
+          : field
+      ),
+    };
+    emitter.beginFile();
+    const emission = emitContentType(emitter, type, spliced, "static_modifier");
+    emitter.endFile();
+    expect(emission.inlineSplices).toEqual([]);
+    expect(emission.unsupported.join("\n")).toContain(
+      "alias_name[fleet_action] (spliced unkeyed at the top level"
+    );
+  });
+
   it("lowers random_events' computed weight keys as a weighted event list", () => {
     const situation = emissions.get("situation_type");
     expect(situation?.code).toContain(

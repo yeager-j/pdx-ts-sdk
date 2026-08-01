@@ -46,17 +46,14 @@ Landed: `technology`, `building`, `tradition`, `tradition_category`,
 `scripted_modifier`, `casus_belli`, `war_goal`, `agreement_preset`,
 `bombardment_stance`, `archaeological_site_type`, `global_ship_design`,
 `utility_component_template`, `weapon_component_template`,
-`strike_craft_component_template`, `scripted_loc`, `situation_type`.
+`strike_craft_component_template`, `scripted_loc`, `situation_type`,
+`static_modifier`.
 
 Blocked, each on a named cause:
 
 - [ ] `civic_or_origin` — needs [alias categories](#parse-non-triggereffect-cwt-alias-categories)
 - [ ] `councilor` — needs [the drift block resolved](#resolve-the-malformed-option-drift-block)
 - [ ] `economic_category` — same drift block
-- [ ] `static_modifier` — splices `alias_name[modifier]` unkeyed at the top level
-      of the definition; `mergeByName` only tracks fields whose key kind is
-      `"name"`, so the splice is invisible to the field model. Needs a
-      top-level unkeyed `ModifierClosure` merged with ordinary members.
 
 Not yet attempted:
 
@@ -217,6 +214,43 @@ cardinality = 0..inf { key = ... value = ... } }`. Internally this is
   repetition lives on the bare declaration, and the writer emits one field
   holding N anonymous nested blocks rather than N sibling entries at the same
   level. The author-facing type is the same `T[]` either way.
+
+### Top-level unkeyed splice
+
+**Landed 2026-08-01.** A definition body whose top level _is_ a spliced alias
+clause, alongside ordinary named fields. `static_modifier` is the consumer:
+`{ alias_name[modifier] = alias_match_left[modifier] icon = filepath … }`, so
+vanilla writes `empire_base = { max_rivalries = 3 }` with the modifier names at
+the block root. `mergeByName` keeps only `name` keys, so the splice was
+invisible to the field model — the registry would have emitted a definition that
+could set an icon but never a modifier.
+
+The emitter now scans the flattened body for `aliasName` keys and lowers each to
+one authoring member (`modifiers: ModifierClosure<S>`), emitted ahead of the
+named fields to match both the rules' declaration order and vanilla's files. The
+runtime shape is `inlineModifiers`, carrying a `member` and no `key` — there is
+none to write — and the writer splices its rows rather than wrapping them.
+Only `modifier` lowers; the other categories a body splices this way
+(`game_rule`'s `trigger`, `script_value`'s `modifier_rule`, `deposit`'s
+`resources_template_optional`) belong to types the manifest does not expose, and
+are reported rather than given an invented member name.
+
+Two things the corpus forced:
+
+- **Coverage has to resolve the category.** A splice is one member covering
+  thousands of legal keys, which no field list can enumerate, so `conformance`
+  takes a separate `spliced` name set — counted as covered, never as `invented`.
+  Resolved from the same `joinModifierScopes` codegen runs, `static_modifier`
+  reports **99.5% across 3096 definitions**; the 18 residual keys are names the
+  game's own dump omits, which is what `CustomModifiers`/`unchecked` are for.
+- **`ModifierClosure<ScopeName>` was unusable.** The rules pin no scope to a
+  static modifier's body, and the distributive `ScopedModifierRecorder` turned
+  that into a union of every per-scope recorder with no member in common — not
+  even `raw`, whose name parameter intersected to `never`. An unconstrained `S`
+  is now checked first and without distributing, resolving to an any-scope
+  recorder built from the union of all names. The trie's DAG dedup absorbs it
+  entirely: **one** new interface, 3456 → 3457. This also fixed
+  `situation_type.target_modifier`, which had the same defect.
 
 ### Accept both scalar and block where CWT declares a field twice
 

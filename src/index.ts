@@ -69,6 +69,11 @@ export type {
   ScriptedModifierDef,
   ScriptedModifierFields,
 } from "./generated/scripted-modifier.ts";
+export type {
+  DefinedStaticModifier,
+  StaticModifierDef,
+  StaticModifierFields,
+} from "./generated/static-modifier.ts";
 export type { DefinedTechnology, TechnologyDef, TechnologyFields } from "./generated/technology.ts";
 export type {
   DefinedTraditionCategory,
