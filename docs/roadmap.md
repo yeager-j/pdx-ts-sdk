@@ -20,6 +20,9 @@ being equipped to build a mod of that size, not porting it.
 - [x] **Delete `CONTENT_EMITTED_FIELDS`.** Every field the emitter can lower is
       emitted. A field is out only if the emitter cannot express it or a
       `CONTENT_DECLINED_FIELDS` row refuses it, and that list holds one entry.
+- [x] **Emit every field inside repeated structs.** The emit-everything flip now
+      reaches all the way down; nested overlay entries keep only what cannot be
+      inferred.
 - [x] **Corpus conformance gate.** `tests/codegen/corpus-conformance.test.ts`
       parses the installed game and measures each emitted interface against
       every shipped definition. Coverage is now "share of real field
@@ -182,6 +185,18 @@ Three occurrences is systematic, not coincidence: when a group holds both, the
 block is the richer form and should win. Fixing it retires three overrides and
 prevents a fourth. The corpus gate cannot catch this class — both forms lower
 and both produce legal-looking output.
+
+### Make the corpus gate see inside nested blocks
+
+`readRegistryCorpus` walks one level of each definition and never descends into
+a repeated struct, so the gate is structurally blind to everything inside one.
+Fixing nested curation gained `tradition_swap.on_enabled` and tradition's
+coverage did not move, because the gate cannot see it.
+
+This matters most for situations, whose substance lives almost entirely inside
+`stages` and `approach`. Measured as-is, situations would report a high number
+derived from a handful of top-level fields while saying nothing about the parts
+that carry the content.
 
 ### Shape conformance
 
