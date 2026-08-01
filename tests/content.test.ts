@@ -112,9 +112,8 @@ function defineContentExample(): Mod<"content_test"> {
     modifier: (m) => m.planet.pop.assembly.mult(0.1),
     possible: hasAuthority("auth_machine_intelligence"),
     customTooltip: ["content_test_ascension_tooltip"],
-    traditionSwap: [
-      {
-        id: "content_test_tradition_ascension_servitor",
+    traditionSwap: {
+      content_test_tradition_ascension_servitor: {
         name: "Custodian Ascension",
         inheritIcon: true,
         modifier: (m) => m.pop.happiness(0.05),
@@ -129,7 +128,7 @@ function defineContentExample(): Mod<"content_test"> {
         },
         trigger: hasAuthority("auth_machine_intelligence"),
       },
-    ],
+    },
     aiWeight: {
       base: 100,
       modifiers: [{ factor: 0.5, when: hasAuthority("auth_corporate") }],
@@ -167,9 +166,8 @@ function defineContentExample(): Mod<"content_test"> {
       modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
     },
     customTooltip: "content_test_machine_futures_tooltip",
-    traditionSwap: [
-      {
-        id: "content_test_ascension_perk_machine_servitor",
+    traditionSwap: {
+      content_test_ascension_perk_machine_servitor: {
         name: "Custodian Futures",
         flavor: "Perfection is stewardship.",
         effects: "Our purpose is renewed.",
@@ -184,7 +182,7 @@ function defineContentExample(): Mod<"content_test"> {
         },
         trigger: hasAuthority("auth_machine_intelligence"),
       },
-    ],
+    },
   });
 
   mod.defineDecision({
@@ -348,6 +346,10 @@ function defineContentExample(): Mod<"content_test"> {
       modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
     },
     destroyStarbases: true,
+    forbiddenPeaceOffers: {
+      demandSurrender: "content_test_war_goal_liberation_no_demand",
+      surrender: "content_test_war_goal_liberation_no_surrender",
+    },
   });
 
   mod.defineAgreementPreset({
@@ -356,6 +358,12 @@ function defineContentExample(): Mod<"content_test"> {
     desc: "A modest tribute agreement.",
     flavor: "Coin for peace.",
     icon: "GFX_agreement_preset_tribute",
+    termData: {
+      hasCooldownOnFirstRenegotiation: true,
+      forcedInitialLoyalty: 20,
+      discreteTerms: [{ key: "subject_integration", value: "subject_can_not_be_integrated" }],
+      resourceTerms: [{ key: "energy", value: 0.1 }],
+    },
     overlordWeight: {
       base: 10,
       modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
@@ -398,12 +406,34 @@ function defineContentExample(): Mod<"content_test"> {
       modifiers: [{ factor: 2, when: hasPlanetFlag("content_test_archaeological_planet_flag") }],
     },
     stages: 3,
+    stage: [
+      { difficulty: 1, icon: "GFX_archaeology_runes_E1", event: "content_test.1" },
+      { difficulty: 2, icon: "GFX_archaeology_runes_E2", event: "content_test.2" },
+      { difficulty: 3, icon: "GFX_archaeology_runes_E3", event: "content_test.3" },
+    ],
     potential: canGoMia(),
     allow: canGoMia(),
     visible: hasAuthority("auth_machine_intelligence"),
     onRollFailed: () => {},
     onCreate: () => {},
     onVisible: (country) => country.setCountryFlag("content_test_site_visible"),
+  });
+
+  mod.defineScriptedLoc({
+    id: "content_test_scripted_loc_flavor_text",
+    random: false,
+    // scripted_loc carries no fixed scope in the rules, so only a scope-agnostic
+    // trigger like always() type-checks here — the same reasoning as decision.potential.
+    text: [
+      {
+        weight: 2,
+        trigger: always(),
+        localizationKey: "content_test_scripted_loc_flavor_text_machine",
+      },
+      { localizationKey: "content_test_scripted_loc_flavor_text_default" },
+    ],
+    value: 1,
+    default: "content_test_scripted_loc_flavor_text_default",
   });
 
   return mod;
@@ -454,14 +484,14 @@ describe("generated content registries", () => {
       runtimeConfigured.defineTradition({
         id: "content_test_tradition_x",
         name: "X",
-        traditionSwap: [{ id: "othermod_swap", name: "Wrong namespace" }],
+        traditionSwap: { othermod_swap: { name: "Wrong namespace" } },
       })
     ).toThrow(/must start with the mod prefix "content_test_"/);
     expect(() =>
       mod.defineTradition({
         id: "content_test_tradition_x",
         name: "X",
-        traditionSwap: [{ id: "content_test_swap_x", name: "Correct namespace" }],
+        traditionSwap: { content_test_swap_x: { name: "Correct namespace" } },
       })
     ).not.toThrow();
   });
@@ -475,13 +505,13 @@ describe("generated content registries", () => {
     mod.defineTradition({
       id: "content_test_tradition_x",
       name: "X",
-      traditionSwap: [{ id: "content_test_swap_shared", name: "First" }],
+      traditionSwap: { content_test_swap_shared: { name: "First" } },
     });
     expect(() =>
       mod.defineTradition({
         id: "content_test_tradition_y",
         name: "Y",
-        traditionSwap: [{ id: "content_test_swap_shared", name: "Second" }],
+        traditionSwap: { content_test_swap_shared: { name: "Second" } },
       })
     ).toThrow('Duplicate tradition.tradition_swap id "content_test_swap_shared"');
   });

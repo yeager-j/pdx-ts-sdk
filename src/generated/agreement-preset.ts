@@ -4,7 +4,78 @@
 
 import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
-import type { AgreementPresetRef, AgreementTermValueSpecialistTypeRef, SpriteRef } from "./refs.ts";
+import type {
+  AgreementPresetRef,
+  AgreementTermDiscreteRef,
+  AgreementTermValueDiscreteRef,
+  AgreementTermValueResourceRef,
+  AgreementTermValueSpecialistTypeRef,
+  SpriteRef,
+} from "./refs.ts";
+
+export interface AgreementPresetTermDataDiscreteTerms {
+  /** The term name, as defined in agreement_terms */
+  key: AgreementTermDiscreteRef | string;
+  /** The term value to use, as defined in agreement_term_values */
+  value: AgreementTermValueDiscreteRef | string;
+}
+
+export const AGREEMENT_PRESET_TERM_DATA_DISCRETE_TERMS_FIELDS: readonly ContentField[] = [
+  { key: "key", member: "key", shape: "value", conversion: "ref" },
+  { key: "value", member: "value", shape: "value", conversion: "ref" },
+];
+
+export interface AgreementPresetTermDataResourceTerms {
+  /** The resource term value to use, as defined in agreement_term_values */
+  key: AgreementTermValueResourceRef | string;
+  /** subsidy percentage */
+  value: number;
+}
+
+export const AGREEMENT_PRESET_TERM_DATA_RESOURCE_TERMS_FIELDS: readonly ContentField[] = [
+  { key: "key", member: "key", shape: "value", conversion: "ref" },
+  { key: "value", member: "value", shape: "value", conversion: "identity" },
+];
+
+export interface AgreementPresetTermData {
+  /** default: yes */
+  hasCooldownOnFirstRenegotiation?: boolean;
+  forcedInitialLoyalty?: number;
+  /** The default discrete terms of this preset */
+  discreteTerms?: AgreementPresetTermDataDiscreteTerms[];
+  resourceTerms?: AgreementPresetTermDataResourceTerms[];
+}
+
+export const AGREEMENT_PRESET_TERM_DATA_FIELDS: readonly ContentField[] = [
+  {
+    key: "has_cooldown_on_first_renegotiation",
+    member: "hasCooldownOnFirstRenegotiation",
+    shape: "value",
+    conversion: "identity",
+  },
+  {
+    key: "forced_initial_loyalty",
+    member: "forcedInitialLoyalty",
+    shape: "value",
+    conversion: "identity",
+  },
+  {
+    key: "discrete_terms",
+    member: "discreteTerms",
+    shape: "struct",
+    fields: AGREEMENT_PRESET_TERM_DATA_DISCRETE_TERMS_FIELDS,
+    wrapped: true,
+    repeated: true,
+  },
+  {
+    key: "resource_terms",
+    member: "resourceTerms",
+    shape: "struct",
+    fields: AGREEMENT_PRESET_TERM_DATA_RESOURCE_TERMS_FIELDS,
+    wrapped: true,
+    repeated: true,
+  },
+];
 
 /**
  * An agreement_preset, as the game's rules describe it.
@@ -21,6 +92,7 @@ export interface AgreementPresetFields {
   parent?: AgreementPresetRef | string;
   icon?: SpriteRef | string;
   specialistType?: AgreementTermValueSpecialistTypeRef | string;
+  termData: AgreementPresetTermData;
   overlordWeight?: WeightBlock<"country">;
   subjectWeight?: WeightBlock<"country">;
   potential?: Trigger<"country">;
@@ -46,6 +118,12 @@ export const AGREEMENT_PRESET_FIELDS: readonly ContentField[] = [
   { key: "parent", member: "parent", shape: "value", conversion: "ref" },
   { key: "icon", member: "icon", shape: "value", conversion: "ref" },
   { key: "specialist_type", member: "specialistType", shape: "value", conversion: "ref" },
+  {
+    key: "term_data",
+    member: "termData",
+    shape: "struct",
+    fields: AGREEMENT_PRESET_TERM_DATA_FIELDS,
+  },
   { key: "overlord_weight", member: "overlordWeight", shape: "weightBlock" },
   { key: "subject_weight", member: "subjectWeight", shape: "weightBlock" },
   { key: "potential", member: "potential", shape: "trigger" },

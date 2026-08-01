@@ -24,6 +24,9 @@ export type AnyOrBool = "any" | "yes" | "no";
 /** `enum[any_or_none_or_bool]`. */
 export type AnyOrNoneOrBool = "any" | "none" | "yes" | "no";
 
+/** `enum[aura_type]`. */
+export type AuraType = "ships" | "fleets";
+
 /** `enum[awareness_level]`. */
 export type AwarenessLevel = "none" | "low" | "medium" | "high" | "full";
 

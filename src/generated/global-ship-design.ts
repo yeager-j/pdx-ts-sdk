@@ -4,12 +4,94 @@
 
 import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
 import type {
+  ComponentTemplateRef,
   ComponentTemplateUtilityComponentTemplateRef,
   CountryTypeRef,
   GlobalShipDesignRef,
   ScriptedTriggerRef,
+  SectionTemplateRef,
   ShipSizeRef,
 } from "./refs.ts";
+
+export interface GlobalShipDesignGrowthStagesSectionComponent {
+  slot?: string;
+  template?: ComponentTemplateRef | string;
+}
+
+export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_COMPONENT_FIELDS: readonly ContentField[] = [
+  { key: "slot", member: "slot", shape: "value", conversion: "identity" },
+  { key: "template", member: "template", shape: "value", conversion: "ref" },
+];
+
+export interface GlobalShipDesignGrowthStagesSection {
+  template?: SectionTemplateRef | string;
+  slot?: string;
+  component?: GlobalShipDesignGrowthStagesSectionComponent[];
+}
+
+export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_FIELDS: readonly ContentField[] = [
+  { key: "template", member: "template", shape: "value", conversion: "ref" },
+  { key: "slot", member: "slot", shape: "value", conversion: "identity" },
+  {
+    key: "component",
+    member: "component",
+    shape: "struct",
+    fields: GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_COMPONENT_FIELDS,
+    repeated: true,
+  },
+];
+
+export interface GlobalShipDesignGrowthStages {
+  shipSize: ShipSizeRef | string;
+  section?: GlobalShipDesignGrowthStagesSection[];
+  requiredComponent?: (ComponentTemplateUtilityComponentTemplateRef | string)[];
+}
+
+export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_FIELDS: readonly ContentField[] = [
+  { key: "ship_size", member: "shipSize", shape: "value", conversion: "ref" },
+  {
+    key: "section",
+    member: "section",
+    shape: "struct",
+    fields: GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "required_component",
+    member: "requiredComponent",
+    shape: "value",
+    conversion: "ref",
+    repeated: true,
+  },
+];
+
+export interface GlobalShipDesignSectionComponent {
+  slot?: string;
+  template?: ComponentTemplateRef | string;
+}
+
+export const GLOBAL_SHIP_DESIGN_SECTION_COMPONENT_FIELDS: readonly ContentField[] = [
+  { key: "slot", member: "slot", shape: "value", conversion: "identity" },
+  { key: "template", member: "template", shape: "value", conversion: "ref" },
+];
+
+export interface GlobalShipDesignSection {
+  template?: SectionTemplateRef | string;
+  slot?: string;
+  component?: GlobalShipDesignSectionComponent[];
+}
+
+export const GLOBAL_SHIP_DESIGN_SECTION_FIELDS: readonly ContentField[] = [
+  { key: "template", member: "template", shape: "value", conversion: "ref" },
+  { key: "slot", member: "slot", shape: "value", conversion: "identity" },
+  {
+    key: "component",
+    member: "component",
+    shape: "struct",
+    fields: GLOBAL_SHIP_DESIGN_SECTION_COMPONENT_FIELDS,
+    repeated: true,
+  },
+];
 
 /**
  * A global_ship_design, as the game's rules describe it.
@@ -23,6 +105,7 @@ export interface GlobalShipDesignFields {
   creatureDesignerTemplate?: boolean;
   customTradeWeight?: number;
   isEventDesign?: boolean;
+  growthStages?: GlobalShipDesignGrowthStages[];
   useDesignName?: boolean;
   regeneratesWhenDisabled?: boolean;
   /** whether this design should be set to automatically upgrade its components (default: no) */
@@ -32,6 +115,7 @@ export interface GlobalShipDesignFields {
   countryType?: CountryTypeRef | string;
   isSpecialBuildable?: boolean;
   allowBuildableTrigger?: ScriptedTriggerRef | string;
+  section?: GlobalShipDesignSection[];
   requiredComponent?: (ComponentTemplateUtilityComponentTemplateRef | string)[];
 }
 
@@ -63,6 +147,14 @@ export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "is_event_design", member: "isEventDesign", shape: "value", conversion: "identity" },
+  {
+    key: "growth_stages",
+    member: "growthStages",
+    shape: "struct",
+    fields: GLOBAL_SHIP_DESIGN_GROWTH_STAGES_FIELDS,
+    wrapped: true,
+    repeated: true,
+  },
   { key: "use_design_name", member: "useDesignName", shape: "value", conversion: "identity" },
   {
     key: "regenerates_when_disabled",
@@ -89,6 +181,13 @@ export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
     member: "allowBuildableTrigger",
     shape: "value",
     conversion: "ref",
+  },
+  {
+    key: "section",
+    member: "section",
+    shape: "struct",
+    fields: GLOBAL_SHIP_DESIGN_SECTION_FIELDS,
+    repeated: true,
   },
   {
     key: "required_component",

@@ -82,16 +82,15 @@ describe("generated content authoring types", () => {
           modifiers: (m) => m.country.unity.produces.mult(0.1),
         },
       ],
-      traditionSwap: [
-        {
-          id: "content_types_ascension_perk_swap_scoped",
+      traditionSwap: {
+        content_types_ascension_perk_swap_scoped: {
           name: "X",
           onEnabled: (country) => {
             // @ts-expect-error — ascension perk swap effects also run in country scope
             country.setPlanetFlag("planet_only");
           },
         },
-      ],
+      },
     });
     mod.defineEdict({
       id: "content_types_edict_scoped",
@@ -221,9 +220,18 @@ describe("generated content authoring types", () => {
     mod.defineJob({
       id: "content_types_job_unlowerable",
       name: "X",
-      // @ts-expect-error — swappable_data nests its repeated entries two levels
-      // deep, which the nested-definition machinery cannot express yet
+      // @ts-expect-error — swappable_data's own `default` sub-struct is required
       swappableData: {},
+    });
+    mod.defineJob({
+      id: "content_types_job_swappable_data",
+      name: "X",
+      // The struct field shape now expresses swappable_data's two-level nesting:
+      // a required `default` struct plus a repeated `swap_type` struct list.
+      swappableData: {
+        default: { desc: "content_types_job_swappable_default_desc" },
+        swapType: [{ trigger: isCapital(), weight: 1 }],
+      },
     });
     mod.defineAgenda({
       id: "content_types_agenda_localisation_alias",

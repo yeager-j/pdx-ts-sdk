@@ -1,0 +1,16 @@
+defined_text = {
+	name = content_test_scripted_loc_flavor_text
+	random = no
+	text = {
+		weight = 2
+		trigger = {
+			always = yes
+		}
+		localization_key = content_test_scripted_loc_flavor_text_machine
+	}
+	text = {
+		localization_key = content_test_scripted_loc_flavor_text_default
+	}
+	value = 1
+	default = content_test_scripted_loc_flavor_text_default
+}

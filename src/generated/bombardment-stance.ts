@@ -6,6 +6,16 @@ import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } f
 import type { Trigger } from "../trigger-core.ts";
 import type { ScopeName } from "./scopes.ts";
 
+export interface BombardmentStanceKillPopAmount {
+  min: number;
+  max: number;
+}
+
+export const BOMBARDMENT_STANCE_KILL_POP_AMOUNT_FIELDS: readonly ContentField[] = [
+  { key: "min", member: "min", shape: "value", conversion: "identity" },
+  { key: "max", member: "max", shape: "value", conversion: "identity" },
+];
+
 /**
  * A bombardment_stance, as the game's rules describe it.
  * Generated from `type[bombardment_stance]` at `game/common/bombardment_stances`.
@@ -32,6 +42,7 @@ export interface BombardmentStanceFields {
   killPopChance?: WeightBlock<ScopeName>;
   /** Will not kill/abduct pops if pops <= this number already, default = 0. Doesn't work for nations that doesn't have diplomatic wars! */
   minPopsToKillPop?: number;
+  killPopAmount?: BombardmentStanceKillPopAmount;
   aiWeight: WeightBlock<"fleet">;
 }
 
@@ -70,6 +81,12 @@ export const BOMBARDMENT_STANCE_FIELDS: readonly ContentField[] = [
     member: "minPopsToKillPop",
     shape: "value",
     conversion: "identity",
+  },
+  {
+    key: "kill_pop_amount",
+    member: "killPopAmount",
+    shape: "struct",
+    fields: BOMBARDMENT_STANCE_KILL_POP_AMOUNT_FIELDS,
   },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
 ];

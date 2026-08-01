@@ -14,7 +14,67 @@ import type {
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { JobTrigger } from "./enums.ts";
-import type { PopCategoryRef, PurgeTypeRef, TraitRef } from "./refs.ts";
+import type { BuildingRef, JobRef, PopCategoryRef, PurgeTypeRef, TraitRef } from "./refs.ts";
+
+export interface JobSwappableDataDefault {
+  desc?: string;
+  icon?: JobRef | string;
+  buildingIcon?: BuildingRef | string;
+  conditionString?: string;
+}
+
+export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
+  { key: "desc", member: "desc", shape: "value", conversion: "identity" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
+  { key: "building_icon", member: "buildingIcon", shape: "value", conversion: "ref" },
+  { key: "condition_string", member: "conditionString", shape: "value", conversion: "identity" },
+];
+
+export interface JobSwappableDataSwapType {
+  trigger: Trigger<"planet">;
+  name?: string;
+  desc?: string;
+  icon?: JobRef | string;
+  buildingIcon?: BuildingRef | string;
+  conditionString?: string;
+  weight: number;
+}
+
+export const JOB_SWAPPABLE_DATA_SWAP_TYPE_FIELDS: readonly ContentField[] = [
+  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "name", member: "name", shape: "value", conversion: "identity" },
+  { key: "desc", member: "desc", shape: "value", conversion: "identity" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
+  { key: "building_icon", member: "buildingIcon", shape: "value", conversion: "ref" },
+  { key: "condition_string", member: "conditionString", shape: "value", conversion: "identity" },
+  { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+];
+
+export interface JobSwappableData {
+  default: JobSwappableDataDefault;
+  swapType?: JobSwappableDataSwapType[];
+}
+
+export const JOB_SWAPPABLE_DATA_FIELDS: readonly ContentField[] = [
+  { key: "default", member: "default", shape: "struct", fields: JOB_SWAPPABLE_DATA_DEFAULT_FIELDS },
+  {
+    key: "swap_type",
+    member: "swapType",
+    shape: "struct",
+    fields: JOB_SWAPPABLE_DATA_SWAP_TYPE_FIELDS,
+    repeated: true,
+  },
+];
+
+export interface JobTriggeredTags {
+  trigger: Trigger<"planet">;
+  tags: string[];
+}
+
+export const JOB_TRIGGERED_TAGS_FIELDS: readonly ContentField[] = [
+  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "tags", member: "tags", shape: "valueList", conversion: "identity" },
+];
 
 /**
  * A job, as the game's rules describe it.
@@ -35,6 +95,7 @@ export interface JobFields {
   isCappedByModifier?: boolean;
   /** default no */
   canBeAutomated?: boolean;
+  swappableData?: JobSwappableData;
   exemptFromAiAmenityPrioritization?: boolean;
   countAsAvailableForAi?: boolean;
   canSetPriority?: boolean;
@@ -45,6 +106,7 @@ export interface JobFields {
   /** Sets whether the job contributes to diplo weight. Default = yes */
   contributesToDiploWeight?: boolean;
   tags?: string[];
+  triggeredTags?: JobTriggeredTags;
   localizedTags?: string[];
   possiblePrecalc?: JobTrigger;
   possible?: Trigger<"pop_group">;
@@ -86,6 +148,12 @@ export const JOB_FIELDS: readonly ContentField[] = [
   },
   { key: "can_be_automated", member: "canBeAutomated", shape: "value", conversion: "identity" },
   {
+    key: "swappable_data",
+    member: "swappableData",
+    shape: "struct",
+    fields: JOB_SWAPPABLE_DATA_FIELDS,
+  },
+  {
     key: "exempt_from_ai_amenity_prioritization",
     member: "exemptFromAiAmenityPrioritization",
     shape: "value",
@@ -109,6 +177,12 @@ export const JOB_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "tags", member: "tags", shape: "valueList", conversion: "identity" },
+  {
+    key: "triggered_tags",
+    member: "triggeredTags",
+    shape: "struct",
+    fields: JOB_TRIGGERED_TAGS_FIELDS,
+  },
   { key: "localized_tags", member: "localizedTags", shape: "valueList", conversion: "identity" },
   { key: "possible_precalc", member: "possiblePrecalc", shape: "value", conversion: "identity" },
   { key: "possible", member: "possible", shape: "trigger" },

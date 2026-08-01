@@ -39,8 +39,17 @@ export type AgreementPresetRef = TypedRef<"agreement_preset">;
 /** A reference to a `<agreement_term>`. */
 export type AgreementTermRef = TypedRef<"agreement_term">;
 
+/** A reference to a `<agreement_term.discrete>`. */
+export type AgreementTermDiscreteRef = TypedRef<"agreement_term.discrete">;
+
 /** A reference to a `<agreement_term_value>`. */
 export type AgreementTermValueRef = TypedRef<"agreement_term_value">;
+
+/** A reference to a `<agreement_term_value.discrete>`. */
+export type AgreementTermValueDiscreteRef = TypedRef<"agreement_term_value.discrete">;
+
+/** A reference to a `<agreement_term_value.resource>`. */
+export type AgreementTermValueResourceRef = TypedRef<"agreement_term_value.resource">;
 
 /** A reference to a `<agreement_term_value.specialist_type>`. */
 export type AgreementTermValueSpecialistTypeRef = TypedRef<"agreement_term_value.specialist_type">;
@@ -351,6 +360,9 @@ export type ScriptedEffectRef = TypedRef<"scripted_effect">;
 
 /** A reference to a `<scripted_trigger>`. */
 export type ScriptedTriggerRef = TypedRef<"scripted_trigger">;
+
+/** A reference to a `<section_template>`. */
+export type SectionTemplateRef = TypedRef<"section_template">;
 
 /** A reference to a `<sector_type>`. */
 export type SectorTypeRef = TypedRef<"sector_type">;

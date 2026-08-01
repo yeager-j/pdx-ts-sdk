@@ -18,11 +18,11 @@ import {
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   FIELD_WIDENINGS,
-  NESTED_CONTENT_DEFINITIONS,
-  NESTED_FIELD_OVERRIDES,
+  REPEATED_STRUCT_DEFINITIONS,
+  REPEATED_STRUCT_FIELD_OVERRIDES,
   REQUIRED_LOCALISATION,
   type ContentFieldOverride,
-  type NestedContentDefinition,
+  type RepeatedStructDefinition,
 } from "../overlay.ts";
 import { Emitter, type TsValue } from "./types.ts";
 
@@ -43,10 +43,46 @@ export interface ContentEmission {
 interface LoweredField {
   readonly memberType: string;
   readonly metadata: string;
+  /** Extra top-level declarations a nested struct level needed, prepended by the caller. */
+  readonly code?: string;
+  /** Paths bubbled up from a nested struct level, already prefixed. */
+  readonly unsupported?: readonly string[];
 }
 
 function bareValuesOf(type: RuleType): readonly RuleType[] | null {
   return type.kind === "block" && type.bare.length > 0 ? type.bare : null;
+}
+
+type BlockType = Extract<RuleType, { kind: "block" }>;
+
+/**
+ * Finds the anonymous-block shape behind a repeated-struct field, in either of
+ * CWT's two spellings.
+ *
+ * "Direct": the field's own type is a block of ordinary named fields —
+ * `text = { trigger = { ... } }` repeated, or a singular fixed-shape block
+ * like `forbidden_peace_offers = { demand_surrender = ... }`.
+ *
+ * "Wrapped": the field is a singular container whose only content is one bare
+ * anonymous block declared repeatable inside it — `discrete_terms = { ##
+ * cardinality = 0..inf { key = ... value = ... } }`. The repetition lives on
+ * the bare declaration, not on `discrete_terms` itself, so the result is
+ * always a list regardless of the outer field's own cardinality — the same
+ * convention `lowerValueList` already uses for bare scalar lists.
+ */
+function structBlockOf(
+  type: RuleType
+): { readonly block: BlockType; readonly wrapped: boolean } | null {
+  if (type.kind !== "block") {
+    return null;
+  }
+  if (type.fields.length === 0 && type.bare.length === 1 && type.bare[0]!.kind === "block") {
+    return { block: type.bare[0] as BlockType, wrapped: true };
+  }
+  if (type.fields.length > 0) {
+    return { block: type, wrapped: false };
+  }
+  return null;
 }
 
 function spliceCategory(type: RuleType): string | null {
@@ -189,13 +225,111 @@ function lowerValueList(
   };
 }
 
+/**
+ * Lowers an anonymous, identity-less block field: the fallback that
+ * generalizes shape 3 ("repeated siblings with no id") down to whatever
+ * cardinality CWT actually declares, so a singular fixed-shape block like
+ * `forbidden_peace_offers` is just the N=0..1 case of the same mechanism.
+ *
+ * Recurses through the ordinary field pipeline for the struct's own members,
+ * so a struct nested inside a struct (`agreement_preset.term_data.discrete_terms`
+ * inside `term_data`) falls out for free rather than needing its own case.
+ */
+function lowerStruct(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  path: string,
+  inheritedScope: ScopeContext | null
+): LoweredField | null {
+  const located = structBlockOf(field.type);
+  if (located === null) {
+    return null;
+  }
+  const { block, wrapped } = located;
+  if (block.fields.some((inner) => inner.key.kind !== "name")) {
+    // A splice (alias_name), subtype, or computed key inside the block means
+    // some of its content is invisible to mergeByName. Emitting a struct from
+    // only the ordinary fields would silently drop the rest, so decline
+    // rather than guess — the caller reports this path as unsupported.
+    return null;
+  }
+  const grouped = mergeByName(block.fields, pascalCase(name));
+  if (grouped.size === 0) {
+    return null;
+  }
+  const typeName = pascalCase(path);
+  const members: string[] = [];
+  const fieldMetadata: string[] = [];
+  const extraCode: string[] = [];
+  const unsupported: string[] = [];
+  for (const [fieldName, group] of grouped) {
+    const fieldPath = `${path}.${fieldName}`;
+    const lowered = pickOrdinary(
+      emitter,
+      group,
+      fieldName,
+      inheritedScope,
+      CONTENT_FIELD_OVERRIDES.get(fieldPath),
+      FIELD_WIDENINGS.get(fieldPath)?.extraType,
+      fieldPath
+    );
+    if (lowered === null) {
+      unsupported.push(`${fieldPath} (no declaration the emitter can lower)`);
+      continue;
+    }
+    const optional = group.every((inner) => isOptional(inner.cardinality));
+    members.push(
+      docComment(
+        group.flatMap((inner) => inner.docs),
+        "  "
+      ) + `  ${camelCase(fieldName)}${optional ? "?" : ""}: ${lowered.memberType};\n`
+    );
+    fieldMetadata.push(lowered.metadata);
+    if (lowered.code !== undefined) {
+      extraCode.push(lowered.code);
+    }
+    if (lowered.unsupported !== undefined) {
+      unsupported.push(...lowered.unsupported);
+    }
+  }
+  if (members.length === 0) {
+    return null;
+  }
+  const fieldsConstant = `${constantCase(typeName)}_FIELDS`;
+  const repeated = wrapped || isRepeated(field.cardinality);
+  const code =
+    extraCode.join("") +
+    `export interface ${typeName} {\n` +
+    members.join("") +
+    "}\n\n" +
+    `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
+    fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
+    "];\n\n";
+  const metadataMembers = [
+    `key: ${JSON.stringify(name)}`,
+    `member: ${JSON.stringify(camelCase(name))}`,
+    `shape: "struct"`,
+    `fields: ${fieldsConstant}`,
+    ...(wrapped ? ["wrapped: true"] : []),
+    ...(repeated ? ["repeated: true"] : []),
+  ];
+  return {
+    memberType: repeated ? arrayType(typeName) : typeName,
+    metadata: `{ ${metadataMembers.join(", ")} }`,
+    code,
+    unsupported,
+  };
+}
+
 function lowerOrdinary(
   emitter: Emitter,
   field: RuleField,
   name: string,
   inheritedScope: ScopeContext | null,
   override: ContentFieldOverride | undefined,
-  widening: string | undefined
+  widening: string | undefined,
+  path: string
 ): LoweredField | null {
   const requested = override?.shape;
   if (requested === "modifierBlock") {
@@ -249,9 +383,26 @@ function lowerOrdinary(
   if (requested === "value") {
     return lowerValue(emitter, field, name, widening);
   }
+  if (requested === "struct") {
+    return lowerStruct(emitter, field, name, path, inheritedScope);
+  }
   const bare = bareValuesOf(field.type);
   if (bare !== null) {
-    return lowerValueList(emitter, field, name, widening, false);
+    // A single bare block, rather than a bare scalar, is the "wrapped" spelling
+    // of a repeated struct (see structBlockOf) — try that before treating it as
+    // a scalar list, and don't fall through to a scalar reading if it declines,
+    // since that would misread the block as an empty/invalid scalar list.
+    if (bare.length === 1 && bare[0]!.kind === "block") {
+      return lowerStruct(emitter, field, name, path, inheritedScope);
+    }
+    const asList = lowerValueList(emitter, field, name, widening, false);
+    if (asList !== null) {
+      return asList;
+    }
+  }
+  const struct = lowerStruct(emitter, field, name, path, inheritedScope);
+  if (struct !== null) {
+    return struct;
   }
   return lowerValue(emitter, field, name, widening);
 }
@@ -262,10 +413,11 @@ function pickOrdinary(
   name: string,
   inheritedScope: ScopeContext | null,
   override: ContentFieldOverride | undefined,
-  widening: string | undefined
+  widening: string | undefined,
+  path: string
 ): LoweredField | null {
   for (const field of group) {
-    const lowered = lowerOrdinary(emitter, field, name, inheritedScope, override, widening);
+    const lowered = lowerOrdinary(emitter, field, name, inheritedScope, override, widening, path);
     if (lowered !== null) {
       return lowered;
     }
@@ -366,11 +518,20 @@ function localisationMetadata(type: ContentType, plan = planLocalisation(type)):
   );
 }
 
-function nestedEmission(
+/**
+ * Lowers an overlay-configured repeated-struct field: a named, ordered
+ * collection whose name is both identity and localization key (shapes 1 and 2
+ * — the same distinction `name_field` draws for top-level registries, one
+ * level down). Authors as `Readonly<Record<Id, ${typeName}Fields>>` rather
+ * than an array carrying its own `id`, so the id cannot be omitted, cannot
+ * collide, and the mod prefix applies at one point — exactly like a top-level
+ * definition's id.
+ */
+function repeatedStructEmission(
   emitter: Emitter,
   ownerField: RuleField,
   ownerPath: string,
-  config: NestedContentDefinition,
+  config: RepeatedStructDefinition,
   inheritedScope: ScopeContext | null
 ): {
   readonly code: string;
@@ -385,11 +546,16 @@ function nestedEmission(
   if (ownerField.type.kind !== "block") {
     return null;
   }
+  const keying = config.keying ?? "siblings";
+  if (keying === "siblings" && config.identityKey === undefined) {
+    return null;
+  }
   const grouped = mergeByName(ownerField.type.fields, config.typeName);
   const members: string[] = [];
   const fieldMetadata: string[] = [];
-  const emitted = new Set<string>([config.identityKey]);
+  const emitted = new Set<string>(config.identityKey === undefined ? [] : [config.identityKey]);
   const unsupported: string[] = [];
+  const extraCode: string[] = [];
 
   for (const name of config.fields) {
     const group = grouped.get(name);
@@ -397,16 +563,18 @@ function nestedEmission(
       unsupported.push(`${ownerPath}.${name} (no such nested rule field)`);
       continue;
     }
+    const fieldPath = `${ownerPath}.${name}`;
     const lowering = pickOrdinary(
       emitter,
       group,
       name,
       inheritedScope,
-      NESTED_FIELD_OVERRIDES.get(`${ownerPath}.${name}`),
-      undefined
+      REPEATED_STRUCT_FIELD_OVERRIDES.get(fieldPath),
+      undefined,
+      fieldPath
     );
     if (lowering === null) {
-      unsupported.push(`${ownerPath}.${name} (no declaration the emitter can lower)`);
+      unsupported.push(`${fieldPath} (no declaration the emitter can lower)`);
       continue;
     }
     const optional = group.every((field) => isOptional(field.cardinality));
@@ -417,6 +585,12 @@ function nestedEmission(
       ) + `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
     );
     fieldMetadata.push(lowering.metadata);
+    if (lowering.code !== undefined) {
+      extraCode.push(lowering.code);
+    }
+    if (lowering.unsupported !== undefined) {
+      unsupported.push(...lowering.unsupported);
+    }
     emitted.add(name);
   }
 
@@ -438,9 +612,8 @@ function nestedEmission(
     localisationAliases = plan.aliases;
   }
   const code =
-    `export interface ${typeName}Def<Id extends string = string> {\n` +
-    "  /** Prefixed identity emitted through the nested definition's name field. */\n" +
-    "  id: Id;\n" +
+    extraCode.join("") +
+    `export interface ${typeName}Fields {\n` +
     locMembers +
     members.join("") +
     "}\n\n" +
@@ -456,9 +629,10 @@ function nestedEmission(
   const metadataValue = metadata(
     ownerField,
     ownerField.key.kind === "name" ? ownerField.key.name : "",
-    "nested",
+    "repeatedStruct",
     [
-      `identityKey: ${JSON.stringify(config.identityKey)}`,
+      `keying: ${JSON.stringify(keying)}`,
+      ...(keying === "siblings" ? [`identityKey: ${JSON.stringify(config.identityKey)}`] : []),
       `fields: ${fieldsConstant}`,
       `localisation: ${localisationConstant}`,
     ]
@@ -467,7 +641,7 @@ function nestedEmission(
     code,
     fieldsConstant,
     localisationConstant,
-    memberType: `${typeName}Def<Id>[]`,
+    memberType: `Readonly<Record<Id, ${typeName}Fields>>`,
     metadata: metadataValue,
     unemitted,
     unsupported,
@@ -496,10 +670,27 @@ export function emitContentType(
   const declinedFields: string[] = [];
   const unsupported: string[] = [];
   const nestedUnemitted: string[] = [];
-  const nestedCode: string[] = [];
+  const extraCode: string[] = [];
   const localisationAliases: string[] = [];
   const members: string[] = [];
   const fieldMetadata: string[] = [];
+  // Only a repeatedStruct field's Readonly<Record<Id, ...>> member type actually
+  // references Id — a plain struct field (no identity) never does, so the owner
+  // type should not carry an unused Id generic just because a struct happened
+  // to be present.
+  let needsId = false;
+  const localisationPlan = planLocalisation(type);
+  // A body field can share a name with a localization slot without meaning the
+  // same thing — `building.desc` (`single_alias_right[triggered_desc_clause]`,
+  // a repeated trigger+text struct) is unrelated to the `desc` flavor text the
+  // type's own localisation table already claims for the TS member `desc`. Both
+  // succeeding would emit the same interface property twice with different
+  // types, so the localization slot — already load-bearing everywhere it
+  // appears — wins, and the colliding body field is reported instead of
+  // silently overwritten.
+  const localisationMemberNames = new Set(
+    localisationPlan.entries.map((entry) => camelCase(entry.key))
+  );
 
   // Everything the emitter can lower is emitted, in the rules' own declaration
   // order. The SDK's promise is that a mod author does not run out of API, so a
@@ -512,13 +703,19 @@ export function emitContentType(
       declinedFields.push(`${path} — ${declined}`);
       continue;
     }
+    if (localisationMemberNames.has(camelCase(name))) {
+      unsupported.push(`${name} (collides with the "${camelCase(name)}" localization slot)`);
+      continue;
+    }
     const override = CONTENT_FIELD_OVERRIDES.get(path);
-    if (override?.shape === "nested") {
-      const config = NESTED_CONTENT_DEFINITIONS.get(path);
+    if (override?.shape === "repeatedStruct") {
+      const config = REPEATED_STRUCT_DEFINITIONS.get(path);
       const nested =
-        config === undefined ? null : nestedEmission(emitter, group[0]!, path, config, body.scope);
+        config === undefined
+          ? null
+          : repeatedStructEmission(emitter, group[0]!, path, config, body.scope);
       if (nested === null) {
-        unsupported.push(`${name} (nested definition overlay is incomplete)`);
+        unsupported.push(`${name} (repeated-struct overlay is incomplete)`);
         continue;
       }
       const optional = group.every((field) => isOptional(field.cardinality));
@@ -528,8 +725,9 @@ export function emitContentType(
           "  "
         ) + `  ${camelCase(name)}${optional ? "?" : ""}: ${nested.memberType};\n`
       );
-      nestedCode.push(nested.code);
+      extraCode.push(nested.code);
       fieldMetadata.push(nested.metadata);
+      needsId = true;
       nestedUnemitted.push(...nested.unemitted);
       unsupported.push(...nested.unsupported);
       localisationAliases.push(...nested.localisationAliases);
@@ -537,7 +735,15 @@ export function emitContentType(
       continue;
     }
     const widening = FIELD_WIDENINGS.get(path);
-    const lowered = pickOrdinary(emitter, group, name, body.scope, override, widening?.extraType);
+    const lowered = pickOrdinary(
+      emitter,
+      group,
+      name,
+      body.scope,
+      override,
+      widening?.extraType,
+      path
+    );
     if (lowered === null) {
       unsupported.push(`${name} (no declaration the emitter can lower)`);
       continue;
@@ -550,17 +756,22 @@ export function emitContentType(
       ) + `  ${camelCase(name)}${optional ? "?" : ""}: ${lowered.memberType};\n`
     );
     fieldMetadata.push(lowered.metadata);
+    if (lowered.code !== undefined) {
+      extraCode.push(lowered.code);
+    }
+    if (lowered.unsupported !== undefined) {
+      unsupported.push(...lowered.unsupported);
+    }
     emittedFields.push(name);
   }
 
   const typeName = pascalCase(type.name);
   const fieldsConstant = `${type.name.toUpperCase()}_FIELDS`;
   const localisationConstant = `${type.name.toUpperCase()}_LOCALISATION`;
-  const fieldsGeneric = nestedCode.length === 0 ? "" : "<Id extends string = string>";
-  const fieldsReference = nestedCode.length === 0 ? typeName + "Fields" : `${typeName}Fields<Id>`;
-  const localisationPlan = planLocalisation(type);
+  const fieldsGeneric = needsId ? "<Id extends string = string>" : "";
+  const fieldsReference = needsId ? `${typeName}Fields<Id>` : typeName + "Fields";
   const code =
-    nestedCode.join("") +
+    extraCode.join("") +
     docComment([
       `${indefiniteArticle(type.name)} ${type.name}, as the game's rules describe it.`,
       "",

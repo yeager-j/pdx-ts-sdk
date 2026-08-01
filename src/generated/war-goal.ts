@@ -13,6 +13,18 @@ import type { Trigger } from "../trigger-core.ts";
 import type { CedeClaim, PeaceOffer, WarGoalHide } from "./enums.ts";
 import type { CasusBelliRef, WarGoalRef } from "./refs.ts";
 
+export interface WarGoalForbiddenPeaceOffers {
+  demandSurrender?: string;
+  statusQuo?: string;
+  surrender?: string;
+}
+
+export const WAR_GOAL_FORBIDDEN_PEACE_OFFERS_FIELDS: readonly ContentField[] = [
+  { key: "demand_surrender", member: "demandSurrender", shape: "value", conversion: "identity" },
+  { key: "status_quo", member: "statusQuo", shape: "value", conversion: "identity" },
+  { key: "surrender", member: "surrender", shape: "value", conversion: "identity" },
+];
+
 /**
  * A war_goal, as the game's rules describe it.
  * Generated from `type[war_goal]` at `game/common/war_goals`.
@@ -44,6 +56,7 @@ export interface WarGoalFields {
   warExhaustion?: number;
   /** If used as attacker wargoal and set, defender will have their wargoal predetermined by this. If not set, defender gets to pick their own wargoal. */
   setDefenderWargoal?: WarGoalRef | string;
+  forbiddenPeaceOffers?: WarGoalForbiddenPeaceOffers;
   releaseOccupiedSystemsOnStatusQuo?: boolean;
   /** default: no */
   showAgreementTerms?: boolean;
@@ -102,6 +115,12 @@ export const WAR_GOAL_FIELDS: readonly ContentField[] = [
   },
   { key: "war_exhaustion", member: "warExhaustion", shape: "value", conversion: "identity" },
   { key: "set_defender_wargoal", member: "setDefenderWargoal", shape: "value", conversion: "ref" },
+  {
+    key: "forbidden_peace_offers",
+    member: "forbiddenPeaceOffers",
+    shape: "struct",
+    fields: WAR_GOAL_FORBIDDEN_PEACE_OFFERS_FIELDS,
+  },
   {
     key: "release_occupied_systems_on_status_quo",
     member: "releaseOccupiedSystemsOnStatusQuo",

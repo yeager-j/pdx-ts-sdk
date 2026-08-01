@@ -185,7 +185,20 @@ export type ContentFieldShape =
   | "triggeredModifierBlock"
   | "modifierBlock"
   | "weightBlock"
-  | "nested";
+  /**
+   * An anonymous block with no identity: `text = { trigger = { ... } }`
+   * written N times, or a single fixed-shape block like
+   * `forbidden_peace_offers = { demand_surrender = ... }`. Inferred from CWT
+   * block structure like `economicResources`; requestable explicitly only
+   * when the heuristic needs an assist.
+   */
+  | "struct"
+  /**
+   * A named, ordered collection whose name is both identity and localisation
+   * key — the same distinction `name_field` draws for top-level registries,
+   * one level down. See docs/roadmap.md's "Repeated-struct field shape".
+   */
+  | "repeatedStruct";
 
 export interface ContentFieldOverride {
   readonly shape: ContentFieldShape;
@@ -234,9 +247,10 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   [
     "tradition.tradition_swap",
     {
-      shape: "nested",
+      shape: "repeatedStruct",
       reason:
-        "A tradition swap is a repeated nested definition with its own identity and localization.",
+        "A tradition swap is a repeated-struct field: a named, ordered collection whose name " +
+        "(name_field, one level down) is both identity and localization key.",
     },
   ],
   [
@@ -271,9 +285,10 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   [
     "ascension_perk.tradition_swap",
     {
-      shape: "nested",
+      shape: "repeatedStruct",
       reason:
-        "An ascension perk swap is a repeated nested definition with its own identity and localization.",
+        "An ascension perk swap is a repeated-struct field: a named, ordered collection whose " +
+        "name (name_field, one level down) is both identity and localization key.",
     },
   ],
   [
@@ -537,14 +552,23 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   ],
 ]);
 
-export interface NestedContentDefinition {
+export interface RepeatedStructDefinition {
   readonly typeName: string;
-  readonly identityKey: string;
+  /**
+   * "siblings" (shape 2 — `approach = { name = approach_a ... }` repeated):
+   * the record key is written into `identityKey` inside each sibling block.
+   * "container" (shape 1 — `stages = { stage_1 = { ... } }`): the record key
+   * IS the inner block's key, and `identityKey` is unused. Defaults to
+   * "siblings".
+   */
+  readonly keying?: "siblings" | "container";
+  /** Required when `keying` is "siblings" (the default); unused for "container". */
+  readonly identityKey?: string;
   readonly localisationType: string;
   readonly fields: readonly string[];
 }
 
-export const NESTED_CONTENT_DEFINITIONS = new Map<string, NestedContentDefinition>([
+export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinition>([
   [
     "tradition.tradition_swap",
     {
@@ -585,7 +609,7 @@ export const NESTED_CONTENT_DEFINITIONS = new Map<string, NestedContentDefinitio
   ],
 ]);
 
-export const NESTED_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   [
     "tradition.tradition_swap.modifier",
     {

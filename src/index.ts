@@ -35,7 +35,7 @@ export type {
 export type {
   AscensionPerkDef,
   AscensionPerkFields,
-  AscensionPerkSwapDef,
+  AscensionPerkSwapFields,
   DefinedAscensionPerk,
 } from "./generated/ascension-perk.ts";
 export type {
@@ -58,6 +58,11 @@ export type {
   OpinionModifierFields,
 } from "./generated/opinion-modifier.ts";
 export type {
+  DefinedScriptedLoc,
+  ScriptedLocDef,
+  ScriptedLocFields,
+} from "./generated/scripted-loc.ts";
+export type {
   DefinedScriptedModifier,
   ScriptedModifierDef,
   ScriptedModifierFields,
@@ -72,7 +77,7 @@ export type {
   DefinedTradition,
   TraditionDef,
   TraditionFields,
-  TraditionSwapDef,
+  TraditionSwapFields,
 } from "./generated/tradition.ts";
 export type { DefinedWarGoal, WarGoalDef, WarGoalFields } from "./generated/war-goal.ts";
 export type {

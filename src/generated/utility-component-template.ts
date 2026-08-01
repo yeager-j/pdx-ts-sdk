@@ -5,6 +5,7 @@
 import type { ContentField, ContentLocalisation, DefinedContent, EffectBlock } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type {
+  AuraType,
   ComponentTag,
   PointDefenceTarget,
   TargetFocus,
@@ -15,6 +16,7 @@ import type {
   ComponentSetRef,
   ComponentTemplateRef,
   ModelEntityRef,
+  ModifierRef,
   ProjectileRef,
   ScriptedActionRef,
   ShipBehaviorRef,
@@ -24,6 +26,297 @@ import type {
   TechnologyRef,
 } from "./refs.ts";
 import type { UpgradePath } from "./value-sets.ts";
+
+export interface UtilityComponentTemplateInjectedModifierModifier {
+  modifier: ModifierRef | string;
+  days?: number;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_INJECTED_MODIFIER_MODIFIER_FIELDS: readonly ContentField[] =
+  [
+    { key: "modifier", member: "modifier", shape: "value", conversion: "ref" },
+    { key: "days", member: "days", shape: "value", conversion: "identity" },
+  ];
+
+export interface UtilityComponentTemplateInjectedModifierStackInfo {
+  id: string;
+  priority: number;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_INJECTED_MODIFIER_STACK_INFO_FIELDS: readonly ContentField[] =
+  [
+    { key: "id", member: "id", shape: "value", conversion: "identity" },
+    { key: "priority", member: "priority", shape: "value", conversion: "identity" },
+  ];
+
+export interface UtilityComponentTemplateInjectedModifier {
+  modifier: UtilityComponentTemplateInjectedModifierModifier;
+  stackInfo?: UtilityComponentTemplateInjectedModifierStackInfo;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_INJECTED_MODIFIER_FIELDS: readonly ContentField[] = [
+  {
+    key: "modifier",
+    member: "modifier",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_INJECTED_MODIFIER_MODIFIER_FIELDS,
+  },
+  {
+    key: "stack_info",
+    member: "stackInfo",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_INJECTED_MODIFIER_STACK_INFO_FIELDS,
+  },
+];
+
+export interface UtilityComponentTemplateDamage {
+  min: number;
+  max: number;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_DAMAGE_FIELDS: readonly ContentField[] = [
+  { key: "min", member: "min", shape: "value", conversion: "identity" },
+  { key: "max", member: "max", shape: "value", conversion: "identity" },
+];
+
+export interface UtilityComponentTemplateWindup {
+  min: number;
+  max: number;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_WINDUP_FIELDS: readonly ContentField[] = [
+  { key: "min", member: "min", shape: "value", conversion: "identity" },
+  { key: "max", member: "max", shape: "value", conversion: "identity" },
+];
+
+export interface UtilityComponentTemplateFriendlyAuraStackInfo {
+  id: string;
+  priority?: number;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_STACK_INFO_FIELDS: readonly ContentField[] = [
+  { key: "id", member: "id", shape: "value", conversion: "identity" },
+  { key: "priority", member: "priority", shape: "value", conversion: "identity" },
+];
+
+export interface UtilityComponentTemplateFriendlyAuraGraphicsAreaEffect {
+  entity: ModelEntityRef | string;
+  dynamicScale: boolean;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
+  [
+    { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+    { key: "dynamic_scale", member: "dynamicScale", shape: "value", conversion: "identity" },
+  ];
+
+export interface UtilityComponentTemplateFriendlyAuraGraphicsShipEffect {
+  entity: ModelEntityRef | string;
+  dynamicScale: boolean;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
+  [
+    { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+    { key: "dynamic_scale", member: "dynamicScale", shape: "value", conversion: "identity" },
+  ];
+
+export interface UtilityComponentTemplateFriendlyAuraGraphics {
+  areaEffect?: UtilityComponentTemplateFriendlyAuraGraphicsAreaEffect[];
+  shipEffect?: UtilityComponentTemplateFriendlyAuraGraphicsShipEffect[];
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_FIELDS: readonly ContentField[] = [
+  {
+    key: "area_effect",
+    member: "areaEffect",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "ship_effect",
+    member: "shipEffect",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS,
+    repeated: true,
+  },
+];
+
+export interface UtilityComponentTemplateFriendlyAura {
+  name: string;
+  limit?: Trigger<"ship">;
+  systemWide?: boolean;
+  radius?: number;
+  applyOn?: AuraType;
+  stackInfo: UtilityComponentTemplateFriendlyAuraStackInfo;
+  graphics?: UtilityComponentTemplateFriendlyAuraGraphics;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly ContentField[] = [
+  { key: "name", member: "name", shape: "value", conversion: "identity" },
+  { key: "limit", member: "limit", shape: "trigger" },
+  { key: "system_wide", member: "systemWide", shape: "value", conversion: "identity" },
+  { key: "radius", member: "radius", shape: "value", conversion: "identity" },
+  { key: "apply_on", member: "applyOn", shape: "value", conversion: "identity" },
+  {
+    key: "stack_info",
+    member: "stackInfo",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_STACK_INFO_FIELDS,
+  },
+  {
+    key: "graphics",
+    member: "graphics",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_FIELDS,
+  },
+];
+
+export interface UtilityComponentTemplateHostileAuraStackInfo {
+  id: string;
+  priority?: number;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_STACK_INFO_FIELDS: readonly ContentField[] = [
+  { key: "id", member: "id", shape: "value", conversion: "identity" },
+  { key: "priority", member: "priority", shape: "value", conversion: "identity" },
+];
+
+export interface UtilityComponentTemplateHostileAuraGraphicsAreaEffect {
+  entity: ModelEntityRef | string;
+  dynamicScale: boolean;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
+  [
+    { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+    { key: "dynamic_scale", member: "dynamicScale", shape: "value", conversion: "identity" },
+  ];
+
+export interface UtilityComponentTemplateHostileAuraGraphicsShipEffect {
+  entity: ModelEntityRef | string;
+  dynamicScale: boolean;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
+  [
+    { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+    { key: "dynamic_scale", member: "dynamicScale", shape: "value", conversion: "identity" },
+  ];
+
+export interface UtilityComponentTemplateHostileAuraGraphics {
+  areaEffect?: UtilityComponentTemplateHostileAuraGraphicsAreaEffect[];
+  shipEffect?: UtilityComponentTemplateHostileAuraGraphicsShipEffect[];
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_FIELDS: readonly ContentField[] = [
+  {
+    key: "area_effect",
+    member: "areaEffect",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "ship_effect",
+    member: "shipEffect",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS,
+    repeated: true,
+  },
+];
+
+export interface UtilityComponentTemplateHostileAuraDamagePerDayDamage {
+  min: number;
+  max: number;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_DAMAGE_FIELDS: readonly ContentField[] =
+  [
+    { key: "min", member: "min", shape: "value", conversion: "identity" },
+    { key: "max", member: "max", shape: "value", conversion: "identity" },
+  ];
+
+export interface UtilityComponentTemplateHostileAuraDamagePerDay {
+  accuracy?: number;
+  damage?: UtilityComponentTemplateHostileAuraDamagePerDayDamage;
+  hullDamage?: number;
+  armorDamage?: number;
+  shieldDamage?: number;
+  armorPenetration?: number;
+  shieldPenetration?: number;
+  sizeDamageFactor?: number;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_FIELDS: readonly ContentField[] =
+  [
+    { key: "accuracy", member: "accuracy", shape: "value", conversion: "identity" },
+    {
+      key: "damage",
+      member: "damage",
+      shape: "struct",
+      fields: UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_DAMAGE_FIELDS,
+    },
+    { key: "hull_damage", member: "hullDamage", shape: "value", conversion: "identity" },
+    { key: "armor_damage", member: "armorDamage", shape: "value", conversion: "identity" },
+    { key: "shield_damage", member: "shieldDamage", shape: "value", conversion: "identity" },
+    {
+      key: "armor_penetration",
+      member: "armorPenetration",
+      shape: "value",
+      conversion: "identity",
+    },
+    {
+      key: "shield_penetration",
+      member: "shieldPenetration",
+      shape: "value",
+      conversion: "identity",
+    },
+    {
+      key: "size_damage_factor",
+      member: "sizeDamageFactor",
+      shape: "value",
+      conversion: "identity",
+    },
+  ];
+
+export interface UtilityComponentTemplateHostileAura {
+  name: string;
+  limit?: Trigger<"ship">;
+  systemWide?: boolean;
+  radius?: number;
+  applyOn?: AuraType;
+  stackInfo: UtilityComponentTemplateHostileAuraStackInfo;
+  graphics?: UtilityComponentTemplateHostileAuraGraphics;
+  damagePerDay?: UtilityComponentTemplateHostileAuraDamagePerDay;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_FIELDS: readonly ContentField[] = [
+  { key: "name", member: "name", shape: "value", conversion: "identity" },
+  { key: "limit", member: "limit", shape: "trigger" },
+  { key: "system_wide", member: "systemWide", shape: "value", conversion: "identity" },
+  { key: "radius", member: "radius", shape: "value", conversion: "identity" },
+  { key: "apply_on", member: "applyOn", shape: "value", conversion: "identity" },
+  {
+    key: "stack_info",
+    member: "stackInfo",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_STACK_INFO_FIELDS,
+  },
+  {
+    key: "graphics",
+    member: "graphics",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_FIELDS,
+  },
+  {
+    key: "damage_per_day",
+    member: "damagePerDay",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_DAMAGE_PER_DAY_FIELDS,
+  },
+];
 
 /**
  * An utility_component_template, as the game's rules describe it.
@@ -101,6 +394,8 @@ export interface UtilityComponentTemplateFields {
    */
   targetFocus?: TargetFocus;
   /** Only when utility_component_template subtype `weapon_component_template` applies. */
+  injectedModifier?: UtilityComponentTemplateInjectedModifier;
+  /** Only when utility_component_template subtype `weapon_component_template` applies. */
   firingArc?: number;
   /** Only when utility_component_template subtype `weapon_component_template` applies. */
   minRange?: number;
@@ -112,6 +407,11 @@ export interface UtilityComponentTemplateFields {
   staticRotation?: boolean;
   /** Only when utility_component_template subtype `weapon_component_template` applies. */
   planetDestructionGfx?: string;
+  /**
+   * Only when utility_component_template subtype `weapon_component_template` applies.
+   * Only when utility_component_template subtype `strike_craft_component_template` applies.
+   */
+  damage?: UtilityComponentTemplateDamage;
   /**
    * Only when utility_component_template subtype `weapon_component_template` applies.
    * Only when utility_component_template subtype `strike_craft_component_template` applies.
@@ -146,6 +446,8 @@ export interface UtilityComponentTemplateFields {
   collateralDamage?: number;
   /** Only when utility_component_template subtype `weapon_component_template` applies. */
   collateralRange?: number;
+  /** Only when utility_component_template subtype `weapon_component_template` applies. */
+  windup?: UtilityComponentTemplateWindup;
   /** Only when utility_component_template subtype `weapon_component_template` applies. */
   totalFireTime?: number;
   /**
@@ -234,6 +536,8 @@ export interface UtilityComponentTemplateFields {
   scriptedAction?: (ScriptedActionRef | string)[];
   potential?: Trigger<"design">;
   showTechUnlockIf?: Trigger<"country">;
+  friendlyAura?: UtilityComponentTemplateFriendlyAura[];
+  hostileAura?: UtilityComponentTemplateHostileAura[];
 }
 
 export interface UtilityComponentTemplateDef<
@@ -298,6 +602,12 @@ export const UTILITY_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   },
   { key: "target_type", member: "targetType", shape: "value", conversion: "ref" },
   { key: "target_focus", member: "targetFocus", shape: "value", conversion: "identity" },
+  {
+    key: "injected_modifier",
+    member: "injectedModifier",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_INJECTED_MODIFIER_FIELDS,
+  },
   { key: "firing_arc", member: "firingArc", shape: "value", conversion: "identity" },
   { key: "min_range", member: "minRange", shape: "value", conversion: "identity" },
   { key: "prio_projectile", member: "prioProjectile", shape: "value", conversion: "identity" },
@@ -308,6 +618,12 @@ export const UTILITY_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     member: "planetDestructionGfx",
     shape: "value",
     conversion: "identity",
+  },
+  {
+    key: "damage",
+    member: "damage",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_DAMAGE_FIELDS,
   },
   { key: "hull_damage", member: "hullDamage", shape: "value", conversion: "identity" },
   { key: "armor_damage", member: "armorDamage", shape: "value", conversion: "identity" },
@@ -322,6 +638,12 @@ export const UTILITY_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   { key: "size_damage_factor", member: "sizeDamageFactor", shape: "value", conversion: "identity" },
   { key: "collateral_damage", member: "collateralDamage", shape: "value", conversion: "identity" },
   { key: "collateral_range", member: "collateralRange", shape: "value", conversion: "identity" },
+  {
+    key: "windup",
+    member: "windup",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_WINDUP_FIELDS,
+  },
   { key: "total_fire_time", member: "totalFireTime", shape: "value", conversion: "identity" },
   { key: "range", member: "range", shape: "value", conversion: "identity" },
   { key: "accuracy", member: "accuracy", shape: "value", conversion: "identity" },
@@ -378,6 +700,20 @@ export const UTILITY_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   { key: "scripted_action", member: "scriptedAction", shape: "valueList", conversion: "ref" },
   { key: "potential", member: "potential", shape: "trigger" },
   { key: "show_tech_unlock_if", member: "showTechUnlockIf", shape: "trigger" },
+  {
+    key: "friendly_aura",
+    member: "friendlyAura",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "hostile_aura",
+    member: "hostileAura",
+    shape: "struct",
+    fields: UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_FIELDS,
+    repeated: true,
+  },
 ];
 
 export const UTILITY_COMPONENT_TEMPLATE_LOCALISATION: readonly ContentLocalisation[] = [

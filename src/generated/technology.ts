@@ -8,6 +8,28 @@ import type { ResearchArea, TechAiType } from "./enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./refs.ts";
 import type { FeatureFlag, TechWeightGroup } from "./value-sets.ts";
 
+export interface TechnologyTechnologySwap {
+  name?: string;
+  inheritIcon?: boolean;
+  inheritName?: boolean;
+  inheritEffects?: boolean;
+  trigger?: Trigger<"country">;
+  area?: ResearchArea;
+  category?: (TechnologyCategoryRef | string)[];
+  weight?: number;
+}
+
+export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
+  { key: "name", member: "name", shape: "value", conversion: "identity" },
+  { key: "inherit_icon", member: "inheritIcon", shape: "value", conversion: "identity" },
+  { key: "inherit_name", member: "inheritName", shape: "value", conversion: "identity" },
+  { key: "inherit_effects", member: "inheritEffects", shape: "value", conversion: "identity" },
+  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "area", member: "area", shape: "value", conversion: "identity" },
+  { key: "category", member: "category", shape: "valueList", conversion: "ref" },
+  { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+];
+
 /**
  * A technology, as the game's rules describe it.
  * Generated from `type[technology]` at `game/common/technology`.
@@ -50,6 +72,7 @@ export interface TechnologyFields {
   /** Only when technology subtype not `start` applies. */
   levels?: number;
   prerequisites?: (TechnologyRef | string)[];
+  technologySwap?: TechnologyTechnologySwap[];
   potential?: Trigger<"country">;
   gateway?: string;
   /** Only when technology subtype `repeatable` applies. */
@@ -94,6 +117,13 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
     shape: "valueList",
     conversion: "ref",
     quoted: true,
+  },
+  {
+    key: "technology_swap",
+    member: "technologySwap",
+    shape: "struct",
+    fields: TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS,
+    repeated: true,
   },
   { key: "potential", member: "potential", shape: "trigger" },
   { key: "gateway", member: "gateway", shape: "value", conversion: "identity" },

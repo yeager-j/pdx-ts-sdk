@@ -32,7 +32,7 @@ Landed: `technology`, `building`, `tradition`, `tradition_category`,
 `scripted_modifier`, `casus_belli`, `war_goal`, `agreement_preset`,
 `bombardment_stance`, `archaeological_site_type`, `global_ship_design`,
 `utility_component_template`, `weapon_component_template`,
-`strike_craft_component_template`.
+`strike_craft_component_template`, `scripted_loc`.
 
 Blocked, each on a named cause:
 
@@ -43,12 +43,10 @@ Blocked, each on a named cause:
       of the definition; `mergeByName` only tracks fields whose key kind is
       `"name"`, so the splice is invisible to the field model. Needs a
       top-level unkeyed `ModifierClosure` merged with ordinary members.
-- [ ] `scripted_loc` — needs [repeated structs](#repeated-struct-field-shape).
-      Reverted rather than shipped: its whole surface was `random` and `value`
-      while `text`, written by 1095 of 1152 shipped definitions, lowered to
-      nothing.
-- [ ] `situations` — needs [repeated structs](#repeated-struct-field-shape).
-      Seven in DoA, 96–519 lines each, and the spine of the mod.
+- [ ] `situations` — [repeated structs](#repeated-struct-field-shape) landed and
+      support both its `stages` (shape 1) and `approach` (shape 2) fields;
+      adding the registry itself is still undone. Seven in DoA, 96–519 lines
+      each, and the spine of the mod.
 
 Not yet attempted:
 
@@ -64,17 +62,46 @@ Not yet attempted:
 
 ### Repeated-struct field shape
 
-**Highest leverage remaining.** A field that repeats, each occurrence an
-anonymous block with a fixed internal shape — usually a trigger plus payload.
-Distinct from nested content definitions, which key by their own id; the writer
-must emit N sibling blocks under one key.
+**Landed 2026-08-01.** A field that repeats, each occurrence an anonymous
+block with a fixed internal shape — usually a trigger plus payload. Distinct
+from nested content definitions, which key by their own id; the writer must
+emit N sibling blocks under one key.
 
-Consumers: `scripted_loc.text` (1095/1152), `archaeological_site_type.stage`
-(123/124), `agreement_preset.term_data` (all 56),
-`war_goal.forbidden_peace_offers` (42/87), and **situations**, whose stages and
-approaches are exactly this shape.
+Consumers cleared: `scripted_loc.text` (1152/1152, re-landing the registry —
+was 43% before landing, `text` its whole reason to exist), `war_goal`
+(87/87, was 95%), `agreement_preset` (56/56, was 83%, term_data's
+`discrete_terms`/`resource_terms` lower through CWT's other repeated-struct
+spelling — see "wrapped" below), `archaeological_site_type` (124/124, was
+89%). All four now report 100% corpus coverage. `situations` (out of scope —
+the registry itself is still not added) can now express both its `stages`
+(shape 1) and `approach` (shape 2) fields.
 
-Blocks the situations registry outright and caps four others.
+The shape is inferred from CWT block structure, the same way `economicResources`
+and `trigger`/`effect` already are — no overlay row was needed for any of the
+four consumers above. An anonymous field whose type is a block of ordinary
+named fields (no splices, subtypes, or computed keys — those bail out to stay
+`unsupported` rather than silently drop content) lowers through the same
+`pickOrdinary` pipeline used at the content type's own top level, recursively,
+so a struct nested inside a struct (`term_data` containing `discrete_terms`)
+falls out for free. Landing this also picked up struct-shaped fields nobody
+had named as repeated-struct consumers — `building.triggered_desc`,
+`bombardment_stance.kill_pop_amount`, ship-design `growth_stages`/`section`,
+weapon/utility/strike-craft component template `friendly_aura`/`hostile_aura`
+and others — moving `building` from 18 curated fields to 82% real corpus
+coverage and similarly across the other component-heavy registries.
+
+One collision the auto-inference surfaced: a body field can share a name with
+a localisation slot without meaning the same thing — `building.desc`
+(`single_alias_right[triggered_desc_clause]`, a repeated trigger+text struct)
+is unrelated to the `desc` flavor text `type[building].localisation` already
+claims for the TS member `desc`. Both succeeding would emit the same
+interface property twice with different types, so the emitter now checks
+every ordinary field's derived member name against the localisation plan
+first and declines the collision (visible in the report as "collides with the
+... localization slot") rather than emit a broken duplicate. `building.desc`
+and `tradition_category.desc` both hit this and stay on the machinery
+backlog — a real but narrow gap, not a regression, since neither could lower
+at all before this landed.
 
 **Design settled 2026-08-01.** The game spells these three ways, but only two
 matter to an author:
@@ -105,6 +132,25 @@ way it already does for top-level ids, and localization rides the key for both
 spellings instead of two separate stories. Insertion order carries the "list
 your stages in the correct order" requirement, and the mod-prefix rule keeps
 every key non-integer-like, which is the one case JS would reorder.
+
+Two more things the implementation had to generalize beyond the three-shape
+write-up above, both discovered against real corpus files rather than reasoned
+from CWT alone:
+
+- **Cardinality, not a fourth shape.** `war_goal.forbidden_peace_offers` has no
+  id and cardinality `0..1`, not `0..inf` — CWT's own N=0-or-1 case of shape 3.
+  The emitter does not special-case it: a shape-3 field's author-facing type is
+  `T` or `T[]` by the same `repeated` flag every other shape already uses, so a
+  singular fixed-shape block just falls out of the general mechanism.
+- **A second CWT spelling of "repeated, no id."** Besides repeating a named
+  field directly (`text = { ... }` written N times), CWT sometimes wraps the
+  repetition as a bare anonymous block declared repeatable *inside* a singular
+  container field — `agreement_preset.term_data.discrete_terms = { ##
+  cardinality = 0..inf { key = ... value = ... } }`. Internally this is
+  "wrapped": the container field's own cardinality is irrelevant, the
+  repetition lives on the bare declaration, and the writer emits one field
+  holding N anonymous nested blocks rather than N sibling entries at the same
+  level. The author-facing type is the same `T[]` either way.
 
 ### Fix the scalar-versus-block field picker
 

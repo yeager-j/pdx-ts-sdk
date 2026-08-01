@@ -13,9 +13,7 @@ import type {
 import type { Trigger } from "../trigger-core.ts";
 import type { AgendaRef } from "./refs.ts";
 
-export interface TraditionSwapDef<Id extends string = string> {
-  /** Prefixed identity emitted through the nested definition's name field. */
-  id: Id;
+export interface TraditionSwapFields {
   /** English text emitted to localization under `<id>`. */
   name?: string;
   /** English text emitted to localization under `<id>_delayed`. */
@@ -82,7 +80,7 @@ export interface TraditionFields<Id extends string = string> {
   onEnabled?: EffectBlock<"country">;
   customTooltip?: string[];
   customTooltipWithModifiers?: string[];
-  traditionSwap?: TraditionSwapDef<Id>[];
+  traditionSwap?: Readonly<Record<Id, TraditionSwapFields>>;
   /** the ai_weight in traditions applies both to the main traditions and the tradition swaps, there are no seperate fields. */
   aiWeight?: WeightBlock<"country">;
 }
@@ -119,7 +117,8 @@ export const TRADITION_FIELDS: readonly ContentField[] = [
   {
     key: "tradition_swap",
     member: "traditionSwap",
-    shape: "nested",
+    shape: "repeatedStruct",
+    keying: "siblings",
     identityKey: "name",
     fields: TRADITION_SWAP_FIELDS,
     localisation: TRADITION_SWAP_LOCALISATION,

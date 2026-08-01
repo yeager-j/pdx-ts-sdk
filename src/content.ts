@@ -5,6 +5,7 @@
 
 import {
   block,
+  container,
   kv,
   list,
   quoted,
@@ -175,11 +176,45 @@ interface ContentWeightField extends ContentFieldBase {
   readonly shape: "weightBlock";
 }
 
-interface ContentNestedField extends ContentFieldBase {
-  readonly shape: "nested";
-  readonly identityKey: string;
+/**
+ * An anonymous, identity-less block: `text = { trigger = { ... } }` written N
+ * times (shape 3), generalized down to whatever cardinality CWT declares — a
+ * singular fixed-shape block like `forbidden_peace_offers` is just the N=0..1
+ * case of the same mechanism, so `repeated` (from {@link ContentFieldBase})
+ * decides `T` versus `T[]` exactly like every other shape.
+ */
+interface ContentStructField extends ContentFieldBase {
+  readonly shape: "struct";
+  readonly fields: readonly ContentField[];
+  /**
+   * True when CWT nests the repetition as bare anonymous blocks inside one
+   * enclosing field (`discrete_terms = { { key = .. value = .. } ... }`)
+   * rather than repeating `key` itself at the sibling level. Always implies
+   * an array value, independent of `repeated`.
+   */
+  readonly wrapped?: boolean;
+}
+
+/**
+ * A named, ordered collection whose name is both identity and localization
+ * key — the same distinction `name_field` draws for top-level registries, one
+ * level down. Authored as `Readonly<Record<id, fields>>` rather than an array
+ * carrying its own id, so the id cannot be omitted, cannot collide, and the
+ * mod prefix applies at one point.
+ */
+interface ContentRepeatedStructField extends ContentFieldBase {
+  readonly shape: "repeatedStruct";
   readonly fields: readonly ContentField[];
   readonly localisation: readonly ContentLocalisation[];
+  /**
+   * "siblings" (shape 2 — `approach = { name = approach_a ... }` repeated):
+   * each record entry is its own `key` block with `identityKey` set to the
+   * record key. "container" (shape 1 — `stages = { stage_1 = { ... } }`): one
+   * `key` block wraps entries individually keyed by the record key itself.
+   */
+  readonly keying: "siblings" | "container";
+  /** Body field the id is written into. Only meaningful when keying is "siblings". */
+  readonly identityKey?: string;
 }
 
 /** Generated runtime lowering for one admitted content field. */
@@ -192,7 +227,8 @@ export type ContentField =
   | ContentTriggeredModifierField
   | ContentModifierField
   | ContentWeightField
-  | ContentNestedField;
+  | ContentStructField
+  | ContentRepeatedStructField;
 
 /** Generated description of one authorable content registry. */
 export interface ContentRegistryDescriptor {
@@ -406,16 +442,43 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
       case "weightBlock":
         entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));
         break;
-      case "nested":
-        for (const nested of value as readonly ContentDef[]) {
+      case "struct": {
+        if (field.wrapped) {
+          const items = value as readonly Readonly<Record<string, unknown>>[];
           entries.push(
-            block(field.key, [
-              kv(field.identityKey, nested.id),
-              ...fieldEntries(nested, field.fields),
-            ])
+            kv(
+              field.key,
+              container(items.map((item) => container(fieldEntries(item, field.fields))))
+            )
+          );
+          break;
+        }
+        const values = field.repeated
+          ? (value as readonly Readonly<Record<string, unknown>>[])
+          : [value as Readonly<Record<string, unknown>>];
+        entries.push(...values.map((item) => block(field.key, fieldEntries(item, field.fields))));
+        break;
+      }
+      case "repeatedStruct": {
+        const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+        if (field.keying === "container") {
+          entries.push(
+            block(
+              field.key,
+              Object.entries(record).map(([id, item]) =>
+                block(id, fieldEntries(item, field.fields))
+              )
+            )
+          );
+          break;
+        }
+        for (const [id, item] of Object.entries(record)) {
+          entries.push(
+            block(field.key, [kv(field.identityKey!, id), ...fieldEntries(item, field.fields)])
           );
         }
         break;
+      }
     }
   }
   return entries;
@@ -482,8 +545,8 @@ export class ContentAuthoring {
     }
     const localisation: LocalisationEntry[] = [];
     const nestedIds = new Map<string, Set<string>>();
-    this.collectLocalisation(def, descriptor.localisation, localisation);
-    this.collectNested(def, descriptor.fields, type, nestedIds, localisation);
+    this.collectLocalisation(def.id, def, descriptor.localisation, localisation);
+    this.collectRepeatedStructs(def, descriptor.fields, type, nestedIds, localisation);
     this.registerLoc(localisation);
     for (const [identity, pending] of nestedIds) {
       const ids = this.nestedIds.get(identity) ?? new Set<string>();
@@ -531,23 +594,24 @@ export class ContentAuthoring {
   }
 
   private collectLocalisation(
-    def: Readonly<Record<string, unknown>> & { readonly id: string },
+    id: string,
+    def: Readonly<Record<string, unknown>>,
     slots: readonly ContentLocalisation[],
     into: LocalisationEntry[]
   ): void {
     for (const slot of slots) {
-      const text = (def as Readonly<Record<string, unknown>>)[slot.member];
+      const text = def[slot.member];
       if (text === undefined) {
         if (slot.required) {
-          throw new Error(`Missing required localization "${slot.member}" for "${def.id}"`);
+          throw new Error(`Missing required localization "${slot.member}" for "${id}"`);
         }
         continue;
       }
-      into.push([localisationKey(slot.pattern, def.id), text as string]);
+      into.push([localisationKey(slot.pattern, id), text as string]);
     }
   }
 
-  private collectNested(
+  private collectRepeatedStructs(
     def: Readonly<Record<string, unknown>>,
     fields: readonly ContentField[],
     ownerType: string,
@@ -555,24 +619,25 @@ export class ContentAuthoring {
     localisation: LocalisationEntry[]
   ): void {
     for (const field of fields) {
-      if (field.shape !== "nested") {
+      if (field.shape !== "repeatedStruct") {
         continue;
       }
-      const nestedValues = (def as Readonly<Record<string, unknown>>)[field.member];
-      if (nestedValues === undefined) {
+      const record = def[field.member] as
+        Readonly<Record<string, Readonly<Record<string, unknown>>>> | undefined;
+      if (record === undefined) {
         continue;
       }
       const identity = `${ownerType}.${field.key}`;
       const existingIds = this.nestedIds.get(identity);
       const pending = pendingIds.get(identity) ?? new Set<string>();
-      for (const nested of nestedValues as readonly ContentDef[]) {
-        this.assertPrefixed(identity, nested.id);
-        if (existingIds?.has(nested.id) || pending.has(nested.id)) {
-          throw new Error(`Duplicate ${identity} id "${nested.id}"`);
+      for (const [id, nested] of Object.entries(record)) {
+        this.assertPrefixed(identity, id);
+        if (existingIds?.has(id) || pending.has(id)) {
+          throw new Error(`Duplicate ${identity} id "${id}"`);
         }
-        pending.add(nested.id);
-        this.collectLocalisation(nested, field.localisation, localisation);
-        this.collectNested(nested, field.fields, identity, pendingIds, localisation);
+        pending.add(id);
+        this.collectLocalisation(id, nested, field.localisation, localisation);
+        this.collectRepeatedStructs(nested, field.fields, identity, pendingIds, localisation);
       }
       pendingIds.set(identity, pending);
     }

@@ -49,11 +49,13 @@ describe("content-type codegen", () => {
     expect(emissions.get("building")?.code).toContain('potential?: Trigger<"colony">;');
   });
 
-  it("emits nested definitions as data-driven field tables", () => {
+  it("emits repeated-struct definitions as data-driven field tables", () => {
     const tradition = emissions.get("tradition");
-    expect(tradition?.code).toContain("export interface TraditionSwapDef");
-    expect(tradition?.code).toContain('shape: "nested"');
+    expect(tradition?.code).toContain("export interface TraditionSwapFields");
+    expect(tradition?.code).toContain('shape: "repeatedStruct"');
+    expect(tradition?.code).toContain('keying: "siblings"');
     expect(tradition?.code).toContain("fields: TRADITION_SWAP_FIELDS");
+    expect(tradition?.code).toContain("traditionSwap?: Readonly<Record<Id, TraditionSwapFields>>;");
   });
 
   it("infers reusable effect closures with the content body's scope", () => {
@@ -90,10 +92,10 @@ describe("content-type codegen", () => {
   it("generates ascension perks and their swaps without registry-specific code", () => {
     const perk = emissions.get("ascension_perk");
     expect(perk?.code).toContain("export interface AscensionPerkDef");
-    expect(perk?.code).toContain("export interface AscensionPerkSwapDef");
+    expect(perk?.code).toContain("export interface AscensionPerkSwapFields");
     expect(perk?.code).toContain('potential?: Trigger<"country">;');
     expect(perk?.code).toContain('modifier?: ModifierClosure<"country">;');
-    expect(perk?.code).toContain('shape: "nested"');
+    expect(perk?.code).toContain('shape: "repeatedStruct"');
   });
 
   it("collapses duplicate localization patterns without hiding them", () => {
@@ -111,9 +113,17 @@ describe("content-type codegen", () => {
     const job = emissions.get("job");
     expect(job?.code).toContain("name: string;");
     expect(job?.code).toContain("desc?: string;");
-    // Only one `desc` member survives even though the rules declare it twice.
-    expect(job?.code?.match(/\bdesc\??: string;/g)).toHaveLength(1);
-    expect(job?.code).not.toContain("conditionString");
+    // Only one `desc` member survives on JobFields itself even though the rules
+    // declare it twice — struct-shaped fields nested elsewhere in the file (like
+    // swappable_data's own `desc`) are unrelated members and legitimately reuse
+    // the name, so the check is scoped to the top-level interface body.
+    const jobFieldsBody = job?.code?.match(/export interface JobFields \{([\s\S]*?)\n\}/)?.[1];
+    expect(jobFieldsBody?.match(/\bdesc\??: string;/g)).toHaveLength(1);
+    // The excluded patterns point at swappable_data's own `desc`/`condition_string`
+    // body fields — struct lowering now expresses those as ordinary members on
+    // JobSwappableDataDefault, an unrelated field the loc-alias exclusion above
+    // does not (and should not) suppress.
+    expect(job?.code).toContain("conditionString?: string;");
     expect(job?.localisationAliases).toEqual([
       "job.localisation.desc (swappable_data/default/desc) has no `$` id placeholder — " +
         "not a static <id>-keyed slot, excluded",
@@ -184,7 +194,12 @@ describe("content-type codegen", () => {
     expect(warGoal?.code).toContain("export interface WarGoalDef");
     expect(warGoal?.code).toContain("casusBelli: CasusBelliRef | string;");
     expect(warGoal?.code).toContain('aiWeight?: WeightBlock<"country">;');
-    expect(warGoal?.machineryBacklog.join("\n")).toContain("forbidden_peace_offers");
+    // forbidden_peace_offers is a fixed-shape anonymous block — the same struct
+    // shape shape 3 generalizes down to cardinality 0..1 — so it is no longer
+    // stuck on the machinery backlog.
+    expect(warGoal?.code).toContain("forbiddenPeaceOffers?: WarGoalForbiddenPeaceOffers;");
+    expect(warGoal?.code).toContain('shape: "struct"');
+    expect(warGoal?.machineryBacklog.join("\n")).not.toContain("forbidden_peace_offers");
   });
 
   it("overrides dual bare/modifier_rule declarations that would otherwise pick the wrong shape", () => {
@@ -198,5 +213,59 @@ describe("content-type codegen", () => {
 
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
     expect(archaeologicalSiteType?.code).toContain('weight?: WeightBlock<"planet">;');
+  });
+
+  it("lowers repeated siblings with no id (shape 3) as an anonymous struct list", () => {
+    // scripted_loc.text: `text = { trigger = { ... } localization_key = ... }`
+    // written N times as siblings, exactly the settled shape 3 example.
+    const scriptedLoc = emissions.get("scripted_loc");
+    expect(scriptedLoc?.code).toContain("export interface ScriptedLocText");
+    expect(scriptedLoc?.code).toContain("text?: ScriptedLocText[];");
+    expect(scriptedLoc?.code).toContain('{ key: "text", member: "text", shape: "struct"');
+    expect(scriptedLoc?.machineryBacklog.join("\n")).not.toContain("text");
+
+    // archaeological_site_type.stage: the same shape, order-dependent siblings.
+    const archaeologicalSiteType = emissions.get("archaeological_site_type");
+    expect(archaeologicalSiteType?.code).toContain("export interface ArchaeologicalSiteTypeStage");
+    expect(archaeologicalSiteType?.code).toContain("stage?: ArchaeologicalSiteTypeStage[];");
+  });
+
+  it("generalizes the same struct shape down to a singular fixed-shape block", () => {
+    // war_goal.forbidden_peace_offers has no id and cardinality 0..1 — the N=0..1
+    // case of the same anonymous-struct mechanism as shape 3, not a fourth shape.
+    const warGoal = emissions.get("war_goal");
+    expect(warGoal?.code).toContain("export interface WarGoalForbiddenPeaceOffers");
+    expect(warGoal?.code).toContain("demandSurrender?: string;");
+    expect(warGoal?.code).not.toContain("forbiddenPeaceOffers?: WarGoalForbiddenPeaceOffers[];");
+  });
+
+  it("lowers CWT's wrapped bare-block spelling of a repeated struct", () => {
+    // agreement_preset.term_data.discrete_terms declares its repetition as a bare
+    // anonymous block cardinality inside a singular wrapper field, rather than by
+    // repeating a named field directly — a second CWT spelling of shape 3.
+    const agreementPreset = emissions.get("agreement_preset");
+    expect(agreementPreset?.code).toContain("export interface AgreementPresetTermData");
+    expect(agreementPreset?.code).toContain("termData: AgreementPresetTermData;");
+    expect(agreementPreset?.code).toContain(
+      "export interface AgreementPresetTermDataDiscreteTerms"
+    );
+    expect(agreementPreset?.code).toContain(
+      "discreteTerms?: AgreementPresetTermDataDiscreteTerms[];"
+    );
+    expect(agreementPreset?.code).toContain("wrapped: true");
+    expect(agreementPreset?.machineryBacklog.join("\n")).not.toContain("term_data");
+  });
+
+  it("declines a struct field that would collide with a localization member name", () => {
+    // building.desc (`single_alias_right[triggered_desc_clause]`, a repeated
+    // trigger+text struct) would otherwise duplicate the `desc` flavor-text
+    // member the type's own localisation table already claims.
+    const building = emissions.get("building");
+    expect(building?.code).not.toContain("export interface BuildingDesc ");
+    expect(building?.unsupported.join("\n")).toContain(
+      'desc (collides with the "desc" localization slot)'
+    );
+    // triggered_desc has no such collision and still lowers.
+    expect(building?.code).toContain("export interface BuildingTriggeredDesc");
   });
 });

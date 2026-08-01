@@ -14,9 +14,7 @@ import type {
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 
-export interface AscensionPerkSwapDef<Id extends string = string> {
-  /** Prefixed identity emitted through the nested definition's name field. */
-  id: Id;
+export interface AscensionPerkSwapFields {
   /** English text emitted to localization under `<id>`. */
   name?: string;
   /** English text emitted to localization under `<id>_delayed`. */
@@ -82,7 +80,7 @@ export interface AscensionPerkFields<Id extends string = string> {
   triggeredModifier?: TriggeredModifier<"country">[];
   aiWeight?: WeightBlock<"country">;
   customTooltip?: string;
-  traditionSwap?: AscensionPerkSwapDef<Id>[];
+  traditionSwap?: Readonly<Record<Id, AscensionPerkSwapFields>>;
 }
 
 export interface AscensionPerkDef<Id extends string = string> extends AscensionPerkFields<Id> {
@@ -111,7 +109,8 @@ export const ASCENSION_PERK_FIELDS: readonly ContentField[] = [
   {
     key: "tradition_swap",
     member: "traditionSwap",
-    shape: "nested",
+    shape: "repeatedStruct",
+    keying: "siblings",
     identityKey: "name",
     fields: ASCENSION_PERK_SWAP_FIELDS,
     localisation: ASCENSION_PERK_SWAP_LOCALISATION,

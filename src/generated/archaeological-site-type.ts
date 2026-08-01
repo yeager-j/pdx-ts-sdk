@@ -10,7 +10,25 @@ import type {
   WeightBlock,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
-import type { SituationLogCategoryRef, SpriteRef } from "./refs.ts";
+import type { EventFleetRef, SituationLogCategoryRef, SpriteRef } from "./refs.ts";
+
+export interface ArchaeologicalSiteTypeStage {
+  /**
+   * min max interval type. interval is defined either by '<int>' or '{ min = <int> max = <int> }' where the later will randomize a value between min and max.
+   * min max interval type. interval is defined either by '<int>' or '{ min = <int> max = <int> }' where the later will randomize a value between min and max.
+   */
+  difficulty: number;
+  /** rune icon gfx type. */
+  icon: SpriteRef | string;
+  /** event to fire when the stage has been completed. */
+  event: EventFleetRef | string;
+}
+
+export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS: readonly ContentField[] = [
+  { key: "difficulty", member: "difficulty", shape: "value", conversion: "identity" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
+  { key: "event", member: "event", shape: "value", conversion: "ref" },
+];
 
 /**
  * An archaeological_site_type, as the game's rules describe it.
@@ -43,6 +61,8 @@ export interface ArchaeologicalSiteTypeFields {
   allow: Trigger<"fleet">;
   /** Trigger that checks if a scope with this=country can see the from=archaeological site */
   visible: Trigger<"country">;
+  /** Stage definition, order dependent. */
+  stage?: ArchaeologicalSiteTypeStage[];
   /** Effect to fire when a roll fails, with scope this=fleet, from=archaeological site. */
   onRollFailed: EffectBlock<"fleet">;
   /** Effect to fire upon site creation, with scope this=archaeological site. */
@@ -84,6 +104,13 @@ export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
   { key: "potential", member: "potential", shape: "trigger" },
   { key: "allow", member: "allow", shape: "trigger" },
   { key: "visible", member: "visible", shape: "trigger" },
+  {
+    key: "stage",
+    member: "stage",
+    shape: "struct",
+    fields: ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS,
+    repeated: true,
+  },
   { key: "on_roll_failed", member: "onRollFailed", shape: "effect" },
   { key: "on_create", member: "onCreate", shape: "effect" },
   { key: "on_visible", member: "onVisible", shape: "effect" },

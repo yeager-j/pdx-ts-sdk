@@ -1,5 +1,21 @@
 content_test_agreement_preset_tribute = {
 	icon = GFX_agreement_preset_tribute
+	term_data = {
+		has_cooldown_on_first_renegotiation = yes
+		forced_initial_loyalty = 20
+		discrete_terms = {
+			{
+				key = subject_integration
+				value = subject_can_not_be_integrated
+			}
+		}
+		resource_terms = {
+			{
+				key = energy
+				value = 0.1
+			}
+		}
+	}
 	overlord_weight = {
 		base = 10
 		modifier = {
