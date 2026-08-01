@@ -1,10 +1,13 @@
 # Content-breadth roadmap
 
-> **Live, last updated 2026-08-01.** The tracked worklist for the phase that
-> follows the architecture being settled. Evidence and measurements live in
+> **Historical as of 2026-08-01 — tracking moved to Linear.** The remaining
+> items below were filed as SDK-1 through SDK-19 in the
+> [SDK MVP project](https://linear.app/unnamed-system/project/sdk-mvp-077fabda18d8)
+> ("Dawn of Ascension" milestone; the two post-MVP items carry no milestone).
+> Linear is now the worklist; this file stays as the design record behind
+> those tickets. Evidence and measurements live in
 > [coverage-dawn-of-ascension.md](coverage-dawn-of-ascension.md); design
-> decisions in [handoff-vanilla-surface.md](handoff-vanilla-surface.md). This
-> file is the list.
+> decisions in [handoff-vanilla-surface.md](handoff-vanilla-surface.md).
 
 Yardstick: **Dawn Of Ascension** (Steam workshop `2816360131`). The goal is
 being equipped to build a mod of that size, not porting it.
