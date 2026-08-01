@@ -511,4 +511,36 @@ describe("content-type codegen", () => {
       "leader_background_job_weight (no declaration the emitter can lower)",
     ]);
   });
+
+  it("generates component_set as a name_field registry without registry-specific code", () => {
+    const componentSet = emissions.get("component_set");
+    expect(componentSet?.code).toContain("export interface ComponentSetDef");
+    expect(componentSet?.code).toContain("requiredComponentSet?: boolean;");
+    expect(componentSet?.code).toContain("affectsTargetFocus?: boolean;");
+    expect(componentSet?.machineryBacklog).toEqual([]);
+  });
+
+  it("lowers section_template's resources/modifier/ship_modifier via overlay shapes", () => {
+    // section_template's own machinery is ordinary name_field wiring; only its
+    // economic_template and modifier_clause splices need overlay help, the
+    // same shapes every other registry with those fields already uses.
+    const sectionTemplate = emissions.get("section_template");
+    expect(sectionTemplate?.code).toContain("export interface SectionTemplateDef");
+    expect(sectionTemplate?.code).toContain("resources?: EconomicResourceBlock<ScopeName>[];");
+    // Both replace_scopes-pinned to "ship".
+    expect(sectionTemplate?.code).toContain('modifier?: ModifierClosure<"ship">;');
+    expect(sectionTemplate?.code).toContain('shipModifier?: ModifierClosure<"ship">;');
+    expect(sectionTemplate?.emittedFields).toContain("resources");
+    expect(sectionTemplate?.emittedFields).toContain("modifier");
+    expect(sectionTemplate?.emittedFields).toContain("ship_modifier");
+    expect(sectionTemplate?.machineryBacklog).toEqual([]);
+  });
+
+  it("generates ambient_object as a name_field registry keyed by name", () => {
+    const ambientObject = emissions.get("ambient_object");
+    expect(ambientObject?.code).toContain("export interface AmbientObjectDef");
+    expect(ambientObject?.code).toContain("entity: ModelEntityRef | string;");
+    expect(ambientObject?.code).toContain("showName?: boolean;");
+    expect(ambientObject?.machineryBacklog).toEqual([]);
+  });
 });

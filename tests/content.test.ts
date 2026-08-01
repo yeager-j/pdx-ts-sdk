@@ -637,6 +637,57 @@ function defineContentExample(): Mod<"content_test"> {
     ],
   });
 
+  mod.defineComponentSet({
+    id: "content_test_component_set_reactor",
+    name: "Reactor Boosters",
+    desc: "Auxiliary reactor components.",
+    shipDesc: "Ship-mounted reactor boosters.",
+    stationDesc: "Station-mounted reactor boosters.",
+    isCoreComponentSet: true,
+    affectsTargetType: true,
+    affectsTargetFocus: false,
+    icon: "GFX_component_set_reactor",
+  });
+
+  // name_field registry keyed by the repeated `ship_section_template` keyword,
+  // with `resources`/`modifier`/`ship_modifier` exercising the overlay's
+  // economicResources/modifierBlock shapes.
+  mod.defineSectionTemplate({
+    id: "content_test_section_template_core",
+    name: "Core Section",
+    shipSize: ["ship_size_corvette"],
+    fitsOnSlot: ["core"],
+    entity: "content_test_section_core_entity",
+    resources: [{ category: "ship_components", cost: { amounts: { alloys: 20 } } }],
+    componentSlot: [
+      {
+        name: "core_slot_1",
+        template: "content_test_component_slot_template",
+        locatorname: "$mesh_locator",
+      },
+    ],
+    smallUtilitySlots: 2,
+    // Both pinned to ship scope by `## replace_scopes = { this = ship root = ship }`.
+    // unchecked() names the flat modifier directly, same as civic_or_origin's
+    // swapType.modifier — the checked trie's per-scope shape is a separate
+    // concern from this registry's own wiring.
+    modifier: (m) => m.unchecked("ship_hull_add", 10),
+    shipModifier: (m) => m.unchecked("ship_hull_mult", 0.05),
+  });
+
+  mod.defineAmbientObject({
+    id: "content_test_ambient_object_wreck",
+    name: "Adrift Hulk",
+    entity: "content_test_ambient_wreck_entity",
+    selectable: true,
+    showName: true,
+    // `description`/`tooltip` are `localisation`-typed CWT fields with no `$`
+    // static id placeholder, so they hold an author-chosen localisation key
+    // rather than a slot the SDK auto-writes — hence the free-form names.
+    description: "content_test_ambient_object_wreck_description",
+    tooltip: "content_test_ambient_object_wreck_tooltip",
+  });
+
   return mod;
 }
 

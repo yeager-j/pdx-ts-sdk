@@ -132,6 +132,9 @@ export type ColonyTypeRef = TypedRef<"colony_type">;
 /** A reference to a `<component_set>`. */
 export type ComponentSetRef = TypedRef<"component_set">;
 
+/** A reference to a `<component_slot_template>`. */
+export type ComponentSlotTemplateRef = TypedRef<"component_slot_template">;
+
 /** A reference to a `<component_template>`. */
 export type ComponentTemplateRef = TypedRef<"component_template">;
 

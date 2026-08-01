@@ -19,7 +19,9 @@ import {
   type EdictRef,
   type GovernmentTriggerBlock,
   type JobRef,
+  type ModifierClosure,
   type OpinionModifierRef,
+  type SectionTemplateFields,
   type TechnologyRef,
   type Trigger,
   type WarGoalRef,
@@ -428,6 +430,35 @@ describe("generated content authoring types", () => {
       id: "content_types_economic_category_bad",
       // @ts-expect-error — modifier_category is drawn from enum[scripted_modifier_category]
       modifierCategory: "nonsense",
+    });
+  });
+
+  it("requires an entity on ambient_object but leaves name/description optional", () => {
+    mod.defineAmbientObject({
+      id: "content_types_ambient_object_x",
+      entity: "some_entity",
+    });
+    // @ts-expect-error — entity has no default and must be supplied
+    mod.defineAmbientObject({
+      id: "content_types_ambient_object_missing_entity",
+    });
+  });
+
+  it("pins section_template's modifier/ship_modifier to ship scope", () => {
+    // Both fields carry `## replace_scopes = { this = ship root = ship }` and
+    // no scope-parameterized generic — the generated shape is exactly
+    // ModifierClosure<"ship">, not the wider ScopeName civic_or_origin's own
+    // (unscoped) swap_type.modifier needs.
+    expectTypeOf<SectionTemplateFields["modifier"]>().toEqualTypeOf<
+      ModifierClosure<"ship"> | undefined
+    >();
+    expectTypeOf<SectionTemplateFields["shipModifier"]>().toEqualTypeOf<
+      ModifierClosure<"ship"> | undefined
+    >();
+    mod.defineSectionTemplate({
+      id: "content_types_section_template_x",
+      entity: "some_entity",
+      modifier: (m) => m.unchecked("ship_hull_add", 10),
     });
   });
 });

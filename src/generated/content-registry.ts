@@ -20,6 +20,8 @@
 // From: common/scripted_loc.cwt
 // From: common/governments.cwt
 // From: common/economic_categories.cwt
+// From: common/section_templates.cwt
+// From: common/ambient_objects.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -34,6 +36,12 @@ import {
   type AgreementPresetDef,
   type DefinedAgreementPreset,
 } from "./agreement-preset.ts";
+import {
+  AMBIENT_OBJECT_FIELDS,
+  AMBIENT_OBJECT_LOCALISATION,
+  type AmbientObjectDef,
+  type DefinedAmbientObject,
+} from "./ambient-object.ts";
 import {
   ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
   ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
@@ -70,6 +78,12 @@ import {
   type CivicOrOriginDef,
   type DefinedCivicOrOrigin,
 } from "./civic-or-origin.ts";
+import {
+  COMPONENT_SET_FIELDS,
+  COMPONENT_SET_LOCALISATION,
+  type ComponentSetDef,
+  type DefinedComponentSet,
+} from "./component-set.ts";
 import {
   COUNCILOR_FIELDS,
   COUNCILOR_LOCALISATION,
@@ -114,6 +128,12 @@ import {
   type DefinedScriptedModifier,
   type ScriptedModifierDef,
 } from "./scripted-modifier.ts";
+import {
+  SECTION_TEMPLATE_FIELDS,
+  SECTION_TEMPLATE_LOCALISATION,
+  type DefinedSectionTemplate,
+  type SectionTemplateDef,
+} from "./section-template.ts";
 import {
   SITUATION_TYPE_FIELDS,
   SITUATION_TYPE_LOCALISATION,
@@ -359,6 +379,30 @@ export const CONTENT_REGISTRIES = [
     fields: CIVIC_OR_ORIGIN_FIELDS,
     localisation: CIVIC_OR_ORIGIN_LOCALISATION,
   },
+  {
+    type: "component_set",
+    outputDir: "common/component_sets",
+    fileStem: "component_sets",
+    fields: COMPONENT_SET_FIELDS,
+    localisation: COMPONENT_SET_LOCALISATION,
+    keyedBy: { keyword: "component_set", nameField: "key" },
+  },
+  {
+    type: "section_template",
+    outputDir: "common/section_templates",
+    fileStem: "section_templates",
+    fields: SECTION_TEMPLATE_FIELDS,
+    localisation: SECTION_TEMPLATE_LOCALISATION,
+    keyedBy: { keyword: "ship_section_template", nameField: "key" },
+  },
+  {
+    type: "ambient_object",
+    outputDir: "common/ambient_objects",
+    fileStem: "ambient_objects",
+    fields: AMBIENT_OBJECT_FIELDS,
+    localisation: AMBIENT_OBJECT_LOCALISATION,
+    keyedBy: { keyword: "ambient_object", nameField: "name" },
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -390,6 +434,9 @@ export interface ContentDefMap<P extends string> {
   councilor: CouncilorDef<PrefixedId<P>>;
   economic_category: EconomicCategoryDef<PrefixedId<P>>;
   civic_or_origin: CivicOrOriginDef<PrefixedId<P>>;
+  component_set: ComponentSetDef<PrefixedId<P>>;
+  section_template: SectionTemplateDef<PrefixedId<P>>;
+  ambient_object: AmbientObjectDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -419,6 +466,9 @@ export interface DefinedContentMap<P extends string> {
   councilor: DefinedCouncilor<PrefixedId<P>>;
   economic_category: DefinedEconomicCategory<PrefixedId<P>>;
   civic_or_origin: DefinedCivicOrOrigin<PrefixedId<P>>;
+  component_set: DefinedComponentSet<PrefixedId<P>>;
+  section_template: DefinedSectionTemplate<PrefixedId<P>>;
+  ambient_object: DefinedAmbientObject<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -585,5 +635,26 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["civic_or_origin"]
   ): DefinedContentMap<P>["civic_or_origin"] {
     return this.defineGeneratedContent("civic_or_origin", def);
+  }
+
+  /** Defines a component set in this mod. */
+  defineComponentSet(
+    def: ContentDefMap<P>["component_set"]
+  ): DefinedContentMap<P>["component_set"] {
+    return this.defineGeneratedContent("component_set", def);
+  }
+
+  /** Defines a section template in this mod. */
+  defineSectionTemplate(
+    def: ContentDefMap<P>["section_template"]
+  ): DefinedContentMap<P>["section_template"] {
+    return this.defineGeneratedContent("section_template", def);
+  }
+
+  /** Defines an ambient object in this mod. */
+  defineAmbientObject(
+    def: ContentDefMap<P>["ambient_object"]
+  ): DefinedContentMap<P>["ambient_object"] {
+    return this.defineGeneratedContent("ambient_object", def);
   }
 }

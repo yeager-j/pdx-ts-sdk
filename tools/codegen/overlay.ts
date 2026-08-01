@@ -661,6 +661,32 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "government_trigger consumer governments.cwt declares alongside it.",
     },
   ],
+  [
+    "section_template.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "section_template.modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields. Vanilla " +
+        "never writes this field, but the rules declare it authorable.",
+    },
+  ],
+  [
+    "section_template.ship_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields. Vanilla " +
+        "never writes this field, but the rules declare it authorable.",
+    },
+  ],
 ]);
 
 export interface RepeatedStructDefinition {

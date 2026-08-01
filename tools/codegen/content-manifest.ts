@@ -79,4 +79,11 @@ export const CONTENT_MANIFEST = [
   { type: "councilor", source: "common/governments.cwt" },
   { type: "economic_category", source: "common/economic_categories.cwt" },
   { type: "civic_or_origin", source: "common/governments.cwt" },
+  { type: "component_set", source: "common/components.cwt", keyword: "component_set" },
+  {
+    type: "section_template",
+    source: "common/section_templates.cwt",
+    keyword: "ship_section_template",
+  },
+  { type: "ambient_object", source: "common/ambient_objects.cwt", keyword: "ambient_object" },
 ] as const satisfies readonly ContentManifestEntry[];

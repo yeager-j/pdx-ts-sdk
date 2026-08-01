@@ -1,0 +1,8 @@
+ambient_object = {
+	name = content_test_ambient_object_wreck
+	entity = content_test_ambient_wreck_entity
+	selectable = yes
+	show_name = yes
+	description = content_test_ambient_object_wreck_description
+	tooltip = content_test_ambient_object_wreck_tooltip
+}
