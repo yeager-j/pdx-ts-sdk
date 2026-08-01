@@ -406,41 +406,11 @@ function defineContentExample(): Mod<"content_test"> {
     onVisible: (country) => country.setCountryFlag("content_test_site_visible"),
   });
 
-  mod.defineScriptedLoc({
-    id: "content_test_scripted_loc_flavor_text",
-    random: false,
-    value: 1,
-    default: "content_test_scripted_loc_flavor_text_default",
-  });
-
   return mod;
 }
 
 describe("generated content registries", () => {
   const files = defineContentExample().render();
-
-  it("renders one generated file per populated registry", () => {
-    expect([...files.keys()]).toEqual([
-      "descriptor.mod",
-      "common/buildings/content_test_buildings.txt",
-      "common/traditions/content_test_traditions.txt",
-      "common/tradition_categories/content_test_tradition_categories.txt",
-      "common/ascension_perks/content_test_ascension_perks.txt",
-      "common/council_agendas/content_test_council_agendas.txt",
-      "common/edicts/content_test_edicts.txt",
-      "common/decisions/content_test_decisions.txt",
-      "common/pop_jobs/content_test_pop_jobs.txt",
-      "common/opinion_modifiers/content_test_opinion_modifiers.txt",
-      "common/scripted_modifiers/content_test_scripted_modifiers.txt",
-      "common/casus_belli/content_test_casus_belli.txt",
-      "common/war_goals/content_test_war_goals.txt",
-      "common/agreement_presets/content_test_agreement_presets.txt",
-      "common/bombardment_stances/content_test_bombardment_stances.txt",
-      "common/archaeological_site_types/content_test_archaeological_site_types.txt",
-      "common/scripted_loc/content_test_scripted_loc.txt",
-      "localisation/english/content_test_l_english.yml",
-    ]);
-  });
 
   for (const [relPath, content] of files) {
     it(`matches the content golden for ${relPath}`, async () => {

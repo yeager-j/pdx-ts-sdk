@@ -58,11 +58,6 @@ export type {
   OpinionModifierFields,
 } from "./generated/opinion-modifier.ts";
 export type {
-  DefinedScriptedLoc,
-  ScriptedLocDef,
-  ScriptedLocFields,
-} from "./generated/scripted-loc.ts";
-export type {
   DefinedScriptedModifier,
   ScriptedModifierDef,
   ScriptedModifierFields,

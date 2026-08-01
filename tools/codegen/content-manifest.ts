@@ -69,9 +69,4 @@ export const CONTENT_MANIFEST = [
   { type: "agreement_preset", source: "common/agreements.cwt" },
   { type: "bombardment_stance", source: "common/bombardment_stances.cwt" },
   { type: "archaeological_site_type", source: "common/archaeology.cwt" },
-  {
-    type: "scripted_loc",
-    source: "common/scripted_loc.cwt",
-    keyword: "defined_text",
-  },
 ] as const satisfies readonly ContentManifestEntry[];

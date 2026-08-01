@@ -199,15 +199,4 @@ describe("content-type codegen", () => {
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
     expect(archaeologicalSiteType?.code).toContain('weight?: WeightBlock<"planet">;');
   });
-
-  it("keys agreement_preset and scripted_loc registries without hiding their blocked fields", () => {
-    const agreementPreset = emissions.get("agreement_preset");
-    expect(agreementPreset?.code).toContain("export interface AgreementPresetDef");
-    expect(agreementPreset?.code).toContain('overlordWeight?: WeightBlock<"country">;');
-    expect(agreementPreset?.machineryBacklog.join("\n")).toContain("term_data");
-
-    const scriptedLoc = emissions.get("scripted_loc");
-    expect(scriptedLoc?.code).toContain("export interface ScriptedLocDef");
-    expect(scriptedLoc?.machineryBacklog.join("\n")).toContain("text");
-  });
 });

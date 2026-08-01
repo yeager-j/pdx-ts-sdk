@@ -16,7 +16,6 @@
 // From: common/agreements.cwt
 // From: common/bombardment_stances.cwt
 // From: common/archaeology.cwt
-// From: common/scripted_loc.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -81,12 +80,6 @@ import {
   type DefinedOpinionModifier,
   type OpinionModifierDef,
 } from "./opinion-modifier.ts";
-import {
-  SCRIPTED_LOC_FIELDS,
-  SCRIPTED_LOC_LOCALISATION,
-  type DefinedScriptedLoc,
-  type ScriptedLocDef,
-} from "./scripted-loc.ts";
 import {
   SCRIPTED_MODIFIER_FIELDS,
   SCRIPTED_MODIFIER_LOCALISATION,
@@ -283,14 +276,6 @@ export const CONTENT_REGISTRIES = [
     fields: ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
     localisation: ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
   },
-  {
-    type: "scripted_loc",
-    outputDir: "common/scripted_loc",
-    fileStem: "scripted_loc",
-    fields: SCRIPTED_LOC_FIELDS,
-    localisation: SCRIPTED_LOC_LOCALISATION,
-    keyedBy: { keyword: "defined_text", nameField: "name" },
-  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -316,7 +301,6 @@ export interface ContentDefMap<P extends string> {
   agreement_preset: AgreementPresetDef<PrefixedId<P>>;
   bombardment_stance: BombardmentStanceDef<PrefixedId<P>>;
   archaeological_site_type: ArchaeologicalSiteTypeDef<PrefixedId<P>>;
-  scripted_loc: ScriptedLocDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -340,7 +324,6 @@ export interface DefinedContentMap<P extends string> {
   agreement_preset: DefinedAgreementPreset<PrefixedId<P>>;
   bombardment_stance: DefinedBombardmentStance<PrefixedId<P>>;
   archaeological_site_type: DefinedArchaeologicalSiteType<PrefixedId<P>>;
-  scripted_loc: DefinedScriptedLoc<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -469,10 +452,5 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["archaeological_site_type"]
   ): DefinedContentMap<P>["archaeological_site_type"] {
     return this.defineGeneratedContent("archaeological_site_type", def);
-  }
-
-  /** Defines a scripted loc in this mod. */
-  defineScriptedLoc(def: ContentDefMap<P>["scripted_loc"]): DefinedContentMap<P>["scripted_loc"] {
-    return this.defineGeneratedContent("scripted_loc", def);
   }
 }
