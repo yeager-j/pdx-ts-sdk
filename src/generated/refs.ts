@@ -448,6 +448,9 @@ export type StarClassRef = TypedRef<"star_class">;
 /** A reference to a `<starbase_building>`. */
 export type StarbaseBuildingRef = TypedRef<"starbase_building">;
 
+/** A reference to a `<starbase_level>`. */
+export type StarbaseLevelRef = TypedRef<"starbase_level">;
+
 /** A reference to a `<starbase_module>`. */
 export type StarbaseModuleRef = TypedRef<"starbase_module">;
 

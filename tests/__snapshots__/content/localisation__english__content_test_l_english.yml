@@ -56,3 +56,6 @@
  station_content_test_component_set_reactor_DESC:0 "Station-mounted reactor boosters."
  content_test_section_template_core:0 "Core Section"
  content_test_ambient_object_wreck:0 "Adrift Hulk"
+ content_test_species_class_precursor:0 "Precursor"
+ content_test_species_class_precursor_desc:0 "An ancient and enigmatic lineage."
+ content_test_species_class_precursor_plural:0 "Precursors"

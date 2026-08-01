@@ -1,0 +1,32 @@
+content_test_species_class_precursor = {
+	archetype = ARCHETYPE_HUMANOID
+	modifier = {
+		bonus_pop_growth = 1
+	}
+	playable = {
+		always = yes
+	}
+	randomized = yes
+	possible = {
+		authority = {
+			value = auth_democratic
+		}
+	}
+	possible_secondary = {
+		OR = {
+			ethics = {
+				value = ethic_xenophile
+			}
+		}
+	}
+	graphical_culture = content_test_graphical_culture_synthetic
+	leader_age_min = 20
+	leader_age_max = 80
+	resources = {
+		category = species
+		cost = {
+			unity = 50
+		}
+	}
+	ethics_to_prefer = { ethic_xenophile }
+}

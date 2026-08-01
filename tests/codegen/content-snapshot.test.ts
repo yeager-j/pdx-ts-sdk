@@ -543,4 +543,51 @@ describe("content-type codegen", () => {
     expect(ambientObject?.code).toContain("showName?: boolean;");
     expect(ambientObject?.machineryBacklog).toEqual([]);
   });
+
+  it("generates graphical_culture with scope-agnostic randomized/selectable triggers", () => {
+    // No `## replace_scopes` on either field, unlike ship_selection_weight
+    // (pinned to species scope) right below them.
+    const graphicalCulture = emissions.get("graphical_culture");
+    expect(graphicalCulture?.code).toContain("export interface GraphicalCultureDef");
+    expect(graphicalCulture?.code).toContain("randomized?: Trigger<ScopeName>;");
+    expect(graphicalCulture?.code).toContain("selectable?: Trigger<ScopeName>;");
+    expect(graphicalCulture?.code).toContain('shipSelectionWeight?: WeightBlock<"species">;');
+    expect(graphicalCulture?.machineryBacklog).toEqual([]);
+  });
+
+  it("pins starbase_level's upgrade/downgrade triggers to starbase scope", () => {
+    const starbaseLevel = emissions.get("starbase_level");
+    expect(starbaseLevel?.code).toContain("export interface StarbaseLevelDef");
+    expect(starbaseLevel?.code).toContain('upgradePossible?: Trigger<"starbase">;');
+    expect(starbaseLevel?.code).toContain('downgradePotential?: Trigger<"starbase">;');
+    expect(starbaseLevel?.code).toContain("collectsTrade?: boolean;");
+    expect(starbaseLevel?.code).toContain("specialConstruction?: boolean;");
+    expect(starbaseLevel?.machineryBacklog).toEqual([]);
+  });
+
+  it("lowers species_class's possible/possible_secondary onto the shared government_trigger block", () => {
+    // Same shape and reasoning SDK-3 landed for civic_or_origin.potential/
+    // .possible: `possible = { text? always? alias_name[government_trigger] }`.
+    const speciesClass = emissions.get("species_class");
+    expect(speciesClass?.code).toContain("export interface SpeciesClassDef");
+    expect(speciesClass?.code).toContain("possible?: GovernmentTriggerBlock;");
+    expect(speciesClass?.code).toContain("possibleSecondary?: GovernmentTriggerBlock;");
+    expect(speciesClass?.code).toContain(
+      '{ key: "possible", member: "possible", shape: "aliasStruct", ' +
+        'category: "government_trigger" }'
+    );
+    // resources/modifier need the same economicResources/modifierBlock help
+    // every other registry with those fields already uses.
+    expect(speciesClass?.code).toContain("resources?: EconomicResourceBlock<ScopeName>[];");
+    expect(speciesClass?.code).toContain('modifier?: ModifierClosure<"pop_group">;');
+    // playable carries no `## replace_scopes`, unlike possible/possible_secondary.
+    expect(speciesClass?.code).toContain("playable?: Trigger<ScopeName>;");
+    // The localisation table nests under `subtype[playable]`, not the type's
+    // top level — 26 slots, all recovered.
+    expect(speciesClass?.code).toContain('{ member: "plural", pattern: "$_plural"');
+    expect(speciesClass?.emittedFields).toContain("possible");
+    expect(speciesClass?.emittedFields).toContain("possible_secondary");
+    expect(speciesClass?.unsupported.join("\n")).not.toContain("possible");
+    expect(speciesClass?.machineryBacklog).toEqual([]);
+  });
 });

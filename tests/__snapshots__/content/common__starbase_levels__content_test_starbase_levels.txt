@@ -1,0 +1,24 @@
+content_test_starbase_level_outpost = {
+	ship_size = ship_size_starbase_i
+	next_level = content_test_starbase_level_starport
+	show_in_outliner = yes
+	level_weight = 0
+	picture = {
+		trigger = {
+			always = yes
+		}
+		picture = GFX_starbase_outpost_view
+	}
+	potential_home_base = no
+	collects_trade = no
+	upgrade_possible = {
+		always = yes
+	}
+	portrait = GFX_starbase_background_outpost
+	special_construction = yes
+	downgrade_potential = {
+		always = yes
+	}
+	module_slots = { 2 spinal_mount_1 }
+	building_slots = { 1 lower_1 }
+}

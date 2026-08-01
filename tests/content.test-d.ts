@@ -461,4 +461,48 @@ describe("generated content authoring types", () => {
       modifier: (m) => m.unchecked("ship_hull_add", 10),
     });
   });
+
+  it("pins starbase_level's upgrade/downgrade triggers to starbase scope", () => {
+    mod.defineStarbaseLevel({
+      id: "content_types_starbase_level_x",
+      shipSize: "ship_size_starbase_i",
+      upgradePossible: always(),
+      // @ts-expect-error — upgrade_possible replace_scopes to starbase; a
+      // country-only condition like hasAuthority does not hold there.
+      downgradePotential: hasAuthority("auth_democratic"),
+    });
+  });
+
+  it("types species_class's possible/possible_secondary as the government_trigger DSL, not a Trigger", () => {
+    mod.defineSpeciesClass({
+      id: "content_types_species_class_dsl",
+      name: "X",
+      possible: { authority: { value: "auth_democratic" } },
+      possibleSecondary: { or: [{ ethics: { value: "ethic_xenophile" } }] },
+    });
+    mod.defineSpeciesClass({
+      id: "content_types_species_class_dsl_rejects_trigger",
+      name: "X",
+      // @ts-expect-error — a Trigger is not a GovernmentTriggerBlock; the game
+      // does not read possible/possible_secondary as script conditions.
+      possible: hasAuthority("auth_democratic"),
+    });
+  });
+
+  it("keeps species_class's playable scope-agnostic like tradition_swap's trigger", () => {
+    // No `## replace_scopes` on playable, so it stays Trigger<ScopeName> —
+    // only a universal trigger like always() type-checks.
+    mod.defineSpeciesClass({
+      id: "content_types_species_class_playable",
+      name: "X",
+      playable: always(),
+    });
+    mod.defineSpeciesClass({
+      id: "content_types_species_class_playable_rejects_country_only",
+      name: "X",
+      // @ts-expect-error — hasAuthority only holds in country scope, not
+      // every scope playable's ScopeName type demands.
+      playable: hasAuthority("auth_democratic"),
+    });
+  });
 });

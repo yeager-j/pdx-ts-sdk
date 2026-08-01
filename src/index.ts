@@ -79,6 +79,11 @@ export type {
   GovernmentTriggerClause,
   GovernmentTriggerClauseGroup,
 } from "./generated/government-trigger.ts";
+export type {
+  DefinedGraphicalCulture,
+  GraphicalCultureDef,
+  GraphicalCultureFields,
+} from "./generated/graphical-culture.ts";
 export type { DefinedJob, JobDef, JobFields } from "./generated/job.ts";
 export type {
   DefinedOpinionModifier,
@@ -100,6 +105,16 @@ export type {
   SectionTemplateDef,
   SectionTemplateFields,
 } from "./generated/section-template.ts";
+export type {
+  DefinedSpeciesClass,
+  SpeciesClassDef,
+  SpeciesClassFields,
+} from "./generated/species-class.ts";
+export type {
+  DefinedStarbaseLevel,
+  StarbaseLevelDef,
+  StarbaseLevelFields,
+} from "./generated/starbase-level.ts";
 export type {
   DefinedStaticModifier,
   StaticModifierDef,

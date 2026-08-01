@@ -22,6 +22,9 @@
 // From: common/economic_categories.cwt
 // From: common/section_templates.cwt
 // From: common/ambient_objects.cwt
+// From: common/graphical_cultures.cwt
+// From: common/starbases_consolidated.cwt
+// From: common/species_consolidated.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -109,6 +112,12 @@ import {
   type DefinedGlobalShipDesign,
   type GlobalShipDesignDef,
 } from "./global-ship-design.ts";
+import {
+  GRAPHICAL_CULTURE_FIELDS,
+  GRAPHICAL_CULTURE_LOCALISATION,
+  type DefinedGraphicalCulture,
+  type GraphicalCultureDef,
+} from "./graphical-culture.ts";
 import { JOB_FIELDS, JOB_LOCALISATION, type DefinedJob, type JobDef } from "./job.ts";
 import {
   OPINION_MODIFIER_FIELDS,
@@ -140,6 +149,18 @@ import {
   type DefinedSituationType,
   type SituationTypeDef,
 } from "./situation-type.ts";
+import {
+  SPECIES_CLASS_FIELDS,
+  SPECIES_CLASS_LOCALISATION,
+  type DefinedSpeciesClass,
+  type SpeciesClassDef,
+} from "./species-class.ts";
+import {
+  STARBASE_LEVEL_FIELDS,
+  STARBASE_LEVEL_LOCALISATION,
+  type DefinedStarbaseLevel,
+  type StarbaseLevelDef,
+} from "./starbase-level.ts";
 import {
   STATIC_MODIFIER_FIELDS,
   STATIC_MODIFIER_LOCALISATION,
@@ -403,6 +424,27 @@ export const CONTENT_REGISTRIES = [
     localisation: AMBIENT_OBJECT_LOCALISATION,
     keyedBy: { keyword: "ambient_object", nameField: "name" },
   },
+  {
+    type: "graphical_culture",
+    outputDir: "common/graphical_culture",
+    fileStem: "graphical_culture",
+    fields: GRAPHICAL_CULTURE_FIELDS,
+    localisation: GRAPHICAL_CULTURE_LOCALISATION,
+  },
+  {
+    type: "starbase_level",
+    outputDir: "common/starbase_levels",
+    fileStem: "starbase_levels",
+    fields: STARBASE_LEVEL_FIELDS,
+    localisation: STARBASE_LEVEL_LOCALISATION,
+  },
+  {
+    type: "species_class",
+    outputDir: "common/species_classes",
+    fileStem: "species_classes",
+    fields: SPECIES_CLASS_FIELDS,
+    localisation: SPECIES_CLASS_LOCALISATION,
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -437,6 +479,9 @@ export interface ContentDefMap<P extends string> {
   component_set: ComponentSetDef<PrefixedId<P>>;
   section_template: SectionTemplateDef<PrefixedId<P>>;
   ambient_object: AmbientObjectDef<PrefixedId<P>>;
+  graphical_culture: GraphicalCultureDef<PrefixedId<P>>;
+  starbase_level: StarbaseLevelDef<PrefixedId<P>>;
+  species_class: SpeciesClassDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -469,6 +514,9 @@ export interface DefinedContentMap<P extends string> {
   component_set: DefinedComponentSet<PrefixedId<P>>;
   section_template: DefinedSectionTemplate<PrefixedId<P>>;
   ambient_object: DefinedAmbientObject<PrefixedId<P>>;
+  graphical_culture: DefinedGraphicalCulture<PrefixedId<P>>;
+  starbase_level: DefinedStarbaseLevel<PrefixedId<P>>;
+  species_class: DefinedSpeciesClass<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -656,5 +704,26 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["ambient_object"]
   ): DefinedContentMap<P>["ambient_object"] {
     return this.defineGeneratedContent("ambient_object", def);
+  }
+
+  /** Defines a graphical culture in this mod. */
+  defineGraphicalCulture(
+    def: ContentDefMap<P>["graphical_culture"]
+  ): DefinedContentMap<P>["graphical_culture"] {
+    return this.defineGeneratedContent("graphical_culture", def);
+  }
+
+  /** Defines a starbase level in this mod. */
+  defineStarbaseLevel(
+    def: ContentDefMap<P>["starbase_level"]
+  ): DefinedContentMap<P>["starbase_level"] {
+    return this.defineGeneratedContent("starbase_level", def);
+  }
+
+  /** Defines a species class in this mod. */
+  defineSpeciesClass(
+    def: ContentDefMap<P>["species_class"]
+  ): DefinedContentMap<P>["species_class"] {
+    return this.defineGeneratedContent("species_class", def);
   }
 }

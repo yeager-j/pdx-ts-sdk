@@ -354,6 +354,18 @@ export type SituationCategory = "positive" | "negative" | "neutral";
  */
 export type SituationStage = string;
 
+/** `enum[species_rights_type]`. */
+export type SpeciesRightsType =
+  | "citizenship"
+  | "military_service"
+  | "slavery"
+  | "purge"
+  | "living_standard"
+  | "migration_control"
+  | "population_control"
+  | "colonization_control"
+  | "none";
+
 /** `enum[specimen_type]`. */
 export type SpecimenType = "aesthetic_wonder" | "historical_item" | "xeno_geology";
 

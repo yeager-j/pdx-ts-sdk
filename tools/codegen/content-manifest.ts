@@ -86,4 +86,7 @@ export const CONTENT_MANIFEST = [
     keyword: "ship_section_template",
   },
   { type: "ambient_object", source: "common/ambient_objects.cwt", keyword: "ambient_object" },
+  { type: "graphical_culture", source: "common/graphical_cultures.cwt" },
+  { type: "starbase_level", source: "common/starbases_consolidated.cwt" },
+  { type: "species_class", source: "common/species_consolidated.cwt" },
 ] as const satisfies readonly ContentManifestEntry[];
