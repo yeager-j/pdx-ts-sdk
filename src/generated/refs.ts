@@ -132,6 +132,9 @@ export type ColonyTypeRef = TypedRef<"colony_type">;
 /** A reference to a `<component_set>`. */
 export type ComponentSetRef = TypedRef<"component_set">;
 
+/** A reference to a `<component_set.required_component>`. */
+export type ComponentSetRequiredComponentRef = TypedRef<"component_set.required_component">;
+
 /** A reference to a `<component_template>`. */
 export type ComponentTemplateRef = TypedRef<"component_template">;
 
@@ -468,6 +471,9 @@ export type TechnologyCategoryRef = TypedRef<"technology_category">;
 
 /** A reference to a `<technology_tier>`. */
 export type TechnologyTierRef = TypedRef<"technology_tier">;
+
+/** A reference to a `<text_color>`. */
+export type TextColorRef = TypedRef<"text_color">;
 
 /** A reference to a `<timeline_events>`. */
 export type TimelineEventsRef = TypedRef<"timeline_events">;

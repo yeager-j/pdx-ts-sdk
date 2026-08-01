@@ -47,7 +47,8 @@ Landed: `technology`, `building`, `tradition`, `tradition_category`,
 `bombardment_stance`, `archaeological_site_type`, `global_ship_design`,
 `utility_component_template`, `weapon_component_template`,
 `strike_craft_component_template`, `scripted_loc`, `situation_type`,
-`static_modifier`, `councilor`, `economic_category`, `civic_or_origin`.
+`static_modifier`, `councilor`, `economic_category`, `civic_or_origin`,
+`ship_size`.
 
 Nothing is blocked any more: alias categories unblocked `civic_or_origin` and
 the malformed-option drift block unblocked `councilor` and
@@ -59,8 +60,8 @@ position as the requirements DSL and not a script condition tree.
 
 Not yet attempted:
 
-- [ ] `ship_size`, `graphical_culture`, `species_class` (also needs alias
-      categories), `starbase_level`
+- [ ] `graphical_culture`, `species_class` (also needs alias categories),
+      `starbase_level`
 - [ ] `component_sets`, `section_templates`, `ambient_objects` — `name_field`
       registries; the machinery exists, the entries do not
 - [ ] `component_tags`, `country_limits`, `scripted_variables` — no CWT type
@@ -216,6 +217,45 @@ cardinality = 0..inf { key = ... value = ... } }`. Internally this is
   repetition lives on the bare declaration, and the writer emits one field
   holding N anonymous nested blocks rather than N sibling entries at the same
   level. The author-facing type is the same `T[]` either way.
+
+### Engine-keyed maps
+
+**Landed 2026-08-01.** Two shapes for a block keyed by names the _engine_ owns
+rather than ids the mod invents — `structMap` for block values
+(`section_slots = { mid = { locator = part1 } }`) and `scalarMap` for scalar
+ones (`min_upgrade_cost = { alloys = 20 }`, from CWT's `{ <resource> = float }`).
+Together they took `ship_size` from 88% to **100% across 319 definitions**.
+
+The interesting part is that `structMap` and a repeated-struct **container** are
+the _same_ declaration in CWT — a wildcard-keyed block inside a block — and mean
+opposite things:
+
+- a situation's `stages` key is an id the mod owns: mod-prefixed,
+  duplicate-checked, localised, and ordered
+- a ship size's `section_slots` key is `mid`, `bow`, `core` or the integer `1`:
+  a name the engine and the ship models already agree on, which section
+  templates reference by `slot = "mid"`
+
+Nothing in the rules separates them, so the shape is **requested by the overlay,
+never inferred** — the same precedent `weightedEvents` set for computed keys.
+That is the whole justification for a second shape rather than a flag on the
+first: prefixing `mid` would break every reference to it. Entry order is also
+meaningless here, which is what makes a plain object safe — a repeated-struct
+record leans on insertion order to carry a stage sequence and on its prefix rule
+to keep keys non-integer-like, since JS iterates integer-like keys first. Slots
+are addressed by name, so `1` sorting ahead of `mid` changes nothing.
+
+`scalarMap` was built because a _second_ consumer turned up:
+`civic_or_origin.leader_background_job_weight` (`{ <job> = int }`) had been left
+on the machinery backlog when that registry landed, and
+`ship_size.min_upgrade_cost` is the identical shape. Landing it retired the
+backlog entry, so `civic_or_origin` also reached 100%. Keys stay `string`:
+`TypedRef` is a branded object and cannot type a `Record` key, the same reason
+an economic block's `amounts` is `Record<string, number>`. Closing that is the
+[vanilla identifier package](#vanilla-identifier-package)'s job.
+
+`lowerStruct` and `lowerStructMap` now share one `structShape` helper, so the
+two differ only in how they locate the block and what they wrap the result in.
 
 ### Top-level unkeyed splice
 

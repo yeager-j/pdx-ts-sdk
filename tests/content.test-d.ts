@@ -315,6 +315,43 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("types an engine-keyed map without imposing an id on its keys", () => {
+    // A structMap key is a plain engine name, so `PrefixedId` must NOT reach
+    // it — unlike a repeated-struct record key one level down, which is an id
+    // the mod owns. The values still get their full struct type.
+    mod.defineShipSize({
+      id: "content_types_ship_size_x",
+      name: "X",
+      class: "shipclass_military",
+      sectionSlots: {
+        mid: { locator: ["part1"] },
+        "1": { locator: ["part2"] },
+      },
+      minUpgradeCost: { alloys: 20 },
+    });
+    mod.defineShipSize({
+      id: "content_types_ship_size_bad_slot",
+      name: "X",
+      class: "shipclass_military",
+      // @ts-expect-error — the slot's own fields are still typed
+      sectionSlots: { mid: { locator: 5 } },
+    });
+    mod.defineShipSize({
+      id: "content_types_ship_size_bad_cost",
+      name: "X",
+      class: "shipclass_military",
+      // @ts-expect-error — a scalarMap's values are numbers, not blocks
+      minUpgradeCost: { alloys: { base: 20 } },
+    });
+    // A repeated-struct record key, by contrast, IS constrained to the prefix.
+    mod.defineTradition({
+      id: "content_types_tradition_prefix_contrast",
+      name: "X",
+      // @ts-expect-error — nested definition ids must carry the mod prefix
+      traditionSwap: { othermod_swap: { name: "Wrong namespace" } },
+    });
+  });
+
   it("keeps content reference brands distinct", () => {
     const building = mod.defineBuilding({
       id: "content_types_building_brand",

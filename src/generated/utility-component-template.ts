@@ -14,6 +14,7 @@ import type {
   AuraType,
   ComponentTag,
   PointDefenceTarget,
+  ShipClass,
   TargetFocus,
   UtilitySlotSize,
   WeaponSlotSize,
@@ -340,7 +341,7 @@ export interface UtilityComponentTemplateFields {
   componentSet?: ComponentSetRef | string;
   hidden?: boolean;
   /** (DEPRECATED: use "potential" trigger instead) The ship class(es) that the component is restricted to. */
-  classRestriction?: string[];
+  classRestriction?: ShipClass[];
   upgradesTo?: ComponentTemplateRef | string;
   /** For core components, components that have the same upgrade path are shown on the same row. */
   upgradePath?: UpgradePath;

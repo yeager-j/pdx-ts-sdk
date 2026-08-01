@@ -1,0 +1,21 @@
+content_test_ship_size_synth_cruiser = {
+	modifier = {
+		starbase_shipyard_build_speed_mult = 0.1
+	}
+	ship_modifier = {
+		ship_weapon_damage = 0.05
+	}
+	section_slots = {
+		bow = {
+			locator = part1
+		}
+		mid = {
+			locator = part2
+			locator = part3
+		}
+	}
+	class = shipclass_military
+	min_upgrade_cost = {
+		alloys = 20
+	}
+}

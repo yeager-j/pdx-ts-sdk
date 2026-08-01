@@ -451,6 +451,52 @@ describe("content-type codegen", () => {
     expect(situation?.unsupported.join("\n")).not.toContain("random_events");
   });
 
+  it("distinguishes an engine-keyed map from an identity-keyed one", () => {
+    // section_slots and situations' stages are the SAME shape in CWT — a
+    // wildcard-keyed block inside a block — and mean opposite things. A stage
+    // key is an id the mod owns, prefixed and localised; a section slot key is
+    // `mid` or the integer `1`, names the engine and the ship models already
+    // agree on. Only the overlay can tell them apart, so this pins both.
+    const shipSize = emissions.get("ship_size");
+    expect(shipSize?.code).toContain("export interface ShipSizeSectionSlots");
+    expect(shipSize?.code).toContain(
+      "sectionSlots?: Readonly<Record<string, ShipSizeSectionSlots>>;"
+    );
+    expect(shipSize?.code).toContain('shape: "structMap"');
+    expect(shipSize?.code).toContain("fields: SHIP_SIZE_SECTION_SLOTS_FIELDS");
+    // No identity machinery: a structMap key carries no localisation table and
+    // no identityKey, which is exactly what separates it from repeatedStruct.
+    expect(shipSize?.code).not.toContain("SHIP_SIZE_SECTION_SLOTS_LOCALISATION");
+    expect(shipSize?.code).not.toContain('shape: "repeatedStruct"');
+    // The identity-keyed reading is still generated where it belongs.
+    expect(emissions.get("situation_type")?.code).toContain('keying: "container"');
+  });
+
+  it("lowers a ref-keyed scalar map, the shape two registries needed", () => {
+    // `{ <resource> = float }` and `{ <job> = int }` are computed keys, which
+    // mergeByName drops — so nothing reached these fields at all.
+    // leader_background_job_weight sat on the machinery backlog until
+    // ship_size.min_upgrade_cost turned up as a second consumer.
+    const shipSize = emissions.get("ship_size");
+    expect(shipSize?.code).toContain("minUpgradeCost?: Readonly<Record<string, number>>;");
+    expect(shipSize?.code).toContain(
+      '{ key: "min_upgrade_cost", member: "minUpgradeCost", shape: "scalarMap" }'
+    );
+    const civic = emissions.get("civic_or_origin");
+    expect(civic?.code).toContain("leaderBackgroundJobWeight?: Readonly<Record<string, number>>;");
+    // Both registries now lower everything the rules declare.
+    expect(shipSize?.machineryBacklog).toEqual([]);
+    expect(civic?.machineryBacklog).toEqual([]);
+  });
+
+  it("carries ship_size's per-field modifier scopes", () => {
+    // The two modifier fields sit in different scopes on the same definition,
+    // which is the thing a flat modifier table could never express.
+    const shipSize = emissions.get("ship_size");
+    expect(shipSize?.code).toContain('modifier?: ModifierClosure<"starbase">;');
+    expect(shipSize?.code).toContain('shipModifier?: ModifierClosure<"ship">;');
+  });
+
   it("generates councilor without registry-specific code", () => {
     // Blocked purely by the governments.cwt malformed-option drift block
     // (SDK-2); councilor's own fields are ordinary.
@@ -502,13 +548,11 @@ describe("content-type codegen", () => {
     expect(civicOrOrigin?.emittedFields).toContain("possible");
     expect(civicOrOrigin?.unsupported.join("\n")).not.toContain("potential");
     expect(civicOrOrigin?.unsupported.join("\n")).not.toContain("possible");
-    // leader_background_job_weight (`{ <job> = int }`, one open ref-keyed
-    // scalar map, used by a single vanilla origin) is the one field genuinely
-    // left on the machinery backlog — a wildcard-keyed scalar map is a shape
-    // the emitter has no model for yet, not something the overlay can paper
-    // over.
-    expect(civicOrOrigin?.machineryBacklog).toEqual([
-      "leader_background_job_weight (no declaration the emitter can lower)",
-    ]);
+    // leader_background_job_weight (`{ <job> = int }`) was the one field left
+    // on this registry's machinery backlog when it landed. `scalarMap` — built
+    // once ship_size.min_upgrade_cost turned up needing the same shape —
+    // retired it, so the backlog is now empty.
+    expect(civicOrOrigin?.machineryBacklog).toEqual([]);
+    expect(civicOrOrigin?.emittedFields).toContain("leader_background_job_weight");
   });
 });

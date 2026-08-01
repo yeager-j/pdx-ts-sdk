@@ -215,6 +215,7 @@ export interface CivicOrOriginFields {
   blocksRandomMachineEmpireGeneration?: boolean;
   room?: string | AssetSelectorRoomRef;
   cityGraphicalCulture?: GraphicalCultureRef | string;
+  leaderBackgroundJobWeight?: Readonly<Record<string, number>>;
   randomWeight?: WeightBlock<"country">;
   aiWeight?: WeightBlock<"country">;
   addedClimateLabels?: (CustomizeSpeciesEditorHeader | string)[];
@@ -346,6 +347,7 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "ref",
   },
+  { key: "leader_background_job_weight", member: "leaderBackgroundJobWeight", shape: "scalarMap" },
   { key: "random_weight", member: "randomWeight", shape: "weightBlock" },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
   {

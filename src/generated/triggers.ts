@@ -33,6 +33,7 @@ import type {
   ResearchArea,
   ResolutionPosition,
   ScopeTypeToken,
+  ShipClass,
   ShipOwnerType,
   ShipRarity,
   SituationApproach,
@@ -7302,7 +7303,7 @@ export function hasDepositFlag(value: DepositFlag): Trigger<"deposit"> {
  * has_deposit_for = shipclass_mining_station
  * ```
  */
-export function hasDepositFor(value: string): Trigger<"carrier" | "colony" | "planet" | "ship"> {
+export function hasDepositFor(value: ShipClass): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   return trigger([kv("has_deposit_for", value)]);
 }
 
@@ -11432,7 +11433,7 @@ export function isShipCategory(
  * ```
  */
 export function isShipClass(
-  value: string
+  value: ShipClass
 ): Trigger<"design" | "fleet" | "ship" | "ship_growth_stage"> {
   return trigger([kv("is_ship_class", value)]);
 }

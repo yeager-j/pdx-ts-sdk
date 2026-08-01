@@ -81,6 +81,12 @@ export type {
   ScriptedLocFields,
 } from "./generated/scripted-loc.ts";
 export type {
+  DefinedShipSize,
+  ShipSizeDef,
+  ShipSizeFields,
+  ShipSizeSectionSlots,
+} from "./generated/ship-size.ts";
+export type {
   DefinedScriptedModifier,
   ScriptedModifierDef,
   ScriptedModifierFields,

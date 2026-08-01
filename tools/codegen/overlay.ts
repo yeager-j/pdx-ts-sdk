@@ -291,6 +291,30 @@ export type ContentFieldShape =
    */
   | "weightedEvents"
   /**
+   * A map keyed by engine names rather than by ids the mod invents:
+   * `section_slots = { mid = { locator = ... } }`, from CWT's
+   * `{ scalar = { ... } }`.
+   *
+   * CWT spells this identically to `repeatedStruct`'s "container" keying, and
+   * the rules carry nothing that separates them — which is exactly why the
+   * shape must be requested. The distinction is semantic and decided here,
+   * once: a `stages` key is an id the mod owns, prefixed and localised, while
+   * a `section_slots` key is `mid`, `bow`, or the integer `1`, a name the
+   * engine and the ship models already agree on and that section templates
+   * reference by `slot = "mid"`. Requesting `repeatedStruct` for one of these
+   * would prefix `mid` out of existence and let JS reorder the numeric keys.
+   */
+  | "structMap"
+  /**
+   * The scalar-valued form of `structMap`: `min_upgrade_cost = { alloys = 20 }`
+   * from CWT's `{ <resource> = float }`. Also the shape behind
+   * `civic_or_origin.leader_background_job_weight` (`{ <job> = int }`).
+   *
+   * Computed keys are invisible to the ordinary field model, the same reason
+   * `weightedEvents` must be requested.
+   */
+  | "scalarMap"
+  /**
    * A field spliced from a non-trigger/effect CWT alias category emitted by
    * `emit/alias-struct.ts` — `government_trigger` is the only consumer so
    * far. Unlike the pure-splice categories `spliceCategory` finds on its own
@@ -659,6 +683,69 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "Same shape and justification as civic_or_origin.potential — `possible` is the other " +
         "government_trigger consumer governments.cwt declares alongside it.",
+    },
+  ],
+  [
+    "civic_or_origin.leader_background_job_weight",
+    {
+      shape: "scalarMap",
+      reason:
+        "`{ <job> = int }` — a job-keyed weight map. Left on the machinery backlog when the " +
+        "registry landed; ship_size.min_upgrade_cost is the same shape, so the second consumer " +
+        "is what made a generic scalarMap worth building.",
+    },
+  ],
+  [
+    "ship_size.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "ship_size.ship_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "ship_size.resources",
+    {
+      shape: "economicResources",
+      reason: "Same category-plus-economic_template-splice shape as job.resources.",
+    },
+  ],
+  [
+    "ship_size.space_fauna_values.culling_value",
+    {
+      shape: "economicResources",
+      reason:
+        "The same economic block one level down, inside the space_fauna_values struct — " +
+        "repeated 0..inf rather than singular.",
+    },
+  ],
+  [
+    "ship_size.section_slots",
+    {
+      shape: "structMap",
+      reason:
+        "The keys are engine names, not ids this mod owns: vanilla writes `mid`, `bow`, " +
+        "`core`, `stern` and the integers 1-6, ship models expose them as locators, and " +
+        'section templates reference them by `slot = "mid"`. Identical in CWT to a ' +
+        "repeatedStruct container, which is why the distinction has to be declared here — " +
+        "prefixing `mid` would break every reference to it. Slot order also carries no " +
+        "meaning, unlike a situation's stages, so a Record is safe despite JS ordering " +
+        "integer-like keys ahead of the rest.",
+    },
+  ],
+  [
+    "ship_size.min_upgrade_cost",
+    {
+      shape: "scalarMap",
+      reason:
+        "`{ <resource> = float }` — a resource-keyed cost map, the same shape as " +
+        "civic_or_origin.leader_background_job_weight.",
     },
   ],
 ]);

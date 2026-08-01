@@ -226,6 +226,9 @@ export type MiaType = "mia_return_home" | "mia_emergency_ftl" | "mia_fleet_eaten
 /** `enum[mission_status]`. */
 export type MissionStatus = "success" | "stop";
 
+/** `enum[mutation_components_size]`. */
+export type MutationComponentsSize = "extra_large" | "large" | "medium" | "small";
+
 /** `enum[opinion_level]`. */
 export type OpinionLevel = "terrible" | "poor" | "neutral" | "good" | "excellent";
 
@@ -326,6 +329,18 @@ export type ScriptedModifierCategory =
   | "federation"
   | "espionage"
   | "colony";
+
+/**
+ * `enum[section_slot]`.
+ * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ */
+export type SectionSlot = string;
+
+/**
+ * `enum[ship_class]`.
+ * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ */
+export type ShipClass = string;
 
 /** `enum[ship_owner_type]`. */
 export type ShipOwnerType = "country" | "federation" | "galactic_community" | "global_ship_design";

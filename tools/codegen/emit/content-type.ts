@@ -373,23 +373,35 @@ function lowerValueList(
  * so a struct nested inside a struct (`agreement_preset.term_data.discrete_terms`
  * inside `term_data`) falls out for free rather than needing its own case.
  */
-function lowerStruct(
+interface StructShape {
+  readonly typeName: string;
+  readonly fieldsConstant: string;
+  /** The interface and field-table declarations, for the caller to prepend. */
+  readonly code: string;
+  readonly unsupported: readonly string[];
+}
+
+/**
+ * Builds the interface and runtime field table for one anonymous block's named
+ * members, recursing through the ordinary field pipeline so a struct nested
+ * inside a struct falls out for free.
+ *
+ * Declines a block holding a splice (`alias_name`), subtype, or computed key:
+ * those are invisible to `mergeByName`, so emitting only the ordinary fields
+ * would silently drop the rest. The caller reports the path as unsupported.
+ *
+ * Shared by every shape whose value is an anonymous block — `lowerStruct` and
+ * `lowerStructMap` differ only in how they find that block and what they wrap
+ * the resulting type in.
+ */
+function structShape(
   emitter: Emitter,
-  field: RuleField,
+  block: BlockType,
   name: string,
   path: string,
   inheritedScope: ScopeContext | null
-): LoweredField | null {
-  const located = structBlockOf(field.type);
-  if (located === null) {
-    return null;
-  }
-  const { block, wrapped } = located;
+): StructShape | null {
   if (block.fields.some((inner) => inner.key.kind !== "name")) {
-    // A splice (alias_name), subtype, or computed key inside the block means
-    // some of its content is invisible to mergeByName. Emitting a struct from
-    // only the ordinary fields would silently drop the rest, so decline
-    // rather than guess — the caller reports this path as unsupported.
     return null;
   }
   const grouped = mergeByName(block.fields, pascalCase(name));
@@ -433,15 +445,96 @@ function lowerStruct(
     return null;
   }
   const fieldsConstant = `${constantCase(typeName)}_FIELDS`;
+  return {
+    typeName,
+    fieldsConstant,
+    code:
+      extraCode.join("") +
+      `export interface ${typeName} {\n` +
+      members.join("") +
+      "}\n\n" +
+      `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
+      fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
+      "];\n\n",
+    unsupported,
+  };
+}
+
+/**
+ * Lowers a map whose keys are engine names rather than ids the mod invents:
+ * `section_slots = { mid = { locator = ... } }`.
+ *
+ * The CWT shape is the wildcard-keyed block `repeatedStruct`'s "container"
+ * keying also matches, and the rules carry nothing that tells them apart — so
+ * this is requested by the overlay, never inferred. See the `structMap` doc
+ * there for why the identity rules must not apply to these keys.
+ */
+function lowerStructMap(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  path: string,
+  inheritedScope: ScopeContext | null
+): LoweredField | null {
+  const block = wildcardBlockOf(field.type);
+  if (block === null) {
+    return null;
+  }
+  const shape = structShape(emitter, block, name, path, inheritedScope);
+  if (shape === null) {
+    return null;
+  }
+  return {
+    memberType: `Readonly<Record<string, ${shape.typeName}>>`,
+    metadata: metadata(field, name, "structMap", [`fields: ${shape.fieldsConstant}`]),
+    code: shape.code,
+    unsupported: shape.unsupported,
+  };
+}
+
+/**
+ * Lowers the scalar-valued form: `min_upgrade_cost = { <resource> = float }`.
+ *
+ * Keys stay `string` — `TypedRef` is a branded object and cannot type a
+ * `Record` key, the same reason an economic block's `amounts` is
+ * `Record<string, number>`.
+ */
+function lowerScalarMap(emitter: Emitter, field: RuleField, name: string): LoweredField | null {
+  if (field.type.kind !== "block") {
+    return null;
+  }
+  const values = field.type.fields.filter((inner) => inner.key.kind === "computed");
+  if (values.length === 0 || values.length !== field.type.fields.length) {
+    return null;
+  }
+  const value = emitter.unionFor(values.map((inner) => inner.type));
+  if (value === null) {
+    return null;
+  }
+  return {
+    memberType: `Readonly<Record<string, ${value.type}>>`,
+    metadata: metadata(field, name, "scalarMap"),
+  };
+}
+
+function lowerStruct(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  path: string,
+  inheritedScope: ScopeContext | null
+): LoweredField | null {
+  const located = structBlockOf(field.type);
+  if (located === null) {
+    return null;
+  }
+  const { block, wrapped } = located;
+  const shape = structShape(emitter, block, name, path, inheritedScope);
+  if (shape === null) {
+    return null;
+  }
+  const { typeName, fieldsConstant, code, unsupported } = shape;
   const repeated = wrapped || isRepeated(field.cardinality);
-  const code =
-    extraCode.join("") +
-    `export interface ${typeName} {\n` +
-    members.join("") +
-    "}\n\n" +
-    `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
-    fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
-    "];\n\n";
   const metadataMembers = [
     `key: ${JSON.stringify(name)}`,
     `member: ${JSON.stringify(camelCase(name))}`,
@@ -562,6 +655,12 @@ function lowerOrdinary(
   }
   if (requested === "struct") {
     return lowerStruct(emitter, field, name, path, inheritedScope);
+  }
+  if (requested === "structMap") {
+    return lowerStructMap(emitter, field, name, path, inheritedScope);
+  }
+  if (requested === "scalarMap") {
+    return lowerScalarMap(emitter, field, name);
   }
   if (requested === "weightedEvents") {
     if (field.type.kind !== "block") {

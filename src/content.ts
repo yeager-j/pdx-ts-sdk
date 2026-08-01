@@ -268,6 +268,44 @@ interface ContentAliasStructField extends ContentFieldBase {
 }
 
 /**
+ * A map whose keys are engine names rather than identities.
+ *
+ * CWT spells this exactly like {@link ContentRepeatedStructField}'s "container"
+ * keying — a wildcard-keyed block inside a block — but the two mean opposite
+ * things, and only the overlay can tell them apart. A situation's `stages` keys
+ * are ids the mod invents and localises; a ship size's `section_slots` keys are
+ * `mid`, `bow`, `core` and the integers `1`-`6`, names the engine and the ship
+ * models already agree on and that section templates reference by
+ * `slot = "mid"`. So these keys take no mod prefix, register no ids, and carry
+ * no localisation — applying the identity rules here would rename `mid` out of
+ * existence.
+ *
+ * Entry order is not meaningful either, which is what makes a plain object
+ * safe: a repeated-struct record relies on insertion order to carry a stage
+ * sequence, and depends on its mod-prefix rule to keep every key non-integer-
+ * like, since JS iterates integer-like keys first. Slots are addressed by name,
+ * so `1` sorting ahead of `mid` changes nothing.
+ */
+interface ContentStructMapField extends ContentFieldBase {
+  readonly shape: "structMap";
+  readonly fields: readonly ContentField[];
+}
+
+/**
+ * The scalar-valued form of {@link ContentStructMapField}: an engine-keyed map
+ * of plain values, `min_upgrade_cost = { alloys = 20 }` from CWT's
+ * `{ <resource> = float }`.
+ *
+ * Keys stay `string`. `<resource>` and `<job>` are content references, but
+ * `TypedRef` is a branded object and cannot be a `Record` key — the same reason
+ * an economic block's `amounts` is `Record<string, number>`. Closing that is the
+ * vanilla identifier package's job, not this shape's.
+ */
+interface ContentScalarMapField extends ContentFieldBase {
+  readonly shape: "scalarMap";
+}
+
+/**
  * A named, ordered collection whose name is both identity and localization
  * key — the same distinction `name_field` draws for top-level registries, one
  * level down. Authored as `Readonly<Record<id, fields>>` rather than an array
@@ -305,6 +343,8 @@ export type ContentField =
   | ContentWeightedEventsField
   | ContentStructField
   | ContentAliasStructField
+  | ContentStructMapField
+  | ContentScalarMapField
   | ContentRepeatedStructField;
 
 const ALIAS_STRUCT_FIELDS = new Map<string, readonly ContentField[]>();
@@ -593,6 +633,28 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
           ? (value as readonly Readonly<Record<string, unknown>>[])
           : [value as Readonly<Record<string, unknown>>];
         entries.push(...values.map((item) => block(field.key, fieldEntries(item, nested))));
+        break;
+      }
+      case "structMap": {
+        const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+        entries.push(
+          block(
+            field.key,
+            Object.entries(record).map(([name, item]) =>
+              block(name, fieldEntries(item, field.fields))
+            )
+          )
+        );
+        break;
+      }
+      case "scalarMap": {
+        const record = value as Readonly<Record<string, number | string>>;
+        entries.push(
+          block(
+            field.key,
+            Object.entries(record).map(([name, amount]) => kv(name, amount))
+          )
+        );
         break;
       }
       case "repeatedStruct": {

@@ -10,6 +10,7 @@
 // From: common/pop_jobs.cwt
 // From: common/global_ship_designs.cwt
 // From: common/components.cwt
+// From: common/ship_sizes.cwt
 // From: common/modifiers.cwt
 // From: common/scripted_modifiers.cwt
 // From: common/casus_belli_and_war_goals.cwt
@@ -114,6 +115,12 @@ import {
   type DefinedScriptedModifier,
   type ScriptedModifierDef,
 } from "./scripted-modifier.ts";
+import {
+  SHIP_SIZE_FIELDS,
+  SHIP_SIZE_LOCALISATION,
+  type DefinedShipSize,
+  type ShipSizeDef,
+} from "./ship-size.ts";
 import {
   SITUATION_TYPE_FIELDS,
   SITUATION_TYPE_LOCALISATION,
@@ -268,6 +275,13 @@ export const CONTENT_REGISTRIES = [
     keyedBy: { keyword: "strike_craft_component_template", nameField: "key" },
   },
   {
+    type: "ship_size",
+    outputDir: "common/ship_sizes",
+    fileStem: "ship_sizes",
+    fields: SHIP_SIZE_FIELDS,
+    localisation: SHIP_SIZE_LOCALISATION,
+  },
+  {
     type: "opinion_modifier",
     outputDir: "common/opinion_modifiers",
     fileStem: "opinion_modifiers",
@@ -377,6 +391,7 @@ export interface ContentDefMap<P extends string> {
   utility_component_template: UtilityComponentTemplateDef<PrefixedId<P>>;
   weapon_component_template: WeaponComponentTemplateDef<PrefixedId<P>>;
   strike_craft_component_template: StrikeCraftComponentTemplateDef<PrefixedId<P>>;
+  ship_size: ShipSizeDef<PrefixedId<P>>;
   opinion_modifier: OpinionModifierDef<PrefixedId<P>>;
   static_modifier: StaticModifierDef<PrefixedId<P>>;
   scripted_modifier: ScriptedModifierDef<PrefixedId<P>>;
@@ -406,6 +421,7 @@ export interface DefinedContentMap<P extends string> {
   utility_component_template: DefinedUtilityComponentTemplate<PrefixedId<P>>;
   weapon_component_template: DefinedWeaponComponentTemplate<PrefixedId<P>>;
   strike_craft_component_template: DefinedStrikeCraftComponentTemplate<PrefixedId<P>>;
+  ship_size: DefinedShipSize<PrefixedId<P>>;
   opinion_modifier: DefinedOpinionModifier<PrefixedId<P>>;
   static_modifier: DefinedStaticModifier<PrefixedId<P>>;
   scripted_modifier: DefinedScriptedModifier<PrefixedId<P>>;
@@ -502,6 +518,11 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["strike_craft_component_template"]
   ): DefinedContentMap<P>["strike_craft_component_template"] {
     return this.defineGeneratedContent("strike_craft_component_template", def);
+  }
+
+  /** Defines a ship size in this mod. */
+  defineShipSize(def: ContentDefMap<P>["ship_size"]): DefinedContentMap<P>["ship_size"] {
+    return this.defineGeneratedContent("ship_size", def);
   }
 
   /** Defines an opinion modifier in this mod. */

@@ -3,6 +3,7 @@
 // From: common/global_ship_designs.cwt
 
 import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
+import type { SectionSlot } from "./enums.ts";
 import type {
   ComponentTemplateRef,
   ComponentTemplateUtilityComponentTemplateRef,
@@ -25,7 +26,7 @@ export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_COMPONENT_FIELDS: readonly
 
 export interface GlobalShipDesignGrowthStagesSection {
   template?: SectionTemplateRef | string;
-  slot?: string;
+  slot?: SectionSlot;
   component?: GlobalShipDesignGrowthStagesSectionComponent[];
 }
 
@@ -77,7 +78,7 @@ export const GLOBAL_SHIP_DESIGN_SECTION_COMPONENT_FIELDS: readonly ContentField[
 
 export interface GlobalShipDesignSection {
   template?: SectionTemplateRef | string;
-  slot?: string;
+  slot?: SectionSlot;
   component?: GlobalShipDesignSectionComponent[];
 }
 

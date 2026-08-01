@@ -326,6 +326,20 @@ function defineContentExample(): Mod<"content_test"> {
     hideFromCountryList: true,
   });
 
+  mod.defineShipSize({
+    id: "content_test_ship_size_synth_cruiser",
+    name: "Synthetic Cruiser",
+    class: "shipclass_military",
+    // Engine-keyed, not mod-prefixed: section templates mount to these names.
+    sectionSlots: {
+      bow: { locator: ["part1"] },
+      mid: { locator: ["part2", "part3"] },
+    },
+    minUpgradeCost: { alloys: 20 },
+    modifier: (m) => m.starbase.shipyard.build.speed.mult(0.1),
+    shipModifier: (m) => m.ship.weapon.damage(0.05),
+  });
+
   mod.defineScriptedModifier({
     id: "content_test_scripted_modifier_synthetic_output",
     name: "Synthetic Output",
@@ -807,6 +821,54 @@ describe("generated content registries", () => {
     expect(rendered).toContain(
       "on_monthly = {\n\t\trandom_events = {\n\t\t\t100 = re_test_event.1\n\t\t\t20 = 0\n\t\t}\n\t}"
     );
+  });
+
+  it("writes engine-keyed maps verbatim, taking no mod prefix", () => {
+    // The whole reason structMap exists rather than reusing repeatedStruct:
+    // these keys are the engine's, so `assertPrefixed` must not run on them and
+    // no localisation key is derived. Vanilla really does use bare integers
+    // (`1`..`6`) alongside names like `mid`, so both spellings are covered.
+    const mod = new Mod({
+      name: "Ship size test",
+      prefix: "ss_test",
+      supportedVersion: "4.4.*",
+    });
+    mod.defineShipSize({
+      id: "ss_test_cruiser",
+      name: "Cruiser",
+      class: "shipclass_military",
+      sectionSlots: {
+        mid: { locator: ["part1"] },
+        "1": { locator: ["part2"] },
+      },
+      minUpgradeCost: { alloys: 20, energy: 5 },
+    });
+    const rendered = mod.render().get("common/ship_sizes/ss_test_ship_sizes.txt")!;
+    expect(rendered).toContain("mid = {\n\t\t\tlocator = part1\n\t\t}");
+    expect(rendered).toContain("1 = {\n\t\t\tlocator = part2\n\t\t}");
+    expect(rendered).toContain("min_upgrade_cost = {\n\t\talloys = 20\n\t\tenergy = 5\n\t}");
+    // No prefixing, and no `ss_test_mid` localisation key invented for a slot.
+    expect(rendered).not.toContain("ss_test_mid");
+    expect(mod.render().get("localisation/english/ss_test_l_english.yml")).not.toContain("mid");
+  });
+
+  it("rejects an unprefixed id but not an unprefixed engine key", () => {
+    // The prefix rule still applies to the definition itself — only the
+    // structMap keys inside it are exempt.
+    const mod = new Mod({
+      name: "Ship size test",
+      prefix: "ss_test",
+      supportedVersion: "4.4.*",
+    });
+    const runtimeConfigured: Mod<string> = mod;
+    expect(() =>
+      runtimeConfigured.defineShipSize({
+        id: "othermod_cruiser",
+        name: "X",
+        class: "shipclass_military",
+        sectionSlots: { mid: { locator: ["part1"] } },
+      })
+    ).toThrow(/must start with the mod prefix "ss_test_"/);
   });
 
   it("splices a static modifier's rows at the block root, with no enclosing key", () => {
