@@ -12,6 +12,7 @@ import {
   type DecisionRef,
   type EdictRef,
   type JobRef,
+  type OpinionModifierRef,
   type TechnologyRef,
   type Trigger,
 } from "../src/index.ts";
@@ -69,6 +70,17 @@ describe("generated content authoring types", () => {
       name: "X",
     });
     expectTypeOf(job).toExtend<JobRef>();
+    const opinionModifier = mod.defineOpinionModifier({
+      id: "content_types_opinion_modifier_x",
+      name: "X",
+      opinion: { base: 10 },
+    });
+    expectTypeOf(opinionModifier).toExtend<OpinionModifierRef>();
+    const scriptedModifier = mod.defineScriptedModifier({
+      id: "content_types_scripted_modifier_x",
+      category: "country",
+    });
+    expectTypeOf(scriptedModifier).toExtend<{ readonly id: string }>();
   });
 
   it("does not invent a category field on traditions", () => {
@@ -87,6 +99,10 @@ describe("generated content authoring types", () => {
     mod.defineDecision({ id: "other_decision_x", name: "X", effect: () => {} });
     // @ts-expect-error — the job id must carry the inferred mod prefix
     mod.defineJob({ id: "other_job_x", name: "X" });
+    // @ts-expect-error — the opinion modifier id must carry the inferred mod prefix
+    mod.defineOpinionModifier({ id: "other_opinion_modifier_x", name: "X", opinion: { base: 1 } });
+    // @ts-expect-error — the scripted modifier id must carry the inferred mod prefix
+    mod.defineScriptedModifier({ id: "other_scripted_modifier_x", category: "country" });
     mod.defineTradition({
       id: "content_types_tradition_with_swap",
       name: "X",
@@ -217,6 +233,17 @@ describe("generated content authoring types", () => {
         },
       ],
     });
+    mod.defineOpinionModifier({
+      id: "content_types_opinion_modifier_scoped",
+      name: "X",
+      opinion: {
+        base: 10,
+        // @ts-expect-error — opinion modifiers run in country scope
+        modifiers: [{ factor: 2, when: hasPlanetFlag("planet_only") }],
+      },
+      // @ts-expect-error — the opinion modifier's own trigger runs in country scope
+      trigger: hasPlanetFlag("planet_only"),
+    });
   });
 
   it("keeps subtype fields optional rather than introducing a union", () => {
@@ -258,6 +285,17 @@ describe("generated content authoring types", () => {
       // @ts-expect-error — duplicate CWT localization aliases collapse to the canonical name slot
       councilAgendaName: "Duplicate",
     });
+  });
+
+  it("restricts scripted modifier category to the generated enum", () => {
+    mod.defineScriptedModifier({
+      id: "content_types_scripted_modifier_category",
+      category: "planet",
+      // @ts-expect-error — category is drawn from enum[scripted_modifier_category], not a free string
+      icon: 5,
+    });
+    // @ts-expect-error — an unknown category value is not a member of ScriptedModifierCategory
+    mod.defineScriptedModifier({ id: "content_types_scripted_modifier_bad", category: "nonsense" });
   });
 
   it("keeps content reference brands distinct", () => {

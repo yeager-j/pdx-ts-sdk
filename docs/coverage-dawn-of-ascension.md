@@ -63,9 +63,9 @@ Both remaining items in this batch are blocked on infrastructure, not modeling:
 
 Batch 2 — modifiers and loc:
 
-- [ ] `static_modifier` — `common/modifiers.cwt` — 10
-- [ ] `opinion_modifier` — `common/modifiers.cwt` — 3
-- [ ] `scripted_modifier` — `common/scripted_modifiers.cwt` — 5
+- [ ] `static_modifier` — `common/modifiers.cwt` — 10 — **blocked on new generic machinery**
+- [x] `opinion_modifier` — `common/modifiers.cwt` — 3
+- [x] `scripted_modifier` — `common/scripted_modifiers.cwt` — 5
 - [ ] `scripted_loc` — `common/scripted_loc.cwt` — 2 — **blocked on `name_field`**
 
 `scripted_loc` declares `name_field = "name"` at the top level of its type with
@@ -73,10 +73,41 @@ Batch 2 — modifiers and loc:
 below, not the swap-subtype form already handled. So the `name_field` work gates
 part of batch 2, not only batch 4.
 
-`common/modifiers.cwt` declares `static_modifier`, `triggered_opinion_modifier`,
-and `block_triggered` against `common/static_modifiers`; pick deliberately. Check
-whether these bodies should accept the existing `ModifierBlock` recorder rather
-than a fresh shape.
+`common/modifiers.cwt` actually declares two real types here, not three:
+`type[opinion_modifier]` (`game/common/opinion_modifiers`) and `type[static_modifier]`
+(`game/common/static_modifiers`). `triggered_opinion_modifier` and `block_triggered`
+are `subtype[...]` declarations *inside* `type[opinion_modifier]`, selected
+structurally by the presence of `trigger` or `block_triggered = yes` — the same
+subtype-merge shape already used for `job`'s capped/uncapped split, so
+`opinion_modifier` is one registry, not three.
+
+`opinion_modifier`'s fields reuse the existing recorder cleanly:
+`opinion`/`decay`/`growth` are `alias_name[modifier_rule]` blocks, the same
+base-plus-gated-`Modifier[]` shape as `ai_weight`/`weight` elsewhere, so they take
+`WeightBlock<S>` via a `CONTENT_FIELD_OVERRIDES` row — no new shape needed. (Each
+is declared twice, once as a bare `float` and once as the block; without the
+override the field group picks the bare float and silently drops the gated
+adjustments — the kind of "lowers cleanly but wrong" case the allowlist review
+exists to catch.)
+
+`static_modifier` cannot reuse the recorder and does not land here. Its body
+splices `alias_name[modifier] = alias_match_left[modifier]` — the actual
+modifier-clause grammar — directly at the *top level* of the definition, unkeyed,
+alongside ordinary named fields (`icon`, `important`, `custom_tooltip`, …).
+Confirmed against vanilla `common/static_modifiers/00_static_modifiers.txt`:
+entries like `empire_base = { max_rivalries = 3 ... }` carry no metadata at all,
+just modifier names at the block root. The emitter's field model — an allowlist of
+named CWT fields, each lowered to one `ContentField` — has no representation for
+a splice with no field key; `mergeByName` only tracks fields whose key kind is
+`"name"`, so the splice is invisible to `CONTENT_EMITTED_FIELDS` and
+`CONTENT_FIELD_OVERRIDES` alike. Landing `static_modifier` without it would ship a
+`defineStaticModifier` that can set icon/tooltip metadata but can never define the
+modifier's actual effect — not minimal, broken. Needs a new field shape (a
+top-level, unkeyed `ModifierClosure` merged with ordinary members) touching
+`cwt/rules.ts`/`model.ts` (to surface the splice), `emit/content-type.ts` (to emit
+the extra top-level member — currently off-limits, mid-flight for `name_field`),
+and `src/content.ts`'s writer (to splice those entries at the top level instead of
+under a key).
 
 Batch 3 — war and diplomacy:
 

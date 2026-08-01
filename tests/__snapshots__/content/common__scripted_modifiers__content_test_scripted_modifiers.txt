@@ -1,0 +1,13 @@
+content_test_scripted_modifier_synthetic_output = {
+	icon = GFX_scripted_modifier_synthetic_output
+	percentage = yes
+	min_mult = 0
+	max_decimals = 1
+	good = yes
+	neutral = no
+	hidden = no
+	no_diff = no
+	cap_zero_to_one = no
+	localize_with_value_key = no
+	category = country
+}

@@ -32,6 +32,16 @@ export type { BuildingDef, BuildingFields, DefinedBuilding } from "./generated/b
 export type { DecisionDef, DecisionFields, DefinedDecision } from "./generated/decision.ts";
 export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";
 export type { DefinedJob, JobDef, JobFields } from "./generated/job.ts";
+export type {
+  DefinedOpinionModifier,
+  OpinionModifierDef,
+  OpinionModifierFields,
+} from "./generated/opinion-modifier.ts";
+export type {
+  DefinedScriptedModifier,
+  ScriptedModifierDef,
+  ScriptedModifierFields,
+} from "./generated/scripted-modifier.ts";
 export type { DefinedTechnology, TechnologyDef, TechnologyFields } from "./generated/technology.ts";
 export type {
   DefinedTraditionCategory,

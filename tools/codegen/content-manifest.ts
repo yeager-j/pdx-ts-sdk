@@ -62,4 +62,6 @@ export const CONTENT_MANIFEST = [
     keyword: "strike_craft_component_template",
     as: "strike_craft_component_template",
   },
+  { type: "opinion_modifier", source: "common/modifiers.cwt" },
+  { type: "scripted_modifier", source: "common/scripted_modifiers.cwt" },
 ] as const satisfies readonly ContentManifestEntry[];

@@ -275,6 +275,39 @@ function defineContentExample(): Mod<"content_test"> {
     autoTraitPrio: ["trait_thrifty"],
   });
 
+  mod.defineOpinionModifier({
+    id: "content_test_opinion_modifier_diplomatic_thaw",
+    name: "Diplomatic Thaw",
+    opinion: {
+      base: 20,
+      modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
+    },
+    decay: { base: -1 },
+    growth: { base: 5 },
+    accumulative: true,
+    min: -50,
+    max: 50,
+    unique: true,
+    monthly: true,
+    months: 12,
+  });
+
+  mod.defineScriptedModifier({
+    id: "content_test_scripted_modifier_synthetic_output",
+    name: "Synthetic Output",
+    icon: "GFX_scripted_modifier_synthetic_output",
+    percentage: true,
+    minMult: 0,
+    maxDecimals: 1,
+    good: true,
+    neutral: false,
+    hidden: false,
+    noDiff: false,
+    capZeroToOne: false,
+    localizeWithValueKey: false,
+    category: "country",
+  });
+
   return mod;
 }
 
@@ -292,6 +325,8 @@ describe("generated content registries", () => {
       "common/edicts/content_test_edicts.txt",
       "common/decisions/content_test_decisions.txt",
       "common/pop_jobs/content_test_pop_jobs.txt",
+      "common/opinion_modifiers/content_test_opinion_modifiers.txt",
+      "common/scripted_modifiers/content_test_scripted_modifiers.txt",
       "localisation/english/content_test_l_english.yml",
     ]);
   });

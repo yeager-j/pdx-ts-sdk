@@ -310,9 +310,7 @@ async function main(): Promise<void> {
       `; clusters ${effects.clusterCount})`
   );
   for (const content of contents) {
-    console.log(
-      `${content.registry}: ${content.emission.emittedFields.length} curated fields emitted`
-    );
+    console.log(`${content.registry}: ${content.emission.emittedFields.length} fields emitted`);
   }
   console.log(`event kinds: ${events.kinds}`);
   console.log(

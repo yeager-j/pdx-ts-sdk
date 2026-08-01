@@ -1,0 +1,21 @@
+content_test_opinion_modifier_diplomatic_thaw = {
+	opinion = {
+		base = 20
+		modifier = {
+			factor = 2
+			has_authority = auth_machine_intelligence
+		}
+	}
+	decay = {
+		base = -1
+	}
+	growth = {
+		base = 5
+	}
+	accumulative = yes
+	min = -50
+	max = 50
+	unique = yes
+	monthly = yes
+	months = 12
+}

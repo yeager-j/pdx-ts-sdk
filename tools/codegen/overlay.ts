@@ -150,20 +150,18 @@ export const REQUIRED_LOCALISATION = new Set([
   "councilor.name",
   "decision.name",
   "job.name",
+  "opinion_modifier.name",
 ]);
 
 /**
  * Fields the emitter can lower but that review has decided not to emit, with
  * the reason.
  *
- * {@link CONTENT_EMITTED_FIELDS} is a queue that shrinks: a field absent from
- * it usually means "not reviewed yet", and codegen reports those so they can be
- * worked down. A permanent decision is different in kind, and recording it here
- * keeps it out of that queue instead of re-surfacing every run for someone to
- * re-litigate.
- *
- * Only for fields that lower successfully. A field the emitter cannot lower is
- * detected mechanically and belongs in no list.
+ * Everything the emitter can lower is emitted, so this is the only way to keep
+ * a field out of the authoring surface deliberately. It should stay nearly
+ * empty: a field the emitter cannot lower is detected mechanically and belongs
+ * in no list, and a field whose lowered type is wrong is better fixed than
+ * hidden.
  */
 export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
   [
@@ -442,6 +440,31 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     {
       shape: "weightBlock",
       reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "opinion_modifier.opinion",
+    {
+      shape: "weightBlock",
+      reason:
+        "opinion is declared twice, as a bare float and as a modifier_rule block; without the " +
+        "override the group picks the bare float and silently drops the gated adjustments.",
+    },
+  ],
+  [
+    "opinion_modifier.decay",
+    {
+      shape: "weightBlock",
+      reason:
+        "Same dual bare-float/modifier_rule declaration as opinion, gated to non-triggered subtypes.",
+    },
+  ],
+  [
+    "opinion_modifier.growth",
+    {
+      shape: "weightBlock",
+      reason:
+        "Same dual bare-float/modifier_rule declaration as opinion, gated to non-triggered subtypes.",
     },
   ],
 ]);

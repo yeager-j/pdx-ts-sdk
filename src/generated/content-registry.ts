@@ -10,6 +10,8 @@
 // From: common/pop_jobs.cwt
 // From: common/global_ship_designs.cwt
 // From: common/components.cwt
+// From: common/modifiers.cwt
+// From: common/scripted_modifiers.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import {
@@ -44,6 +46,18 @@ import {
   type GlobalShipDesignDef,
 } from "./global-ship-design.ts";
 import { JOB_FIELDS, JOB_LOCALISATION, type DefinedJob, type JobDef } from "./job.ts";
+import {
+  OPINION_MODIFIER_FIELDS,
+  OPINION_MODIFIER_LOCALISATION,
+  type DefinedOpinionModifier,
+  type OpinionModifierDef,
+} from "./opinion-modifier.ts";
+import {
+  SCRIPTED_MODIFIER_FIELDS,
+  SCRIPTED_MODIFIER_LOCALISATION,
+  type DefinedScriptedModifier,
+  type ScriptedModifierDef,
+} from "./scripted-modifier.ts";
 import {
   STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS,
   STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
@@ -179,6 +193,20 @@ export const CONTENT_REGISTRIES = [
     localisation: STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
     keyedBy: { keyword: "strike_craft_component_template", nameField: "key" },
   },
+  {
+    type: "opinion_modifier",
+    outputDir: "common/opinion_modifiers",
+    fileStem: "opinion_modifiers",
+    fields: OPINION_MODIFIER_FIELDS,
+    localisation: OPINION_MODIFIER_LOCALISATION,
+  },
+  {
+    type: "scripted_modifier",
+    outputDir: "common/scripted_modifiers",
+    fileStem: "scripted_modifiers",
+    fields: SCRIPTED_MODIFIER_FIELDS,
+    localisation: SCRIPTED_MODIFIER_LOCALISATION,
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -197,6 +225,8 @@ export interface ContentDefMap<P extends string> {
   utility_component_template: UtilityComponentTemplateDef<PrefixedId<P>>;
   weapon_component_template: WeaponComponentTemplateDef<PrefixedId<P>>;
   strike_craft_component_template: StrikeCraftComponentTemplateDef<PrefixedId<P>>;
+  opinion_modifier: OpinionModifierDef<PrefixedId<P>>;
+  scripted_modifier: ScriptedModifierDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -213,6 +243,8 @@ export interface DefinedContentMap<P extends string> {
   utility_component_template: DefinedUtilityComponentTemplate<PrefixedId<P>>;
   weapon_component_template: DefinedWeaponComponentTemplate<PrefixedId<P>>;
   strike_craft_component_template: DefinedStrikeCraftComponentTemplate<PrefixedId<P>>;
+  opinion_modifier: DefinedOpinionModifier<PrefixedId<P>>;
+  scripted_modifier: DefinedScriptedModifier<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -296,5 +328,19 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["strike_craft_component_template"]
   ): DefinedContentMap<P>["strike_craft_component_template"] {
     return this.defineGeneratedContent("strike_craft_component_template", def);
+  }
+
+  /** Defines an opinion modifier in this mod. */
+  defineOpinionModifier(
+    def: ContentDefMap<P>["opinion_modifier"]
+  ): DefinedContentMap<P>["opinion_modifier"] {
+    return this.defineGeneratedContent("opinion_modifier", def);
+  }
+
+  /** Defines a scripted modifier in this mod. */
+  defineScriptedModifier(
+    def: ContentDefMap<P>["scripted_modifier"]
+  ): DefinedContentMap<P>["scripted_modifier"] {
+    return this.defineGeneratedContent("scripted_modifier", def);
   }
 }

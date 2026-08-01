@@ -22,3 +22,5 @@
  job_content_test_job_synthetic_technician_plural:0 "Synthetic Technicians"
  job_content_test_job_synthetic_technician_desc:0 "Maintains the machine collective's growing infrastructure."
  job_content_test_job_synthetic_technician_effect_desc:0 "content_test_job_synthetic_technician_effect_desc_text"
+ content_test_opinion_modifier_diplomatic_thaw:0 "Diplomatic Thaw"
+ mod_content_test_scripted_modifier_synthetic_output:0 "Synthetic Output"

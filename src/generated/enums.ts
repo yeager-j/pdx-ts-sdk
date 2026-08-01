@@ -248,6 +248,31 @@ export type ScopeTypeToken =
   | "mission"
   | "colony";
 
+/** `enum[scripted_modifier_category]`. */
+export type ScriptedModifierCategory =
+  | "all"
+  | "none"
+  | "pop_group"
+  | "pop_job"
+  | "ship"
+  | "station"
+  | "fleet"
+  | "country"
+  | "army"
+  | "leader"
+  | "planet"
+  | "component"
+  | "pop_faction"
+  | "deposit"
+  | "megastructure"
+  | "habitability"
+  | "starbase"
+  | "economic_unit"
+  | "system"
+  | "federation"
+  | "espionage"
+  | "colony";
+
 /** `enum[ship_owner_type]`. */
 export type ShipOwnerType = "country" | "federation" | "galactic_community" | "global_ship_design";
 
