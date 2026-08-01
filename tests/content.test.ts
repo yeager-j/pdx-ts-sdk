@@ -6,6 +6,7 @@ import {
   canJoinFactions,
   hasAuthority,
   hasPlanetFlag,
+  hasSituationFlag,
   isCapital,
   Mod,
 } from "../src/index.ts";
@@ -429,6 +430,23 @@ function defineContentExample(): Mod<"content_test"> {
     onProgressComplete: () => {},
     onFail: () => {},
     abortTrigger: always(),
+    // modifier_rule_with_loc: `desc` is required per row (unlike plain
+    // modifier_rule) and takes display text, auto-registered like every other
+    // definition-attached localization slot — see the golden snapshot and the
+    // "registers a generated localisation key per monthly_progress desc" test
+    // below for the generated keys this produces. The corpus's dominant
+    // operations beyond add/factor — mult and subtract — are exercised here.
+    monthlyProgress: {
+      base: 2,
+      modifiers: [
+        { mult: 1.5, desc: "The uprising is spreading.", when: always() },
+        {
+          subtract: 1,
+          desc: "Machine intelligence keeps the uprising contained.",
+          when: hasSituationFlag("content_test_situation_uprising_contained"),
+        },
+      ],
+    },
     modifier: (m) => m.country.unity.produces.mult(0.02),
     targetModifier: (m) => m.pop.happiness(0.05),
     triggeredModifier: [
@@ -591,6 +609,7 @@ describe("generated content registries", () => {
     mod.defineSituationType({
       id: "sw_test_situation_dynamic",
       name: "Dynamic Progress Situation",
+      monthlyProgress: { base: 1 },
       totalProgress: { base: 60_000, modifiers: [{ factor: 2, when: always() }] },
       stages: {
         sw_test_situation_dynamic_stage_only: {
@@ -667,6 +686,7 @@ describe("generated content registries", () => {
       runtimeConfigured.defineSituationType({
         id: "content_test_situation_x",
         name: "X",
+        monthlyProgress: { base: 1 },
         stages: {
           othermod_stage: { name: "Wrong namespace", icon: "GFX_x", iconBackground: "GFX_x_bg" },
         },
@@ -675,6 +695,7 @@ describe("generated content registries", () => {
     mod.defineSituationType({
       id: "content_test_situation_y",
       name: "Y",
+      monthlyProgress: { base: 1 },
       stages: {
         content_test_situation_stage_shared: {
           name: "First",
@@ -687,6 +708,7 @@ describe("generated content registries", () => {
       mod.defineSituationType({
         id: "content_test_situation_z",
         name: "Z",
+        monthlyProgress: { base: 1 },
         stages: {
           content_test_situation_stage_shared: {
             name: "Second",

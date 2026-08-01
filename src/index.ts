@@ -13,6 +13,7 @@ export {
   type EventTarget,
   type IfChain,
   type Modifier,
+  type ModifierWithLoc,
   type RandomListArm,
   type ScopeRef,
   type StructuralEffects,
@@ -100,6 +101,7 @@ export type {
   ModifierClosure,
   TriggeredModifier,
   WeightBlock,
+  WeightBlockWithLoc,
 } from "./content.ts";
 export type {
   ModifierBlockByScope,

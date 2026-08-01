@@ -65,16 +65,74 @@ export function scopeRef<S extends ScopeName>(path: string): ScopeRef<S> {
 // Weight modifiers
 // ---------------------------------------------------------------------------
 
-/** One `modifier = { ... }` rule: a numeric change gated by a trigger. */
+/**
+ * One `modifier = { ... }` rule: a numeric change gated by a trigger.
+ *
+ * The operations mirror `complex_maths_enum` in `modifier_rule.cwt`
+ * (`set weight add subtract factor mult multiply divide modulo round_to max
+ * min pow`) restricted to the members the corpus actually exercises across
+ * every weight-block consumer, not just `situation_type.monthly_progress` —
+ * measured there alone: add 255, mult 176, subtract 37, factor 34, min 2,
+ * max 2, divide 2. `multiply` is spelled `multiplier` here to stay distinct
+ * from `mult`, and `min`/`max` are spelled `minValue`/`maxValue` since bare
+ * `min`/`max` read as comparisons rather than assignments. `set`, `modulo`,
+ * `round_to`, and `pow` are declared but unmeasured anywhere in the corpus
+ * and stay out until a real consumer needs them.
+ */
 export interface Modifier<S extends ScopeName> {
   readonly factor?: number;
   readonly add?: number;
   readonly weight?: number;
+  readonly subtract?: number;
+  readonly mult?: number;
+  readonly multiplier?: number;
+  readonly divide?: number;
+  readonly minValue?: number;
+  readonly maxValue?: number;
+  /**
+   * Display text for this modifier row's tooltip (`desc = localisation` in
+   * `modifier_rule.cwt`). Like every other definition-attached localization
+   * slot in the SDK, the author writes text and a key is generated and
+   * registered automatically — see `ContentAuthoring`'s modifier-desc
+   * collection in `content.ts`, which is the only pathway that can safely
+   * auto-register (it runs once, at `define()` time, against a stable
+   * definition id). `randomList`/`lockedRandomList`/`random` and other
+   * runtime-recorded effect modifiers have no such stable, once-only
+   * registration point — `modifierEntry` below throws if `desc` reaches it
+   * unresolved from one of those.
+   */
+  readonly desc?: string;
   /** The gating condition, spliced inline per `modifier_rule.cwt`. */
   readonly when: Trigger<S>;
 }
 
-/** SDK-internal shared lowering for a `modifier_rule` row. */
+/**
+ * A {@link Modifier} whose `desc` is required, matching
+ * `modifier_rule_with_loc` — "deliberately more restrictive because of what
+ * we can make good tooltips with", per the CWT source comment. Same concept
+ * as `Modifier`, one stricter requiredness level, not a duplicate shape.
+ */
+export type ModifierWithLoc<S extends ScopeName> = Modifier<S> & { readonly desc: string };
+
+/**
+ * Resolved `desc` keys, by the exact `Modifier` object that carries them.
+ *
+ * Modifier rows are anonymous and repeated with no id of their own, so a
+ * generated localisation key cannot ride the usual `<id>`/`<id>_desc`
+ * pattern. `ContentAuthoring` (content.ts) generates and registers one key
+ * per desc-bearing row at `define()` time — the only point with a stable
+ * definition id and a once-only guarantee — and records it here, keyed by
+ * object identity rather than by any path string, so `modifierEntry` below
+ * needs no extra context threaded through the ordinary lowering call chain.
+ */
+const modifierDescKeys = new WeakMap<Modifier<ScopeName>, string>();
+
+/** SDK-internal: records the localisation key a modifier row's `desc` resolved to. */
+export function registerModifierDescKey(modifier: Modifier<ScopeName>, key: string): void {
+  modifierDescKeys.set(modifier, key);
+}
+
+/** SDK-internal shared lowering for a `modifier_rule`/`modifier_rule_with_loc` row. */
 export function modifierEntry(modifier: Modifier<ScopeName>): PdxEntry {
   const entries: PdxEntry[] = [];
   if (modifier.factor !== undefined) {
@@ -85,6 +143,37 @@ export function modifierEntry(modifier: Modifier<ScopeName>): PdxEntry {
   }
   if (modifier.weight !== undefined) {
     entries.push(kv("weight", modifier.weight));
+  }
+  if (modifier.subtract !== undefined) {
+    entries.push(kv("subtract", modifier.subtract));
+  }
+  if (modifier.mult !== undefined) {
+    entries.push(kv("mult", modifier.mult));
+  }
+  if (modifier.multiplier !== undefined) {
+    entries.push(kv("multiply", modifier.multiplier));
+  }
+  if (modifier.divide !== undefined) {
+    entries.push(kv("divide", modifier.divide));
+  }
+  if (modifier.minValue !== undefined) {
+    entries.push(kv("min", modifier.minValue));
+  }
+  if (modifier.maxValue !== undefined) {
+    entries.push(kv("max", modifier.maxValue));
+  }
+  if (modifier.desc !== undefined) {
+    const key = modifierDescKeys.get(modifier);
+    if (key === undefined) {
+      throw new Error(
+        "Modifier.desc is display text that must be registered as localization before it can " +
+          "be lowered, and this row was never registered. desc is only supported on modifiers " +
+          "inside a content definition's WeightBlock (e.g. situation_type.monthly_progress) — " +
+          "randomList/lockedRandomList/random and other runtime-recorded effect modifiers have " +
+          "no stable, once-only point to register a key against, so they cannot accept desc."
+      );
+    }
+    entries.push(kv("desc", key));
   }
   entries.push(...modifier.when.entries);
   return block("modifier", entries);

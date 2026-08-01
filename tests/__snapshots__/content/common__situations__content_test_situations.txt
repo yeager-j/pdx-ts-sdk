@@ -23,6 +23,19 @@ content_test_situation_machine_uprising = {
 		}
 		country_unity_produces_mult = -0.05
 	}
+	monthly_progress = {
+		base = 2
+		modifier = {
+			mult = 1.5
+			desc = content_test_situation_machine_uprising_monthly_progress_0
+			always = yes
+		}
+		modifier = {
+			subtract = 1
+			desc = content_test_situation_machine_uprising_monthly_progress_1
+			has_situation_flag = content_test_situation_uprising_contained
+		}
+	}
 	approach = {
 		name = content_test_situation_machine_uprising_approach_negotiate
 		icon = GFX_situation_approach_negotiate

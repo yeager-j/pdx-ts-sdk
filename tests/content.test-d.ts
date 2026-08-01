@@ -273,6 +273,7 @@ describe("generated content authoring types", () => {
     mod.defineSituationType({
       id: "content_types_situation_scoped",
       name: "X",
+      monthlyProgress: { base: 1 },
       // Valid here — potential replace_scopes to country.
       potential: hasAuthority("auth_democratic"),
       stages: {

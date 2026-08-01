@@ -15,7 +15,13 @@ import {
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
-import { makeScope, modifierEntry, type Modifier } from "./effect-core.ts";
+import {
+  makeScope,
+  modifierEntry,
+  registerModifierDescKey,
+  type Modifier,
+  type ModifierWithLoc,
+} from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "./generated/modifiers.ts";
 import { refId, type TypedRef } from "./generated/refs.ts";
@@ -89,13 +95,26 @@ export interface EconomicResourceBlock<S extends ScopeName> {
   readonly logistics?: EconomicResourceOperation<S>;
 }
 
-/** A `modifier_rule` block: optional base weight plus gated adjustments. */
-export interface WeightBlock<S extends ScopeName> {
+/**
+ * A `modifier_rule` block: optional base weight plus gated adjustments.
+ *
+ * `M` defaults to plain {@link Modifier} (`desc` optional); `WeightBlockWithLoc`
+ * below is the same shape with `M` pinned to {@link ModifierWithLoc} for
+ * `modifier_rule_with_loc` consumers, not a separate runtime concept — the
+ * writer lowers both through the same `weightBlock` function.
+ */
+export interface WeightBlock<S extends ScopeName, M extends Modifier<S> = Modifier<S>> {
   /** Starting weight before modifiers. */
   readonly base?: number;
   /** Conditional adjustments emitted as repeated `modifier` blocks. */
-  readonly modifiers?: readonly Modifier<S>[];
+  readonly modifiers?: readonly M[];
 }
+
+/**
+ * A {@link WeightBlock} whose rows require `desc`, matching
+ * `modifier_rule_with_loc` (e.g. `situation_type.monthly_progress`).
+ */
+export type WeightBlockWithLoc<S extends ScopeName> = WeightBlock<S, ModifierWithLoc<S>>;
 
 /** A script effect block recorded against the scope declared by the content rules. */
 export type EffectBlock<S extends ScopeName> = (scope: ScopeObjOf<S>) => void;
@@ -176,6 +195,11 @@ interface ContentWeightField extends ContentFieldBase {
   readonly shape: "weightBlock";
 }
 
+/** Same runtime shape as {@link ContentWeightField}; its rows require `desc`. */
+interface ContentWeightWithLocField extends ContentFieldBase {
+  readonly shape: "weightBlockWithLoc";
+}
+
 /**
  * An anonymous, identity-less block: `text = { trigger = { ... } }` written N
  * times (shape 3), generalized down to whatever cardinality CWT declares — a
@@ -227,6 +251,7 @@ export type ContentField =
   | ContentTriggeredModifierField
   | ContentModifierField
   | ContentWeightField
+  | ContentWeightWithLocField
   | ContentStructField
   | ContentRepeatedStructField;
 
@@ -440,6 +465,7 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
         entries.push(modifierBlock(field.key, value as ModifierClosure));
         break;
       case "weightBlock":
+      case "weightBlockWithLoc":
         entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));
         break;
       case "struct": {
@@ -546,7 +572,7 @@ export class ContentAuthoring {
     const localisation: LocalisationEntry[] = [];
     const nestedIds = new Map<string, Set<string>>();
     this.collectLocalisation(def.id, def, descriptor.localisation, localisation);
-    this.collectRepeatedStructs(def, descriptor.fields, type, nestedIds, localisation);
+    this.collectRepeatedStructs(def.id, "", def, descriptor.fields, type, nestedIds, localisation);
     this.registerLoc(localisation);
     for (const [identity, pending] of nestedIds) {
       const ids = this.nestedIds.get(identity) ?? new Set<string>();
@@ -611,7 +637,21 @@ export class ContentAuthoring {
     }
   }
 
+  /**
+   * Walks every field level (top, plain `struct` nesting, and `repeatedStruct`
+   * nesting) for the two things that need a stable identity to resolve
+   * against: repeated-struct ids (prefix and duplicate checks, matched
+   * against localisation) and `WeightBlock`/`WeightBlockWithLoc` modifier
+   * rows carrying `desc` (registered as localisation via
+   * {@link collectModifierDescs}). `ownerId` is the nearest enclosing
+   * identity — the definition id, or a repeated-struct entry's own id once
+   * recursion crosses one — and `path` accumulates plain `struct` field keys
+   * since the last identity, so a modifier's generated key is unique even
+   * when a WeightBlock sits several `struct` levels deep.
+   */
   private collectRepeatedStructs(
+    ownerId: string,
+    path: string,
     def: Readonly<Record<string, unknown>>,
     fields: readonly ContentField[],
     ownerType: string,
@@ -619,14 +659,37 @@ export class ContentAuthoring {
     localisation: LocalisationEntry[]
   ): void {
     for (const field of fields) {
+      const raw = def[field.member];
+      if (raw === undefined) {
+        continue;
+      }
+      const fieldPath = path === "" ? field.key : `${path}_${field.key}`;
+      if (field.shape === "weightBlock" || field.shape === "weightBlockWithLoc") {
+        this.collectModifierDescs(ownerId, fieldPath, raw as WeightBlock<ScopeName>, localisation);
+        continue;
+      }
+      if (field.shape === "struct") {
+        const items = field.repeated
+          ? (raw as readonly Readonly<Record<string, unknown>>[])
+          : [raw as Readonly<Record<string, unknown>>];
+        items.forEach((item, index) => {
+          const itemPath = field.repeated ? `${fieldPath}_${index}` : fieldPath;
+          this.collectRepeatedStructs(
+            ownerId,
+            itemPath,
+            item,
+            field.fields,
+            ownerType,
+            pendingIds,
+            localisation
+          );
+        });
+        continue;
+      }
       if (field.shape !== "repeatedStruct") {
         continue;
       }
-      const record = def[field.member] as
-        Readonly<Record<string, Readonly<Record<string, unknown>>>> | undefined;
-      if (record === undefined) {
-        continue;
-      }
+      const record = raw as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
       const identity = `${ownerType}.${field.key}`;
       const existingIds = this.nestedIds.get(identity);
       const pending = pendingIds.get(identity) ?? new Set<string>();
@@ -637,9 +700,43 @@ export class ContentAuthoring {
         }
         pending.add(id);
         this.collectLocalisation(id, nested, field.localisation, localisation);
-        this.collectRepeatedStructs(nested, field.fields, identity, pendingIds, localisation);
+        this.collectRepeatedStructs(
+          id,
+          "",
+          nested,
+          field.fields,
+          identity,
+          pendingIds,
+          localisation
+        );
       }
       pendingIds.set(identity, pending);
     }
+  }
+
+  /**
+   * Registers one localisation key per desc-bearing modifier row in a
+   * `WeightBlock`. Modifier rows are anonymous and repeated with no id of
+   * their own, so the key is derived rather than author-supplied:
+   * `<ownerId>_<fieldPath>_<index>`. `ownerId` and `fieldPath` are already
+   * unique per definition (mod-prefixed and duplicate-checked, or a fixed
+   * field key/struct path), and `index` disambiguates multiple modifier rows
+   * on the same field — deterministic across runs, and never collides for
+   * legitimate input with several modifiers on one definition.
+   */
+  private collectModifierDescs(
+    ownerId: string,
+    fieldPath: string,
+    weight: WeightBlock<ScopeName>,
+    into: LocalisationEntry[]
+  ): void {
+    (weight.modifiers ?? []).forEach((modifier, index) => {
+      if (modifier.desc === undefined) {
+        return;
+      }
+      const key = `${ownerId}_${fieldPath}_${index}`;
+      into.push([key, modifier.desc]);
+      registerModifierDescKey(modifier, key);
+    });
   }
 }

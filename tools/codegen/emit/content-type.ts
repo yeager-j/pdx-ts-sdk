@@ -373,6 +373,13 @@ function lowerOrdinary(
       metadata: metadata(field, name, "weightBlock"),
     };
   }
+  if (requested === "weightBlockWithLoc") {
+    const scope = scopeType(emitter, field, inheritedScope);
+    return {
+      memberType: `WeightBlockWithLoc<${scope}>`,
+      metadata: metadata(field, name, "weightBlockWithLoc"),
+    };
+  }
   if (requested === "valueList") {
     return lowerValueList(emitter, field, name, widening, override?.quoted ?? false);
   }

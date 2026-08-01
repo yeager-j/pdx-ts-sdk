@@ -196,6 +196,7 @@ async function main(): Promise<void> {
       "ModifierClosure",
       "TriggeredModifier",
       "WeightBlock",
+      "WeightBlockWithLoc",
     ].filter((name) => content.emission.code.includes(name));
     await write(
       `${content.registry.replaceAll("_", "-")}.ts`,

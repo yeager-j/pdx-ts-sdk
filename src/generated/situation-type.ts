@@ -12,6 +12,7 @@ import type {
   ModifierClosure,
   TriggeredModifier,
   WeightBlock,
+  WeightBlockWithLoc,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { SituationCategory } from "./enums.ts";
@@ -200,6 +201,7 @@ export interface SituationTypeFields<Id extends string = string> {
   triggeredModifier?: TriggeredModifier<"country">[];
   triggeredTargetModifier?: TriggeredModifier<"planet">[];
   onMonthly?: SituationTypeOnMonthly;
+  monthlyProgress: WeightBlockWithLoc<"situation">;
   approach?: Readonly<Record<Id, SituationApproachFields>>;
   /** Situation will start at this number. Default is 0 */
   startValue?: number;
@@ -325,6 +327,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     shape: "struct",
     fields: SITUATION_TYPE_ON_MONTHLY_FIELDS,
   },
+  { key: "monthly_progress", member: "monthlyProgress", shape: "weightBlockWithLoc" },
   {
     key: "approach",
     member: "approach",

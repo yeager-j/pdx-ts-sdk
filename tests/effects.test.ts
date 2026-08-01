@@ -92,4 +92,25 @@ add_resource = {
     const scope = makeScope<"country">(sink) as unknown as { bogusEffect(): void };
     expect(() => scope.bogusEffect()).toThrow(/Unknown effect "bogusEffect"/);
   });
+
+  it("throws on a randomList modifier's desc, which has no once-only point to register a key against", () => {
+    // Modifier.desc is display text that content definitions auto-register
+    // as localisation at define() time (see content.test.ts's monthly_progress
+    // coverage). randomList/lockedRandomList/random run inside effect
+    // closures with no stable definition id and no once-only guarantee — a
+    // render() can be called more than once — so there is nowhere safe to
+    // register a key, and modifierEntry refuses rather than silently writing
+    // the author's display text as a script identifier.
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+    expect(() =>
+      country.randomList([
+        {
+          weight: 40,
+          modifiers: [{ factor: 2, desc: "This arm is favored during war.", when: isAtWar() }],
+          do: () => {},
+        },
+      ])
+    ).toThrow(/desc is only supported on modifiers inside a content definition's WeightBlock/);
+  });
 });

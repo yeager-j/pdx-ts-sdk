@@ -186,6 +186,14 @@ export type ContentFieldShape =
   | "modifierBlock"
   | "weightBlock"
   /**
+   * Same runtime shape as `weightBlock` — `WeightBlockWithLoc<S>`, a
+   * `WeightBlock` whose `Modifier` rows require `desc` — for
+   * `modifier_rule_with_loc` splices, which the CWT source comment calls
+   * "deliberately more restrictive because of what we can make good
+   * tooltips with" than plain `modifier_rule`.
+   */
+  | "weightBlockWithLoc"
+  /**
    * An anonymous block with no identity: `text = { trigger = { ... } }`
    * written N times, or a single fixed-shape block like
    * `forbidden_peace_offers = { demand_surrender = ... }`. Inferred from CWT
@@ -560,6 +568,24 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "picks the malformed bare scalar and silently drops the gated adjustments, same failure " +
         "mode as opinion_modifier.opinion — the fourth occurrence the roadmap's scalar-versus-block " +
         "picker section predicted.",
+    },
+  ],
+  [
+    "situation_type.monthly_progress",
+    {
+      shape: "weightBlockWithLoc",
+      reason:
+        "Splices `alias_name[modifier_rule_with_loc]`, not `modifier_rule` — the same base-plus-" +
+        "gated-Modifier shape, but `desc` is required per row rather than optional (no `## " +
+        "cardinality = 0..1` precedes it, unlike plain modifier_rule's `desc`). `complex_maths_enum` " +
+        "(add/subtract/factor/mult/multiply/divide/min/max/...) is declared with real values in " +
+        "modifier_rule.cwt's own `enums = { ... }` block, but only ever appears as a computed key " +
+        "(`enum[complex_maths_enum] = value_field`), never as a value type, so it never reaches " +
+        "`emitter.usedEnums` and cannot be mechanically derived the way an ordinary enum-typed field " +
+        "would be — same absence-of-a-value-position gap as the valueless enums `emitEnums` widens " +
+        "to `string`, just discovered from the key side instead. The operation set on `Modifier` is " +
+        "hand-curated in src/effect-core.ts from the grammar's declared members intersected with " +
+        "what the corpus actually uses, not derived here.",
     },
   ],
   [
