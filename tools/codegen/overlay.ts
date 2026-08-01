@@ -565,7 +565,6 @@ export interface RepeatedStructDefinition {
   /** Required when `keying` is "siblings" (the default); unused for "container". */
   readonly identityKey?: string;
   readonly localisationType: string;
-  readonly fields: readonly string[];
 }
 
 export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinition>([
@@ -575,17 +574,6 @@ export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinit
       typeName: "TraditionSwap",
       identityKey: "name",
       localisationType: "swapped_tradition",
-      fields: [
-        "inherit_icon",
-        "inherit_name",
-        "inherit_effects",
-        "unlocks_agenda",
-        "custom_tooltip",
-        "custom_tooltip_with_modifiers",
-        "modifier",
-        "weight",
-        "trigger",
-      ],
     },
   ],
   [
@@ -594,17 +582,6 @@ export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinit
       typeName: "AscensionPerkSwap",
       identityKey: "name",
       localisationType: "swapped_ascension_perk",
-      fields: [
-        "inherit_icon",
-        "inherit_name",
-        "inherit_effects",
-        "custom_tooltip",
-        "custom_tooltip_with_modifiers",
-        "modifier",
-        "on_enabled",
-        "weight",
-        "trigger",
-      ],
     },
   ],
 ]);

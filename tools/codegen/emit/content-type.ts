@@ -539,7 +539,9 @@ function repeatedStructEmission(
   readonly localisationConstant: string;
   readonly memberType: string;
   readonly metadata: string;
-  readonly unemitted: readonly string[];
+  /** Refused outright by CONTENT_DECLINED_FIELDS, each with its reason. */
+  readonly declinedFields: readonly string[];
+  /** Present in the struct's rules but not expressible, or a member-name collision. */
   readonly unsupported: readonly string[];
   readonly localisationAliases: readonly string[];
 } | null {
@@ -551,19 +553,47 @@ function repeatedStructEmission(
     return null;
   }
   const grouped = mergeByName(ownerField.type.fields, config.typeName);
+  // The record key already carries the identity value — written into
+  // identityKey inside each sibling block, or (for "container") the block's
+  // own key — so it is not an ordinary member, the same reason the top level
+  // drops its nameField before iterating.
+  if (config.identityKey !== undefined) {
+    grouped.delete(config.identityKey);
+  }
+
+  const typeName = config.typeName;
+  const localisationType = emitter.rules.contentTypes.get(config.localisationType);
+  const localisationPlan =
+    localisationType === undefined ? null : planLocalisation(localisationType);
+  // A struct field can share a name with the struct's own localisation slot
+  // without meaning the same thing, exactly the collision the top level
+  // guards against — the localisation member wins and the body field is
+  // reported instead of silently duplicating a TS property.
+  const localisationMemberNames = new Set(
+    (localisationPlan?.entries ?? []).map((entry) => camelCase(entry.key))
+  );
+
   const members: string[] = [];
   const fieldMetadata: string[] = [];
-  const emitted = new Set<string>(config.identityKey === undefined ? [] : [config.identityKey]);
+  const declinedFields: string[] = [];
   const unsupported: string[] = [];
   const extraCode: string[] = [];
 
-  for (const name of config.fields) {
-    const group = grouped.get(name);
-    if (group === undefined) {
-      unsupported.push(`${ownerPath}.${name} (no such nested rule field)`);
+  // Everything the struct's rules declare is emitted, in the rules'
+  // declaration order — the same loop shape the top level uses, one level
+  // down. A nested field is absent only because the emitter cannot express
+  // it or CONTENT_DECLINED_FIELDS refuses it outright.
+  for (const [name, group] of grouped) {
+    const fieldPath = `${ownerPath}.${name}`;
+    const declined = CONTENT_DECLINED_FIELDS.get(fieldPath);
+    if (declined !== undefined) {
+      declinedFields.push(`${fieldPath} — ${declined}`);
       continue;
     }
-    const fieldPath = `${ownerPath}.${name}`;
+    if (localisationMemberNames.has(camelCase(name))) {
+      unsupported.push(`${fieldPath} (collides with the "${camelCase(name)}" localization slot)`);
+      continue;
+    }
     const lowering = pickOrdinary(
       emitter,
       group,
@@ -591,26 +621,21 @@ function repeatedStructEmission(
     if (lowering.unsupported !== undefined) {
       unsupported.push(...lowering.unsupported);
     }
-    emitted.add(name);
   }
 
-  const localisationType = emitter.rules.contentTypes.get(config.localisationType);
   if (localisationType === undefined) {
     unsupported.push(`${ownerPath} (missing type[${config.localisationType}] localization)`);
   }
-  const typeName = config.typeName;
   const constantPrefix = constantCase(typeName);
   const fieldsConstant = `${constantPrefix}_FIELDS`;
   const localisationConstant = `${constantPrefix}_LOCALISATION`;
-  let locMembers = "";
-  let locMetadata = "[]";
-  let localisationAliases: readonly string[] = [];
-  if (localisationType !== undefined) {
-    const plan = planLocalisation(localisationType);
-    locMembers = localisationMembers(localisationType, plan);
-    locMetadata = localisationMetadata(localisationType, plan);
-    localisationAliases = plan.aliases;
-  }
+  const locMembers =
+    localisationType === undefined ? "" : localisationMembers(localisationType, localisationPlan!);
+  const locMetadata =
+    localisationType === undefined
+      ? "[]"
+      : localisationMetadata(localisationType, localisationPlan!);
+  const localisationAliases: readonly string[] = localisationPlan?.aliases ?? [];
   const code =
     extraCode.join("") +
     `export interface ${typeName}Fields {\n` +
@@ -622,10 +647,6 @@ function repeatedStructEmission(
     "];\n\n" +
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ${locMetadata};\n\n`;
 
-  const unemitted = [...grouped.keys()]
-    .filter((name) => !emitted.has(name))
-    .map((name) => `${ownerPath}.${name}`)
-    .sort();
   const metadataValue = metadata(
     ownerField,
     ownerField.key.kind === "name" ? ownerField.key.name : "",
@@ -643,7 +664,7 @@ function repeatedStructEmission(
     localisationConstant,
     memberType: `Readonly<Record<Id, ${typeName}Fields>>`,
     metadata: metadataValue,
-    unemitted,
+    declinedFields,
     unsupported,
     localisationAliases,
   };
@@ -669,7 +690,6 @@ export function emitContentType(
   const emittedFields: string[] = [];
   const declinedFields: string[] = [];
   const unsupported: string[] = [];
-  const nestedUnemitted: string[] = [];
   const extraCode: string[] = [];
   const localisationAliases: string[] = [];
   const members: string[] = [];
@@ -728,7 +748,7 @@ export function emitContentType(
       extraCode.push(nested.code);
       fieldMetadata.push(nested.metadata);
       needsId = true;
-      nestedUnemitted.push(...nested.unemitted);
+      declinedFields.push(...nested.declinedFields);
       unsupported.push(...nested.unsupported);
       localisationAliases.push(...nested.localisationAliases);
       emittedFields.push(name);
@@ -802,7 +822,7 @@ export function emitContentType(
     localisationConstant,
     emittedFields,
     declinedFields: declinedFields.sort(),
-    machineryBacklog: [...nestedUnemitted, ...unsupported].sort(),
+    machineryBacklog: [...unsupported].sort(),
     unsupported,
     localisationAliases: [...localisationPlan.aliases, ...localisationAliases],
   };
