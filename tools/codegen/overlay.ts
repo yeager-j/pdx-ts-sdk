@@ -286,12 +286,25 @@ export type ContentFieldShape =
    * nothing-happens arm. The computed key is invisible to the ordinary field
    * model, so the shape must be requested.
    */
-  | "weightedEvents";
+  | "weightedEvents"
+  /**
+   * A field spliced from a non-trigger/effect CWT alias category emitted by
+   * `emit/alias-struct.ts` — `government_trigger` is the only consumer so
+   * far. Unlike the pure-splice categories `spliceCategory` finds on its own
+   * (`trigger`, `effect`, `modifier_rule`), the category here sits alongside
+   * ordinary named siblings (`potential = { text? always? alias_name[...] }`),
+   * the same "combinator" shape the category's own self-recursive members
+   * use — so the field lowers to that category's shared `<Name>Block`
+   * interface rather than being auto-detected.
+   */
+  | "aliasStruct";
 
 export interface ContentFieldOverride {
   /** Omitted when the row only renames the authoring member. */
   readonly shape?: ContentFieldShape;
   readonly quoted?: boolean;
+  /** The alias category to splice in, when `shape` is `"aliasStruct"`. */
+  readonly category?: string;
   /**
    * Authoring member name, when the mechanically derived one collides with a
    * localisation slot: `desc = { trigger text }` (the repeated block form of
@@ -600,6 +613,49 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "Repeated siblings carrying a name field (`approach = { name = approach_a ... }`), the " +
         "same shape tradition_swap already exercises.",
+    },
+  ],
+  [
+    "civic_or_origin.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "civic_or_origin.multiply_by_habitability_effect_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "civic_or_origin.swap_type.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "civic_or_origin.potential",
+    {
+      shape: "aliasStruct",
+      category: "government_trigger",
+      reason:
+        "`potential = { text? always? alias_name[government_trigger] }` is the same " +
+        "text/always-plus-splice shape government_trigger's own OR/AND/limit combinators use, " +
+        "so it lowers onto the shared GovernmentTriggerBlock rather than a Trigger — the game " +
+        "reads this as the requirements DSL, not a script condition tree.",
+    },
+  ],
+  [
+    "civic_or_origin.possible",
+    {
+      shape: "aliasStruct",
+      category: "government_trigger",
+      reason:
+        "Same shape and justification as civic_or_origin.potential — `possible` is the other " +
+        "government_trigger consumer governments.cwt declares alongside it.",
     },
   ],
 ]);

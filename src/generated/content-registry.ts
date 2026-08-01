@@ -65,6 +65,12 @@ import {
   type DefinedCasusBelli,
 } from "./casus-belli.ts";
 import {
+  CIVIC_OR_ORIGIN_FIELDS,
+  CIVIC_OR_ORIGIN_LOCALISATION,
+  type CivicOrOriginDef,
+  type DefinedCivicOrOrigin,
+} from "./civic-or-origin.ts";
+import {
   COUNCILOR_FIELDS,
   COUNCILOR_LOCALISATION,
   type CouncilorDef,
@@ -333,6 +339,13 @@ export const CONTENT_REGISTRIES = [
     fields: ECONOMIC_CATEGORY_FIELDS,
     localisation: ECONOMIC_CATEGORY_LOCALISATION,
   },
+  {
+    type: "civic_or_origin",
+    outputDir: "common/governments/civics",
+    fileStem: "civics",
+    fields: CIVIC_OR_ORIGIN_FIELDS,
+    localisation: CIVIC_OR_ORIGIN_LOCALISATION,
+  },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
@@ -362,6 +375,7 @@ export interface ContentDefMap<P extends string> {
   scripted_loc: ScriptedLocDef<PrefixedId<P>>;
   councilor: CouncilorDef<PrefixedId<P>>;
   economic_category: EconomicCategoryDef<PrefixedId<P>>;
+  civic_or_origin: CivicOrOriginDef<PrefixedId<P>>;
 }
 
 export interface DefinedContentMap<P extends string> {
@@ -389,6 +403,7 @@ export interface DefinedContentMap<P extends string> {
   scripted_loc: DefinedScriptedLoc<PrefixedId<P>>;
   councilor: DefinedCouncilor<PrefixedId<P>>;
   economic_category: DefinedEconomicCategory<PrefixedId<P>>;
+  civic_or_origin: DefinedCivicOrOrigin<PrefixedId<P>>;
 }
 
 export abstract class GeneratedContentMethods<const P extends string> {
@@ -541,5 +556,12 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["economic_category"]
   ): DefinedContentMap<P>["economic_category"] {
     return this.defineGeneratedContent("economic_category", def);
+  }
+
+  /** Defines a civic or origin in this mod. */
+  defineCivicOrOrigin(
+    def: ContentDefMap<P>["civic_or_origin"]
+  ): DefinedContentMap<P>["civic_or_origin"] {
+    return this.defineGeneratedContent("civic_or_origin", def);
   }
 }

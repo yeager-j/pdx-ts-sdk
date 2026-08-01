@@ -424,6 +424,14 @@ function lowerOrdinary(
       metadata: metadata(field, name, "weightBlockWithLoc"),
     };
   }
+  if (requested === "aliasStruct") {
+    const category = override!.category!;
+    const memberType = `${pascalCase(category)}Block`;
+    return {
+      memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+      metadata: metadata(field, name, "aliasStruct", [`category: ${JSON.stringify(category)}`]),
+    };
+  }
   if (requested === "valueList") {
     return lowerValueList(emitter, field, name, widening, override?.quoted ?? false);
   }

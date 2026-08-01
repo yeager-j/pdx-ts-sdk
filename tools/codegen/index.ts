@@ -11,6 +11,7 @@ import { format, resolveConfig } from "prettier";
 
 import { CONTENT_MANIFEST, type ContentManifestEntry } from "./content-manifest.ts";
 import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
+import { emitAliasStruct, type AliasStructEmission } from "./emit/alias-struct.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
@@ -27,10 +28,11 @@ import {
   valuelessEnums,
 } from "./emit/support.ts";
 import { emitTriggers } from "./emit/triggers.ts";
-import { Emitter } from "./emit/types.ts";
+import { Emitter, type Usage } from "./emit/types.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
+import { CONTENT_FIELD_OVERRIDES, REPEATED_STRUCT_FIELD_OVERRIDES } from "./overlay.ts";
 import { compareToBaseline, reconcile, type DriftReport } from "./reconcile.ts";
 
 const VENDOR = "vendor/cwtools-stellaris-config";
@@ -137,6 +139,33 @@ async function main(): Promise<void> {
   const effects = emitEffects(emitter, docs.effects, index, classifiedLinks.links);
   const effectUsage = emitter.endFile();
 
+  // Categories a content field lowers onto via `shape: "aliasStruct"` each need
+  // their own shared `<Name>Block` module — `government_trigger` is the first,
+  // via `civic_or_origin.potential`/`possible`. Collected from the overlay
+  // rather than hardcoded so a future aliasStruct consumer picks this up for
+  // free.
+  const aliasStructCategories = [
+    ...CONTENT_FIELD_OVERRIDES.values(),
+    ...REPEATED_STRUCT_FIELD_OVERRIDES.values(),
+  ]
+    .filter((override) => override.shape === "aliasStruct")
+    .map((override) => override.category!)
+    .filter((category, index, categories) => categories.indexOf(category) === index);
+  const aliasStructs = new Map<string, AliasStructEmission & { usage: Usage }>();
+  for (const category of aliasStructCategories) {
+    const members = rules.aliasCategories.get(category);
+    if (members === undefined || members.size === 0) {
+      throw new Error(
+        `overlay requests aliasStruct category "${category}" but the rules declare no ` +
+          `alias[${category}:...] members — add it to EXTRA_ALIAS_CATEGORIES`
+      );
+    }
+    emitter.beginFile();
+    const emission = emitAliasStruct(emitter, category, members);
+    const usage = emitter.endFile();
+    aliasStructs.set(category, { ...emission, usage });
+  }
+
   const contents: Array<{
     manifest: (typeof CONTENT_MANIFEST)[number];
     /** Registry name: the CWT type unless the manifest renames it via `as`. */
@@ -202,6 +231,27 @@ async function main(): Promise<void> {
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       modifiers.code
   );
+  for (const [category, emission] of aliasStructs) {
+    await write(
+      `${category.replaceAll("_", "-")}.ts`,
+      header(commit, [`alias[${category}:...] across the rule files`]) +
+        'import { registerAliasStructFields, type ContentField } from "../content.ts";\n' +
+        importList(
+          "./enums.ts",
+          emission.usage.enums.map((name) => emitter.enumTypeName(name))
+        ) +
+        importList(
+          "./refs.ts",
+          emission.usage.refs.map((name) => emitter.refTypeName(name))
+        ) +
+        importList(
+          "./value-sets.ts",
+          emission.usage.valueSets.map((name) => emitter.valueSetTypeName(name))
+        ) +
+        "\n" +
+        emission.code
+    );
+  }
   for (const content of contents) {
     const runtimeTypes = [
       "ContentField",
@@ -215,6 +265,22 @@ async function main(): Promise<void> {
       "WeightBlock",
       "WeightBlockWithLoc",
     ].filter((name) => content.emission.code.includes(name));
+    // A field lowered through `shape: "aliasStruct"` (see civic_or_origin's
+    // potential/possible) references a shared `<Name>Block` type generated
+    // into its own category file. The type import alone would be erased at
+    // build time, so a bare side-effect import guarantees the category's
+    // `registerAliasStructFields` call actually runs before this registry's
+    // definitions are ever serialized.
+    const aliasStructImports = [...aliasStructs]
+      .filter(([, aliasEmission]) => content.emission.code.includes(aliasEmission.typeName))
+      .map(([category, aliasEmission]) => {
+        const file = `./${category.replaceAll("_", "-")}.ts`;
+        return (
+          `import type { ${aliasEmission.typeName} } from ${JSON.stringify(file)};\n` +
+          `import ${JSON.stringify(file)};\n`
+        );
+      })
+      .join("");
     await write(
       `${content.registry.replaceAll("_", "-")}.ts`,
       header(commit, [content.manifest.source]) +
@@ -237,6 +303,7 @@ async function main(): Promise<void> {
           "./value-sets.ts",
           content.usage.valueSets.map((name) => emitter.valueSetTypeName(name))
         ) +
+        aliasStructImports +
         "\n" +
         content.emission.code
     );
@@ -373,6 +440,13 @@ async function main(): Promise<void> {
   console.log(
     `on-actions: ${onActions.emitted} emitted (${onActions.noScope} scopeless and currently rejected)`
   );
+  for (const [category, emission] of aliasStructs) {
+    console.log(
+      `${category}: ${emission.emittedMembers.length} alias-struct members emitted` +
+        ` of ${rules.aliasCategories.get(category)?.size ?? 0} declared`
+    );
+    reportSection(`${category} members declined`, emission.declinedMembers);
+  }
 
   reportSection("Triggers not emitted", summarise(triggers.skipped));
   reportSection("Effects not emitted", summarise(effects.skipped));

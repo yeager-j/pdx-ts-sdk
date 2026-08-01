@@ -46,3 +46,5 @@
  content_test_situation_machine_uprising_stage_revolt_desc:0 "The machines have taken up arms."
  content_test_councilor_chancellor:0 "Chancellor"
  content_test_councilor_chancellor_desc:0 "Presides over the ruling council."
+ content_test_civic_meritocracy:0 "Meritocracy"
+ content_test_civic_meritocracy_desc:0 "Leadership is earned, not inherited."

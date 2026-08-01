@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import {
+  always,
   canGoMia,
   canJoinFactions,
   hasAuthority,
@@ -16,6 +17,7 @@ import {
   type CasusBelliRef,
   type DecisionRef,
   type EdictRef,
+  type GovernmentTriggerBlock,
   type JobRef,
   type OpinionModifierRef,
   type TechnologyRef,
@@ -330,6 +332,42 @@ describe("generated content authoring types", () => {
       },
     });
     expectTypeOf(hasAuthority("auth_democratic")).toExtend<Trigger<"country">>();
+  });
+
+  it("types civic_or_origin's potential/possible as the government_trigger DSL, not a Trigger", () => {
+    mod.defineCivicOrOrigin({
+      id: "content_types_civic_dsl",
+      name: "X",
+      // The requirements DSL: a plain object, matched against empire setup —
+      // not a script condition tree.
+      potential: { authority: { value: "auth_democratic" } },
+      possible: { or: [{ civics: { value: "content_types_civic_other" } }] },
+    });
+    mod.defineCivicOrOrigin({
+      id: "content_types_civic_dsl_rejects_trigger",
+      name: "X",
+      // @ts-expect-error — a Trigger is not a GovernmentTriggerBlock; the game
+      // does not read potential/possible as script conditions.
+      potential: hasAuthority("auth_democratic"),
+    });
+    // Every domain member (authority, civics, ethics, ...) shares one clause
+    // template, differing only in which content type `value` references.
+    const block: GovernmentTriggerBlock = {
+      authority: { value: "auth_democratic" },
+      civics: { or: [{ values: ["some_civic"] }] },
+    };
+    void block;
+  });
+
+  it("keeps civic_or_origin's playable/ai_playable pinned to no_scope", () => {
+    mod.defineCivicOrOrigin({
+      id: "content_types_civic_no_scope",
+      name: "X",
+      playable: always(),
+      // @ts-expect-error — playable replace_scopes to no_scope; a country-only
+      // condition like hasAuthority does not hold there.
+      aiPlayable: hasAuthority("auth_democratic"),
+    });
   });
 
   it("keeps councilor's country and leader scope triggers distinct", () => {

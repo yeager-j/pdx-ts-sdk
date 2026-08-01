@@ -426,4 +426,43 @@ describe("content-type codegen", () => {
     );
     expect(economicCategory?.machineryBacklog).toEqual([]);
   });
+
+  it("lowers civic_or_origin's potential/possible onto the shared government_trigger block", () => {
+    // civic_or_origin was blocked on the government_trigger alias category
+    // (SDK-1): potential/possible splice it alongside ordinary text/always
+    // siblings, the same "combinator" shape government_trigger's own OR/AND/
+    // limit members use, so the overlay points both at the shared
+    // GovernmentTriggerBlock rather than a Trigger.
+    const civicOrOrigin = emissions.get("civic_or_origin");
+    expect(civicOrOrigin?.code).toContain("export interface CivicOrOriginDef");
+    expect(civicOrOrigin?.code).toContain("potential?: GovernmentTriggerBlock;");
+    expect(civicOrOrigin?.code).toContain("possible?: GovernmentTriggerBlock;");
+    expect(civicOrOrigin?.code).toContain(
+      '{ key: "potential", member: "potential", shape: "aliasStruct", ' +
+        'category: "government_trigger" }'
+    );
+    // playable/ai_playable are single_alias_right[trigger_clause] — real
+    // Triggers, not government_trigger — and their `## replace_scopes` pins
+    // them to no_scope.
+    expect(civicOrOrigin?.code).toContain('playable?: Trigger<"no_scope">;');
+    expect(civicOrOrigin?.code).toContain('aiPlayable?: Trigger<"no_scope">;');
+    expect(civicOrOrigin?.code).toContain('modifier?: ModifierClosure<"country">;');
+    expect(civicOrOrigin?.code).toContain(
+      'multiplyByHabitabilityEffectModifier?: ModifierClosure<"country">;'
+    );
+    expect(civicOrOrigin?.code).toContain("export interface CivicOrOriginSwapType");
+    expect(civicOrOrigin?.code).toContain("modifier?: ModifierClosure<ScopeName>;");
+    expect(civicOrOrigin?.emittedFields).toContain("potential");
+    expect(civicOrOrigin?.emittedFields).toContain("possible");
+    expect(civicOrOrigin?.unsupported.join("\n")).not.toContain("potential");
+    expect(civicOrOrigin?.unsupported.join("\n")).not.toContain("possible");
+    // leader_background_job_weight (`{ <job> = int }`, one open ref-keyed
+    // scalar map, used by a single vanilla origin) is the one field genuinely
+    // left on the machinery backlog — a wildcard-keyed scalar map is a shape
+    // the emitter has no model for yet, not something the overlay can paper
+    // over.
+    expect(civicOrOrigin?.machineryBacklog).toEqual([
+      "leader_background_job_weight (no declaration the emitter can lower)",
+    ]);
+  });
 });

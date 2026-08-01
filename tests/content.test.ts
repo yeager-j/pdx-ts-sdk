@@ -580,6 +580,45 @@ function defineContentExample(): Mod<"content_test"> {
     ],
   });
 
+  mod.defineCivicOrOrigin({
+    id: "content_test_civic_meritocracy",
+    name: "Meritocracy",
+    desc: "Leadership is earned, not inherited.",
+    // no_scope AND triggers — real Triggers, not government_trigger, per the
+    // CWT's own `## replace_scopes = { this = no_scope root = no_scope }`.
+    playable: always(),
+    aiPlayable: always(),
+    // The government_trigger requirements DSL: a plain data object, not a
+    // Trigger — the game reads potential/possible against empire setup, not
+    // as a script condition tree.
+    potential: {
+      authority: { value: "auth_democratic" },
+      civics: { not: [{ values: ["content_test_civic_incompatible"] }] },
+    },
+    possible: {
+      or: [
+        { authority: { value: "auth_democratic" } },
+        { text: "content_test_meritocracy_oligarchic", authority: { value: "auth_oligarchic" } },
+      ],
+    },
+    modifier: (m) => m.country.unity.produces.mult(0.05),
+    cost: 1,
+    pickableAtStart: true,
+    canBuildRulerShip: false,
+    swapType: [
+      {
+        name: "content_test_civic_meritocracy_swap",
+        // Neither trigger nor modifier has a `## replace_scopes` inside
+        // swap_type, so both stay scope-agnostic: always() for the trigger,
+        // and unchecked() for the recorder, since a ScopeName modifier
+        // closure's `m` is too wide a union for the checked trie API to
+        // resolve through every scope's recorder at once.
+        trigger: always(),
+        modifier: (m) => m.unchecked("country_unity_produces_mult", 0.1),
+      },
+    ],
+  });
+
   return mod;
 }
 

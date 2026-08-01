@@ -63,6 +63,10 @@ export type ComponentTag = string;
 /** `enum[crisis_type]`. */
 export type CrisisType = "prethoryn" | "unbidden" | "contingency" | "synth_queen" | "all" | "any";
 
+/** `enum[customize_species_editor_header]`. */
+export type CustomizeSpeciesEditorHeader =
+  "TYPE_HEADER_01" | "TYPE_HEADER_02" | "TYPE_HEADER_03" | "TYPE_HEADER_04";
+
 /** `enum[dlc]`. */
 export type Dlc =
   | "Plantoids Species Pack"
