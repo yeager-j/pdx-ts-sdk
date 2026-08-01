@@ -144,6 +144,7 @@ export const REQUIRED_LOCALISATION = new Set([
   "building.name",
   "tradition.name",
   "tradition_category.name",
+  "ascension_perk.name",
   "agenda.name",
   "edict.name",
 ]);
@@ -204,6 +205,16 @@ export const CONTENT_EMITTED_FIELDS: Readonly<Record<string, readonly string[]>>
     "traditions",
     "potential",
     "ai_weight",
+  ],
+  ascension_perk: [
+    "potential",
+    "possible",
+    "on_enabled",
+    "modifier",
+    "triggered_modifier",
+    "ai_weight",
+    "custom_tooltip",
+    "tradition_swap",
   ],
   agenda: [
     "agenda_cost",
@@ -309,6 +320,36 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "ascension_perk.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "ascension_perk.triggered_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
+    },
+  ],
+  [
+    "ascension_perk.ai_weight",
+    {
+      shape: "weightBlock",
+      reason: "modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "ascension_perk.tradition_swap",
+    {
+      shape: "nested",
+      reason:
+        "An ascension perk swap is a repeated nested definition with its own identity and localization.",
+    },
+  ],
+  [
     "agenda.modifier",
     {
       shape: "modifierBlock",
@@ -388,6 +429,25 @@ export const NESTED_CONTENT_DEFINITIONS = new Map<string, NestedContentDefinitio
       ],
     },
   ],
+  [
+    "ascension_perk.tradition_swap",
+    {
+      typeName: "AscensionPerkSwap",
+      identityKey: "name",
+      localisationType: "swapped_ascension_perk",
+      fields: [
+        "inherit_icon",
+        "inherit_name",
+        "inherit_effects",
+        "custom_tooltip",
+        "custom_tooltip_with_modifiers",
+        "modifier",
+        "on_enabled",
+        "weight",
+        "trigger",
+      ],
+    },
+  ],
 ]);
 
 export const NESTED_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
@@ -400,6 +460,20 @@ export const NESTED_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   ],
   [
     "tradition.tradition_swap.weight",
+    {
+      shape: "weightBlock",
+      reason: "Nested modifier_rule blocks lower to a base plus gated Modifier rows.",
+    },
+  ],
+  [
+    "ascension_perk.tradition_swap.modifier",
+    {
+      shape: "modifierBlock",
+      reason: "Nested modifier_clause is the same open modifier-name map as its parent.",
+    },
+  ],
+  [
+    "ascension_perk.tradition_swap.weight",
     {
       shape: "weightBlock",
       reason: "Nested modifier_rule blocks lower to a base plus gated Modifier rows.",

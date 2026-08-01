@@ -11,3 +11,8 @@
  content_test_tradition_ascension_servitor:0 "Custodian Ascension"
  content_test_tradition_category_machines:0 "Machine Futures"
  content_test_tradition_category_machines_desc:0 "Choose the shape of tomorrow."
+ content_test_ascension_perk_machine_futures:0 "Machine Futures"
+ content_test_ascension_perk_machine_futures_desc:0 "Our future belongs to forms we choose."
+ content_test_ascension_perk_machine_servitor:0 "Custodian Futures"
+ content_test_ascension_perk_machine_servitor_delayed:0 "Perfection is stewardship."
+ content_test_ascension_perk_machine_servitor_desc:0 "Our purpose is renewed."

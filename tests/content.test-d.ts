@@ -7,6 +7,7 @@ import {
   isCapital,
   Mod,
   type AgendaRef,
+  type AscensionPerkRef,
   type EdictRef,
   type TechnologyRef,
   type Trigger,
@@ -49,6 +50,11 @@ describe("generated content authoring types", () => {
       icon: "GFX_edict_x",
     });
     expectTypeOf(edict).toExtend<EdictRef>();
+    const ascensionPerk = mod.defineAscensionPerk({
+      id: "content_types_ascension_perk_x",
+      name: "X",
+    });
+    expectTypeOf(ascensionPerk).toExtend<AscensionPerkRef>();
   });
 
   it("does not invent a category field on traditions", () => {
@@ -70,6 +76,17 @@ describe("generated content authoring types", () => {
         {
           // @ts-expect-error — nested identities use the same prefix contract
           id: "other_swap_x",
+          name: "Wrong namespace",
+        },
+      ],
+    });
+    mod.defineAscensionPerk({
+      id: "content_types_ascension_perk_with_swap",
+      name: "X",
+      traditionSwap: [
+        {
+          // @ts-expect-error — ascension perk swaps use the same prefix contract
+          id: "other_ascension_perk_swap",
           name: "Wrong namespace",
         },
       ],
@@ -100,6 +117,35 @@ describe("generated content authoring types", () => {
         // @ts-expect-error — agenda effects run in country, not planet, scope
         country.setPlanetFlag("planet_only");
       },
+    });
+    mod.defineAscensionPerk({
+      id: "content_types_ascension_perk_scoped",
+      name: "X",
+      potential: hasAuthority("auth_democratic"),
+      // @ts-expect-error — ascension perk conditions run in country scope
+      possible: hasPlanetFlag("planet_only"),
+      onEnabled: (country) => {
+        country.setCountryFlag("country_only");
+        // @ts-expect-error — ascension perk effects run in country, not planet, scope
+        country.setPlanetFlag("planet_only");
+      },
+      triggeredModifier: [
+        {
+          // @ts-expect-error — ascension perk triggered modifiers run in country scope
+          when: hasPlanetFlag("planet_only"),
+          modifiers: (m) => m.country.unity.produces.mult(0.1),
+        },
+      ],
+      traditionSwap: [
+        {
+          id: "content_types_ascension_perk_swap_scoped",
+          name: "X",
+          onEnabled: (country) => {
+            // @ts-expect-error — ascension perk swap effects also run in country scope
+            country.setPlanetFlag("planet_only");
+          },
+        },
+      ],
     });
     mod.defineEdict({
       id: "content_types_edict_scoped",

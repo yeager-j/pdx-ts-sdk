@@ -1,0 +1,49 @@
+content_test_ascension_perk_machine_futures = {
+	potential = {
+		has_authority = auth_machine_intelligence
+	}
+	possible = {
+		has_authority = auth_machine_intelligence
+	}
+	on_enabled = {
+		set_country_flag = content_test_machine_futures_enabled
+	}
+	modifier = {
+		planet_pop_assembly_mult = 0.1
+	}
+	triggered_modifier = {
+		potential = {
+			has_authority = auth_machine_intelligence
+		}
+		country_unity_produces_mult = 0.05
+	}
+	ai_weight = {
+		base = 100
+		modifier = {
+			factor = 2
+			has_authority = auth_machine_intelligence
+		}
+	}
+	custom_tooltip = content_test_machine_futures_tooltip
+	tradition_swap = {
+		name = content_test_ascension_perk_machine_servitor
+		inherit_icon = yes
+		custom_tooltip = content_test_machine_servitor_tooltip
+		modifier = {
+			pop_happiness = 0.05
+		}
+		on_enabled = {
+			set_country_flag = content_test_machine_servitor_futures_enabled
+		}
+		weight = {
+			base = 10
+			modifier = {
+				factor = 2
+				has_authority = auth_machine_intelligence
+			}
+		}
+		trigger = {
+			has_authority = auth_machine_intelligence
+		}
+	}
+}

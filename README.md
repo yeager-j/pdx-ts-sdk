@@ -42,9 +42,10 @@ mod.defineTechnology({
 await mod.synth("./out");
 ```
 
-The same generated content module backs buildings, agendas, edicts, and
-traditions. Effect blocks use the same scope-checked recorder as events, and
-defined content can be passed directly through cross-registry references:
+The same generated content module backs ascension perks, buildings, agendas,
+edicts, and traditions. Effect blocks use the same scope-checked recorder as
+events, and defined content can be passed directly through cross-registry
+references:
 
 ```ts
 const agenda = mod.defineAgenda({

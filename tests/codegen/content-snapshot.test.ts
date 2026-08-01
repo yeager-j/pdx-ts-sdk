@@ -56,6 +56,7 @@ describe("content-type codegen", () => {
     expect(agenda?.code).toContain('initEffect?: EffectBlock<"country">;');
     expect(agenda?.code).toContain('effect?: EffectBlock<"country">;');
     expect(agenda?.code).toContain('shape: "effect"');
+    expect(emissions.get("ascension_perk")?.code).toContain('onEnabled?: EffectBlock<"country">;');
   });
 
   it("carries each modifier field's scope into its recorder closure", () => {
@@ -76,6 +77,18 @@ describe("content-type codegen", () => {
     expect(edict?.code).toContain('shape: "economicResources"');
     expect(edict?.code).toContain('shape: "triggeredModifierBlock"');
     expect(edict?.code).toContain("isWartimeEdict?: true;");
+    expect(emissions.get("ascension_perk")?.code).toContain(
+      'triggeredModifier?: TriggeredModifier<"country">[];'
+    );
+  });
+
+  it("generates ascension perks and their swaps without registry-specific code", () => {
+    const perk = emissions.get("ascension_perk");
+    expect(perk?.code).toContain("export interface AscensionPerkDef");
+    expect(perk?.code).toContain("export interface AscensionPerkSwapDef");
+    expect(perk?.code).toContain('potential?: Trigger<"country">;');
+    expect(perk?.code).toContain('modifier?: ModifierClosure<"country">;');
+    expect(perk?.code).toContain('shape: "nested"');
   });
 
   it("collapses duplicate localization patterns without hiding them", () => {
@@ -98,6 +111,7 @@ describe("content-type codegen", () => {
     expect(emissions.get("tradition_category")?.unemittedFields).toContain(
       "tradition_category.desc"
     );
+    expect(emissions.get("ascension_perk")?.unemittedFields).toEqual([]);
     expect(emissions.get("agenda")?.unemittedFields).toEqual([]);
     expect(emissions.get("edict")?.unemittedFields).toEqual([]);
   });

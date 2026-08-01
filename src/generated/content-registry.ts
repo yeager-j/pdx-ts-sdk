@@ -3,6 +3,7 @@
 // From: common/technologies_consolidated.cwt
 // From: common/buildings.cwt
 // From: common/traditions.cwt
+// From: common/ascension_perks.cwt
 // From: common/council_agendas.cwt
 // From: common/edicts.cwt
 
@@ -13,6 +14,12 @@ import {
   type AgendaDef,
   type DefinedAgenda,
 } from "./agenda.ts";
+import {
+  ASCENSION_PERK_FIELDS,
+  ASCENSION_PERK_LOCALISATION,
+  type AscensionPerkDef,
+  type DefinedAscensionPerk,
+} from "./ascension-perk.ts";
 import {
   BUILDING_FIELDS,
   BUILDING_LOCALISATION,
@@ -71,6 +78,13 @@ export const CONTENT_REGISTRIES = [
     localisation: TRADITION_CATEGORY_LOCALISATION,
   },
   {
+    type: "ascension_perk",
+    outputDir: "common/ascension_perks",
+    fileStem: "ascension_perks",
+    fields: ASCENSION_PERK_FIELDS,
+    localisation: ASCENSION_PERK_LOCALISATION,
+  },
+  {
     type: "agenda",
     outputDir: "common/council_agendas",
     fileStem: "council_agendas",
@@ -93,6 +107,7 @@ export interface ContentDefMap<P extends string> {
   building: BuildingDef<PrefixedId<P>>;
   tradition: TraditionDef<PrefixedId<P>>;
   tradition_category: TraditionCategoryDef<PrefixedId<P>>;
+  ascension_perk: AscensionPerkDef<PrefixedId<P>>;
   agenda: AgendaDef<PrefixedId<P>>;
   edict: EdictDef<PrefixedId<P>>;
 }
@@ -102,6 +117,7 @@ export interface DefinedContentMap<P extends string> {
   building: DefinedBuilding<PrefixedId<P>>;
   tradition: DefinedTradition<PrefixedId<P>>;
   tradition_category: DefinedTraditionCategory<PrefixedId<P>>;
+  ascension_perk: DefinedAscensionPerk<PrefixedId<P>>;
   agenda: DefinedAgenda<PrefixedId<P>>;
   edict: DefinedEdict<PrefixedId<P>>;
 }
@@ -132,6 +148,13 @@ export abstract class GeneratedContentMethods<const P extends string> {
     def: ContentDefMap<P>["tradition_category"]
   ): DefinedContentMap<P>["tradition_category"] {
     return this.defineGeneratedContent("tradition_category", def);
+  }
+
+  /** Defines an ascension perk in this mod. */
+  defineAscensionPerk(
+    def: ContentDefMap<P>["ascension_perk"]
+  ): DefinedContentMap<P>["ascension_perk"] {
+    return this.defineGeneratedContent("ascension_perk", def);
   }
 
   /** Defines an agenda in this mod. */

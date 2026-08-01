@@ -140,6 +140,45 @@ function defineContentExample(): Mod<"content_test"> {
     aiWeight: { base: 50 },
   });
 
+  mod.defineAscensionPerk({
+    id: "content_test_ascension_perk_machine_futures",
+    name: "Machine Futures",
+    desc: "Our future belongs to forms we choose.",
+    potential: hasAuthority("auth_machine_intelligence"),
+    possible: hasAuthority("auth_machine_intelligence"),
+    onEnabled: (country) => country.setCountryFlag("content_test_machine_futures_enabled"),
+    modifier: (m) => m.planet.pop.assembly.mult(0.1),
+    triggeredModifier: [
+      {
+        when: hasAuthority("auth_machine_intelligence"),
+        modifiers: (m) => m.country.unity.produces.mult(0.05),
+      },
+    ],
+    aiWeight: {
+      base: 100,
+      modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
+    },
+    customTooltip: "content_test_machine_futures_tooltip",
+    traditionSwap: [
+      {
+        id: "content_test_ascension_perk_machine_servitor",
+        name: "Custodian Futures",
+        flavor: "Perfection is stewardship.",
+        effects: "Our purpose is renewed.",
+        inheritIcon: true,
+        customTooltip: ["content_test_machine_servitor_tooltip"],
+        modifier: (m) => m.pop.happiness(0.05),
+        onEnabled: (country) =>
+          country.setCountryFlag("content_test_machine_servitor_futures_enabled"),
+        weight: {
+          base: 10,
+          modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
+        },
+        trigger: hasAuthority("auth_machine_intelligence"),
+      },
+    ],
+  });
+
   return mod;
 }
 
@@ -152,6 +191,7 @@ describe("generated content registries", () => {
       "common/buildings/content_test_buildings.txt",
       "common/traditions/content_test_traditions.txt",
       "common/tradition_categories/content_test_tradition_categories.txt",
+      "common/ascension_perks/content_test_ascension_perks.txt",
       "common/council_agendas/content_test_council_agendas.txt",
       "common/edicts/content_test_edicts.txt",
       "localisation/english/content_test_l_english.yml",

@@ -1,0 +1,142 @@
+# Repository guidance
+
+## Project purpose
+
+`@pdx-ts/sdk` is a TypeScript SDK for generating Stellaris mods. Mod authors run ordinary
+TypeScript at build time; the SDK records typed triggers, effects, content definitions, and file
+layout, then serializes a launcher-ready mod in PDXScript.
+
+The root package contains the Stellaris-facing SDK. `packages/pdxscript` is the standalone
+PDXScript parser/serializer workspace package used underneath it.
+
+Read `README.md` before making architectural changes. Files under `docs/` and `design/` preserve
+handoffs, probes, and design evidence; check their status headers and the current implementation
+before treating an older proposal as current behavior.
+
+## Repository conventions
+
+- Use npm; `package-lock.json` is the lockfile.
+- Keep the project strict TypeScript and ESM. Internal relative imports include the `.ts`
+  extension.
+- Run Prettier for touched TypeScript files. The pre-commit hook formats staged TypeScript, but do
+  not rely on the hook as the first formatting pass.
+- The package is private and has not been released, so breaking changes are allowed and encouraged over band-aids or migrations.
+- Prefer data-driven additions to registry-specific branches. Shared runtime machinery belongs in
+  `src/`; source interpretation and emitted TypeScript belong in `tools/codegen/`; deliberate
+  exceptions belong in the audited overlay.
+- Keep changes focused. Do not update vendored game data, drift baselines, snapshots, or generated
+  output unless the task requires the corresponding source change.
+
+## Code generation
+
+`src/generated/` is committed output from `tools/codegen/`. Never edit it by hand.
+
+The main inputs are:
+
+- `vendor/cwtools-stellaris-config/` for vendored CWT rules and Stellaris documentation dumps
+- `tools/codegen/content-manifest.ts` for the content registries intentionally exposed by the SDK
+- `tools/codegen/overlay.ts` for reviewed departures from a mechanical reading of the rules
+- emitters and parsers under `tools/codegen/`
+
+Use:
+
+```sh
+npm run codegen
+```
+
+After generation:
+
+- Read the codegen report. Unsupported, omitted, or collapsed fields must remain visible; do not
+  hide them with filters.
+- Inspect the complete `src/generated/` diff as a public-API change.
+- Commit generated output together with the source change that produced it.
+- Keep generated headers and formatting generator-owned.
+
+`npm run codegen:check` regenerates and then runs `git diff --exit-code src/generated`. It is the
+CI-style drift gate. During an intentional uncommitted codegen change, use `npm run codegen` and
+inspect the diff; the check will correctly fail until the generated diff is part of the comparison
+baseline (for example, staged or committed).
+
+Do not run `npm run codegen -- --rebaseline` reflexively. Rebaseline
+`tools/codegen/drift-baseline.json` only after reviewing and intentionally accepting drift between
+the vendored rule sources and documentation dumps.
+
+## Adding a new content type
+
+The content system is deliberately generic. Adding a registry such as `ascension_perk` should
+generate `AscensionPerkDef`, `DefinedAscensionPerk`, and `Mod.defineAscensionPerk` without a new
+emitter, writer class, or type-name conditional.
+
+1. Find the CWT `type[...]` declaration and its source file under
+   `vendor/cwtools-stellaris-config/config/`. Confirm the declared `path` is the Stellaris output
+   directory you expect.
+2. Add the type and source file to the explicit allowlist in
+   `tools/codegen/content-manifest.ts`.
+3. Add a reviewed field allowlist to `CONTENT_EMITTED_FIELDS` in `tools/codegen/overlay.ts`. A
+   field being mechanically typeable is not proof that the SDK lowers it correctly.
+4. Add only the necessary overlay entries:
+   - `REQUIRED_LOCALISATION` for localization the authoring API should require
+   - `FIELD_WIDENINGS` for intentional ergonomic input forms
+   - `CONTENT_FIELD_OVERRIDES` when the field shape cannot be inferred correctly
+   - nested-definition metadata only when the CWT field is genuinely a nested content definition
+5. Run codegen and inspect its report and generated files. Fix the generic model when a shape is
+   reusable. Do not add `if (type === "...")` branches to the generic writer or emitter.
+6. Export the new generated public types from `src/index.ts`.
+7. Add all three kinds of evidence:
+   - codegen coverage in `tests/codegen/content-snapshot.test.ts`
+   - compile-time API and scope/reference safety in `tests/content.test-d.ts`
+   - runtime serialization coverage and file snapshots in `tests/content.test.ts` and
+     `tests/__snapshots__/content/`
+8. Add or update a README example when the new registry introduces an authoring pattern users
+   would not infer from existing content types.
+
+Use the generated naming rather than adding hand-written aliases: a snake-case type such as
+`ascension_perk` becomes `AscensionPerk`, `defineAscensionPerk`, and
+`src/generated/ascension-perk.ts`.
+
+`defineX` and `patchX` have different evidence requirements. A prefixed new definition cannot
+collide with vanilla ids, but a vanilla patch is a whole-object override whose load order and
+emission must be verified per registry. Do not add `patchAscensionPerk` merely because
+`defineAscensionPerk` exists.
+
+## PDXScript parser
+
+Parser work belongs in `packages/pdxscript/`. Read `packages/pdxscript/README.md` and
+`packages/pdxscript/GRAMMAR.md` before changing it.
+
+Keep the package syntax-only and game-semantics-free. It preserves order and duplicate keys,
+reports repairs to malformed shipped input, and promises semantic rather than byte-identical
+round trips. Parser changes should retain the per-claim tests, full-vanilla fixpoint, jomini
+differential, and fast-check property gates described in that package.
+
+## Important design boundaries
+
+- Triggers are declarative expression trees. Effects are closures executed once at build time to
+  record AST entries.
+- Runtime effect recording is scope-agnostic; generated interfaces enforce which effects and
+  scope transitions are legal.
+- Cross-content references should remain branded objects where the generated rules know the
+  registry. Use raw strings only for intentional vanilla or third-party references supported by
+  the API.
+- Generated content ids and nested definition ids must use the mod prefix.
+- Localization rides with definitions. Preserve duplicate-key checks and the BOM-prefixed
+  Stellaris localization output.
+- Testing helpers are whitelist-based. Unsupported game semantics should fail loudly rather than
+  be guessed.
+
+## Verification
+
+For ordinary SDK changes, run:
+
+```sh
+npm run typecheck
+npm test
+npm run build
+```
+
+Also run `npm run codegen` whenever codegen inputs or implementation change, and inspect the
+result. Use `npm run example` when changing synthesis behavior or the quickstart example.
+
+Prefer focused Vitest runs while iterating, but finish with the full relevant gates. Snapshot
+changes are review evidence: update them only when the serialized output change is intentional,
+then inspect their contents rather than accepting them blindly.
