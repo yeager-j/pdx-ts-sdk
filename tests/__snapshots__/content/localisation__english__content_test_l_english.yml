@@ -44,3 +44,5 @@
  content_test_situation_machine_uprising_stage_unrest:0 "Rising Unrest"
  content_test_situation_machine_uprising_stage_revolt:0 "Open Revolt"
  content_test_situation_machine_uprising_stage_revolt_desc:0 "The machines have taken up arms."
+ content_test_councilor_chancellor:0 "Chancellor"
+ content_test_councilor_chancellor_desc:0 "Presides over the ruling council."

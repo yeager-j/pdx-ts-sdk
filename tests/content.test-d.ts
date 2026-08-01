@@ -331,4 +331,15 @@ describe("generated content authoring types", () => {
     });
     expectTypeOf(hasAuthority("auth_democratic")).toExtend<Trigger<"country">>();
   });
+
+  it("keeps councilor's country and leader scope triggers distinct", () => {
+    mod.defineCouncilor({
+      id: "content_types_councilor_scoped",
+      name: "X",
+      leaderClass: ["leader_class_official"],
+      possible: hasAuthority("auth_democratic"),
+      // @ts-expect-error — is_leader_possible runs in leader scope, not country
+      isLeaderPossible: hasAuthority("auth_democratic"),
+    });
+  });
 });

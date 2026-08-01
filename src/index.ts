@@ -51,6 +51,7 @@ export type {
   CasusBelliFields,
   DefinedCasusBelli,
 } from "./generated/casus-belli.ts";
+export type { CouncilorDef, CouncilorFields, DefinedCouncilor } from "./generated/councilor.ts";
 export type { DecisionDef, DecisionFields, DefinedDecision } from "./generated/decision.ts";
 export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";
 export type { DefinedJob, JobDef, JobFields } from "./generated/job.ts";

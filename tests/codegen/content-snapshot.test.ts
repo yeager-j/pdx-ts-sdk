@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT_MANIFEST } from "../../tools/codegen/content-manifest.ts";
+import type { CwtDiagnostic } from "../../tools/codegen/cwt/parser.ts";
 import { loadRules } from "../../tools/codegen/cwt/rules.ts";
+import driftBaseline from "../../tools/codegen/drift-baseline.json" with { type: "json" };
 import { emitContentType } from "../../tools/codegen/emit/content-type.ts";
 import { Emitter } from "../../tools/codegen/emit/types.ts";
+
+function describeDiagnostic(diagnostic: CwtDiagnostic): string {
+  return `${diagnostic.file}:${diagnostic.line} ${diagnostic.text}`;
+}
 
 const rules = loadRules("vendor/cwtools-stellaris-config/config");
 const emitter = new Emitter(rules);
@@ -27,9 +33,17 @@ const emissions = new Map(
 describe("content-type codegen", () => {
   it("parses every manifest source without recovery", () => {
     const manifestSources = new Set<string>(CONTENT_MANIFEST.map((entry) => entry.source));
-    expect(rules.diagnostics.filter((diagnostic) => manifestSources.has(diagnostic.file))).toEqual(
-      []
-    );
+    // common/governments.cwt and common/economic_categories.cwt each carry an
+    // upstream `## default: no` malformed-option typo (SDK-2). Those three are
+    // deliberately recorded in the drift baseline rather than fixed upstream,
+    // so they are the only diagnostics this check lets through — anything else
+    // in a manifest source is still a hard failure.
+    const knownMalformedOptions = new Set(driftBaseline.malformedOptions);
+    expect(
+      rules.diagnostics
+        .filter((diagnostic) => manifestSources.has(diagnostic.file))
+        .filter((diagnostic) => !knownMalformedOptions.has(describeDiagnostic(diagnostic)))
+    ).toEqual([]);
   });
 
   it("reports what it cannot lower rather than dropping it", () => {
@@ -389,5 +403,17 @@ describe("content-type codegen", () => {
       '{ key: "random_events", member: "randomEvents", shape: "weightedEvents", conversion: "ref" }'
     );
     expect(situation?.unsupported.join("\n")).not.toContain("random_events");
+  });
+
+  it("generates councilor without registry-specific code", () => {
+    // Blocked purely by the governments.cwt malformed-option drift block
+    // (SDK-2); councilor's own fields are ordinary.
+    const councilor = emissions.get("councilor");
+    expect(councilor?.code).toContain("export interface CouncilorDef");
+    expect(councilor?.code).toContain('possible?: Trigger<"country">;');
+    expect(councilor?.code).toContain('isLeaderPossible?: Trigger<"leader">;');
+    expect(councilor?.code).toContain('modifier?: ModifierClosure<"country">;');
+    expect(councilor?.code).toContain('triggeredCountryModifier?: TriggeredModifier<"country">[];');
+    expect(councilor?.machineryBacklog).toEqual([]);
   });
 });

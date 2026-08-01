@@ -75,4 +75,5 @@ export const CONTENT_MANIFEST = [
     source: "common/scripted_loc.cwt",
     keyword: "defined_text",
   },
+  { type: "councilor", source: "common/governments.cwt" },
 ] as const satisfies readonly ContentManifestEntry[];

@@ -536,6 +536,32 @@ function defineContentExample(): Mod<"content_test"> {
     default: "content_test_scripted_loc_flavor_text_default",
   });
 
+  mod.defineCouncilor({
+    id: "content_test_councilor_chancellor",
+    name: "Chancellor",
+    desc: "Presides over the ruling council.",
+    leaderClass: ["leader_class_official"],
+    // Country/leader scope triggers, per the CWT's own `## replace_scopes`.
+    possible: always(),
+    isLeaderPossible: always(),
+    civic: "content_test_civic_meritocracy",
+    modifier: (m) => m.country.unity.produces.mult(0.02),
+    triggeredCountryModifier: [
+      {
+        when: hasAuthority("auth_machine_intelligence"),
+        modifiers: (m) => m.country.unity.produces.mult(0.01),
+      },
+    ],
+    aiPriority: 10,
+    optional: always(),
+    // aiHiringWeight runs in leader scope — always() is the only trigger valid
+    // there among the ones this file already imports.
+    aiHiringWeight: {
+      base: 1,
+      modifiers: [{ factor: 2, when: always() }],
+    },
+  });
+
   return mod;
 }
 
