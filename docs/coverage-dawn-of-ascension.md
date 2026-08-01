@@ -66,7 +66,12 @@ Batch 2 — modifiers and loc:
 - [ ] `static_modifier` — `common/modifiers.cwt` — 10
 - [ ] `opinion_modifier` — `common/modifiers.cwt` — 3
 - [ ] `scripted_modifier` — `common/scripted_modifiers.cwt` — 5
-- [ ] `scripted_loc` — `common/scripted_loc.cwt` — 2
+- [ ] `scripted_loc` — `common/scripted_loc.cwt` — 2 — **blocked on `name_field`**
+
+`scripted_loc` declares `name_field = "name"` at the top level of its type with
+`## type_key_filter = { defined_text define_text }` — the keyword-headed shape
+below, not the swap-subtype form already handled. So the `name_field` work gates
+part of batch 2, not only batch 4.
 
 `common/modifiers.cwt` declares `static_modifier`, `triggered_opinion_modifier`,
 and `block_triggered` against `common/static_modifiers`; pick deliberately. Check
