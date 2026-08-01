@@ -138,6 +138,36 @@ export const FIRE_EFFECTS = new Set([
   "colony_event",
 ]);
 
+/**
+ * Alias families the rule loader reads into a table beyond `trigger` and
+ * `effect`.
+ *
+ * CWT declares roughly two dozen alias categories, and most of them are GUI or
+ * graphics grammar with no bearing on the content registries the SDK exposes.
+ * Sweeping them all in would cost parse time and, worse, invite the emitters to
+ * guess at shapes nobody has read. So the loader reads a category only when a
+ * content registry actually consumes it, and each row says which consumer.
+ */
+export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
+  [
+    "pop_pre_trigger",
+    "Seven plain bools consumed by `job.possible_pre_triggers` (and " +
+      "pop_faction_type's can_join_pre_triggers). Every member is `bool`, so the " +
+      "splice lowers as an ordinary struct.",
+  ],
+  [
+    "colony_pre_trigger",
+    "The colony-scoped twin of pop_pre_trigger, seven plain bools, consumed by " +
+      "the planet/colony event `pre_triggers` blocks.",
+  ],
+  [
+    "government_trigger",
+    "The requirements DSL behind civic/origin `potential` and `possible`. Not a " +
+      "`Trigger` — its members are a fixed value/OR/NOT/NOR clause template plus " +
+      "self-recursive OR/AND/limit combinators, emitted by emit/alias-struct.ts.",
+  ],
+]);
+
 export interface FieldWidening {
   /** Appended to the mechanically derived type. */
   readonly extraType: string;

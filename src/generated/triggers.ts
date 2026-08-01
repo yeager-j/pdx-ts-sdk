@@ -17,6 +17,7 @@ import type {
   ColossusStatu,
   ComponentTag,
   CrisisType,
+  Dlc,
   ElectionType,
   EnvoyTask,
   FederationSetting,
@@ -9222,7 +9223,7 @@ export function highestThreat(op: PdxOp, value: number): Trigger<"country"> {
 }
 
 /** Checks if the host has a specific DLC enabled */
-export function hostHasDlc(value: string): Trigger<ScopeName> {
+export function hostHasDlc(value: Dlc): Trigger<ScopeName> {
   return trigger([kv("host_has_dlc", value)]);
 }
 
@@ -12183,7 +12184,7 @@ export function lgateEnabled(value: boolean = true): Trigger<ScopeName> {
 }
 
 /** Checks if the local player has a specific DLC enabled */
-export function localHasDlc(value: string): Trigger<ScopeName> {
+export function localHasDlc(value: Dlc): Trigger<ScopeName> {
   return trigger([kv("local_has_dlc", value)]);
 }
 

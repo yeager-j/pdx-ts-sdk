@@ -239,6 +239,21 @@ interface ContentStructField extends ContentFieldBase {
 }
 
 /**
+ * A block spliced from a CWT alias category that refers back to itself.
+ *
+ * `government_trigger`'s `OR`/`AND`/`limit` members each contain the whole
+ * category again, so their field table cannot be written inline the way
+ * {@link ContentStructField} writes its members — the constant would reference
+ * itself before it is initialised. Naming the category instead and resolving it
+ * through {@link registerAliasStructFields} at write time is what breaks the
+ * cycle; a generated module registers its table once at import.
+ */
+interface ContentAliasStructField extends ContentFieldBase {
+  readonly shape: "aliasStruct";
+  readonly category: string;
+}
+
+/**
  * A named, ordered collection whose name is both identity and localization
  * key — the same distinction `name_field` draws for top-level registries, one
  * level down. Authored as `Readonly<Record<id, fields>>` rather than an array
@@ -274,7 +289,33 @@ export type ContentField =
   | ContentValueOrWeightField
   | ContentWeightedEventsField
   | ContentStructField
+  | ContentAliasStructField
   | ContentRepeatedStructField;
+
+const ALIAS_STRUCT_FIELDS = new Map<string, readonly ContentField[]>();
+
+/**
+ * Publishes one alias category's field table under its CWT category name.
+ *
+ * Generated modules call this at import time. Keeping the table in a
+ * module-level map rather than on the descriptor is deliberate: a
+ * self-recursive category (`government_trigger`) has no non-circular inline
+ * spelling, and a name resolved on write is the only lookup that terminates.
+ */
+export function registerAliasStructFields(category: string, fields: readonly ContentField[]): void {
+  ALIAS_STRUCT_FIELDS.set(category, fields);
+}
+
+function aliasStructFieldsOf(category: string): readonly ContentField[] {
+  const fields = ALIAS_STRUCT_FIELDS.get(category);
+  if (fields === undefined) {
+    throw new Error(
+      `No field table registered for alias category "${category}" — the generated ` +
+        "module that declares it must be imported before rendering"
+    );
+  }
+  return fields;
+}
 
 /** Generated description of one authorable content registry. */
 export interface ContentRegistryDescriptor {
@@ -526,6 +567,14 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
           ? (value as readonly Readonly<Record<string, unknown>>[])
           : [value as Readonly<Record<string, unknown>>];
         entries.push(...values.map((item) => block(field.key, fieldEntries(item, field.fields))));
+        break;
+      }
+      case "aliasStruct": {
+        const nested = aliasStructFieldsOf(field.category);
+        const values = field.repeated
+          ? (value as readonly Readonly<Record<string, unknown>>[])
+          : [value as Readonly<Record<string, unknown>>];
+        entries.push(...values.map((item) => block(field.key, fieldEntries(item, nested))));
         break;
       }
       case "repeatedStruct": {

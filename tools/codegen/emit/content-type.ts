@@ -13,7 +13,7 @@ import {
   type ScopeContext,
 } from "../cwt/model.ts";
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
-import { camelCase, docComment, pascalCase } from "../naming.ts";
+import { camelCase, docComment, isPlainName, pascalCase } from "../naming.ts";
 import {
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -124,6 +124,52 @@ function spliceCategory(type: RuleType): string | null {
   }
   const unique = new Set(categories);
   return unique.size === 1 ? [...unique][0]! : null;
+}
+
+/**
+ * Rewrites an all-scalar alias category as ordinary named fields.
+ *
+ * `possible_pre_triggers = { alias_name[pop_pre_trigger] = ... }` is a struct
+ * wearing a splice's clothes: the category admits exactly seven members and
+ * every one of them is a plain `bool`, so naming them turns the field into
+ * something `lowerStruct` already knows how to emit — no new runtime shape, no
+ * `Trigger` that would let an author write conditions the game will not read.
+ *
+ * Returns `null` for any category with a member the struct pipeline cannot
+ * express (`government_trigger`'s clause blocks and self-recursive
+ * combinators), leaving the field to be reported as unsupported rather than
+ * half-lowered. One `RuleField` per declaration, so a member declared twice
+ * merges through `mergeByName` exactly like an ordinary repeated key.
+ */
+function aliasScalarFields(emitter: Emitter, category: string): RuleField[] | null {
+  const members = emitter.rules.aliasCategories.get(category);
+  if (members === undefined || members.size === 0) {
+    return null;
+  }
+  const fields: RuleField[] = [];
+  for (const [name, declarations] of members) {
+    if (!isPlainName(name)) {
+      return null;
+    }
+    for (const declaration of declarations) {
+      if (declaration.type.kind === "block" || emitter.valueFor(declaration.type) === null) {
+        return null;
+      }
+      fields.push({
+        key: { kind: "name", name },
+        type: declaration.type,
+        // A splice never requires any particular member: the block is legal
+        // empty, so every synthesized field is optional regardless of what the
+        // declaration itself says.
+        cardinality: { min: 0, max: 1 },
+        docs: declaration.docs,
+        scope: declaration.scope,
+        line: declaration.line,
+        comparison: declaration.comparison,
+      });
+    }
+  }
+  return fields;
 }
 
 function scopeType(
@@ -409,6 +455,18 @@ function lowerOrdinary(
       memberType: `WeightBlockWithLoc<${scope}>`,
       metadata: metadata(field, name, "weightBlockWithLoc"),
     };
+  }
+  if (requested === undefined && category !== null) {
+    const members = aliasScalarFields(emitter, category);
+    if (members !== null) {
+      return lowerStruct(
+        emitter,
+        { ...field, type: { kind: "block", fields: members, bare: [] } },
+        name,
+        path,
+        inheritedScope
+      );
+    }
   }
   if (requested === "economicResources") {
     const scope = scopeType(emitter, field, inheritedScope);

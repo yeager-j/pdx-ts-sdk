@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { CONTENT_MANIFEST } from "../content-manifest.ts";
-import { EXTRA_SCOPES } from "../overlay.ts";
+import { EXTRA_ALIAS_CATEGORIES, EXTRA_SCOPES } from "../overlay.ts";
 import {
   classify,
   classifyBlock,
@@ -120,6 +120,15 @@ export interface RuleSet {
   readonly triggers: ReadonlyMap<string, readonly AliasDecl[]>;
   /** Loaded only so the drift gate covers effects too; nothing emits them yet. */
   readonly effects: ReadonlyMap<string, readonly AliasDecl[]>;
+  /**
+   * Alias families other than triggers and effects, category -> member -> its
+   * declarations. Populated only for the categories `EXTRA_ALIAS_CATEGORIES`
+   * names, so the ~20 GUI and graphics grammar categories stay out.
+   *
+   * `triggers` and `effects` keep their own fields: they are read by every
+   * emitter and their absence from a category table would be a silent hole.
+   */
+  readonly aliasCategories: ReadonlyMap<string, ReadonlyMap<string, readonly AliasDecl[]>>;
   /** Scope links from `links.cwt`, the `owner = { ... }` navigation table. */
   readonly links: ReadonlyMap<string, LinkDecl>;
   readonly contentTypes: ReadonlyMap<string, ContentType>;
@@ -142,6 +151,8 @@ const RULE_FILES = [
   "links.cwt",
   "triggers.cwt",
   "effects.cwt",
+  "pre_triggers.cwt",
+  "dlc_list.cwt",
   "events/events.cwt",
   "events/event_namespaces.cwt",
   "on_actions.cwt",
@@ -296,10 +307,19 @@ function readModifierDecls(
   }
 }
 
-function readAliases(
+/**
+ * Reads every `alias[<category>:<name>] = ...` declaration in one file into a
+ * member table.
+ *
+ * Exported because a category can be read from a rule file that `loadRules`
+ * deliberately does not load — `common/governments.cwt` carries malformed
+ * option comments that the drift gate rejects, so `government_trigger` is
+ * parsed on its own in tests until that file is clean.
+ */
+export function readAliases(
   nodes: readonly CwtNode[],
   file: string,
-  category: "trigger" | "effect",
+  category: string,
   singleAliases: ReadonlyMap<string, CwtValue>,
   into: Map<string, AliasDecl[]>
 ): void {
@@ -446,6 +466,9 @@ export function loadRules(root: string): RuleSet {
   const scopes = new Map<string, string[]>();
   const triggers = new Map<string, AliasDecl[]>();
   const effects = new Map<string, AliasDecl[]>();
+  const aliasCategories = new Map<string, Map<string, AliasDecl[]>>(
+    [...EXTRA_ALIAS_CATEGORIES.keys()].map((category) => [category, new Map()])
+  );
   const links = new Map<string, LinkDecl>();
   const contentTypes = new Map<string, ContentType>();
   const bodies = new Map<string, ContentBody>();
@@ -466,6 +489,9 @@ export function loadRules(root: string): RuleSet {
     readLinks(parsed.nodes, relative, links);
     readAliases(parsed.nodes, relative, "trigger", singleAliases, triggers);
     readAliases(parsed.nodes, relative, "effect", singleAliases, effects);
+    for (const [category, members] of aliasCategories) {
+      readAliases(parsed.nodes, relative, category, singleAliases, members);
+    }
     readContentTypes(parsed.nodes, contentTypes);
     readBodies(parsed.nodes, contentTypes, singleAliases, bodies);
     readOnActions(parsed.nodes, relative, onActions);
@@ -478,6 +504,7 @@ export function loadRules(root: string): RuleSet {
     scopes,
     triggers,
     effects,
+    aliasCategories,
     links,
     contentTypes,
     bodies,

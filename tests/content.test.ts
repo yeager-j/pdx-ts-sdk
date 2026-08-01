@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ContentAuthoring,
+  registerAliasStructFields,
+  type ContentField,
+  type ContentRegistryDescriptor,
+} from "../src/content.ts";
+import {
   always,
   canGoMia,
   canJoinFactions,
@@ -233,6 +239,9 @@ function defineContentExample(): Mod<"content_test"> {
     ignoresFavorite: false,
     purge: "purge_processing",
     contributesToDiploWeight: true,
+    // The pop_pre_trigger alias category, lowered as an ordinary struct: seven
+    // named bools rather than a Trigger the game would not read here.
+    possiblePreTriggers: { hasOwner: true, isEnslaved: false, isRobotic: true },
     tags: ["content_test_tag_machine"],
     localizedTags: ["content_test_job_localized_tag"],
     possiblePrecalc: "can_fill_worker_job",
@@ -790,5 +799,170 @@ describe("generated content registries", () => {
         },
       })
     ).toThrow('Duplicate situation_type.stages id "content_test_situation_stage_shared"');
+  });
+
+  it("lowers pop_pre_trigger's alias splice as named bools, not a trigger block", () => {
+    const rendered = files.get("common/pop_jobs/content_test_pop_jobs.txt")!;
+    expect(rendered).toContain(
+      "possible_pre_triggers = {\n\t\thas_owner = yes\n\t\tis_enslaved = no\n\t\tis_robotic = yes\n\t}"
+    );
+  });
+});
+
+/**
+ * The `aliasStruct` writer arm, exercised through a descriptor built by hand.
+ *
+ * `government_trigger`'s consumer registry (`civic_or_origin`) is not generated
+ * yet, so the field tables here are transcribed from what
+ * `tools/codegen/emit/alias-struct.ts` emits for the real category — the
+ * codegen side is asserted in `tests/codegen/alias-struct.test.ts`. The
+ * expected output is pinned against real vanilla civics: `civic_corvee_system`
+ * and `civic_corporate_dominion` in
+ * `common/governments/civics/00_civics.txt`.
+ */
+describe("alias-struct serialization", () => {
+  const GROUP_FIELDS: readonly ContentField[] = [
+    { key: "text", member: "text", shape: "value", conversion: "identity" },
+    { key: "value", member: "values", shape: "value", conversion: "ref", repeated: true },
+  ];
+  const CLAUSE_FIELDS: readonly ContentField[] = [
+    { key: "value", member: "value", shape: "value", conversion: "ref" },
+    { key: "OR", member: "or", shape: "struct", fields: GROUP_FIELDS, repeated: true },
+    { key: "NOT", member: "not", shape: "struct", fields: GROUP_FIELDS, repeated: true },
+    { key: "NOR", member: "nor", shape: "struct", fields: GROUP_FIELDS, repeated: true },
+  ];
+  const GOVERNMENT_TRIGGER_FIELDS: readonly ContentField[] = [
+    { key: "text", member: "text", shape: "value", conversion: "identity" },
+    { key: "always", member: "always", shape: "value", conversion: "identity" },
+    { key: "authority", member: "authority", shape: "struct", fields: CLAUSE_FIELDS },
+    { key: "ethics", member: "ethics", shape: "struct", fields: CLAUSE_FIELDS },
+    { key: "civics", member: "civics", shape: "struct", fields: CLAUSE_FIELDS },
+    {
+      key: "OR",
+      member: "or",
+      shape: "aliasStruct",
+      category: "government_trigger",
+      repeated: true,
+    },
+    { key: "host_has_dlc", member: "hostHasDlc", shape: "value", conversion: "identity" },
+  ];
+  registerAliasStructFields("government_trigger", GOVERNMENT_TRIGGER_FIELDS);
+
+  const descriptor: ContentRegistryDescriptor = {
+    type: "civic_or_origin",
+    outputDir: "common/governments/civics",
+    fileStem: "civics",
+    fields: [
+      {
+        key: "potential",
+        member: "potential",
+        shape: "aliasStruct",
+        category: "government_trigger",
+      },
+      { key: "possible", member: "possible", shape: "aliasStruct", category: "government_trigger" },
+    ],
+    localisation: [],
+  };
+
+  function render(def: Record<string, unknown> & { id: string }): string {
+    const authoring = new ContentAuthoring("gt_test", [descriptor], () => {});
+    authoring.define("civic_or_origin", def);
+    return authoring.render().get("common/governments/civics/gt_test_civics.txt")!;
+  }
+
+  it("writes a domain clause the way vanilla civics write it", () => {
+    // civic_corvee_system, verbatim in shape: a bare NOT group in `potential`,
+    // and a NOR group carrying its tooltip plus two operands in `possible`.
+    expect(
+      render({
+        id: "gt_test_civic_corvee_system",
+        potential: {
+          ethics: { not: [{ values: ["ethic_gestalt_consciousness"] }] },
+          authority: { not: [{ values: ["auth_corporate"] }] },
+        },
+        possible: {
+          ethics: {
+            nor: [
+              {
+                text: "civic_tooltip_not_egalitarian",
+                values: ["ethic_egalitarian", "ethic_fanatic_egalitarian"],
+              },
+            ],
+          },
+          civics: { not: [{ values: ["civic_free_haven"] }] },
+        },
+      })
+    ).toBe(
+      "gt_test_civic_corvee_system = {\n" +
+        "\tpotential = {\n" +
+        "\t\tauthority = {\n\t\t\tNOT = {\n\t\t\t\tvalue = auth_corporate\n\t\t\t}\n\t\t}\n" +
+        "\t\tethics = {\n\t\t\tNOT = {\n\t\t\t\tvalue = ethic_gestalt_consciousness\n\t\t\t}\n\t\t}\n" +
+        "\t}\n" +
+        "\tpossible = {\n" +
+        "\t\tethics = {\n" +
+        "\t\t\tNOR = {\n" +
+        "\t\t\t\ttext = civic_tooltip_not_egalitarian\n" +
+        "\t\t\t\tvalue = ethic_egalitarian\n" +
+        "\t\t\t\tvalue = ethic_fanatic_egalitarian\n" +
+        "\t\t\t}\n" +
+        "\t\t}\n" +
+        "\t\tcivics = {\n\t\t\tNOT = {\n\t\t\t\tvalue = civic_free_haven\n\t\t\t}\n\t\t}\n" +
+        "\t}\n" +
+        "}\n"
+    );
+  });
+
+  it("recurses through the OR combinator via the category table", () => {
+    // The self-reference the module-level table exists for: an `OR` inside
+    // `possible` holds a whole government_trigger block again, repeated once
+    // per entry rather than merged, exactly as the game reads it.
+    expect(
+      render({
+        id: "gt_test_civic_corporate_dominion",
+        possible: {
+          or: [
+            { authority: { value: "auth_oligarchic" } },
+            { text: "gt_test_tooltip", always: true, hostHasDlc: "Overlord" },
+          ],
+        },
+      })
+    ).toBe(
+      "gt_test_civic_corporate_dominion = {\n" +
+        "\tpossible = {\n" +
+        "\t\tOR = {\n\t\t\tauthority = {\n\t\t\t\tvalue = auth_oligarchic\n\t\t\t}\n\t\t}\n" +
+        "\t\tOR = {\n" +
+        "\t\t\ttext = gt_test_tooltip\n" +
+        "\t\t\talways = yes\n" +
+        "\t\t\thost_has_dlc = Overlord\n" +
+        "\t\t}\n" +
+        "\t}\n" +
+        "}\n"
+    );
+  });
+
+  it("refuses to render an alias category nothing registered", () => {
+    // Silence here would emit an empty block the game reads as "no
+    // requirements", quietly making a civic available to everyone.
+    const authoring = new ContentAuthoring(
+      "gt_test",
+      [
+        {
+          ...descriptor,
+          fields: [
+            {
+              key: "potential",
+              member: "potential",
+              shape: "aliasStruct",
+              category: "species_trigger",
+            },
+          ],
+        },
+      ],
+      () => {}
+    );
+    authoring.define("civic_or_origin", { id: "gt_test_civic_unregistered", potential: {} });
+    expect(() => authoring.render()).toThrow(
+      'No field table registered for alias category "species_trigger"'
+    );
   });
 });

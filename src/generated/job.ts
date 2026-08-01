@@ -66,6 +66,31 @@ export const JOB_SWAPPABLE_DATA_FIELDS: readonly ContentField[] = [
   },
 ];
 
+export interface JobPossiblePreTriggers {
+  hasOwner?: boolean;
+  isEnslaved?: boolean;
+  isBeingPurged?: boolean;
+  isBeingAssimilated?: boolean;
+  hasPlanet?: boolean;
+  isSapient?: boolean;
+  isRobotic?: boolean;
+}
+
+export const JOB_POSSIBLE_PRE_TRIGGERS_FIELDS: readonly ContentField[] = [
+  { key: "has_owner", member: "hasOwner", shape: "value", conversion: "identity" },
+  { key: "is_enslaved", member: "isEnslaved", shape: "value", conversion: "identity" },
+  { key: "is_being_purged", member: "isBeingPurged", shape: "value", conversion: "identity" },
+  {
+    key: "is_being_assimilated",
+    member: "isBeingAssimilated",
+    shape: "value",
+    conversion: "identity",
+  },
+  { key: "has_planet", member: "hasPlanet", shape: "value", conversion: "identity" },
+  { key: "is_sapient", member: "isSapient", shape: "value", conversion: "identity" },
+  { key: "is_robotic", member: "isRobotic", shape: "value", conversion: "identity" },
+];
+
 export interface JobTriggeredTags {
   trigger: Trigger<"planet">;
   tags: string[];
@@ -105,6 +130,8 @@ export interface JobFields {
   purge?: PurgeTypeRef | string;
   /** Sets whether the job contributes to diplo weight. Default = yes */
   contributesToDiploWeight?: boolean;
+  /** Only uses certain simple triggers. */
+  possiblePreTriggers?: JobPossiblePreTriggers;
   tags?: string[];
   triggeredTags?: JobTriggeredTags;
   localizedTags?: string[];
@@ -175,6 +202,12 @@ export const JOB_FIELDS: readonly ContentField[] = [
     member: "contributesToDiploWeight",
     shape: "value",
     conversion: "identity",
+  },
+  {
+    key: "possible_pre_triggers",
+    member: "possiblePreTriggers",
+    shape: "struct",
+    fields: JOB_POSSIBLE_PRE_TRIGGERS_FIELDS,
   },
   { key: "tags", member: "tags", shape: "valueList", conversion: "identity" },
   {

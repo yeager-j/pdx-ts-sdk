@@ -11,6 +11,11 @@ content_test_job_synthetic_technician = {
 	ignores_favorite = no
 	purge = purge_processing
 	contributes_to_diplo_weight = yes
+	possible_pre_triggers = {
+		has_owner = yes
+		is_enslaved = no
+		is_robotic = yes
+	}
 	tags = { content_test_tag_machine }
 	localized_tags = { content_test_job_localized_tag }
 	possible_precalc = can_fill_worker_job

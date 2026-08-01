@@ -349,6 +349,37 @@ describe("content-type codegen", () => {
     expect(situation?.code).toContain("conditionalDesc?: SituationTypeDesc[];");
   });
 
+  it("expands an all-scalar alias splice into an ordinary struct", () => {
+    // job.possible_pre_triggers splices `pop_pre_trigger`, whose seven members
+    // are every one a plain bool. Naming them turns the splice into something
+    // the existing struct pipeline emits — and keeps it from becoming a
+    // Trigger, which the game does not read in this position.
+    const job = emissions.get("job");
+    expect(job?.code).toContain("export interface JobPossiblePreTriggers {");
+    expect(job?.code).toContain("possiblePreTriggers?: JobPossiblePreTriggers;");
+    for (const member of [
+      "hasOwner",
+      "isEnslaved",
+      "isBeingPurged",
+      "isBeingAssimilated",
+      "hasPlanet",
+      "isSapient",
+      "isRobotic",
+    ]) {
+      expect(job?.code, member).toContain(`  ${member}?: boolean;\n`);
+    }
+    expect(job?.code).toContain(
+      '{ key: "has_owner", member: "hasOwner", shape: "value", conversion: "identity" }'
+    );
+    expect(job?.code).toContain(
+      '{ key: "possible_pre_triggers", member: "possiblePreTriggers", shape: "struct", ' +
+        "fields: JOB_POSSIBLE_PRE_TRIGGERS_FIELDS }"
+    );
+    expect(job?.emittedFields).toContain("possible_pre_triggers");
+    expect(job?.unsupported.join("\n")).not.toContain("possible_pre_triggers");
+    expect(job?.machineryBacklog.join("\n")).not.toContain("possible_pre_triggers");
+  });
+
   it("lowers random_events' computed weight keys as a weighted event list", () => {
     const situation = emissions.get("situation_type");
     expect(situation?.code).toContain(

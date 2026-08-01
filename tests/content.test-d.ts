@@ -242,6 +242,28 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("types an all-scalar alias splice as named booleans", () => {
+    // possible_pre_triggers admits exactly the seven pop_pre_trigger members,
+    // each a bool — not a Trigger, and not an open record.
+    mod.defineJob({
+      id: "content_types_job_pre_triggers",
+      name: "X",
+      possiblePreTriggers: { hasOwner: true, isSapient: false, isRobotic: true },
+    });
+    mod.defineJob({
+      id: "content_types_job_pre_triggers_bad_value",
+      name: "X",
+      // @ts-expect-error — every pop_pre_trigger member is a bool
+      possiblePreTriggers: { hasOwner: "yes" },
+    });
+    mod.defineJob({
+      id: "content_types_job_pre_triggers_unknown",
+      name: "X",
+      // @ts-expect-error — the category is closed; `is_ai` belongs to colony_pre_trigger
+      possiblePreTriggers: { isAi: true },
+    });
+  });
+
   it("restricts scripted modifier category to the generated enum", () => {
     mod.defineScriptedModifier({
       id: "content_types_scripted_modifier_category",
