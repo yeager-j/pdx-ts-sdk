@@ -1,14 +1,15 @@
 import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import { stellaris } from "../../src/index.ts";
+import { render, stellaris, write } from "../../src/index.ts";
 import { defineHardening } from "./mod.ts";
 
 const vanilla = stellaris.load();
 const hardening = defineHardening(vanilla);
 const outDir = resolve(process.argv[2] ?? new URL("./out/", import.meta.url).pathname);
 
-await hardening.mod.synth(outDir);
+const files = render(hardening.mod);
+await write(outDir, files);
 const launcherDescriptor = `${outDir}.mod`;
 await writeFile(
   launcherDescriptor,
@@ -25,7 +26,7 @@ await writeFile(
 console.log(`Built PDX SDK Hardening for Stellaris ${vanilla.gameVersion ?? "unknown"}`);
 console.log(`Content directory: ${outDir}`);
 console.log(`Launcher descriptor: ${launcherDescriptor}`);
-for (const relPath of hardening.mod.render().keys()) {
+for (const relPath of files.keys()) {
   console.log(`  wrote ${relPath}`);
 }
 console.log("");

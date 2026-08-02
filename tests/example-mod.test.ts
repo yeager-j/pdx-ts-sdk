@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { defineHelloGalaxy } from "../examples/hello-galaxy/mod.ts";
+import { render } from "../src/index.ts";
 
 describe("hello-galaxy example mod", () => {
-  const files = defineHelloGalaxy().render();
+  const files = render(defineHelloGalaxy());
 
   it("renders the expected file set", () => {
     expect([...files.keys()]).toEqual([

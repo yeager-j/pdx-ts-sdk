@@ -1,12 +1,16 @@
 import {
   and,
+  buildMod,
   countryFlags,
+  createEvents,
+  createTechnologies,
   eventTarget,
   hasCountryFlag,
   hasOwner,
   isAtWar,
-  Mod,
   not,
+  type PureMod,
+  type TechnologyItem,
 } from "../../src/index.ts";
 
 /**
@@ -17,16 +21,25 @@ import {
  */
 const flags = countryFlags("hello_galaxy_heard_the_hum", "hello_galaxy_pacifist_path");
 
-export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
-  const mod = new Mod({
-    name: "Hello Galaxy",
-    prefix: "hello_galaxy",
-    version: "0.1.0",
-    supportedVersion: "4.0.*",
-    tags: ["Technologies"],
-  });
+const config = {
+  name: "Hello Galaxy",
+  prefix: "hello_galaxy",
+  version: "0.1.0",
+  supportedVersion: "4.0.*",
+  tags: ["Technologies"],
+};
 
-  const resonanceTheory = mod.defineTechnology({
+export function defineHelloGalaxy(): PureMod {
+  // Each factory is a collection: creating content through it registers the
+  // content, and the collection names the file it lands in. No stem means
+  // the registry default, `common/technology/hello_galaxy_technology.txt`.
+  const techs = createTechnologies();
+  // Event identity is authored, never inferred from layout: the file stem
+  // and the namespace are declared together, so every id below is
+  // `hello_galaxy.<n>` from birth.
+  const events = createEvents("events", "hello_galaxy");
+
+  const resonanceTheory = techs.defineTechnology({
     id: "hello_galaxy_tech_resonance_theory",
     name: "Crystal Resonance Theory",
     desc: "The lattice hums at frequencies we are only beginning to hear.",
@@ -37,7 +50,7 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
     weight: 100,
   });
 
-  mod.defineTechnology({
+  techs.defineTechnology({
     id: "hello_galaxy_tech_resonance_weapons",
     name: "Resonance Disruptors",
     desc: "Weaponized harmonics that shatter hulls from within.",
@@ -56,7 +69,7 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
 
   // Build-time loop: one definition, five tiers of amplifier techs, each
   // requiring the previous — the "generate fifty variants" superpower.
-  let previous = resonanceTheory;
+  let previous: TechnologyItem = resonanceTheory;
   for (const [index, adjective] of [
     "Attuned",
     "Harmonic",
@@ -65,7 +78,7 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
     "Transcendent",
   ].entries()) {
     const tier = index + 1;
-    previous = mod.defineTechnology({
+    previous = techs.defineTechnology({
       id: `hello_galaxy_tech_amplifier_${tier}`,
       name: `${adjective} Resonance Amplifiers`,
       cost: 1000 * 2 ** tier,
@@ -83,7 +96,7 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
   // compile-checked; recording happens right here, at define time.
   const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
 
-  const aftershock = mod.definePlanetEvent({
+  const aftershock = events.definePlanetEvent({
     id: 2,
     from: "country",
     title: "Aftershock",
@@ -97,7 +110,7 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
     options: [{ name: "Noted." }],
   });
 
-  mod.defineCountryEvent({
+  events.defineCountryEvent({
     id: 1,
     title: "The Hum Returns",
     desc: "Deep in the lattice, something answers back.",
@@ -128,5 +141,7 @@ export function defineHelloGalaxy(): Mod<"hello_galaxy"> {
     options: [{ name: "Fascinating." }],
   });
 
-  return mod;
+  // `buildMod` is the fold: collections in, an assembled value out. Nothing
+  // is written and nothing is serialized until `render`/`write`.
+  return buildMod(config, [techs, events]);
 }

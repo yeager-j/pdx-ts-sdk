@@ -1,8 +1,16 @@
 import {
+  buildMod,
   countryFlags,
+  createAgendas,
+  createBuildings,
+  createEdicts,
+  createEvents,
+  createOnActions,
+  createTechnologies,
+  createTraditionCategories,
+  createTraditions,
   eventTarget,
   hasAuthority,
-  Mod,
   numOwnedPlanets,
   onActions,
   type VanillaView,
@@ -11,15 +19,26 @@ import {
 export const hardeningFlags = countryFlags("pdx_hardening_entry_fired");
 export const hardeningTarget = eventTarget<"planet">("pdx_hardening_chain_planet");
 
-export function defineHardening(vanilla: VanillaView) {
-  const mod = new Mod({
-    name: "PDX SDK Hardening",
-    prefix: "pdx_hardening",
-    version: "1.0.0",
-    supportedVersion: "v4.4.*",
-  });
+const config = {
+  name: "PDX SDK Hardening",
+  prefix: "pdx_hardening",
+  version: "1.0.0",
+  supportedVersion: "v4.4.*",
+};
 
-  const markerTechnology = mod.defineTechnology({
+export function defineHardening(vanilla: VanillaView) {
+  // One collection per registry the corpus covers; each takes the registry's
+  // default file stem, so the emitted paths are the same ones the goldens pin.
+  const technologies = createTechnologies();
+  const buildings = createBuildings();
+  const agendas = createAgendas();
+  const traditions = createTraditions();
+  const traditionCategories = createTraditionCategories();
+  const edicts = createEdicts();
+  const events = createEvents("events", "pdx_hardening");
+  const hooks = createOnActions();
+
+  const markerTechnology = technologies.defineTechnology({
     id: "pdx_hardening_tech_marker",
     name: "SDK Hardening Marker",
     desc: "A harmless marker proving generated technology content loaded.",
@@ -31,7 +50,7 @@ export function defineHardening(vanilla: VanillaView) {
     weight: 0,
   });
 
-  mod.defineBuilding({
+  buildings.defineBuilding({
     id: "pdx_hardening_building_marker",
     name: "SDK Hardening Lab",
     desc: "A harmless building definition used by the hardening calibration.",
@@ -46,7 +65,7 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const agenda = mod.defineAgenda({
+  const agenda = agendas.defineAgenda({
     id: "pdx_hardening_agenda_marker",
     name: "SDK Hardening",
     desc: "Keep generated definitions observable and boring.",
@@ -54,7 +73,7 @@ export function defineHardening(vanilla: VanillaView) {
     effect: (country) => country.log("PDX_HARDENING_AGENDA"),
   });
 
-  const tradition = mod.defineTradition({
+  const tradition = traditions.defineTradition({
     id: "pdx_hardening_tradition_marker",
     name: "Hardening Discipline",
     effects: "The SDK seams remain observable.",
@@ -65,7 +84,7 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  mod.defineTraditionCategory({
+  traditionCategories.defineTraditionCategory({
     id: "pdx_hardening_tradition_category_marker",
     name: "SDK Hardening",
     desc: "A one-node category for integration coverage.",
@@ -75,7 +94,7 @@ export function defineHardening(vanilla: VanillaView) {
     traditions: [tradition],
   });
 
-  mod.defineEdict({
+  edicts.defineEdict({
     id: "pdx_hardening_edict_marker",
     name: "SDK Hardening Marker",
     description: "A harmless edict definition used by the hardening calibration.",
@@ -99,7 +118,7 @@ export function defineHardening(vanilla: VanillaView) {
     effect: (country) => country.log("PDX_HARDENING_EDICT"),
   });
 
-  const cascade = mod.defineCountryEvent({
+  const cascade = events.defineCountryEvent({
     id: 4,
     hideWindow: true,
     isTriggeredOnly: true,
@@ -108,7 +127,7 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const delayedA = mod.defineCountryEvent({
+  const delayedA = events.defineCountryEvent({
     id: 2,
     from: "planet",
     hideWindow: true,
@@ -120,14 +139,14 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const delayedB = mod.defineCountryEvent({
+  const delayedB = events.defineCountryEvent({
     id: 3,
     hideWindow: true,
     isTriggeredOnly: true,
     immediate: (country) => country.log("PDX_HARDENING_ORDER_B"),
   });
 
-  const expiredTargetProbe = mod.defineCountryEvent({
+  const expiredTargetProbe = events.defineCountryEvent({
     id: 5,
     hideWindow: true,
     isTriggeredOnly: true,
@@ -139,7 +158,7 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const entryEvent = mod.defineCountryEvent({
+  const entryEvent = events.defineCountryEvent({
     id: 1,
     hideWindow: true,
     isTriggeredOnly: true,
@@ -163,16 +182,20 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  mod.on(onActions.onGameStartCountry, entryEvent);
+  hooks.on(onActions.onGameStartCountry, entryEvent);
 
   const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
-  mod.patchTechnology(geneTailoring, (technology) => ({
+  technologies.patchTechnology(geneTailoring, (technology) => ({
     cost: technology.cost.value * 2,
     prerequisites: [...technology.prerequisites, markerTechnology],
   }));
 
   return {
-    mod,
+    mod: buildMod(
+      config,
+      [technologies, buildings, agendas, traditions, traditionCategories, edicts, events, hooks],
+      { vanilla }
+    ),
     entryEvent,
     delayedA,
     delayedB,

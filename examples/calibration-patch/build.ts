@@ -10,21 +10,16 @@ import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-import { Mod, stellaris } from "../../src/index.ts";
+import { buildMod, createTechnologies, render, stellaris, write } from "../../src/index.ts";
 
 const vanilla = stellaris.load();
 
-const mod = new Mod({
-  name: "PDX Calibration Patch",
-  prefix: "pdx_calib",
-  version: "1.0",
-  supportedVersion: "v4.4.*",
-});
+const technologies = createTechnologies();
 
 // Auto-researched at game start (tier 0 start tech), so appending it as a
 // prerequisite never gates the patched tech — it only has to *show up* in
 // the prerequisite list, a second observable on top of the cost.
-const marker = mod.defineTechnology({
+const marker = technologies.defineTechnology({
   id: "pdx_calib_tech_marker",
   name: "Calibration Marker",
   desc: "If you can read this in the technology tooltip, the SDK's patch file won the override.",
@@ -37,14 +32,28 @@ const marker = mod.defineTechnology({
 const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
 const vanillaCost = geneTailoring.cost.value;
 
-mod.patchTechnology(geneTailoring, (t) => ({
+technologies.patchTechnology(geneTailoring, (t) => ({
   cost: t.cost.value * 2,
   prerequisites: [...t.prerequisites, marker],
 }));
 
+// The patch guards — one vanilla view per mod, no duplicate patch, no id
+// colliding with a real vanilla technology — are checked here, at the fold.
+const mod = buildMod(
+  {
+    name: "PDX Calibration Patch",
+    prefix: "pdx_calib",
+    version: "1.0",
+    supportedVersion: "v4.4.*",
+  },
+  [technologies],
+  { vanilla }
+);
+
 const modRoot = join(homedir(), "Documents/Paradox Interactive/Stellaris/mod");
 const contentDir = join(modRoot, "pdx_calib");
-await mod.synth(contentDir);
+const files = render(mod);
+await write(contentDir, files);
 
 // The launcher-side descriptor: same fields as descriptor.mod plus the path.
 await writeFile(
@@ -53,9 +62,9 @@ await writeFile(
   "utf8"
 );
 
-const plan = mod.patchPlan()!;
+const plan = mod.patchPlan!;
 console.log(`Installed to ${contentDir}`);
-for (const relPath of mod.render().keys()) {
+for (const relPath of files.keys()) {
   console.log(`  wrote ${relPath}`);
 }
 console.log(

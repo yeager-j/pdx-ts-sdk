@@ -11,15 +11,13 @@ PDXScript.
 ## Quickstart
 
 ```ts
-import { and, eventTarget, hasAuthority, hasCountryFlag, hasOwner, Mod, not } from "@pdx-ts/sdk";
+import { and, buildMod, createTechnologies, hasCountryFlag, not, render, write } from "@pdx-ts/sdk";
 
-const mod = new Mod({
-  name: "Hello Galaxy",
-  prefix: "hello_galaxy", // namespaces every id and filename
-  supportedVersion: "4.0.*",
-});
+// A collection factory per registry. Creating content through it registers
+// the content, and the collection names the file it all lands in.
+const technologies = createTechnologies();
 
-const theory = mod.defineTechnology({
+const theory = technologies.defineTechnology({
   id: "hello_galaxy_tech_resonance_theory",
   name: "Crystal Resonance Theory", // localization rides along
   cost: 2000,
@@ -28,7 +26,7 @@ const theory = mod.defineTechnology({
   category: "particles",
 });
 
-mod.defineTechnology({
+technologies.defineTechnology({
   id: "hello_galaxy_tech_resonance_weapons",
   name: "Resonance Disruptors",
   cost: 6000,
@@ -39,8 +37,34 @@ mod.defineTechnology({
   potential: and(hasCountryFlag("heard_the_hum"), not(hasCountryFlag("pacifist_path"))),
 });
 
-await mod.synth("./out");
+// `buildMod` is the fold: config plus collections in, an assembled mod value
+// out. `render` serializes it; `write` is the only step that touches disk.
+const mod = buildMod(
+  {
+    name: "Hello Galaxy",
+    prefix: "hello_galaxy", // namespaces every id and filename
+    supportedVersion: "4.0.*",
+  },
+  [technologies]
+);
+
+await write("./out", render(mod));
 ```
+
+Nothing is global and nothing is implicit: a collection is an ordinary value
+you can build in one module and export from it, `buildMod` is where every
+cross-collection check happens (duplicate ids, localization key collisions,
+event references with no definition behind them), and everything the build
+wants to say but need not refuse — an id missing the mod prefix, a quote the
+Paradox yml format cannot escape — comes back as data on `mod.warnings`
+rather than console output.
+
+Collections are also the file layout. `createTechnologies()` takes the
+registry's default file; `createTechnologies("ascension")` puts its
+definitions in `common/technology/hello_galaxy_ascension.txt` instead, and
+two collections sharing a stem merge in order. Splitting a registry across
+files never bypasses the patch machinery: every file a registry emits joins
+the load-order enumeration a patch filename has to beat.
 
 The same generated content module backs ascension perks, buildings, agendas,
 edicts, and traditions. Effect blocks use the same scope-checked recorder as
@@ -48,7 +72,12 @@ events, and defined content can be passed directly through cross-registry
 references:
 
 ```ts
-const agenda = mod.defineAgenda({
+const agendas = createAgendas();
+const traditions = createTraditions();
+const traditionCategories = createTraditionCategories();
+const edicts = createEdicts();
+
+const agenda = agendas.defineAgenda({
   id: "hello_galaxy_agenda_machine_futures",
   name: "Machine Futures",
   agendaCost: 1000,
@@ -57,7 +86,7 @@ const agenda = mod.defineAgenda({
   },
 });
 
-const ascension = mod.defineTradition({
+const ascension = traditions.defineTradition({
   id: "hello_galaxy_tradition_ascension",
   name: "Synthetic Ascension",
   unlocksAgenda: agenda,
@@ -65,7 +94,7 @@ const ascension = mod.defineTradition({
   modifier: (m) => m.planet.pop.assembly.mult(0.1),
 });
 
-mod.defineTraditionCategory({
+traditionCategories.defineTraditionCategory({
   id: "hello_galaxy_tradition_category_machines",
   name: "Machine Futures",
   treeTemplate: "tree_template_5",
@@ -74,7 +103,7 @@ mod.defineTraditionCategory({
   traditions: [ascension],
 });
 
-mod.defineEdict({
+edicts.defineEdict({
   id: "hello_galaxy_edict_machine_mobilization",
   name: "Machine Mobilization",
   length: 3600,
@@ -98,12 +127,18 @@ mod.defineEdict({
 ```
 
 Events work the same way — except effect blocks are closures that really run,
-once, at build time, recording into a typed scope object:
+once, at build time, recording into a typed scope object. An event collection
+declares its file and its namespace together, because event identity must
+never follow layout: saves persist pending fires by full id, so moving an
+event between files can never be allowed to change what it is called.
 
 ```ts
 const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
 
-const aftershock = mod.definePlanetEvent({
+// `events/hello_galaxy_events.txt`, every id below `hello_galaxy.<n>`.
+const events = createEvents("events", "hello_galaxy");
+
+const aftershock = events.definePlanetEvent({
   id: 2,
   from: "country", // the FROM contract: fire sites are checked against it
   title: "Aftershock",
@@ -116,7 +151,7 @@ const aftershock = mod.definePlanetEvent({
   options: [{ name: "Noted." }],
 });
 
-mod.defineCountryEvent({
+events.defineCountryEvent({
   id: 1,
   title: "The Hum Returns",
   isTriggeredOnly: true,
@@ -135,9 +170,16 @@ mod.defineCountryEvent({
 });
 ```
 
-`synth` writes a complete, launcher-ready mod folder: `descriptor.mod`,
-namespaced files under each populated `common/` registry, `events/*.txt`, and
-BOM-prefixed localization `.yml`.
+Numeric ids are per namespace, and each namespace gets its own file with its
+own `namespace = ...` header — so a large mod gives every feature its own
+`createEvents(file, namespace)` and its own id space, instead of one global
+counter. Firing an event whose collection was never passed to `buildMod` is a
+build error, not a silent dangling id.
+
+`render(mod)` returns the complete, launcher-ready mod folder as a
+path-to-contents map — `descriptor.mod`, namespaced files under each
+populated `common/` registry, `events/*.txt`, and BOM-prefixed localization
+`.yml` — and `write(dir, files)` puts it on disk.
 
 ## Design pillars
 
@@ -248,7 +290,7 @@ with no enclosing key, so the rows land at the definition's root exactly as
 vanilla writes them.
 
 ```ts
-mod.defineStaticModifier({
+createStaticModifiers().defineStaticModifier({
   id: "hello_galaxy_synthetic_surge",
   name: "Synthetic Surge",
   modifiers: (m) => {
@@ -277,7 +319,7 @@ you assert it — `target<"planet">(...)` in triggers,
 declare it once and every start is checked:
 
 ```ts
-const uprising = mod.defineSituationType({
+const uprising = createSituationTypes().defineSituationType({
   id: "mymod_situation_uprising",
   name: "Machine Uprising",
   targetScope: "planet", // compile-time only; emits nothing
@@ -392,13 +434,17 @@ typed object; a patch is a plain TypeScript transform over it:
 ```ts
 const vanilla = stellaris.load();
 
-mod.patchTechnology(
+technologies.patchTechnology(
   vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
   (t) => ({
     cost: t.cost.value * 2, // cost is @tier3cost1 in the file — .value bakes visibly
     prerequisites: [...t.prerequisites, myNewTech],
   })
 );
+
+// Hand `buildMod` the view the patches came from: a defined id colliding with
+// a real vanilla id then becomes a hard error rather than a silent override.
+const mod = buildMod(config, [technologies], { vanilla });
 ```
 
 Numbers parse as value-plus-provenance: `cost` in the file is the scripted
@@ -411,7 +457,7 @@ the file's own field order. Unknown `@variables`, invalid enum values, and
 unknown ids all fail at parse time with file and line — never a silent
 widening to `string`.
 
-The headline is what happens at `synth()`: the patch is emitted into a file
+The headline is what happens at `buildMod`: the patch is emitted into a file
 whose name is _computed from the parsed enumeration_ to byte-sort after
 every surviving file defining the key — no `zz_` cargo cult — and the build
 fails loudly when no winning name exists or when the registry's override
@@ -421,6 +467,12 @@ install refuses until explicitly accepted). "Launched the game and the
 override didn't take" becomes a build error. The v1 claim is exactly
 "provably beats vanilla" — wins against third-party mods await playset
 enumeration and are stated as unverified in every emitted header.
+
+`buildMod` is also where patches are first seen together, so it is where
+patching the same technology twice, or mixing patches from two different
+`stellaris.load()` views, is refused. The resulting plan — the winning
+filename and its win assertions — rides on the built value as
+`mod.patchPlan`, ready to print or assert on before anything is written.
 
 Status: landed in `src/` ([docs/verdict-patches.md](docs/verdict-patches.md)
 is the verdict). The parser it builds on is
@@ -467,8 +519,10 @@ ownership limit has exactly one entry, keyed `default`, which the game reads
 additively, so ship-of-size limits author as a contribution to it:
 
 ```ts
-const titan = mod.defineCountryShipOfSizeLimit({ id: "mymod_titan_limit", ... });
-mod.addShipOfSizeLimits([titan]);
+const limits = createCountryShipOfSizeLimits();
+
+const titan = limits.defineCountryShipOfSizeLimit({ id: "mymod_titan_limit", ... });
+limits.addShipOfSizeLimits([titan]);
 // emits: default = { ship_of_size_limits = { mymod_titan_limit } }
 ```
 
