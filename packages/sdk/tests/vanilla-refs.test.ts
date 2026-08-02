@@ -59,23 +59,34 @@ function navigate(trie: unknown): Record<string, Record<string, { readonly id: s
 }
 
 describe("the oversized trie's two entry points", () => {
-  it("reconstructs a navigated path by joining its segments with an underscore", () => {
-    // The proxy carries no id data; the generator split every sprite id on
-    // `_`, so joining the segments back is what makes navigation and the real
-    // id the same string.
-    expect(navigate(vanilla.sprite)["GFX"]!["evt"]!.id).toBe("GFX_evt");
+  it("reads a navigated id from the last segment alone", () => {
+    // The proxy carries no id data. Every trie the generator emits spells its
+    // leaf keys with the whole id and its earlier segments with the vanilla
+    // file the id came from, so the last segment *is* the id and nothing is
+    // reassembled — one behaviour, for every registry.
+    expect(navigate(vanilla.sprite)["eventpictures"]!["GFX_evt_ship_in_orbit"]!.id).toBe(
+      "GFX_evt_ship_in_orbit"
+    );
+    expect(navigate(vanilla.staticModifier)["deficit"]!["food_deficit"]!.id).toBe("food_deficit");
+  });
+
+  it("reads the same id however deep the buckets go", () => {
+    // `sound/toxoids/events/tox_events.asset` is three segments of navigation
+    // before the leaf, and none of them is part of the id.
+    const deep = navigate(vanilla.soundEffect)["toxoids"]!["events"] as unknown as Record<
+      string,
+      Record<string, { readonly id: string }>
+    >;
+    expect(deep["tox_events"]!["event_first_contact_toxoid"]!.id).toBe(
+      "event_first_contact_toxoid"
+    );
   });
 
   it("agrees with the string call form", () => {
-    expect(vanilla.sprite("a_b").id).toBe("a_b");
-    expect(navigate(vanilla.sprite)["a"]!["b"]!.id).toBe(vanilla.sprite("a_b").id);
-  });
-
-  it("reads a file-bucketed registry's id from the leaf key alone", () => {
-    // `static_modifier` navigates by source file, so the bucket segment is not
-    // part of the id — the opposite contract from the sprite trie above, and
-    // the reason `makeIdTrie` takes a mode rather than assuming one.
-    expect(navigate(vanilla.staticModifier)["deficit"]!["food_deficit"]!.id).toBe("food_deficit");
+    expect(vanilla.sprite("GFX_evt_ship_in_orbit").id).toBe("GFX_evt_ship_in_orbit");
+    expect(navigate(vanilla.sprite)["eventpictures"]!["GFX_evt_ship_in_orbit"]!.id).toBe(
+      vanilla.sprite("GFX_evt_ship_in_orbit").id
+    );
     expect(vanilla.staticModifier("food_deficit").id).toBe("food_deficit");
   });
 });

@@ -1,13 +1,30 @@
 # A nested directory: the real `sound/` tree is several levels deep, so the
-# reader has to walk rather than list.
+# reader has to walk rather than list — and every level it walks is a
+# navigation segment of the trie.
+#
+# `fake.dotted.alert` is here for the leaf keys: a dot cannot appear in a
+# property *name*, and does not have to — the leaf is a quoted key spelling the
+# whole id, which is what makes the ~100 dotted vanilla sound names navigable.
 
 sound = {
 	name = "fake_alert_two"
 	file = "placeholders/fake_alert_two.wav"
 }
 
+sound = {
+	name = "fake.dotted.alert"
+	file = "placeholders/fake_dotted_alert.wav"
+}
+
 soundeffect = {
 	name = fake_effect_beta
+	sounds = {
+		sound = fake_alert_two
+	}
+}
+
+soundeffect = {
+	name = "fake.dotted.effect"
 	sounds = {
 		sound = fake_alert_two
 	}

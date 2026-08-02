@@ -2,50 +2,38 @@
 
 import type { StaticModifierRef } from "@pdx-ts/sdk";
 
-import type {
-  VanillaStaticModifierTrieAncientRelics,
-  VanillaStaticModifierTrieApocalypse,
-  VanillaStaticModifierTrieAquatics,
-  VanillaStaticModifierTrieAstralPlanes,
-} from "./a.ts";
-import type { VanillaStaticModifierTrieBiogenesis } from "./b.ts";
-import type {
-  VanillaStaticModifierTrieCloneArmyOrigin,
-  VanillaStaticModifierTrieCosmicStorms,
-} from "./c.ts";
-import type {
-  VanillaStaticModifierTrieDeficit,
-  VanillaStaticModifierTrieDistantStars,
-} from "./d.ts";
-import type { VanillaStaticModifierTrieExtremeFrontiers } from "./e.ts";
-import type {
-  VanillaStaticModifierTrieFactions,
-  VanillaStaticModifierTrieFederations,
-  VanillaStaticModifierTrieFirstContactDlc,
-} from "./f.ts";
-import type { VanillaStaticModifierTrieGrandArchive } from "./g.ts";
-import type { VanillaStaticModifierTrieHorizonsignal } from "./h.ts";
-import type { VanillaStaticModifierTrieInfernals } from "./i.ts";
-import type { VanillaStaticModifierTrieJobs } from "./j.ts";
-import type { VanillaStaticModifierTrieLeviathans } from "./l.ts";
-import type {
-  VanillaStaticModifierTrieMachineAge,
-  VanillaStaticModifierTrieMegacorp,
-} from "./m.ts";
-import type {
-  VanillaStaticModifierTrieNecroids,
-  VanillaStaticModifierTrieNemesis,
-  VanillaStaticModifierTrieNomads,
-} from "./n.ts";
-import type { VanillaStaticModifierTrieOverlord } from "./o.ts";
-import type { VanillaStaticModifierTrieParagon, VanillaStaticModifierTriePlantoids } from "./p.ts";
-import type {
-  VanillaStaticModifierTrieShroud,
-  VanillaStaticModifierTrieSituations,
-  VanillaStaticModifierTrieStrangeWorlds,
-} from "./s.ts";
-import type { VanillaStaticModifierTrieToxoids } from "./t.ts";
-import type { VanillaStaticModifierTrieUnplugged, VanillaStaticModifierTrieUtopia } from "./u.ts";
+import type { VanillaStaticModifierTrieAncientRelics } from "./ancient-relics.ts";
+import type { VanillaStaticModifierTrieApocalypse } from "./apocalypse.ts";
+import type { VanillaStaticModifierTrieAquatics } from "./aquatics.ts";
+import type { VanillaStaticModifierTrieAstralPlanes } from "./astral-planes.ts";
+import type { VanillaStaticModifierTrieBiogenesis } from "./biogenesis.ts";
+import type { VanillaStaticModifierTrieCloneArmyOrigin } from "./clone-army-origin.ts";
+import type { VanillaStaticModifierTrieCosmicStorms } from "./cosmic-storms.ts";
+import type { VanillaStaticModifierTrieDeficit } from "./deficit.ts";
+import type { VanillaStaticModifierTrieDistantStars } from "./distant-stars.ts";
+import type { VanillaStaticModifierTrieExtremeFrontiers } from "./extreme-frontiers.ts";
+import type { VanillaStaticModifierTrieFactions } from "./factions.ts";
+import type { VanillaStaticModifierTrieFederations } from "./federations.ts";
+import type { VanillaStaticModifierTrieFirstContactDlc } from "./first-contact-dlc.ts";
+import type { VanillaStaticModifierTrieGrandArchive } from "./grand-archive.ts";
+import type { VanillaStaticModifierTrieHorizonsignal } from "./horizonsignal.ts";
+import type { VanillaStaticModifierTrieInfernals } from "./infernals.ts";
+import type { VanillaStaticModifierTrieJobs } from "./jobs.ts";
+import type { VanillaStaticModifierTrieLeviathans } from "./leviathans.ts";
+import type { VanillaStaticModifierTrieMachineAge } from "./machine-age.ts";
+import type { VanillaStaticModifierTrieMegacorp } from "./megacorp.ts";
+import type { VanillaStaticModifierTrieNecroids } from "./necroids.ts";
+import type { VanillaStaticModifierTrieNemesis } from "./nemesis.ts";
+import type { VanillaStaticModifierTrieNomads } from "./nomads.ts";
+import type { VanillaStaticModifierTrieOverlord } from "./overlord.ts";
+import type { VanillaStaticModifierTrieParagon } from "./paragon.ts";
+import type { VanillaStaticModifierTriePlantoids } from "./plantoids.ts";
+import type { VanillaStaticModifierTrieShroud } from "./shroud.ts";
+import type { VanillaStaticModifierTrieSituations } from "./situations.ts";
+import type { VanillaStaticModifierTrieStrangeWorlds } from "./strange-worlds.ts";
+import type { VanillaStaticModifierTrieToxoids } from "./toxoids.ts";
+import type { VanillaStaticModifierTrieUnplugged } from "./unplugged.ts";
+import type { VanillaStaticModifierTrieUtopia } from "./utopia.ts";
 
 export interface VanillaStaticModifierTrie {
   readonly "6_hour_workday": StaticModifierRef & {

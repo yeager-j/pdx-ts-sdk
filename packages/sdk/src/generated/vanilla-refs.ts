@@ -248,9 +248,9 @@ export function opinionModifier<const Id extends VanillaId<"opinion_modifier">>(
 
 /**
  * Vanilla static modifier ids, both navigable and checked.
- * `staticModifier.<file>.<id>` descends one level of buckets named after
- * the vanilla files these ids are defined in, to a leaf spelling the
- * id verbatim — the bucket is navigation only and no part of the id.
+ * `staticModifier.<file>...<id>` descends buckets named after the vanilla
+ * files and directories these ids are defined in, to a leaf spelling the
+ * id verbatim — the buckets are navigation only and no part of the id.
  * `staticModifier(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
  * Checked against @pdx-ts/stellaris-vanilla when it is installed; any
@@ -260,7 +260,7 @@ export function opinionModifier<const Id extends VanillaId<"opinion_modifier">>(
 export const staticModifier: VanillaTrie<"static_modifier"> &
   (<const Id extends string>(
     id: Id & CheckedVanillaId<"static_modifier", Id>
-  ) => StaticModifierRef & { readonly id: Id }) = makeIdTrie("static_modifier", "leaf");
+  ) => StaticModifierRef & { readonly id: Id }) = makeIdTrie("static_modifier");
 
 /**
  * A checked reference to a vanilla scripted modifier id.
@@ -480,9 +480,9 @@ export function countryShipOfSizeLimit<const Id extends VanillaId<"country_ship_
 
 /**
  * Vanilla sound ids, both navigable and checked.
- * `sound.<segment>...` descends a trie of every id this registry
- * defines, split on `_` at generation time, down to a leaf typed as
- * the exact ref — so the path, rejoined with `_`, is the id.
+ * `sound.<file>...<id>` descends buckets named after the vanilla
+ * files and directories these ids are defined in, to a leaf spelling the
+ * id verbatim — the buckets are navigation only and no part of the id.
  * `sound(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
  * Checked against @pdx-ts/stellaris-vanilla when it is installed; any
@@ -492,13 +492,13 @@ export function countryShipOfSizeLimit<const Id extends VanillaId<"country_ship_
 export const sound: VanillaTrie<"sound"> &
   (<const Id extends string>(
     id: Id & CheckedVanillaId<"sound", Id>
-  ) => SoundRef & { readonly id: Id }) = makeIdTrie("sound", "path");
+  ) => SoundRef & { readonly id: Id }) = makeIdTrie("sound");
 
 /**
  * Vanilla sound effect ids, both navigable and checked.
- * `soundEffect.<segment>...` descends a trie of every id this registry
- * defines, split on `_` at generation time, down to a leaf typed as
- * the exact ref — so the path, rejoined with `_`, is the id.
+ * `soundEffect.<file>...<id>` descends buckets named after the vanilla
+ * files and directories these ids are defined in, to a leaf spelling the
+ * id verbatim — the buckets are navigation only and no part of the id.
  * `soundEffect(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
  * Checked against @pdx-ts/stellaris-vanilla when it is installed; any
@@ -508,13 +508,13 @@ export const sound: VanillaTrie<"sound"> &
 export const soundEffect: VanillaTrie<"sound_effect"> &
   (<const Id extends string>(
     id: Id & CheckedVanillaId<"sound_effect", Id>
-  ) => SoundEffectRef & { readonly id: Id }) = makeIdTrie("sound_effect", "path");
+  ) => SoundEffectRef & { readonly id: Id }) = makeIdTrie("sound_effect");
 
 /**
  * Vanilla sprite ids, both navigable and checked.
- * `sprite.<segment>...` descends a trie of every id this registry
- * defines, split on `_` at generation time, down to a leaf typed as
- * the exact ref — so the path, rejoined with `_`, is the id.
+ * `sprite.<file>...<id>` descends buckets named after the vanilla
+ * files and directories these ids are defined in, to a leaf spelling the
+ * id verbatim — the buckets are navigation only and no part of the id.
  * `sprite(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
  * Checked against @pdx-ts/stellaris-vanilla when it is installed; any
@@ -524,7 +524,7 @@ export const soundEffect: VanillaTrie<"sound_effect"> &
 export const sprite: VanillaTrie<"sprite"> &
   (<const Id extends string>(
     id: Id & CheckedVanillaId<"sprite", Id>
-  ) => SpriteRef & { readonly id: Id }) = makeIdTrie("sprite", "path");
+  ) => SpriteRef & { readonly id: Id }) = makeIdTrie("sprite");
 
 /**
  * A checked reference to a vanilla resource id.

@@ -72,45 +72,57 @@ describe("oversized registries: the checked call form", () => {
 });
 
 describe("oversized registries: trie navigation", () => {
-  it("types a real leaf as the exact ref", () => {
-    // `GFX_evt_ship_in_orbit` split on `_` at generation time; navigating the
-    // same segments back is what `makeIdTrie` reconstructs at runtime.
-    const leaf = vanilla.sprite.GFX.evt.ship.in_orbit;
+  it("navigates sprites by their .gfx file, id spelled verbatim at the leaf", () => {
+    // `interface/eventpictures.gfx` defines `GFX_evt_ship_in_orbit`. The bucket
+    // is the file and no part of the id, so the leaf key is the whole id —
+    // there is no `GFX`/`evt`/`ship` ladder, because a shared prefix is not a
+    // category.
+    const leaf = vanilla.sprite.eventpictures.GFX_evt_ship_in_orbit;
     expectTypeOf(leaf.id).toEqualTypeOf<"GFX_evt_ship_in_orbit">();
     expectTypeOf(leaf).toExtend<SpriteRef>();
   });
 
-  it("gives an intermediate node no id", () => {
-    // `GFX_evt_ship` is a prefix, not a sprite. Only the types decide what is a
-    // leaf — the runtime proxy would happily hand back a `.id` here.
+  it("gives a file bucket no id of its own", () => {
+    // `eventpictures` is a filename, not a sprite. Only the types decide what
+    // is a leaf — the runtime proxy would happily hand back a `.id` here.
     // @ts-expect-error
-    vanilla.sprite.GFX.evt.ship.id;
+    vanilla.sprite.eventpictures.id;
   });
 
-  it("rejects a segment no id has", () => {
+  it("rejects an id that file does not define", () => {
     // @ts-expect-error
-    vanilla.sprite.GFX.evt.ship.in_orbti;
+    vanilla.sprite.eventpictures.GFX_evt_ship_in_orbti;
   });
 
-  it("navigates static_modifier by vanilla source file, id spelled verbatim", () => {
+  it("navigates a sound by every directory level of its source path", () => {
+    // `sound/toxoids/events/tox_events.asset`: the `sound/` tree is deep and
+    // each level is a real category, so each is a navigation segment.
+    expectTypeOf(
+      vanilla.soundEffect.toxoids.events.tox_events.event_first_contact_toxoid.id
+    ).toEqualTypeOf<"event_first_contact_toxoid">();
+  });
+
+  it("carries an id no property name could spell, as a quoted key", () => {
+    // `sound/nomads/ships/nom_dyson_gun.asset` defines 100-odd names with dots
+    // in them. A verbatim leaf key is a legal quoted property, so they are
+    // navigable rather than flat-union-only.
+    expectTypeOf(
+      vanilla.sound.nomads.ships.nom_dyson_gun["dyson_arm_laser_2s_fadeinout_0.5s_01"].id
+    ).toEqualTypeOf<"dyson_arm_laser_2s_fadeinout_0.5s_01">();
+  });
+
+  it("navigates static_modifier the same way, by vanilla source file", () => {
     // `static_modifier` is a `CONTENT_MANIFEST` registry (it has a `defineX`),
     // not a `VANILLA_REF_EXTRAS` row — it earns the trie purely on size
-    // (3,081 vanilla ids), via `ContentManifestEntry.oversized`. Its mode is
-    // `file-buckets`, so unlike the sprite trie the *path is not the id*: the
-    // bucket names the file (`09_static_modifiers_deficit.txt`,
-    // `19_static_modifiers_paragon.txt`) and the leaf key is the whole id.
+    // (3,081 vanilla ids), via `ContentManifestEntry.oversized`. Its files are
+    // `common/`-style, so the bucket is the stem with the load-order number
+    // and the registry token stripped (`19_static_modifiers_paragon.txt`).
     expectTypeOf(vanilla.staticModifier.deficit.food_deficit.id).toEqualTypeOf<"food_deficit">();
     expectTypeOf(vanilla.staticModifier.deficit.food_deficit).toExtend<StaticModifierRef>();
     expectTypeOf(
       vanilla.staticModifier.paragon.crisis_studied.id
     ).toEqualTypeOf<"crisis_studied">();
     expectTypeOf(vanilla.staticModifier("food_deficit").id).toEqualTypeOf<"food_deficit">();
-  });
-
-  it("gives a file bucket no id of its own", () => {
-    // `deficit` is a filename, not a static modifier.
-    // @ts-expect-error
-    vanilla.staticModifier.deficit.id;
   });
 
   it("puts ids from a subject-less file at the trie root", () => {
@@ -162,8 +174,9 @@ describe("scripted trigger parameters (the SDK-13 payload)", () => {
 describe("the two sides' oversized thresholds agree", () => {
   it("gives a trie to exactly the registries the SDK emits as oversized", () => {
     // The generator decides by measured id count
-    // (`tools/vanilla-codegen/trie.ts`); the SDK decides by the `oversized`
-    // flags in `tools/codegen/content-manifest.ts`. Nothing links them but
+    // (`packages/vanilla-codegen/src/trie.ts`); the SDK decides by the
+    // `oversized` flags in `packages/codegen/src/content-manifest.ts`. Nothing
+    // links them but
     // this assertion — if either side's threshold moves, an SDK export loses
     // its navigation (or gains a 3,000-member union parameter) silently, and
     // this is what goes red instead.

@@ -33,15 +33,16 @@ export interface RegistryIds {
   /** The registry's directory does not exist in this install. */
   readonly missing: boolean;
   /**
-   * Id -> the stem of the file that defines it, for `file-buckets` registries
-   * only. Every other registry gets `null`: provenance costs a map per id and
-   * nothing but a file-bucketed trie has any use for it.
+   * Id -> the path of the file that defines it, relative to the registry's own
+   * directory and always `/`-separated. It is the whole relative path rather
+   * than the stem because that is what the trie navigates by: `sound/` nests
+   * several directories deep and every level is a category.
    *
-   * An id defined in two files keeps the first stem in walk order, which is
+   * An id defined in two files keeps the first path in walk order, which is
    * sorted — so which bucket a redefined id lands in is deterministic rather
    * than filesystem-dependent.
    */
-  readonly sourceStems: ReadonlyMap<string, string> | null;
+  readonly sourcePaths: ReadonlyMap<string, string>;
 }
 
 /**
@@ -135,27 +136,25 @@ function collect(spec: RegistrySpec, items: readonly PdxItem[], add: (id: string
   }
 }
 
-/** `09_static_modifiers_deficit.txt` -> `09_static_modifiers_deficit`. */
-function stemOf(file: string): string {
-  const name = path.basename(file);
-  const dot = name.lastIndexOf(".");
-  return dot <= 0 ? name : name.slice(0, dot);
+/** Always `/`-separated, so a bucket path does not depend on the platform. */
+function relativeTo(dir: string, file: string): string {
+  return path.relative(dir, file).split(path.sep).join("/");
 }
 
 export function readRegistryIds(root: string, spec: RegistrySpec): RegistryIds {
   const dir = path.join(root, spec.path);
   const files = walk(dir, spec.extension, !spec.pathStrict);
   const ids = new Set<string>();
-  const sourceStems = spec.trieMode === "file-buckets" ? new Map<string, string>() : null;
+  const sourcePaths = new Map<string, string>();
   let diagnostics = 0;
   for (const file of files) {
     const parsed = parse(readFileSync(file, "utf8"), path.basename(file));
     diagnostics += parsed.diagnostics.length;
-    const stem = stemOf(file);
+    const source = relativeTo(dir, file);
     collect(spec, parsed.items, (id) => {
       ids.add(id);
-      if (sourceStems !== null && !sourceStems.has(id)) {
-        sourceStems.set(id, stem);
+      if (!sourcePaths.has(id)) {
+        sourcePaths.set(id, source);
       }
     });
   }
@@ -165,7 +164,7 @@ export function readRegistryIds(root: string, spec: RegistrySpec): RegistryIds {
     files: files.length,
     diagnostics,
     missing: files.length === 0 && !exists(dir),
-    sourceStems,
+    sourcePaths,
   };
 }
 

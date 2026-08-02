@@ -19,7 +19,7 @@ That one line declaration-merges this package's per-registry id unions,
 scripted trigger/effect parameter tables, and trie node types into
 `@pdx-ts/sdk`'s merge targets (`VanillaIds`, `VanillaScriptedTriggers`,
 `VanillaScriptedEffects`, `VanillaTries`). From then on, every `vanilla.*`
-helper the SDK exports (`vanilla.technology(...)`, `vanilla.sprite.ship...`)
+helper the SDK exports (`vanilla.technology(...)`, `vanilla.sprite.icons...`)
 checks its argument against this package's real id set instead of accepting
 any string.
 

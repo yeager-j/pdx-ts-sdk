@@ -611,13 +611,14 @@ defineTechnology({
 });
 
 // Sprites, sounds, and static modifiers are too large for a completion menu
-// (9,197 sprites in 4.4.6), so they are navigable as well as callable.
-// Sprites and sounds nest by name — the path, rejoined with `_`, is the id:
-vanilla.sprite.GFX.evt.ship.in_orbit; // → "GFX_evt_ship_in_orbit"
+// (9,197 sprites in 4.4.6), so they are navigable as well as callable. They
+// navigate by the vanilla file each id is defined in — the buckets are
+// navigation only, and the leaf spells the id verbatim:
+vanilla.sprite.eventpictures.GFX_evt_ship_in_orbit; // → "GFX_evt_ship_in_orbit"
 vanilla.sprite("GFX_evt_ship_in_orbit"); // checked, for an id copied from a game file
 
-// Static modifier names share prefixes by accident, so they nest by the
-// vanilla file they are defined in instead. The bucket is navigation only:
+// `sound/` nests several directories deep, so every level is a segment:
+vanilla.soundEffect.toxoids.events.tox_events.event_first_contact_toxoid;
 vanilla.staticModifier.deficit.food_deficit; // → "food_deficit"
 ```
 

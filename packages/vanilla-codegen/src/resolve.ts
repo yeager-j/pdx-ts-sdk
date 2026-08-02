@@ -11,10 +11,10 @@
  * quietly ignores.
  */
 
-import type { TrieMode } from "@pdx-ts/codegen/content-manifest";
 import { loadContentTypesFrom, loadRules, type ContentType } from "@pdx-ts/codegen/cwt/rules";
 
 import type { VanillaIdRow } from "./manifest.ts";
+import type { BucketLayout } from "./trie.ts";
 
 /** Where one registry's definitions live, and how to recognise them. */
 export interface RegistrySpec {
@@ -36,8 +36,8 @@ export interface RegistrySpec {
    * CWT types, whose ids a recursive walk would emit as technologies.
    */
   readonly pathStrict: boolean;
-  /** How this registry's trie is arranged, if it is large enough to get one. */
-  readonly trieMode: TrieMode;
+  /** How much of a file's path names its bucket, if the registry gets a trie. */
+  readonly bucket: BucketLayout;
 }
 
 /** The extension the game assumes when the rules declare none. */
@@ -101,6 +101,6 @@ function resolveRow(row: VanillaIdRow, type: ContentType | undefined): RegistryS
     nameField: type.nameField,
     skipRootKey,
     pathStrict: type.pathStrict ?? false,
-    trieMode: row.trie ?? "segments",
+    bucket: row.bucket ?? "stripped-file",
   };
 }

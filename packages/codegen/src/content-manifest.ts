@@ -31,29 +31,17 @@ export interface ContentManifestEntry {
    * Marks a registry whose vanilla id count blows out a completion menu, so
    * the generated `vanilla.*` namespace gives it the navigable trie plus
    * checked-call form instead of a flat literal-union parameter — the same
-   * two-tier split `VANILLA_REF_EXTRAS` declares below. The value is the
-   * trie's {@link TrieMode}. The two sides are pinned together by a type test
-   * over `keyof VanillaTries`.
+   * two-tier split `VANILLA_REF_EXTRAS` declares below.
+   *
+   * Only the yes-or-no belongs here. How the trie is arranged is a fact about
+   * the *install's* directories, so it lives with the generator that reads
+   * them (`@pdx-ts/vanilla-codegen`'s `BucketLayout`) and never reaches the
+   * SDK: every trie navigates buckets to a leaf spelling the id verbatim, so
+   * the runtime behaviour is the same for all of them. The two sides are
+   * pinned together by a type test over `keyof VanillaTries`.
    */
-  readonly oversized?: TrieMode;
+  readonly oversized?: true;
 }
-
-/**
- * How an oversized registry's ids are arranged for navigation, and therefore
- * how the runtime proxy reconstructs an id from a property path.
- *
- * - `segments`: ids split on `_` and nest, so the path *is* the id joined back
- *   with `_`. Right where names share meaningful prefixes — every sprite id
- *   starts `GFX_`, every sound name groups by subject.
- * - `file-buckets`: one level of buckets named after the vanilla source files,
- *   each holding its ids verbatim as leaves. The bucket key is navigation
- *   only; the id is the leaf key alone. Right where a segment split produces
- *   noise instead of structure — static modifiers share first words almost by
- *   accident (1,028 segment buckets, most of them one id), while the files
- *   Paradox groups them into are real categories: `deficit`, `paragon`,
- *   `jobs`.
- */
-export type TrieMode = "segments" | "file-buckets";
 
 export const CONTENT_MANIFEST = [
   { type: "technology", source: "common/technologies_consolidated.cwt" },
@@ -90,9 +78,8 @@ export const CONTENT_MANIFEST = [
   },
   { type: "ship_size", source: "common/ship_sizes.cwt" },
   { type: "opinion_modifier", source: "common/modifiers.cwt" },
-  // >2,000 ids in vanilla; gets the trie + checked-call form, bucketed by
-  // vanilla source file rather than by segment (see `TrieMode`).
-  { type: "static_modifier", source: "common/modifiers.cwt", oversized: "file-buckets" },
+  // >2,000 ids in vanilla; gets the trie + checked-call form.
+  { type: "static_modifier", source: "common/modifiers.cwt", oversized: true },
   {
     type: "scripted_modifier",
     source: "common/scripted_modifiers.cwt",
@@ -164,12 +151,12 @@ export const CONTENT_MANIFEST = [
  */
 export interface VanillaRefExtra {
   readonly type: string;
-  readonly oversized?: TrieMode;
+  readonly oversized?: true;
 }
 
 export const VANILLA_REF_EXTRAS = [
-  { type: "sound", oversized: "segments" },
-  { type: "sound_effect", oversized: "segments" },
-  { type: "sprite", oversized: "segments" },
+  { type: "sound", oversized: true },
+  { type: "sound_effect", oversized: true },
+  { type: "sprite", oversized: true },
   { type: "resource" },
 ] as const satisfies readonly VanillaRefExtra[];

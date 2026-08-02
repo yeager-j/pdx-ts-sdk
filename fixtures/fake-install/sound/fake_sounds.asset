@@ -1,10 +1,18 @@
 # Fixture sounds. `.asset` is Clausewitz syntax like everything else, and both
 # `sound` and `soundeffect` are top-level keywords with the id in `name`.
+#
+# The `sound/` tree buckets by directory, so this file — sitting at the top
+# level — contributes one bucket named after its own stem.
 
 sound = {
 	name = "fake_alert_one"
 	file = "placeholders/fake_alert_one.wav"
 	always_load = no
+}
+
+sound = {
+	name = "fake_alert_three"
+	file = "placeholders/fake_alert_three.wav"
 }
 
 soundeffect = {
@@ -13,6 +21,13 @@ soundeffect = {
 		sound = fake_alert_one
 	}
 	volume = 0.5
+}
+
+soundeffect = {
+	name = fake_effect_gamma
+	sounds = {
+		sound = fake_alert_three
+	}
 }
 
 category = {

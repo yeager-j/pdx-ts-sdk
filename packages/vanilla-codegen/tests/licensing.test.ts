@@ -26,7 +26,7 @@ const OPTIONS = {
   installRoot: path.join(ROOT, "fixtures/fake-install"),
   gameVersion: "4.4.6",
   configRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/config"),
-  trie: { threshold: 5, leafSize: 4 },
+  trieThreshold: 5,
 };
 
 const generated = generateVanillaPackage(OPTIONS);

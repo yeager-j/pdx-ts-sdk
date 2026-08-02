@@ -13,7 +13,9 @@
  * from the rules rather than written down twice.
  */
 
-import { CONTENT_MANIFEST, type TrieMode } from "@pdx-ts/codegen/content-manifest";
+import { CONTENT_MANIFEST } from "@pdx-ts/codegen/content-manifest";
+
+import type { BucketLayout } from "./trie.ts";
 
 /**
  * A registry whose ids are enumerated from the install, resolved through the
@@ -30,12 +32,13 @@ export interface VanillaIdRow {
   /** Top-level keyword, for types the rules mark with `name_field`. */
   readonly keyword?: string;
   /**
-   * The trie shape to use *if* this registry turns out to be oversized.
-   * Whether it gets a trie at all is measured, not declared — the id count
-   * decides that. How it is arranged is a judgement about the names, so it
-   * comes from `CONTENT_MANIFEST` and defaults to `segments`.
+   * How this registry's files name their buckets *if* it turns out to be
+   * oversized. Whether it gets a trie at all is measured, not declared — the id
+   * count decides that. How its files are laid out is a fact about the
+   * install's directories, so it is stated here, and defaults to the `common/`
+   * convention every content registry follows.
    */
-  readonly trie?: TrieMode;
+  readonly bucket?: BucketLayout;
 }
 
 /**
@@ -58,7 +61,6 @@ const CONTENT_ROWS: readonly VanillaIdRow[] = CONTENT_MANIFEST.map((entry) => ({
   registry: "as" in entry ? entry.as : entry.type,
   source: entry.source,
   ...("keyword" in entry ? { keyword: entry.keyword } : {}),
-  ...("oversized" in entry ? { trie: entry.oversized } : {}),
 }));
 
 /**
@@ -69,19 +71,36 @@ const CONTENT_ROWS: readonly VanillaIdRow[] = CONTENT_MANIFEST.map((entry) => ({
  * name categories and compressors nothing points at. `sprite` covers
  * `event.picture` and every other `<sprite>` field. `resource` unlocks typing
  * the `Record<string, number>` resource tables.
+ *
+ * These three are also the only registries whose files are laid out unlike
+ * `common/`, so they are the only rows that state a {@link BucketLayout}.
  */
 const EXTRA_ROWS: readonly VanillaManifestRow[] = [
   { kind: "scripted", registry: "scripted_trigger", dir: "common/scripted_triggers" },
   { kind: "scripted", registry: "scripted_effect", dir: "common/scripted_effects" },
-  { kind: "ids", type: "sound", registry: "sound", source: "sound/sound.cwt", keyword: "sound" },
+  {
+    kind: "ids",
+    type: "sound",
+    registry: "sound",
+    source: "sound/sound.cwt",
+    keyword: "sound",
+    bucket: "directory",
+  },
   {
     kind: "ids",
     type: "sound_effect",
     registry: "sound_effect",
     source: "sound/sound.cwt",
     keyword: "soundeffect",
+    bucket: "directory",
   },
-  { kind: "ids", type: "sprite", registry: "sprite", source: "interface/sprites.cwt" },
+  {
+    kind: "ids",
+    type: "sprite",
+    registry: "sprite",
+    source: "interface/sprites.cwt",
+    bucket: "file",
+  },
   { kind: "ids", type: "resource", registry: "resource", source: "common/strategic_resources.cwt" },
 ];
 

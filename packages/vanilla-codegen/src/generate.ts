@@ -31,13 +31,7 @@ import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./
 import { readRegistryIds } from "./read-ids.ts";
 import { readScriptedDefinitions } from "./read-scripted.ts";
 import { resolveRegistries } from "./resolve.ts";
-import {
-  buildFileBucketTrie,
-  buildIdTrie,
-  DEFAULT_TRIE_SHAPE,
-  type TrieNode,
-  type TrieShape,
-} from "./trie.ts";
+import { buildTrie, countLeaves, DEFAULT_TRIE_THRESHOLD } from "./trie.ts";
 
 export interface GenerateOptions {
   /** Stellaris game root. */
@@ -47,24 +41,26 @@ export interface GenerateOptions {
   /** The vendored cwtools config root. */
   readonly configRoot: string;
   /**
-   * When a registry is big enough to need a trie, and how small a bucket has to
-   * get before it stops splitting. Overridable so a fixture can exercise the
-   * trie without shipping 2,000 fake sprites.
+   * How many ids a registry needs before it gets a trie. Overridable so a
+   * fixture can exercise the trie without shipping 2,000 fake sprites.
    */
-  readonly trie?: TrieShape;
+  readonly trieThreshold?: number;
 }
 
 export interface TrieReport {
   readonly buckets: number;
   readonly largestBucket: number;
   /**
-   * Top-level entries that are ids rather than buckets — a `file-buckets`
-   * registry's files with no subject in their name put their ids here.
-   * Counted separately because they are part of `buckets` and would otherwise
-   * read as categories.
+   * Top-level entries that are ids rather than buckets — files with no subject
+   * in their name put their ids here. Counted separately because they are part
+   * of `buckets` and would otherwise read as categories.
    */
   readonly rootLeaves: number;
-  /** Ids the trie cannot navigate to; the flat union still carries them. */
+  /**
+   * Ids the flat union carries and the trie does not reach. Measured by
+   * counting the trie's leaves back, so a lowering that quietly dropped an id
+   * shows up as a number rather than as a missing completion.
+   */
   readonly flatOnly: number;
 }
 
@@ -103,7 +99,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
   files: ReadonlyMap<string, string>;
   report: VanillaReport;
 } {
-  const shape = options.trie ?? DEFAULT_TRIE_SHAPE;
+  const threshold = options.trieThreshold ?? DEFAULT_TRIE_THRESHOLD;
   const { gameVersion } = options;
   const idRows = VANILLA_MANIFEST.filter((row): row is VanillaIdRow => row.kind === "ids");
   const scriptedRows = VANILLA_MANIFEST.filter(
@@ -128,25 +124,20 @@ export function generateVanillaPackage(options: GenerateOptions): {
     plan.ids.push({ registry: spec.registry, file });
 
     let trieReport: TrieReport | null = null;
-    if (read.ids.length > shape.threshold) {
-      // A file bucket is a category, not a size class, so it never splits
-      // again: an unbounded budget is what says "this level is the last one".
-      const fileBucketed = spec.trieMode === "file-buckets" && read.sourceStems !== null;
-      const trie = fileBucketed
-        ? buildFileBucketTrie(read.ids, read.sourceStems!, basename(spec.path))
-        : buildIdTrie(read.ids, shape);
-      const budget = fileBucketed ? Number.POSITIVE_INFINITY : shape.leafSize;
-      const emission = emitTrie(spec.registry, trie.buckets, budget, gate, gameVersion);
+    if (read.ids.length > threshold) {
+      const buckets = buildTrie(read.ids, read.sourcePaths, spec.bucket, basename(spec.path));
+      const emission = emitTrie(spec.registry, buckets, gate, gameVersion);
       for (const [path, text] of emission.files) {
         files.set(path, text);
       }
       exports.push(...emission.exports);
       plan.tries.push({ registry: spec.registry, file: trieIndexFile(spec.registry) });
+      const nodes = [...buckets.values()];
       trieReport = {
-        buckets: trie.buckets.size,
-        largestBucket: Math.max(0, ...[...trie.buckets.values()].map(countLeaves)),
-        rootLeaves: [...trie.buckets.values()].filter((node) => node.children.size === 0).length,
-        flatOnly: trie.excluded.length,
+        buckets: buckets.size,
+        largestBucket: Math.max(0, ...nodes.map(countLeaves)),
+        rootLeaves: nodes.filter((node) => node.id !== null).length,
+        flatOnly: read.ids.length - nodes.reduce((total, node) => total + countLeaves(node), 0),
       };
     }
     registries.push({
@@ -199,12 +190,4 @@ export function generateVanillaPackage(options: GenerateOptions): {
       rejections: 0,
     },
   };
-}
-
-function countLeaves(node: TrieNode): number {
-  let total = node.id === null ? 0 : 1;
-  for (const child of node.children.values()) {
-    total += countLeaves(child);
-  }
-  return total;
 }

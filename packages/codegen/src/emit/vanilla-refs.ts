@@ -11,7 +11,7 @@
  * package's declaration merge adds.
  */
 
-import type { ContentManifestEntry, TrieMode, VanillaRefExtra } from "../content-manifest.ts";
+import type { ContentManifestEntry, VanillaRefExtra } from "../content-manifest.ts";
 import { camelCase, docComment } from "../naming.ts";
 import type { Emitter } from "./types.ts";
 
@@ -29,8 +29,8 @@ interface VanillaRefRow {
   /** The CWT `<type>` name backing the ref — differs from `registry` only for
    * the `component_template` registries that share one CWT type via `as`. */
   readonly refSource: string;
-  /** The trie's shape, or `null` for a registry small enough to stay flat. */
-  readonly oversized: TrieMode | null;
+  /** Whether the registry is large enough to get the navigable trie. */
+  readonly oversized: boolean;
 }
 
 export function emitVanillaRefs(
@@ -42,12 +42,12 @@ export function emitVanillaRefs(
     ...manifest.map((entry): VanillaRefRow => ({
       registry: entry.as ?? entry.type,
       refSource: entry.type,
-      oversized: entry.oversized ?? null,
+      oversized: entry.oversized ?? false,
     })),
     ...extras.map((extra): VanillaRefRow => ({
       registry: extra.type,
       refSource: extra.type,
-      oversized: extra.oversized ?? null,
+      oversized: extra.oversized ?? false,
     })),
   ];
 
@@ -56,8 +56,8 @@ export function emitVanillaRefs(
   return {
     code: chunks.join("\n"),
     refs: [...new Set(rows.map((row) => row.refSource))].sort(),
-    checked: rows.filter((row) => row.oversized === null).length,
-    tries: rows.filter((row) => row.oversized !== null).length,
+    checked: rows.filter((row) => !row.oversized).length,
+    tries: rows.filter((row) => row.oversized).length,
   };
 }
 
@@ -72,7 +72,7 @@ function emitRow(emitter: Emitter, row: VanillaRefRow): string {
   const key = JSON.stringify(row.registry);
   const spoken = row.registry.replaceAll("_", " ");
 
-  if (row.oversized === null) {
+  if (!row.oversized) {
     return (
       docComment([
         `A checked reference to a vanilla ${spoken} id.`,
@@ -89,24 +89,13 @@ function emitRow(emitter: Emitter, row: VanillaRefRow): string {
     );
   }
 
-  const navigation =
-    row.oversized === "segments"
-      ? [
-          `\`${name}.<segment>...\` descends a trie of every id this registry`,
-          "defines, split on `_` at generation time, down to a leaf typed as",
-          "the exact ref — so the path, rejoined with `_`, is the id.",
-        ]
-      : [
-          `\`${name}.<file>.<id>\` descends one level of buckets named after`,
-          "the vanilla files these ids are defined in, to a leaf spelling the",
-          "id verbatim — the bucket is navigation only and no part of the id.",
-        ];
-
   return (
     docComment([
       `Vanilla ${spoken} ids, both navigable and checked.`,
       "",
-      ...navigation,
+      `\`${name}.<file>...<id>\` descends buckets named after the vanilla`,
+      "files and directories these ids are defined in, to a leaf spelling the",
+      "id verbatim — the buckets are navigation only and no part of the id.",
       "",
       `\`${name}(id)\` accepts a string copied straight from a game file,`,
       "checked against the same id set with no completion menu ever built.",
@@ -118,8 +107,6 @@ function emitRow(emitter: Emitter, row: VanillaRefRow): string {
     `export const ${name}: VanillaTrie<${key}> &\n` +
     "  (<const Id extends string>(\n" +
     `    id: Id & CheckedVanillaId<${key}, Id>\n` +
-    `  ) => ${refType} & { readonly id: Id }) = makeIdTrie(${key}, ${JSON.stringify(
-      row.oversized === "segments" ? "path" : "leaf"
-    )});\n`
+    `  ) => ${refType} & { readonly id: Id }) = makeIdTrie(${key});\n`
   );
 }

@@ -1,0 +1,28 @@
+# Two directory levels down, which vanilla does routinely
+# (`sound/toxoids/ships/tox_ships_moves.asset`). Both levels and then the stem
+# are navigation segments, so these ids live at
+# `sound.nested.deeper.fake_deep.<id>`.
+
+sound = {
+	name = "fake_deep_hum"
+	file = "placeholders/fake_deep_hum.wav"
+}
+
+sound = {
+	name = "fake_deep_pulse"
+	file = "placeholders/fake_deep_pulse.wav"
+}
+
+soundeffect = {
+	name = fake_effect_deep_one
+	sounds = {
+		sound = fake_deep_hum
+	}
+}
+
+soundeffect = {
+	name = fake_effect_deep_two
+	sounds = {
+		sound = fake_deep_pulse
+	}
+}

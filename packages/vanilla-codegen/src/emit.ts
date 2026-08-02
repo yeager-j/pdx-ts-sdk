@@ -160,161 +160,87 @@ export interface TrieEmission {
 }
 
 /**
- * Which file a top-level bucket's type lands in: its key's first character.
+ * The trie as files: one per top-level bucket, plus the registry's index.
  *
- * "One file per bucket" was the plan, and the real install argues against it in
- * both directions — static modifiers produce 658 top-level keys, most of them
- * single ids that would each become a two-line file, while sprites produce nine
- * buckets of which one holds 9,171 ids. Grouping by first character keeps the
- * count bounded at both ends and, unlike packing by size, is *stable*: a bucket
- * stays in its file as the game gains and loses ids, so a regeneration diff
- * still reads as a local change.
+ * The emitted layout follows the buckets, which follow vanilla's own files —
+ * `registries/sprite/eventpictures.ts` holds what `interface/eventpictures.gfx`
+ * defines, `registries/sound/toxoids.ts` holds the whole `sound/toxoids/`
+ * subtree. A bucket's subtree is written inline inside its file however deep it
+ * goes: splitting it further would name files after something other than the
+ * game's own layout, which is the one thing making a regeneration diff readable.
+ *
+ * Ids from a file that names no bucket at all are leaves at the root, so they
+ * are written into the index directly rather than becoming hundreds of one-line
+ * files.
  */
-function bucketStem(key: string): string {
-  const first = key[0] ?? "_";
-  return /[A-Za-z0-9]/.test(first) ? first.toLowerCase() : "_";
-}
-
 export function emitTrie(
   registry: string,
   buckets: ReadonlyMap<string, TrieNode>,
-  budget: number,
   gate: Chokepoint,
   gameVersion: string
 ): TrieEmission {
   const context = `${registry} trie key`;
   const reference = refTypeName(registry);
   const root = trieTypeName(registry);
-  const taken = new Set<string>([root]);
-  const chunks: TrieChunk[] = [];
-
-  /**
-   * Lifts a node out into its own exported type. Applied to every top-level
-   * bucket, and then again to the children of any node whose subtree is larger
-   * than one file should carry — which is what keeps a registry where one
-   * bucket holds 9,171 of 9,197 ids from emitting a single megabyte file that
-   * rewrites itself on every game patch.
-   */
-  const extract = (key: string, node: TrieNode, path: string): string => {
-    const name = unique(`${root}${pascalCase(path)}`, taken, "");
-    const deps: string[] = [];
-    const body = render(node, path, deps);
-    chunks.push({ name, stem: bucketStem(key), body, deps });
-    return name;
-  };
+  const takenNames = new Set<string>([root]);
+  // `index` is the registry's own index file, and two keys can mangle onto one
+  // stem on a case-insensitive filesystem (`GFX_ship` and `gfx-ship`).
+  const takenStems = new Set<string>(["index"]);
 
   /**
    * One node as a type.
    *
-   * A node is a leaf, a branch, or both — an id that is also the prefix of
-   * longer ids. The intersection is what makes the third case navigable *and*
-   * usable: `.id` reads the complete id, and the remaining keys keep descending.
+   * A node is a leaf, a branch, or both — an id spelled like the file or
+   * directory its neighbours live in. The intersection is what makes the third
+   * case navigable *and* usable: `.id` reads the id, and the remaining keys
+   * keep descending.
    */
-  const render = (node: TrieNode, path: string, deps: string[]): string => {
+  const render = (node: TrieNode): string => {
     const members: string[] = [];
     if (node.id !== null) {
       members.push(`readonly id: ${gate.literal(node.id, `${context} leaf`)};`);
     }
-    const split = node.children.size > 1 && leafCount(node) > budget;
     for (const [key, child] of node.children) {
-      let type: string;
-      if (split) {
-        type = extract(key, child, `${path}_${key}`);
-        deps.push(type);
-      } else {
-        type = render(child, `${path}_${key}`, deps);
-      }
-      members.push(`readonly ${gate.literal(key, context)}: ${type};`);
+      members.push(`readonly ${gate.literal(key, context)}: ${render(child)};`);
     }
     const body = `{\n${members.join("\n")}\n}`;
     return node.id === null ? body : `${reference} & ${body}`;
   };
 
-  // A bucket with no children is one line. Lifting it into its own exported
-  // type in its own file would buy nothing and cost an import — and a
-  // file-bucketed registry has hundreds of them, since every id defined in a
-  // file with no subject in its name is a leaf at the root.
-  const rootDeps: string[] = [];
+  const dir = `registries/${kebabCase(registry)}`;
+  const files = new Map<string, string>();
+  const imports: string[] = [];
   const rootMembers: string[] = [];
   let rootLeaves = false;
   for (const [key, node] of buckets) {
-    const type = node.children.size === 0 ? render(node, key, rootDeps) : extract(key, node, key);
+    const quoted = gate.literal(key, context);
     if (node.children.size === 0) {
       rootLeaves = true;
-    } else {
-      rootDeps.push(type);
+      rootMembers.push(`readonly ${quoted}: ${render(node)};`);
+      continue;
     }
-    rootMembers.push(`readonly ${gate.literal(key, context)}: ${type};`);
-  }
-
-  const dir = `registries/${kebabCase(registry)}`;
-  const stemOf = new Map(chunks.map((chunk) => [chunk.name, chunk.stem]));
-  const byStem = new Map<string, TrieChunk[]>();
-  for (const chunk of chunks) {
-    byStem.set(chunk.stem, [...(byStem.get(chunk.stem) ?? []), chunk]);
-  }
-
-  const files = new Map<string, string>();
-  for (const [stem, members] of sorted(byStem)) {
-    const defined = new Set(members.map((chunk) => chunk.name));
-    const body = members.map((chunk) => `export type ${chunk.name} = ${chunk.body};\n`).join("\n");
-    const external = members.flatMap((chunk) => chunk.deps).filter((name) => !defined.has(name));
+    const name = unique(`${root}${pascalCase(key)}`, takenNames);
+    const stem = unique(kebabCase(key), takenStems);
     files.set(
       `${dir}/${stem}.ts`,
-      header(gameVersion) +
-        (body.includes(reference) ? `import type { ${reference} } from "@pdx-ts/sdk";\n` : "") +
-        importsFrom(external, stemOf, "./") +
-        "\n" +
-        body
+      `${header(gameVersion)}import type { ${reference} } from "@pdx-ts/sdk";\n\n` +
+        `export type ${name} = ${render(node)};\n`
     );
+    imports.push(`import type { ${name} } from "./${stem}.ts";\n`);
+    rootMembers.push(`readonly ${quoted}: ${name};`);
   }
+
   files.set(
     trieIndexFile(registry),
     header(gameVersion) +
       (rootLeaves ? `import type { ${reference} } from "@pdx-ts/sdk";\n` : "") +
-      importsFrom(rootDeps, stemOf, "./") +
+      imports.join("") +
       `\nexport interface ${root} {\n${rootMembers.join("\n")}\n}\n`
   );
-  // Only the root is public API. The per-node types are structural
-  // intermediates the root already reaches; re-exporting a thousand of them
+  // Only the root is public API. The per-bucket types are structural
+  // intermediates the root already reaches; re-exporting a hundred of them
   // from the barrel would make the package's surface the trie's shape.
   return { files, exports: [{ name: root, file: trieIndexFile(registry) }] };
-}
-
-interface TrieChunk {
-  readonly name: string;
-  /** File stem the type lands in. */
-  readonly stem: string;
-  readonly body: string;
-  /** Other chunk types the body references. */
-  readonly deps: readonly string[];
-}
-
-function leafCount(node: TrieNode): number {
-  let total = node.id === null ? 0 : 1;
-  for (const child of node.children.values()) {
-    total += leafCount(child);
-  }
-  return total;
-}
-
-function sorted<T>(map: ReadonlyMap<string, T>): [string, T][] {
-  return [...map].sort(([left], [right]) => compareIdentifiers(left, right));
-}
-
-function importsFrom(
-  names: readonly string[],
-  stemOf: ReadonlyMap<string, string>,
-  prefix: string
-): string {
-  const byStem = new Map<string, Set<string>>();
-  for (const name of [...new Set(names)].sort(compareIdentifiers)) {
-    const stem = stemOf.get(name)!;
-    byStem.set(stem, (byStem.get(stem) ?? new Set()).add(name));
-  }
-  return sorted(byStem)
-    .map(([stem, used]) => `import type { ${[...used].join(", ")} } from "${prefix}${stem}.ts";\n`)
-    .join("");
 }
 
 export function emitScriptedParams(
@@ -413,15 +339,15 @@ export function emitIndex(
 }
 
 /**
- * Two bucket keys can mangle onto one name — `GFX_ship` and `gfx-ship` share a
- * file stem on a case-insensitive filesystem. Buckets are walked in sorted
- * order, so the numbering is deterministic rather than machine-dependent.
+ * Two bucket keys can mangle onto one type name or one file stem — `GFX_ship`
+ * and `gfx-ship` share both. Buckets are walked in sorted order, so the
+ * numbering is deterministic rather than machine-dependent.
  */
-function unique(candidate: string, taken: Set<string>, separator: string): string {
+function unique(candidate: string, taken: Set<string>): string {
   let name = candidate;
   let suffix = 2;
   while (taken.has(name)) {
-    name = `${candidate}${separator}${suffix}`;
+    name = `${candidate}${suffix}`;
     suffix += 1;
   }
   taken.add(name);
