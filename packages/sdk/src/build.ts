@@ -364,7 +364,7 @@ export function buildMod(
   // and only then registered straight down each array.
   const bindings = flat.flatMap(({ item }) => (item.itemKind === "on-action" ? [item] : []));
   const bindingOrder = (item: OnActionBindingItem): string =>
-    item.events.map((event) => event.id).join(" ");
+    item.events.map((event) => event.id).join("\u0000");
   const orderedBindings = [...bindings].sort(
     (a, b) => compareUtf8(a.hook.name, b.hook.name) || compareUtf8(bindingOrder(a), bindingOrder(b))
   );
