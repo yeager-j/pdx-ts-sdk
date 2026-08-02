@@ -319,13 +319,7 @@ export const REQUIRED_LOCALISATION = new Set([
  * in no list, and a field whose lowered type is wrong is better fixed than
  * hidden.
  */
-export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
-  [
-    "job.auto_generate_description",
-    "CWT declares `cardinality = 0..inf` on a bare bool, which lowers to a " +
-      "nonsensical `boolean[]` — an upstream authoring quirk, not a real list field",
-  ],
-]);
+export const CONTENT_DECLINED_FIELDS = new Map<string, string>([]);
 
 export type ContentFieldShape =
   | "value"
@@ -423,6 +417,17 @@ export interface ContentFieldOverride {
    * rather than silently widening.
    */
   readonly scope?: string;
+  /**
+   * Asserts that the key is written at most once, where CWT's cardinality says
+   * otherwise and the corpus proves it wrong.
+   *
+   * `## cardinality = 0..inf` on a bare `bool` lowers to `boolean[]` — a field
+   * whose only sensible authoring is one flag. Like {@link scope}, this states
+   * game semantics the rules get wrong, so a row needs evidence: the arity
+   * mismatches shape conformance reports are that evidence, and a row here
+   * without one is a guess.
+   */
+  readonly arity?: "single";
   /**
    * Authoring member name, when the mechanically derived one collides with a
    * localisation slot: `desc = { trigger text }` (the repeated block form of
@@ -587,6 +592,16 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       shape: "economicResources",
       reason:
         "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "job.auto_generate_description",
+    {
+      arity: "single",
+      reason:
+        "CWT declares `cardinality = 0..inf` on a bare bool, which lowers to a nonsensical " +
+        "`boolean[]`. All three shipped jobs that set it write one scalar `no`, and a repeated " +
+        "flag would mean nothing to the game — an upstream authoring quirk, not a list field.",
     },
   ],
   [

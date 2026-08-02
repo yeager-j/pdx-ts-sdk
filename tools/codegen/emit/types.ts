@@ -22,6 +22,17 @@ export interface TsValue {
    * nothing about any registry.
    */
   readonly refTypes?: readonly string[];
+  /**
+   * Every scalar this shape admits, spelled as the game writes it, when the
+   * rules close the set: a literal, a bool, or an enum with members. Undefined
+   * for open shapes (`scalar`, `int`, a `<type>` reference, an enum CWT
+   * declares without listing its values).
+   *
+   * Spelled in game rather than TypeScript terms — `yes`/`no`, not
+   * `true`/`false` — because the only thing that reads it compares against
+   * values parsed out of the shipped game files.
+   */
+  readonly literals?: readonly string[];
 }
 
 export interface Usage {
@@ -87,7 +98,7 @@ export class Emitter {
   valueFor(type: RuleType): TsValue | null {
     switch (type.kind) {
       case "bool":
-        return { type: "boolean", toScalar: (e) => e };
+        return { type: "boolean", toScalar: (e) => e, literals: ["yes", "no"] };
       case "int":
       case "float":
       case "valueField":
@@ -107,14 +118,21 @@ export class Emitter {
       case "scopeGroup":
         return { type: "string", toScalar: (e) => e };
       case "literal":
-        return { type: JSON.stringify(type.text), toScalar: (e) => e };
+        return { type: JSON.stringify(type.text), toScalar: (e) => e, literals: [type.text] };
       case "enum": {
-        if (!this.rules.enums.has(type.name)) {
+        const members = this.rules.enums.get(type.name);
+        if (members === undefined) {
           return { type: "string", toScalar: (e) => e };
         }
         this.usedEnums.add(type.name);
         this.scopedEnums.add(type.name);
-        return { type: this.enumTypeName(type.name), toScalar: (e) => e };
+        return {
+          type: this.enumTypeName(type.name),
+          toScalar: (e) => e,
+          // An enum CWT names but never populates emits as bare `string`, so
+          // its set is open however the rules spell it.
+          ...(members.length > 0 ? { literals: members } : {}),
+        };
       }
       case "typeRef": {
         this.usedRefs.add(type.name);
@@ -142,9 +160,14 @@ export class Emitter {
     const refTypes = values.every((value) => value!.refTypes !== undefined)
       ? [...new Set(values.flatMap((value) => [...value!.refTypes!]))]
       : undefined;
+    // One open arm opens the whole union, the same rule `refTypes` follows: a
+    // scalar arm makes every value legal, so the closed arms prove nothing.
+    const literals = values.every((value) => value!.literals !== undefined)
+      ? [...new Set(values.flatMap((value) => [...value!.literals!]))]
+      : undefined;
     if (converts.size > 1) {
-      return { type: parts.join(" | "), toScalar: (e) => `refId(${e})`, refTypes };
+      return { type: parts.join(" | "), toScalar: (e) => `refId(${e})`, refTypes, literals };
     }
-    return { type: parts.join(" | "), toScalar: values[0]!.toScalar, refTypes };
+    return { type: parts.join(" | "), toScalar: values[0]!.toScalar, refTypes, literals };
   }
 }

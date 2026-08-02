@@ -25,6 +25,7 @@ import { FIRE_EFFECTS, HAND_WRITTEN_EFFECTS, STRUCTURAL_EFFECT_METHODS } from ".
 import type { ClassifiedLink } from "./links.ts";
 import {
   canonicalScopeSet,
+  declaredScopes,
   mergeFields,
   scopeType,
   type ArgField,
@@ -312,8 +313,7 @@ export function emitEffects(
       continue;
     }
     const doc = docs.get(key);
-    const declared = declarations.flatMap((declaration) => declaration.supportedScopes ?? []);
-    const supported = declared.length > 0 ? declared : (doc?.scopes ?? []);
+    const supported = declaredScopes(declarations, doc);
     if (supported.length === 0) {
       skipped.push({ name: key, reason: "no scopes in either the rules or the game's dump" });
       continue;
