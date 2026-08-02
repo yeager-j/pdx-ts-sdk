@@ -312,3 +312,77 @@ describe.skipIf(installPath === undefined)("corpus conformance", () => {
     expect(reports.length).toBeGreaterThan(0);
   });
 });
+
+/**
+ * The gate's own logic, against a corpus built here rather than parsed.
+ *
+ * Hermetic on purpose, and outside the install-gated block above: a check that
+ * has only ever been green proves nothing, and the real corpus cannot be made
+ * to contain the case this has to detect. Every shipped decision picks one
+ * scope, so only a synthetic definition shows that the parameter check is
+ * per definition rather than per key.
+ */
+describe("shape conformance, per-definition scope", () => {
+  const RULES = new Map<string, RuleScopes>([
+    ["is_capital", ["planet"]],
+    ["has_ship_flag", ["ship"]],
+    ["always", "universal"],
+  ]);
+  const scopesOf = (_clause: "trigger" | "effect", key: string): RuleScopes | null =>
+    RULES.get(key) ?? null;
+
+  const potential = {
+    field: "potential",
+    shape: "trigger",
+    repeated: false,
+    clause: "trigger",
+    scope: { parameter: ["planet", "ship"] },
+  } as const;
+
+  function corpusOf(...definitions: readonly (readonly string[])[]) {
+    const keysByDefinition = definitions.map((keys) => new Set(keys));
+    return {
+      definitions: definitions.length,
+      files: 1,
+      occurrences: new Map([
+        [
+          "potential",
+          {
+            definitions: definitions.length,
+            repeated: 0,
+            scalars: 0,
+            blocks: definitions.length,
+            bareBlocks: 0,
+            values: new Set<string>(),
+            keys: new Set(definitions.flat()),
+            keysByDefinition,
+          },
+        ],
+      ]),
+    };
+  }
+
+  it("accepts definitions that each pick one scope", () => {
+    // The shape of the real corpus: some definitions planet, some ship, none
+    // mixing. Universal rules and rules nothing knows constrain nothing.
+    const mismatches = shapeConformance(
+      corpusOf(["is_capital", "always"], ["has_ship_flag"], ["some_scripted_trigger"]),
+      [potential],
+      scopesOf
+    );
+    expect(mismatches).toEqual([]);
+  });
+
+  it("rejects one definition whose conditions share no scope", () => {
+    // The case the merged key set could not see: per key, each of these is
+    // legal under one declared scope, so a per-key check passes a definition
+    // no single `scope:` declaration can express.
+    const mismatches = shapeConformance(
+      corpusOf(["is_capital", "has_ship_flag"]),
+      [potential],
+      scopesOf
+    );
+    expect(mismatches.map((mismatch) => mismatch.kind)).toEqual(["scope"]);
+    expect(mismatches[0]?.detail).toContain("no single scope of planet/ship");
+  });
+});

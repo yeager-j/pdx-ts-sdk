@@ -438,13 +438,48 @@ export function acceptedForm(field: {
 }
 
 /**
+ * Whether a value is a content reference: `TypedRef` is `{ id }`, which is an
+ * object at runtime and a scalar in the file.
+ *
+ * The brand is a phantom property and absent at runtime, so `id` is the only
+ * signature there is. That is why this alone cannot place a value — see
+ * {@link dualArm}, which asks it only once an arm has claimed references.
+ */
+function isReference(value: unknown): value is TypedRef<string> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { readonly id?: unknown }).id === "string"
+  );
+}
+
+/**
  * The arm of a dual field that accepts what the author passed.
  *
- * Throws rather than guessing. The generated types make the wrong form a
- * compile error, so reaching here means either a cast or an arm pair the
- * emitter should not have produced, and both deserve to be loud.
+ * A reference is the one value whose own shape cannot place it: `refId` unwraps
+ * either an id string or a `{ id }` object, so an authored reference looks like
+ * a block and belongs on a scalar arm. The arm's declared `conversion` settles
+ * it — asking the metadata rather than guessing from the value keeps the
+ * decision where the emitter already made it. Passing a reference where no arm
+ * takes one falls through to the ordinary form matching, so a struct arm still
+ * gets a struct that happens to carry an `id` member.
+ *
+ * Throws rather than guessing when nothing matches. The generated types make
+ * the wrong form a compile error, so reaching there means either a cast or an
+ * arm pair the emitter should not have produced, and both deserve to be loud.
  */
 function dualArm(field: ContentDualField, value: unknown): ContentField {
+  if (isReference(value)) {
+    const reference = field.arms.find(
+      (candidate) =>
+        acceptedForm(candidate) === "scalar" &&
+        "conversion" in candidate &&
+        candidate.conversion === "ref"
+    );
+    if (reference !== undefined) {
+      return reference;
+    }
+  }
   const form = authoredForm(value);
   const arm = field.arms.find((candidate) => acceptedForm(candidate) === form);
   if (arm === undefined) {

@@ -179,7 +179,7 @@ export function defineEdict<const Id extends string>(
 }
 
 /** What a decision collection can contain. */
-export type DecisionItem = ContentItem<"decision", DecisionDef>;
+export type DecisionItem = ContentItem<"decision", DecisionDef<string, never>>;
 
 /**
  * Defines a decision in this mod. The returned item is the
@@ -190,9 +190,9 @@ export type DecisionItem = ContentItem<"decision", DecisionDef>;
  */
 export function defineDecision<const Id extends string, S extends DecisionScope = "planet">(
   def: DecisionDef<Id, S>
-): ContentItem<"decision", DecisionDef<Id>> {
+): ContentItem<"decision", DecisionDef<Id, never>> {
   const { scope, ...rest } = def;
-  return { itemKind: "content", type: "decision", id: def.id, def: rest as DecisionDef<Id> };
+  return { itemKind: "content", type: "decision", id: def.id, def: rest as DecisionDef<Id, never> };
 }
 
 /** What a job collection can contain. */

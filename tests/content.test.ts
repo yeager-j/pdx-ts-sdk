@@ -53,6 +53,7 @@ import {
   namespace,
   render,
   type PureMod,
+  type SpriteRef,
 } from "../src/index.ts";
 
 function configFor(name: string, prefix: string) {
@@ -1208,6 +1209,15 @@ describe("generated content registries", () => {
         // this form, against 9 writing the trigger-gated block.
         picture: "GFX_starbase_background_outpost",
       }),
+      defineStarbaseLevel({
+        id: "du_test_ring",
+        shipSize: "ship_size_starbase_i",
+        // The same arm reached by a branded reference rather than a raw id.
+        // A `TypedRef` is `{ id }` — an object at runtime and a scalar in the
+        // file — so nothing about the value's own shape places it on the
+        // scalar arm; only the arm's `ref` conversion does.
+        picture: { id: "GFX_orbital_ring_background" } as SpriteRef,
+      }),
     ]);
     const speciesClasses = collection(undefined, [
       defineSpeciesClass({
@@ -1225,9 +1235,9 @@ describe("generated content registries", () => {
     const sizes = files.get("common/ship_sizes/du_test_ship_sizes.txt")!;
     expect(sizes).toContain("construction_type = { starbase_shipyard starbase_beastport }");
     expect(sizes).toContain("construction_type = starbase_shipyard\n");
-    expect(files.get("common/starbase_levels/du_test_starbase_levels.txt")).toContain(
-      "picture = GFX_starbase_background_outpost"
-    );
+    const levels = files.get("common/starbase_levels/du_test_starbase_levels.txt")!;
+    expect(levels).toContain("picture = GFX_starbase_background_outpost");
+    expect(levels).toContain("picture = GFX_orbital_ring_background");
     expect(files.get("common/species_classes/du_test_species_classes.txt")).toContain(
       "randomized = {\n\t\talways = yes\n\t}"
     );

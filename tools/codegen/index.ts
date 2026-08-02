@@ -534,7 +534,12 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
     const patchable = CONTENT_PATCH_REGISTRIES.get(registry);
     const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
 
-    const itemArms = [`ContentItem<${key}, ${name}Def>`];
+    // A scope-parameterised registry erases S to `never`, not to its default:
+    // `Trigger<S>` is contravariant, so `Def<Id, never>` is the supertype every
+    // scoped variant satisfies, while `Def<Id, "planet">` would both exclude a
+    // ship definition from this union and misreport its clauses as planet ones.
+    const erased = emission.scopeParameter === null ? "" : "<string, never>";
+    const itemArms = [`ContentItem<${key}, ${name}Def${erased}>`];
     if (patchable !== undefined) {
       itemArms.push(`${name}PatchItem`);
       runtimeItemTypes.add(`${name}PatchItem`);
@@ -562,7 +567,7 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
           ? `  return { itemKind: "content", type: ${key}, id: def.id, def };\n`
           : `  const { scope, ...rest } = def;\n` +
             `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-            `def: rest as ${name}Def<Id> };\n`;
+            `def: rest as ${name}Def<Id, never> };\n`;
       definitions.push(
         docComment([
           `Defines ${article} ${spoken} in this mod. The returned item is the`,
@@ -578,7 +583,7 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
         ]) +
           `export function define${name}${parameters}(\n` +
           `  def: ${name}Def<Id${scoped === null ? "" : ", S"}>\n` +
-          `): ContentItem<${key}, ${name}Def<Id>> {\n` +
+          `): ContentItem<${key}, ${name}Def<Id${scoped === null ? "" : ", never"}>> {\n` +
           body +
           "}\n"
       );

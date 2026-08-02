@@ -52,6 +52,17 @@ export interface FieldObservation {
   readonly values: ReadonlySet<string>;
   /** Every key written directly inside a block value. */
   readonly keys: ReadonlySet<string>;
+  /**
+   * The same keys, still grouped by the definition that wrote them and
+   * deduplicated across definitions writing the same set.
+   *
+   * {@link keys} merges every definition together, which cannot answer "could
+   * one scope have been declared for *this* definition" — a field where one
+   * definition writes a planet-only rule and another a ship-only rule looks
+   * identical to one definition writing both. Only the second is a defect, and
+   * only this can tell them apart.
+   */
+  readonly keysByDefinition: readonly ReadonlySet<string>[];
 }
 
 /**
@@ -136,6 +147,10 @@ function descendRepeatedStruct(
   }
 }
 
+function sameKeys(left: ReadonlySet<string>, right: ReadonlySet<string>): boolean {
+  return left.size === right.size && [...left].every((key) => right.has(key));
+}
+
 /** One scalar as the game spells it, so a `bool` reads back as `yes`/`no`. */
 function scalarText(value: PdxValue): string | null {
   switch (value.kind) {
@@ -172,6 +187,7 @@ function observe(into: Map<string, FieldObservation>, written: ReadonlyMap<strin
       values: new Set(previous?.values ?? []),
       keys: new Set(previous?.keys ?? []),
     };
+    const written = new Set<string>();
     let scalar = false;
     let block = false;
     let bare = false;
@@ -188,6 +204,7 @@ function observe(into: Map<string, FieldObservation>, written: ReadonlyMap<strin
       for (const item of value.items) {
         if (item.kind === "entry") {
           observation.keys.add(item.key);
+          written.add(item.key);
           continue;
         }
         if (item.kind === "param") {
@@ -202,11 +219,15 @@ function observe(into: Map<string, FieldObservation>, written: ReadonlyMap<strin
         }
       }
     }
+    const seen = previous?.keysByDefinition ?? [];
     into.set(key, {
       ...observation,
       scalars: observation.scalars + (scalar ? 1 : 0),
       blocks: observation.blocks + (block ? 1 : 0),
       bareBlocks: observation.bareBlocks + (bare ? 1 : 0),
+      // Deduplicated: most definitions of a registry write the same handful of
+      // keys, so the distinct sets stay far smaller than the definition count.
+      keysByDefinition: seen.some((keys) => sameKeys(keys, written)) ? seen : [...seen, written],
     });
   }
 }
@@ -374,23 +395,35 @@ const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
  * "accepts almost nothing", which is why an unannotated field can be emitted,
  * required, and unfillable all at once.
  */
-function fieldAdmits(
-  field: readonly string[] | "any" | { readonly parameter: readonly string[] },
-  rule: RuleScopes
-): boolean {
+function fieldAdmits(field: readonly string[] | "any", rule: RuleScopes): boolean {
   if (rule === "universal") {
     return true;
   }
   if (field === "any") {
     return false;
   }
-  // A scope parameter is the author's choice, so the field is fillable as long
-  // as *some* declared scope takes the rule — the question the gate is really
-  // asking of these registries is whether the declared set covers the corpus.
-  if ("parameter" in field) {
-    return field.parameter.some((scope) => rule.includes(scope));
-  }
   return field.every((scope) => rule.includes(scope));
+}
+
+/**
+ * The declared scopes under which one definition's writes are all expressible.
+ *
+ * A parameterised field's scope is chosen once per *definition*, so this is the
+ * question the gate has to ask per definition rather than per key: asking
+ * whether each key is legal under *some* declared scope would pass a definition
+ * that writes a planet-only rule beside a ship-only one, which no single choice
+ * of S can express. Keys nothing knows are skipped, as everywhere else.
+ */
+function workableScopes(
+  declared: readonly string[],
+  keys: ReadonlySet<string>,
+  scopesOf: (key: string) => RuleScopes | null
+): readonly string[] {
+  const scoped = [...keys].flatMap((key) => {
+    const rule = scopesOf(key);
+    return rule === null ? [] : [rule];
+  });
+  return declared.filter((scope) => scoped.every((rule) => fieldAdmits([scope], rule)));
 }
 
 /**
@@ -464,22 +497,38 @@ export function shapeConformance(
       }
     }
     if (field.clause !== undefined && field.scope !== undefined) {
-      const rejected = [...observation.keys].filter((key) => {
-        const scopes = scopesOf(field.clause!, key);
-        return scopes !== null && !fieldAdmits(field.scope!, scopes);
-      });
-      if (rejected.length > 0) {
-        const scope =
-          field.scope === "any"
-            ? "ScopeName"
-            : "parameter" in field.scope
-              ? `any of ${field.scope.parameter.join("/")}`
-              : field.scope.join("/");
-        report(
-          "scope",
-          `typed for scope ${scope}, which rejects ${rejected.slice(0, 6).join(" ")}` +
-            (rejected.length > 6 ? ` +${rejected.length - 6}` : "")
+      const clause = field.clause;
+      const rules = (key: string): RuleScopes | null => scopesOf(clause, key);
+      if (typeof field.scope === "object" && "parameter" in field.scope) {
+        // Per definition, not per key: the author picks one scope for the whole
+        // definition, so a definition whose writes have no scope in common is
+        // unfillable even though each rule alone is fine under some choice.
+        const declared = field.scope.parameter;
+        const stranded = observation.keysByDefinition.filter(
+          (keys) => workableScopes(declared, keys, rules).length === 0
         );
+        if (stranded.length > 0) {
+          const worst = stranded[0]!;
+          report(
+            "scope",
+            `no single scope of ${declared.join("/")} expresses one definition's ` +
+              `own conditions here (${[...worst].slice(0, 6).join(" ")})`
+          );
+        }
+      } else {
+        const scope = field.scope;
+        const rejected = [...observation.keys].filter((key) => {
+          const scopes = rules(key);
+          return scopes !== null && !fieldAdmits(scope, scopes);
+        });
+        if (rejected.length > 0) {
+          report(
+            "scope",
+            `typed for scope ${scope === "any" ? "ScopeName" : scope.join("/")}, which rejects ` +
+              rejected.slice(0, 6).join(" ") +
+              (rejected.length > 6 ? ` +${rejected.length - 6}` : "")
+          );
+        }
       }
     }
   }

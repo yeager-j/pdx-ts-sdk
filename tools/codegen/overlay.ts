@@ -343,7 +343,9 @@ export interface ContentScopeParameter {
  *
  * A row turns every field the registry left unpinned into `Trigger<NoInfer<S>>`
  * and adds one authoring member, `scope`, that names S and emits nothing. It
- * needs the same evidence a `scope` assertion does — the scopes listed are the
+ * also introduces a public `<Registry>Scope` union, which has to be re-exported
+ * from `src/index.ts` by hand — nothing else makes a consumer able to name the
+ * type its own helpers need. It needs the same evidence a `scope` assertion does — the scopes listed are the
  * ones real definitions are written against, and shape conformance checks that
  * the set covers what the corpus writes rather than taking the row's word.
  */
