@@ -1,46 +1,101 @@
-# `@pdx-ts/stellaris-ids`
+# @pdx-ts/stellaris-ids
 
-Vanilla Stellaris identifiers — content ids, scripted trigger/effect names and
-their `$PARAM$` lists, event ids and namespaces, sprite and sound names,
-resource keys — generated from a real, installed copy of the game and
-version-pinned to it. See `PROVENANCE.md` for the game version, the licensing
+Every identifier a real, installed copy of Stellaris defines — content ids for
+38 registries, scripted trigger and effect names with their `$PARAM$` lists,
+sprite and sound names — shipped as TypeScript literal-union types,
+version-pinned to the game build. The package's npm version *is* the game
+version: `@pdx-ts/stellaris-ids@4.4.6` carries the identifiers of Stellaris
+4.4.6 and nothing else.
+
+Types only: there are no runtime exports, no materialized constants, and —
+deliberately — no script bodies, localized text, or asset data.
+[PROVENANCE.md](PROVENANCE.md) states the game version, the licensing
 boundary, and the regeneration procedure.
 
-## Activation
+## Usage
 
-This package has no runtime exports. Installing it is not enough on its own;
-import it once, anywhere in the mod's build entry, for its side effect:
+Install it next to `@pdx-ts/sdk` and import it once, anywhere in the mod's
+build entry, for its type-level side effect:
 
 ```ts
 import "@pdx-ts/stellaris-ids";
 ```
 
-That one line declaration-merges this package's per-registry id unions,
-scripted trigger/effect parameter tables, and trie node types into
-`@pdx-ts/sdk`'s merge targets (`VanillaIds`, `VanillaScriptedTriggers`,
-`VanillaScriptedEffects`, `VanillaTries`). From then on, every `vanilla.*`
-helper the SDK exports (`vanilla.technology(...)`, `vanilla.sprite.icons...`)
-checks its argument against this package's real id set instead of accepting
-any string.
+That one line declaration-merges this package's id unions into the SDK's
+merge targets. From then on every `vanilla.*` helper the SDK exports checks
+its argument against the real id set:
 
-Without this import — or without the package installed at all — the same
-helpers still work, just unchecked: `VanillaId<K>` degrades to `string` for
-whichever registries this package does not cover (absent entirely, or merely
-stale and missing that one registry).
+```ts
+import { vanilla } from "@pdx-ts/sdk";
 
-## Two versions, one hard compile error
+vanilla.technology("tech_lasers_1");  // ok
+vanilla.technology("tech_lazers_1");  // compile error
 
-TypeScript's module augmentation is global to the program it runs in. Two
-different versions of this package resolving into the _same_ TypeScript
-program both try to extend the same merge targets and will not typecheck —
-this is not a bug to work around, it is what "version-pinned to one game
-build" means. Coexistence of two game-version pins is fine across separate
-projects; it is not supported within one.
+// Oversized registries (sprites 9.2k, sounds 5.9k, static modifiers 3.1k)
+// are also navigable, bucketed by the vanilla file each id is defined in.
+// Buckets are navigation only; the leaf spells the id verbatim:
+vanilla.sprite.eventpictures.GFX_evt_ship_in_orbit;
+vanilla.staticModifier.deficit.food_deficit;        // → "food_deficit"
+vanilla.soundEffect.toxoids.events.tox_events.event_first_contact_toxoid;
+vanilla.sprite("GFX_evt_ship_in_orbit"); // the checked call form, for copy-paste
+```
 
-## Relationship to `@pdx-ts/sdk`
+Scripted trigger and effect names carry their parameter lists, including
+optionality — this is what lets the SDK's scripted-trigger bindings check
+existence and arguments offline, with no install present.
 
-The checked `vanilla.*` namespace, and the `VanillaId`/`CheckedVanillaId`
-plumbing it is built on, live in `@pdx-ts/sdk` itself — this package supplies
-only the data those types check against. Without `@pdx-ts/stellaris-ids`
-installed, `vanilla.*` helpers still exist and still accept plain strings;
-they simply cannot catch a typo.
+### Without the package
+
+Nothing breaks and nothing is checked. The `vanilla.*` helpers live in
+`@pdx-ts/sdk` itself and accept any string when this package is absent (or
+present but predating a registry): `VanillaId<K>` degrades to `string`
+per-registry. This package supplies only the data the checks run against.
+
+## Version pinning
+
+Two guards keep the pin honest:
+
+- **At build time**, `buildMod` compares this package's version against the
+  install a `stellaris.load()` view came from, and refuses a mismatched build
+  with `VanillaPackageMismatchError` unless `acceptGameVersion` explicitly
+  accepts that install version. A regeneration-fix release (`4.4.6-r2`) still
+  pins install `4.4.6` — only `major.minor.patch` is compared.
+- **In the type system**, module augmentation is global to a TypeScript
+  program: two versions of this package in one program both extend the same
+  merge targets and will not typecheck. That is what "pinned to one game
+  build" means — two pins coexist across separate projects, never within one.
+
+## What's inside
+
+```
+src/
+├── index.ts             side-effect imports + type re-exports; zero runtime
+├── augment.ts           the single `declare module "@pdx-ts/sdk"` augmentation
+├── registries/          one file per registry (38): literal-union id types;
+│                        the four oversized registries are directories of
+│                        per-bucket trie files instead
+│                        (registries/sprite/eventpictures.ts, ...)
+├── scripted-triggers.ts name → parameter-object tables (1,618 triggers)
+└── scripted-effects.ts  same for effects (1,657)
+```
+
+Everything under `src/` is generated — never edit it by hand.
+
+## Regeneration
+
+Generated by [@pdx-ts/codegen-vanilla](../codegen-vanilla/README.md) from a
+clean install: `npm run codegen:vanilla` from the repository root, next to an
+install of the pinned version. The generator stamps the version, enforces the
+identifiers-only licensing boundary at an emit chokepoint, and prints a
+report; the diff is reviewed as a public-API change.
+
+## Testing
+
+`tests/present.test-d.ts` is the package-present world: literal preservation,
+typo rejection, cross-registry rejection, trie navigation to real leaves,
+scripted-trigger parameter shapes cross-checked against the game's own files,
+and a guard that the trie'd registries match the SDK's oversized list. The
+package-absent world is covered from the SDK's own test program, which
+excludes this package on purpose. `tests/committed-output.test.ts` regenerates
+in memory wherever an install exists and fails on any divergence from the
+committed files — the drift gate for the artifact itself.
