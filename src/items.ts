@@ -15,6 +15,7 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { DefinedEvent } from "./events.ts";
 import type { ContentTypeName } from "./generated/content-registry.ts";
+import type { TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import type { OnActionRef } from "./on-actions.ts";
 import type { PatchedTechnology } from "./vanilla/patch.ts";
@@ -24,12 +25,19 @@ export interface ModWarning {
   readonly message: string;
 }
 
-/** A content definition as a value: structurally a `TypedRef`, so it flows
- * into reference fields (`prerequisites: [tech]`) exactly like today. */
+/**
+ * A content definition as a value: a `TypedRef` for its own registry, so it
+ * flows into that registry's reference fields (`prerequisites: [tech]`) and
+ * nowhere else. Extending `TypedRef<K>` carries the registry brand without
+ * this module naming the phantom symbol — the same trick `EventItem` uses
+ * through `DefinedEvent`. The brand stays optional and phantom (raw vanilla
+ * id strings still assign to a `TypedRef`); what it buys is that two items
+ * with mismatched `K` conflict, so a building is not a `TechnologyRef`.
+ */
 export interface ContentItem<
   K extends ContentTypeName = ContentTypeName,
   D extends { readonly id: string } = { readonly id: string },
-> {
+> extends TypedRef<K> {
   readonly itemKind: "content";
   readonly type: K;
   readonly id: D["id"];

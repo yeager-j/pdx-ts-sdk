@@ -419,13 +419,13 @@ describe("generated content authoring types", () => {
     void technology;
   });
 
-  it("types a definer's return as its own registry's content item", () => {
+  it("types a definer's return as its own registry's content item, branded", () => {
     // The class API's answer to "what did I just define" was `DefinedBuilding`,
-    // a branded `TypedRef`. The pure API's is the collection's element type,
-    // which carries the registry name in `type` rather than in a phantom brand
-    // — so the item flows into any reference field structurally. Cross-registry
-    // integrity is a build-time check (see the ref-integrity watch item in
-    // docs/verdict-pure-api-probe.md), not this type.
+    // a branded `TypedRef`. The pure API's is the collection's element type —
+    // and it extends `TypedRef<"building">`, so the registry name lives in the
+    // phantom brand as well as the runtime `type` field. Without the brand an
+    // item was structurally assignable to *every* `TypedRef`, because the brand
+    // is optional; carrying it is what makes the mismatch a conflict.
     const building = buildings.defineBuilding({
       id: "content_types_building_brand_item",
       name: "X",
@@ -434,8 +434,12 @@ describe("generated content authoring types", () => {
       ContentItem<"building", BuildingDef<"content_types_building_brand_item">>
     >();
     expectTypeOf(buildings.items).toEqualTypeOf<readonly BuildingItem[]>();
-    const structural: TechnologyRef = building;
-    void structural;
+    // Its own registry's reference fields still take it directly.
+    const own: BuildingRef = building;
+    void own;
+    // @ts-expect-error — a defined building is not a technology reference
+    const crossRegistry: TechnologyRef = building;
+    void crossRegistry;
   });
 
   it("scopes situations' repeated-struct fields per their own push_scope, not the body default", () => {
@@ -662,8 +666,12 @@ describe("generated content authoring types", () => {
     // The ownership limit takes definitions or raw ids, and never an id of
     // its own — the engine owns that key.
     shipOfSizeLimits.addShipOfSizeLimits([limit, "some_other_mods_limit"]);
-    const wrongBrand: BuildingRef = { id: "content_types_b_x" };
-    // @ts-expect-error — a wrongly-branded reference is still rejected
-    shipOfSizeLimits.addShipOfSizeLimits([wrongBrand]);
+    const wrongRegistry = buildings.defineBuilding({
+      id: "content_types_ship_of_size_limit_wrong_registry",
+      name: "X",
+    });
+    // @ts-expect-error — a definition from another registry is rejected: items
+    // carry their registry's brand, so this needs no hand-branded stand-in.
+    shipOfSizeLimits.addShipOfSizeLimits([wrongRegistry]);
   });
 });

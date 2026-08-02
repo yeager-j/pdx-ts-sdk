@@ -17,6 +17,7 @@ import {
   onActions,
   type EventItemBase,
   type TechnologyItem,
+  type TechnologyRef,
 } from "../src/index.ts";
 
 describe("factory definers", () => {
@@ -38,6 +39,33 @@ describe("factory definers", () => {
     // @ts-expect-error — the id is the literal "probe_neg_tech", not just string
     const other: "some_other_id" = tech.id;
     void other;
+  });
+
+  /**
+   * The item is a `TypedRef` for its own registry and no other. The graft's
+   * `targetScope` intersection is the interesting case: a hand-written type
+   * rides on top of the generated item, and the brand has to survive it.
+   */
+  it("brands a definer's return with its own registry, graft included", () => {
+    const techs = createTechnologies();
+    const situations = createSituationTypes();
+    const tech = techs.defineTechnology({
+      id: "probe_neg_tech_brand",
+      name: "T",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    const situation = situations.defineSituationType({
+      id: "probe_neg_sit_brand",
+      name: "S",
+      monthlyProgress: { base: 1 },
+    });
+    const ownRegistry: TechnologyRef = tech;
+    void ownRegistry;
+    // @ts-expect-error — a situation type definition is not a technology reference
+    const crossRegistry: TechnologyRef = situation;
+    void crossRegistry;
   });
 
   it("types a collection's items with its registry's element type", () => {
