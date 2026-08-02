@@ -248,18 +248,19 @@ export function opinionModifier<const Id extends VanillaId<"opinion_modifier">>(
 
 /**
  * Vanilla static modifier ids, both navigable and checked.
- * `staticModifier.<segment>...` descends a trie of every id this registry
- * defines, split on `_` at generation time, down to a leaf typed as the
- * exact ref; `staticModifier(id)` accepts a string copied straight from a game
- * file, checked against the same id set with no completion menu ever
- * built. Checked against @pdx-ts/stellaris-vanilla when it is installed;
- * any string otherwise, with no navigation. Zero runtime validation
- * either way.
+ * `staticModifier.<file>.<id>` descends one level of buckets named after
+ * the vanilla files these ids are defined in, to a leaf spelling the
+ * id verbatim — the bucket is navigation only and no part of the id.
+ * `staticModifier(id)` accepts a string copied straight from a game file,
+ * checked against the same id set with no completion menu ever built.
+ * Checked against @pdx-ts/stellaris-vanilla when it is installed; any
+ * string otherwise, with no navigation. Zero runtime validation either
+ * way.
  */
 export const staticModifier: VanillaTrie<"static_modifier"> &
   (<const Id extends string>(
     id: Id & CheckedVanillaId<"static_modifier", Id>
-  ) => StaticModifierRef & { readonly id: Id }) = makeIdTrie("static_modifier");
+  ) => StaticModifierRef & { readonly id: Id }) = makeIdTrie("static_modifier", "leaf");
 
 /**
  * A checked reference to a vanilla scripted modifier id.
@@ -480,47 +481,50 @@ export function countryShipOfSizeLimit<const Id extends VanillaId<"country_ship_
 /**
  * Vanilla sound ids, both navigable and checked.
  * `sound.<segment>...` descends a trie of every id this registry
- * defines, split on `_` at generation time, down to a leaf typed as the
- * exact ref; `sound(id)` accepts a string copied straight from a game
- * file, checked against the same id set with no completion menu ever
- * built. Checked against @pdx-ts/stellaris-vanilla when it is installed;
- * any string otherwise, with no navigation. Zero runtime validation
- * either way.
+ * defines, split on `_` at generation time, down to a leaf typed as
+ * the exact ref — so the path, rejoined with `_`, is the id.
+ * `sound(id)` accepts a string copied straight from a game file,
+ * checked against the same id set with no completion menu ever built.
+ * Checked against @pdx-ts/stellaris-vanilla when it is installed; any
+ * string otherwise, with no navigation. Zero runtime validation either
+ * way.
  */
 export const sound: VanillaTrie<"sound"> &
   (<const Id extends string>(
     id: Id & CheckedVanillaId<"sound", Id>
-  ) => SoundRef & { readonly id: Id }) = makeIdTrie("sound");
+  ) => SoundRef & { readonly id: Id }) = makeIdTrie("sound", "path");
 
 /**
  * Vanilla sound effect ids, both navigable and checked.
  * `soundEffect.<segment>...` descends a trie of every id this registry
- * defines, split on `_` at generation time, down to a leaf typed as the
- * exact ref; `soundEffect(id)` accepts a string copied straight from a game
- * file, checked against the same id set with no completion menu ever
- * built. Checked against @pdx-ts/stellaris-vanilla when it is installed;
- * any string otherwise, with no navigation. Zero runtime validation
- * either way.
+ * defines, split on `_` at generation time, down to a leaf typed as
+ * the exact ref — so the path, rejoined with `_`, is the id.
+ * `soundEffect(id)` accepts a string copied straight from a game file,
+ * checked against the same id set with no completion menu ever built.
+ * Checked against @pdx-ts/stellaris-vanilla when it is installed; any
+ * string otherwise, with no navigation. Zero runtime validation either
+ * way.
  */
 export const soundEffect: VanillaTrie<"sound_effect"> &
   (<const Id extends string>(
     id: Id & CheckedVanillaId<"sound_effect", Id>
-  ) => SoundEffectRef & { readonly id: Id }) = makeIdTrie("sound_effect");
+  ) => SoundEffectRef & { readonly id: Id }) = makeIdTrie("sound_effect", "path");
 
 /**
  * Vanilla sprite ids, both navigable and checked.
  * `sprite.<segment>...` descends a trie of every id this registry
- * defines, split on `_` at generation time, down to a leaf typed as the
- * exact ref; `sprite(id)` accepts a string copied straight from a game
- * file, checked against the same id set with no completion menu ever
- * built. Checked against @pdx-ts/stellaris-vanilla when it is installed;
- * any string otherwise, with no navigation. Zero runtime validation
- * either way.
+ * defines, split on `_` at generation time, down to a leaf typed as
+ * the exact ref — so the path, rejoined with `_`, is the id.
+ * `sprite(id)` accepts a string copied straight from a game file,
+ * checked against the same id set with no completion menu ever built.
+ * Checked against @pdx-ts/stellaris-vanilla when it is installed; any
+ * string otherwise, with no navigation. Zero runtime validation either
+ * way.
  */
 export const sprite: VanillaTrie<"sprite"> &
   (<const Id extends string>(
     id: Id & CheckedVanillaId<"sprite", Id>
-  ) => SpriteRef & { readonly id: Id }) = makeIdTrie("sprite");
+  ) => SpriteRef & { readonly id: Id }) = makeIdTrie("sprite", "path");
 
 /**
  * A checked reference to a vanilla resource id.

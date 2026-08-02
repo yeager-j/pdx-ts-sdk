@@ -1,0 +1,7 @@
+fake_empire_base = {
+	pop_growth_speed = 0.1
+}
+
+fake_planet_base = {
+	planet_jobs_produces_mult = 0.05
+}

@@ -71,11 +71,12 @@ describe("checkVanillaPackagePin", () => {
 
 describe("installedVanillaPackageVersion", () => {
   it("resolves the workspace package's stamped version via the default specifier", () => {
-    const version = installedVanillaPackageVersion();
-    // Today's placeholder is the literal "0.0.0" sentinel, but this asserts
-    // the shape rather than that literal so the test survives the later
-    // generation seam stamping a real game version in.
-    expect(version).toMatch(/^\d+\.\d+\.\d+/);
+    // The workspace package is generated and stamped (4.4.6 today), so this
+    // asserts the shape rather than a literal — a regeneration against a newer
+    // install is supposed to move it, and only `PROVENANCE.md`'s consistency
+    // check and the install-gated conformance gate pin the exact value.
+    expect(installedVanillaPackageVersion()).toMatch(/^\d+\.\d+\.\d+/);
+    expect(installedVanillaPackageVersion()).not.toBe("0.0.0");
   });
 
   it("returns undefined for a specifier that does not resolve", () => {
@@ -98,23 +99,48 @@ describe("buildMod's version-pin hook", () => {
     };
   }
 
-  it("does not throw for a vanilla view with a gameVersion and no patches", () => {
-    // The ambient @pdx-ts/stellaris-vanilla package is still the 0.0.0
-    // sentinel (no generation has run yet), so checkVanillaPackagePin's
-    // sentinel short-circuit passes silently regardless of this view's
-    // gameVersion. The stamped-package mismatch path — where a real pinned
-    // version disagrees with a real install — gets end-to-end coverage once
-    // the generation seam (D) commits a stamped package.
+  const technologies = collection(undefined, [
+    defineTechnology({
+      id: "pp_mod_tech_new",
+      name: "New",
+      area: "physics",
+      tier: 1,
+      category: "computing",
+    }),
+  ]);
+
+  it("throws when the workspace package's version disagrees with the view's install", () => {
+    // End to end, through the real resolved package: @pdx-ts/stellaris-vanilla
+    // is stamped 4.4.6, this view claims a 4.5.0 install, and no patch is
+    // involved — identifiers influence everything authored, so the gate fires
+    // on `options.vanilla` alone rather than on the presence of patches.
     const vanilla = viewFromFiles(FILES, { gameVersion: "4.5.0" });
-    const technologies = collection(undefined, [
-      defineTechnology({
-        id: "pp_mod_tech_new",
-        name: "New",
-        area: "physics",
-        tier: 1,
-        category: "computing",
-      }),
-    ]);
+    try {
+      buildMod(makeConfig(), [technologies], { vanilla });
+      expect.unreachable("expected buildMod to throw VanillaPackageMismatchError");
+    } catch (error) {
+      expect(error).toBeInstanceOf(VanillaPackageMismatchError);
+      const message = (error as Error).message;
+      expect(message).toContain("4.5.0");
+      expect(message).toContain(installedVanillaPackageVersion()!);
+    }
+  });
+
+  it("passes when acceptGameVersion names the install version", () => {
+    const vanilla = viewFromFiles(FILES, { gameVersion: "4.5.0" });
+    expect(() =>
+      render(
+        buildMod(makeConfig({ acceptGameVersion: "4.5.0" }), [technologies], {
+          vanilla,
+        })
+      )
+    ).not.toThrow();
+  });
+
+  it("passes when the view's install matches the package", () => {
+    const vanilla = viewFromFiles(FILES, {
+      gameVersion: installedVanillaPackageVersion(),
+    });
     expect(() => render(buildMod(makeConfig(), [technologies], { vanilla }))).not.toThrow();
   });
 });

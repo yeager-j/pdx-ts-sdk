@@ -141,5 +141,8 @@ describe.skipIf(!existsSync(COMMON))("jomini differential (non-gating)", () => {
     expect(compared).toBeGreaterThan(500);
     expect(mismatched.sort()).toEqual(JOMINI_MISREADS);
     expect(jominiRejected.sort()).toEqual(JOMINI_CANNOT_PARSE);
-  });
+    // Parses the game's whole `common/` tree twice, once per implementation.
+    // Like the fixpoint suite next door it needs a budget of its own: the
+    // default 5s is a test-authoring convenience, not a claim about this.
+  }, 60_000);
 });

@@ -1,0 +1,7 @@
+fake_food_deficit = {
+	pop_happiness = -0.2
+}
+
+fake_energy_deficit = {
+	ship_speed_mult = -0.25
+}

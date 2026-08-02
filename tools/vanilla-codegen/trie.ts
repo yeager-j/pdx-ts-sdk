@@ -1,18 +1,24 @@
 /**
- * The adaptive trie an oversized registry navigates by.
+ * The trie an oversized registry navigates by, in the two shapes the manifest's
+ * `TrieMode` chooses between.
  *
  * A literal union of 9,000 sprite names is a correct type and an unusable one:
  * the editor builds the whole menu at every completion position. The measured
- * fix — the same one the modifier recorder proved at 45k names — is structure.
- * Ids split on `_` and nest, so every menu a modder sees is small, while the
- * flat union stays around for the checked string call, which never reaches a
- * completion position.
+ * fix — the same one the modifier recorder proved at 45k names — is structure,
+ * while the flat union stays around for the checked string call, which never
+ * reaches a completion position.
  *
- * Reconstruction is the contract the runtime depends on: the property path
- * joined with `_` *is* the id, and `id` is the terminal accessor. No name data
- * exists at runtime, so an id that cannot survive that round trip cannot be a
- * leaf — it is routed to the flat union only and counted, rather than emitted
- * as a path that would rebuild the wrong string.
+ * **`segments`** ({@link buildIdTrie}): ids split on `_` and nest. The property
+ * path joined with `_` *is* the id, and `id` is the terminal accessor. No name
+ * data exists at runtime, so an id that cannot survive that round trip cannot
+ * be a leaf — it is routed to the flat union only and counted, rather than
+ * emitted as a path that would rebuild the wrong string.
+ *
+ * **`file-buckets`** ({@link buildFileBucketTrie}): one level of buckets named
+ * after the vanilla files, each holding its ids verbatim as leaves. Here the
+ * path is *not* the id — the bucket is navigation only and the leaf key is the
+ * whole id — which is also why nothing needs routing to the flat union: a
+ * verbatim key is a legal quoted property whatever characters it contains.
  */
 
 /** Bucket sizes above which a level splits, and the level at which it stops. */
@@ -61,6 +67,73 @@ export function navigable(id: string): boolean {
   }
   const segments = id.split("_");
   return segments.join("_") === id && !segments.includes("id");
+}
+
+/**
+ * The bucket a vanilla file's stem names.
+ *
+ * Vanilla writes `<NN>_<registry-token>[_<subject>].txt`, so the load-order
+ * number and the registry token are noise and the subject is the real
+ * category: `09_static_modifiers_deficit` -> `deficit`. Two files can name the
+ * same subject (`16_static_modifiers_paragon`, `19_static_modifiers_paragon`)
+ * and merge into one bucket, which is the intent — load order is not a
+ * category. A stem that is nothing but number and token
+ * (`00_static_modifiers`) yields `""`, meaning "no bucket": its ids are leaves
+ * at the trie root, since there is no subject to name them after.
+ */
+export function fileBucketKey(stem: string, token: string): string {
+  const withoutOrder = stem.replace(/^\d+_/, "");
+  return withoutOrder === token
+    ? ""
+    : withoutOrder.startsWith(`${token}_`)
+      ? withoutOrder.slice(token.length + 1)
+      : withoutOrder;
+}
+
+/**
+ * The file-bucketed trie: one level of buckets, leaves spelled verbatim.
+ *
+ * `token` is the registry's own word as vanilla spells it in its filenames
+ * (`static_modifiers` for `static_modifier`) — plural, and therefore not
+ * derivable from the registry name, so it is passed in.
+ */
+export function buildFileBucketTrie(
+  ids: readonly string[],
+  sourceStems: ReadonlyMap<string, string>,
+  token: string
+): IdTrie {
+  const buckets = new Map<string, TrieNode>();
+  const grouped = new Map<string, string[]>();
+  for (const id of ids) {
+    const stem = sourceStems.get(id);
+    if (stem === undefined) {
+      // Unreachable while the reader fills the map for every id it returns;
+      // a leaf at the root is the honest fallback, since the alternative is
+      // dropping an id the registry really defines.
+      grouped.set("", [...(grouped.get("") ?? []), id]);
+      continue;
+    }
+    const key = fileBucketKey(stem, token);
+    grouped.set(key, [...(grouped.get(key) ?? []), id]);
+  }
+  const rootLeaves = grouped.get("") ?? [];
+  grouped.delete("");
+  for (const id of rootLeaves) {
+    buckets.set(id, { id, children: new Map() });
+  }
+  for (const [key, members] of [...grouped].sort(([left], [right]) =>
+    compareSegments(left, right)
+  )) {
+    buckets.set(key, {
+      id: null,
+      children: new Map(members.map((id) => [id, { id, children: new Map<string, TrieNode>() }])),
+    });
+  }
+  return { buckets: sortByKey(buckets), excluded: [] };
+}
+
+function sortByKey(map: ReadonlyMap<string, TrieNode>): ReadonlyMap<string, TrieNode> {
+  return new Map([...map].sort(([left], [right]) => compareSegments(left, right)));
 }
 
 export function buildIdTrie(ids: readonly string[], shape: TrieShape): IdTrie {

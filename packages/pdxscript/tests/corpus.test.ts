@@ -80,5 +80,9 @@ describe.skipIf(!existsSync(COMMON))("vanilla corpus (non-gating)", () => {
       "named_colors/01_trait_colors.txt: operator-less-entry",
       "scripted_loc/scripted_loc_ruloc.txt: unclosed-at-eof",
     ]);
-  });
+    // Parses, serializes, and re-parses every file in the game's `common/`
+    // tree — seconds of real work, and it sits behind the default 5s budget
+    // only by luck on a quiet machine. It shares the run with the other
+    // install-gated suites, so it needs a budget of its own.
+  }, 60_000);
 });

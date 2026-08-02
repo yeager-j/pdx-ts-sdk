@@ -10,6 +10,8 @@
  * install with no filesystem writes at all.
  */
 
+import { basename } from "node:path";
+
 import { pascalCase } from "../codegen/naming.ts";
 import {
   createChokepoint,
@@ -29,7 +31,13 @@ import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./
 import { readRegistryIds } from "./read-ids.ts";
 import { readScriptedDefinitions } from "./read-scripted.ts";
 import { resolveRegistries } from "./resolve.ts";
-import { buildIdTrie, DEFAULT_TRIE_SHAPE, type TrieNode, type TrieShape } from "./trie.ts";
+import {
+  buildFileBucketTrie,
+  buildIdTrie,
+  DEFAULT_TRIE_SHAPE,
+  type TrieNode,
+  type TrieShape,
+} from "./trie.ts";
 
 export interface GenerateOptions {
   /** Stellaris game root. */
@@ -49,6 +57,13 @@ export interface GenerateOptions {
 export interface TrieReport {
   readonly buckets: number;
   readonly largestBucket: number;
+  /**
+   * Top-level entries that are ids rather than buckets — a `file-buckets`
+   * registry's files with no subject in their name put their ids here.
+   * Counted separately because they are part of `buckets` and would otherwise
+   * read as categories.
+   */
+  readonly rootLeaves: number;
   /** Ids the trie cannot navigate to; the flat union still carries them. */
   readonly flatOnly: number;
 }
@@ -114,8 +129,14 @@ export function generateVanillaPackage(options: GenerateOptions): {
 
     let trieReport: TrieReport | null = null;
     if (read.ids.length > shape.threshold) {
-      const trie = buildIdTrie(read.ids, shape);
-      const emission = emitTrie(spec.registry, trie.buckets, shape.leafSize, gate, gameVersion);
+      // A file bucket is a category, not a size class, so it never splits
+      // again: an unbounded budget is what says "this level is the last one".
+      const fileBucketed = spec.trieMode === "file-buckets" && read.sourceStems !== null;
+      const trie = fileBucketed
+        ? buildFileBucketTrie(read.ids, read.sourceStems!, basename(spec.path))
+        : buildIdTrie(read.ids, shape);
+      const budget = fileBucketed ? Number.POSITIVE_INFINITY : shape.leafSize;
+      const emission = emitTrie(spec.registry, trie.buckets, budget, gate, gameVersion);
       for (const [path, text] of emission.files) {
         files.set(path, text);
       }
@@ -124,6 +145,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
       trieReport = {
         buckets: trie.buckets.size,
         largestBucket: Math.max(0, ...[...trie.buckets.values()].map(countLeaves)),
+        rootLeaves: [...trie.buckets.values()].filter((node) => node.children.size === 0).length,
         flatOnly: trie.excluded.length,
       };
     }

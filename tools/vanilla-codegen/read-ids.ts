@@ -32,6 +32,16 @@ export interface RegistryIds {
   readonly diagnostics: number;
   /** The registry's directory does not exist in this install. */
   readonly missing: boolean;
+  /**
+   * Id -> the stem of the file that defines it, for `file-buckets` registries
+   * only. Every other registry gets `null`: provenance costs a map per id and
+   * nothing but a file-bucketed trie has any use for it.
+   *
+   * An id defined in two files keeps the first stem in walk order, which is
+   * sorted — so which bucket a redefined id lands in is deterministic rather
+   * than filesystem-dependent.
+   */
+  readonly sourceStems: ReadonlyMap<string, string> | null;
 }
 
 /**
@@ -91,7 +101,7 @@ function nameFieldValue(items: readonly PdxItem[], nameField: string): string | 
   return null;
 }
 
-function collect(spec: RegistrySpec, items: readonly PdxItem[], into: Set<string>): void {
+function collect(spec: RegistrySpec, items: readonly PdxItem[], add: (id: string) => void): void {
   for (const item of items) {
     if (item.kind !== "entry" || item.value.kind !== "container") {
       continue;
@@ -106,7 +116,7 @@ function collect(spec: RegistrySpec, items: readonly PdxItem[], into: Set<string
         }
         const id = nameFieldValue(inner.value.items, spec.nameField);
         if (id !== null) {
-          into.add(id);
+          add(id);
         }
       }
       continue;
@@ -117,23 +127,37 @@ function collect(spec: RegistrySpec, items: readonly PdxItem[], into: Set<string
       }
       const id = nameFieldValue(item.value.items, spec.nameField);
       if (id !== null) {
-        into.add(id);
+        add(id);
       }
       continue;
     }
-    into.add(item.key);
+    add(item.key);
   }
+}
+
+/** `09_static_modifiers_deficit.txt` -> `09_static_modifiers_deficit`. */
+function stemOf(file: string): string {
+  const name = path.basename(file);
+  const dot = name.lastIndexOf(".");
+  return dot <= 0 ? name : name.slice(0, dot);
 }
 
 export function readRegistryIds(root: string, spec: RegistrySpec): RegistryIds {
   const dir = path.join(root, spec.path);
   const files = walk(dir, spec.extension, !spec.pathStrict);
   const ids = new Set<string>();
+  const sourceStems = spec.trieMode === "file-buckets" ? new Map<string, string>() : null;
   let diagnostics = 0;
   for (const file of files) {
     const parsed = parse(readFileSync(file, "utf8"), path.basename(file));
     diagnostics += parsed.diagnostics.length;
-    collect(spec, parsed.items, ids);
+    const stem = stemOf(file);
+    collect(spec, parsed.items, (id) => {
+      ids.add(id);
+      if (sourceStems !== null && !sourceStems.has(id)) {
+        sourceStems.set(id, stem);
+      }
+    });
   }
   return {
     registry: spec.registry,
@@ -141,6 +165,7 @@ export function readRegistryIds(root: string, spec: RegistrySpec): RegistryIds {
     files: files.length,
     diagnostics,
     missing: files.length === 0 && !exists(dir),
+    sourceStems,
   };
 }
 

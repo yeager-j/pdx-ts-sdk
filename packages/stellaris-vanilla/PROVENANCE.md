@@ -12,12 +12,24 @@ unchecked string.
 
 ## Game version
 
-`0.0.0` placeholder — this package's real `version` is stamped by
-`tools/vanilla-codegen` from the installed game's `launcher-settings.json` the
-next time it runs against a real install. The stamped version is
-`major.minor.patch` of the game build the package was generated from; the SDK
-compares its own install's version against this package's `package.json`
-version and refuses to build silently on a mismatch.
+Generated from Stellaris **4.4.6**.
+
+The npm `version` *is* the game version: `tools/vanilla-codegen` stamps
+`package.json` with `major.minor.patch` from the installed game's
+`launcher-settings.json`, so there is one authority for which build these
+identifiers came from. The SDK compares its own install's version against this
+package's `package.json` version and refuses to build silently on a mismatch
+(`VanillaPackageMismatchError`; `buildMod`'s `acceptGameVersion` is the
+deliberate escape).
+
+The 4.4.6 generation read 38 registries and 29,725 ids, plus 1,618 scripted
+triggers (86 parameterized) and 1,657 scripted effects (382 parameterized).
+`sprite`, `sound`, `sound_effect`, and `static_modifier` are large enough to be
+emitted as navigable tries as well as flat unions. The first three nest by name
+(ids split on `_`); `static_modifier` nests by the vanilla file each id is
+defined in, since its names share first words by coincidence rather than by
+meaning — 658 top-level keys, of which 626 are ids from files carrying no
+subject in their name, and the largest bucket holds 232 ids.
 
 ## What is here, and what is not
 

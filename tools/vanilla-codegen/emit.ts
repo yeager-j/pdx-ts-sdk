@@ -162,12 +162,12 @@ export interface TrieEmission {
  * Which file a top-level bucket's type lands in: its key's first character.
  *
  * "One file per bucket" was the plan, and the real install argues against it in
- * both directions — 3,081 static modifiers share only their first *word*, so
- * they produce 1,028 buckets and would produce 1,028 two-line files, while
- * sprites produce nine buckets of which one holds 9,171 ids. Grouping by first
- * character keeps the count bounded at both ends and, unlike packing by size,
- * is *stable*: a bucket stays in its file as the game gains and loses ids, so a
- * regeneration diff still reads as a local change.
+ * both directions — static modifiers produce 658 top-level keys, most of them
+ * single ids that would each become a two-line file, while sprites produce nine
+ * buckets of which one holds 9,171 ids. Grouping by first character keeps the
+ * count bounded at both ends and, unlike packing by size, is *stable*: a bucket
+ * stays in its file as the game gains and loses ids, so a regeneration diff
+ * still reads as a local change.
  */
 function bucketStem(key: string): string {
   const first = key[0] ?? "_";
@@ -229,12 +229,21 @@ export function emitTrie(
     return node.id === null ? body : `${reference} & ${body}`;
   };
 
+  // A bucket with no children is one line. Lifting it into its own exported
+  // type in its own file would buy nothing and cost an import — and a
+  // file-bucketed registry has hundreds of them, since every id defined in a
+  // file with no subject in its name is a leaf at the root.
   const rootDeps: string[] = [];
   const rootMembers: string[] = [];
+  let rootLeaves = false;
   for (const [key, node] of buckets) {
-    const name = extract(key, node, key);
-    rootDeps.push(name);
-    rootMembers.push(`readonly ${gate.literal(key, context)}: ${name};`);
+    const type = node.children.size === 0 ? render(node, key, rootDeps) : extract(key, node, key);
+    if (node.children.size === 0) {
+      rootLeaves = true;
+    } else {
+      rootDeps.push(type);
+    }
+    rootMembers.push(`readonly ${gate.literal(key, context)}: ${type};`);
   }
 
   const dir = `registries/${kebabCase(registry)}`;
@@ -261,6 +270,7 @@ export function emitTrie(
   files.set(
     trieIndexFile(registry),
     header(gameVersion) +
+      (rootLeaves ? `import type { ${reference} } from "@pdx-ts/sdk";\n` : "") +
       importsFrom(rootDeps, stemOf, "./") +
       `\nexport interface ${root} {\n${rootMembers.join("\n")}\n}\n`
   );

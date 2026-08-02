@@ -11,6 +11,7 @@
  * quietly ignores.
  */
 
+import type { TrieMode } from "../codegen/content-manifest.ts";
 import { loadContentTypesFrom, loadRules, type ContentType } from "../codegen/cwt/rules.ts";
 import type { VanillaIdRow } from "./manifest.ts";
 
@@ -34,6 +35,8 @@ export interface RegistrySpec {
    * CWT types, whose ids a recursive walk would emit as technologies.
    */
   readonly pathStrict: boolean;
+  /** How this registry's trie is arranged, if it is large enough to get one. */
+  readonly trieMode: TrieMode;
 }
 
 /** The extension the game assumes when the rules declare none. */
@@ -97,5 +100,6 @@ function resolveRow(row: VanillaIdRow, type: ContentType | undefined): RegistryS
     nameField: type.nameField,
     skipRootKey,
     pathStrict: type.pathStrict ?? false,
+    trieMode: row.trie ?? "segments",
   };
 }

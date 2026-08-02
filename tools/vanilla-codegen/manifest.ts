@@ -13,7 +13,7 @@
  * from the rules rather than written down twice.
  */
 
-import { CONTENT_MANIFEST } from "../codegen/content-manifest.ts";
+import { CONTENT_MANIFEST, type TrieMode } from "../codegen/content-manifest.ts";
 
 /**
  * A registry whose ids are enumerated from the install, resolved through the
@@ -29,6 +29,13 @@ export interface VanillaIdRow {
   readonly source: string;
   /** Top-level keyword, for types the rules mark with `name_field`. */
   readonly keyword?: string;
+  /**
+   * The trie shape to use *if* this registry turns out to be oversized.
+   * Whether it gets a trie at all is measured, not declared — the id count
+   * decides that. How it is arranged is a judgement about the names, so it
+   * comes from `CONTENT_MANIFEST` and defaults to `segments`.
+   */
+  readonly trie?: TrieMode;
 }
 
 /**
@@ -51,6 +58,7 @@ const CONTENT_ROWS: readonly VanillaIdRow[] = CONTENT_MANIFEST.map((entry) => ({
   registry: "as" in entry ? entry.as : entry.type,
   source: entry.source,
   ...("keyword" in entry ? { keyword: entry.keyword } : {}),
+  ...("oversized" in entry ? { trie: entry.oversized } : {}),
 }));
 
 /**

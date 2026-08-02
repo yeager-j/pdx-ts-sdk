@@ -124,7 +124,9 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
       one.trie === null
         ? []
         : [
-            `${one.registry}: ${one.trie.buckets} buckets, largest ${one.trie.largestBucket} ids, ` +
+            `${one.registry}: ${one.trie.buckets} top-level keys ` +
+              `(${one.trie.rootLeaves} of them ids, not buckets), ` +
+              `largest bucket ${one.trie.largestBucket} ids, ` +
               `${one.trie.flatOnly} routed to the flat union only`,
           ]
     )
