@@ -1,0 +1,3 @@
+default = {
+	ship_of_size_limits = { content_test_ship_of_size_limit_titan }
+}

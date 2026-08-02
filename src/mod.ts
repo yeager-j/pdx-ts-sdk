@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { kv, serialize } from "@pdx-ts/pdxscript";
+import { block, kv, list, scalar, serialize } from "@pdx-ts/pdxscript";
 
 import { ContentAuthoring } from "./content.ts";
 import { StaleRuleTableError, VanillaPathCollisionError } from "./errors.ts";
@@ -12,8 +12,10 @@ import {
   type ContentTypeName,
   type DefinedContentMap,
 } from "./generated/content-registry.ts";
+import type { DefinedCountryShipOfSizeLimit } from "./generated/country-ship-of-size-limit.ts";
 import { GeneratedEventMethods } from "./generated/event-methods.ts";
 import type { EventKindKey } from "./generated/events.ts";
+import { refId } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { OnActionAuthoring, type OnActionRef } from "./on-actions.ts";
 import { normalizeLogicalPath } from "./resolver/path-order.ts";
@@ -56,6 +58,7 @@ export class Mod<const P extends string = string> extends GeneratedEventMethods<
   private readonly eventIds = new Set<number>();
   private readonly onActions: OnActionAuthoring;
   private readonly loc = new Map<string, string>();
+  private readonly shipOfSizeLimits = new Set<string>();
 
   constructor(config: ModConfig<P>) {
     super();
@@ -76,6 +79,26 @@ export class Mod<const P extends string = string> extends GeneratedEventMethods<
     def: ContentDefMap<P>[K]
   ): DefinedContentMap<P>[K] {
     return this.content.define(type, def) as unknown as DefinedContentMap<P>[K];
+  }
+
+  /**
+   * Applies ship-of-size limits to this mod's countries.
+   *
+   * Deliberately not a `define`. A `country_ownership_limit` carries no id this
+   * mod owns: vanilla ships exactly one, keyed `default`, and the game reads
+   * that key *additively* — vanilla's own file notes that a second `default`
+   * applies both its limits and the original's. Every mod on record that
+   * touches this registry writes `default` and nothing else, so emitting a
+   * mod-prefixed key instead would produce a file with no observed precedent
+   * and a silent failure mode if the engine reads only `default`.
+   *
+   * So the id is not an authoring decision and the API does not ask for one.
+   * Repeated calls accumulate, and a limit listed twice is emitted once.
+   */
+  addShipOfSizeLimits(limits: readonly (DefinedCountryShipOfSizeLimit | string)[]): void {
+    for (const limit of limits) {
+      this.shipOfSizeLimits.add(String(refId(limit)));
+    }
   }
 
   /**
@@ -260,6 +283,19 @@ export class Mod<const P extends string = string> extends GeneratedEventMethods<
       files.set(
         `events/${prefix}_events.txt`,
         serialize([kv("namespace", prefix), ...this.events.map((event) => event.entry)])
+      );
+    }
+    if (this.shipOfSizeLimits.size > 0) {
+      files.set(
+        `common/country_limits/ownership_limits/${prefix}_ownership_limits.txt`,
+        serialize([
+          block("default", [
+            list(
+              "ship_of_size_limits",
+              [...this.shipOfSizeLimits].map((id) => scalar(id))
+            ),
+          ]),
+        ])
       );
     }
     const renderedOnActions = this.onActions.render();

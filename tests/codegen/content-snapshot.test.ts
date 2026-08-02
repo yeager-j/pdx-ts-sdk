@@ -497,6 +497,41 @@ describe("content-type codegen", () => {
     expect(shipSize?.code).toContain('shipModifier?: ModifierClosure<"ship">;');
   });
 
+  it("lets the overlay assert a scope the rules omit", () => {
+    // country_ship_of_size_limit.show carries no `## replace_scopes`, so the
+    // mechanical reading is Trigger<ScopeName> — valid in EVERY scope — and the
+    // field is required. All 7 shipped entries write a country condition there,
+    // none of which satisfies that type, so the field would be emitted and
+    // unfillable. The corpus gate cannot see this: it only checks presence.
+    const limit = emissions.get("country_ship_of_size_limit");
+    expect(limit?.code).toContain('show: Trigger<"country">;');
+    expect(limit?.code).not.toContain("show: Trigger<ScopeName>;");
+    // The assertion is surgical: decision's triggers stay scopeless on purpose,
+    // because a decision's own scope really does vary by category.
+    expect(emissions.get("decision")?.code).toContain("potential?: Trigger<ScopeName>;");
+  });
+
+  it("gives an asserted scope precedence over one the rules declare", () => {
+    // The row has to win even where CWT *does* annotate, otherwise it could
+    // only ever fix the absent case and a wrong annotation would be unfixable.
+    // Feeding `show` a planet scope it does not really have proves precedence.
+    const type = rules.contentTypes.get("country_ship_of_size_limit")!;
+    const body = rules.bodies.get("country_ship_of_size_limit")!;
+    const misScoped = {
+      ...body,
+      fields: body.fields.map((field) =>
+        field.key.kind === "name" && field.key.name === "show"
+          ? { ...field, scope: { this: "planet", root: null } }
+          : field
+      ),
+    };
+    emitter.beginFile();
+    const emission = emitContentType(emitter, type, misScoped, "country_ship_of_size_limit");
+    emitter.endFile();
+    expect(emission.code).toContain('show: Trigger<"country">;');
+    expect(emission.code).not.toContain('show: Trigger<"planet">;');
+  });
+
   it("generates councilor without registry-specific code", () => {
     // Blocked purely by the governments.cwt malformed-option drift block
     // (SDK-2); councilor's own fields are ordinary.
@@ -645,7 +680,9 @@ describe("content-type codegen", () => {
     expect(countryShipOfSizeLimit?.code).toContain("base: number;");
     expect(countryShipOfSizeLimit?.code).toContain("max?: number;");
     expect(countryShipOfSizeLimit?.code).toContain("navalCapFraction?: number;");
-    expect(countryShipOfSizeLimit?.code).toContain("show: Trigger<ScopeName>;");
+    // `show` is scoped by an overlay assertion rather than by the rules — see
+    // the scope-assertion test above for why the mechanical reading was wrong.
+    expect(countryShipOfSizeLimit?.code).toContain('show: Trigger<"country">;');
     // The CWT type declares no localisation for this registry at all.
     expect(countryShipOfSizeLimit?.code).not.toContain("name?:");
     expect(countryShipOfSizeLimit?.code).not.toContain("desc?:");

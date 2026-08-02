@@ -333,6 +333,22 @@ export interface ContentFieldOverride {
   /** The alias category to splice in, when `shape` is `"aliasStruct"`. */
   readonly category?: string;
   /**
+   * The scope this field's closures run in, when CWT declares none and the
+   * mechanical fallback is wrong.
+   *
+   * An unannotated field lowers to `Trigger<ScopeName>` / `ModifierClosure<ScopeName>`
+   * — "valid in every scope" — which is right when the scope genuinely varies
+   * (a decision's own scope depends on its category) and wrong when the scope
+   * is fixed but simply unannotated. The wrong case is invisible to the corpus
+   * gate, which only checks whether a field is *present*, so it has to be
+   * caught by reading real definitions.
+   *
+   * This asserts game semantics the rules do not state, so a row needs the
+   * evidence in its reason, not a guess. An unknown scope name fails codegen
+   * rather than silently widening.
+   */
+  readonly scope?: string;
+  /**
    * Authoring member name, when the mechanically derived one collides with a
    * localisation slot: `desc = { trigger text }` (the repeated block form of
    * the `desc` key) is a different thing from the `desc` flavor-text member
@@ -737,6 +753,19 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "prefixing `mid` would break every reference to it. Slot order also carries no " +
         "meaning, unlike a situation's stages, so a Record is safe despite JS ordering " +
         "integer-like keys ahead of the rest.",
+    },
+  ],
+  [
+    "country_ship_of_size_limit.show",
+    {
+      scope: "country",
+      reason:
+        "CWT annotates no scope, so the mechanical reading is `Trigger<ScopeName>` — valid in " +
+        "every scope — and the field is required, so every definition must carry one. All 7 " +
+        "shipped entries write a country condition there (`has_technology`, `has_origin`), none " +
+        "of which satisfies that type, and the field controls the country's naval-capacity " +
+        "tooltip on a registry named country_ship_of_size_limit. Without this the field is " +
+        "emitted but can hold nothing any real definition writes.",
     },
   ],
   [

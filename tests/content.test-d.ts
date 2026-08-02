@@ -567,4 +567,28 @@ describe("generated content authoring types", () => {
       show: always(),
     });
   });
+
+  it("scopes the ship-of-size limit's show clause to country", () => {
+    // The overlay asserts the scope CWT omits. Without it `show` is
+    // Trigger<ScopeName> — required, and unable to hold the country condition
+    // every shipped entry writes.
+    const limit = mod.defineCountryShipOfSizeLimit({
+      id: "content_types_ship_of_size_limit_scoped",
+      shipTypes: ["ship_size_titan"],
+      base: 80,
+      show: hasAuthority("auth_democratic"),
+    });
+    mod.defineCountryShipOfSizeLimit({
+      id: "content_types_ship_of_size_limit_wrong_scope",
+      shipTypes: ["ship_size_titan"],
+      base: 80,
+      // @ts-expect-error — the clause runs in country scope, not planet
+      show: hasPlanetFlag("planet_only"),
+    });
+    // The ownership limit takes definitions or raw ids, and never an id of
+    // its own — the engine owns that key.
+    mod.addShipOfSizeLimits([limit, "some_other_mods_limit"]);
+    // @ts-expect-error — a wrongly-branded definition is still rejected
+    mod.addShipOfSizeLimits([mod.defineBuilding({ id: "content_types_b_x", name: "X" })]);
+  });
 });

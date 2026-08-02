@@ -8,11 +8,13 @@ import {
 } from "../src/content.ts";
 import {
   always,
+  and,
   canGoMia,
   canJoinFactions,
   hasAuthority,
   hasPlanetFlag,
   hasSituationFlag,
+  hasTechnology,
   isCapital,
   isScopeValid,
   Mod,
@@ -778,20 +780,22 @@ function defineContentExample(): Mod<"content_test"> {
     leaderAgeMax: 80,
   });
 
-  mod.defineCountryShipOfSizeLimit({
-    // Modeled on the vanilla doa_ascendant_titan_ships_limit entry (real
-    // corpus, 100% field coverage): a branded ship_size ref alongside a raw
-    // vanilla ship_size string, both accepted by shipTypes. `show` carries no
-    // `## replace_scopes` in the rules, so it stays Trigger<ScopeName> —
-    // unlike vanilla's own `has_technology` (country-only), only a genuinely
-    // universal trigger like isScopeValid() type-checks here.
+  // Modeled on the vanilla doa_ascendant_titan_ships_limit entry: a branded
+  // ship_size ref alongside a raw vanilla ship_size string, both accepted by
+  // shipTypes, and a `show` written the way all 7 shipped entries write it —
+  // is_scope_valid plus a country condition. The overlay asserts the country
+  // scope the rules omit; without it this clause would not type-check.
+  const titanLimit = mod.defineCountryShipOfSizeLimit({
     id: "content_test_ship_of_size_limit_titan",
     shipTypes: [shipSize, "ship_size_titan"],
     base: 80,
     max: 1600,
     navalCapFraction: 0.1,
-    show: isScopeValid(),
+    show: and(isScopeValid(), hasTechnology("tech_titans")),
   });
+
+  // Not a define: the ownership limit has no id this mod owns.
+  mod.addShipOfSizeLimits([titanLimit]);
 
   return mod;
 }
@@ -981,6 +985,44 @@ describe("generated content registries", () => {
     const rendered = mod.render().get("common/situations/re_test_situations.txt");
     expect(rendered).toContain(
       "on_monthly = {\n\t\trandom_events = {\n\t\t\t100 = re_test_event.1\n\t\t\t20 = 0\n\t\t}\n\t}"
+    );
+  });
+
+  it("contributes ship-of-size limits under the engine's `default` key", () => {
+    // The ownership limit is not a define: its key belongs to the engine and
+    // the game reads it additively, so the API takes no id and the mod-prefix
+    // rule never applies to it. Repeated calls accumulate; duplicates collapse.
+    const mod = new Mod({ name: "Limit test", prefix: "cl_test", supportedVersion: "4.4.*" });
+    const titan = mod.defineCountryShipOfSizeLimit({
+      id: "cl_test_titan_limit",
+      shipTypes: ["cl_test_titan"],
+      base: 80,
+      show: isScopeValid(),
+    });
+    mod.addShipOfSizeLimits([titan]);
+    mod.addShipOfSizeLimits([titan, "cl_test_other_limit"]);
+    const rendered = mod
+      .render()
+      .get("common/country_limits/ownership_limits/cl_test_ownership_limits.txt");
+    expect(rendered).toBe(
+      "default = {\n\tship_of_size_limits = { cl_test_titan_limit cl_test_other_limit }\n}\n"
+    );
+  });
+
+  it("emits no ownership-limit file when no limits are applied", () => {
+    const mod = new Mod({ name: "Limit test", prefix: "cl_test", supportedVersion: "4.4.*" });
+    mod.defineCountryShipOfSizeLimit({
+      id: "cl_test_unused_limit",
+      shipTypes: ["cl_test_titan"],
+      base: 80,
+      show: isScopeValid(),
+    });
+    const files = mod.render();
+    expect(
+      files.has("common/country_limits/ship_of_size_limits/cl_test_ship_of_size_limits.txt")
+    ).toBe(true);
+    expect(files.has("common/country_limits/ownership_limits/cl_test_ownership_limits.txt")).toBe(
+      false
     );
   });
 

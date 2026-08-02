@@ -180,11 +180,28 @@ function aliasScalarFields(emitter: Emitter, category: string): RuleField[] | nu
   return fields;
 }
 
+/**
+ * The scope a field's closures run in.
+ *
+ * `asserted` is an overlay row's declared scope, which wins over the rules —
+ * see `ContentFieldOverride.scope` for when that is legitimate. A bad scope
+ * name there throws rather than falling back to `ScopeName`: silently widening
+ * would turn a typo into a field that accepts nothing useful, which is the very
+ * failure the row exists to fix.
+ */
 function scopeType(
   emitter: Emitter,
   field: RuleField,
-  inheritedScope: ScopeContext | null
+  inheritedScope: ScopeContext | null,
+  asserted?: string
 ): string {
+  if (asserted !== undefined) {
+    const canonical = emitter.canonicalScope(asserted);
+    if (canonical === null) {
+      throw new Error(`Overlay asserts unknown scope "${asserted}"`);
+    }
+    return JSON.stringify(canonical);
+  }
   const declared = field.scope?.this ?? inheritedScope?.this;
   if (declared === undefined || declared === null) {
     return "ScopeName";
@@ -562,21 +579,21 @@ function lowerOrdinary(
 ): LoweredField | null {
   const requested = override?.shape;
   if (requested === "modifierBlock") {
-    const scope = scopeType(emitter, field, inheritedScope);
+    const scope = scopeType(emitter, field, inheritedScope, override?.scope);
     return {
       memberType: `ModifierClosure<${scope}>`,
       metadata: metadata(field, name, "modifierBlock"),
     };
   }
   if (requested === "weightBlock") {
-    const scope = scopeType(emitter, field, inheritedScope);
+    const scope = scopeType(emitter, field, inheritedScope, override?.scope);
     return {
       memberType: `WeightBlock<${scope}>`,
       metadata: metadata(field, name, "weightBlock"),
     };
   }
   if (requested === "weightBlockWithLoc") {
-    const scope = scopeType(emitter, field, inheritedScope);
+    const scope = scopeType(emitter, field, inheritedScope, override?.scope);
     return {
       memberType: `WeightBlockWithLoc<${scope}>`,
       metadata: metadata(field, name, "weightBlockWithLoc"),
@@ -595,28 +612,28 @@ function lowerOrdinary(
   }
   const category = spliceCategory(field.type);
   if (requested === "trigger" || (requested === undefined && category === "trigger")) {
-    const scope = scopeType(emitter, field, inheritedScope);
+    const scope = scopeType(emitter, field, inheritedScope, override?.scope);
     return {
       memberType: `Trigger<${scope}>`,
       metadata: metadata(field, name, "trigger"),
     };
   }
   if (requested === "effect" || (requested === undefined && category === "effect")) {
-    const scope = scopeType(emitter, field, inheritedScope);
+    const scope = scopeType(emitter, field, inheritedScope, override?.scope);
     return {
       memberType: `EffectBlock<${scope}>`,
       metadata: metadata(field, name, "effect"),
     };
   }
   if (requested === undefined && category === "modifier_rule") {
-    const scope = scopeType(emitter, field, inheritedScope);
+    const scope = scopeType(emitter, field, inheritedScope, override?.scope);
     return {
       memberType: `WeightBlock<${scope}>`,
       metadata: metadata(field, name, "weightBlock"),
     };
   }
   if (requested === undefined && category === "modifier_rule_with_loc") {
-    const scope = scopeType(emitter, field, inheritedScope);
+    const scope = scopeType(emitter, field, inheritedScope, override?.scope);
     return {
       memberType: `WeightBlockWithLoc<${scope}>`,
       metadata: metadata(field, name, "weightBlockWithLoc"),
@@ -635,7 +652,7 @@ function lowerOrdinary(
     }
   }
   if (requested === "economicResources") {
-    const scope = scopeType(emitter, field, inheritedScope);
+    const scope = scopeType(emitter, field, inheritedScope, override?.scope);
     const memberType = `EconomicResourceBlock<${scope}>`;
     return {
       memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
@@ -643,7 +660,7 @@ function lowerOrdinary(
     };
   }
   if (requested === "triggeredModifierBlock") {
-    const scope = scopeType(emitter, field, inheritedScope);
+    const scope = scopeType(emitter, field, inheritedScope, override?.scope);
     const memberType = `TriggeredModifier<${scope}>`;
     return {
       memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
@@ -715,7 +732,8 @@ function lowerDualWeight(
   emitter: Emitter,
   group: readonly RuleField[],
   name: string,
-  inheritedScope: ScopeContext | null
+  inheritedScope: ScopeContext | null,
+  asserted?: string
 ): LoweredField | null {
   const weightArms = group.filter((field) => spliceCategory(field.type) === "modifier_rule");
   const scalarArms = group.filter((field) => field.type.kind !== "block");
@@ -732,7 +750,7 @@ function lowerDualWeight(
   if (value === null) {
     return null;
   }
-  const scope = scopeType(emitter, weightArms[0]!, inheritedScope);
+  const scope = scopeType(emitter, weightArms[0]!, inheritedScope, asserted);
   return {
     memberType: `${value.type} | WeightBlock<${scope}>`,
     metadata: metadata(scalarArms[0]!, name, "valueOrWeightBlock", [
@@ -784,7 +802,7 @@ function pickOrdinary(
   path: string
 ): LoweredField | null {
   if (override?.shape === undefined && group.length > 1) {
-    const dual = lowerDualWeight(emitter, group, name, inheritedScope);
+    const dual = lowerDualWeight(emitter, group, name, inheritedScope, override?.scope);
     if (dual !== null) {
       return dual;
     }

@@ -5,7 +5,6 @@
 import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { ShipSizeRef } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
 
 /**
  * A country_ship_of_size_limit, as the game's rules describe it.
@@ -21,7 +20,7 @@ export interface CountryShipOfSizeLimitFields {
   /** Fraction of current naval capacity of the country */
   navalCapFraction?: number;
   /** Trigger that defines if tooltip for naval capacity icon on the top bar should be shown */
-  show: Trigger<ScopeName>;
+  show: Trigger<"country">;
 }
 
 export interface CountryShipOfSizeLimitDef<
