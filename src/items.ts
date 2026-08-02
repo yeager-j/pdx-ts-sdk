@@ -14,6 +14,7 @@
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { ContentRefUse } from "./content-refs.ts";
 import type { DefinedEvent } from "./events.ts";
 import type { ContentTypeName } from "./generated/content-registry.ts";
 import type { TypedRef } from "./generated/refs.ts";
@@ -61,6 +62,8 @@ export interface EventItemBase {
   /** The full id, e.g. `pp_mod_ascension.2`. Plain data — no deferral. */
   readonly id: string;
   readonly entry: PdxEntry;
+  /** Content references the event's closures wrote, for the build's guard. */
+  readonly refs: readonly ContentRefUse[];
   readonly locEntries: ReadonlyArray<readonly [string, string]>;
 }
 

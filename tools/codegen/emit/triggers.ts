@@ -151,10 +151,20 @@ function emitComparison(fn: string, key: string, scope: string, docs: string[]):
 }
 
 function emitValue(fn: string, key: string, scope: string, docs: string[], value: TsValue): string {
+  const signature =
+    docComment(docs) + `export function ${fn}(value: ${value.type}): Trigger<${scope}> {\n`;
+  if (value.refTypes === undefined) {
+    return (
+      signature + `  return trigger([kv(${JSON.stringify(key)}, ${value.toScalar("value")})]);\n}\n`
+    );
+  }
+  // The id is bound once and both written and recorded, so the emitted entry
+  // and the reference the build checks can never drift apart.
   return (
-    docComment(docs) +
-    `export function ${fn}(value: ${value.type}): Trigger<${scope}> {\n` +
-    `  return trigger([kv(${JSON.stringify(key)}, ${value.toScalar("value")})]);\n}\n`
+    signature +
+    `  const id = ${value.toScalar("value")};\n` +
+    `  return trigger([kv(${JSON.stringify(key)}, id)], ` +
+    `[{ targets: ${JSON.stringify(value.refTypes)}, id, field: ${JSON.stringify(key)} }]);\n}\n`
   );
 }
 
@@ -168,7 +178,8 @@ function emitWrapper(
   return (
     docComment(docs) +
     `export function ${fn}(condition: Trigger<${JSON.stringify(inner)}>): Trigger<${scope}> {\n` +
-    `  return trigger([block(${JSON.stringify(key)}, [...condition.entries])]);\n}\n`
+    `  return trigger([block(${JSON.stringify(key)}, [...condition.entries])], ` +
+    `[...condition.refs]);\n}\n`
   );
 }
 
@@ -186,15 +197,40 @@ function memberType(field: ArgField, outerScope: string): string {
   }
 }
 
-function pushCode(field: ArgField, access: string): string {
+/** Whether this field can put a content reference into the emitted tree: a
+ * whole-reference scalar directly, a nested condition through its own refs. */
+function contributesRefs(field: ArgField): boolean {
+  if (field.value.kind === "clause") {
+    return true;
+  }
+  return field.value.kind === "scalar" && field.value.value.refTypes !== undefined;
+}
+
+function pushCode(field: ArgField, access: string, owner: string, index: number): string {
   const key = JSON.stringify(field.name);
   switch (field.value.kind) {
-    case "scalar":
-      return `entries.push(kv(${key}, ${field.value.value.toScalar(access)}));`;
+    case "scalar": {
+      const { refTypes } = field.value.value;
+      if (refTypes === undefined) {
+        return `entries.push(kv(${key}, ${field.value.value.toScalar(access)}));`;
+      }
+      // Indexed rather than named after the field, so the local can never
+      // collide with `args`, `entries`, `refs`, or a sibling field's name.
+      const local = `id${index}`;
+      const field_ = JSON.stringify(`${owner}.${field.name}`);
+      return (
+        `const ${local} = ${field.value.value.toScalar(access)};\n` +
+        `    entries.push(kv(${key}, ${local}));\n` +
+        `    refs.push({ targets: ${JSON.stringify(refTypes)}, id: ${local}, field: ${field_} });`
+      );
+    }
     case "clause":
-      return field.value.splice
-        ? `entries.push(...${access}.entries);`
-        : `entries.push(block(${key}, [...${access}.entries]));`;
+      return (
+        (field.value.splice
+          ? `entries.push(...${access}.entries);\n`
+          : `entries.push(block(${key}, [...${access}.entries]));\n`) +
+        `    refs.push(...${access}.refs);`
+      );
     case "comparison":
       return (
         `entries.push(typeof ${access} === "object" ` +
@@ -219,18 +255,21 @@ function emitFields(
     )
     .join("");
   const pushes = fields
-    .map((field) => {
+    .map((field, index) => {
       const access = `args.${camelCase(field.name)}`;
-      const push = `    ${pushCode(field, access)}\n`;
+      const push = `    ${pushCode(field, access, key, index)}\n`;
       return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
     })
     .join("");
+  const withRefs = fields.some(contributesRefs);
   return (
     `export interface ${name} {\n${members}}\n\n` +
     docComment(docs) +
     `export function ${fn}(args: ${name}): Trigger<${scope}> {\n` +
-    `  const entries: PdxEntry[] = [];\n${pushes}` +
-    `  return trigger([block(${JSON.stringify(key)}, entries)]);\n}\n`
+    `  const entries: PdxEntry[] = [];\n` +
+    (withRefs ? `  const refs: ContentRefUse[] = [];\n` : "") +
+    pushes +
+    `  return trigger([block(${JSON.stringify(key)}, entries)]${withRefs ? ", refs" : ""});\n}\n`
   );
 }
 

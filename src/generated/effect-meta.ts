@@ -10,11 +10,18 @@ export interface EffectFieldMeta {
   readonly prop: string;
   readonly key: string;
   readonly kind: EffectFieldKind;
+  /**
+   * The registries an id in this field may name, when every form the
+   * field admits is a `<type>` reference. Undefined the moment one arm is
+   * not — an id-shaped value would then prove nothing about any registry.
+   * `buildMod` resolves what the recorder reports against the built ids.
+   */
+  readonly refTypes?: readonly string[];
 }
 
 export type EffectShapeMeta =
   | { readonly kind: "bool" }
-  | { readonly kind: "value" }
+  | { readonly kind: "value"; readonly refTypes?: readonly string[] }
   | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }
   | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null };
 
@@ -35,14 +42,20 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["special_project"] },
         { prop: "location", key: "location", kind: "value" },
       ],
     },
   },
-  acceptCovenant: { key: "accept_covenant", shape: { kind: "value" } },
-  activateCrisisProgression: { key: "activate_crisis_progression", shape: { kind: "value" } },
-  activateFogMachine: { key: "activate_fog_machine", shape: { kind: "value" } },
+  acceptCovenant: { key: "accept_covenant", shape: { kind: "value", refTypes: ["patron_type"] } },
+  activateCrisisProgression: {
+    key: "activate_crisis_progression",
+    shape: { kind: "value", refTypes: ["crisis_path"] },
+  },
+  activateFogMachine: {
+    key: "activate_fog_machine",
+    shape: { kind: "value", refTypes: ["dust_clouds"] },
+  },
   activateGateway: { key: "activate_gateway", shape: { kind: "value" } },
   activateSavedLeader: {
     key: "activate_saved_leader",
@@ -61,12 +74,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value" },
+        { prop: "category", key: "category", kind: "value", refTypes: ["anomaly_category"] },
         { prop: "target", key: "target", kind: "value" },
       ],
     },
   },
-  addAscensionPerk: { key: "add_ascension_perk", shape: { kind: "value" } },
+  addAscensionPerk: {
+    key: "add_ascension_perk",
+    shape: { kind: "value", refTypes: ["ascension_perk"] },
+  },
   addAssociateMember: {
     key: "add_associate_member",
     shape: {
@@ -83,7 +99,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "radius", key: "radius", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["asteroid_belt_type"] },
       ],
     },
   },
@@ -94,18 +110,18 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["deposit.blocker"] },
         { prop: "blockedDeposit", key: "blocked_deposit", kind: "value" },
       ],
     },
   },
-  addBuilding: { key: "add_building", shape: { kind: "value" } },
+  addBuilding: { key: "add_building", shape: { kind: "value", refTypes: ["building"] } },
   addCasusBelli: {
     key: "add_casus_belli",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["casus_belli"] },
         { prop: "who", key: "who", kind: "value" },
         { prop: "days", key: "days", kind: "value" },
       ],
@@ -131,16 +147,19 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   addCustodianTermDays: { key: "add_custodian_term_days", shape: { kind: "value" } },
   addDeposit: { key: "add_deposit", shape: { kind: "value" } },
-  addDepositCategoryEffect: { key: "add_deposit_category_effect", shape: { kind: "value" } },
-  addDistrict: { key: "add_district", shape: { kind: "value" } },
-  addEdict: { key: "add_edict", shape: { kind: "value" } },
+  addDepositCategoryEffect: {
+    key: "add_deposit_category_effect",
+    shape: { kind: "value", refTypes: ["deposit_category"] },
+  },
+  addDistrict: { key: "add_district", shape: { kind: "value", refTypes: ["district"] } },
+  addEdict: { key: "add_edict", shape: { kind: "value", refTypes: ["edict"] } },
   addEspionageInformation: { key: "add_espionage_information", shape: { kind: "value" } },
   addEventChainCounter: {
     key: "add_event_chain_counter",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "eventChain", key: "event_chain", kind: "value" },
+        { prop: "eventChain", key: "event_chain", kind: "value", refTypes: ["event_chain"] },
         { prop: "counter", key: "counter", kind: "value" },
         { prop: "amount", key: "amount", kind: "value" },
       ],
@@ -173,19 +192,27 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value" },
+        { prop: "category", key: "category", kind: "value", refTypes: ["country_card_categories"] },
         { prop: "amount", key: "amount", kind: "value" },
       ],
     },
   },
-  addGlobalShipDesign: { key: "add_global_ship_design", shape: { kind: "value" } },
+  addGlobalShipDesign: {
+    key: "add_global_ship_design",
+    shape: { kind: "value", refTypes: ["global_ship_design"] },
+  },
   addGrowth: { key: "add_growth", shape: { kind: "value" } },
   addHolding: {
     key: "add_holding",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "holding", key: "holding", kind: "value" },
+        {
+          prop: "holding",
+          key: "holding",
+          kind: "value",
+          refTypes: ["building.corporate", "building.holding"],
+        },
         { prop: "owner", key: "owner", kind: "value" },
       ],
     },
@@ -216,7 +243,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value" },
+        { prop: "category", key: "category", kind: "value", refTypes: ["intel_category"] },
         { prop: "level", key: "level", kind: "value" },
         { prop: "days", key: "days", kind: "value" },
         { prop: "who", key: "who", kind: "value" },
@@ -229,7 +256,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "mission", key: "mission", kind: "value" },
+        { prop: "mission", key: "mission", kind: "value", refTypes: ["mission"] },
         { prop: "counter", key: "counter", kind: "value" },
         { prop: "amount", key: "amount", kind: "value" },
       ],
@@ -241,7 +268,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "modifier", key: "modifier", kind: "value" },
+        { prop: "modifier", key: "modifier", kind: "value", refTypes: ["static_modifier"] },
         { prop: "days", key: "days", kind: "value" },
         { prop: "months", key: "months", kind: "value" },
         { prop: "years", key: "years", kind: "value" },
@@ -257,7 +284,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value" },
+        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
         { prop: "value", key: "value", kind: "value" },
         { prop: "min", key: "min", kind: "value" },
         { prop: "max", key: "max", kind: "value" },
@@ -265,14 +292,17 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  addNotificationModifier: { key: "add_notification_modifier", shape: { kind: "value" } },
+  addNotificationModifier: {
+    key: "add_notification_modifier",
+    shape: { kind: "value", refTypes: ["notification_modifier"] },
+  },
   addOpinionModifier: {
     key: "add_opinion_modifier",
     shape: {
       kind: "fields",
       fields: [
         { prop: "who", key: "who", kind: "value" },
-        { prop: "modifier", key: "modifier", kind: "value" },
+        { prop: "modifier", key: "modifier", kind: "value", refTypes: ["opinion_modifier"] },
       ],
     },
   },
@@ -296,9 +326,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value" },
+        { prop: "category", key: "category", kind: "value", refTypes: ["technology_category"] },
         { prop: "area", key: "area", kind: "value" },
-        { prop: "tier", key: "tier", kind: "value" },
+        { prop: "tier", key: "tier", kind: "value", refTypes: ["technology_tier"] },
         { prop: "addProgress", key: "add_progress", kind: "value" },
         { prop: "failEffects", key: "fail_effects", kind: "effect" },
         { prop: "ignorePrereqs", key: "ignore_prereqs", kind: "value" },
@@ -308,10 +338,16 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  addRelic: { key: "add_relic", shape: { kind: "value" } },
-  addResearchOption: { key: "add_research_option", shape: { kind: "value" } },
+  addRelic: { key: "add_relic", shape: { kind: "value", refTypes: ["relic"] } },
+  addResearchOption: {
+    key: "add_research_option",
+    shape: { kind: "value", refTypes: ["technology"] },
+  },
   addSeenBypass: { key: "add_seen_bypass", shape: { kind: "value" } },
-  addSeenBypassType: { key: "add_seen_bypass_type", shape: { kind: "value" } },
+  addSeenBypassType: {
+    key: "add_seen_bypass_type",
+    shape: { kind: "value", refTypes: ["bypass"] },
+  },
   addShipDesign: { key: "add_ship_design", shape: { kind: "value" } },
   addSituationProgress: { key: "add_situation_progress", shape: { kind: "value" } },
   addSkill: { key: "add_skill", shape: { kind: "value" } },
@@ -326,7 +362,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "modifier", key: "modifier", kind: "value" },
+        { prop: "modifier", key: "modifier", kind: "value", refTypes: ["static_modifier"] },
         { prop: "days", key: "days", kind: "value" },
         { prop: "months", key: "months", kind: "value" },
         { prop: "years", key: "years", kind: "value" },
@@ -336,7 +372,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   addStarbaseComponent: {
     key: "add_starbase_component",
-    shape: { kind: "fields", fields: [{ prop: "component", key: "component", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "component", key: "component", kind: "value", refTypes: ["component_template"] },
+      ],
+    },
   },
   addStaticWarExhaustion: {
     key: "add_static_war_exhaustion",
@@ -354,7 +395,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "tech", key: "tech", kind: "value" },
+        { prop: "tech", key: "tech", kind: "value", refTypes: ["technology"] },
         { prop: "progress", key: "progress", kind: "value" },
       ],
     },
@@ -379,7 +420,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "trait", key: "trait", kind: "value" },
+        { prop: "trait", key: "trait", kind: "value", refTypes: ["trait"] },
         { prop: "days", key: "days", kind: "value" },
         { prop: "months", key: "months", kind: "value" },
         { prop: "years", key: "years", kind: "value" },
@@ -403,7 +444,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  addTradition: { key: "add_tradition", shape: { kind: "value" } },
+  addTradition: { key: "add_tradition", shape: { kind: "value", refTypes: ["tradition"] } },
   addTrait: { key: "add_trait", shape: { kind: "value" } },
   addTrust: {
     key: "add_trust",
@@ -441,7 +482,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "district", key: "district", kind: "value" },
-        { prop: "zone", key: "zone", kind: "value" },
+        { prop: "zone", key: "zone", kind: "value", refTypes: ["zone"] },
         { prop: "zoneSlot", key: "zone_slot", kind: "value" },
         { prop: "replace", key: "replace", kind: "value" },
       ],
@@ -465,7 +506,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   archaeologicalSite: { key: "archaeological_site", shape: { kind: "wrapper", fields: null } },
   armyLeader: { key: "army_leader", shape: { kind: "wrapper", fields: null } },
   assemblingSpecies: { key: "assembling_species", shape: { kind: "wrapper", fields: null } },
-  assignEspionageAsset: { key: "assign_espionage_asset", shape: { kind: "value" } },
+  assignEspionageAsset: {
+    key: "assign_espionage_asset",
+    shape: { kind: "value", refTypes: ["espionage_asset"] },
+  },
   assignLeader: { key: "assign_leader", shape: { kind: "value" } },
   associatedFederation: { key: "associated_federation", shape: { kind: "wrapper", fields: null } },
   astralRift: { key: "astral_rift", shape: { kind: "wrapper", fields: null } },
@@ -480,7 +524,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "target", key: "target", kind: "value" },
         { prop: "clearAutoMoveOnArrival", key: "clear_auto_move_on_arrival", kind: "value" },
         { prop: "destroyOnArrival", key: "destroy_on_arrival", kind: "value" },
-        { prop: "arrivalEffect", key: "arrival_effect", kind: "value" },
+        {
+          prop: "arrivalEffect",
+          key: "arrival_effect",
+          kind: "value",
+          refTypes: ["scripted_effect"],
+        },
       ],
     },
   },
@@ -490,7 +539,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "eventChain", key: "event_chain", kind: "value" },
+        { prop: "eventChain", key: "event_chain", kind: "value", refTypes: ["event_chain"] },
         { prop: "target", key: "target", kind: "value" },
       ],
     },
@@ -509,14 +558,23 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  cancelResolution: { key: "cancel_resolution", shape: { kind: "value" } },
+  cancelResolution: {
+    key: "cancel_resolution",
+    shape: { kind: "value", refTypes: ["resolution"] },
+  },
   cancelTerraformation: { key: "cancel_terraformation", shape: { kind: "bool" } },
   capitalScope: { key: "capital_scope", shape: { kind: "wrapper", fields: null } },
   capitalStar: { key: "capital_star", shape: { kind: "wrapper", fields: null } },
   carrier: { key: "carrier", shape: { kind: "wrapper", fields: null } },
   ceilingVariable: { key: "ceiling_variable", shape: { kind: "value" } },
-  changeBackgroundEthic: { key: "change_background_ethic", shape: { kind: "value" } },
-  changeBackgroundJob: { key: "change_background_job", shape: { kind: "value" } },
+  changeBackgroundEthic: {
+    key: "change_background_ethic",
+    shape: { kind: "value", refTypes: ["ethic"] },
+  },
+  changeBackgroundJob: {
+    key: "change_background_job",
+    shape: { kind: "value", refTypes: ["job"] },
+  },
   changeColonyFoundationDate: { key: "change_colony_foundation_date", shape: { kind: "value" } },
   changeCountryFlag: { key: "change_country_flag", shape: { kind: "value" } },
   changeDominantSpecies: {
@@ -530,7 +588,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   changeGovernment: { key: "change_government", shape: { kind: "value" } },
-  changeLeaderClass: { key: "change_leader_class", shape: { kind: "value" } },
+  changeLeaderClass: {
+    key: "change_leader_class",
+    shape: { kind: "value", refTypes: ["leader_class"] },
+  },
   changeLeaderPortrait: { key: "change_leader_portrait", shape: { kind: "value" } },
   changePc: { key: "change_pc", shape: { kind: "value" } },
   changePlanetSize: { key: "change_planet_size", shape: { kind: "value" } },
@@ -545,9 +606,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "immortal", key: "immortal", kind: "value" },
         { prop: "canBeModified", key: "can_be_modified", kind: "value" },
         { prop: "portrait", key: "portrait", kind: "value" },
-        { prop: "addTrait", key: "add_trait", kind: "value" },
+        { prop: "addTrait", key: "add_trait", kind: "value", refTypes: ["trait.species_trait"] },
         { prop: "addTraitsAtStartOfList", key: "add_traits_at_start_of_list", kind: "value" },
-        { prop: "removeTrait", key: "remove_trait", kind: "value" },
+        {
+          prop: "removeTrait",
+          key: "remove_trait",
+          kind: "value",
+          refTypes: ["trait.species_trait"],
+        },
         { prop: "gender", key: "gender", kind: "value" },
         { prop: "canChangeLeader", key: "can_change_leader", kind: "value" },
       ],
@@ -570,7 +636,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "target", key: "target", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["casus_belli"] },
       ],
     },
   },
@@ -591,7 +657,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value" },
+        { prop: "category", key: "category", kind: "value", refTypes: ["intel_category"] },
         { prop: "who", key: "who", kind: "value" },
       ],
     },
@@ -616,14 +682,17 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   colony: { key: "colony", shape: { kind: "wrapper", fields: null } },
-  completeCrisisObjective: { key: "complete_crisis_objective", shape: { kind: "value" } },
-  completeDeed: { key: "complete_deed", shape: { kind: "value" } },
+  completeCrisisObjective: {
+    key: "complete_crisis_objective",
+    shape: { kind: "value", refTypes: ["crisis_objective"] },
+  },
+  completeDeed: { key: "complete_deed", shape: { kind: "value", refTypes: ["deed"] } },
   completeSpecialProject: {
     key: "complete_special_project",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["special_project"] },
         { prop: "location", key: "location", kind: "value" },
       ],
     },
@@ -641,7 +710,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "who", key: "who", kind: "value" },
-        { prop: "category", key: "category", kind: "value" },
+        { prop: "category", key: "category", kind: "value", refTypes: ["technology_category"] },
         { prop: "area", key: "area", kind: "value" },
         { prop: "progress", key: "progress", kind: "value" },
       ],
@@ -652,15 +721,23 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "country_list_tooltip",
     shape: { kind: "fields", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
   },
-  countryRemoveEthic: { key: "country_remove_ethic", shape: { kind: "value" } },
+  countryRemoveEthic: {
+    key: "country_remove_ethic",
+    shape: { kind: "value", refTypes: ["ethic"] },
+  },
   createArchaeologicalSite: { key: "create_archaeological_site", shape: { kind: "value" } },
   createArmyTransport: {
     key: "create_army_transport",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "graphicalCulture", key: "graphical_culture", kind: "value" },
-        { prop: "armyType", key: "army_type", kind: "value" },
+        {
+          prop: "graphicalCulture",
+          key: "graphical_culture",
+          kind: "value",
+          refTypes: ["graphical_culture"],
+        },
+        { prop: "armyType", key: "army_type", kind: "value", refTypes: ["army"] },
         { prop: "shipName", key: "ship_name", kind: "value" },
         { prop: "armyName", key: "army_name", kind: "value" },
         { prop: "species", key: "species", kind: "value" },
@@ -674,7 +751,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "owner", key: "owner", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["bypass"] },
         { prop: "effect", key: "effect", kind: "effect" },
       ],
     },
@@ -700,7 +777,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "stormMinRadius", key: "storm_min_radius", kind: "value" },
         { prop: "stormMaxRadius", key: "storm_max_radius", kind: "value" },
         { prop: "stormMaxRange", key: "storm_max_range", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["storm_types"] },
         { prop: "immediate", key: "immediate", kind: "value" },
         { prop: "cosmicStormStartPosition", key: "cosmic_storm_start_position", kind: "value" },
       ],
@@ -722,7 +799,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["espionage_asset"] },
         { prop: "effect", key: "effect", kind: "effect" },
       ],
     },
@@ -769,10 +846,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "id", key: "id", kind: "value" },
         { prop: "name", key: "name", kind: "value" },
         { prop: "desc", key: "desc", kind: "value" },
-        { prop: "eventChain", key: "event_chain", kind: "value" },
+        { prop: "eventChain", key: "event_chain", kind: "value", refTypes: ["event_chain"] },
         { prop: "location", key: "location", kind: "value" },
         { prop: "category", key: "category", kind: "value" },
-        { prop: "picture", key: "picture", kind: "value" },
+        { prop: "picture", key: "picture", kind: "value", refTypes: ["sprite"] },
       ],
     },
   },
@@ -807,10 +884,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "owner", key: "owner", kind: "value" },
-        { prop: "size", key: "size", kind: "value" },
-        { prop: "design", key: "design", kind: "value" },
-        { prop: "module", key: "module", kind: "value" },
-        { prop: "building", key: "building", kind: "value" },
+        { prop: "size", key: "size", kind: "value", refTypes: ["ship_size.starbase"] },
+        { prop: "design", key: "design", kind: "value", refTypes: ["global_ship_design"] },
+        { prop: "module", key: "module", kind: "value", refTypes: ["starbase_module"] },
+        { prop: "building", key: "building", kind: "value", refTypes: ["starbase_building"] },
         { prop: "effect", key: "effect", kind: "effect" },
       ],
     },
@@ -852,7 +929,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: { kind: "fields", fields: [{ prop: "center", key: "center", kind: "value" }] },
   },
   destroyCountry: { key: "destroy_country", shape: { kind: "bool" } },
-  destroyEspionageAsset: { key: "destroy_espionage_asset", shape: { kind: "value" } },
+  destroyEspionageAsset: {
+    key: "destroy_espionage_asset",
+    shape: { kind: "value", refTypes: ["espionage_asset"] },
+  },
   destroyEspionageOperation: { key: "destroy_espionage_operation", shape: { kind: "value" } },
   destroyFleet: { key: "destroy_fleet", shape: { kind: "value" } },
   destroyFleetNavalCap: {
@@ -869,7 +949,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   destroyPsionicAura: { key: "destroy_psionic_aura", shape: { kind: "bool" } },
   destroyShip: { key: "destroy_ship", shape: { kind: "value" } },
   destroySituation: { key: "destroy_situation", shape: { kind: "value" } },
-  disableBuilding: { key: "disable_building", shape: { kind: "value" } },
+  disableBuilding: { key: "disable_building", shape: { kind: "value", refTypes: ["building"] } },
   dismantle: { key: "dismantle", shape: { kind: "bool" } },
   displacePopAmount: {
     key: "displace_pop_amount",
@@ -894,7 +974,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   downgradeAllBuildings: { key: "downgrade_all_buildings", shape: { kind: "bool" } },
-  downgradeBuildingsOfType: { key: "downgrade_buildings_of_type", shape: { kind: "value" } },
+  downgradeBuildingsOfType: {
+    key: "downgrade_buildings_of_type",
+    shape: { kind: "value", refTypes: ["building"] },
+  },
   effectOnBlob: {
     key: "effect_on_blob",
     shape: {
@@ -907,26 +990,29 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  enableFactionOfType: { key: "enable_faction_of_type", shape: { kind: "value" } },
+  enableFactionOfType: {
+    key: "enable_faction_of_type",
+    shape: { kind: "value", refTypes: ["pop_faction"] },
+  },
   enableGalacticMarket: { key: "enable_galactic_market", shape: { kind: "bool" } },
   enableMission: {
     key: "enable_mission",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "name", key: "name", kind: "value" },
+        { prop: "name", key: "name", kind: "value", refTypes: ["mission"] },
         { prop: "location", key: "location", kind: "value" },
       ],
     },
   },
-  enableOnMarket: { key: "enable_on_market", shape: { kind: "value" } },
+  enableOnMarket: { key: "enable_on_market", shape: { kind: "value", refTypes: ["resource"] } },
   enablePatronFirstContactProject: {
     key: "enable_patron_first_contact_project",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "name", key: "name", kind: "value" },
-        { prop: "patron", key: "patron", kind: "value" },
+        { prop: "name", key: "name", kind: "value", refTypes: ["special_project"] },
+        { prop: "patron", key: "patron", kind: "value", refTypes: ["patron_type"] },
         { prop: "owner", key: "owner", kind: "value" },
         { prop: "location", key: "location", kind: "value" },
       ],
@@ -937,14 +1023,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "name", key: "name", kind: "value" },
+        { prop: "name", key: "name", kind: "value", refTypes: ["special_project"] },
         { prop: "owner", key: "owner", kind: "value" },
         { prop: "location", key: "location", kind: "value" },
       ],
     },
   },
   endAllTreatiesWith: { key: "end_all_treaties_with", shape: { kind: "value" } },
-  endEventChain: { key: "end_event_chain", shape: { kind: "value" } },
+  endEventChain: { key: "end_event_chain", shape: { kind: "value", refTypes: ["event_chain"] } },
   endFleetContract: { key: "end_fleet_contract", shape: { kind: "bool" } },
   endgameTelemetry: { key: "endgame_telemetry", shape: { kind: "value" } },
   endRivalry: { key: "end_rivalry", shape: { kind: "value" } },
@@ -1376,14 +1462,22 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   excavatorFleet: { key: "excavator_fleet", shape: { kind: "wrapper", fields: null } },
   exileLeaderAs: { key: "exile_leader_as", shape: { kind: "value" } },
-  expireSiteEvent: { key: "expire_site_event", shape: { kind: "value" } },
+  expireSiteEvent: {
+    key: "expire_site_event",
+    shape: { kind: "value", refTypes: ["event.fleet"] },
+  },
   explorer: { key: "explorer", shape: { kind: "wrapper", fields: null } },
   exportModifierDurationToVariable: {
     key: "export_modifier_duration_to_variable",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "modifier", key: "modifier", kind: "value" },
+        {
+          prop: "modifier",
+          key: "modifier",
+          kind: "value",
+          refTypes: ["modifier", "static_modifier"],
+        },
         { prop: "variable", key: "variable", kind: "value" },
       ],
     },
@@ -1403,7 +1497,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value" },
+        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
         { prop: "variable", key: "variable", kind: "value" },
       ],
     },
@@ -1413,7 +1507,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value" },
+        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
         { prop: "variable", key: "variable", kind: "value" },
       ],
     },
@@ -1423,7 +1517,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value" },
+        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
         { prop: "variable", key: "variable", kind: "value" },
       ],
     },
@@ -1459,13 +1553,21 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "specialProject", key: "special_project", kind: "value" },
+        {
+          prop: "specialProject",
+          key: "special_project",
+          kind: "value",
+          refTypes: ["special_project"],
+        },
         { prop: "target", key: "target", kind: "value" },
       ],
     },
   },
   floorVariable: { key: "floor_variable", shape: { kind: "value" } },
-  forceAddCivic: { key: "force_add_civic", shape: { kind: "value" } },
+  forceAddCivic: {
+    key: "force_add_civic",
+    shape: { kind: "value", refTypes: ["civic_or_origin.civic"] },
+  },
   forceFactionEvaluation: { key: "force_faction_evaluation", shape: { kind: "bool" } },
   forceRemoveCivic: { key: "force_remove_civic", shape: { kind: "value" } },
   forceRemoveCivicByIndex: { key: "force_remove_civic_by_index", shape: { kind: "value" } },
@@ -1505,7 +1607,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "shipCategory", key: "ship_category", kind: "value" },
+        {
+          prop: "shipCategory",
+          key: "ship_category",
+          kind: "value",
+          refTypes: ["ship_categories"],
+        },
         { prop: "rarity", key: "rarity", kind: "value" },
       ],
     },
@@ -1525,7 +1632,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "tech", key: "tech", kind: "value" },
+        { prop: "tech", key: "tech", kind: "value", refTypes: ["technology"] },
         { prop: "message", key: "message", kind: "value" },
       ],
     },
@@ -1543,7 +1650,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "contract", key: "contract", kind: "value" },
+        { prop: "contract", key: "contract", kind: "value", refTypes: ["mission"] },
         { prop: "location", key: "location", kind: "value" },
         { prop: "target", key: "target", kind: "value" },
       ],
@@ -1669,9 +1776,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "species", key: "species", kind: "value" },
         { prop: "base", key: "base", kind: "value" },
-        { prop: "addTrait", key: "add_trait", kind: "value" },
+        { prop: "addTrait", key: "add_trait", kind: "value", refTypes: ["trait"] },
         { prop: "addTraitsAtStartOfList", key: "add_traits_at_start_of_list", kind: "value" },
-        { prop: "removeTrait", key: "remove_trait", kind: "value" },
+        { prop: "removeTrait", key: "remove_trait", kind: "value", refTypes: ["trait"] },
         { prop: "idealPlanetClass", key: "ideal_planet_class", kind: "value" },
         { prop: "changeScopedSpecies", key: "change_scoped_species", kind: "value" },
         { prop: "portrait", key: "portrait", kind: "value" },
@@ -2969,14 +3076,17 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "pass_debris_ownership",
     shape: { kind: "fields", fields: [{ prop: "owner", key: "owner", kind: "value" }] },
   },
-  passResolution: { key: "pass_resolution", shape: { kind: "value" } },
-  passResolutionNoCooldown: { key: "pass_resolution_no_cooldown", shape: { kind: "value" } },
+  passResolution: { key: "pass_resolution", shape: { kind: "value", refTypes: ["resolution"] } },
+  passResolutionNoCooldown: {
+    key: "pass_resolution_no_cooldown",
+    shape: { kind: "value", refTypes: ["resolution"] },
+  },
   passTargetedResolution: {
     key: "pass_targeted_resolution",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resolution", key: "resolution", kind: "value" },
+        { prop: "resolution", key: "resolution", kind: "value", refTypes: ["resolution"] },
         { prop: "target", key: "target", kind: "value" },
       ],
     },
@@ -2987,13 +3097,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   planet: { key: "planet", shape: { kind: "wrapper", fields: null } },
   planetOwner: { key: "planet_owner", shape: { kind: "wrapper", fields: null } },
-  playSound: { key: "play_sound", shape: { kind: "value" } },
+  playSound: { key: "play_sound", shape: { kind: "value", refTypes: ["sound_effect"] } },
   popChangeEthic: {
     key: "pop_change_ethic",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "ethic", key: "ethic", kind: "value" },
+        { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"] },
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
@@ -3006,7 +3116,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "ethic", key: "ethic", kind: "value" },
+        { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"] },
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
@@ -3019,7 +3129,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "ethic", key: "ethic", kind: "value" },
+        { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"] },
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
@@ -3037,7 +3147,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resolution", key: "resolution", kind: "value" },
+        { prop: "resolution", key: "resolution", kind: "value", refTypes: ["resolution"] },
         { prop: "target", key: "target", kind: "value" },
       ],
     },
@@ -4084,7 +4194,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   refreshPortraits: { key: "refresh_portraits", shape: { kind: "value" } },
   refreshPsionicAuraType: { key: "refresh_psionic_aura_type", shape: { kind: "bool" } },
   refreshSpeciesRights: { key: "refresh_species_rights", shape: { kind: "bool" } },
-  refuseCovenant: { key: "refuse_covenant", shape: { kind: "value" } },
+  refuseCovenant: { key: "refuse_covenant", shape: { kind: "value", refTypes: ["patron_type"] } },
   releaseVivariumFauna: {
     key: "release_vivarium_fauna",
     shape: {
@@ -4108,7 +4218,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   removeArchaeologyFlag: { key: "remove_archaeology_flag", shape: { kind: "value" } },
   removeArmy: { key: "remove_army", shape: { kind: "bool" } },
   removeArmyFlag: { key: "remove_army_flag", shape: { kind: "value" } },
-  removeAscensionPerk: { key: "remove_ascension_perk", shape: { kind: "value" } },
+  removeAscensionPerk: {
+    key: "remove_ascension_perk",
+    shape: { kind: "value", refTypes: ["ascension_perk"] },
+  },
   removeAssociateMember: {
     key: "remove_associate_member",
     shape: {
@@ -4121,7 +4234,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   removeAstralRiftFlag: { key: "remove_astral_rift_flag", shape: { kind: "value" } },
   removeAutoMoveTarget: { key: "remove_auto_move_target", shape: { kind: "bool" } },
-  removeBuilding: { key: "remove_building", shape: { kind: "value" } },
+  removeBuilding: { key: "remove_building", shape: { kind: "value", refTypes: ["building"] } },
   removeCarrierFlag: { key: "remove_carrier_flag", shape: { kind: "value" } },
   removeClaims: {
     key: "remove_claims",
@@ -4138,7 +4251,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   removeDeposit: { key: "remove_deposit", shape: { kind: "value" } },
   removeDepositFlag: { key: "remove_deposit_flag", shape: { kind: "value" } },
   removeDesignFlag: { key: "remove_design_flag", shape: { kind: "value" } },
-  removeDistrict: { key: "remove_district", shape: { kind: "value" } },
+  removeDistrict: { key: "remove_district", shape: { kind: "value", refTypes: ["district"] } },
   removeEnvoysTo: { key: "remove_envoys_to", shape: { kind: "value" } },
   removeEspionageAssetFlag: { key: "remove_espionage_asset_flag", shape: { kind: "value" } },
   removeEspionageOperationFlag: {
@@ -4163,13 +4276,21 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   removeFromGalacticCommunity: { key: "remove_from_galactic_community", shape: { kind: "bool" } },
   removeFromGalacticCouncil: { key: "remove_from_galactic_council", shape: { kind: "bool" } },
   removeGlobalFlag: { key: "remove_global_flag", shape: { kind: "value" } },
-  removeGlobalShipDesign: { key: "remove_global_ship_design", shape: { kind: "value" } },
+  removeGlobalShipDesign: {
+    key: "remove_global_ship_design",
+    shape: { kind: "value", refTypes: ["global_ship_design"] },
+  },
   removeHolding: {
     key: "remove_holding",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "holding", key: "holding", kind: "value" },
+        {
+          prop: "holding",
+          key: "holding",
+          kind: "value",
+          refTypes: ["building.corporate", "building.holding"],
+        },
         { prop: "owner", key: "owner", kind: "value" },
       ],
     },
@@ -4188,19 +4309,25 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   removeMegastructure: { key: "remove_megastructure", shape: { kind: "value" } },
   removeMegastructureFlag: { key: "remove_megastructure_flag", shape: { kind: "value" } },
   removeMissionFlag: { key: "remove_mission_flag", shape: { kind: "value" } },
-  removeModifier: { key: "remove_modifier", shape: { kind: "value" } },
-  removeNotificationModifier: { key: "remove_notification_modifier", shape: { kind: "value" } },
+  removeModifier: {
+    key: "remove_modifier",
+    shape: { kind: "value", refTypes: ["static_modifier"] },
+  },
+  removeNotificationModifier: {
+    key: "remove_notification_modifier",
+    shape: { kind: "value", refTypes: ["notification_modifier"] },
+  },
   removeOpinionModifier: {
     key: "remove_opinion_modifier",
     shape: {
       kind: "fields",
       fields: [
         { prop: "who", key: "who", kind: "value" },
-        { prop: "modifier", key: "modifier", kind: "value" },
+        { prop: "modifier", key: "modifier", kind: "value", refTypes: ["opinion_modifier"] },
       ],
     },
   },
-  removePatron: { key: "remove_patron", shape: { kind: "value" } },
+  removePatron: { key: "remove_patron", shape: { kind: "value", refTypes: ["patron_type"] } },
   removePermanentCouncillor: { key: "remove_permanent_councillor", shape: { kind: "bool" } },
   removePlanet: { key: "remove_planet", shape: { kind: "bool" } },
   removePlanetFlag: { key: "remove_planet_flag", shape: { kind: "value" } },
@@ -4215,7 +4342,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["starbase_building"] },
         { prop: "count", key: "count", kind: "value" },
       ],
     },
@@ -4225,7 +4352,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["starbase_module"] },
         { prop: "count", key: "count", kind: "value" },
       ],
     },
@@ -4240,7 +4367,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  removeRelic: { key: "remove_relic", shape: { kind: "value" } },
+  removeRelic: { key: "remove_relic", shape: { kind: "value", refTypes: ["relic"] } },
   removeSavedLeader: { key: "remove_saved_leader", shape: { kind: "value" } },
   removeSecretFealty: { key: "remove_secret_fealty", shape: { kind: "value" } },
   removeSectorFlag: { key: "remove_sector_flag", shape: { kind: "value" } },
@@ -4250,7 +4377,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   removeSpeciesFlag: { key: "remove_species_flag", shape: { kind: "value" } },
   removeSpecimen: { key: "remove_specimen", shape: { kind: "value" } },
   removeSpynetworkFlag: { key: "remove_spynetwork_flag", shape: { kind: "value" } },
-  removeStageModifier: { key: "remove_stage_modifier", shape: { kind: "value" } },
+  removeStageModifier: {
+    key: "remove_stage_modifier",
+    shape: { kind: "value", refTypes: ["static_modifier"] },
+  },
   removeStarbaseBuilding: {
     key: "remove_starbase_building",
     shape: {
@@ -4263,7 +4393,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   removeStarbaseComponent: {
     key: "remove_starbase_component",
-    shape: { kind: "fields", fields: [{ prop: "component", key: "component", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "component", key: "component", kind: "value", refTypes: ["component_template"] },
+      ],
+    },
   },
   removeStarbaseFlag: { key: "remove_starbase_flag", shape: { kind: "value" } },
   removeStarbaseModule: {
@@ -4278,8 +4413,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   removeStarFlag: { key: "remove_star_flag", shape: { kind: "value" } },
   removeTerrified: { key: "remove_terrified", shape: { kind: "bool" } },
-  removeTradition: { key: "remove_tradition", shape: { kind: "value" } },
-  removeTraditionTree: { key: "remove_tradition_tree", shape: { kind: "value" } },
+  removeTradition: { key: "remove_tradition", shape: { kind: "value", refTypes: ["tradition"] } },
+  removeTraditionTree: {
+    key: "remove_tradition_tree",
+    shape: { kind: "value", refTypes: ["tradition_category"] },
+  },
   removeTrait: { key: "remove_trait", shape: { kind: "value" } },
   removeWarFlag: { key: "remove_war_flag", shape: { kind: "value" } },
   removeWarParticipant: { key: "remove_war_participant", shape: { kind: "value" } },
@@ -4288,9 +4426,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "district", key: "district", kind: "value" },
-        { prop: "zone", key: "zone", kind: "value" },
-        { prop: "zoneSlot", key: "zone_slot", kind: "value" },
+        { prop: "district", key: "district", kind: "value", refTypes: ["district"] },
+        { prop: "zone", key: "zone", kind: "value", refTypes: ["zone"] },
+        { prop: "zoneSlot", key: "zone_slot", kind: "value", refTypes: ["zone_slots"] },
         { prop: "all", key: "all", kind: "value" },
       ],
     },
@@ -4302,7 +4440,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "promptCountry", key: "prompt_country", kind: "value" },
         { prop: "name", key: "name", kind: "value" },
-        { prop: "nameList", key: "name_list", kind: "value" },
+        { prop: "nameList", key: "name_list", kind: "value", refTypes: ["species_named_list"] },
       ],
     },
   },
@@ -4311,7 +4449,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   repairAmount: { key: "repair_amount", shape: { kind: "value" } },
   repairArmorAmount: { key: "repair_armor_amount", shape: { kind: "value" } },
   repairArmorPercentage: { key: "repair_armor_percentage", shape: { kind: "value" } },
-  repairBuilding: { key: "repair_building", shape: { kind: "value" } },
+  repairBuilding: { key: "repair_building", shape: { kind: "value", refTypes: ["building"] } },
   repairPercentage: { key: "repair_percentage", shape: { kind: "value" } },
   repairShieldAmount: { key: "repair_shield_amount", shape: { kind: "value" } },
   repairShieldPercentage: { key: "repair_shield_percentage", shape: { kind: "value" } },
@@ -4321,8 +4459,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "newPatron", key: "new_patron", kind: "value" },
-        { prop: "replacedPatron", key: "replaced_patron", kind: "value" },
+        { prop: "newPatron", key: "new_patron", kind: "value", refTypes: ["patron_type"] },
+        {
+          prop: "replacedPatron",
+          key: "replaced_patron",
+          kind: "value",
+          refTypes: ["patron_type"],
+        },
       ],
     },
   },
@@ -4336,7 +4479,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "eventChain", key: "event_chain", kind: "value" },
+        { prop: "eventChain", key: "event_chain", kind: "value", refTypes: ["event_chain"] },
         { prop: "counter", key: "counter", kind: "value" },
       ],
     },
@@ -4348,7 +4491,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   returnFromMia: { key: "return_from_mia", shape: { kind: "value" } },
   returnLeaderFromExile: { key: "return_leader_from_exile", shape: { kind: "value" } },
   reverseFirstContact: { key: "reverse_first_contact", shape: { kind: "wrapper", fields: null } },
-  revertAccords: { key: "revert_accords", shape: { kind: "value" } },
+  revertAccords: { key: "revert_accords", shape: { kind: "value", refTypes: ["patron_type"] } },
   rollAiPreferredPatron: { key: "roll_ai_preferred_patron", shape: { kind: "bool" } },
   roomNameOverride: { key: "room_name_override", shape: { kind: "value" } },
   roundVariable: { key: "round_variable", shape: { kind: "value" } },
@@ -4398,7 +4541,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   sectorCapital: { key: "sector_capital", shape: { kind: "wrapper", fields: null } },
   selectDecision: {
     key: "select_decision",
-    shape: { kind: "fields", fields: [{ prop: "name", key: "name", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [{ prop: "name", key: "name", kind: "value", refTypes: ["decision"] }],
+    },
   },
   setAdjective: { key: "set_adjective", shape: { kind: "value" } },
   setAdvisorActive: { key: "set_advisor_active", shape: { kind: "bool" } },
@@ -4411,13 +4557,19 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "preset", key: "preset", kind: "value" },
+        { prop: "preset", key: "preset", kind: "value", refTypes: ["agreement_preset"] },
         { prop: "applyTerms", key: "apply_terms", kind: "value" },
       ],
     },
   },
-  setAiPersonality: { key: "set_ai_personality", shape: { kind: "value" } },
-  setAiPreferredPatron: { key: "set_ai_preferred_patron", shape: { kind: "value" } },
+  setAiPersonality: {
+    key: "set_ai_personality",
+    shape: { kind: "value", refTypes: ["ai_personality"] },
+  },
+  setAiPreferredPatron: {
+    key: "set_ai_preferred_patron",
+    shape: { kind: "value", refTypes: ["patron_type"] },
+  },
   setAllowSubjectsToJoin: { key: "set_allow_subjects_to_join", shape: { kind: "bool" } },
   setAmbientObjectFlag: { key: "set_ambient_object_flag", shape: { kind: "value" } },
   setAnimationState: { key: "set_animation_state", shape: { kind: "value" } },
@@ -4429,7 +4581,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "radius", key: "radius", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["asteroid_belt_type"] },
       ],
     },
   },
@@ -4440,7 +4592,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "value", key: "value", kind: "value" },
-        { prop: "patron", key: "patron", kind: "value" },
+        { prop: "patron", key: "patron", kind: "value", refTypes: ["patron_type"] },
       ],
     },
   },
@@ -4456,12 +4608,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["citizenship_type"] },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
   },
-  setCityGraphicalCulture: { key: "set_city_graphical_culture", shape: { kind: "value" } },
+  setCityGraphicalCulture: {
+    key: "set_city_graphical_culture",
+    shape: { kind: "value", refTypes: ["graphical_culture"] },
+  },
   setCloakingActive: { key: "set_cloaking_active", shape: { kind: "bool" } },
   setClosedBorders: {
     key: "set_closed_borders",
@@ -4485,7 +4640,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  setColonyType: { key: "set_colony_type", shape: { kind: "value" } },
+  setColonyType: { key: "set_colony_type", shape: { kind: "value", refTypes: ["colony_type"] } },
   setConfused: { key: "set_confused", shape: { kind: "bool" } },
   setController: { key: "set_controller", shape: { kind: "value" } },
   setCooldown: { key: "set_cooldown", shape: { kind: "value" } },
@@ -4496,9 +4651,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [{ prop: "cosmicStorm", key: "cosmic_storm", kind: "value" }],
     },
   },
-  setCouncilAgenda: { key: "set_council_agenda", shape: { kind: "value" } },
+  setCouncilAgenda: { key: "set_council_agenda", shape: { kind: "value", refTypes: ["agenda"] } },
   setCouncilEmergencyMeasures: { key: "set_council_emergency_measures", shape: { kind: "bool" } },
-  setCouncilPosition: { key: "set_council_position", shape: { kind: "value" } },
+  setCouncilPosition: {
+    key: "set_council_position",
+    shape: { kind: "value", refTypes: ["councilor"] },
+  },
   setCouncilPositionTitleFemale: {
     key: "set_council_position_title_female",
     shape: {
@@ -4519,16 +4677,19 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  setCouncilPositionToCouncil: { key: "set_council_position_to_council", shape: { kind: "value" } },
+  setCouncilPositionToCouncil: {
+    key: "set_council_position_to_council",
+    shape: { kind: "value", refTypes: ["councilor"] },
+  },
   setCouncilSize: { key: "set_council_size", shape: { kind: "value" } },
   setCouncilVeto: { key: "set_council_veto", shape: { kind: "bool" } },
   setCountryFlag: { key: "set_country_flag", shape: { kind: "value" } },
-  setCountryType: { key: "set_country_type", shape: { kind: "value" } },
-  setCrisisSound: { key: "set_crisis_sound", shape: { kind: "value" } },
+  setCountryType: { key: "set_country_type", shape: { kind: "value", refTypes: ["country_type"] } },
+  setCrisisSound: { key: "set_crisis_sound", shape: { kind: "value", refTypes: ["sound_effect"] } },
   setCurrentStage: { key: "set_current_stage", shape: { kind: "value" } },
   setCustodianTermDays: { key: "set_custodian_term_days", shape: { kind: "value" } },
   setCustomCapitalLocation: { key: "set_custom_capital_location", shape: { kind: "value" } },
-  setDeposit: { key: "set_deposit", shape: { kind: "value" } },
+  setDeposit: { key: "set_deposit", shape: { kind: "value", refTypes: ["deposit"] } },
   setDepositFlag: { key: "set_deposit_flag", shape: { kind: "value" } },
   setDesignFlag: { key: "set_design_flag", shape: { kind: "value" } },
   setDisableAtHealth: { key: "set_disable_at_health", shape: { kind: "value" } },
@@ -4589,7 +4750,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   setFaunaFleetGrowthStance: { key: "set_fauna_fleet_growth_stance", shape: { kind: "value" } },
   setFederationFlag: { key: "set_federation_flag", shape: { kind: "value" } },
-  setFederationLaw: { key: "set_federation_law", shape: { kind: "value" } },
+  setFederationLaw: {
+    key: "set_federation_law",
+    shape: { kind: "value", refTypes: ["federation_law"] },
+  },
   setFederationLeader: { key: "set_federation_leader", shape: { kind: "value" } },
   setFederationSettings: {
     key: "set_federation_settings",
@@ -4603,12 +4767,21 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   setFederationSuccessionTerm: { key: "set_federation_succession_term", shape: { kind: "value" } },
   setFederationSuccessionType: { key: "set_federation_succession_type", shape: { kind: "value" } },
-  setFederationType: { key: "set_federation_type", shape: { kind: "value" } },
+  setFederationType: {
+    key: "set_federation_type",
+    shape: { kind: "value", refTypes: ["federation_type"] },
+  },
   setFemaleHeirTitle: { key: "set_female_heir_title", shape: { kind: "value" } },
   setFemaleRulerTitle: { key: "set_female_ruler_title", shape: { kind: "value" } },
   setFirstContactFlag: { key: "set_first_contact_flag", shape: { kind: "value" } },
-  setFirstContactStage: { key: "set_first_contact_stage", shape: { kind: "value" } },
-  setFleetBombardmentStance: { key: "set_fleet_bombardment_stance", shape: { kind: "value" } },
+  setFirstContactStage: {
+    key: "set_first_contact_stage",
+    shape: { kind: "value", refTypes: ["first_contact_stage"] },
+  },
+  setFleetBombardmentStance: {
+    key: "set_fleet_bombardment_stance",
+    shape: { kind: "value", refTypes: ["bombardment_stance"] },
+  },
   setFleetFlag: { key: "set_fleet_flag", shape: { kind: "value" } },
   setFleetSettings: {
     key: "set_fleet_settings",
@@ -4640,7 +4813,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setGraphicalCulture: { key: "set_graphical_culture", shape: { kind: "value" } },
   setHabitabilityTrait: {
     key: "set_habitability_trait",
-    shape: { kind: "fields", fields: [{ prop: "trait", key: "trait", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [{ prop: "trait", key: "trait", kind: "value", refTypes: ["trait.species_trait"] }],
+    },
   },
   setHalted: { key: "set_halted", shape: { kind: "value" } },
   setHeir: { key: "set_heir", shape: { kind: "value" } },
@@ -4649,14 +4825,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setImmortal: { key: "set_immortal", shape: { kind: "bool" } },
   setLeader: { key: "set_leader", shape: { kind: "value" } },
   setLeaderFlag: { key: "set_leader_flag", shape: { kind: "value" } },
-  setLeaderTier: { key: "set_leader_tier", shape: { kind: "value" } },
+  setLeaderTier: { key: "set_leader_tier", shape: { kind: "value", refTypes: ["leader_tier"] } },
   setLivingStandard: {
     key: "set_living_standard",
     shape: {
       kind: "fields",
       fields: [
         { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["living_standard"] },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -4685,18 +4861,21 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["military_service_type"] },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
   },
-  setMission: { key: "set_mission", shape: { kind: "value" } },
+  setMission: {
+    key: "set_mission",
+    shape: { kind: "value", refTypes: ["observation_station_mission"] },
+  },
   setMissionCounter: {
     key: "set_mission_counter",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "mission", key: "mission", kind: "value" },
+        { prop: "mission", key: "mission", kind: "value", refTypes: ["mission"] },
         { prop: "counter", key: "counter", kind: "value" },
         { prop: "amount", key: "amount", kind: "value" },
       ],
@@ -4709,21 +4888,21 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "id", key: "id", kind: "value" },
-        { prop: "onRollFailed", key: "on_roll_failed", kind: "value" },
+        { prop: "id", key: "id", kind: "value", refTypes: ["event"] },
+        { prop: "onRollFailed", key: "on_roll_failed", kind: "value", refTypes: ["event"] },
         { prop: "failProbability", key: "fail_probability", kind: "value" },
       ],
     },
   },
   setOnlyLeaderBuildsFleets: { key: "set_only_leader_builds_fleets", shape: { kind: "bool" } },
-  setOrigin: { key: "set_origin", shape: { kind: "value" } },
+  setOrigin: { key: "set_origin", shape: { kind: "value", refTypes: ["civic_or_origin.origin"] } },
   setOwner: { key: "set_owner", shape: { kind: "value" } },
   setPatronFirstContactState: {
     key: "set_patron_first_contact_state",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "patron", key: "patron", kind: "value" },
+        { prop: "patron", key: "patron", kind: "value", refTypes: ["patron_type"] },
         { prop: "state", key: "state", kind: "value" },
       ],
     },
@@ -4745,7 +4924,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   setPlanetFlag: { key: "set_planet_flag", shape: { kind: "value" } },
   setPlanetName: { key: "set_planet_name", shape: { kind: "value" } },
-  setPlanetPurgeType: { key: "set_planet_purge_type", shape: { kind: "value" } },
+  setPlanetPurgeType: {
+    key: "set_planet_purge_type",
+    shape: { kind: "value", refTypes: ["purge_type"] },
+  },
   setPlanetSize: { key: "set_planet_size", shape: { kind: "value" } },
   setPlayer: { key: "set_player", shape: { kind: "value" } },
   setPolicy: {
@@ -4753,14 +4935,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "policy", key: "policy", kind: "value" },
+        { prop: "policy", key: "policy", kind: "value", refTypes: ["policy"] },
         { prop: "option", key: "option", kind: "value" },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
   },
-  setPolicyCooldown: { key: "set_policy_cooldown", shape: { kind: "value" } },
-  setPopFaction: { key: "set_pop_faction", shape: { kind: "value" } },
+  setPolicyCooldown: { key: "set_policy_cooldown", shape: { kind: "value", refTypes: ["policy"] } },
+  setPopFaction: { key: "set_pop_faction", shape: { kind: "value", refTypes: ["pop_faction"] } },
   setPopFactionFlag: { key: "set_pop_faction_flag", shape: { kind: "value" } },
   setPopGroupFlag: { key: "set_pop_group_flag", shape: { kind: "value" } },
   setPopulationControls: {
@@ -4774,14 +4956,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  setPreFtlAge: { key: "set_pre_ftl_age", shape: { kind: "value" } },
+  setPreFtlAge: { key: "set_pre_ftl_age", shape: { kind: "value", refTypes: ["pre_ftl_age"] } },
   setPurgeType: {
     key: "set_purge_type",
     shape: {
       kind: "fields",
       fields: [
         { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["purge_type"] },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -4801,7 +4983,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value" },
+        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
         { prop: "value", key: "value", kind: "value" },
       ],
     },
@@ -4844,7 +5026,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "design", key: "design", kind: "value" },
-        { prop: "randomExistingDesign", key: "random_existing_design", kind: "value" },
+        {
+          prop: "randomExistingDesign",
+          key: "random_existing_design",
+          kind: "value",
+          refTypes: ["ship_size"],
+        },
       ],
     },
   },
@@ -4862,7 +5049,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["slavery_type"] },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -4878,7 +5065,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "slot", key: "slot", kind: "value" },
-        { prop: "building", key: "building", kind: "value" },
+        { prop: "building", key: "building", kind: "value", refTypes: ["starbase_building"] },
       ],
     },
   },
@@ -4889,12 +5076,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "slot", key: "slot", kind: "value" },
-        { prop: "module", key: "module", kind: "value" },
+        { prop: "module", key: "module", kind: "value", refTypes: ["starbase_module"] },
       ],
     },
   },
-  setStarbaseSize: { key: "set_starbase_size", shape: { kind: "value" } },
-  setStarClass: { key: "set_star_class", shape: { kind: "value" } },
+  setStarbaseSize: {
+    key: "set_starbase_size",
+    shape: { kind: "value", refTypes: ["ship_size.starbase"] },
+  },
+  setStarClass: { key: "set_star_class", shape: { kind: "value", refTypes: ["star_class"] } },
   setStarFlag: { key: "set_star_flag", shape: { kind: "value" } },
   setStormFlag: { key: "set_storm_flag", shape: { kind: "value" } },
   setSubjectOf: {
@@ -4905,7 +5095,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "who", key: "who", kind: "value" },
         { prop: "useDemandedTerms", key: "use_demanded_terms", kind: "value" },
         { prop: "allowInstantNegotiation", key: "allow_instant_negotiation", kind: "value" },
-        { prop: "preset", key: "preset", kind: "value" },
+        { prop: "preset", key: "preset", kind: "value", refTypes: ["agreement_preset"] },
       ],
     },
   },
@@ -5288,14 +5478,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["war_goal"] },
         { prop: "target", key: "target", kind: "value" },
         { prop: "enemy", key: "enemy", kind: "value" },
       ],
     },
   },
   setYearsServed: { key: "set_years_served", shape: { kind: "value" } },
-  shiftEthic: { key: "shift_ethic", shape: { kind: "value" } },
+  shiftEthic: { key: "shift_ethic", shape: { kind: "value", refTypes: ["ethic"] } },
   ship: { key: "ship", shape: { kind: "wrapper", fields: null } },
   shipGrowthStage: { key: "ship_growth_stage", shape: { kind: "wrapper", fields: null } },
   solarSystem: { key: "solar_system", shape: { kind: "wrapper", fields: null } },
@@ -5322,7 +5512,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "owner", key: "owner", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["psionic_aura"] },
         { prop: "updateType", key: "update_type", kind: "value" },
       ],
     },
@@ -5336,7 +5526,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["storm_types"] },
         { prop: "cosmicStormStartPosition", key: "cosmic_storm_start_position", kind: "value" },
         { prop: "immediate", key: "immediate", kind: "value" },
       ],
@@ -5370,20 +5560,29 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   spynetwork: { key: "spynetwork", shape: { kind: "wrapper", fields: null } },
   star: { key: "star", shape: { kind: "wrapper", fields: null } },
   starbase: { key: "starbase", shape: { kind: "wrapper", fields: null } },
-  startAstralActionCooldown: { key: "start_astral_action_cooldown", shape: { kind: "value" } },
+  startAstralActionCooldown: {
+    key: "start_astral_action_cooldown",
+    shape: { kind: "value", refTypes: ["astral_action.uses_custom_cooldown"] },
+  },
   startSituation: {
     key: "start_situation",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["situation_type"] },
         { prop: "target", key: "target", kind: "value" },
         { prop: "effect", key: "effect", kind: "effect" },
       ],
     },
   },
-  startTerraformProcess: { key: "start_terraform_process", shape: { kind: "value" } },
-  startTerraformProgress: { key: "start_terraform_progress", shape: { kind: "value" } },
+  startTerraformProcess: {
+    key: "start_terraform_process",
+    shape: { kind: "value", refTypes: ["planet_class", "planet_class_random_list"] },
+  },
+  startTerraformProgress: {
+    key: "start_terraform_progress",
+    shape: { kind: "value", refTypes: ["planet_class", "planet_class_random_list"] },
+  },
   stealPlanetOutput: {
     key: "steal_planet_output",
     shape: {
@@ -5432,7 +5631,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "mission", key: "mission", kind: "value" },
+        { prop: "mission", key: "mission", kind: "value", refTypes: ["mission"] },
         { prop: "status", key: "status", kind: "value" },
       ],
     },
@@ -5504,19 +5703,25 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "target", key: "target", kind: "value" },
-        { prop: "mult", key: "mult", kind: "value" },
+        { prop: "mult", key: "mult", kind: "value", refTypes: ["variable"] },
       ],
     },
   },
   triggerMegastructureIcon: { key: "trigger_megastructure_icon", shape: { kind: "bool" } },
-  unassignEspionageAsset: { key: "unassign_espionage_asset", shape: { kind: "value" } },
+  unassignEspionageAsset: {
+    key: "unassign_espionage_asset",
+    shape: { kind: "value", refTypes: ["espionage_asset"] },
+  },
   unassignLeader: { key: "unassign_leader", shape: { kind: "value" } },
   unhappiestPop: { key: "unhappiest_pop", shape: { kind: "wrapper", fields: null } },
   unlockCouncilSelection: { key: "unlock_council_selection", shape: { kind: "bool" } },
   unlockCouncilSlots: { key: "unlock_council_slots", shape: { kind: "value" } },
   unlockExhibit: { key: "unlock_exhibit", shape: { kind: "value" } },
   unsetCosmicStorm: { key: "unset_cosmic_storm", shape: { kind: "bool" } },
-  upgradeMegastructureTo: { key: "upgrade_megastructure_to", shape: { kind: "value" } },
+  upgradeMegastructureTo: {
+    key: "upgrade_megastructure_to",
+    shape: { kind: "value", refTypes: ["megastructure"] },
+  },
   validateAndRepairPlanetBuildingsAndDistricts: {
     key: "validate_and_repair_planet_buildings_and_districts",
     shape: { kind: "bool" },

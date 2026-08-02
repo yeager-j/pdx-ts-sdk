@@ -15,6 +15,7 @@
 
 import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
 
+import type { ContentRefUse } from "./content-refs.ts";
 import { EFFECT_META, type EffectFieldMeta } from "./generated/effect-meta.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import { EVENT_KINDS } from "./generated/events.ts";
@@ -132,8 +133,9 @@ export function registerModifierDescKey(modifier: Modifier<ScopeName>, key: stri
   modifierDescKeys.set(modifier, key);
 }
 
-/** SDK-internal shared lowering for a `modifier_rule`/`modifier_rule_with_loc` row. */
-export function modifierEntry(modifier: Modifier<ScopeName>): PdxEntry {
+/** SDK-internal shared lowering for a `modifier_rule`/`modifier_rule_with_loc` row.
+ * `refs`, when given, collects the content references the gating trigger writes. */
+export function modifierEntry(modifier: Modifier<ScopeName>, refs?: ContentRefUse[]): PdxEntry {
   const entries: PdxEntry[] = [];
   if (modifier.factor !== undefined) {
     entries.push(kv("factor", modifier.factor));
@@ -176,6 +178,7 @@ export function modifierEntry(modifier: Modifier<ScopeName>): PdxEntry {
     entries.push(kv("desc", key));
   }
   entries.push(...modifier.when.entries);
+  refs?.push(...modifier.when.refs);
   return block("modifier", entries);
 }
 
@@ -195,10 +198,12 @@ export interface IfChain<S extends ScopeName> {
 
 class IfChainRecorder {
   private readonly sink: PdxEntry[];
+  private readonly refs: ContentRefUse[];
   private mark: number;
 
-  constructor(sink: PdxEntry[]) {
+  constructor(sink: PdxEntry[], refs: ContentRefUse[]) {
     this.sink = sink;
+    this.refs = refs;
     this.mark = sink.length;
   }
 
@@ -214,7 +219,7 @@ class IfChainRecorder {
 
   elseIf(condition: Trigger<ScopeName>, body: (scope: unknown) => void): IfChainRecorder {
     this.guard("else_if");
-    this.sink.push(conditionalBlock("else_if", condition, body));
+    this.sink.push(conditionalBlock("else_if", condition, body, this.refs));
     this.mark = this.sink.length;
     return this;
   }
@@ -222,7 +227,7 @@ class IfChainRecorder {
   else(body: (scope: unknown) => void): void {
     this.guard("else");
     const child: PdxEntry[] = [];
-    body(makeAnyScope(child));
+    body(makeAnyScope(child, this.refs));
     this.sink.push(block("else", child));
     this.mark = this.sink.length;
   }
@@ -231,10 +236,12 @@ class IfChainRecorder {
 function conditionalBlock(
   key: string,
   condition: Trigger<ScopeName>,
-  body: (scope: unknown) => void
+  body: (scope: unknown) => void,
+  refs: ContentRefUse[]
 ): PdxEntry {
   const child: PdxEntry[] = [block("limit", [...condition.entries])];
-  body(makeAnyScope(child));
+  refs.push(...condition.refs);
+  body(makeAnyScope(child, refs));
   return block(key, child);
 }
 
@@ -314,9 +321,28 @@ function toScalar(value: unknown): string | number | boolean {
   return value as string | number | boolean;
 }
 
+/**
+ * Records an id-valued argument as a content reference when the generated meta
+ * says every form the field admits is a `<type>` reference. A field that also
+ * admits plain scalars says nothing about any registry and is left alone —
+ * the same rule the content field tables follow.
+ */
+function recordRef(
+  refs: ContentRefUse[],
+  targets: readonly string[] | undefined,
+  field: string,
+  value: string | number | boolean
+): void {
+  if (targets !== undefined && typeof value === "string") {
+    refs.push({ targets, id: value, field });
+  }
+}
+
 function fieldEntries(
   fields: readonly EffectFieldMeta[],
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
+  path: string,
+  refs: ContentRefUse[]
 ): PdxEntry[] {
   const entries: PdxEntry[] = [];
   for (const field of fields) {
@@ -325,28 +351,39 @@ function fieldEntries(
       continue;
     }
     switch (field.kind) {
-      case "value":
-        entries.push(kv(field.key, toScalar(value)));
+      case "value": {
+        const scalar = toScalar(value);
+        recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
+        entries.push(kv(field.key, scalar));
         break;
+      }
       case "comparison":
-        entries.push(
-          Array.isArray(value)
-            ? cmp(field.key, value[0] as PdxOp, value[1] as number)
-            : kv(field.key, toScalar(value))
-        );
+        if (Array.isArray(value)) {
+          entries.push(cmp(field.key, value[0] as PdxOp, value[1] as number));
+        } else {
+          const scalar = toScalar(value);
+          recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
+          entries.push(kv(field.key, scalar));
+        }
         break;
       case "trigger":
         entries.push(block(field.key, [...(value as Trigger).entries]));
+        refs.push(...(value as Trigger).refs);
         break;
       case "effect": {
         const child: PdxEntry[] = [];
-        (value as (scope: unknown) => void)(makeAnyScope(child));
+        (value as (scope: unknown) => void)(makeAnyScope(child, refs));
         entries.push(block(field.key, child));
         break;
       }
       case "modifiers":
         entries.push(
-          block(field.key, (value as readonly Modifier<ScopeName>[]).map(modifierEntry))
+          block(
+            field.key,
+            (value as readonly Modifier<ScopeName>[]).map((modifier) =>
+              modifierEntry(modifier, refs)
+            )
+          )
         );
         break;
     }
@@ -354,52 +391,57 @@ function fieldEntries(
   return entries;
 }
 
-function weightedList(key: string, sink: PdxEntry[]) {
+function weightedList(key: string, sink: PdxEntry[], refs: ContentRefUse[]) {
   return (arms: ReadonlyArray<RandomListArm<ScopeName>>): void => {
     const armBlocks = arms.map((arm) => {
-      const child: PdxEntry[] = (arm.modifiers ?? []).map(modifierEntry);
-      (arm.do as (scope: unknown) => void)(makeAnyScope(child));
+      const child: PdxEntry[] = (arm.modifiers ?? []).map((modifier) =>
+        modifierEntry(modifier, refs)
+      );
+      (arm.do as (scope: unknown) => void)(makeAnyScope(child, refs));
       return block(String(arm.weight), child);
     });
     sink.push(block(key, armBlocks));
   };
 }
 
-const STRUCTURAL: Record<string, ((sink: PdxEntry[]) => unknown) | undefined> = {
-  if: (sink) => (condition: Trigger<ScopeName>, body: (scope: unknown) => void) => {
-    sink.push(conditionalBlock("if", condition, body));
-    return new IfChainRecorder(sink);
+const STRUCTURAL: Record<
+  string,
+  ((sink: PdxEntry[], refs: ContentRefUse[]) => unknown) | undefined
+> = {
+  if: (sink, refs) => (condition: Trigger<ScopeName>, body: (scope: unknown) => void) => {
+    sink.push(conditionalBlock("if", condition, body, refs));
+    return new IfChainRecorder(sink, refs);
   },
 
-  within: (sink) => (ref: ScopeRef, body: (scope: unknown) => void) => {
+  within: (sink, refs) => (ref: ScopeRef, body: (scope: unknown) => void) => {
     const child: PdxEntry[] = [];
-    body(makeAnyScope(child));
+    body(makeAnyScope(child, refs));
     sink.push(block(ref.path, child));
   },
 
-  target: (sink) => (body: (scope: unknown) => void) => {
+  target: (sink, refs) => (body: (scope: unknown) => void) => {
     const child: PdxEntry[] = [];
-    body(makeAnyScope(child));
+    body(makeAnyScope(child, refs));
     sink.push(block("target", child));
   },
 
-  randomList: (sink) => weightedList("random_list", sink),
-  lockedRandomList: (sink) => weightedList("locked_random_list", sink),
+  randomList: (sink, refs) => weightedList("random_list", sink, refs),
+  lockedRandomList: (sink, refs) => weightedList("locked_random_list", sink, refs),
 
   random:
-    (sink) =>
+    (sink, refs) =>
     (
       args: { chance: number; modifiers?: readonly Modifier<ScopeName>[] },
       body: (scope: unknown) => void
     ) => {
       const child: PdxEntry[] = [kv("chance", args.chance)];
-      child.push(...(args.modifiers ?? []).map(modifierEntry));
-      body(makeAnyScope(child));
+      child.push(...(args.modifiers ?? []).map((modifier) => modifierEntry(modifier, refs)));
+      body(makeAnyScope(child, refs));
       sink.push(block("random", child));
     },
 
   whileLoop:
-    (sink) =>
+    (sink, refs) =>
     (args: { count?: number; limit?: Trigger<ScopeName> }, body: (scope: unknown) => void) => {
       const child: PdxEntry[] = [];
       if (args.count !== undefined) {
@@ -407,8 +449,9 @@ const STRUCTURAL: Record<string, ((sink: PdxEntry[]) => unknown) | undefined> = 
       }
       if (args.limit !== undefined) {
         child.push(block("limit", [...args.limit.entries]));
+        refs.push(...args.limit.refs);
       }
-      body(makeAnyScope(child));
+      body(makeAnyScope(child, refs));
       sink.push(block("while", child));
     },
 
@@ -493,7 +536,7 @@ for (const kind of Object.values(EVENT_KINDS)) {
   STRUCTURAL[methodName(kind.key)] = fireEffect(kind.key);
 }
 
-function makeAnyScope(sink: PdxEntry[]): unknown {
+function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[]): unknown {
   return new Proxy(Object.create(null) as object, {
     get(_target, prop) {
       if (typeof prop !== "string") {
@@ -501,7 +544,7 @@ function makeAnyScope(sink: PdxEntry[]): unknown {
       }
       const structural = STRUCTURAL[prop];
       if (structural !== undefined) {
-        return structural(sink);
+        return structural(sink, refs);
       }
       const meta = EFFECT_META[prop];
       if (meta === undefined) {
@@ -515,21 +558,25 @@ function makeAnyScope(sink: PdxEntry[]): unknown {
         case "bool":
           return (value: boolean = true) => sink.push(kv(meta.key, value));
         case "value":
-          return (value: unknown) => sink.push(kv(meta.key, toScalar(value)));
+          return (value: unknown) => {
+            const scalar = toScalar(value);
+            recordRef(refs, shape.refTypes, meta.key, scalar);
+            sink.push(kv(meta.key, scalar));
+          };
         case "fields":
           return (args: Record<string, unknown>) =>
-            sink.push(block(meta.key, fieldEntries(shape.fields ?? [], args)));
+            sink.push(block(meta.key, fieldEntries(shape.fields ?? [], args, meta.key, refs)));
         case "wrapper":
           if (shape.fields === null) {
             return (body: (scope: unknown) => void) => {
               const child: PdxEntry[] = [];
-              body(makeAnyScope(child));
+              body(makeAnyScope(child, refs));
               sink.push(block(meta.key, child));
             };
           }
           return (args: Record<string, unknown>, body: (scope: unknown) => void) => {
-            const child: PdxEntry[] = fieldEntries(shape.fields ?? [], args);
-            body(makeAnyScope(child));
+            const child: PdxEntry[] = fieldEntries(shape.fields ?? [], args, meta.key, refs);
+            body(makeAnyScope(child, refs));
             sink.push(block(meta.key, child));
           };
       }
@@ -541,7 +588,15 @@ function makeAnyScope(sink: PdxEntry[]): unknown {
  * Builds the scope object an effect closure receives. The recorder is
  * scope-agnostic at runtime — the interface named by S is what restricts
  * which effects exist in which scope. This is the design's one cast.
+ *
+ * `refs` collects the content references the closure writes, so an id reaching
+ * the output through a script closure faces the same integrity check as one
+ * written into a declarative content field. Callers that have no build to
+ * check against (the testing helpers) can let it default and discard them.
  */
-export function makeScope<S extends ScopeName>(sink: PdxEntry[]): ScopeObjOf<S> {
-  return makeAnyScope(sink) as ScopeObjOf<S>;
+export function makeScope<S extends ScopeName>(
+  sink: PdxEntry[],
+  refs: ContentRefUse[] = []
+): ScopeObjOf<S> {
+  return makeAnyScope(sink, refs) as ScopeObjOf<S>;
 }

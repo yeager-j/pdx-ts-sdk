@@ -10,6 +10,7 @@
  * events.test-d.ts, the situation target contract in situations.test-d.ts.
  */
 
+import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
 import {
@@ -152,5 +153,20 @@ describe("buildMod's input", () => {
     buildMod(config, [techs]);
     // @ts-expect-error — a bare content item is not a collection
     buildMod(config, [tech]);
+  });
+});
+
+describe("buildMod's output", () => {
+  it("carries the on-action emission as data, not the accumulator", () => {
+    const event = namespace("probe_neg").defineCountryEvent({ id: 1, isTriggeredOnly: true });
+    const mod = buildMod({ name: "N", prefix: "probe_neg", supportedVersion: "4.4.*" }, [
+      collection("events", [event]),
+      collection(undefined, [on(onActions.onGameStartCountry, [event])]),
+    ]);
+    expectTypeOf(mod.onActions).toEqualTypeOf<readonly PdxEntry[]>();
+    // @ts-expect-error — the accumulator stays inside the fold: registering
+    // after buildMod returned would change what render(mod) emits, bypassing
+    // the collection fold and its ordering rules.
+    mod.onActions.register(onActions.onGameStartCountry, event);
   });
 });

@@ -42,7 +42,8 @@ describe("emitted trigger signatures", () => {
   it("type reference: accepts an SDK object or a raw id", () => {
     expect(declaration("hasEdict")).toMatchInlineSnapshot(`
       "export function hasEdict(value: EdictRef | string): Trigger<"country"> {
-        return trigger([kv("has_edict", refId(value))]);
+        const id = refId(value);
+        return trigger([kv("has_edict", id)], [{ targets: ["edict"], id, field: "has_edict" }]);
       }"
     `);
   });
@@ -58,7 +59,7 @@ describe("emitted trigger signatures", () => {
   it("scope change: takes the condition, typed to the pushed scope", () => {
     expect(declaration("anyCountry")).toMatchInlineSnapshot(`
       "export function anyCountry(condition: Trigger<"country">): Trigger<ScopeName> {
-        return trigger([block("any_country", [...condition.entries])]);
+        return trigger([block("any_country", [...condition.entries])], [...condition.refs]);
       }"
     `);
   });
@@ -77,15 +78,17 @@ describe("emitted trigger signatures", () => {
         "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
       > {
         const entries: PdxEntry[] = [];
+        const refs: ContentRefUse[] = [];
         if (args.limit !== undefined) {
           entries.push(block("limit", [...args.limit.entries]));
+          refs.push(...args.limit.refs);
         }
         entries.push(
           typeof args.count === "object"
             ? cmp("count", args.count[0], args.count[1])
             : kv("count", args.count)
         );
-        return trigger([block("count_owned_pop_group", entries)]);
+        return trigger([block("count_owned_pop_group", entries)], refs);
       }"
     `);
   });
@@ -100,13 +103,15 @@ describe("emitted trigger signatures", () => {
     expect(declaration("calcTrueIf")).toMatchInlineSnapshot(`
       "export function calcTrueIf(args: CalcTrueIfArgs): Trigger<ScopeName> {
         const entries: PdxEntry[] = [];
+        const refs: ContentRefUse[] = [];
         entries.push(
           typeof args.amount === "object"
             ? cmp("amount", args.amount[0], args.amount[1])
             : kv("amount", args.amount)
         );
         entries.push(...args.conditions.entries);
-        return trigger([block("calc_true_if", entries)]);
+        refs.push(...args.conditions.refs);
+        return trigger([block("calc_true_if", entries)], refs);
       }"
     `);
   });

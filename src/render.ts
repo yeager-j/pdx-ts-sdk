@@ -39,9 +39,8 @@ export function render(mod: PureMod): Map<string, string> {
       ])
     );
   }
-  const renderedOnActions = mod.onActions.render();
-  if (renderedOnActions !== undefined) {
-    files.set(`common/on_actions/${prefix}_on_actions.txt`, renderedOnActions);
+  if (mod.onActions.length > 0) {
+    files.set(`common/on_actions/${prefix}_on_actions.txt`, serialize(mod.onActions));
   }
   files.set(`localisation/english/${prefix}_l_english.yml`, renderLocalization(mod));
 

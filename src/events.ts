@@ -16,6 +16,7 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import { underField, type ContentRefUse } from "./content-refs.ts";
 import { makeScope, scopeRef, type ScopeRef } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { EventKindKey } from "./generated/events.ts";
@@ -104,7 +105,16 @@ export interface EventDef<S extends ScopeName, From extends ScopeName | undefine
 export type DefinedEvent<S extends ScopeName, From extends ScopeName | undefined> = EventRef<
   S,
   From
-> & { readonly entry: PdxEntry };
+> & {
+  readonly entry: PdxEntry;
+  /**
+   * Content references the event's closures and option conditions wrote. The
+   * closures ran here, at the definition site, so the recorder's report is
+   * captured here too — `buildMod` resolves it against the ids the build
+   * defined, exactly as it does for declarative content fields.
+   */
+  readonly refs: readonly ContentRefUse[];
+};
 
 /** Where definition-side localization lands; the caller supplies its registry. */
 export interface LocSink {
@@ -147,38 +157,48 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   if (def.fireOnlyOnce === true) {
     entries.push(kv("fire_only_once", true));
   }
+  const refs: ContentRefUse[] = [];
   if (def.immediate !== undefined) {
     const sink: PdxEntry[] = [];
-    def.immediate(makeScope<S>(sink), ctx);
+    const recorded: ContentRefUse[] = [];
+    def.immediate(makeScope<S>(sink, recorded), ctx);
     entries.push(block("immediate", sink));
+    refs.push(...underField(recorded, "immediate"));
   }
   if (def.after !== undefined) {
     const sink: PdxEntry[] = [];
-    def.after(makeScope<S>(sink), ctx);
+    const recorded: ContentRefUse[] = [];
+    def.after(makeScope<S>(sink, recorded), ctx);
     entries.push(block("after", sink));
+    refs.push(...underField(recorded, "after"));
   }
   (def.options ?? []).forEach((option, index) => {
     const optionKey = `${id}.${OPTION_KEYS[index] ?? `opt${index}`}`;
     loc.register(optionKey, option.name);
     const optionEntries: PdxEntry[] = [kv("name", optionKey)];
+    const where = `option[${index}]`;
     if (option.trigger !== undefined) {
       optionEntries.push(block("trigger", [...option.trigger.entries]));
+      refs.push(...underField(option.trigger.refs, `${where}.trigger`));
     }
     if (option.allow !== undefined) {
       optionEntries.push(block("allow", [...option.allow.entries]));
+      refs.push(...underField(option.allow.refs, `${where}.allow`));
     }
     if (option.hideIfNotAllowed === true) {
       optionEntries.push(kv("hide_option_if_not_allowed", true));
     }
     if (option.effects !== undefined) {
       const sink: PdxEntry[] = [];
-      option.effects(makeScope<S>(sink), ctx);
+      const recorded: ContentRefUse[] = [];
+      option.effects(makeScope<S>(sink, recorded), ctx);
       optionEntries.push(...sink);
+      refs.push(...underField(recorded, where));
     }
     entries.push(block("option", optionEntries));
   });
 
-  return { kind: "event-ref", scope, id, from: def.from, entry: block(kind, entries) };
+  return { kind: "event-ref", scope, id, from: def.from, entry: block(kind, entries), refs };
 }
 
 // ---------------------------------------------------------------------------

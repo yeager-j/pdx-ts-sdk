@@ -437,6 +437,31 @@ describe("event namespaces", () => {
     );
   });
 
+  it("leaves alone a foreign event whose namespace merely starts with the prefix", () => {
+    // `pp_module_extras` is somebody else's namespace: the accepted own
+    // namespaces are `pp_mod` and `pp_mod_*`, and this is neither. Firing it
+    // must not demand a definition this mod was never going to supply.
+    const foreign = namespace("pp_module_extras").definePlanetEvent({
+      id: 22,
+      from: "country",
+      isTriggeredOnly: true,
+    });
+    const included = collection("events", [
+      namespace("pp_mod").defineCountryEvent({
+        id: 23,
+        isTriggeredOnly: true,
+        hideWindow: true,
+        immediate: (country, ctx) => {
+          country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+            planet.planetEvent({ id: foreign, from: ctx.self });
+          });
+        },
+      }),
+    ]);
+    const files = render(buildMod(CONFIG, [included]));
+    expect(files.get("events/pp_mod_events.txt")).toContain("id = pp_module_extras.22");
+  });
+
   it("requires on-action events to be collections of the same build", () => {
     const event = namespace("pp_mod").defineCountryEvent({ id: 31, isTriggeredOnly: true });
     const hooks = collection(undefined, [on(onActions.onGameStartCountry, [event])]);
@@ -463,6 +488,82 @@ describe("content reference integrity", () => {
     expect(files.get("common/technology/pp_mod_derived_techs.txt")).toContain(
       'prerequisites = { "pp_mod_tech_base" }'
     );
+  });
+
+  // An id reaching the output through a script closure is a reference just as
+  // much as one written into a declarative field. The recorder reports what
+  // the closure wrote, so both face the same guard — a well-formed,
+  // own-prefixed id with no definition behind it never builds clean.
+  it("fails loudly on a reference an effect closure wrote", () => {
+    const orphan = defineTechnology({
+      id: "pp_mod_tech_closure_orphan",
+      name: "Closure orphan",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    const events = collection("events", [
+      namespace("pp_mod").defineCountryEvent({
+        id: 41,
+        isTriggeredOnly: true,
+        hideWindow: true,
+        immediate: (country) => {
+          country.giveTechnology({ tech: orphan });
+        },
+      }),
+    ]);
+    expect(() => buildMod(CONFIG, [events])).toThrow(
+      'event "pp_mod.41" references technology "pp_mod_tech_closure_orphan" in ' +
+        '"immediate.give_technology.tech"'
+    );
+  });
+
+  it("fails loudly on a reference a trigger inside a closure wrote", () => {
+    const orphan = defineTechnology({
+      id: "pp_mod_tech_gated_orphan",
+      name: "Gated orphan",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    const events = collection("events", [
+      namespace("pp_mod").defineCountryEvent({
+        id: 42,
+        isTriggeredOnly: true,
+        hideWindow: true,
+        immediate: (country) => {
+          country.if(and(hasTechnology(orphan)), (owner) => {
+            owner.addResource({ resource: "energy", amount: 1 });
+          });
+        },
+      }),
+    ]);
+    expect(() => buildMod(CONFIG, [events])).toThrow(
+      'event "pp_mod.42" references technology "pp_mod_tech_gated_orphan" in ' +
+        '"immediate.has_technology"'
+    );
+  });
+
+  it("resolves a closure reference when its collection is passed", () => {
+    const tech = defineTechnology({
+      id: "pp_mod_tech_granted",
+      name: "Granted",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    const events = collection("events", [
+      namespace("pp_mod").defineCountryEvent({
+        id: 43,
+        isTriggeredOnly: true,
+        hideWindow: true,
+        immediate: (country) => {
+          country.giveTechnology({ tech });
+        },
+      }),
+    ]);
+    const files = render(buildMod(CONFIG, [collection("granted", [tech]), events]));
+    expect(files.get("events/pp_mod_events.txt")).toContain("tech = pp_mod_tech_granted");
   });
 
   it("fails loudly on a reference whose collection was not passed", () => {

@@ -216,6 +216,13 @@ function methodSignature(effect: EmittedEffect, outerScope: string): string {
   }
 }
 
+/** `refTypes: [...]`, when every form the value admits is a `<type>` reference.
+ * One non-reference arm and it is omitted: an id-shaped value would then be
+ * legal for reasons no registry can see. */
+function refTypesMeta(value: TsValue | undefined): string {
+  return value?.refTypes === undefined ? "" : `, refTypes: ${JSON.stringify(value.refTypes)}`;
+}
+
 function fieldMeta(field: ArgField): string {
   const kind =
     field.value.kind === "scalar"
@@ -227,7 +234,8 @@ function fieldMeta(field: ArgField): string {
           : field.value.category === "modifier_rule"
             ? "modifiers"
             : "effect";
-  return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: ${JSON.stringify(kind)} }`;
+  const refTypes = refTypesMeta(field.value.kind === "scalar" ? field.value.value : undefined);
+  return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: ${JSON.stringify(kind)}${refTypes} }`;
 }
 
 function metaEntry(effect: EmittedEffect): string {
@@ -238,7 +246,7 @@ function metaEntry(effect: EmittedEffect): string {
     case "bool":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "bool" } },\n`;
     case "value":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "value" } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "value"${refTypesMeta(shape.value)} } },\n`;
     case "fields":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
     case "wrapper":
@@ -430,10 +438,20 @@ export function emitEffects(
     "  readonly prop: string;\n" +
     "  readonly key: string;\n" +
     "  readonly kind: EffectFieldKind;\n" +
+    docComment(
+      [
+        "The registries an id in this field may name, when every form the",
+        "field admits is a `<type>` reference. Undefined the moment one arm is",
+        "not — an id-shaped value would then prove nothing about any registry.",
+        "`buildMod` resolves what the recorder reports against the built ids.",
+      ],
+      "  "
+    ) +
+    "  readonly refTypes?: readonly string[];\n" +
     "}\n\n" +
     "export type EffectShapeMeta =\n" +
     '  | { readonly kind: "bool" }\n' +
-    '  | { readonly kind: "value" }\n' +
+    '  | { readonly kind: "value"; readonly refTypes?: readonly string[] }\n' +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null };\n\n' +
     "export interface EffectMeta {\n" +

@@ -42,6 +42,7 @@ import {
   type EventItemBase,
   type ModItemInput,
   type ModWarning,
+  type OnActionBindingItem,
 } from "./items.ts";
 import { OnActionAuthoring } from "./on-actions.ts";
 import { compareUtf8, normalizeLogicalPath } from "./resolver/path-order.ts";
@@ -101,7 +102,8 @@ export interface PureMod {
   /** Event emission: one file per stem, one namespace per file. */
   readonly eventFiles: readonly EmittedFile[];
   readonly events: readonly EventItemBase[];
-  readonly onActions: OnActionAuthoring;
+  /** The on-action hook blocks, already in emission order. */
+  readonly onActions: readonly PdxEntry[];
   readonly loc: ReadonlyMap<string, string>;
   readonly shipOfSizeLimits: ReadonlySet<string>;
   readonly patchPlan: PatchPlan | undefined;
@@ -322,6 +324,12 @@ export function buildMod(
       throw new Error(`Duplicate event id "${item.id}"`);
     }
     eventIds.add(item.id);
+    // An event's closures ran at its definition site and reported what they
+    // wrote there; the references arrive as finished data like everything
+    // else on the item, and face the same guard as a declarative field.
+    for (const use of item.refs) {
+      refUses.push({ owner: `event "${item.id}"`, use });
+    }
     registerLocEntries(item.locEntries);
     if (!namespaces.includes(item.namespace)) {
       namespaces.push(item.namespace);
@@ -345,15 +353,21 @@ export function buildMod(
 
   // On-actions: ownership is membership in this build, by value identity.
   const includedEvents = new Set<EventItemBase>(placedEvents.map(({ item }) => item));
-  const onActions = new OnActionAuthoring((event) =>
+  const onActionAuthoring = new OnActionAuthoring((event) =>
     includedEvents.has(event as unknown as EventItemBase)
   );
-  for (const { item } of flat) {
-    if (item.itemKind !== "on-action") {
-      continue;
-    }
-    // Array order is author data — the game fires a hook's event list as
-    // written — so this loop registers straight down it and never sorts.
+  // The array inside one `on()` call is author data. Which `on()` call comes
+  // first is not: two collections — or two discovered modules — can each bind
+  // the same hook, and collection order must never reach the output (SDK-23).
+  // So the calls are ordered by hook name, then by their event-id sequence,
+  // and only then registered straight down each array.
+  const bindings = flat.flatMap(({ item }) => (item.itemKind === "on-action" ? [item] : []));
+  const bindingOrder = (item: OnActionBindingItem): string =>
+    item.events.map((event) => event.id).join(" ");
+  const orderedBindings = [...bindings].sort(
+    (a, b) => compareUtf8(a.hook.name, b.hook.name) || compareUtf8(bindingOrder(a), bindingOrder(b))
+  );
+  for (const item of orderedBindings) {
     for (const event of item.events) {
       if (!includedEvents.has(event)) {
         throw new Error(
@@ -361,9 +375,17 @@ export function buildMod(
             `on-action "${item.hook.name}" can only fire this mod's own events`
         );
       }
-      onActions.register(item.hook, event as DefinedEvent<ScopeName, ScopeName | undefined>);
+      onActionAuthoring.register(
+        item.hook,
+        event as DefinedEvent<ScopeName, ScopeName | undefined>
+      );
     }
   }
+  // The accumulator stays inside the fold; the mod carries only its finished
+  // entries. Handing out the live instance would let a caller register after
+  // `buildMod` returned and change what `render` emits — a builder backdoor
+  // around the collection fold and its ordering rules.
+  const onActions = onActionAuthoring.entries();
 
   // Contributions: union into the shared sink; a limit listed twice emits
   // once. The sink is a Set, which `render` iterates in insertion order, so
@@ -414,7 +436,11 @@ export function buildMod(
   // well-formed id with no definition behind it. Scan every emitted entry
   // tree for scalars shaped like one of this mod's own event ids and demand
   // a definition — the getter throw this replaces died with the stamp.
-  const ownEventId = new RegExp(`^${config.prefix}[a-z0-9_]*\\.\\d+$`);
+  // The prefix is delimited, matching the namespaces the warning above accepts
+  // (`prefix` or `prefix_*`) rather than every namespace that merely starts
+  // with those characters: for prefix `foo`, a third-party `foobar.1` is
+  // somebody else's event, and firing it must not demand a definition here.
+  const ownEventId = new RegExp(`^${config.prefix}(_[a-z0-9_]*)?\\.\\d+$`);
   const scanned: string[] = [];
   const scan = (nodes: readonly PdxItem[]): void => {
     for (const node of nodes) {

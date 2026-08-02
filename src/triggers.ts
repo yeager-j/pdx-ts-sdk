@@ -18,28 +18,40 @@ export { trigger, type Trigger } from "./trigger-core.ts";
 export * from "./generated/triggers.ts";
 export * from "./generated/links.ts";
 
+/** Operand references travel with the combinator: a technology named inside an
+ * `and(...)` is referenced just as surely as one named at the top level. */
+function operandRefs<S extends ScopeName>(triggers: readonly Trigger<S>[]) {
+  return triggers.flatMap((operand) => [...operand.refs]);
+}
+
 export function and<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
-  return trigger([
-    block(
-      "AND",
-      triggers.flatMap((t) => [...t.entries])
-    ),
-  ]);
+  return trigger(
+    [
+      block(
+        "AND",
+        triggers.flatMap((t) => [...t.entries])
+      ),
+    ],
+    operandRefs(triggers)
+  );
 }
 
 export function or<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
-  return trigger([
-    block(
-      "OR",
-      triggers.flatMap((operand) =>
-        operand.entries.length === 1 ? [...operand.entries] : [block("AND", [...operand.entries])]
-      )
-    ),
-  ]);
+  return trigger(
+    [
+      block(
+        "OR",
+        triggers.flatMap((operand) =>
+          operand.entries.length === 1 ? [...operand.entries] : [block("AND", [...operand.entries])]
+        )
+      ),
+    ],
+    operandRefs(triggers)
+  );
 }
 
 export function not<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {
-  return trigger([block("NOT", [...condition.entries])]);
+  return trigger([block("NOT", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -51,5 +63,5 @@ export function not<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {
 export function target<S extends ScopeName>(
   condition: Trigger<S>
 ): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network"> {
-  return trigger([block("target", [...condition.entries])]);
+  return trigger([block("target", [...condition.entries])], [...condition.refs]);
 }

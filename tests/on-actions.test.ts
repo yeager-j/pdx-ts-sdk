@@ -44,6 +44,31 @@ describe("on-action authoring", () => {
     expect(render(mod)).toEqual(render(mod));
   });
 
+  it("emits the same bytes when two collections bind one hook in either order", () => {
+    // Two `on()` calls for the same hook, split across collections. The list
+    // inside one call is author data; which call came first is layout, and
+    // layout must not reach the output (SDK-23).
+    const build = (reversed: boolean) => {
+      const events = namespace("on_action_test");
+      const zulu = events.defineCountryEvent({ id: 6, isTriggeredOnly: true });
+      const alpha = events.defineCountryEvent({ id: 7, isTriggeredOnly: true });
+      const first = collection(undefined, [on(onActions.onGameStartCountry, [zulu])]);
+      const second = collection(undefined, [on(onActions.onGameStartCountry, [alpha])]);
+      const hooks = reversed ? [second, first] : [first, second];
+      return render(buildMod(CONFIG, [collection("events", [zulu, alpha]), ...hooks])).get(
+        "common/on_actions/on_action_test_on_actions.txt"
+      );
+    };
+
+    expect(build(false)).toBe(build(true));
+    expect(build(false)).toMatchInlineSnapshot(`
+      "on_game_start_country = {
+      	events = { on_action_test.6 on_action_test.7 }
+      }
+      "
+    `);
+  });
+
   it("rejects duplicate registrations of one event on one hook", () => {
     const events = namespace("on_action_test");
     const event = events.defineCountryEvent({ id: 4, isTriggeredOnly: true });

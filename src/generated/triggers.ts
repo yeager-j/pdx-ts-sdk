@@ -6,6 +6,7 @@
 
 import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
 
+import type { ContentRefUse } from "../content-refs.ts";
 import { trigger, type Trigger } from "../trigger-core.ts";
 import type {
   AiAttitudeBehaviour,
@@ -221,7 +222,11 @@ export function additionalCrisisStrength(op: PdxOp, value: number): Trigger<Scop
  * ```
  */
 export function agreementPreset(value: AgreementPresetRef | string): Trigger<"agreement"> {
-  return trigger([kv("agreement_preset", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("agreement_preset", id)],
+    [{ targets: ["agreement_preset"], id, field: "agreement_preset" }]
+  );
 }
 
 /**
@@ -296,7 +301,7 @@ export function always(value: boolean = true): Trigger<ScopeName> {
  * ```
  */
 export function anyActiveFirstContact(condition: Trigger<"first_contact">): Trigger<"country"> {
-  return trigger([block("any_active_first_contact", [...condition.entries])]);
+  return trigger([block("any_active_first_contact", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -306,7 +311,7 @@ export function anyActiveFirstContact(condition: Trigger<"first_contact">): Trig
  * ```
  */
 export function anyAgreement(condition: Trigger<"agreement">): Trigger<"country" | "no_scope"> {
-  return trigger([block("any_agreement", [...condition.entries])]);
+  return trigger([block("any_agreement", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -316,7 +321,7 @@ export function anyAgreement(condition: Trigger<"agreement">): Trigger<"country"
  * ```
  */
 export function anyAmbientObject(condition: Trigger<"ambient_object">): Trigger<ScopeName> {
-  return trigger([block("any_ambient_object", [...condition.entries])]);
+  return trigger([block("any_ambient_object", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -328,7 +333,7 @@ export function anyAmbientObject(condition: Trigger<"ambient_object">): Trigger<
 export function anyArchaeologicalSite(
   condition: Trigger<"archaeological_site">
 ): Trigger<ScopeName> {
-  return trigger([block("any_archaeological_site", [...condition.entries])]);
+  return trigger([block("any_archaeological_site", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -338,7 +343,7 @@ export function anyArchaeologicalSite(
  * ```
  */
 export function anyAssociate(condition: Trigger<"country">): Trigger<"federation"> {
-  return trigger([block("any_associate", [...condition.entries])]);
+  return trigger([block("any_associate", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -348,7 +353,7 @@ export function anyAssociate(condition: Trigger<"country">): Trigger<"federation
  * ```
  */
 export function anyAstralRift(condition: Trigger<"astral_rift">): Trigger<ScopeName> {
-  return trigger([block("any_astral_rift", [...condition.entries])]);
+  return trigger([block("any_astral_rift", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -358,7 +363,7 @@ export function anyAstralRift(condition: Trigger<"astral_rift">): Trigger<ScopeN
  * ```
  */
 export function anyAttacker(condition: Trigger<"country">): Trigger<"war"> {
-  return trigger([block("any_attacker", [...condition.entries])]);
+  return trigger([block("any_attacker", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -368,7 +373,7 @@ export function anyAttacker(condition: Trigger<"country">): Trigger<"war"> {
  * ```
  */
 export function anyAvailableDebris(condition: Trigger<"debris">): Trigger<"country"> {
-  return trigger([block("any_available_debris", [...condition.entries])]);
+  return trigger([block("any_available_debris", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -378,7 +383,7 @@ export function anyAvailableDebris(condition: Trigger<"debris">): Trigger<"count
  * ```
  */
 export function anyBypass(condition: Trigger<"bypass">): Trigger<ScopeName> {
-  return trigger([block("any_bypass", [...condition.entries])]);
+  return trigger([block("any_bypass", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -388,7 +393,7 @@ export function anyBypass(condition: Trigger<"bypass">): Trigger<ScopeName> {
  * ```
  */
 export function anyBypassInSystem(condition: Trigger<"bypass">): Trigger<"system"> {
-  return trigger([block("any_bypass_in_system", [...condition.entries])]);
+  return trigger([block("any_bypass_in_system", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -398,7 +403,7 @@ export function anyBypassInSystem(condition: Trigger<"bypass">): Trigger<"system
  * ```
  */
 export function anyCombatantFleet(condition: Trigger<"fleet">): Trigger<"fleet"> {
-  return trigger([block("any_combatant_fleet", [...condition.entries])]);
+  return trigger([block("any_combatant_fleet", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -408,7 +413,7 @@ export function anyCombatantFleet(condition: Trigger<"fleet">): Trigger<"fleet">
  * ```
  */
 export function anyControlledColony(condition: Trigger<"colony">): Trigger<"country"> {
-  return trigger([block("any_controlled_colony", [...condition.entries])]);
+  return trigger([block("any_controlled_colony", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -418,7 +423,7 @@ export function anyControlledColony(condition: Trigger<"colony">): Trigger<"coun
  * ```
  */
 export function anyControlledFleet(condition: Trigger<"fleet">): Trigger<"country"> {
-  return trigger([block("any_controlled_fleet", [...condition.entries])]);
+  return trigger([block("any_controlled_fleet", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -428,7 +433,7 @@ export function anyControlledFleet(condition: Trigger<"fleet">): Trigger<"countr
  * ```
  */
 export function anyControlledPlanet(condition: Trigger<"planet">): Trigger<"country"> {
-  return trigger([block("any_controlled_planet", [...condition.entries])]);
+  return trigger([block("any_controlled_planet", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -438,7 +443,7 @@ export function anyControlledPlanet(condition: Trigger<"planet">): Trigger<"coun
  * ```
  */
 export function anyControlledShip(condition: Trigger<"ship">): Trigger<"country" | "fleet"> {
-  return trigger([block("any_controlled_ship", [...condition.entries])]);
+  return trigger([block("any_controlled_ship", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -448,7 +453,7 @@ export function anyControlledShip(condition: Trigger<"ship">): Trigger<"country"
  * ```
  */
 export function anyCouncilMember(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("any_council_member", [...condition.entries])]);
+  return trigger([block("any_council_member", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -458,7 +463,7 @@ export function anyCouncilMember(condition: Trigger<"country">): Trigger<ScopeNa
  * ```
  */
 export function anyCountry(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("any_country", [...condition.entries])]);
+  return trigger([block("any_country", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -468,7 +473,10 @@ export function anyCountry(condition: Trigger<"country">): Trigger<ScopeName> {
  * ```
  */
 export function anyCountryNeighborToSystem(condition: Trigger<"country">): Trigger<"system"> {
-  return trigger([block("any_country_neighbor_to_system", [...condition.entries])]);
+  return trigger(
+    [block("any_country_neighbor_to_system", [...condition.entries])],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -478,7 +486,7 @@ export function anyCountryNeighborToSystem(condition: Trigger<"country">): Trigg
  * ```
  */
 export function anyDefender(condition: Trigger<"country">): Trigger<"war"> {
-  return trigger([block("any_defender", [...condition.entries])]);
+  return trigger([block("any_defender", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -490,7 +498,7 @@ export function anyDefender(condition: Trigger<"country">): Trigger<"war"> {
 export function anyDeposit(
   condition: Trigger<"deposit">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_deposit", [...condition.entries])]);
+  return trigger([block("any_deposit", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -502,7 +510,7 @@ export function anyDeposit(
 export function anyEnslavedSpecies(
   condition: Trigger<"species">
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
-  return trigger([block("any_enslaved_species", [...condition.entries])]);
+  return trigger([block("any_enslaved_species", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -512,7 +520,7 @@ export function anyEnslavedSpecies(
  * ```
  */
 export function anyEnvoy(condition: Trigger<"leader">): Trigger<"country"> {
-  return trigger([block("any_envoy", [...condition.entries])]);
+  return trigger([block("any_envoy", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -524,7 +532,7 @@ export function anyEnvoy(condition: Trigger<"leader">): Trigger<"country"> {
 export function anyEspionageAsset(
   condition: Trigger<"espionage_asset">
 ): Trigger<"espionage_operation" | "no_scope" | "spy_network"> {
-  return trigger([block("any_espionage_asset", [...condition.entries])]);
+  return trigger([block("any_espionage_asset", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -536,7 +544,7 @@ export function anyEspionageAsset(
 export function anyEspionageOperation(
   condition: Trigger<"espionage_operation">
 ): Trigger<"country" | "no_scope" | "spy_network"> {
-  return trigger([block("any_espionage_operation", [...condition.entries])]);
+  return trigger([block("any_espionage_operation", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -546,7 +554,7 @@ export function anyEspionageOperation(
  * ```
  */
 export function anyExhibit(condition: Trigger<"exhibit">): Trigger<"country"> {
-  return trigger([block("any_exhibit", [...condition.entries])]);
+  return trigger([block("any_exhibit", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -556,7 +564,10 @@ export function anyExhibit(condition: Trigger<"exhibit">): Trigger<"country"> {
  * ```
  */
 export function anyExistingSpeciesTraits(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("any_existing_species_traits", [...condition.entries])]);
+  return trigger(
+    [block("any_existing_species_traits", [...condition.entries])],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -566,7 +577,7 @@ export function anyExistingSpeciesTraits(condition: Trigger<"country">): Trigger
  * ```
  */
 export function anyFederation(condition: Trigger<"federation">): Trigger<ScopeName> {
-  return trigger([block("any_federation", [...condition.entries])]);
+  return trigger([block("any_federation", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -576,7 +587,7 @@ export function anyFederation(condition: Trigger<"federation">): Trigger<ScopeNa
  * ```
  */
 export function anyFederationAlly(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_federation_ally", [...condition.entries])]);
+  return trigger([block("any_federation_ally", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -586,7 +597,7 @@ export function anyFederationAlly(condition: Trigger<"country">): Trigger<"count
  * ```
  */
 export function anyFirstContact(condition: Trigger<"first_contact">): Trigger<"country"> {
-  return trigger([block("any_first_contact", [...condition.entries])]);
+  return trigger([block("any_first_contact", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -598,7 +609,7 @@ export function anyFirstContact(condition: Trigger<"first_contact">): Trigger<"c
 export function anyFleetInOrbit(
   condition: Trigger<"fleet">
 ): Trigger<"carrier" | "megastructure" | "planet" | "ship" | "starbase"> {
-  return trigger([block("any_fleet_in_orbit", [...condition.entries])]);
+  return trigger([block("any_fleet_in_orbit", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -608,7 +619,7 @@ export function anyFleetInOrbit(
  * ```
  */
 export function anyFleetInSystem(condition: Trigger<"fleet">): Trigger<"system"> {
-  return trigger([block("any_fleet_in_system", [...condition.entries])]);
+  return trigger([block("any_fleet_in_system", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -618,7 +629,7 @@ export function anyFleetInSystem(condition: Trigger<"fleet">): Trigger<"system">
  * ```
  */
 export function anyGalaxyFleet(condition: Trigger<"fleet">): Trigger<ScopeName> {
-  return trigger([block("any_galaxy_fleet", [...condition.entries])]);
+  return trigger([block("any_galaxy_fleet", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -628,7 +639,7 @@ export function anyGalaxyFleet(condition: Trigger<"fleet">): Trigger<ScopeName> 
  * ```
  */
 export function anyGalaxyPlanet(condition: Trigger<"planet">): Trigger<ScopeName> {
-  return trigger([block("any_galaxy_planet", [...condition.entries])]);
+  return trigger([block("any_galaxy_planet", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -638,7 +649,7 @@ export function anyGalaxyPlanet(condition: Trigger<"planet">): Trigger<ScopeName
  * ```
  */
 export function anyGalaxySector(condition: Trigger<"sector">): Trigger<ScopeName> {
-  return trigger([block("any_galaxy_sector", [...condition.entries])]);
+  return trigger([block("any_galaxy_sector", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -648,7 +659,7 @@ export function anyGalaxySector(condition: Trigger<"sector">): Trigger<ScopeName
  * ```
  */
 export function anyGalaxySpecies(condition: Trigger<"species">): Trigger<ScopeName> {
-  return trigger([block("any_galaxy_species", [...condition.entries])]);
+  return trigger([block("any_galaxy_species", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -658,7 +669,7 @@ export function anyGalaxySpecies(condition: Trigger<"species">): Trigger<ScopeNa
  * ```
  */
 export function anyGalcomMember(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("any_galcom_member", [...condition.entries])]);
+  return trigger([block("any_galcom_member", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -670,7 +681,10 @@ export function anyGalcomMember(condition: Trigger<"country">): Trigger<ScopeNam
 export function anyGroundCombatAttacker(
   condition: Trigger<"army">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_ground_combat_attacker", [...condition.entries])]);
+  return trigger(
+    [block("any_ground_combat_attacker", [...condition.entries])],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -682,7 +696,10 @@ export function anyGroundCombatAttacker(
 export function anyGroundCombatDefender(
   condition: Trigger<"army">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_ground_combat_defender", [...condition.entries])]);
+  return trigger(
+    [block("any_ground_combat_defender", [...condition.entries])],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -692,7 +709,7 @@ export function anyGroundCombatDefender(
  * ```
  */
 export function anyIssuedMission(condition: Trigger<"mission">): Trigger<"country"> {
-  return trigger([block("any_issued_mission", [...condition.entries])]);
+  return trigger([block("any_issued_mission", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -702,7 +719,7 @@ export function anyIssuedMission(condition: Trigger<"mission">): Trigger<"countr
  * ```
  */
 export function anyJobPopGroup(condition: Trigger<"pop_group">): Trigger<"pop_job"> {
-  return trigger([block("any_job_pop_group", [...condition.entries])]);
+  return trigger([block("any_job_pop_group", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -712,7 +729,7 @@ export function anyJobPopGroup(condition: Trigger<"pop_group">): Trigger<"pop_jo
  * ```
  */
 export function anyMegastructure(condition: Trigger<"megastructure">): Trigger<ScopeName> {
-  return trigger([block("any_megastructure", [...condition.entries])]);
+  return trigger([block("any_megastructure", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -722,7 +739,7 @@ export function anyMegastructure(condition: Trigger<"megastructure">): Trigger<S
  * ```
  */
 export function anyMember(condition: Trigger<"country">): Trigger<"federation"> {
-  return trigger([block("any_member", [...condition.entries])]);
+  return trigger([block("any_member", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -734,7 +751,7 @@ export function anyMember(condition: Trigger<"country">): Trigger<"federation"> 
 export function anyMoon(
   condition: Trigger<"planet">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_moon", [...condition.entries])]);
+  return trigger([block("any_moon", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -744,7 +761,7 @@ export function anyMoon(
  * ```
  */
 export function anyNeighborCountry(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_neighbor_country", [...condition.entries])]);
+  return trigger([block("any_neighbor_country", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -754,7 +771,7 @@ export function anyNeighborCountry(condition: Trigger<"country">): Trigger<"coun
  * ```
  */
 export function anyNeighborSystem(condition: Trigger<"system">): Trigger<"system"> {
-  return trigger([block("any_neighbor_system", [...condition.entries])]);
+  return trigger([block("any_neighbor_system", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -764,7 +781,10 @@ export function anyNeighborSystem(condition: Trigger<"system">): Trigger<"system
  * ```
  */
 export function anyNeighborSystemEuclidean(condition: Trigger<"system">): Trigger<"system"> {
-  return trigger([block("any_neighbor_system_euclidean", [...condition.entries])]);
+  return trigger(
+    [block("any_neighbor_system_euclidean", [...condition.entries])],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -776,7 +796,10 @@ export function anyNeighborSystemEuclidean(condition: Trigger<"system">): Trigge
 export function anyObservedPreFtlWithinBorder(
   condition: Trigger<"country">
 ): Trigger<"country" | "sector"> {
-  return trigger([block("any_observed_pre_ftl_within_border", [...condition.entries])]);
+  return trigger(
+    [block("any_observed_pre_ftl_within_border", [...condition.entries])],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -786,7 +809,7 @@ export function anyObservedPreFtlWithinBorder(
  * ```
  */
 export function anyOrbitalStation(condition: Trigger<"fleet">): Trigger<"country" | "system"> {
-  return trigger([block("any_orbital_station", [...condition.entries])]);
+  return trigger([block("any_orbital_station", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -796,7 +819,7 @@ export function anyOrbitalStation(condition: Trigger<"fleet">): Trigger<"country
  * ```
  */
 export function anyOwnedArmy(condition: Trigger<"army">): Trigger<"country"> {
-  return trigger([block("any_owned_army", [...condition.entries])]);
+  return trigger([block("any_owned_army", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -806,7 +829,7 @@ export function anyOwnedArmy(condition: Trigger<"army">): Trigger<"country"> {
  * ```
  */
 export function anyOwnedColony(condition: Trigger<"colony">): Trigger<"country" | "sector"> {
-  return trigger([block("any_owned_colony", [...condition.entries])]);
+  return trigger([block("any_owned_colony", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -816,7 +839,7 @@ export function anyOwnedColony(condition: Trigger<"colony">): Trigger<"country" 
  * ```
  */
 export function anyOwnedContract(condition: Trigger<"mission">): Trigger<"country"> {
-  return trigger([block("any_owned_contract", [...condition.entries])]);
+  return trigger([block("any_owned_contract", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -826,7 +849,7 @@ export function anyOwnedContract(condition: Trigger<"mission">): Trigger<"countr
  * ```
  */
 export function anyOwnedDesign(condition: Trigger<"design">): Trigger<"country"> {
-  return trigger([block("any_owned_design", [...condition.entries])]);
+  return trigger([block("any_owned_design", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -836,7 +859,7 @@ export function anyOwnedDesign(condition: Trigger<"design">): Trigger<"country">
  * ```
  */
 export function anyOwnedFleet(condition: Trigger<"fleet">): Trigger<"country"> {
-  return trigger([block("any_owned_fleet", [...condition.entries])]);
+  return trigger([block("any_owned_fleet", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -846,7 +869,7 @@ export function anyOwnedFleet(condition: Trigger<"fleet">): Trigger<"country"> {
  * ```
  */
 export function anyOwnedLeader(condition: Trigger<"leader">): Trigger<"country"> {
-  return trigger([block("any_owned_leader", [...condition.entries])]);
+  return trigger([block("any_owned_leader", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -856,7 +879,7 @@ export function anyOwnedLeader(condition: Trigger<"leader">): Trigger<"country">
  * ```
  */
 export function anyOwnedMegastructure(condition: Trigger<"megastructure">): Trigger<"country"> {
-  return trigger([block("any_owned_megastructure", [...condition.entries])]);
+  return trigger([block("any_owned_megastructure", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -866,7 +889,7 @@ export function anyOwnedMegastructure(condition: Trigger<"megastructure">): Trig
  * ```
  */
 export function anyOwnedMission(condition: Trigger<"mission">): Trigger<"country"> {
-  return trigger([block("any_owned_mission", [...condition.entries])]);
+  return trigger([block("any_owned_mission", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -876,7 +899,10 @@ export function anyOwnedMission(condition: Trigger<"mission">): Trigger<"country
  * ```
  */
 export function anyOwnedNonprimaryStarbase(condition: Trigger<"starbase">): Trigger<"country"> {
-  return trigger([block("any_owned_nonprimary_starbase", [...condition.entries])]);
+  return trigger(
+    [block("any_owned_nonprimary_starbase", [...condition.entries])],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -886,7 +912,7 @@ export function anyOwnedNonprimaryStarbase(condition: Trigger<"starbase">): Trig
  * ```
  */
 export function anyOwnedPlanet(condition: Trigger<"planet">): Trigger<"country" | "sector"> {
-  return trigger([block("any_owned_planet", [...condition.entries])]);
+  return trigger([block("any_owned_planet", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -900,7 +926,7 @@ export function anyOwnedPopGroup(
 ): Trigger<
   "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
 > {
-  return trigger([block("any_owned_pop_group", [...condition.entries])]);
+  return trigger([block("any_owned_pop_group", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -912,7 +938,7 @@ export function anyOwnedPopGroup(
 export function anyOwnedPopJob(
   condition: Trigger<"pop_job">
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "sector" | "ship" | "system"> {
-  return trigger([block("any_owned_pop_job", [...condition.entries])]);
+  return trigger([block("any_owned_pop_job", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -922,7 +948,7 @@ export function anyOwnedPopJob(
  * ```
  */
 export function anyOwnedPopSpecies(condition: Trigger<"species">): Trigger<"country"> {
-  return trigger([block("any_owned_pop_species", [...condition.entries])]);
+  return trigger([block("any_owned_pop_species", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -932,7 +958,7 @@ export function anyOwnedPopSpecies(condition: Trigger<"species">): Trigger<"coun
  * ```
  */
 export function anyOwnedSector(condition: Trigger<"sector">): Trigger<"country"> {
-  return trigger([block("any_owned_sector", [...condition.entries])]);
+  return trigger([block("any_owned_sector", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -942,7 +968,7 @@ export function anyOwnedSector(condition: Trigger<"sector">): Trigger<"country">
  * ```
  */
 export function anyOwnedShip(condition: Trigger<"ship">): Trigger<"country" | "fleet"> {
-  return trigger([block("any_owned_ship", [...condition.entries])]);
+  return trigger([block("any_owned_ship", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -954,7 +980,7 @@ export function anyOwnedShip(condition: Trigger<"ship">): Trigger<"country" | "f
 export function anyOwnedSpecies(
   condition: Trigger<"species">
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
-  return trigger([block("any_owned_species", [...condition.entries])]);
+  return trigger([block("any_owned_species", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -964,7 +990,7 @@ export function anyOwnedSpecies(
  * ```
  */
 export function anyOwnedStarbase(condition: Trigger<"starbase">): Trigger<"country"> {
-  return trigger([block("any_owned_starbase", [...condition.entries])]);
+  return trigger([block("any_owned_starbase", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -976,7 +1002,10 @@ export function anyOwnedStarbase(condition: Trigger<"starbase">): Trigger<"count
 export function anyOwnedStormInfluenceField(
   condition: Trigger<"cosmic_storm_influence_field">
 ): Trigger<"country"> {
-  return trigger([block("any_owned_storm_influence_field", [...condition.entries])]);
+  return trigger(
+    [block("any_owned_storm_influence_field", [...condition.entries])],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -988,7 +1017,7 @@ export function anyOwnedStormInfluenceField(
 export function anyPlanetArmy(
   condition: Trigger<"army">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_planet_army", [...condition.entries])]);
+  return trigger([block("any_planet_army", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -998,7 +1027,7 @@ export function anyPlanetArmy(
  * ```
  */
 export function anyPlanetWithinBorder(condition: Trigger<"planet">): Trigger<"country"> {
-  return trigger([block("any_planet_within_border", [...condition.entries])]);
+  return trigger([block("any_planet_within_border", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1008,7 +1037,7 @@ export function anyPlanetWithinBorder(condition: Trigger<"planet">): Trigger<"co
  * ```
  */
 export function anyPlayableCountry(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("any_playable_country", [...condition.entries])]);
+  return trigger([block("any_playable_country", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1018,7 +1047,7 @@ export function anyPlayableCountry(condition: Trigger<"country">): Trigger<Scope
  * ```
  */
 export function anyPoolLeader(condition: Trigger<"leader">): Trigger<"country"> {
-  return trigger([block("any_pool_leader", [...condition.entries])]);
+  return trigger([block("any_pool_leader", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1028,7 +1057,7 @@ export function anyPoolLeader(condition: Trigger<"leader">): Trigger<"country"> 
  * ```
  */
 export function anyPopFaction(condition: Trigger<"pop_faction">): Trigger<"country"> {
-  return trigger([block("any_pop_faction", [...condition.entries])]);
+  return trigger([block("any_pop_faction", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1040,7 +1069,7 @@ export function anyPopFaction(condition: Trigger<"pop_faction">): Trigger<"count
 export function anyPreFtlWithinBorder(
   condition: Trigger<"country">
 ): Trigger<"country" | "sector"> {
-  return trigger([block("any_pre_ftl_within_border", [...condition.entries])]);
+  return trigger([block("any_pre_ftl_within_border", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1050,7 +1079,7 @@ export function anyPreFtlWithinBorder(
  * ```
  */
 export function anyRelation(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_relation", [...condition.entries])]);
+  return trigger([block("any_relation", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1060,7 +1089,7 @@ export function anyRelation(condition: Trigger<"country">): Trigger<"country"> {
  * ```
  */
 export function anyRimSystem(condition: Trigger<"system">): Trigger<ScopeName> {
-  return trigger([block("any_rim_system", [...condition.entries])]);
+  return trigger([block("any_rim_system", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1070,7 +1099,7 @@ export function anyRimSystem(condition: Trigger<"system">): Trigger<ScopeName> {
  * ```
  */
 export function anyRivalCountry(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_rival_country", [...condition.entries])]);
+  return trigger([block("any_rival_country", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1080,7 +1109,7 @@ export function anyRivalCountry(condition: Trigger<"country">): Trigger<"country
  * ```
  */
 export function anyShipInSystem(condition: Trigger<"ship">): Trigger<"system"> {
-  return trigger([block("any_ship_in_system", [...condition.entries])]);
+  return trigger([block("any_ship_in_system", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1090,7 +1119,7 @@ export function anyShipInSystem(condition: Trigger<"ship">): Trigger<"system"> {
  * ```
  */
 export function anySituation(condition: Trigger<"situation">): Trigger<"country"> {
-  return trigger([block("any_situation", [...condition.entries])]);
+  return trigger([block("any_situation", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1100,7 +1129,7 @@ export function anySituation(condition: Trigger<"situation">): Trigger<"country"
  * ```
  */
 export function anySpeciesPopGroup(condition: Trigger<"pop_group">): Trigger<"species"> {
-  return trigger([block("any_species_pop_group", [...condition.entries])]);
+  return trigger([block("any_species_pop_group", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1110,7 +1139,7 @@ export function anySpeciesPopGroup(condition: Trigger<"pop_group">): Trigger<"sp
  * ```
  */
 export function anySpynetwork(condition: Trigger<"spy_network">): Trigger<"country" | "no_scope"> {
-  return trigger([block("any_spynetwork", [...condition.entries])]);
+  return trigger([block("any_spynetwork", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1120,7 +1149,7 @@ export function anySpynetwork(condition: Trigger<"spy_network">): Trigger<"count
  * ```
  */
 export function anyStarbaseInNetwork(condition: Trigger<"starbase">): Trigger<"starbase"> {
-  return trigger([block("any_starbase_in_network", [...condition.entries])]);
+  return trigger([block("any_starbase_in_network", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1130,7 +1159,7 @@ export function anyStarbaseInNetwork(condition: Trigger<"starbase">): Trigger<"s
  * ```
  */
 export function anyStarbaseInSystem(condition: Trigger<"starbase">): Trigger<"system"> {
-  return trigger([block("any_starbase_in_system", [...condition.entries])]);
+  return trigger([block("any_starbase_in_system", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1140,7 +1169,7 @@ export function anyStarbaseInSystem(condition: Trigger<"starbase">): Trigger<"sy
  * ```
  */
 export function anySubject(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("any_subject", [...condition.entries])]);
+  return trigger([block("any_subject", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1150,7 +1179,7 @@ export function anySubject(condition: Trigger<"country">): Trigger<"country"> {
  * ```
  */
 export function anySystem(condition: Trigger<"system">): Trigger<ScopeName> {
-  return trigger([block("any_system", [...condition.entries])]);
+  return trigger([block("any_system", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1160,7 +1189,7 @@ export function anySystem(condition: Trigger<"system">): Trigger<ScopeName> {
  * ```
  */
 export function anySystemAmbientObject(condition: Trigger<"ambient_object">): Trigger<"system"> {
-  return trigger([block("any_system_ambient_object", [...condition.entries])]);
+  return trigger([block("any_system_ambient_object", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1172,7 +1201,10 @@ export function anySystemAmbientObject(condition: Trigger<"ambient_object">): Tr
 export function anySystemInCosmicStormInfluenceField(
   condition: Trigger<"system">
 ): Trigger<"cosmic_storm_influence_field"> {
-  return trigger([block("any_system_in_cosmic_storm_influence_field", [...condition.entries])]);
+  return trigger(
+    [block("any_system_in_cosmic_storm_influence_field", [...condition.entries])],
+    [...condition.refs]
+  );
 }
 
 /**
@@ -1182,7 +1214,7 @@ export function anySystemInCosmicStormInfluenceField(
  * ```
  */
 export function anySystemMegastructure(condition: Trigger<"megastructure">): Trigger<"system"> {
-  return trigger([block("any_system_megastructure", [...condition.entries])]);
+  return trigger([block("any_system_megastructure", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1192,7 +1224,7 @@ export function anySystemMegastructure(condition: Trigger<"megastructure">): Tri
  * ```
  */
 export function anySystemPlanet(condition: Trigger<"planet">): Trigger<"system"> {
-  return trigger([block("any_system_planet", [...condition.entries])]);
+  return trigger([block("any_system_planet", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1202,7 +1234,7 @@ export function anySystemPlanet(condition: Trigger<"planet">): Trigger<"system">
  * ```
  */
 export function anySystemPlanetColony(condition: Trigger<"colony">): Trigger<"system"> {
-  return trigger([block("any_system_planet_colony", [...condition.entries])]);
+  return trigger([block("any_system_planet_colony", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1212,7 +1244,7 @@ export function anySystemPlanetColony(condition: Trigger<"colony">): Trigger<"sy
  * ```
  */
 export function anySystemShipColony(condition: Trigger<"colony">): Trigger<"system"> {
-  return trigger([block("any_system_ship_colony", [...condition.entries])]);
+  return trigger([block("any_system_ship_colony", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1222,7 +1254,7 @@ export function anySystemShipColony(condition: Trigger<"colony">): Trigger<"syst
  * ```
  */
 export function anySystemWithAura(condition: Trigger<"system">): Trigger<"country"> {
-  return trigger([block("any_system_with_aura", [...condition.entries])]);
+  return trigger([block("any_system_with_aura", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1232,7 +1264,7 @@ export function anySystemWithAura(condition: Trigger<"system">): Trigger<"countr
  * ```
  */
 export function anySystemWithinBorder(condition: Trigger<"system">): Trigger<"country" | "sector"> {
-  return trigger([block("any_system_within_border", [...condition.entries])]);
+  return trigger([block("any_system_within_border", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1244,7 +1276,7 @@ export function anySystemWithinBorder(condition: Trigger<"system">): Trigger<"co
 export function anyTargetingSituation(
   condition: Trigger<"situation">
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("any_targeting_situation", [...condition.entries])]);
+  return trigger([block("any_targeting_situation", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1257,7 +1289,7 @@ export function anyTargetingSituation(
 export function anyTraitOfSpecies(
   condition: Trigger<"species_trait">
 ): Trigger<"leader" | "pop_group" | "species"> {
-  return trigger([block("any_trait_of_species", [...condition.entries])]);
+  return trigger([block("any_trait_of_species", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1267,7 +1299,7 @@ export function anyTraitOfSpecies(
  * ```
  */
 export function anyWar(condition: Trigger<"war">): Trigger<"country"> {
-  return trigger([block("any_war", [...condition.entries])]);
+  return trigger([block("any_war", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1277,7 +1309,7 @@ export function anyWar(condition: Trigger<"war">): Trigger<"country"> {
  * ```
  */
 export function anyWarParticipant(condition: Trigger<"country">): Trigger<"war"> {
-  return trigger([block("any_war_participant", [...condition.entries])]);
+  return trigger([block("any_war_participant", [...condition.entries])], [...condition.refs]);
 }
 
 /**
@@ -1287,7 +1319,8 @@ export function anyWarParticipant(condition: Trigger<"country">): Trigger<"war">
  * ```
  */
 export function armyType(value: ArmyRef | string): Trigger<"army"> {
-  return trigger([kv("army_type", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("army_type", id)], [{ targets: ["army"], id, field: "army_type" }]);
 }
 
 /**
@@ -1410,13 +1443,15 @@ export interface CalcTrueIfArgs {
  */
 export function calcTrueIf(args: CalcTrueIfArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(
     typeof args.amount === "object"
       ? cmp("amount", args.amount[0], args.amount[1])
       : kv("amount", args.amount)
   );
   entries.push(...args.conditions.entries);
-  return trigger([block("calc_true_if", entries)]);
+  refs.push(...args.conditions.refs);
+  return trigger([block("calc_true_if", entries)], refs);
 }
 
 /**
@@ -1486,7 +1521,11 @@ export function canBeUpgraded(
  * ```
  */
 export function canBuyOnMarket(value: ResourceRef | string): Trigger<"country"> {
-  return trigger([kv("can_buy_on_market", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("can_buy_on_market", id)],
+    [{ targets: ["resource"], id, field: "can_buy_on_market" }]
+  );
 }
 
 /**
@@ -1496,7 +1535,11 @@ export function canBuyOnMarket(value: ResourceRef | string): Trigger<"country"> 
  * ```
  */
 export function canChangePolicy(value: PolicyRef | string): Trigger<"country"> {
-  return trigger([kv("can_change_policy", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("can_change_policy", id)],
+    [{ targets: ["policy"], id, field: "can_change_policy" }]
+  );
 }
 
 export interface CanColonizeArgs {
@@ -1545,14 +1588,21 @@ export interface CanCopyRandomTechFromArgs {
  */
 export function canCopyRandomTechFrom(args: CanCopyRandomTechFromArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(kv("who", args.who));
   if (args.category !== undefined) {
-    entries.push(kv("category", refId(args.category)));
+    const id1 = refId(args.category);
+    entries.push(kv("category", id1));
+    refs.push({
+      targets: ["technology_category"],
+      id: id1,
+      field: "can_copy_random_tech_from.category",
+    });
   }
   if (args.area !== undefined) {
     entries.push(kv("area", args.area));
   }
-  return trigger([block("can_copy_random_tech_from", entries)]);
+  return trigger([block("can_copy_random_tech_from", entries)], refs);
 }
 
 export interface CanDeclareWarArgs {
@@ -1571,9 +1621,12 @@ export interface CanDeclareWarArgs {
  */
 export function canDeclareWar(args: CanDeclareWarArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(kv("target", args.target));
-  entries.push(kv("attacker_war_goal", refId(args.attackerWarGoal)));
-  return trigger([block("can_declare_war", entries)]);
+  const id1 = refId(args.attackerWarGoal);
+  entries.push(kv("attacker_war_goal", id1));
+  refs.push({ targets: ["war_goal"], id: id1, field: "can_declare_war.attacker_war_goal" });
+  return trigger([block("can_declare_war", entries)], refs);
 }
 
 /**
@@ -1583,7 +1636,11 @@ export function canDeclareWar(args: CanDeclareWarArgs): Trigger<"country"> {
  * ```
  */
 export function canGiveSpecimen(value: SpecimenRef | string): Trigger<"country"> {
-  return trigger([kv("can_give_specimen", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("can_give_specimen", id)],
+    [{ targets: ["specimen"], id, field: "can_give_specimen" }]
+  );
 }
 
 /**
@@ -1638,7 +1695,11 @@ export function canLockBeRenewed(value: boolean = true): Trigger<"bypass"> {
  * ```
  */
 export function canResearchTechnology(value: TechnologyRef | string): Trigger<"country"> {
-  return trigger([kv("can_research_technology", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("can_research_technology", id)],
+    [{ targets: ["technology"], id, field: "can_research_technology" }]
+  );
 }
 
 export interface CanResearchTierArgs {
@@ -1674,9 +1735,12 @@ export interface CanSetPolicyArgs {
  */
 export function canSetPolicy(args: CanSetPolicyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("policy", refId(args.policy)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.policy);
+  entries.push(kv("policy", id0));
+  refs.push({ targets: ["policy"], id: id0, field: "can_set_policy.policy" });
   entries.push(kv("option", args.option));
-  return trigger([block("can_set_policy", entries)]);
+  return trigger([block("can_set_policy", entries)], refs);
 }
 
 /**
@@ -1696,7 +1760,11 @@ export function canSetSituationApproach(value: SituationApproach): Trigger<"situ
  * ```
  */
 export function canWorkSpecificJob(value: JobRef | string): Trigger<"pop_group"> {
-  return trigger([kv("can_work_specific_job", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("can_work_specific_job", id)],
+    [{ targets: ["job"], id, field: "can_work_specific_job" }]
+  );
 }
 
 /**
@@ -1738,7 +1806,11 @@ export function carrierIsType(
 export function categoryLastPickedTradition(
   value: TraditionCategoryRef | string
 ): Trigger<"country"> {
-  return trigger([kv("category_last_picked_tradition", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("category_last_picked_tradition", id)],
+    [{ targets: ["tradition_category"], id, field: "category_last_picked_tradition" }]
+  );
 }
 
 export interface CheckGalaxySetupValueArgs {
@@ -1988,7 +2060,11 @@ export function checkVariableArithmetic(
  * ```
  */
 export function cityGraphicalCulture(value: GraphicalCultureRef | string): Trigger<"country"> {
-  return trigger([kv("city_graphical_culture", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("city_graphical_culture", id)],
+    [{ targets: ["graphical_culture"], id, field: "city_graphical_culture" }]
+  );
 }
 
 /**
@@ -2023,6 +2099,7 @@ export interface ClosestSystemArgs {
  */
 export function closestSystem(args: ClosestSystemArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.minSteps !== undefined) {
     entries.push(
       typeof args.minSteps === "object"
@@ -2042,9 +2119,11 @@ export function closestSystem(args: ClosestSystemArgs): Trigger<ScopeName> {
   }
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(...args.conditions.entries);
-  return trigger([block("closest_system", entries)]);
+  refs.push(...args.conditions.refs);
+  return trigger([block("closest_system", entries)], refs);
 }
 
 /**
@@ -2138,9 +2217,12 @@ export interface ConditionalTooltipArgs {
 /** The enclosed trigger will be completely ignored if the condition in "trigger" isn't true. Useful to hide part of tooltips that are not relevant. */
 export function conditionalTooltip(args: ConditionalTooltipArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(block("trigger", [...args.trigger.entries]));
+  refs.push(...args.trigger.refs);
   entries.push(...args.conditions.entries);
-  return trigger([block("conditional_tooltip", entries)]);
+  refs.push(...args.conditions.refs);
+  return trigger([block("conditional_tooltip", entries)], refs);
 }
 
 /**
@@ -2219,15 +2301,17 @@ export interface CountActiveFirstContactArgs {
  */
 export function countActiveFirstContact(args: CountActiveFirstContactArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_active_first_contact", entries)]);
+  return trigger([block("count_active_first_contact", entries)], refs);
 }
 
 export interface CountAgreementArgs {
@@ -2246,15 +2330,17 @@ export interface CountAgreementArgs {
  */
 export function countAgreement(args: CountAgreementArgs): Trigger<"country" | "no_scope"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_agreement", entries)]);
+  return trigger([block("count_agreement", entries)], refs);
 }
 
 export interface CountAmbientObjectArgs {
@@ -2273,15 +2359,17 @@ export interface CountAmbientObjectArgs {
  */
 export function countAmbientObject(args: CountAmbientObjectArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_ambient_object", entries)]);
+  return trigger([block("count_ambient_object", entries)], refs);
 }
 
 export interface CountArchaeologicalSiteArgs {
@@ -2300,15 +2388,17 @@ export interface CountArchaeologicalSiteArgs {
  */
 export function countArchaeologicalSite(args: CountArchaeologicalSiteArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_archaeological_site", entries)]);
+  return trigger([block("count_archaeological_site", entries)], refs);
 }
 
 export interface CountAssociateArgs {
@@ -2327,15 +2417,17 @@ export interface CountAssociateArgs {
  */
 export function countAssociate(args: CountAssociateArgs): Trigger<"federation"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_associate", entries)]);
+  return trigger([block("count_associate", entries)], refs);
 }
 
 export interface CountAstralRiftArgs {
@@ -2354,15 +2446,17 @@ export interface CountAstralRiftArgs {
  */
 export function countAstralRift(args: CountAstralRiftArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_astral_rift", entries)]);
+  return trigger([block("count_astral_rift", entries)], refs);
 }
 
 export interface CountAttackerArgs {
@@ -2381,15 +2475,17 @@ export interface CountAttackerArgs {
  */
 export function countAttacker(args: CountAttackerArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_attacker", entries)]);
+  return trigger([block("count_attacker", entries)], refs);
 }
 
 /**
@@ -2418,15 +2514,17 @@ export interface CountAvailableDebrisArgs {
  */
 export function countAvailableDebris(args: CountAvailableDebrisArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_available_debris", entries)]);
+  return trigger([block("count_available_debris", entries)], refs);
 }
 
 export interface CountBypassArgs {
@@ -2445,15 +2543,17 @@ export interface CountBypassArgs {
  */
 export function countBypass(args: CountBypassArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_bypass", entries)]);
+  return trigger([block("count_bypass", entries)], refs);
 }
 
 export interface CountBypassInSystemArgs {
@@ -2472,15 +2572,17 @@ export interface CountBypassInSystemArgs {
  */
 export function countBypassInSystem(args: CountBypassInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_bypass_in_system", entries)]);
+  return trigger([block("count_bypass_in_system", entries)], refs);
 }
 
 export interface CountCombatantFleetArgs {
@@ -2499,15 +2601,17 @@ export interface CountCombatantFleetArgs {
  */
 export function countCombatantFleet(args: CountCombatantFleetArgs): Trigger<"fleet"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_combatant_fleet", entries)]);
+  return trigger([block("count_combatant_fleet", entries)], refs);
 }
 
 /**
@@ -2537,15 +2641,17 @@ export interface CountControlledColonyArgs {
  */
 export function countControlledColony(args: CountControlledColonyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_controlled_colony", entries)]);
+  return trigger([block("count_controlled_colony", entries)], refs);
 }
 
 export interface CountControlledFleetArgs {
@@ -2564,15 +2670,17 @@ export interface CountControlledFleetArgs {
  */
 export function countControlledFleet(args: CountControlledFleetArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_controlled_fleet", entries)]);
+  return trigger([block("count_controlled_fleet", entries)], refs);
 }
 
 export interface CountControlledPlanetArgs {
@@ -2591,15 +2699,17 @@ export interface CountControlledPlanetArgs {
  */
 export function countControlledPlanet(args: CountControlledPlanetArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_controlled_planet", entries)]);
+  return trigger([block("count_controlled_planet", entries)], refs);
 }
 
 export interface CountControlledShipArgs {
@@ -2618,15 +2728,17 @@ export interface CountControlledShipArgs {
  */
 export function countControlledShip(args: CountControlledShipArgs): Trigger<"country" | "fleet"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_controlled_ship", entries)]);
+  return trigger([block("count_controlled_ship", entries)], refs);
 }
 
 export interface CountCosmicStormArgs {
@@ -2645,15 +2757,17 @@ export interface CountCosmicStormArgs {
  */
 export function countCosmicStorm(args: CountCosmicStormArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_cosmic_storm", entries)]);
+  return trigger([block("count_cosmic_storm", entries)], refs);
 }
 
 export interface CountCosmicStormEndPositionArgs {
@@ -2674,15 +2788,17 @@ export function countCosmicStormEndPosition(
   args: CountCosmicStormEndPositionArgs
 ): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_cosmic_storm_end_position", entries)]);
+  return trigger([block("count_cosmic_storm_end_position", entries)], refs);
 }
 
 export interface CountCosmicStormStartPositionArgs {
@@ -2703,15 +2819,17 @@ export function countCosmicStormStartPosition(
   args: CountCosmicStormStartPositionArgs
 ): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_cosmic_storm_start_position", entries)]);
+  return trigger([block("count_cosmic_storm_start_position", entries)], refs);
 }
 
 export interface CountCouncilMemberArgs {
@@ -2730,15 +2848,17 @@ export interface CountCouncilMemberArgs {
  */
 export function countCouncilMember(args: CountCouncilMemberArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_council_member", entries)]);
+  return trigger([block("count_council_member", entries)], refs);
 }
 
 export interface CountCountryArgs {
@@ -2757,15 +2877,17 @@ export interface CountCountryArgs {
  */
 export function countCountry(args: CountCountryArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_country", entries)]);
+  return trigger([block("count_country", entries)], refs);
 }
 
 export interface CountCountryNeighborToSystemArgs {
@@ -2786,15 +2908,17 @@ export function countCountryNeighborToSystem(
   args: CountCountryNeighborToSystemArgs
 ): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_country_neighbor_to_system", entries)]);
+  return trigger([block("count_country_neighbor_to_system", entries)], refs);
 }
 
 export interface CountDefenderArgs {
@@ -2813,15 +2937,17 @@ export interface CountDefenderArgs {
  */
 export function countDefender(args: CountDefenderArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_defender", entries)]);
+  return trigger([block("count_defender", entries)], refs);
 }
 
 export interface CountDepositArgs {
@@ -2842,15 +2968,17 @@ export function countDeposit(
   args: CountDepositArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_deposit", entries)]);
+  return trigger([block("count_deposit", entries)], refs);
 }
 
 export interface CountDepositsArgs {
@@ -2869,18 +2997,23 @@ export function countDeposits(
   args: CountDepositsArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.type !== undefined) {
-    entries.push(kv("type", refId(args.type)));
+    const id0 = refId(args.type);
+    entries.push(kv("type", id0));
+    refs.push({ targets: ["deposit"], id: id0, field: "count_deposits.type" });
   }
   if (args.category !== undefined) {
-    entries.push(kv("category", refId(args.category)));
+    const id1 = refId(args.category);
+    entries.push(kv("category", id1));
+    refs.push({ targets: ["deposit_category"], id: id1, field: "count_deposits.category" });
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_deposits", entries)]);
+  return trigger([block("count_deposits", entries)], refs);
 }
 
 /**
@@ -2912,15 +3045,17 @@ export function countEnslavedSpecies(
   args: CountEnslavedSpeciesArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_enslaved_species", entries)]);
+  return trigger([block("count_enslaved_species", entries)], refs);
 }
 
 export interface CountEnvoyArgs {
@@ -2939,15 +3074,17 @@ export interface CountEnvoyArgs {
  */
 export function countEnvoy(args: CountEnvoyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_envoy", entries)]);
+  return trigger([block("count_envoy", entries)], refs);
 }
 
 export interface CountEspionageAssetArgs {
@@ -2968,15 +3105,17 @@ export function countEspionageAsset(
   args: CountEspionageAssetArgs
 ): Trigger<"espionage_operation" | "no_scope" | "spy_network"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_espionage_asset", entries)]);
+  return trigger([block("count_espionage_asset", entries)], refs);
 }
 
 export interface CountEspionageOperationArgs {
@@ -2997,15 +3136,17 @@ export function countEspionageOperation(
   args: CountEspionageOperationArgs
 ): Trigger<"country" | "no_scope" | "spy_network"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_espionage_operation", entries)]);
+  return trigger([block("count_espionage_operation", entries)], refs);
 }
 
 export interface CountExactSpeciesArgs {
@@ -3023,15 +3164,17 @@ export function countExactSpecies(
   args: CountExactSpeciesArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_exact_species", entries)]);
+  return trigger([block("count_exact_species", entries)], refs);
 }
 
 export interface CountExhibitArgs {
@@ -3050,15 +3193,17 @@ export interface CountExhibitArgs {
  */
 export function countExhibit(args: CountExhibitArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_exhibit", entries)]);
+  return trigger([block("count_exhibit", entries)], refs);
 }
 
 export interface CountExistingSpeciesTraitsArgs {
@@ -3079,15 +3224,17 @@ export function countExistingSpeciesTraits(
   args: CountExistingSpeciesTraitsArgs
 ): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_existing_species_traits", entries)]);
+  return trigger([block("count_existing_species_traits", entries)], refs);
 }
 
 export interface CountFederationArgs {
@@ -3106,15 +3253,17 @@ export interface CountFederationArgs {
  */
 export function countFederation(args: CountFederationArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_federation", entries)]);
+  return trigger([block("count_federation", entries)], refs);
 }
 
 export interface CountFederationAllyArgs {
@@ -3133,15 +3282,17 @@ export interface CountFederationAllyArgs {
  */
 export function countFederationAlly(args: CountFederationAllyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_federation_ally", entries)]);
+  return trigger([block("count_federation_ally", entries)], refs);
 }
 
 export interface CountFirstContactArgs {
@@ -3160,15 +3311,17 @@ export interface CountFirstContactArgs {
  */
 export function countFirstContact(args: CountFirstContactArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_first_contact", entries)]);
+  return trigger([block("count_first_contact", entries)], refs);
 }
 
 export interface CountFleetInOrbitArgs {
@@ -3189,15 +3342,17 @@ export function countFleetInOrbit(
   args: CountFleetInOrbitArgs
 ): Trigger<"carrier" | "megastructure" | "planet" | "ship" | "starbase"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_fleet_in_orbit", entries)]);
+  return trigger([block("count_fleet_in_orbit", entries)], refs);
 }
 
 export interface CountFleetInSystemArgs {
@@ -3216,15 +3371,17 @@ export interface CountFleetInSystemArgs {
  */
 export function countFleetInSystem(args: CountFleetInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_fleet_in_system", entries)]);
+  return trigger([block("count_fleet_in_system", entries)], refs);
 }
 
 export interface CountGalaxyFleetArgs {
@@ -3243,15 +3400,17 @@ export interface CountGalaxyFleetArgs {
  */
 export function countGalaxyFleet(args: CountGalaxyFleetArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_galaxy_fleet", entries)]);
+  return trigger([block("count_galaxy_fleet", entries)], refs);
 }
 
 export interface CountGalaxyPlanetArgs {
@@ -3270,15 +3429,17 @@ export interface CountGalaxyPlanetArgs {
  */
 export function countGalaxyPlanet(args: CountGalaxyPlanetArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_galaxy_planet", entries)]);
+  return trigger([block("count_galaxy_planet", entries)], refs);
 }
 
 export interface CountGalaxySectorArgs {
@@ -3297,15 +3458,17 @@ export interface CountGalaxySectorArgs {
  */
 export function countGalaxySector(args: CountGalaxySectorArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_galaxy_sector", entries)]);
+  return trigger([block("count_galaxy_sector", entries)], refs);
 }
 
 export interface CountGalaxySpeciesArgs {
@@ -3324,15 +3487,17 @@ export interface CountGalaxySpeciesArgs {
  */
 export function countGalaxySpecies(args: CountGalaxySpeciesArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_galaxy_species", entries)]);
+  return trigger([block("count_galaxy_species", entries)], refs);
 }
 
 export interface CountGalcomMemberArgs {
@@ -3351,15 +3516,17 @@ export interface CountGalcomMemberArgs {
  */
 export function countGalcomMember(args: CountGalcomMemberArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_galcom_member", entries)]);
+  return trigger([block("count_galcom_member", entries)], refs);
 }
 
 export interface CountGroundCombatAttackerArgs {
@@ -3380,15 +3547,17 @@ export function countGroundCombatAttacker(
   args: CountGroundCombatAttackerArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_ground_combat_attacker", entries)]);
+  return trigger([block("count_ground_combat_attacker", entries)], refs);
 }
 
 export interface CountGroundCombatDefenderArgs {
@@ -3409,15 +3578,17 @@ export function countGroundCombatDefender(
   args: CountGroundCombatDefenderArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_ground_combat_defender", entries)]);
+  return trigger([block("count_ground_combat_defender", entries)], refs);
 }
 
 /**
@@ -3446,15 +3617,17 @@ export interface CountIssuedMissionArgs {
  */
 export function countIssuedMission(args: CountIssuedMissionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_issued_mission", entries)]);
+  return trigger([block("count_issued_mission", entries)], refs);
 }
 
 export interface CountJobPopGroupArgs {
@@ -3473,15 +3646,17 @@ export interface CountJobPopGroupArgs {
  */
 export function countJobPopGroup(args: CountJobPopGroupArgs): Trigger<"pop_job"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_job_pop_group", entries)]);
+  return trigger([block("count_job_pop_group", entries)], refs);
 }
 
 export interface CountMegastructureArgs {
@@ -3500,15 +3675,17 @@ export interface CountMegastructureArgs {
  */
 export function countMegastructure(args: CountMegastructureArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_megastructure", entries)]);
+  return trigger([block("count_megastructure", entries)], refs);
 }
 
 export interface CountMemberArgs {
@@ -3527,15 +3704,17 @@ export interface CountMemberArgs {
  */
 export function countMember(args: CountMemberArgs): Trigger<"federation"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_member", entries)]);
+  return trigger([block("count_member", entries)], refs);
 }
 
 export interface CountMoonArgs {
@@ -3554,15 +3733,17 @@ export interface CountMoonArgs {
  */
 export function countMoon(args: CountMoonArgs): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_moon", entries)]);
+  return trigger([block("count_moon", entries)], refs);
 }
 
 export interface CountNeighborCountryArgs {
@@ -3581,15 +3762,17 @@ export interface CountNeighborCountryArgs {
  */
 export function countNeighborCountry(args: CountNeighborCountryArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_neighbor_country", entries)]);
+  return trigger([block("count_neighbor_country", entries)], refs);
 }
 
 export interface CountNeighborSystemArgs {
@@ -3608,15 +3791,17 @@ export interface CountNeighborSystemArgs {
  */
 export function countNeighborSystem(args: CountNeighborSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_neighbor_system", entries)]);
+  return trigger([block("count_neighbor_system", entries)], refs);
 }
 
 export interface CountNeighborSystemEuclideanArgs {
@@ -3637,15 +3822,17 @@ export function countNeighborSystemEuclidean(
   args: CountNeighborSystemEuclideanArgs
 ): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_neighbor_system_euclidean", entries)]);
+  return trigger([block("count_neighbor_system_euclidean", entries)], refs);
 }
 
 export interface CountObservedPreFtlWithinBorderArgs {
@@ -3666,15 +3853,17 @@ export function countObservedPreFtlWithinBorder(
   args: CountObservedPreFtlWithinBorderArgs
 ): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_observed_pre_ftl_within_border", entries)]);
+  return trigger([block("count_observed_pre_ftl_within_border", entries)], refs);
 }
 
 export interface CountOrbitalStationArgs {
@@ -3693,15 +3882,17 @@ export interface CountOrbitalStationArgs {
  */
 export function countOrbitalStation(args: CountOrbitalStationArgs): Trigger<"country" | "system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_orbital_station", entries)]);
+  return trigger([block("count_orbital_station", entries)], refs);
 }
 
 export interface CountOwnedArmyArgs {
@@ -3720,15 +3911,17 @@ export interface CountOwnedArmyArgs {
  */
 export function countOwnedArmy(args: CountOwnedArmyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_army", entries)]);
+  return trigger([block("count_owned_army", entries)], refs);
 }
 
 export interface CountOwnedColonyArgs {
@@ -3747,15 +3940,17 @@ export interface CountOwnedColonyArgs {
  */
 export function countOwnedColony(args: CountOwnedColonyArgs): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_colony", entries)]);
+  return trigger([block("count_owned_colony", entries)], refs);
 }
 
 export interface CountOwnedContractArgs {
@@ -3774,15 +3969,17 @@ export interface CountOwnedContractArgs {
  */
 export function countOwnedContract(args: CountOwnedContractArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_contract", entries)]);
+  return trigger([block("count_owned_contract", entries)], refs);
 }
 
 export interface CountOwnedDesignArgs {
@@ -3801,15 +3998,17 @@ export interface CountOwnedDesignArgs {
  */
 export function countOwnedDesign(args: CountOwnedDesignArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_design", entries)]);
+  return trigger([block("count_owned_design", entries)], refs);
 }
 
 export interface CountOwnedFleetArgs {
@@ -3828,15 +4027,17 @@ export interface CountOwnedFleetArgs {
  */
 export function countOwnedFleet(args: CountOwnedFleetArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_fleet", entries)]);
+  return trigger([block("count_owned_fleet", entries)], refs);
 }
 
 export interface CountOwnedLeaderArgs {
@@ -3855,15 +4056,17 @@ export interface CountOwnedLeaderArgs {
  */
 export function countOwnedLeader(args: CountOwnedLeaderArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_leader", entries)]);
+  return trigger([block("count_owned_leader", entries)], refs);
 }
 
 export interface CountOwnedMegastructureArgs {
@@ -3882,15 +4085,17 @@ export interface CountOwnedMegastructureArgs {
  */
 export function countOwnedMegastructure(args: CountOwnedMegastructureArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_megastructure", entries)]);
+  return trigger([block("count_owned_megastructure", entries)], refs);
 }
 
 export interface CountOwnedMissionArgs {
@@ -3909,15 +4114,17 @@ export interface CountOwnedMissionArgs {
  */
 export function countOwnedMission(args: CountOwnedMissionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_mission", entries)]);
+  return trigger([block("count_owned_mission", entries)], refs);
 }
 
 export interface CountOwnedNonprimaryStarbaseArgs {
@@ -3938,15 +4145,17 @@ export function countOwnedNonprimaryStarbase(
   args: CountOwnedNonprimaryStarbaseArgs
 ): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_nonprimary_starbase", entries)]);
+  return trigger([block("count_owned_nonprimary_starbase", entries)], refs);
 }
 
 export interface CountOwnedPlanetArgs {
@@ -3965,15 +4174,17 @@ export interface CountOwnedPlanetArgs {
  */
 export function countOwnedPlanet(args: CountOwnedPlanetArgs): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_planet", entries)]);
+  return trigger([block("count_owned_planet", entries)], refs);
 }
 
 export interface CountOwnedPopAmountArgs {
@@ -3996,15 +4207,17 @@ export function countOwnedPopAmount(
   "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
 > {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_pop_amount", entries)]);
+  return trigger([block("count_owned_pop_amount", entries)], refs);
 }
 
 export interface CountOwnedPopGroupArgs {
@@ -4027,15 +4240,17 @@ export function countOwnedPopGroup(
   "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
 > {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_pop_group", entries)]);
+  return trigger([block("count_owned_pop_group", entries)], refs);
 }
 
 export interface CountOwnedPopJobArgs {
@@ -4056,15 +4271,17 @@ export function countOwnedPopJob(
   args: CountOwnedPopJobArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "sector" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_pop_job", entries)]);
+  return trigger([block("count_owned_pop_job", entries)], refs);
 }
 
 export interface CountOwnedPopSpeciesArgs {
@@ -4083,15 +4300,17 @@ export interface CountOwnedPopSpeciesArgs {
  */
 export function countOwnedPopSpecies(args: CountOwnedPopSpeciesArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_pop_species", entries)]);
+  return trigger([block("count_owned_pop_species", entries)], refs);
 }
 
 export interface CountOwnedSectorArgs {
@@ -4110,15 +4329,17 @@ export interface CountOwnedSectorArgs {
  */
 export function countOwnedSector(args: CountOwnedSectorArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_sector", entries)]);
+  return trigger([block("count_owned_sector", entries)], refs);
 }
 
 export interface CountOwnedShipArgs {
@@ -4137,15 +4358,17 @@ export interface CountOwnedShipArgs {
  */
 export function countOwnedShip(args: CountOwnedShipArgs): Trigger<"country" | "fleet"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_ship", entries)]);
+  return trigger([block("count_owned_ship", entries)], refs);
 }
 
 export interface CountOwnedSpeciesArgs {
@@ -4166,15 +4389,17 @@ export function countOwnedSpecies(
   args: CountOwnedSpeciesArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_species", entries)]);
+  return trigger([block("count_owned_species", entries)], refs);
 }
 
 export interface CountOwnedStarbaseArgs {
@@ -4193,15 +4418,17 @@ export interface CountOwnedStarbaseArgs {
  */
 export function countOwnedStarbase(args: CountOwnedStarbaseArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_starbase", entries)]);
+  return trigger([block("count_owned_starbase", entries)], refs);
 }
 
 export interface CountOwnedStormInfluenceFieldArgs {
@@ -4222,15 +4449,17 @@ export function countOwnedStormInfluenceField(
   args: CountOwnedStormInfluenceFieldArgs
 ): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_storm_influence_field", entries)]);
+  return trigger([block("count_owned_storm_influence_field", entries)], refs);
 }
 
 export interface CountOwnedWorkforceArgs {
@@ -4251,15 +4480,17 @@ export function countOwnedWorkforce(
   args: CountOwnedWorkforceArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "sector" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_owned_workforce", entries)]);
+  return trigger([block("count_owned_workforce", entries)], refs);
 }
 
 export interface CountPlanetArmyArgs {
@@ -4280,15 +4511,17 @@ export function countPlanetArmy(
   args: CountPlanetArmyArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_planet_army", entries)]);
+  return trigger([block("count_planet_army", entries)], refs);
 }
 
 export interface CountPlanetWithinBorderArgs {
@@ -4307,15 +4540,17 @@ export interface CountPlanetWithinBorderArgs {
  */
 export function countPlanetWithinBorder(args: CountPlanetWithinBorderArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_planet_within_border", entries)]);
+  return trigger([block("count_planet_within_border", entries)], refs);
 }
 
 export interface CountPlayableCountryArgs {
@@ -4334,15 +4569,17 @@ export interface CountPlayableCountryArgs {
  */
 export function countPlayableCountry(args: CountPlayableCountryArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_playable_country", entries)]);
+  return trigger([block("count_playable_country", entries)], refs);
 }
 
 export interface CountPoolLeaderArgs {
@@ -4361,15 +4598,17 @@ export interface CountPoolLeaderArgs {
  */
 export function countPoolLeader(args: CountPoolLeaderArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_pool_leader", entries)]);
+  return trigger([block("count_pool_leader", entries)], refs);
 }
 
 export interface CountPopFactionArgs {
@@ -4388,15 +4627,17 @@ export interface CountPopFactionArgs {
  */
 export function countPopFaction(args: CountPopFactionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_pop_faction", entries)]);
+  return trigger([block("count_pop_faction", entries)], refs);
 }
 
 export interface CountPotentialWarParticipantsArgs {
@@ -4417,8 +4658,10 @@ export function countPotentialWarParticipants(
   args: CountPotentialWarParticipantsArgs
 ): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(kv("attacker", args.attacker));
   entries.push(kv("defender", args.defender));
@@ -4428,7 +4671,7 @@ export function countPotentialWarParticipants(
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_potential_war_participants", entries)]);
+  return trigger([block("count_potential_war_participants", entries)], refs);
 }
 
 export interface CountPreFtlWithinBorderArgs {
@@ -4449,15 +4692,17 @@ export function countPreFtlWithinBorder(
   args: CountPreFtlWithinBorderArgs
 ): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_pre_ftl_within_border", entries)]);
+  return trigger([block("count_pre_ftl_within_border", entries)], refs);
 }
 
 export interface CountRelationArgs {
@@ -4476,15 +4721,17 @@ export interface CountRelationArgs {
  */
 export function countRelation(args: CountRelationArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_relation", entries)]);
+  return trigger([block("count_relation", entries)], refs);
 }
 
 export interface CountRimSystemArgs {
@@ -4503,15 +4750,17 @@ export interface CountRimSystemArgs {
  */
 export function countRimSystem(args: CountRimSystemArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_rim_system", entries)]);
+  return trigger([block("count_rim_system", entries)], refs);
 }
 
 export interface CountRivalCountryArgs {
@@ -4530,15 +4779,17 @@ export interface CountRivalCountryArgs {
  */
 export function countRivalCountry(args: CountRivalCountryArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_rival_country", entries)]);
+  return trigger([block("count_rival_country", entries)], refs);
 }
 
 export interface CountShipInSystemArgs {
@@ -4557,15 +4808,17 @@ export interface CountShipInSystemArgs {
  */
 export function countShipInSystem(args: CountShipInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_ship_in_system", entries)]);
+  return trigger([block("count_ship_in_system", entries)], refs);
 }
 
 export interface CountShipSizeInSystemArgs {
@@ -4585,15 +4838,17 @@ export interface CountShipSizeInSystemArgs {
  */
 export function countShipSizeInSystem(args: CountShipSizeInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_ship_size_in_system", entries)]);
+  return trigger([block("count_ship_size_in_system", entries)], refs);
 }
 
 export interface CountSituationArgs {
@@ -4612,15 +4867,17 @@ export interface CountSituationArgs {
  */
 export function countSituation(args: CountSituationArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_situation", entries)]);
+  return trigger([block("count_situation", entries)], refs);
 }
 
 export interface CountSpeciesArgs {
@@ -4638,15 +4895,17 @@ export function countSpecies(
   args: CountSpeciesArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_species", entries)]);
+  return trigger([block("count_species", entries)], refs);
 }
 
 export interface CountSpeciesPopGroupArgs {
@@ -4665,15 +4924,17 @@ export interface CountSpeciesPopGroupArgs {
  */
 export function countSpeciesPopGroup(args: CountSpeciesPopGroupArgs): Trigger<"species"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_species_pop_group", entries)]);
+  return trigger([block("count_species_pop_group", entries)], refs);
 }
 
 export interface CountSpeciesTraitsArgs {
@@ -4691,8 +4952,10 @@ export interface CountSpeciesTraitsArgs {
  */
 export function countSpeciesTraits(args: CountSpeciesTraitsArgs): Trigger<"pop_group" | "species"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   if (args.category !== undefined) {
     entries.push(kv("category", args.category));
@@ -4709,7 +4972,7 @@ export function countSpeciesTraits(args: CountSpeciesTraitsArgs): Trigger<"pop_g
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_species_traits", entries)]);
+  return trigger([block("count_species_traits", entries)], refs);
 }
 
 export interface CountSpynetworkArgs {
@@ -4728,15 +4991,17 @@ export interface CountSpynetworkArgs {
  */
 export function countSpynetwork(args: CountSpynetworkArgs): Trigger<"country" | "no_scope"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_spynetwork", entries)]);
+  return trigger([block("count_spynetwork", entries)], refs);
 }
 
 export interface CountStarbaseBuildingsArgs {
@@ -4755,18 +5020,21 @@ export function countStarbaseBuildings(
   args: CountStarbaseBuildingsArgs
 ): Trigger<"country" | "starbase" | "system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
   if (args.type !== undefined) {
-    entries.push(kv("type", refId(args.type)));
+    const id1 = refId(args.type);
+    entries.push(kv("type", id1));
+    refs.push({ targets: ["starbase_building"], id: id1, field: "count_starbase_buildings.type" });
   }
   if (args.includeBeingConstructed !== undefined) {
     entries.push(kv("include_being_constructed", args.includeBeingConstructed));
   }
-  return trigger([block("count_starbase_buildings", entries)]);
+  return trigger([block("count_starbase_buildings", entries)], refs);
 }
 
 export interface CountStarbaseInNetworkArgs {
@@ -4785,15 +5053,17 @@ export interface CountStarbaseInNetworkArgs {
  */
 export function countStarbaseInNetwork(args: CountStarbaseInNetworkArgs): Trigger<"starbase"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_starbase_in_network", entries)]);
+  return trigger([block("count_starbase_in_network", entries)], refs);
 }
 
 export interface CountStarbaseInSystemArgs {
@@ -4812,15 +5082,17 @@ export interface CountStarbaseInSystemArgs {
  */
 export function countStarbaseInSystem(args: CountStarbaseInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_starbase_in_system", entries)]);
+  return trigger([block("count_starbase_in_system", entries)], refs);
 }
 
 export interface CountStarbaseModulesArgs {
@@ -4839,18 +5111,21 @@ export function countStarbaseModules(
   args: CountStarbaseModulesArgs
 ): Trigger<"country" | "starbase" | "system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
   if (args.type !== undefined) {
-    entries.push(kv("type", refId(args.type)));
+    const id1 = refId(args.type);
+    entries.push(kv("type", id1));
+    refs.push({ targets: ["starbase_module"], id: id1, field: "count_starbase_modules.type" });
   }
   if (args.includeBeingConstructed !== undefined) {
     entries.push(kv("include_being_constructed", args.includeBeingConstructed));
   }
-  return trigger([block("count_starbase_modules", entries)]);
+  return trigger([block("count_starbase_modules", entries)], refs);
 }
 
 export interface CountStarbaseSizesArgs {
@@ -4869,13 +5144,20 @@ export interface CountStarbaseSizesArgs {
  */
 export function countStarbaseSizes(args: CountStarbaseSizesArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  entries.push(kv("starbase_size", refId(args.starbaseSize)));
-  return trigger([block("count_starbase_sizes", entries)]);
+  const id1 = refId(args.starbaseSize);
+  entries.push(kv("starbase_size", id1));
+  refs.push({
+    targets: ["ship_size.starbase"],
+    id: id1,
+    field: "count_starbase_sizes.starbase_size",
+  });
+  return trigger([block("count_starbase_sizes", entries)], refs);
 }
 
 export interface CountSubjectArgs {
@@ -4894,15 +5176,17 @@ export interface CountSubjectArgs {
  */
 export function countSubject(args: CountSubjectArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_subject", entries)]);
+  return trigger([block("count_subject", entries)], refs);
 }
 
 export interface CountSystemArgs {
@@ -4921,15 +5205,17 @@ export interface CountSystemArgs {
  */
 export function countSystem(args: CountSystemArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system", entries)]);
+  return trigger([block("count_system", entries)], refs);
 }
 
 export interface CountSystemAddedToStormArgs {
@@ -4948,15 +5234,17 @@ export interface CountSystemAddedToStormArgs {
  */
 export function countSystemAddedToStorm(args: CountSystemAddedToStormArgs): Trigger<"storm"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_added_to_storm", entries)]);
+  return trigger([block("count_system_added_to_storm", entries)], refs);
 }
 
 export interface CountSystemAmbientObjectArgs {
@@ -4975,15 +5263,17 @@ export interface CountSystemAmbientObjectArgs {
  */
 export function countSystemAmbientObject(args: CountSystemAmbientObjectArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_ambient_object", entries)]);
+  return trigger([block("count_system_ambient_object", entries)], refs);
 }
 
 export interface CountSystemInCosmicStormInfluenceFieldArgs {
@@ -5004,15 +5294,17 @@ export function countSystemInCosmicStormInfluenceField(
   args: CountSystemInCosmicStormInfluenceFieldArgs
 ): Trigger<"cosmic_storm_influence_field"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_in_cosmic_storm_influence_field", entries)]);
+  return trigger([block("count_system_in_cosmic_storm_influence_field", entries)], refs);
 }
 
 export interface CountSystemMegastructureArgs {
@@ -5031,15 +5323,17 @@ export interface CountSystemMegastructureArgs {
  */
 export function countSystemMegastructure(args: CountSystemMegastructureArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_megastructure", entries)]);
+  return trigger([block("count_system_megastructure", entries)], refs);
 }
 
 export interface CountSystemPlanetArgs {
@@ -5058,15 +5352,17 @@ export interface CountSystemPlanetArgs {
  */
 export function countSystemPlanet(args: CountSystemPlanetArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_planet", entries)]);
+  return trigger([block("count_system_planet", entries)], refs);
 }
 
 export interface CountSystemPlanetColonyArgs {
@@ -5085,15 +5381,17 @@ export interface CountSystemPlanetColonyArgs {
  */
 export function countSystemPlanetColony(args: CountSystemPlanetColonyArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_planet_colony", entries)]);
+  return trigger([block("count_system_planet_colony", entries)], refs);
 }
 
 export interface CountSystemRemovedFromStormArgs {
@@ -5114,15 +5412,17 @@ export function countSystemRemovedFromStorm(
   args: CountSystemRemovedFromStormArgs
 ): Trigger<"storm"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_removed_from_storm", entries)]);
+  return trigger([block("count_system_removed_from_storm", entries)], refs);
 }
 
 export interface CountSystemShipColonyArgs {
@@ -5141,15 +5441,17 @@ export interface CountSystemShipColonyArgs {
  */
 export function countSystemShipColony(args: CountSystemShipColonyArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_ship_colony", entries)]);
+  return trigger([block("count_system_ship_colony", entries)], refs);
 }
 
 export interface CountSystemWithAuraArgs {
@@ -5168,15 +5470,17 @@ export interface CountSystemWithAuraArgs {
  */
 export function countSystemWithAura(args: CountSystemWithAuraArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_with_aura", entries)]);
+  return trigger([block("count_system_with_aura", entries)], refs);
 }
 
 export interface CountSystemWithinBorderArgs {
@@ -5197,15 +5501,17 @@ export function countSystemWithinBorder(
   args: CountSystemWithinBorderArgs
 ): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_within_border", entries)]);
+  return trigger([block("count_system_within_border", entries)], refs);
 }
 
 export interface CountSystemWithinStormArgs {
@@ -5224,15 +5530,17 @@ export interface CountSystemWithinStormArgs {
  */
 export function countSystemWithinStorm(args: CountSystemWithinStormArgs): Trigger<"storm"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_system_within_storm", entries)]);
+  return trigger([block("count_system_within_storm", entries)], refs);
 }
 
 /**
@@ -5263,15 +5571,17 @@ export function countTargetingSituation(
   args: CountTargetingSituationArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_targeting_situation", entries)]);
+  return trigger([block("count_targeting_situation", entries)], refs);
 }
 
 export interface CountTechOptionsArgs {
@@ -5315,15 +5625,17 @@ export function countTraitAvailableForSpecies(
   args: CountTraitAvailableForSpeciesArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_trait_available_for_species", entries)]);
+  return trigger([block("count_trait_available_for_species", entries)], refs);
 }
 
 export interface CountTraitOfSpeciesArgs {
@@ -5345,15 +5657,17 @@ export function countTraitOfSpecies(
   args: CountTraitOfSpeciesArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_trait_of_species", entries)]);
+  return trigger([block("count_trait_of_species", entries)], refs);
 }
 
 /**
@@ -5381,15 +5695,17 @@ export function countUsedNavalCap(
   args: CountUsedNavalCapArgs
 ): Trigger<"country" | "fleet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_used_naval_cap", entries)]);
+  return trigger([block("count_used_naval_cap", entries)], refs);
 }
 
 /**
@@ -5418,15 +5734,17 @@ export interface CountWarArgs {
  */
 export function countWar(args: CountWarArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_war", entries)]);
+  return trigger([block("count_war", entries)], refs);
 }
 
 export interface CountWarParticipantArgs {
@@ -5445,15 +5763,17 @@ export interface CountWarParticipantArgs {
  */
 export function countWarParticipant(args: CountWarParticipantArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_war_participant", entries)]);
+  return trigger([block("count_war_participant", entries)], refs);
 }
 
 export interface CountWarParticipantsArgs {
@@ -5470,8 +5790,10 @@ export interface CountWarParticipantsArgs {
  */
 export function countWarParticipants(args: CountWarParticipantsArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(kv("side", args.side));
   entries.push(
@@ -5479,7 +5801,7 @@ export function countWarParticipants(args: CountWarParticipantsArgs): Trigger<"w
       ? cmp("count", args.count[0], args.count[1])
       : kv("count", args.count)
   );
-  return trigger([block("count_war_participants", entries)]);
+  return trigger([block("count_war_participants", entries)], refs);
 }
 
 /**
@@ -5532,6 +5854,7 @@ export interface CustomProgressArgs {
  */
 export function customProgress(args: CustomProgressArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.currentValCoeff !== undefined) {
     entries.push(
       typeof args.currentValCoeff === "object"
@@ -5550,7 +5873,8 @@ export function customProgress(args: CustomProgressArgs): Trigger<ScopeName> {
     entries.push(kv("mode", args.mode));
   }
   entries.push(...args.conditions.entries);
-  return trigger([block("custom_progress", entries)]);
+  refs.push(...args.conditions.refs);
+  return trigger([block("custom_progress", entries)], refs);
 }
 
 export interface CustomTooltipFailArgs {
@@ -5569,9 +5893,11 @@ export interface CustomTooltipFailArgs {
  */
 export function customTooltipFail(args: CustomTooltipFailArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(kv("text", args.text));
   entries.push(...args.conditions.entries);
-  return trigger([block("custom_tooltip_fail", entries)]);
+  refs.push(...args.conditions.refs);
+  return trigger([block("custom_tooltip_fail", entries)], refs);
 }
 
 export interface CustomTooltipSuccessArgs {
@@ -5590,9 +5916,11 @@ export interface CustomTooltipSuccessArgs {
  */
 export function customTooltipSuccess(args: CustomTooltipSuccessArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(kv("text", args.text));
   entries.push(...args.conditions.entries);
-  return trigger([block("custom_tooltip_success", entries)]);
+  refs.push(...args.conditions.refs);
+  return trigger([block("custom_tooltip_success", entries)], refs);
 }
 
 /** Checks Cutholoids presence scaling in game setup */
@@ -5821,11 +6149,14 @@ export interface ElseArgs {
  */
 export function else_(args: ElseArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(...args.conditions.entries);
-  return trigger([block("else", entries)]);
+  refs.push(...args.conditions.refs);
+  return trigger([block("else", entries)], refs);
 }
 
 export interface ElseIfArgs {
@@ -5842,9 +6173,12 @@ export interface ElseIfArgs {
  */
 export function elseIf(args: ElseIfArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(block("limit", [...args.limit.entries]));
+  refs.push(...args.limit.refs);
   entries.push(...args.conditions.entries);
-  return trigger([block("else_if", entries)]);
+  refs.push(...args.conditions.refs);
+  return trigger([block("else_if", entries)], refs);
 }
 
 /**
@@ -6061,7 +6395,11 @@ export function fleetSize(op: PdxOp, value: number): Trigger<"fleet"> {
  * ```
  */
 export function formerCitizenshipType(value: CitizenshipTypeRef | string): Trigger<"pop_group"> {
-  return trigger([kv("former_citizenship_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("former_citizenship_type", id)],
+    [{ targets: ["citizenship_type"], id, field: "former_citizenship_type" }]
+  );
 }
 
 /**
@@ -6073,7 +6411,11 @@ export function formerCitizenshipType(value: CitizenshipTypeRef | string): Trigg
 export function formerColonizationControlType(
   value: ColonizationControlRef | string
 ): Trigger<"pop_group"> {
-  return trigger([kv("former_colonization_control_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("former_colonization_control_type", id)],
+    [{ targets: ["colonization_control"], id, field: "former_colonization_control_type" }]
+  );
 }
 
 /**
@@ -6083,7 +6425,11 @@ export function formerColonizationControlType(
  * ```
  */
 export function formerLivingStandardType(value: LivingStandardRef | string): Trigger<"pop_group"> {
-  return trigger([kv("former_living_standard_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("former_living_standard_type", id)],
+    [{ targets: ["living_standard"], id, field: "former_living_standard_type" }]
+  );
 }
 
 /**
@@ -6095,7 +6441,11 @@ export function formerLivingStandardType(value: LivingStandardRef | string): Tri
 export function formerMigrationControlType(
   value: MigrationControlRef | string
 ): Trigger<"pop_group"> {
-  return trigger([kv("former_migration_control_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("former_migration_control_type", id)],
+    [{ targets: ["migration_control"], id, field: "former_migration_control_type" }]
+  );
 }
 
 /**
@@ -6107,7 +6457,11 @@ export function formerMigrationControlType(
 export function formerMilitaryServiceType(
   value: MilitaryServiceTypeRef | string
 ): Trigger<"pop_group"> {
-  return trigger([kv("former_military_service_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("former_military_service_type", id)],
+    [{ targets: ["military_service_type"], id, field: "former_military_service_type" }]
+  );
 }
 
 /**
@@ -6119,7 +6473,11 @@ export function formerMilitaryServiceType(
 export function formerPopulationControlType(
   value: PopulationControlRef | string
 ): Trigger<"pop_group"> {
-  return trigger([kv("former_population_control_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("former_population_control_type", id)],
+    [{ targets: ["population_control"], id, field: "former_population_control_type" }]
+  );
 }
 
 /**
@@ -6129,7 +6487,11 @@ export function formerPopulationControlType(
  * ```
  */
 export function formerPurgeType(value: PurgeTypeRef | string): Trigger<"pop_group"> {
-  return trigger([kv("former_purge_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("former_purge_type", id)],
+    [{ targets: ["purge_type"], id, field: "former_purge_type" }]
+  );
 }
 
 /**
@@ -6139,7 +6501,11 @@ export function formerPurgeType(value: PurgeTypeRef | string): Trigger<"pop_grou
  * ```
  */
 export function formerSlaveryType(value: SlaveryTypeRef | string): Trigger<"pop_group"> {
-  return trigger([kv("former_slavery_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("former_slavery_type", id)],
+    [{ targets: ["slavery_type"], id, field: "former_slavery_type" }]
+  );
 }
 
 /**
@@ -6243,11 +6609,16 @@ export function freeJobsOfType(
   args: FreeJobsOfTypeArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.job !== undefined) {
-    entries.push(kv("job", refId(args.job)));
+    const id0 = refId(args.job);
+    entries.push(kv("job", id0));
+    refs.push({ targets: ["job"], id: id0, field: "free_jobs_of_type.job" });
   }
   if (args.category !== undefined) {
-    entries.push(kv("category", refId(args.category)));
+    const id1 = refId(args.category);
+    entries.push(kv("category", id1));
+    refs.push({ targets: ["pop_category"], id: id1, field: "free_jobs_of_type.category" });
   }
   if (args.includeDeprioritizedJobs !== undefined) {
     entries.push(kv("include_deprioritized_jobs", args.includeDeprioritizedJobs));
@@ -6259,7 +6630,7 @@ export function freeJobsOfType(
         : kv("value", args.value)
     );
   }
-  return trigger([block("free_jobs_of_type", entries)]);
+  return trigger([block("free_jobs_of_type", entries)], refs);
 }
 
 /**
@@ -6309,7 +6680,11 @@ export function galaxyRadius(op: PdxOp, value: number): Trigger<ScopeName> {
  * ```
  */
 export function galaxyShape(value: GalaxyShapeRef | string): Trigger<ScopeName> {
-  return trigger([kv("galaxy_shape", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("galaxy_shape", id)],
+    [{ targets: ["galaxy_shape"], id, field: "galaxy_shape" }]
+  );
 }
 
 /**
@@ -6319,7 +6694,11 @@ export function galaxyShape(value: GalaxyShapeRef | string): Trigger<ScopeName> 
  * ```
  */
 export function galaxySize(value: MapSetupScenarioRef | string): Trigger<ScopeName> {
-  return trigger([kv("galaxy_size", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("galaxy_size", id)],
+    [{ targets: ["map_setup_scenario"], id, field: "galaxy_size" }]
+  );
 }
 
 /**
@@ -6351,7 +6730,10 @@ export interface GetAttunementPointsForArgs {
  */
 export function getAttunementPointsFor(args: GetAttunementPointsForArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("patron", refId(args.patron)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.patron);
+  entries.push(kv("patron", id0));
+  refs.push({ targets: ["patron_type"], id: id0, field: "get_attunement_points_for.patron" });
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], args.value[1])
@@ -6360,7 +6742,7 @@ export function getAttunementPointsFor(args: GetAttunementPointsForArgs): Trigge
   if (args.negative !== undefined) {
     entries.push(kv("negative", args.negative));
   }
-  return trigger([block("get_attunement_points_for", entries)]);
+  return trigger([block("get_attunement_points_for", entries)], refs);
 }
 
 export interface GetCouncilorLevelArgs {
@@ -6375,8 +6757,11 @@ export interface GetCouncilorLevelArgs {
  */
 export function getCouncilorLevel(args: GetCouncilorLevelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("type", refId(args.type)));
-  return trigger([block("get_councilor_level", entries)]);
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.type);
+  entries.push(kv("type", id0));
+  refs.push({ targets: ["councilor"], id: id0, field: "get_councilor_level.type" });
+  return trigger([block("get_councilor_level", entries)], refs);
 }
 
 /**
@@ -6468,7 +6853,11 @@ export function hasAccessFleet(value: string): Trigger<"system"> {
 export function hasActiveBuilding(
   value: BuildingRef | string
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("has_active_building", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_active_building", id)],
+    [{ targets: ["building"], id, field: "has_active_building" }]
+  );
 }
 
 /**
@@ -6488,7 +6877,11 @@ export function hasActiveFirstContactWith(value: string): Trigger<"country"> {
  * ```
  */
 export function hasActiveFocus(value: CountryFocusCardsRef | string): Trigger<"country"> {
-  return trigger([kv("has_active_focus", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_active_focus", id)],
+    [{ targets: ["country_focus_cards"], id, field: "has_active_focus" }]
+  );
 }
 
 /**
@@ -6510,7 +6903,11 @@ export function hasActiveSpecialization(
  * ```
  */
 export function hasActiveTradition(value: TraditionRef | string): Trigger<"country"> {
-  return trigger([kv("has_active_tradition", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_active_tradition", id)],
+    [{ targets: ["tradition"], id, field: "has_active_tradition" }]
+  );
 }
 
 /**
@@ -6550,7 +6947,11 @@ export function hasAiExpansionPlan(value: boolean = true): Trigger<"country"> {
  * ```
  */
 export function hasAiPersonality(value: AiPersonalityRef | string): Trigger<"country"> {
-  return trigger([kv("has_ai_personality", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_ai_personality", id)],
+    [{ targets: ["ai_personality"], id, field: "has_ai_personality" }]
+  );
 }
 
 /**
@@ -6594,7 +6995,11 @@ export function hasAnomaly(
 export function hasAnyFederationLawInCategory(
   value: FederationLawCategoryRef | string
 ): Trigger<"federation"> {
-  return trigger([kv("has_any_federation_law_in_category", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_any_federation_law_in_category", id)],
+    [{ targets: ["federation_law_category"], id, field: "has_any_federation_law_in_category" }]
+  );
 }
 
 /**
@@ -6686,7 +7091,11 @@ export function hasArmyFlag(value: ArmyFlag): Trigger<"army"> {
  * ```
  */
 export function hasAscensionPerk(value: AscensionPerkRef | string): Trigger<"country"> {
-  return trigger([kv("has_ascension_perk", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_ascension_perk", id)],
+    [{ targets: ["ascension_perk"], id, field: "has_ascension_perk" }]
+  );
 }
 
 /**
@@ -6759,7 +7168,11 @@ export function hasAttitudeBehavior(args: HasAttitudeBehaviorArgs): Trigger<"cou
 export function hasAuthority(
   value: AuthorityRef | string
 ): Trigger<"country" | "dlc_recommendation"> {
-  return trigger([kv("has_authority", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_authority", id)],
+    [{ targets: ["authority"], id, field: "has_authority" }]
+  );
 }
 
 /**
@@ -6786,7 +7199,11 @@ export function hasAutomationSetting(value: FleetAutomationSetting): Trigger<"fl
 export function hasAvailableJobs(
   value: JobRef | string
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("has_available_jobs", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_available_jobs", id)],
+    [{ targets: ["job"], id, field: "has_available_jobs" }]
+  );
 }
 
 /**
@@ -6905,11 +7322,14 @@ export interface HasCasusBelliArgs {
  */
 export function hasCasusBelli(args: HasCasusBelliArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(kv("target", args.target));
   if (args.type !== undefined) {
-    entries.push(kv("type", refId(args.type)));
+    const id1 = refId(args.type);
+    entries.push(kv("type", id1));
+    refs.push({ targets: ["casus_belli"], id: id1, field: "has_casus_belli.type" });
   }
-  return trigger([block("has_casus_belli", entries)]);
+  return trigger([block("has_casus_belli", entries)], refs);
 }
 
 /**
@@ -6939,11 +7359,14 @@ export function hasCitizenshipType(
   args: HasCitizenshipTypeArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country));
   }
-  entries.push(kv("type", refId(args.type)));
-  return trigger([block("has_citizenship_type", entries)]);
+  const id1 = refId(args.type);
+  entries.push(kv("type", id1));
+  refs.push({ targets: ["citizenship_type"], id: id1, field: "has_citizenship_type.type" });
+  return trigger([block("has_citizenship_type", entries)], refs);
 }
 
 /**
@@ -6955,7 +7378,11 @@ export function hasCitizenshipType(
 export function hasCivic(
   value: CivicOrOriginCivicRef | string
 ): Trigger<"country" | "dlc_recommendation"> {
-  return trigger([kv("has_civic", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_civic", id)],
+    [{ targets: ["civic_or_origin.civic"], id, field: "has_civic" }]
+  );
 }
 
 export interface HasCivicInSlotArgs {
@@ -6971,13 +7398,16 @@ export interface HasCivicInSlotArgs {
  */
 export function hasCivicInSlot(args: HasCivicInSlotArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("civic", refId(args.civic)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.civic);
+  entries.push(kv("civic", id0));
+  refs.push({ targets: ["civic_or_origin.civic"], id: id0, field: "has_civic_in_slot.civic" });
   entries.push(
     typeof args.index === "object"
       ? cmp("index", args.index[0], args.index[1])
       : kv("index", args.index)
   );
-  return trigger([block("has_civic_in_slot", entries)]);
+  return trigger([block("has_civic_in_slot", entries)], refs);
 }
 
 /**
@@ -7092,7 +7522,11 @@ export function hasCommunications(value: string): Trigger<"country"> {
  * ```
  */
 export function hasCompletedEventChain(value: EventChainRef | string): Trigger<"country"> {
-  return trigger([kv("has_completed_event_chain", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_completed_event_chain", id)],
+    [{ targets: ["event_chain"], id, field: "has_completed_event_chain" }]
+  );
 }
 
 export interface HasCompletedEventChainCounterArgs {
@@ -7110,9 +7544,16 @@ export function hasCompletedEventChainCounter(
   args: HasCompletedEventChainCounterArgs
 ): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("event_chain", refId(args.eventChain)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.eventChain);
+  entries.push(kv("event_chain", id0));
+  refs.push({
+    targets: ["event_chain"],
+    id: id0,
+    field: "has_completed_event_chain_counter.event_chain",
+  });
   entries.push(kv("counter", args.counter));
-  return trigger([block("has_completed_event_chain_counter", entries)]);
+  return trigger([block("has_completed_event_chain_counter", entries)], refs);
 }
 
 /**
@@ -7122,7 +7563,11 @@ export function hasCompletedEventChainCounter(
  * ```
  */
 export function hasCompletedFocus(value: CountryFocusCardsRef | string): Trigger<"country"> {
-  return trigger([kv("has_completed_focus", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_completed_focus", id)],
+    [{ targets: ["country_focus_cards"], id, field: "has_completed_focus" }]
+  );
 }
 
 /**
@@ -7134,7 +7579,11 @@ export function hasCompletedFocus(value: CountryFocusCardsRef | string): Trigger
 export function hasCompletedSpecialProjectInLog(
   value: SpecialProjectRef | string
 ): Trigger<"country"> {
-  return trigger([kv("has_completed_special_project_in_log", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_completed_special_project_in_log", id)],
+    [{ targets: ["special_project"], id, field: "has_completed_special_project_in_log" }]
+  );
 }
 
 /**
@@ -7146,7 +7595,11 @@ export function hasCompletedSpecialProjectInLog(
 export function hasComponent(
   value: ComponentTemplateRef | string
 ): Trigger<"ship" | "ship_growth_stage"> {
-  return trigger([kv("has_component", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_component", id)],
+    [{ targets: ["component_template"], id, field: "has_component" }]
+  );
 }
 
 /**
@@ -7156,7 +7609,11 @@ export function hasComponent(
  * ```
  */
 export function hasContract(value: MissionContractRef | string): Trigger<"country"> {
-  return trigger([kv("has_contract", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_contract", id)],
+    [{ targets: ["mission.contract"], id, field: "has_contract" }]
+  );
 }
 
 /**
@@ -7166,7 +7623,11 @@ export function hasContract(value: MissionContractRef | string): Trigger<"countr
  * ```
  */
 export function hasContractOfCategory(value: MissionCategoryRef | string): Trigger<"country"> {
-  return trigger([kv("has_contract_of_category", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_contract_of_category", id)],
+    [{ targets: ["mission_category"], id, field: "has_contract_of_category" }]
+  );
 }
 
 /**
@@ -7192,13 +7653,16 @@ export interface HasCountryResourceArgs {
  */
 export function hasCountryResource(args: HasCountryResourceArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("type", refId(args.type)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.type);
+  entries.push(kv("type", id0));
+  refs.push({ targets: ["resource"], id: id0, field: "has_country_resource.type" });
   entries.push(
     typeof args.amount === "object"
       ? cmp("amount", args.amount[0], args.amount[1])
       : kv("amount", args.amount)
   );
-  return trigger([block("has_country_resource", entries)]);
+  return trigger([block("has_country_resource", entries)], refs);
 }
 
 /**
@@ -7208,7 +7672,11 @@ export function hasCountryResource(args: HasCountryResourceArgs): Trigger<"count
  * ```
  */
 export function hasCovenant(value: PatronTypeRef | string): Trigger<"country"> {
-  return trigger([kv("has_covenant", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_covenant", id)],
+    [{ targets: ["patron_type"], id, field: "has_covenant" }]
+  );
 }
 
 /**
@@ -7218,7 +7686,11 @@ export function hasCovenant(value: PatronTypeRef | string): Trigger<"country"> {
  * ```
  */
 export function hasCrisisLevel(value: CrisisLevelRef | string): Trigger<"country"> {
-  return trigger([kv("has_crisis_level", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_crisis_level", id)],
+    [{ targets: ["crisis_level"], id, field: "has_crisis_level" }]
+  );
 }
 
 /**
@@ -7228,7 +7700,11 @@ export function hasCrisisLevel(value: CrisisLevelRef | string): Trigger<"country
  * ```
  */
 export function hasCrisisPerk(value: MenacePerkRef | string): Trigger<"country"> {
-  return trigger([kv("has_crisis_perk", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_crisis_perk", id)],
+    [{ targets: ["menace_perk"], id, field: "has_crisis_perk" }]
+  );
 }
 
 /**
@@ -7262,7 +7738,8 @@ export function hasDefensivePact(value: string): Trigger<"country"> {
 export function hasDeficit(
   value: ResourceRef | string
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
-  return trigger([kv("has_deficit", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("has_deficit", id)], [{ targets: ["resource"], id, field: "has_deficit" }]);
 }
 
 /**
@@ -7285,7 +7762,11 @@ export function hasDeposit(
  * ```
  */
 export function hasDepositCategory(value: DepositCategoryRef | string): Trigger<"deposit"> {
-  return trigger([kv("has_deposit_category", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_deposit_category", id)],
+    [{ targets: ["deposit_category"], id, field: "has_deposit_category" }]
+  );
 }
 
 /**
@@ -7361,11 +7842,14 @@ export interface HasDnaArgs {
  */
 export function hasDna(args: HasDnaArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("ship_category", refId(args.shipCategory)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.shipCategory);
+  entries.push(kv("ship_category", id0));
+  refs.push({ targets: ["ship_categories"], id: id0, field: "has_dna.ship_category" });
   if (args.rarity !== undefined) {
     entries.push(kv("rarity", args.rarity));
   }
-  return trigger([block("has_dna", entries)]);
+  return trigger([block("has_dna", entries)], refs);
 }
 
 /**
@@ -7375,7 +7859,8 @@ export function hasDna(args: HasDnaArgs): Trigger<"country"> {
  * ```
  */
 export function hasEdict(value: EdictRef | string): Trigger<"country"> {
-  return trigger([kv("has_edict", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("has_edict", id)], [{ targets: ["edict"], id, field: "has_edict" }]);
 }
 
 /**
@@ -7445,7 +7930,11 @@ export function hasEnvoyTask(args: HasEnvoyTaskArgs): Trigger<"leader"> {
 export function hasEspionageAsset(
   value: EspionageAssetRef | string
 ): Trigger<"espionage_operation" | "spy_network"> {
-  return trigger([kv("has_espionage_asset", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_espionage_asset", id)],
+    [{ targets: ["espionage_asset"], id, field: "has_espionage_asset" }]
+  );
 }
 
 /**
@@ -7467,7 +7956,11 @@ export function hasEspionageAssetFlag(value: EspionageAssetFlag): Trigger<"espio
 export function hasEspionageCategory(
   value: EspionageCategoryRef | string
 ): Trigger<"espionage_operation"> {
-  return trigger([kv("has_espionage_category", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_espionage_category", id)],
+    [{ targets: ["espionage_category"], id, field: "has_espionage_category" }]
+  );
 }
 
 /**
@@ -7491,7 +7984,11 @@ export function hasEspionageOperationFlag(
 export function hasEspionageType(
   value: EspionageOperationRef | string
 ): Trigger<"espionage_operation"> {
-  return trigger([kv("has_espionage_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_espionage_type", id)],
+    [{ targets: ["espionage_operation"], id, field: "has_espionage_type" }]
+  );
 }
 
 /**
@@ -7513,7 +8010,8 @@ export function hasEstablishedContact(value: string): Trigger<"country"> {
 export function hasEthic(
   value: EthicRef | string
 ): Trigger<"country" | "dlc_recommendation" | "leader" | "pop_faction" | "pop_group"> {
-  return trigger([kv("has_ethic", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("has_ethic", id)], [{ targets: ["ethic"], id, field: "has_ethic" }]);
 }
 
 /**
@@ -7523,12 +8021,20 @@ export function hasEthic(
  * ```
  */
 export function hasEventChain(value: EventChainRef | string): Trigger<"country"> {
-  return trigger([kv("has_event_chain", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_event_chain", id)],
+    [{ targets: ["event_chain"], id, field: "has_event_chain" }]
+  );
 }
 
 /** Checks if the country has a specific ship design available */
 export function hasExistingShipDesign(value: ShipSizeRef | string): Trigger<"country"> {
-  return trigger([kv("has_existing_ship_design", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_existing_ship_design", id)],
+    [{ targets: ["ship_size"], id, field: "has_existing_ship_design" }]
+  );
 }
 
 /**
@@ -7558,7 +8064,8 @@ export function hasExtortedFaction(value: boolean = true): Trigger<"country"> {
  * ```
  */
 export function hasFaction(value: PopFactionRef | string): Trigger<"country"> {
-  return trigger([kv("has_faction", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("has_faction", id)], [{ targets: ["pop_faction"], id, field: "has_faction" }]);
 }
 
 /**
@@ -7570,7 +8077,11 @@ export function hasFaction(value: PopFactionRef | string): Trigger<"country"> {
 export function hasFailedSpecialProjectInLog(
   value: SpecialProjectRef | string
 ): Trigger<"country"> {
-  return trigger([kv("has_failed_special_project_in_log", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_failed_special_project_in_log", id)],
+    [{ targets: ["special_project"], id, field: "has_failed_special_project_in_log" }]
+  );
 }
 
 /**
@@ -7600,7 +8111,11 @@ export function hasFederationFlag(value: FederationFlag): Trigger<"federation"> 
  * ```
  */
 export function hasFederationLaw(value: FederationLawRef | string): Trigger<"federation"> {
-  return trigger([kv("has_federation_law", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_federation_law", id)],
+    [{ targets: ["federation_law"], id, field: "has_federation_law" }]
+  );
 }
 
 /**
@@ -7610,7 +8125,11 @@ export function hasFederationLaw(value: FederationLawRef | string): Trigger<"fed
  * ```
  */
 export function hasFederationPerk(value: FederationPerkRef | string): Trigger<"federation"> {
-  return trigger([kv("has_federation_perk", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_federation_perk", id)],
+    [{ targets: ["federation_perk"], id, field: "has_federation_perk" }]
+  );
 }
 
 /**
@@ -7630,7 +8149,11 @@ export function hasFederationSetting(value: FederationSetting): Trigger<"federat
  * ```
  */
 export function hasFederationType(value: FederationTypeRef | string): Trigger<"federation"> {
-  return trigger([kv("has_federation_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_federation_type", id)],
+    [{ targets: ["federation_type"], id, field: "has_federation_type" }]
+  );
 }
 
 /**
@@ -7672,7 +8195,11 @@ export function hasFleetOrder(value: FleetOrder): Trigger<"fleet" | "ship"> {
 export function hasForbiddenJobs(
   value: JobRef | string
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("has_forbidden_jobs", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_forbidden_jobs", id)],
+    [{ targets: ["job"], id, field: "has_forbidden_jobs" }]
+  );
 }
 
 /**
@@ -7829,14 +8356,17 @@ export interface HasIntelLevelArgs {
  */
 export function hasIntelLevel(args: HasIntelLevelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("category", refId(args.category)));
+  const id1 = refId(args.category);
+  entries.push(kv("category", id1));
+  refs.push({ targets: ["intel_category"], id: id1, field: "has_intel_level.category" });
   entries.push(
     typeof args.level === "object"
       ? cmp("level", args.level[0], args.level[1])
       : kv("level", args.level)
   );
-  return trigger([block("has_intel_level", entries)]);
+  return trigger([block("has_intel_level", entries)], refs);
 }
 
 export interface HasIntelReportArgs {
@@ -7853,14 +8383,17 @@ export interface HasIntelReportArgs {
  */
 export function hasIntelReport(args: HasIntelReportArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("category", refId(args.category)));
+  const id1 = refId(args.category);
+  entries.push(kv("category", id1));
+  refs.push({ targets: ["intel_category"], id: id1, field: "has_intel_report.category" });
   entries.push(
     typeof args.level === "object"
       ? cmp("level", args.level[0], args.level[1])
       : kv("level", args.level)
   );
-  return trigger([block("has_intel_report", entries)]);
+  return trigger([block("has_intel_report", entries)], refs);
 }
 
 /**
@@ -7870,7 +8403,11 @@ export function hasIntelReport(args: HasIntelReportArgs): Trigger<"country"> {
  * ```
  */
 export function hasInvalidCivic(value: CivicOrOriginCivicRef | string): Trigger<"country"> {
-  return trigger([kv("has_invalid_civic", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_invalid_civic", id)],
+    [{ targets: ["civic_or_origin.civic"], id, field: "has_invalid_civic" }]
+  );
 }
 
 /**
@@ -7880,7 +8417,11 @@ export function hasInvalidCivic(value: CivicOrOriginCivicRef | string): Trigger<
  * ```
  */
 export function hasJobCategory(value: PopCategoryRef | string): Trigger<"pop_job"> {
-  return trigger([kv("has_job_category", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_job_category", id)],
+    [{ targets: ["pop_category"], id, field: "has_job_category" }]
+  );
 }
 
 /**
@@ -7890,7 +8431,8 @@ export function hasJobCategory(value: PopCategoryRef | string): Trigger<"pop_job
  * ```
  */
 export function hasJobType(value: JobRef | string): Trigger<"pop_job"> {
-  return trigger([kv("has_job_type", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("has_job_type", id)], [{ targets: ["job"], id, field: "has_job_type" }]);
 }
 
 /**
@@ -7918,11 +8460,14 @@ export function hasLivingStandard(
   args: HasLivingStandardArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country));
   }
-  entries.push(kv("type", refId(args.type)));
-  return trigger([block("has_living_standard", entries)]);
+  const id1 = refId(args.type);
+  entries.push(kv("type", id1));
+  refs.push({ targets: ["living_standard"], id: id1, field: "has_living_standard.type" });
+  return trigger([block("has_living_standard", entries)], refs);
 }
 
 /**
@@ -7972,7 +8517,11 @@ export function hasMaxHp(op: PdxOp, value: number): Trigger<"ship"> {
  * ```
  */
 export function hasMegastructure(value: MegastructureRef | string): Trigger<"country" | "system"> {
-  return trigger([kv("has_megastructure", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_megastructure", id)],
+    [{ targets: ["megastructure"], id, field: "has_megastructure" }]
+  );
 }
 
 /**
@@ -7992,7 +8541,11 @@ export function hasMegastructureFlag(value: MegastructureFlag): Trigger<"megastr
  * ```
  */
 export function hasMenacePerk(value: MenacePerkRef | string): Trigger<"country"> {
-  return trigger([kv("has_menace_perk", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_menace_perk", id)],
+    [{ targets: ["menace_perk"], id, field: "has_menace_perk" }]
+  );
 }
 
 /**
@@ -8042,11 +8595,18 @@ export function hasMilitaryServiceType(
   args: HasMilitaryServiceTypeArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country));
   }
-  entries.push(kv("type", refId(args.type)));
-  return trigger([block("has_military_service_type", entries)]);
+  const id1 = refId(args.type);
+  entries.push(kv("type", id1));
+  refs.push({
+    targets: ["military_service_type"],
+    id: id1,
+    field: "has_military_service_type.type",
+  });
+  return trigger([block("has_military_service_type", entries)], refs);
 }
 
 /**
@@ -8066,7 +8626,11 @@ export function hasMiningStation(value: boolean = true): Trigger<"carrier" | "pl
  * ```
  */
 export function hasMission(value: ObservationStationMissionRef | string): Trigger<"fleet"> {
-  return trigger([kv("has_mission", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_mission", id)],
+    [{ targets: ["observation_station_mission"], id, field: "has_mission" }]
+  );
 }
 
 /**
@@ -8105,7 +8669,11 @@ export function hasModifier(
   | "starbase"
   | "system"
 > {
-  return trigger([kv("has_modifier", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_modifier", id)],
+    [{ targets: ["static_modifier"], id, field: "has_modifier" }]
+  );
 }
 
 export interface HasMonthlyIncomeArgs {
@@ -8122,18 +8690,23 @@ export interface HasMonthlyIncomeArgs {
  */
 export function hasMonthlyIncome(args: HasMonthlyIncomeArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.resource !== undefined) {
-    entries.push(kv("resource", refId(args.resource)));
+    const id0 = refId(args.resource);
+    entries.push(kv("resource", id0));
+    refs.push({ targets: ["resource"], id: id0, field: "has_monthly_income.resource" });
   }
   if (args.type !== undefined) {
-    entries.push(kv("type", refId(args.type)));
+    const id1 = refId(args.type);
+    entries.push(kv("type", id1));
+    refs.push({ targets: ["resource"], id: id1, field: "has_monthly_income.type" });
   }
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("has_monthly_income", entries)]);
+  return trigger([block("has_monthly_income", entries)], refs);
 }
 
 /**
@@ -8163,7 +8736,11 @@ export function hasMoon(value: boolean = true): Trigger<"carrier" | "colony" | "
  * ```
  */
 export function hasMostAttunement(value: PatronTypeRef | string): Trigger<"country"> {
-  return trigger([kv("has_most_attunement", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_most_attunement", id)],
+    [{ targets: ["patron_type"], id, field: "has_most_attunement" }]
+  );
 }
 
 /**
@@ -8205,7 +8782,11 @@ export function hasNonAggressionPact(value: string): Trigger<"country"> {
 export function hasNotificationModifier(
   value: NotificationModifierRef | string
 ): Trigger<"country"> {
-  return trigger([kv("has_notification_modifier", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_notification_modifier", id)],
+    [{ targets: ["notification_modifier"], id, field: "has_notification_modifier" }]
+  );
 }
 
 /**
@@ -8234,12 +8815,15 @@ export interface HasOpinionModifierArgs {
  */
 export function hasOpinionModifier(args: HasOpinionModifierArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(kv("who", args.who));
-  entries.push(kv("modifier", refId(args.modifier)));
+  const id1 = refId(args.modifier);
+  entries.push(kv("modifier", id1));
+  refs.push({ targets: ["opinion_modifier"], id: id1, field: "has_opinion_modifier.modifier" });
   if (args.isReverse !== undefined) {
     entries.push(kv("is_reverse", args.isReverse));
   }
-  return trigger([block("has_opinion_modifier", entries)]);
+  return trigger([block("has_opinion_modifier", entries)], refs);
 }
 
 /**
@@ -8263,7 +8847,11 @@ export function hasOrbitalBombardment(
 export function hasOrbitalBombardmentStance(
   value: BombardmentStanceRef | string
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("has_orbital_bombardment_stance", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_orbital_bombardment_stance", id)],
+    [{ targets: ["bombardment_stance"], id, field: "has_orbital_bombardment_stance" }]
+  );
 }
 
 /**
@@ -8285,7 +8873,11 @@ export function hasOrbitalStation(value: boolean = true): Trigger<"carrier" | "p
 export function hasOrigin(
   value: CivicOrOriginOriginRef | string
 ): Trigger<"country" | "dlc_recommendation"> {
-  return trigger([kv("has_origin", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_origin", id)],
+    [{ targets: ["civic_or_origin.origin"], id, field: "has_origin" }]
+  );
 }
 
 /**
@@ -8355,7 +8947,11 @@ export function hasPassedResolution(args: HasPassedResolutionArgs): Trigger<"cou
  * ```
  */
 export function hasPatronAura(value: PatronTypeRef | string): Trigger<"country"> {
-  return trigger([kv("has_patron_aura", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_patron_aura", id)],
+    [{ targets: ["patron_type"], id, field: "has_patron_aura" }]
+  );
 }
 
 /**
@@ -8429,7 +9025,11 @@ export function hasPlanetFlag(value: PlanetFlag): Trigger<"planet"> {
  * ```
  */
 export function hasPlanetModifier(value: PlanetModifierRef | string): Trigger<"colony" | "planet"> {
-  return trigger([kv("has_planet_modifier", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_planet_modifier", id)],
+    [{ targets: ["planet_modifier"], id, field: "has_planet_modifier" }]
+  );
 }
 
 /**
@@ -8532,7 +9132,11 @@ export function hasPotentialClaims(value: boolean = true): Trigger<"country"> {
  * ```
  */
 export function hasPreFtlAge(value: PreFtlAgeRef | string): Trigger<"country"> {
-  return trigger([kv("has_pre_ftl_age", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_pre_ftl_age", id)],
+    [{ targets: ["pre_ftl_age"], id, field: "has_pre_ftl_age" }]
+  );
 }
 
 /**
@@ -8578,11 +9182,14 @@ export interface HasPurgeTypeArgs {
  */
 export function hasPurgeType(args: HasPurgeTypeArgs): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country));
   }
-  entries.push(kv("type", refId(args.type)));
-  return trigger([block("has_purge_type", entries)]);
+  const id1 = refId(args.type);
+  entries.push(kv("type", id1));
+  refs.push({ targets: ["purge_type"], id: id1, field: "has_purge_type.type" });
+  return trigger([block("has_purge_type", entries)], refs);
 }
 
 export interface HasRelationFlagArgs {
@@ -8613,7 +9220,8 @@ export function hasRelationFlag(args: HasRelationFlagArgs): Trigger<"country"> {
  * ```
  */
 export function hasRelic(value: RelicRef | string): Trigger<"country"> {
-  return trigger([kv("has_relic", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("has_relic", id)], [{ targets: ["relic"], id, field: "has_relic" }]);
 }
 
 /**
@@ -8673,7 +9281,11 @@ export function hasRole(value: ComponentTag): Trigger<"design" | "ship_growth_st
  * ```
  */
 export function hasRulerTrait(value: TraitLeaderTraitRef | string): Trigger<"leader"> {
-  return trigger([kv("has_ruler_trait", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_ruler_trait", id)],
+    [{ targets: ["trait.leader_trait"], id, field: "has_ruler_trait" }]
+  );
 }
 
 /**
@@ -8723,7 +9335,11 @@ export function hasSectorFlag(value: SectorFlag): Trigger<"sector"> {
  * ```
  */
 export function hasSectorType(value: SectorTypeRef | string): Trigger<"sector"> {
-  return trigger([kv("has_sector_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_sector_type", id)],
+    [{ targets: ["sector_type"], id, field: "has_sector_type" }]
+  );
 }
 
 /**
@@ -8733,7 +9349,11 @@ export function hasSectorType(value: SectorTypeRef | string): Trigger<"sector"> 
  * ```
  */
 export function hasSeenAnyBypass(value: BypassRef | string): Trigger<"country"> {
-  return trigger([kv("has_seen_any_bypass", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_seen_any_bypass", id)],
+    [{ targets: ["bypass"], id, field: "has_seen_any_bypass" }]
+  );
 }
 
 /**
@@ -8823,11 +9443,14 @@ export function hasSlaveryType(
   args: HasSlaveryTypeArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country));
   }
-  entries.push(kv("type", refId(args.type)));
-  return trigger([block("has_slavery_type", entries)]);
+  const id1 = refId(args.type);
+  entries.push(kv("type", id1));
+  refs.push({ targets: ["slavery_type"], id: id1, field: "has_slavery_type.type" });
+  return trigger([block("has_slavery_type", entries)], refs);
 }
 
 /**
@@ -8837,7 +9460,11 @@ export function hasSlaveryType(
  * ```
  */
 export function hasSpecialProject(value: SpecialProjectRef | string): Trigger<"country"> {
-  return trigger([kv("has_special_project", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_special_project", id)],
+    [{ targets: ["special_project"], id, field: "has_special_project" }]
+  );
 }
 
 /**
@@ -8847,7 +9474,11 @@ export function hasSpecialProject(value: SpecialProjectRef | string): Trigger<"c
  * ```
  */
 export function hasSpecialistPerk(value: SpecialistSubjectPerkRef | string): Trigger<"agreement"> {
-  return trigger([kv("has_specialist_perk", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_specialist_perk", id)],
+    [{ targets: ["specialist_subject_perk"], id, field: "has_specialist_perk" }]
+  );
 }
 
 /**
@@ -8919,7 +9550,11 @@ export function hasSpynetworkValue(op: PdxOp, value: number): Trigger<"spy_netwo
 export function hasStageModifier(
   value: StaticModifierRef | string
 ): Trigger<"astral_rift" | "espionage_operation"> {
-  return trigger([kv("has_stage_modifier", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_stage_modifier", id)],
+    [{ targets: ["static_modifier"], id, field: "has_stage_modifier" }]
+  );
 }
 
 export interface HasStaleIntelArgs {
@@ -8959,7 +9594,11 @@ export function hasStarFlag(
  * ```
  */
 export function hasStarbaseBuilding(value: StarbaseBuildingRef | string): Trigger<"starbase"> {
-  return trigger([kv("has_starbase_building", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_starbase_building", id)],
+    [{ targets: ["starbase_building"], id, field: "has_starbase_building" }]
+  );
 }
 
 /**
@@ -8979,7 +9618,11 @@ export function hasStarbaseFlag(value: StarbaseFlag): Trigger<"starbase"> {
  * ```
  */
 export function hasStarbaseModule(value: StarbaseModuleRef | string): Trigger<"starbase"> {
-  return trigger([kv("has_starbase_module", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_starbase_module", id)],
+    [{ targets: ["starbase_module"], id, field: "has_starbase_module" }]
+  );
 }
 
 /**
@@ -8989,7 +9632,11 @@ export function hasStarbaseModule(value: StarbaseModuleRef | string): Trigger<"s
  * ```
  */
 export function hasStarbaseSize(value: ShipSizeStarbaseRef | string): Trigger<"starbase"> {
-  return trigger([kv("has_starbase_size", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_starbase_size", id)],
+    [{ targets: ["ship_size.starbase"], id, field: "has_starbase_size" }]
+  );
 }
 
 /**
@@ -9041,7 +9688,11 @@ export function hasSubject(value: string): Trigger<"country"> {
  * ```
  */
 export function hasSurveyedClass(value: PlanetClassRef | string): Trigger<"country"> {
-  return trigger([kv("has_surveyed_class", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_surveyed_class", id)],
+    [{ targets: ["planet_class"], id, field: "has_surveyed_class" }]
+  );
 }
 
 /**
@@ -9051,7 +9702,11 @@ export function hasSurveyedClass(value: PlanetClassRef | string): Trigger<"count
  * ```
  */
 export function hasTechOption(value: TechnologyRef | string): Trigger<"country"> {
-  return trigger([kv("has_tech_option", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_tech_option", id)],
+    [{ targets: ["technology"], id, field: "has_tech_option" }]
+  );
 }
 
 /**
@@ -9061,7 +9716,11 @@ export function hasTechOption(value: TechnologyRef | string): Trigger<"country">
  * ```
  */
 export function hasTechnology(value: TechnologyRef | string): Trigger<"country"> {
-  return trigger([kv("has_technology", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_technology", id)],
+    [{ targets: ["technology"], id, field: "has_technology" }]
+  );
 }
 
 export interface HasTermValueArgs {
@@ -9077,9 +9736,14 @@ export interface HasTermValueArgs {
  */
 export function hasTermValue(args: HasTermValueArgs): Trigger<"agreement"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("term", refId(args.term)));
-  entries.push(kv("value", refId(args.value)));
-  return trigger([block("has_term_value", entries)]);
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.term);
+  entries.push(kv("term", id0));
+  refs.push({ targets: ["agreement_term"], id: id0, field: "has_term_value.term" });
+  const id1 = refId(args.value);
+  entries.push(kv("value", id1));
+  refs.push({ targets: ["agreement_term_value"], id: id1, field: "has_term_value.value" });
+  return trigger([block("has_term_value", entries)], refs);
 }
 
 /**
@@ -9109,7 +9773,11 @@ export function hasTotalSkill(op: PdxOp, value: number): Trigger<"leader"> {
  * ```
  */
 export function hasTradition(value: TraditionRef | string): Trigger<"country"> {
-  return trigger([kv("has_tradition", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_tradition", id)],
+    [{ targets: ["tradition"], id, field: "has_tradition" }]
+  );
 }
 
 /**
@@ -9121,7 +9789,8 @@ export function hasTradition(value: TraditionRef | string): Trigger<"country"> {
 export function hasTrait(
   value: TraitRef | string
 ): Trigger<"country" | "dlc_recommendation" | "leader" | "pop_group" | "species"> {
-  return trigger([kv("has_trait", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("has_trait", id)], [{ targets: ["trait"], id, field: "has_trait" }]);
 }
 
 /**
@@ -9181,7 +9850,11 @@ export function hasValidAiPersonality(value: boolean = true): Trigger<"country">
  * ```
  */
 export function hasValidCivic(value: CivicOrOriginCivicRef | string): Trigger<"country"> {
-  return trigger([kv("has_valid_civic", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("has_valid_civic", id)],
+    [{ targets: ["civic_or_origin.civic"], id, field: "has_valid_civic" }]
+  );
 }
 
 /**
@@ -9281,9 +9954,12 @@ export interface IfArgs {
  */
 export function if_(args: IfArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(block("limit", [...args.limit.entries]));
+  refs.push(...args.limit.refs);
   entries.push(...args.conditions.entries);
-  return trigger([block("if", entries)]);
+  refs.push(...args.conditions.refs);
+  return trigger([block("if", entries)], refs);
 }
 
 /**
@@ -9303,7 +9979,11 @@ export function imperialAuthority(op: PdxOp, value: number): Trigger<ScopeName> 
  * ```
  */
 export function inBreachOf(value: ResolutionRef | string): Trigger<"country"> {
-  return trigger([kv("in_breach_of", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("in_breach_of", id)],
+    [{ targets: ["resolution"], id, field: "in_breach_of" }]
+  );
 }
 
 /**
@@ -9371,9 +10051,12 @@ export interface IsActionActiveArgs {
  */
 export function isActionActive(args: IsActionActiveArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("action", refId(args.action)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.action);
+  entries.push(kv("action", id0));
+  refs.push({ targets: ["tradable_action"], id: id0, field: "is_action_active.action" });
   entries.push(kv("with_country", args.withCountry));
-  return trigger([block("is_action_active", entries)]);
+  return trigger([block("is_action_active", entries)], refs);
 }
 
 /**
@@ -9383,7 +10066,11 @@ export function isActionActive(args: IsActionActiveArgs): Trigger<"country"> {
  * ```
  */
 export function isActiveResolution(value: ResolutionRef | string): Trigger<ScopeName> {
-  return trigger([kv("is_active_resolution", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_active_resolution", id)],
+    [{ targets: ["resolution"], id, field: "is_active_resolution" }]
+  );
 }
 
 /**
@@ -9423,7 +10110,11 @@ export function isAllianceFleet(value: boolean = true): Trigger<"fleet"> {
  * ```
  */
 export function isAmbientObjectType(value: AmbientObjectRef | string): Trigger<"ambient_object"> {
-  return trigger([kv("is_ambient_object_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_ambient_object_type", id)],
+    [{ targets: ["ambient_object"], id, field: "is_ambient_object_type" }]
+  );
 }
 
 /**
@@ -9443,7 +10134,11 @@ export function isAngryTo(value: string): Trigger<"country"> {
  * ```
  */
 export function isArchetype(value: SpeciesArchetypeRef | string): Trigger<"species"> {
-  return trigger([kv("is_archetype", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_archetype", id)],
+    [{ targets: ["species_archetype"], id, field: "is_archetype" }]
+  );
 }
 
 /**
@@ -9495,7 +10190,11 @@ export function isAsteroid(value: boolean = true): Trigger<"carrier" | "planet" 
  * ```
  */
 export function isAstralRiftExplored(value: AstralRiftRef | string): Trigger<"country"> {
-  return trigger([kv("is_astral_rift_explored", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_astral_rift_explored", id)],
+    [{ targets: ["astral_rift"], id, field: "is_astral_rift_explored" }]
+  );
 }
 
 /**
@@ -9664,7 +10363,11 @@ export function isBridge(value: boolean = true): Trigger<"system"> {
  * ```
  */
 export function isBypassType(value: BypassRef | string): Trigger<"bypass"> {
-  return trigger([kv("is_bypass_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_bypass_type", id)],
+    [{ targets: ["bypass"], id, field: "is_bypass_type" }]
+  );
 }
 
 /**
@@ -9706,7 +10409,11 @@ export function isCapitalsConnectedThroughRelayNetwork(value: string): Trigger<"
  * ```
  */
 export function isCardinalPatron(value: PatronTypeRef | string): Trigger<"country"> {
-  return trigger([kv("is_cardinal_patron", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_cardinal_patron", id)],
+    [{ targets: ["patron_type"], id, field: "is_cardinal_patron" }]
+  );
 }
 
 /**
@@ -9802,7 +10509,11 @@ export function isCouncilor(value: boolean = true): Trigger<"leader"> {
  * ```
  */
 export function isCouncilorType(value: CouncilorRef | string): Trigger<"leader"> {
-  return trigger([kv("is_councilor_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_councilor_type", id)],
+    [{ targets: ["councilor"], id, field: "is_councilor_type" }]
+  );
 }
 
 /**
@@ -9832,7 +10543,11 @@ export function isCountry(value: string): Trigger<"country"> {
  * ```
  */
 export function isCountryType(value: CountryTypeRef | string): Trigger<"country"> {
-  return trigger([kv("is_country_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_country_type", id)],
+    [{ targets: ["country_type"], id, field: "is_country_type" }]
+  );
 }
 
 /**
@@ -9874,7 +10589,11 @@ export function isCurrentExcavatorFleet(value: string): Trigger<"archaeological_
 export function isCurrentFirstContactStage(
   value: FirstContactStageRef | string
 ): Trigger<"first_contact"> {
-  return trigger([kv("is_current_first_contact_stage", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_current_first_contact_stage", id)],
+    [{ targets: ["first_contact_stage"], id, field: "is_current_first_contact_stage" }]
+  );
 }
 
 /**
@@ -9962,7 +10681,11 @@ export function isDefensiveArmy(value: boolean = true): Trigger<"army"> {
  * ```
  */
 export function isDepositType(value: DepositRef | string): Trigger<"deposit"> {
-  return trigger([kv("is_deposit_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_deposit_type", id)],
+    [{ targets: ["deposit"], id, field: "is_deposit_type" }]
+  );
 }
 
 /**
@@ -10135,7 +10858,11 @@ export function isEspionageOperationScoreNoDie(
  * ```
  */
 export function isEthicRepresentedOnCouncil(value: EthicRef | string): Trigger<"country"> {
-  return trigger([kv("is_ethic_represented_on_council", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_ethic_represented_on_council", id)],
+    [{ targets: ["ethic"], id, field: "is_ethic_represented_on_council" }]
+  );
 }
 
 /**
@@ -10489,7 +11216,11 @@ export function isInCombat(value: boolean = true): Trigger<"fleet" | "ship"> {
  * ```
  */
 export function isInDomain(value: PatronTypeRef | string): Trigger<"country"> {
-  return trigger([kv("is_in_domain", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_in_domain", id)],
+    [{ targets: ["patron_type"], id, field: "is_in_domain" }]
+  );
 }
 
 /**
@@ -10623,9 +11354,14 @@ export interface IsJobOfPopCategoryArgs {
  */
 export function isJobOfPopCategory(args: IsJobOfPopCategoryArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("job", refId(args.job)));
-  entries.push(kv("category", refId(args.category)));
-  return trigger([block("is_job_of_pop_category", entries)]);
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.job);
+  entries.push(kv("job", id0));
+  refs.push({ targets: ["job"], id: id0, field: "is_job_of_pop_category.job" });
+  const id1 = refId(args.category);
+  entries.push(kv("category", id1));
+  refs.push({ targets: ["pop_category"], id: id1, field: "is_job_of_pop_category.category" });
+  return trigger([block("is_job_of_pop_category", entries)], refs);
 }
 
 /**
@@ -10635,7 +11371,11 @@ export function isJobOfPopCategory(args: IsJobOfPopCategoryArgs): Trigger<ScopeN
  * ```
  */
 export function isLastAcquiredSpecimen(value: SpecimenRef | string): Trigger<"country"> {
-  return trigger([kv("is_last_acquired_specimen", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_last_acquired_specimen", id)],
+    [{ targets: ["specimen"], id, field: "is_last_acquired_specimen" }]
+  );
 }
 
 /**
@@ -10679,7 +11419,11 @@ export function isLastBuildingChangedCapital(
 export function isLastIncreasedTechCategory(
   value: TechnologyCategoryRef | string
 ): Trigger<"country"> {
-  return trigger([kv("is_last_increased_tech_category", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_last_increased_tech_category", id)],
+    [{ targets: ["technology_category"], id, field: "is_last_increased_tech_category" }]
+  );
 }
 
 /**
@@ -10709,7 +11453,11 @@ export function isLastIncreasedTechRepeatable(value: boolean = true): Trigger<"c
  * ```
  */
 export function isLastLostRelic(value: RelicRef | string): Trigger<"country"> {
-  return trigger([kv("is_last_lost_relic", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_last_lost_relic", id)],
+    [{ targets: ["relic"], id, field: "is_last_lost_relic" }]
+  );
 }
 
 /**
@@ -10719,7 +11467,11 @@ export function isLastLostRelic(value: RelicRef | string): Trigger<"country"> {
  * ```
  */
 export function isLastReceivedRelic(value: RelicRef | string): Trigger<"country"> {
-  return trigger([kv("is_last_received_relic", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_last_received_relic", id)],
+    [{ targets: ["relic"], id, field: "is_last_received_relic" }]
+  );
 }
 
 /**
@@ -10729,7 +11481,11 @@ export function isLastReceivedRelic(value: RelicRef | string): Trigger<"country"
  * ```
  */
 export function isLeaderTier(value: LeaderTierRef | string): Trigger<"leader"> {
-  return trigger([kv("is_leader_tier", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_leader_tier", id)],
+    [{ targets: ["leader_tier"], id, field: "is_leader_tier" }]
+  );
 }
 
 /**
@@ -10781,7 +11537,11 @@ export function isMarketLeader(value: boolean = true): Trigger<"country"> {
  * ```
  */
 export function isMegastructureType(value: MegastructureRef | string): Trigger<"megastructure"> {
-  return trigger([kv("is_megastructure_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_megastructure_type", id)],
+    [{ targets: ["megastructure"], id, field: "is_megastructure_type" }]
+  );
 }
 
 /**
@@ -10791,7 +11551,11 @@ export function isMegastructureType(value: MegastructureRef | string): Trigger<"
  * ```
  */
 export function isMissionType(value: MissionRef | string): Trigger<"mission"> {
-  return trigger([kv("is_mission_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_mission_type", id)],
+    [{ targets: ["mission"], id, field: "is_mission_type" }]
+  );
 }
 
 /**
@@ -10904,7 +11668,8 @@ export function isOnGalaxyMap(
  * ```
  */
 export function isOnMarket(value: ResourceRef | string): Trigger<ScopeName> {
-  return trigger([kv("is_on_market", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("is_on_market", id)], [{ targets: ["resource"], id, field: "is_on_market" }]);
 }
 
 /**
@@ -11070,10 +11835,13 @@ export function isPointOfInterest(
   args: IsPointOfInterestArgs
 ): Trigger<"ambient_object" | "carrier" | "country" | "planet" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(kv("id", args.id));
-  entries.push(kv("event_chain", refId(args.eventChain)));
+  const id1 = refId(args.eventChain);
+  entries.push(kv("event_chain", id1));
+  refs.push({ targets: ["event_chain"], id: id1, field: "is_point_of_interest.event_chain" });
   entries.push(kv("owner", args.owner));
-  return trigger([block("is_point_of_interest", entries)]);
+  return trigger([block("is_point_of_interest", entries)], refs);
 }
 
 /**
@@ -11083,7 +11851,11 @@ export function isPointOfInterest(
  * ```
  */
 export function isPopCategory(value: PopCategoryRef | string): Trigger<"pop_group"> {
-  return trigger([kv("is_pop_category", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_pop_category", id)],
+    [{ targets: ["pop_category"], id, field: "is_pop_category" }]
+  );
 }
 
 /**
@@ -11093,7 +11865,11 @@ export function isPopCategory(value: PopCategoryRef | string): Trigger<"pop_grou
  * ```
  */
 export function isPopFactionType(value: PopFactionRef | string): Trigger<"pop_faction"> {
-  return trigger([kv("is_pop_faction_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_pop_faction_type", id)],
+    [{ targets: ["pop_faction"], id, field: "is_pop_faction_type" }]
+  );
 }
 
 /**
@@ -11103,7 +11879,11 @@ export function isPopFactionType(value: PopFactionRef | string): Trigger<"pop_fa
  * ```
  */
 export function isPreferredPatron(value: PatronTypeRef | string): Trigger<"country"> {
-  return trigger([kv("is_preferred_patron", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_preferred_patron", id)],
+    [{ targets: ["patron_type"], id, field: "is_preferred_patron" }]
+  );
 }
 
 /**
@@ -11197,7 +11977,11 @@ export function isResearchingAnyTechnology(value: boolean = true): Trigger<"coun
 export function isResearchingSpecialProject(
   value: SpecialProjectRef | string
 ): Trigger<"country" | "leader"> {
-  return trigger([kv("is_researching_special_project", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_researching_special_project", id)],
+    [{ targets: ["special_project"], id, field: "is_researching_special_project" }]
+  );
 }
 
 /**
@@ -11207,7 +11991,11 @@ export function isResearchingSpecialProject(
  * ```
  */
 export function isResearchingTechnology(value: TechnologyRef | string): Trigger<"country"> {
-  return trigger([kv("is_researching_technology", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_researching_technology", id)],
+    [{ targets: ["technology"], id, field: "is_researching_technology" }]
+  );
 }
 
 /**
@@ -11424,7 +12212,11 @@ export function isShip(value: string): Trigger<"ship"> {
 export function isShipCategory(
   value: ShipCategoriesRef | string
 ): Trigger<"design" | "fleet" | "ship" | "ship_growth_stage"> {
-  return trigger([kv("is_ship_category", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_ship_category", id)],
+    [{ targets: ["ship_categories"], id, field: "is_ship_category" }]
+  );
 }
 
 /**
@@ -11448,7 +12240,8 @@ export function isShipClass(
 export function isShipSize(
   value: ShipSizeRef | string
 ): Trigger<"design" | "fleet" | "ship" | "ship_growth_stage" | "starbase"> {
-  return trigger([kv("is_ship_size", refId(value))]);
+  const id = refId(value);
+  return trigger([kv("is_ship_size", id)], [{ targets: ["ship_size"], id, field: "is_ship_size" }]);
 }
 
 /**
@@ -11554,7 +12347,11 @@ export function isSiteLocked(value: boolean = true): Trigger<"archaeological_sit
 export function isSiteType(
   value: ArchaeologicalSiteTypeRef | string
 ): Trigger<"archaeological_site"> {
-  return trigger([kv("is_site_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_site_type", id)],
+    [{ targets: ["archaeological_site_type"], id, field: "is_site_type" }]
+  );
 }
 
 /**
@@ -11574,7 +12371,11 @@ export function isSiteUnderExcavation(value: boolean = true): Trigger<"archaeolo
  * ```
  */
 export function isSituationType(value: SituationTypeRef | string): Trigger<"situation"> {
-  return trigger([kv("is_situation_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_situation_type", id)],
+    [{ targets: ["situation_type"], id, field: "is_situation_type" }]
+  );
 }
 
 /**
@@ -11608,7 +12409,11 @@ export function isSpecies(value: string): Trigger<"country" | "leader" | "pop_gr
 export function isSpeciesClass(
   value: SpeciesClassRef | string
 ): Trigger<"country" | "dlc_recommendation" | "pop_group" | "species"> {
-  return trigger([kv("is_species_class", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_species_class", id)],
+    [{ targets: ["species_class"], id, field: "is_species_class" }]
+  );
 }
 
 /**
@@ -11682,7 +12487,11 @@ export function isStarClass(
 export function isStarbaseBuildingBuilding(
   value: StarbaseBuildingRef | string
 ): Trigger<"starbase"> {
-  return trigger([kv("is_starbase_building_building", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_starbase_building_building", id)],
+    [{ targets: ["starbase_building"], id, field: "is_starbase_building_building" }]
+  );
 }
 
 /**
@@ -11692,7 +12501,11 @@ export function isStarbaseBuildingBuilding(
  * ```
  */
 export function isStarbaseBuildingModule(value: StarbaseModuleRef | string): Trigger<"starbase"> {
-  return trigger([kv("is_starbase_building_module", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_starbase_building_module", id)],
+    [{ targets: ["starbase_module"], id, field: "is_starbase_building_module" }]
+  );
 }
 
 /**
@@ -11702,7 +12515,11 @@ export function isStarbaseBuildingModule(value: StarbaseModuleRef | string): Tri
  * ```
  */
 export function isStarbaseType(value: StarbaseTypeRef | string): Trigger<"starbase"> {
-  return trigger([kv("is_starbase_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_starbase_type", id)],
+    [{ targets: ["starbase_type"], id, field: "is_starbase_type" }]
+  );
 }
 
 /** Checks if there is currently a storm active within the storm sector that this system belongs to. The galaxy is split up in multiple storm sectors, which we use to avoid spawning storms too close to each other. */
@@ -11717,7 +12534,11 @@ export function isStormActiveInStormSector(value: boolean = true): Trigger<"syst
  * ```
  */
 export function isStormType(value: StormTypesRef | string): Trigger<"storm"> {
-  return trigger([kv("is_storm_type", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("is_storm_type", id)],
+    [{ targets: ["storm_types"], id, field: "is_storm_type" }]
+  );
 }
 
 /**
@@ -12019,7 +12840,11 @@ export function isYearsSinceCouncilEstablishment(op: PdxOp, value: number): Trig
  * ```
  */
 export function lastActivatedRelic(value: RelicRef | string): Trigger<"country"> {
-  return trigger([kv("last_activated_relic", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("last_activated_relic", id)],
+    [{ targets: ["relic"], id, field: "last_activated_relic" }]
+  );
 }
 
 /**
@@ -12031,7 +12856,11 @@ export function lastActivatedRelic(value: RelicRef | string): Trigger<"country">
 export function lastBuildingChanged(
   value: BuildingRef | string
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("last_building_changed", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("last_building_changed", id)],
+    [{ targets: ["building"], id, field: "last_building_changed" }]
+  );
 }
 
 /**
@@ -12041,7 +12870,11 @@ export function lastBuildingChanged(
  * ```
  */
 export function lastChangedPolicy(value: PolicyRef | string): Trigger<"country"> {
-  return trigger([kv("last_changed_policy", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("last_changed_policy", id)],
+    [{ targets: ["policy"], id, field: "last_changed_policy" }]
+  );
 }
 
 /**
@@ -12077,7 +12910,11 @@ export function lastCompletedSpecialProjectHasResearchCost(
 export function lastDistrictChanged(
   value: DistrictRef | string
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("last_district_changed", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("last_district_changed", id)],
+    [{ targets: ["district"], id, field: "last_district_changed" }]
+  );
 }
 
 /**
@@ -12087,7 +12924,11 @@ export function lastDistrictChanged(
  * ```
  */
 export function lastIncreasedTech(value: TechnologyRef | string): Trigger<"country"> {
-  return trigger([kv("last_increased_tech", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("last_increased_tech", id)],
+    [{ targets: ["technology"], id, field: "last_increased_tech" }]
+  );
 }
 
 /**
@@ -12097,7 +12938,11 @@ export function lastIncreasedTech(value: TechnologyRef | string): Trigger<"count
  * ```
  */
 export function lastLostRelic(value: RelicRef | string): Trigger<"country"> {
-  return trigger([kv("last_lost_relic", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("last_lost_relic", id)],
+    [{ targets: ["relic"], id, field: "last_lost_relic" }]
+  );
 }
 
 /**
@@ -12107,7 +12952,11 @@ export function lastLostRelic(value: RelicRef | string): Trigger<"country"> {
  * ```
  */
 export function lastReceivedRelic(value: RelicRef | string): Trigger<"country"> {
-  return trigger([kv("last_received_relic", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("last_received_relic", id)],
+    [{ targets: ["relic"], id, field: "last_received_relic" }]
+  );
 }
 
 /**
@@ -12119,7 +12968,11 @@ export function lastReceivedRelic(value: RelicRef | string): Trigger<"country"> 
 export function lastResolutionCategoryChanged(
   value: ResolutionCategoryRef | string
 ): Trigger<ScopeName> {
-  return trigger([kv("last_resolution_category_changed", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("last_resolution_category_changed", id)],
+    [{ targets: ["resolution_category"], id, field: "last_resolution_category_changed" }]
+  );
 }
 
 /**
@@ -12129,7 +12982,11 @@ export function lastResolutionCategoryChanged(
  * ```
  */
 export function lastResolutionChanged(value: ResolutionRef | string): Trigger<ScopeName> {
-  return trigger([kv("last_resolution_changed", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("last_resolution_changed", id)],
+    [{ targets: ["resolution"], id, field: "last_resolution_changed" }]
+  );
 }
 
 /**
@@ -12149,7 +13006,11 @@ export function leaderAge(op: PdxOp, value: number): Trigger<"leader"> {
  * ```
  */
 export function leaderClass(value: LeaderClassRef | string): Trigger<"leader"> {
-  return trigger([kv("leader_class", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("leader_class", id)],
+    [{ targets: ["leader_class"], id, field: "leader_class" }]
+  );
 }
 
 /**
@@ -12229,7 +13090,10 @@ export interface MarketResourcePriceArgs {
  */
 export function marketResourcePrice(args: MarketResourcePriceArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("resource", refId(args.resource)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.resource);
+  entries.push(kv("resource", id0));
+  refs.push({ targets: ["resource"], id: id0, field: "market_resource_price.resource" });
   if (args.amount !== undefined) {
     entries.push(
       typeof args.amount === "object"
@@ -12245,7 +13109,7 @@ export function marketResourcePrice(args: MarketResourcePriceArgs): Trigger<"cou
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("market_resource_price", entries)]);
+  return trigger([block("market_resource_price", entries)], refs);
 }
 
 /**
@@ -13050,8 +13914,10 @@ export interface NumNeighborSystemsArgs {
  */
 export function numNeighborSystems(args: NumNeighborSystemsArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   if (args.minDistance !== undefined) {
     entries.push(
@@ -13067,7 +13933,7 @@ export function numNeighborSystems(args: NumNeighborSystemsArgs): Trigger<ScopeN
         : kv("max_distance", args.maxDistance)
     );
   }
-  return trigger([block("num_neighbor_systems", entries)]);
+  return trigger([block("num_neighbor_systems", entries)], refs);
 }
 
 /**
@@ -13320,13 +14186,16 @@ export interface NumShipsInDebrisArgs {
  */
 export function numShipsInDebris(args: NumShipsInDebrisArgs): Trigger<"debris"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("ship_size", refId(args.shipSize)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.shipSize);
+  entries.push(kv("ship_size", id0));
+  refs.push({ targets: ["ship_size"], id: id0, field: "num_ships_in_debris.ship_size" });
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("num_ships_in_debris", entries)]);
+  return trigger([block("num_ships_in_debris", entries)], refs);
 }
 
 /**
@@ -13645,7 +14514,11 @@ export function originalOwner(
  * ```
  */
 export function ownsAnyBypass(value: BypassRef | string): Trigger<"country"> {
-  return trigger([kv("owns_any_bypass", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("owns_any_bypass", id)],
+    [{ targets: ["bypass"], id, field: "owns_any_bypass" }]
+  );
 }
 
 /**
@@ -13655,7 +14528,11 @@ export function ownsAnyBypass(value: BypassRef | string): Trigger<"country"> {
  * ```
  */
 export function patronHasAllAccordsUnlocked(value: PatronTypeRef | string): Trigger<"country"> {
-  return trigger([kv("patron_has_all_accords_unlocked", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("patron_has_all_accords_unlocked", id)],
+    [{ targets: ["patron_type"], id, field: "patron_has_all_accords_unlocked" }]
+  );
 }
 
 /**
@@ -13723,8 +14600,10 @@ export function planetHappinessAboveThreshold(
   args: PlanetHappinessAboveThresholdArgs
 ): Trigger<"planet" | "system"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
   }
   entries.push(
     typeof args.threshold === "object"
@@ -13736,7 +14615,7 @@ export function planetHappinessAboveThreshold(
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("planet_happiness_above_threshold", entries)]);
+  return trigger([block("planet_happiness_above_threshold", entries)], refs);
 }
 
 export interface PlanetResourceCompareArgs {
@@ -13760,16 +14639,19 @@ export function planetResourceCompare(
   args: PlanetResourceCompareArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.type !== undefined) {
     entries.push(kv("type", args.type));
   }
-  entries.push(kv("resource", refId(args.resource)));
+  const id1 = refId(args.resource);
+  entries.push(kv("resource", id1));
+  refs.push({ targets: ["resource"], id: id1, field: "planet_resource_compare.resource" });
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("planet_resource_compare", entries)]);
+  return trigger([block("planet_resource_compare", entries)], refs);
 }
 
 /**
@@ -13819,16 +14701,19 @@ export function popAmountPercentage(
   args: PopAmountPercentageArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   entries.push(block("limit", [...args.limit.entries]));
+  refs.push(...args.limit.refs);
   if (args.exclude !== undefined) {
     entries.push(block("exclude", [...args.exclude.entries]));
+    refs.push(...args.exclude.refs);
   }
   entries.push(
     typeof args.percentage === "object"
       ? cmp("percentage", args.percentage[0], args.percentage[1])
       : kv("percentage", args.percentage)
   );
-  return trigger([block("pop_amount_percentage", entries)]);
+  return trigger([block("pop_amount_percentage", entries)], refs);
 }
 
 /**
@@ -13848,7 +14733,11 @@ export function popGroupCrime(op: PdxOp, value: number): Trigger<"planet" | "pop
  * ```
  */
 export function popGroupHasEthic(value: EthicRef | string): Trigger<"pop_group"> {
-  return trigger([kv("pop_group_has_ethic", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("pop_group_has_ethic", id)],
+    [{ targets: ["ethic"], id, field: "pop_group_has_ethic" }]
+  );
 }
 
 /**
@@ -13868,7 +14757,11 @@ export function popGroupHasHappiness(value: boolean = true): Trigger<"pop_group"
  * ```
  */
 export function popGroupHasTrait(value: TraitSpeciesTraitRef | string): Trigger<"pop_group"> {
-  return trigger([kv("pop_group_has_trait", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("pop_group_has_trait", id)],
+    [{ targets: ["trait.species_trait"], id, field: "pop_group_has_trait" }]
+  );
 }
 
 /**
@@ -13904,13 +14797,16 @@ export interface PopMaintenanceCostArgs {
  */
 export function popMaintenanceCost(args: PopMaintenanceCostArgs): Trigger<"pop_group"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("resource", refId(args.resource)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.resource);
+  entries.push(kv("resource", id0));
+  refs.push({ targets: ["resource"], id: id0, field: "pop_maintenance_cost.resource" });
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("pop_maintenance_cost", entries)]);
+  return trigger([block("pop_maintenance_cost", entries)], refs);
 }
 
 /**
@@ -14008,16 +14904,25 @@ export interface ResourceExpensesCompareArgs {
  */
 export function resourceExpensesCompare(args: ResourceExpensesCompareArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("resource", refId(args.resource)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.resource);
+  entries.push(kv("resource", id0));
+  refs.push({ targets: ["resource"], id: id0, field: "resource_expenses_compare.resource" });
   if (args.category !== undefined) {
-    entries.push(kv("category", refId(args.category)));
+    const id1 = refId(args.category);
+    entries.push(kv("category", id1));
+    refs.push({
+      targets: ["economic_category"],
+      id: id1,
+      field: "resource_expenses_compare.category",
+    });
   }
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("resource_expenses_compare", entries)]);
+  return trigger([block("resource_expenses_compare", entries)], refs);
 }
 
 export interface ResourceIncomeCompareArgs {
@@ -14036,13 +14941,16 @@ export interface ResourceIncomeCompareArgs {
  */
 export function resourceIncomeCompare(args: ResourceIncomeCompareArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("resource", refId(args.resource)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.resource);
+  entries.push(kv("resource", id0));
+  refs.push({ targets: ["resource"], id: id0, field: "resource_income_compare.resource" });
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("resource_income_compare", entries)]);
+  return trigger([block("resource_income_compare", entries)], refs);
 }
 
 export interface ResourceIncomeToExpenditureBalanceRatioArgs {
@@ -14066,8 +14974,15 @@ export function resourceIncomeToExpenditureBalanceRatio(
   args: ResourceIncomeToExpenditureBalanceRatioArgs
 ): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.resource !== undefined) {
-    entries.push(kv("resource", refId(args.resource)));
+    const id0 = refId(args.resource);
+    entries.push(kv("resource", id0));
+    refs.push({
+      targets: ["resource"],
+      id: id0,
+      field: "resource_income_to_expenditure_balance_ratio.resource",
+    });
   }
   if (args.category !== undefined) {
     entries.push(kv("category", args.category));
@@ -14077,7 +14992,7 @@ export function resourceIncomeToExpenditureBalanceRatio(
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("resource_income_to_expenditure_balance_ratio", entries)]);
+  return trigger([block("resource_income_to_expenditure_balance_ratio", entries)], refs);
 }
 
 export interface ResourceRevenueCompareArgs {
@@ -14099,16 +15014,25 @@ export interface ResourceRevenueCompareArgs {
  */
 export function resourceRevenueCompare(args: ResourceRevenueCompareArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
   if (args.category !== undefined) {
-    entries.push(kv("category", refId(args.category)));
+    const id0 = refId(args.category);
+    entries.push(kv("category", id0));
+    refs.push({
+      targets: ["economic_category"],
+      id: id0,
+      field: "resource_revenue_compare.category",
+    });
   }
-  entries.push(kv("resource", refId(args.resource)));
+  const id1 = refId(args.resource);
+  entries.push(kv("resource", id1));
+  refs.push({ targets: ["resource"], id: id1, field: "resource_revenue_compare.resource" });
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], args.value[1])
       : kv("value", args.value)
   );
-  return trigger([block("resource_revenue_compare", entries)]);
+  return trigger([block("resource_revenue_compare", entries)], refs);
 }
 
 export interface ResourceStockpileCompareArgs {
@@ -14132,7 +15056,10 @@ export function resourceStockpileCompare(
   args: ResourceStockpileCompareArgs
 ): Trigger<"country" | "ship"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("resource", refId(args.resource)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.resource);
+  entries.push(kv("resource", id0));
+  refs.push({ targets: ["resource"], id: id0, field: "resource_stockpile_compare.resource" });
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], args.value[1])
@@ -14152,7 +15079,7 @@ export function resourceStockpileCompare(
         : kv("multiplier", args.multiplier)
     );
   }
-  return trigger([block("resource_stockpile_compare", entries)]);
+  return trigger([block("resource_stockpile_compare", entries)], refs);
 }
 
 export interface ResourceStockpilePercentArgs {
@@ -14172,9 +15099,12 @@ export interface ResourceStockpilePercentArgs {
  */
 export function resourceStockpilePercent(args: ResourceStockpilePercentArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("resource", refId(args.resource)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.resource);
+  entries.push(kv("resource", id0));
+  refs.push({ targets: ["resource"], id: id0, field: "resource_stockpile_percent.resource" });
   entries.push(kv("value", args.value));
-  return trigger([block("resource_stockpile_percent", entries)]);
+  return trigger([block("resource_stockpile_percent", entries)], refs);
 }
 
 export interface ReverseHasRelationFlagArgs {
@@ -14232,8 +15162,11 @@ export function shipSizeCostResourcePercent(
   args: ShipSizeCostResourcePercentArgs
 ): Trigger<"design" | "ship" | "ship_growth_stage"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("resource", refId(args.resource)));
-  return trigger([block("ship_size_cost_resource_percent", entries)]);
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.resource);
+  entries.push(kv("resource", id0));
+  refs.push({ targets: ["resource"], id: id0, field: "ship_size_cost_resource_percent.resource" });
+  return trigger([block("ship_size_cost_resource_percent", entries)], refs);
 }
 
 /**
@@ -14314,7 +15247,11 @@ export function speciesHasHappinessWithOwner(value: string): Trigger<"species"> 
 export function speciesPortrait(
   value: PortraitRef | string | PortraitGroupRef
 ): Trigger<"country" | "pop_group" | "species"> {
-  return trigger([kv("species_portrait", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("species_portrait", id)],
+    [{ targets: ["portrait", "portrait_group"], id, field: "species_portrait" }]
+  );
 }
 
 export interface StarbaseBuildableIsInQueueBeforeArgs {
@@ -14333,9 +15270,22 @@ export function starbaseBuildableIsInQueueBefore(
   args: StarbaseBuildableIsInQueueBeforeArgs
 ): Trigger<"starbase"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("first", refId(args.first)));
-  entries.push(kv("second", refId(args.second)));
-  return trigger([block("starbase_buildable_is_in_queue_before", entries)]);
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.first);
+  entries.push(kv("first", id0));
+  refs.push({
+    targets: ["starbase_module", "starbase_building"],
+    id: id0,
+    field: "starbase_buildable_is_in_queue_before.first",
+  });
+  const id1 = refId(args.second);
+  entries.push(kv("second", id1));
+  refs.push({
+    targets: ["starbase_module", "starbase_building"],
+    id: id1,
+    field: "starbase_buildable_is_in_queue_before.second",
+  });
+  return trigger([block("starbase_buildable_is_in_queue_before", entries)], refs);
 }
 
 /**
@@ -14611,7 +15561,11 @@ export function upgradeDaysLeft(op: PdxOp, value: number): Trigger<"megastructur
  * ```
  */
 export function upliftIsArchetype(value: SpeciesArchetypeRef | string): Trigger<"species"> {
-  return trigger([kv("uplift_is_archetype", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("uplift_is_archetype", id)],
+    [{ targets: ["species_archetype"], id, field: "uplift_is_archetype" }]
+  );
 }
 
 /**
@@ -14705,7 +15659,11 @@ export function usesDistrictSet(value: string): Trigger<"carrier" | "colony" | "
  * ```
  */
 export function usesShipCategory(value: ShipCategoriesRef | string): Trigger<"country"> {
-  return trigger([kv("uses_ship_category", refId(value))]);
+  const id = refId(value);
+  return trigger(
+    [kv("uses_ship_category", id)],
+    [{ targets: ["ship_categories"], id, field: "uses_ship_category" }]
+  );
 }
 
 export interface UsingWarGoalArgs {
@@ -14721,9 +15679,12 @@ export interface UsingWarGoalArgs {
  */
 export function usingWarGoal(args: UsingWarGoalArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
-  entries.push(kv("type", refId(args.type)));
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.type);
+  entries.push(kv("type", id0));
+  refs.push({ targets: ["war_goal"], id: id0, field: "using_war_goal.type" });
   entries.push(kv("owner", args.owner));
-  return trigger([block("using_war_goal", entries)]);
+  return trigger([block("using_war_goal", entries)], refs);
 }
 
 /**

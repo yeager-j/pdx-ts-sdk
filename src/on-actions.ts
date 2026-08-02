@@ -1,4 +1,4 @@
-import { block, list, scalar, serialize, type PdxEntry } from "@pdx-ts/pdxscript";
+import { block, list, scalar, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { DefinedEvent } from "./events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
@@ -57,10 +57,9 @@ export class OnActionAuthoring {
     this.registrations.push({ hook, event });
   }
 
-  render(): string | undefined {
-    if (this.registrations.length === 0) {
-      return undefined;
-    }
+  /** The finished hook blocks. `buildMod` keeps this instance to itself and
+   * puts only these entries on the mod, so nothing can register after the fold. */
+  entries(): PdxEntry[] {
     const byHook = new Map<string, DefinedEvent<ScopeName, ScopeName | undefined>[]>();
     for (const registration of this.registrations) {
       const events = byHook.get(registration.hook.name) ?? [];
@@ -71,7 +70,7 @@ export class OnActionAuthoring {
     // content, never of registration order). The events inside one hook keep
     // registration order — that list is author data, and the game fires it as
     // written.
-    const entries: PdxEntry[] = [...byHook]
+    return [...byHook]
       .sort(([a], [b]) => compareUtf8(a, b))
       .map(([name, events]) =>
         block(name, [
@@ -81,7 +80,6 @@ export class OnActionAuthoring {
           ),
         ])
       );
-    return serialize(entries);
   }
 }
 

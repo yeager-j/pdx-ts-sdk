@@ -325,6 +325,7 @@ async function main(): Promise<void> {
     "triggers.ts",
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
       'import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";\n' +
+      'import type { ContentRefUse } from "../content-refs.ts";\n' +
       'import { trigger, type Trigger } from "../trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(

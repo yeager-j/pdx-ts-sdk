@@ -15,6 +15,7 @@ import {
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
+import { underField, type ContentRefSink, type ContentRefUse } from "./content-refs.ts";
 import {
   makeScope,
   modifierEntry,
@@ -401,26 +402,10 @@ export interface ContentRegistryDescriptor {
   readonly keyedBy?: { readonly keyword: string; readonly nameField: string };
 }
 
-/**
- * One id-valued reference, recorded while a definition is lowered.
- *
- * Recording here rather than scanning the emitted tree afterwards is what
- * makes the reference guard registry-aware and false-positive-free: at this
- * point the field table still says which registries the id may name, so a
- * country flag, a localization key, and a saved event target — all of them
- * own-prefixed scalars in the same output — are never mistaken for content.
- */
-export interface ContentRefUse {
-  /** Registries the id may name; every one of them a real content type. */
-  readonly targets: readonly string[];
-  /** The lowered id, with branded refs already resolved to their string. */
-  readonly id: string;
-  /** Dotted PDXScript key path to the field holding it, e.g. `section.template`. */
-  readonly field: string;
-}
-
-/** Where {@link DefinedContent.toEntries} reports the references it lowers. */
-export type ContentRefSink = (use: ContentRefUse) => void;
+/** The reference vocabulary lives in `content-refs.ts` because the trigger and
+ * effect encoders record them too; it is re-exported here where content
+ * lowering — the first and densest producer — is defined. */
+export type { ContentRefSink, ContentRefUse } from "./content-refs.ts";
 
 /** A definition registered with a mod and usable as a typed cross-reference. */
 export interface DefinedContent<
@@ -452,6 +437,21 @@ function childContext(
 
 function joinPath(path: string, segment: string): string {
   return path === "" ? segment : `${path}.${segment}`;
+}
+
+/** Reports references a spliced trigger or effect closure recorded, re-rooted
+ * under the field that holds them so the diagnostic names the whole path. */
+function collectRefs(
+  ctx: LoweringContext | undefined,
+  refs: readonly ContentRefUse[],
+  segment: string
+): void {
+  if (ctx === undefined) {
+    return;
+  }
+  for (const use of underField(refs, joinPath(ctx.path, segment))) {
+    ctx.collect(use);
+  }
 }
 
 function contentScalar(
@@ -509,12 +509,14 @@ function modifierBlock(key: string, value: ModifierClosure): PdxEntry {
   return block(key, modifierEntries(value));
 }
 
-function weightBlock(key: string, value: WeightBlock<ScopeName>): PdxEntry {
+function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringContext): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.base !== undefined) {
     entries.push(kv("base", value.base));
   }
-  entries.push(...(value.modifiers ?? []).map(modifierEntry));
+  const refs: ContentRefUse[] = [];
+  entries.push(...(value.modifiers ?? []).map((modifier) => modifierEntry(modifier, refs)));
+  collectRefs(ctx, refs, key);
   return block(key, entries);
 }
 
@@ -525,10 +527,15 @@ function repeatedNumbers(key: string, value: number | readonly number[] | undefi
   return (Array.isArray(value) ? value : [value]).map((item) => kv(key, item));
 }
 
-function economicOperation(key: string, value: EconomicResourceOperation<ScopeName>): PdxEntry {
+function economicOperation(
+  key: string,
+  value: EconomicResourceOperation<ScopeName>,
+  ctx?: LoweringContext
+): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.when !== undefined) {
     entries.push(block("trigger", [...value.when.entries]));
+    collectRefs(ctx, value.when.refs, `${key}.trigger`);
   }
   entries.push(...Object.entries(value.amounts).map(([resource, amount]) => kv(resource, amount)));
   entries.push(...repeatedNumbers("multiplier", value.multiplier));
@@ -556,16 +563,21 @@ function economicResourceBlock(
   for (const operation of ["cost", "produces", "upkeep", "logistics"] as const) {
     const arm = value[operation];
     if (arm !== undefined) {
-      entries.push(economicOperation(operation, arm));
+      entries.push(economicOperation(operation, arm, childContext(ctx, key)));
     }
   }
   return block(key, entries);
 }
 
-function triggeredModifierBlock(key: string, value: TriggeredModifier<ScopeName>): PdxEntry {
+function triggeredModifierBlock(
+  key: string,
+  value: TriggeredModifier<ScopeName>,
+  ctx?: LoweringContext
+): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.when !== undefined) {
     entries.push(block("potential", [...value.when.entries]));
+    collectRefs(ctx, value.when.refs, `${key}.potential`);
   }
   if (value.key !== undefined) {
     entries.push(kv("key", value.key));
@@ -637,11 +649,17 @@ function fieldEntries(
       }
       case "trigger":
         entries.push(block(field.key, [...(value as Trigger<ScopeName>).entries]));
+        collectRefs(ctx, (value as Trigger<ScopeName>).refs, field.key);
         break;
       case "effect": {
         const child: PdxEntry[] = [];
-        (value as EffectBlock<ScopeName>)(makeScope(child));
+        // A reference written inside a script closure is a reference like any
+        // other; the recorder reports them here so they face the same
+        // integrity check as the declarative fields around them.
+        const recorded: ContentRefUse[] = [];
+        (value as EffectBlock<ScopeName>)(makeScope(child, recorded));
         entries.push(block(field.key, child));
+        collectRefs(ctx, recorded, field.key);
         break;
       }
       case "economicResources": {
@@ -655,7 +673,7 @@ function fieldEntries(
         const values = field.repeated
           ? (value as readonly TriggeredModifier<ScopeName>[])
           : [value as TriggeredModifier<ScopeName>];
-        entries.push(...values.map((item) => triggeredModifierBlock(field.key, item)));
+        entries.push(...values.map((item) => triggeredModifierBlock(field.key, item, ctx)));
         break;
       }
       case "modifierBlock":
@@ -666,11 +684,11 @@ function fieldEntries(
         break;
       case "weightBlock":
       case "weightBlockWithLoc":
-        entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));
+        entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>, ctx));
         break;
       case "valueOrWeightBlock":
         if (typeof value === "object") {
-          entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));
+          entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>, ctx));
         } else {
           entries.push(kv(field.key, contentScalar(value, field, false, ctx)));
         }
