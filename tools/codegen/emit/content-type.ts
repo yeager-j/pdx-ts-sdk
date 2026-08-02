@@ -14,7 +14,7 @@ import {
   type ScopeContext,
 } from "../cwt/model.ts";
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
-import { camelCase, docComment, isPlainName, pascalCase } from "../naming.ts";
+import { camelCase, docComment, indefiniteArticle, isPlainName, pascalCase } from "../naming.ts";
 import {
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -299,8 +299,9 @@ function constantCase(name: string): string {
   return name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
 }
 
-function indefiniteArticle(name: string): "A" | "An" {
-  return /^[aeiou]/i.test(name) ? "An" : "A";
+/** The sentence-initial form; the rule itself lives in naming.ts. */
+function capitalizedArticle(name: string): "A" | "An" {
+  return indefiniteArticle(name) === "an" ? "An" : "A";
 }
 
 function conversionFor(value: TsValue): "identity" | "ref" {
@@ -938,10 +939,18 @@ function localisationMetadata(type: ContentType, plan = planLocalisation(type)):
  * Lowers an overlay-configured repeated-struct field: a named, ordered
  * collection whose name is both identity and localization key (shapes 1 and 2
  * — the same distinction `name_field` draws for top-level registries, one
- * level down). Authors as `Readonly<Record<Id, ${typeName}Fields>>` rather
+ * level down). Authors as `Readonly<Record<string, ${typeName}Fields>>` rather
  * than an array carrying its own `id`, so the id cannot be omitted, cannot
  * collide, and the mod prefix applies at one point — exactly like a top-level
  * definition's id.
+ *
+ * The record key is `string`, not the owning definition's `Id`. A nested id is
+ * its own name (`stage_1`), unrelated to the definition's; keying the record by
+ * `Id` only looked sound under the class API's `PrefixedId<P>` pattern type,
+ * where both sides happened to be the same wide pattern. Against a literal id —
+ * what the pure API's definers preserve — it would demand every stage key equal
+ * the definition id. The prefix and duplicate checks on these keys are runtime
+ * checks in `ContentAuthoring` either way.
  */
 function repeatedStructEmission(
   emitter: Emitter,
@@ -1099,7 +1108,7 @@ function repeatedStructEmission(
     code,
     fieldsConstant,
     localisationConstant,
-    memberType: `Readonly<Record<Id, ${typeName}Fields>>`,
+    memberType: `Readonly<Record<string, ${typeName}Fields>>`,
     metadata: metadataValue,
     declinedFields,
     unsupported,
@@ -1135,11 +1144,6 @@ export function emitContentType(
   const members: string[] = [];
   const fieldMetadata: string[] = [];
   const emittedMembers = new Set<string>();
-  // Only a repeatedStruct field's Readonly<Record<Id, ...>> member type actually
-  // references Id — a plain struct field (no identity) never does, so the owner
-  // type should not carry an unused Id generic just because a struct happened
-  // to be present.
-  let needsId = false;
   const localisationPlan = planLocalisation(type);
   // A body field can share a name with a localization slot without meaning the
   // same thing — `building.desc` (`single_alias_right[triggered_desc_clause]`,
@@ -1187,7 +1191,6 @@ export function emitContentType(
       );
       extraCode.push(nested.code);
       fieldMetadata.push(nested.metadata);
-      needsId = true;
       declinedFields.push(...nested.declinedFields);
       unsupported.push(...nested.unsupported);
       nestedEmittedFields.push(...nested.emittedFields);
@@ -1266,21 +1269,19 @@ export function emitContentType(
   const typeName = pascalCase(type.name);
   const fieldsConstant = `${type.name.toUpperCase()}_FIELDS`;
   const localisationConstant = `${type.name.toUpperCase()}_LOCALISATION`;
-  const fieldsGeneric = needsId ? "<Id extends string = string>" : "";
-  const fieldsReference = needsId ? `${typeName}Fields<Id>` : typeName + "Fields";
   const code =
     extraCode.join("") +
     docComment([
-      `${indefiniteArticle(type.name)} ${type.name}, as the game's rules describe it.`,
+      `${capitalizedArticle(type.name)} ${type.name}, as the game's rules describe it.`,
       "",
       `Generated from \`type[${cwtType.name}]\` at \`${type.path}\`.`,
     ]) +
-    `export interface ${typeName}Fields${fieldsGeneric} {\n` +
+    `export interface ${typeName}Fields {\n` +
     localisationMembers(type, localisationPlan) +
     spliceMembers.join("") +
     members.join("") +
     "}\n\n" +
-    `export interface ${typeName}Def<Id extends string = string> extends ${fieldsReference} {\n` +
+    `export interface ${typeName}Def<Id extends string = string> extends ${typeName}Fields {\n` +
     "  /** Full content id, including the mod prefix. */\n" +
     "  id: Id;\n" +
     "}\n\n" +

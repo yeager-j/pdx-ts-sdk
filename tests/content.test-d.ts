@@ -23,6 +23,7 @@ import {
   type OpinionModifierRef,
   type SectionTemplateFields,
   type TechnologyRef,
+  type TraditionSwapFields,
   type Trigger,
   type WarGoalRef,
 } from "../src/index.ts";
@@ -318,9 +319,9 @@ describe("generated content authoring types", () => {
   });
 
   it("types an engine-keyed map without imposing an id on its keys", () => {
-    // A structMap key is a plain engine name, so `PrefixedId` must NOT reach
-    // it — unlike a repeated-struct record key one level down, which is an id
-    // the mod owns. The values still get their full struct type.
+    // A structMap key is a plain engine name and its values still get their
+    // full struct type. A repeated-struct record key is an id the mod owns,
+    // but it is typed `string` all the same — see the sibling case below.
     mod.defineShipSize({
       id: "content_types_ship_size_x",
       name: "X",
@@ -345,13 +346,21 @@ describe("generated content authoring types", () => {
       // @ts-expect-error — a scalarMap's values are numbers, not blocks
       minUpgradeCost: { alloys: { base: 20 } },
     });
-    // A repeated-struct record key, by contrast, IS constrained to the prefix.
+    // A repeated-struct record key is `string`, not the definition's own id
+    // type: a nested id is its own name, unrelated to its owner's. Typing the
+    // record by the owner's `Id` only ever looked sound because both sides
+    // were the same wide `PrefixedId<P>` pattern here; against the literal id
+    // the pure API's definers preserve, it demanded every swap key equal the
+    // tradition's id. The prefix rule on these keys is enforced at define
+    // time instead — tests/content.test.ts pins the throw.
     mod.defineTradition({
-      id: "content_types_tradition_prefix_contrast",
+      id: "content_types_tradition_nested_key",
       name: "X",
-      // @ts-expect-error — nested definition ids must carry the mod prefix
-      traditionSwap: { othermod_swap: { name: "Wrong namespace" } },
+      traditionSwap: { othermod_swap: { name: "Accepted by the type, rejected at define" } },
     });
+    expectTypeOf<
+      NonNullable<Parameters<typeof mod.defineTradition>[0]["traditionSwap"]>
+    >().toEqualTypeOf<Readonly<Record<string, TraditionSwapFields>>>();
   });
 
   it("keeps content reference brands distinct", () => {

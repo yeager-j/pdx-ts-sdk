@@ -184,7 +184,7 @@ export const SITUATION_STAGE_LOCALISATION: readonly ContentLocalisation[] = [
  * A situation_type, as the game's rules describe it.
  * Generated from `type[situation_type]` at `game/common/situations`.
  */
-export interface SituationTypeFields<Id extends string = string> {
+export interface SituationTypeFields {
   /** English text emitted to localization under `<id>`. */
   name: string;
   /** English text emitted to localization under `<id>_type`. */
@@ -217,7 +217,7 @@ export interface SituationTypeFields<Id extends string = string> {
   triggeredTargetModifier?: TriggeredModifier<"planet">[];
   onMonthly?: SituationTypeOnMonthly;
   monthlyProgress: WeightBlockWithLoc<"situation">;
-  approach?: Readonly<Record<Id, SituationApproachFields>>;
+  approach?: Readonly<Record<string, SituationApproachFields>>;
   /** Situation will start at this number. Default is 0 */
   startValue?: number;
   /** The value the situation progress is going to have when starting. Important for bidirectional situations. if it is lower than start_value, it will be changed to start_value */
@@ -245,10 +245,10 @@ export interface SituationTypeFields<Id extends string = string> {
   completeIconFrame?: SpriteRef | string;
   failIcon?: SpriteRef | string;
   failIconFrame?: SpriteRef | string;
-  stages?: Readonly<Record<Id, SituationStageFields>>;
+  stages?: Readonly<Record<string, SituationStageFields>>;
 }
 
-export interface SituationTypeDef<Id extends string = string> extends SituationTypeFields<Id> {
+export interface SituationTypeDef<Id extends string = string> extends SituationTypeFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }

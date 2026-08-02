@@ -13,6 +13,7 @@
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { DefinedEvent } from "./events.ts";
 import type { ContentTypeName } from "./generated/content-registry.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import type { OnActionRef } from "./on-actions.ts";
@@ -53,6 +54,21 @@ export interface EventItemBase {
   readonly entry: PdxEntry;
   readonly locEntries: ReadonlyArray<readonly [string, string]>;
 }
+
+/**
+ * What an event definer returns: a defined event with its scope and FROM
+ * contract intact for fire sites and `on()`. Structurally a `DefinedEvent`, so
+ * it flows into both unchanged — the FROM brand rides along by intersection
+ * without this module naming the phantom symbol.
+ */
+export type EventItem<
+  S extends ScopeName = ScopeName,
+  From extends ScopeName | undefined = ScopeName | undefined,
+> = DefinedEvent<S, From> & {
+  readonly itemKind: "event";
+  readonly namespace: string;
+  readonly locEntries: ReadonlyArray<readonly [string, string]>;
+};
 
 export interface OnActionBindingItem {
   readonly itemKind: "on-action";

@@ -22,7 +22,7 @@ export abstract class GeneratedEventMethods<
   ): DefinedEvent<S, From>;
 
   /**
-   * Defines a agreement event in this mod's namespace; the full id is
+   * Defines an agreement event in this mod's namespace; the full id is
    * `${prefix}.${def.id}`. Title/desc/option localization rides along, and the
    * event's closures record eagerly, at the define site.
    */
@@ -33,7 +33,7 @@ export abstract class GeneratedEventMethods<
   }
 
   /**
-   * Defines a astral rift event in this mod's namespace; the full id is
+   * Defines an astral rift event in this mod's namespace; the full id is
    * `${prefix}.${def.id}`. Title/desc/option localization rides along, and the
    * event's closures record eagerly, at the define site.
    */
@@ -114,7 +114,7 @@ export abstract class GeneratedEventMethods<
   }
 
   /**
-   * Defines a espionage operation event in this mod's namespace; the full id is
+   * Defines an espionage operation event in this mod's namespace; the full id is
    * `${prefix}.${def.id}`. Title/desc/option localization rides along, and the
    * event's closures record eagerly, at the define site.
    */
@@ -158,7 +158,7 @@ export abstract class GeneratedEventMethods<
   }
 
   /**
-   * Defines a observer event in this mod's namespace; the full id is
+   * Defines an observer event in this mod's namespace; the full id is
    * `${prefix}.${def.id}`. Title/desc/option localization rides along, and the
    * event's closures record eagerly, at the define site.
    */

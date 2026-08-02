@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import { EVENT_KINDS } from "../../src/generated/events.ts";
+
 const methods = readFileSync("src/generated/event-methods.ts", "utf8");
+const factory = readFileSync("src/generated/event-factory.ts", "utf8");
 const fires = readFileSync("src/generated/event-fires.ts", "utf8");
 
 describe("generated event surface", () => {
@@ -15,6 +18,40 @@ describe("generated event surface", () => {
     // The scopeless `event` kind cannot type its closures and is skipped.
     expect(methods).not.toContain('"event", null');
     expect(methods).not.toContain("defineEvent<From");
+  });
+
+  it("emits createEvents with a definer for every kind the class API defines", () => {
+    // The two surfaces come off one kind table, so they cannot drift apart:
+    // every `defineXEvent` on the abstract class has a definer on the factory,
+    // and the scopeless `event` kind is absent from both.
+    const classMethods = [...methods.matchAll(/^  (define\w+Event)</gm)].map((match) => match[1]);
+    const factoryDefiners = [...factory.matchAll(/^  (define\w+Event)</gm)].map(
+      (match) => match[1]
+    );
+    expect(factoryDefiners).toEqual(classMethods);
+    expect(factoryDefiners).toHaveLength(
+      Object.values(EVENT_KINDS).filter((kind) => kind.scope !== null).length
+    );
+    expect(factory).toContain(
+      "  defineCountryEvent<From extends ScopeName | undefined = undefined>(\n" +
+        '    def: EventDef<"country", From>\n' +
+        '  ): EventItem<"country", From>;'
+    );
+    expect(factory).toContain('defineSituationEvent: definerOf("situation_event", "situation"),');
+    expect(factory).not.toContain("defineEvent<From");
+  });
+
+  it("keeps the factory's eager closures, per-namespace ids, and duplicate check", () => {
+    // The namespace is known at the definition site, so nothing is deferred:
+    // buildEvent runs right there and the full id is a plain string from birth.
+    expect(factory).toContain("export function createEvents(file: string, namespace: string)");
+    expect(factory).toContain("  assertNamespace(namespace);");
+    expect(factory).toContain("const used = new Set<number>();");
+    expect(factory).toContain('throw new Error(`Duplicate event id "${namespace}.${def.id}"`);');
+    expect(factory).toContain("const built = buildEvent(kind, scope, namespace, def, {");
+    expect(factory).toContain(
+      'const item = { ...built, itemKind: "event" as const, namespace, locEntries };'
+    );
   });
 
   it("emits the witness-overload pair for every fire effect", () => {

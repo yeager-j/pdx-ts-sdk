@@ -89,6 +89,11 @@ export type {
   GraphicalCultureDef,
   GraphicalCultureFields,
 } from "./generated/graphical-culture.ts";
+export type {
+  DefinedGlobalShipDesign,
+  GlobalShipDesignDef,
+  GlobalShipDesignFields,
+} from "./generated/global-ship-design.ts";
 export type { DefinedJob, JobDef, JobFields } from "./generated/job.ts";
 export type {
   DefinedOpinionModifier,
@@ -117,10 +122,32 @@ export type {
   SectionTemplateFields,
 } from "./generated/section-template.ts";
 export type {
+  DefinedSituationType,
+  SituationApproachFields,
+  SituationStageFields,
+  SituationTypeDef,
+  SituationTypeFields,
+} from "./generated/situation-type.ts";
+export type {
   DefinedSpeciesClass,
   SpeciesClassDef,
   SpeciesClassFields,
 } from "./generated/species-class.ts";
+export type {
+  DefinedStrikeCraftComponentTemplate,
+  StrikeCraftComponentTemplateDef,
+  StrikeCraftComponentTemplateFields,
+} from "./generated/strike-craft-component-template.ts";
+export type {
+  DefinedUtilityComponentTemplate,
+  UtilityComponentTemplateDef,
+  UtilityComponentTemplateFields,
+} from "./generated/utility-component-template.ts";
+export type {
+  DefinedWeaponComponentTemplate,
+  WeaponComponentTemplateDef,
+  WeaponComponentTemplateFields,
+} from "./generated/weapon-component-template.ts";
 export type {
   DefinedStarbaseLevel,
   StarbaseLevelDef,
@@ -179,21 +206,15 @@ export type { ModConfig, PrefixedId } from "./mod.ts";
 export { Mod } from "./mod.ts";
 export { buildMod, type BuildOptions, type EmittedFile, type PureMod } from "./build.ts";
 export { render, write } from "./render.ts";
+// One collection factory per content registry — `createTechnologies`,
+// `createAscensionPerks`, ... — with its `XCollection` and `XItem` types.
+export * from "./generated/content-factories.ts";
+export { createEvents, type EventCollection } from "./generated/event-factory.ts";
 export {
-  createCountryShipOfSizeLimits,
-  createEvents,
   createOnActions,
-  createSituationTypes,
-  createTechnologies,
-  type CountryShipOfSizeLimitCollection,
-  type CountryShipOfSizeLimitItem,
-  type EventCollection,
-  type EventItem,
+  situationTypeDefiner,
   type OnActionCollection,
-  type SituationTypeCollection,
-  type SituationTypeItem,
-  type TechnologyCollection,
-  type TechnologyItem,
+  type SituationTypeDefiner,
 } from "./factories.ts";
 export {
   assertFileStem,
@@ -203,6 +224,7 @@ export {
   type Collection,
   type ContentItem,
   type ContributionItem,
+  type EventItem,
   type EventItemBase,
   type ModItem,
   type ModItemInput,

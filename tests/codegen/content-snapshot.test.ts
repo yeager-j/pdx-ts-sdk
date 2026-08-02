@@ -1,11 +1,17 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { CONTENT_MANIFEST } from "../../tools/codegen/content-manifest.ts";
+import {
+  CONTENT_MANIFEST,
+  type ContentManifestEntry,
+} from "../../tools/codegen/content-manifest.ts";
 import type { CwtDiagnostic } from "../../tools/codegen/cwt/parser.ts";
 import { loadRules } from "../../tools/codegen/cwt/rules.ts";
 import driftBaseline from "../../tools/codegen/drift-baseline.json" with { type: "json" };
 import { emitContentType } from "../../tools/codegen/emit/content-type.ts";
 import { Emitter } from "../../tools/codegen/emit/types.ts";
+import { pascalCase } from "../../tools/codegen/naming.ts";
+import { HAND_WRITTEN_CONTENT_DEFINERS } from "../../tools/codegen/overlay.ts";
 
 function describeDiagnostic(diagnostic: CwtDiagnostic): string {
   return `${diagnostic.file}:${diagnostic.line} ${diagnostic.text}`;
@@ -69,7 +75,28 @@ describe("content-type codegen", () => {
     expect(tradition?.code).toContain('shape: "repeatedStruct"');
     expect(tradition?.code).toContain('keying: "siblings"');
     expect(tradition?.code).toContain("fields: TRADITION_SWAP_FIELDS");
-    expect(tradition?.code).toContain("traditionSwap?: Readonly<Record<Id, TraditionSwapFields>>;");
+    expect(tradition?.code).toContain(
+      "traditionSwap?: Readonly<Record<string, TraditionSwapFields>>;"
+    );
+  });
+
+  it("keys a repeated-struct record by string, not by the owner's id type", () => {
+    // A nested id is its own name (`othermod_swap`), unrelated to the
+    // definition that contains it. Reusing the owner's `Id` for the key only
+    // ever looked sound under the class API's wide `PrefixedId<P>`, where both
+    // sides were the same pattern; against the literal id the pure API's
+    // definers preserve, it demanded every swap key equal the tradition's id.
+    // Nothing references `Id` inside the Fields interface any more, so it
+    // carries no type parameter either — only `XDef` is generic in the id.
+    for (const registry of ["tradition", "ascension_perk", "situation_type"] as const) {
+      const code = emissions.get(registry)!.code;
+      expect(code, registry).not.toContain("Record<Id,");
+      expect(code, registry).not.toMatch(/export interface \w+Fields<Id/);
+    }
+    expect(emissions.get("tradition")!.code).toContain("export interface TraditionFields {");
+    expect(emissions.get("tradition")!.code).toContain(
+      "export interface TraditionDef<Id extends string = string> extends TraditionFields {"
+    );
   });
 
   it("infers reusable effect closures with the content body's scope", () => {
@@ -282,7 +309,7 @@ describe("content-type codegen", () => {
     expect(situation?.code).toContain('shape: "repeatedStruct"');
     expect(situation?.code).toContain('keying: "container"');
     expect(situation?.code).toContain("fields: SITUATION_STAGE_FIELDS");
-    expect(situation?.code).toContain("stages?: Readonly<Record<Id, SituationStageFields>>;");
+    expect(situation?.code).toContain("stages?: Readonly<Record<string, SituationStageFields>>;");
     // "container" keying carries no identityKey member in its metadata — the
     // record key IS the block's own key, not a body field.
     expect(situation?.code).not.toMatch(/keying: "container"[^}]*identityKey/);
@@ -291,7 +318,9 @@ describe("content-type codegen", () => {
     expect(situation?.code).toContain('keying: "siblings"');
     expect(situation?.code).toContain('identityKey: "name"');
     expect(situation?.code).toContain("fields: SITUATION_APPROACH_FIELDS");
-    expect(situation?.code).toContain("approach?: Readonly<Record<Id, SituationApproachFields>>;");
+    expect(situation?.code).toContain(
+      "approach?: Readonly<Record<string, SituationApproachFields>>;"
+    );
   });
 
   it("falls back to the identity-localisation convention when no CWT type carries it", () => {
@@ -690,5 +719,75 @@ describe("content-type codegen", () => {
       "COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION: readonly ContentLocalisation[] = [\n];"
     );
     expect(countryShipOfSizeLimit?.machineryBacklog).toEqual([]);
+  });
+});
+
+/**
+ * The collection factories, read from the committed output rather than
+ * re-emitted: `npm run codegen:check` is what guarantees the file matches the
+ * emitter, so asserting against the file also asserts against what ships.
+ */
+describe("generated content factories", () => {
+  const factories = readFileSync("src/generated/content-factories.ts", "utf8");
+
+  it("emits one factory per manifest registry, named by its explicit plural", () => {
+    for (const manifest of CONTENT_MANIFEST) {
+      const entry = manifest as ContentManifestEntry;
+      const registry = entry.as ?? entry.type;
+      const name = pascalCase(registry);
+      expect(factories, registry).toMatch(
+        new RegExp(
+          `export function create${pascalCase(entry.plural)}\\(\\s*file\\?: string\\s*\\): ` +
+            `${name}Collection \\{`
+        )
+      );
+      expect(factories, registry).toMatch(
+        new RegExp(`export interface ${name}Collection\\s+extends Collection<${name}Item>`)
+      );
+      expect(factories, registry).toContain(`export type ${name}Item =`);
+    }
+    expect(factories.match(/^export function create/gm)).toHaveLength(CONTENT_MANIFEST.length);
+  });
+
+  it("preserves a definition's literal id through its definer", () => {
+    // The property the class methods — generic only in the mod prefix —
+    // widened away, and what every branded cross-reference downstream needs.
+    expect(factories).toContain(
+      "  defineTechnology<const Id extends string>(\n" +
+        "    def: TechnologyDef<Id>\n" +
+        '  ): ContentItem<"technology", TechnologyDef<Id>>;'
+    );
+  });
+
+  it("keeps patchTechnology on the technology factory alone", () => {
+    // A prefixed definition cannot collide with vanilla, but a patch is a
+    // whole-object override whose load order and emission are verified per
+    // registry — and only technology has that evidence.
+    expect(factories.match(/^  patch\w+</gm)).toEqual(["  patchTechnology<"]);
+    expect(factories).toContain("patched: transformTechnology(technology, patch)");
+  });
+
+  it("keeps addShipOfSizeLimits on the country_ship_of_size_limit factory alone", () => {
+    expect(factories.match(/^  add\w+\(/gm)).toEqual(["  addShipOfSizeLimits("]);
+    expect(factories).toContain(
+      "export type CountryShipOfSizeLimitItem =\n" +
+        '  ContentItem<"country_ship_of_size_limit", CountryShipOfSizeLimitDef> | ContributionItem;'
+    );
+    expect(factories).toContain('registry: "ship_of_size_limits",');
+  });
+
+  it("takes situation_type's definer from the hand-written graft", () => {
+    // HAND_WRITTEN_CONTENT_DEFINERS, the HAND_WRITTEN_TRIGGERS arrangement one
+    // level up: no mechanical defineSituationType is emitted beside the graft,
+    // because `targetScope` is a contract the rules describe nowhere.
+    expect(HAND_WRITTEN_CONTENT_DEFINERS.has("situation_type")).toBe(true);
+    expect(factories).not.toContain("defineSituationType<const Id");
+    expect(factories).toContain(
+      "export interface SituationTypeCollection\n" +
+        "  extends Collection<SituationTypeItem>, SituationTypeDefiner {}"
+    );
+    expect(factories).toContain("    ...situationTypeDefiner(items),");
+    // Every other registry still gets its mechanical definer.
+    expect(factories.match(/^  define\w+<const Id/gm)).toHaveLength(CONTENT_MANIFEST.length - 1);
   });
 });

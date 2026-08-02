@@ -15,6 +15,10 @@
  * - `event-methods.ts` — `GeneratedEventMethods`, one `defineXEvent` per
  *   scoped kind, over the same abstract-hook shape `GeneratedContentMethods`
  *   uses. The scopeless `event` kind is skipped and reported.
+ * - `event-factory.ts` — `createEvents(file, namespace)`, the pure API's event
+ *   collection, with the same one definer per scoped kind. Same kinds, same
+ *   scopes, different surface: the definers close over the factory's namespace
+ *   and its used-id set instead of dispatching to an abstract hook.
  * - `event-fires.ts` — the witness-overload pair per fire effect, merged into
  *   the generated scope interfaces. The pair cannot be generated as ordinary
  *   effects (see `FIRE_EFFECTS` in the overlay): the `id` argument is an
@@ -26,13 +30,14 @@
  *   scope is the kind's from this table.
  */
 
-import { camelCase, docComment, pascalCase } from "../naming.ts";
+import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
 import type { SkippedRule } from "./shape.ts";
 import { Emitter } from "./types.ts";
 
 export interface EventsEmission {
   readonly code: string;
   readonly methodsCode: string;
+  readonly factoryCode: string;
   readonly firesCode: string;
   readonly kinds: number;
   readonly defineMethods: number;
@@ -48,10 +53,11 @@ interface EmittedKind {
 
 function defineMethod(kind: EmittedKind & { scope: string }): string {
   const scope = JSON.stringify(kind.scope);
+  const spoken = kind.key.replaceAll("_", " ");
   return (
     docComment(
       [
-        `Defines a ${kind.key.replaceAll("_", " ")} in this mod's namespace; the full id is`,
+        `Defines ${indefiniteArticle(spoken)} ${spoken} in this mod's namespace; the full id is`,
         "`${prefix}.${def.id}`. Title/desc/option localization rides along, and the",
         "event's closures record eagerly, at the define site.",
       ],
@@ -65,12 +71,41 @@ function defineMethod(kind: EmittedKind & { scope: string }): string {
   );
 }
 
+function factorySignature(kind: EmittedKind & { scope: string }): string {
+  const scope = JSON.stringify(kind.scope);
+  const spoken = kind.key.replaceAll("_", " ");
+  return (
+    docComment(
+      [
+        `Defines ${indefiniteArticle(spoken)} ${spoken} in this factory's namespace; the full id is`,
+        "`${namespace}.${def.id}`. Title/desc/option localization rides along, and the",
+        "event's closures record eagerly, at the define site.",
+      ],
+      "  "
+    ) +
+    `  define${pascalCase(kind.key)}<From extends ScopeName | undefined = undefined>(\n` +
+    `    def: EventDef<${scope}, From>\n` +
+    `  ): EventItem<${scope}, From>;\n`
+  );
+}
+
+function factoryBinding(kind: EmittedKind & { scope: string }): string {
+  return (
+    `    define${pascalCase(kind.key)}: definerOf(${JSON.stringify(kind.key)}, ` +
+    `${JSON.stringify(kind.scope)}),\n`
+  );
+}
+
 function fireOverloads(kind: EmittedKind & { scope: string }): string {
   const method = camelCase(kind.key);
   const scope = JSON.stringify(kind.scope);
+  const spoken = kind.key.replaceAll("_", " ");
   return (
     docComment(
-      [`Fires a ${kind.key.replaceAll("_", " ")} for the scoped ${kind.scope}, after any delay.`],
+      [
+        `Fires ${indefiniteArticle(spoken)} ${spoken} for the scoped ${kind.scope}, after any ` +
+          "delay.",
+      ],
       "    "
     ) +
     `    ${method}(args: FireEventArgs<${scope}, undefined>): void;\n` +
@@ -144,6 +179,58 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     scoped.map(defineMethod).join("\n") +
     "}\n";
 
+  const factoryCode =
+    docComment([
+      "The pure API's event collection: one `defineXEvent` per scoped event",
+      "kind, each returning an `EventItem` that is both the registration and",
+      "the value fire sites and `on()` bindings reference.",
+    ]) +
+    "export interface EventCollection extends Collection<EventItemBase> {\n" +
+    "  readonly namespace: string;\n" +
+    scoped.map(factorySignature).join("\n") +
+    "}\n\n" +
+    docComment([
+      "File and namespace, co-declared: one namespace per event file by",
+      "construction. The namespace is identity — saves persist pending fires by",
+      "full id and on_actions reference it — so it is written in full here and",
+      "never inferred from the file stem; prefix compliance is a build warning,",
+      "the same policy as content ids.",
+      "",
+      "Because the namespace is known at the definition site, the recorder",
+      "closures run eagerly right there — the class API's semantics — and the",
+      "full id is a plain string from birth. Nothing about an event is deferred.",
+      "The per-factory duplicate check catches a repeated numeric id at the",
+      "define site, with a precise stack; `buildMod` keeps a global full-id",
+      "check for two factories sharing one namespace string.",
+    ]) +
+    "export function createEvents(file: string, namespace: string): EventCollection {\n" +
+    "  assertNamespace(namespace);\n" +
+    "  const { collection, items } = makeCollection<EventItemBase>(file);\n" +
+    "  const used = new Set<number>();\n" +
+    "  const definerOf =\n" +
+    "    <S extends ScopeName>(kind: EventKindKey, scope: S) =>\n" +
+    "    <From extends ScopeName | undefined = undefined>(\n" +
+    "      def: EventDef<S, From>\n" +
+    "    ): EventItem<S, From> => {\n" +
+    "      if (used.has(def.id)) {\n" +
+    '        throw new Error(`Duplicate event id "${namespace}.${def.id}"`);\n' +
+    "      }\n" +
+    "      used.add(def.id);\n" +
+    "      const locEntries: (readonly [string, string])[] = [];\n" +
+    "      const built = buildEvent(kind, scope, namespace, def, {\n" +
+    "        register: (key, text) => locEntries.push([key, text]),\n" +
+    "      });\n" +
+    '      const item = { ...built, itemKind: "event" as const, namespace, locEntries };\n' +
+    "      items.push(item as EventItemBase);\n" +
+    "      return item as EventItem<S, From>;\n" +
+    "    };\n" +
+    "  return {\n" +
+    "    ...collection,\n" +
+    "    namespace,\n" +
+    scoped.map(factoryBinding).join("") +
+    "  };\n" +
+    "}\n";
+
   // The receiving scopes come from the fire effect's own `## scopes`; a kind
   // whose rule the effects file no longer declares gets no typed fire method
   // and is reported rather than guessed at.
@@ -197,6 +284,7 @@ export function emitEvents(emitter: Emitter): EventsEmission {
   return {
     code,
     methodsCode,
+    factoryCode,
     firesCode,
     kinds: kinds.length,
     defineMethods: scoped.length,

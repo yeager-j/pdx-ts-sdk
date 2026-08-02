@@ -64,8 +64,9 @@ the vendored rule sources and documentation dumps.
 ## Adding a new content type
 
 The content system is deliberately generic. Adding a registry such as `ascension_perk` should
-generate `AscensionPerkDef`, `DefinedAscensionPerk`, and `Mod.defineAscensionPerk` without a new
-emitter, writer class, or type-name conditional.
+generate `AscensionPerkDef`, `DefinedAscensionPerk`, `Mod.defineAscensionPerk`, and the
+`createAscensionPerks` collection factory (with `AscensionPerkCollection`/`AscensionPerkItem`)
+without a new emitter, writer class, or type-name conditional.
 
 Every field the emitter can lower is emitted automatically — there is no curated field allowlist to
 maintain. A field being mechanically typeable is still not proof the SDK lowers it *correctly*, but
@@ -78,7 +79,9 @@ pre-review of a list.
    repeated top-level keyword rather than by id; work out that keyword (checking any
    `type_key_filter` the rules declare) — you will need it in the next step.
 2. Add the type and source file to the explicit allowlist in `tools/codegen/content-manifest.ts`,
-   with a `keyword` for `name_field` registries.
+   with a `keyword` for `name_field` registries and the registry name in the `plural` (snake_case),
+   which names the emitted collection factory — `technologies` gives `createTechnologies`. There is
+   no pluralizer; write the correct English plural.
 3. Run `npm run codegen` and read its report. Add overlay rows only where the emitted shape is
    actually wrong or the rules need help:
    - `REQUIRED_LOCALISATION` for localization the authoring API should require

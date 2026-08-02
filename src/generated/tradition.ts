@@ -69,7 +69,7 @@ export const TRADITION_SWAP_LOCALISATION: readonly ContentLocalisation[] = [
  * A tradition, as the game's rules describe it.
  * Generated from `type[tradition]` at `game/common/traditions`.
  */
-export interface TraditionFields<Id extends string = string> {
+export interface TraditionFields {
   /** English text emitted to localization under `<id>`. */
   name: string;
   /** English text emitted to localization under `<id>_delayed`. */
@@ -82,12 +82,12 @@ export interface TraditionFields<Id extends string = string> {
   onEnabled?: EffectBlock<"country">;
   customTooltip?: string[];
   customTooltipWithModifiers?: string[];
-  traditionSwap?: Readonly<Record<Id, TraditionSwapFields>>;
+  traditionSwap?: Readonly<Record<string, TraditionSwapFields>>;
   /** the ai_weight in traditions applies both to the main traditions and the tradition swaps, there are no seperate fields. */
   aiWeight?: WeightBlock<"country">;
 }
 
-export interface TraditionDef<Id extends string = string> extends TraditionFields<Id> {
+export interface TraditionDef<Id extends string = string> extends TraditionFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
