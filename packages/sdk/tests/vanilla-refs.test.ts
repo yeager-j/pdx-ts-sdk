@@ -114,10 +114,10 @@ describe("provenance consistency", () => {
     // The generator stamps `package.json` and nothing else, so the prose that
     // tells a reader which game build these identifiers came from can silently
     // fall behind the artifact. This is what stops that.
-    const manifest = JSON.parse(
-      readFileSync("packages/stellaris-vanilla/package.json", "utf8")
-    ) as { version: string };
-    const provenance = readFileSync("packages/stellaris-vanilla/PROVENANCE.md", "utf8");
+    const manifest = JSON.parse(readFileSync("packages/stellaris-ids/package.json", "utf8")) as {
+      version: string;
+    };
+    const provenance = readFileSync("packages/stellaris-ids/PROVENANCE.md", "utf8");
     expect(provenance).toContain(manifest.version);
   });
 });

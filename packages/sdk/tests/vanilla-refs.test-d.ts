@@ -1,10 +1,10 @@
 /**
  * The package-absent world (SDK-12 seam D).
  *
- * The root tsconfig excludes `packages/stellaris-vanilla`, so this program
+ * The root tsconfig excludes `packages/stellaris-ids`, so this program
  * genuinely does not contain the augmentation — this is not a simulation of
  * absence, it is absence. Every assertion here is the opposite of one in
- * `packages/stellaris-vanilla/tests/present.test-d.ts`: the `vanilla.*` helpers
+ * `packages/stellaris-ids/tests/present.test-d.ts`: the `vanilla.*` helpers
  * still compile, still preserve literal ids, and still brand per registry;
  * only the id *sets* are gone.
  */

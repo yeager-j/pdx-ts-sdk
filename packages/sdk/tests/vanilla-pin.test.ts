@@ -1,5 +1,5 @@
 /**
- * The version-pin gate for the optional `@pdx-ts/stellaris-vanilla` package
+ * The version-pin gate for the optional `@pdx-ts/stellaris-ids` package
  * (SDK-12): the pure matrix over `checkVanillaPackagePin`, the runtime
  * resolver `installedVanillaPackageVersion`, and `buildMod`'s hook. Hermetic
  * throughout — no install is required.
@@ -110,7 +110,7 @@ describe("buildMod's version-pin hook", () => {
   ]);
 
   it("throws when the workspace package's version disagrees with the view's install", () => {
-    // End to end, through the real resolved package: @pdx-ts/stellaris-vanilla
+    // End to end, through the real resolved package: @pdx-ts/stellaris-ids
     // is stamped 4.4.6, this view claims a 4.5.0 install, and no patch is
     // involved — identifiers influence everything authored, so the gate fires
     // on `options.vanilla` alone rather than on the presence of patches.

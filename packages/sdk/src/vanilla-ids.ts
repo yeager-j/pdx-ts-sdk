@@ -1,5 +1,5 @@
 /**
- * Merge targets and resolvers for the optional `@pdx-ts/stellaris-vanilla`
+ * Merge targets and resolvers for the optional `@pdx-ts/stellaris-ids`
  * package (SDK-12).
  *
  * `VanillaIds`, `VanillaScriptedTriggers`, `VanillaScriptedEffects`, and
@@ -8,7 +8,7 @@
  * one — so an empty interface is the only shape a later
  * `declare module "@pdx-ts/sdk" { ... }` augmentation can safely extend
  * without this module knowing anything about the package that might do so.
- * `@pdx-ts/stellaris-vanilla`'s `src/augment.ts` is the one place that
+ * `@pdx-ts/stellaris-ids`'s `src/augment.ts` is the one place that
  * augmentation happens; everything below reads the merge result back out
  * through a conditional type.
  *
@@ -20,7 +20,7 @@
  *   installed package does cover stays checked.
  */
 
-// Deliberately empty — see the module doc. `@pdx-ts/stellaris-vanilla`'s
+// Deliberately empty — see the module doc. `@pdx-ts/stellaris-ids`'s
 // augmentation adds one `readonly <registry>: Vanilla<PascalCase>Id` member
 // per `CONTENT_MANIFEST` registry (registry name = `as ?? type`), plus the
 // `VANILLA_REF_EXTRAS` registries.
@@ -37,7 +37,7 @@ export interface VanillaScriptedEffects {}
 
 /**
  * A vanilla id for registry `K`: checked against
- * `@pdx-ts/stellaris-vanilla`'s real id set when it is installed and covers
+ * `@pdx-ts/stellaris-ids`'s real id set when it is installed and covers
  * `K`, plain `string` otherwise (package absent, or present but missing this
  * one registry).
  */

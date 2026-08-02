@@ -1,12 +1,15 @@
 import { readFileSync } from "node:fs";
-import { CONTENT_MANIFEST, type ContentManifestEntry } from "@pdx-ts/codegen/content-manifest";
-import type { CwtDiagnostic } from "@pdx-ts/codegen/cwt/parser";
-import { loadRules } from "@pdx-ts/codegen/cwt/rules";
-import driftBaseline from "@pdx-ts/codegen/drift-baseline.json" with { type: "json" };
-import { emitContentType, type EmittedField } from "@pdx-ts/codegen/emit/content-type";
-import { Emitter } from "@pdx-ts/codegen/emit/types";
-import { pascalCase } from "@pdx-ts/codegen/naming";
-import { CONTENT_DECLINED_FIELDS, HAND_WRITTEN_CONTENT_DEFINERS } from "@pdx-ts/codegen/overlay";
+import { CONTENT_MANIFEST, type ContentManifestEntry } from "@pdx-ts/codegen-cwt/content-manifest";
+import type { CwtDiagnostic } from "@pdx-ts/codegen-cwt/cwt/parser";
+import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
+import driftBaseline from "@pdx-ts/codegen-cwt/drift-baseline.json" with { type: "json" };
+import { emitContentType, type EmittedField } from "@pdx-ts/codegen-cwt/emit/content-type";
+import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
+import {
+  CONTENT_DECLINED_FIELDS,
+  HAND_WRITTEN_CONTENT_DEFINERS,
+} from "@pdx-ts/codegen-cwt/overlay";
 import { describe, expect, it } from "vitest";
 
 function describeDiagnostic(diagnostic: CwtDiagnostic): string {

@@ -162,7 +162,7 @@ interface ContentFieldBase {
   /**
    * The one authored form this field's member accepts, precomputed by codegen
    * from the field's own `shape` (and, for a `struct`, whether it repeats or
-   * is wrapped) — see `authoredForm` in `@pdx-ts/codegen`'s
+   * is wrapped) — see `authoredForm` in `@pdx-ts/codegen-cwt`'s
    * `emit/authored-form.ts`. The runtime dual-arm dispatcher below only ever
    * reads this; it never reclassifies a shape into a form itself.
    */

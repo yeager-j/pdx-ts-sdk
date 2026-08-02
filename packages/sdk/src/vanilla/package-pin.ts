@@ -1,5 +1,5 @@
 /**
- * The version-pin gate for the optional `@pdx-ts/stellaris-vanilla` package
+ * The version-pin gate for the optional `@pdx-ts/stellaris-ids` package
  * (SDK-12). Distinct from the rule-table staleness gate in `build.ts`: that
  * one guards patch emission against an unverified CWT rule table, and only
  * fires when patches exist. This one guards every authored vanilla
@@ -13,7 +13,7 @@ import { createRequire } from "node:module";
 import { VanillaPackageMismatchError } from "../errors.ts";
 
 /**
- * The version pinned by the installed `@pdx-ts/stellaris-vanilla` package,
+ * The version pinned by the installed `@pdx-ts/stellaris-ids` package,
  * read from its `package.json` at runtime via `createRequire` — never
  * imported as a module, so this resolves correctly whether or not the
  * package is present. Any failure (not installed, no such export in the
@@ -25,7 +25,7 @@ import { VanillaPackageMismatchError } from "../errors.ts";
  * exercise this without touching the workspace-installed package.
  */
 export function installedVanillaPackageVersion(
-  specifier = "@pdx-ts/stellaris-vanilla/package.json"
+  specifier = "@pdx-ts/stellaris-ids/package.json"
 ): string | undefined {
   try {
     const require = createRequire(import.meta.url);
@@ -56,7 +56,7 @@ function corePatchVersion(version: string): string {
 
 /**
  * The pure check behind the gate: throws `VanillaPackageMismatchError` when
- * the installed `@pdx-ts/stellaris-vanilla` package is pinned to a game
+ * the installed `@pdx-ts/stellaris-ids` package is pinned to a game
  * version that differs from the install a `VanillaView` was built from,
  * unless the mod config explicitly accepts that install version.
  *
@@ -91,8 +91,8 @@ export function checkVanillaPackagePin(
     return;
   }
   throw new VanillaPackageMismatchError(
-    `the install is Stellaris ${installGameVersion} but @pdx-ts/stellaris-vanilla is pinned to ` +
-      `${pinned} — install @pdx-ts/stellaris-vanilla@${installGameVersion} to match, or set ` +
+    `the install is Stellaris ${installGameVersion} but @pdx-ts/stellaris-ids is pinned to ` +
+      `${pinned} — install @pdx-ts/stellaris-ids@${installGameVersion} to match, or set ` +
       `acceptGameVersion: "${installGameVersion}" to proceed on mismatched identifier types`
   );
 }

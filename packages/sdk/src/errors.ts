@@ -34,7 +34,7 @@ export class SwapPatchError extends PdxSdkError {}
 export class VanillaPathCollisionError extends PdxSdkError {}
 
 /**
- * The installed `@pdx-ts/stellaris-vanilla` package is pinned to a game
+ * The installed `@pdx-ts/stellaris-ids` package is pinned to a game
  * version that differs from the install a `VanillaView` was built from.
  */
 export class VanillaPackageMismatchError extends PdxSdkError {}
