@@ -24,15 +24,19 @@ describe("on-action authoring", () => {
     hooks.on(onActions.onGameStartCountry, second);
     hooks.on(onActions.onCustomDiplomacy, diplomacy);
 
+    // Hook blocks come out sorted by hook name — `on_custom_diplomacy` was
+    // registered last and is emitted first (SDK-23: order is a function of
+    // content). The event list inside a hook is author data and keeps the
+    // order it was registered in.
     const mod = buildMod(CONFIG, [events, hooks]);
     expect(render(mod).get("common/on_actions/on_action_test_on_actions.txt"))
       .toMatchInlineSnapshot(`
-        "on_game_start_country = {
-        	events = { on_action_test.1 on_action_test.2 }
+        "on_custom_diplomacy = {
+        	events = { on_action_test.3 }
         }
 
-        on_custom_diplomacy = {
-        	events = { on_action_test.3 }
+        on_game_start_country = {
+        	events = { on_action_test.1 on_action_test.2 }
         }
         "
       `);

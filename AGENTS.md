@@ -138,6 +138,13 @@ differential, and fast-check property gates described in that package.
   act, and `buildMod(config, collections, { vanilla? })` folds collections into a `PureMod` value
   that `render`/`write` consume. There is no builder object. Diagnostics are throws or
   `mod.warnings` data — never console output.
+- Emission order is a function of the content, never of source position or the order collections
+  were passed: content sorts by registry declaration order, then emitted file path, then id;
+  event files sort by path with numeric ids inside a file; on-action hook blocks, the
+  contribution sink and the patch list sort by name or id. Arrays *inside* a definition
+  (prerequisites, event options) are author data and are emitted as written. Moving a definition
+  between files or reordering an argument list must not change a byte of output — the
+  order-purity test in `tests/pure-api.test.ts` is the standing evidence.
 - Runtime effect recording is scope-agnostic; generated interfaces enforce which effects and
   scope transitions are legal.
 - Cross-content references should remain branded objects where the generated rules know the

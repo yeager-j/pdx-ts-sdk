@@ -64,10 +64,14 @@ export function normalizeLogicalPath(raw: string): LogicalPath {
 }
 
 /**
- * Sign of the UTF-8 byte comparison of two normalized paths — the enumeration
- * order itself. Case-sensitive by spec; no folding of any kind.
+ * Sign of the UTF-8 byte comparison of two strings. The path comparator below
+ * is this function at its own domain; `buildMod`'s canonical emission order
+ * (SDK-23) is the same comparison over content ids and emitted relative paths,
+ * which are strings rather than validated logical paths. Both want the one
+ * property the header states: UTF-8 byte order, which is code-point order and
+ * is *not* JavaScript's UTF-16 `<`, and never a locale-sensitive collation.
  */
-export function compareLogicalPaths(a: LogicalPath, b: LogicalPath): -1 | 0 | 1 {
+export function compareUtf8(a: string, b: string): -1 | 0 | 1 {
   const bytesA = encoder.encode(a);
   const bytesB = encoder.encode(b);
   const shared = Math.min(bytesA.length, bytesB.length);
@@ -78,6 +82,14 @@ export function compareLogicalPaths(a: LogicalPath, b: LogicalPath): -1 | 0 | 1 
     }
   }
   return bytesA.length === bytesB.length ? 0 : bytesA.length < bytesB.length ? -1 : 1;
+}
+
+/**
+ * Sign of the UTF-8 byte comparison of two normalized paths — the enumeration
+ * order itself. Case-sensitive by spec; no folding of any kind.
+ */
+export function compareLogicalPaths(a: LogicalPath, b: LogicalPath): -1 | 0 | 1 {
+  return compareUtf8(a, b);
 }
 
 /**

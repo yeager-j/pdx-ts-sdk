@@ -1,0 +1,12 @@
+[
+  {
+    "registry": "technologies",
+    "key": "tech_gene_forging",
+    "rule": "last-wins",
+    "confidence": "verified",
+    "beats": [
+      "common/technology/pp_soc_tech.txt"
+    ],
+    "verifiedAgainst": "4.4.6"
+  }
+]

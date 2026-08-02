@@ -10,6 +10,17 @@
  * ordered — loc extraction (the write) always precedes lowering (the read,
  * in the emission grouping below).
  *
+ * Emission order is a function of the content alone (SDK-23), never of source
+ * position or the order collections were passed: content sorts by registry
+ * declaration order, then emitted file path bytes, then id bytes; event files
+ * sort by path bytes with numeric ids inside a file; on-action hook blocks
+ * sort by hook name; the contribution sink and the patch list sort by id.
+ * Arrays *inside* a definition — prerequisites, options, weight modifiers —
+ * are author data and are left exactly as written. This is why content is
+ * defined in three passes below: `define` registers localization as a side
+ * effect, so it cannot run before the canonical order is known, or the loc
+ * yml would desynchronize from the txt files it describes.
+ *
  * Emission paths are computed here, not in `render`: each collection's file
  * stem groups content into per-file entry lists, event files are one
  * namespace each by construction (co-declared at `createEvents`) with a
@@ -26,9 +37,15 @@ import { StaleRuleTableError } from "./errors.ts";
 import type { DefinedEvent } from "./events.ts";
 import { CONTENT_REGISTRIES, type ContentTypeName } from "./generated/content-registry.ts";
 import type { ScopeName } from "./generated/scopes.ts";
-import { flattenItems, type EventItemBase, type ModItemInput, type ModWarning } from "./items.ts";
+import {
+  flattenItems,
+  type ContentItem,
+  type EventItemBase,
+  type ModItemInput,
+  type ModWarning,
+} from "./items.ts";
 import { OnActionAuthoring } from "./on-actions.ts";
-import { normalizeLogicalPath } from "./resolver/path-order.ts";
+import { compareUtf8, normalizeLogicalPath } from "./resolver/path-order.ts";
 import { collectVarRefs, planPatchEmission, type PatchPlan } from "./resolver/plan.ts";
 import { SUPPORTED_STELLARIS_BUILD } from "./resolver/rules.ts";
 import type { PatchedTechnology } from "./vanilla/patch.ts";
@@ -99,6 +116,12 @@ function emissionPath(prefix: string, outputDir: string, stem: string): string {
   return `${outputDir}/${prefix}_${stem}.txt`;
 }
 
+/** The numeric half of `namespace.N`. Only ever called for events already
+ * grouped under that namespace, so the slice is total. */
+function eventNumber(event: EventItemBase, namespace: string): number {
+  return Number(event.id.slice(namespace.length + 1));
+}
+
 export function buildMod(
   config: ModConfig,
   collections: readonly ModItemInput[],
@@ -154,18 +177,18 @@ export function buildMod(
     CONTENT_REGISTRIES.map((descriptor) => [descriptor.type as ContentTypeName, descriptor])
   );
 
-  // Content, in item order — the order the emitted files and loc yml keep.
-  // Each definition records where its collection placed it.
-  interface Placement {
-    readonly type: ContentTypeName;
-    readonly relPath: string;
-    readonly defined: DefinedContent<string, { readonly id: string }>;
-  }
-  const placements: Placement[] = [];
   // Every own-prefixed content reference the build writes, with the thing that
   // wrote it. Filled while lowering (and by the patch and contribution folds),
   // resolved against the built ids once every collection has been seen.
   const refUses: { readonly owner: string; readonly use: ContentRefUse }[] = [];
+
+  // Content pass 1: collect the raw items into registry → emitted file →
+  // items, without defining any of them. Nothing here depends on the order
+  // the items arrived in — the unknown-type and vanilla-collision checks are
+  // per item — which is the point: `define` registers localization as a side
+  // effect, so it must not run until the canonical order is known, or the loc
+  // yml would follow item order while the txt files follow this one.
+  const rawByType = new Map<ContentTypeName, Map<string, ContentItem[]>>();
   for (const { item, file } of flat) {
     if (item.itemKind !== "content") {
       continue;
@@ -181,39 +204,53 @@ export function buildMod(
           `defining it would silently override vanilla content; patch it instead`
       );
     }
-    placements.push({
-      type: item.type,
-      relPath: emissionPath(config.prefix, descriptor.outputDir, file ?? descriptor.fileStem),
-      defined: content.define(item.type, item.def),
-    });
+    const relPath = emissionPath(config.prefix, descriptor.outputDir, file ?? descriptor.fileStem);
+    const byPath = rawByType.get(item.type) ?? new Map<string, ContentItem[]>();
+    const group = byPath.get(relPath) ?? [];
+    group.push(item);
+    byPath.set(relPath, group);
+    rawByType.set(item.type, byPath);
   }
 
-  // Group placements into files: registry declaration order (matching the
-  // class API for default stems), then collection files by first appearance.
-  // Lowering happens here — after every define, so the modifierDescKeys
-  // write has always preceded this read.
-  const contentFiles: ContentFile[] = [];
+  // Content pass 2: define in canonical order (SDK-23) — registry declaration
+  // order, then emitted files by path bytes, then items by id bytes. Defining
+  // here rather than above is what keeps the localization insertion order and
+  // the emitted files one and the same order.
+  interface DefinedGroup {
+    readonly type: ContentTypeName;
+    readonly relPath: string;
+    readonly defined: readonly DefinedContent<string, { readonly id: string }>[];
+  }
+  const definedGroups: DefinedGroup[] = [];
   for (const descriptor of CONTENT_REGISTRIES) {
-    const rows = placements.filter((placement) => placement.type === descriptor.type);
-    const byPath = new Map<string, Placement[]>();
-    for (const row of rows) {
-      const group = byPath.get(row.relPath) ?? [];
-      group.push(row);
-      byPath.set(row.relPath, group);
+    const type = descriptor.type as ContentTypeName;
+    const byPath = rawByType.get(type);
+    if (byPath === undefined) {
+      continue;
     }
-    for (const [relPath, group] of byPath) {
-      contentFiles.push({
+    for (const relPath of [...byPath.keys()].sort(compareUtf8)) {
+      const items = [...byPath.get(relPath)!].sort((a, b) => compareUtf8(a.def.id, b.def.id));
+      definedGroups.push({
+        type,
         relPath,
-        type: descriptor.type as ContentTypeName,
-        ids: group.map((row) => row.defined.id),
-        entries: group.map((row) =>
-          row.defined.toEntries((use) => {
-            refUses.push({ owner: `${row.type} "${row.defined.id}"`, use });
-          })
-        ),
+        defined: items.map((item) => content.define(item.type, item.def)),
       });
     }
   }
+
+  // Content pass 3: lower. Separate from the defining loop, not merged into
+  // it, because lowering reads the modifierDescKeys WeakMap that defining
+  // writes — every define must precede every read, whatever the grouping.
+  const contentFiles: ContentFile[] = definedGroups.map((group) => ({
+    relPath: group.relPath,
+    type: group.type,
+    ids: group.defined.map((defined) => defined.id),
+    entries: group.defined.map((defined) =>
+      defined.toEntries((use) => {
+        refUses.push({ owner: `${group.type} "${defined.id}"`, use });
+      })
+    ),
+  }));
 
   // Events arrive as finished data (closures ran at the definition site,
   // where createEvents knew the namespace). The fold's jobs: the global
@@ -223,9 +260,43 @@ export function buildMod(
     (placed): placed is { item: EventItemBase; file: string | undefined } =>
       placed.item.itemKind === "event"
   );
+
+  // Grouping runs first now, so the duplicate check, the loc merge and the
+  // prefix warnings can all run in the canonical order below. One namespace
+  // per event file: createEvents makes this hold by construction, and the
+  // check catches same-stem merges of two factories.
+  const eventsByPath = new Map<string, { namespace: string; events: EventItemBase[] }>();
+  for (const { item, file } of placedEvents) {
+    const relPath = emissionPath(config.prefix, "events", file ?? "events");
+    const group = eventsByPath.get(relPath);
+    if (group === undefined) {
+      eventsByPath.set(relPath, { namespace: item.namespace, events: [item] });
+    } else if (group.namespace !== item.namespace) {
+      throw new Error(
+        `event file ${relPath} would mix namespaces "${group.namespace}" and ` +
+          `"${item.namespace}" — one namespace per file; give each createEvents its own file stem`
+      );
+    } else {
+      group.events.push(item);
+    }
+  }
+  // Files by path bytes; events inside a file by their *numeric* id, which is
+  // well defined because a file carries exactly one namespace (the backstop
+  // above). Sorting the full ids as text would file `ns.10` before `ns.2`.
+  const eventGroups = [...eventsByPath]
+    .sort(([a], [b]) => compareUtf8(a, b))
+    .map(([relPath, group]) => ({
+      relPath,
+      namespace: group.namespace,
+      events: [...group.events].sort(
+        (a, b) => eventNumber(a, group.namespace) - eventNumber(b, group.namespace)
+      ),
+    }));
+  const orderedEvents = eventGroups.flatMap((group) => group.events);
+
   const eventIds = new Set<string>();
   const namespaces: string[] = [];
-  for (const { item } of placedEvents) {
+  for (const item of orderedEvents) {
     if (eventIds.has(item.id)) {
       throw new Error(`Duplicate event id "${item.id}"`);
     }
@@ -246,25 +317,8 @@ export function buildMod(
     }
   }
 
-  // One namespace per event file. createEvents makes this hold by
-  // construction; the check catches same-stem merges of two factories.
-  const eventsByPath = new Map<string, { namespace: string; events: EventItemBase[] }>();
-  for (const { item, file } of placedEvents) {
-    const relPath = emissionPath(config.prefix, "events", file ?? "events");
-    const group = eventsByPath.get(relPath);
-    if (group === undefined) {
-      eventsByPath.set(relPath, { namespace: item.namespace, events: [item] });
-    } else if (group.namespace !== item.namespace) {
-      throw new Error(
-        `event file ${relPath} would mix namespaces "${group.namespace}" and ` +
-          `"${item.namespace}" — one namespace per file; give each createEvents its own file stem`
-      );
-    } else {
-      group.events.push(item);
-    }
-  }
-  const eventFiles: EmittedFile[] = [...eventsByPath].map(([relPath, group]) => ({
-    relPath,
+  const eventFiles: EmittedFile[] = eventGroups.map((group) => ({
+    relPath: group.relPath,
     entries: [kv("namespace", group.namespace), ...group.events.map((event) => event.entry)],
   }));
 
@@ -286,20 +340,24 @@ export function buildMod(
     onActions.register(item.hook, item.event as DefinedEvent<ScopeName, ScopeName | undefined>);
   }
 
-  // Contributions: union into the shared sink; a limit listed twice emits once.
-  const shipOfSizeLimits = new Set<string>();
+  // Contributions: union into the shared sink; a limit listed twice emits
+  // once. The sink is a Set, which `render` iterates in insertion order, so
+  // the ids go in sorted — the emitted list is the content, not the order the
+  // contributions happened to arrive in.
+  const contributedLimits: string[] = [];
   for (const { item } of flat) {
     if (item.itemKind !== "contribution") {
       continue;
     }
     for (const id of item.ids) {
-      shipOfSizeLimits.add(id);
+      contributedLimits.push(id);
       refUses.push({
         owner: `the ${item.registry} contribution`,
         use: { targets: [item.refRegistry], id, field: `default.${item.registry}` },
       });
     }
   }
+  const shipOfSizeLimits = new Set<string>(contributedLimits.sort(compareUtf8));
 
   // Patches: seen together, so the duplicate and one-view checks live here.
   const patches: PatchedTechnology[] = [];
@@ -378,10 +436,12 @@ export function buildMod(
   // a field the rules say holds `<technology>` demands a built technology.
   const authorableTypes = new Set<string>(CONTENT_REGISTRIES.map((descriptor) => descriptor.type));
   const builtIds = new Map<string, Set<string>>();
-  for (const placement of placements) {
-    const ids = builtIds.get(placement.type) ?? new Set<string>();
-    ids.add(placement.defined.id);
-    builtIds.set(placement.type, ids);
+  for (const group of definedGroups) {
+    const ids = builtIds.get(group.type) ?? new Set<string>();
+    for (const defined of group.defined) {
+      ids.add(defined.id);
+    }
+    builtIds.set(group.type, ids);
   }
   for (const { owner, use } of refUses) {
     // Vanilla and third-party ids are somebody else's to define, exactly as
@@ -406,14 +466,17 @@ export function buildMod(
     );
   }
 
+  // Patch emission is content too: the plan enumerates and serializes the
+  // patched entries, so they go in by id rather than by arrival.
+  const orderedPatches = [...patches].sort((a, b) => compareUtf8(a.id, b.id));
   const patchPlan = planPatches(
     config,
     contentFiles.filter((file) => file.type === "technology"),
-    patches
+    orderedPatches
   );
   const vanillaPaths =
-    patches.length > 0
-      ? new Set(patches[0]!.source.origin.files.map((file) => file.path))
+    orderedPatches.length > 0
+      ? new Set(orderedPatches[0]!.source.origin.files.map((file) => file.path))
       : undefined;
 
   return Object.freeze({
@@ -421,7 +484,7 @@ export function buildMod(
     warnings,
     contentFiles,
     eventFiles,
-    events: placedEvents.map(({ item }) => item),
+    events: orderedEvents,
     onActions,
     loc,
     shipOfSizeLimits,

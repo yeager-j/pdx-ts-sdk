@@ -2,6 +2,7 @@ import { block, list, scalar, serialize, type PdxEntry } from "@pdx-ts/pdxscript
 
 import type { DefinedEvent } from "./events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
+import { compareUtf8 } from "./resolver/path-order.ts";
 
 export interface OnActionRef<
   S extends ScopeName | null = ScopeName | null,
@@ -66,14 +67,20 @@ export class OnActionAuthoring {
       events.push(registration.event);
       byHook.set(registration.hook.name, events);
     }
-    const entries: PdxEntry[] = [...byHook].map(([name, events]) =>
-      block(name, [
-        list(
-          "events",
-          events.map((event) => scalar(event.id))
-        ),
-      ])
-    );
+    // Hook blocks sort by hook name (SDK-23: emission order is a function of
+    // content, never of registration order). The events inside one hook keep
+    // registration order — that list is author data, and the game fires it as
+    // written.
+    const entries: PdxEntry[] = [...byHook]
+      .sort(([a], [b]) => compareUtf8(a, b))
+      .map(([name, events]) =>
+        block(name, [
+          list(
+            "events",
+            events.map((event) => scalar(event.id))
+          ),
+        ])
+      );
     return serialize(entries);
   }
 }

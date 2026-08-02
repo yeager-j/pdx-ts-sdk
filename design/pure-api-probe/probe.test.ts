@@ -126,10 +126,17 @@ function techsWith(file: string | undefined, ...ids: string[]): Collection {
 describe("parity with the class builder", () => {
   // The class builder is gone; its bytes for this fixture live on as the
   // goldens the migration captured from `Mod.render()` while both APIs were
-  // live (tests/__snapshots__/pure-api/). The probe's own pipeline is
-  // measured against those same files, so this record still asserts exactly
-  // what it always asserted: the fold reproduces the builder byte for byte.
-  const goldenDir = new URL("../../tests/__snapshots__/pure-api/", import.meta.url);
+  // live. The probe's own pipeline is measured against those same files, so
+  // this record still asserts exactly what it always asserted: the fold
+  // reproduces the builder byte for byte.
+  //
+  // They used to be read straight out of `tests/__snapshots__/pure-api/`.
+  // SDK-23 made the shipping SDK's emission order a function of the content
+  // (files and ids sort; source position no longer shows through), which moved
+  // those goldens — so the SDK-22 bytes are frozen here instead, beside the
+  // frozen pipeline that produced them. This directory is a design record: it
+  // is not regenerated, and the shipping suites are the live evidence.
+  const goldenDir = new URL("./goldens/", import.meta.url);
   const golden = (relPath: string): string =>
     readFileSync(new URL(relPath.replaceAll("/", "__"), goldenDir), "utf8");
 

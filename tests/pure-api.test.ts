@@ -7,8 +7,14 @@
  * now committed as goldens under `tests/__snapshots__/pure-api/`, captured
  * from the class API's own `render()` and asserted identical in all three
  * directions (class → goldens, pure → class, pure → goldens) before the
- * class half was deleted. The goldens are the permanent record of that
- * parity — nothing regenerates them from the pure API's own output.
+ * class half was deleted.
+ *
+ * SDK-23 recaptured them once, on purpose: emission order became a function
+ * of the content rather than of source position, so entries within a file and
+ * groups within a registry moved. The recapture was reviewed as pure
+ * reordering — every affected golden's line set (loc yml) or top-level key set
+ * (block files) is unchanged, only its order. The class API's exact bytes for
+ * this fixture are frozen separately in `design/pure-api-probe/goldens/`.
  *
  * The rest pins the fold's validation story — duplicate ids, the prefix
  * warning, the vanilla collision guard, dangling event references,
@@ -517,13 +523,43 @@ describe("content reference integrity", () => {
 });
 
 describe("collections", () => {
-  it("merges same-stem content collections in item order", () => {
+  it("merges same-stem content collections, ordering the merge by id", () => {
+    // Passed second-collection-first: the merged file is still id-sorted, so
+    // which collection contributed a definition is not observable in the
+    // output (SDK-23).
     const first = techsWith("shared", "pp_mod_tech_first");
     const second = techsWith("shared", "pp_mod_tech_second");
-    const files = render(buildMod(CONFIG, [first, second]));
+    const files = render(buildMod(CONFIG, [second, first]));
     const shared = files.get("common/technology/pp_mod_shared.txt")!;
     expect(shared.indexOf("pp_mod_tech_first")).toBeGreaterThanOrEqual(0);
     expect(shared.indexOf("pp_mod_tech_first")).toBeLessThan(shared.indexOf("pp_mod_tech_second"));
+  });
+
+  it("orders file groups within a registry by path, not by first appearance", () => {
+    const beta = techsWith("beta_techs", "pp_mod_tech_beta");
+    const alpha = techsWith("alpha_techs", "pp_mod_tech_alpha");
+    const paths = [...render(buildMod(CONFIG, [beta, alpha])).keys()].filter((relPath) =>
+      relPath.startsWith("common/technology/")
+    );
+    expect(paths).toEqual([
+      "common/technology/pp_mod_alpha_techs.txt",
+      "common/technology/pp_mod_beta_techs.txt",
+    ]);
+  });
+
+  it("orders events inside a file numerically, not lexically", () => {
+    // `ns.10` after `ns.2` — the reason the event sort reads the numeric half
+    // of the id instead of comparing the full id as text.
+    const events = createEvents("events", "pp_mod");
+    for (const id of [10, 2, 1]) {
+      events.defineCountryEvent({ id, isTriggeredOnly: true, hideWindow: true });
+    }
+    const file = render(buildMod(CONFIG, [events])).get("events/pp_mod_events.txt")!;
+    expect([...file.matchAll(/id = (pp_mod\.\d+)/g)].map((match) => match[1])).toEqual([
+      "pp_mod.1",
+      "pp_mod.2",
+      "pp_mod.10",
+    ]);
   });
 
   it("rejects stems that are not flat snake_case", () => {
@@ -579,5 +615,161 @@ describe("lowering determinism", () => {
     const secondFiles = render(second);
     const firstFiles = render(first);
     expect([...firstFiles.entries()]).toEqual([...secondFiles.entries()]);
+  });
+});
+
+/**
+ * Emission order is a function of the content, never of where the author put
+ * it (SDK-23 decision 4). This is the property the whole chunk exists for, so
+ * it is checked as a property rather than through goldens: one fixture built
+ * twice, with everything an author controls but the output must not observe
+ * flipped — the order collections are passed to `buildMod`, and the order the
+ * definitions were authored in.
+ *
+ * What is deliberately NOT reversed: the arrays inside a definition
+ * (prerequisites, event options, the `addShipOfSizeLimits` argument list) and
+ * two registrations on the *same* on-action hook. Those are author data, and
+ * reversing them is supposed to change the output.
+ */
+describe("order purity", () => {
+  const PROBE_TECH_FILE = `tech_probe_alpha = {
+	cost = 100
+	area = physics
+	tier = 1
+	category = { particles }
+}
+
+tech_probe_zeta = {
+	cost = 200
+	area = physics
+	tier = 1
+	category = { particles }
+}
+`;
+  const probeVanilla = viewFromFiles(
+    { "common/technology/00_probe_tech.txt": PROBE_TECH_FILE },
+    { gameVersion: "4.4.6" }
+  );
+
+  function orderProbe(reversed: boolean): ModItemInput[] {
+    const alpha = createTechnologies("alpha_techs");
+    const beta = createTechnologies("beta_techs");
+    const limits = createCountryShipOfSizeLimits();
+    const events = createEvents("events", "pp_mod");
+    const zetaEvents = createEvents("zeta_events", "pp_mod_zeta");
+    const hooks = createOnActions();
+
+    const steps: (() => void)[] = [
+      () => {
+        // Two ids in one file, out of sorted order among themselves.
+        beta.defineTechnology({
+          id: "pp_mod_tech_beta_two",
+          name: "Beta Two",
+          area: "physics",
+          tier: 1,
+          category: "particles",
+        });
+      },
+      () => {
+        beta.defineTechnology({
+          id: "pp_mod_tech_beta_one",
+          name: "Beta One",
+          area: "physics",
+          tier: 1,
+          category: "particles",
+        });
+      },
+      () => {
+        alpha.defineTechnology({
+          id: "pp_mod_tech_alpha_one",
+          name: "Alpha One",
+          area: "physics",
+          tier: 1,
+          category: "particles",
+        });
+      },
+      () => {
+        const limit = limits.defineCountryShipOfSizeLimit({
+          id: "pp_mod_limit_zeta",
+          shipTypes: ["ship_size_titan"],
+          base: 1,
+          show: isScopeValid(),
+        });
+        limits.addShipOfSizeLimits([limit]);
+      },
+      () => {
+        const limit = limits.defineCountryShipOfSizeLimit({
+          id: "pp_mod_limit_alpha",
+          shipTypes: ["ship_size_juggernaut"],
+          base: 2,
+          show: isScopeValid(),
+        });
+        limits.addShipOfSizeLimits([limit]);
+      },
+      () => {
+        // 10 before 2: the numeric event sort, from both directions.
+        const event = events.defineCountryEvent({
+          id: 10,
+          title: "Ten",
+          isTriggeredOnly: true,
+          options: [{ name: "Noted." }],
+        });
+        hooks.on(onActions.onGameStartCountry, event);
+      },
+      () => {
+        const event = events.defineCountryEvent({
+          id: 2,
+          title: "Two",
+          isTriggeredOnly: true,
+          options: [{ name: "Fascinating." }],
+        });
+        // A different hook, so the two registrations are hook-block ordering
+        // rather than the within-hook list the author owns.
+        hooks.on(onActions.onDecadePulseCountry, event);
+      },
+      () => {
+        zetaEvents.defineCountryEvent({
+          id: 1,
+          title: "Zeta",
+          isTriggeredOnly: true,
+          options: [{ name: "Noted." }],
+        });
+      },
+      () => {
+        beta.patchTechnology(probeVanilla.technology("tech_probe_zeta").require("cost"), (t) => ({
+          cost: t.cost.value * 2,
+        }));
+      },
+      () => {
+        alpha.patchTechnology(probeVanilla.technology("tech_probe_alpha").require("cost"), (t) => ({
+          cost: t.cost.value * 3,
+        }));
+      },
+    ];
+    for (const step of reversed ? [...steps].reverse() : steps) {
+      step();
+    }
+    const collections = [alpha, beta, limits, events, zetaEvents, hooks];
+    return reversed ? [...collections].reverse() : collections;
+  }
+
+  it("renders byte-identical output when collection and authoring order reverse", () => {
+    const forward = render(buildMod(CONFIG, orderProbe(false), { vanilla: probeVanilla }));
+    const backward = render(buildMod(CONFIG, orderProbe(true), { vanilla: probeVanilla }));
+    // The fixture has to actually exercise every channel, or the property is
+    // asserted over nothing.
+    expect([...forward.keys()]).toEqual([
+      "descriptor.mod",
+      "common/technology/pp_mod_alpha_techs.txt",
+      "common/technology/pp_mod_beta_techs.txt",
+      "common/country_limits/ship_of_size_limits/pp_mod_ship_of_size_limits.txt",
+      "events/pp_mod_events.txt",
+      "events/pp_mod_zeta_events.txt",
+      "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
+      "common/on_actions/pp_mod_on_actions.txt",
+      "localisation/english/pp_mod_l_english.yml",
+      "common/technology/00_probe_tech_pp_mod_patch.txt",
+    ]);
+    expect([...backward.entries()]).toEqual([...forward.entries()]);
   });
 });

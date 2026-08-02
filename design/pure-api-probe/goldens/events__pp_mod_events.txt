@@ -1,5 +1,21 @@
 namespace = pp_mod
 
+planet_event = {
+	id = pp_mod.2
+	title = pp_mod.2.name
+	is_triggered_only = yes
+	immediate = {
+		from = {
+			add_resource = {
+				influence = 50
+			}
+		}
+	}
+	option = {
+		name = pp_mod.2.a
+	}
+}
+
 country_event = {
 	id = pp_mod.1
 	title = pp_mod.1.name
@@ -17,21 +33,5 @@ country_event = {
 	}
 	option = {
 		name = pp_mod.1.a
-	}
-}
-
-planet_event = {
-	id = pp_mod.2
-	title = pp_mod.2.name
-	is_triggered_only = yes
-	immediate = {
-		from = {
-			add_resource = {
-				influence = 50
-			}
-		}
-	}
-	option = {
-		name = pp_mod.2.a
 	}
 }
