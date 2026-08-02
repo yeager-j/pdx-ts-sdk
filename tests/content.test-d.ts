@@ -33,6 +33,7 @@ import {
   hasAuthority,
   hasCountryFlag,
   hasPlanetFlag,
+  hasShipFlag,
   isCapital,
   type AgendaRef,
   type AgreementPresetRef,
@@ -152,6 +153,39 @@ describe("generated content authoring types", () => {
       name: "X",
       effect: () => {},
       showTechUnlockIf: hasAuthority("auth_democratic"),
+    });
+    // A decision's own clauses take the scope the *definition* declares, since
+    // CWT scopes the body `this = any` and means it. Unstated, that is `planet`
+    // — the scope every one of the 111 shipped decisions is written against.
+    defineDecision({
+      id: "content_types_decision_default_scope",
+      name: "X",
+      potential: isCapital(),
+      effect: (planet) => planet.setPlanetFlag("content_types_planet_only"),
+    });
+    defineDecision({
+      id: "content_types_decision_ship_scope",
+      name: "X",
+      scope: "ship",
+      potential: hasShipFlag("content_types_ship_only"),
+      effect: (ship) => ship.setShipFlag("content_types_ship_only"),
+    });
+    defineDecision({
+      id: "content_types_decision_wrong_scope",
+      name: "X",
+      scope: "ship",
+      // @ts-expect-error — this decision declared ship scope, so a planet
+      // condition no longer type-checks in it
+      potential: hasPlanetFlag("content_types_planet_only"),
+      effect: () => {},
+    });
+    defineDecision({
+      id: "content_types_decision_unknown_scope",
+      name: "X",
+      // @ts-expect-error — the parameter is the registry's declared set, not
+      // every scope the game has
+      scope: "country",
+      effect: () => {},
     });
     defineJob({
       id: "content_types_job_scoped",
@@ -341,6 +375,49 @@ describe("generated content authoring types", () => {
       name: "X",
       // @ts-expect-error — cohesion applies in federation scope, not country
       modifier: (m) => m.cohesion.ethics.penalty.mult(0.1),
+    });
+  });
+
+  it("admits either arm of a dual declaration, and nothing else", () => {
+    // A dual's member is the union of what CWT declares, so both forms compile
+    // and a third does not. Type-level evidence matters more here than for most
+    // shapes: the writer dispatches on the value's runtime form, so a value the
+    // types let through but no arm accepts would throw at render time.
+    defineShipSize({
+      id: "content_types_ship_size_dual_list",
+      name: "X",
+      class: "shipclass_military",
+      constructionType: ["starbase_shipyard", "starbase_beastport"],
+    });
+    defineShipSize({
+      id: "content_types_ship_size_dual_scalar",
+      name: "X",
+      class: "shipclass_military",
+      constructionType: "starbase_shipyard",
+    });
+    defineShipSize({
+      id: "content_types_ship_size_dual_bad",
+      name: "X",
+      class: "shipclass_military",
+      // @ts-expect-error — neither arm is a block: the key takes a value_set
+      // member or a list of them.
+      constructionType: { base: 1 },
+    });
+    defineStarbaseLevel({
+      id: "content_types_starbase_dual_scalar",
+      shipSize: "ship_size_starbase_i",
+      picture: "GFX_starbase_background_outpost",
+    });
+    defineStarbaseLevel({
+      id: "content_types_starbase_dual_block",
+      shipSize: "ship_size_starbase_i",
+      picture: { trigger: always(), picture: "GFX_starbase_background_outpost" },
+    });
+    defineStarbaseLevel({
+      id: "content_types_starbase_dual_bad",
+      shipSize: "ship_size_starbase_i",
+      // @ts-expect-error — the block arm's own fields are still typed
+      picture: { picture: 5 },
     });
   });
 

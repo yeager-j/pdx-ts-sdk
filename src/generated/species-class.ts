@@ -108,7 +108,7 @@ export interface SpeciesClassFields {
   archetype?: SpeciesArchetypeRef | string;
   modifier?: ModifierClosure<"pop_group">;
   playable?: Trigger<ScopeName>;
-  randomized?: boolean;
+  randomized?: boolean | Trigger<ScopeName>;
   upliftedInto?: SpeciesClassRef | string;
   upliftedPortraits?: (PortraitRef | string | PortraitGroupRef)[];
   possible?: GovernmentTriggerBlock;
@@ -156,7 +156,15 @@ export const SPECIES_CLASS_FIELDS: readonly ContentField[] = [
   },
   { key: "modifier", member: "modifier", shape: "modifierBlock" },
   { key: "playable", member: "playable", shape: "trigger" },
-  { key: "randomized", member: "randomized", shape: "value", conversion: "identity" },
+  {
+    key: "randomized",
+    member: "randomized",
+    shape: "dual",
+    arms: [
+      { key: "randomized", member: "randomized", shape: "value", conversion: "identity" },
+      { key: "randomized", member: "randomized", shape: "trigger" },
+    ],
+  },
   {
     key: "uplifted_into",
     member: "upliftedInto",

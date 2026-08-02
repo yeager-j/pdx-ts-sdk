@@ -12,13 +12,21 @@ import type {
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { DecisionRef, SoundEffectRef, SoundRef, TechnologyRef } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
+
+/** The scopes a decision may declare. */
+export type DecisionScope = "planet" | "ship";
 
 /**
  * A decision, as the game's rules describe it.
  * Generated from `type[decision]` at `game/common/decisions`.
  */
-export interface DecisionFields {
+export interface DecisionFields<S extends DecisionScope = "planet"> {
+  /**
+   * The scope this definition's own clauses run in.
+   * Emits nothing — it names a fact the game already knows and the rules
+   * decline to state (`this = any`). Defaults to `planet`.
+   */
+  scope?: S;
   /** English text emitted to localization under `<id>`. */
   name: string;
   /** English text emitted to localization under `<id>_desc`. */
@@ -28,20 +36,23 @@ export interface DecisionFields {
   enactmentTime?: number;
   sound?: SoundRef | string | SoundEffectRef;
   icon?: string | DecisionRef;
-  resources?: EconomicResourceBlock<ScopeName>[];
+  resources?: EconomicResourceBlock<NoInfer<S>>[];
   showTechUnlockIf?: Trigger<"country">;
-  potential?: Trigger<ScopeName>;
-  allow?: Trigger<ScopeName>;
-  abortTrigger?: Trigger<ScopeName>;
-  abortEffect?: EffectBlock<ScopeName>;
-  onQueued?: EffectBlock<ScopeName>;
-  onUnqueued?: EffectBlock<ScopeName>;
-  effect: EffectBlock<ScopeName>;
-  aiWeight?: WeightBlock<ScopeName>;
+  potential?: Trigger<NoInfer<S>>;
+  allow?: Trigger<NoInfer<S>>;
+  abortTrigger?: Trigger<NoInfer<S>>;
+  abortEffect?: EffectBlock<NoInfer<S>>;
+  onQueued?: EffectBlock<NoInfer<S>>;
+  onUnqueued?: EffectBlock<NoInfer<S>>;
+  effect: EffectBlock<NoInfer<S>>;
+  aiWeight?: WeightBlock<NoInfer<S>>;
   prerequisites?: (TechnologyRef | string)[];
 }
 
-export interface DecisionDef<Id extends string = string> extends DecisionFields {
+export interface DecisionDef<
+  Id extends string = string,
+  S extends DecisionScope = "planet",
+> extends DecisionFields<S> {
   /** Full content id, including the mod prefix. */
   id: Id;
 }

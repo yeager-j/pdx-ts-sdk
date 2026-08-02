@@ -34,7 +34,15 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
     conversion: "ref",
     refTypes: ["technology_category"],
   },
-  { key: "weight", member: "weight", shape: "valueOrWeightBlock", conversion: "identity" },
+  {
+    key: "weight",
+    member: "weight",
+    shape: "dual",
+    arms: [
+      { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+      { key: "weight", member: "weight", shape: "weightBlock" },
+    ],
+  },
 ];
 
 /**
@@ -119,7 +127,15 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
     refTypes: ["technology_category"],
   },
   { key: "icon", member: "icon", shape: "value", conversion: "identity" },
-  { key: "cost", member: "cost", shape: "valueOrWeightBlock", conversion: "identity" },
+  {
+    key: "cost",
+    member: "cost",
+    shape: "dual",
+    arms: [
+      { key: "cost", member: "cost", shape: "value", conversion: "identity" },
+      { key: "cost", member: "cost", shape: "weightBlock" },
+    ],
+  },
   { key: "weight", member: "weight", shape: "value", conversion: "identity" },
   { key: "is_custom_tech_1", member: "isCustomTech1", shape: "value", conversion: "identity" },
   { key: "is_custom_tech_2", member: "isCustomTech2", shape: "value", conversion: "identity" },

@@ -43,7 +43,7 @@ import type { CivicOrOriginDef } from "./civic-or-origin.ts";
 import type { ComponentSetDef } from "./component-set.ts";
 import type { CouncilorDef } from "./councilor.ts";
 import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts";
-import type { DecisionDef } from "./decision.ts";
+import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
@@ -179,17 +179,20 @@ export function defineEdict<const Id extends string>(
 }
 
 /** What a decision collection can contain. */
-export type DecisionItem = ContentItem<"decision", DecisionDef>;
+export type DecisionItem = ContentItem<"decision", DecisionDef<string, never>>;
 
 /**
  * Defines a decision in this mod. The returned item is the
  * definition as a value and a reference to it; place it in a
  * `collection(...)` — or export it from a discovered module — to emit it.
+ * `scope` names which scope this definition's clauses run in and emits
+ * nothing; it defaults to `planet`.
  */
-export function defineDecision<const Id extends string>(
-  def: DecisionDef<Id>
-): ContentItem<"decision", DecisionDef<Id>> {
-  return { itemKind: "content", type: "decision", id: def.id, def };
+export function defineDecision<const Id extends string, S extends DecisionScope = "planet">(
+  def: DecisionDef<Id, S>
+): ContentItem<"decision", DecisionDef<Id, never>> {
+  const { scope, ...rest } = def;
+  return { itemKind: "content", type: "decision", id: def.id, def: rest as DecisionDef<Id, never> };
 }
 
 /** What a job collection can contain. */

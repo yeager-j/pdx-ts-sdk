@@ -182,7 +182,7 @@ export interface CivicOrOriginFields {
    * Can be a set of two triggers, add to check if can be added later under certain conditions, remove to check if can be removed later under certain conditions
    * Only when civic_or_origin subtype `civic` applies.
    */
-  modification?: CivicOrOriginModification;
+  modification?: CivicOrOriginModification | boolean;
   /**
    * default: no
    * Only when civic_or_origin subtype `civic` applies.
@@ -309,8 +309,16 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
   {
     key: "modification",
     member: "modification",
-    shape: "struct",
-    fields: CIVIC_OR_ORIGIN_MODIFICATION_FIELDS,
+    shape: "dual",
+    arms: [
+      {
+        key: "modification",
+        member: "modification",
+        shape: "struct",
+        fields: CIVIC_OR_ORIGIN_MODIFICATION_FIELDS,
+      },
+      { key: "modification", member: "modification", shape: "value", conversion: "identity" },
+    ],
   },
   {
     key: "can_build_ruler_ship",

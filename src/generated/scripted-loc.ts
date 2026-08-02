@@ -8,13 +8,21 @@ import type { SpriteRef } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
 export interface ScriptedLocText {
-  weight?: number | WeightBlock<ScopeName>;
+  weight?: WeightBlock<ScopeName> | number;
   trigger?: Trigger<ScopeName>;
   localizationKey: string | SpriteRef;
 }
 
 export const SCRIPTED_LOC_TEXT_FIELDS: readonly ContentField[] = [
-  { key: "weight", member: "weight", shape: "valueOrWeightBlock", conversion: "identity" },
+  {
+    key: "weight",
+    member: "weight",
+    shape: "dual",
+    arms: [
+      { key: "weight", member: "weight", shape: "weightBlock" },
+      { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+    ],
+  },
   { key: "trigger", member: "trigger", shape: "trigger" },
   { key: "localization_key", member: "localizationKey", shape: "value", conversion: "ref" },
 ];

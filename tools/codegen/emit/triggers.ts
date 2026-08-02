@@ -13,6 +13,7 @@ import type { DocEntry } from "../logs/trigger-docs.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
 import { HAND_WRITTEN_TRIGGERS } from "../overlay.ts";
 import {
+  declaredScopes,
   mergeFields,
   scopeType,
   type ArgField,
@@ -313,8 +314,7 @@ export function emitTriggers(
     const doc = docs.get(key);
     // The rules are authoritative where they carry `## scopes`; the dump is the
     // fallback for the handful of rules that do not, and stays the cross-check.
-    const declared = declarations.flatMap((declaration) => declaration.supportedScopes ?? []);
-    const supported = declared.length > 0 ? declared : (doc?.scopes ?? []);
+    const supported = declaredScopes(declarations, doc);
     if (supported.length === 0) {
       skipped.push({ name: key, reason: "no scopes in either the rules or the game's dump" });
       continue;

@@ -36,7 +36,7 @@ export interface StarbaseLevelFields {
   /** Determines which levels are more important to upgrade from */
   aiWeight?: WeightBlock<"starbase">;
   /** Optional - determines the image used when viewing the starbase. Default is GFX_starbase_background which */
-  picture?: StarbaseLevelPicture;
+  picture?: StarbaseLevelPicture | SpriteRef | string;
   /** Default no, if yes starbase may be used as homebase for fleets */
   potentialHomeBase?: boolean;
   /** Default yes, if no then starbase_trade_collection_range_add and starbase_trade_protection_range_add will have no effect on starbases of this level */
@@ -94,7 +94,21 @@ export const STARBASE_LEVEL_FIELDS: readonly ContentField[] = [
   },
   { key: "level_weight", member: "levelWeight", shape: "value", conversion: "identity" },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
-  { key: "picture", member: "picture", shape: "struct", fields: STARBASE_LEVEL_PICTURE_FIELDS },
+  {
+    key: "picture",
+    member: "picture",
+    shape: "dual",
+    arms: [
+      { key: "picture", member: "picture", shape: "struct", fields: STARBASE_LEVEL_PICTURE_FIELDS },
+      {
+        key: "picture",
+        member: "picture",
+        shape: "value",
+        conversion: "ref",
+        refTypes: ["sprite"],
+      },
+    ],
+  },
   {
     key: "potential_home_base",
     member: "potentialHomeBase",

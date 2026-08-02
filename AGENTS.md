@@ -85,21 +85,30 @@ pre-review of a list.
    actually wrong or the rules need help:
    - `REQUIRED_LOCALISATION` for localization the authoring API should require
    - `FIELD_WIDENINGS` for intentional ergonomic input forms
-   - `CONTENT_FIELD_OVERRIDES` when the field shape cannot be inferred correctly — including a field
-     the rules declare twice (once as a bare scalar, once as a `modifier_rule` block), where the
-     generic picker silently keeps the bare form and drops the gated adjustments
+   - `CONTENT_FIELD_OVERRIDES` when the field shape cannot be inferred correctly. A field the rules
+     declare twice, once as a scalar and once as a block, needs no row: it lowers to a `dual` of
+     both arms on its own. Requesting a `shape` there suppresses that, so only pin an arm when you
+     mean to make the other unauthorable.
    - nested-definition metadata only when the CWT field is genuinely a nested content definition
+   - a `scope` or `arity` assertion on `CONTENT_FIELD_OVERRIDES` when CWT states game semantics
+     wrongly rather than incompletely, or a `CONTENT_SCOPE_PARAMETERS` row when CWT scopes a body
+     `any` and is *right* — the scope is then a property of each definition, declared by a `scope`
+     member the definer strips. All three need evidence, and shape conformance is where that
+     evidence comes from — never assert one from a reading of the rules alone.
    - `CONTENT_DECLINED_FIELDS`, the only way to keep a field the emitter *can* lower out of the
-     authoring surface. It should stay nearly empty and needs a real reason, not "not reviewed yet".
+     authoring surface. It is currently empty and should stay that way: a field whose lowered shape
+     is wrong is better measured and fixed than withheld.
 4. Re-run codegen and inspect its report and generated files. Fix the generic model when a shape is
    reusable. Do not add `if (type === "...")` branches to the generic writer or emitter.
 5. Export the new generated public types from `src/index.ts`.
 6. Add all four kinds of evidence, all of them written through the free definer:
    - codegen coverage in `tests/codegen/content-snapshot.test.ts`
    - corpus coverage in `tests/codegen/corpus-conformance.test.ts` — it parses the real installed
-     game and measures the emitted interface against every shipped definition. A field the emitter
-     invents with zero real precedent is worth verifying by hand against the vendored rules; a
-     registry parsing to zero definitions means the path or keyword is wrong.
+     game and measures the emitted interface against every shipped definition, both for presence
+     and for shape. A field the emitter invents with zero real precedent is worth verifying by hand
+     against the vendored rules; a registry parsing to zero definitions means the path or keyword is
+     wrong. A new `form` or `scope` mismatch fails: it names a field the game writes and no author
+     can produce, so fix the lowering rather than acknowledging it.
    - compile-time API and scope/reference safety in `tests/content.test-d.ts`: the definer preserves
      the literal id, the returned item flows into its own registry's reference fields, and another
      registry's item does not.

@@ -319,11 +319,49 @@ export const REQUIRED_LOCALISATION = new Set([
  * in no list, and a field whose lowered type is wrong is better fixed than
  * hidden.
  */
-export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
+export const CONTENT_DECLINED_FIELDS = new Map<string, string>([]);
+
+export interface ContentScopeParameter {
+  /** Every scope a definition may declare, canonical names. */
+  readonly scopes: readonly string[];
+  /** The scope a definition that declares none runs in. */
+  readonly fallback: string;
+  readonly reason: string;
+}
+
+/**
+ * Registries whose unpinned field scopes are a property of the *definition*
+ * rather than a constant the rules could state.
+ *
+ * The `scope` assertion fixes a field CWT failed to annotate. This is the case
+ * where CWT annotates `this = any` and is **right**: a decision taken on a
+ * nomadic ship colony really is ship-scoped and one taken on a planet really is
+ * planet-scoped, and the rules say so in a comment. The trouble is that
+ * `Trigger<S>` is contravariant, so "valid in every scope" as a field type
+ * admits only rules legal in every scope — leaving the field emitted, required,
+ * and unfillable. See `docs/roadmap.md`'s "Per-definition field scopes".
+ *
+ * A row turns every field the registry left unpinned into `Trigger<NoInfer<S>>`
+ * and adds one authoring member, `scope`, that names S and emits nothing. It
+ * also introduces a public `<Registry>Scope` union, which has to be re-exported
+ * from `src/index.ts` by hand — nothing else makes a consumer able to name the
+ * type its own helpers need. It needs the same evidence a `scope` assertion does — the scopes listed are the
+ * ones real definitions are written against, and shape conformance checks that
+ * the set covers what the corpus writes rather than taking the row's word.
+ */
+export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
   [
-    "job.auto_generate_description",
-    "CWT declares `cardinality = 0..inf` on a bare bool, which lowers to a " +
-      "nonsensical `boolean[]` — an upstream authoring quirk, not a real list field",
+    "decision",
+    {
+      scopes: ["planet", "ship"],
+      fallback: "planet",
+      reason:
+        "decisions.cwt annotates the body `this = any` and explains why: on a nomadic ship " +
+        "colony a decision is ship-scoped, on a planet planet-scoped. Every non-universal " +
+        "condition across all 111 shipped decisions is planet-valid — none writes a country-only " +
+        "condition directly, they navigate through `owner` — so `planet` is the fallback and " +
+        "`ship` the case that has to be declared.",
+    },
   ],
 ]);
 
@@ -424,6 +462,17 @@ export interface ContentFieldOverride {
    */
   readonly scope?: string;
   /**
+   * Asserts that the key is written at most once, where CWT's cardinality says
+   * otherwise and the corpus proves it wrong.
+   *
+   * `## cardinality = 0..inf` on a bare `bool` lowers to `boolean[]` — a field
+   * whose only sensible authoring is one flag. Like {@link scope}, this states
+   * game semantics the rules get wrong, so a row needs evidence: the arity
+   * mismatches shape conformance reports are that evidence, and a row here
+   * without one is a guess.
+   */
+  readonly arity?: "single";
+  /**
    * Authoring member name, when the mechanically derived one collides with a
    * localisation slot: `desc = { trigger text }` (the repeated block form of
    * the `desc` key) is a different thing from the `desc` flavor-text member
@@ -464,14 +513,13 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   [
     "situation_type.desc",
     {
-      shape: "struct",
       member: "conditionalDesc",
       reason:
         "The `desc` key's repeated trigger+text block form; the derived member collides with " +
         "the `desc` flavor-text localisation slot. Named like building.desc for consistency. " +
         "Unlike building's, situations' `desc` is also declared as a bare localisation scalar, " +
-        "which the localisation slot already covers — the struct shape pins the block form so " +
-        "first-wins picking cannot resurface the redundant scalar.",
+        "which shipped situations do write — so the field duals, and the row no longer pins the " +
+        "block form. It pinned it when first-wins picking could only keep one arm.",
     },
   ],
   [
@@ -587,6 +635,28 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       shape: "economicResources",
       reason:
         "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "ship_size.graphical_culture",
+    {
+      arity: "single",
+      reason:
+        "Both declarations — the `<graphical_culture>` list and the bare bool — carry " +
+        "`cardinality = 0..2`, which reads as `at most one of each form` rather than `write it " +
+        "twice`: no shipped ship size writes the key more than once in 263 definitions. Taken " +
+        "literally it makes both arms arrays, which is indistinguishable at the authoring member " +
+        "and blocks the dual lowering the two declarations exist to produce.",
+    },
+  ],
+  [
+    "job.auto_generate_description",
+    {
+      arity: "single",
+      reason:
+        "CWT declares `cardinality = 0..inf` on a bare bool, which lowers to a nonsensical " +
+        "`boolean[]`. All three shipped jobs that set it write one scalar `no`, and a repeated " +
+        "flag would mean nothing to the game — an upstream authoring quirk, not a list field.",
     },
   ],
   [

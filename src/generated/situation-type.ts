@@ -25,6 +25,16 @@ import type {
 } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
+export interface SituationTypeTitle {
+  trigger: Trigger<"situation">;
+  text?: string;
+}
+
+export const SITUATION_TYPE_TITLE_FIELDS: readonly ContentField[] = [
+  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "text", member: "text", shape: "value", conversion: "identity" },
+];
+
 export interface SituationTypeDesc {
   trigger?: Trigger<"situation">;
   text?: string;
@@ -124,7 +134,15 @@ export const SITUATION_APPROACH_FIELDS: readonly ContentField[] = [
   },
   { key: "resources", member: "resources", shape: "economicResources", repeated: true },
   { key: "on_select", member: "onSelect", shape: "effect" },
-  { key: "ai_weight", member: "aiWeight", shape: "valueOrWeightBlock", conversion: "identity" },
+  {
+    key: "ai_weight",
+    member: "aiWeight",
+    shape: "dual",
+    arms: [
+      { key: "ai_weight", member: "aiWeight", shape: "value", conversion: "identity" },
+      { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
+    ],
+  },
 ];
 
 export const SITUATION_APPROACH_LOCALISATION: readonly ContentLocalisation[] = [
@@ -163,12 +181,23 @@ export interface SituationStageFields {
 }
 
 export const SITUATION_STAGE_FIELDS: readonly ContentField[] = [
-  { key: "end", member: "end", shape: "valueOrWeightBlock", conversion: "identity" },
+  {
+    key: "end",
+    member: "end",
+    shape: "dual",
+    arms: [
+      { key: "end", member: "end", shape: "value", conversion: "identity" },
+      { key: "end", member: "end", shape: "weightBlock" },
+    ],
+  },
   {
     key: "section_weight",
     member: "sectionWeight",
-    shape: "valueOrWeightBlock",
-    conversion: "identity",
+    shape: "dual",
+    arms: [
+      { key: "section_weight", member: "sectionWeight", shape: "value", conversion: "identity" },
+      { key: "section_weight", member: "sectionWeight", shape: "weightBlock" },
+    ],
   },
   { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
   {
@@ -218,8 +247,8 @@ export interface SituationTypeFields {
   picture?: (SpriteRef | string)[];
   category?: SituationCategory;
   situationLogCategory?: SituationLogCategoryRef | string;
-  title?: string;
-  conditionalDesc?: SituationTypeDesc[];
+  title?: string | SituationTypeTitle[];
+  conditionalDesc?: string | SituationTypeDesc[];
   activeTooltip?: string;
   overrideActiveTitle?: string;
   overrideActiveDesc?: string;
@@ -299,13 +328,35 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     conversion: "ref",
     refTypes: ["situation_log_category"],
   },
-  { key: "title", member: "title", shape: "value", conversion: "identity" },
+  {
+    key: "title",
+    member: "title",
+    shape: "dual",
+    arms: [
+      { key: "title", member: "title", shape: "value", conversion: "identity" },
+      {
+        key: "title",
+        member: "title",
+        shape: "struct",
+        fields: SITUATION_TYPE_TITLE_FIELDS,
+        repeated: true,
+      },
+    ],
+  },
   {
     key: "desc",
     member: "conditionalDesc",
-    shape: "struct",
-    fields: SITUATION_TYPE_DESC_FIELDS,
-    repeated: true,
+    shape: "dual",
+    arms: [
+      { key: "desc", member: "conditionalDesc", shape: "value", conversion: "identity" },
+      {
+        key: "desc",
+        member: "conditionalDesc",
+        shape: "struct",
+        fields: SITUATION_TYPE_DESC_FIELDS,
+        repeated: true,
+      },
+    ],
   },
   { key: "active_tooltip", member: "activeTooltip", shape: "value", conversion: "identity" },
   {
@@ -394,8 +445,11 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
   {
     key: "total_progress",
     member: "totalProgress",
-    shape: "valueOrWeightBlock",
-    conversion: "identity",
+    shape: "dual",
+    arms: [
+      { key: "total_progress", member: "totalProgress", shape: "value", conversion: "identity" },
+      { key: "total_progress", member: "totalProgress", shape: "weightBlock" },
+    ],
   },
   {
     key: "progress_direction",

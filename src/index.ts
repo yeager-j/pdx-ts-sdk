@@ -72,7 +72,12 @@ export type {
   CountryShipOfSizeLimitFields,
   DefinedCountryShipOfSizeLimit,
 } from "./generated/country-ship-of-size-limit.ts";
-export type { DecisionDef, DecisionFields, DefinedDecision } from "./generated/decision.ts";
+export type {
+  DecisionDef,
+  DecisionFields,
+  DecisionScope,
+  DefinedDecision,
+} from "./generated/decision.ts";
 export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";
 export type {
   DefinedEconomicCategory,

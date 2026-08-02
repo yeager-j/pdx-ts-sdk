@@ -229,13 +229,25 @@ interface ContentWeightWithLocField extends ContentFieldBase {
 }
 
 /**
- * A field CWT declares both as a bare scalar and as a modifier_rule block
- * (`stages.end = 100` versus `end = { base = 100 modifier = { ... } }`),
- * lowered by whichever form the author passes.
+ * A field CWT declares more than once at forms that are not the same kind of
+ * thing: `stages.end = 100` beside `end = { base = 100 modifier = { ... } }`,
+ * `picture = "GFX_x"` beside `picture = { trigger = { ... } picture = ... }`.
+ *
+ * Both declarations are legal and the shipped game writes both, so picking one
+ * is wrong in whichever direction that registry's corpus happens to lean — it
+ * leaves a form no author can produce. The field admits every declared arm and
+ * the writer dispatches on what the author passed.
+ *
+ * Each arm carries its own complete lowering, which is what keeps this from
+ * needing to know anything about the shapes it dispatches to: writing an arm is
+ * writing an ordinary field whose value happens to have arrived here.
  */
-interface ContentValueOrWeightField extends ContentFieldBase, ContentRefTypes {
-  readonly shape: "valueOrWeightBlock";
-  readonly conversion: "identity" | "ref";
+interface ContentDualField {
+  readonly shape: "dual";
+  readonly key: string;
+  readonly member: string;
+  /** In CWT declaration order. Exactly one accepts any given authored value. */
+  readonly arms: readonly ContentField[];
 }
 
 /**
@@ -353,13 +365,131 @@ export type ContentField =
   | ContentInlineModifiersField
   | ContentWeightField
   | ContentWeightWithLocField
-  | ContentValueOrWeightField
+  | ContentDualField
   | ContentWeightedEventsField
   | ContentStructField
   | ContentAliasStructField
   | ContentStructMapField
   | ContentScalarMapField
   | ContentRepeatedStructField;
+
+/**
+ * The five shapes an authored value can arrive in, which is all the writer
+ * needs to tell one {@link ContentDualField} arm from another.
+ *
+ * A `Trigger` is a callable carrying `kind: "trigger"` — the call signature
+ * exists to poison truthiness — so it has to be recognised before the plain
+ * function test, or every trigger would read as a closure.
+ */
+export type AuthoredForm = "scalar" | "list" | "trigger" | "closure" | "block";
+
+function authoredForm(value: unknown): AuthoredForm {
+  if (Array.isArray(value)) {
+    return "list";
+  }
+  if (typeof value !== "object" && typeof value !== "function") {
+    return "scalar";
+  }
+  if ((value as { readonly kind?: unknown } | null)?.kind === "trigger") {
+    return "trigger";
+  }
+  return typeof value === "function" ? "closure" : "block";
+}
+
+/**
+ * The one form a field's authoring member accepts.
+ *
+ * Structurally typed rather than taking a whole {@link ContentField} so codegen
+ * can ask the same question of a lowering it has not finished building: a dual
+ * is only well formed when its arms accept *different* forms, and that has to
+ * be decided by the rule the writer will actually dispatch with, not a second
+ * copy of it.
+ */
+export function acceptedForm(field: {
+  readonly shape: string;
+  readonly repeated?: boolean;
+  readonly wrapped?: boolean;
+}): AuthoredForm {
+  switch (field.shape) {
+    case "trigger":
+      return "trigger";
+    case "effect":
+    case "modifierBlock":
+    case "inlineModifiers":
+      return "closure";
+    case "valueList":
+    case "weightedEvents":
+      return "list";
+    case "struct":
+      return field.repeated === true || field.wrapped === true ? "list" : "block";
+    case "value":
+    case "economicResources":
+    case "triggeredModifierBlock":
+    case "aliasStruct":
+      return field.repeated === true ? "list" : field.shape === "value" ? "scalar" : "block";
+    case "dual":
+      // A dual's arms are ordinary fields. Nesting one inside another would
+      // mean CWT declared the same key at three incompatible forms, and
+      // `lowerDual` builds its arms from single declarations either way.
+      throw new Error("A dual field cannot be another dual's arm");
+    default:
+      return "block";
+  }
+}
+
+/**
+ * Whether a value is a content reference: `TypedRef` is `{ id }`, which is an
+ * object at runtime and a scalar in the file.
+ *
+ * The brand is a phantom property and absent at runtime, so `id` is the only
+ * signature there is. That is why this alone cannot place a value — see
+ * {@link dualArm}, which asks it only once an arm has claimed references.
+ */
+function isReference(value: unknown): value is TypedRef<string> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { readonly id?: unknown }).id === "string"
+  );
+}
+
+/**
+ * The arm of a dual field that accepts what the author passed.
+ *
+ * A reference is the one value whose own shape cannot place it: `refId` unwraps
+ * either an id string or a `{ id }` object, so an authored reference looks like
+ * a block and belongs on a scalar arm. The arm's declared `conversion` settles
+ * it — asking the metadata rather than guessing from the value keeps the
+ * decision where the emitter already made it. Passing a reference where no arm
+ * takes one falls through to the ordinary form matching, so a struct arm still
+ * gets a struct that happens to carry an `id` member.
+ *
+ * Throws rather than guessing when nothing matches. The generated types make
+ * the wrong form a compile error, so reaching there means either a cast or an
+ * arm pair the emitter should not have produced, and both deserve to be loud.
+ */
+function dualArm(field: ContentDualField, value: unknown): ContentField {
+  if (isReference(value)) {
+    const reference = field.arms.find(
+      (candidate) =>
+        acceptedForm(candidate) === "scalar" &&
+        "conversion" in candidate &&
+        candidate.conversion === "ref"
+    );
+    if (reference !== undefined) {
+      return reference;
+    }
+  }
+  const form = authoredForm(value);
+  const arm = field.arms.find((candidate) => acceptedForm(candidate) === form);
+  if (arm === undefined) {
+    const declared = field.arms.map((candidate) => acceptedForm(candidate)).join(" or ");
+    throw new Error(
+      `Field "${field.key}" was given a ${form} value, and its declarations accept ${declared}`
+    );
+  }
+  return arm;
+}
 
 const ALIAS_STRUCT_FIELDS = new Map<string, readonly ContentField[]>();
 
@@ -686,13 +816,14 @@ function fieldEntries(
       case "weightBlockWithLoc":
         entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>, ctx));
         break;
-      case "valueOrWeightBlock":
-        if (typeof value === "object") {
-          entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>, ctx));
-        } else {
-          entries.push(kv(field.key, contentScalar(value, field, false, ctx)));
-        }
+      case "dual": {
+        // The arm is an ordinary field under the same member, so writing it is
+        // one more turn of this same loop rather than a second implementation
+        // of every shape a dual can reach.
+        const arm = dualArm(field, value);
+        entries.push(...fieldEntries({ [arm.member]: value }, [arm], ctx));
         break;
+      }
       case "weightedEvents": {
         const arms = value as readonly { weight: number; event?: unknown }[];
         entries.push(
@@ -970,8 +1101,20 @@ export class ContentAuthoring {
         this.collectModifierDescs(ownerId, fieldPath, raw as WeightBlock<ScopeName>, localisation);
         continue;
       }
-      if (field.shape === "valueOrWeightBlock" && typeof raw === "object") {
-        this.collectModifierDescs(ownerId, fieldPath, raw as WeightBlock<ScopeName>, localisation);
+      if (field.shape === "dual") {
+        // Same trick the writer uses: resolve the arm and walk it as the
+        // ordinary field it is. `path`, not `fieldPath` — the arm carries the
+        // same key, so the recursion rebuilds the identical path.
+        const arm = dualArm(field, raw);
+        this.collectRepeatedStructs(
+          ownerId,
+          path,
+          { [arm.member]: raw },
+          [arm],
+          ownerType,
+          pendingIds,
+          localisation
+        );
         continue;
       }
       if (field.shape === "struct") {

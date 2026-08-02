@@ -22,8 +22,9 @@ being equipped to build a mod of that size, not porting it.
       rules, so it is declared in the manifest and checked against any
       `type_key_filter` CWT does carry.
 - [x] **Delete `CONTENT_EMITTED_FIELDS`.** Every field the emitter can lower is
-      emitted. A field is out only if the emitter cannot express it or a
-      `CONTENT_DECLINED_FIELDS` row refuses it, and that list holds one entry.
+      emitted. A field is out only if the emitter cannot express it — shape
+      conformance retired the one `CONTENT_DECLINED_FIELDS` row, and the list is
+      now empty.
 - [x] **Emit every field inside repeated structs.** The emit-everything flip now
       reaches all the way down; nested overlay entries keep only what cannot be
       inferred.
@@ -34,9 +35,20 @@ being equipped to build a mod of that size, not porting it.
 - [x] **Scope links.** 87 typed navigation links in both trigger and effect
       position, generated from `links.cwt`; `target` is author-asserted plus
       a declared contract on situations. See the machinery section.
-- [x] **Accept both scalar and block for dual declarations.** The picker
-      merges a scalar + `modifier_rule` group into `number | WeightBlock<S>`
-      and unions multi-literal declarations; retired ~24 overlay rows.
+- [x] **Accept both scalar and block for dual declarations.** The picker merges
+      a mixed scalar/block group into a `dual` of both arms, dispatched at write
+      time by what the author passed; retired ~24 overlay rows and, once shape
+      conformance could find them, eight more fields whose second form was
+      unwritable.
+- [x] **Shape conformance.** The corpus gate compares each lowered type against
+      the values behind it, not just the keys. It retired the last declined
+      field and found ten more dual declarations the picker had been silently
+      halving.
+- [x] **Per-definition field scopes.** Where CWT scopes a body `any` and is
+      right, the definition declares its own scope and the unpinned fields
+      follow it. Landed for `decision`; `ship_size`'s construction clauses turn
+      out to be a different shape — the clause discovers its scope rather than
+      the definition knowing it — and are SDK-24.
 - [x] **Event kinds generated.** All 20 scoped kinds get `defineXEvent` and
       witnessed fire overloads from `EVENT_KINDS` + the effect rules.
 
@@ -260,6 +272,22 @@ Deliberately one row, not a sweep: 20 content fields across 9 registries lower
 to `Trigger<ScopeName>` and each needs its own judgment about whether the scope
 is variable or merely unannotated. That belongs to shape conformance.
 
+**Swept 2026-08-02, and it took no second row.** Shape conformance resolves
+every scopeless field mechanically, and none of the 41 is the
+`country_ship_of_size_limit.show` case again. They split three ways:
+
+- **No evidence either way** (the majority). `graphical_culture.randomized`,
+  `species_class.playable`, `ship_size.selectable` and the rest write only
+  universal conditions and DLC scripted triggers, which constrain nothing. An
+  assertion here would be a guess, and the row format exists to refuse guesses.
+- **Never written at all** — `civic_or_origin.trigger`/`add`/`remove`,
+  `economic_category.trigger`, `scripted_loc.trigger`, `tradition_category.trigger`.
+  The `invented` report already names these.
+- **CWT scopes them `any` on purpose**, and asserting over that would be
+  overriding a decision rather than filling a gap. See
+  [per-definition field scopes](#per-definition-field-scopes) — the type is still
+  unfillable, but the fix is not a constant.
+
 ### Additive contributions to engine-owned objects
 
 **Landed 2026-08-01.** Not every registry entry is a definition the mod owns.
@@ -373,8 +401,7 @@ Two things the corpus forced:
 
 **Landed 2026-08-01.** A field group mixing a bare scalar with a
 `modifier_rule` block now lowers mechanically to `number | WeightBlock<S>`
-(runtime shape `valueOrWeightBlock`, dispatched by what the author passes),
-and a group of differing scalar literals lowers to their union — which made
+(dispatched by what the author passes), and a group of differing scalar literals lowers to their union — which made
 `progress_direction = bidirectional` (and the two fields its subtype gates)
 reachable for the first time. Pure `modifier_rule` splices now infer
 `WeightBlock`/`WeightBlockWithLoc` without overlay help, the same way
@@ -389,10 +416,60 @@ and `custom_storm_ai_weight` emit for the first time. The one upstream typo
 (`total_progress`'s `value_int_field`) is normalized in `classifyScalar`
 rather than overlaid.
 
-Note the corpus gate reported no problem here, because it only checks whether
+Note the corpus gate reported no problem here, because it only checked whether
 a field is PRESENT. Comparing the emitted type against real values is
 [shape conformance](#shape-conformance), which would have flagged a
 block-typed field whose 254 observed values are scalars.
+
+**Generalized 2026-08-02, once shape conformance could see the rest.** The
+weight case was not the only one — ten more fields are declared once as a scalar
+and once as a block, and in every one the corpus writes both arms, so whichever
+the picker dropped was a form no author could produce.
+
+`valueOrWeightBlock` is now `dual`: a union of arms, each carrying its own
+complete lowering, dispatched at write time by the form of the value the author
+passed. Nothing about it is weight-specific any more — a scalar pairs with a
+weight block, a struct, a repeated struct, a trigger or a bare value list
+identically, because each arm lowers through the ordinary pipeline and the
+writer resolves an arm by re-entering its own field loop. Eight of the ten fixed
+themselves the moment it landed:
+
+| field                           | arms                                       |
+| ------------------------------- | ------------------------------------------ |
+| `ship_size.construction_type`   | value_set member, or a list of it          |
+| `ship_size.graphical_culture`   | bool, or a `<graphical_culture>` list      |
+| `starbase_level.picture`        | `<sprite>`, or a trigger+picture block     |
+| `situation_type.title` / `desc` | localisation key, or N trigger+text blocks |
+| `archaeological_site_type.desc` | localisation key, or N trigger+text blocks |
+| `civic_or_origin.modification`  | bool, or an add/remove trigger pair        |
+| `species_class.randomized`      | bool, or a condition block                 |
+
+Plus `archaeological_site_type.stage.difficulty`, a min/max block nobody had
+catalogued, which fell out for free.
+
+**What decides whether a dual is well formed** is not how many declarations
+there are but whether the arms can be _told apart_ by the value the author
+passed — the writer has one key and one member to work with. Two arms that both
+author as arrays are indistinguishable, so `lowerDual` declines and the field
+stays whichever arm the picker keeps. That is the standing case for
+`situation_type.picture`, where CWT puts `cardinality = 0..inf` on both the bare
+`<sprite>` and the trigger-gated block; `title` and `desc` dual cleanly only
+because their scalar arm is `0..1`. `ship_size.graphical_culture` had the same
+collision from a `0..2` on both declarations, resolved by an `arity` assertion —
+the cardinality there reads as "at most one of each form", and no shipped ship
+size writes the key twice in 263 definitions.
+
+The runtime rule lives in one place: `acceptedForm` in `src/content.ts` maps a
+lowered field to the authored form it accepts, and codegen imports it to decide
+whether a pair of arms is distinguishable. Two copies of that rule would be two
+opportunities to emit a dual the writer cannot dispatch.
+
+Three fields are a different defect and remain acknowledged:
+`global_ship_design.growth_stages`, `ship_size.triggered_ship_roles` and
+`species_class.resources` lower to keyed blocks against a corpus that only ever
+writes bare lists there. CWT declares one form and vanilla writes another, so
+there is no second arm to admit — inventing one would be guessing at game
+semantics from a shipped file.
 
 ### Make the corpus gate see inside nested blocks
 
@@ -407,15 +484,139 @@ carries the full walkable field tree if this is ever worth finishing.
 
 ### Shape conformance
 
-The unbuilt half of the corpus gate. Compare each lowered type against the real
-values: array versus scalar, enum membership, block versus scalar. This is what
-retires the last `CONTENT_DECLINED_FIELDS` entry —
-`job.auto_generate_description` lowers to `boolean[]` from a CWT cardinality
-quirk while all three shipped jobs write a scalar `no`, which is a mechanical
-comparison rather than a judgment.
+**Landed 2026-08-02.** The other half of the corpus gate. The reader now records
+what definitions write under each key — block or scalar, repeated or single,
+which scalars, which inner keys — and `shapeConformance` measures the lowered
+type against it. The emitter supplies the other side: `emittedFields` carries a
+shape descriptor per field rather than a bare name, which is precisely what the
+gate had been missing.
 
-Known blind spot, per the picker defect above: where CWT declares a field twice
-at different arities, both readings satisfy the corpus.
+Four comparisons, split by what a disagreement proves:
+
+- **form** and **scope** are asserted. The corpus writes it, so it is legal, and
+  the emitted type cannot hold it — the field is unfillable however the rules
+  read. New ones fail; the known ones are acknowledged with a reason in the
+  test, and an acknowledgement whose defect is fixed fails too, so the list
+  cannot rot in either direction.
+- **arity** and **literal** are reported. A `T[]` the game happens never to
+  repeat is still legal, and a stray scalar is usually an upstream spelling the
+  game reads case-insensitively (`LARGE` for `large`, in two component
+  templates).
+
+The scope comparison is the one that needed a real idea rather than a
+predicate. `Trigger<S>` is contravariant, so a field typed `Trigger<S>` admits
+exactly the triggers legal in **every** scope S names — which makes an unpinned
+`Trigger<ScopeName>` the _narrowest_ field type there is, not the widest. Resolve
+each key vanilla writes inside the field to its own scope set (the same
+`## scopes`-then-dump resolution the trigger and effect emitters run) and the
+verdict falls out. Keys nothing knows — scripted triggers, scope links —
+resolve to null and are skipped: they are the vanilla-surface backlog, not
+evidence about the field holding them.
+
+`CONTENT_DECLINED_FIELDS` is now empty. `job.auto_generate_description` became
+an `arity: "single"` assertion in `CONTENT_FIELD_OVERRIDES`, which is the
+`scope` assertion's exact sibling — both state game semantics the rules get
+wrong, both need evidence rather than a reviewer's word, and shape conformance
+is where that evidence now comes from. The field is authorable for the first
+time instead of merely withheld. Asserting the arity narrows the declared
+cardinality rather than special-casing the lowering, so the member type, the
+runtime metadata and the shape descriptor cannot end up disagreeing about
+whether the key repeats.
+
+The blind spot named here — a field CWT declares twice, where both readings
+satisfy a presence check — is exactly what it found ten more of, eight of them
+since fixed. See
+[accept both scalar and block](#accept-both-scalar-and-block-where-cwt-declares-a-field-twice).
+
+### Per-definition field scopes
+
+Shape conformance's other finding, and a genuinely new problem. Six fields were
+unfillable not because anything was misread but because CWT scopes them `any`
+_correctly_: `decision`'s `potential`, `allow`, `effect`, `on_queued`,
+`on_unqueued` and `ship_size.potential_construction`. The rules say so in as
+many words — decisions.cwt annotates `this = any` with a comment explaining
+that a decision on a nomadic ship colony is ship-scoped and on a planet
+planet-scoped.
+
+The trouble is that "the scope varies per definition" and "no author can write a
+condition here" are the same statement once `Trigger<S>` is contravariant: the
+field admits only universal triggers, and vanilla writes `is_capital`,
+`is_planet_class`, `add_modifier`, `free_housing`. Every non-universal condition
+in all 111 shipped decisions is planet-valid, so the scope is not really free —
+it is a function of the definition (a decision's category, a ship size's
+construction site).
+
+So the fix is neither a `scope` assertion nor widening: it is the definition
+supplying its own scope.
+
+**Landed for `decision` 2026-08-02.** A `CONTENT_SCOPE_PARAMETERS` row declares
+the scopes a registry's definitions may run in and which one they run in
+unstated; every field the rules left unpinned then takes that parameter, and one
+authoring member names it:
+
+```ts
+defineDecision({
+  id: "hg_jettison_cargo",
+  name: "Jettison Cargo",
+  scope: "ship",
+  potential: hasShipFlag("hg_laden"),
+  effect: (ship) => ship.removeShipFlag("hg_laden"),
+});
+```
+
+`scope` emits nothing — it states a fact the engine already knows and the rules
+decline to. Omitted, it is `planet`, which is what all 111 shipped decisions are
+written against; the wrong choice is a type error at the first condition rather
+than a mod that builds and misbehaves.
+
+Four things this needed:
+
+- **`NoInfer` on every parameterised field.** Without it TypeScript infers `S`
+  from the `Trigger<S>` positions too, and those are contravariant, so it lands
+  somewhere unrelated to what the author declared. `scope` has to be the sole
+  inference site.
+- **The definer's return type erases `S`.** `Trigger<"ship">` is not assignable
+  to `Trigger<"planet">`, so a leaked `S` would put a ship decision outside its
+  own registry's item union and break `collection([…])`. The definer is generic
+  in its _parameter_ and erased in its _result_, the same split
+  `defineSituationType` already uses for `targetScope`.
+- **A field the rules do pin keeps its own scope.** `show_tech_unlock_if` is
+  `Trigger<"country">` before and after: the parameter fills the gap rather than
+  flattening the registry into it.
+- **The gate stops acknowledging and starts checking.** `EmittedField.scope`
+  gained a parameter form, and `fieldAdmits` reads it as "some declared scope
+  takes this rule" — so the five acknowledged decision mismatches became a live
+  check that the declared set covers what the corpus writes. Declare too narrow
+  a set and it fails.
+
+**`ship_size.potential_construction` turned out not to be this shape at all**, and
+looking properly is what showed it. A decision is consistently one scope per
+definition — `is_scope_type` appears in **zero** shipped decisions. A ship size's
+construction clause is evaluated against several scope types and vanilla branches
+on which, testing `is_scope_type` 13 times across those clauses and again inside
+the scripted triggers they delegate to:
+
+```
+potential_construction = { is_scope_type = starbase  OR = { has_starbase_size >= … } }
+```
+
+So a scope parameter there would encode a false premise. `Trigger<ScopeName>` is
+the correct type — "runs in an unknown scope" is exactly true — and what is
+missing is a way to narrow _inside_ the clause: `inScope("starbase", condition)`,
+the type-level counterpart of the runtime test vanilla already uses, sound
+because a condition guarded by `is_scope_type` is simply false in other scopes.
+That is SDK-24, and it waits on the vanilla scripted-trigger binding, since most
+bodies here delegate to triggers the SDK cannot name yet.
+
+Two mechanisms, then, for two different facts: **the definition knows its scope**
+(a parameter) versus **the clause discovers it** (a narrowing combinator).
+
+Worth revisiting: `decision.ai_weight` and `resources` are in this class too and
+the gate cannot see them. A `WeightBlock`'s conditions live in its `modifier`
+rows, one level below the keys the gate reads, so they were unfillable in
+exactly the same way and appeared in no report. They are parameterised now
+because the row covers every unpinned field, not because anything flagged them —
+worth remembering that the gate's reach stops at the first level of a block.
 
 ### Bind vanilla scripted triggers and effects
 
@@ -514,7 +715,7 @@ snake_case file stem — `collection("ascension", [...])` emits
 `common/technology/<prefix>_ascension.txt`, and under SDK-23 a module named
 `ascension.ts` does the same — and same-stem collections merge (by canonical
 order since SDK-23, item order before it). The constraint held: `buildMod` computes emission paths, so the
-patch planner reserves and enumerates *every* one of the mod's own technology
+patch planner reserves and enumerates _every_ one of the mod's own technology
 files rather than one fixed name, pinned by a split-tech-plus-patch test.
 Stems carry no `/`: the subdirectories under a registry directory are different
 registries, not layout. Localization is still one file — its splitting belongs
@@ -549,7 +750,7 @@ eagerly at the define site and full ids are plain strings, and the generated
 on a collection is also the SDK-19 splitting primitive (below).
 
 Two deviations from the spike's own plan, both decided during it: events are
-*not* deferred/stamped in `buildMod` (so forward references stay illegal, as
+_not_ deferred/stamped in `buildMod` (so forward references stay illegal, as
 under the builder), and the item vocabulary is collection-typed rather than one
 flat tagged-value array. The [verdict](verdict-pure-api-probe.md) records the
 full evolution.
@@ -592,7 +793,7 @@ Shipped decisions:
    what lets two features emit into one registry file.
 6. One module's stem fans out across every registry it defined into, so a
    feature module holding technologies and events emits
-   `common/technology/<prefix>_<stem>.txt` *and* `events/<prefix>_<stem>.txt`.
+   `common/technology/<prefix>_<stem>.txt` _and_ `events/<prefix>_<stem>.txt`.
    That is `collection(stem, items)`'s property; `discoverContent` only takes
    the stem from a filename.
 
