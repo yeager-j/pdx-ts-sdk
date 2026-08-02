@@ -16,31 +16,45 @@
  * (block files) is unchanged, only its order. The class API's exact bytes for
  * this fixture are frozen separately in `design/pure-api-probe/goldens/`.
  *
+ * SDK-23 chunk 2 added a second parity gate of the same shape, for the same
+ * reason: the free definers and the factories are both live, so the same
+ * fixture goes through each and the two mods are compared directly. That test
+ * is what makes migrating every consumer (chunk 3) and deleting the factories
+ * (chunk 4) mechanical, and it dies with the factories.
+ *
  * The rest pins the fold's validation story — duplicate ids, the prefix
  * warning, the vanilla collision guard, dangling event references,
  * on-action ownership, loc dedupe, the `modifierDescKeys` ordering hazard —
- * and the factory-collection semantics: creation is registration, one
- * namespace per event file, and split files feeding the patch plan's path
- * order.
+ * and the collection semantics: creation is registration on the factory path,
+ * one file per namespace and one namespace per file on both, and split files
+ * feeding the patch plan's path order.
  */
 
 import { describe, expect, it } from "vitest";
 
 import {
+  addShipOfSizeLimits,
   always,
   and,
   buildMod,
+  collection,
   createCountryShipOfSizeLimits,
   createEvents,
   createOnActions,
   createSituationTypes,
   createTechnologies,
   createTraditions,
+  defineCountryShipOfSizeLimit,
+  defineSituationType,
+  defineTechnology,
   eventTarget,
   hasOwner,
   hasTechnology,
   isScopeValid,
+  namespace,
+  on,
   onActions,
+  patchTechnology,
   render,
   type Collection,
   type ModItemInput,
@@ -132,6 +146,95 @@ function pureCollections(): ModItemInput[] {
   return [techs, situations, limits, events, hooks];
 }
 
+/**
+ * The same fixture through the free definers (SDK-23): every definition is a
+ * value, and `collection(file, items)` is the only thing that places it. The
+ * factory twin above and this one must produce the same mod — that is the
+ * whole claim of chunk 2, and it is what makes chunks 3 and 4 a migration
+ * rather than a rewrite.
+ *
+ * The collections are deliberately built in the same shape as the factories'
+ * (one per registry, the event stem co-declared) so the comparison isolates
+ * the authoring surface rather than also testing the file layout.
+ */
+function freeCollections(): ModItemInput[] {
+  const events = namespace("pp_mod");
+
+  const grafts = defineTechnology({
+    id: "pp_mod_tech_chimeric_grafts",
+    name: "Chimeric Grafts",
+    area: "society",
+    tier: 3,
+    category: "biology",
+  });
+  const situation = defineSituationType({
+    id: "pp_mod_situation_probe",
+    name: "Probe Situation",
+    targetScope: "planet",
+    monthlyProgress: {
+      base: 2,
+      modifiers: [{ mult: 1.5, desc: "The probe is spreading.", when: always() }],
+    },
+  });
+  const titan = defineCountryShipOfSizeLimit({
+    id: "pp_mod_limit_titan",
+    shipTypes: ["ship_size_titan"],
+    base: 80,
+    max: 1600,
+    show: and(isScopeValid(), hasTechnology("tech_titans")),
+  });
+  const aftershock = events.definePlanetEvent({
+    id: 2,
+    from: "country",
+    title: "Aftershock",
+    isTriggeredOnly: true,
+    immediate: (planet, ctx) => {
+      planet.within(ctx.from, (country) => {
+        country.addResource({ resource: "influence", amount: 50 });
+      });
+    },
+    options: [{ name: "Noted." }],
+  });
+  const hum = events.defineCountryEvent({
+    id: 1,
+    title: "The Hum",
+    isTriggeredOnly: true,
+    immediate: (country, ctx) => {
+      country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+        planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
+      });
+    },
+    options: [{ name: "Fascinating." }],
+  });
+  const patch = patchTechnology(
+    vanilla.technology("tech_gene_forging").require("cost", "prerequisites"),
+    (t) => ({
+      cost: t.cost.value * 2,
+      prerequisites: [...t.prerequisites, grafts],
+    })
+  );
+  return [
+    collection(undefined, [grafts, patch]),
+    collection(undefined, [situation]),
+    collection(undefined, [titan, addShipOfSizeLimits([titan, "third_party_limit"])]),
+    collection("events", [aftershock, hum]),
+    collection(undefined, [on(onActions.onGameStartCountry, [hum])]),
+  ];
+}
+
+/** Every emission channel the representative fixture exercises, in order. */
+const FIXTURE_CHANNELS = [
+  "descriptor.mod",
+  "common/technology/pp_mod_technology.txt",
+  "common/situations/pp_mod_situations.txt",
+  "common/country_limits/ship_of_size_limits/pp_mod_ship_of_size_limits.txt",
+  "events/pp_mod_events.txt",
+  "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
+  "common/on_actions/pp_mod_on_actions.txt",
+  "localisation/english/pp_mod_l_english.yml",
+  "common/technology/pp_soc_tech_pp_mod_patch.txt",
+];
+
 /** Goldens mirror the emitted tree with `/` flattened, as the other suites do. */
 function goldenPath(relPath: string): string {
   return `__snapshots__/pure-api/${relPath.replaceAll("/", "__")}`;
@@ -154,17 +257,7 @@ describe("parity with the deleted class builder", () => {
   // would mint a new file instead of failing. Pinning the keys first makes
   // that a test failure.
   it("emits exactly the channels the fixture exercises", () => {
-    expect([...files.keys()]).toEqual([
-      "descriptor.mod",
-      "common/technology/pp_mod_technology.txt",
-      "common/situations/pp_mod_situations.txt",
-      "common/country_limits/ship_of_size_limits/pp_mod_ship_of_size_limits.txt",
-      "events/pp_mod_events.txt",
-      "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
-      "common/on_actions/pp_mod_on_actions.txt",
-      "localisation/english/pp_mod_l_english.yml",
-      "common/technology/pp_soc_tech_pp_mod_patch.txt",
-    ]);
+    expect([...files.keys()]).toEqual(FIXTURE_CHANNELS);
   });
 
   for (const [relPath, content] of files) {
@@ -178,6 +271,39 @@ describe("parity with the deleted class builder", () => {
       "__snapshots__/pure-api/patch-plan-assertions.json"
     );
     expect(pure.warnings).toEqual([]);
+  });
+});
+
+/**
+ * The keystone gate for the SDK-23 migration (chunk 2).
+ *
+ * Both authoring surfaces are live at once, so the free definers can be held
+ * to the factories' exact output before a single consumer moves. Every channel
+ * the fixture has goes through the comparison: content with localization, the
+ * situation graft's `targetScope`, two events that fire each other with a FROM
+ * witness, an on-action binding (one event through the factory method, an
+ * array of one through free `on()`), the contribution sink, and a patch.
+ *
+ * This test dies with the factories in chunk 4; until then it is what makes
+ * "migrate the consumers" a mechanical rewrite rather than a leap.
+ */
+describe("parity between the factories and the free definers", () => {
+  const throughFactories = buildMod(CONFIG, pureCollections(), { vanilla });
+  const throughDefiners = buildMod(CONFIG, freeCollections(), { vanilla });
+
+  it("renders the same files, byte for byte", () => {
+    const files = render(throughDefiners);
+    // Pinned first, so "both surfaces emitted nothing" cannot pass as parity.
+    expect([...files.keys()]).toEqual(FIXTURE_CHANNELS);
+    expect([...files.entries()]).toEqual([...render(throughFactories).entries()]);
+  });
+
+  it("computes the same patch plan and the same warnings", () => {
+    expect(JSON.stringify(throughDefiners.patchPlan)).toEqual(
+      JSON.stringify(throughFactories.patchPlan)
+    );
+    expect(throughDefiners.warnings).toEqual(throughFactories.warnings);
+    expect(throughDefiners.shipOfSizeLimits).toEqual(throughFactories.shipOfSizeLimits);
   });
 });
 
@@ -272,12 +398,37 @@ describe("event factories", () => {
     );
   });
 
-  it("rejects the same full id from two factories at buildMod", () => {
+  it("rejects the same full id from two factories sharing a file", () => {
+    // Same stem and same namespace is a legal merge — the bijection below
+    // holds — so this is exactly the case the define-site check cannot see:
+    // each factory has its own `used` set, and only the global check across
+    // every collection knows the two collided.
+    const first = createEvents("shared_events", "pp_mod_shared");
+    first.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
+    const second = createEvents("shared_events", "pp_mod_shared");
+    second.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
+    expect(() => buildMod(CONFIG, [first, second])).toThrow('Duplicate event id "pp_mod_shared.1"');
+    // The merge itself is fine: distinct ids in the two collections land in
+    // one file, exactly as two same-stem content collections do.
+    const third = createEvents("shared_events", "pp_mod_shared");
+    third.defineCountryEvent({ id: 2, isTriggeredOnly: true, hideWindow: true });
+    const merged = render(buildMod(CONFIG, [first, third])).get("events/pp_mod_shared_events.txt")!;
+    expect(merged).toContain("id = pp_mod_shared.1");
+    expect(merged).toContain("id = pp_mod_shared.2");
+  });
+
+  it("keeps one file per namespace, the other half of the bijection", () => {
+    // SDK-23 decision 1. A namespace split across two files splits its
+    // numeric id space across two independent define-site checks, and makes
+    // the emitted file a fact about layout rather than about identity.
     const first = createEvents("a_events", "pp_mod_shared");
     first.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
     const second = createEvents("b_events", "pp_mod_shared");
-    second.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
-    expect(() => buildMod(CONFIG, [first, second])).toThrow('Duplicate event id "pp_mod_shared.1"');
+    second.defineCountryEvent({ id: 2, isTriggeredOnly: true, hideWindow: true });
+    expect(() => buildMod(CONFIG, [first, second])).toThrow(
+      'event namespace "pp_mod_shared" is split across file stems "a_events" and "b_events" — ' +
+        "one file per namespace; give each namespace its own file stem"
+    );
   });
 
   it("keeps one namespace per emitted file, catching same-stem merges", () => {

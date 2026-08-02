@@ -280,6 +280,28 @@ export function buildMod(
       group.events.push(item);
     }
   }
+  // The other half of the bijection (SDK-23 decision 1): the grouping above
+  // forbids two namespaces in one file, this forbids one namespace across two
+  // files. A split namespace splits its numeric id space across independent
+  // define-site duplicate checks, and makes which file an event lands in a
+  // fact about layout rather than about the event's identity.
+  const stemsByNamespace = new Map<string, Set<string>>();
+  for (const { item, file } of placedEvents) {
+    const stems = stemsByNamespace.get(item.namespace) ?? new Set<string>();
+    stems.add(file ?? "events");
+    stemsByNamespace.set(item.namespace, stems);
+  }
+  for (const [namespace, stems] of stemsByNamespace) {
+    if (stems.size > 1) {
+      const listed = [...stems].sort(compareUtf8).map((stem) => `"${stem}"`);
+      throw new Error(
+        `event namespace "${namespace}" is split across file stems ` +
+          `${listed.slice(0, -1).join(", ")} and ${listed.at(-1)} — one file per namespace; ` +
+          `give each namespace its own file stem`
+      );
+    }
+  }
+
   // Files by path bytes; events inside a file by their *numeric* id, which is
   // well defined because a file carries exactly one namespace (the backstop
   // above). Sorting the full ids as text would file `ns.10` before `ns.2`.
@@ -331,13 +353,17 @@ export function buildMod(
     if (item.itemKind !== "on-action") {
       continue;
     }
-    if (!includedEvents.has(item.event)) {
-      throw new Error(
-        `Event "${item.event.id}" is not among the collections passed to buildMod; ` +
-          `on-action "${item.hook.name}" can only fire this mod's own events`
-      );
+    // Array order is author data — the game fires a hook's event list as
+    // written — so this loop registers straight down it and never sorts.
+    for (const event of item.events) {
+      if (!includedEvents.has(event)) {
+        throw new Error(
+          `Event "${event.id}" is not among the collections passed to buildMod; ` +
+            `on-action "${item.hook.name}" can only fire this mod's own events`
+        );
+      }
+      onActions.register(item.hook, event as DefinedEvent<ScopeName, ScopeName | undefined>);
     }
-    onActions.register(item.hook, item.event as DefinedEvent<ScopeName, ScopeName | undefined>);
   }
 
   // Contributions: union into the shared sink; a limit listed twice emits

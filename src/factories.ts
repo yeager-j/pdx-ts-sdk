@@ -16,6 +16,12 @@
  * same arrangement `HAND_WRITTEN_TRIGGERS` uses one level up, so the generated
  * situation-type collection extends the interface below instead of emitting a
  * mechanical definer beside it.
+ *
+ * The free halves of the same two hand-written members live here too (SDK-23):
+ * `defineSituationType`, which the factory graft now delegates to, and `on`,
+ * whose collection method wraps it. Both surfaces coexist until the factories
+ * are deleted, and the wrapping is what makes that a deletion rather than a
+ * behavior change.
  */
 
 import type { ScopeName } from "./generated/scopes.ts";
@@ -59,6 +65,32 @@ export interface SituationTypeDefiner {
   ): ContentItem<"situation_type", SituationTypeDef<Id>> & { readonly targetScope: T };
 }
 
+/**
+ * The free `defineSituationType` (SDK-23), re-exported from
+ * `src/generated/content-definers.ts` so all 34 definers come from one module.
+ *
+ * One object, doing both jobs: it is the item a `collection(...)` collects and
+ * the `targetScope`-carrying ref `startSituation` call sites are checked
+ * against. `targetScope` is stripped out of `def` — what the emitter lowers is
+ * the rest — and rides on the item itself, where nothing reads it but the type
+ * system.
+ */
+export function defineSituationType<
+  const Id extends string,
+  T extends ScopeName | undefined = undefined,
+>(
+  def: SituationTypeDef<Id> & { readonly targetScope?: T }
+): ContentItem<"situation_type", SituationTypeDef<Id>> & { readonly targetScope: T } {
+  const { targetScope, ...rest } = def;
+  return {
+    itemKind: "content",
+    type: "situation_type",
+    id: def.id,
+    def: rest as SituationTypeDef<Id>,
+    targetScope: targetScope as T,
+  };
+}
+
 /** Builds the graft over a collection's item array, for the generated factory
  * to spread in beside the collection itself. */
 export function situationTypeDefiner(
@@ -66,17 +98,32 @@ export function situationTypeDefiner(
 ): SituationTypeDefiner {
   return {
     defineSituationType(def) {
-      const { targetScope, ...rest } = def;
-      const item = {
-        itemKind: "content" as const,
-        type: "situation_type" as const,
-        id: def.id,
-        def: rest as SituationTypeDef<typeof def.id>,
-      };
+      const item = defineSituationType(def);
       items.push(item);
-      return { ...item, targetScope: targetScope as never };
+      return item;
     },
   };
+}
+
+/**
+ * Binds this mod's events to a generated on-action hook (SDK-23).
+ *
+ * The events are a non-empty tuple, and the list order is author data: the
+ * game fires a hook's `events = { ... }` list as written, so `buildMod`
+ * registers straight down the array and never sorts it. Two separate `on()`
+ * items on the same hook still concatenate in the order they reach `buildMod`;
+ * this is the form that puts that order fully in the author's hands.
+ *
+ * `NoInfer` makes the hook the only inference site, so a scope or FROM
+ * mismatch is reported against the events rather than silently widening the
+ * hook. The tuple has to be written as an array literal at the call site — a
+ * variable of type `EventItem[]` has no non-empty proof to offer.
+ */
+export function on<S extends ScopeName, From extends ScopeName | undefined>(
+  hook: OnActionRef<S, From>,
+  events: readonly [EventItem<NoInfer<S>, NoInfer<From>>, ...EventItem<NoInfer<S>, NoInfer<From>>[]]
+): OnActionBindingItem {
+  return { itemKind: "on-action", hook, events: events as readonly EventItemBase[] };
 }
 
 export interface OnActionCollection extends Collection<OnActionBindingItem> {
@@ -95,7 +142,7 @@ export function createOnActions(): OnActionCollection {
   return {
     ...collection,
     on(hook, event) {
-      items.push({ itemKind: "on-action", hook, event: event as EventItemBase });
+      items.push(on(hook, [event]));
     },
   };
 }

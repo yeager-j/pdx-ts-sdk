@@ -29,7 +29,7 @@
 // From: common/country_limits.cwt
 
 import { makeCollection, situationTypeDefiner, type SituationTypeDefiner } from "../factories.ts";
-import type { Collection, ContentItem, ContributionItem, TechnologyPatchItem } from "../items.ts";
+import type { Collection, ContentItem, TechnologyPatchItem } from "../items.ts";
 import { patchTechnology as transformTechnology, type TechnologyPatch } from "../vanilla/patch.ts";
 import type { ParsedTechnology } from "../vanilla/surface.ts";
 import type { AgendaDef } from "./agenda.ts";
@@ -42,6 +42,42 @@ import type { BuildingDef } from "./building.ts";
 import type { CasusBelliDef } from "./casus-belli.ts";
 import type { CivicOrOriginDef } from "./civic-or-origin.ts";
 import type { ComponentSetDef } from "./component-set.ts";
+import type {
+  AgendaItem,
+  AgreementPresetItem,
+  AmbientObjectItem,
+  ArchaeologicalSiteTypeItem,
+  AscensionPerkItem,
+  BombardmentStanceItem,
+  BuildingItem,
+  CasusBelliItem,
+  CivicOrOriginItem,
+  ComponentSetItem,
+  CouncilorItem,
+  CountryShipOfSizeLimitItem,
+  DecisionItem,
+  EconomicCategoryItem,
+  EdictItem,
+  GlobalShipDesignItem,
+  GraphicalCultureItem,
+  JobItem,
+  OpinionModifierItem,
+  ScriptedLocItem,
+  ScriptedModifierItem,
+  SectionTemplateItem,
+  ShipSizeItem,
+  SituationTypeItem,
+  SpeciesClassItem,
+  StarbaseLevelItem,
+  StaticModifierItem,
+  StrikeCraftComponentTemplateItem,
+  TechnologyItem,
+  TraditionCategoryItem,
+  TraditionItem,
+  UtilityComponentTemplateItem,
+  WarGoalItem,
+  WeaponComponentTemplateItem,
+} from "./content-definers.ts";
 import type { CouncilorDef } from "./councilor.ts";
 import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts";
 import type { DecisionDef } from "./decision.ts";
@@ -67,9 +103,6 @@ import type { TraditionDef } from "./tradition.ts";
 import type { UtilityComponentTemplateDef } from "./utility-component-template.ts";
 import type { WarGoalDef } from "./war-goal.ts";
 import type { WeaponComponentTemplateDef } from "./weapon-component-template.ts";
-
-/** What a technology collection can contain. */
-export type TechnologyItem = ContentItem<"technology", TechnologyDef> | TechnologyPatchItem;
 
 export interface TechnologyCollection extends Collection<TechnologyItem> {
   /** Defines a technology in this mod, registering it in this collection. */
@@ -113,9 +146,6 @@ export function createTechnologies(file?: string): TechnologyCollection {
   };
 }
 
-/** What a building collection can contain. */
-export type BuildingItem = ContentItem<"building", BuildingDef>;
-
 export interface BuildingCollection extends Collection<BuildingItem> {
   /** Defines a building in this mod, registering it in this collection. */
   defineBuilding<const Id extends string>(
@@ -141,9 +171,6 @@ export function createBuildings(file?: string): BuildingCollection {
   };
 }
 
-/** What a tradition collection can contain. */
-export type TraditionItem = ContentItem<"tradition", TraditionDef>;
-
 export interface TraditionCollection extends Collection<TraditionItem> {
   /** Defines a tradition in this mod, registering it in this collection. */
   defineTradition<const Id extends string>(
@@ -168,9 +195,6 @@ export function createTraditions(file?: string): TraditionCollection {
     },
   };
 }
-
-/** What a tradition category collection can contain. */
-export type TraditionCategoryItem = ContentItem<"tradition_category", TraditionCategoryDef>;
 
 export interface TraditionCategoryCollection extends Collection<TraditionCategoryItem> {
   /** Defines a tradition category in this mod, registering it in this collection. */
@@ -202,9 +226,6 @@ export function createTraditionCategories(file?: string): TraditionCategoryColle
   };
 }
 
-/** What an ascension perk collection can contain. */
-export type AscensionPerkItem = ContentItem<"ascension_perk", AscensionPerkDef>;
-
 export interface AscensionPerkCollection extends Collection<AscensionPerkItem> {
   /** Defines an ascension perk in this mod, registering it in this collection. */
   defineAscensionPerk<const Id extends string>(
@@ -235,9 +256,6 @@ export function createAscensionPerks(file?: string): AscensionPerkCollection {
   };
 }
 
-/** What an agenda collection can contain. */
-export type AgendaItem = ContentItem<"agenda", AgendaDef>;
-
 export interface AgendaCollection extends Collection<AgendaItem> {
   /** Defines an agenda in this mod, registering it in this collection. */
   defineAgenda<const Id extends string>(def: AgendaDef<Id>): ContentItem<"agenda", AgendaDef<Id>>;
@@ -261,9 +279,6 @@ export function createAgendas(file?: string): AgendaCollection {
   };
 }
 
-/** What an edict collection can contain. */
-export type EdictItem = ContentItem<"edict", EdictDef>;
-
 export interface EdictCollection extends Collection<EdictItem> {
   /** Defines an edict in this mod, registering it in this collection. */
   defineEdict<const Id extends string>(def: EdictDef<Id>): ContentItem<"edict", EdictDef<Id>>;
@@ -286,9 +301,6 @@ export function createEdicts(file?: string): EdictCollection {
     },
   };
 }
-
-/** What a decision collection can contain. */
-export type DecisionItem = ContentItem<"decision", DecisionDef>;
 
 export interface DecisionCollection extends Collection<DecisionItem> {
   /** Defines a decision in this mod, registering it in this collection. */
@@ -315,9 +327,6 @@ export function createDecisions(file?: string): DecisionCollection {
   };
 }
 
-/** What a job collection can contain. */
-export type JobItem = ContentItem<"job", JobDef>;
-
 export interface JobCollection extends Collection<JobItem> {
   /** Defines a job in this mod, registering it in this collection. */
   defineJob<const Id extends string>(def: JobDef<Id>): ContentItem<"job", JobDef<Id>>;
@@ -340,9 +349,6 @@ export function createJobs(file?: string): JobCollection {
     },
   };
 }
-
-/** What a global ship design collection can contain. */
-export type GlobalShipDesignItem = ContentItem<"global_ship_design", GlobalShipDesignDef>;
 
 export interface GlobalShipDesignCollection extends Collection<GlobalShipDesignItem> {
   /** Defines a global ship design in this mod, registering it in this collection. */
@@ -374,12 +380,6 @@ export function createGlobalShipDesigns(file?: string): GlobalShipDesignCollecti
   };
 }
 
-/** What an utility component template collection can contain. */
-export type UtilityComponentTemplateItem = ContentItem<
-  "utility_component_template",
-  UtilityComponentTemplateDef
->;
-
 export interface UtilityComponentTemplateCollection extends Collection<UtilityComponentTemplateItem> {
   /** Defines an utility component template in this mod, registering it in this collection. */
   defineUtilityComponentTemplate<const Id extends string>(
@@ -410,12 +410,6 @@ export function createUtilityComponentTemplates(file?: string): UtilityComponent
   };
 }
 
-/** What a weapon component template collection can contain. */
-export type WeaponComponentTemplateItem = ContentItem<
-  "weapon_component_template",
-  WeaponComponentTemplateDef
->;
-
 export interface WeaponComponentTemplateCollection extends Collection<WeaponComponentTemplateItem> {
   /** Defines a weapon component template in this mod, registering it in this collection. */
   defineWeaponComponentTemplate<const Id extends string>(
@@ -445,12 +439,6 @@ export function createWeaponComponentTemplates(file?: string): WeaponComponentTe
     },
   };
 }
-
-/** What a strike craft component template collection can contain. */
-export type StrikeCraftComponentTemplateItem = ContentItem<
-  "strike_craft_component_template",
-  StrikeCraftComponentTemplateDef
->;
 
 export interface StrikeCraftComponentTemplateCollection extends Collection<StrikeCraftComponentTemplateItem> {
   /** Defines a strike craft component template in this mod, registering it in this collection. */
@@ -484,9 +472,6 @@ export function createStrikeCraftComponentTemplates(
   };
 }
 
-/** What a ship size collection can contain. */
-export type ShipSizeItem = ContentItem<"ship_size", ShipSizeDef>;
-
 export interface ShipSizeCollection extends Collection<ShipSizeItem> {
   /** Defines a ship size in this mod, registering it in this collection. */
   defineShipSize<const Id extends string>(
@@ -511,9 +496,6 @@ export function createShipSizes(file?: string): ShipSizeCollection {
     },
   };
 }
-
-/** What an opinion modifier collection can contain. */
-export type OpinionModifierItem = ContentItem<"opinion_modifier", OpinionModifierDef>;
 
 export interface OpinionModifierCollection extends Collection<OpinionModifierItem> {
   /** Defines an opinion modifier in this mod, registering it in this collection. */
@@ -545,9 +527,6 @@ export function createOpinionModifiers(file?: string): OpinionModifierCollection
   };
 }
 
-/** What a static modifier collection can contain. */
-export type StaticModifierItem = ContentItem<"static_modifier", StaticModifierDef>;
-
 export interface StaticModifierCollection extends Collection<StaticModifierItem> {
   /** Defines a static modifier in this mod, registering it in this collection. */
   defineStaticModifier<const Id extends string>(
@@ -577,9 +556,6 @@ export function createStaticModifiers(file?: string): StaticModifierCollection {
     },
   };
 }
-
-/** What a scripted modifier collection can contain. */
-export type ScriptedModifierItem = ContentItem<"scripted_modifier", ScriptedModifierDef>;
 
 export interface ScriptedModifierCollection extends Collection<ScriptedModifierItem> {
   /** Defines a scripted modifier in this mod, registering it in this collection. */
@@ -611,9 +587,6 @@ export function createScriptedModifiers(file?: string): ScriptedModifierCollecti
   };
 }
 
-/** What a casus belli collection can contain. */
-export type CasusBelliItem = ContentItem<"casus_belli", CasusBelliDef>;
-
 export interface CasusBelliCollection extends Collection<CasusBelliItem> {
   /** Defines a casus belli in this mod, registering it in this collection. */
   defineCasusBelli<const Id extends string>(
@@ -639,9 +612,6 @@ export function createCasusBelli(file?: string): CasusBelliCollection {
   };
 }
 
-/** What a war goal collection can contain. */
-export type WarGoalItem = ContentItem<"war_goal", WarGoalDef>;
-
 export interface WarGoalCollection extends Collection<WarGoalItem> {
   /** Defines a war goal in this mod, registering it in this collection. */
   defineWarGoal<const Id extends string>(
@@ -666,9 +636,6 @@ export function createWarGoals(file?: string): WarGoalCollection {
     },
   };
 }
-
-/** What an agreement preset collection can contain. */
-export type AgreementPresetItem = ContentItem<"agreement_preset", AgreementPresetDef>;
 
 export interface AgreementPresetCollection extends Collection<AgreementPresetItem> {
   /** Defines an agreement preset in this mod, registering it in this collection. */
@@ -700,9 +667,6 @@ export function createAgreementPresets(file?: string): AgreementPresetCollection
   };
 }
 
-/** What a bombardment stance collection can contain. */
-export type BombardmentStanceItem = ContentItem<"bombardment_stance", BombardmentStanceDef>;
-
 export interface BombardmentStanceCollection extends Collection<BombardmentStanceItem> {
   /** Defines a bombardment stance in this mod, registering it in this collection. */
   defineBombardmentStance<const Id extends string>(
@@ -732,12 +696,6 @@ export function createBombardmentStances(file?: string): BombardmentStanceCollec
     },
   };
 }
-
-/** What an archaeological site type collection can contain. */
-export type ArchaeologicalSiteTypeItem = ContentItem<
-  "archaeological_site_type",
-  ArchaeologicalSiteTypeDef
->;
 
 export interface ArchaeologicalSiteTypeCollection extends Collection<ArchaeologicalSiteTypeItem> {
   /** Defines an archaeological site type in this mod, registering it in this collection. */
@@ -769,9 +727,6 @@ export function createArchaeologicalSiteTypes(file?: string): ArchaeologicalSite
   };
 }
 
-/** What a situation type collection can contain. */
-export type SituationTypeItem = ContentItem<"situation_type", SituationTypeDef>;
-
 export interface SituationTypeCollection
   extends Collection<SituationTypeItem>, SituationTypeDefiner {}
 
@@ -788,9 +743,6 @@ export function createSituationTypes(file?: string): SituationTypeCollection {
     ...situationTypeDefiner(items),
   };
 }
-
-/** What a scripted loc collection can contain. */
-export type ScriptedLocItem = ContentItem<"scripted_loc", ScriptedLocDef>;
 
 export interface ScriptedLocCollection extends Collection<ScriptedLocItem> {
   /** Defines a scripted loc in this mod, registering it in this collection. */
@@ -817,9 +769,6 @@ export function createScriptedLocs(file?: string): ScriptedLocCollection {
   };
 }
 
-/** What a councilor collection can contain. */
-export type CouncilorItem = ContentItem<"councilor", CouncilorDef>;
-
 export interface CouncilorCollection extends Collection<CouncilorItem> {
   /** Defines a councilor in this mod, registering it in this collection. */
   defineCouncilor<const Id extends string>(
@@ -844,9 +793,6 @@ export function createCouncilors(file?: string): CouncilorCollection {
     },
   };
 }
-
-/** What an economic category collection can contain. */
-export type EconomicCategoryItem = ContentItem<"economic_category", EconomicCategoryDef>;
 
 export interface EconomicCategoryCollection extends Collection<EconomicCategoryItem> {
   /** Defines an economic category in this mod, registering it in this collection. */
@@ -878,9 +824,6 @@ export function createEconomicCategories(file?: string): EconomicCategoryCollect
   };
 }
 
-/** What a civic or origin collection can contain. */
-export type CivicOrOriginItem = ContentItem<"civic_or_origin", CivicOrOriginDef>;
-
 export interface CivicOrOriginCollection extends Collection<CivicOrOriginItem> {
   /** Defines a civic or origin in this mod, registering it in this collection. */
   defineCivicOrOrigin<const Id extends string>(
@@ -910,9 +853,6 @@ export function createCivicsOrOrigins(file?: string): CivicOrOriginCollection {
     },
   };
 }
-
-/** What a component set collection can contain. */
-export type ComponentSetItem = ContentItem<"component_set", ComponentSetDef>;
 
 export interface ComponentSetCollection extends Collection<ComponentSetItem> {
   /** Defines a component set in this mod, registering it in this collection. */
@@ -944,9 +884,6 @@ export function createComponentSets(file?: string): ComponentSetCollection {
   };
 }
 
-/** What a section template collection can contain. */
-export type SectionTemplateItem = ContentItem<"section_template", SectionTemplateDef>;
-
 export interface SectionTemplateCollection extends Collection<SectionTemplateItem> {
   /** Defines a section template in this mod, registering it in this collection. */
   defineSectionTemplate<const Id extends string>(
@@ -976,9 +913,6 @@ export function createSectionTemplates(file?: string): SectionTemplateCollection
     },
   };
 }
-
-/** What an ambient object collection can contain. */
-export type AmbientObjectItem = ContentItem<"ambient_object", AmbientObjectDef>;
 
 export interface AmbientObjectCollection extends Collection<AmbientObjectItem> {
   /** Defines an ambient object in this mod, registering it in this collection. */
@@ -1010,9 +944,6 @@ export function createAmbientObjects(file?: string): AmbientObjectCollection {
   };
 }
 
-/** What a graphical culture collection can contain. */
-export type GraphicalCultureItem = ContentItem<"graphical_culture", GraphicalCultureDef>;
-
 export interface GraphicalCultureCollection extends Collection<GraphicalCultureItem> {
   /** Defines a graphical culture in this mod, registering it in this collection. */
   defineGraphicalCulture<const Id extends string>(
@@ -1042,9 +973,6 @@ export function createGraphicalCultures(file?: string): GraphicalCultureCollecti
     },
   };
 }
-
-/** What a starbase level collection can contain. */
-export type StarbaseLevelItem = ContentItem<"starbase_level", StarbaseLevelDef>;
 
 export interface StarbaseLevelCollection extends Collection<StarbaseLevelItem> {
   /** Defines a starbase level in this mod, registering it in this collection. */
@@ -1076,9 +1004,6 @@ export function createStarbaseLevels(file?: string): StarbaseLevelCollection {
   };
 }
 
-/** What a species class collection can contain. */
-export type SpeciesClassItem = ContentItem<"species_class", SpeciesClassDef>;
-
 export interface SpeciesClassCollection extends Collection<SpeciesClassItem> {
   /** Defines a species class in this mod, registering it in this collection. */
   defineSpeciesClass<const Id extends string>(
@@ -1108,10 +1033,6 @@ export function createSpeciesClasses(file?: string): SpeciesClassCollection {
     },
   };
 }
-
-/** What a country ship of size limit collection can contain. */
-export type CountryShipOfSizeLimitItem =
-  ContentItem<"country_ship_of_size_limit", CountryShipOfSizeLimitDef> | ContributionItem;
 
 export interface CountryShipOfSizeLimitCollection extends Collection<CountryShipOfSizeLimitItem> {
   /** Defines a country ship of size limit in this mod, registering it in this collection. */

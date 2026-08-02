@@ -210,12 +210,18 @@ export {
   type PureMod,
 } from "./build.ts";
 export { render, write } from "./render.ts";
+// One free definer per content registry — `defineTechnology`,
+// `defineAscensionPerk`, ... — plus `patchTechnology`, `addShipOfSizeLimits`,
+// and every registry's `XItem` union.
+export * from "./generated/content-definers.ts";
+export { namespace, type EventNamespace } from "./generated/event-definers.ts";
 // One collection factory per content registry — `createTechnologies`,
-// `createAscensionPerks`, ... — with its `XCollection` and `XItem` types.
+// `createAscensionPerks`, ... — with its `XCollection` type.
 export * from "./generated/content-factories.ts";
 export { createEvents, type EventCollection } from "./generated/event-factory.ts";
 export {
   createOnActions,
+  on,
   situationTypeDefiner,
   type OnActionCollection,
   type SituationTypeDefiner,
@@ -223,6 +229,7 @@ export {
 export {
   assertFileStem,
   assertNamespace,
+  collection,
   flattenItems,
   FILE_STEM_PATTERN,
   type Collection,

@@ -16,6 +16,8 @@
  *   with one `defineXEvent` definer per scoped kind, each closing over the
  *   factory's namespace and its used-id set. The scopeless `event` kind cannot
  *   type its closures, so it is skipped and reported.
+ * - `event-definers.ts` — `namespace(ns)`, the same definers with no collection
+ *   behind them: the events are values the author places, not registrations.
  * - `event-fires.ts` — the witness-overload pair per fire effect, merged into
  *   the generated scope interfaces. The pair cannot be generated as ordinary
  *   effects (see `FIRE_EFFECTS` in the overlay): the `id` argument is an
@@ -34,6 +36,7 @@ import { Emitter } from "./types.ts";
 export interface EventsEmission {
   readonly code: string;
   readonly factoryCode: string;
+  readonly definerCode: string;
   readonly firesCode: string;
   readonly kinds: number;
   readonly definers: number;
@@ -69,6 +72,24 @@ function factoryBinding(kind: EmittedKind & { scope: string }): string {
   return (
     `    define${pascalCase(kind.key)}: definerOf(${JSON.stringify(kind.key)}, ` +
     `${JSON.stringify(kind.scope)}),\n`
+  );
+}
+
+function definerSignature(kind: EmittedKind & { scope: string }): string {
+  const scope = JSON.stringify(kind.scope);
+  const spoken = kind.key.replaceAll("_", " ");
+  return (
+    docComment(
+      [
+        `Defines ${indefiniteArticle(spoken)} ${spoken} in this namespace; the full id is`,
+        "`${namespace}.${def.id}`. Title/desc/option localization rides along, and the",
+        "event's closures record eagerly, at the define site.",
+      ],
+      "  "
+    ) +
+    `  define${pascalCase(kind.key)}<From extends ScopeName | undefined = undefined>(\n` +
+    `    def: EventDef<${scope}, From>\n` +
+    `  ): EventItem<${scope}, From>;\n`
   );
 }
 
@@ -190,6 +211,66 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     "  };\n" +
     "}\n";
 
+  const definerCode =
+    docComment([
+      "An event namespace handle: the free half of the event surface (SDK-23).",
+      "One `defineXEvent` per scoped event kind, each returning an `EventItem`",
+      "that is the definition, the value fire sites reference, and the value",
+      "`on()` binds — but registering nothing. Which file the events land in is",
+      "decided by the `collection(...)` they are placed in, or by the module",
+      "`discoverContent` found them exported from.",
+    ]) +
+    "export interface EventNamespace {\n" +
+    "  /**\n" +
+    "   * Discovery's marker. Exporting the handle instead of the events it\n" +
+    "   * defined is the one wrong thing an author is likely to do here, so it\n" +
+    "   * is recognizable enough to earn a targeted error rather than the\n" +
+    "   * generic unrecognized-export one.\n" +
+    "   */\n" +
+    '  readonly kind: "event-namespace";\n' +
+    "  readonly namespace: string;\n" +
+    scoped.map(definerSignature).join("\n") +
+    "}\n\n" +
+    docComment([
+      "Opens an event namespace. The namespace is identity — saves persist",
+      "pending fires by full id and on_actions reference it — so it is written",
+      "in full here and never inferred from a file name; prefix compliance is a",
+      "build warning, the same policy as content ids.",
+      "",
+      "Because the namespace is known at the definition site, the recorder",
+      "closures run eagerly right there and the full id is a plain string from",
+      "birth. Nothing about an event is deferred. The per-handle duplicate check",
+      "catches a repeated numeric id at the define site, with a precise stack;",
+      "`buildMod` keeps a global full-id check for two handles opened on one",
+      "namespace string, and requires all of a namespace's events to land in one",
+      "file.",
+    ]) +
+    "export function namespace(ns: string): EventNamespace {\n" +
+    "  assertNamespace(ns);\n" +
+    "  const used = new Set<number>();\n" +
+    "  const definerOf =\n" +
+    "    <S extends ScopeName>(kind: EventKindKey, scope: S) =>\n" +
+    "    <From extends ScopeName | undefined = undefined>(\n" +
+    "      def: EventDef<S, From>\n" +
+    "    ): EventItem<S, From> => {\n" +
+    "      if (used.has(def.id)) {\n" +
+    '        throw new Error(`Duplicate event id "${ns}.${def.id}"`);\n' +
+    "      }\n" +
+    "      used.add(def.id);\n" +
+    "      const locEntries: (readonly [string, string])[] = [];\n" +
+    "      const built = buildEvent(kind, scope, ns, def, {\n" +
+    "        register: (key, text) => locEntries.push([key, text]),\n" +
+    "      });\n" +
+    '      const item = { ...built, itemKind: "event" as const, namespace: ns, locEntries };\n' +
+    "      return item as EventItem<S, From>;\n" +
+    "    };\n" +
+    "  return {\n" +
+    '    kind: "event-namespace",\n' +
+    "    namespace: ns,\n" +
+    scoped.map(factoryBinding).join("") +
+    "  };\n" +
+    "}\n";
+
   // The receiving scopes come from the fire effect's own `## scopes`; a kind
   // whose rule the effects file no longer declares gets no typed fire method
   // and is reported rather than guessed at.
@@ -243,6 +324,7 @@ export function emitEvents(emitter: Emitter): EventsEmission {
   return {
     code,
     factoryCode,
+    definerCode,
     firesCode,
     kinds: kinds.length,
     definers: scoped.length,

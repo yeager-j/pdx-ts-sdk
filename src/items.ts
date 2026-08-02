@@ -9,6 +9,11 @@
  * forgot to pass it" failure mode does not exist below the granularity of
  * a whole collection. Nested arrays flatten, so a pack is a module
  * exporting a collection or an array of them.
+ *
+ * SDK-23 adds the other direction: free definers return items and register
+ * nothing, and `collection(file, items)` places a list of them. The items
+ * below are the vocabulary both surfaces speak, which is why they live here
+ * and not beside either one.
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
@@ -81,8 +86,16 @@ export type EventItem<
 export interface OnActionBindingItem {
   readonly itemKind: "on-action";
   readonly hook: OnActionRef;
-  /** Identity is the ownership proof: this exact value must also be built. */
-  readonly event: EventItemBase;
+  /**
+   * The events bound to this hook, in the order the author listed them.
+   * That order is author data — the game fires a hook's event list as
+   * written — so `buildMod` registers straight down the array and never
+   * sorts it, the same rule the per-hook registration order already follows.
+   *
+   * Identity is the ownership proof: each of these exact values must also be
+   * among the collections passed to the same `buildMod`.
+   */
+  readonly events: readonly EventItemBase[];
 }
 
 export interface TechnologyPatchItem {
@@ -138,6 +151,27 @@ export function assertNamespace(namespace: string): void {
       `Event namespace "${namespace}" must be lowercase snake_case ([a-z][a-z0-9_]*)`
     );
   }
+}
+
+/**
+ * A collection over items that already exist: the manual path's primitive
+ * (SDK-23).
+ *
+ * The factories build their collection and its items together, so creation is
+ * registration. Free definers separate the two — they return items and register
+ * nothing — and this is what places a list of them in a file. `discoverContent`
+ * calls it once per module with the module's basename; hand-written packs call
+ * it directly. The stem is validated here, once, exactly as the factories
+ * validate theirs.
+ */
+export function collection<T extends ModItem>(
+  file: string | undefined,
+  items: readonly T[]
+): Collection<T> {
+  if (file !== undefined) {
+    assertFileStem(file);
+  }
+  return { itemKind: "collection", file, items };
 }
 
 export type ModItemInput = Collection | readonly ModItemInput[];

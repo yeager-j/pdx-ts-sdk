@@ -745,7 +745,6 @@ describe("generated content factories", () => {
       expect(factories, registry).toMatch(
         new RegExp(`export interface ${name}Collection\\s+extends Collection<${name}Item>`)
       );
-      expect(factories, registry).toContain(`export type ${name}Item =`);
     }
     expect(factories.match(/^export function create/gm)).toHaveLength(CONTENT_MANIFEST.length);
   });
@@ -770,11 +769,16 @@ describe("generated content factories", () => {
 
   it("keeps addShipOfSizeLimits on the country_ship_of_size_limit factory alone", () => {
     expect(factories.match(/^  add\w+\(/gm)).toEqual(["  addShipOfSizeLimits("]);
-    expect(factories).toContain(
-      "export type CountryShipOfSizeLimitItem =\n" +
-        '  ContentItem<"country_ship_of_size_limit", CountryShipOfSizeLimitDef> | ContributionItem;'
-    );
     expect(factories).toContain('registry: "ship_of_size_limits",');
+  });
+
+  it("takes the XItem unions from the definers module rather than declaring them", () => {
+    // The unions describe what a collection of a registry's items can hold,
+    // which outlives the factory that used to be the only way to build one —
+    // so they are emitted beside the free definers and imported here. Two
+    // `export *` sources in src/index.ts must not both export the same name.
+    expect(factories).not.toMatch(/^export type \w+Item =/m);
+    expect(factories).toContain('} from "./content-definers.ts";');
   });
 
   it("takes situation_type's definer from the hand-written graft", () => {
@@ -790,5 +794,67 @@ describe("generated content factories", () => {
     expect(factories).toContain("    ...situationTypeDefiner(items),");
     // Every other registry still gets its mechanical definer.
     expect(factories.match(/^  define\w+<const Id/gm)).toHaveLength(CONTENT_MANIFEST.length - 1);
+  });
+});
+
+/**
+ * The free definers (SDK-23), read from the committed output for the same
+ * reason: `codegen:check` is what ties the file to the emitter.
+ *
+ * The claim is that all 34 definers are importable from this one module — 33
+ * mechanical, one re-exported from the hand-written graft — and that none of
+ * them registers anything, which is what makes `collection(...)` and
+ * `discoverContent` the only things that decide placement.
+ */
+describe("generated content definers", () => {
+  const definers = readFileSync("src/generated/content-definers.ts", "utf8");
+
+  it("emits one free definer and one item union per manifest registry", () => {
+    for (const manifest of CONTENT_MANIFEST) {
+      const entry = manifest as ContentManifestEntry;
+      const name = pascalCase(entry.as ?? entry.type);
+      expect(definers, entry.type).toContain(`export type ${name}Item =`);
+      expect(definers, entry.type).toMatch(new RegExp(`\\bdefine${name}\\b`));
+    }
+    // 33 mechanical `export function defineX` plus the graft's re-export.
+    expect(definers.match(/^export function define\w+<const Id extends string>\(/gm)).toHaveLength(
+      CONTENT_MANIFEST.length - HAND_WRITTEN_CONTENT_DEFINERS.size
+    );
+    expect(definers).toContain('export { defineSituationType } from "../factories.ts";');
+    expect(definers).not.toContain("export function defineSituationType");
+  });
+
+  it("preserves a definition's literal id, and registers nothing", () => {
+    expect(definers).toContain(
+      "export function defineTechnology<const Id extends string>(\n" +
+        "  def: TechnologyDef<Id>\n" +
+        '): ContentItem<"technology", TechnologyDef<Id>> {\n' +
+        '  return { itemKind: "content", type: "technology", id: def.id, def };\n' +
+        "}"
+    );
+    // No collection, no item array, nothing pushed: a definer is a function
+    // from a definition to a value, and that is the whole of it.
+    expect(definers).not.toContain("items.push");
+    expect(definers).not.toContain("makeCollection");
+    expect(definers).not.toContain("Collection<");
+  });
+
+  it("emits the free patchTechnology and addShipOfSizeLimits, and only those", () => {
+    expect(definers.match(/^export function patch\w+</gm)).toEqual([
+      "export function patchTechnology<",
+    ]);
+    expect(definers).toContain(
+      "): TechnologyPatchItem {\n" +
+        '  return { itemKind: "patch", patched: transformTechnology(technology, patch) };'
+    );
+    expect(definers.match(/^export function add\w+\(/gm)).toEqual([
+      "export function addShipOfSizeLimits(",
+    ]);
+    expect(definers).toContain(
+      "export type CountryShipOfSizeLimitItem =\n" +
+        '  ContentItem<"country_ship_of_size_limit", CountryShipOfSizeLimitDef> | ContributionItem;'
+    );
+    expect(definers).toContain("): ContributionItem {");
+    expect(definers).toContain('refRegistry: "country_ship_of_size_limit",');
   });
 });

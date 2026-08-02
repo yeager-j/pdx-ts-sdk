@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { EVENT_KINDS } from "../../src/generated/events.ts";
 
 const factory = readFileSync("src/generated/event-factory.ts", "utf8");
+const definers = readFileSync("src/generated/event-definers.ts", "utf8");
 const fires = readFileSync("src/generated/event-fires.ts", "utf8");
 
 describe("generated event surface", () => {
@@ -40,6 +41,27 @@ describe("generated event surface", () => {
     expect(factory).toContain(
       'const item = { ...built, itemKind: "event" as const, namespace, locEntries };'
     );
+  });
+
+  it("gives namespace(ns) the same definer set, with nothing to register into", () => {
+    // The free surface (SDK-23): same kinds, same eager closures, same
+    // per-handle duplicate check — the only thing missing is the collection,
+    // because where the events land is decided where they are placed.
+    const free = [...definers.matchAll(/^  (define\w+Event)</gm)].map((match) => match[1]);
+    const bound = [...factory.matchAll(/^  (define\w+Event)</gm)].map((match) => match[1]);
+    expect(free).toEqual(bound);
+    expect(definers).toContain("export function namespace(ns: string): EventNamespace {");
+    expect(definers).toContain("export interface EventNamespace {");
+    // Discovery's marker, so exporting the handle instead of its events can
+    // earn a targeted error rather than the generic unrecognized-export one.
+    expect(definers).toContain('  readonly kind: "event-namespace";');
+    expect(definers).toContain("  readonly namespace: string;");
+    expect(definers).toContain("  assertNamespace(ns);");
+    expect(definers).toContain("const used = new Set<number>();");
+    expect(definers).toContain('throw new Error(`Duplicate event id "${ns}.${def.id}"`);');
+    expect(definers).toContain("const built = buildEvent(kind, scope, ns, def, {");
+    expect(definers).not.toContain("makeCollection");
+    expect(definers).not.toContain("items.push");
   });
 
   it("emits the witness-overload pair for every fire effect", () => {
