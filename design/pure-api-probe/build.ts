@@ -22,18 +22,29 @@
 
 import { kv, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
-import type { ModConfig } from "../../src/build.ts";
-import { ContentAuthoring, type DefinedContent } from "../../src/content.ts";
-import { StaleRuleTableError } from "../../src/errors.ts";
-import type { DefinedEvent } from "../../src/events.ts";
-import { CONTENT_REGISTRIES, type ContentTypeName } from "../../src/generated/content-registry.ts";
-import type { ScopeName } from "../../src/generated/scopes.ts";
-import { OnActionAuthoring } from "../../src/on-actions.ts";
-import { normalizeLogicalPath } from "../../src/resolver/path-order.ts";
-import { collectVarRefs, planPatchEmission, type PatchPlan } from "../../src/resolver/plan.ts";
-import { SUPPORTED_STELLARIS_BUILD } from "../../src/resolver/rules.ts";
-import type { PatchedTechnology } from "../../src/vanilla/patch.ts";
-import { sha256Hex, type VanillaFile, type VanillaView } from "../../src/vanilla/surface.ts";
+import type { ModConfig } from "../../packages/sdk/src/build.ts";
+import { ContentAuthoring, type DefinedContent } from "../../packages/sdk/src/content.ts";
+import { StaleRuleTableError } from "../../packages/sdk/src/errors.ts";
+import type { DefinedEvent } from "../../packages/sdk/src/events.ts";
+import {
+  CONTENT_REGISTRIES,
+  type ContentTypeName,
+} from "../../packages/sdk/src/generated/content-registry.ts";
+import type { ScopeName } from "../../packages/sdk/src/generated/scopes.ts";
+import { OnActionAuthoring } from "../../packages/sdk/src/on-actions.ts";
+import { normalizeLogicalPath } from "../../packages/sdk/src/resolver/path-order.ts";
+import {
+  collectVarRefs,
+  planPatchEmission,
+  type PatchPlan,
+} from "../../packages/sdk/src/resolver/plan.ts";
+import { SUPPORTED_STELLARIS_BUILD } from "../../packages/sdk/src/resolver/rules.ts";
+import type { PatchedTechnology } from "../../packages/sdk/src/vanilla/patch.ts";
+import {
+  sha256Hex,
+  type VanillaFile,
+  type VanillaView,
+} from "../../packages/sdk/src/vanilla/surface.ts";
 import { flattenItems, type EventItemBase, type ModItemInput, type ModWarning } from "./items.ts";
 
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;

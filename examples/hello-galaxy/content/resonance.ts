@@ -26,7 +26,7 @@ import {
   isAtWar,
   namespace,
   not,
-} from "../../../src/index.ts";
+} from "../../../packages/sdk/src/index.ts";
 import { flags } from "../flags.ts";
 
 export const resonanceTheory = defineTechnology({

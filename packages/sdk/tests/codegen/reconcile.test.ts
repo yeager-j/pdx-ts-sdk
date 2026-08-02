@@ -1,12 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { loadRules } from "../../tools/codegen/cwt/rules.ts";
-import { parseModifierDocs } from "../../tools/codegen/logs/modifier-docs.ts";
-import { parseScopeLinks } from "../../tools/codegen/logs/scopes.ts";
-import { parseTriggerDocs } from "../../tools/codegen/logs/trigger-docs.ts";
-import { SPECIAL_SCOPE_PATHS } from "../../tools/codegen/overlay.ts";
-import { compareToBaseline, reconcile, type DriftReport } from "../../tools/codegen/reconcile.ts";
+import { loadRules } from "../../../../tools/codegen/cwt/rules.ts";
+import { parseModifierDocs } from "../../../../tools/codegen/logs/modifier-docs.ts";
+import { parseScopeLinks } from "../../../../tools/codegen/logs/scopes.ts";
+import { parseTriggerDocs } from "../../../../tools/codegen/logs/trigger-docs.ts";
+import { SPECIAL_SCOPE_PATHS } from "../../../../tools/codegen/overlay.ts";
+import {
+  compareToBaseline,
+  reconcile,
+  type DriftReport,
+} from "../../../../tools/codegen/reconcile.ts";
 
 const CONFIG = "vendor/cwtools-stellaris-config/config";
 const DOCS = "vendor/cwtools-stellaris-config/script-docs/v4.4.1";

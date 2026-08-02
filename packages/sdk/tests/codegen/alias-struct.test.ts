@@ -10,11 +10,11 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { parseCwt } from "../../tools/codegen/cwt/parser.ts";
-import { loadRules, readAliases, type AliasDecl } from "../../tools/codegen/cwt/rules.ts";
-import { emitAliasStruct } from "../../tools/codegen/emit/alias-struct.ts";
-import { Emitter } from "../../tools/codegen/emit/types.ts";
-import { EXTRA_ALIAS_CATEGORIES } from "../../tools/codegen/overlay.ts";
+import { parseCwt } from "../../../../tools/codegen/cwt/parser.ts";
+import { loadRules, readAliases, type AliasDecl } from "../../../../tools/codegen/cwt/rules.ts";
+import { emitAliasStruct } from "../../../../tools/codegen/emit/alias-struct.ts";
+import { Emitter } from "../../../../tools/codegen/emit/types.ts";
+import { EXTRA_ALIAS_CATEGORIES } from "../../../../tools/codegen/overlay.ts";
 
 const CONFIG = "vendor/cwtools-stellaris-config/config";
 const GOVERNMENTS = "common/governments.cwt";

@@ -25,7 +25,7 @@ import {
   isAtWar,
   namespace,
   not,
-} from "../../src/index.ts";
+} from "../../packages/sdk/src/index.ts";
 
 export const flags = countryFlags("tp_heard_the_hum", "tp_pacifist_path");
 export const globals = globalFlags("tp_lattice_awake");

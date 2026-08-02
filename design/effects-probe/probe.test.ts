@@ -1,7 +1,7 @@
 import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { isAtWar } from "../../src/triggers.ts";
+import { isAtWar } from "../../packages/sdk/src/triggers.ts";
 import { makeScope } from "./effect-core.ts";
 import { aftershock, humReturns } from "./probe.ts";
 

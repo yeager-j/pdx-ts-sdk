@@ -11,8 +11,8 @@
  * pays it influence.
  */
 
-import { countryFlags } from "../../src/generated/value-sets.ts";
-import { hasCountryFlag, hasOwner, isAtWar } from "../../src/triggers.ts";
+import { countryFlags } from "../../packages/sdk/src/generated/value-sets.ts";
+import { hasCountryFlag, hasOwner, isAtWar } from "../../packages/sdk/src/triggers.ts";
 import { eventTarget } from "./effect-core.ts";
 import { defineCountryEvent, definePlanetEvent } from "./events-sample.ts";
 

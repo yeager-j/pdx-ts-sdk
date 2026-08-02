@@ -17,9 +17,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { always, and, hasOwner, hasTechnology, isScopeValid, onActions } from "../../src/index.ts";
-import { viewFromFiles } from "../../src/vanilla/surface.ts";
-import { TECH_FILE, VARS_FILE } from "../../tests/fixtures/vanilla-fixture.ts";
+import {
+  always,
+  and,
+  hasOwner,
+  hasTechnology,
+  isScopeValid,
+  onActions,
+} from "../../packages/sdk/src/index.ts";
+import { viewFromFiles } from "../../packages/sdk/src/vanilla/surface.ts";
+import { TECH_FILE, VARS_FILE } from "../../packages/sdk/tests/fixtures/vanilla-fixture.ts";
 import { buildMod } from "./build.ts";
 import {
   createCountryShipOfSizeLimits,

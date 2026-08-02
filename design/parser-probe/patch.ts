@@ -9,9 +9,13 @@
 
 import { quoted, scalar, type PdxEntry, type PdxValue } from "@pdx-ts/pdxscript";
 
-import type { ResearchArea } from "../../src/generated/enums.ts";
-import { refId, type TechnologyCategoryRef, type TechnologyRef } from "../../src/generated/refs.ts";
-import type { Trigger } from "../../src/trigger-core.ts";
+import type { ResearchArea } from "../../packages/sdk/src/generated/enums.ts";
+import {
+  refId,
+  type TechnologyCategoryRef,
+  type TechnologyRef,
+} from "../../packages/sdk/src/generated/refs.ts";
+import type { Trigger } from "../../packages/sdk/src/trigger-core.ts";
 import { lowerEntry } from "./emit.ts";
 import type { ParsedNumber, ParsedTechnology } from "./surface.ts";
 

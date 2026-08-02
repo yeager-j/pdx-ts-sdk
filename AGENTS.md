@@ -6,8 +6,11 @@
 TypeScript at build time; the SDK records typed triggers, effects, content definitions, and file
 layout, then serializes a launcher-ready mod in PDXScript.
 
-The root package contains the Stellaris-facing SDK. `packages/pdxscript` is the standalone
-PDXScript parser/serializer workspace package used underneath it.
+The repository root is a private npm-workspaces root: it owns the shared tooling
+(`tools/codegen/`, `vendor/`, `examples/`, `design/`, the tsconfigs and the vitest config) and no
+source of its own. `packages/sdk` is the Stellaris-facing SDK (`@pdx-ts/sdk`); `packages/pdxscript`
+is the standalone PDXScript parser/serializer workspace package used underneath it. Every gate
+below runs from the repository root.
 
 Read `README.md` before making architectural changes. Files under `docs/` and `design/` preserve
 handoffs, probes, and design evidence; check their status headers and the current implementation
@@ -22,14 +25,14 @@ before treating an older proposal as current behavior.
   not rely on the hook as the first formatting pass.
 - The package is private and has not been released, so breaking changes are allowed and encouraged over band-aids or migrations.
 - Prefer data-driven additions to registry-specific branches. Shared runtime machinery belongs in
-  `src/`; source interpretation and emitted TypeScript belong in `tools/codegen/`; deliberate
-  exceptions belong in the audited overlay.
+  `packages/sdk/src/`; source interpretation and emitted TypeScript belong in `tools/codegen/`;
+  deliberate exceptions belong in the audited overlay.
 - Keep changes focused. Do not update vendored game data, drift baselines, snapshots, or generated
   output unless the task requires the corresponding source change.
 
 ## Code generation
 
-`src/generated/` is committed output from `tools/codegen/`. Never edit it by hand.
+`packages/sdk/src/generated/` is committed output from `tools/codegen/`. Never edit it by hand.
 
 The main inputs are:
 
@@ -48,14 +51,14 @@ After generation:
 
 - Read the codegen report. Unsupported, omitted, or collapsed fields must remain visible; do not
   hide them with filters.
-- Inspect the complete `src/generated/` diff as a public-API change.
+- Inspect the complete `packages/sdk/src/generated/` diff as a public-API change.
 - Commit generated output together with the source change that produced it.
 - Keep generated headers and formatting generator-owned.
 
-`npm run codegen:check` regenerates and then runs `git diff --exit-code src/generated`. It is the
-CI-style drift gate. During an intentional uncommitted codegen change, use `npm run codegen` and
-inspect the diff; the check will correctly fail until the generated diff is part of the comparison
-baseline (for example, staged or committed).
+`npm run codegen:check` regenerates and then runs `git diff --exit-code packages/sdk/src/generated`.
+It is the CI-style drift gate. During an intentional uncommitted codegen change, use
+`npm run codegen` and inspect the diff; the check will correctly fail until the generated diff is
+part of the comparison baseline (for example, staged or committed).
 
 Do not run `npm run codegen -- --rebaseline` reflexively. Rebaseline
 `tools/codegen/drift-baseline.json` only after reviewing and intentionally accepting drift between
@@ -100,27 +103,27 @@ pre-review of a list.
      is wrong is better measured and fixed than withheld.
 4. Re-run codegen and inspect its report and generated files. Fix the generic model when a shape is
    reusable. Do not add `if (type === "...")` branches to the generic writer or emitter.
-5. Export the new generated public types from `src/index.ts`.
+5. Export the new generated public types from `packages/sdk/src/index.ts`.
 6. Add all four kinds of evidence, all of them written through the free definer:
-   - codegen coverage in `tests/codegen/content-snapshot.test.ts`
-   - corpus coverage in `tests/codegen/corpus-conformance.test.ts` — it parses the real installed
-     game and measures the emitted interface against every shipped definition, both for presence
-     and for shape. A field the emitter invents with zero real precedent is worth verifying by hand
-     against the vendored rules; a registry parsing to zero definitions means the path or keyword is
-     wrong. A new `form` or `scope` mismatch fails: it names a field the game writes and no author
-     can produce, so fix the lowering rather than acknowledging it.
-   - compile-time API and scope/reference safety in `tests/content.test-d.ts`: the definer preserves
-     the literal id, the returned item flows into its own registry's reference fields, and another
-     registry's item does not.
-   - runtime serialization coverage and file snapshots in `tests/content.test.ts` and
-     `tests/__snapshots__/content/`, built with
+   - codegen coverage in `packages/sdk/tests/codegen/content-snapshot.test.ts`
+   - corpus coverage in `packages/sdk/tests/codegen/corpus-conformance.test.ts` — it parses the real
+     installed game and measures the emitted interface against every shipped definition, both for
+     presence and for shape. A field the emitter invents with zero real precedent is worth verifying
+     by hand against the vendored rules; a registry parsing to zero definitions means the path or
+     keyword is wrong. A new `form` or `scope` mismatch fails: it names a field the game writes and
+     no author can produce, so fix the lowering rather than acknowledging it.
+   - compile-time API and scope/reference safety in `packages/sdk/tests/content.test-d.ts`: the
+     definer preserves the literal id, the returned item flows into its own registry's reference
+     fields, and another registry's item does not.
+   - runtime serialization coverage and file snapshots in `packages/sdk/tests/content.test.ts` and
+     `packages/sdk/tests/__snapshots__/content/`, built with
      `render(buildMod(config, [collection(undefined, [defineAscensionPerk({ ... }), ...])]))`
 7. Add or update a README example when the new registry introduces an authoring pattern users
    would not infer from existing content types.
 
 Use the generated naming rather than adding hand-written aliases: a snake-case type such as
 `ascension_perk` becomes `AscensionPerk`, `defineAscensionPerk`, `AscensionPerkItem`, and
-`src/generated/ascension-perk.ts`.
+`packages/sdk/src/generated/ascension-perk.ts`.
 
 `defineX` and `patchX` have different evidence requirements. A prefixed new definition cannot
 collide with vanilla ids, but a vanilla patch is a whole-object override whose load order and
@@ -147,21 +150,22 @@ differential, and fast-check property gates described in that package.
   `collection(stem, items)` places items in a file; `buildMod(config, collections, { vanilla? })`
   folds them into a `PureMod` value that `render`/`write` consume. There is no builder object and
   no registry-typed factory. Diagnostics are throws or `mod.warnings` data — never console output.
-- Source layout is not identity. `discoverContent(dir)` (`src/discover.ts`) is the impure shell that
-  turns a directory of feature modules into those collections — export is registration, the
-  basename is the file stem — and it is a convenience over `collection`, never a second path into
-  the fold.
+- Source layout is not identity. `discoverContent(dir)` (`packages/sdk/src/discover.ts`) is the
+  impure shell that turns a directory of feature modules into those collections — export is
+  registration, the basename is the file stem — and it is a convenience over `collection`, never a
+  second path into the fold.
 - Emission order is a function of the content, never of source position, module layout, export
   order, or the order collections were passed: content sorts by registry declaration order, then
   emitted file path, then id; event files sort by path with numeric ids inside a file; on-action
   hook blocks, the contribution sink and the patch list sort by name or id. Arrays *inside* a
   definition (prerequisites, event options, one `on()` call's event list) are author data and are
   emitted as written. Reordering collections, exports, or authoring statements must not change a
-  byte of output, and moving a definition to another module must change only which file it lands
-  in — never its id, its bytes, or its position among its neighbors. The standing evidence is the
-  order-purity test in `tests/pure-api.test.ts` (two reversed authoring orders rendering
-  identically) and the identity-preservation test in `tests/example-mod.test.ts` (hello-galaxy's
-  ids, event namespace, and localization frozen across its restructure into feature modules).
+  byte of output, and moving a definition to another module must change only which file it lands in
+  — never its id, its bytes, or its position among its neighbors. The standing evidence is the
+  order-purity test in `packages/sdk/tests/pure-api.test.ts` (two reversed authoring orders
+  rendering identically) and the identity-preservation test in
+  `packages/sdk/tests/example-mod.test.ts` (hello-galaxy's ids, event namespace, and localization
+  frozen across its restructure into feature modules).
 - One feature module fans out across every registry it defines into, keeping its stem in each:
   `content/resonance.ts` holding technologies and events emits both
   `common/technology/<prefix>_resonance.txt` and `events/<prefix>_resonance.txt`. That is a

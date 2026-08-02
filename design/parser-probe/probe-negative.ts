@@ -6,9 +6,9 @@
  * inert at runtime.
  */
 
-import type { ResearchArea } from "../../src/generated/enums.ts";
-import type { TechnologyDef } from "../../src/generated/technology.ts";
-import { isPlanet } from "../../src/generated/triggers.ts";
+import type { ResearchArea } from "../../packages/sdk/src/generated/enums.ts";
+import type { TechnologyDef } from "../../packages/sdk/src/generated/technology.ts";
+import { isPlanet } from "../../packages/sdk/src/generated/triggers.ts";
 import { patchTechnology } from "./patch.ts";
 import { chimericGrafts, geneForging } from "./probe.ts";
 

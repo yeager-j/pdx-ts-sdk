@@ -4,17 +4,17 @@ import { describe, expect, it } from "vitest";
 import {
   CONTENT_MANIFEST,
   type ContentManifestEntry,
-} from "../../tools/codegen/content-manifest.ts";
-import type { CwtDiagnostic } from "../../tools/codegen/cwt/parser.ts";
-import { loadRules } from "../../tools/codegen/cwt/rules.ts";
-import driftBaseline from "../../tools/codegen/drift-baseline.json" with { type: "json" };
-import { emitContentType, type EmittedField } from "../../tools/codegen/emit/content-type.ts";
-import { Emitter } from "../../tools/codegen/emit/types.ts";
-import { pascalCase } from "../../tools/codegen/naming.ts";
+} from "../../../../tools/codegen/content-manifest.ts";
+import type { CwtDiagnostic } from "../../../../tools/codegen/cwt/parser.ts";
+import { loadRules } from "../../../../tools/codegen/cwt/rules.ts";
+import driftBaseline from "../../../../tools/codegen/drift-baseline.json" with { type: "json" };
+import { emitContentType, type EmittedField } from "../../../../tools/codegen/emit/content-type.ts";
+import { Emitter } from "../../../../tools/codegen/emit/types.ts";
+import { pascalCase } from "../../../../tools/codegen/naming.ts";
 import {
   CONTENT_DECLINED_FIELDS,
   HAND_WRITTEN_CONTENT_DEFINERS,
-} from "../../tools/codegen/overlay.ts";
+} from "../../../../tools/codegen/overlay.ts";
 
 function describeDiagnostic(diagnostic: CwtDiagnostic): string {
   return `${diagnostic.file}:${diagnostic.line} ${diagnostic.text}`;
@@ -776,7 +776,7 @@ describe("content-type codegen", () => {
  * `discoverContent` the only things that decide placement.
  */
 describe("generated content definers", () => {
-  const definers = readFileSync("src/generated/content-definers.ts", "utf8");
+  const definers = readFileSync("packages/sdk/src/generated/content-definers.ts", "utf8");
 
   it("emits one free definer and one item union per manifest registry", () => {
     for (const manifest of CONTENT_MANIFEST) {

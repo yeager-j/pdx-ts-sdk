@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import { EVENT_KINDS } from "../../src/generated/events.ts";
 
-const definers = readFileSync("src/generated/event-definers.ts", "utf8");
-const fires = readFileSync("src/generated/event-fires.ts", "utf8");
+const definers = readFileSync("packages/sdk/src/generated/event-definers.ts", "utf8");
+const fires = readFileSync("packages/sdk/src/generated/event-fires.ts", "utf8");
 
 describe("generated event surface", () => {
   it("emits a definer for every scoped kind, and only those", () => {
@@ -72,7 +72,7 @@ describe("generated event surface", () => {
     // src/situations.ts merges the declared-target overload into this exact
     // interface; if clustering ever moves the generated signature, the
     // augmentation would silently detach instead of overloading.
-    const effects = readFileSync("src/generated/effects.ts", "utf8");
+    const effects = readFileSync("packages/sdk/src/generated/effects.ts", "utf8");
     const start = effects.indexOf("export interface EffectsInCountry {");
     expect(start).toBeGreaterThan(-1);
     const cluster = effects.slice(start, effects.indexOf("\n}\n", start));

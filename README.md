@@ -516,7 +516,7 @@ separate at `@pdx-ts/sdk/testing/matchers`, so importing the evaluator has no
 matcher side effect and the main SDK entry does not depend on Vitest. The model
 first passed its gated probe (`design/testing-probe/` remains the executable
 design record, [docs/verdict-testing-probe.md](docs/verdict-testing-probe.md)
-the verdict) before the implementation moved into `src/testing/`.
+the verdict) before the implementation moved into `packages/sdk/src/testing/`.
 
 The [hardening example](examples/hardening/) is the integration corpus: every
 current content registry, typed `on_game_start_country` registration, an
@@ -579,7 +579,7 @@ patching the same technology twice, or mixing patches from two different
 filename and its win assertions — rides on the built value as
 `mod.patchPlan`, ready to print or assert on before anything is written.
 
-Status: landed in `src/` ([docs/verdict-patches.md](docs/verdict-patches.md)
+Status: landed in `packages/sdk/src/` ([docs/verdict-patches.md](docs/verdict-patches.md)
 is the verdict). The parser it builds on is
 [@pdx-ts/pdxscript](packages/pdxscript/README.md) — a standalone,
 publishable workspace package (one AST, one serializer), gated by a
@@ -588,7 +588,7 @@ tree, a tree differential against jomini, and fast-check property tests.
 
 ## Generated types
 
-`src/generated/` is produced by `tools/codegen` from the vendored
+`packages/sdk/src/generated/` is produced by `tools/codegen` from the vendored
 [cwtools-stellaris-config](vendor/cwtools-stellaris-config/VERSION.md), and it
 is committed so a rules bump lands as a reviewable diff on the public API.
 
@@ -636,17 +636,23 @@ needs the game install and the PDXScript parser.
 
 ## Development
 
+This repository is an npm workspace. The SDK lives in `packages/sdk`, the
+PDXScript parser in `packages/pdxscript`, and the shared tooling (`tools/`,
+`vendor/`, `examples/`, `design/`) at the root. Every command below runs from
+the repository root.
+
 ```bash
 npm test             # snapshot + type-level tests (vitest)
 npm run typecheck    # tsc --noEmit
-npm run codegen      # regenerate src/generated/
+npm run codegen      # regenerate packages/sdk/src/generated/
 npm run codegen:check # regenerate and fail if the committed output moved
 npm run example      # generate examples/hello-galaxy/out/
 npm run build        # emit dist/
 ```
 
-The golden files under `tests/__snapshots__/hello-galaxy/` are the emitted
-PDXScript, reviewable in PRs. `tests/example-mod.test.ts` also freezes what the
+The golden files under `packages/sdk/tests/__snapshots__/hello-galaxy/` are the
+emitted PDXScript, reviewable in PRs. `packages/sdk/tests/example-mod.test.ts`
+also freezes what the
 example's restructure into feature modules could not change — its technology
 ids, its event namespace and ids, and its localization bytes — so a layout
 change that moved identity would fail rather than be re-baselined.
@@ -664,7 +670,7 @@ the follow-up work. The mod-testing evaluator
 ([docs/handoff-mod-testing.md](docs/handoff-mod-testing.md)) passed its own
 gated probe the same way —
 [docs/verdict-testing-probe.md](docs/verdict-testing-probe.md) — and is now
-implemented under `src/testing/`; its
+implemented under `packages/sdk/src/testing/`; its
 final real-game semantics checkpoint is tracked by the
 [hardening calibration](examples/hardening/calibration/README.md). The
 PDXScript parser passed its round-trip-fidelity probe

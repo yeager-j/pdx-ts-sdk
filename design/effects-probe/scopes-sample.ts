@@ -12,10 +12,10 @@
  * recorder in effect-core.ts.
  */
 
-import type { DepositRef, StaticModifierRef } from "../../src/generated/refs.ts";
-import type { ScopeName } from "../../src/generated/scopes.ts";
-import type { CountryFlag } from "../../src/generated/value-sets.ts";
-import type { Trigger } from "../../src/trigger-core.ts";
+import type { DepositRef, StaticModifierRef } from "../../packages/sdk/src/generated/refs.ts";
+import type { ScopeName } from "../../packages/sdk/src/generated/scopes.ts";
+import type { CountryFlag } from "../../packages/sdk/src/generated/value-sets.ts";
+import type { Trigger } from "../../packages/sdk/src/trigger-core.ts";
 import type { EventRef, EventTarget, IfChain, Modifier, ScopeRef } from "./effect-core.ts";
 
 /** The scopes the probe models. The full slice maps all 38. */

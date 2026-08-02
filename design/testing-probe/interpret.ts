@@ -13,11 +13,11 @@
 
 import type { PdxEntry, PdxScalar } from "@pdx-ts/pdxscript";
 
-import { makeScope } from "../../src/effect-core.ts";
-import { EFFECT_META } from "../../src/generated/effect-meta.ts";
-import type { ScopeObjOf } from "../../src/generated/effects.ts";
-import { EVENT_KINDS } from "../../src/generated/events.ts";
-import type { Trigger } from "../../src/trigger-core.ts";
+import { makeScope } from "../../packages/sdk/src/effect-core.ts";
+import { EFFECT_META } from "../../packages/sdk/src/generated/effect-meta.ts";
+import type { ScopeObjOf } from "../../packages/sdk/src/generated/effects.ts";
+import { EVENT_KINDS } from "../../packages/sdk/src/generated/events.ts";
+import type { Trigger } from "../../packages/sdk/src/trigger-core.ts";
 import {
   cloneState,
   Country,

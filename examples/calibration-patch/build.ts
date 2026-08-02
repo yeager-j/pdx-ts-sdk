@@ -18,7 +18,7 @@ import {
   render,
   stellaris,
   write,
-} from "../../src/index.ts";
+} from "../../packages/sdk/src/index.ts";
 
 const vanilla = stellaris.load();
 

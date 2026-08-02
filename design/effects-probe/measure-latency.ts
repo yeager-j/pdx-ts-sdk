@@ -11,9 +11,13 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 const simPath = fileURLToPath(new URL("./latency-sim.ts", import.meta.url));
-const triggerCorePath = fileURLToPath(new URL("../../src/trigger-core.ts", import.meta.url));
-const astPath = fileURLToPath(new URL("../../src/ast.ts", import.meta.url));
-const scopesPath = fileURLToPath(new URL("../../src/generated/scopes.ts", import.meta.url));
+const triggerCorePath = fileURLToPath(
+  new URL("../../packages/sdk/src/trigger-core.ts", import.meta.url)
+);
+const astPath = fileURLToPath(new URL("../../packages/sdk/src/ast.ts", import.meta.url));
+const scopesPath = fileURLToPath(
+  new URL("../../packages/sdk/src/generated/scopes.ts", import.meta.url)
+);
 const probePath = fileURLToPath(new URL("./__completion-probe.ts", import.meta.url));
 
 const probeText = `import type { BigCountryScope } from "./latency-sim.ts";

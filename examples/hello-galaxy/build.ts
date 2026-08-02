@@ -1,4 +1,4 @@
-import { render, write } from "../../src/index.ts";
+import { render, write } from "../../packages/sdk/src/index.ts";
 import { defineHelloGalaxy } from "./mod.ts";
 
 const mod = await defineHelloGalaxy();

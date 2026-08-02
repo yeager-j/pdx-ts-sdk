@@ -16,7 +16,7 @@ import {
   onActions,
   patchTechnology,
   type VanillaView,
-} from "../../src/index.ts";
+} from "../../packages/sdk/src/index.ts";
 
 export const hardeningFlags = countryFlags("pdx_hardening_entry_fired");
 export const hardeningTarget = eventTarget<"planet">("pdx_hardening_chain_planet");

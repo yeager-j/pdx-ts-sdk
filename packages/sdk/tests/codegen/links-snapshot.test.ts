@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const source = readFileSync("src/generated/links.ts", "utf8");
+const source = readFileSync("packages/sdk/src/generated/links.ts", "utf8");
 
 /** Slices one generated declaration out so signature changes show up in the diff. */
 function declaration(name: string): string {

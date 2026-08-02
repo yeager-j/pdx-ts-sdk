@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { loadRules, scopeIndex } from "../../tools/codegen/cwt/rules.ts";
-import { emitModifiers, joinModifierScopes } from "../../tools/codegen/emit/modifiers.ts";
-import { parseModifierDocs } from "../../tools/codegen/logs/modifier-docs.ts";
+import { loadRules, scopeIndex } from "../../../../tools/codegen/cwt/rules.ts";
+import { emitModifiers, joinModifierScopes } from "../../../../tools/codegen/emit/modifiers.ts";
+import { parseModifierDocs } from "../../../../tools/codegen/logs/modifier-docs.ts";
 
 const CONFIG = "vendor/cwtools-stellaris-config/config";
 const DOCS = "vendor/cwtools-stellaris-config/script-docs/v4.4.1";

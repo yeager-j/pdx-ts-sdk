@@ -1,5 +1,5 @@
 /**
- * Regenerates `src/generated/` from the vendored cwtools config.
+ * Regenerates `packages/sdk/src/generated/` from the vendored cwtools config.
  *
  * Run with `npm run codegen`. The output is committed, so a rules bump shows up
  * as a reviewable diff on the SDK's public API.
@@ -46,7 +46,7 @@ const VENDOR = "vendor/cwtools-stellaris-config";
 const CONFIG = `${VENDOR}/config`;
 /** The dump directory matching the game version these rules target. */
 const DOCS = `${VENDOR}/script-docs/v4.4.1`;
-const OUT = "src/generated";
+const OUT = "packages/sdk/src/generated";
 const BASELINE = "tools/codegen/drift-baseline.json";
 
 function upstreamCommit(): string {

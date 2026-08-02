@@ -5,7 +5,7 @@
  * rule shapes that the runtime content writer understands.
  */
 
-import { acceptedForm } from "../../../src/content.ts";
+import { acceptedForm } from "../../../packages/sdk/src/content.ts";
 import {
   isOptional,
   isRepeated,

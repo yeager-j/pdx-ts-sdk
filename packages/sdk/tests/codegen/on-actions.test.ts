@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { loadRules } from "../../tools/codegen/cwt/rules.ts";
-import { emitOnActions } from "../../tools/codegen/emit/on-actions.ts";
+import { loadRules } from "../../../../tools/codegen/cwt/rules.ts";
+import { emitOnActions } from "../../../../tools/codegen/emit/on-actions.ts";
 
 const rules = loadRules("vendor/cwtools-stellaris-config/config");
 const emission = emitOnActions(rules);

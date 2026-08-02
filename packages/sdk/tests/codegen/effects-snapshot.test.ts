@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const interfaces = readFileSync("src/generated/effects.ts", "utf8");
-const meta = readFileSync("src/generated/effect-meta.ts", "utf8");
+const interfaces = readFileSync("packages/sdk/src/generated/effects.ts", "utf8");
+const meta = readFileSync("packages/sdk/src/generated/effect-meta.ts", "utf8");
 
 /** Slices one method signature (possibly wrapped over lines) out of effects.ts. */
 function signature(name: string): string {

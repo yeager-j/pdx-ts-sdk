@@ -1,4 +1,4 @@
-import { countryFlags } from "../../src/index.ts";
+import { countryFlags } from "../../packages/sdk/src/index.ts";
 
 /**
  * Flags this mod sets and reads.

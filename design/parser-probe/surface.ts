@@ -16,9 +16,12 @@
 
 import { type PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { ResearchArea } from "../../src/generated/enums.ts";
-import type { TechnologyCategoryRef, TechnologyRef } from "../../src/generated/refs.ts";
-import { trigger, type Trigger } from "../../src/trigger-core.ts";
+import type { ResearchArea } from "../../packages/sdk/src/generated/enums.ts";
+import type {
+  TechnologyCategoryRef,
+  TechnologyRef,
+} from "../../packages/sdk/src/generated/refs.ts";
+import { trigger, type Trigger } from "../../packages/sdk/src/trigger-core.ts";
 import { lowerEntries } from "./emit.ts";
 import { parseSource, type ParsedEntry, type ParsedValue } from "./parser.ts";
 

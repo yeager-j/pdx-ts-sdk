@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { defineHelloGalaxy } from "../examples/hello-galaxy/mod.ts";
+import { defineHelloGalaxy } from "../../../examples/hello-galaxy/mod.ts";
 import { render } from "../src/index.ts";
 
 // Top-level await: the example discovers its content from the filesystem, so

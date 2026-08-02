@@ -1,4 +1,4 @@
-import { buildMod, discoverContent, type PureMod } from "../../src/index.ts";
+import { buildMod, discoverContent, type PureMod } from "../../packages/sdk/src/index.ts";
 
 const config = {
   name: "Hello Galaxy",

@@ -12,7 +12,7 @@
  * place the same definition twice, which `buildMod` reports as a duplicate id.)
  */
 
-import { defineTechnology, type TechnologyItem } from "../../../src/index.ts";
+import { defineTechnology, type TechnologyItem } from "../../../packages/sdk/src/index.ts";
 import { resonanceTheory } from "./resonance.ts";
 
 // Build-time loop: one definition, five tiers of amplifier techs, each

@@ -11,8 +11,12 @@
  * error via `Trigger`'s contravariant scope parameter.
  */
 
-import { refId, type TypedRef } from "../../src/generated/refs.ts";
-import type { CountryFlag, GlobalFlag, PlanetFlag } from "../../src/generated/value-sets.ts";
+import { refId, type TypedRef } from "../../packages/sdk/src/generated/refs.ts";
+import type {
+  CountryFlag,
+  GlobalFlag,
+  PlanetFlag,
+} from "../../packages/sdk/src/generated/value-sets.ts";
 
 /** The scopes the fixture models. The interpreter refuses everything else. */
 export type SimScopeName = "country" | "planet";

@@ -9,7 +9,7 @@
  * docs/handoff-pdxscript-parser.md, "Decisions already made").
  */
 
-import { defineTechnology } from "../../src/index.ts";
+import { defineTechnology } from "../../packages/sdk/src/index.ts";
 import { TECH_FILE, VARS_FILE } from "./fixture.ts";
 import { patchTechnology } from "./patch.ts";
 import { parseVanilla } from "./surface.ts";

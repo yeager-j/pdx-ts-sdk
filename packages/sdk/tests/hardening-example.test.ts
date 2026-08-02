@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { defineHardening } from "../examples/hardening/mod.ts";
+import { defineHardening } from "../../../examples/hardening/mod.ts";
 import { render } from "../src/index.ts";
 import { load } from "../src/stellaris/load.ts";
 import { declareFrom, fixture, renderFired } from "../src/testing/index.ts";

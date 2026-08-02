@@ -13,11 +13,11 @@
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { ContentRefUse } from "../../src/content-refs.ts";
-import type { ContentTypeName } from "../../src/generated/content-registry.ts";
-import type { ScopeName } from "../../src/generated/scopes.ts";
-import type { OnActionRef } from "../../src/on-actions.ts";
-import type { PatchedTechnology } from "../../src/vanilla/patch.ts";
+import type { ContentRefUse } from "../../packages/sdk/src/content-refs.ts";
+import type { ContentTypeName } from "../../packages/sdk/src/generated/content-registry.ts";
+import type { ScopeName } from "../../packages/sdk/src/generated/scopes.ts";
+import type { OnActionRef } from "../../packages/sdk/src/on-actions.ts";
+import type { PatchedTechnology } from "../../packages/sdk/src/vanilla/patch.ts";
 
 export interface ModWarning {
   readonly code: "missing-prefix" | "loc-quote-replaced";

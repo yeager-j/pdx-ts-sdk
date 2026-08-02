@@ -1,0 +1,15 @@
+{
+  "name": "@pdx-ts/sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for generating Stellaris mods",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts",
+    "./testing/matchers": "./src/testing/matchers.ts"
+  },
+  "dependencies": {
+    "@pdx-ts/pdxscript": "*"
+  }
+}

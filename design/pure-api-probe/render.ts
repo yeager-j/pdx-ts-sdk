@@ -12,8 +12,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 
-import { VanillaPathCollisionError } from "../../src/errors.ts";
-import { normalizeLogicalPath } from "../../src/resolver/path-order.ts";
+import { VanillaPathCollisionError } from "../../packages/sdk/src/errors.ts";
+import { normalizeLogicalPath } from "../../packages/sdk/src/resolver/path-order.ts";
 import type { PureMod } from "./build.ts";
 
 export function render(mod: PureMod): Map<string, string> {

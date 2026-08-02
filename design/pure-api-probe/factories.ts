@@ -12,19 +12,19 @@
  * naming needs a codegen rule (`technology` → `createTechnologies`).
  */
 
-import { buildEvent, type DefinedEvent, type EventDef } from "../../src/events.ts";
-import type { CountryShipOfSizeLimitDef } from "../../src/generated/country-ship-of-size-limit.ts";
-import type { EventKindKey } from "../../src/generated/events.ts";
-import { refId, type TypedRef } from "../../src/generated/refs.ts";
-import type { ScopeName } from "../../src/generated/scopes.ts";
-import type { SituationTypeDef } from "../../src/generated/situation-type.ts";
-import type { TechnologyDef } from "../../src/generated/technology.ts";
-import type { OnActionRef } from "../../src/on-actions.ts";
+import { buildEvent, type DefinedEvent, type EventDef } from "../../packages/sdk/src/events.ts";
+import type { CountryShipOfSizeLimitDef } from "../../packages/sdk/src/generated/country-ship-of-size-limit.ts";
+import type { EventKindKey } from "../../packages/sdk/src/generated/events.ts";
+import { refId, type TypedRef } from "../../packages/sdk/src/generated/refs.ts";
+import type { ScopeName } from "../../packages/sdk/src/generated/scopes.ts";
+import type { SituationTypeDef } from "../../packages/sdk/src/generated/situation-type.ts";
+import type { TechnologyDef } from "../../packages/sdk/src/generated/technology.ts";
+import type { OnActionRef } from "../../packages/sdk/src/on-actions.ts";
 import {
   patchTechnology as transformTechnology,
   type TechnologyPatch,
-} from "../../src/vanilla/patch.ts";
-import type { ParsedTechnology } from "../../src/vanilla/surface.ts";
+} from "../../packages/sdk/src/vanilla/patch.ts";
+import type { ParsedTechnology } from "../../packages/sdk/src/vanilla/surface.ts";
 import {
   assertFileStem,
   assertNamespace,
