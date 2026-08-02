@@ -27,6 +27,15 @@ export interface ContentManifestEntry {
    * utility template, so each gets its own branded type and `defineX`.
    */
   readonly as?: string;
+  /**
+   * Marks a registry whose vanilla id count blows out a completion menu, so
+   * the generated `vanilla.*` namespace gives it the navigable trie plus
+   * checked-call form instead of a flat literal-union parameter — the same
+   * two-tier split `VANILLA_REF_EXTRAS` declares below. The threshold is the
+   * vanilla generator's (`tools/vanilla-codegen/trie.ts`), and the two sides
+   * are pinned together by a type test over `keyof VanillaTries`.
+   */
+  readonly oversized?: true;
 }
 
 export const CONTENT_MANIFEST = [
@@ -64,7 +73,8 @@ export const CONTENT_MANIFEST = [
   },
   { type: "ship_size", source: "common/ship_sizes.cwt" },
   { type: "opinion_modifier", source: "common/modifiers.cwt" },
-  { type: "static_modifier", source: "common/modifiers.cwt" },
+  // >2,000 ids in vanilla; gets the trie + checked-call form.
+  { type: "static_modifier", source: "common/modifiers.cwt", oversized: true },
   {
     type: "scripted_modifier",
     source: "common/scripted_modifiers.cwt",

@@ -5,7 +5,9 @@
  * which *fields* definitions write — and throws the ids away, walks one
  * directory flat, and only ever looks at `.txt`. Sounds live in nested
  * `.asset` files and sprites in nested `.gfx` files, so this walks recursively
- * and honours the extension the rules declare.
+ * and honours the extension the rules declare — except where the rules declare
+ * `path_strict`, which is how a type says its subdirectories belong to someone
+ * else.
  *
  * Parsing is non-strict, the corpus reader's stance: shipped files contain
  * repairs the parser reports and the game accepts, and a diagnostic is a number
@@ -32,8 +34,15 @@ export interface RegistryIds {
   readonly missing: boolean;
 }
 
-/** Every file under `dir` with the given extension, in a stable walk order. */
-function walk(dir: string, extension: string): string[] {
+/**
+ * Every file under `dir` with the given extension, in a stable walk order.
+ *
+ * `recurse` is what the rules' `path_strict` decides: subdirectories of a
+ * strict path hold *other* CWT types (`common/technology/tier`,
+ * `common/technology/category`), and descending into them would attribute
+ * their ids to this registry.
+ */
+function walk(dir: string, extension: string, recurse: boolean): string[] {
   let names: string[];
   try {
     names = readdirSync(dir).sort();
@@ -44,7 +53,9 @@ function walk(dir: string, extension: string): string[] {
   for (const name of names) {
     const full = path.join(dir, name);
     if (statSync(full).isDirectory()) {
-      found.push(...walk(full, extension));
+      if (recurse) {
+        found.push(...walk(full, extension, recurse));
+      }
       continue;
     }
     if (name.endsWith(extension)) {
@@ -116,7 +127,7 @@ function collect(spec: RegistrySpec, items: readonly PdxItem[], into: Set<string
 
 export function readRegistryIds(root: string, spec: RegistrySpec): RegistryIds {
   const dir = path.join(root, spec.path);
-  const files = walk(dir, spec.extension);
+  const files = walk(dir, spec.extension, !spec.pathStrict);
   const ids = new Set<string>();
   let diagnostics = 0;
   for (const file of files) {

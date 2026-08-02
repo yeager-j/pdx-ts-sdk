@@ -86,6 +86,17 @@ export interface ContentType {
    * this key rather than at the top level. Sprites sit inside `spriteTypes`.
    */
   readonly skipRootKey?: string | null;
+  /**
+   * `path_strict = yes`: definitions live directly in `path`, never in a
+   * subdirectory of it. `technology` declares it because
+   * `common/technology/tier` and `common/technology/category` hold
+   * `technology_tier` and `technology_category` definitions — different types
+   * that a recursive walk would otherwise read as technologies.
+   *
+   * Optional for the same reason as `pathExtension`: a synthetic `ContentType`
+   * has no file layout to describe.
+   */
+  readonly pathStrict?: boolean;
   /** Type-level `## type_key_filter`, when the type declares exactly one. */
   readonly keyFilter: string | null;
   readonly subtypes: readonly ContentSubtype[];
@@ -413,6 +424,7 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
       const nameFieldNode = inner.find((node) => node.key.text === "name_field");
       const extensionNode = inner.find((node) => node.key.text === "path_extension");
       const skipRootKeyNode = inner.find((node) => node.key.text === "skip_root_key");
+      const pathStrictNode = inner.find((node) => node.key.text === "path_strict");
       const typeKeyFilter = findOption(entry.options, "type_key_filter");
       into.set(match[2]!, {
         name: match[2]!,
@@ -421,6 +433,7 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
         pathExtension:
           extensionNode?.value.kind === "scalar" ? dotted(extensionNode.value.text) : null,
         skipRootKey: skipRootKeyNode?.value.kind === "scalar" ? skipRootKeyNode.value.text : null,
+        pathStrict: pathStrictNode?.value.kind === "scalar" && pathStrictNode.value.text === "yes",
         keyFilter: typeKeyFilter?.value?.kind === "scalar" ? typeKeyFilter.value.text : null,
         subtypes: inner.flatMap((node) => {
           const subtype = BRACKET_KEY.exec(node.key.text);

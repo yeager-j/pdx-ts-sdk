@@ -96,6 +96,15 @@ describe("registry readers", () => {
     `);
   });
 
+  it("does not descend a path_strict registry's subdirectories", () => {
+    // `common/technology/category` holds `technology_category` definitions, a
+    // different CWT type; the fixture puts `biology` there. Reading it as a
+    // technology is exactly the silent over-approximation `path_strict = yes`
+    // exists to prevent, and `stellaris.load()` skips the same two subdirs.
+    expect(registryReport("technology").ids).toBe(2);
+    expect(file("registries/technology.ts")).not.toContain("biology");
+  });
+
   it("reads name_field registries from the keyword's body field", () => {
     expect(registryReport("ambient_object").ids).toBe(2);
     expect(file("registries/ambient-object.ts")).toMatchInlineSnapshot(`

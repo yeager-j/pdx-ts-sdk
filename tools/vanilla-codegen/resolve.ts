@@ -27,6 +27,13 @@ export interface RegistrySpec {
   readonly nameField: string | null;
   /** Root block the definitions sit one level inside, e.g. `spriteTypes`. */
   readonly skipRootKey: string | null;
+  /**
+   * `path_strict`: read `path` itself and no subdirectory of it. Only
+   * `technology` needs it among the registries here, and it needs it badly —
+   * `common/technology/tier` and `common/technology/category` hold two other
+   * CWT types, whose ids a recursive walk would emit as technologies.
+   */
+  readonly pathStrict: boolean;
 }
 
 /** The extension the game assumes when the rules declare none. */
@@ -89,5 +96,6 @@ function resolveRow(row: VanillaIdRow, type: ContentType | undefined): RegistryS
     keyword,
     nameField: type.nameField,
     skipRootKey,
+    pathStrict: type.pathStrict ?? false,
   };
 }

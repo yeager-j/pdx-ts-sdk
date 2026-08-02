@@ -1,0 +1,5 @@
+biology = {
+	modifier_types = {
+		{ key = tech_speed }
+	}
+}

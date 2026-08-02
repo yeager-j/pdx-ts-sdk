@@ -247,16 +247,19 @@ export function opinionModifier<const Id extends VanillaId<"opinion_modifier">>(
 }
 
 /**
- * A checked reference to a vanilla static modifier id.
- * Checked against @pdx-ts/stellaris-vanilla when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Vanilla static modifier ids, both navigable and checked.
+ * `staticModifier.<segment>...` descends a trie of every id this registry
+ * defines, split on `_` at generation time, down to a leaf typed as the
+ * exact ref; `staticModifier(id)` accepts a string copied straight from a game
+ * file, checked against the same id set with no completion menu ever
+ * built. Checked against @pdx-ts/stellaris-vanilla when it is installed;
+ * any string otherwise, with no navigation. Zero runtime validation
+ * either way.
  */
-export function staticModifier<const Id extends VanillaId<"static_modifier">>(
-  id: Id
-): StaticModifierRef & { readonly id: Id } {
-  return { id };
-}
+export const staticModifier: VanillaTrie<"static_modifier"> &
+  (<const Id extends string>(
+    id: Id & CheckedVanillaId<"static_modifier", Id>
+  ) => StaticModifierRef & { readonly id: Id }) = makeIdTrie("static_modifier");
 
 /**
  * A checked reference to a vanilla scripted modifier id.

@@ -41,7 +41,7 @@ export function emitVanillaRefs(
     ...manifest.map((entry): VanillaRefRow => ({
       registry: entry.as ?? entry.type,
       refSource: entry.type,
-      oversized: false,
+      oversized: entry.oversized ?? false,
     })),
     ...extras.map((extra): VanillaRefRow => ({
       registry: extra.type,
