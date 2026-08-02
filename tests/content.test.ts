@@ -9,25 +9,91 @@ import {
 import {
   always,
   and,
+  buildMod,
   canGoMia,
   canJoinFactions,
+  createAgendas,
+  createAgreementPresets,
+  createAmbientObjects,
+  createArchaeologicalSiteTypes,
+  createAscensionPerks,
+  createBombardmentStances,
+  createBuildings,
+  createCasusBelli,
+  createCivicsOrOrigins,
+  createComponentSets,
+  createCouncilors,
+  createCountryShipOfSizeLimits,
+  createDecisions,
+  createEconomicCategories,
+  createEdicts,
+  createEvents,
+  createGraphicalCultures,
+  createJobs,
+  createOpinionModifiers,
+  createScriptedLocs,
+  createScriptedModifiers,
+  createSectionTemplates,
+  createShipSizes,
+  createSituationTypes,
+  createSpeciesClasses,
+  createStarbaseLevels,
+  createStaticModifiers,
+  createTraditionCategories,
+  createTraditions,
+  createWarGoals,
   hasAuthority,
   hasPlanetFlag,
   hasSituationFlag,
   hasTechnology,
   isCapital,
   isScopeValid,
-  Mod,
+  render,
+  type PureMod,
 } from "../src/index.ts";
 
-function defineContentExample(): Mod<"content_test"> {
-  const mod = new Mod({
-    name: "Content test",
-    prefix: "content_test",
-    supportedVersion: "4.4.*",
-  });
+function configFor(name: string, prefix: string) {
+  return { name, prefix, supportedVersion: "4.4.*" };
+}
 
-  const agenda = mod.defineAgenda({
+const CONFIG = configFor("Content test", "content_test");
+
+function defineContentExample(): PureMod {
+  // One collection per registry, in the order the definitions below run: the
+  // fold registers localization in collection order, so this listing is what
+  // keeps the emitted yml in definition order.
+  const agendas = createAgendas();
+  const edicts = createEdicts();
+  const buildings = createBuildings();
+  const traditions = createTraditions();
+  const traditionCategories = createTraditionCategories();
+  const ascensionPerks = createAscensionPerks();
+  const decisions = createDecisions();
+  const jobs = createJobs();
+  const opinionModifiers = createOpinionModifiers();
+  const staticModifiers = createStaticModifiers();
+  const shipSizes = createShipSizes();
+  const scriptedModifiers = createScriptedModifiers();
+  const casusBelliTypes = createCasusBelli();
+  const warGoals = createWarGoals();
+  const agreementPresets = createAgreementPresets();
+  const bombardmentStances = createBombardmentStances();
+  const archaeologicalSiteTypes = createArchaeologicalSiteTypes();
+  const situationTypes = createSituationTypes();
+  const scriptedLocs = createScriptedLocs();
+  const councilors = createCouncilors();
+  const economicCategories = createEconomicCategories();
+  const civicsOrOrigins = createCivicsOrOrigins();
+  const componentSets = createComponentSets();
+  const sectionTemplates = createSectionTemplates();
+  const ambientObjects = createAmbientObjects();
+  const graphicalCultures = createGraphicalCultures();
+  const starbaseLevels = createStarbaseLevels();
+  const speciesClasses = createSpeciesClasses();
+  const shipOfSizeLimits = createCountryShipOfSizeLimits();
+  const events = createEvents("events", "content_test");
+
+  const agenda = agendas.defineAgenda({
     id: "content_test_agenda_machine_futures",
     name: "Machine Futures",
     desc: "Direct the council toward synthetic ascension.",
@@ -46,7 +112,7 @@ function defineContentExample(): Mod<"content_test"> {
     },
   });
 
-  mod.defineEdict({
+  edicts.defineEdict({
     id: "content_test_edict_machine_mobilization",
     name: "Machine Mobilization",
     description: "Redirect the economy toward immediate expansion.",
@@ -94,7 +160,7 @@ function defineContentExample(): Mod<"content_test"> {
     onDisabled: (country) => country.removeCountryFlag("content_test_machine_mobilization_active"),
   });
 
-  mod.defineBuilding({
+  buildings.defineBuilding({
     id: "content_test_building_lab_1",
     name: "Experimental Lab",
     desc: "A proving ground for impossible ideas.",
@@ -113,7 +179,7 @@ function defineContentExample(): Mod<"content_test"> {
     convertTo: ["building_ruined_lab"],
   });
 
-  const tradition = mod.defineTradition({
+  const tradition = traditions.defineTradition({
     id: "content_test_tradition_ascension",
     name: "Synthetic Ascension",
     flavor: "The flesh is a temporary constraint.",
@@ -145,7 +211,7 @@ function defineContentExample(): Mod<"content_test"> {
     },
   });
 
-  mod.defineTraditionCategory({
+  traditionCategories.defineTraditionCategory({
     id: "content_test_tradition_category_machines",
     name: "Machine Futures",
     desc: "Choose the shape of tomorrow.",
@@ -157,7 +223,7 @@ function defineContentExample(): Mod<"content_test"> {
     aiWeight: { base: 50 },
   });
 
-  mod.defineAscensionPerk({
+  ascensionPerks.defineAscensionPerk({
     id: "content_test_ascension_perk_machine_futures",
     name: "Machine Futures",
     desc: "Our future belongs to forms we choose.",
@@ -195,7 +261,7 @@ function defineContentExample(): Mod<"content_test"> {
     },
   });
 
-  mod.defineDecision({
+  decisions.defineDecision({
     id: "content_test_decision_machine_ascendancy",
     name: "Pursue Machine Ascendancy",
     desc: "Redirect national effort toward synthetic transcendence.",
@@ -224,7 +290,7 @@ function defineContentExample(): Mod<"content_test"> {
     prerequisites: ["tech_global_production_strategy"],
   });
 
-  mod.defineJob({
+  jobs.defineJob({
     id: "content_test_job_synthetic_technician",
     name: "Synthetic Technician",
     plural: "Synthetic Technicians",
@@ -294,7 +360,7 @@ function defineContentExample(): Mod<"content_test"> {
     autoTraitPrio: ["trait_thrifty"],
   });
 
-  mod.defineOpinionModifier({
+  opinionModifiers.defineOpinionModifier({
     id: "content_test_opinion_modifier_diplomatic_thaw",
     name: "Diplomatic Thaw",
     opinion: {
@@ -313,7 +379,7 @@ function defineContentExample(): Mod<"content_test"> {
 
   // The modifier rows land at the block root, next to the metadata keys —
   // static_modifier splices `alias_name[modifier]` unkeyed at its top level.
-  mod.defineStaticModifier({
+  staticModifiers.defineStaticModifier({
     id: "content_test_static_modifier_synthetic_surge",
     name: "Synthetic Surge",
     desc: "Machine empires push their production past its rated limits.",
@@ -329,7 +395,7 @@ function defineContentExample(): Mod<"content_test"> {
     hideFromCountryList: true,
   });
 
-  const shipSize = mod.defineShipSize({
+  const shipSize = shipSizes.defineShipSize({
     id: "content_test_ship_size_synth_cruiser",
     name: "Synthetic Cruiser",
     class: "shipclass_military",
@@ -343,7 +409,7 @@ function defineContentExample(): Mod<"content_test"> {
     shipModifier: (m) => m.ship.weapon.damage(0.05),
   });
 
-  mod.defineScriptedModifier({
+  scriptedModifiers.defineScriptedModifier({
     id: "content_test_scripted_modifier_synthetic_output",
     name: "Synthetic Output",
     icon: "GFX_scripted_modifier_synthetic_output",
@@ -359,7 +425,7 @@ function defineContentExample(): Mod<"content_test"> {
     category: "country",
   });
 
-  const casusBelli = mod.defineCasusBelli({
+  const casusBelli = casusBelliTypes.defineCasusBelli({
     id: "content_test_casus_belli_manufactured_grievance",
     name: "Manufactured Grievance",
     hint: "Fabricate a pretext for war.",
@@ -372,7 +438,7 @@ function defineContentExample(): Mod<"content_test"> {
     aggregatedMessageKey: "content_test_casus_belli_aggregated",
   });
 
-  mod.defineWarGoal({
+  warGoals.defineWarGoal({
     id: "content_test_war_goal_liberation",
     name: "Liberation",
     desc: "Free the occupied systems.",
@@ -397,7 +463,7 @@ function defineContentExample(): Mod<"content_test"> {
     },
   });
 
-  mod.defineAgreementPreset({
+  agreementPresets.defineAgreementPreset({
     id: "content_test_agreement_preset_tribute",
     name: "Tribute",
     desc: "A modest tribute agreement.",
@@ -420,7 +486,7 @@ function defineContentExample(): Mod<"content_test"> {
     canPresetBeChanged: true,
   });
 
-  mod.defineBombardmentStance({
+  bombardmentStances.defineBombardmentStance({
     id: "content_test_bombardment_stance_scorched_earth",
     name: "Scorched Earth",
     desc: "Bombard with no restraint.",
@@ -438,7 +504,14 @@ function defineContentExample(): Mod<"content_test"> {
     aiWeight: { base: 1 },
   });
 
-  mod.defineArchaeologicalSiteType({
+  // The site stages fire this mod's own events. Under the pure API a scalar
+  // shaped like one of the mod's event ids must have a definition in the
+  // build, so the three dig events the stages reference are defined here.
+  const digEvents = [1, 2, 3].map((id) =>
+    events.defineCountryEvent({ id, hideWindow: true, isTriggeredOnly: true })
+  );
+
+  archaeologicalSiteTypes.defineArchaeologicalSiteType({
     id: "content_test_archaeological_site_type_derelict",
     name: "Derelict Outpost",
     desc: "The ruins of a forgotten station.",
@@ -452,9 +525,9 @@ function defineContentExample(): Mod<"content_test"> {
     },
     stages: 3,
     stage: [
-      { difficulty: 1, icon: "GFX_archaeology_runes_E1", event: "content_test.1" },
-      { difficulty: 2, icon: "GFX_archaeology_runes_E2", event: "content_test.2" },
-      { difficulty: 3, icon: "GFX_archaeology_runes_E3", event: "content_test.3" },
+      { difficulty: 1, icon: "GFX_archaeology_runes_E1", event: digEvents[0]! },
+      { difficulty: 2, icon: "GFX_archaeology_runes_E2", event: digEvents[1]! },
+      { difficulty: 3, icon: "GFX_archaeology_runes_E3", event: digEvents[2]! },
     ],
     potential: canGoMia(),
     allow: canGoMia(),
@@ -464,7 +537,7 @@ function defineContentExample(): Mod<"content_test"> {
     onVisible: (country) => country.setCountryFlag("content_test_site_visible"),
   });
 
-  mod.defineSituationType({
+  situationTypes.defineSituationType({
     id: "content_test_situation_machine_uprising",
     name: "Machine Uprising",
     desc: "The machines stir beneath the surface.",
@@ -554,7 +627,7 @@ function defineContentExample(): Mod<"content_test"> {
     },
   });
 
-  mod.defineScriptedLoc({
+  scriptedLocs.defineScriptedLoc({
     id: "content_test_scripted_loc_flavor_text",
     random: false,
     // scripted_loc carries no fixed scope in the rules, so only a scope-agnostic
@@ -571,7 +644,7 @@ function defineContentExample(): Mod<"content_test"> {
     default: "content_test_scripted_loc_flavor_text_default",
   });
 
-  mod.defineCouncilor({
+  councilors.defineCouncilor({
     id: "content_test_councilor_chancellor",
     name: "Chancellor",
     desc: "Presides over the ruling council.",
@@ -597,7 +670,7 @@ function defineContentExample(): Mod<"content_test"> {
     },
   });
 
-  mod.defineEconomicCategory({
+  economicCategories.defineEconomicCategory({
     id: "content_test_economic_category_research",
     useForAiBudget: true,
     modifierCategory: "economic_unit",
@@ -615,7 +688,7 @@ function defineContentExample(): Mod<"content_test"> {
     ],
   });
 
-  mod.defineCivicOrOrigin({
+  civicsOrOrigins.defineCivicOrOrigin({
     id: "content_test_civic_meritocracy",
     name: "Meritocracy",
     desc: "Leadership is earned, not inherited.",
@@ -654,7 +727,7 @@ function defineContentExample(): Mod<"content_test"> {
     ],
   });
 
-  mod.defineComponentSet({
+  componentSets.defineComponentSet({
     id: "content_test_component_set_reactor",
     name: "Reactor Boosters",
     desc: "Auxiliary reactor components.",
@@ -669,7 +742,7 @@ function defineContentExample(): Mod<"content_test"> {
   // name_field registry keyed by the repeated `ship_section_template` keyword,
   // with `resources`/`modifier`/`ship_modifier` exercising the overlay's
   // economicResources/modifierBlock shapes.
-  mod.defineSectionTemplate({
+  sectionTemplates.defineSectionTemplate({
     id: "content_test_section_template_core",
     name: "Core Section",
     shipSize: ["ship_size_corvette"],
@@ -692,7 +765,7 @@ function defineContentExample(): Mod<"content_test"> {
     shipModifier: (m) => m.unchecked("ship_hull_mult", 0.05),
   });
 
-  mod.defineAmbientObject({
+  ambientObjects.defineAmbientObject({
     id: "content_test_ambient_object_wreck",
     name: "Adrift Hulk",
     entity: "content_test_ambient_wreck_entity",
@@ -705,7 +778,7 @@ function defineContentExample(): Mod<"content_test"> {
     tooltip: "content_test_ambient_object_wreck_tooltip",
   });
 
-  mod.defineGraphicalCulture({
+  graphicalCultures.defineGraphicalCulture({
     id: "content_test_graphical_culture_synthetic",
     hasCityGraphics: false,
     fallback: "graphical_culture_01",
@@ -731,7 +804,7 @@ function defineContentExample(): Mod<"content_test"> {
     },
   });
 
-  mod.defineStarbaseLevel({
+  starbaseLevels.defineStarbaseLevel({
     id: "content_test_starbase_level_outpost",
     shipSize: "ship_size_starbase_i",
     nextLevel: "content_test_starbase_level_starport",
@@ -751,7 +824,7 @@ function defineContentExample(): Mod<"content_test"> {
     buildingSlots: [1, "lower_1"],
   });
 
-  mod.defineSpeciesClass({
+  speciesClasses.defineSpeciesClass({
     id: "content_test_species_class_precursor",
     name: "Precursor",
     desc: "An ancient and enigmatic lineage.",
@@ -785,7 +858,7 @@ function defineContentExample(): Mod<"content_test"> {
   // shipTypes, and a `show` written the way all 7 shipped entries write it —
   // is_scope_valid plus a country condition. The overlay asserts the country
   // scope the rules omit; without it this clause would not type-check.
-  const titanLimit = mod.defineCountryShipOfSizeLimit({
+  const titanLimit = shipOfSizeLimits.defineCountryShipOfSizeLimit({
     id: "content_test_ship_of_size_limit_titan",
     shipTypes: [shipSize, "ship_size_titan"],
     base: 80,
@@ -795,13 +868,44 @@ function defineContentExample(): Mod<"content_test"> {
   });
 
   // Not a define: the ownership limit has no id this mod owns.
-  mod.addShipOfSizeLimits([titanLimit]);
+  shipOfSizeLimits.addShipOfSizeLimits([titanLimit]);
 
-  return mod;
+  return buildMod(CONFIG, [
+    agendas,
+    edicts,
+    buildings,
+    traditions,
+    traditionCategories,
+    ascensionPerks,
+    decisions,
+    jobs,
+    opinionModifiers,
+    staticModifiers,
+    shipSizes,
+    scriptedModifiers,
+    casusBelliTypes,
+    warGoals,
+    agreementPresets,
+    bombardmentStances,
+    archaeologicalSiteTypes,
+    situationTypes,
+    scriptedLocs,
+    councilors,
+    economicCategories,
+    civicsOrOrigins,
+    componentSets,
+    sectionTemplates,
+    ambientObjects,
+    graphicalCultures,
+    starbaseLevels,
+    speciesClasses,
+    shipOfSizeLimits,
+    events,
+  ]);
 }
 
 describe("generated content registries", () => {
-  const files = defineContentExample().render();
+  const files = render(defineContentExample());
 
   for (const [relPath, content] of files) {
     it(`matches the content golden for ${relPath}`, async () => {
@@ -831,12 +935,8 @@ describe("generated content registries", () => {
   });
 
   it("lowers recorder paths, raw names, and unchecked names identically", () => {
-    const mod = new Mod({
-      name: "Recorder test",
-      prefix: "rec_test",
-      supportedVersion: "4.4.*",
-    });
-    mod.defineTradition({
+    const traditions = createTraditions();
+    traditions.defineTradition({
       id: "rec_test_tradition",
       name: "X",
       modifier: (m) => {
@@ -846,7 +946,9 @@ describe("generated content registries", () => {
         m.unchecked("someone_elses_modifier", 0.03);
       },
     });
-    const rendered = mod.render().get("common/traditions/rec_test_traditions.txt");
+    const rendered = render(buildMod(configFor("Recorder test", "rec_test"), [traditions])).get(
+      "common/traditions/rec_test_traditions.txt"
+    );
     expect(rendered).toContain("country_unity_produces_mult = 0.01");
     expect(rendered).toContain("bonus_pop_growth = 0.1");
     expect(rendered).toContain("country_energy_produces_mult = 0.02");
@@ -889,12 +991,8 @@ describe("generated content registries", () => {
     // versus a modifier_rule block, gated to the dynamic_progress subtype) are
     // each declared twice; the union type keeps the block form's gated
     // adjustments authorable.
-    const mod = new Mod({
-      name: "Section weights test",
-      prefix: "sw_test",
-      supportedVersion: "4.4.*",
-    });
-    mod.defineSituationType({
+    const situationTypes = createSituationTypes();
+    situationTypes.defineSituationType({
       id: "sw_test_situation_dynamic",
       name: "Dynamic Progress Situation",
       monthlyProgress: { base: 1 },
@@ -908,7 +1006,9 @@ describe("generated content registries", () => {
         },
       },
     });
-    const rendered = mod.render().get("common/situations/sw_test_situations.txt");
+    const rendered = render(
+      buildMod(configFor("Section weights test", "sw_test"), [situationTypes])
+    ).get("common/situations/sw_test_situations.txt");
     expect(rendered).toContain(
       "total_progress = {\n\t\tbase = 60000\n\t\tmodifier = {\n\t\t\tfactor = 2\n\t\t\talways = yes\n\t\t}\n\t}"
     );
@@ -919,12 +1019,8 @@ describe("generated content registries", () => {
     // Vanilla writes `end = 100` 254 times against 1 block, so the scalar form
     // is the common case; it must serialize as a plain assignment, not as an
     // empty weight block.
-    const mod = new Mod({
-      name: "Scalar end test",
-      prefix: "se_test",
-      supportedVersion: "4.4.*",
-    });
-    mod.defineSituationType({
+    const situationTypes = createSituationTypes();
+    situationTypes.defineSituationType({
       id: "se_test_situation_plain",
       name: "Plain Situation",
       monthlyProgress: { base: 1 },
@@ -938,7 +1034,9 @@ describe("generated content registries", () => {
         },
       },
     });
-    const rendered = mod.render().get("common/situations/se_test_situations.txt");
+    const rendered = render(
+      buildMod(configFor("Scalar end test", "se_test"), [situationTypes])
+    ).get("common/situations/se_test_situations.txt");
     expect(rendered).toContain("end = 100");
     expect(rendered).not.toContain("end = {");
     expect(rendered).toContain("progress_direction = bidirectional");
@@ -947,12 +1045,8 @@ describe("generated content registries", () => {
   it("emits conditionalDesc under the game's desc key", () => {
     // The authoring member is renamed to dodge the desc flavor-text slot, but
     // the serialized key is still `desc`, one block per entry.
-    const mod = new Mod({
-      name: "Conditional desc test",
-      prefix: "cd_test",
-      supportedVersion: "4.4.*",
-    });
-    mod.defineSituationType({
+    const situationTypes = createSituationTypes();
+    situationTypes.defineSituationType({
       id: "cd_test_situation",
       name: "Situation",
       monthlyProgress: { base: 1 },
@@ -961,7 +1055,9 @@ describe("generated content registries", () => {
         { text: "cd_test_situation_desc_fallback" },
       ],
     });
-    const rendered = mod.render().get("common/situations/cd_test_situations.txt");
+    const rendered = render(
+      buildMod(configFor("Conditional desc test", "cd_test"), [situationTypes])
+    ).get("common/situations/cd_test_situations.txt");
     expect(rendered).toContain(
       "desc = {\n\t\ttrigger = {\n\t\t\talways = yes\n\t\t}\n\t\ttext = cd_test_situation_desc_alt\n\t}"
     );
@@ -969,12 +1065,12 @@ describe("generated content registries", () => {
   });
 
   it("emits random_events as weight = event rows with 0 for the empty arm", () => {
-    const mod = new Mod({
-      name: "Random events test",
-      prefix: "re_test",
-      supportedVersion: "4.4.*",
-    });
-    mod.defineSituationType({
+    // The fired event has to exist in the build: buildMod scans emitted
+    // scalars for ids shaped like this mod's own and demands a definition.
+    const events = createEvents("events", "re_test_event");
+    events.defineCountryEvent({ id: 1, hideWindow: true, isTriggeredOnly: true });
+    const situationTypes = createSituationTypes();
+    situationTypes.defineSituationType({
       id: "re_test_situation",
       name: "Situation",
       monthlyProgress: { base: 1 },
@@ -982,7 +1078,9 @@ describe("generated content registries", () => {
         randomEvents: [{ weight: 100, event: "re_test_event.1" }, { weight: 20 }],
       },
     });
-    const rendered = mod.render().get("common/situations/re_test_situations.txt");
+    const rendered = render(
+      buildMod(configFor("Random events test", "re_test"), [situationTypes, events])
+    ).get("common/situations/re_test_situations.txt");
     expect(rendered).toContain(
       "on_monthly = {\n\t\trandom_events = {\n\t\t\t100 = re_test_event.1\n\t\t\t20 = 0\n\t\t}\n\t}"
     );
@@ -992,32 +1090,32 @@ describe("generated content registries", () => {
     // The ownership limit is not a define: its key belongs to the engine and
     // the game reads it additively, so the API takes no id and the mod-prefix
     // rule never applies to it. Repeated calls accumulate; duplicates collapse.
-    const mod = new Mod({ name: "Limit test", prefix: "cl_test", supportedVersion: "4.4.*" });
-    const titan = mod.defineCountryShipOfSizeLimit({
+    const limits = createCountryShipOfSizeLimits();
+    const titan = limits.defineCountryShipOfSizeLimit({
       id: "cl_test_titan_limit",
       shipTypes: ["cl_test_titan"],
       base: 80,
       show: isScopeValid(),
     });
-    mod.addShipOfSizeLimits([titan]);
-    mod.addShipOfSizeLimits([titan, "cl_test_other_limit"]);
-    const rendered = mod
-      .render()
-      .get("common/country_limits/ownership_limits/cl_test_ownership_limits.txt");
+    limits.addShipOfSizeLimits([titan]);
+    limits.addShipOfSizeLimits([titan, "cl_test_other_limit"]);
+    const rendered = render(buildMod(configFor("Limit test", "cl_test"), [limits])).get(
+      "common/country_limits/ownership_limits/cl_test_ownership_limits.txt"
+    );
     expect(rendered).toBe(
       "default = {\n\tship_of_size_limits = { cl_test_titan_limit cl_test_other_limit }\n}\n"
     );
   });
 
   it("emits no ownership-limit file when no limits are applied", () => {
-    const mod = new Mod({ name: "Limit test", prefix: "cl_test", supportedVersion: "4.4.*" });
-    mod.defineCountryShipOfSizeLimit({
+    const limits = createCountryShipOfSizeLimits();
+    limits.defineCountryShipOfSizeLimit({
       id: "cl_test_unused_limit",
       shipTypes: ["cl_test_titan"],
       base: 80,
       show: isScopeValid(),
     });
-    const files = mod.render();
+    const files = render(buildMod(configFor("Limit test", "cl_test"), [limits]));
     expect(
       files.has("common/country_limits/ship_of_size_limits/cl_test_ship_of_size_limits.txt")
     ).toBe(true);
@@ -1031,12 +1129,8 @@ describe("generated content registries", () => {
     // these keys are the engine's, so `assertPrefixed` must not run on them and
     // no localisation key is derived. Vanilla really does use bare integers
     // (`1`..`6`) alongside names like `mid`, so both spellings are covered.
-    const mod = new Mod({
-      name: "Ship size test",
-      prefix: "ss_test",
-      supportedVersion: "4.4.*",
-    });
-    mod.defineShipSize({
+    const shipSizes = createShipSizes();
+    shipSizes.defineShipSize({
       id: "ss_test_cruiser",
       name: "Cruiser",
       class: "shipclass_military",
@@ -1046,32 +1140,36 @@ describe("generated content registries", () => {
       },
       minUpgradeCost: { alloys: 20, energy: 5 },
     });
-    const rendered = mod.render().get("common/ship_sizes/ss_test_ship_sizes.txt")!;
+    const files = render(buildMod(configFor("Ship size test", "ss_test"), [shipSizes]));
+    const rendered = files.get("common/ship_sizes/ss_test_ship_sizes.txt")!;
     expect(rendered).toContain("mid = {\n\t\t\tlocator = part1\n\t\t}");
     expect(rendered).toContain("1 = {\n\t\t\tlocator = part2\n\t\t}");
     expect(rendered).toContain("min_upgrade_cost = {\n\t\talloys = 20\n\t\tenergy = 5\n\t}");
     // No prefixing, and no `ss_test_mid` localisation key invented for a slot.
     expect(rendered).not.toContain("ss_test_mid");
-    expect(mod.render().get("localisation/english/ss_test_l_english.yml")).not.toContain("mid");
+    expect(files.get("localisation/english/ss_test_l_english.yml")).not.toContain("mid");
   });
 
-  it("rejects an unprefixed id but not an unprefixed engine key", () => {
+  it("warns on an unprefixed id but not on an unprefixed engine key", () => {
     // The prefix rule still applies to the definition itself — only the
-    // structMap keys inside it are exempt.
-    const mod = new Mod({
-      name: "Ship size test",
-      prefix: "ss_test",
-      supportedVersion: "4.4.*",
+    // structMap keys inside it are exempt. The pure API demotes the rule to a
+    // warning datum on the built value; exactly one warning means the engine
+    // keys inside the definition stayed exempt.
+    const shipSizes = createShipSizes();
+    shipSizes.defineShipSize({
+      id: "othermod_cruiser",
+      name: "X",
+      class: "shipclass_military",
+      sectionSlots: { mid: { locator: ["part1"] } },
     });
-    const runtimeConfigured: Mod<string> = mod;
-    expect(() =>
-      runtimeConfigured.defineShipSize({
-        id: "othermod_cruiser",
-        name: "X",
-        class: "shipclass_military",
-        sectionSlots: { mid: { locator: ["part1"] } },
-      })
-    ).toThrow(/must start with the mod prefix "ss_test_"/);
+    expect(buildMod(configFor("Ship size test", "ss_test"), [shipSizes]).warnings).toEqual([
+      {
+        code: "missing-prefix",
+        message:
+          'ship_size id "othermod_cruiser" must start with the mod prefix "ss_test_" ' +
+          "so it cannot collide with vanilla or other mods",
+      },
+    ]);
   });
 
   it("splices a static modifier's rows at the block root, with no enclosing key", () => {
@@ -1079,12 +1177,8 @@ describe("generated content registries", () => {
     // rule, so the modifier names sit next to the metadata keys — writing them
     // under a `modifier = { ... }` block would produce a file the game reads as
     // a static modifier with no effect at all.
-    const mod = new Mod({
-      name: "Static modifier test",
-      prefix: "sm_test",
-      supportedVersion: "4.4.*",
-    });
-    mod.defineStaticModifier({
+    const staticModifiers = createStaticModifiers();
+    staticModifiers.defineStaticModifier({
       id: "sm_test_surge",
       name: "Surge",
       modifiers: (m) => {
@@ -1093,7 +1187,9 @@ describe("generated content registries", () => {
       },
       icon: "gfx/interface/icons/modifiers/mod_surge.dds",
     });
-    const rendered = mod.render().get("common/static_modifiers/sm_test_static_modifiers.txt")!;
+    const rendered = render(
+      buildMod(configFor("Static modifier test", "sm_test"), [staticModifiers])
+    ).get("common/static_modifiers/sm_test_static_modifiers.txt")!;
     expect(rendered).toContain(
       "sm_test_surge = {\n\tcountry_unity_produces_mult = 0.15\n" +
         "\tplanet_jobs_alloys_produces_mult = 0.1\n" +
@@ -1106,58 +1202,50 @@ describe("generated content registries", () => {
   it("emits a static modifier with no modifiers as an empty body", () => {
     // Vanilla ships plenty of these (`player_empire`, `empire_size`): the
     // registry's other fields must not depend on the splice being present.
-    const mod = new Mod({
-      name: "Static modifier test",
-      prefix: "sm_test",
-      supportedVersion: "4.4.*",
-    });
-    mod.defineStaticModifier({ id: "sm_test_marker", name: "Marker" });
-    expect(mod.render().get("common/static_modifiers/sm_test_static_modifiers.txt")).toBe(
-      "sm_test_marker = {}\n"
-    );
+    const staticModifiers = createStaticModifiers();
+    staticModifiers.defineStaticModifier({ id: "sm_test_marker", name: "Marker" });
+    expect(
+      render(buildMod(configFor("Static modifier test", "sm_test"), [staticModifiers])).get(
+        "common/static_modifiers/sm_test_static_modifiers.txt"
+      )
+    ).toBe("sm_test_marker = {}\n");
   });
 
-  it("rejects an unprefixed nested definition before rendering", () => {
-    const mod = new Mod({
-      name: "Content test",
-      prefix: "content_test",
-      supportedVersion: "4.4.*",
+  it("warns on an unprefixed nested definition", () => {
+    const wrong = createTraditions();
+    wrong.defineTradition({
+      id: "content_test_tradition_x",
+      name: "X",
+      traditionSwap: { othermod_swap: { name: "Wrong namespace" } },
     });
-    const runtimeConfigured: Mod<string> = mod;
-    expect(() =>
-      runtimeConfigured.defineTradition({
-        id: "content_test_tradition_x",
-        name: "X",
-        traditionSwap: { othermod_swap: { name: "Wrong namespace" } },
-      })
-    ).toThrow(/must start with the mod prefix "content_test_"/);
-    expect(() =>
-      mod.defineTradition({
-        id: "content_test_tradition_x",
-        name: "X",
-        traditionSwap: { content_test_swap_x: { name: "Correct namespace" } },
-      })
-    ).not.toThrow();
+    const warnings = buildMod(CONFIG, [wrong]).warnings;
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]!.message).toMatch(/must start with the mod prefix "content_test_"/);
+
+    const right = createTraditions();
+    right.defineTradition({
+      id: "content_test_tradition_x",
+      name: "X",
+      traditionSwap: { content_test_swap_x: { name: "Correct namespace" } },
+    });
+    expect(buildMod(CONFIG, [right]).warnings).toEqual([]);
   });
 
   it("rejects duplicate nested ids across traditions", () => {
-    const mod = new Mod({
-      name: "Content test",
-      prefix: "content_test",
-      supportedVersion: "4.4.*",
-    });
-    mod.defineTradition({
+    const traditions = createTraditions();
+    traditions.defineTradition({
       id: "content_test_tradition_x",
       name: "X",
       traditionSwap: { content_test_swap_shared: { name: "First" } },
     });
-    expect(() =>
-      mod.defineTradition({
-        id: "content_test_tradition_y",
-        name: "Y",
-        traditionSwap: { content_test_swap_shared: { name: "Second" } },
-      })
-    ).toThrow('Duplicate tradition.tradition_swap id "content_test_swap_shared"');
+    traditions.defineTradition({
+      id: "content_test_tradition_y",
+      name: "Y",
+      traditionSwap: { content_test_swap_shared: { name: "Second" } },
+    });
+    expect(() => buildMod(CONFIG, [traditions])).toThrow(
+      'Duplicate tradition.tradition_swap id "content_test_swap_shared"'
+    );
   });
 
   it('applies the same mod-prefix and duplicate-id rules to "container" keying', () => {
@@ -1166,23 +1254,21 @@ describe("generated content registries", () => {
     // through the writer than "siblings" (tradition_swap, approach) already
     // exercises, so it needs its own direct check rather than relying on
     // approach's coverage to stand in for it.
-    const mod = new Mod({
-      name: "Content test",
-      prefix: "content_test",
-      supportedVersion: "4.4.*",
+    const unprefixed = createSituationTypes();
+    unprefixed.defineSituationType({
+      id: "content_test_situation_x",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      stages: {
+        othermod_stage: { name: "Wrong namespace", icon: "GFX_x", iconBackground: "GFX_x_bg" },
+      },
     });
-    const runtimeConfigured: Mod<string> = mod;
-    expect(() =>
-      runtimeConfigured.defineSituationType({
-        id: "content_test_situation_x",
-        name: "X",
-        monthlyProgress: { base: 1 },
-        stages: {
-          othermod_stage: { name: "Wrong namespace", icon: "GFX_x", iconBackground: "GFX_x_bg" },
-        },
-      })
-    ).toThrow(/must start with the mod prefix "content_test_"/);
-    mod.defineSituationType({
+    const warnings = buildMod(CONFIG, [unprefixed]).warnings;
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]!.message).toMatch(/must start with the mod prefix "content_test_"/);
+
+    const duplicated = createSituationTypes();
+    duplicated.defineSituationType({
       id: "content_test_situation_y",
       name: "Y",
       monthlyProgress: { base: 1 },
@@ -1194,20 +1280,21 @@ describe("generated content registries", () => {
         },
       },
     });
-    expect(() =>
-      mod.defineSituationType({
-        id: "content_test_situation_z",
-        name: "Z",
-        monthlyProgress: { base: 1 },
-        stages: {
-          content_test_situation_stage_shared: {
-            name: "Second",
-            icon: "GFX_x",
-            iconBackground: "GFX_x_bg",
-          },
+    duplicated.defineSituationType({
+      id: "content_test_situation_z",
+      name: "Z",
+      monthlyProgress: { base: 1 },
+      stages: {
+        content_test_situation_stage_shared: {
+          name: "Second",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
         },
-      })
-    ).toThrow('Duplicate situation_type.stages id "content_test_situation_stage_shared"');
+      },
+    });
+    expect(() => buildMod(CONFIG, [duplicated])).toThrow(
+      'Duplicate situation_type.stages id "content_test_situation_stage_shared"'
+    );
   });
 
   it("lowers pop_pre_trigger's alias splice as named bools, not a trigger block", () => {
@@ -1273,7 +1360,7 @@ describe("alias-struct serialization", () => {
     localisation: [],
   };
 
-  function render(def: Record<string, unknown> & { id: string }): string {
+  function renderCivic(def: Record<string, unknown> & { id: string }): string {
     const authoring = new ContentAuthoring("gt_test", [descriptor], () => {});
     authoring.define("civic_or_origin", def);
     return authoring.render().get("common/governments/civics/gt_test_civics.txt")!;
@@ -1283,7 +1370,7 @@ describe("alias-struct serialization", () => {
     // civic_corvee_system, verbatim in shape: a bare NOT group in `potential`,
     // and a NOR group carrying its tooltip plus two operands in `possible`.
     expect(
-      render({
+      renderCivic({
         id: "gt_test_civic_corvee_system",
         potential: {
           ethics: { not: [{ values: ["ethic_gestalt_consciousness"] }] },
@@ -1326,7 +1413,7 @@ describe("alias-struct serialization", () => {
     // `possible` holds a whole government_trigger block again, repeated once
     // per entry rather than merged, exactly as the game reads it.
     expect(
-      render({
+      renderCivic({
         id: "gt_test_civic_corporate_dominion",
         possible: {
           or: [

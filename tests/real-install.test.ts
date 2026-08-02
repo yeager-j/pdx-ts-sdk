@@ -16,7 +16,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 
-import { Mod } from "../src/mod.ts";
+import { buildMod, createTechnologies, render } from "../src/index.ts";
 import { compareLogicalPaths } from "../src/resolver/path-order.ts";
 import { SUPPORTED_STELLARIS_BUILD } from "../src/resolver/rules.ts";
 import { load } from "../src/stellaris/load.ts";
@@ -68,7 +68,7 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
 
   it("patches the real tech_gene_tailoring into a provably winning file", () => {
     const vanilla = load({ installPath, cache: cacheDir });
-    const mod = new Mod({
+    const config = {
       name: "Real Patch Probe",
       prefix: "pp_real",
       supportedVersion: "4.4.*",
@@ -77,23 +77,25 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
       ...(vanilla.gameVersion !== SUPPORTED_STELLARIS_BUILD
         ? { acceptGameVersion: vanilla.gameVersion }
         : {}),
-    });
-    const myNewTech = mod.defineTechnology({
+    };
+    const technologies = createTechnologies();
+    const myNewTech = technologies.defineTechnology({
       id: "pp_real_tech_marker",
       name: "Probe Marker",
       area: "society",
       tier: 1,
       category: "biology",
     });
-    mod.patchTechnology(
+    technologies.patchTechnology(
       vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
       (t) => ({
         cost: t.cost.value * 2,
         prerequisites: [...t.prerequisites, myNewTech],
       })
     );
+    const mod = buildMod(config, [technologies], { vanilla });
 
-    const plan = mod.patchPlan()!;
+    const plan = mod.patchPlan!;
     const assertion = plan.assertions[0]!;
     expect(assertion.key).toBe("tech_gene_tailoring");
     expect(assertion.beats).toContain("common/technology/00_soc_tech.txt");
@@ -105,7 +107,7 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
     const definers = vanilla.files.filter((file) => file.keys.includes("tech_gene_tailoring"));
     expect(definers.map((file) => file.path)).toEqual(assertion.beats);
 
-    const files = mod.render();
+    const files = render(mod);
     expect(files.get(plan.relPath)).toBe(plan.content);
     console.info(`computed winning path: ${plan.relPath}`);
     console.info(`beats: ${assertion.beats.join(", ")}`);

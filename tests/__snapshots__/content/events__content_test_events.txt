@@ -1,0 +1,19 @@
+namespace = content_test
+
+country_event = {
+	id = content_test.1
+	hide_window = yes
+	is_triggered_only = yes
+}
+
+country_event = {
+	id = content_test.2
+	hide_window = yes
+	is_triggered_only = yes
+}
+
+country_event = {
+	id = content_test.3
+	hide_window = yes
+	is_triggered_only = yes
+}
