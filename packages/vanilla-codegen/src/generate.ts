@@ -11,8 +11,8 @@
  */
 
 import { basename } from "node:path";
+import { pascalCase } from "@pdx-ts/codegen/naming";
 
-import { pascalCase } from "../codegen/naming.ts";
 import {
   createChokepoint,
   emitAugment,

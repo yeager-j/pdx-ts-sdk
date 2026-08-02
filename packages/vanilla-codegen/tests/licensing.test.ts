@@ -12,18 +12,20 @@
  * module carries runtime code. One authority, applied twice.
  */
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import {
-  assertVanillaIdentifier,
-  compareIdentifiers,
-} from "../../../../tools/vanilla-codegen/emit.ts";
-import { generateVanillaPackage } from "../../../../tools/vanilla-codegen/generate.ts";
+import { assertVanillaIdentifier, compareIdentifiers } from "../src/emit.ts";
+import { generateVanillaPackage } from "../src/generate.ts";
+
+/** The repo root, from this module — never the directory vitest was started in. */
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 
 const OPTIONS = {
-  installRoot: "packages/sdk/tests/fixtures/fake-install",
+  installRoot: path.join(ROOT, "fixtures/fake-install"),
   gameVersion: "4.4.6",
-  configRoot: "vendor/cwtools-stellaris-config/config",
+  configRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/config"),
   trie: { threshold: 5, leafSize: 4 },
 };
 
@@ -79,7 +81,7 @@ describe("negative control", () => {
     expect(() =>
       generateVanillaPackage({
         ...OPTIONS,
-        installRoot: "packages/sdk/tests/fixtures/fake-install-poisoned",
+        installRoot: fileURLToPath(new URL("./fixtures/fake-install-poisoned", import.meta.url)),
       })
     ).toThrow(/sound id: refusing to emit "The Grand Herald has arrived\."/);
   });

@@ -1,19 +1,18 @@
 import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { loadRules } from "@pdx-ts/codegen/cwt/rules";
+import { parseModifierDocs } from "@pdx-ts/codegen/logs/modifier-docs";
+import { parseScopeLinks } from "@pdx-ts/codegen/logs/scopes";
+import { parseTriggerDocs } from "@pdx-ts/codegen/logs/trigger-docs";
+import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen/overlay";
+import { compareToBaseline, reconcile, type DriftReport } from "@pdx-ts/codegen/reconcile";
 import { describe, expect, it } from "vitest";
 
-import { loadRules } from "../../../../tools/codegen/cwt/rules.ts";
-import { parseModifierDocs } from "../../../../tools/codegen/logs/modifier-docs.ts";
-import { parseScopeLinks } from "../../../../tools/codegen/logs/scopes.ts";
-import { parseTriggerDocs } from "../../../../tools/codegen/logs/trigger-docs.ts";
-import { SPECIAL_SCOPE_PATHS } from "../../../../tools/codegen/overlay.ts";
-import {
-  compareToBaseline,
-  reconcile,
-  type DriftReport,
-} from "../../../../tools/codegen/reconcile.ts";
-
-const CONFIG = "vendor/cwtools-stellaris-config/config";
-const DOCS = "vendor/cwtools-stellaris-config/script-docs/v4.4.1";
+/** The repo root, from this module — never the directory vitest was started in. */
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
+const DOCS = path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1");
 
 const rules = loadRules(CONFIG);
 const docs = parseTriggerDocs(
@@ -23,7 +22,7 @@ const docs = parseTriggerDocs(
 const modifierDocs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
 const dumpLinks = parseScopeLinks(readFileSync(`${DOCS}/scopes.log`, "utf8"));
 const baseline = JSON.parse(
-  readFileSync("tools/codegen/drift-baseline.json", "utf8")
+  readFileSync(new URL("../src/drift-baseline.json", import.meta.url), "utf8")
 ) as DriftReport;
 
 describe("the two rule sources", () => {
@@ -75,9 +74,9 @@ describe("the scope-link join", () => {
 
   it("excludes the dump's special scope references rather than reporting them", () => {
     const dumpNames = new Set(dumpLinks.map((link) => link.name));
-    for (const path of SPECIAL_SCOPE_PATHS) {
-      expect(dumpNames.has(path)).toBe(true);
-      expect(report.links.docsOnly).not.toContain(path);
+    for (const scopePath of SPECIAL_SCOPE_PATHS) {
+      expect(dumpNames.has(scopePath)).toBe(true);
+      expect(report.links.docsOnly).not.toContain(scopePath);
     }
   });
 

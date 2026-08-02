@@ -14,7 +14,7 @@ unchecked string.
 
 Generated from Stellaris **4.4.6**.
 
-The npm `version` *is* the game version: `tools/vanilla-codegen` stamps
+The npm `version` *is* the game version: `@pdx-ts/vanilla-codegen` stamps
 `package.json` with `major.minor.patch` from the installed game's
 `launcher-settings.json`, so there is one authority for which build these
 identifiers came from. The SDK compares its own install's version against this

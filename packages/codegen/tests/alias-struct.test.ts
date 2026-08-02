@@ -8,15 +8,18 @@
  */
 
 import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { parseCwt } from "@pdx-ts/codegen/cwt/parser";
+import { loadRules, readAliases, type AliasDecl } from "@pdx-ts/codegen/cwt/rules";
+import { emitAliasStruct } from "@pdx-ts/codegen/emit/alias-struct";
+import { Emitter } from "@pdx-ts/codegen/emit/types";
+import { EXTRA_ALIAS_CATEGORIES } from "@pdx-ts/codegen/overlay";
 import { describe, expect, it } from "vitest";
 
-import { parseCwt } from "../../../../tools/codegen/cwt/parser.ts";
-import { loadRules, readAliases, type AliasDecl } from "../../../../tools/codegen/cwt/rules.ts";
-import { emitAliasStruct } from "../../../../tools/codegen/emit/alias-struct.ts";
-import { Emitter } from "../../../../tools/codegen/emit/types.ts";
-import { EXTRA_ALIAS_CATEGORIES } from "../../../../tools/codegen/overlay.ts";
-
-const CONFIG = "vendor/cwtools-stellaris-config/config";
+/** The repo root, from this module — never the directory vitest was started in. */
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
 const GOVERNMENTS = "common/governments.cwt";
 
 const rules = loadRules(CONFIG);

@@ -1,0 +1,18 @@
+{
+  "name": "@pdx-ts/codegen",
+  "version": "1.0.0",
+  "description": "Generates @pdx-ts/sdk's committed TypeScript surface from the vendored cwtools rules and Stellaris documentation dumps",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./drift-baseline.json": "./src/drift-baseline.json",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@pdx-ts/pdxscript": "*",
+    "@pdx-ts/sdk": "*"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6"
+  }
+}

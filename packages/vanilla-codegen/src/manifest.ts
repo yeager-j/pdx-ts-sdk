@@ -2,7 +2,7 @@
  * What the vanilla identifier package covers.
  *
  * The content registries are not restated here: they come from
- * `tools/codegen/content-manifest.ts`, which is already the one authority on
+ * `@pdx-ts/codegen`'s `content-manifest.ts`, which is already the one authority on
  * which registries the SDK exposes. A registry added there gains vanilla
  * identifiers automatically, which is the point — the two lists cannot drift.
  *
@@ -13,7 +13,7 @@
  * from the rules rather than written down twice.
  */
 
-import { CONTENT_MANIFEST, type TrieMode } from "../codegen/content-manifest.ts";
+import { CONTENT_MANIFEST, type TrieMode } from "@pdx-ts/codegen/content-manifest";
 
 /**
  * A registry whose ids are enumerated from the install, resolved through the

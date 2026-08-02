@@ -1,7 +1,7 @@
 /**
  * Tokenizer for PDXScript — the probe's, not yet the SDK's.
  *
- * This is the sibling of tools/codegen/cwt/lexer.ts, for the game's own
+ * This is the sibling of packages/codegen/src/cwt/lexer.ts, for the game's own
  * format: no doc or option comments (every `#` runs to end of line and is
  * dropped), the full comparison-operator set, and two constructs `.cwt` has
  * no notion of — `@variable` tokens and `@[ ... ]` inline math, the latter

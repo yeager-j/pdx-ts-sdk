@@ -1,7 +1,7 @@
 /**
  * Enumerates the ids one registry defines in an install.
  *
- * `tools/codegen/corpus.ts` reads the same files for a different question —
+ * `@pdx-ts/codegen`'s `corpus.ts` reads the same files for a different question —
  * which *fields* definitions write — and throws the ids away, walks one
  * directory flat, and only ever looks at `.txt`. Sounds live in nested
  * `.asset` files and sprites in nested `.gfx` files, so this walks recursively

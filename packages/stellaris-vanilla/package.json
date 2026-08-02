@@ -17,5 +17,8 @@
   ],
   "peerDependencies": {
     "@pdx-ts/sdk": "*"
+  },
+  "devDependencies": {
+    "@pdx-ts/vanilla-codegen": "*"
   }
 }

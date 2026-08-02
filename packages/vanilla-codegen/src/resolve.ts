@@ -6,13 +6,14 @@
  * `path_extension`, `name_field`, and `skip_root_key` all come from the CWT
  * `type[...]` declaration. What the manifest states — the keyword a
  * `name_field` registry is written under — is cross-checked against any
- * `## type_key_filter` the rules declare, the same stance `tools/codegen`
+ * `## type_key_filter` the rules declare, the same stance `@pdx-ts/codegen`
  * takes: a keyword the rules contradict would emit a top-level key the game
  * quietly ignores.
  */
 
-import type { TrieMode } from "../codegen/content-manifest.ts";
-import { loadContentTypesFrom, loadRules, type ContentType } from "../codegen/cwt/rules.ts";
+import type { TrieMode } from "@pdx-ts/codegen/content-manifest";
+import { loadContentTypesFrom, loadRules, type ContentType } from "@pdx-ts/codegen/cwt/rules";
+
 import type { VanillaIdRow } from "./manifest.ts";
 
 /** Where one registry's definitions live, and how to recognise them. */

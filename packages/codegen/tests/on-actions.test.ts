@@ -1,9 +1,12 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { loadRules } from "@pdx-ts/codegen/cwt/rules";
+import { emitOnActions } from "@pdx-ts/codegen/emit/on-actions";
 import { describe, expect, it } from "vitest";
 
-import { loadRules } from "../../../../tools/codegen/cwt/rules.ts";
-import { emitOnActions } from "../../../../tools/codegen/emit/on-actions.ts";
-
-const rules = loadRules("vendor/cwtools-stellaris-config/config");
+/** The repo root, from this module — never the directory vitest was started in. */
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+const rules = loadRules(path.join(ROOT, "vendor/cwtools-stellaris-config/config"));
 const emission = emitOnActions(rules);
 
 describe("on-action codegen", () => {

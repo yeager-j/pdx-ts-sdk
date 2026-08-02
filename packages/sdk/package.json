@@ -6,10 +6,15 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
+    "./content": "./src/content.ts",
+    "./stellaris": "./src/stellaris/index.ts",
     "./testing": "./src/testing/index.ts",
     "./testing/matchers": "./src/testing/matchers.ts"
   },
   "dependencies": {
     "@pdx-ts/pdxscript": "*"
+  },
+  "devDependencies": {
+    "@pdx-ts/codegen": "*"
   }
 }

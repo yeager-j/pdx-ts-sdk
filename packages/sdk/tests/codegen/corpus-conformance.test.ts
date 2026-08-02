@@ -18,24 +18,24 @@
  */
 
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
-
-import { CONTENT_MANIFEST } from "../../../../tools/codegen/content-manifest.ts";
+import { CONTENT_MANIFEST } from "@pdx-ts/codegen/content-manifest";
 import {
   conformance,
   readRegistryCorpus,
   shapeConformance,
   type RepeatedStructField,
   type RuleScopes,
-} from "../../../../tools/codegen/corpus.ts";
-import { loadRules, scopeIndex } from "../../../../tools/codegen/cwt/rules.ts";
-import { emitContentType } from "../../../../tools/codegen/emit/content-type.ts";
-import { joinModifierScopes } from "../../../../tools/codegen/emit/modifiers.ts";
-import { canonicalScopeSet, declaredScopes } from "../../../../tools/codegen/emit/shape.ts";
-import { Emitter } from "../../../../tools/codegen/emit/types.ts";
-import { parseModifierDocs } from "../../../../tools/codegen/logs/modifier-docs.ts";
-import { parseTriggerDocs } from "../../../../tools/codegen/logs/trigger-docs.ts";
-import { REPEATED_STRUCT_DEFINITIONS } from "../../../../tools/codegen/overlay.ts";
+} from "@pdx-ts/codegen/corpus";
+import { loadRules, scopeIndex } from "@pdx-ts/codegen/cwt/rules";
+import { emitContentType } from "@pdx-ts/codegen/emit/content-type";
+import { joinModifierScopes } from "@pdx-ts/codegen/emit/modifiers";
+import { canonicalScopeSet, declaredScopes } from "@pdx-ts/codegen/emit/shape";
+import { Emitter } from "@pdx-ts/codegen/emit/types";
+import { parseModifierDocs } from "@pdx-ts/codegen/logs/modifier-docs";
+import { parseTriggerDocs } from "@pdx-ts/codegen/logs/trigger-docs";
+import { REPEATED_STRUCT_DEFINITIONS } from "@pdx-ts/codegen/overlay";
+import { describe, expect, it } from "vitest";
+
 import { locateInstall } from "../../src/stellaris/locate.ts";
 
 /**

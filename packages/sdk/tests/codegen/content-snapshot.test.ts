@@ -1,20 +1,13 @@
 import { readFileSync } from "node:fs";
+import { CONTENT_MANIFEST, type ContentManifestEntry } from "@pdx-ts/codegen/content-manifest";
+import type { CwtDiagnostic } from "@pdx-ts/codegen/cwt/parser";
+import { loadRules } from "@pdx-ts/codegen/cwt/rules";
+import driftBaseline from "@pdx-ts/codegen/drift-baseline.json" with { type: "json" };
+import { emitContentType, type EmittedField } from "@pdx-ts/codegen/emit/content-type";
+import { Emitter } from "@pdx-ts/codegen/emit/types";
+import { pascalCase } from "@pdx-ts/codegen/naming";
+import { CONTENT_DECLINED_FIELDS, HAND_WRITTEN_CONTENT_DEFINERS } from "@pdx-ts/codegen/overlay";
 import { describe, expect, it } from "vitest";
-
-import {
-  CONTENT_MANIFEST,
-  type ContentManifestEntry,
-} from "../../../../tools/codegen/content-manifest.ts";
-import type { CwtDiagnostic } from "../../../../tools/codegen/cwt/parser.ts";
-import { loadRules } from "../../../../tools/codegen/cwt/rules.ts";
-import driftBaseline from "../../../../tools/codegen/drift-baseline.json" with { type: "json" };
-import { emitContentType, type EmittedField } from "../../../../tools/codegen/emit/content-type.ts";
-import { Emitter } from "../../../../tools/codegen/emit/types.ts";
-import { pascalCase } from "../../../../tools/codegen/naming.ts";
-import {
-  CONTENT_DECLINED_FIELDS,
-  HAND_WRITTEN_CONTENT_DEFINERS,
-} from "../../../../tools/codegen/overlay.ts";
 
 function describeDiagnostic(diagnostic: CwtDiagnostic): string {
   return `${diagnostic.file}:${diagnostic.line} ${diagnostic.text}`;

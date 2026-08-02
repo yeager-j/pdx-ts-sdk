@@ -1,7 +1,6 @@
+import { classify, supportedScopesOf } from "@pdx-ts/codegen/cwt/model";
+import { parseCwt, type CwtAssignment } from "@pdx-ts/codegen/cwt/parser";
 import { describe, expect, it } from "vitest";
-
-import { classify, supportedScopesOf } from "../../../../tools/codegen/cwt/model.ts";
-import { parseCwt, type CwtAssignment } from "../../../../tools/codegen/cwt/parser.ts";
 
 function only(source: string): CwtAssignment {
   const { nodes } = parseCwt(source, "test.cwt");

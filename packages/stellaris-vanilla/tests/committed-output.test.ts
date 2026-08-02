@@ -16,15 +16,17 @@
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { locateInstall } from "@pdx-ts/sdk/stellaris";
+import { formatEmitted } from "@pdx-ts/vanilla-codegen/format";
+import { generateVanillaPackage } from "@pdx-ts/vanilla-codegen/generate";
 import { describe, expect, it } from "vitest";
 
-import { formatEmitted } from "../../../../tools/vanilla-codegen/format.ts";
-import { generateVanillaPackage } from "../../../../tools/vanilla-codegen/generate.ts";
-import { locateInstall } from "../../src/stellaris/locate.ts";
-
-const PACKAGE = "packages/stellaris-vanilla";
-const OUT = `${PACKAGE}/src`;
-const CONFIG = "vendor/cwtools-stellaris-config/config";
+/** The repo root, from this module — never the directory vitest was started in. */
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+const PACKAGE = fileURLToPath(new URL("../", import.meta.url));
+const OUT = path.join(PACKAGE, "src");
+const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
 
 let installRoot: string | undefined;
 try {
@@ -33,7 +35,7 @@ try {
   installRoot = undefined;
 }
 
-const manifest = JSON.parse(readFileSync(`${PACKAGE}/package.json`, "utf8")) as {
+const manifest = JSON.parse(readFileSync(path.join(PACKAGE, "package.json"), "utf8")) as {
   version: string;
 };
 

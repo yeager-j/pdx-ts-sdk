@@ -14,7 +14,7 @@ import { InstallNotFoundError } from "../src/errors.ts";
 import { load } from "../src/stellaris/load.ts";
 import { locateInstall } from "../src/stellaris/locate.ts";
 
-const FIXTURE = join(import.meta.dirname, "fixtures/fake-install");
+const FIXTURE = join(import.meta.dirname, "../../../fixtures/fake-install");
 
 const temps: string[] = [];
 function tempDir(): string {

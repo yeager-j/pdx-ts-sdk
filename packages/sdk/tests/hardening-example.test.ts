@@ -7,7 +7,7 @@ import { load } from "../src/stellaris/load.ts";
 import { declareFrom, fixture, renderFired } from "../src/testing/index.ts";
 
 const vanilla = load({
-  installPath: join(import.meta.dirname, "fixtures/fake-install"),
+  installPath: join(import.meta.dirname, "../../../fixtures/fake-install"),
   cache: false,
 });
 const hardening = defineHardening(vanilla);

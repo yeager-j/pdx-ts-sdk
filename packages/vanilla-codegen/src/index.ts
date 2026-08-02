@@ -1,8 +1,8 @@
 /**
  * Regenerates `packages/stellaris-vanilla/` from an installed copy of the game.
  *
- * Run with `npm run vanilla:codegen`, from the repo root. Separate from
- * `tools/codegen` because the source is different in kind: cwtools rules are
+ * Run with `npm run vanilla:codegen`. Separate from `@pdx-ts/codegen` because
+ * the source is different in kind: cwtools rules are
  * vendored and versioned in-repo, an install is a machine-local artifact that
  * changes when Paradox ships a patch. Different sources, different regeneration
  * triggers, different failure modes — one script each.
@@ -13,14 +13,22 @@
 
 import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { locateInstall } from "@pdx-ts/sdk/stellaris";
 
-import { locateInstall } from "../../packages/sdk/src/stellaris/locate.ts";
 import { formatEmitted } from "./format.ts";
 import { generateVanillaPackage, type VanillaReport } from "./generate.ts";
 
-const CONFIG = "vendor/cwtools-stellaris-config/config";
+/**
+ * Anchored to the module rather than the process, so the repo this writes into
+ * is the repo this script lives in whatever directory npm was invoked from.
+ */
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
+/** Repo-relative, for the report; {@link PACKAGE_DIR} is what the writes use. */
 const PACKAGE = "packages/stellaris-vanilla";
-const OUT = `${PACKAGE}/src`;
+const PACKAGE_DIR = path.join(ROOT, PACKAGE);
+const OUT = path.join(PACKAGE_DIR, "src");
 
 /**
  * Written through Prettier so the committed output matches the repo's style and
@@ -82,7 +90,7 @@ function readGameVersion(installRoot: string): string {
 }
 
 function stampVersion(version: string): void {
-  const file = path.join(PACKAGE, "package.json");
+  const file = path.join(PACKAGE_DIR, "package.json");
   const manifest = JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
   manifest["version"] = version;
   writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");

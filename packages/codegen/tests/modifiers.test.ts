@@ -1,12 +1,15 @@
 import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { loadRules, scopeIndex } from "@pdx-ts/codegen/cwt/rules";
+import { emitModifiers, joinModifierScopes } from "@pdx-ts/codegen/emit/modifiers";
+import { parseModifierDocs } from "@pdx-ts/codegen/logs/modifier-docs";
 import { describe, expect, it } from "vitest";
 
-import { loadRules, scopeIndex } from "../../../../tools/codegen/cwt/rules.ts";
-import { emitModifiers, joinModifierScopes } from "../../../../tools/codegen/emit/modifiers.ts";
-import { parseModifierDocs } from "../../../../tools/codegen/logs/modifier-docs.ts";
-
-const CONFIG = "vendor/cwtools-stellaris-config/config";
-const DOCS = "vendor/cwtools-stellaris-config/script-docs/v4.4.1";
+/** The repo root, from this module — never the directory vitest was started in. */
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
+const DOCS = path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1");
 
 const rules = loadRules(CONFIG);
 const docs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
