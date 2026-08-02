@@ -1,0 +1,41 @@
+# Fixture sprites. Definitions sit one level inside `spriteTypes` and are
+# recognised by having a `name`, not by their subtype keyword — vanilla spells
+# those eight ways with inconsistent casing.
+#
+# The ids are chosen to exercise the trie: every one shares the `GFX` prefix
+# (so the root level fuses), `GFX_ship` is both a complete id and a branch, and
+# `GFX_ship_combat_1` leaves a two-segment tail at its leaf.
+
+spriteTypes = {
+
+	spriteType = {
+		name = "GFX_ship"
+		texturefile = "gfx/fake/ship.dds"
+	}
+
+	spriteType = {
+		name = "GFX_ship_combat"
+		texturefile = "gfx/fake/ship_combat.dds"
+	}
+
+	spriteType = {
+		name = "GFX_ship_combat_1"
+		texturefile = "gfx/fake/ship_combat_1.dds"
+	}
+
+	frameAnimatedSpriteType = {
+		name = "GFX_ship_combat_2"
+		texturefile = "gfx/fake/ship_combat_2.dds"
+		noOfFrames = 4
+	}
+
+	spriteType = {
+		name = "GFX_planet_barren"
+		texturefile = "gfx/fake/planet_barren.dds"
+	}
+
+	PieChartType = {
+		name = "GFX_planet_ocean"
+		size = 32
+	}
+}

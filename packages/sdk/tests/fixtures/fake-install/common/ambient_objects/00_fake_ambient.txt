@@ -1,0 +1,13 @@
+# A `name_field` registry: the top-level key is a repeated keyword and the id
+# lives in `name`.
+
+ambient_object = {
+	name = "fake_ambient_beacon"
+	entity = "fake_beacon_entity"
+	selectable = yes
+}
+
+ambient_object = {
+	name = "fake_ambient_relay"
+	entity = "fake_relay_entity"
+}

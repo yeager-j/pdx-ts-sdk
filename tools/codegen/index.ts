@@ -9,7 +9,11 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { format, resolveConfig } from "prettier";
 
-import { CONTENT_MANIFEST, type ContentManifestEntry } from "./content-manifest.ts";
+import {
+  CONTENT_MANIFEST,
+  VANILLA_REF_EXTRAS,
+  type ContentManifestEntry,
+} from "./content-manifest.ts";
 import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
 import { emitAliasStruct, type AliasStructEmission } from "./emit/alias-struct.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
@@ -29,6 +33,7 @@ import {
 } from "./emit/support.ts";
 import { emitTriggers } from "./emit/triggers.ts";
 import { Emitter, type Usage } from "./emit/types.ts";
+import { emitVanillaRefs } from "./emit/vanilla-refs.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
@@ -215,6 +220,12 @@ async function main(): Promise<void> {
     contents.push({ manifest, registry, keyword, type, emission, usage });
   }
 
+  // Registers every ref this namespace names (including the ref-only extras —
+  // sound, sound_effect, sprite, resource) with `emitter.usedRefs` before
+  // `refs.ts` is written below, so their `XRef` aliases survive even if
+  // nothing else in the rules happens to reference them.
+  const vanillaRefs = emitVanillaRefs(emitter, CONTENT_MANIFEST, VANILLA_REF_EXTRAS);
+
   await write(
     "scopes.ts",
     header(commit, ["scopes.cwt"]) + emitScopes(canonicalScopes(rules.scopes))
@@ -321,6 +332,18 @@ async function main(): Promise<void> {
   await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));
   const definers = contentDefiners(contents);
   await write("content-definers.ts", header(commit, contentSources) + definers.code);
+  await write(
+    "vanilla-refs.ts",
+    header(commit, [...contentSources, "content-manifest.ts (VANILLA_REF_EXTRAS)"]) +
+      'import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../vanilla-ids.ts";\n' +
+      'import { makeIdTrie } from "../vanilla-trie.ts";\n' +
+      importList(
+        "./refs.ts",
+        vanillaRefs.refs.map((name) => emitter.refTypeName(name))
+      ) +
+      "\n" +
+      vanillaRefs.code
+  );
   await write(
     "triggers.ts",
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
@@ -444,6 +467,10 @@ async function main(): Promise<void> {
       ` (${CONTENT_PATCH_REGISTRIES.size} free patchX,` +
       ` ${CONTENT_CONTRIBUTION_SINKS.size} free contribution adder,` +
       ` ${definers.grafted.length} re-exported from a hand-written graft)`
+  );
+  console.log(
+    `vanilla refs: ${vanillaRefs.checked} checked constructors,` +
+      ` ${vanillaRefs.tries} tries emitted (${vanillaRefs.refs.length} ref types registered)`
   );
   console.log(
     `event kinds: ${events.kinds} (${events.definers} definers, ` +

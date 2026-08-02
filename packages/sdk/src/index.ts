@@ -249,6 +249,7 @@ export {
   StaleRuleTableError,
   SwapPatchError,
   UnverifiedRegistryError,
+  VanillaPackageMismatchError,
   VanillaPathCollisionError,
 } from "./errors.ts";
 export {
@@ -269,3 +270,14 @@ export {
   type VanillaFile,
 } from "./vanilla/surface.ts";
 export type { PatchedTechnology, TechnologyPatch } from "./vanilla/patch.ts";
+export type {
+  CheckedVanillaId,
+  InvalidVanillaId,
+  VanillaId,
+  VanillaIds,
+  VanillaScriptedEffects,
+  VanillaScriptedTriggers,
+  VanillaTrie,
+  VanillaTries,
+} from "./vanilla-ids.ts";
+export * as vanilla from "./generated/vanilla-refs.ts";

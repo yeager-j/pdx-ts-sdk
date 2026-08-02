@@ -1,0 +1,8 @@
+fake_resource_alpha = {
+	tradable = yes
+	category = fake
+}
+
+fake_resource_beta = {
+	tradable = no
+}

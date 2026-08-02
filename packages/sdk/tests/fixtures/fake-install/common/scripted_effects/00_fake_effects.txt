@@ -1,0 +1,14 @@
+# Fixture scripted effects. Invented bodies; only names and parameters matter.
+
+fake_effect_simple = {
+	set_country_flag = fake_flag
+}
+
+fake_effect_params = {
+	add_resource = {
+		energy = $AMOUNT$
+	}
+	[[REASON]
+		set_country_flag = $REASON$
+	]
+}

@@ -20,5 +20,6 @@
     "strict": true,
     "target": "ES2024",
     "types": ["node"]
-  }
+  },
+  "exclude": ["node_modules", "dist", "packages/stellaris-vanilla"]
 }

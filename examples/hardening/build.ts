@@ -1,7 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { render, stellaris, write } from "@pdx-ts/sdk";
 
-import { render, stellaris, write } from "../../packages/sdk/src/index.ts";
 import { defineHardening } from "./mod.ts";
 
 const vanilla = stellaris.load();

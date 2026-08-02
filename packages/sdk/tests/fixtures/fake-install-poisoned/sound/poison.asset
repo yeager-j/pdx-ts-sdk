@@ -1,0 +1,12 @@
+# Deliberately poisoned. The `name` here is a localised sentence rather than an
+# identifier — exactly the kind of content the licensing gate exists to keep out
+# of the generated package. Generating against this install must FAIL.
+#
+# Kept in its own fixture install so the main one stays clean: a fixture that
+# both exercises the happy path and carries a poison pill would make it
+# impossible to assert that a normal run rejects nothing.
+
+sound = {
+	name = "The Grand Herald has arrived."
+	file = "placeholders/fake.wav"
+}

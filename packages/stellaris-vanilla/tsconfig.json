@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src", "tests"],
+  // The root tsconfig excludes this package's own directory (so the root
+  // program can model the package-absent world without this package's
+  // augmentation ever joining it) — that exclude is inherited verbatim and
+  // would otherwise re-resolve to this same directory and exclude everything.
+  // Overriding it back to empty here is what lets this package's own program
+  // see its own `src`/`tests`.
+  "exclude": []
+}

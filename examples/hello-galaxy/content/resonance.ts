@@ -26,7 +26,8 @@ import {
   isAtWar,
   namespace,
   not,
-} from "../../../packages/sdk/src/index.ts";
+} from "@pdx-ts/sdk";
+
 import { flags } from "../flags.ts";
 
 export const resonanceTheory = defineTechnology({

@@ -1,0 +1,26 @@
+# Nested, like the real `interface/` tree. `GFX_odd.name` is here to be routed
+# to the flat union only: a dot cannot survive property navigation, so it must
+# never appear as a trie key.
+
+spriteTypes = {
+
+	spriteType = {
+		name = "GFX_planet_toxic"
+		texturefile = "gfx/fake/planet_toxic.dds"
+	}
+
+	spriteType = {
+		name = "GFX_icon_alert"
+		texturefile = "gfx/fake/icon_alert.dds"
+	}
+
+	spriteType = {
+		name = "GFX_icon_warning"
+		texturefile = "gfx/fake/icon_warning.dds"
+	}
+
+	spriteType = {
+		name = "GFX_odd.name"
+		texturefile = "gfx/fake/odd.dds"
+	}
+}

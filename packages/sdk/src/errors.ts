@@ -32,3 +32,9 @@ export class SwapPatchError extends PdxSdkError {}
 
 /** The mod would emit a file at a path vanilla already occupies. */
 export class VanillaPathCollisionError extends PdxSdkError {}
+
+/**
+ * The installed `@pdx-ts/stellaris-vanilla` package is pinned to a game
+ * version that differs from the install a `VanillaView` was built from.
+ */
+export class VanillaPackageMismatchError extends PdxSdkError {}

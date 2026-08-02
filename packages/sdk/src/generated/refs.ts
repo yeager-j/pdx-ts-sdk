@@ -117,6 +117,9 @@ export type CasusBelliRef = TypedRef<"casus_belli">;
 /** A reference to a `<citizenship_type>`. */
 export type CitizenshipTypeRef = TypedRef<"citizenship_type">;
 
+/** A reference to a `<civic_or_origin>`. */
+export type CivicOrOriginRef = TypedRef<"civic_or_origin">;
+
 /** A reference to a `<civic_or_origin.civic>`. */
 export type CivicOrOriginCivicRef = TypedRef<"civic_or_origin.civic">;
 
@@ -153,6 +156,9 @@ export type CountryCardCategoriesRef = TypedRef<"country_card_categories">;
 
 /** A reference to a `<country_focus_cards>`. */
 export type CountryFocusCardsRef = TypedRef<"country_focus_cards">;
+
+/** A reference to a `<country_ship_of_size_limit>`. */
+export type CountryShipOfSizeLimitRef = TypedRef<"country_ship_of_size_limit">;
 
 /** A reference to a `<country_type>`. */
 export type CountryTypeRef = TypedRef<"country_type">;
@@ -381,6 +387,12 @@ export type ScriptedActionRef = TypedRef<"scripted_action">;
 
 /** A reference to a `<scripted_effect>`. */
 export type ScriptedEffectRef = TypedRef<"scripted_effect">;
+
+/** A reference to a `<scripted_loc>`. */
+export type ScriptedLocRef = TypedRef<"scripted_loc">;
+
+/** A reference to a `<scripted_modifier>`. */
+export type ScriptedModifierRef = TypedRef<"scripted_modifier">;
 
 /** A reference to a `<scripted_trigger>`. */
 export type ScriptedTriggerRef = TypedRef<"scripted_trigger">;

@@ -1,0 +1,14 @@
+# A nested directory: the real `sound/` tree is several levels deep, so the
+# reader has to walk rather than list.
+
+sound = {
+	name = "fake_alert_two"
+	file = "placeholders/fake_alert_two.wav"
+}
+
+soundeffect = {
+	name = fake_effect_beta
+	sounds = {
+		sound = fake_alert_two
+	}
+}

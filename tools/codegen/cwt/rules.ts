@@ -71,6 +71,21 @@ export interface ContentType {
    * so it comes from the overlay.
    */
   readonly nameField: string | null;
+  /**
+   * `path_extension`, normalized to include the leading dot. Registries whose
+   * files are not `.txt` declare it — sounds are `.asset`, sprites `.gfx`.
+   * Absent means the rules say nothing and `.txt` is the game's default.
+   *
+   * Optional rather than `| null` alone so a synthetic `ContentType` built by
+   * an emitter — one standing in for a type the rules never declared, and so
+   * having no file layout at all — needs no placeholder for it.
+   */
+  readonly pathExtension?: string | null;
+  /**
+   * `skip_root_key`: the definitions live one level inside a root block with
+   * this key rather than at the top level. Sprites sit inside `spriteTypes`.
+   */
+  readonly skipRootKey?: string | null;
   /** Type-level `## type_key_filter`, when the type declares exactly one. */
   readonly keyFilter: string | null;
   readonly subtypes: readonly ContentSubtype[];
@@ -371,6 +386,15 @@ function readLocalisation(block: CwtAssignment): ContentType["localisation"] {
   });
 }
 
+/**
+ * `path_extension` is written both ways across the rule files — `.asset` in
+ * sound.cwt, `txt` elsewhere — so the leading dot is normalized in rather than
+ * left for every reader to guess at.
+ */
+function dotted(extension: string): string {
+  return extension.startsWith(".") ? extension : `.${extension}`;
+}
+
 function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentType>): void {
   for (const outer of assignments(nodes)) {
     if (outer.key.text !== "types" || outer.value.kind !== "block") {
@@ -387,11 +411,16 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
       // Written both quoted and bare across the rule files: `name_field = "key"`
       // in components.cwt, `name_field = name` in global_ship_designs.cwt.
       const nameFieldNode = inner.find((node) => node.key.text === "name_field");
+      const extensionNode = inner.find((node) => node.key.text === "path_extension");
+      const skipRootKeyNode = inner.find((node) => node.key.text === "skip_root_key");
       const typeKeyFilter = findOption(entry.options, "type_key_filter");
       into.set(match[2]!, {
         name: match[2]!,
         path: pathNode?.value.kind === "scalar" ? pathNode.value.text : null,
         nameField: nameFieldNode?.value.kind === "scalar" ? nameFieldNode.value.text : null,
+        pathExtension:
+          extensionNode?.value.kind === "scalar" ? dotted(extensionNode.value.text) : null,
+        skipRootKey: skipRootKeyNode?.value.kind === "scalar" ? skipRootKeyNode.value.text : null,
         keyFilter: typeKeyFilter?.value?.kind === "scalar" ? typeKeyFilter.value.text : null,
         subtypes: inner.flatMap((node) => {
           const subtype = BRACKET_KEY.exec(node.key.text);
@@ -467,6 +496,28 @@ function readOnActions(nodes: readonly CwtNode[], file: string, into: OnActionDe
       });
     }
   }
+}
+
+/**
+ * Reads just the `type[...]` declarations out of an arbitrary set of `.cwt`
+ * files.
+ *
+ * {@link loadRules} deliberately loads a fixed file list, and its drift gate is
+ * calibrated against exactly that list. Sounds and sprites are declared in
+ * files outside it, and the vanilla-identifier generator needs their paths,
+ * keywords, and extensions without widening what the main pipeline reads —
+ * hence a second, narrower entry point over the same reader.
+ */
+export function loadContentTypesFrom(
+  root: string,
+  files: readonly string[]
+): ReadonlyMap<string, ContentType> {
+  const contentTypes = new Map<string, ContentType>();
+  for (const relative of files) {
+    const parsed = parseCwt(readFileSync(path.join(root, relative), "utf8"), relative);
+    readContentTypes(parsed.nodes, contentTypes);
+  }
+  return contentTypes;
 }
 
 export function loadRules(root: string): RuleSet {

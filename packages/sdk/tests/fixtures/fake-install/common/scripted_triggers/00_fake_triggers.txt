@@ -1,0 +1,21 @@
+# Fixture scripted triggers. One case per parameter rule the reader has to get
+# right; the bodies are invented, not copied from the game.
+
+fake_no_params = {
+	is_country_type = default
+}
+
+fake_defaulted = {
+	years_passed > $YEARS|10$
+}
+
+fake_required = {
+	has_technology = $TECH$
+}
+
+fake_conditional = {
+	[[FLAG]
+		has_country_flag = $NAME$
+	]
+	is_country_type = default
+}

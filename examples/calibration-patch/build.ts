@@ -9,7 +9,6 @@
 import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-
 import {
   buildMod,
   collection,
@@ -18,7 +17,7 @@ import {
   render,
   stellaris,
   write,
-} from "../../packages/sdk/src/index.ts";
+} from "@pdx-ts/sdk";
 
 const vanilla = stellaris.load();
 

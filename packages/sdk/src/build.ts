@@ -48,6 +48,7 @@ import { OnActionAuthoring } from "./on-actions.ts";
 import { compareUtf8, normalizeLogicalPath } from "./resolver/path-order.ts";
 import { collectVarRefs, planPatchEmission, type PatchPlan } from "./resolver/plan.ts";
 import { SUPPORTED_STELLARIS_BUILD } from "./resolver/rules.ts";
+import { checkVanillaPackagePin, installedVanillaPackageVersion } from "./vanilla/package-pin.ts";
 import type { PatchedTechnology } from "./vanilla/patch.ts";
 import { sha256Hex, type VanillaFile, type VanillaView } from "./vanilla/surface.ts";
 
@@ -529,6 +530,22 @@ export function buildMod(
     orderedPatches.length > 0
       ? new Set(orderedPatches[0]!.source.origin.files.map((file) => file.path))
       : undefined;
+
+  // Identifier-package version pin (SDK-12), checked after the rule-table
+  // staleness gate above: rule-table staleness outranks identifier-package
+  // staleness because patch emission — what that gate guards — is the more
+  // dangerous operation. This gate is broader (it fires whenever a vanilla
+  // view is supplied at all, not only when patches exist, because vanilla
+  // identifiers can be authored anywhere a reference is written) but must
+  // never change which error a stale-rule-table build sees, so it runs
+  // strictly after `planPatches` has had its chance to throw.
+  if (options.vanilla !== undefined) {
+    checkVanillaPackagePin(
+      installedVanillaPackageVersion(),
+      options.vanilla.gameVersion,
+      config.acceptGameVersion
+    );
+  }
 
   return Object.freeze({
     config,

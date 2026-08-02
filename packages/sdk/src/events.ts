@@ -20,6 +20,7 @@ import { underField, type ContentRefUse } from "./content-refs.ts";
 import { makeScope, scopeRef, type ScopeRef } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { EventKindKey } from "./generated/events.ts";
+import { refId, type SoundEffectRef, type SpriteRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import type { Trigger } from "./trigger-core.ts";
 // The typed fire signatures for every event kind are generated into the
@@ -88,7 +89,8 @@ export interface EventDef<S extends ScopeName, From extends ScopeName | undefine
   /** English title text; omit for hidden events. */
   readonly title?: string;
   readonly desc?: string;
-  readonly picture?: string;
+  readonly picture?: SpriteRef | string;
+  readonly showSound?: SoundEffectRef | string;
   /**
    * The scope this event expects FROM to be when fired. Emits nothing — it
    * is the compile-time contract every fire site is checked against.
@@ -146,7 +148,10 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     entries.push(kv("desc", `${id}.desc`));
   }
   if (def.picture !== undefined) {
-    entries.push(kv("picture", def.picture));
+    entries.push(kv("picture", refId(def.picture)));
+  }
+  if (def.showSound !== undefined) {
+    entries.push(kv("show_sound", refId(def.showSound)));
   }
   if (def.hideWindow === true) {
     entries.push(kv("hide_window", true));

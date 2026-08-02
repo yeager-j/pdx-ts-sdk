@@ -1,0 +1,23 @@
+# Fixture sounds. `.asset` is Clausewitz syntax like everything else, and both
+# `sound` and `soundeffect` are top-level keywords with the id in `name`.
+
+sound = {
+	name = "fake_alert_one"
+	file = "placeholders/fake_alert_one.wav"
+	always_load = no
+}
+
+soundeffect = {
+	name = fake_effect_alpha
+	sounds = {
+		sound = fake_alert_one
+	}
+	volume = 0.5
+}
+
+category = {
+	name = "FakeCategory"
+	soundeffects = {
+		fake_effect_alpha
+	}
+}

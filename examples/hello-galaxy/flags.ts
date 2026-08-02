@@ -1,4 +1,4 @@
-import { countryFlags } from "../../packages/sdk/src/index.ts";
+import { countryFlags } from "@pdx-ts/sdk";
 
 /**
  * Flags this mod sets and reads.
