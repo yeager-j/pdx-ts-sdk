@@ -141,8 +141,11 @@ export const BUILDING_FIELDS: readonly ContentField[] = [
   {
     key: "district_limit",
     member: "districtLimit",
-    shape: "valueOrWeightBlock",
-    conversion: "identity",
+    shape: "dual",
+    arms: [
+      { key: "district_limit", member: "districtLimit", shape: "value", conversion: "identity" },
+      { key: "district_limit", member: "districtLimit", shape: "weightBlock" },
+    ],
   },
   { key: "owner_type", member: "ownerType", shape: "value", conversion: "identity" },
   { key: "ruined_icon", member: "ruinedIcon", shape: "value", conversion: "ref" },
@@ -151,14 +154,20 @@ export const BUILDING_FIELDS: readonly ContentField[] = [
   {
     key: "empire_limit",
     member: "empireLimit",
-    shape: "valueOrWeightBlock",
-    conversion: "identity",
+    shape: "dual",
+    arms: [
+      { key: "empire_limit", member: "empireLimit", shape: "value", conversion: "identity" },
+      { key: "empire_limit", member: "empireLimit", shape: "weightBlock" },
+    ],
   },
   {
     key: "planet_limit",
     member: "planetLimit",
-    shape: "valueOrWeightBlock",
-    conversion: "identity",
+    shape: "dual",
+    arms: [
+      { key: "planet_limit", member: "planetLimit", shape: "value", conversion: "identity" },
+      { key: "planet_limit", member: "planetLimit", shape: "weightBlock" },
+    ],
   },
   {
     key: "exempt_from_ai_planet_specialization",

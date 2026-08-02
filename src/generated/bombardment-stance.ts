@@ -76,8 +76,11 @@ export const BOMBARDMENT_STANCE_FIELDS: readonly ContentField[] = [
   {
     key: "planet_damage",
     member: "planetDamage",
-    shape: "valueOrWeightBlock",
-    conversion: "identity",
+    shape: "dual",
+    arms: [
+      { key: "planet_damage", member: "planetDamage", shape: "value", conversion: "identity" },
+      { key: "planet_damage", member: "planetDamage", shape: "weightBlock" },
+    ],
   },
   { key: "army_damage", member: "armyDamage", shape: "value", conversion: "identity" },
   { key: "kill_pop_chance", member: "killPopChance", shape: "weightBlock" },

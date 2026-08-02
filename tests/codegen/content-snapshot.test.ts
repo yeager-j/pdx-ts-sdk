@@ -262,14 +262,18 @@ describe("content-type codegen", () => {
     // declared twice — once as a bare number, once as a modifier_rule block. Picking
     // either alone is wrong in one direction (vanilla writes the scalar form almost
     // exclusively; the block form carries the gated adjustments), so the group lowers
-    // to the union and the writer dispatches on what the author passes.
+    // to the union and the writer dispatches on what the author passes. The arms read
+    // in CWT's own declaration order, which is why the two differ.
     const bombardmentStance = emissions.get("bombardment_stance");
     expect(bombardmentStance?.code).toContain('planetDamage?: number | WeightBlock<"fleet">;');
     // A pure modifier_rule splice needs no overlay row either — it infers weightBlock.
     expect(bombardmentStance?.code).toContain('aiWeight: WeightBlock<"fleet">;');
 
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
-    expect(archaeologicalSiteType?.code).toContain('weight?: number | WeightBlock<"planet">;');
+    expect(archaeologicalSiteType?.code).toContain('weight?: WeightBlock<"planet"> | number;');
+    expect(archaeologicalSiteType?.code).toContain(
+      '{ key: "weight", member: "weight", shape: "dual", arms: ['
+    );
   });
 
   it("lowers repeated siblings with no id (shape 3) as an anonymous struct list", () => {
@@ -401,9 +405,12 @@ describe("content-type codegen", () => {
     expect(building?.code).toContain("triggeredDesc?: BuildingTriggeredDesc[];");
 
     // situations' desc is also declared as a bare localisation scalar, which
-    // the slot already covers — the overlay pins the struct form.
+    // shipped situations do write, so the renamed member is a dual of both arms.
     const situation = emissions.get("situation_type");
-    expect(situation?.code).toContain("conditionalDesc?: SituationTypeDesc[];");
+    expect(situation?.code).toContain("conditionalDesc?: string | SituationTypeDesc[];");
+    // The rename has to reach the arms too: the writer resolves an arm by its
+    // own member name, so a single-shot replace would leave them as `desc`.
+    expect(situation?.code).not.toContain('member: "desc", shape: "struct"');
   });
 
   it("expands an all-scalar alias splice into an ordinary struct", () => {

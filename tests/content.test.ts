@@ -1142,6 +1142,62 @@ describe("generated content registries", () => {
     expect(files.get("localisation/english/ss_test_l_english.yml")).not.toContain("mid");
   });
 
+  it("lowers every arm of a dual declaration by what the author passed", () => {
+    // The arms below were all unreachable before duals generalized past
+    // scalar-or-weight-block: first-wins picking kept one declaration per field
+    // and the other form could not be authored at all, though the shipped game
+    // writes both. One case per arm kind the writer has to tell apart — a bare
+    // list, a scalar beside a struct, and a trigger — since the dispatch is by
+    // the value's runtime form and nothing else.
+    const shipSizes = collection(undefined, [
+      defineShipSize({
+        id: "du_test_cruiser",
+        name: "Cruiser",
+        class: "shipclass_military",
+        // `construction_type` is declared as one value_set member and as a
+        // block of them; vanilla writes both.
+        constructionType: ["starbase_shipyard", "starbase_beastport"],
+      }),
+      defineShipSize({
+        id: "du_test_corvette",
+        name: "Corvette",
+        class: "shipclass_military",
+        constructionType: "starbase_shipyard",
+      }),
+    ]);
+    const starbaseLevels = collection(undefined, [
+      defineStarbaseLevel({
+        id: "du_test_outpost",
+        shipSize: "ship_size_starbase_i",
+        // The bare <sprite> arm — 18 of the 27 shipped starbase levels write
+        // this form, against 9 writing the trigger-gated block.
+        picture: "GFX_starbase_background_outpost",
+      }),
+    ]);
+    const speciesClasses = collection(undefined, [
+      defineSpeciesClass({
+        id: "du_test_precursor",
+        name: "Precursor",
+        plural: "Precursors",
+        archetype: "ARCHETYPE_HUMANOID",
+        // A bool in 20 shipped species classes, a condition block in 13.
+        randomized: always(),
+      }),
+    ]);
+    const files = render(
+      buildMod(configFor("Dual arm test", "du_test"), [shipSizes, starbaseLevels, speciesClasses])
+    );
+    const sizes = files.get("common/ship_sizes/du_test_ship_sizes.txt")!;
+    expect(sizes).toContain("construction_type = { starbase_shipyard starbase_beastport }");
+    expect(sizes).toContain("construction_type = starbase_shipyard\n");
+    expect(files.get("common/starbase_levels/du_test_starbase_levels.txt")).toContain(
+      "picture = GFX_starbase_background_outpost"
+    );
+    expect(files.get("common/species_classes/du_test_species_classes.txt")).toContain(
+      "randomized = {\n\t\talways = yes\n\t}"
+    );
+  });
+
   it("warns on an unprefixed id but not on an unprefixed engine key", () => {
     // The prefix rule still applies to the definition itself — only the
     // structMap keys inside it are exempt. The pure API demotes the rule to a

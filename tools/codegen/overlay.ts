@@ -469,14 +469,13 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   [
     "situation_type.desc",
     {
-      shape: "struct",
       member: "conditionalDesc",
       reason:
         "The `desc` key's repeated trigger+text block form; the derived member collides with " +
         "the `desc` flavor-text localisation slot. Named like building.desc for consistency. " +
         "Unlike building's, situations' `desc` is also declared as a bare localisation scalar, " +
-        "which the localisation slot already covers — the struct shape pins the block form so " +
-        "first-wins picking cannot resurface the redundant scalar.",
+        "which shipped situations do write — so the field duals, and the row no longer pins the " +
+        "block form. It pinned it when first-wins picking could only keep one arm.",
     },
   ],
   [
@@ -592,6 +591,18 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       shape: "economicResources",
       reason:
         "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
+    },
+  ],
+  [
+    "ship_size.graphical_culture",
+    {
+      arity: "single",
+      reason:
+        "Both declarations — the `<graphical_culture>` list and the bare bool — carry " +
+        "`cardinality = 0..2`, which reads as `at most one of each form` rather than `write it " +
+        "twice`: no shipped ship size writes the key more than once in 263 definitions. Taken " +
+        "literally it makes both arms arrays, which is indistinguishable at the authoring member " +
+        "and blocks the dual lowering the two declarations exist to produce.",
     },
   ],
   [

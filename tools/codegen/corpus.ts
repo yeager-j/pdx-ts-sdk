@@ -347,7 +347,7 @@ export interface ShapeMismatch {
  */
 const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
   ["value", "scalar"],
-  ["valueOrWeightBlock", "both"],
+  ["dual", "both"],
   ["valueList", "block"],
   ["trigger", "block"],
   ["effect", "block"],
@@ -362,12 +362,6 @@ const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
   ["structMap", "block"],
   ["scalarMap", "block"],
   ["repeatedStruct", "block"],
-]);
-
-/** The shapes whose block contents are trigger or effect rules, so scope binds. */
-const CLAUSE_OF = new Map<string, "trigger" | "effect">([
-  ["trigger", "trigger"],
-  ["effect", "effect"],
 ]);
 
 /**
@@ -435,7 +429,9 @@ export function shapeConformance(
     }
     // A block whose interior form is wrong is the same defect one level in: a
     // list type against `{ trigger = { … } }`, or a struct against `{ a b c }`.
-    if (observation.blocks > 0 && form !== "scalar") {
+    // A dual is exempt: admitting two interiors is the whole point of it, and
+    // the arms were each checked against the rules that produced them.
+    if (observation.blocks > 0 && form === "block") {
       const bare = field.shape === "valueList";
       if (bare && observation.bareBlocks === 0) {
         report(
@@ -458,10 +454,9 @@ export function shapeConformance(
         report("literal", `outside the emitted union: ${stray.slice(0, 6).join(" ")}`);
       }
     }
-    const clause = CLAUSE_OF.get(field.shape);
-    if (clause !== undefined && field.scope !== undefined) {
+    if (field.clause !== undefined && field.scope !== undefined) {
       const rejected = [...observation.keys].filter((key) => {
-        const scopes = scopesOf(clause, key);
+        const scopes = scopesOf(field.clause!, key);
         return scopes !== null && !fieldAdmits(field.scope!, scopes);
       });
       if (rejected.length > 0) {

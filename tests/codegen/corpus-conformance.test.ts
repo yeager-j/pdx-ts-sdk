@@ -43,13 +43,14 @@ import { REPEATED_STRUCT_DEFINITIONS } from "../../tools/codegen/overlay.ts";
  * with the reason. Anything else fails.
  *
  * Every entry here is a field the SDK emits that an author cannot fill with
- * what vanilla writes. They fall into two families:
+ * what vanilla writes. Three families remain, none of them a misreading the
+ * emitter could fix on its own:
  *
- * - **A field CWT declares twice, once as a scalar and once as a block.** The
- *   picker keeps whichever arm lowers first and drops the other, so half the
- *   corpus becomes unwritable. `number | WeightBlock` already generalizes the
- *   one case where both arms are weights; the rest await the same treatment.
- *   See `docs/roadmap.md`'s "Accept both scalar and block".
+ * - **The corpus writes a form CWT does not declare.** Inventing an arm the
+ *   rules deny would be guessing at game semantics from one shipped file.
+ * - **Two declarations whose arms are indistinguishable.** A dual dispatches on
+ *   what the author passed, so two arms that both author as arrays cannot be
+ *   told apart. See `lowerDual`.
  * - **A field CWT scopes `any`.** `Trigger<ScopeName>` accepts only rules legal
  *   in every scope, so "the scope varies per definition" and "no author can
  *   write a condition here" are the same statement. The fix is a scope the
@@ -64,39 +65,12 @@ const ACKNOWLEDGED = new Map<string, string>([
       "rules do not declare.",
   ],
   [
-    "ship_size.graphical_culture form",
-    "Declared twice: a block of <graphical_culture> refs and a bare bool. Orbital rings write " +
-      "`graphical_culture = yes`, everything else writes the list.",
-  ],
-  [
-    "ship_size.construction_type form",
-    "Declared twice, as value_set[construction_type] and as a block of the same.",
-  ],
-  [
-    "starbase_level.picture form",
-    "Declared twice, as a trigger+picture block and as a bare <sprite>.",
-  ],
-  [
     "situation_type.picture form",
-    "Declared twice, as a trigger+picture block and as a bare scalar.",
-  ],
-  ["situation_type.title form", "Declared twice, as a trigger+text block and as a bare scalar."],
-  [
-    "situation_type.desc form",
-    "Declared twice; the overlay pins the block arm because the bare localisation arm is what " +
-      "the `desc` localisation slot already covers. The scalar writes are that arm.",
-  ],
-  [
-    "archaeological_site_type.desc form",
-    "Declared twice, as a trigger+text block and as a bare localisation key.",
-  ],
-  [
-    "civic_or_origin.modification form",
-    "Declared twice, as a bool and as a block; 109 of 142 definitions write the bool.",
-  ],
-  [
-    "species_class.randomized form",
-    "Declared twice, as a bool and as a trigger block; 13 definitions write the block.",
+    "Declared twice, as a bare <sprite> and as a trigger+picture block — but both declarations " +
+      "carry `cardinality = 0..inf`, so both arms author as arrays and the writer could not tell " +
+      "which one a value belongs to. `title` and `desc` dual cleanly because their scalar arm is " +
+      "`0..1`. An `arity` assertion cannot help: it would narrow the block arm too, and the block " +
+      "form really does repeat.",
   ],
   [
     "global_ship_design.growth_stages form",

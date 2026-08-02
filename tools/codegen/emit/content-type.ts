@@ -5,6 +5,7 @@
  * rule shapes that the runtime content writer understands.
  */
 
+import { acceptedForm } from "../../../src/content.ts";
 import {
   isOptional,
   isRepeated,
@@ -52,6 +53,13 @@ export interface EmittedField {
    * rule.
    */
   readonly scope?: readonly string[] | "any";
+  /**
+   * Set when the field's block holds trigger or effect rules, so a consumer
+   * knows the keys inside it are scoped rules rather than struct members or
+   * modifier names. The emitter knows this from the splice category it lowered;
+   * nothing downstream should try to re-derive it from a shape name.
+   */
+  readonly clause?: "trigger" | "effect";
 }
 
 export interface ContentEmission {
@@ -90,6 +98,12 @@ interface LoweredField {
    * `repeated` the metadata does, so the two cannot describe different things.
    */
   readonly admits: Omit<EmittedField, "field">;
+  /**
+   * A `struct` whose repetition is nested inside one key. Irrelevant to the
+   * corpus gate, which asks whether the *key* repeats, but it decides whether
+   * the authoring member is an array — which is what tells two dual arms apart.
+   */
+  readonly wrapped?: boolean;
   /** Extra top-level declarations a nested struct level needed, prepended by the caller. */
   readonly code?: string;
   /** Paths bubbled up from a nested struct level, already prefixed. */
@@ -439,12 +453,14 @@ function admitsScalars(
 function admitsBlock(
   field: RuleField,
   shape: string,
-  scope?: FieldScope
+  scope?: FieldScope,
+  clause?: "trigger" | "effect"
 ): Omit<EmittedField, "field"> {
   return {
     shape,
     repeated: repeatsSiblings(field, shape),
     ...(scope === undefined ? {} : { scope: scope.scopes }),
+    ...(clause === undefined ? {} : { clause }),
   };
 }
 
@@ -662,6 +678,7 @@ function lowerStruct(
     // `wrapped` nests the repetition inside one key, so only CWT's own
     // cardinality says whether the key itself may repeat.
     admits: { shape: "struct", repeated: isRepeated(field.cardinality) },
+    wrapped,
     code,
     unsupported,
   };
@@ -719,7 +736,7 @@ function lowerOrdinary(
     return {
       memberType: `Trigger<${scope.type}>`,
       metadata: metadata(field, name, "trigger"),
-      admits: admitsBlock(field, "trigger", scope),
+      admits: admitsBlock(field, "trigger", scope, "trigger"),
     };
   }
   if (requested === "effect" || (requested === undefined && category === "effect")) {
@@ -727,7 +744,7 @@ function lowerOrdinary(
     return {
       memberType: `EffectBlock<${scope.type}>`,
       metadata: metadata(field, name, "effect"),
-      admits: admitsBlock(field, "effect", scope),
+      admits: admitsBlock(field, "effect", scope, "effect"),
     };
   }
   if (requested === undefined && category === "modifier_rule") {
@@ -830,42 +847,74 @@ function lowerOrdinary(
 }
 
 /**
- * A field CWT declares twice — once as a bare scalar and once as a
- * modifier_rule block — accepts both forms, lowered at runtime by which one
- * the author passes. Picking either declaration alone is wrong in one
- * direction: vanilla writes `stages.end = 100` 254 times against 1 block,
- * while `opinion_modifier.opinion` needs the block's gated adjustments.
+ * A field CWT declares both as a scalar and as a block accepts both, lowered at
+ * runtime by whichever form the author passes.
+ *
+ * Picking one declaration is wrong in whichever direction that registry's
+ * corpus leans, and the shipped game writes both: vanilla writes
+ * `stages.end = 100` 254 times against 1 block, while `opinion_modifier.opinion`
+ * needs the block's gated adjustments; `starbase_level.picture` is a bare
+ * `<sprite>` in 18 definitions and a trigger-gated block in 9. Whichever arm
+ * first-wins picking dropped became a form no author could produce, and a
+ * presence-only corpus check could not see it — see `docs/roadmap.md`'s
+ * "Shape conformance".
+ *
+ * Both arms lower through the ordinary pipeline, so the pairing is not limited
+ * to any particular combination: a scalar beside a weight block, a struct, a
+ * trigger, or a bare list all fall out the same way.
  */
-function lowerDualWeight(
+function lowerDual(
   emitter: Emitter,
   group: readonly RuleField[],
   name: string,
   inheritedScope: ScopeContext | null,
-  asserted?: string
+  override: ContentFieldOverride | undefined,
+  widening: string | undefined,
+  path: string
 ): LoweredField | null {
-  const weightArms = group.filter((field) => spliceCategory(field.type) === "modifier_rule");
   const scalarArms = group.filter((field) => field.type.kind !== "block");
-  if (weightArms.length === 0 || scalarArms.length === 0) {
+  const blockArms = group.filter((field) => field.type.kind === "block");
+  if (scalarArms.length === 0 || blockArms.length === 0) {
     return null;
   }
-  if (weightArms.length + scalarArms.length !== group.length) {
+  const scalar = pickOrdinary(emitter, scalarArms, name, inheritedScope, undefined, widening, path);
+  const block = pickOrdinary(emitter, blockArms, name, inheritedScope, override, widening, path);
+  if (scalar === null || block === null) {
     return null;
   }
-  if (group.some((field) => isRepeated(field.cardinality))) {
+  // Declaration order, so the emitted union reads in the order the rules do.
+  const arms =
+    group.indexOf(scalarArms[0]!) < group.indexOf(blockArms[0]!)
+      ? [scalar, block]
+      : [block, scalar];
+  // Both arms share one key and one authoring member, so the writer can only
+  // tell them apart by what the author passed. Two arms accepting the same form
+  // — a repeated bool beside a bare value list, both arrays — are
+  // indistinguishable, and declining is the honest answer. Where the *arity* is
+  // what makes them collide rather than the shapes, an `arity` assertion fixes
+  // it upstream of here.
+  const forms = arms.map((arm) =>
+    acceptedForm({ shape: arm.admits.shape, repeated: arm.admits.repeated, wrapped: arm.wrapped })
+  );
+  if (new Set(forms).size !== forms.length) {
     return null;
   }
-  const value = emitter.unionFor(scalarArms.map((field) => field.type));
-  if (value === null) {
-    return null;
-  }
-  const scope = scopeType(emitter, weightArms[0]!, inheritedScope, asserted);
   return {
-    memberType: `${value.type} | WeightBlock<${scope.type}>`,
-    metadata: metadata(scalarArms[0]!, name, "valueOrWeightBlock", scalarMetadata(value)),
+    memberType: arms.map((arm) => arm.memberType).join(" | "),
+    metadata:
+      `{ key: ${JSON.stringify(name)}, member: ${JSON.stringify(camelCase(name))}, ` +
+      `shape: "dual", arms: [${arms.map((arm) => arm.metadata).join(", ")}] }`,
     admits: {
-      ...admitsScalars(scalarArms[0]!, "valueOrWeightBlock", value),
-      scope: scope.scopes,
+      shape: "dual",
+      // The key repeats if any arm lets it: `situation_type.picture` is one
+      // scalar or N trigger-gated blocks.
+      repeated: arms.some((arm) => arm.admits.repeated),
+      ...(scalar.admits.literals === undefined ? {} : { literals: scalar.admits.literals }),
+      ...(block.admits.scope === undefined ? {} : { scope: block.admits.scope }),
+      ...(block.admits.clause === undefined ? {} : { clause: block.admits.clause }),
     },
+    code: arms.map((arm) => arm.code ?? "").join(""),
+    unsupported: arms.flatMap((arm) => arm.unsupported ?? []),
   };
 }
 
@@ -929,7 +978,7 @@ function pickOrdinary(
 ): LoweredField | null {
   const group = assertedArity(declared, override);
   if (override?.shape === undefined && group.length > 1) {
-    const dual = lowerDualWeight(emitter, group, name, inheritedScope, override?.scope);
+    const dual = lowerDual(emitter, group, name, inheritedScope, override, widening, path);
     if (dual !== null) {
       return dual;
     }
@@ -1351,7 +1400,9 @@ export function emitContentType(
     fieldMetadata.push(
       override?.member === undefined
         ? lowered.metadata
-        : lowered.metadata.replace(
+        : // replaceAll, not replace: a dual repeats the member on each arm, and
+          // the writer resolves an arm by its own member name.
+          lowered.metadata.replaceAll(
             `member: ${JSON.stringify(camelCase(name))}`,
             `member: ${JSON.stringify(member)}`
           )

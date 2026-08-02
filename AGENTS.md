@@ -85,9 +85,10 @@ pre-review of a list.
    actually wrong or the rules need help:
    - `REQUIRED_LOCALISATION` for localization the authoring API should require
    - `FIELD_WIDENINGS` for intentional ergonomic input forms
-   - `CONTENT_FIELD_OVERRIDES` when the field shape cannot be inferred correctly — including a field
-     the rules declare twice (once as a bare scalar, once as a `modifier_rule` block), where the
-     generic picker silently keeps the bare form and drops the gated adjustments
+   - `CONTENT_FIELD_OVERRIDES` when the field shape cannot be inferred correctly. A field the rules
+     declare twice, once as a scalar and once as a block, needs no row: it lowers to a `dual` of
+     both arms on its own. Requesting a `shape` there suppresses that, so only pin an arm when you
+     mean to make the other unauthorable.
    - nested-definition metadata only when the CWT field is genuinely a nested content definition
    - a `scope` or `arity` assertion on `CONTENT_FIELD_OVERRIDES` when CWT states game semantics
      wrongly rather than incompletely. Both need evidence, and shape conformance is where that

@@ -344,6 +344,49 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("admits either arm of a dual declaration, and nothing else", () => {
+    // A dual's member is the union of what CWT declares, so both forms compile
+    // and a third does not. Type-level evidence matters more here than for most
+    // shapes: the writer dispatches on the value's runtime form, so a value the
+    // types let through but no arm accepts would throw at render time.
+    defineShipSize({
+      id: "content_types_ship_size_dual_list",
+      name: "X",
+      class: "shipclass_military",
+      constructionType: ["starbase_shipyard", "starbase_beastport"],
+    });
+    defineShipSize({
+      id: "content_types_ship_size_dual_scalar",
+      name: "X",
+      class: "shipclass_military",
+      constructionType: "starbase_shipyard",
+    });
+    defineShipSize({
+      id: "content_types_ship_size_dual_bad",
+      name: "X",
+      class: "shipclass_military",
+      // @ts-expect-error — neither arm is a block: the key takes a value_set
+      // member or a list of them.
+      constructionType: { base: 1 },
+    });
+    defineStarbaseLevel({
+      id: "content_types_starbase_dual_scalar",
+      shipSize: "ship_size_starbase_i",
+      picture: "GFX_starbase_background_outpost",
+    });
+    defineStarbaseLevel({
+      id: "content_types_starbase_dual_block",
+      shipSize: "ship_size_starbase_i",
+      picture: { trigger: always(), picture: "GFX_starbase_background_outpost" },
+    });
+    defineStarbaseLevel({
+      id: "content_types_starbase_dual_bad",
+      shipSize: "ship_size_starbase_i",
+      // @ts-expect-error — the block arm's own fields are still typed
+      picture: { picture: 5 },
+    });
+  });
+
   it("types an engine-keyed map without imposing an id on its keys", () => {
     // A structMap key is a plain engine name and its values still get their
     // full struct type. A repeated-struct record key is an id the mod owns,

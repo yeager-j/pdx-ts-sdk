@@ -12,9 +12,29 @@ import type {
 import type { Trigger } from "../trigger-core.ts";
 import type { EventFleetRef, SituationLogCategoryRef, SpriteRef } from "./refs.ts";
 
+export interface ArchaeologicalSiteTypeDesc {
+  trigger?: Trigger<"archaeological_site">;
+  text?: string;
+}
+
+export const ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS: readonly ContentField[] = [
+  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "text", member: "text", shape: "value", conversion: "identity" },
+];
+
+export interface ArchaeologicalSiteTypeStageDifficulty {
+  min: number;
+  max: number;
+}
+
+export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_DIFFICULTY_FIELDS: readonly ContentField[] = [
+  { key: "min", member: "min", shape: "value", conversion: "identity" },
+  { key: "max", member: "max", shape: "value", conversion: "identity" },
+];
+
 export interface ArchaeologicalSiteTypeStage {
   /** min max interval type. interval is defined either by '<int>' or '{ min = <int> max = <int> }' where the later will randomize a value between min and max. */
-  difficulty: number;
+  difficulty: number | ArchaeologicalSiteTypeStageDifficulty;
   /** rune icon gfx type. */
   icon: SpriteRef | string;
   /** event to fire when the stage has been completed. */
@@ -22,7 +42,20 @@ export interface ArchaeologicalSiteTypeStage {
 }
 
 export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS: readonly ContentField[] = [
-  { key: "difficulty", member: "difficulty", shape: "value", conversion: "identity" },
+  {
+    key: "difficulty",
+    member: "difficulty",
+    shape: "dual",
+    arms: [
+      { key: "difficulty", member: "difficulty", shape: "value", conversion: "identity" },
+      {
+        key: "difficulty",
+        member: "difficulty",
+        shape: "struct",
+        fields: ARCHAEOLOGICAL_SITE_TYPE_STAGE_DIFFICULTY_FIELDS,
+      },
+    ],
+  },
   { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
   { key: "event", member: "event", shape: "value", conversion: "ref", refTypes: ["event.fleet"] },
 ];
@@ -37,13 +70,13 @@ export interface ArchaeologicalSiteTypeFields {
   /** GFX_* sprite key for the sites image */
   picture?: SpriteRef | string;
   /** Description generator for the site, with scope this=archaeological site. */
-  desc?: string;
+  desc?: string | ArchaeologicalSiteTypeDesc[];
   situationLogCategory?: SituationLogCategoryRef | string;
   /** Max instances of this type a galaxy can have, only checked when using 'create_archaeological_site = random' */
   maxInstances?: number;
   notificationDuration?: number;
   /** Weight used for random weight, only used when using 'create_archaeological_site = random'. scriptable value type is defined either by '<int>' or '<mean time to happen>'. */
-  weight?: number | WeightBlock<"planet">;
+  weight?: WeightBlock<"planet"> | number;
   /** Should match number of defined stages below. */
   stages: number;
   /** Trigger checking if a scope with this=fleet,from=archaeological site is potential to excavate (this will add/remove this option without giving the player a reason). */
@@ -76,7 +109,21 @@ export type DefinedArchaeologicalSiteType<Id extends string = string> = DefinedC
 
 export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
   { key: "picture", member: "picture", shape: "value", conversion: "ref", refTypes: ["sprite"] },
-  { key: "desc", member: "desc", shape: "value", conversion: "identity" },
+  {
+    key: "desc",
+    member: "desc",
+    shape: "dual",
+    arms: [
+      { key: "desc", member: "desc", shape: "value", conversion: "identity" },
+      {
+        key: "desc",
+        member: "desc",
+        shape: "struct",
+        fields: ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS,
+        repeated: true,
+      },
+    ],
+  },
   {
     key: "situation_log_category",
     member: "situationLogCategory",
@@ -91,7 +138,15 @@ export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "identity",
   },
-  { key: "weight", member: "weight", shape: "valueOrWeightBlock", conversion: "identity" },
+  {
+    key: "weight",
+    member: "weight",
+    shape: "dual",
+    arms: [
+      { key: "weight", member: "weight", shape: "weightBlock" },
+      { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+    ],
+  },
   { key: "stages", member: "stages", shape: "value", conversion: "identity" },
   { key: "potential", member: "potential", shape: "trigger" },
   { key: "allow", member: "allow", shape: "trigger" },

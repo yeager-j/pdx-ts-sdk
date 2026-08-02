@@ -120,7 +120,7 @@ export interface ShipSizeAiShipData {
   max?: number;
   systemMult?: number;
   planetMult?: number;
-  fraction?: number | WeightBlock<"country">;
+  fraction?: WeightBlock<"country"> | number;
 }
 
 export const SHIP_SIZE_AI_SHIP_DATA_FIELDS: readonly ContentField[] = [
@@ -128,7 +128,15 @@ export const SHIP_SIZE_AI_SHIP_DATA_FIELDS: readonly ContentField[] = [
   { key: "max", member: "max", shape: "value", conversion: "identity" },
   { key: "system_mult", member: "systemMult", shape: "value", conversion: "identity" },
   { key: "planet_mult", member: "planetMult", shape: "value", conversion: "identity" },
-  { key: "fraction", member: "fraction", shape: "valueOrWeightBlock", conversion: "identity" },
+  {
+    key: "fraction",
+    member: "fraction",
+    shape: "dual",
+    arms: [
+      { key: "fraction", member: "fraction", shape: "weightBlock" },
+      { key: "fraction", member: "fraction", shape: "value", conversion: "identity" },
+    ],
+  },
 ];
 
 export interface ShipSizeMapIconOverride {
@@ -185,7 +193,7 @@ export interface ShipSizeFields {
   name?: string;
   /** English text emitted to localization under `<id>_plural`. */
   plural?: string;
-  graphicalCulture?: (GraphicalCultureRef | string)[];
+  graphicalCulture?: (GraphicalCultureRef | string)[] | boolean;
   isSpaceObject?: boolean;
   isReckoningShip?: boolean;
   /** Indicates that this ship is a type of entropy conduit ship used in the galactic hyperthermia crisis */
@@ -256,7 +264,7 @@ export interface ShipSizeFields {
   triggeredShipRoles?: ShipSizeTriggeredShipRoles[];
   prerequisites?: (TechnologyRef | string)[];
   class: ShipClass;
-  constructionType?: ConstructionType;
+  constructionType?: ConstructionType | ConstructionType[];
   possibleStarbase?: Trigger<"starbase">;
   potentialStarbase?: Trigger<"starbase">;
   requiredComponentSet?: (ComponentSetRequiredComponentRef | string)[];
@@ -361,9 +369,22 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
   {
     key: "graphical_culture",
     member: "graphicalCulture",
-    shape: "valueList",
-    conversion: "ref",
-    refTypes: ["graphical_culture"],
+    shape: "dual",
+    arms: [
+      {
+        key: "graphical_culture",
+        member: "graphicalCulture",
+        shape: "valueList",
+        conversion: "ref",
+        refTypes: ["graphical_culture"],
+      },
+      {
+        key: "graphical_culture",
+        member: "graphicalCulture",
+        shape: "value",
+        conversion: "identity",
+      },
+    ],
   },
   { key: "is_space_object", member: "isSpaceObject", shape: "value", conversion: "identity" },
   { key: "is_reckoning_ship", member: "isReckoningShip", shape: "value", conversion: "identity" },
@@ -495,7 +516,25 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     refTypes: ["technology"],
   },
   { key: "class", member: "class", shape: "value", conversion: "identity" },
-  { key: "construction_type", member: "constructionType", shape: "value", conversion: "identity" },
+  {
+    key: "construction_type",
+    member: "constructionType",
+    shape: "dual",
+    arms: [
+      {
+        key: "construction_type",
+        member: "constructionType",
+        shape: "value",
+        conversion: "identity",
+      },
+      {
+        key: "construction_type",
+        member: "constructionType",
+        shape: "valueList",
+        conversion: "identity",
+      },
+    ],
+  },
   { key: "possible_starbase", member: "possibleStarbase", shape: "trigger" },
   { key: "potential_starbase", member: "potentialStarbase", shape: "trigger" },
   {

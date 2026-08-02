@@ -12,7 +12,7 @@ import type { Trigger } from "../trigger-core.ts";
 export interface OpinionModifierFields {
   /** English text emitted to localization under `<id>`. */
   name: string;
-  opinion: number | WeightBlock<"country">;
+  opinion: WeightBlock<"country"> | number;
   /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
   decay?: number | WeightBlock<"country">;
   /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
@@ -63,9 +63,33 @@ export type DefinedOpinionModifier<Id extends string = string> = DefinedContent<
 >;
 
 export const OPINION_MODIFIER_FIELDS: readonly ContentField[] = [
-  { key: "opinion", member: "opinion", shape: "valueOrWeightBlock", conversion: "identity" },
-  { key: "decay", member: "decay", shape: "valueOrWeightBlock", conversion: "identity" },
-  { key: "growth", member: "growth", shape: "valueOrWeightBlock", conversion: "identity" },
+  {
+    key: "opinion",
+    member: "opinion",
+    shape: "dual",
+    arms: [
+      { key: "opinion", member: "opinion", shape: "weightBlock" },
+      { key: "opinion", member: "opinion", shape: "value", conversion: "identity" },
+    ],
+  },
+  {
+    key: "decay",
+    member: "decay",
+    shape: "dual",
+    arms: [
+      { key: "decay", member: "decay", shape: "value", conversion: "identity" },
+      { key: "decay", member: "decay", shape: "weightBlock" },
+    ],
+  },
+  {
+    key: "growth",
+    member: "growth",
+    shape: "dual",
+    arms: [
+      { key: "growth", member: "growth", shape: "value", conversion: "identity" },
+      { key: "growth", member: "growth", shape: "weightBlock" },
+    ],
+  },
   { key: "accumulative", member: "accumulative", shape: "value", conversion: "identity" },
   { key: "min", member: "min", shape: "value", conversion: "identity" },
   { key: "max", member: "max", shape: "value", conversion: "identity" },
