@@ -16,18 +16,18 @@
  * (block files) is unchanged, only its order. The class API's exact bytes for
  * this fixture are frozen separately in `design/pure-api-probe/goldens/`.
  *
- * SDK-23 chunk 2 added a second parity gate of the same shape, for the same
- * reason: the free definers and the factories are both live, so the same
- * fixture goes through each and the two mods are compared directly. That test
- * is what makes migrating every consumer (chunk 3) and deleting the factories
- * (chunk 4) mechanical, and it dies with the factories.
+ * SDK-23 chunk 2 held the free definers to the collection factories' exact
+ * output with a second parity gate of the same shape, so that migrating every
+ * consumer (chunk 3) and deleting the factories (chunk 4) was mechanical. The
+ * factories are gone; what the gate proved is now carried by the goldens
+ * above, which the free fixture below is asserted against directly.
  *
  * The rest pins the fold's validation story — duplicate ids, the prefix
  * warning, the vanilla collision guard, dangling event references,
  * on-action ownership, loc dedupe, the `modifierDescKeys` ordering hazard —
- * and the collection semantics: creation is registration on the factory path,
- * one file per namespace and one namespace per file on both, and split files
- * feeding the patch plan's path order.
+ * and the collection semantics: `collection(file, items)` places what the
+ * definers return, one file per namespace and one namespace per file, and
+ * split files feeding the patch plan's path order.
  */
 
 import { describe, expect, it } from "vitest";
@@ -38,11 +38,6 @@ import {
   and,
   buildMod,
   collection,
-  createCountryShipOfSizeLimits,
-  createEvents,
-  createOnActions,
-  createSituationTypes,
-  createTechnologies,
   defineCountryShipOfSizeLimit,
   defineSituationType,
   defineTechnology,
@@ -79,85 +74,16 @@ const CONFIG = {
 const vanilla = viewFromFiles(FILES, { gameVersion: "4.4.6" });
 
 /**
- * The representative fixture through the pure API. Collection order mirrors
- * the fold's grouping (content → events → on → limits → patch) so the class
- * twin below produces the same localization insertion order.
- */
-function pureCollections(): ModItemInput[] {
-  const techs = createTechnologies();
-  const situations = createSituationTypes();
-  const limits = createCountryShipOfSizeLimits();
-  const events = createEvents("events", "pp_mod");
-  const hooks = createOnActions();
-
-  const grafts = techs.defineTechnology({
-    id: "pp_mod_tech_chimeric_grafts",
-    name: "Chimeric Grafts",
-    area: "society",
-    tier: 3,
-    category: "biology",
-  });
-  situations.defineSituationType({
-    id: "pp_mod_situation_probe",
-    name: "Probe Situation",
-    targetScope: "planet",
-    monthlyProgress: {
-      base: 2,
-      modifiers: [{ mult: 1.5, desc: "The probe is spreading.", when: always() }],
-    },
-  });
-  const titan = limits.defineCountryShipOfSizeLimit({
-    id: "pp_mod_limit_titan",
-    shipTypes: ["ship_size_titan"],
-    base: 80,
-    max: 1600,
-    show: and(isScopeValid(), hasTechnology("tech_titans")),
-  });
-  const aftershock = events.definePlanetEvent({
-    id: 2,
-    from: "country",
-    title: "Aftershock",
-    isTriggeredOnly: true,
-    immediate: (planet, ctx) => {
-      planet.within(ctx.from, (country) => {
-        country.addResource({ resource: "influence", amount: 50 });
-      });
-    },
-    options: [{ name: "Noted." }],
-  });
-  const hum = events.defineCountryEvent({
-    id: 1,
-    title: "The Hum",
-    isTriggeredOnly: true,
-    immediate: (country, ctx) => {
-      country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
-        planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
-      });
-    },
-    options: [{ name: "Fascinating." }],
-  });
-  hooks.on(onActions.onGameStartCountry, hum);
-  limits.addShipOfSizeLimits([titan, "third_party_limit"]);
-  techs.patchTechnology(
-    vanilla.technology("tech_gene_forging").require("cost", "prerequisites"),
-    (t) => ({
-      cost: t.cost.value * 2,
-      prerequisites: [...t.prerequisites, grafts],
-    })
-  );
-  return [techs, situations, limits, events, hooks];
-}
-
-/**
- * The same fixture through the free definers (SDK-23): every definition is a
- * value, and `collection(file, items)` is the only thing that places it. The
- * factory twin above and this one must produce the same mod — that is the
- * whole claim of chunk 2, and it is what makes chunks 3 and 4 a migration
- * rather than a rewrite.
+ * The representative fixture, through the free definers (SDK-23): every
+ * definition is a value, and `collection(file, items)` is the only thing that
+ * places it. It exercises every channel the mod has — content with
+ * localization, the situation graft's `targetScope`, two events that fire each
+ * other with a FROM witness, an on-action binding, the contribution sink, and
+ * a patch.
  *
- * The collections are deliberately built in the same shape as the factories'
- * (one per registry, the event stem co-declared) so the comparison isolates
- * the authoring surface rather than also testing the file layout.
+ * The collections are one per registry, with the event stem named, because
+ * that is the layout the goldens were captured under; the definers themselves
+ * have no opinion about it.
  */
 function freeCollections(): ModItemInput[] {
   const events = namespace("pp_mod");
@@ -274,39 +200,6 @@ describe("parity with the deleted class builder", () => {
       "__snapshots__/pure-api/patch-plan-assertions.json"
     );
     expect(pure.warnings).toEqual([]);
-  });
-});
-
-/**
- * The keystone gate for the SDK-23 migration (chunk 2).
- *
- * Both authoring surfaces are live at once, so the free definers can be held
- * to the factories' exact output before a single consumer moves. Every channel
- * the fixture has goes through the comparison: content with localization, the
- * situation graft's `targetScope`, two events that fire each other with a FROM
- * witness, an on-action binding (one event through the factory method, an
- * array of one through free `on()`), the contribution sink, and a patch.
- *
- * This test dies with the factories in chunk 4; until then it is what makes
- * "migrate the consumers" a mechanical rewrite rather than a leap.
- */
-describe("parity between the factories and the free definers", () => {
-  const throughFactories = buildMod(CONFIG, pureCollections(), { vanilla });
-  const throughDefiners = buildMod(CONFIG, freeCollections(), { vanilla });
-
-  it("renders the same files, byte for byte", () => {
-    const files = render(throughDefiners);
-    // Pinned first, so "both surfaces emitted nothing" cannot pass as parity.
-    expect([...files.keys()]).toEqual(FIXTURE_CHANNELS);
-    expect([...files.entries()]).toEqual([...render(throughFactories).entries()]);
-  });
-
-  it("computes the same patch plan and the same warnings", () => {
-    expect(JSON.stringify(throughDefiners.patchPlan)).toEqual(
-      JSON.stringify(throughFactories.patchPlan)
-    );
-    expect(throughDefiners.warnings).toEqual(throughFactories.warnings);
-    expect(throughDefiners.shipOfSizeLimits).toEqual(throughFactories.shipOfSizeLimits);
   });
 });
 

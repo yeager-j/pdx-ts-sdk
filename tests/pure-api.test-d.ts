@@ -4,10 +4,10 @@
  * must keep. If any annotation stops firing, the typecheck gate fails — the
  * claims are pinned, not assumed.
  *
- * Both authoring surfaces are live while SDK-23 lands, so the claims come in
- * two halves: the factory blocks (which die with the factories in chunk 4) and
- * the free-definer blocks below them, which pin only what changes when the
- * collection comes out from under a definer.
+ * The collection factories these claims were originally written against are
+ * gone (SDK-23). Every claim they pinned is pinned here on the free definers,
+ * or in the suite that owns the contract outright: the event FROM witness in
+ * events.test-d.ts, the situation target contract in situations.test-d.ts.
  */
 
 import { describe, expectTypeOf, it } from "vitest";
@@ -15,14 +15,9 @@ import { describe, expectTypeOf, it } from "vitest";
 import {
   buildMod,
   collection,
-  createEvents,
-  createOnActions,
-  createSituationTypes,
-  createTechnologies,
   defineSituationType,
   defineTechnology,
   defineTradition,
-  eventTarget,
   namespace,
   on,
   onActions,
@@ -35,142 +30,11 @@ import {
   type TraditionItem,
 } from "../src/index.ts";
 
-describe("factory definers", () => {
-  /**
-   * The property `docs/design-consumer-codegen.md` needs for branded literal
-   * returns, and the one the class surface (generic only in the mod prefix)
-   * widens away.
-   */
-  it("preserves the literal id type", () => {
-    const techs = createTechnologies();
-    const tech = techs.defineTechnology({
-      id: "probe_neg_tech",
-      name: "T",
-      area: "physics",
-      tier: 1,
-      category: "particles",
-    });
-    expectTypeOf(tech.id).toEqualTypeOf<"probe_neg_tech">();
-    // @ts-expect-error — the id is the literal "probe_neg_tech", not just string
-    const other: "some_other_id" = tech.id;
-    void other;
-  });
-
-  /**
-   * The item is a `TypedRef` for its own registry and no other. The graft's
-   * `targetScope` intersection is the interesting case: a hand-written type
-   * rides on top of the generated item, and the brand has to survive it.
-   */
-  it("brands a definer's return with its own registry, graft included", () => {
-    const techs = createTechnologies();
-    const situations = createSituationTypes();
-    const tech = techs.defineTechnology({
-      id: "probe_neg_tech_brand",
-      name: "T",
-      area: "physics",
-      tier: 1,
-      category: "particles",
-    });
-    const situation = situations.defineSituationType({
-      id: "probe_neg_sit_brand",
-      name: "S",
-      monthlyProgress: { base: 1 },
-    });
-    const ownRegistry: TechnologyRef = tech;
-    void ownRegistry;
-    // @ts-expect-error — a situation type definition is not a technology reference
-    const crossRegistry: TechnologyRef = situation;
-    void crossRegistry;
-  });
-
-  it("types a collection's items with its registry's element type", () => {
-    const techs = createTechnologies();
-    expectTypeOf(techs.items).toEqualTypeOf<readonly TechnologyItem[]>();
-    // @ts-expect-error — a technology collection can never contain event items
-    const wrong: readonly EventItemBase[] = techs.items;
-    void wrong;
-  });
-});
-
-describe("the event FROM witness contract", () => {
-  it("survives the factory definers", () => {
-    const events = createEvents("neg_events", "probe_neg");
-    const witnessed = events.definePlanetEvent({ id: 40, from: "country", isTriggeredOnly: true });
-    events.defineCountryEvent({
-      id: 41,
-      isTriggeredOnly: true,
-      immediate: (country, ctx) => {
-        country.everyOwnedPlanet({}, (planet) => {
-          planet.planetEvent({ id: witnessed, from: ctx.self });
-          // @ts-expect-error — the event declares FROM country; firing without a witness is rejected
-          planet.planetEvent({ id: witnessed });
-        });
-      },
-    });
-  });
-
-  it("rejects a witness of the wrong scope", () => {
-    const events = createEvents("neg_from_events", "probe_neg_from");
-    const planetFrom = events.definePlanetEvent({ id: 42, from: "planet", isTriggeredOnly: true });
-    events.defineCountryEvent({
-      id: 43,
-      isTriggeredOnly: true,
-      immediate: (country, ctx) => {
-        country.everyOwnedPlanet({}, (planet) => {
-          // @ts-expect-error — ctx.self is a country ref; the event declares FROM planet
-          planet.planetEvent({ id: planetFrom, from: ctx.self });
-        });
-      },
-    });
-  });
-});
-
-describe("the on-action contract", () => {
-  it("is checked at the binding", () => {
-    const events = createEvents("neg_hook_events", "probe_neg_hooks");
-    const hooks = createOnActions();
-    const countryEvent = events.defineCountryEvent({ id: 50, isTriggeredOnly: true });
-    const planetEvent = events.definePlanetEvent({ id: 51, isTriggeredOnly: true });
-    const witnessed = events.defineCountryEvent({ id: 52, from: "country", isTriggeredOnly: true });
-    hooks.on(onActions.onGameStartCountry, countryEvent);
-    // @ts-expect-error — the hook supplies country scope; a planet event does not satisfy it
-    hooks.on(onActions.onGameStartCountry, planetEvent);
-    // @ts-expect-error — the hook supplies no FROM; an event declaring FROM country is rejected
-    hooks.on(onActions.onGameStartCountry, witnessed);
-  });
-});
-
-describe("the situation target contract", () => {
-  it("rides the factory definer's targetScope graft", () => {
-    const situations = createSituationTypes();
-    const events = createEvents("neg_sit_events", "probe_neg_sit");
-    const planetSit = situations.defineSituationType({
-      id: "probe_neg_sit",
-      name: "S",
-      monthlyProgress: { base: 1 },
-      targetScope: "planet",
-    });
-    expectTypeOf(planetSit.targetScope).toEqualTypeOf<"planet">();
-    const world = eventTarget<"planet">("probe_neg_world");
-    events.defineCountryEvent({
-      id: 60,
-      isTriggeredOnly: true,
-      immediate: (country, ctx) => {
-        country.startSituation({ type: planetSit, target: world });
-        // @ts-expect-error — the type declared a planet target; a country ref does not satisfy it
-        country.startSituation({ type: planetSit, target: ctx.self });
-      },
-    });
-  });
-});
-
 /**
- * The free definers (SDK-23). Only what the factory claims above do not
- * already cover: the definers are the same signatures with the collection
- * taken out, so what needs pinning is that taking it out changed nothing about
- * the literal id, and that the two things the collection used to supply —
- * placement and the on-action binding — are as well typed free as they were
- * bound.
+ * The definers, and what a definition is once no collection is in the way:
+ * the literal id survives, the situation graft's `targetScope` rides on the
+ * one object returned, and the registry brand is on the item rather than on
+ * whatever collected it.
  */
 describe("free definers", () => {
   it("preserves the literal id with no collection in the way", () => {
@@ -225,11 +89,17 @@ describe("free definers", () => {
       }),
     ]);
     expectTypeOf(techs.items[0]!.type).toEqualTypeOf<"technology">();
+    expectTypeOf(techs.items).toEqualTypeOf<
+      readonly ContentItem<"technology", TechnologyDef<"probe_neg_collected">>[]
+    >();
     const asRegistryCollection: Collection<TechnologyItem> = techs;
     void asRegistryCollection;
     // @ts-expect-error — a technology collection is not a tradition collection
     const wrongRegistry: Collection<TraditionItem> = techs;
     void wrongRegistry;
+    // @ts-expect-error — a technology collection's items can never be event items
+    const wrongKind: readonly EventItemBase[] = techs.items;
+    void wrongKind;
     // Mixed registries are legal and land in one file — the element type is
     // the union, which is what stops it being read as either one alone.
     const mixed = collection("free_mixed", [

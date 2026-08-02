@@ -22,9 +22,8 @@
  * yml would desynchronize from the txt files it describes.
  *
  * Emission paths are computed here, not in `render`: each collection's file
- * stem groups content into per-file entry lists, event files are one
- * namespace each by construction (co-declared at `createEvents`) with a
- * backstop check for same-stem merges, and the patch planner reserves and
+ * stem groups content into per-file entry lists, event files are checked to
+ * hold exactly one namespace each (in both directions), and the patch planner reserves and
  * enumerates every one of the mod's own technology files — the SDK-19
  * constraint that any splitting API must feed the path-order machinery,
  * not bypass it.
@@ -253,8 +252,8 @@ export function buildMod(
   }));
 
   // Events arrive as finished data (closures ran at the definition site,
-  // where createEvents knew the namespace). The fold's jobs: the global
-  // duplicate check across factories, the loc merge, per-namespace prefix
+  // where the namespace handle knew the namespace). The fold's jobs: the
+  // global duplicate check across handles, the loc merge, per-namespace prefix
   // warnings, and file grouping with the one-namespace-per-file backstop.
   const placedEvents = flat.filter(
     (placed): placed is { item: EventItemBase; file: string | undefined } =>
@@ -263,8 +262,8 @@ export function buildMod(
 
   // Grouping runs first now, so the duplicate check, the loc merge and the
   // prefix warnings can all run in the canonical order below. One namespace
-  // per event file: createEvents makes this hold by construction, and the
-  // check catches same-stem merges of two factories.
+  // per event file, checked here because a collection can be handed events
+  // from two namespaces and two collections can share one file stem.
   const eventsByPath = new Map<string, { namespace: string; events: EventItemBase[] }>();
   for (const { item, file } of placedEvents) {
     const relPath = emissionPath(config.prefix, "events", file ?? "events");
@@ -274,7 +273,7 @@ export function buildMod(
     } else if (group.namespace !== item.namespace) {
       throw new Error(
         `event file ${relPath} would mix namespaces "${group.namespace}" and ` +
-          `"${item.namespace}" — one namespace per file; give each createEvents its own file stem`
+          `"${item.namespace}" — one namespace per file; give each namespace its own file stem`
       );
     } else {
       group.events.push(item);
@@ -449,7 +448,7 @@ export function buildMod(
     if (ownEventId.test(value) && !eventIds.has(value)) {
       throw new Error(
         `"${value}" looks like one of this mod's event ids, but no such event is among the ` +
-          `collections passed to buildMod — was its createEvents(...) collection included?`
+          `collections passed to buildMod — was the collection holding it included?`
       );
     }
   }

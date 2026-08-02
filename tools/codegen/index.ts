@@ -32,7 +32,7 @@ import { Emitter, type Usage } from "./emit/types.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
-import { camelCase, docComment, indefiniteArticle, pascalCase } from "./naming.ts";
+import { camelCase, docComment, indefiniteArticle } from "./naming.ts";
 import {
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_FIELD_OVERRIDES,
@@ -321,8 +321,6 @@ async function main(): Promise<void> {
   await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));
   const definers = contentDefiners(contents);
   await write("content-definers.ts", header(commit, contentSources) + definers.code);
-  const factories = contentFactories(contents);
-  await write("content-factories.ts", header(commit, contentSources) + factories.code);
   await write(
     "triggers.ts",
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
@@ -392,17 +390,6 @@ async function main(): Promise<void> {
       events.code
   );
   await write(
-    "event-factory.ts",
-    header(commit, ["events/events.cwt"]) +
-      'import { buildEvent, type EventDef } from "../events.ts";\n' +
-      'import { makeCollection } from "../factories.ts";\n' +
-      'import { assertNamespace } from "../items.ts";\n' +
-      'import type { Collection, EventItem, EventItemBase } from "../items.ts";\n' +
-      'import type { EventKindKey } from "./events.ts";\n' +
-      'import type { ScopeName } from "./scopes.ts";\n\n' +
-      events.factoryCode
-  );
-  await write(
     "event-definers.ts",
     header(commit, ["events/events.cwt"]) +
       'import { buildEvent, type EventDef } from "../events.ts";\n' +
@@ -452,18 +439,13 @@ async function main(): Promise<void> {
     console.log(`${content.registry}: ${content.emission.emittedFields.length} fields emitted`);
   }
   console.log(
-    `content factories: ${factories.factories} emitted` +
-      ` (${CONTENT_PATCH_REGISTRIES.size} with patchX,` +
-      ` ${CONTENT_CONTRIBUTION_SINKS.size} with a contribution sink)`
-  );
-  console.log(
     `content definers: ${definers.definers} emitted` +
       ` (${CONTENT_PATCH_REGISTRIES.size} free patchX,` +
       ` ${CONTENT_CONTRIBUTION_SINKS.size} free contribution adder,` +
-      ` ${definers.grafted} re-exported from a hand-written graft)`
+      ` ${definers.grafted.length} re-exported from a hand-written graft)`
   );
   console.log(
-    `event kinds: ${events.kinds} (${events.definers} definers per surface, ` +
+    `event kinds: ${events.kinds} (${events.definers} definers, ` +
       `${events.fireMethods} typed fire methods)`
   );
   console.log(
@@ -490,7 +472,7 @@ async function main(): Promise<void> {
     events.skipped.map((entry) => `${entry.name} — ${entry.reason}`)
   );
   reportSection("Enums widened to string (rules declare no values)", valuelessEnums(emitter));
-  reportSection("Content definers taken from the hand-written grafts", factories.grafted);
+  reportSection("Content definers taken from the hand-written grafts", definers.grafted);
   for (const content of contents) {
     const type = content.registry;
     console.log(`\n${type}: ${content.emission.emittedFields.length} fields emitted`);
@@ -512,8 +494,10 @@ async function main(): Promise<void> {
 }
 
 /**
- * One collection factory per registry: the pure authoring API's whole content
- * surface.
+ * One free definer per registry: the SDK-23 authoring surface, and the whole
+ * content surface. A definition is a value a module exports; nothing is
+ * registered at the definition site, because `collection(file, items)` and
+ * `discoverContent` are what place it.
  *
  * The definers are literal-preserving (`<const Id extends string>`), so a
  * definition's id survives as its literal type all the way into the item the
@@ -521,202 +505,21 @@ async function main(): Promise<void> {
  * the mod prefix, widened away.
  *
  * Three kinds of registry-specific member, each an overlay row rather than a
- * conditional in this emitter:
+ * conditional in this emitter: `CONTENT_PATCH_REGISTRIES` adds a free `patchX`,
+ * `CONTENT_CONTRIBUTION_SINKS` a free `addX` for the id-less sink, and
  * `HAND_WRITTEN_CONTENT_DEFINERS` replaces the mechanical `defineX` with a
- * graft from `src/factories.ts`, `CONTENT_PATCH_REGISTRIES` adds `patchX`, and
- * `CONTENT_CONTRIBUTION_SINKS` adds the id-less contribution method.
+ * re-export from `src/definers.ts`, so every definer this SDK has is importable
+ * from this one module.
  *
- * The `XItem` union types are emitted beside the free definers
- * (`contentDefiners`) and imported here, so `src/index.ts` can `export *` from
- * both files without an ambiguous re-export while the two surfaces coexist.
+ * The `XItem` union types are emitted here too: they describe what a collection
+ * of this registry's items can hold.
  */
-function contentFactories(
-  contents: readonly {
-    manifest: (typeof CONTENT_MANIFEST)[number];
-    registry: string;
-    type: ContentType;
-    emission: ContentEmission;
-  }[]
-): { code: string; factories: number; grafted: string[] } {
+function contentDefiners(contents: readonly { registry: string; emission: ContentEmission }[]): {
+  code: string;
+  definers: number;
+  grafted: string[];
+} {
   const grafted: string[] = [];
-  const grafts = new Set<string>();
-  const runtimeItemTypes = new Set<string>(["Collection", "ContentItem"]);
-  const chunks: string[] = [];
-
-  for (const content of contents) {
-    const { registry, emission } = content;
-    const name = emission.typeName;
-    const key = JSON.stringify(registry);
-    const spoken = registry.replaceAll("_", " ");
-    const article = indefiniteArticle(spoken);
-    const graft = HAND_WRITTEN_CONTENT_DEFINERS.get(registry);
-    const patchable = CONTENT_PATCH_REGISTRIES.get(registry);
-    const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
-
-    if (patchable !== undefined) {
-      runtimeItemTypes.add(`${name}PatchItem`);
-    }
-
-    const members: string[] = [];
-    const bindings: string[] = [];
-    if (graft === undefined) {
-      members.push(
-        docComment(
-          [`Defines ${article} ${spoken} in this mod, registering it in this collection.`],
-          "  "
-        ) +
-          `  define${name}<const Id extends string>(\n` +
-          `    def: ${name}Def<Id>\n` +
-          `  ): ContentItem<${key}, ${name}Def<Id>>;\n`
-      );
-      bindings.push(
-        `    define${name}(def) {\n` +
-          `      const item = { itemKind: "content" as const, type: ${key} as const, ` +
-          "id: def.id, def };\n" +
-          "      items.push(item);\n" +
-          "      return item;\n" +
-          "    },\n"
-      );
-    } else {
-      grafts.add(graft.definerFactory);
-      grafts.add(`type ${graft.definerInterface}`);
-      grafted.push(`${registry}.define${name} — ${graft.reason}`);
-      bindings.push(`    ...${graft.definerFactory}(items),\n`);
-    }
-    if (patchable !== undefined) {
-      members.push(
-        docComment(
-          [
-            `Patches ${article} vanilla ${spoken} as a whole-object override. The transform`,
-            "runs here (pure); the duplicate-key and one-view checks stay in",
-            "`buildMod`, which sees every patch together, and the emitted filename",
-            "is always resolver-computed — this collection's file stem names only",
-            "the mod's own definitions file.",
-          ],
-          "  "
-        ) +
-          `  patch${name}<Source extends Parsed${name}>(\n` +
-          `    ${camelCase(registry)}: Source,\n` +
-          `    patch: (${camelCase(registry)}: Source) => ${name}Patch\n` +
-          `  ): ${name}PatchItem;\n`
-      );
-      bindings.push(
-        `    patch${name}(${camelCase(registry)}, patch) {\n` +
-          `      const item = { itemKind: "patch" as const, patched: transform${name}(` +
-          `${camelCase(registry)}, patch) };\n` +
-          "      items.push(item);\n" +
-          "      return item;\n" +
-          "    },\n"
-      );
-    }
-    if (contribution !== undefined) {
-      members.push(
-        docComment(
-          [
-            `Contributes to the shared additive \`default = { ${contribution.sink} = ... }\``,
-            "sink: ids this mod names but does not own, with no author-named file.",
-            "A ref listed twice is emitted once.",
-          ],
-          "  "
-        ) +
-          `  ${contribution.method}(\n` +
-          `    ${camelCase(contribution.sink)}: readonly (TypedRef<${JSON.stringify(contribution.refRegistry)}> | string)[]\n` +
-          "  ): void;\n"
-      );
-      bindings.push(
-        `    ${contribution.method}(${camelCase(contribution.sink)}) {\n` +
-          "      items.push({\n" +
-          '        itemKind: "contribution",\n' +
-          `        registry: ${JSON.stringify(contribution.sink)},\n` +
-          `        refRegistry: ${JSON.stringify(contribution.refRegistry)},\n` +
-          `        ids: ${camelCase(contribution.sink)}.map((entry) => String(refId(entry))),\n` +
-          "      });\n" +
-          "    },\n"
-      );
-    }
-
-    const extendsList = [
-      `Collection<${name}Item>`,
-      ...(graft === undefined ? [] : [graft.definerInterface]),
-    ];
-    chunks.push(
-      `export interface ${name}Collection extends ${extendsList.join(", ")} {\n` +
-        members.join("\n") +
-        "}\n\n" +
-        docComment([
-          `A ${spoken} collection, optionally bound to a file stem: its definitions`,
-          `land in \`${outputDirOf(content.type)}/<prefix>_<file>.txt\`, defaulting to the`,
-          "registry's own file name. The definers register into the collection at",
-          "the definition site, so creating a definition is registering it.",
-        ]) +
-        `export function create${pascalCase(content.manifest.plural)}(\n` +
-        "  file?: string\n" +
-        `): ${name}Collection {\n` +
-        `  const { collection, items } = makeCollection<${name}Item>(file);\n` +
-        "  return {\n" +
-        "    ...collection,\n" +
-        bindings.join("") +
-        "  };\n" +
-        "}\n"
-    );
-  }
-
-  const patchNames = contents
-    .filter((content) => CONTENT_PATCH_REGISTRIES.has(content.registry))
-    .map((content) => content.emission.typeName);
-  const refImports = contents.some((content) => CONTENT_CONTRIBUTION_SINKS.has(content.registry));
-  const imports =
-    `import { ${["makeCollection", ...grafts].sort().join(", ")} } from "../factories.ts";\n` +
-    importList("../items.ts", [...runtimeItemTypes]) +
-    importList(
-      "./content-definers.ts",
-      contents.map((content) => `${content.emission.typeName}Item`)
-    ) +
-    (refImports ? 'import { refId, type TypedRef } from "./refs.ts";\n' : "") +
-    patchNames
-      .map(
-        (name) =>
-          `import { patch${name} as transform${name}, type ${name}Patch } ` +
-          'from "../vanilla/patch.ts";\n' +
-          `import type { Parsed${name} } from "../vanilla/surface.ts";\n`
-      )
-      .join("") +
-    contents
-      .map(
-        (content) =>
-          `import type { ${content.emission.typeName}Def } from ` +
-          `${JSON.stringify(`./${content.registry.replaceAll("_", "-")}.ts`)};\n`
-      )
-      .join("");
-
-  return { code: imports + "\n" + chunks.join("\n"), factories: contents.length, grafted };
-}
-
-/**
- * One free definer per registry: the SDK-23 authoring surface, where a
- * definition is a value a module exports rather than something registered into
- * a collection at the definition site.
- *
- * Same bodies as the factory bindings above, minus the `items.push` — creation
- * is no longer registration, `collection(file, items)` and `discoverContent`
- * are. Same three overlay rows reinterpret the same way: the patch registry
- * gets a free `patchX`, the contribution sink a free `addX`, and a hand-written
- * graft is re-exported from `src/factories.ts` so every definer this SDK has is
- * importable from this one module.
- *
- * The `XItem` union types live here rather than beside the factories: they
- * describe what a collection of this registry's items can hold, which outlives
- * the factory that used to be the only way to make one.
- */
-function contentDefiners(
-  contents: readonly {
-    manifest: (typeof CONTENT_MANIFEST)[number];
-    registry: string;
-    type: ContentType;
-    emission: ContentEmission;
-  }[]
-): { code: string; definers: number; grafted: number } {
-  let grafted = 0;
   const runtimeItemTypes = new Set<string>(["ContentItem"]);
   const chunks: string[] = [];
 
@@ -755,11 +558,11 @@ function contentDefiners(
           "}\n"
       );
     } else {
-      grafted += 1;
+      grafted.push(`${registry}.define${name} — ${graft.reason}`);
       definitions.push(
-        `// define${name} is hand-written (${graft.definerFactory}'s free half); re-exported\n` +
-          "// here so every definer this SDK has comes from one module.\n" +
-          `export { define${name} } from "../factories.ts";\n`
+        `// define${name} is hand-written; re-exported here so every definer this\n` +
+          "// SDK has comes from one module.\n" +
+          `export { define${name} } from "../definers.ts";\n`
       );
     }
     if (patchable !== undefined) {
@@ -829,12 +632,6 @@ function contentDefiners(
       .join("");
 
   return { code: imports + "\n" + chunks.join("\n"), definers: contents.length, grafted };
-}
-
-/** `game/common/technology` → `common/technology`; the descriptor path already
- * validated in `contentRegistry`, so this is documentation, not a check. */
-function outputDirOf(type: ContentType): string {
-  return type.path === null ? "common" : type.path.replace(/^game\//, "");
 }
 
 function contentRegistry(

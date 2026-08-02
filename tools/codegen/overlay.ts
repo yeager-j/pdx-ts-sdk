@@ -139,16 +139,12 @@ export const FIRE_EFFECTS = new Set([
 ]);
 
 export interface HandWrittenDefiner {
-  /** The interface the generated collection extends, from `src/factories.ts`. */
-  readonly definerInterface: string;
-  /** The function that builds the definer over a collection's item array. */
-  readonly definerFactory: string;
   readonly reason: string;
 }
 
 /**
- * Registries whose collection factory takes its definer from `src/factories.ts`
- * instead of the mechanical `defineX` the emitter would write.
+ * Registries whose `defineX` is re-exported from `src/definers.ts` instead of
+ * being the mechanical one the emitter would write.
  *
  * The `HAND_WRITTEN_TRIGGERS` arrangement, one level up: codegen skips the
  * member and the hand-written module supplies it, so there is exactly one
@@ -160,8 +156,6 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
   [
     "situation_type",
     {
-      definerInterface: "SituationTypeDefiner",
-      definerFactory: "situationTypeDefiner",
       reason:
         "`targetScope` is authored, emits nothing, and is carried on the returned item as the " +
         "situation target contract every `startSituation` call site is checked against " +

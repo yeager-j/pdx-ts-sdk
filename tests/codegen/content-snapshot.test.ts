@@ -724,82 +724,10 @@ describe("content-type codegen", () => {
 });
 
 /**
- * The collection factories, read from the committed output rather than
+ * The free definers (SDK-23) — the whole content surface since the collection
+ * factories were deleted — read from the committed output rather than
  * re-emitted: `npm run codegen:check` is what guarantees the file matches the
  * emitter, so asserting against the file also asserts against what ships.
- */
-describe("generated content factories", () => {
-  const factories = readFileSync("src/generated/content-factories.ts", "utf8");
-
-  it("emits one factory per manifest registry, named by its explicit plural", () => {
-    for (const manifest of CONTENT_MANIFEST) {
-      const entry = manifest as ContentManifestEntry;
-      const registry = entry.as ?? entry.type;
-      const name = pascalCase(registry);
-      expect(factories, registry).toMatch(
-        new RegExp(
-          `export function create${pascalCase(entry.plural)}\\(\\s*file\\?: string\\s*\\): ` +
-            `${name}Collection \\{`
-        )
-      );
-      expect(factories, registry).toMatch(
-        new RegExp(`export interface ${name}Collection\\s+extends Collection<${name}Item>`)
-      );
-    }
-    expect(factories.match(/^export function create/gm)).toHaveLength(CONTENT_MANIFEST.length);
-  });
-
-  it("preserves a definition's literal id through its definer", () => {
-    // The property the class methods — generic only in the mod prefix —
-    // widened away, and what every branded cross-reference downstream needs.
-    expect(factories).toContain(
-      "  defineTechnology<const Id extends string>(\n" +
-        "    def: TechnologyDef<Id>\n" +
-        '  ): ContentItem<"technology", TechnologyDef<Id>>;'
-    );
-  });
-
-  it("keeps patchTechnology on the technology factory alone", () => {
-    // A prefixed definition cannot collide with vanilla, but a patch is a
-    // whole-object override whose load order and emission are verified per
-    // registry — and only technology has that evidence.
-    expect(factories.match(/^  patch\w+</gm)).toEqual(["  patchTechnology<"]);
-    expect(factories).toContain("patched: transformTechnology(technology, patch)");
-  });
-
-  it("keeps addShipOfSizeLimits on the country_ship_of_size_limit factory alone", () => {
-    expect(factories.match(/^  add\w+\(/gm)).toEqual(["  addShipOfSizeLimits("]);
-    expect(factories).toContain('registry: "ship_of_size_limits",');
-  });
-
-  it("takes the XItem unions from the definers module rather than declaring them", () => {
-    // The unions describe what a collection of a registry's items can hold,
-    // which outlives the factory that used to be the only way to build one —
-    // so they are emitted beside the free definers and imported here. Two
-    // `export *` sources in src/index.ts must not both export the same name.
-    expect(factories).not.toMatch(/^export type \w+Item =/m);
-    expect(factories).toContain('} from "./content-definers.ts";');
-  });
-
-  it("takes situation_type's definer from the hand-written graft", () => {
-    // HAND_WRITTEN_CONTENT_DEFINERS, the HAND_WRITTEN_TRIGGERS arrangement one
-    // level up: no mechanical defineSituationType is emitted beside the graft,
-    // because `targetScope` is a contract the rules describe nowhere.
-    expect(HAND_WRITTEN_CONTENT_DEFINERS.has("situation_type")).toBe(true);
-    expect(factories).not.toContain("defineSituationType<const Id");
-    expect(factories).toContain(
-      "export interface SituationTypeCollection\n" +
-        "  extends Collection<SituationTypeItem>, SituationTypeDefiner {}"
-    );
-    expect(factories).toContain("    ...situationTypeDefiner(items),");
-    // Every other registry still gets its mechanical definer.
-    expect(factories.match(/^  define\w+<const Id/gm)).toHaveLength(CONTENT_MANIFEST.length - 1);
-  });
-});
-
-/**
- * The free definers (SDK-23), read from the committed output for the same
- * reason: `codegen:check` is what ties the file to the emitter.
  *
  * The claim is that all 34 definers are importable from this one module — 33
  * mechanical, one re-exported from the hand-written graft — and that none of
@@ -820,8 +748,13 @@ describe("generated content definers", () => {
     expect(definers.match(/^export function define\w+<const Id extends string>\(/gm)).toHaveLength(
       CONTENT_MANIFEST.length - HAND_WRITTEN_CONTENT_DEFINERS.size
     );
-    expect(definers).toContain('export { defineSituationType } from "../factories.ts";');
+    // HAND_WRITTEN_CONTENT_DEFINERS, the HAND_WRITTEN_TRIGGERS arrangement one
+    // level up: no mechanical defineSituationType is emitted beside the graft,
+    // because `targetScope` is a contract the rules describe nowhere.
+    expect(HAND_WRITTEN_CONTENT_DEFINERS.has("situation_type")).toBe(true);
+    expect(definers).toContain('export { defineSituationType } from "../definers.ts";');
     expect(definers).not.toContain("export function defineSituationType");
+    expect(definers).not.toContain("defineSituationType<const Id");
   });
 
   it("preserves a definition's literal id, and registers nothing", () => {
@@ -855,6 +788,7 @@ describe("generated content definers", () => {
         '  ContentItem<"country_ship_of_size_limit", CountryShipOfSizeLimitDef> | ContributionItem;'
     );
     expect(definers).toContain("): ContributionItem {");
+    expect(definers).toContain('registry: "ship_of_size_limits",');
     expect(definers).toContain('refRegistry: "country_ship_of_size_limit",');
   });
 });

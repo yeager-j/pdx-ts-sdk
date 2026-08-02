@@ -1,19 +1,15 @@
 /**
- * The pure authoring API's item vocabulary (SDK-22).
+ * The pure authoring API's item vocabulary (SDK-22, SDK-23).
  *
  * `buildMod(config, collections)` takes collections — never loose items.
- * Every piece of content is created through a registry-typed factory
- * (`createTechnologies(file?)`, `createEvents(file, namespace)`, ... in
- * factories.ts) whose definers register into their collection at the
- * definition site, so creation IS registration and the "defined it but
- * forgot to pass it" failure mode does not exist below the granularity of
- * a whole collection. Nested arrays flatten, so a pack is a module
- * exporting a collection or an array of them.
+ * Every piece of content is created through a free definer (`defineTechnology`,
+ * `namespace(ns).defineCountryEvent`, ...) that returns an item and registers
+ * nothing; `collection(file, items)` is what places a list of them in a file.
+ * Nested arrays flatten, so a pack is a module exporting a collection or an
+ * array of them.
  *
- * SDK-23 adds the other direction: free definers return items and register
- * nothing, and `collection(file, items)` places a list of them. The items
- * below are the vocabulary both surfaces speak, which is why they live here
- * and not beside either one.
+ * The items below are the vocabulary the definers, the collections, and the
+ * fold all speak, which is why they live here and not beside any one of them.
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
@@ -50,7 +46,7 @@ export interface ContentItem<
 }
 
 /**
- * A defined event: finished data. The factory knew the namespace, so the
+ * A defined event: finished data. The namespace handle knew the namespace, so the
  * recorder closures already ran (define-site stack traces, like the class
  * API), the full id is a plain string, and the definition-side localization
  * rides along for `buildMod` to merge. Structurally a `DefinedEvent`, so it
@@ -116,11 +112,10 @@ export type ModItem =
   ContentItem | EventItemBase | OnActionBindingItem | TechnologyPatchItem | ContributionItem;
 
 /**
- * What a factory returns (plus its definers): the file stem and the items
- * its definers registered. The list is read when `buildMod` runs. Generic
- * in its element type so a technology collection's `items` are technology
- * items — the type says what the collection can contain, not just that it
- * contains "something".
+ * One output file's worth of items: the file stem and what lands in it. The
+ * list is read when `buildMod` runs. Generic in its element type so a
+ * technology collection's `items` are technology items — the type says what
+ * the collection can contain, not just that it contains "something".
  */
 export interface Collection<T extends ModItem = ModItem> {
   readonly itemKind: "collection";
@@ -157,12 +152,10 @@ export function assertNamespace(namespace: string): void {
  * A collection over items that already exist: the manual path's primitive
  * (SDK-23).
  *
- * The factories build their collection and its items together, so creation is
- * registration. Free definers separate the two — they return items and register
- * nothing — and this is what places a list of them in a file. `discoverContent`
- * calls it once per module with the module's basename; hand-written packs call
- * it directly. The stem is validated here, once, exactly as the factories
- * validate theirs.
+ * Definers return items and register nothing, so this is what places a list of
+ * them in a file. `discoverContent` calls it once per module with the module's
+ * basename; hand-written packs call it directly. The stem is validated here,
+ * once, for every collection the SDK has.
  */
 export function collection<T extends ModItem>(
   file: string | undefined,

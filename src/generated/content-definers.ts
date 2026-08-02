@@ -403,9 +403,9 @@ export function defineArchaeologicalSiteType<const Id extends string>(
 /** What a situation type collection can contain. */
 export type SituationTypeItem = ContentItem<"situation_type", SituationTypeDef>;
 
-// defineSituationType is hand-written (situationTypeDefiner's free half); re-exported
-// here so every definer this SDK has comes from one module.
-export { defineSituationType } from "../factories.ts";
+// defineSituationType is hand-written; re-exported here so every definer this
+// SDK has comes from one module.
+export { defineSituationType } from "../definers.ts";
 
 /** What a scripted loc collection can contain. */
 export type ScriptedLocItem = ContentItem<"scripted_loc", ScriptedLocDef>;

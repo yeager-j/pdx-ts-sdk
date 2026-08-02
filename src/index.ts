@@ -215,17 +215,7 @@ export { render, write } from "./render.ts";
 // and every registry's `XItem` union.
 export * from "./generated/content-definers.ts";
 export { namespace, type EventNamespace } from "./generated/event-definers.ts";
-// One collection factory per content registry — `createTechnologies`,
-// `createAscensionPerks`, ... — with its `XCollection` type.
-export * from "./generated/content-factories.ts";
-export { createEvents, type EventCollection } from "./generated/event-factory.ts";
-export {
-  createOnActions,
-  on,
-  situationTypeDefiner,
-  type OnActionCollection,
-  type SituationTypeDefiner,
-} from "./factories.ts";
+export { on } from "./definers.ts";
 export {
   assertFileStem,
   assertNamespace,
