@@ -513,6 +513,23 @@ technology across 4 files and component templates across 14. Ergonomics only —
 but any splitting API must feed the same path-order machinery the patch resolver
 uses, not bypass it. Record the decision even if it is "no".
 
+### Pure-function authoring API (SDK-22, spiked 2026-08-01)
+
+The `Mod` builder becomes free definers plus an explicit fold:
+`defineTechnology(def)` returns a value, `buildMod(config, items, { vanilla? })`
+validates and assembles, `render(mod)`/`write(dir, files)` finish the pipeline.
+The spike (`design/pure-api-probe/`,
+[verdict](verdict-pure-api-probe.md)) proved byte parity with the class API
+across every emission channel, with no lost validation. Decisions now binding
+for the migration: prefix typing drops (missing prefix is a warning on the
+value; collision with a real vanilla id under an injected view is a hard
+error), `buildMod` takes one flat tagged-value array (nested arrays flatten —
+the SDK-19 file-group extension point), warnings are data on the returned
+value, deferred events stamp their namespace in `buildMod` (forward references
+become legal), and the generated `Def` types must stop reusing `Id` for nested
+repeated-struct keys. Migration priced at ≈6–9 focused days; sequence it
+before the consumer-codegen work so the generated surface migrates once.
+
 ## Cross-cutting, unscheduled
 
 - **`inline_script`** — 285 buildings, 146 jobs, 36 weapon components, 27

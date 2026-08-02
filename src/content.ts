@@ -719,16 +719,23 @@ export class ContentAuthoring {
   private readonly definitions = new Map<string, ContentDefinition<string, ContentDef>[]>();
   private readonly nestedIds = new Map<string, Set<string>>();
   private readonly registerLoc: RegisterLoc;
+  private readonly onPrefixViolation: (message: string) => void;
 
   constructor(
     prefix: string,
     descriptors: readonly ContentRegistryDescriptor[],
-    registerLoc: RegisterLoc
+    registerLoc: RegisterLoc,
+    onPrefixViolation?: (message: string) => void
   ) {
     this.prefix = prefix;
     this.descriptors = descriptors;
     this.byType = new Map(descriptors.map((descriptor) => [descriptor.type, descriptor]));
     this.registerLoc = registerLoc;
+    this.onPrefixViolation =
+      onPrefixViolation ??
+      ((message) => {
+        throw new Error(message);
+      });
   }
 
   define<K extends string, D extends ContentDef>(type: K, def: D): DefinedContent<K, D> {
@@ -784,7 +791,7 @@ export class ContentAuthoring {
 
   private assertPrefixed(type: string, id: string): void {
     if (!id.startsWith(`${this.prefix}_`)) {
-      throw new Error(
+      this.onPrefixViolation(
         `${type} id "${id}" must start with the mod prefix "${this.prefix}_" ` +
           "so it cannot collide with vanilla or other mods"
       );
