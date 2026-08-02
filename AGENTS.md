@@ -147,9 +147,16 @@ differential, and fast-check property gates described in that package.
   emitted file path, then id; event files sort by path with numeric ids inside a file; on-action
   hook blocks, the contribution sink and the patch list sort by name or id. Arrays *inside* a
   definition (prerequisites, event options, one `on()` call's event list) are author data and are
-  emitted as written. Moving a definition between files or reordering an argument list must not
-  change a byte of output — the order-purity test in `tests/pure-api.test.ts` and hello-galaxy's
-  goldens surviving its restructure into `content/` are the standing evidence.
+  emitted as written. Reordering collections, exports, or authoring statements must not change a
+  byte of output, and moving a definition to another module must change only which file it lands
+  in — never its id, its bytes, or its position among its neighbors. The standing evidence is the
+  order-purity test in `tests/pure-api.test.ts` (two reversed authoring orders rendering
+  identically) and the identity-preservation test in `tests/example-mod.test.ts` (hello-galaxy's
+  ids, event namespace, and localization frozen across its restructure into feature modules).
+- One feature module fans out across every registry it defines into, keeping its stem in each:
+  `content/resonance.ts` holding technologies and events emits both
+  `common/technology/<prefix>_resonance.txt` and `events/<prefix>_resonance.txt`. That is a
+  property of `collection(stem, items)`, not of `discoverContent`.
 - An event namespace and an event file are in bijection: one namespace per file, one file per
   namespace. A namespace's events therefore live in one module.
 - Runtime effect recording is scope-agnostic; generated interfaces enforce which effects and

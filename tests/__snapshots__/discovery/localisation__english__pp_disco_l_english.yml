@@ -1,7 +1,8 @@
 ﻿l_english:
  pp_disco_tech_beacon_network:0 "Beacon Network"
- pp_disco_tech_chorus_rites:0 "Chorus Rites"
  pp_disco_tech_survey_doctrine:0 "Survey Doctrine"
+ pp_disco_tech_chorus_rites:0 "Chorus Rites"
+ pp_disco_tech_vigil_cadence:0 "Vigil Cadence"
  pp_disco.1.name:0 "First Light"
  pp_disco.1.desc:0 "The beacons come online."
  pp_disco.1.a:0 "Onward."

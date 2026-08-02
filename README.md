@@ -21,30 +21,32 @@ The SDK is a compiler, so **source layout and output layout are decoupled**.
 Write a module per feature, put its technologies, its events, and its hook
 bindings in it, and let the build sort out where the game wants them. What a
 module's basename decides is only the emitted _file stem_, so the grouping is
-still visible in the built mod: two features' `technology.ts` modules merge
-into one `common/technology/<prefix>_technology.txt`, and a feature that gets
-its own stem gets its own file.
+still visible in the built mod: one feature module fans out across every
+registry it defined into, keeping its name in each — `resonance.ts` becomes
+`common/technology/<prefix>_resonance.txt` _and_
+`events/<prefix>_resonance.txt`. Features small enough to share a file share a
+basename instead, and same-stem modules merge.
 
 ## Quickstart
 
 ```
 examples/hello-galaxy/
-├── mod.ts                  # config + the fold
-├── flags.ts                # shared values live outside content/
+├── mod.ts             # config + the fold
+├── flags.ts           # shared values live outside content/
 └── content/
-    ├── resonance/
-    │   ├── technology.ts   → common/technology/hello_galaxy_technology.txt
-    │   └── events.ts       → events/hello_galaxy_events.txt
-    └── amplifiers/
-        └── technology.ts   → the same technology file
+    ├── resonance.ts   → common/technology/hello_galaxy_resonance.txt
+    │                  → events/hello_galaxy_resonance.txt
+    └── amplifiers.ts  → common/technology/hello_galaxy_amplifiers.txt
 ```
 
 ```ts
-// content/resonance/technology.ts — a definer returns an item; exporting it
-// is what registers it. Nothing is global and nothing is implicit.
-import { and, defineTechnology, hasCountryFlag, not } from "@pdx-ts/sdk";
+// content/resonance.ts — technologies and events of one feature, in one
+// module. A definer returns an item; exporting it is what registers it.
+// Nothing is global and nothing is implicit.
+// → common/technology/hello_galaxy_resonance.txt, events/hello_galaxy_resonance.txt
+import { and, defineTechnology, hasCountryFlag, namespace, not } from "@pdx-ts/sdk";
 
-import { flags } from "../../flags.ts";
+import { flags } from "../flags.ts";
 
 export const theory = defineTechnology({
   id: "hello_galaxy_tech_resonance_theory",
@@ -67,6 +69,19 @@ export const weapons = defineTechnology({
     hasCountryFlag(flags.hello_galaxy_heard_the_hum),
     not(hasCountryFlag(flags.hello_galaxy_pacifist_path))
   ),
+});
+
+// The same feature's events, right here — the flag the technology gates on is
+// the flag this event sets. Stellaris wants them in different directories; the
+// feature wants them on the same screen. The build settles it.
+const events = namespace("hello_galaxy"); // local: one namespace per file
+
+export const humReturns = events.defineCountryEvent({
+  id: 1, // → hello_galaxy.1, from birth
+  title: "The Hum Returns",
+  isTriggeredOnly: true,
+  immediate: (country) => country.setCountryFlag(flags.hello_galaxy_heard_the_hum),
+  options: [{ name: "Fascinating." }],
 });
 ```
 
@@ -97,11 +112,14 @@ constants — live in a module outside `content/`, because everything a
 discovered module exports is registered. Anything that is not a `.ts` file is
 ignored, so notes and data files can sit beside the definitions they belong to.
 
-Layout has no effect on output. Emission order is a function of the content
-alone — registry order, then file path, then id — so moving a definition
-between feature folders, or reordering exports, cannot change a byte. The one
-order that _is_ author data is a hook's event list, and it is written where it
-belongs: inside a single `on(hook, [first, second])` call.
+Layout is not identity. A module's basename picks the file stem and nothing
+else: ids are authored, localization is keyed by id, and emission order is a
+function of the content alone — registry order, then file path, then id — so
+moving a definition to another feature module changes which file it is written
+into and not one byte of the definition, its id, or its position relative to
+its neighbors. Reordering exports changes nothing at all. The one order that
+_is_ author data is a hook's event list, and it is written where it belongs:
+inside a single `on(hook, [first, second])` call.
 
 `buildMod` is where every cross-collection check happens (duplicate ids,
 localization key collisions, event references with no definition behind them),
@@ -122,9 +140,14 @@ const theory = defineTechnology({ ... });
 
 const mod = buildMod(config, [
   collection(undefined, [theory]), // the registry's default file stem
-  collection("ascension", [ascensionTech]), // common/technology/<prefix>_ascension.txt
+  collection("ascension", [ascensionTech, ascensionEvent]),
+  // → common/technology/<prefix>_ascension.txt, events/<prefix>_ascension.txt
 ]);
 ```
+
+The fan-out is the collection's, not discovery's: one stem plus a list spanning
+two registries is two files, one per registry directory. `discoverContent` only
+supplies the stem from a filename.
 
 That is how a reusable pack ships (a module exporting a collection is data,
 not a callback), and how a build assembles content that never came from a
@@ -623,7 +646,10 @@ npm run build        # emit dist/
 ```
 
 The golden files under `tests/__snapshots__/hello-galaxy/` are the emitted
-PDXScript, reviewable in PRs.
+PDXScript, reviewable in PRs. `tests/example-mod.test.ts` also freezes what the
+example's restructure into feature modules could not change — its technology
+ids, its event namespace and ids, and its localization bytes — so a layout
+change that moved identity would fail rather than be re-baselined.
 
 ## Status
 

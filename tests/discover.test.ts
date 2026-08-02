@@ -4,7 +4,7 @@
  *
  * Two kinds of evidence. The committed fixture under
  * `tests/fixtures/content-discovery/` is the happy path end to end — feature
- * folders in, a rendered mod out — and everything else is written into a fresh
+ * modules in, a rendered mod out — and everything else is written into a fresh
  * temp directory per test. Fresh is not optional: `import()` caches by URL, so
  * a mutated-and-reimported module would keep serving its first version.
  */
@@ -62,11 +62,10 @@ describe("discoverContent over the committed fixture", () => {
     const collections = await discoverContent(FIXTURE);
     expect(collections.map((entry) => entry.file)).toEqual([
       "technology",
-      "events",
-      "hooks",
+      "expansion",
       "technology",
     ]);
-    expect(collections.map((entry) => entry.items.length)).toEqual([1, 2, 1, 2]);
+    expect(collections.map((entry) => entry.items.length)).toEqual([1, 5, 1]);
   });
 
   it("accepts a directory URL as well as a path", async () => {
@@ -79,8 +78,9 @@ describe("discoverContent over the committed fixture", () => {
     const files = render(buildMod(config, await discoverContent(FIXTURE)));
     expect([...files.keys()]).toEqual([
       "descriptor.mod",
+      "common/technology/pp_disco_expansion.txt",
       "common/technology/pp_disco_technology.txt",
-      "events/pp_disco_events.txt",
+      "events/pp_disco_expansion.txt",
       "common/on_actions/pp_disco_on_actions.txt",
       "localisation/english/pp_disco_l_english.yml",
     ]);
@@ -91,13 +91,27 @@ describe("discoverContent over the committed fixture", () => {
     }
   });
 
+  it("fans one feature module out to every registry it defined into", async () => {
+    // `expansion.ts` is a whole feature — technologies, events, and the hook
+    // that fires them — so its one stem reaches two registry directories under
+    // the same name, plus the on-action file every hook shares.
+    const files = render(buildMod(config, await discoverContent(FIXTURE)));
+    expect([...files.keys()]).toContain("common/technology/pp_disco_expansion.txt");
+    expect([...files.keys()]).toContain("events/pp_disco_expansion.txt");
+    expect(
+      [...files.get("common/technology/pp_disco_expansion.txt")!.matchAll(/^(\w+) = \{$/gm)].map(
+        (match) => match[1]
+      )
+    ).toEqual(["pp_disco_tech_beacon_network", "pp_disco_tech_survey_doctrine"]);
+    expect(files.get("events/pp_disco_expansion.txt")).toContain("namespace = pp_disco");
+  });
+
   it("merges the two feature folders' technology.ts into one registry file", async () => {
     const files = render(buildMod(config, await discoverContent(FIXTURE)));
     const technology = files.get("common/technology/pp_disco_technology.txt")!;
     expect([...technology.matchAll(/^(\w+) = \{$/gm)].map((match) => match[1])).toEqual([
-      "pp_disco_tech_beacon_network",
       "pp_disco_tech_chorus_rites",
-      "pp_disco_tech_survey_doctrine",
+      "pp_disco_tech_vigil_cadence",
     ]);
   });
 

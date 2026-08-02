@@ -627,6 +627,39 @@ describe("content reference integrity", () => {
 });
 
 describe("collections", () => {
+  it("fans one stem out to every registry the collection's items belong to", () => {
+    // The mechanism behind feature colocation, independent of `discoverContent`:
+    // one collection holding a technology and an event is one *feature*, and
+    // the stem it carries names a file in each registry directory those items
+    // land in. Stellaris still gets one directory per registry; the author
+    // still writes one module per feature.
+    const amplifiers = collection("amplifiers", [
+      defineTechnology({
+        id: "pp_mod_tech_amplifier",
+        name: "Amplifier",
+        area: "physics",
+        tier: 1,
+        category: "particles",
+      }),
+      namespace("pp_mod_amp").defineCountryEvent({
+        id: 1,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
+    const files = render(buildMod(CONFIG, [amplifiers]));
+    expect([...files.keys()]).toEqual([
+      "descriptor.mod",
+      "common/technology/pp_mod_amplifiers.txt",
+      "events/pp_mod_amplifiers.txt",
+      "localisation/english/pp_mod_l_english.yml",
+    ]);
+    expect(files.get("common/technology/pp_mod_amplifiers.txt")).toContain(
+      "pp_mod_tech_amplifier = {"
+    );
+    expect(files.get("events/pp_mod_amplifiers.txt")).toContain("namespace = pp_mod_amp");
+  });
+
   it("merges same-stem content collections, ordering the merge by id", () => {
     // Passed second-collection-first: the merged file is still id-sorted, so
     // which collection contributed a definition is not observable in the

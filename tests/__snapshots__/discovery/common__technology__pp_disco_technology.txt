@@ -1,12 +1,3 @@
-pp_disco_tech_beacon_network = {
-	area = physics
-	tier = 2
-	category = { computing }
-	cost = 2000
-	weight = 70
-	prerequisites = { "pp_disco_tech_survey_doctrine" }
-}
-
 pp_disco_tech_chorus_rites = {
 	area = society
 	tier = 2
@@ -16,10 +7,10 @@ pp_disco_tech_chorus_rites = {
 	prerequisites = { "pp_disco_tech_beacon_network" }
 }
 
-pp_disco_tech_survey_doctrine = {
+pp_disco_tech_vigil_cadence = {
 	area = society
-	tier = 1
+	tier = 3
 	category = { statecraft }
-	cost = 1000
-	weight = 90
+	cost = 4000
+	weight = 40
 }

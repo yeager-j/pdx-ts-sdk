@@ -590,20 +590,40 @@ Shipped decisions:
    existing duplicate-id error.
 5. Same-basename modules in different folders share a stem and merge, which is
    what lets two features emit into one registry file.
+6. One module's stem fans out across every registry it defined into, so a
+   feature module holding technologies and events emits
+   `common/technology/<prefix>_<stem>.txt` *and* `events/<prefix>_<stem>.txt`.
+   That is `collection(stem, items)`'s property; `discoverContent` only takes
+   the stem from a filename.
 
 The showcase is `examples/hello-galaxy/`, restructured from a single `mod.ts`
-into `content/resonance/{technology,events}.ts` +
-`content/amplifiers/technology.ts` with **its golden `out/` tree byte-identical
-across the move** — the demonstration that source layout is decoupled from
-output. `discoverContent` is a convenience over `collection`, so the manual path
-stays first-class and `examples/hardening/` remains its living example.
+into `content/resonance.ts` (technologies + events) and
+`content/amplifiers.ts` — one feature per module, fanned out to
+`common/technology/hello_galaxy_{amplifiers,resonance}.txt` and
+`events/hello_galaxy_resonance.txt`. `discoverContent` is a convenience over
+`collection`, so the manual path stays first-class and `examples/hardening/`
+remains its living example.
 
-Landed in five sequential chunks on `feature/pure-api`: 56e842e (canonical
+The interim restructure (56cfa27) kept content-type-shaped modules —
+`content/resonance/{technology,events}.ts` + `content/amplifiers/technology.ts`
+— which made the golden `out/` tree byte-identical across the move but
+demonstrated the anti-pattern the ticket exists to kill. This chunk fixes that:
+the goldens moved deliberately (`hello_galaxy_technology.txt` →
+`{amplifiers,resonance}.txt`, `hello_galaxy_events.txt` →
+`hello_galaxy_resonance.txt`), with every definition byte-identical inside its
+new file, and the claim is now stated sharply rather than by byte-parity — an
+identity-preservation test in `tests/example-mod.test.ts` freezes the
+technology id set, the event namespace and full ids, and the localization
+bytes across the regrouping.
+
+Landed in six sequential chunks on `feature/pure-api`: 56e842e (canonical
 emission order, the one golden recapture), b2e8dc7 (free definers beside the
 factories, `namespace`/`on`/`collection`, the bijection check), 8a16415 (every
 consumer migrated, zero golden movement), e8e0ce0 (factories deleted;
-`src/factories.ts` became `src/definers.ts`), and this chunk (`discoverContent`,
-the hello-galaxy restructure, and the docs).
+`src/factories.ts` became `src/definers.ts`), 56cfa27 (`discoverContent` and the
+first hello-galaxy restructure), and this chunk (feature fan-out in the
+showcase, the fixture, and the docs, plus the fan-out and
+identity-preservation tests).
 
 ## Cross-cutting, unscheduled
 

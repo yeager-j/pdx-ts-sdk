@@ -1,0 +1,16 @@
+pp_disco_tech_beacon_network = {
+	area = physics
+	tier = 2
+	category = { computing }
+	cost = 2000
+	weight = 70
+	prerequisites = { "pp_disco_tech_survey_doctrine" }
+}
+
+pp_disco_tech_survey_doctrine = {
+	area = society
+	tier = 1
+	category = { statecraft }
+	cost = 1000
+	weight = 90
+}

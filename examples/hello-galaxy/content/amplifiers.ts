@@ -1,5 +1,10 @@
 /**
- * The amplifier ladder: a separate feature, the same registry file.
+ * The amplifier ladder: a second feature, a second stem.
+ *
+ * It emits `common/technology/hello_galaxy_amplifiers.txt` — the same registry
+ * as `resonance.ts`, a different file, because the file stem is the module's
+ * basename. Two features, two files, no folder in the output that Stellaris did
+ * not ask for.
  *
  * It imports the resonance feature's first technology and requires it, without
  * re-exporting it — importing a value is not registering it, so the theory tech
@@ -7,8 +12,8 @@
  * place the same definition twice, which `buildMod` reports as a duplicate id.)
  */
 
-import { defineTechnology, type TechnologyItem } from "../../../../src/index.ts";
-import { resonanceTheory } from "../resonance/technology.ts";
+import { defineTechnology, type TechnologyItem } from "../../../src/index.ts";
+import { resonanceTheory } from "./resonance.ts";
 
 // Build-time loop: one definition, five tiers of amplifier techs, each
 // requiring the previous — the "generate fifty variants" superpower. Discovery

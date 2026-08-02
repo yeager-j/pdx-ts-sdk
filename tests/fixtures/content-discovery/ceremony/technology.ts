@@ -1,11 +1,12 @@
 /**
- * A second feature emitting into the same registry file. It imports the
- * expansion feature's technology to require it, without re-exporting it:
- * importing a value is not registering it.
+ * A small feature that shares a registry file with `../ritual/technology.ts`
+ * rather than claiming a stem of its own. It imports the expansion feature's
+ * technology to require it, without re-exporting it: importing a value is not
+ * registering it.
  */
 
 import { defineTechnology } from "../../../../src/index.ts";
-import { beaconNetwork } from "../expansion/technology.ts";
+import { beaconNetwork } from "../expansion.ts";
 
 export const chorusRites = defineTechnology({
   id: "pp_disco_tech_chorus_rites",
