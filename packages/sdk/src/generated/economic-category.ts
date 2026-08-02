@@ -20,10 +20,22 @@ export interface EconomicCategoryTriggeredCostModifier {
 }
 
 export const ECONOMIC_CATEGORY_TRIGGERED_COST_MODIFIER_FIELDS: readonly ContentField[] = [
-  { key: "key", member: "key", shape: "value", conversion: "ref" },
-  { key: "use_parent_icon", member: "useParentIcon", shape: "value", conversion: "identity" },
-  { key: "modifier_types", member: "modifierTypes", shape: "valueList", conversion: "identity" },
-  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "key", member: "key", shape: "value", form: "scalar", conversion: "ref" },
+  {
+    key: "use_parent_icon",
+    member: "useParentIcon",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "modifier_types",
+    member: "modifierTypes",
+    shape: "valueList",
+    form: "list",
+    conversion: "identity",
+  },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
 export interface EconomicCategoryTriggeredProducesModifier {
@@ -34,10 +46,22 @@ export interface EconomicCategoryTriggeredProducesModifier {
 }
 
 export const ECONOMIC_CATEGORY_TRIGGERED_PRODUCES_MODIFIER_FIELDS: readonly ContentField[] = [
-  { key: "key", member: "key", shape: "value", conversion: "ref" },
-  { key: "use_parent_icon", member: "useParentIcon", shape: "value", conversion: "identity" },
-  { key: "modifier_types", member: "modifierTypes", shape: "valueList", conversion: "identity" },
-  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "key", member: "key", shape: "value", form: "scalar", conversion: "ref" },
+  {
+    key: "use_parent_icon",
+    member: "useParentIcon",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "modifier_types",
+    member: "modifierTypes",
+    shape: "valueList",
+    form: "list",
+    conversion: "identity",
+  },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
 export interface EconomicCategoryTriggeredUpkeepModifier {
@@ -48,10 +72,22 @@ export interface EconomicCategoryTriggeredUpkeepModifier {
 }
 
 export const ECONOMIC_CATEGORY_TRIGGERED_UPKEEP_MODIFIER_FIELDS: readonly ContentField[] = [
-  { key: "key", member: "key", shape: "value", conversion: "ref" },
-  { key: "use_parent_icon", member: "useParentIcon", shape: "value", conversion: "identity" },
-  { key: "modifier_types", member: "modifierTypes", shape: "valueList", conversion: "identity" },
-  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "key", member: "key", shape: "value", form: "scalar", conversion: "ref" },
+  {
+    key: "use_parent_icon",
+    member: "useParentIcon",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "modifier_types",
+    member: "modifierTypes",
+    shape: "valueList",
+    form: "list",
+    conversion: "identity",
+  },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
 export interface EconomicCategoryTriggeredLogisticsModifier {
@@ -62,10 +98,22 @@ export interface EconomicCategoryTriggeredLogisticsModifier {
 }
 
 export const ECONOMIC_CATEGORY_TRIGGERED_LOGISTICS_MODIFIER_FIELDS: readonly ContentField[] = [
-  { key: "key", member: "key", shape: "value", conversion: "ref" },
-  { key: "use_parent_icon", member: "useParentIcon", shape: "value", conversion: "identity" },
-  { key: "modifier_types", member: "modifierTypes", shape: "valueList", conversion: "identity" },
-  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "key", member: "key", shape: "value", form: "scalar", conversion: "ref" },
+  {
+    key: "use_parent_icon",
+    member: "useParentIcon",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "modifier_types",
+    member: "modifierTypes",
+    shape: "valueList",
+    form: "list",
+    conversion: "identity",
+  },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
 /**
@@ -111,43 +159,67 @@ export const ECONOMIC_CATEGORY_FIELDS: readonly ContentField[] = [
     key: "parent",
     member: "parent",
     shape: "value",
+    form: "scalar",
     conversion: "ref",
     refTypes: ["economic_category"],
   },
-  { key: "use_for_ai_budget", member: "useForAiBudget", shape: "value", conversion: "identity" },
+  {
+    key: "use_for_ai_budget",
+    member: "useForAiBudget",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "ai_use_parent_for_resources_upkeep",
     member: "aiUseParentForResourcesUpkeep",
     shape: "valueList",
+    form: "list",
     conversion: "ref",
     refTypes: ["resource"],
   },
-  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
-  { key: "hidden", member: "hidden", shape: "value", conversion: "identity" },
-  { key: "modifier_category", member: "modifierCategory", shape: "value", conversion: "identity" },
+  { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "hidden", member: "hidden", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "modifier_category",
+    member: "modifierCategory",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "add_unscaled_value_to_tooltip",
     member: "addUnscaledValueToTooltip",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
-  { key: "scaled_value_key", member: "scaledValueKey", shape: "value", conversion: "identity" },
+  {
+    key: "scaled_value_key",
+    member: "scaledValueKey",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "generate_add_modifiers",
     member: "generateAddModifiers",
     shape: "valueList",
+    form: "list",
     conversion: "identity",
   },
   {
     key: "generate_mult_modifiers",
     member: "generateMultModifiers",
     shape: "valueList",
+    form: "list",
     conversion: "identity",
   },
   {
     key: "triggered_cost_modifier",
     member: "triggeredCostModifier",
     shape: "struct",
+    form: "list",
     fields: ECONOMIC_CATEGORY_TRIGGERED_COST_MODIFIER_FIELDS,
     repeated: true,
   },
@@ -155,6 +227,7 @@ export const ECONOMIC_CATEGORY_FIELDS: readonly ContentField[] = [
     key: "triggered_produces_modifier",
     member: "triggeredProducesModifier",
     shape: "struct",
+    form: "list",
     fields: ECONOMIC_CATEGORY_TRIGGERED_PRODUCES_MODIFIER_FIELDS,
     repeated: true,
   },
@@ -162,6 +235,7 @@ export const ECONOMIC_CATEGORY_FIELDS: readonly ContentField[] = [
     key: "triggered_upkeep_modifier",
     member: "triggeredUpkeepModifier",
     shape: "struct",
+    form: "list",
     fields: ECONOMIC_CATEGORY_TRIGGERED_UPKEEP_MODIFIER_FIELDS,
     repeated: true,
   },
@@ -169,6 +243,7 @@ export const ECONOMIC_CATEGORY_FIELDS: readonly ContentField[] = [
     key: "triggered_logistics_modifier",
     member: "triggeredLogisticsModifier",
     shape: "struct",
+    form: "list",
     fields: ECONOMIC_CATEGORY_TRIGGERED_LOGISTICS_MODIFIER_FIELDS,
     repeated: true,
   },

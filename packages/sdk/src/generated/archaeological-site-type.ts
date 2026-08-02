@@ -18,8 +18,8 @@ export interface ArchaeologicalSiteTypeDesc {
 }
 
 export const ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS: readonly ContentField[] = [
-  { key: "trigger", member: "trigger", shape: "trigger" },
-  { key: "text", member: "text", shape: "value", conversion: "identity" },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
 export interface ArchaeologicalSiteTypeStageDifficulty {
@@ -28,8 +28,8 @@ export interface ArchaeologicalSiteTypeStageDifficulty {
 }
 
 export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_DIFFICULTY_FIELDS: readonly ContentField[] = [
-  { key: "min", member: "min", shape: "value", conversion: "identity" },
-  { key: "max", member: "max", shape: "value", conversion: "identity" },
+  { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
 export interface ArchaeologicalSiteTypeStage {
@@ -47,17 +47,38 @@ export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS: readonly ContentField[] = [
     member: "difficulty",
     shape: "dual",
     arms: [
-      { key: "difficulty", member: "difficulty", shape: "value", conversion: "identity" },
+      {
+        key: "difficulty",
+        member: "difficulty",
+        shape: "value",
+        form: "scalar",
+        conversion: "identity",
+      },
       {
         key: "difficulty",
         member: "difficulty",
         shape: "struct",
+        form: "block",
         fields: ARCHAEOLOGICAL_SITE_TYPE_STAGE_DIFFICULTY_FIELDS,
       },
     ],
   },
-  { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
-  { key: "event", member: "event", shape: "value", conversion: "ref", refTypes: ["event.fleet"] },
+  {
+    key: "icon",
+    member: "icon",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
+  {
+    key: "event",
+    member: "event",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["event.fleet"],
+  },
 ];
 
 /**
@@ -108,17 +129,25 @@ export type DefinedArchaeologicalSiteType<Id extends string = string> = DefinedC
 >;
 
 export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
-  { key: "picture", member: "picture", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  {
+    key: "picture",
+    member: "picture",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
   {
     key: "desc",
     member: "desc",
     shape: "dual",
     arms: [
-      { key: "desc", member: "desc", shape: "value", conversion: "identity" },
+      { key: "desc", member: "desc", shape: "value", form: "scalar", conversion: "identity" },
       {
         key: "desc",
         member: "desc",
         shape: "struct",
+        form: "list",
         fields: ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS,
         repeated: true,
       },
@@ -128,14 +157,22 @@ export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
     key: "situation_log_category",
     member: "situationLogCategory",
     shape: "value",
+    form: "scalar",
     conversion: "ref",
     refTypes: ["situation_log_category"],
   },
-  { key: "max_instances", member: "maxInstances", shape: "value", conversion: "identity" },
+  {
+    key: "max_instances",
+    member: "maxInstances",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "notification_duration",
     member: "notificationDuration",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
   {
@@ -143,24 +180,25 @@ export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
     member: "weight",
     shape: "dual",
     arms: [
-      { key: "weight", member: "weight", shape: "weightBlock" },
-      { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+      { key: "weight", member: "weight", shape: "weightBlock", form: "block" },
+      { key: "weight", member: "weight", shape: "value", form: "scalar", conversion: "identity" },
     ],
   },
-  { key: "stages", member: "stages", shape: "value", conversion: "identity" },
-  { key: "potential", member: "potential", shape: "trigger" },
-  { key: "allow", member: "allow", shape: "trigger" },
-  { key: "visible", member: "visible", shape: "trigger" },
+  { key: "stages", member: "stages", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
+  { key: "allow", member: "allow", shape: "trigger", form: "trigger" },
+  { key: "visible", member: "visible", shape: "trigger", form: "trigger" },
   {
     key: "stage",
     member: "stage",
     shape: "struct",
+    form: "list",
     fields: ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS,
     repeated: true,
   },
-  { key: "on_roll_failed", member: "onRollFailed", shape: "effect" },
-  { key: "on_create", member: "onCreate", shape: "effect" },
-  { key: "on_visible", member: "onVisible", shape: "effect" },
+  { key: "on_roll_failed", member: "onRollFailed", shape: "effect", form: "closure" },
+  { key: "on_create", member: "onCreate", shape: "effect", form: "closure" },
+  { key: "on_visible", member: "onVisible", shape: "effect", form: "closure" },
 ];
 
 export const ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION: readonly ContentLocalisation[] = [

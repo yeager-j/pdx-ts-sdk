@@ -9,8 +9,7 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@pdx-ts/pdxscript": "*",
-    "@pdx-ts/sdk": "*"
+    "@pdx-ts/pdxscript": "*"
   },
   "devDependencies": {
     "prettier": "^3.9.6"

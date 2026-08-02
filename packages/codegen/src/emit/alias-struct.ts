@@ -27,6 +27,7 @@
 import type { RuleField, RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import { camelCase, docComment, isPlainName, pascalCase } from "../naming.ts";
+import { authoredForm } from "./authored-form.ts";
 import type { Emitter, TsValue } from "./types.ts";
 
 export interface AliasStructEmission {
@@ -203,7 +204,8 @@ function conversionOf(value: TsValue): "identity" | "ref" {
 function valueField(key: string, value: TsValue): string {
   return (
     `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
-    `shape: "value", conversion: ${JSON.stringify(conversionOf(value))} },\n`
+    `shape: "value", form: ${JSON.stringify(authoredForm({ shape: "value" }))}, ` +
+    `conversion: ${JSON.stringify(conversionOf(value))} },\n`
   );
 }
 
@@ -272,13 +274,15 @@ export function emitAliasStruct(
       blockMembers.push(`${docs}  ${memberName(name)}?: ${clauseName}<${shape.ref.type}>;\n`);
       metadata.push(
         `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(memberName(name))}, ` +
-          `shape: "struct", fields: ${clauseFieldsConstant} },\n`
+          `shape: "struct", form: ${JSON.stringify(authoredForm({ shape: "struct" }))}, ` +
+          `fields: ${clauseFieldsConstant} },\n`
       );
     } else {
       blockMembers.push(`${docs}  ${memberName(name)}?: readonly ${typeName}[];\n`);
       metadata.push(
         `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(memberName(name))}, ` +
-          `shape: "aliasStruct", category: ${JSON.stringify(category)}, repeated: true },\n`
+          `shape: "aliasStruct", form: ${JSON.stringify(authoredForm({ shape: "aliasStruct", repeated: true }))}, ` +
+          `category: ${JSON.stringify(category)}, repeated: true },\n`
       );
     }
     emittedMembers.push(name);
@@ -319,18 +323,22 @@ export function emitAliasStruct(
         `  nor?: readonly ${groupName}<R>[];\n` +
         "}\n\n" +
         `export const ${groupFieldsConstant}: readonly ContentField[] = [\n` +
-        '  { key: "text", member: "text", shape: "value", conversion: "identity" },\n' +
+        `  { key: "text", member: "text", shape: "value", ` +
+        `form: ${JSON.stringify(authoredForm({ shape: "value" }))}, conversion: "identity" },\n` +
         `  { key: "value", member: "values", shape: "value", ` +
+        `form: ${JSON.stringify(authoredForm({ shape: "value", repeated: true }))}, ` +
         `conversion: ${JSON.stringify(conversionOf(groupValue.ref))}, repeated: true },\n` +
         "];\n\n" +
         `export const ${clauseFieldsConstant}: readonly ContentField[] = [\n` +
         `  { key: "value", member: "value", shape: "value", ` +
+        `form: ${JSON.stringify(authoredForm({ shape: "value" }))}, ` +
         `conversion: ${JSON.stringify(conversionOf(groupValue.ref))} },\n` +
         [...GROUP_KEYS]
           .map(
             (key) =>
               `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
-              `shape: "struct", fields: ${groupFieldsConstant}, repeated: true },\n`
+              `shape: "struct", form: ${JSON.stringify(authoredForm({ shape: "struct", repeated: true }))}, ` +
+              `fields: ${groupFieldsConstant}, repeated: true },\n`
           )
           .join("") +
         "];\n\n";

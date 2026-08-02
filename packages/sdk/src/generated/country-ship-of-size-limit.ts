@@ -40,13 +40,20 @@ export const COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS: readonly ContentField[] = [
     key: "ship_types",
     member: "shipTypes",
     shape: "valueList",
+    form: "list",
     conversion: "ref",
     refTypes: ["ship_size"],
   },
-  { key: "base", member: "base", shape: "value", conversion: "identity" },
-  { key: "max", member: "max", shape: "value", conversion: "identity" },
-  { key: "naval_cap_fraction", member: "navalCapFraction", shape: "value", conversion: "identity" },
-  { key: "show", member: "show", shape: "trigger" },
+  { key: "base", member: "base", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "naval_cap_fraction",
+    member: "navalCapFraction",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "show", member: "show", shape: "trigger", form: "trigger" },
 ];
 
 export const COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION: readonly ContentLocalisation[] = [];

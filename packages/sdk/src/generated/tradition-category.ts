@@ -13,8 +13,8 @@ export interface TraditionCategoryDesc {
 }
 
 export const TRADITION_CATEGORY_DESC_FIELDS: readonly ContentField[] = [
-  { key: "trigger", member: "trigger", shape: "trigger" },
-  { key: "text", member: "text", shape: "value", conversion: "identity" },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
 /**
@@ -50,14 +50,22 @@ export const TRADITION_CATEGORY_FIELDS: readonly ContentField[] = [
     key: "desc",
     member: "conditionalDesc",
     shape: "struct",
+    form: "list",
     fields: TRADITION_CATEGORY_DESC_FIELDS,
     repeated: true,
   },
-  { key: "tree_template", member: "treeTemplate", shape: "value", conversion: "identity" },
+  {
+    key: "tree_template",
+    member: "treeTemplate",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "adoption_bonus",
     member: "adoptionBonus",
     shape: "value",
+    form: "scalar",
     conversion: "ref",
     refTypes: ["tradition"],
   },
@@ -65,6 +73,7 @@ export const TRADITION_CATEGORY_FIELDS: readonly ContentField[] = [
     key: "finish_bonus",
     member: "finishBonus",
     shape: "value",
+    form: "scalar",
     conversion: "ref",
     refTypes: ["tradition"],
   },
@@ -72,11 +81,12 @@ export const TRADITION_CATEGORY_FIELDS: readonly ContentField[] = [
     key: "traditions",
     member: "traditions",
     shape: "valueList",
+    form: "list",
     conversion: "ref",
     refTypes: ["tradition"],
   },
-  { key: "potential", member: "potential", shape: "trigger" },
-  { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
+  { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
+  { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
 export const TRADITION_CATEGORY_LOCALISATION: readonly ContentLocalisation[] = [

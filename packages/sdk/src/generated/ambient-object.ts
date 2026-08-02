@@ -35,13 +35,26 @@ export const AMBIENT_OBJECT_FIELDS: readonly ContentField[] = [
     key: "entity",
     member: "entity",
     shape: "value",
+    form: "scalar",
     conversion: "ref",
     refTypes: ["model_entity"],
   },
-  { key: "selectable", member: "selectable", shape: "value", conversion: "identity" },
-  { key: "show_name", member: "showName", shape: "value", conversion: "identity" },
-  { key: "description", member: "description", shape: "value", conversion: "identity" },
-  { key: "tooltip", member: "tooltip", shape: "value", conversion: "identity" },
+  {
+    key: "selectable",
+    member: "selectable",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "show_name", member: "showName", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "description",
+    member: "description",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "tooltip", member: "tooltip", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
 export const AMBIENT_OBJECT_LOCALISATION: readonly ContentLocalisation[] = [

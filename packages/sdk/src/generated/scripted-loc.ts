@@ -19,12 +19,18 @@ export const SCRIPTED_LOC_TEXT_FIELDS: readonly ContentField[] = [
     member: "weight",
     shape: "dual",
     arms: [
-      { key: "weight", member: "weight", shape: "weightBlock" },
-      { key: "weight", member: "weight", shape: "value", conversion: "identity" },
+      { key: "weight", member: "weight", shape: "weightBlock", form: "block" },
+      { key: "weight", member: "weight", shape: "value", form: "scalar", conversion: "identity" },
     ],
   },
-  { key: "trigger", member: "trigger", shape: "trigger" },
-  { key: "localization_key", member: "localizationKey", shape: "value", conversion: "ref" },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
+  {
+    key: "localization_key",
+    member: "localizationKey",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+  },
 ];
 
 /**
@@ -49,16 +55,17 @@ export type DefinedScriptedLoc<Id extends string = string> = DefinedContent<
 >;
 
 export const SCRIPTED_LOC_FIELDS: readonly ContentField[] = [
-  { key: "random", member: "random", shape: "value", conversion: "identity" },
+  { key: "random", member: "random", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "text",
     member: "text",
     shape: "struct",
+    form: "list",
     fields: SCRIPTED_LOC_TEXT_FIELDS,
     repeated: true,
   },
-  { key: "value", member: "value", shape: "value", conversion: "identity" },
-  { key: "default", member: "default", shape: "value", conversion: "ref" },
+  { key: "value", member: "value", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "default", member: "default", shape: "value", form: "scalar", conversion: "ref" },
 ];
 
 export const SCRIPTED_LOC_LOCALISATION: readonly ContentLocalisation[] = [];

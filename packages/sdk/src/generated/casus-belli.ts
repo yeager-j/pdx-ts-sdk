@@ -65,22 +65,36 @@ export type DefinedCasusBelli<Id extends string = string> = DefinedContent<
 >;
 
 export const CASUS_BELLI_FIELDS: readonly ContentField[] = [
-  { key: "potential", member: "potential", shape: "trigger" },
-  { key: "is_valid", member: "isValid", shape: "trigger" },
-  { key: "destroy_if", member: "destroyIf", shape: "trigger" },
-  { key: "show_notification", member: "showNotification", shape: "value", conversion: "identity" },
+  { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
+  { key: "is_valid", member: "isValid", shape: "trigger", form: "trigger" },
+  { key: "destroy_if", member: "destroyIf", shape: "trigger", form: "trigger" },
+  {
+    key: "show_notification",
+    member: "showNotification",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "proxy_war_resources",
     member: "proxyWarResources",
     shape: "economicResources",
+    form: "list",
     repeated: true,
   },
-  { key: "on_proxy_war_start", member: "onProxyWarStart", shape: "effect" },
-  { key: "show_in_diplomacy", member: "showInDiplomacy", shape: "value", conversion: "identity" },
+  { key: "on_proxy_war_start", member: "onProxyWarStart", shape: "effect", form: "closure" },
+  {
+    key: "show_in_diplomacy",
+    member: "showInDiplomacy",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "aggregated_message_key",
     member: "aggregatedMessageKey",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
 ];

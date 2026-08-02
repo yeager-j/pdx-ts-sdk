@@ -5,8 +5,6 @@
  * rule shapes that the runtime content writer understands.
  */
 
-import { acceptedForm } from "@pdx-ts/sdk/content";
-
 import {
   isOptional,
   isRepeated,
@@ -28,6 +26,7 @@ import {
   type ContentFieldOverride,
   type RepeatedStructDefinition,
 } from "../overlay.ts";
+import { authoredForm } from "./authored-form.ts";
 import { Emitter, type TsValue } from "./types.ts";
 
 /**
@@ -420,13 +419,15 @@ function metadata(
   shape: string,
   extras: readonly string[] = []
 ): string {
+  const repeated = repeatsSiblings(field, shape);
   const members = [
     `key: ${JSON.stringify(name)}`,
     `member: ${JSON.stringify(camelCase(name))}`,
     `shape: ${JSON.stringify(shape)}`,
+    `form: ${JSON.stringify(authoredForm({ shape, repeated }))}`,
     ...extras,
   ];
-  if (repeatsSiblings(field, shape)) {
+  if (repeated) {
     members.push("repeated: true");
   }
   return `{ ${members.join(", ")} }`;
@@ -686,11 +687,16 @@ function lowerStruct(
     return null;
   }
   const { typeName, fieldsConstant, code, unsupported } = shape;
-  const repeated = wrapped || isRepeated(field.cardinality);
+  // `wrapped` nests the repetition inside one key, so the key itself only
+  // repeats when CWT's own cardinality says so — matching `admits.repeated`
+  // below, which the form calculation must agree with.
+  const structRepeated = isRepeated(field.cardinality);
+  const repeated = wrapped || structRepeated;
   const metadataMembers = [
     `key: ${JSON.stringify(name)}`,
     `member: ${JSON.stringify(camelCase(name))}`,
     `shape: "struct"`,
+    `form: ${JSON.stringify(authoredForm({ shape: "struct", repeated: structRepeated, wrapped }))}`,
     `fields: ${fieldsConstant}`,
     ...(wrapped ? ["wrapped: true"] : []),
     ...(repeated ? ["repeated: true"] : []),
@@ -698,9 +704,7 @@ function lowerStruct(
   return {
     memberType: repeated ? arrayType(typeName) : typeName,
     metadata: `{ ${metadataMembers.join(", ")} }`,
-    // `wrapped` nests the repetition inside one key, so only CWT's own
-    // cardinality says whether the key itself may repeat.
-    admits: { shape: "struct", repeated: isRepeated(field.cardinality) },
+    admits: { shape: "struct", repeated: structRepeated },
     wrapped,
     code,
     unsupported,
@@ -917,7 +921,7 @@ function lowerDual(
   // what makes them collide rather than the shapes, an `arity` assertion fixes
   // it upstream of here.
   const forms = arms.map((arm) =>
-    acceptedForm({ shape: arm.admits.shape, repeated: arm.admits.repeated, wrapped: arm.wrapped })
+    authoredForm({ shape: arm.admits.shape, repeated: arm.admits.repeated, wrapped: arm.wrapped })
   );
   if (new Set(forms).size !== forms.length) {
     return null;

@@ -12,8 +12,8 @@ export interface BombardmentStanceKillPopAmount {
 }
 
 export const BOMBARDMENT_STANCE_KILL_POP_AMOUNT_FIELDS: readonly ContentField[] = [
-  { key: "min", member: "min", shape: "value", conversion: "identity" },
-  { key: "max", member: "max", shape: "value", conversion: "identity" },
+  { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
 /**
@@ -57,46 +57,74 @@ export type DefinedBombardmentStance<Id extends string = string> = DefinedConten
 >;
 
 export const BOMBARDMENT_STANCE_FIELDS: readonly ContentField[] = [
-  { key: "trigger", member: "trigger", shape: "trigger" },
-  { key: "default", member: "default", shape: "value", conversion: "identity" },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
+  { key: "default", member: "default", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "stop_when_armies_dead",
     member: "stopWhenArmiesDead",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
   {
     key: "stop_when_ground_combat",
     member: "stopWhenGroundCombat",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
-  { key: "accept_surrender", member: "acceptSurrender", shape: "value", conversion: "identity" },
-  { key: "abduct_pops", member: "abductPops", shape: "value", conversion: "identity" },
+  {
+    key: "accept_surrender",
+    member: "acceptSurrender",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "abduct_pops",
+    member: "abductPops",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "planet_damage",
     member: "planetDamage",
     shape: "dual",
     arms: [
-      { key: "planet_damage", member: "planetDamage", shape: "value", conversion: "identity" },
-      { key: "planet_damage", member: "planetDamage", shape: "weightBlock" },
+      {
+        key: "planet_damage",
+        member: "planetDamage",
+        shape: "value",
+        form: "scalar",
+        conversion: "identity",
+      },
+      { key: "planet_damage", member: "planetDamage", shape: "weightBlock", form: "block" },
     ],
   },
-  { key: "army_damage", member: "armyDamage", shape: "value", conversion: "identity" },
-  { key: "kill_pop_chance", member: "killPopChance", shape: "weightBlock" },
+  {
+    key: "army_damage",
+    member: "armyDamage",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "kill_pop_chance", member: "killPopChance", shape: "weightBlock", form: "block" },
   {
     key: "min_pops_to_kill_pop",
     member: "minPopsToKillPop",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
   {
     key: "kill_pop_amount",
     member: "killPopAmount",
     shape: "struct",
+    form: "block",
     fields: BOMBARDMENT_STANCE_KILL_POP_AMOUNT_FIELDS,
   },
-  { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
+  { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
 export const BOMBARDMENT_STANCE_LOCALISATION: readonly ContentLocalisation[] = [

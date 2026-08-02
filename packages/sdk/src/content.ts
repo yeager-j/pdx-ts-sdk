@@ -159,6 +159,14 @@ interface ContentFieldBase {
   readonly key: string;
   readonly member: string;
   readonly repeated?: boolean;
+  /**
+   * The one authored form this field's member accepts, precomputed by codegen
+   * from the field's own `shape` (and, for a `struct`, whether it repeats or
+   * is wrapped) — see `authoredForm` in `@pdx-ts/codegen`'s
+   * `emit/authored-form.ts`. The runtime dual-arm dispatcher below only ever
+   * reads this; it never reclassifies a shape into a form itself.
+   */
+  readonly form: AuthoredForm;
 }
 
 /**
@@ -246,8 +254,15 @@ interface ContentDualField {
   readonly shape: "dual";
   readonly key: string;
   readonly member: string;
-  /** In CWT declaration order. Exactly one accepts any given authored value. */
-  readonly arms: readonly ContentField[];
+  /**
+   * In CWT declaration order. Exactly one accepts any given authored value.
+   *
+   * Typed as {@link ContentDualArm} rather than the full {@link ContentField}
+   * union: an arm is always built from a single ordinary declaration (see
+   * codegen's `lowerDual`), never from another dual or a top-level splice, so
+   * every arm actually carries the `form` the dispatcher below reads.
+   */
+  readonly arms: readonly ContentDualArm[];
 }
 
 /**
@@ -374,6 +389,17 @@ export type ContentField =
   | ContentRepeatedStructField;
 
 /**
+ * Every shape a dual field's arm can actually be lowered to — every
+ * {@link ContentField} variant except the two that can never occur there: a
+ * dual cannot nest inside another dual, and a top-level splice
+ * ({@link ContentInlineModifiersField}) is never built by the arm pipeline.
+ * Narrowing here (rather than widening those two to carry a `form` they never
+ * need) is what lets {@link dualArm} read `.form` off an arm without a runtime
+ * guard.
+ */
+type ContentDualArm = Exclude<ContentField, ContentDualField | ContentInlineModifiersField>;
+
+/**
  * The five shapes an authored value can arrive in, which is all the writer
  * needs to tell one {@link ContentDualField} arm from another.
  *
@@ -394,47 +420,6 @@ function authoredForm(value: unknown): AuthoredForm {
     return "trigger";
   }
   return typeof value === "function" ? "closure" : "block";
-}
-
-/**
- * The one form a field's authoring member accepts.
- *
- * Structurally typed rather than taking a whole {@link ContentField} so codegen
- * can ask the same question of a lowering it has not finished building: a dual
- * is only well formed when its arms accept *different* forms, and that has to
- * be decided by the rule the writer will actually dispatch with, not a second
- * copy of it.
- */
-export function acceptedForm(field: {
-  readonly shape: string;
-  readonly repeated?: boolean;
-  readonly wrapped?: boolean;
-}): AuthoredForm {
-  switch (field.shape) {
-    case "trigger":
-      return "trigger";
-    case "effect":
-    case "modifierBlock":
-    case "inlineModifiers":
-      return "closure";
-    case "valueList":
-    case "weightedEvents":
-      return "list";
-    case "struct":
-      return field.repeated === true || field.wrapped === true ? "list" : "block";
-    case "value":
-    case "economicResources":
-    case "triggeredModifierBlock":
-    case "aliasStruct":
-      return field.repeated === true ? "list" : field.shape === "value" ? "scalar" : "block";
-    case "dual":
-      // A dual's arms are ordinary fields. Nesting one inside another would
-      // mean CWT declared the same key at three incompatible forms, and
-      // `lowerDual` builds its arms from single declarations either way.
-      throw new Error("A dual field cannot be another dual's arm");
-    default:
-      return "block";
-  }
 }
 
 /**
@@ -468,22 +453,20 @@ function isReference(value: unknown): value is TypedRef<string> {
  * the wrong form a compile error, so reaching there means either a cast or an
  * arm pair the emitter should not have produced, and both deserve to be loud.
  */
-function dualArm(field: ContentDualField, value: unknown): ContentField {
+function dualArm(field: ContentDualField, value: unknown): ContentDualArm {
   if (isReference(value)) {
     const reference = field.arms.find(
       (candidate) =>
-        acceptedForm(candidate) === "scalar" &&
-        "conversion" in candidate &&
-        candidate.conversion === "ref"
+        candidate.form === "scalar" && "conversion" in candidate && candidate.conversion === "ref"
     );
     if (reference !== undefined) {
       return reference;
     }
   }
   const form = authoredForm(value);
-  const arm = field.arms.find((candidate) => acceptedForm(candidate) === form);
+  const arm = field.arms.find((candidate) => candidate.form === form);
   if (arm === undefined) {
-    const declared = field.arms.map((candidate) => acceptedForm(candidate)).join(" or ");
+    const declared = field.arms.map((candidate) => candidate.form).join(" or ");
     throw new Error(
       `Field "${field.key}" was given a ${form} value, and its declarations accept ${declared}`
     );

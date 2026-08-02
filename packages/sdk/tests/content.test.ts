@@ -1419,29 +1419,70 @@ describe("generated content registries", () => {
  */
 describe("alias-struct serialization", () => {
   const GROUP_FIELDS: readonly ContentField[] = [
-    { key: "text", member: "text", shape: "value", conversion: "identity" },
-    { key: "value", member: "values", shape: "value", conversion: "ref", repeated: true },
+    { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+    {
+      key: "value",
+      member: "values",
+      shape: "value",
+      form: "list",
+      conversion: "ref",
+      repeated: true,
+    },
   ];
   const CLAUSE_FIELDS: readonly ContentField[] = [
-    { key: "value", member: "value", shape: "value", conversion: "ref" },
-    { key: "OR", member: "or", shape: "struct", fields: GROUP_FIELDS, repeated: true },
-    { key: "NOT", member: "not", shape: "struct", fields: GROUP_FIELDS, repeated: true },
-    { key: "NOR", member: "nor", shape: "struct", fields: GROUP_FIELDS, repeated: true },
+    { key: "value", member: "value", shape: "value", form: "scalar", conversion: "ref" },
+    {
+      key: "OR",
+      member: "or",
+      shape: "struct",
+      form: "list",
+      fields: GROUP_FIELDS,
+      repeated: true,
+    },
+    {
+      key: "NOT",
+      member: "not",
+      shape: "struct",
+      form: "list",
+      fields: GROUP_FIELDS,
+      repeated: true,
+    },
+    {
+      key: "NOR",
+      member: "nor",
+      shape: "struct",
+      form: "list",
+      fields: GROUP_FIELDS,
+      repeated: true,
+    },
   ];
   const GOVERNMENT_TRIGGER_FIELDS: readonly ContentField[] = [
-    { key: "text", member: "text", shape: "value", conversion: "identity" },
-    { key: "always", member: "always", shape: "value", conversion: "identity" },
-    { key: "authority", member: "authority", shape: "struct", fields: CLAUSE_FIELDS },
-    { key: "ethics", member: "ethics", shape: "struct", fields: CLAUSE_FIELDS },
-    { key: "civics", member: "civics", shape: "struct", fields: CLAUSE_FIELDS },
+    { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+    { key: "always", member: "always", shape: "value", form: "scalar", conversion: "identity" },
+    {
+      key: "authority",
+      member: "authority",
+      shape: "struct",
+      form: "block",
+      fields: CLAUSE_FIELDS,
+    },
+    { key: "ethics", member: "ethics", shape: "struct", form: "block", fields: CLAUSE_FIELDS },
+    { key: "civics", member: "civics", shape: "struct", form: "block", fields: CLAUSE_FIELDS },
     {
       key: "OR",
       member: "or",
       shape: "aliasStruct",
+      form: "list",
       category: "government_trigger",
       repeated: true,
     },
-    { key: "host_has_dlc", member: "hostHasDlc", shape: "value", conversion: "identity" },
+    {
+      key: "host_has_dlc",
+      member: "hostHasDlc",
+      shape: "value",
+      form: "scalar",
+      conversion: "identity",
+    },
   ];
   registerAliasStructFields("government_trigger", GOVERNMENT_TRIGGER_FIELDS);
 
@@ -1454,9 +1495,16 @@ describe("alias-struct serialization", () => {
         key: "potential",
         member: "potential",
         shape: "aliasStruct",
+        form: "block",
         category: "government_trigger",
       },
-      { key: "possible", member: "possible", shape: "aliasStruct", category: "government_trigger" },
+      {
+        key: "possible",
+        member: "possible",
+        shape: "aliasStruct",
+        form: "block",
+        category: "government_trigger",
+      },
     ],
     localisation: [],
   };
@@ -1550,6 +1598,7 @@ describe("alias-struct serialization", () => {
               key: "potential",
               member: "potential",
               shape: "aliasStruct",
+              form: "block",
               category: "species_trigger",
             },
           ],

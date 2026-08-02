@@ -25,8 +25,8 @@ export interface SectionTemplateComponentSlotPosition {
 }
 
 export const SECTION_TEMPLATE_COMPONENT_SLOT_POSITION_FIELDS: readonly ContentField[] = [
-  { key: "x", member: "x", shape: "value", conversion: "identity" },
-  { key: "y", member: "y", shape: "value", conversion: "identity" },
+  { key: "x", member: "x", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
 export interface SectionTemplateComponentSlot {
@@ -40,24 +40,44 @@ export interface SectionTemplateComponentSlot {
 }
 
 export const SECTION_TEMPLATE_COMPONENT_SLOT_FIELDS: readonly ContentField[] = [
-  { key: "name", member: "name", shape: "value", conversion: "identity" },
+  { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "template",
     member: "template",
     shape: "value",
+    form: "scalar",
     conversion: "ref",
     refTypes: ["component_slot_template"],
   },
-  { key: "locatorname", member: "locatorname", shape: "value", conversion: "identity" },
-  { key: "is_side_slot", member: "isSideSlot", shape: "value", conversion: "identity" },
-  { key: "rotation", member: "rotation", shape: "value", conversion: "identity" },
+  {
+    key: "locatorname",
+    member: "locatorname",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "is_side_slot",
+    member: "isSideSlot",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "rotation", member: "rotation", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "position",
     member: "position",
     shape: "struct",
+    form: "block",
     fields: SECTION_TEMPLATE_COMPONENT_SLOT_POSITION_FIELDS,
   },
-  { key: "section_instance", member: "sectionInstance", shape: "value", conversion: "identity" },
+  {
+    key: "section_instance",
+    member: "sectionInstance",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
 ];
 
 /**
@@ -103,6 +123,7 @@ export const SECTION_TEMPLATE_FIELDS: readonly ContentField[] = [
     key: "ship_size",
     member: "shipSize",
     shape: "value",
+    form: "list",
     conversion: "ref",
     refTypes: ["ship_size"],
     repeated: true,
@@ -111,30 +132,46 @@ export const SECTION_TEMPLATE_FIELDS: readonly ContentField[] = [
     key: "fits_on_slot",
     member: "fitsOnSlot",
     shape: "value",
+    form: "list",
     conversion: "identity",
     repeated: true,
   },
-  { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+  { key: "entity", member: "entity", shape: "value", form: "scalar", conversion: "ref" },
   {
     key: "compatible_with_all_ship_sizes",
     member: "compatibleWithAllShipSizes",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
-  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
-  { key: "icon_frame", member: "iconFrame", shape: "value", conversion: "identity" },
-  { key: "ai_tags", member: "aiTags", shape: "valueList", conversion: "identity" },
+  { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "icon_frame",
+    member: "iconFrame",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "ai_tags", member: "aiTags", shape: "valueList", form: "list", conversion: "identity" },
   {
     key: "should_draw_components",
     member: "shouldDrawComponents",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
-  { key: "resources", member: "resources", shape: "economicResources", repeated: true },
+  {
+    key: "resources",
+    member: "resources",
+    shape: "economicResources",
+    form: "list",
+    repeated: true,
+  },
   {
     key: "prerequisites",
     member: "prerequisites",
     shape: "valueList",
+    form: "list",
     conversion: "ref",
     refTypes: ["technology"],
   },
@@ -142,6 +179,7 @@ export const SECTION_TEMPLATE_FIELDS: readonly ContentField[] = [
     key: "component_slot",
     member: "componentSlot",
     shape: "struct",
+    form: "list",
     fields: SECTION_TEMPLATE_COMPONENT_SLOT_FIELDS,
     repeated: true,
   },
@@ -149,24 +187,33 @@ export const SECTION_TEMPLATE_FIELDS: readonly ContentField[] = [
     key: "small_utility_slots",
     member: "smallUtilitySlots",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
   {
     key: "medium_utility_slots",
     member: "mediumUtilitySlots",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
   {
     key: "large_utility_slots",
     member: "largeUtilitySlots",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
-  { key: "aux_utility_slots", member: "auxUtilitySlots", shape: "value", conversion: "identity" },
-  { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
-  { key: "modifier", member: "modifier", shape: "modifierBlock" },
-  { key: "ship_modifier", member: "shipModifier", shape: "modifierBlock" },
+  {
+    key: "aux_utility_slots",
+    member: "auxUtilitySlots",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
+  { key: "ship_modifier", member: "shipModifier", shape: "modifierBlock", form: "closure" },
 ];
 
 export const SECTION_TEMPLATE_LOCALISATION: readonly ContentLocalisation[] = [

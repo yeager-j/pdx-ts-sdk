@@ -28,19 +28,91 @@ export interface GraphicalCultureShipLighting {
 }
 
 export const GRAPHICAL_CULTURE_SHIP_LIGHTING_FIELDS: readonly ContentField[] = [
-  { key: "cam_light_1_dir", member: "camLight1Dir", shape: "valueList", conversion: "identity" },
-  { key: "cam_light_2_dir", member: "camLight2Dir", shape: "valueList", conversion: "identity" },
-  { key: "cam_light_3_dir", member: "camLight3Dir", shape: "valueList", conversion: "identity" },
-  { key: "intensity_near", member: "intensityNear", shape: "value", conversion: "identity" },
-  { key: "intensity_far", member: "intensityFar", shape: "value", conversion: "identity" },
-  { key: "near_value", member: "nearValue", shape: "value", conversion: "identity" },
-  { key: "far_value", member: "farValue", shape: "value", conversion: "identity" },
-  { key: "rim_start_near", member: "rimStartNear", shape: "value", conversion: "identity" },
-  { key: "rim_stop_near", member: "rimStopNear", shape: "value", conversion: "identity" },
-  { key: "rim_start_far", member: "rimStartFar", shape: "value", conversion: "identity" },
-  { key: "rim_stop_far", member: "rimStopFar", shape: "value", conversion: "identity" },
-  { key: "ambient_near", member: "ambientNear", shape: "value", conversion: "identity" },
-  { key: "ambient_far", member: "ambientFar", shape: "value", conversion: "identity" },
+  {
+    key: "cam_light_1_dir",
+    member: "camLight1Dir",
+    shape: "valueList",
+    form: "list",
+    conversion: "identity",
+  },
+  {
+    key: "cam_light_2_dir",
+    member: "camLight2Dir",
+    shape: "valueList",
+    form: "list",
+    conversion: "identity",
+  },
+  {
+    key: "cam_light_3_dir",
+    member: "camLight3Dir",
+    shape: "valueList",
+    form: "list",
+    conversion: "identity",
+  },
+  {
+    key: "intensity_near",
+    member: "intensityNear",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "intensity_far",
+    member: "intensityFar",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "near_value",
+    member: "nearValue",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "far_value", member: "farValue", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "rim_start_near",
+    member: "rimStartNear",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "rim_stop_near",
+    member: "rimStopNear",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "rim_start_far",
+    member: "rimStartFar",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "rim_stop_far",
+    member: "rimStopFar",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "ambient_near",
+    member: "ambientNear",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "ambient_far",
+    member: "ambientFar",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
 ];
 
 /**
@@ -70,31 +142,51 @@ export type DefinedGraphicalCulture<Id extends string = string> = DefinedContent
 >;
 
 export const GRAPHICAL_CULTURE_FIELDS: readonly ContentField[] = [
-  { key: "has_city_graphics", member: "hasCityGraphics", shape: "value", conversion: "identity" },
+  {
+    key: "has_city_graphics",
+    member: "hasCityGraphics",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "fallback",
     member: "fallback",
     shape: "value",
+    form: "scalar",
     conversion: "ref",
     refTypes: ["graphical_culture"],
   },
-  { key: "ship_color", member: "shipColor", shape: "value", conversion: "identity" },
+  {
+    key: "ship_color",
+    member: "shipColor",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "ship_lighting",
     member: "shipLighting",
     shape: "struct",
+    form: "block",
     fields: GRAPHICAL_CULTURE_SHIP_LIGHTING_FIELDS,
   },
-  { key: "randomized", member: "randomized", shape: "trigger" },
-  { key: "selectable", member: "selectable", shape: "trigger" },
+  { key: "randomized", member: "randomized", shape: "trigger", form: "trigger" },
+  { key: "selectable", member: "selectable", shape: "trigger", form: "trigger" },
   {
     key: "ship_kinds",
     member: "shipKinds",
     shape: "valueList",
+    form: "list",
     conversion: "ref",
     refTypes: ["ship_categories"],
   },
-  { key: "ship_selection_weight", member: "shipSelectionWeight", shape: "weightBlock" },
+  {
+    key: "ship_selection_weight",
+    member: "shipSelectionWeight",
+    shape: "weightBlock",
+    form: "block",
+  },
 ];
 
 export const GRAPHICAL_CULTURE_LOCALISATION: readonly ContentLocalisation[] = [];

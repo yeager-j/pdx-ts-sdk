@@ -115,7 +115,8 @@ describe("government_trigger emission", () => {
     expect(emission.code).toContain("hostHasDlc?: Dlc;");
     expect(emission.code).toContain("isNomadic?: boolean;");
     expect(emission.code).toContain(
-      '{ key: "host_has_dlc", member: "hostHasDlc", shape: "value", conversion: "identity" }'
+      '{ key: "host_has_dlc", member: "hostHasDlc", shape: "value", ' +
+        'form: "scalar", conversion: "identity" }'
     );
   });
 
@@ -130,7 +131,7 @@ describe("government_trigger emission", () => {
       expect(emission.code, member).toContain(`${member}?: readonly GovernmentTriggerBlock[];`);
       expect(emission.code, member).toContain(
         `{ key: ${JSON.stringify(key)}, member: ${JSON.stringify(member)}, ` +
-          'shape: "aliasStruct", category: "government_trigger", repeated: true }'
+          'shape: "aliasStruct", form: "list", category: "government_trigger", repeated: true }'
       );
     }
     expect(emission.code).toContain(
@@ -143,10 +144,10 @@ describe("government_trigger emission", () => {
     // `potential`/`possible` blocks declare the same two beside their splice.
     expect(emission.code).toContain("  text?: string;\n  always?: boolean;\n");
     expect(emission.code).toContain(
-      '{ key: "text", member: "text", shape: "value", conversion: "identity" }'
+      '{ key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" }'
     );
     expect(emission.code).toContain(
-      '{ key: "always", member: "always", shape: "value", conversion: "identity" }'
+      '{ key: "always", member: "always", shape: "value", form: "scalar", conversion: "identity" }'
     );
   });
 

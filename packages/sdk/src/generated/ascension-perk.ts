@@ -35,13 +35,32 @@ export interface AscensionPerkSwapFields {
 }
 
 export const ASCENSION_PERK_SWAP_FIELDS: readonly ContentField[] = [
-  { key: "inherit_icon", member: "inheritIcon", shape: "value", conversion: "identity" },
-  { key: "inherit_name", member: "inheritName", shape: "value", conversion: "identity" },
-  { key: "inherit_effects", member: "inheritEffects", shape: "value", conversion: "identity" },
+  {
+    key: "inherit_icon",
+    member: "inheritIcon",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "inherit_name",
+    member: "inheritName",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "inherit_effects",
+    member: "inheritEffects",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "custom_tooltip",
     member: "customTooltip",
     shape: "value",
+    form: "list",
     conversion: "identity",
     repeated: true,
   },
@@ -49,13 +68,14 @@ export const ASCENSION_PERK_SWAP_FIELDS: readonly ContentField[] = [
     key: "custom_tooltip_with_modifiers",
     member: "customTooltipWithModifiers",
     shape: "value",
+    form: "list",
     conversion: "identity",
     repeated: true,
   },
-  { key: "modifier", member: "modifier", shape: "modifierBlock" },
-  { key: "on_enabled", member: "onEnabled", shape: "effect" },
-  { key: "weight", member: "weight", shape: "weightBlock" },
-  { key: "trigger", member: "trigger", shape: "trigger" },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
+  { key: "on_enabled", member: "onEnabled", shape: "effect", form: "closure" },
+  { key: "weight", member: "weight", shape: "weightBlock", form: "block" },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
 export const ASCENSION_PERK_SWAP_LOCALISATION: readonly ContentLocalisation[] = [
@@ -94,22 +114,30 @@ export type DefinedAscensionPerk<Id extends string = string> = DefinedContent<
 >;
 
 export const ASCENSION_PERK_FIELDS: readonly ContentField[] = [
-  { key: "potential", member: "potential", shape: "trigger" },
-  { key: "possible", member: "possible", shape: "trigger" },
-  { key: "on_enabled", member: "onEnabled", shape: "effect" },
-  { key: "modifier", member: "modifier", shape: "modifierBlock" },
+  { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
+  { key: "possible", member: "possible", shape: "trigger", form: "trigger" },
+  { key: "on_enabled", member: "onEnabled", shape: "effect", form: "closure" },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   {
     key: "triggered_modifier",
     member: "triggeredModifier",
     shape: "triggeredModifierBlock",
+    form: "list",
     repeated: true,
   },
-  { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
-  { key: "custom_tooltip", member: "customTooltip", shape: "value", conversion: "identity" },
+  { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
+  {
+    key: "custom_tooltip",
+    member: "customTooltip",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "tradition_swap",
     member: "traditionSwap",
     shape: "repeatedStruct",
+    form: "block",
     keying: "siblings",
     identityKey: "name",
     fields: ASCENSION_PERK_SWAP_FIELDS,

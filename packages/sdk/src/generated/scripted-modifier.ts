@@ -47,22 +47,41 @@ export type DefinedScriptedModifier<Id extends string = string> = DefinedContent
 >;
 
 export const SCRIPTED_MODIFIER_FIELDS: readonly ContentField[] = [
-  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
-  { key: "percentage", member: "percentage", shape: "value", conversion: "identity" },
-  { key: "min_mult", member: "minMult", shape: "value", conversion: "identity" },
-  { key: "max_decimals", member: "maxDecimals", shape: "value", conversion: "identity" },
-  { key: "good", member: "good", shape: "value", conversion: "identity" },
-  { key: "neutral", member: "neutral", shape: "value", conversion: "identity" },
-  { key: "hidden", member: "hidden", shape: "value", conversion: "identity" },
-  { key: "no_diff", member: "noDiff", shape: "value", conversion: "identity" },
-  { key: "cap_zero_to_one", member: "capZeroToOne", shape: "value", conversion: "identity" },
+  { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "percentage",
+    member: "percentage",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "min_mult", member: "minMult", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "max_decimals",
+    member: "maxDecimals",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "good", member: "good", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "neutral", member: "neutral", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "hidden", member: "hidden", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "no_diff", member: "noDiff", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "cap_zero_to_one",
+    member: "capZeroToOne",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "localize_with_value_key",
     member: "localizeWithValueKey",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
-  { key: "category", member: "category", shape: "value", conversion: "identity" },
+  { key: "category", member: "category", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
 export const SCRIPTED_MODIFIER_LOCALISATION: readonly ContentLocalisation[] = [

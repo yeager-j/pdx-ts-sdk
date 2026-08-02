@@ -426,11 +426,12 @@ describe("content-type codegen", () => {
       expect(job?.code, member).toContain(`  ${member}?: boolean;\n`);
     }
     expect(job?.code).toContain(
-      '{ key: "has_owner", member: "hasOwner", shape: "value", conversion: "identity" }'
+      '{ key: "has_owner", member: "hasOwner", shape: "value", form: "scalar", ' +
+        'conversion: "identity" }'
     );
     expect(job?.code).toContain(
       '{ key: "possible_pre_triggers", member: "possiblePreTriggers", shape: "struct", ' +
-        "fields: JOB_POSSIBLE_PRE_TRIGGERS_FIELDS }"
+        'form: "block", fields: JOB_POSSIBLE_PRE_TRIGGERS_FIELDS }'
     );
     expect(fieldNames(job!.emittedFields)).toContain("possible_pre_triggers");
     expect(job?.unsupported.join("\n")).not.toContain("possible_pre_triggers");
@@ -490,7 +491,7 @@ describe("content-type codegen", () => {
     );
     expect(situation?.code).toContain(
       '{ key: "random_events", member: "randomEvents", shape: "weightedEvents", ' +
-        'conversion: "ref", refTypes: ["event.scopeless","event.situation"] }'
+        'form: "list", conversion: "ref", refTypes: ["event.scopeless","event.situation"] }'
     );
     expect(situation?.unsupported.join("\n")).not.toContain("random_events");
   });
@@ -524,7 +525,7 @@ describe("content-type codegen", () => {
     const shipSize = emissions.get("ship_size");
     expect(shipSize?.code).toContain("minUpgradeCost?: Readonly<Record<string, number>>;");
     expect(shipSize?.code).toContain(
-      '{ key: "min_upgrade_cost", member: "minUpgradeCost", shape: "scalarMap" }'
+      '{ key: "min_upgrade_cost", member: "minUpgradeCost", shape: "scalarMap", form: "block" }'
     );
     const civic = emissions.get("civic_or_origin");
     expect(civic?.code).toContain("leaderBackgroundJobWeight?: Readonly<Record<string, number>>;");
@@ -630,7 +631,7 @@ describe("content-type codegen", () => {
     expect(civicOrOrigin?.code).toContain("possible?: GovernmentTriggerBlock;");
     expect(civicOrOrigin?.code).toContain(
       '{ key: "potential", member: "potential", shape: "aliasStruct", ' +
-        'category: "government_trigger" }'
+        'form: "block", category: "government_trigger" }'
     );
     // playable/ai_playable are single_alias_right[trigger_clause] — real
     // Triggers, not government_trigger — and their `## replace_scopes` pins
@@ -717,7 +718,7 @@ describe("content-type codegen", () => {
     expect(speciesClass?.code).toContain("possibleSecondary?: GovernmentTriggerBlock;");
     expect(speciesClass?.code).toContain(
       '{ key: "possible", member: "possible", shape: "aliasStruct", ' +
-        'category: "government_trigger" }'
+        'form: "block", category: "government_trigger" }'
     );
     // resources/modifier need the same economicResources/modifierBlock help
     // every other registry with those fields already uses.

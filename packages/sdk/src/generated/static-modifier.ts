@@ -46,20 +46,34 @@ export type DefinedStaticModifier<Id extends string = string> = DefinedContent<
 
 export const STATIC_MODIFIER_FIELDS: readonly ContentField[] = [
   { member: "modifiers", shape: "inlineModifiers" },
-  { key: "icon_frame", member: "iconFrame", shape: "value", conversion: "identity" },
-  { key: "icon", member: "icon", shape: "value", conversion: "identity" },
-  { key: "important", member: "important", shape: "value", conversion: "identity" },
-  { key: "custom_tooltip", member: "customTooltip", shape: "value", conversion: "identity" },
+  {
+    key: "icon_frame",
+    member: "iconFrame",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "important", member: "important", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "custom_tooltip",
+    member: "customTooltip",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
   {
     key: "show_only_custom_tooltip",
     member: "showOnlyCustomTooltip",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
   {
     key: "apply_modifier_to_other_planets",
     member: "applyModifierToOtherPlanets",
     shape: "value",
+    form: "scalar",
     conversion: "ref",
     refTypes: ["static_modifier"],
   },
@@ -67,6 +81,7 @@ export const STATIC_MODIFIER_FIELDS: readonly ContentField[] = [
     key: "hide_from_country_list",
     member: "hideFromCountryList",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
 ];

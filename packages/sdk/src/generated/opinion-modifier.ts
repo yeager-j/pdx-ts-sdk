@@ -68,8 +68,8 @@ export const OPINION_MODIFIER_FIELDS: readonly ContentField[] = [
     member: "opinion",
     shape: "dual",
     arms: [
-      { key: "opinion", member: "opinion", shape: "weightBlock" },
-      { key: "opinion", member: "opinion", shape: "value", conversion: "identity" },
+      { key: "opinion", member: "opinion", shape: "weightBlock", form: "block" },
+      { key: "opinion", member: "opinion", shape: "value", form: "scalar", conversion: "identity" },
     ],
   },
   {
@@ -77,8 +77,8 @@ export const OPINION_MODIFIER_FIELDS: readonly ContentField[] = [
     member: "decay",
     shape: "dual",
     arms: [
-      { key: "decay", member: "decay", shape: "value", conversion: "identity" },
-      { key: "decay", member: "decay", shape: "weightBlock" },
+      { key: "decay", member: "decay", shape: "value", form: "scalar", conversion: "identity" },
+      { key: "decay", member: "decay", shape: "weightBlock", form: "block" },
     ],
   },
   {
@@ -86,18 +86,30 @@ export const OPINION_MODIFIER_FIELDS: readonly ContentField[] = [
     member: "growth",
     shape: "dual",
     arms: [
-      { key: "growth", member: "growth", shape: "value", conversion: "identity" },
-      { key: "growth", member: "growth", shape: "weightBlock" },
+      { key: "growth", member: "growth", shape: "value", form: "scalar", conversion: "identity" },
+      { key: "growth", member: "growth", shape: "weightBlock", form: "block" },
     ],
   },
-  { key: "accumulative", member: "accumulative", shape: "value", conversion: "identity" },
-  { key: "min", member: "min", shape: "value", conversion: "identity" },
-  { key: "max", member: "max", shape: "value", conversion: "identity" },
-  { key: "unique", member: "unique", shape: "value", conversion: "identity" },
-  { key: "monthly", member: "monthly", shape: "value", conversion: "identity" },
-  { key: "months", member: "months", shape: "value", conversion: "identity" },
-  { key: "block_triggered", member: "blockTriggered", shape: "value", conversion: "identity" },
-  { key: "trigger", member: "trigger", shape: "trigger" },
+  {
+    key: "accumulative",
+    member: "accumulative",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "unique", member: "unique", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "monthly", member: "monthly", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "months", member: "months", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "block_triggered",
+    member: "blockTriggered",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
 export const OPINION_MODIFIER_LOCALISATION: readonly ContentLocalisation[] = [

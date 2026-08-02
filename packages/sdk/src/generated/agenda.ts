@@ -42,27 +42,41 @@ export interface AgendaDef<Id extends string = string> extends AgendaFields {
 export type DefinedAgenda<Id extends string = string> = DefinedContent<"agenda", AgendaDef<Id>>;
 
 export const AGENDA_FIELDS: readonly ContentField[] = [
-  { key: "agenda_cost", member: "agendaCost", shape: "value", conversion: "identity" },
-  { key: "agenda_cooldown", member: "agendaCooldown", shape: "value", conversion: "identity" },
-  { key: "potential", member: "potential", shape: "trigger" },
-  { key: "allow", member: "allow", shape: "trigger" },
+  {
+    key: "agenda_cost",
+    member: "agendaCost",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "agenda_cooldown",
+    member: "agendaCooldown",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
+  { key: "allow", member: "allow", shape: "trigger", form: "trigger" },
   {
     key: "initial_effect_custom_loc",
     member: "initialEffectCustomLoc",
     shape: "value",
+    form: "scalar",
     conversion: "identity",
   },
-  { key: "init_effect", member: "initEffect", shape: "effect" },
-  { key: "modifier", member: "modifier", shape: "modifierBlock" },
+  { key: "init_effect", member: "initEffect", shape: "effect", form: "closure" },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   {
     key: "finish_modifier",
     member: "finishModifier",
     shape: "value",
+    form: "scalar",
     conversion: "ref",
     refTypes: ["static_modifier"],
   },
-  { key: "effect", member: "effect", shape: "effect" },
-  { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
+  { key: "effect", member: "effect", shape: "effect", form: "closure" },
+  { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
 export const AGENDA_LOCALISATION: readonly ContentLocalisation[] = [
