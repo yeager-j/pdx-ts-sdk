@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { TechnologyDef } from "../src/generated/technology.ts";
-import { Mod } from "../src/mod.ts";
+import { createTechnologies } from "../src/index.ts";
 import {
   and,
   hasCountryFlag,
@@ -90,7 +90,7 @@ describe("scope safety", () => {
   });
 });
 
-describe("prefix enforcement", () => {
+describe("content ids", () => {
   const techDef = {
     name: "X",
     cost: 100,
@@ -99,21 +99,22 @@ describe("prefix enforcement", () => {
     category: "particles",
   } as const;
 
-  it("infers the prefix as a literal type from the config", () => {
-    const mod = new Mod({ name: "M", prefix: "mymod", supportedVersion: "4.0.*" });
-    expectTypeOf(mod).toExtend<Mod<"mymod">>();
+  it("preserves the id's literal type through the definer", () => {
+    const techs = createTechnologies();
+    const tech = techs.defineTechnology({ ...techDef, id: "mymod_tech_x" });
+    expectTypeOf(tech.id).toEqualTypeOf<"mymod_tech_x">();
   });
 
-  it("rejects technology ids that do not start with the mod prefix", () => {
-    const mod = new Mod({ name: "M", prefix: "mymod", supportedVersion: "4.0.*" });
-    // @ts-expect-error — id must match `mymod_${string}`
-    mod.defineTechnology({ ...techDef, id: "othermod_tech_x" });
-    // @ts-expect-error — the bare prefix without the underscore separator is not enough
-    mod.defineTechnology({ ...techDef, id: "mymod" });
-  });
-
-  it("accepts technology ids carrying the mod prefix", () => {
-    const mod = new Mod({ name: "M", prefix: "mymod", supportedVersion: "4.0.*" });
-    mod.defineTechnology({ ...techDef, id: "mymod_tech_x" });
+  it("leaves prefix compliance to the build-time warning", () => {
+    // The class API constrained every id to the `mymod_${string}` pattern type
+    // its `Mod<P>` generic carried, so an unprefixed id was a compile error.
+    // A factory knows no prefix — the mod config is only read at `buildMod` —
+    // so the same ids type-check here and surface as a `missing-prefix`
+    // warning on the built value instead (tests/pure-api.test.ts pins it).
+    const techs = createTechnologies();
+    const foreign = techs.defineTechnology({ ...techDef, id: "othermod_tech_x" });
+    expectTypeOf(foreign.id).toEqualTypeOf<"othermod_tech_x">();
+    const bare = techs.defineTechnology({ ...techDef, id: "mymod" });
+    expectTypeOf(bare.id).toEqualTypeOf<"mymod">();
   });
 });
