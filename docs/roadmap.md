@@ -46,8 +46,9 @@ being equipped to build a mod of that size, not porting it.
       halving.
 - [x] **Per-definition field scopes.** Where CWT scopes a body `any` and is
       right, the definition declares its own scope and the unpinned fields
-      follow it. Landed for `decision`; `ship_size`'s two construction clauses
-      still need their legal set settled.
+      follow it. Landed for `decision`; `ship_size`'s construction clauses turn
+      out to be a different shape — the clause discovers its scope rather than
+      the definition knowing it — and are SDK-24.
 - [x] **Event kinds generated.** All 20 scoped kinds get `defineXEvent` and
       witnessed fire overloads from `EVENT_KINDS` + the effect rules.
 
@@ -588,9 +589,27 @@ Four things this needed:
   check that the declared set covers what the corpus writes. Declare too narrow
   a set and it fails.
 
-`ship_size.potential_construction` is the same shape and stays acknowledged: its
-legal set needs settling from the shipped construction sites first, and one
-trigger in 10 of 46 definitions is thin evidence for it.
+**`ship_size.potential_construction` turned out not to be this shape at all**, and
+looking properly is what showed it. A decision is consistently one scope per
+definition — `is_scope_type` appears in **zero** shipped decisions. A ship size's
+construction clause is evaluated against several scope types and vanilla branches
+on which, testing `is_scope_type` 13 times across those clauses and again inside
+the scripted triggers they delegate to:
+
+```
+potential_construction = { is_scope_type = starbase  OR = { has_starbase_size >= … } }
+```
+
+So a scope parameter there would encode a false premise. `Trigger<ScopeName>` is
+the correct type — "runs in an unknown scope" is exactly true — and what is
+missing is a way to narrow _inside_ the clause: `inScope("starbase", condition)`,
+the type-level counterpart of the runtime test vanilla already uses, sound
+because a condition guarded by `is_scope_type` is simply false in other scopes.
+That is SDK-24, and it waits on the vanilla scripted-trigger binding, since most
+bodies here delegate to triggers the SDK cannot name yet.
+
+Two mechanisms, then, for two different facts: **the definition knows its scope**
+(a parameter) versus **the clause discovers it** (a narrowing combinator).
 
 Worth revisiting: `decision.ai_weight` and `resources` are in this class too and
 the gate cannot see them. A `WeightBlock`'s conditions live in its `modifier`

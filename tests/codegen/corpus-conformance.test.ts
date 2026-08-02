@@ -88,10 +88,12 @@ const ACKNOWLEDGED = new Map<string, string>([
   ],
   [
     "ship_size.potential_construction scope",
-    "CWT scopes this field `this = any`: a ship size is constructed at a starbase, a planet, or " +
-      "a fleet, and the condition is evaluated against whichever. `decision` resolved the same " +
-      "shape with a scope parameter; this registry needs its legal set settled from the shipped " +
-      "construction sites first — one trigger in 10 of 46 definitions is thin evidence for it.",
+    "`Trigger<ScopeName>` is the right type and the clause needs narrowing inside it, not a " +
+      "declaration: one ship size's construction clause is evaluated against several scope types " +
+      "and vanilla branches on which, testing `is_scope_type` 13 times across these clauses " +
+      "(zero shipped decisions do, which is why a scope parameter fit there and not here). " +
+      "SDK-24 tracks the `inScope` combinator; it waits on SDK-13, since most bodies here " +
+      "delegate to vanilla scripted triggers the SDK cannot name yet.",
   ],
 ]);
 
