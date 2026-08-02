@@ -456,9 +456,21 @@ Today codegen emits 1054 of 1082 triggers, 976 of 1058 effects, and 372 typed
 on-action references — the effects as 87 interfaces clustered by scope set (so
 each signature is emitted once, not per scope) plus a serialization meta table
 that drives the one runtime recorder — the 21-kind event table derived from
-`type[event]`'s subtypes, and six content registries from one content emitter.
-Nothing is dropped silently: every skipped rule, unrepresentable on-action, or
-content field is reported with a named reason.
+`type[event]`'s subtypes, and **34 content registries** from one content
+emitter, 26 of them at 100% coverage against every definition the real game
+ships. Nothing is dropped silently: every skipped rule, unrepresentable
+on-action, or content field is reported with a named reason.
+
+Not every registry entry is a `define`. Where the entries are the _engine's_
+rather than the mod's, the API says so instead of inventing an id — a country's
+ownership limit has exactly one entry, keyed `default`, which the game reads
+additively, so ship-of-size limits author as a contribution to it:
+
+```ts
+const titan = mod.defineCountryShipOfSizeLimit({ id: "mymod_titan_limit", ... });
+mod.addShipOfSizeLimits([titan]);
+// emits: default = { ship_of_size_limits = { mymod_titan_limit } }
+```
 
 Every deliberate departure from a mechanical reading of the rules lives in one
 audited file, `tools/codegen/overlay.ts`. What the rules cannot supply at all —

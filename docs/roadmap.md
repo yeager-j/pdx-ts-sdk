@@ -1,7 +1,8 @@
 # Content-breadth roadmap
 
 > **Historical as of 2026-08-01 — tracking moved to Linear.** The remaining
-> items below were filed as SDK-1 through SDK-19 in the
+> items below were filed as SDK-1 onward (SDK-20 and SDK-21 were split out
+> later) in the
 > [SDK MVP project](https://linear.app/unnamed-system/project/sdk-mvp-077fabda18d8)
 > ("Dawn of Ascension" milestone; the two post-MVP items carry no milestone).
 > Linear is now the worklist; this file stays as the design record behind
@@ -49,9 +50,10 @@ Landed: `technology`, `building`, `tradition`, `tradition_category`,
 `strike_craft_component_template`, `scripted_loc`, `situation_type`,
 `static_modifier`, `councilor`, `economic_category`, `civic_or_origin`,
 `ship_size`, `component_set`, `section_template`, `ambient_object`,
-`graphical_culture`, `starbase_level`, `species_class`.
+`graphical_culture`, `starbase_level`, `species_class`,
+`country_ship_of_size_limit`.
 
-**33 registries, 26 of them at 100% real-corpus coverage.** The seven below
+**34 registries, 27 of them at 100% real-corpus coverage.** The seven below
 100% are all held there by the same handful of unlowered fields — `resources`,
 `modifier`, `triggered_*_modifier` on the component templates and `building`,
 plus `inline_script`, which is its own cross-cutting item.
@@ -64,11 +66,20 @@ registry to expose; its `potential`/`possible` lower onto the shared
 `GovernmentTriggerBlock` rather than a `Trigger`, since the game reads that
 position as the requirements DSL and not a script condition tree.
 
-Not yet attempted:
+Every registry with a declared CWT type is landed. What is left was filed as
+three "no CWT type" items and resolved as three different things (SDK-9):
 
-- [ ] `component_tags`, `country_limits`, `scripted_variables` — no CWT type
-      declared anywhere; each needs a deliberate call between an overlay entry,
-      a raw-emit path, and explicit non-support
+- [ ] `component_tags` — not a content type but the declaration site for the
+      open `enum[component_tag]` set, whose members generate modifier names.
+      Moved to SDK-20 with its design; see
+      [engine-keyed maps](#engine-keyed-maps) for why the trie cannot absorb it.
+- [x] `country_limits` — the premise was wrong, it _does_ declare two CWT types.
+      `country_ship_of_size_limit` landed as an ordinary registry;
+      `country_ownership_limit` as an
+      [additive contribution](#additive-contributions-to-engine-owned-objects).
+- [x] `scripted_variables` — a TS `const` already is one, inlined. What inlining
+      costs is ejectability, which is the
+      [scripted-emission item](#emit-scripted-effects-triggers-and-variables).
 
 ## Machinery
 
@@ -219,6 +230,68 @@ cardinality = 0..inf { key = ... value = ... } }`. Internally this is
   repetition lives on the bare declaration, and the writer emits one field
   holding N anonymous nested blocks rather than N sibling entries at the same
   level. The author-facing type is the same `T[]` either way.
+
+### Asserted field scopes
+
+**Landed 2026-08-01.** `ContentFieldOverride` gained a `scope`, declaring the
+scope a field's closures run in where CWT annotates none and the mechanical
+fallback is wrong.
+
+An unannotated field lowers to `Trigger<ScopeName>` / `ModifierClosure<ScopeName>`
+— "valid in **every** scope". That is right when the scope genuinely varies (a
+decision's own scope depends on its category) and wrong when the scope is fixed
+but simply unannotated, and the wrong case produces a field that is emitted and
+unfillable.
+
+`country_ship_of_size_limit.show` is the worked example: CWT gives it no scope
+_and_ no cardinality, so it is required, and all 7 shipped entries write a
+country condition (`has_technology`, `has_origin`) that `Trigger<ScopeName>`
+rejects. The corpus gate reported 100% regardless, because it only checks
+whether a field is **present** — see [shape conformance](#shape-conformance).
+
+Two rules the mechanism needs:
+
+- the assertion **wins over a scope the rules do declare**, or a wrong upstream
+  annotation would be unfixable
+- an unknown scope name **throws** rather than degrading to `ScopeName`, since
+  silently widening on a typo recreates the exact bug the row exists to fix
+
+Deliberately one row, not a sweep: 20 content fields across 9 registries lower
+to `Trigger<ScopeName>` and each needs its own judgment about whether the scope
+is variable or merely unannotated. That belongs to shape conformance.
+
+### Additive contributions to engine-owned objects
+
+**Landed 2026-08-01.** Not every registry entry is a definition the mod owns.
+`country_ownership_limit` has exactly one entry in vanilla, keyed `default`, and
+the game reads that key **additively** — vanilla's own file notes that a second
+`default` applies both its limits and the original's. Across the 31 installed
+workshop mods, the two that touch this registry both write `default` and nothing
+else.
+
+So there is no id to author, and `defineCountryOwnershipLimit({ id })` would be
+the wrong shape regardless of the mod-prefix rule — it would emit a file with no
+observed precedent and a silent failure mode if the engine reads only `default`.
+It authors as a contribution instead:
+
+```ts
+mod.addShipOfSizeLimits([titanLimit, dreadnoughtLimit]);
+```
+
+Takes `DefinedCountryShipOfSizeLimit` refs so the cross-reference stays branded,
+accumulates across calls, collapses duplicates, and emits nothing when unused.
+
+This is the first place the mod-prefix invariant was worth _not_ relaxing. The
+rule is what makes `define` structurally incapable of overriding vanilla, which
+is the guarantee the patch resolver stands on; the fix was to model the thing
+correctly rather than weaken the rule. Still worth making the prefix a
+per-registry property rather than a global axiom before the next engine-keyed
+registry reopens it.
+
+Open, and cheap to settle: CWT declares no `type_key_filter` here and vanilla's
+commented example shows `name_of_ownership_limit = { ... }`, so a named key may
+well be legal. An in-game check would collapse this back to an ordinary
+registry.
 
 ### Engine-keyed maps
 
