@@ -473,10 +473,10 @@ that load order from the vanilla install.
 
 ### Event kinds beyond country and planet
 
-**Landed 2026-08-01.** All 20 scoped kinds generate `defineXEvent`
-(`GeneratedEventMethods` in `src/generated/event-methods.ts`, chained onto
-`GeneratedContentMethods` so `Mod` keeps one base) and the witnessed
-fire-overload pairs (`src/generated/event-fires.ts`, merged into the scope
+**Landed 2026-08-01.** All 20 scoped kinds generate `defineXEvent` (on
+`createEvents`, `src/generated/event-factory.ts` — originally also on an
+abstract `GeneratedEventMethods` class, deleted with the builder on
+2026-08-02) and the witnessed fire-overload pairs (`src/generated/event-fires.ts`, merged into the scope
 interfaces; receiving scopes come from each fire effect's own `## scopes`, so
 `observer_event` rides `UniversalEffects`). The runtime was already generic —
 `buildEvent` and the fire encoders never keyed on kind. The scopeless `event`
@@ -484,16 +484,17 @@ kind is skipped and reported: its closures cannot be typed.
 
 ### Standalone localization API
 
-`Mod.loc` is private and only written by definition-attached names. DoA ships 12
-localisation files whose keys are largely unattached — tooltips, event body
-text, mod menu strings. Also decide multi-file splitting and multi-language
-support; the path is hardcoded to english.
+A build's localization map is internal to `buildMod` and only written by
+definition-attached names. DoA ships 12 localisation files whose keys are
+largely unattached — tooltips, event body text, mod menu strings. Also decide
+multi-file splitting and multi-language support; the path is hardcoded to
+english.
 
 ### Static asset passthrough
 
-`render()` returns `Map<string, string>` and `synth()` writes utf8 only. DoA
-carries 154M of gfx, 19M of sound, and 56K of `interface` that a real mod
-cannot ship without.
+`render(mod)` returns `Map<string, string>` and `write(dir, files)` writes utf8
+only. DoA carries 154M of gfx, 19M of sound, and 56K of `interface` that a real
+mod cannot ship without.
 
 ### Emit scripted effects, triggers, and variables
 
@@ -508,27 +509,51 @@ replacement for inlining.
 
 ### Multi-file layout within a registry
 
-Lowest priority. One file per registry at a fixed name today; DoA splits
-technology across 4 files and component templates across 14. Ergonomics only —
-but any splitting API must feed the same path-order machinery the patch resolver
-uses, not bypass it. Record the decision even if it is "no".
+**Landed 2026-08-02 with SDK-22.** A collection factory takes an optional flat
+snake_case file stem — `createTechnologies("ascension")` emits
+`common/technology/<prefix>_ascension.txt` — and same-stem collections merge in
+item order. The constraint held: `buildMod` computes emission paths, so the
+patch planner reserves and enumerates *every* one of the mod's own technology
+files rather than one fixed name, pinned by a split-tech-plus-patch test.
+Stems carry no `/`: the subdirectories under a registry directory are different
+registries, not layout. Localization is still one file — its splitting belongs
+to the standalone-localization item above.
 
-### Pure-function authoring API (SDK-22, spiked 2026-08-01)
+### Pure-function authoring API (SDK-22, spiked and landed 2026-08-01/02)
 
-The `Mod` builder becomes free definers plus an explicit fold:
-`defineTechnology(def)` returns a value, `buildMod(config, items, { vanilla? })`
-validates and assembles, `render(mod)`/`write(dir, files)` finish the pipeline.
-The spike (`design/pure-api-probe/`,
-[verdict](verdict-pure-api-probe.md)) proved byte parity with the class API
-across every emission channel, with no lost validation. Decisions now binding
-for the migration: prefix typing drops (missing prefix is a warning on the
-value; collision with a real vanilla id under an injected view is a hard
-error), `buildMod` takes one flat tagged-value array (nested arrays flatten —
-the SDK-19 file-group extension point), warnings are data on the returned
-value, deferred events stamp their namespace in `buildMod` (forward references
-become legal), and the generated `Def` types must stop reusing `Id` for nested
-repeated-struct keys. Migration priced at ≈6–9 focused days; sequence it
-before the consumer-codegen work so the generated surface migrates once.
+**Landed 2026-08-02.** The `Mod` builder is gone; authoring is registry-typed
+collection factories plus an explicit fold. `createTechnologies(file?)` and its
+33 siblings are emitted per registry (`src/generated/content-factories.ts`),
+`createEvents(file, namespace)` co-declares an event file with its namespace
+(`src/generated/event-factory.ts`), `createOnActions()` binds hooks, and
+`buildMod(config, collections, { vanilla? })` validates and assembles into a
+`PureMod` value that `render(mod)` / `write(dir, files)` finish. Creation is
+registration: a definer records into its collection at the definition site, so
+the only thing left to forget is a whole collection.
+
+Shipped decisions, all pinned by test: prefix typing dropped (a missing prefix
+is a `missing-prefix` warning on the value; collision with a real vanilla id
+under an injected view is a hard error), `buildMod` takes collections rather
+than loose items (nested arrays flatten, so a pack is a module exporting one),
+warnings are data on the returned value instead of console output, event
+namespaces are authored at `createEvents` so the recorder closures still run
+eagerly at the define site and full ids are plain strings, and the generated
+`Def` types stopped reusing `Id` for nested repeated-struct keys. The file stem
+on a collection is also the SDK-19 splitting primitive (below).
+
+Two deviations from the spike's own plan, both decided during it: events are
+*not* deferred/stamped in `buildMod` (so forward references stay illegal, as
+under the builder), and the item vocabulary is collection-typed rather than one
+flat tagged-value array. The [verdict](verdict-pure-api-probe.md) records the
+full evolution.
+
+Migrated in six sequential chunks on `feature/pure-api` (9dd8857 promote,
+78871c4 codegen, 13f4c56 examples/README, 6b1853b runtime tests, 50a9d95 type
+tests, then the builder deletion), each ending on green gates with the
+byte-parity harness live throughout. The builder's bytes for the
+representative fixture are committed as goldens in
+`tests/__snapshots__/pure-api/`, captured from `Mod.render()` before the class
+was deleted — the permanent record that the fold reproduces it exactly.
 
 ## Cross-cutting, unscheduled
 

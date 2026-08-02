@@ -202,9 +202,13 @@ export type {
   UniversalModifiers,
   UnscopedModifierRecorder,
 } from "./generated/modifiers.ts";
-export type { ModConfig, PrefixedId } from "./mod.ts";
-export { Mod } from "./mod.ts";
-export { buildMod, type BuildOptions, type EmittedFile, type PureMod } from "./build.ts";
+export {
+  buildMod,
+  type BuildOptions,
+  type EmittedFile,
+  type ModConfig,
+  type PureMod,
+} from "./build.ts";
 export { render, write } from "./render.ts";
 // One collection factory per content registry — `createTechnologies`,
 // `createAscensionPerks`, ... — with its `XCollection` and `XItem` types.

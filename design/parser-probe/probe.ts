@@ -9,7 +9,7 @@
  * docs/handoff-pdxscript-parser.md, "Decisions already made").
  */
 
-import { Mod } from "../../src/mod.ts";
+import { createTechnologies } from "../../src/index.ts";
 import { TECH_FILE, VARS_FILE } from "./fixture.ts";
 import { patchTechnology } from "./patch.ts";
 import { parseVanilla } from "./surface.ts";
@@ -27,11 +27,7 @@ export const vanilla = parseVanilla({
 export const geneForging = vanilla.technology("tech_gene_forging").require("cost", "prerequisites");
 
 /** A new SDK-authored technology, referenced as an object — never an id string. */
-const authored = new Mod({
-  name: "Parser Probe",
-  prefix: "pp",
-  supportedVersion: "4.4.*",
-});
+const authored = createTechnologies();
 export const chimericGrafts = authored.defineTechnology({
   id: "pp_tech_chimeric_grafts",
   name: "Chimeric Grafts",

@@ -1,5 +1,5 @@
 /**
- * Emits the event-kind table, the per-kind definition methods, and the typed
+ * Emits the event-kind table, the per-kind definers, and the typed
  * fire-effect signatures.
  *
  * `type[event]` in `events/events.cwt` declares one `event_type` subtype per
@@ -12,13 +12,10 @@
  * Three outputs:
  *
  * - `events.ts` — the `EVENT_KINDS` data table.
- * - `event-methods.ts` — `GeneratedEventMethods`, one `defineXEvent` per
- *   scoped kind, over the same abstract-hook shape `GeneratedContentMethods`
- *   uses. The scopeless `event` kind is skipped and reported.
- * - `event-factory.ts` — `createEvents(file, namespace)`, the pure API's event
- *   collection, with the same one definer per scoped kind. Same kinds, same
- *   scopes, different surface: the definers close over the factory's namespace
- *   and its used-id set instead of dispatching to an abstract hook.
+ * - `event-factory.ts` — `createEvents(file, namespace)`, the event collection,
+ *   with one `defineXEvent` definer per scoped kind, each closing over the
+ *   factory's namespace and its used-id set. The scopeless `event` kind cannot
+ *   type its closures, so it is skipped and reported.
  * - `event-fires.ts` — the witness-overload pair per fire effect, merged into
  *   the generated scope interfaces. The pair cannot be generated as ordinary
  *   effects (see `FIRE_EFFECTS` in the overlay): the `id` argument is an
@@ -36,11 +33,10 @@ import { Emitter } from "./types.ts";
 
 export interface EventsEmission {
   readonly code: string;
-  readonly methodsCode: string;
   readonly factoryCode: string;
   readonly firesCode: string;
   readonly kinds: number;
-  readonly defineMethods: number;
+  readonly definers: number;
   readonly fireMethods: number;
   readonly skipped: readonly SkippedRule[];
 }
@@ -49,26 +45,6 @@ interface EmittedKind {
   readonly key: string;
   readonly subtype: string;
   readonly scope: string | null;
-}
-
-function defineMethod(kind: EmittedKind & { scope: string }): string {
-  const scope = JSON.stringify(kind.scope);
-  const spoken = kind.key.replaceAll("_", " ");
-  return (
-    docComment(
-      [
-        `Defines ${indefiniteArticle(spoken)} ${spoken} in this mod's namespace; the full id is`,
-        "`${prefix}.${def.id}`. Title/desc/option localization rides along, and the",
-        "event's closures record eagerly, at the define site.",
-      ],
-      "  "
-    ) +
-    `  define${pascalCase(kind.key)}<From extends ScopeName | undefined = undefined>(\n` +
-    `    def: EventDef<${scope}, From>\n` +
-    `  ): DefinedEvent<${scope}, From> {\n` +
-    `    return this.defineEventOf(${JSON.stringify(kind.key)}, ${scope}, def);\n` +
-    `  }\n`
-  );
 }
 
 function factorySignature(kind: EmittedKind & { scope: string }): string {
@@ -161,23 +137,6 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     skipped.push({ name: kind.key, reason: "scopeless event kind — closures cannot be typed" });
     return false;
   });
-
-  const methodsCode =
-    docComment([
-      "The `defineXEvent` methods, one per scoped event kind. `Mod` extends",
-      "this the same way it extends `GeneratedContentMethods`, which this",
-      "class chains to so the two generated surfaces share one base chain.",
-    ]) +
-    "export abstract class GeneratedEventMethods<\n" +
-    "  const P extends string,\n" +
-    "> extends GeneratedContentMethods<P> {\n" +
-    "  protected abstract defineEventOf<S extends ScopeName, From extends ScopeName | undefined>(\n" +
-    "    kind: EventKindKey,\n" +
-    "    scope: S,\n" +
-    "    def: EventDef<S, From>\n" +
-    "  ): DefinedEvent<S, From>;\n\n" +
-    scoped.map(defineMethod).join("\n") +
-    "}\n";
 
   const factoryCode =
     docComment([
@@ -283,11 +242,10 @@ export function emitEvents(emitter: Emitter): EventsEmission {
 
   return {
     code,
-    methodsCode,
     factoryCode,
     firesCode,
     kinds: kinds.length,
-    defineMethods: scoped.length,
+    definers: scoped.length,
     fireMethods,
     skipped,
   };

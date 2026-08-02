@@ -1,16 +1,21 @@
 /**
  * Runtime evidence for the pure authoring API (SDK-22).
  *
- * The headline claim is byte parity: the same content pushed through the
- * `Mod` builder and through `buildMod`/`render` produces identical file
- * maps, patch plan included. That parity test is the harness guarding the
- * rest of the pure-API migration — while both APIs coexist, every
- * intermediate state has to keep it green. The rest pins the fold's
- * validation story — duplicate ids, the prefix warning, the vanilla
- * collision guard, dangling event references, on-action ownership, loc
- * dedupe, the `modifierDescKeys` ordering hazard — and the
- * factory-collection semantics: creation is registration, one namespace per
- * event file, and split files feeding the patch plan's path order.
+ * The headline claim is byte parity with the `Mod` builder the pure API
+ * replaced. While both APIs were live the parity test built one fixture
+ * through each and compared the file maps directly; the builder's bytes are
+ * now committed as goldens under `tests/__snapshots__/pure-api/`, captured
+ * from the class API's own `render()` and asserted identical in all three
+ * directions (class → goldens, pure → class, pure → goldens) before the
+ * class half was deleted. The goldens are the permanent record of that
+ * parity — nothing regenerates them from the pure API's own output.
+ *
+ * The rest pins the fold's validation story — duplicate ids, the prefix
+ * warning, the vanilla collision guard, dangling event references,
+ * on-action ownership, loc dedupe, the `modifierDescKeys` ordering hazard —
+ * and the factory-collection semantics: creation is registration, one
+ * namespace per event file, and split files feeding the patch plan's path
+ * order.
  */
 
 import { describe, expect, it } from "vitest";
@@ -27,7 +32,6 @@ import {
   hasOwner,
   hasTechnology,
   isScopeValid,
-  Mod,
   onActions,
   render,
   type Collection,
@@ -120,65 +124,9 @@ function pureCollections(): ModItemInput[] {
   return [techs, situations, limits, events, hooks];
 }
 
-/** The identical fixture through the class builder. */
-function classMod(): Mod<"pp_mod"> {
-  const mod = new Mod(CONFIG);
-  const grafts = mod.defineTechnology({
-    id: "pp_mod_tech_chimeric_grafts",
-    name: "Chimeric Grafts",
-    area: "society",
-    tier: 3,
-    category: "biology",
-  });
-  mod.defineSituationType({
-    id: "pp_mod_situation_probe",
-    name: "Probe Situation",
-    targetScope: "planet",
-    monthlyProgress: {
-      base: 2,
-      modifiers: [{ mult: 1.5, desc: "The probe is spreading.", when: always() }],
-    },
-  });
-  const titan = mod.defineCountryShipOfSizeLimit({
-    id: "pp_mod_limit_titan",
-    shipTypes: ["ship_size_titan"],
-    base: 80,
-    max: 1600,
-    show: and(isScopeValid(), hasTechnology("tech_titans")),
-  });
-  const aftershock = mod.definePlanetEvent({
-    id: 2,
-    from: "country",
-    title: "Aftershock",
-    isTriggeredOnly: true,
-    immediate: (planet, ctx) => {
-      planet.within(ctx.from, (country) => {
-        country.addResource({ resource: "influence", amount: 50 });
-      });
-    },
-    options: [{ name: "Noted." }],
-  });
-  const hum = mod.defineCountryEvent({
-    id: 1,
-    title: "The Hum",
-    isTriggeredOnly: true,
-    immediate: (country, ctx) => {
-      country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
-        planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
-      });
-    },
-    options: [{ name: "Fascinating." }],
-  });
-  mod.on(onActions.onGameStartCountry, hum);
-  mod.addShipOfSizeLimits([titan, "third_party_limit"]);
-  mod.patchTechnology(
-    vanilla.technology("tech_gene_forging").require("cost", "prerequisites"),
-    (t) => ({
-      cost: t.cost.value * 2,
-      prerequisites: [...t.prerequisites, grafts],
-    })
-  );
-  return mod;
+/** Goldens mirror the emitted tree with `/` flattened, as the other suites do. */
+function goldenPath(relPath: string): string {
+  return `__snapshots__/pure-api/${relPath.replaceAll("/", "__")}`;
 }
 
 function techsWith(file: string | undefined, ...ids: string[]): Collection {
@@ -189,13 +137,16 @@ function techsWith(file: string | undefined, ...ids: string[]): Collection {
   return techs;
 }
 
-describe("parity with the class builder", () => {
-  it("renders byte-identical files for the full representative fixture", () => {
-    const pure = render(buildMod(CONFIG, pureCollections(), { vanilla }));
-    const classic = classMod().render();
-    expect([...pure.entries()]).toEqual([...classic.entries()]);
-    // The fixture exercises every emission channel.
-    expect([...pure.keys()]).toEqual([
+describe("parity with the deleted class builder", () => {
+  const pure = buildMod(CONFIG, pureCollections(), { vanilla });
+  const files = render(pure);
+
+  // The path list is the guard on the goldens themselves: a missing golden is
+  // written rather than failed, so an emission channel that silently moved
+  // would mint a new file instead of failing. Pinning the keys first makes
+  // that a test failure.
+  it("emits exactly the channels the fixture exercises", () => {
+    expect([...files.keys()]).toEqual([
       "descriptor.mod",
       "common/technology/pp_mod_technology.txt",
       "common/situations/pp_mod_situations.txt",
@@ -208,9 +159,16 @@ describe("parity with the class builder", () => {
     ]);
   });
 
-  it("computes the same patch plan, win assertions included", () => {
-    const pure = buildMod(CONFIG, pureCollections(), { vanilla });
-    expect(pure.patchPlan?.assertions).toEqual(classMod().patchPlan()?.assertions);
+  for (const [relPath, content] of files) {
+    it(`renders the builder's bytes for ${relPath}`, async () => {
+      await expect(content).toMatchFileSnapshot(goldenPath(relPath));
+    });
+  }
+
+  it("computes the builder's patch plan, win assertions included", async () => {
+    await expect(JSON.stringify(pure.patchPlan?.assertions, null, 2) + "\n").toMatchFileSnapshot(
+      "__snapshots__/pure-api/patch-plan-assertions.json"
+    );
     expect(pure.warnings).toEqual([]);
   });
 });

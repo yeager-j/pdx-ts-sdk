@@ -3,42 +3,30 @@ import { describe, expect, it } from "vitest";
 
 import { EVENT_KINDS } from "../../src/generated/events.ts";
 
-const methods = readFileSync("src/generated/event-methods.ts", "utf8");
 const factory = readFileSync("src/generated/event-factory.ts", "utf8");
 const fires = readFileSync("src/generated/event-fires.ts", "utf8");
 
 describe("generated event surface", () => {
-  it("emits one define method per scoped kind off the abstract hook", () => {
-    expect(methods).toContain("export abstract class GeneratedEventMethods<");
-    expect(methods).toContain("extends GeneratedContentMethods<P>");
-    expect(methods).toContain(
-      "defineSituationEvent<From extends ScopeName | undefined = undefined>("
-    );
-    expect(methods).toContain('return this.defineEventOf("situation_event", "situation", def);');
-    // The scopeless `event` kind cannot type its closures and is skipped.
-    expect(methods).not.toContain('"event", null');
-    expect(methods).not.toContain("defineEvent<From");
-  });
-
-  it("emits createEvents with a definer for every kind the class API defines", () => {
-    // The two surfaces come off one kind table, so they cannot drift apart:
-    // every `defineXEvent` on the abstract class has a definer on the factory,
-    // and the scopeless `event` kind is absent from both.
-    const classMethods = [...methods.matchAll(/^  (define\w+Event)</gm)].map((match) => match[1]);
-    const factoryDefiners = [...factory.matchAll(/^  (define\w+Event)</gm)].map(
-      (match) => match[1]
-    );
-    expect(factoryDefiners).toEqual(classMethods);
-    expect(factoryDefiners).toHaveLength(
+  it("emits a definer for every scoped kind, and only those", () => {
+    // The definers come straight off the kind table, so the surface cannot
+    // drift from the rules: one per scoped kind, and the scopeless `event`
+    // kind — whose closures cannot be typed — is absent.
+    const definers = [...factory.matchAll(/^  (define\w+Event)</gm)].map((match) => match[1]);
+    expect(definers).toHaveLength(
       Object.values(EVENT_KINDS).filter((kind) => kind.scope !== null).length
     );
+    expect(new Set(definers).size).toBe(definers.length);
     expect(factory).toContain(
       "  defineCountryEvent<From extends ScopeName | undefined = undefined>(\n" +
         '    def: EventDef<"country", From>\n' +
         '  ): EventItem<"country", From>;'
     );
+    expect(factory).toContain(
+      "  defineSituationEvent<From extends ScopeName | undefined = undefined>("
+    );
     expect(factory).toContain('defineSituationEvent: definerOf("situation_event", "situation"),');
     expect(factory).not.toContain("defineEvent<From");
+    expect(factory).not.toContain('"event", null');
   });
 
   it("keeps the factory's eager closures, per-namespace ids, and duplicate check", () => {

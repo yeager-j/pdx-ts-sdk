@@ -36,7 +36,8 @@ export class OnActionAuthoring {
     }
     if (!this.ownsEvent(event)) {
       throw new Error(
-        `Event "${event.id}" was not defined by the Mod receiving on-action "${hook.name}"`
+        `Event "${event.id}" is not among the collections passed to buildMod; on-action ` +
+          `"${hook.name}" can only fire this mod's own events`
       );
     }
     if (hook.scope !== event.scope || hook.from !== event.from) {

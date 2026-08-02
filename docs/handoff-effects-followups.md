@@ -1,9 +1,15 @@
 # Handoff: after the events-and-effects vertical
 
+> **Superseded 2026-08-02 — this is no longer the live list.** Tracking moved
+> to Linear (see [roadmap.md](roadmap.md)'s header). Follow-ups 1, 2, and 6
+> below landed; the resolution is noted inline on each. The rest are still
+> open and are recorded in the roadmap. The "what landed" and "sharp edges"
+> sections stay as written, with the authoring surface updated where the
+> pure-API migration renamed it.
+
 Written after the vertical landed, for whoever continues. The predecessor is
 [handoff-events-and-effects.md](handoff-events-and-effects.md); the spike's
-gate verdict is [verdict-effects-probe.md](verdict-effects-probe.md). Both are
-history now — this file is the live list.
+gate verdict is [verdict-effects-probe.md](verdict-effects-probe.md).
 
 ## What landed
 
@@ -21,7 +27,8 @@ recorded closures**, with zero escape hatches in consumer code. Concretely:
   ([generated/events.ts](../src/generated/events.ts)) derived from
   `type[event]`'s subtypes. Every skip has a named reason in the codegen
   report. Output is byte-deterministic.
-- **Events**: `mod.defineCountryEvent` / `definePlanetEvent` with eager
+- **Events**: `defineCountryEvent` / `definePlanetEvent` (then methods on
+  `Mod`, since 2026-08-02 definers on `createEvents`) with eager
   closure recording, loc riding along (`{id}.name`/`.desc`/`.a`…), the FROM
   contract (declared on the event, witnessed at fire sites with `NoInfer`,
   inert-sentinel `ctx.from` when undeclared), and `events/{prefix}_events.txt`
@@ -32,14 +39,13 @@ recorded closures**, with zero escape hatches in consumer code. Concretely:
 
 ## Follow-up work, roughly in value order
 
-1. **Generate the fire-effect overload pairs.** Six kinds have typed
-   signatures (hand-written module augmentation in [events.ts](../src/events.ts));
-   the other 15 have runtime encoders but no types. The overloads are fully
-   templated (kind key + scope), so `emit/effects.ts` could emit them once it
-   can import `EventRef` — a type-only cycle that already works elsewhere.
-2. **The remaining 13 event kinds on `Mod`.** `defineEventOf` is generic
-   already; adding `defineShipEvent` etc. is a typed wrapper per kind (or one
-   generic `defineEvent(kind, def)` over `EVENT_KINDS`).
+1. ~~**Generate the fire-effect overload pairs.**~~ **Done 2026-08-01** —
+   `src/generated/event-fires.ts` emits the witness-overload pair per fire
+   effect, merged into the generated scope interfaces.
+2. ~~**The remaining 13 event kinds.**~~ **Done 2026-08-01** — all 20 scoped
+   kinds are generated from `EVENT_KINDS`; today they are the `defineXEvent`
+   definers on `createEvents` (`src/generated/event-factory.ts`). The scopeless
+   `event` kind stays skipped: its closures cannot be typed.
 3. **Event body fields not yet modelled**: `mean_time_to_happen`, triggered
    desc/picture variants, `abort_trigger`/`abort_effect`, `ai_chance` on
    options (the `Modifier` type is ready for it), diplomatic/timeline event
@@ -54,8 +60,9 @@ recorded closures**, with zero escape hatches in consumer code. Concretely:
 5. **`prev` and deeper FROM chains.** `ScopeRef` covers them mechanically
    (`scopeRef("prev")`); the design question is typing, same as `fromfrom`
    (currently absent by design).
-6. **on_action registration** — the only way mods actually *pull* events into
-   play without another mod firing them.
+6. ~~**on_action registration**~~ **Done** — `createOnActions().on(hook, event)`
+   over the generated `onActions` table, with the hook's scope and FROM
+   metadata deciding which event contract is accepted.
 
 The chosen next spike is none of the above: it is the mod-testing evaluator —
 see [handoff-mod-testing.md](handoff-mod-testing.md).

@@ -1,5 +1,15 @@
 # Pure-API probe verdict: the fold holds
 
+> **Migrated 2026-08-02.** The dispatch plan below ran to completion on
+> `feature/pure-api` in its six chunks (9dd8857 promote, 78871c4 codegen,
+> 13f4c56 examples/README, 6b1853b runtime tests, 50a9d95 type tests, then the
+> builder deletion). `Mod`, `GeneratedContentMethods`, and
+> `GeneratedEventMethods` are gone; the byte-parity claim lives on as the
+> goldens in `tests/__snapshots__/pure-api/`, captured from `Mod.render()`
+> before the class was deleted. The watch items at the end are still open and
+> tracked separately. The body below is the spike's verdict as written and is
+> left intact.
+
 The SDK-22 spike: pure authoring functions, `buildMod` as the explicit fold
 the `Mod` builder already was, `render`/`write` as free functions. The probe
 lives in `design/pure-api-probe/` and stays there — it is the design record,

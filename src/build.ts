@@ -1,6 +1,5 @@
 /**
- * `buildMod`: the Mod builder's accumulators, written as the fold they
- * already were (SDK-22). Pure in the sense that matters: same config,
+ * `buildMod`: the mod assembly, written as the fold it is (SDK-22). Pure in the sense that matters: same config,
  * collections, and options produce the same value; all diagnostics are
  * throws or data on the returned value, never console output.
  *
@@ -28,7 +27,6 @@ import type { DefinedEvent } from "./events.ts";
 import { CONTENT_REGISTRIES, type ContentTypeName } from "./generated/content-registry.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { flattenItems, type EventItemBase, type ModItemInput, type ModWarning } from "./items.ts";
-import type { ModConfig } from "./mod.ts";
 import { OnActionAuthoring } from "./on-actions.ts";
 import { normalizeLogicalPath } from "./resolver/path-order.ts";
 import { collectVarRefs, planPatchEmission, type PatchPlan } from "./resolver/plan.ts";
@@ -37,6 +35,25 @@ import type { PatchedTechnology } from "./vanilla/patch.ts";
 import { sha256Hex, type VanillaFile, type VanillaView } from "./vanilla/surface.ts";
 
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+/** The mod's identity and launcher metadata: `buildMod`'s first argument. */
+export interface ModConfig<P extends string = string> {
+  /** Display name shown in the launcher. */
+  name: string;
+  /** Namespace for everything the mod emits: file names and content ids. Lowercase snake_case. */
+  prefix: P;
+  version?: string;
+  /** Game version pattern, e.g. "4.0.*". */
+  supportedVersion: string;
+  tags?: string[];
+  /**
+   * Acknowledges a game build the rule table is not verified against.
+   * Patch emission refuses when the loaded install's version differs from
+   * the table's pin; setting this to that exact version proceeds anyway —
+   * an explicit, per-version acceptance, never a blanket one.
+   */
+  acceptGameVersion?: string;
+}
 
 export interface BuildOptions {
   /**
@@ -363,9 +380,8 @@ export function buildMod(
 }
 
 /**
- * `Mod.patchPlan()` (src/mod.ts) over explicit inputs instead of `this` —
- * and over *every* one of the mod's own technology files, not one fixed
- * stem. With collections a registry can split, so each own file joins the
+ * The patch plan over explicit inputs, and over *every* one of the mod's own
+ * technology files rather than one fixed stem. With collections a registry can split, so each own file joins the
  * surviving-file enumeration (its name competes for path order) and the
  * reserved list (the patch file must not be named over it).
  */

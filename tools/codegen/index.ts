@@ -403,15 +403,6 @@ async function main(): Promise<void> {
       events.code
   );
   await write(
-    "event-methods.ts",
-    header(commit, ["events/events.cwt"]) +
-      'import type { DefinedEvent, EventDef } from "../events.ts";\n' +
-      'import { GeneratedContentMethods } from "./content-registry.ts";\n' +
-      'import type { EventKindKey } from "./events.ts";\n' +
-      'import type { ScopeName } from "./scopes.ts";\n\n' +
-      events.methodsCode
-  );
-  await write(
     "event-factory.ts",
     header(commit, ["events/events.cwt"]) +
       'import { buildEvent, type EventDef } from "../events.ts";\n' +
@@ -467,8 +458,8 @@ async function main(): Promise<void> {
       ` ${CONTENT_CONTRIBUTION_SINKS.size} with a contribution sink)`
   );
   console.log(
-    `event kinds: ${events.kinds} (${events.defineMethods} define methods, ` +
-      `${events.defineMethods} factory definers, ${events.fireMethods} typed fire methods)`
+    `event kinds: ${events.kinds} (${events.definers} factory definers, ` +
+      `${events.fireMethods} typed fire methods)`
   );
   console.log(
     `on-actions: ${onActions.emitted} emitted (${onActions.noScope} scopeless and currently rejected)`
@@ -516,14 +507,13 @@ async function main(): Promise<void> {
 }
 
 /**
- * One collection factory per registry: the pure authoring API's surface, and
- * the successor to `GeneratedContentMethods` above (which stays until the class
- * builder is deleted).
+ * One collection factory per registry: the pure authoring API's whole content
+ * surface.
  *
  * The definers are literal-preserving (`<const Id extends string>`), so a
  * definition's id survives as its literal type all the way into the item the
- * definer returns — the property the class methods, generic only in the mod
- * prefix, widened away.
+ * definer returns — the property the deleted class methods, generic only in
+ * the mod prefix, widened away.
  *
  * Three kinds of registry-specific member, each an overlay row rather than a
  * conditional in this emitter:
@@ -715,11 +705,7 @@ function contentRegistry(
     .map((content) => {
       const file = `./${content.registry.replaceAll("_", "-")}.ts`;
       const values = [content.emission.fieldsConstant, content.emission.localisationConstant];
-      const types = [`${content.emission.typeName}Def`, `Defined${content.emission.typeName}`];
-      return (
-        `import { ${values.join(", ")} } from ${JSON.stringify(file)};\n` +
-        `import type { ${types.join(", ")} } from ${JSON.stringify(file)};\n`
-      );
+      return `import { ${values.join(", ")} } from ${JSON.stringify(file)};\n`;
     })
     .join("");
   const descriptors = contents
@@ -745,53 +731,14 @@ function contentRegistry(
       );
     })
     .join("");
-  const defMap = contents
-    .map(
-      (content) =>
-        `  ${JSON.stringify(content.registry)}: ${content.emission.typeName}Def<PrefixedId<P>>;\n`
-    )
-    .join("");
-  const definedMap = contents
-    .map(
-      (content) =>
-        `  ${JSON.stringify(content.registry)}: Defined${content.emission.typeName}<PrefixedId<P>>;\n`
-    )
-    .join("");
-  const methods = contents
-    .map((content) => {
-      const method = `define${content.emission.typeName}`;
-      const key = JSON.stringify(content.registry);
-      const spoken = content.registry.replaceAll("_", " ");
-      return (
-        `  /** Defines ${indefiniteArticle(spoken)} ${spoken} in this mod. */\n` +
-        `  ${method}(def: ContentDefMap<P>[${key}]): DefinedContentMap<P>[${key}] {\n` +
-        `    return this.defineGeneratedContent(${key}, def);\n` +
-        "  }\n"
-      );
-    })
-    .join("\n");
   return (
     'import type { ContentRegistryDescriptor } from "../content.ts";\n' +
     imports +
     "\n" +
-    "export type PrefixedId<P extends string> = `${P}_${string}`;\n\n" +
     "export const CONTENT_REGISTRIES = [\n" +
     descriptors +
     "] as const satisfies readonly ContentRegistryDescriptor[];\n\n" +
-    'export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];\n\n' +
-    "export interface ContentDefMap<P extends string> {\n" +
-    defMap +
-    "}\n\n" +
-    "export interface DefinedContentMap<P extends string> {\n" +
-    definedMap +
-    "}\n\n" +
-    "export abstract class GeneratedContentMethods<const P extends string> {\n" +
-    "  protected abstract defineGeneratedContent<K extends ContentTypeName>(\n" +
-    "    type: K,\n" +
-    "    def: ContentDefMap<P>[K]\n" +
-    "  ): DefinedContentMap<P>[K];\n\n" +
-    methods +
-    "}\n"
+    'export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];\n'
   );
 }
 

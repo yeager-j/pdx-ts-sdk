@@ -29,202 +29,64 @@
 // From: common/country_limits.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
-import {
-  AGENDA_FIELDS,
-  AGENDA_LOCALISATION,
-  type AgendaDef,
-  type DefinedAgenda,
-} from "./agenda.ts";
-import {
-  AGREEMENT_PRESET_FIELDS,
-  AGREEMENT_PRESET_LOCALISATION,
-  type AgreementPresetDef,
-  type DefinedAgreementPreset,
-} from "./agreement-preset.ts";
-import {
-  AMBIENT_OBJECT_FIELDS,
-  AMBIENT_OBJECT_LOCALISATION,
-  type AmbientObjectDef,
-  type DefinedAmbientObject,
-} from "./ambient-object.ts";
+import { AGENDA_FIELDS, AGENDA_LOCALISATION } from "./agenda.ts";
+import { AGREEMENT_PRESET_FIELDS, AGREEMENT_PRESET_LOCALISATION } from "./agreement-preset.ts";
+import { AMBIENT_OBJECT_FIELDS, AMBIENT_OBJECT_LOCALISATION } from "./ambient-object.ts";
 import {
   ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
   ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
-  type ArchaeologicalSiteTypeDef,
-  type DefinedArchaeologicalSiteType,
 } from "./archaeological-site-type.ts";
-import {
-  ASCENSION_PERK_FIELDS,
-  ASCENSION_PERK_LOCALISATION,
-  type AscensionPerkDef,
-  type DefinedAscensionPerk,
-} from "./ascension-perk.ts";
+import { ASCENSION_PERK_FIELDS, ASCENSION_PERK_LOCALISATION } from "./ascension-perk.ts";
 import {
   BOMBARDMENT_STANCE_FIELDS,
   BOMBARDMENT_STANCE_LOCALISATION,
-  type BombardmentStanceDef,
-  type DefinedBombardmentStance,
 } from "./bombardment-stance.ts";
-import {
-  BUILDING_FIELDS,
-  BUILDING_LOCALISATION,
-  type BuildingDef,
-  type DefinedBuilding,
-} from "./building.ts";
-import {
-  CASUS_BELLI_FIELDS,
-  CASUS_BELLI_LOCALISATION,
-  type CasusBelliDef,
-  type DefinedCasusBelli,
-} from "./casus-belli.ts";
-import {
-  CIVIC_OR_ORIGIN_FIELDS,
-  CIVIC_OR_ORIGIN_LOCALISATION,
-  type CivicOrOriginDef,
-  type DefinedCivicOrOrigin,
-} from "./civic-or-origin.ts";
-import {
-  COMPONENT_SET_FIELDS,
-  COMPONENT_SET_LOCALISATION,
-  type ComponentSetDef,
-  type DefinedComponentSet,
-} from "./component-set.ts";
-import {
-  COUNCILOR_FIELDS,
-  COUNCILOR_LOCALISATION,
-  type CouncilorDef,
-  type DefinedCouncilor,
-} from "./councilor.ts";
+import { BUILDING_FIELDS, BUILDING_LOCALISATION } from "./building.ts";
+import { CASUS_BELLI_FIELDS, CASUS_BELLI_LOCALISATION } from "./casus-belli.ts";
+import { CIVIC_OR_ORIGIN_FIELDS, CIVIC_OR_ORIGIN_LOCALISATION } from "./civic-or-origin.ts";
+import { COMPONENT_SET_FIELDS, COMPONENT_SET_LOCALISATION } from "./component-set.ts";
+import { COUNCILOR_FIELDS, COUNCILOR_LOCALISATION } from "./councilor.ts";
 import {
   COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS,
   COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION,
-  type CountryShipOfSizeLimitDef,
-  type DefinedCountryShipOfSizeLimit,
 } from "./country-ship-of-size-limit.ts";
-import {
-  DECISION_FIELDS,
-  DECISION_LOCALISATION,
-  type DecisionDef,
-  type DefinedDecision,
-} from "./decision.ts";
-import {
-  ECONOMIC_CATEGORY_FIELDS,
-  ECONOMIC_CATEGORY_LOCALISATION,
-  type DefinedEconomicCategory,
-  type EconomicCategoryDef,
-} from "./economic-category.ts";
-import { EDICT_FIELDS, EDICT_LOCALISATION, type DefinedEdict, type EdictDef } from "./edict.ts";
+import { DECISION_FIELDS, DECISION_LOCALISATION } from "./decision.ts";
+import { ECONOMIC_CATEGORY_FIELDS, ECONOMIC_CATEGORY_LOCALISATION } from "./economic-category.ts";
+import { EDICT_FIELDS, EDICT_LOCALISATION } from "./edict.ts";
 import {
   GLOBAL_SHIP_DESIGN_FIELDS,
   GLOBAL_SHIP_DESIGN_LOCALISATION,
-  type DefinedGlobalShipDesign,
-  type GlobalShipDesignDef,
 } from "./global-ship-design.ts";
-import {
-  GRAPHICAL_CULTURE_FIELDS,
-  GRAPHICAL_CULTURE_LOCALISATION,
-  type DefinedGraphicalCulture,
-  type GraphicalCultureDef,
-} from "./graphical-culture.ts";
-import { JOB_FIELDS, JOB_LOCALISATION, type DefinedJob, type JobDef } from "./job.ts";
-import {
-  OPINION_MODIFIER_FIELDS,
-  OPINION_MODIFIER_LOCALISATION,
-  type DefinedOpinionModifier,
-  type OpinionModifierDef,
-} from "./opinion-modifier.ts";
-import {
-  SCRIPTED_LOC_FIELDS,
-  SCRIPTED_LOC_LOCALISATION,
-  type DefinedScriptedLoc,
-  type ScriptedLocDef,
-} from "./scripted-loc.ts";
-import {
-  SCRIPTED_MODIFIER_FIELDS,
-  SCRIPTED_MODIFIER_LOCALISATION,
-  type DefinedScriptedModifier,
-  type ScriptedModifierDef,
-} from "./scripted-modifier.ts";
-import {
-  SECTION_TEMPLATE_FIELDS,
-  SECTION_TEMPLATE_LOCALISATION,
-  type DefinedSectionTemplate,
-  type SectionTemplateDef,
-} from "./section-template.ts";
-import {
-  SHIP_SIZE_FIELDS,
-  SHIP_SIZE_LOCALISATION,
-  type DefinedShipSize,
-  type ShipSizeDef,
-} from "./ship-size.ts";
-import {
-  SITUATION_TYPE_FIELDS,
-  SITUATION_TYPE_LOCALISATION,
-  type DefinedSituationType,
-  type SituationTypeDef,
-} from "./situation-type.ts";
-import {
-  SPECIES_CLASS_FIELDS,
-  SPECIES_CLASS_LOCALISATION,
-  type DefinedSpeciesClass,
-  type SpeciesClassDef,
-} from "./species-class.ts";
-import {
-  STARBASE_LEVEL_FIELDS,
-  STARBASE_LEVEL_LOCALISATION,
-  type DefinedStarbaseLevel,
-  type StarbaseLevelDef,
-} from "./starbase-level.ts";
-import {
-  STATIC_MODIFIER_FIELDS,
-  STATIC_MODIFIER_LOCALISATION,
-  type DefinedStaticModifier,
-  type StaticModifierDef,
-} from "./static-modifier.ts";
+import { GRAPHICAL_CULTURE_FIELDS, GRAPHICAL_CULTURE_LOCALISATION } from "./graphical-culture.ts";
+import { JOB_FIELDS, JOB_LOCALISATION } from "./job.ts";
+import { OPINION_MODIFIER_FIELDS, OPINION_MODIFIER_LOCALISATION } from "./opinion-modifier.ts";
+import { SCRIPTED_LOC_FIELDS, SCRIPTED_LOC_LOCALISATION } from "./scripted-loc.ts";
+import { SCRIPTED_MODIFIER_FIELDS, SCRIPTED_MODIFIER_LOCALISATION } from "./scripted-modifier.ts";
+import { SECTION_TEMPLATE_FIELDS, SECTION_TEMPLATE_LOCALISATION } from "./section-template.ts";
+import { SHIP_SIZE_FIELDS, SHIP_SIZE_LOCALISATION } from "./ship-size.ts";
+import { SITUATION_TYPE_FIELDS, SITUATION_TYPE_LOCALISATION } from "./situation-type.ts";
+import { SPECIES_CLASS_FIELDS, SPECIES_CLASS_LOCALISATION } from "./species-class.ts";
+import { STARBASE_LEVEL_FIELDS, STARBASE_LEVEL_LOCALISATION } from "./starbase-level.ts";
+import { STATIC_MODIFIER_FIELDS, STATIC_MODIFIER_LOCALISATION } from "./static-modifier.ts";
 import {
   STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS,
   STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
-  type DefinedStrikeCraftComponentTemplate,
-  type StrikeCraftComponentTemplateDef,
 } from "./strike-craft-component-template.ts";
-import {
-  TECHNOLOGY_FIELDS,
-  TECHNOLOGY_LOCALISATION,
-  type DefinedTechnology,
-  type TechnologyDef,
-} from "./technology.ts";
+import { TECHNOLOGY_FIELDS, TECHNOLOGY_LOCALISATION } from "./technology.ts";
 import {
   TRADITION_CATEGORY_FIELDS,
   TRADITION_CATEGORY_LOCALISATION,
-  type DefinedTraditionCategory,
-  type TraditionCategoryDef,
 } from "./tradition-category.ts";
-import {
-  TRADITION_FIELDS,
-  TRADITION_LOCALISATION,
-  type DefinedTradition,
-  type TraditionDef,
-} from "./tradition.ts";
+import { TRADITION_FIELDS, TRADITION_LOCALISATION } from "./tradition.ts";
 import {
   UTILITY_COMPONENT_TEMPLATE_FIELDS,
   UTILITY_COMPONENT_TEMPLATE_LOCALISATION,
-  type DefinedUtilityComponentTemplate,
-  type UtilityComponentTemplateDef,
 } from "./utility-component-template.ts";
-import {
-  WAR_GOAL_FIELDS,
-  WAR_GOAL_LOCALISATION,
-  type DefinedWarGoal,
-  type WarGoalDef,
-} from "./war-goal.ts";
+import { WAR_GOAL_FIELDS, WAR_GOAL_LOCALISATION } from "./war-goal.ts";
 import {
   WEAPON_COMPONENT_TEMPLATE_FIELDS,
   WEAPON_COMPONENT_TEMPLATE_LOCALISATION,
-  type DefinedWeaponComponentTemplate,
-  type WeaponComponentTemplateDef,
 } from "./weapon-component-template.ts";
-
-export type PrefixedId<P extends string> = `${P}_${string}`;
 
 export const CONTENT_REGISTRIES = [
   {
@@ -476,298 +338,3 @@ export const CONTENT_REGISTRIES = [
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
-
-export interface ContentDefMap<P extends string> {
-  technology: TechnologyDef<PrefixedId<P>>;
-  building: BuildingDef<PrefixedId<P>>;
-  tradition: TraditionDef<PrefixedId<P>>;
-  tradition_category: TraditionCategoryDef<PrefixedId<P>>;
-  ascension_perk: AscensionPerkDef<PrefixedId<P>>;
-  agenda: AgendaDef<PrefixedId<P>>;
-  edict: EdictDef<PrefixedId<P>>;
-  decision: DecisionDef<PrefixedId<P>>;
-  job: JobDef<PrefixedId<P>>;
-  global_ship_design: GlobalShipDesignDef<PrefixedId<P>>;
-  utility_component_template: UtilityComponentTemplateDef<PrefixedId<P>>;
-  weapon_component_template: WeaponComponentTemplateDef<PrefixedId<P>>;
-  strike_craft_component_template: StrikeCraftComponentTemplateDef<PrefixedId<P>>;
-  ship_size: ShipSizeDef<PrefixedId<P>>;
-  opinion_modifier: OpinionModifierDef<PrefixedId<P>>;
-  static_modifier: StaticModifierDef<PrefixedId<P>>;
-  scripted_modifier: ScriptedModifierDef<PrefixedId<P>>;
-  casus_belli: CasusBelliDef<PrefixedId<P>>;
-  war_goal: WarGoalDef<PrefixedId<P>>;
-  agreement_preset: AgreementPresetDef<PrefixedId<P>>;
-  bombardment_stance: BombardmentStanceDef<PrefixedId<P>>;
-  archaeological_site_type: ArchaeologicalSiteTypeDef<PrefixedId<P>>;
-  situation_type: SituationTypeDef<PrefixedId<P>>;
-  scripted_loc: ScriptedLocDef<PrefixedId<P>>;
-  councilor: CouncilorDef<PrefixedId<P>>;
-  economic_category: EconomicCategoryDef<PrefixedId<P>>;
-  civic_or_origin: CivicOrOriginDef<PrefixedId<P>>;
-  component_set: ComponentSetDef<PrefixedId<P>>;
-  section_template: SectionTemplateDef<PrefixedId<P>>;
-  ambient_object: AmbientObjectDef<PrefixedId<P>>;
-  graphical_culture: GraphicalCultureDef<PrefixedId<P>>;
-  starbase_level: StarbaseLevelDef<PrefixedId<P>>;
-  species_class: SpeciesClassDef<PrefixedId<P>>;
-  country_ship_of_size_limit: CountryShipOfSizeLimitDef<PrefixedId<P>>;
-}
-
-export interface DefinedContentMap<P extends string> {
-  technology: DefinedTechnology<PrefixedId<P>>;
-  building: DefinedBuilding<PrefixedId<P>>;
-  tradition: DefinedTradition<PrefixedId<P>>;
-  tradition_category: DefinedTraditionCategory<PrefixedId<P>>;
-  ascension_perk: DefinedAscensionPerk<PrefixedId<P>>;
-  agenda: DefinedAgenda<PrefixedId<P>>;
-  edict: DefinedEdict<PrefixedId<P>>;
-  decision: DefinedDecision<PrefixedId<P>>;
-  job: DefinedJob<PrefixedId<P>>;
-  global_ship_design: DefinedGlobalShipDesign<PrefixedId<P>>;
-  utility_component_template: DefinedUtilityComponentTemplate<PrefixedId<P>>;
-  weapon_component_template: DefinedWeaponComponentTemplate<PrefixedId<P>>;
-  strike_craft_component_template: DefinedStrikeCraftComponentTemplate<PrefixedId<P>>;
-  ship_size: DefinedShipSize<PrefixedId<P>>;
-  opinion_modifier: DefinedOpinionModifier<PrefixedId<P>>;
-  static_modifier: DefinedStaticModifier<PrefixedId<P>>;
-  scripted_modifier: DefinedScriptedModifier<PrefixedId<P>>;
-  casus_belli: DefinedCasusBelli<PrefixedId<P>>;
-  war_goal: DefinedWarGoal<PrefixedId<P>>;
-  agreement_preset: DefinedAgreementPreset<PrefixedId<P>>;
-  bombardment_stance: DefinedBombardmentStance<PrefixedId<P>>;
-  archaeological_site_type: DefinedArchaeologicalSiteType<PrefixedId<P>>;
-  situation_type: DefinedSituationType<PrefixedId<P>>;
-  scripted_loc: DefinedScriptedLoc<PrefixedId<P>>;
-  councilor: DefinedCouncilor<PrefixedId<P>>;
-  economic_category: DefinedEconomicCategory<PrefixedId<P>>;
-  civic_or_origin: DefinedCivicOrOrigin<PrefixedId<P>>;
-  component_set: DefinedComponentSet<PrefixedId<P>>;
-  section_template: DefinedSectionTemplate<PrefixedId<P>>;
-  ambient_object: DefinedAmbientObject<PrefixedId<P>>;
-  graphical_culture: DefinedGraphicalCulture<PrefixedId<P>>;
-  starbase_level: DefinedStarbaseLevel<PrefixedId<P>>;
-  species_class: DefinedSpeciesClass<PrefixedId<P>>;
-  country_ship_of_size_limit: DefinedCountryShipOfSizeLimit<PrefixedId<P>>;
-}
-
-export abstract class GeneratedContentMethods<const P extends string> {
-  protected abstract defineGeneratedContent<K extends ContentTypeName>(
-    type: K,
-    def: ContentDefMap<P>[K]
-  ): DefinedContentMap<P>[K];
-
-  /** Defines a technology in this mod. */
-  defineTechnology(def: ContentDefMap<P>["technology"]): DefinedContentMap<P>["technology"] {
-    return this.defineGeneratedContent("technology", def);
-  }
-
-  /** Defines a building in this mod. */
-  defineBuilding(def: ContentDefMap<P>["building"]): DefinedContentMap<P>["building"] {
-    return this.defineGeneratedContent("building", def);
-  }
-
-  /** Defines a tradition in this mod. */
-  defineTradition(def: ContentDefMap<P>["tradition"]): DefinedContentMap<P>["tradition"] {
-    return this.defineGeneratedContent("tradition", def);
-  }
-
-  /** Defines a tradition category in this mod. */
-  defineTraditionCategory(
-    def: ContentDefMap<P>["tradition_category"]
-  ): DefinedContentMap<P>["tradition_category"] {
-    return this.defineGeneratedContent("tradition_category", def);
-  }
-
-  /** Defines an ascension perk in this mod. */
-  defineAscensionPerk(
-    def: ContentDefMap<P>["ascension_perk"]
-  ): DefinedContentMap<P>["ascension_perk"] {
-    return this.defineGeneratedContent("ascension_perk", def);
-  }
-
-  /** Defines an agenda in this mod. */
-  defineAgenda(def: ContentDefMap<P>["agenda"]): DefinedContentMap<P>["agenda"] {
-    return this.defineGeneratedContent("agenda", def);
-  }
-
-  /** Defines an edict in this mod. */
-  defineEdict(def: ContentDefMap<P>["edict"]): DefinedContentMap<P>["edict"] {
-    return this.defineGeneratedContent("edict", def);
-  }
-
-  /** Defines a decision in this mod. */
-  defineDecision(def: ContentDefMap<P>["decision"]): DefinedContentMap<P>["decision"] {
-    return this.defineGeneratedContent("decision", def);
-  }
-
-  /** Defines a job in this mod. */
-  defineJob(def: ContentDefMap<P>["job"]): DefinedContentMap<P>["job"] {
-    return this.defineGeneratedContent("job", def);
-  }
-
-  /** Defines a global ship design in this mod. */
-  defineGlobalShipDesign(
-    def: ContentDefMap<P>["global_ship_design"]
-  ): DefinedContentMap<P>["global_ship_design"] {
-    return this.defineGeneratedContent("global_ship_design", def);
-  }
-
-  /** Defines an utility component template in this mod. */
-  defineUtilityComponentTemplate(
-    def: ContentDefMap<P>["utility_component_template"]
-  ): DefinedContentMap<P>["utility_component_template"] {
-    return this.defineGeneratedContent("utility_component_template", def);
-  }
-
-  /** Defines a weapon component template in this mod. */
-  defineWeaponComponentTemplate(
-    def: ContentDefMap<P>["weapon_component_template"]
-  ): DefinedContentMap<P>["weapon_component_template"] {
-    return this.defineGeneratedContent("weapon_component_template", def);
-  }
-
-  /** Defines a strike craft component template in this mod. */
-  defineStrikeCraftComponentTemplate(
-    def: ContentDefMap<P>["strike_craft_component_template"]
-  ): DefinedContentMap<P>["strike_craft_component_template"] {
-    return this.defineGeneratedContent("strike_craft_component_template", def);
-  }
-
-  /** Defines a ship size in this mod. */
-  defineShipSize(def: ContentDefMap<P>["ship_size"]): DefinedContentMap<P>["ship_size"] {
-    return this.defineGeneratedContent("ship_size", def);
-  }
-
-  /** Defines an opinion modifier in this mod. */
-  defineOpinionModifier(
-    def: ContentDefMap<P>["opinion_modifier"]
-  ): DefinedContentMap<P>["opinion_modifier"] {
-    return this.defineGeneratedContent("opinion_modifier", def);
-  }
-
-  /** Defines a static modifier in this mod. */
-  defineStaticModifier(
-    def: ContentDefMap<P>["static_modifier"]
-  ): DefinedContentMap<P>["static_modifier"] {
-    return this.defineGeneratedContent("static_modifier", def);
-  }
-
-  /** Defines a scripted modifier in this mod. */
-  defineScriptedModifier(
-    def: ContentDefMap<P>["scripted_modifier"]
-  ): DefinedContentMap<P>["scripted_modifier"] {
-    return this.defineGeneratedContent("scripted_modifier", def);
-  }
-
-  /** Defines a casus belli in this mod. */
-  defineCasusBelli(def: ContentDefMap<P>["casus_belli"]): DefinedContentMap<P>["casus_belli"] {
-    return this.defineGeneratedContent("casus_belli", def);
-  }
-
-  /** Defines a war goal in this mod. */
-  defineWarGoal(def: ContentDefMap<P>["war_goal"]): DefinedContentMap<P>["war_goal"] {
-    return this.defineGeneratedContent("war_goal", def);
-  }
-
-  /** Defines an agreement preset in this mod. */
-  defineAgreementPreset(
-    def: ContentDefMap<P>["agreement_preset"]
-  ): DefinedContentMap<P>["agreement_preset"] {
-    return this.defineGeneratedContent("agreement_preset", def);
-  }
-
-  /** Defines a bombardment stance in this mod. */
-  defineBombardmentStance(
-    def: ContentDefMap<P>["bombardment_stance"]
-  ): DefinedContentMap<P>["bombardment_stance"] {
-    return this.defineGeneratedContent("bombardment_stance", def);
-  }
-
-  /** Defines an archaeological site type in this mod. */
-  defineArchaeologicalSiteType(
-    def: ContentDefMap<P>["archaeological_site_type"]
-  ): DefinedContentMap<P>["archaeological_site_type"] {
-    return this.defineGeneratedContent("archaeological_site_type", def);
-  }
-
-  /** Defines a situation type in this mod. */
-  defineSituationType(
-    def: ContentDefMap<P>["situation_type"]
-  ): DefinedContentMap<P>["situation_type"] {
-    return this.defineGeneratedContent("situation_type", def);
-  }
-
-  /** Defines a scripted loc in this mod. */
-  defineScriptedLoc(def: ContentDefMap<P>["scripted_loc"]): DefinedContentMap<P>["scripted_loc"] {
-    return this.defineGeneratedContent("scripted_loc", def);
-  }
-
-  /** Defines a councilor in this mod. */
-  defineCouncilor(def: ContentDefMap<P>["councilor"]): DefinedContentMap<P>["councilor"] {
-    return this.defineGeneratedContent("councilor", def);
-  }
-
-  /** Defines an economic category in this mod. */
-  defineEconomicCategory(
-    def: ContentDefMap<P>["economic_category"]
-  ): DefinedContentMap<P>["economic_category"] {
-    return this.defineGeneratedContent("economic_category", def);
-  }
-
-  /** Defines a civic or origin in this mod. */
-  defineCivicOrOrigin(
-    def: ContentDefMap<P>["civic_or_origin"]
-  ): DefinedContentMap<P>["civic_or_origin"] {
-    return this.defineGeneratedContent("civic_or_origin", def);
-  }
-
-  /** Defines a component set in this mod. */
-  defineComponentSet(
-    def: ContentDefMap<P>["component_set"]
-  ): DefinedContentMap<P>["component_set"] {
-    return this.defineGeneratedContent("component_set", def);
-  }
-
-  /** Defines a section template in this mod. */
-  defineSectionTemplate(
-    def: ContentDefMap<P>["section_template"]
-  ): DefinedContentMap<P>["section_template"] {
-    return this.defineGeneratedContent("section_template", def);
-  }
-
-  /** Defines an ambient object in this mod. */
-  defineAmbientObject(
-    def: ContentDefMap<P>["ambient_object"]
-  ): DefinedContentMap<P>["ambient_object"] {
-    return this.defineGeneratedContent("ambient_object", def);
-  }
-
-  /** Defines a graphical culture in this mod. */
-  defineGraphicalCulture(
-    def: ContentDefMap<P>["graphical_culture"]
-  ): DefinedContentMap<P>["graphical_culture"] {
-    return this.defineGeneratedContent("graphical_culture", def);
-  }
-
-  /** Defines a starbase level in this mod. */
-  defineStarbaseLevel(
-    def: ContentDefMap<P>["starbase_level"]
-  ): DefinedContentMap<P>["starbase_level"] {
-    return this.defineGeneratedContent("starbase_level", def);
-  }
-
-  /** Defines a species class in this mod. */
-  defineSpeciesClass(
-    def: ContentDefMap<P>["species_class"]
-  ): DefinedContentMap<P>["species_class"] {
-    return this.defineGeneratedContent("species_class", def);
-  }
-
-  /** Defines a country ship of size limit in this mod. */
-  defineCountryShipOfSizeLimit(
-    def: ContentDefMap<P>["country_ship_of_size_limit"]
-  ): DefinedContentMap<P>["country_ship_of_size_limit"] {
-    return this.defineGeneratedContent("country_ship_of_size_limit", def);
-  }
-}

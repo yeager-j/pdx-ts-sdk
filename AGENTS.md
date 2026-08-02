@@ -64,8 +64,8 @@ the vendored rule sources and documentation dumps.
 ## Adding a new content type
 
 The content system is deliberately generic. Adding a registry such as `ascension_perk` should
-generate `AscensionPerkDef`, `DefinedAscensionPerk`, `Mod.defineAscensionPerk`, and the
-`createAscensionPerks` collection factory (with `AscensionPerkCollection`/`AscensionPerkItem`)
+generate `AscensionPerkDef`, `DefinedAscensionPerk`, and the `createAscensionPerks` collection
+factory (with `AscensionPerkCollection`/`AscensionPerkItem` and its `defineAscensionPerk` definer)
 without a new emitter, writer class, or type-name conditional.
 
 Every field the emitter can lower is emitted automatically — there is no curated field allowlist to
@@ -95,26 +95,30 @@ pre-review of a list.
 4. Re-run codegen and inspect its report and generated files. Fix the generic model when a shape is
    reusable. Do not add `if (type === "...")` branches to the generic writer or emitter.
 5. Export the new generated public types from `src/index.ts`.
-6. Add all four kinds of evidence:
+6. Add all four kinds of evidence, all of them written through the factory:
    - codegen coverage in `tests/codegen/content-snapshot.test.ts`
    - corpus coverage in `tests/codegen/corpus-conformance.test.ts` — it parses the real installed
      game and measures the emitted interface against every shipped definition. A field the emitter
      invents with zero real precedent is worth verifying by hand against the vendored rules; a
      registry parsing to zero definitions means the path or keyword is wrong.
-   - compile-time API and scope/reference safety in `tests/content.test-d.ts`
+   - compile-time API and scope/reference safety in `tests/content.test-d.ts`: the definer preserves
+     the literal id, the returned item flows into reference fields, and the collection's element
+     type rejects another registry's content.
    - runtime serialization coverage and file snapshots in `tests/content.test.ts` and
-     `tests/__snapshots__/content/`
+     `tests/__snapshots__/content/`, built with
+     `render(buildMod(config, [createAscensionPerks(), ...]))`
 7. Add or update a README example when the new registry introduces an authoring pattern users
    would not infer from existing content types.
 
 Use the generated naming rather than adding hand-written aliases: a snake-case type such as
-`ascension_perk` becomes `AscensionPerk`, `defineAscensionPerk`, and
+`ascension_perk` becomes `AscensionPerk`, `defineAscensionPerk`, `createAscensionPerks`, and
 `src/generated/ascension-perk.ts`.
 
 `defineX` and `patchX` have different evidence requirements. A prefixed new definition cannot
 collide with vanilla ids, but a vanilla patch is a whole-object override whose load order and
-emission must be verified per registry. Do not add `patchAscensionPerk` merely because
-`defineAscensionPerk` exists.
+emission must be verified per registry. `patchX` is an overlay row
+(`CONTENT_PATCH_REGISTRIES`), not a consequence of `defineX` existing — do not add
+`patchAscensionPerk` merely because `defineAscensionPerk` exists.
 
 ## PDXScript parser
 
@@ -130,6 +134,10 @@ differential, and fast-check property gates described in that package.
 
 - Triggers are declarative expression trees. Effects are closures executed once at build time to
   record AST entries.
+- Authoring is pure: registry-typed collection factories create content and register it in one
+  act, and `buildMod(config, collections, { vanilla? })` folds collections into a `PureMod` value
+  that `render`/`write` consume. There is no builder object. Diagnostics are throws or
+  `mod.warnings` data — never console output.
 - Runtime effect recording is scope-agnostic; generated interfaces enforce which effects and
   scope transitions are legal.
 - Cross-content references should remain branded objects where the generated rules know the

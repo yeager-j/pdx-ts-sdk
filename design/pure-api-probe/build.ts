@@ -22,12 +22,12 @@
 
 import { kv, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
+import type { ModConfig } from "../../src/build.ts";
 import { ContentAuthoring, type DefinedContent } from "../../src/content.ts";
 import { StaleRuleTableError } from "../../src/errors.ts";
 import type { DefinedEvent } from "../../src/events.ts";
 import { CONTENT_REGISTRIES, type ContentTypeName } from "../../src/generated/content-registry.ts";
 import type { ScopeName } from "../../src/generated/scopes.ts";
-import type { ModConfig } from "../../src/mod.ts";
 import { OnActionAuthoring } from "../../src/on-actions.ts";
 import { normalizeLogicalPath } from "../../src/resolver/path-order.ts";
 import { collectVarRefs, planPatchEmission, type PatchPlan } from "../../src/resolver/plan.ts";
@@ -363,7 +363,7 @@ export function buildMod(
 }
 
 /**
- * `Mod.patchPlan()` (src/mod.ts) over explicit inputs instead of `this` —
+ * `Mod.patchPlan()` over explicit inputs instead of `this` —
  * and over *every* one of the mod's own technology files, not one fixed
  * stem. With collections a registry can split, so each own file joins the
  * surviving-file enumeration (its name competes for path order) and the

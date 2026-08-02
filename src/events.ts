@@ -106,7 +106,7 @@ export type DefinedEvent<S extends ScopeName, From extends ScopeName | undefined
   From
 > & { readonly entry: PdxEntry };
 
-/** Where definition-side localization lands; `Mod` supplies its registry. */
+/** Where definition-side localization lands; the caller supplies its registry. */
 export interface LocSink {
   register(key: string, text: string): void;
 }
