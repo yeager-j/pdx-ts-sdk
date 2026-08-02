@@ -94,6 +94,8 @@ export interface TechnologyPatchItem {
 export interface ContributionItem {
   readonly itemKind: "contribution";
   readonly registry: "ship_of_size_limits";
+  /** The registry the listed ids name, so own-prefixed ones can be resolved. */
+  readonly refRegistry: ContentTypeName;
   readonly ids: readonly string[];
 }
 

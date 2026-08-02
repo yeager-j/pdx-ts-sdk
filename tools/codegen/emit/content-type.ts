@@ -308,6 +308,19 @@ function conversionFor(value: TsValue): "identity" | "ref" {
   return value.toScalar("x") === "x" ? "identity" : "ref";
 }
 
+/**
+ * The scalar-lowering half of a field's metadata: how to turn the authored
+ * value into an id, and — when the rules say every admitted form is a
+ * reference — which registries that id must come from. The second half is what
+ * lets `buildMod` hold an own-prefixed reference to the registry it names.
+ */
+function scalarMetadata(value: TsValue): string[] {
+  return [
+    `conversion: ${JSON.stringify(conversionFor(value))}`,
+    ...(value.refTypes === undefined ? [] : [`refTypes: ${JSON.stringify(value.refTypes)}`]),
+  ];
+}
+
 function arrayType(type: string): string {
   return type.includes(" | ") ? `(${type})[]` : `${type}[]`;
 }
@@ -350,9 +363,7 @@ function lowerValue(
   const base = literalType + (widening === undefined ? "" : ` | ${widening}`);
   return {
     memberType: repeated ? arrayType(base) : base,
-    metadata: metadata(field, name, "value", [
-      `conversion: ${JSON.stringify(conversionFor(value))}`,
-    ]),
+    metadata: metadata(field, name, "value", scalarMetadata(value)),
   };
 }
 
@@ -375,7 +386,7 @@ function lowerValueList(
   return {
     memberType: listType + (widening === undefined ? "" : ` | ${widening}`),
     metadata: metadata(field, name, "valueList", [
-      `conversion: ${JSON.stringify(conversionFor(value))}`,
+      ...scalarMetadata(value),
       ...(quoted ? ["quoted: true"] : []),
     ]),
   };
@@ -696,9 +707,7 @@ function lowerOrdinary(
     }
     return {
       memberType: `readonly { weight: number; event?: ${value.type} }[]`,
-      metadata: metadata(field, name, "weightedEvents", [
-        `conversion: ${JSON.stringify(conversionFor(value))}`,
-      ]),
+      metadata: metadata(field, name, "weightedEvents", scalarMetadata(value)),
     };
   }
   const bare = bareValuesOf(field.type);
@@ -754,9 +763,7 @@ function lowerDualWeight(
   const scope = scopeType(emitter, weightArms[0]!, inheritedScope, asserted);
   return {
     memberType: `${value.type} | WeightBlock<${scope}>`,
-    metadata: metadata(scalarArms[0]!, name, "valueOrWeightBlock", [
-      `conversion: ${JSON.stringify(conversionFor(value))}`,
-    ]),
+    metadata: metadata(scalarArms[0]!, name, "valueOrWeightBlock", scalarMetadata(value)),
   };
 }
 
@@ -787,9 +794,7 @@ function lowerScalarUnion(
   const base = value.type + (widening === undefined ? "" : ` | ${widening}`);
   return {
     memberType: repeated[0]! ? arrayType(base) : base,
-    metadata: metadata(group[0]!, name, "value", [
-      `conversion: ${JSON.stringify(conversionFor(value))}`,
-    ]),
+    metadata: metadata(group[0]!, name, "value", scalarMetadata(value)),
   };
 }
 

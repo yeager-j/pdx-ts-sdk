@@ -9,6 +9,16 @@
 > before the class was deleted. The watch items at the end are still open and
 > tracked separately. The body below is the spike's verdict as written and is
 > left intact.
+>
+> **Content ref-integrity landed 2026-08-02.** The first watch item is closed:
+> `buildMod` now fails when a content reference carrying the mod's own prefix
+> resolves to nothing in the build. References are recorded as the generic
+> writer lowers them, from generated field metadata (`refTypes`) naming the
+> registries each field may reference, so the check is registry-aware — a
+> prerequisite has to be a built _technology_ — and never mistakes a flag,
+> localization key, or saved event target for a reference. Defines, technology
+> patches, and the ship-of-size-limits contribution are covered; references
+> made inside effect closures still are not, beyond the event scan.
 
 The SDK-22 spike: pure authoring functions, `buildMod` as the explicit fold
 the `Mod` builder already was, `render`/`write` as free functions. The probe

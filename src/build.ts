@@ -21,7 +21,7 @@
 
 import { kv, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
-import { ContentAuthoring, type DefinedContent } from "./content.ts";
+import { ContentAuthoring, type ContentRefUse, type DefinedContent } from "./content.ts";
 import { StaleRuleTableError } from "./errors.ts";
 import type { DefinedEvent } from "./events.ts";
 import { CONTENT_REGISTRIES, type ContentTypeName } from "./generated/content-registry.ts";
@@ -162,6 +162,10 @@ export function buildMod(
     readonly defined: DefinedContent<string, { readonly id: string }>;
   }
   const placements: Placement[] = [];
+  // Every own-prefixed content reference the build writes, with the thing that
+  // wrote it. Filled while lowering (and by the patch and contribution folds),
+  // resolved against the built ids once every collection has been seen.
+  const refUses: { readonly owner: string; readonly use: ContentRefUse }[] = [];
   for (const { item, file } of flat) {
     if (item.itemKind !== "content") {
       continue;
@@ -202,7 +206,11 @@ export function buildMod(
         relPath,
         type: descriptor.type as ContentTypeName,
         ids: group.map((row) => row.defined.id),
-        entries: group.map((row) => row.defined.toEntries()),
+        entries: group.map((row) =>
+          row.defined.toEntries((use) => {
+            refUses.push({ owner: `${row.type} "${row.defined.id}"`, use });
+          })
+        ),
       });
     }
   }
@@ -286,6 +294,10 @@ export function buildMod(
     }
     for (const id of item.ids) {
       shipOfSizeLimits.add(id);
+      refUses.push({
+        owner: `the ${item.registry} contribution`,
+        use: { targets: [item.refRegistry], id, field: `default.${item.registry}` },
+      });
     }
   }
 
@@ -309,6 +321,9 @@ export function buildMod(
       );
     }
     patches.push(patched);
+    for (const use of patched.refs) {
+      refUses.push({ owner: `the patch of ${patched.id}`, use });
+    }
   }
 
   // The dangling-reference guard: with plain string ids, firing an event
@@ -353,6 +368,42 @@ export function buildMod(
           `collections passed to buildMod — was its createEvents(...) collection included?`
       );
     }
+  }
+
+  // The content half of the same guard. Where events are found by scanning
+  // emitted scalars for an id shape, content references are recorded as they
+  // are lowered, from field metadata that still says which registries the id
+  // may name. That is the difference between "an own-prefixed string" — flags,
+  // localization keys, saved event targets are all that — and a reference: only
+  // a field the rules say holds `<technology>` demands a built technology.
+  const authorableTypes = new Set<string>(CONTENT_REGISTRIES.map((descriptor) => descriptor.type));
+  const builtIds = new Map<string, Set<string>>();
+  for (const placement of placements) {
+    const ids = builtIds.get(placement.type) ?? new Set<string>();
+    ids.add(placement.defined.id);
+    builtIds.set(placement.type, ids);
+  }
+  for (const { owner, use } of refUses) {
+    // Vanilla and third-party ids are somebody else's to define, exactly as
+    // the prefix policy and the event scan have it.
+    if (!use.id.startsWith(`${config.prefix}_`)) {
+      continue;
+    }
+    // A target this SDK cannot author (`<technology_tier>`) or a field that
+    // also admits non-references excuses the id: nothing here could have
+    // defined it, so its absence is not evidence of a mistake.
+    if (use.targets.length === 0 || !use.targets.every((type) => authorableTypes.has(type))) {
+      continue;
+    }
+    if (use.targets.some((type) => builtIds.get(type)?.has(use.id))) {
+      continue;
+    }
+    const target = use.targets.join(" or ");
+    throw new Error(
+      `${owner} references ${target} "${use.id}" in "${use.field}", but no such ${target} is ` +
+        `among the collections passed to buildMod — the id carries this mod's prefix ` +
+        `"${config.prefix}_", so this build has to define it; was its collection passed to buildMod?`
+    );
   }
 
   const patchPlan = planPatches(

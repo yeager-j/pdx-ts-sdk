@@ -174,7 +174,9 @@ function defineContentExample(): PureMod {
     allow: isCapital(),
     planetModifier: (m) => m.planet.jobs.engineering.research.produces.mult(0.1),
     showInTech: ["tech_basic_science_lab_1"],
-    upgrades: ["content_test_building_lab_2"],
+    // A vanilla building: nothing in this fixture defines a second lab, and an
+    // own-prefixed id here would (rightly) fail the reference guard.
+    upgrades: ["building_research_lab_2"],
     prerequisites: ["tech_basic_science_lab_1"],
     convertTo: ["building_ruined_lab"],
   });
@@ -807,7 +809,9 @@ function defineContentExample(): PureMod {
   starbaseLevels.defineStarbaseLevel({
     id: "content_test_starbase_level_outpost",
     shipSize: "ship_size_starbase_i",
-    nextLevel: "content_test_starbase_level_starport",
+    // Vanilla's starport, for the same reason `upgrades` above names a vanilla
+    // building: this fixture defines exactly one starbase level.
+    nextLevel: "starbase_level_starport",
     levelWeight: 0,
     showInOutliner: true,
     collectsTrade: false,
@@ -1093,17 +1097,19 @@ describe("generated content registries", () => {
     const limits = createCountryShipOfSizeLimits();
     const titan = limits.defineCountryShipOfSizeLimit({
       id: "cl_test_titan_limit",
-      shipTypes: ["cl_test_titan"],
+      shipTypes: ["ship_size_titan"],
       base: 80,
       show: isScopeValid(),
     });
     limits.addShipOfSizeLimits([titan]);
-    limits.addShipOfSizeLimits([titan, "cl_test_other_limit"]);
+    // The raw string is another mod's id: it carries no prefix of this mod's,
+    // so the reference guard leaves it alone.
+    limits.addShipOfSizeLimits([titan, "third_party_limit"]);
     const rendered = render(buildMod(configFor("Limit test", "cl_test"), [limits])).get(
       "common/country_limits/ownership_limits/cl_test_ownership_limits.txt"
     );
     expect(rendered).toBe(
-      "default = {\n\tship_of_size_limits = { cl_test_titan_limit cl_test_other_limit }\n}\n"
+      "default = {\n\tship_of_size_limits = { cl_test_titan_limit third_party_limit }\n}\n"
     );
   });
 
@@ -1111,7 +1117,7 @@ describe("generated content registries", () => {
     const limits = createCountryShipOfSizeLimits();
     limits.defineCountryShipOfSizeLimit({
       id: "cl_test_unused_limit",
-      shipTypes: ["cl_test_titan"],
+      shipTypes: ["ship_size_titan"],
       base: 80,
       show: isScopeValid(),
     });

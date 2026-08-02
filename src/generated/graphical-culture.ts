@@ -71,7 +71,13 @@ export type DefinedGraphicalCulture<Id extends string = string> = DefinedContent
 
 export const GRAPHICAL_CULTURE_FIELDS: readonly ContentField[] = [
   { key: "has_city_graphics", member: "hasCityGraphics", shape: "value", conversion: "identity" },
-  { key: "fallback", member: "fallback", shape: "value", conversion: "ref" },
+  {
+    key: "fallback",
+    member: "fallback",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["graphical_culture"],
+  },
   { key: "ship_color", member: "shipColor", shape: "value", conversion: "identity" },
   {
     key: "ship_lighting",
@@ -81,7 +87,13 @@ export const GRAPHICAL_CULTURE_FIELDS: readonly ContentField[] = [
   },
   { key: "randomized", member: "randomized", shape: "trigger" },
   { key: "selectable", member: "selectable", shape: "trigger" },
-  { key: "ship_kinds", member: "shipKinds", shape: "valueList", conversion: "ref" },
+  {
+    key: "ship_kinds",
+    member: "shipKinds",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["ship_categories"],
+  },
   { key: "ship_selection_weight", member: "shipSelectionWeight", shape: "weightBlock" },
 ];
 

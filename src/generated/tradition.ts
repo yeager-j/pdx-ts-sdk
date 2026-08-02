@@ -38,7 +38,13 @@ export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
   { key: "inherit_icon", member: "inheritIcon", shape: "value", conversion: "identity" },
   { key: "inherit_name", member: "inheritName", shape: "value", conversion: "identity" },
   { key: "inherit_effects", member: "inheritEffects", shape: "value", conversion: "identity" },
-  { key: "unlocks_agenda", member: "unlocksAgenda", shape: "value", conversion: "ref" },
+  {
+    key: "unlocks_agenda",
+    member: "unlocksAgenda",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["agenda"],
+  },
   {
     key: "custom_tooltip",
     member: "customTooltip",
@@ -98,7 +104,13 @@ export type DefinedTradition<Id extends string = string> = DefinedContent<
 >;
 
 export const TRADITION_FIELDS: readonly ContentField[] = [
-  { key: "unlocks_agenda", member: "unlocksAgenda", shape: "value", conversion: "ref" },
+  {
+    key: "unlocks_agenda",
+    member: "unlocksAgenda",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["agenda"],
+  },
   { key: "modifier", member: "modifier", shape: "modifierBlock" },
   { key: "possible", member: "possible", shape: "trigger" },
   { key: "on_enabled", member: "onEnabled", shape: "effect" },

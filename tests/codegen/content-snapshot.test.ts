@@ -475,7 +475,8 @@ describe("content-type codegen", () => {
       "randomEvents?: readonly { weight: number; event?: EventScopelessRef | string | EventSituationRef }[];"
     );
     expect(situation?.code).toContain(
-      '{ key: "random_events", member: "randomEvents", shape: "weightedEvents", conversion: "ref" }'
+      '{ key: "random_events", member: "randomEvents", shape: "weightedEvents", ' +
+        'conversion: "ref", refTypes: ["event.scopeless","event.situation"] }'
     );
     expect(situation?.unsupported.join("\n")).not.toContain("random_events");
   });

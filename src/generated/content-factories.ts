@@ -1153,6 +1153,7 @@ export function createCountryShipOfSizeLimits(file?: string): CountryShipOfSizeL
       items.push({
         itemKind: "contribution",
         registry: "ship_of_size_limits",
+        refRegistry: "country_ship_of_size_limit",
         ids: shipOfSizeLimits.map((entry) => String(refId(entry))),
       });
     },

@@ -87,7 +87,13 @@ export interface WarGoalDef<Id extends string = string> extends WarGoalFields {
 export type DefinedWarGoal<Id extends string = string> = DefinedContent<"war_goal", WarGoalDef<Id>>;
 
 export const WAR_GOAL_FIELDS: readonly ContentField[] = [
-  { key: "casus_belli", member: "casusBelli", shape: "value", conversion: "ref" },
+  {
+    key: "casus_belli",
+    member: "casusBelli",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["casus_belli"],
+  },
   { key: "proxy_wars_only", member: "proxyWarsOnly", shape: "value", conversion: "identity" },
   { key: "hide", member: "hide", shape: "value", conversion: "identity" },
   { key: "cede_claims", member: "cedeClaims", shape: "value", conversion: "identity" },
@@ -114,7 +120,13 @@ export const WAR_GOAL_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "war_exhaustion", member: "warExhaustion", shape: "value", conversion: "identity" },
-  { key: "set_defender_wargoal", member: "setDefenderWargoal", shape: "value", conversion: "ref" },
+  {
+    key: "set_defender_wargoal",
+    member: "setDefenderWargoal",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["war_goal"],
+  },
   {
     key: "forbidden_peace_offers",
     member: "forbiddenPeaceOffers",

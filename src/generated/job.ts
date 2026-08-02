@@ -160,7 +160,13 @@ export interface JobDef<Id extends string = string> extends JobFields {
 export type DefinedJob<Id extends string = string> = DefinedContent<"job", JobDef<Id>>;
 
 export const JOB_FIELDS: readonly ContentField[] = [
-  { key: "category", member: "category", shape: "value", conversion: "ref" },
+  {
+    key: "category",
+    member: "category",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["pop_category"],
+  },
   {
     key: "first_come_first_served",
     member: "firstComeFirstServed",
@@ -196,7 +202,7 @@ export const JOB_FIELDS: readonly ContentField[] = [
   { key: "is_pre_sapient", member: "isPreSapient", shape: "value", conversion: "identity" },
   { key: "ignores_sapience", member: "ignoresSapience", shape: "value", conversion: "identity" },
   { key: "ignores_favorite", member: "ignoresFavorite", shape: "value", conversion: "identity" },
-  { key: "purge", member: "purge", shape: "value", conversion: "ref" },
+  { key: "purge", member: "purge", shape: "value", conversion: "ref", refTypes: ["purge_type"] },
   {
     key: "contributes_to_diplo_weight",
     member: "contributesToDiploWeight",
@@ -254,7 +260,13 @@ export const JOB_FIELDS: readonly ContentField[] = [
     shape: "triggeredModifierBlock",
   },
   { key: "weight", member: "weight", shape: "weightBlock" },
-  { key: "auto_trait_prio", member: "autoTraitPrio", shape: "valueList", conversion: "ref" },
+  {
+    key: "auto_trait_prio",
+    member: "autoTraitPrio",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["trait"],
+  },
 ];
 
 export const JOB_LOCALISATION: readonly ContentLocalisation[] = [

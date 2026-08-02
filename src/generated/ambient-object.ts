@@ -31,7 +31,13 @@ export type DefinedAmbientObject<Id extends string = string> = DefinedContent<
 >;
 
 export const AMBIENT_OBJECT_FIELDS: readonly ContentField[] = [
-  { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+  {
+    key: "entity",
+    member: "entity",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["model_entity"],
+  },
   { key: "selectable", member: "selectable", shape: "value", conversion: "identity" },
   { key: "show_name", member: "showName", shape: "value", conversion: "identity" },
   { key: "description", member: "description", shape: "value", conversion: "identity" },

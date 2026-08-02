@@ -625,6 +625,7 @@ function contentFactories(
           "      items.push({\n" +
           '        itemKind: "contribution",\n' +
           `        registry: ${JSON.stringify(contribution.sink)},\n` +
+          `        refRegistry: ${JSON.stringify(contribution.refRegistry)},\n` +
           `        ids: ${camelCase(contribution.sink)}.map((entry) => String(refId(entry))),\n` +
           "      });\n" +
           "    },\n"

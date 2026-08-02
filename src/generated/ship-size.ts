@@ -109,6 +109,7 @@ export const SHIP_SIZE_SPACE_FAUNA_VALUES_FIELDS: readonly ContentField[] = [
     member: "reanimatedShipDesign",
     shape: "value",
     conversion: "ref",
+    refTypes: ["global_ship_design"],
   },
   { key: "can_breed_alone", member: "canBreedAlone", shape: "value", conversion: "identity" },
   { key: "icon_frame", member: "iconFrame", shape: "value", conversion: "identity" },
@@ -138,10 +139,10 @@ export interface ShipSizeMapIconOverride {
 }
 
 export const SHIP_SIZE_MAP_ICON_OVERRIDE_FIELDS: readonly ContentField[] = [
-  { key: "normal", member: "normal", shape: "value", conversion: "ref" },
-  { key: "mixed", member: "mixed", shape: "value", conversion: "ref" },
-  { key: "cloaked", member: "cloaked", shape: "value", conversion: "ref" },
-  { key: "encamped", member: "encamped", shape: "value", conversion: "ref" },
+  { key: "normal", member: "normal", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  { key: "mixed", member: "mixed", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  { key: "cloaked", member: "cloaked", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  { key: "encamped", member: "encamped", shape: "value", conversion: "ref", refTypes: ["sprite"] },
 ];
 
 export interface ShipSizeHeroShip {
@@ -163,6 +164,7 @@ export const SHIP_SIZE_HERO_SHIP_FIELDS: readonly ContentField[] = [
     member: "heroShipFleetBackground",
     shape: "value",
     conversion: "ref",
+    refTypes: ["sprite"],
   },
   { key: "capabilities", member: "capabilities", shape: "valueList", conversion: "identity" },
   {
@@ -170,6 +172,7 @@ export const SHIP_SIZE_HERO_SHIP_FIELDS: readonly ContentField[] = [
     member: "customClassTextColor",
     shape: "value",
     conversion: "ref",
+    refTypes: ["text_color"],
   },
 ];
 
@@ -355,7 +358,13 @@ export type DefinedShipSize<Id extends string = string> = DefinedContent<
 >;
 
 export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
-  { key: "graphical_culture", member: "graphicalCulture", shape: "valueList", conversion: "ref" },
+  {
+    key: "graphical_culture",
+    member: "graphicalCulture",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["graphical_culture"],
+  },
   { key: "is_space_object", member: "isSpaceObject", shape: "value", conversion: "identity" },
   { key: "is_reckoning_ship", member: "isReckoningShip", shape: "value", conversion: "identity" },
   { key: "is_entropy_conduit", member: "isEntropyConduit", shape: "value", conversion: "identity" },
@@ -368,7 +377,13 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "entity", member: "entity", shape: "value", conversion: "ref" },
-  { key: "ship_category", member: "shipCategory", shape: "value", conversion: "ref" },
+  {
+    key: "ship_category",
+    member: "shipCategory",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_categories"],
+  },
   {
     key: "formation_priority",
     member: "formationPriority",
@@ -414,7 +429,13 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
   },
   { key: "icon", member: "icon", shape: "value", conversion: "identity" },
   { key: "icon_cloned", member: "iconCloned", shape: "value", conversion: "identity" },
-  { key: "use_shipnames_from", member: "useShipnamesFrom", shape: "value", conversion: "ref" },
+  {
+    key: "use_shipnames_from",
+    member: "useShipnamesFrom",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_size"],
+  },
   {
     key: "combat_size_multiplier",
     member: "combatSizeMultiplier",
@@ -450,7 +471,13 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "selectable", member: "selectable", shape: "trigger" },
-  { key: "default_behavior", member: "defaultBehavior", shape: "value", conversion: "ref" },
+  {
+    key: "default_behavior",
+    member: "defaultBehavior",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_behavior"],
+  },
   { key: "ship_roles", member: "shipRoles", shape: "valueList", conversion: "identity" },
   {
     key: "triggered_ship_roles",
@@ -460,7 +487,13 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     wrapped: true,
     repeated: true,
   },
-  { key: "prerequisites", member: "prerequisites", shape: "valueList", conversion: "ref" },
+  {
+    key: "prerequisites",
+    member: "prerequisites",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["technology"],
+  },
   { key: "class", member: "class", shape: "value", conversion: "identity" },
   { key: "construction_type", member: "constructionType", shape: "value", conversion: "identity" },
   { key: "possible_starbase", member: "possibleStarbase", shape: "trigger" },
@@ -470,6 +503,7 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     member: "requiredComponentSet",
     shape: "value",
     conversion: "ref",
+    refTypes: ["component_set.required_component"],
     repeated: true,
   },
   {
@@ -491,7 +525,13 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "identity",
   },
-  { key: "evaluation_resource", member: "evaluationResource", shape: "value", conversion: "ref" },
+  {
+    key: "evaluation_resource",
+    member: "evaluationResource",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["resource"],
+  },
   { key: "uses_name_prefix", member: "usesNamePrefix", shape: "value", conversion: "identity" },
   {
     key: "is_space_fauna_ship",
@@ -551,8 +591,20 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "identity",
   },
-  { key: "role_background", member: "roleBackground", shape: "value", conversion: "ref" },
-  { key: "on_click_sound", member: "onClickSound", shape: "value", conversion: "ref" },
+  {
+    key: "role_background",
+    member: "roleBackground",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
+  {
+    key: "on_click_sound",
+    member: "onClickSound",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sound_effect"],
+  },
   {
     key: "map_icon_override",
     member: "mapIconOverride",
@@ -579,7 +631,13 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "identity",
   },
-  { key: "upgrades_to", member: "upgradesTo", shape: "value", conversion: "ref" },
+  {
+    key: "upgrades_to",
+    member: "upgradesTo",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_size"],
+  },
   {
     key: "display_attack_neutral_fleet_button",
     member: "displayAttackNeutralFleetButton",
@@ -592,7 +650,13 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "identity",
   },
-  { key: "carries_colony", member: "carriesColony", shape: "value", conversion: "ref" },
+  {
+    key: "carries_colony",
+    member: "carriesColony",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["planet_class"],
+  },
   {
     key: "collects_stockpile_from",
     member: "collectsStockpileFrom",
@@ -617,8 +681,20 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "valueList",
     conversion: "identity",
   },
-  { key: "scripted_action", member: "scriptedAction", shape: "valueList", conversion: "ref" },
-  { key: "automation_icon", member: "automationIcon", shape: "value", conversion: "ref" },
+  {
+    key: "scripted_action",
+    member: "scriptedAction",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["scripted_action"],
+  },
+  {
+    key: "automation_icon",
+    member: "automationIcon",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
   {
     key: "preserve_movement_animation_progress",
     member: "preserveMovementAnimationProgress",
@@ -631,7 +707,13 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "identity",
   },
-  { key: "base_ship_size", member: "baseShipSize", shape: "value", conversion: "ref" },
+  {
+    key: "base_ship_size",
+    member: "baseShipSize",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_size"],
+  },
   {
     key: "accepts_all_modifiers",
     member: "acceptsAllModifiers",
@@ -645,7 +727,13 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "arkship_picture", member: "arkshipPicture", shape: "value", conversion: "identity" },
-  { key: "planet_view_header", member: "planetViewHeader", shape: "value", conversion: "ref" },
+  {
+    key: "planet_view_header",
+    member: "planetViewHeader",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
   { key: "hero_ship", member: "heroShip", shape: "struct", fields: SHIP_SIZE_HERO_SHIP_FIELDS },
 ];
 

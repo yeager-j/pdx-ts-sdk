@@ -29,6 +29,8 @@ import {
   createOnActions,
   createSituationTypes,
   createTechnologies,
+  createTraditions,
+  eventTarget,
   hasOwner,
   hasTechnology,
   isScopeValid,
@@ -337,6 +339,179 @@ describe("event factories", () => {
     hooks.on(onActions.onGameStartCountry, event);
     expect(() => buildMod(CONFIG, [hooks])).toThrow(
       'Event "pp_mod.31" is not among the collections passed to buildMod'
+    );
+  });
+});
+
+describe("content reference integrity", () => {
+  it("resolves a reference across two collections of the same build", () => {
+    const base = techsWith("base_techs", "pp_mod_tech_base");
+    const derived = createTechnologies("derived_techs");
+    derived.defineTechnology({
+      id: "pp_mod_tech_derived",
+      name: "Derived",
+      area: "physics",
+      tier: 2,
+      category: "particles",
+      prerequisites: ["pp_mod_tech_base"],
+    });
+    const files = render(buildMod(CONFIG, [base, derived]));
+    expect(files.get("common/technology/pp_mod_derived_techs.txt")).toContain(
+      'prerequisites = { "pp_mod_tech_base" }'
+    );
+  });
+
+  it("fails loudly on a reference whose collection was not passed", () => {
+    const orphans = createTechnologies("orphan_techs");
+    const orphan = orphans.defineTechnology({
+      id: "pp_mod_tech_orphan",
+      name: "Orphan",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    const included = createTechnologies();
+    included.defineTechnology({
+      id: "pp_mod_tech_dependent",
+      name: "Dependent",
+      area: "physics",
+      tier: 2,
+      category: "particles",
+      prerequisites: [orphan],
+    });
+    // `orphans` is never passed — the emitted id has no definition behind it.
+    expect(() => buildMod(CONFIG, [included])).toThrow(
+      'technology "pp_mod_tech_dependent" references technology "pp_mod_tech_orphan" in ' +
+        '"prerequisites", but no such technology is among the collections passed to buildMod'
+    );
+  });
+
+  it("names the registry, not merely the id: a tradition is not a technology", () => {
+    // Same id, different registry. An existence-only check would pass this.
+    const traditions = createTraditions();
+    traditions.defineTradition({
+      id: "pp_mod_ghost",
+      name: "Ghost",
+      effects: "Nothing at all.",
+    });
+    const techs = createTechnologies();
+    techs.defineTechnology({
+      id: "pp_mod_tech_haunted",
+      name: "Haunted",
+      area: "physics",
+      tier: 2,
+      category: "particles",
+      prerequisites: ["pp_mod_ghost"],
+    });
+    expect(() => buildMod(CONFIG, [traditions, techs])).toThrow(
+      'references technology "pp_mod_ghost" in "prerequisites"'
+    );
+  });
+
+  it("checks an own-prefixed raw string exactly like a branded ref", () => {
+    // The prefix is per-mod, so an own-prefixed string in a reference field is
+    // this mod's content however it was written — which is what catches typos.
+    const techs = createTechnologies();
+    techs.defineTechnology({
+      id: "pp_mod_tech_base",
+      name: "Base",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    techs.defineTechnology({
+      id: "pp_mod_tech_typo",
+      name: "Typo",
+      area: "physics",
+      tier: 2,
+      category: "particles",
+      prerequisites: ["pp_mod_tech_bass"],
+    });
+    expect(() => buildMod(CONFIG, [techs])).toThrow(
+      'references technology "pp_mod_tech_bass" in "prerequisites"'
+    );
+  });
+
+  it("exempts vanilla and third-party ids, and fields no registry backs", () => {
+    const techs = createTechnologies();
+    techs.defineTechnology({
+      id: "pp_mod_tech_open",
+      name: "Open",
+      area: "physics",
+      // `<technology_tier>` is not a registry this SDK authors, so nothing
+      // here could have defined it and its absence proves nothing.
+      tier: "pp_mod_tier_custom",
+      category: "particles",
+      prerequisites: ["tech_lasers_2", "someone_elses_tech"],
+    });
+    expect(buildMod(CONFIG, [techs]).warnings).toEqual([]);
+  });
+
+  it("leaves own-prefixed flags, targets and loc keys alone", () => {
+    // The scalars a post-hoc scan of the emitted tree would trip over: all
+    // own-prefixed, none of them content references.
+    const events = createEvents("events", "pp_mod");
+    events.defineCountryEvent({
+      id: 40,
+      title: "Hum",
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.setCountryFlag("pp_mod_heard_the_hum");
+        country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+          planet.saveEventTargetAs(eventTarget<"planet">("pp_mod_storm_world"));
+        });
+      },
+      options: [{ name: "Noted." }],
+    });
+    expect(buildMod(CONFIG, [events]).warnings).toEqual([]);
+  });
+
+  it("holds a patch's references to the same standard", () => {
+    // The calibration anchor's shape: a vanilla technology patched to require
+    // one of this mod's own. In the build it resolves; alone it cannot.
+    const orphans = createTechnologies("orphan_techs");
+    const marker = orphans.defineTechnology({
+      id: "pp_mod_tech_marker",
+      name: "Marker",
+      area: "society",
+      tier: 0,
+      category: "biology",
+      startTech: true,
+    });
+    const patches = createTechnologies();
+    patches.patchTechnology(
+      vanilla.technology("tech_gene_forging").require("prerequisites"),
+      (t) => ({ prerequisites: [...t.prerequisites, marker] })
+    );
+    expect(
+      render(buildMod(CONFIG, [orphans, patches], { vanilla })).get(
+        "common/technology/pp_mod_orphan_techs.txt"
+      )
+    ).toContain("pp_mod_tech_marker");
+    expect(() => buildMod(CONFIG, [patches], { vanilla })).toThrow(
+      'the patch of tech_gene_forging references technology "pp_mod_tech_marker" in ' +
+        '"prerequisites", but no such technology is among the collections passed to buildMod'
+    );
+  });
+
+  it("holds the contribution sink to the same standard", () => {
+    const limits = createCountryShipOfSizeLimits();
+    const titan = limits.defineCountryShipOfSizeLimit({
+      id: "pp_mod_limit_titan",
+      shipTypes: ["ship_size_titan"],
+      base: 80,
+      show: isScopeValid(),
+    });
+    limits.addShipOfSizeLimits([titan, "third_party_limit"]);
+    expect(buildMod(CONFIG, [limits]).shipOfSizeLimits).toEqual(
+      new Set(["pp_mod_limit_titan", "third_party_limit"])
+    );
+
+    const dangling = createCountryShipOfSizeLimits();
+    dangling.addShipOfSizeLimits(["pp_mod_limit_never_defined"]);
+    expect(() => buildMod(CONFIG, [dangling])).toThrow(
+      "the ship_of_size_limits contribution references country_ship_of_size_limit " +
+        '"pp_mod_limit_never_defined" in "default.ship_of_size_limits"'
     );
   });
 });

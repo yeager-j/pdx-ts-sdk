@@ -23,8 +23,8 @@ export interface ArchaeologicalSiteTypeStage {
 
 export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS: readonly ContentField[] = [
   { key: "difficulty", member: "difficulty", shape: "value", conversion: "identity" },
-  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
-  { key: "event", member: "event", shape: "value", conversion: "ref" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  { key: "event", member: "event", shape: "value", conversion: "ref", refTypes: ["event.fleet"] },
 ];
 
 /**
@@ -75,13 +75,14 @@ export type DefinedArchaeologicalSiteType<Id extends string = string> = DefinedC
 >;
 
 export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
-  { key: "picture", member: "picture", shape: "value", conversion: "ref" },
+  { key: "picture", member: "picture", shape: "value", conversion: "ref", refTypes: ["sprite"] },
   { key: "desc", member: "desc", shape: "value", conversion: "identity" },
   {
     key: "situation_log_category",
     member: "situationLogCategory",
     shape: "value",
     conversion: "ref",
+    refTypes: ["situation_log_category"],
   },
   { key: "max_instances", member: "maxInstances", shape: "value", conversion: "identity" },
   {

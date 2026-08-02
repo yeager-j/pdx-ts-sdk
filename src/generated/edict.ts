@@ -61,7 +61,7 @@ export type DefinedEdict<Id extends string = string> = DefinedContent<"edict", E
 
 export const EDICT_FIELDS: readonly ContentField[] = [
   { key: "length", member: "length", shape: "value", conversion: "identity" },
-  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
   { key: "is_wartime_edict", member: "isWartimeEdict", shape: "value", conversion: "identity" },
   {
     key: "edict_lock_in_months",
@@ -82,7 +82,13 @@ export const EDICT_FIELDS: readonly ContentField[] = [
   { key: "relay_network_modifier", member: "relayNetworkModifier", shape: "modifierBlock" },
   { key: "potential", member: "potential", shape: "trigger" },
   { key: "allow", member: "allow", shape: "trigger" },
-  { key: "prerequisites", member: "prerequisites", shape: "valueList", conversion: "ref" },
+  {
+    key: "prerequisites",
+    member: "prerequisites",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["technology"],
+  },
   { key: "show_tech_unlock_if", member: "showTechUnlockIf", shape: "trigger" },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
   { key: "effect", member: "effect", shape: "effect" },

@@ -176,6 +176,13 @@ own `namespace = ...` header — so a large mod gives every feature its own
 counter. Firing an event whose collection was never passed to `buildMod` is a
 build error, not a silent dangling id.
 
+The same holds for content: a reference carrying the mod's own prefix — a
+technology named in `prerequisites`, a tradition in `traditions`, a limit in
+`addShipOfSizeLimits` — must resolve to a definition in the build, in the
+registry the field references, or `buildMod` fails and names the definition,
+the field, and the id. Vanilla and third-party ids carry someone else's
+prefix and are always left alone.
+
 `render(mod)` returns the complete, launcher-ready mod folder as a
 path-to-contents map — `descriptor.mod`, namespaced files under each
 populated `common/` registry, `events/*.txt`, and BOM-prefixed localization

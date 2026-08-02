@@ -13,7 +13,7 @@ export interface StarbaseLevelPicture {
 
 export const STARBASE_LEVEL_PICTURE_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger" },
-  { key: "picture", member: "picture", shape: "value", conversion: "ref" },
+  { key: "picture", member: "picture", shape: "value", conversion: "ref", refTypes: ["sprite"] },
 ];
 
 /**
@@ -63,8 +63,20 @@ export type DefinedStarbaseLevel<Id extends string = string> = DefinedContent<
 >;
 
 export const STARBASE_LEVEL_FIELDS: readonly ContentField[] = [
-  { key: "ship_size", member: "shipSize", shape: "value", conversion: "ref" },
-  { key: "next_level", member: "nextLevel", shape: "value", conversion: "ref" },
+  {
+    key: "ship_size",
+    member: "shipSize",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_size"],
+  },
+  {
+    key: "next_level",
+    member: "nextLevel",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["starbase_level"],
+  },
   { key: "level_tooltip", member: "levelTooltip", shape: "value", conversion: "identity" },
   { key: "show_in_outliner", member: "showInOutliner", shape: "value", conversion: "identity" },
   {
@@ -91,7 +103,7 @@ export const STARBASE_LEVEL_FIELDS: readonly ContentField[] = [
   },
   { key: "collects_trade", member: "collectsTrade", shape: "value", conversion: "identity" },
   { key: "upgrade_possible", member: "upgradePossible", shape: "trigger" },
-  { key: "portrait", member: "portrait", shape: "value", conversion: "ref" },
+  { key: "portrait", member: "portrait", shape: "value", conversion: "ref", refTypes: ["sprite"] },
   {
     key: "special_construction",
     member: "specialConstruction",

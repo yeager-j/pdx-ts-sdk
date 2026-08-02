@@ -54,8 +54,20 @@ export interface SituationTypeOnMonthly {
 }
 
 export const SITUATION_TYPE_ON_MONTHLY_FIELDS: readonly ContentField[] = [
-  { key: "events", member: "events", shape: "valueList", conversion: "ref" },
-  { key: "random_events", member: "randomEvents", shape: "weightedEvents", conversion: "ref" },
+  {
+    key: "events",
+    member: "events",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["event.scopeless", "event.situation"],
+  },
+  {
+    key: "random_events",
+    member: "randomEvents",
+    shape: "weightedEvents",
+    conversion: "ref",
+    refTypes: ["event.scopeless", "event.situation"],
+  },
 ];
 
 export interface SituationApproachFields {
@@ -79,8 +91,14 @@ export interface SituationApproachFields {
 }
 
 export const SITUATION_APPROACH_FIELDS: readonly ContentField[] = [
-  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
-  { key: "icon_background", member: "iconBackground", shape: "value", conversion: "ref" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  {
+    key: "icon_background",
+    member: "iconBackground",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
   { key: "default", member: "default", shape: "value", conversion: "identity" },
   { key: "allow", member: "allow", shape: "trigger" },
   { key: "potential", member: "potential", shape: "trigger" },
@@ -152,9 +170,15 @@ export const SITUATION_STAGE_FIELDS: readonly ContentField[] = [
     shape: "valueOrWeightBlock",
     conversion: "identity",
   },
-  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
-  { key: "icon_background", member: "iconBackground", shape: "value", conversion: "ref" },
-  { key: "color", member: "color", shape: "value", conversion: "ref" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  {
+    key: "icon_background",
+    member: "iconBackground",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
+  { key: "color", member: "color", shape: "value", conversion: "ref", refTypes: ["named_color"] },
   { key: "custom_tooltip", member: "customTooltip", shape: "value", conversion: "identity" },
   { key: "on_first_enter", member: "onFirstEnter", shape: "effect" },
   { key: "on_enter", member: "onEnter", shape: "effect" },
@@ -259,13 +283,21 @@ export type DefinedSituationType<Id extends string = string> = DefinedContent<
 >;
 
 export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
-  { key: "picture", member: "picture", shape: "value", conversion: "ref", repeated: true },
+  {
+    key: "picture",
+    member: "picture",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sprite"],
+    repeated: true,
+  },
   { key: "category", member: "category", shape: "value", conversion: "identity" },
   {
     key: "situation_log_category",
     member: "situationLogCategory",
     shape: "value",
     conversion: "ref",
+    refTypes: ["situation_log_category"],
   },
   { key: "title", member: "title", shape: "value", conversion: "identity" },
   {
@@ -375,10 +407,28 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
   { key: "fail_category", member: "failCategory", shape: "value", conversion: "identity" },
   { key: "permanent", member: "permanent", shape: "value", conversion: "identity" },
   { key: "show_in_outliner", member: "showInOutliner", shape: "value", conversion: "identity" },
-  { key: "complete_icon", member: "completeIcon", shape: "value", conversion: "ref" },
-  { key: "complete_icon_frame", member: "completeIconFrame", shape: "value", conversion: "ref" },
-  { key: "fail_icon", member: "failIcon", shape: "value", conversion: "ref" },
-  { key: "fail_icon_frame", member: "failIconFrame", shape: "value", conversion: "ref" },
+  {
+    key: "complete_icon",
+    member: "completeIcon",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
+  {
+    key: "complete_icon_frame",
+    member: "completeIconFrame",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
+  { key: "fail_icon", member: "failIcon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  {
+    key: "fail_icon_frame",
+    member: "failIconFrame",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
   {
     key: "stages",
     member: "stages",

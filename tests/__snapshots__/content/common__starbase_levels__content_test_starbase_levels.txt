@@ -1,6 +1,6 @@
 content_test_starbase_level_outpost = {
 	ship_size = ship_size_starbase_i
-	next_level = content_test_starbase_level_starport
+	next_level = starbase_level_starport
 	show_in_outliner = yes
 	level_weight = 0
 	picture = {

@@ -107,13 +107,20 @@ export type DefinedEconomicCategory<Id extends string = string> = DefinedContent
 >;
 
 export const ECONOMIC_CATEGORY_FIELDS: readonly ContentField[] = [
-  { key: "parent", member: "parent", shape: "value", conversion: "ref" },
+  {
+    key: "parent",
+    member: "parent",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["economic_category"],
+  },
   { key: "use_for_ai_budget", member: "useForAiBudget", shape: "value", conversion: "identity" },
   {
     key: "ai_use_parent_for_resources_upkeep",
     member: "aiUseParentForResourcesUpkeep",
     shape: "valueList",
     conversion: "ref",
+    refTypes: ["resource"],
   },
   { key: "icon", member: "icon", shape: "value", conversion: "identity" },
   { key: "hidden", member: "hidden", shape: "value", conversion: "identity" },

@@ -44,7 +44,13 @@ export interface WeaponComponentTemplateInjectedModifierModifier {
 
 export const WEAPON_COMPONENT_TEMPLATE_INJECTED_MODIFIER_MODIFIER_FIELDS: readonly ContentField[] =
   [
-    { key: "modifier", member: "modifier", shape: "value", conversion: "ref" },
+    {
+      key: "modifier",
+      member: "modifier",
+      shape: "value",
+      conversion: "ref",
+      refTypes: ["modifier", "static_modifier"],
+    },
     { key: "days", member: "days", shape: "value", conversion: "identity" },
   ];
 
@@ -116,7 +122,13 @@ export interface WeaponComponentTemplateFriendlyAuraGraphicsAreaEffect {
 
 export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
   [
-    { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+    {
+      key: "entity",
+      member: "entity",
+      shape: "value",
+      conversion: "ref",
+      refTypes: ["model_entity"],
+    },
     { key: "dynamic_scale", member: "dynamicScale", shape: "value", conversion: "identity" },
   ];
 
@@ -127,7 +139,13 @@ export interface WeaponComponentTemplateFriendlyAuraGraphicsShipEffect {
 
 export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
   [
-    { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+    {
+      key: "entity",
+      member: "entity",
+      shape: "value",
+      conversion: "ref",
+      refTypes: ["model_entity"],
+    },
     { key: "dynamic_scale", member: "dynamicScale", shape: "value", conversion: "identity" },
   ];
 
@@ -200,7 +218,13 @@ export interface WeaponComponentTemplateHostileAuraGraphicsAreaEffect {
 
 export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS: readonly ContentField[] =
   [
-    { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+    {
+      key: "entity",
+      member: "entity",
+      shape: "value",
+      conversion: "ref",
+      refTypes: ["model_entity"],
+    },
     { key: "dynamic_scale", member: "dynamicScale", shape: "value", conversion: "identity" },
   ];
 
@@ -211,7 +235,13 @@ export interface WeaponComponentTemplateHostileAuraGraphicsShipEffect {
 
 export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS: readonly ContentField[] =
   [
-    { key: "entity", member: "entity", shape: "value", conversion: "ref" },
+    {
+      key: "entity",
+      member: "entity",
+      shape: "value",
+      conversion: "ref",
+      refTypes: ["model_entity"],
+    },
     { key: "dynamic_scale", member: "dynamicScale", shape: "value", conversion: "identity" },
   ];
 
@@ -562,10 +592,22 @@ export type DefinedWeaponComponentTemplate<Id extends string = string> = Defined
 >;
 
 export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
-  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
   { key: "icon_frame", member: "iconFrame", shape: "value", conversion: "identity" },
-  { key: "prerequisites", member: "prerequisites", shape: "valueList", conversion: "ref" },
-  { key: "component_set", member: "componentSet", shape: "value", conversion: "ref" },
+  {
+    key: "prerequisites",
+    member: "prerequisites",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["technology"],
+  },
+  {
+    key: "component_set",
+    member: "componentSet",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["component_set"],
+  },
   { key: "hidden", member: "hidden", shape: "value", conversion: "identity" },
   {
     key: "class_restriction",
@@ -573,14 +615,26 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     shape: "valueList",
     conversion: "identity",
   },
-  { key: "upgrades_to", member: "upgradesTo", shape: "value", conversion: "ref" },
+  {
+    key: "upgrades_to",
+    member: "upgradesTo",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["component_template"],
+  },
   { key: "upgrade_path", member: "upgradePath", shape: "value", conversion: "identity" },
   { key: "tags", member: "tags", shape: "valueList", conversion: "identity" },
   { key: "ai_tags", member: "aiTags", shape: "valueList", conversion: "identity" },
   { key: "ai_tag_weight", member: "aiTagWeight", shape: "value", conversion: "identity" },
   { key: "ship_limit", member: "shipLimit", shape: "value", conversion: "identity" },
   { key: "size_restriction", member: "sizeRestriction", shape: "valueList", conversion: "ref" },
-  { key: "blocked_by", member: "blockedBy", shape: "valueList", conversion: "ref" },
+  {
+    key: "blocked_by",
+    member: "blockedBy",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["component_template"],
+  },
   { key: "custom_tooltip", member: "customTooltip", shape: "value", conversion: "identity" },
   { key: "should_ai_use", member: "shouldAiUse", shape: "value", conversion: "identity" },
   { key: "valid_for_country", member: "validForCountry", shape: "trigger" },
@@ -600,7 +654,13 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     shape: "valueList",
     conversion: "ref",
   },
-  { key: "projectile_gfx", member: "projectileGfx", shape: "value", conversion: "ref" },
+  {
+    key: "projectile_gfx",
+    member: "projectileGfx",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["projectile"],
+  },
   { key: "color", member: "color", shape: "valueList", conversion: "identity" },
   { key: "can_destroy_stars", member: "canDestroyStars", shape: "value", conversion: "identity" },
   { key: "entity", member: "entity", shape: "value", conversion: "ref" },
@@ -610,7 +670,13 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "identity",
   },
-  { key: "target_type", member: "targetType", shape: "value", conversion: "ref" },
+  {
+    key: "target_type",
+    member: "targetType",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["target_type"],
+  },
   { key: "target_focus", member: "targetFocus", shape: "value", conversion: "identity" },
   {
     key: "injected_modifier",
@@ -677,7 +743,13 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   },
   { key: "on_hit", member: "onHit", shape: "effect", repeated: true },
   { key: "weapon_type", member: "weaponType", shape: "value", conversion: "identity" },
-  { key: "ship_behavior", member: "shipBehavior", shape: "value", conversion: "ref" },
+  {
+    key: "ship_behavior",
+    member: "shipBehavior",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_behavior"],
+  },
   { key: "count", member: "count", shape: "value", conversion: "identity" },
   {
     key: "regeneration_per_day",
@@ -707,7 +779,13 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   { key: "jumpdrive", member: "jumpdrive", shape: "value", conversion: "identity" },
   { key: "sensor_range", member: "sensorRange", shape: "value", conversion: "identity" },
   { key: "hyperlane_range", member: "hyperlaneRange", shape: "value", conversion: "identity" },
-  { key: "scripted_action", member: "scriptedAction", shape: "valueList", conversion: "ref" },
+  {
+    key: "scripted_action",
+    member: "scriptedAction",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["scripted_action"],
+  },
   { key: "potential", member: "potential", shape: "trigger" },
   { key: "show_tech_unlock_if", member: "showTechUnlockIf", shape: "trigger" },
   {

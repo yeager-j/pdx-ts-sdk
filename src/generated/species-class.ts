@@ -37,7 +37,13 @@ export interface SpeciesClassCustomPortraits {
 export const SPECIES_CLASS_CUSTOM_PORTRAITS_FIELDS: readonly ContentField[] = [
   { key: "randomized", member: "randomized", shape: "trigger" },
   { key: "playable", member: "playable", shape: "trigger" },
-  { key: "portraits", member: "portraits", shape: "valueList", conversion: "ref" },
+  {
+    key: "portraits",
+    member: "portraits",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["portrait", "portrait_group"],
+  },
 ];
 
 /**
@@ -141,12 +147,30 @@ export type DefinedSpeciesClass<Id extends string = string> = DefinedContent<
 >;
 
 export const SPECIES_CLASS_FIELDS: readonly ContentField[] = [
-  { key: "archetype", member: "archetype", shape: "value", conversion: "ref" },
+  {
+    key: "archetype",
+    member: "archetype",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["species_archetype"],
+  },
   { key: "modifier", member: "modifier", shape: "modifierBlock" },
   { key: "playable", member: "playable", shape: "trigger" },
   { key: "randomized", member: "randomized", shape: "value", conversion: "identity" },
-  { key: "uplifted_into", member: "upliftedInto", shape: "value", conversion: "ref" },
-  { key: "uplifted_portraits", member: "upliftedPortraits", shape: "valueList", conversion: "ref" },
+  {
+    key: "uplifted_into",
+    member: "upliftedInto",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["species_class"],
+  },
+  {
+    key: "uplifted_portraits",
+    member: "upliftedPortraits",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["portrait", "portrait_group"],
+  },
   { key: "possible", member: "possible", shape: "aliasStruct", category: "government_trigger" },
   {
     key: "possible_secondary",
@@ -154,7 +178,13 @@ export const SPECIES_CLASS_FIELDS: readonly ContentField[] = [
     shape: "aliasStruct",
     category: "government_trigger",
   },
-  { key: "portraits", member: "portraits", shape: "valueList", conversion: "ref" },
+  {
+    key: "portraits",
+    member: "portraits",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["portrait", "portrait_group"],
+  },
   {
     key: "custom_portraits",
     member: "customPortraits",
@@ -167,16 +197,30 @@ export const SPECIES_CLASS_FIELDS: readonly ContentField[] = [
     member: "nonRandomizedPortraits",
     shape: "valueList",
     conversion: "ref",
+    refTypes: ["portrait", "portrait_group"],
   },
   {
     key: "non_pre_ftl_portraits",
     member: "nonPreFtlPortraits",
     shape: "valueList",
     conversion: "ref",
+    refTypes: ["portrait", "portrait_group"],
   },
   { key: "gender", member: "gender", shape: "value", conversion: "identity" },
-  { key: "graphical_culture", member: "graphicalCulture", shape: "value", conversion: "ref" },
-  { key: "move_pop_sound_effect", member: "movePopSoundEffect", shape: "value", conversion: "ref" },
+  {
+    key: "graphical_culture",
+    member: "graphicalCulture",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["graphical_culture"],
+  },
+  {
+    key: "move_pop_sound_effect",
+    member: "movePopSoundEffect",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sound_effect"],
+  },
   {
     key: "use_climate_preference",
     member: "useClimatePreference",
@@ -188,9 +232,15 @@ export const SPECIES_CLASS_FIELDS: readonly ContentField[] = [
   { key: "leader_age_max", member: "leaderAgeMax", shape: "value", conversion: "identity" },
   { key: "resources", member: "resources", shape: "economicResources", repeated: true },
   { key: "random_weight", member: "randomWeight", shape: "weightBlock" },
-  { key: "ethics_to_prefer", member: "ethicsToPrefer", shape: "valueList", conversion: "ref" },
+  {
+    key: "ethics_to_prefer",
+    member: "ethicsToPrefer",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["ethic"],
+  },
   { key: "preferred_ethics_weight", member: "preferredEthicsWeight", shape: "weightBlock" },
-  { key: "trait", member: "trait", shape: "value", conversion: "ref" },
+  { key: "trait", member: "trait", shape: "value", conversion: "ref", refTypes: ["trait"] },
   { key: "generate_shipset", member: "generateShipset", shape: "value", conversion: "identity" },
   {
     key: "added_climate_labels",
@@ -204,12 +254,19 @@ export const SPECIES_CLASS_FIELDS: readonly ContentField[] = [
     shape: "valueList",
     conversion: "identity",
   },
-  { key: "added_planet_types", member: "addedPlanetTypes", shape: "valueList", conversion: "ref" },
+  {
+    key: "added_planet_types",
+    member: "addedPlanetTypes",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["planet_class"],
+  },
   {
     key: "removed_planet_types",
     member: "removedPlanetTypes",
     shape: "valueList",
     conversion: "ref",
+    refTypes: ["planet_class"],
   },
 ];
 
