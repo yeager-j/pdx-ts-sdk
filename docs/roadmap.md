@@ -44,6 +44,10 @@ being equipped to build a mod of that size, not porting it.
       the values behind it, not just the keys. It retired the last declined
       field and found ten more dual declarations the picker had been silently
       halving.
+- [x] **Per-definition field scopes.** Where CWT scopes a body `any` and is
+      right, the definition declares its own scope and the unpinned fields
+      follow it. Landed for `decision`; `ship_size`'s two construction clauses
+      still need their legal set settled.
 - [x] **Event kinds generated.** All 20 scoped kinds get `defineXEvent` and
       witnessed fire overloads from `EVENT_KINDS` + the effect rules.
 
@@ -525,7 +529,7 @@ since fixed. See
 
 ### Per-definition field scopes
 
-Shape conformance's other finding, and a genuinely new problem. Six fields are
+Shape conformance's other finding, and a genuinely new problem. Six fields were
 unfillable not because anything was misread but because CWT scopes them `any`
 _correctly_: `decision`'s `potential`, `allow`, `effect`, `on_queued`,
 `on_unqueued` and `ship_size.potential_construction`. The rules say so in as
@@ -542,10 +546,58 @@ it is a function of the definition (a decision's category, a ship size's
 construction site).
 
 So the fix is neither a `scope` assertion nor widening: it is the definition
-supplying its own scope, e.g. `defineDecision` parameterised by the scope its
-category implies, the way `namespace(ns).defineXEvent` already parameterises an
-event by its kind. Worth doing after the dual-declaration generalization, since
-that is the larger population.
+supplying its own scope.
+
+**Landed for `decision` 2026-08-02.** A `CONTENT_SCOPE_PARAMETERS` row declares
+the scopes a registry's definitions may run in and which one they run in
+unstated; every field the rules left unpinned then takes that parameter, and one
+authoring member names it:
+
+```ts
+defineDecision({
+  id: "hg_jettison_cargo",
+  name: "Jettison Cargo",
+  scope: "ship",
+  potential: hasShipFlag("hg_laden"),
+  effect: (ship) => ship.removeShipFlag("hg_laden"),
+});
+```
+
+`scope` emits nothing — it states a fact the engine already knows and the rules
+decline to. Omitted, it is `planet`, which is what all 111 shipped decisions are
+written against; the wrong choice is a type error at the first condition rather
+than a mod that builds and misbehaves.
+
+Four things this needed:
+
+- **`NoInfer` on every parameterised field.** Without it TypeScript infers `S`
+  from the `Trigger<S>` positions too, and those are contravariant, so it lands
+  somewhere unrelated to what the author declared. `scope` has to be the sole
+  inference site.
+- **The definer's return type erases `S`.** `Trigger<"ship">` is not assignable
+  to `Trigger<"planet">`, so a leaked `S` would put a ship decision outside its
+  own registry's item union and break `collection([…])`. The definer is generic
+  in its _parameter_ and erased in its _result_, the same split
+  `defineSituationType` already uses for `targetScope`.
+- **A field the rules do pin keeps its own scope.** `show_tech_unlock_if` is
+  `Trigger<"country">` before and after: the parameter fills the gap rather than
+  flattening the registry into it.
+- **The gate stops acknowledging and starts checking.** `EmittedField.scope`
+  gained a parameter form, and `fieldAdmits` reads it as "some declared scope
+  takes this rule" — so the five acknowledged decision mismatches became a live
+  check that the declared set covers what the corpus writes. Declare too narrow
+  a set and it fails.
+
+`ship_size.potential_construction` is the same shape and stays acknowledged: its
+legal set needs settling from the shipped construction sites first, and one
+trigger in 10 of 46 definitions is thin evidence for it.
+
+Worth revisiting: `decision.ai_weight` and `resources` are in this class too and
+the gate cannot see them. A `WeightBlock`'s conditions live in its `modifier`
+rows, one level below the keys the gate reads, so they were unfillable in
+exactly the same way and appeared in no report. They are parameterised now
+because the row covers every unpinned field, not because anything flagged them —
+worth remembering that the gate's reach stops at the first level of a block.
 
 ### Bind vanilla scripted triggers and effects
 

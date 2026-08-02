@@ -45,6 +45,7 @@ import {
   defineWarGoal,
   hasAuthority,
   hasPlanetFlag,
+  hasShipFlag,
   hasSituationFlag,
   hasTechnology,
   isCapital,
@@ -250,9 +251,10 @@ function defineContentExample(): PureMod {
       },
     ],
     showTechUnlockIf: hasAuthority("auth_machine_intelligence"),
-    // decision.potential/allow/abort_trigger carry no fixed scope in the rules — the
-    // decision's own scope varies by category (ship, planet, or country) — so only a
-    // scope-agnostic trigger like `always()` type-checks here.
+    // This decision takes the default `scope: "planet"`, so its clauses would
+    // also admit planet conditions; `always()` keeps the golden fixture's
+    // conditions independent of that choice. The scoped forms are covered on
+    // their own below.
     potential: always(),
     allow: always(),
     abortTrigger: always(),
@@ -1140,6 +1142,39 @@ describe("generated content registries", () => {
     // No prefixing, and no `ss_test_mid` localisation key invented for a slot.
     expect(rendered).not.toContain("ss_test_mid");
     expect(files.get("localisation/english/ss_test_l_english.yml")).not.toContain("mid");
+  });
+
+  it("takes the definition's scope for the clauses CWT leaves to it", () => {
+    // CWT annotates the decision body `this = any` and means it: the same
+    // registry is planet-scoped on a planet and ship-scoped on a nomadic colony
+    // ship. `Trigger<S>` is contravariant, so the mechanical `Trigger<ScopeName>`
+    // reading admitted only universal conditions — every planet condition the
+    // 111 shipped decisions write was unauthorable. The definition declares its
+    // own scope instead, and `scope` itself emits nothing.
+    const decisions = collection(undefined, [
+      defineDecision({
+        id: "sc_test_terraform",
+        name: "Terraform Deeply",
+        potential: isCapital(),
+        effect: (planet) => planet.setPlanetFlag("sc_test_terraformed"),
+      }),
+      defineDecision({
+        id: "sc_test_jettison",
+        name: "Jettison Cargo",
+        scope: "ship",
+        potential: hasShipFlag("sc_test_laden"),
+        effect: (ship) => ship.removeShipFlag("sc_test_laden"),
+      }),
+    ]);
+    const rendered = render(buildMod(configFor("Decision scope test", "sc_test"), [decisions])).get(
+      "common/decisions/sc_test_decisions.txt"
+    )!;
+    expect(rendered).toContain("potential = {\n\t\tis_capital = yes\n\t}");
+    expect(rendered).toContain("effect = {\n\t\tset_planet_flag = sc_test_terraformed\n\t}");
+    expect(rendered).toContain("potential = {\n\t\thas_ship_flag = sc_test_laden\n\t}");
+    // The declaration is authoring-only: it names a fact the engine already
+    // knows, and writing it into the file would be a key the game cannot read.
+    expect(rendered).not.toContain("scope =");
   });
 
   it("lowers every arm of a dual declaration by what the author passed", () => {

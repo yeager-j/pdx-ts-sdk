@@ -51,11 +51,11 @@ import { REPEATED_STRUCT_DEFINITIONS } from "../../tools/codegen/overlay.ts";
  * - **Two declarations whose arms are indistinguishable.** A dual dispatches on
  *   what the author passed, so two arms that both author as arrays cannot be
  *   told apart. See `lowerDual`.
- * - **A field CWT scopes `any`.** `Trigger<ScopeName>` accepts only rules legal
- *   in every scope, so "the scope varies per definition" and "no author can
- *   write a condition here" are the same statement. The fix is a scope the
- *   definition itself supplies, not an assertion — see `docs/roadmap.md`'s
- *   "Per-definition field scopes".
+ * - **A field CWT scopes `any` whose legal set is not settled.** The fix is a
+ *   scope the definition supplies (`CONTENT_SCOPE_PARAMETERS`, which `decision`
+ *   now uses), and a row there needs the same evidence any assertion does. Once
+ *   one exists the gate stops acknowledging and starts checking: it asks
+ *   whether the declared set covers what the corpus writes.
  */
 const ACKNOWLEDGED = new Map<string, string>([
   [
@@ -87,18 +87,11 @@ const ACKNOWLEDGED = new Map<string, string>([
       "values there.",
   ],
   [
-    "decision.potential scope",
-    "CWT scopes the decision body `this = any` deliberately — a decision on a nomadic ship " +
-      "colony is ship-scoped, on a planet planet-scoped. Its own comment says so.",
-  ],
-  ["decision.allow scope", "Same `this = any` decision body."],
-  ["decision.effect scope", "Same `this = any` decision body."],
-  ["decision.on_queued scope", "Same `this = any` decision body."],
-  ["decision.on_unqueued scope", "Same `this = any` decision body."],
-  [
     "ship_size.potential_construction scope",
     "CWT scopes this field `this = any`: a ship size is constructed at a starbase, a planet, or " +
-      "a fleet, and the condition is evaluated against whichever.",
+      "a fleet, and the condition is evaluated against whichever. `decision` resolved the same " +
+      "shape with a scope parameter; this registry needs its legal set settled from the shipped " +
+      "construction sites first — one trigger in 10 of 46 definitions is thin evidence for it.",
   ],
 ]);
 

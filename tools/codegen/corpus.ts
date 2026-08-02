@@ -374,12 +374,21 @@ const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
  * "accepts almost nothing", which is why an unannotated field can be emitted,
  * required, and unfillable all at once.
  */
-function fieldAdmits(field: readonly string[] | "any", rule: RuleScopes): boolean {
+function fieldAdmits(
+  field: readonly string[] | "any" | { readonly parameter: readonly string[] },
+  rule: RuleScopes
+): boolean {
   if (rule === "universal") {
     return true;
   }
   if (field === "any") {
     return false;
+  }
+  // A scope parameter is the author's choice, so the field is fillable as long
+  // as *some* declared scope takes the rule — the question the gate is really
+  // asking of these registries is whether the declared set covers the corpus.
+  if ("parameter" in field) {
+    return field.parameter.some((scope) => rule.includes(scope));
   }
   return field.every((scope) => rule.includes(scope));
 }
@@ -460,7 +469,12 @@ export function shapeConformance(
         return scopes !== null && !fieldAdmits(field.scope!, scopes);
       });
       if (rejected.length > 0) {
-        const scope = field.scope === "any" ? "ScopeName" : field.scope.join("/");
+        const scope =
+          field.scope === "any"
+            ? "ScopeName"
+            : "parameter" in field.scope
+              ? `any of ${field.scope.parameter.join("/")}`
+              : field.scope.join("/");
         report(
           "scope",
           `typed for scope ${scope}, which rejects ${rejected.slice(0, 6).join(" ")}` +

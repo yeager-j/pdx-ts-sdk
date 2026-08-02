@@ -546,16 +546,40 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
 
     const definitions: string[] = [];
     if (graft === undefined) {
+      // A registry whose scopes are a property of the definition takes a second
+      // type parameter and one extra authoring member. The member is stripped
+      // before the def is stored: it is not a game key, and the returned item
+      // erases S so a `"ship"` definition still belongs to this registry's item
+      // union — `Trigger<S>` is contravariant, so a leaked S would make it not.
+      const scoped = emission.scopeParameter;
+      const parameters =
+        scoped === null
+          ? "<const Id extends string>"
+          : `<\n  const Id extends string,\n  S extends ${scoped.typeName} = ` +
+            `${JSON.stringify(scoped.fallback)},\n>`;
+      const body =
+        scoped === null
+          ? `  return { itemKind: "content", type: ${key}, id: def.id, def };\n`
+          : `  const { scope, ...rest } = def;\n` +
+            `  return { itemKind: "content", type: ${key}, id: def.id, ` +
+            `def: rest as ${name}Def<Id> };\n`;
       definitions.push(
         docComment([
           `Defines ${article} ${spoken} in this mod. The returned item is the`,
           "definition as a value and a reference to it; place it in a",
           "`collection(...)` — or export it from a discovered module — to emit it.",
+          ...(scoped === null
+            ? []
+            : [
+                "",
+                "`scope` names which scope this definition's clauses run in and emits",
+                `nothing; it defaults to \`${scoped.fallback}\`.`,
+              ]),
         ]) +
-          `export function define${name}<const Id extends string>(\n` +
-          `  def: ${name}Def<Id>\n` +
+          `export function define${name}${parameters}(\n` +
+          `  def: ${name}Def<Id${scoped === null ? "" : ", S"}>\n` +
           `): ContentItem<${key}, ${name}Def<Id>> {\n` +
-          `  return { itemKind: "content", type: ${key}, id: def.id, def };\n` +
+          body +
           "}\n"
       );
     } else {
@@ -625,10 +649,15 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
       )
       .join("") +
     contents
-      .map(
-        (content) =>
-          `import type { ${content.emission.typeName}Def } from ` +
-          `${JSON.stringify(`./${content.registry.replaceAll("_", "-")}.ts`)};\n`
+      .map((content) =>
+        importList(`./${content.registry.replaceAll("_", "-")}.ts`, [
+          `${content.emission.typeName}Def`,
+          // A scope-parameterised definer constrains S by the registry's own
+          // scope union, so that type has to travel with the Def.
+          ...(content.emission.scopeParameter === null
+            ? []
+            : [content.emission.scopeParameter.typeName]),
+        ])
       )
       .join("");
 

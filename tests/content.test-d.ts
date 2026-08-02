@@ -33,6 +33,7 @@ import {
   hasAuthority,
   hasCountryFlag,
   hasPlanetFlag,
+  hasShipFlag,
   isCapital,
   type AgendaRef,
   type AgreementPresetRef,
@@ -152,6 +153,39 @@ describe("generated content authoring types", () => {
       name: "X",
       effect: () => {},
       showTechUnlockIf: hasAuthority("auth_democratic"),
+    });
+    // A decision's own clauses take the scope the *definition* declares, since
+    // CWT scopes the body `this = any` and means it. Unstated, that is `planet`
+    // — the scope every one of the 111 shipped decisions is written against.
+    defineDecision({
+      id: "content_types_decision_default_scope",
+      name: "X",
+      potential: isCapital(),
+      effect: (planet) => planet.setPlanetFlag("content_types_planet_only"),
+    });
+    defineDecision({
+      id: "content_types_decision_ship_scope",
+      name: "X",
+      scope: "ship",
+      potential: hasShipFlag("content_types_ship_only"),
+      effect: (ship) => ship.setShipFlag("content_types_ship_only"),
+    });
+    defineDecision({
+      id: "content_types_decision_wrong_scope",
+      name: "X",
+      scope: "ship",
+      // @ts-expect-error — this decision declared ship scope, so a planet
+      // condition no longer type-checks in it
+      potential: hasPlanetFlag("content_types_planet_only"),
+      effect: () => {},
+    });
+    defineDecision({
+      id: "content_types_decision_unknown_scope",
+      name: "X",
+      // @ts-expect-error — the parameter is the registry's declared set, not
+      // every scope the game has
+      scope: "country",
+      effect: () => {},
     });
     defineJob({
       id: "content_types_job_scoped",

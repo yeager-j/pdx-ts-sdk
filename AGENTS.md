@@ -91,7 +91,9 @@ pre-review of a list.
      mean to make the other unauthorable.
    - nested-definition metadata only when the CWT field is genuinely a nested content definition
    - a `scope` or `arity` assertion on `CONTENT_FIELD_OVERRIDES` when CWT states game semantics
-     wrongly rather than incompletely. Both need evidence, and shape conformance is where that
+     wrongly rather than incompletely, or a `CONTENT_SCOPE_PARAMETERS` row when CWT scopes a body
+     `any` and is *right* — the scope is then a property of each definition, declared by a `scope`
+     member the definer strips. All three need evidence, and shape conformance is where that
      evidence comes from — never assert one from a reading of the rules alone.
    - `CONTENT_DECLINED_FIELDS`, the only way to keep a field the emitter *can* lower out of the
      authoring surface. It is currently empty and should stay that way: a field whose lowered shape

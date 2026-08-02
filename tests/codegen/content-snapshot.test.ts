@@ -184,7 +184,7 @@ describe("content-type codegen", () => {
   it("generates decisions and jobs without registry-specific code", () => {
     const decision = emissions.get("decision");
     expect(decision?.code).toContain("export interface DecisionDef");
-    expect(decision?.code).toContain("resources?: EconomicResourceBlock<ScopeName>[];");
+    expect(decision?.code).toContain("resources?: EconomicResourceBlock<NoInfer<S>>[];");
     expect(decision?.code).toContain("prerequisites?: (TechnologyRef | string)[];");
     expect(decision?.code).toContain('shape: "economicResources"');
 
@@ -557,9 +557,29 @@ describe("content-type codegen", () => {
     const limit = emissions.get("country_ship_of_size_limit");
     expect(limit?.code).toContain('show: Trigger<"country">;');
     expect(limit?.code).not.toContain("show: Trigger<ScopeName>;");
-    // The assertion is surgical: decision's triggers stay scopeless on purpose,
-    // because a decision's own scope really does vary by category.
-    expect(emissions.get("decision")?.code).toContain("potential?: Trigger<ScopeName>;");
+    // The assertion is surgical, and its counterpart is a different mechanism:
+    // a decision's scope really does vary per definition, so it takes a scope
+    // parameter rather than an asserted constant.
+    expect(emissions.get("decision")?.code).toContain("potential?: Trigger<NoInfer<S>>;");
+  });
+
+  it("parameterises a registry whose scope is a property of the definition", () => {
+    // CWT annotates the decision body `this = any` and is right to: the same
+    // registry is planet-scoped on a planet and ship-scoped on a nomadic
+    // colony ship. Asserting a constant would be overriding that; the
+    // definition declares which it is instead, and every unpinned field
+    // follows. `NoInfer` keeps `scope` the sole inference site — inferring
+    // from the contravariant `Trigger<S>` positions lands elsewhere entirely.
+    const decision = emissions.get("decision")!;
+    expect(decision.code).toContain('export type DecisionScope = "planet" | "ship";');
+    expect(decision.code).toContain("export interface DecisionFields<S extends DecisionScope");
+    expect(decision.code).toContain("  scope?: S;");
+    expect(decision.code).toContain("effect: EffectBlock<NoInfer<S>>;");
+    // A field CWT does pin keeps its own scope: the parameter fills the gap
+    // rather than flattening everything into it.
+    expect(decision.code).toContain('showTechUnlockIf?: Trigger<"country">;');
+    // Nothing else moves — a registry with no row is emitted exactly as before.
+    expect(emissions.get("edict")?.code).not.toContain("NoInfer<S>");
   });
 
   it("gives an asserted scope precedence over one the rules declare", () => {
@@ -766,7 +786,7 @@ describe("generated content definers", () => {
       expect(definers, entry.type).toMatch(new RegExp(`\\bdefine${name}\\b`));
     }
     // 33 mechanical `export function defineX` plus the graft's re-export.
-    expect(definers.match(/^export function define\w+<const Id extends string>\(/gm)).toHaveLength(
+    expect(definers.match(/^export function define\w+</gm)).toHaveLength(
       CONTENT_MANIFEST.length - HAND_WRITTEN_CONTENT_DEFINERS.size
     );
     // HAND_WRITTEN_CONTENT_DEFINERS, the HAND_WRITTEN_TRIGGERS arrangement one

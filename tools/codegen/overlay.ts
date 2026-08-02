@@ -321,6 +321,48 @@ export const REQUIRED_LOCALISATION = new Set([
  */
 export const CONTENT_DECLINED_FIELDS = new Map<string, string>([]);
 
+export interface ContentScopeParameter {
+  /** Every scope a definition may declare, canonical names. */
+  readonly scopes: readonly string[];
+  /** The scope a definition that declares none runs in. */
+  readonly fallback: string;
+  readonly reason: string;
+}
+
+/**
+ * Registries whose unpinned field scopes are a property of the *definition*
+ * rather than a constant the rules could state.
+ *
+ * The `scope` assertion fixes a field CWT failed to annotate. This is the case
+ * where CWT annotates `this = any` and is **right**: a decision taken on a
+ * nomadic ship colony really is ship-scoped and one taken on a planet really is
+ * planet-scoped, and the rules say so in a comment. The trouble is that
+ * `Trigger<S>` is contravariant, so "valid in every scope" as a field type
+ * admits only rules legal in every scope — leaving the field emitted, required,
+ * and unfillable. See `docs/roadmap.md`'s "Per-definition field scopes".
+ *
+ * A row turns every field the registry left unpinned into `Trigger<NoInfer<S>>`
+ * and adds one authoring member, `scope`, that names S and emits nothing. It
+ * needs the same evidence a `scope` assertion does — the scopes listed are the
+ * ones real definitions are written against, and shape conformance checks that
+ * the set covers what the corpus writes rather than taking the row's word.
+ */
+export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
+  [
+    "decision",
+    {
+      scopes: ["planet", "ship"],
+      fallback: "planet",
+      reason:
+        "decisions.cwt annotates the body `this = any` and explains why: on a nomadic ship " +
+        "colony a decision is ship-scoped, on a planet planet-scoped. Every non-universal " +
+        "condition across all 111 shipped decisions is planet-valid — none writes a country-only " +
+        "condition directly, they navigate through `owner` — so `planet` is the fallback and " +
+        "`ship` the case that has to be declared.",
+    },
+  ],
+]);
+
 export type ContentFieldShape =
   | "value"
   | "valueList"
