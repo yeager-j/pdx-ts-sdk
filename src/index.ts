@@ -177,6 +177,40 @@ export type {
 } from "./generated/modifiers.ts";
 export type { ModConfig, PrefixedId } from "./mod.ts";
 export { Mod } from "./mod.ts";
+export { buildMod, type BuildOptions, type EmittedFile, type PureMod } from "./build.ts";
+export { render, write } from "./render.ts";
+export {
+  createCountryShipOfSizeLimits,
+  createEvents,
+  createOnActions,
+  createSituationTypes,
+  createTechnologies,
+  type CountryShipOfSizeLimitCollection,
+  type CountryShipOfSizeLimitItem,
+  type EventCollection,
+  type EventItem,
+  type OnActionCollection,
+  type SituationTypeCollection,
+  type SituationTypeItem,
+  type TechnologyCollection,
+  type TechnologyItem,
+} from "./factories.ts";
+export {
+  assertFileStem,
+  assertNamespace,
+  flattenItems,
+  FILE_STEM_PATTERN,
+  type Collection,
+  type ContentItem,
+  type ContributionItem,
+  type EventItemBase,
+  type ModItem,
+  type ModItemInput,
+  type ModWarning,
+  type OnActionBindingItem,
+  type PlacedItem,
+  type TechnologyPatchItem,
+} from "./items.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
   InstallNotFoundError,
