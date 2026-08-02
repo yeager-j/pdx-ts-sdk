@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import { defineHelloGalaxy } from "../examples/hello-galaxy/mod.ts";
 import { render } from "../src/index.ts";
 
-describe("hello-galaxy example mod", () => {
-  const files = render(defineHelloGalaxy());
+// Top-level await: the example discovers its content from the filesystem, so
+// the file set is only known after the import walk. Rendering here rather than
+// inside the describe keeps the per-file golden loop below a plain `for`.
+const files = render(await defineHelloGalaxy());
 
+describe("hello-galaxy example mod", () => {
   it("renders the expected file set", () => {
     expect([...files.keys()]).toEqual([
       "descriptor.mod",

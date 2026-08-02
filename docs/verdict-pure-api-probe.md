@@ -19,6 +19,23 @@
 > localization key, or saved event target for a reference. Defines, technology
 > patches, and the ship-of-size-limits contribution are covered; references
 > made inside effect closures still are not, beyond the event scan.
+>
+> **SDK-23 landed 2026-08-02.** The collection factories this migration shipped
+> are gone, one day old. Definers are free functions returning items
+> (`defineTechnology`, `namespace(ns).defineXEvent`, `on`, `patchTechnology`,
+> `addShipOfSizeLimits`), `collection(file, items)` places them, and
+> `discoverContent(dir)` builds those collections from a directory of feature
+> modules — so content colocates by feature and the emitted file stem comes from
+> the module's basename. The fold, the value, and every validation below are
+> unchanged; read "the factory" throughout the body as "the definer plus the
+> collection it is placed in". Emission order also became a pure function of
+> content, which is what makes source layout non-identity.
+>
+> One watch item below is now **decided against**: one namespace spanning
+> several files is no longer emitted today — `buildMod` refuses it. The
+> namespace ↔ file bijection is the rule in both directions (a file carries one
+> namespace, a namespace lives in one file), so the oracle run that item asked
+> for is moot unless the decision is reopened.
 
 The SDK-22 spike: pure authoring functions, `buildMod` as the explicit fold
 the `Mod` builder already was, `render`/`write` as free functions. The probe

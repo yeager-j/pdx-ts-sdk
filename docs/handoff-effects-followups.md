@@ -44,7 +44,8 @@ recorded closures**, with zero escape hatches in consumer code. Concretely:
    effect, merged into the generated scope interfaces.
 2. ~~**The remaining 13 event kinds.**~~ **Done 2026-08-01** — all 20 scoped
    kinds are generated from `EVENT_KINDS`; today they are the `defineXEvent`
-   definers on `createEvents` (`src/generated/event-factory.ts`). The scopeless
+   definers on the `namespace(ns)` handle (`src/generated/event-definers.ts` —
+   they were on `createEvents` until SDK-23 removed the factories). The scopeless
    `event` kind stays skipped: its closures cannot be typed.
 3. **Event body fields not yet modelled**: `mean_time_to_happen`, triggered
    desc/picture variants, `abort_trigger`/`abort_effect`, `ai_chance` on
@@ -60,9 +61,10 @@ recorded closures**, with zero escape hatches in consumer code. Concretely:
 5. **`prev` and deeper FROM chains.** `ScopeRef` covers them mechanically
    (`scopeRef("prev")`); the design question is typing, same as `fromfrom`
    (currently absent by design).
-6. ~~**on_action registration**~~ **Done** — `createOnActions().on(hook, event)`
-   over the generated `onActions` table, with the hook's scope and FROM
-   metadata deciding which event contract is accepted.
+6. ~~**on_action registration**~~ **Done** — `on(hook, events)` over the
+   generated `onActions` table (`createOnActions().on(hook, event)` until SDK-23
+   made it free and array-valued), with the hook's scope and FROM metadata
+   deciding which event contract is accepted.
 
 The chosen next spike is none of the above: it is the mod-testing evaluator —
 see [handoff-mod-testing.md](handoff-mod-testing.md).

@@ -509,10 +509,11 @@ replacement for inlining.
 
 ### Multi-file layout within a registry
 
-**Landed 2026-08-02 with SDK-22.** A collection factory takes an optional flat
-snake_case file stem — `createTechnologies("ascension")` emits
-`common/technology/<prefix>_ascension.txt` — and same-stem collections merge in
-item order. The constraint held: `buildMod` computes emission paths, so the
+**Landed 2026-08-02 with SDK-22.** A collection carries an optional flat
+snake_case file stem — `collection("ascension", [...])` emits
+`common/technology/<prefix>_ascension.txt`, and under SDK-23 a module named
+`ascension.ts` does the same — and same-stem collections merge (by canonical
+order since SDK-23, item order before it). The constraint held: `buildMod` computes emission paths, so the
 patch planner reserves and enumerates *every* one of the mod's own technology
 files rather than one fixed name, pinned by a split-tech-plus-patch test.
 Stems carry no `/`: the subdirectories under a registry directory are different
@@ -530,6 +531,12 @@ collection factories plus an explicit fold. `createTechnologies(file?)` and its
 `PureMod` value that `render(mod)` / `write(dir, files)` finish. Creation is
 registration: a definer records into its collection at the definition site, so
 the only thing left to forget is a whole collection.
+
+**Superseded in part by SDK-23 (below), the same day**: the factories are gone.
+Definers are free functions returning items, `collection(file, items)` places
+them, `namespace(ns)` carries event identity, and `on(hook, events)` binds
+hooks. Everything else in this entry — the fold, the value, the diagnostics
+policy, the goldens — stands as written.
 
 Shipped decisions, all pinned by test: prefix typing dropped (a missing prefix
 is a `missing-prefix` warning on the value; collision with a real vanilla id
@@ -554,6 +561,49 @@ byte-parity harness live throughout. The builder's bytes for the
 representative fixture are committed as goldens in
 `tests/__snapshots__/pure-api/`, captured from `Mod.render()` before the class
 was deleted — the permanent record that the fold reproduces it exactly.
+
+### Filesystem discovery and free definers (SDK-23)
+
+**Landed 2026-08-02.** Colocate content by feature, not by content type. The
+collection factories are gone; every definer is a free function that returns an
+item and registers nothing (`defineTechnology` and its 33 siblings in
+`src/generated/content-definers.ts`, `namespace(ns).defineXEvent` in
+`src/generated/event-definers.ts`, `on(hook, events)`, `patchTechnology`,
+`addShipOfSizeLimits`), `collection(file, items)` places a list of them, and
+`discoverContent(dir)` (`src/discover.ts`) imports a directory of feature
+modules and turns each module's exports into a collection named after the file.
+Export is registration; importing another module's item without re-exporting it
+references the definition without placing it again.
+
+Shipped decisions:
+
+1. An event namespace and an event file are in bijection — `buildMod` already
+   refused two namespaces in one file; it now also refuses one namespace across
+   two files.
+2. Emission order is a pure function of content, so layout cannot be identity:
+   registry declaration order → emitted file path bytes → id bytes, with event
+   files by path and numeric ids within a file, hook blocks by hook name, and
+   the contribution sink and patch list by id.
+3. A hook's event list is author data and is written inside one
+   `on(hook, [a, b, c])` call — never inferred from export or file order.
+4. A module re-exporting another module's item places it twice and gets the
+   existing duplicate-id error.
+5. Same-basename modules in different folders share a stem and merge, which is
+   what lets two features emit into one registry file.
+
+The showcase is `examples/hello-galaxy/`, restructured from a single `mod.ts`
+into `content/resonance/{technology,events}.ts` +
+`content/amplifiers/technology.ts` with **its golden `out/` tree byte-identical
+across the move** — the demonstration that source layout is decoupled from
+output. `discoverContent` is a convenience over `collection`, so the manual path
+stays first-class and `examples/hardening/` remains its living example.
+
+Landed in five sequential chunks on `feature/pure-api`: 56e842e (canonical
+emission order, the one golden recapture), b2e8dc7 (free definers beside the
+factories, `namespace`/`on`/`collection`, the bijection check), 8a16415 (every
+consumer migrated, zero golden movement), e8e0ce0 (factories deleted;
+`src/factories.ts` became `src/definers.ts`), and this chunk (`discoverContent`,
+the hello-galaxy restructure, and the docs).
 
 ## Cross-cutting, unscheduled
 
