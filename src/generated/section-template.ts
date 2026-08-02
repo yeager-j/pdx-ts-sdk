@@ -41,7 +41,13 @@ export interface SectionTemplateComponentSlot {
 
 export const SECTION_TEMPLATE_COMPONENT_SLOT_FIELDS: readonly ContentField[] = [
   { key: "name", member: "name", shape: "value", conversion: "identity" },
-  { key: "template", member: "template", shape: "value", conversion: "ref" },
+  {
+    key: "template",
+    member: "template",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["component_slot_template"],
+  },
   { key: "locatorname", member: "locatorname", shape: "value", conversion: "identity" },
   { key: "is_side_slot", member: "isSideSlot", shape: "value", conversion: "identity" },
   { key: "rotation", member: "rotation", shape: "value", conversion: "identity" },
@@ -93,7 +99,14 @@ export type DefinedSectionTemplate<Id extends string = string> = DefinedContent<
 >;
 
 export const SECTION_TEMPLATE_FIELDS: readonly ContentField[] = [
-  { key: "ship_size", member: "shipSize", shape: "value", conversion: "ref", repeated: true },
+  {
+    key: "ship_size",
+    member: "shipSize",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_size"],
+    repeated: true,
+  },
   {
     key: "fits_on_slot",
     member: "fitsOnSlot",
@@ -118,7 +131,13 @@ export const SECTION_TEMPLATE_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "resources", member: "resources", shape: "economicResources", repeated: true },
-  { key: "prerequisites", member: "prerequisites", shape: "valueList", conversion: "ref" },
+  {
+    key: "prerequisites",
+    member: "prerequisites",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["technology"],
+  },
   {
     key: "component_slot",
     member: "componentSlot",

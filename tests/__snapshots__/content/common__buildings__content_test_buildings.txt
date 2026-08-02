@@ -13,7 +13,7 @@ content_test_building_lab_1 = {
 	planet_modifier = {
 		planet_jobs_engineering_research_produces_mult = 0.1
 	}
-	upgrades = { content_test_building_lab_2 }
+	upgrades = { building_research_lab_2 }
 	prerequisites = { tech_basic_science_lab_1 }
 	convert_to = { building_ruined_lab }
 }

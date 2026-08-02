@@ -1,5 +1,6 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { ContentRefUse } from "./content-refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 
 declare const scopeBrand: unique symbol;
@@ -16,6 +17,13 @@ export interface Trigger<in S extends ScopeName = ScopeName> {
   (): never;
   readonly kind: "trigger";
   readonly entries: readonly PdxEntry[];
+  /**
+   * The content references this condition writes, recorded against the keys
+   * that hold them. A trigger is a value that travels — into a content field,
+   * an event option, an effect's `limit` — so it carries its own references
+   * rather than expecting each splice site to rediscover them.
+   */
+  readonly refs: readonly ContentRefUse[];
   readonly [scopeBrand]: (scope: S) => void;
 }
 
@@ -26,11 +34,14 @@ const POISON_MESSAGE =
   "an effect's 'limit'), or for in-game branching inside an effect closure use " +
   "scope.if(trigger, (s) => ...).elseIf(...).else(...).";
 
-export function trigger<S extends ScopeName>(entries: PdxEntry[]): Trigger<S> {
+export function trigger<S extends ScopeName>(
+  entries: PdxEntry[],
+  refs: readonly ContentRefUse[] = []
+): Trigger<S> {
   return Object.assign(
     () => {
       throw new Error(POISON_MESSAGE);
     },
-    { kind: "trigger", entries } as const
+    { kind: "trigger", entries, refs } as const
   ) as unknown as Trigger<S>;
 }

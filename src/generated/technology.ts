@@ -27,7 +27,13 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
   { key: "inherit_effects", member: "inheritEffects", shape: "value", conversion: "identity" },
   { key: "trigger", member: "trigger", shape: "trigger" },
   { key: "area", member: "area", shape: "value", conversion: "identity" },
-  { key: "category", member: "category", shape: "valueList", conversion: "ref" },
+  {
+    key: "category",
+    member: "category",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["technology_category"],
+  },
   { key: "weight", member: "weight", shape: "valueOrWeightBlock", conversion: "identity" },
 ];
 
@@ -104,8 +110,14 @@ export type DefinedTechnology<Id extends string = string> = DefinedContent<
 
 export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
   { key: "area", member: "area", shape: "value", conversion: "identity" },
-  { key: "tier", member: "tier", shape: "value", conversion: "ref" },
-  { key: "category", member: "category", shape: "valueList", conversion: "ref" },
+  { key: "tier", member: "tier", shape: "value", conversion: "ref", refTypes: ["technology_tier"] },
+  {
+    key: "category",
+    member: "category",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["technology_category"],
+  },
   { key: "icon", member: "icon", shape: "value", conversion: "identity" },
   { key: "cost", member: "cost", shape: "valueOrWeightBlock", conversion: "identity" },
   { key: "weight", member: "weight", shape: "value", conversion: "identity" },
@@ -118,6 +130,7 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
     member: "prerequisites",
     shape: "valueList",
     conversion: "ref",
+    refTypes: ["technology"],
     quoted: true,
   },
   {

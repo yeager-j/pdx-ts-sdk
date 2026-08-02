@@ -61,6 +61,7 @@ export const STATIC_MODIFIER_FIELDS: readonly ContentField[] = [
     member: "applyModifierToOtherPlanets",
     shape: "value",
     conversion: "ref",
+    refTypes: ["static_modifier"],
   },
   {
     key: "hide_from_country_list",

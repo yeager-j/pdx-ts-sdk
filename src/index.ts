@@ -89,6 +89,11 @@ export type {
   GraphicalCultureDef,
   GraphicalCultureFields,
 } from "./generated/graphical-culture.ts";
+export type {
+  DefinedGlobalShipDesign,
+  GlobalShipDesignDef,
+  GlobalShipDesignFields,
+} from "./generated/global-ship-design.ts";
 export type { DefinedJob, JobDef, JobFields } from "./generated/job.ts";
 export type {
   DefinedOpinionModifier,
@@ -117,10 +122,32 @@ export type {
   SectionTemplateFields,
 } from "./generated/section-template.ts";
 export type {
+  DefinedSituationType,
+  SituationApproachFields,
+  SituationStageFields,
+  SituationTypeDef,
+  SituationTypeFields,
+} from "./generated/situation-type.ts";
+export type {
   DefinedSpeciesClass,
   SpeciesClassDef,
   SpeciesClassFields,
 } from "./generated/species-class.ts";
+export type {
+  DefinedStrikeCraftComponentTemplate,
+  StrikeCraftComponentTemplateDef,
+  StrikeCraftComponentTemplateFields,
+} from "./generated/strike-craft-component-template.ts";
+export type {
+  DefinedUtilityComponentTemplate,
+  UtilityComponentTemplateDef,
+  UtilityComponentTemplateFields,
+} from "./generated/utility-component-template.ts";
+export type {
+  DefinedWeaponComponentTemplate,
+  WeaponComponentTemplateDef,
+  WeaponComponentTemplateFields,
+} from "./generated/weapon-component-template.ts";
 export type {
   DefinedStarbaseLevel,
   StarbaseLevelDef,
@@ -175,8 +202,39 @@ export type {
   UniversalModifiers,
   UnscopedModifierRecorder,
 } from "./generated/modifiers.ts";
-export type { ModConfig, PrefixedId } from "./mod.ts";
-export { Mod } from "./mod.ts";
+export {
+  buildMod,
+  type BuildOptions,
+  type EmittedFile,
+  type ModConfig,
+  type PureMod,
+} from "./build.ts";
+export { render, write } from "./render.ts";
+export { discoverContent } from "./discover.ts";
+// One free definer per content registry — `defineTechnology`,
+// `defineAscensionPerk`, ... — plus `patchTechnology`, `addShipOfSizeLimits`,
+// and every registry's `XItem` union.
+export * from "./generated/content-definers.ts";
+export { namespace, type EventNamespace } from "./generated/event-definers.ts";
+export { on } from "./definers.ts";
+export {
+  assertFileStem,
+  assertNamespace,
+  collection,
+  flattenItems,
+  FILE_STEM_PATTERN,
+  type Collection,
+  type ContentItem,
+  type ContributionItem,
+  type EventItem,
+  type EventItemBase,
+  type ModItem,
+  type ModItemInput,
+  type ModWarning,
+  type OnActionBindingItem,
+  type PlacedItem,
+  type TechnologyPatchItem,
+} from "./items.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
   InstallNotFoundError,

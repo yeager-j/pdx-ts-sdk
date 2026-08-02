@@ -14,13 +14,13 @@ import type { ScopeName } from "./scopes.ts";
  */
 declare module "./effects.ts" {
   interface AgreementScope {
-    /** Fires a agreement event for the scoped agreement, after any delay. */
+    /** Fires an agreement event for the scoped agreement, after any delay. */
     agreementEvent(args: FireEventArgs<"agreement", undefined>): void;
     agreementEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"agreement", F>): void;
   }
 
   interface AstralRiftScope {
-    /** Fires a astral rift event for the scoped astral_rift, after any delay. */
+    /** Fires an astral rift event for the scoped astral_rift, after any delay. */
     astralRiftEvent(args: FireEventArgs<"astral_rift", undefined>): void;
     astralRiftEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"astral_rift", F>): void;
   }
@@ -64,7 +64,7 @@ declare module "./effects.ts" {
   }
 
   interface EspionageOperationScope {
-    /** Fires a espionage operation event for the scoped espionage_operation, after any delay. */
+    /** Fires an espionage operation event for the scoped espionage_operation, after any delay. */
     espionageOperationEvent(args: FireEventArgs<"espionage_operation", undefined>): void;
     espionageOperationEvent<F extends ScopeName>(
       args: WitnessedFireEventArgs<"espionage_operation", F>
@@ -146,7 +146,7 @@ declare module "./effects.ts" {
   }
 
   interface UniversalEffects {
-    /** Fires a observer event for the scoped country, after any delay. */
+    /** Fires an observer event for the scoped country, after any delay. */
     observerEvent(args: FireEventArgs<"country", undefined>): void;
     observerEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"country", F>): void;
   }

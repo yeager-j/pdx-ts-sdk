@@ -3,7 +3,10 @@
  *
  * The headline claim is byte parity: the same content pushed through the
  * `Mod` builder and through `buildMod`/`render` produces identical file
- * maps, patch plan included. The rest pins the fold's validation story —
+ * maps, patch plan included. The builder was deleted when the migration
+ * landed, so the parity half now measures the probe's pipeline against the
+ * goldens captured from `Mod.render()` (tests/__snapshots__/pure-api/) —
+ * the same bytes, frozen. The rest pins the fold's validation story —
  * duplicate ids, the prefix warning, the vanilla collision guard, dangling
  * event references, on-action ownership, loc dedupe, the
  * `modifierDescKeys` ordering hazard — and the factory-collection
@@ -11,17 +14,10 @@
  * split files feeding the patch plan's path order.
  */
 
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import {
-  always,
-  and,
-  hasOwner,
-  hasTechnology,
-  isScopeValid,
-  Mod,
-  onActions,
-} from "../../src/index.ts";
+import { always, and, hasOwner, hasTechnology, isScopeValid, onActions } from "../../src/index.ts";
 import { viewFromFiles } from "../../src/vanilla/surface.ts";
 import { TECH_FILE, VARS_FILE } from "../../tests/fixtures/vanilla-fixture.ts";
 import { buildMod } from "./build.ts";
@@ -119,67 +115,6 @@ function pureCollections(): ModItemInput[] {
   return [techs, situations, limits, events, hooks];
 }
 
-/** The identical fixture through the class builder. */
-function classMod(): Mod<"pp_mod"> {
-  const mod = new Mod(CONFIG);
-  const grafts = mod.defineTechnology({
-    id: "pp_mod_tech_chimeric_grafts",
-    name: "Chimeric Grafts",
-    area: "society",
-    tier: 3,
-    category: "biology",
-  });
-  mod.defineSituationType({
-    id: "pp_mod_situation_probe",
-    name: "Probe Situation",
-    targetScope: "planet",
-    monthlyProgress: {
-      base: 2,
-      modifiers: [{ mult: 1.5, desc: "The probe is spreading.", when: always() }],
-    },
-  });
-  const titan = mod.defineCountryShipOfSizeLimit({
-    id: "pp_mod_limit_titan",
-    shipTypes: ["ship_size_titan"],
-    base: 80,
-    max: 1600,
-    show: and(isScopeValid(), hasTechnology("tech_titans")),
-  });
-  const aftershock = mod.definePlanetEvent({
-    id: 2,
-    from: "country",
-    title: "Aftershock",
-    isTriggeredOnly: true,
-    immediate: (planet, ctx) => {
-      planet.within(ctx.from, (country) => {
-        country.addResource({ resource: "influence", amount: 50 });
-      });
-    },
-    options: [{ name: "Noted." }],
-  });
-  const hum = mod.defineCountryEvent({
-    id: 1,
-    title: "The Hum",
-    isTriggeredOnly: true,
-    immediate: (country, ctx) => {
-      country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
-        planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
-      });
-    },
-    options: [{ name: "Fascinating." }],
-  });
-  mod.on(onActions.onGameStartCountry, hum);
-  mod.addShipOfSizeLimits([titan, "third_party_limit"]);
-  mod.patchTechnology(
-    vanilla.technology("tech_gene_forging").require("cost", "prerequisites"),
-    (t) => ({
-      cost: t.cost.value * 2,
-      prerequisites: [...t.prerequisites, grafts],
-    })
-  );
-  return mod;
-}
-
 function techsWith(file: string | undefined, ...ids: string[]): Collection {
   const techs = createTechnologies(file);
   for (const id of ids) {
@@ -189,10 +124,24 @@ function techsWith(file: string | undefined, ...ids: string[]): Collection {
 }
 
 describe("parity with the class builder", () => {
+  // The class builder is gone; its bytes for this fixture live on as the
+  // goldens the migration captured from `Mod.render()` while both APIs were
+  // live. The probe's own pipeline is measured against those same files, so
+  // this record still asserts exactly what it always asserted: the fold
+  // reproduces the builder byte for byte.
+  //
+  // They used to be read straight out of `tests/__snapshots__/pure-api/`.
+  // SDK-23 made the shipping SDK's emission order a function of the content
+  // (files and ids sort; source position no longer shows through), which moved
+  // those goldens — so the SDK-22 bytes are frozen here instead, beside the
+  // frozen pipeline that produced them. This directory is a design record: it
+  // is not regenerated, and the shipping suites are the live evidence.
+  const goldenDir = new URL("./goldens/", import.meta.url);
+  const golden = (relPath: string): string =>
+    readFileSync(new URL(relPath.replaceAll("/", "__"), goldenDir), "utf8");
+
   it("renders byte-identical files for the full representative fixture", () => {
     const pure = render(buildMod(CONFIG, pureCollections(), { vanilla }));
-    const classic = classMod().render();
-    expect([...pure.entries()]).toEqual([...classic.entries()]);
     // The fixture exercises every emission channel.
     expect([...pure.keys()]).toEqual([
       "descriptor.mod",
@@ -205,11 +154,16 @@ describe("parity with the class builder", () => {
       "localisation/english/pp_mod_l_english.yml",
       "common/technology/pp_soc_tech_pp_mod_patch.txt",
     ]);
+    for (const [relPath, content] of pure) {
+      expect(content, relPath).toEqual(golden(relPath));
+    }
   });
 
   it("computes the same patch plan, win assertions included", () => {
     const pure = buildMod(CONFIG, pureCollections(), { vanilla });
-    expect(pure.patchPlan?.assertions).toEqual(classMod().patchPlan()?.assertions);
+    expect(JSON.stringify(pure.patchPlan?.assertions, null, 2) + "\n").toEqual(
+      golden("patch-plan-assertions.json")
+    );
     expect(pure.warnings).toEqual([]);
   });
 });

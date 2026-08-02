@@ -32,8 +32,28 @@ export interface AgreementPresetTermDataDiscreteTerms {
 }
 
 export const AGREEMENT_PRESET_TERM_DATA_DISCRETE_TERMS_FIELDS: readonly ContentField[] = [
-  { key: "key", member: "key", shape: "value", conversion: "ref" },
-  { key: "value", member: "value", shape: "value", conversion: "ref" },
+  {
+    key: "key",
+    member: "key",
+    shape: "value",
+    conversion: "ref",
+    refTypes: [
+      "agreement_term.discrete",
+      "agreement_term.discrete_number",
+      "agreement_term.specialist_type",
+    ],
+  },
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    conversion: "ref",
+    refTypes: [
+      "agreement_term_value.discrete",
+      "agreement_term_value.discrete_number",
+      "agreement_term_value.specialist_type",
+    ],
+  },
 ];
 
 export interface AgreementPresetTermDataResourceTerms {
@@ -44,7 +64,13 @@ export interface AgreementPresetTermDataResourceTerms {
 }
 
 export const AGREEMENT_PRESET_TERM_DATA_RESOURCE_TERMS_FIELDS: readonly ContentField[] = [
-  { key: "key", member: "key", shape: "value", conversion: "ref" },
+  {
+    key: "key",
+    member: "key",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["agreement_term_value.resource"],
+  },
   { key: "value", member: "value", shape: "value", conversion: "identity" },
 ];
 
@@ -126,9 +152,21 @@ export type DefinedAgreementPreset<Id extends string = string> = DefinedContent<
 >;
 
 export const AGREEMENT_PRESET_FIELDS: readonly ContentField[] = [
-  { key: "parent", member: "parent", shape: "value", conversion: "ref" },
-  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
-  { key: "specialist_type", member: "specialistType", shape: "value", conversion: "ref" },
+  {
+    key: "parent",
+    member: "parent",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["agreement_preset"],
+  },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  {
+    key: "specialist_type",
+    member: "specialistType",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["agreement_term_value.specialist_type"],
+  },
   {
     key: "term_data",
     member: "termData",

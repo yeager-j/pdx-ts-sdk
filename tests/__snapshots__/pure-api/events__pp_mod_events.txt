@@ -1,0 +1,37 @@
+namespace = pp_mod
+
+country_event = {
+	id = pp_mod.1
+	title = pp_mod.1.name
+	is_triggered_only = yes
+	immediate = {
+		every_owned_planet = {
+			limit = {
+				has_owner = yes
+			}
+			planet_event = {
+				id = pp_mod.2
+				days = 30
+			}
+		}
+	}
+	option = {
+		name = pp_mod.1.a
+	}
+}
+
+planet_event = {
+	id = pp_mod.2
+	title = pp_mod.2.name
+	is_triggered_only = yes
+	immediate = {
+		from = {
+			add_resource = {
+				influence = 50
+			}
+		}
+	}
+	option = {
+		name = pp_mod.2.a
+	}
+}

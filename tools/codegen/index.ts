@@ -32,7 +32,14 @@ import { Emitter, type Usage } from "./emit/types.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
-import { CONTENT_FIELD_OVERRIDES, REPEATED_STRUCT_FIELD_OVERRIDES } from "./overlay.ts";
+import { camelCase, docComment, indefiniteArticle } from "./naming.ts";
+import {
+  CONTENT_CONTRIBUTION_SINKS,
+  CONTENT_FIELD_OVERRIDES,
+  CONTENT_PATCH_REGISTRIES,
+  HAND_WRITTEN_CONTENT_DEFINERS,
+  REPEATED_STRUCT_FIELD_OVERRIDES,
+} from "./overlay.ts";
 import { compareToBaseline, reconcile, type DriftReport } from "./reconcile.ts";
 
 const VENDOR = "vendor/cwtools-stellaris-config";
@@ -308,19 +315,17 @@ async function main(): Promise<void> {
         content.emission.code
     );
   }
-  await write(
-    "content-registry.ts",
-    header(
-      commit,
-      CONTENT_MANIFEST.map((entry) => entry.source).filter(
-        (source, index, sources) => sources.indexOf(source) === index
-      )
-    ) + contentRegistry(contents)
+  const contentSources = CONTENT_MANIFEST.map((entry) => entry.source).filter(
+    (source, index, sources) => sources.indexOf(source) === index
   );
+  await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));
+  const definers = contentDefiners(contents);
+  await write("content-definers.ts", header(commit, contentSources) + definers.code);
   await write(
     "triggers.ts",
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
       'import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";\n' +
+      'import type { ContentRefUse } from "../content-refs.ts";\n' +
       'import { trigger, type Trigger } from "../trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(
@@ -386,13 +391,14 @@ async function main(): Promise<void> {
       events.code
   );
   await write(
-    "event-methods.ts",
+    "event-definers.ts",
     header(commit, ["events/events.cwt"]) +
-      'import type { DefinedEvent, EventDef } from "../events.ts";\n' +
-      'import { GeneratedContentMethods } from "./content-registry.ts";\n' +
+      'import { buildEvent, type EventDef } from "../events.ts";\n' +
+      'import { assertNamespace } from "../items.ts";\n' +
+      'import type { EventItem } from "../items.ts";\n' +
       'import type { EventKindKey } from "./events.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
-      events.methodsCode
+      events.definerCode
   );
   await write(
     "event-fires.ts",
@@ -434,7 +440,13 @@ async function main(): Promise<void> {
     console.log(`${content.registry}: ${content.emission.emittedFields.length} fields emitted`);
   }
   console.log(
-    `event kinds: ${events.kinds} (${events.defineMethods} define methods, ` +
+    `content definers: ${definers.definers} emitted` +
+      ` (${CONTENT_PATCH_REGISTRIES.size} free patchX,` +
+      ` ${CONTENT_CONTRIBUTION_SINKS.size} free contribution adder,` +
+      ` ${definers.grafted.length} re-exported from a hand-written graft)`
+  );
+  console.log(
+    `event kinds: ${events.kinds} (${events.definers} definers, ` +
       `${events.fireMethods} typed fire methods)`
   );
   console.log(
@@ -461,6 +473,7 @@ async function main(): Promise<void> {
     events.skipped.map((entry) => `${entry.name} — ${entry.reason}`)
   );
   reportSection("Enums widened to string (rules declare no values)", valuelessEnums(emitter));
+  reportSection("Content definers taken from the hand-written grafts", definers.grafted);
   for (const content of contents) {
     const type = content.registry;
     console.log(`\n${type}: ${content.emission.emittedFields.length} fields emitted`);
@@ -481,6 +494,147 @@ async function main(): Promise<void> {
   }
 }
 
+/**
+ * One free definer per registry: the SDK-23 authoring surface, and the whole
+ * content surface. A definition is a value a module exports; nothing is
+ * registered at the definition site, because `collection(file, items)` and
+ * `discoverContent` are what place it.
+ *
+ * The definers are literal-preserving (`<const Id extends string>`), so a
+ * definition's id survives as its literal type all the way into the item the
+ * definer returns — the property the deleted class methods, generic only in
+ * the mod prefix, widened away.
+ *
+ * Three kinds of registry-specific member, each an overlay row rather than a
+ * conditional in this emitter: `CONTENT_PATCH_REGISTRIES` adds a free `patchX`,
+ * `CONTENT_CONTRIBUTION_SINKS` a free `addX` for the id-less sink, and
+ * `HAND_WRITTEN_CONTENT_DEFINERS` replaces the mechanical `defineX` with a
+ * re-export from `src/definers.ts`, so every definer this SDK has is importable
+ * from this one module.
+ *
+ * The `XItem` union types are emitted here too: they describe what a collection
+ * of this registry's items can hold.
+ */
+function contentDefiners(contents: readonly { registry: string; emission: ContentEmission }[]): {
+  code: string;
+  definers: number;
+  grafted: string[];
+} {
+  const grafted: string[] = [];
+  const runtimeItemTypes = new Set<string>(["ContentItem"]);
+  const chunks: string[] = [];
+
+  for (const content of contents) {
+    const { registry, emission } = content;
+    const name = emission.typeName;
+    const key = JSON.stringify(registry);
+    const spoken = registry.replaceAll("_", " ");
+    const article = indefiniteArticle(spoken);
+    const graft = HAND_WRITTEN_CONTENT_DEFINERS.get(registry);
+    const patchable = CONTENT_PATCH_REGISTRIES.get(registry);
+    const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
+
+    const itemArms = [`ContentItem<${key}, ${name}Def>`];
+    if (patchable !== undefined) {
+      itemArms.push(`${name}PatchItem`);
+      runtimeItemTypes.add(`${name}PatchItem`);
+    }
+    if (contribution !== undefined) {
+      itemArms.push("ContributionItem");
+      runtimeItemTypes.add("ContributionItem");
+    }
+
+    const definitions: string[] = [];
+    if (graft === undefined) {
+      definitions.push(
+        docComment([
+          `Defines ${article} ${spoken} in this mod. The returned item is the`,
+          "definition as a value and a reference to it; place it in a",
+          "`collection(...)` — or export it from a discovered module — to emit it.",
+        ]) +
+          `export function define${name}<const Id extends string>(\n` +
+          `  def: ${name}Def<Id>\n` +
+          `): ContentItem<${key}, ${name}Def<Id>> {\n` +
+          `  return { itemKind: "content", type: ${key}, id: def.id, def };\n` +
+          "}\n"
+      );
+    } else {
+      grafted.push(`${registry}.define${name} — ${graft.reason}`);
+      definitions.push(
+        `// define${name} is hand-written; re-exported here so every definer this\n` +
+          "// SDK has comes from one module.\n" +
+          `export { define${name} } from "../definers.ts";\n`
+      );
+    }
+    if (patchable !== undefined) {
+      definitions.push(
+        docComment([
+          `Patches ${article} vanilla ${spoken} as a whole-object override. The transform`,
+          "runs here (pure); the duplicate-key and one-view checks stay in",
+          "`buildMod`, which sees every patch together, and the emitted filename",
+          "is always resolver-computed — a patch item never carries a file of its own.",
+        ]) +
+          `export function patch${name}<Source extends Parsed${name}>(\n` +
+          `  ${camelCase(registry)}: Source,\n` +
+          `  patch: (${camelCase(registry)}: Source) => ${name}Patch\n` +
+          `): ${name}PatchItem {\n` +
+          `  return { itemKind: "patch", patched: transform${name}(${camelCase(registry)}, patch) };\n` +
+          "}\n"
+      );
+    }
+    if (contribution !== undefined) {
+      definitions.push(
+        docComment([
+          `Contributes to the shared additive \`default = { ${contribution.sink} = ... }\``,
+          "sink: ids this mod names but does not own, with no author-named file.",
+          "A ref listed twice is emitted once.",
+        ]) +
+          `export function ${contribution.method}(\n` +
+          `  ${camelCase(contribution.sink)}: readonly (TypedRef<${JSON.stringify(contribution.refRegistry)}> | string)[]\n` +
+          "): ContributionItem {\n" +
+          "  return {\n" +
+          '    itemKind: "contribution",\n' +
+          `    registry: ${JSON.stringify(contribution.sink)},\n` +
+          `    refRegistry: ${JSON.stringify(contribution.refRegistry)},\n` +
+          `    ids: ${camelCase(contribution.sink)}.map((entry) => String(refId(entry))),\n` +
+          "  };\n" +
+          "}\n"
+      );
+    }
+
+    chunks.push(
+      docComment([`What ${article} ${spoken} collection can contain.`]) +
+        `export type ${name}Item = ${itemArms.join(" | ")};\n\n` +
+        definitions.join("\n")
+    );
+  }
+
+  const patchNames = contents
+    .filter((content) => CONTENT_PATCH_REGISTRIES.has(content.registry))
+    .map((content) => content.emission.typeName);
+  const refImports = contents.some((content) => CONTENT_CONTRIBUTION_SINKS.has(content.registry));
+  const imports =
+    importList("../items.ts", [...runtimeItemTypes]) +
+    (refImports ? 'import { refId, type TypedRef } from "./refs.ts";\n' : "") +
+    patchNames
+      .map(
+        (name) =>
+          `import { patch${name} as transform${name}, type ${name}Patch } ` +
+          'from "../vanilla/patch.ts";\n' +
+          `import type { Parsed${name} } from "../vanilla/surface.ts";\n`
+      )
+      .join("") +
+    contents
+      .map(
+        (content) =>
+          `import type { ${content.emission.typeName}Def } from ` +
+          `${JSON.stringify(`./${content.registry.replaceAll("_", "-")}.ts`)};\n`
+      )
+      .join("");
+
+  return { code: imports + "\n" + chunks.join("\n"), definers: contents.length, grafted };
+}
+
 function contentRegistry(
   contents: readonly {
     manifest: (typeof CONTENT_MANIFEST)[number];
@@ -494,11 +648,7 @@ function contentRegistry(
     .map((content) => {
       const file = `./${content.registry.replaceAll("_", "-")}.ts`;
       const values = [content.emission.fieldsConstant, content.emission.localisationConstant];
-      const types = [`${content.emission.typeName}Def`, `Defined${content.emission.typeName}`];
-      return (
-        `import { ${values.join(", ")} } from ${JSON.stringify(file)};\n` +
-        `import type { ${types.join(", ")} } from ${JSON.stringify(file)};\n`
-      );
+      return `import { ${values.join(", ")} } from ${JSON.stringify(file)};\n`;
     })
     .join("");
   const descriptors = contents
@@ -524,53 +674,14 @@ function contentRegistry(
       );
     })
     .join("");
-  const defMap = contents
-    .map(
-      (content) =>
-        `  ${JSON.stringify(content.registry)}: ${content.emission.typeName}Def<PrefixedId<P>>;\n`
-    )
-    .join("");
-  const definedMap = contents
-    .map(
-      (content) =>
-        `  ${JSON.stringify(content.registry)}: Defined${content.emission.typeName}<PrefixedId<P>>;\n`
-    )
-    .join("");
-  const methods = contents
-    .map((content) => {
-      const method = `define${content.emission.typeName}`;
-      const key = JSON.stringify(content.registry);
-      const article = /^[aeiou]/i.test(content.registry) ? "an" : "a";
-      return (
-        `  /** Defines ${article} ${content.registry.replaceAll("_", " ")} in this mod. */\n` +
-        `  ${method}(def: ContentDefMap<P>[${key}]): DefinedContentMap<P>[${key}] {\n` +
-        `    return this.defineGeneratedContent(${key}, def);\n` +
-        "  }\n"
-      );
-    })
-    .join("\n");
   return (
     'import type { ContentRegistryDescriptor } from "../content.ts";\n' +
     imports +
     "\n" +
-    "export type PrefixedId<P extends string> = `${P}_${string}`;\n\n" +
     "export const CONTENT_REGISTRIES = [\n" +
     descriptors +
     "] as const satisfies readonly ContentRegistryDescriptor[];\n\n" +
-    'export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];\n\n' +
-    "export interface ContentDefMap<P extends string> {\n" +
-    defMap +
-    "}\n\n" +
-    "export interface DefinedContentMap<P extends string> {\n" +
-    definedMap +
-    "}\n\n" +
-    "export abstract class GeneratedContentMethods<const P extends string> {\n" +
-    "  protected abstract defineGeneratedContent<K extends ContentTypeName>(\n" +
-    "    type: K,\n" +
-    "    def: ContentDefMap<P>[K]\n" +
-    "  ): DefinedContentMap<P>[K];\n\n" +
-    methods +
-    "}\n"
+    'export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];\n'
   );
 }
 

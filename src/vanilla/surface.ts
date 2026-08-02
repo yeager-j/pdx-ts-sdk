@@ -229,7 +229,7 @@ export class VanillaView {
   readonly fromCache: boolean;
   /**
    * sha256 over the (path, sha256) manifest: two views over byte-identical
-   * inputs share it, so a Mod can tell "same vanilla" from "different loads".
+   * inputs share it, so a build can tell "same vanilla" from "different loads".
    */
   readonly manifestKey: string;
   private readonly technologies: ReadonlyMap<string, ParsedTechnology>;

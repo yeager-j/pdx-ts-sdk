@@ -138,6 +138,81 @@ export const FIRE_EFFECTS = new Set([
   "colony_event",
 ]);
 
+export interface HandWrittenDefiner {
+  readonly reason: string;
+}
+
+/**
+ * Registries whose `defineX` is re-exported from `src/definers.ts` instead of
+ * being the mechanical one the emitter would write.
+ *
+ * The `HAND_WRITTEN_TRIGGERS` arrangement, one level up: codegen skips the
+ * member and the hand-written module supplies it, so there is exactly one
+ * definition of the graft and it is the reviewed one. A row here is expensive —
+ * it removes a definer from generator ownership — and needs a contract the rules
+ * cannot express, not merely a nicer signature.
+ */
+export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>([
+  [
+    "situation_type",
+    {
+      reason:
+        "`targetScope` is authored, emits nothing, and is carried on the returned item as the " +
+        "situation target contract every `startSituation` call site is checked against " +
+        "(src/situations.ts). The rules declare that contract nowhere, so no mechanical definer " +
+        "can produce it.",
+    },
+  ],
+]);
+
+/**
+ * Registries whose collection factory also offers a vanilla patch.
+ *
+ * A prefixed definition cannot collide with vanilla, but a patch is a whole-
+ * object override whose load order and emission have to be verified per
+ * registry — so `patchX` appears only where that evidence exists. The member
+ * names are derived (`patchTechnology`, `ParsedTechnology`, `TechnologyPatch`);
+ * the row is the permission.
+ */
+export const CONTENT_PATCH_REGISTRIES = new Map<string, string>([
+  [
+    "technology",
+    "the only registry the vanilla loader parses and the patch resolver plans emission for " +
+      "(src/resolver, src/vanilla) — verified in-game by the patches-that-provably-win calibration",
+  ],
+]);
+
+export interface ContributionSink {
+  /** The contribution method on the collection factory. */
+  readonly method: string;
+  /** The `ContributionItem` registry tag the fold merges under. */
+  readonly sink: string;
+  /** The ref registry whose ids the contribution lists. */
+  readonly refRegistry: string;
+  readonly reason: string;
+}
+
+/**
+ * Registries that additionally contribute to a shared, non-id-keyed sink.
+ *
+ * A contribution has no id this mod owns and no author-named file: it is folded
+ * into one additive `default = { ... }` block at a fixed path. Nothing in the
+ * rules marks a registry as having one, so each is a reviewed row.
+ */
+export const CONTENT_CONTRIBUTION_SINKS = new Map<string, ContributionSink>([
+  [
+    "country_ship_of_size_limit",
+    {
+      method: "addShipOfSizeLimits",
+      sink: "ship_of_size_limits",
+      refRegistry: "country_ship_of_size_limit",
+      reason:
+        "`country_limits` reads one shared additive `default = { ship_of_size_limits = { ... } }`; " +
+        "the listed limits are ids, not definitions this file owns.",
+    },
+  ],
+]);
+
 /**
  * Alias families the rule loader reads into a table beyond `trigger` and
  * `effect`.

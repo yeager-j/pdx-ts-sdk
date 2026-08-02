@@ -86,6 +86,21 @@ export function pascalCase(name: string): string {
     .join("");
 }
 
+/**
+ * The article for a generated doc comment's display name — "a technology", "an
+ * ascension perk", "an observer event".
+ *
+ * Generated docs are what a modder reads on hover, so "a agreement event" is a
+ * visible defect in the public API. A leading-vowel test is the whole rule: the
+ * names this is called with are registry and rule keys, and none of the
+ * spelling-versus-sound exceptions ("a unique...", "an hour") appears among
+ * them — checked against the full manifest and the event-kind table, and it
+ * degrades to the merely-inelegant rather than the wrong if one ever does.
+ */
+export function indefiniteArticle(name: string): "a" | "an" {
+  return /^[aeiou]/i.test(name) ? "an" : "a";
+}
+
 /** A reserved word gets a trailing underscore: `if` becomes `if_`. */
 export function safeIdentifier(name: string): string {
   return RESERVED.has(name) ? `${name}_` : name;

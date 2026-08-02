@@ -1,31 +1,23 @@
 /**
- * The FROM contract, held against the real Mod API — the probe's claims 5,
- * 5b, and 7 (see docs/verdict-effects-probe.md) pinned on the production
- * surface.
+ * The FROM contract, held against the pure authoring API — the probe's claims
+ * 5, 5b, and 7 (see docs/verdict-effects-probe.md) pinned on the namespace
+ * definers mod authors actually call.
  */
 
 import { describe, it } from "vitest";
 
-import { Mod } from "../src/mod.ts";
-
-function makeMod(): Mod<"from_contract"> {
-  return new Mod({
-    name: "FROM contract type tests",
-    prefix: "from_contract",
-    supportedVersion: "4.0.*",
-  });
-}
+import { namespace } from "../src/index.ts";
 
 describe("the FROM contract on the real event API", () => {
   it("requires a witness when the fired event declared from:", () => {
-    const mod = makeMod();
-    const needsCountryFrom = mod.definePlanetEvent({
+    const events = namespace("from_contract_a");
+    const needsCountryFrom = events.definePlanetEvent({
       id: 1,
       from: "country",
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    mod.definePlanetEvent({
+    events.definePlanetEvent({
       id: 2,
       hideWindow: true,
       isTriggeredOnly: true,
@@ -37,14 +29,14 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("rejects a witness of the wrong scope", () => {
-    const mod = makeMod();
-    const needsCountryFrom = mod.definePlanetEvent({
+    const events = namespace("from_contract_b");
+    const needsCountryFrom = events.definePlanetEvent({
       id: 3,
       from: "country",
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    mod.definePlanetEvent({
+    events.definePlanetEvent({
       id: 4,
       hideWindow: true,
       isTriggeredOnly: true,
@@ -56,14 +48,14 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("accepts a matching witness", () => {
-    const mod = makeMod();
-    const needsCountryFrom = mod.definePlanetEvent({
+    const events = namespace("from_contract_c");
+    const needsCountryFrom = events.definePlanetEvent({
       id: 5,
       from: "country",
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    mod.defineCountryEvent({
+    events.defineCountryEvent({
       id: 6,
       hideWindow: true,
       isTriggeredOnly: true,
@@ -76,14 +68,14 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("holds the FROM contract on a generated kind beyond the original two", () => {
-    const mod = makeMod();
-    const needsCountryFrom = mod.defineSituationEvent({
+    const events = namespace("from_contract_d");
+    const needsCountryFrom = events.defineSituationEvent({
       id: 20,
       from: "country",
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    mod.defineSituationEvent({
+    events.defineSituationEvent({
       id: 21,
       hideWindow: true,
       isTriggeredOnly: true,
@@ -93,12 +85,12 @@ describe("the FROM contract on the real event API", () => {
       },
     });
     // @ts-expect-error — a situation-scoped def does not fit defineCountryEvent
-    mod.defineCountryEvent({ id: 22, immediate: (s) => s.setSituationFlag("x") });
+    events.defineCountryEvent({ id: 22, immediate: (s) => s.setSituationFlag("x") });
   });
 
   it("makes an undeclared FROM unusable rather than any-typed", () => {
-    const mod = makeMod();
-    mod.defineCountryEvent({
+    const events = namespace("from_contract_e");
+    events.defineCountryEvent({
       id: 7,
       hideWindow: true,
       isTriggeredOnly: true,

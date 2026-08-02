@@ -1,20 +1,49 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import {
+  addShipOfSizeLimits,
   always,
   canGoMia,
   canJoinFactions,
+  collection,
+  defineAgenda,
+  defineAmbientObject,
+  defineArchaeologicalSiteType,
+  defineAscensionPerk,
+  defineBombardmentStance,
+  defineBuilding,
+  defineCasusBelli,
+  defineCivicOrOrigin,
+  defineCouncilor,
+  defineCountryShipOfSizeLimit,
+  defineDecision,
+  defineEconomicCategory,
+  defineEdict,
+  defineJob,
+  defineOpinionModifier,
+  defineScriptedModifier,
+  defineSectionTemplate,
+  defineShipSize,
+  defineSituationType,
+  defineSpeciesClass,
+  defineStarbaseLevel,
+  defineStaticModifier,
+  defineTradition,
+  defineWarGoal,
   hasAuthority,
   hasCountryFlag,
   hasPlanetFlag,
   isCapital,
-  Mod,
   type AgendaRef,
   type AgreementPresetRef,
   type ArchaeologicalSiteTypeRef,
   type AscensionPerkRef,
   type BombardmentStanceRef,
+  type BuildingDef,
+  type BuildingItem,
+  type BuildingRef,
   type CasusBelliRef,
+  type ContentItem,
   type DecisionRef,
   type EdictRef,
   type GovernmentTriggerBlock,
@@ -23,19 +52,14 @@ import {
   type OpinionModifierRef,
   type SectionTemplateFields,
   type TechnologyRef,
+  type TraditionSwapFields,
   type Trigger,
   type WarGoalRef,
 } from "../src/index.ts";
 
 describe("generated content authoring types", () => {
-  const mod = new Mod({
-    name: "Content types",
-    prefix: "content_types",
-    supportedVersion: "4.4.*",
-  });
-
   it("does not invent a category field on traditions", () => {
-    mod.defineTradition({
+    defineTradition({
       id: "content_types_tradition_without_category",
       name: "No synthetic membership",
       // @ts-expect-error — membership belongs to TraditionCategoryDef.traditions
@@ -44,21 +68,21 @@ describe("generated content authoring types", () => {
   });
 
   it("carries inherited and explicit trigger scopes", () => {
-    mod.defineBuilding({
+    defineBuilding({
       id: "content_types_building_x",
       name: "X",
       allow: isCapital(),
       // @ts-expect-error — a country-only condition is not valid in colony scope
       potential: hasCountryFlag("country_only"),
     });
-    mod.defineTradition({
+    defineTradition({
       id: "content_types_tradition_scoped",
       name: "X",
       possible: hasAuthority("auth_democratic"),
       // @ts-expect-error — tradition weights and conditions run in country scope
       aiWeight: { modifiers: [{ factor: 2, when: hasPlanetFlag("planet_only") }] },
     });
-    mod.defineAgenda({
+    defineAgenda({
       id: "content_types_agenda_scoped",
       name: "X",
       agendaCost: 100,
@@ -68,7 +92,7 @@ describe("generated content authoring types", () => {
         country.setPlanetFlag("planet_only");
       },
     });
-    mod.defineAscensionPerk({
+    defineAscensionPerk({
       id: "content_types_ascension_perk_scoped",
       name: "X",
       potential: hasAuthority("auth_democratic"),
@@ -96,7 +120,7 @@ describe("generated content authoring types", () => {
         },
       },
     });
-    mod.defineEdict({
+    defineEdict({
       id: "content_types_edict_scoped",
       name: "X",
       length: 360,
@@ -123,13 +147,13 @@ describe("generated content authoring types", () => {
         country.setPlanetFlag("planet_only");
       },
     });
-    mod.defineDecision({
+    defineDecision({
       id: "content_types_decision_scoped",
       name: "X",
       effect: () => {},
       showTechUnlockIf: hasAuthority("auth_democratic"),
     });
-    mod.defineJob({
+    defineJob({
       id: "content_types_job_scoped",
       name: "X",
       possible: canJoinFactions(),
@@ -148,7 +172,7 @@ describe("generated content authoring types", () => {
         },
       ],
     });
-    mod.defineOpinionModifier({
+    defineOpinionModifier({
       id: "content_types_opinion_modifier_scoped",
       name: "X",
       opinion: {
@@ -159,21 +183,21 @@ describe("generated content authoring types", () => {
       // @ts-expect-error — the opinion modifier's own trigger runs in country scope
       trigger: hasPlanetFlag("planet_only"),
     });
-    mod.defineCasusBelli({
+    defineCasusBelli({
       id: "content_types_casus_belli_scoped",
       name: "X",
       showNotification: true,
       // @ts-expect-error — casus belli triggers run in country scope
       potential: hasPlanetFlag("planet_only"),
     });
-    mod.defineWarGoal({
+    defineWarGoal({
       id: "content_types_war_goal_scoped",
       name: "X",
       casusBelli: "some_casus_belli",
       // @ts-expect-error — war goal ai_weight gates run in country scope
       aiWeight: { modifiers: [{ factor: 2, when: hasPlanetFlag("planet_only") }] },
     });
-    mod.defineBombardmentStance({
+    defineBombardmentStance({
       id: "content_types_bombardment_stance_scoped",
       name: "X",
       // @ts-expect-error — bombardment stance triggers run in fleet scope
@@ -181,7 +205,7 @@ describe("generated content authoring types", () => {
       default: false,
       aiWeight: { base: 1 },
     });
-    mod.defineArchaeologicalSiteType({
+    defineArchaeologicalSiteType({
       id: "content_types_archaeological_site_type_scoped",
       name: "X",
       stages: 1,
@@ -197,12 +221,12 @@ describe("generated content authoring types", () => {
   });
 
   it("keeps subtype fields optional rather than introducing a union", () => {
-    mod.defineBuilding({
+    defineBuilding({
       id: "content_types_building_capital_tier",
       name: "X",
       capitalTier: 2,
     });
-    mod.defineEdict({
+    defineEdict({
       id: "content_types_edict_wartime",
       name: "X",
       length: 360,
@@ -216,18 +240,18 @@ describe("generated content authoring types", () => {
     // `onEnabled` used to be rejected because no one had added it to a curated
     // list. It lowers cleanly and is now part of the surface. What stays out is
     // what the emitter genuinely cannot lower.
-    mod.defineTradition({
+    defineTradition({
       id: "content_types_tradition_effect",
       name: "X",
       onEnabled: () => {},
     });
-    mod.defineJob({
+    defineJob({
       id: "content_types_job_unlowerable",
       name: "X",
       // @ts-expect-error — swappable_data's own `default` sub-struct is required
       swappableData: {},
     });
-    mod.defineJob({
+    defineJob({
       id: "content_types_job_swappable_data",
       name: "X",
       // The struct field shape now expresses swappable_data's two-level nesting:
@@ -237,7 +261,7 @@ describe("generated content authoring types", () => {
         swapType: [{ trigger: isCapital(), weight: 1 }],
       },
     });
-    mod.defineAgenda({
+    defineAgenda({
       id: "content_types_agenda_localisation_alias",
       name: "X",
       agendaCost: 100,
@@ -249,18 +273,18 @@ describe("generated content authoring types", () => {
   it("types an all-scalar alias splice as named booleans", () => {
     // possible_pre_triggers admits exactly the seven pop_pre_trigger members,
     // each a bool — not a Trigger, and not an open record.
-    mod.defineJob({
+    defineJob({
       id: "content_types_job_pre_triggers",
       name: "X",
       possiblePreTriggers: { hasOwner: true, isSapient: false, isRobotic: true },
     });
-    mod.defineJob({
+    defineJob({
       id: "content_types_job_pre_triggers_bad_value",
       name: "X",
       // @ts-expect-error — every pop_pre_trigger member is a bool
       possiblePreTriggers: { hasOwner: "yes" },
     });
-    mod.defineJob({
+    defineJob({
       id: "content_types_job_pre_triggers_unknown",
       name: "X",
       // @ts-expect-error — the category is closed; `is_ai` belongs to colony_pre_trigger
@@ -269,14 +293,17 @@ describe("generated content authoring types", () => {
   });
 
   it("restricts scripted modifier category to the generated enum", () => {
-    mod.defineScriptedModifier({
+    defineScriptedModifier({
       id: "content_types_scripted_modifier_category",
       category: "planet",
       // @ts-expect-error — category is drawn from enum[scripted_modifier_category], not a free string
       icon: 5,
     });
-    // @ts-expect-error — an unknown category value is not a member of ScriptedModifierCategory
-    mod.defineScriptedModifier({ id: "content_types_scripted_modifier_bad", category: "nonsense" });
+    defineScriptedModifier({
+      id: "content_types_scripted_modifier_bad",
+      // @ts-expect-error — an unknown category value is not a member of ScriptedModifierCategory
+      category: "nonsense",
+    });
   });
 
   it("records any scope's modifier path in a static modifier's unkeyed splice", () => {
@@ -285,7 +312,7 @@ describe("generated content authoring types", () => {
     // distributed reading would be a union of every per-scope recorder with no
     // member in common — not even `raw`, whose name parameter would intersect
     // to `never`.
-    mod.defineStaticModifier({
+    defineStaticModifier({
       id: "content_types_static_modifier_any_scope",
       name: "X",
       modifiers: (m) => {
@@ -295,13 +322,13 @@ describe("generated content authoring types", () => {
         m.unchecked("othermod_invented_mult", 0.1);
       },
     });
-    mod.defineStaticModifier({
+    defineStaticModifier({
       id: "content_types_static_modifier_bad_path",
       name: "X",
       // @ts-expect-error — a typo in any path segment is still a compile error
       modifiers: (m) => m.country.unity.produses.mult(0.1),
     });
-    mod.defineStaticModifier({
+    defineStaticModifier({
       id: "content_types_static_modifier_bad_raw",
       name: "X",
       // @ts-expect-error — raw() is checked against every known modifier name
@@ -309,7 +336,7 @@ describe("generated content authoring types", () => {
     });
     // A scoped modifier field keeps its own narrower recorder: widening the
     // unconstrained case must not widen the constrained ones with it.
-    mod.defineTradition({
+    defineTradition({
       id: "content_types_tradition_scoped_modifier",
       name: "X",
       // @ts-expect-error — cohesion applies in federation scope, not country
@@ -318,10 +345,10 @@ describe("generated content authoring types", () => {
   });
 
   it("types an engine-keyed map without imposing an id on its keys", () => {
-    // A structMap key is a plain engine name, so `PrefixedId` must NOT reach
-    // it — unlike a repeated-struct record key one level down, which is an id
-    // the mod owns. The values still get their full struct type.
-    mod.defineShipSize({
+    // A structMap key is a plain engine name and its values still get their
+    // full struct type. A repeated-struct record key is an id the mod owns,
+    // but it is typed `string` all the same — see the sibling case below.
+    defineShipSize({
       id: "content_types_ship_size_x",
       name: "X",
       class: "shipclass_military",
@@ -331,37 +358,67 @@ describe("generated content authoring types", () => {
       },
       minUpgradeCost: { alloys: 20 },
     });
-    mod.defineShipSize({
+    defineShipSize({
       id: "content_types_ship_size_bad_slot",
       name: "X",
       class: "shipclass_military",
       // @ts-expect-error — the slot's own fields are still typed
       sectionSlots: { mid: { locator: 5 } },
     });
-    mod.defineShipSize({
+    defineShipSize({
       id: "content_types_ship_size_bad_cost",
       name: "X",
       class: "shipclass_military",
       // @ts-expect-error — a scalarMap's values are numbers, not blocks
       minUpgradeCost: { alloys: { base: 20 } },
     });
-    // A repeated-struct record key, by contrast, IS constrained to the prefix.
-    mod.defineTradition({
-      id: "content_types_tradition_prefix_contrast",
+    // A repeated-struct record key is `string`, not the definition's own id
+    // type: a nested id is its own name, unrelated to its owner's. Typing the
+    // record by the owner's `Id` only ever looked sound because both sides
+    // were the same wide `PrefixedId<P>` pattern under the class API; against
+    // the literal id the factory definers preserve, it demanded every swap key
+    // equal the tradition's id. The prefix rule on these keys is enforced at
+    // define time instead — tests/content.test.ts pins the throw.
+    defineTradition({
+      id: "content_types_tradition_nested_key",
       name: "X",
-      // @ts-expect-error — nested definition ids must carry the mod prefix
-      traditionSwap: { othermod_swap: { name: "Wrong namespace" } },
+      traditionSwap: { othermod_swap: { name: "Accepted by the type, rejected at define" } },
     });
+    expectTypeOf<
+      NonNullable<Parameters<typeof defineTradition>[0]["traditionSwap"]>
+    >().toEqualTypeOf<Readonly<Record<string, TraditionSwapFields>>>();
   });
 
   it("keeps content reference brands distinct", () => {
-    const building = mod.defineBuilding({
-      id: "content_types_building_brand",
+    const buildingRef: BuildingRef = { id: "content_types_building_brand" };
+    // @ts-expect-error — a building reference is not a technology reference
+    const technology: TechnologyRef = buildingRef;
+    void technology;
+  });
+
+  it("types a definer's return as its own registry's content item, branded", () => {
+    // The class API's answer to "what did I just define" was `DefinedBuilding`,
+    // a branded `TypedRef`. The pure API's is the collection's element type —
+    // and it extends `TypedRef<"building">`, so the registry name lives in the
+    // phantom brand as well as the runtime `type` field. Without the brand an
+    // item was structurally assignable to *every* `TypedRef`, because the brand
+    // is optional; carrying it is what makes the mismatch a conflict.
+    const building = defineBuilding({
+      id: "content_types_building_brand_item",
       name: "X",
     });
+    expectTypeOf(building).toEqualTypeOf<
+      ContentItem<"building", BuildingDef<"content_types_building_brand_item">>
+    >();
+    expectTypeOf(collection<BuildingItem>(undefined, [building]).items).toEqualTypeOf<
+      readonly BuildingItem[]
+    >();
+    // Its own registry's reference fields still take it directly.
+    const own: BuildingRef = building;
+    void own;
     // @ts-expect-error — a defined building is not a technology reference
-    const technology: TechnologyRef = building;
-    void technology;
+    const crossRegistry: TechnologyRef = building;
+    void crossRegistry;
   });
 
   it("scopes situations' repeated-struct fields per their own push_scope, not the body default", () => {
@@ -371,7 +428,7 @@ describe("generated content authoring types", () => {
     // approach ("siblings" keying) — so a country-scoped trigger fits the top
     // level but not either nested field. Both keyings need their own check,
     // not just the top level.
-    mod.defineSituationType({
+    defineSituationType({
       id: "content_types_situation_scoped",
       name: "X",
       monthlyProgress: { base: 1 },
@@ -399,7 +456,7 @@ describe("generated content authoring types", () => {
   });
 
   it("keeps modifier recorders numeric and weight conditions scoped", () => {
-    mod.defineTradition({
+    defineTradition({
       id: "content_types_tradition_modifier",
       name: "X",
       modifier: (m) => {
@@ -412,7 +469,7 @@ describe("generated content authoring types", () => {
   });
 
   it("types civic_or_origin's potential/possible as the government_trigger DSL, not a Trigger", () => {
-    mod.defineCivicOrOrigin({
+    defineCivicOrOrigin({
       id: "content_types_civic_dsl",
       name: "X",
       // The requirements DSL: a plain object, matched against empire setup —
@@ -420,7 +477,7 @@ describe("generated content authoring types", () => {
       potential: { authority: { value: "auth_democratic" } },
       possible: { or: [{ civics: { value: "content_types_civic_other" } }] },
     });
-    mod.defineCivicOrOrigin({
+    defineCivicOrOrigin({
       id: "content_types_civic_dsl_rejects_trigger",
       name: "X",
       // @ts-expect-error — a Trigger is not a GovernmentTriggerBlock; the game
@@ -437,7 +494,7 @@ describe("generated content authoring types", () => {
   });
 
   it("keeps civic_or_origin's playable/ai_playable pinned to no_scope", () => {
-    mod.defineCivicOrOrigin({
+    defineCivicOrOrigin({
       id: "content_types_civic_no_scope",
       name: "X",
       playable: always(),
@@ -448,7 +505,7 @@ describe("generated content authoring types", () => {
   });
 
   it("keeps councilor's country and leader scope triggers distinct", () => {
-    mod.defineCouncilor({
+    defineCouncilor({
       id: "content_types_councilor_scoped",
       name: "X",
       leaderClass: ["leader_class_official"],
@@ -459,11 +516,11 @@ describe("generated content authoring types", () => {
   });
 
   it("restricts economic_category's modifier_category to the generated enum", () => {
-    mod.defineEconomicCategory({
+    defineEconomicCategory({
       id: "content_types_economic_category_x",
       modifierCategory: "economic_unit",
     });
-    mod.defineEconomicCategory({
+    defineEconomicCategory({
       id: "content_types_economic_category_bad",
       // @ts-expect-error — modifier_category is drawn from enum[scripted_modifier_category]
       modifierCategory: "nonsense",
@@ -471,12 +528,12 @@ describe("generated content authoring types", () => {
   });
 
   it("requires an entity on ambient_object but leaves name/description optional", () => {
-    mod.defineAmbientObject({
+    defineAmbientObject({
       id: "content_types_ambient_object_x",
       entity: "some_entity",
     });
     // @ts-expect-error — entity has no default and must be supplied
-    mod.defineAmbientObject({
+    defineAmbientObject({
       id: "content_types_ambient_object_missing_entity",
     });
   });
@@ -492,7 +549,7 @@ describe("generated content authoring types", () => {
     expectTypeOf<SectionTemplateFields["shipModifier"]>().toEqualTypeOf<
       ModifierClosure<"ship"> | undefined
     >();
-    mod.defineSectionTemplate({
+    defineSectionTemplate({
       id: "content_types_section_template_x",
       entity: "some_entity",
       modifier: (m) => m.unchecked("ship_hull_add", 10),
@@ -500,7 +557,7 @@ describe("generated content authoring types", () => {
   });
 
   it("pins starbase_level's upgrade/downgrade triggers to starbase scope", () => {
-    mod.defineStarbaseLevel({
+    defineStarbaseLevel({
       id: "content_types_starbase_level_x",
       shipSize: "ship_size_starbase_i",
       upgradePossible: always(),
@@ -511,13 +568,13 @@ describe("generated content authoring types", () => {
   });
 
   it("types species_class's possible/possible_secondary as the government_trigger DSL, not a Trigger", () => {
-    mod.defineSpeciesClass({
+    defineSpeciesClass({
       id: "content_types_species_class_dsl",
       name: "X",
       possible: { authority: { value: "auth_democratic" } },
       possibleSecondary: { or: [{ ethics: { value: "ethic_xenophile" } }] },
     });
-    mod.defineSpeciesClass({
+    defineSpeciesClass({
       id: "content_types_species_class_dsl_rejects_trigger",
       name: "X",
       // @ts-expect-error — a Trigger is not a GovernmentTriggerBlock; the game
@@ -529,12 +586,12 @@ describe("generated content authoring types", () => {
   it("keeps species_class's playable scope-agnostic like tradition_swap's trigger", () => {
     // No `## replace_scopes` on playable, so it stays Trigger<ScopeName> —
     // only a universal trigger like always() type-checks.
-    mod.defineSpeciesClass({
+    defineSpeciesClass({
       id: "content_types_species_class_playable",
       name: "X",
       playable: always(),
     });
-    mod.defineSpeciesClass({
+    defineSpeciesClass({
       id: "content_types_species_class_playable_rejects_country_only",
       name: "X",
       // @ts-expect-error — hasAuthority only holds in country scope, not
@@ -546,19 +603,19 @@ describe("generated content authoring types", () => {
   it("brands country_ship_of_size_limit.ship_types on the ship_size registry, not just any content ref", () => {
     // `<ship_size>` in the CWT body — a defined ship_size or a raw vanilla
     // string both work, same widening every other branded-ref list gets.
-    const shipSize = mod.defineShipSize({
+    const shipSize = defineShipSize({
       id: "content_types_ship_size_for_limit",
       name: "X",
       class: "shipclass_military",
     });
-    mod.defineCountryShipOfSizeLimit({
+    defineCountryShipOfSizeLimit({
       id: "content_types_ship_of_size_limit_x",
       shipTypes: [shipSize, "ship_size_titan"],
       base: 80,
       show: always(),
     });
     const wrongBrand: TechnologyRef = { id: "tech_lasers_1" } as TechnologyRef;
-    mod.defineCountryShipOfSizeLimit({
+    defineCountryShipOfSizeLimit({
       id: "content_types_ship_of_size_limit_bad_ref",
       // @ts-expect-error — a TechnologyRef is not a ShipSizeRef; the two
       // brands must not be interchangeable even though both widen with string.
@@ -572,13 +629,13 @@ describe("generated content authoring types", () => {
     // The overlay asserts the scope CWT omits. Without it `show` is
     // Trigger<ScopeName> — required, and unable to hold the country condition
     // every shipped entry writes.
-    const limit = mod.defineCountryShipOfSizeLimit({
+    const limit = defineCountryShipOfSizeLimit({
       id: "content_types_ship_of_size_limit_scoped",
       shipTypes: ["ship_size_titan"],
       base: 80,
       show: hasAuthority("auth_democratic"),
     });
-    mod.defineCountryShipOfSizeLimit({
+    defineCountryShipOfSizeLimit({
       id: "content_types_ship_of_size_limit_wrong_scope",
       shipTypes: ["ship_size_titan"],
       base: 80,
@@ -587,8 +644,13 @@ describe("generated content authoring types", () => {
     });
     // The ownership limit takes definitions or raw ids, and never an id of
     // its own — the engine owns that key.
-    mod.addShipOfSizeLimits([limit, "some_other_mods_limit"]);
-    // @ts-expect-error — a wrongly-branded definition is still rejected
-    mod.addShipOfSizeLimits([mod.defineBuilding({ id: "content_types_b_x", name: "X" })]);
+    addShipOfSizeLimits([limit, "some_other_mods_limit"]);
+    const wrongRegistry = defineBuilding({
+      id: "content_types_ship_of_size_limit_wrong_registry",
+      name: "X",
+    });
+    // @ts-expect-error — a definition from another registry is rejected: items
+    // carry their registry's brand, so this needs no hand-branded stand-in.
+    addShipOfSizeLimits([wrongRegistry]);
   });
 });

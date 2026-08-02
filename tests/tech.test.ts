@@ -1,17 +1,18 @@
 import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { Mod } from "../src/mod.ts";
+import { buildMod, collection, defineTechnology, render } from "../src/index.ts";
 import { and, hasCountryFlag, hasTechnology, not } from "../src/triggers.ts";
+
+const CONFIG = {
+  name: "Technology test",
+  prefix: "mymod",
+  supportedVersion: "4.4.*",
+};
 
 describe("Technology", () => {
   it("emits vanilla-convention PDXScript", () => {
-    const mod = new Mod({
-      name: "Technology test",
-      prefix: "mymod",
-      supportedVersion: "4.4.*",
-    });
-    const base = mod.defineTechnology({
+    const base = defineTechnology({
       id: "mymod_tech_base",
       name: "Base Tech",
       cost: 1000,
@@ -19,7 +20,7 @@ describe("Technology", () => {
       tier: 2,
       category: "particles",
     });
-    const tech = mod.defineTechnology({
+    const advancedTech = defineTechnology({
       id: "mymod_tech_advanced",
       name: "Advanced Tech",
       cost: 4000,
@@ -31,7 +32,10 @@ describe("Technology", () => {
       isRare: true,
       potential: and(hasCountryFlag("chosen_ones"), not(hasTechnology(base))),
     });
-    expect(serialize([tech.toEntries()])).toMatchInlineSnapshot(`
+    const technologies = collection(undefined, [base, advancedTech]);
+    const file = buildMod(CONFIG, [technologies]).contentFiles[0]!;
+    const advanced = file.entries[file.ids.indexOf("mymod_tech_advanced")]!;
+    expect(serialize([advanced])).toMatchInlineSnapshot(`
       "mymod_tech_advanced = {
       	area = physics
       	tier = 3
@@ -54,20 +58,19 @@ describe("Technology", () => {
   });
 
   it("omits optional fields that were not provided", () => {
-    const mod = new Mod({
-      name: "Technology test",
-      prefix: "mymod",
-      supportedVersion: "4.4.*",
-    });
-    const tech = mod.defineTechnology({
-      id: "mymod_tech_minimal",
-      name: "Minimal",
-      cost: 100,
-      area: "society",
-      tier: 1,
-      category: "statecraft",
-    });
-    expect(serialize([tech.toEntries()])).toBe(
+    const technologies = collection(undefined, [
+      defineTechnology({
+        id: "mymod_tech_minimal",
+        name: "Minimal",
+        cost: 100,
+        area: "society",
+        tier: 1,
+        category: "statecraft",
+      }),
+    ]);
+    expect(
+      render(buildMod(CONFIG, [technologies])).get("common/technology/mymod_technology.txt")
+    ).toBe(
       "mymod_tech_minimal = {\n\tarea = society\n\ttier = 1\n\tcategory = { statecraft }\n\tcost = 100\n}\n"
     );
   });

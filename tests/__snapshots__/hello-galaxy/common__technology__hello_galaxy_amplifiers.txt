@@ -1,29 +1,3 @@
-hello_galaxy_tech_resonance_theory = {
-	area = physics
-	tier = 2
-	category = { particles }
-	cost = 2000
-	weight = 100
-}
-
-hello_galaxy_tech_resonance_weapons = {
-	area = physics
-	tier = 3
-	category = { particles }
-	cost = 6000
-	weight = 70
-	prerequisites = { "hello_galaxy_tech_resonance_theory" "tech_lasers_2" }
-	potential = {
-		AND = {
-			has_country_flag = hello_galaxy_heard_the_hum
-			NOT = {
-				has_country_flag = hello_galaxy_pacifist_path
-			}
-		}
-	}
-	is_rare = yes
-}
-
 hello_galaxy_tech_amplifier_1 = {
 	area = physics
 	tier = 2

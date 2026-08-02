@@ -55,7 +55,13 @@ export const DECISION_FIELDS: readonly ContentField[] = [
   { key: "owned_planets_only", member: "ownedPlanetsOnly", shape: "value", conversion: "identity" },
   { key: "important", member: "important", shape: "value", conversion: "identity" },
   { key: "enactment_time", member: "enactmentTime", shape: "value", conversion: "identity" },
-  { key: "sound", member: "sound", shape: "value", conversion: "ref" },
+  {
+    key: "sound",
+    member: "sound",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["sound", "sound_effect"],
+  },
   { key: "icon", member: "icon", shape: "value", conversion: "ref" },
   { key: "resources", member: "resources", shape: "economicResources", repeated: true },
   { key: "show_tech_unlock_if", member: "showTechUnlockIf", shape: "trigger" },
@@ -67,7 +73,13 @@ export const DECISION_FIELDS: readonly ContentField[] = [
   { key: "on_unqueued", member: "onUnqueued", shape: "effect" },
   { key: "effect", member: "effect", shape: "effect" },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
-  { key: "prerequisites", member: "prerequisites", shape: "valueList", conversion: "ref" },
+  {
+    key: "prerequisites",
+    member: "prerequisites",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["technology"],
+  },
 ];
 
 export const DECISION_LOCALISATION: readonly ContentLocalisation[] = [

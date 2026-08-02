@@ -11,6 +11,17 @@ export interface TsValue {
   readonly type: string;
   /** Given an expression of that type, yields an expression the AST accepts. */
   readonly toScalar: (expression: string) => string;
+  /**
+   * The content types a value of this shape references, when *every* form it
+   * admits is a `<type>` reference. Carried into the emitted field metadata so
+   * the runtime knows which registry an id belongs to, not merely that it is an
+   * id — a technology named as a prerequisite has to be a built technology.
+   *
+   * Undefined the moment one arm is not a reference: `<technology_tier> | int`
+   * admits plain numbers and scalars, so an id-shaped value in it proves
+   * nothing about any registry.
+   */
+  readonly refTypes?: readonly string[];
 }
 
 export interface Usage {
@@ -109,7 +120,7 @@ export class Emitter {
         this.usedRefs.add(type.name);
         this.scopedRefs.add(type.name);
         const name = this.refTypeName(type.name);
-        return { type: `${name} | string`, toScalar: (e) => `refId(${e})` };
+        return { type: `${name} | string`, toScalar: (e) => `refId(${e})`, refTypes: [type.name] };
       }
       default:
         return null;
@@ -126,9 +137,14 @@ export class Emitter {
     // arms instead of repeating in the joined union.
     const parts = [...new Set(values.flatMap((value) => value!.type.split(" | ")))];
     const converts = new Set(values.map((value) => value!.toScalar("x")));
+    // Only an all-reference overload keeps its target types: one non-reference
+    // arm makes an id-shaped value legal for reasons the registries cannot see.
+    const refTypes = values.every((value) => value!.refTypes !== undefined)
+      ? [...new Set(values.flatMap((value) => [...value!.refTypes!]))]
+      : undefined;
     if (converts.size > 1) {
-      return { type: parts.join(" | "), toScalar: (e) => `refId(${e})` };
+      return { type: parts.join(" | "), toScalar: (e) => `refId(${e})`, refTypes };
     }
-    return { type: parts.join(" | "), toScalar: values[0]!.toScalar };
+    return { type: parts.join(" | "), toScalar: values[0]!.toScalar, refTypes };
   }
 }

@@ -1,5 +1,42 @@
 # Pure-API probe verdict: the fold holds
 
+> **Migrated 2026-08-02.** The dispatch plan below ran to completion on
+> `feature/pure-api` in its six chunks (9dd8857 promote, 78871c4 codegen,
+> 13f4c56 examples/README, 6b1853b runtime tests, 50a9d95 type tests, then the
+> builder deletion). `Mod`, `GeneratedContentMethods`, and
+> `GeneratedEventMethods` are gone; the byte-parity claim lives on as the
+> goldens in `tests/__snapshots__/pure-api/`, captured from `Mod.render()`
+> before the class was deleted. The watch items at the end are still open and
+> tracked separately. The body below is the spike's verdict as written and is
+> left intact.
+>
+> **Content ref-integrity landed 2026-08-02.** The first watch item is closed:
+> `buildMod` now fails when a content reference carrying the mod's own prefix
+> resolves to nothing in the build. References are recorded as the generic
+> writer lowers them, from generated field metadata (`refTypes`) naming the
+> registries each field may reference, so the check is registry-aware — a
+> prerequisite has to be a built _technology_ — and never mistakes a flag,
+> localization key, or saved event target for a reference. Defines, technology
+> patches, and the ship-of-size-limits contribution are covered; references
+> made inside effect closures still are not, beyond the event scan.
+>
+> **SDK-23 landed 2026-08-02.** The collection factories this migration shipped
+> are gone, one day old. Definers are free functions returning items
+> (`defineTechnology`, `namespace(ns).defineXEvent`, `on`, `patchTechnology`,
+> `addShipOfSizeLimits`), `collection(file, items)` places them, and
+> `discoverContent(dir)` builds those collections from a directory of feature
+> modules — so content colocates by feature and the emitted file stem comes from
+> the module's basename. The fold, the value, and every validation below are
+> unchanged; read "the factory" throughout the body as "the definer plus the
+> collection it is placed in". Emission order also became a pure function of
+> content, which is what makes source layout non-identity.
+>
+> One watch item below is now **decided against**: one namespace spanning
+> several files is no longer emitted today — `buildMod` refuses it. The
+> namespace ↔ file bijection is the rule in both directions (a file carries one
+> namespace, a namespace lives in one file), so the oracle run that item asked
+> for is moot unless the decision is reopened.
+
 The SDK-22 spike: pure authoring functions, `buildMod` as the explicit fold
 the `Mod` builder already was, `render`/`write` as free functions. The probe
 lives in `design/pure-api-probe/` and stays there — it is the design record,

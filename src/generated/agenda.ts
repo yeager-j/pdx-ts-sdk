@@ -54,7 +54,13 @@ export const AGENDA_FIELDS: readonly ContentField[] = [
   },
   { key: "init_effect", member: "initEffect", shape: "effect" },
   { key: "modifier", member: "modifier", shape: "modifierBlock" },
-  { key: "finish_modifier", member: "finishModifier", shape: "value", conversion: "ref" },
+  {
+    key: "finish_modifier",
+    member: "finishModifier",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["static_modifier"],
+  },
   { key: "effect", member: "effect", shape: "effect" },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock" },
 ];

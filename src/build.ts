@@ -1,0 +1,608 @@
+/**
+ * `buildMod`: the mod assembly, written as the fold it is (SDK-22). Pure in the sense that matters: same config,
+ * collections, and options produce the same value; all diagnostics are
+ * throws or data on the returned value, never console output.
+ *
+ * Fold order: config → content → events → on-actions → contributions →
+ * patches. Grouping is load-bearing twice over: localization insertion
+ * order determines the emitted yml, and the patch plan reads the assembled
+ * technology entries. It also keeps the `modifierDescKeys` WeakMap hazard
+ * ordered — loc extraction (the write) always precedes lowering (the read,
+ * in the emission grouping below).
+ *
+ * Emission order is a function of the content alone (SDK-23), never of source
+ * position or the order collections were passed: content sorts by registry
+ * declaration order, then emitted file path bytes, then id bytes; event files
+ * sort by path bytes with numeric ids inside a file; on-action hook blocks
+ * sort by hook name; the contribution sink and the patch list sort by id.
+ * Arrays *inside* a definition — prerequisites, options, weight modifiers —
+ * are author data and are left exactly as written. This is why content is
+ * defined in three passes below: `define` registers localization as a side
+ * effect, so it cannot run before the canonical order is known, or the loc
+ * yml would desynchronize from the txt files it describes.
+ *
+ * Emission paths are computed here, not in `render`: each collection's file
+ * stem groups content into per-file entry lists, event files are checked to
+ * hold exactly one namespace each (in both directions), and the patch planner reserves and
+ * enumerates every one of the mod's own technology files — the SDK-19
+ * constraint that any splitting API must feed the path-order machinery,
+ * not bypass it.
+ */
+
+import { kv, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
+
+import { ContentAuthoring, type ContentRefUse, type DefinedContent } from "./content.ts";
+import { StaleRuleTableError } from "./errors.ts";
+import type { DefinedEvent } from "./events.ts";
+import { CONTENT_REGISTRIES, type ContentTypeName } from "./generated/content-registry.ts";
+import type { ScopeName } from "./generated/scopes.ts";
+import {
+  flattenItems,
+  type ContentItem,
+  type EventItemBase,
+  type ModItemInput,
+  type ModWarning,
+  type OnActionBindingItem,
+} from "./items.ts";
+import { OnActionAuthoring } from "./on-actions.ts";
+import { compareUtf8, normalizeLogicalPath } from "./resolver/path-order.ts";
+import { collectVarRefs, planPatchEmission, type PatchPlan } from "./resolver/plan.ts";
+import { SUPPORTED_STELLARIS_BUILD } from "./resolver/rules.ts";
+import type { PatchedTechnology } from "./vanilla/patch.ts";
+import { sha256Hex, type VanillaFile, type VanillaView } from "./vanilla/surface.ts";
+
+const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+/** The mod's identity and launcher metadata: `buildMod`'s first argument. */
+export interface ModConfig<P extends string = string> {
+  /** Display name shown in the launcher. */
+  name: string;
+  /** Namespace for everything the mod emits: file names and content ids. Lowercase snake_case. */
+  prefix: P;
+  version?: string;
+  /** Game version pattern, e.g. "4.0.*". */
+  supportedVersion: string;
+  tags?: string[];
+  /**
+   * Acknowledges a game build the rule table is not verified against.
+   * Patch emission refuses when the loaded install's version differs from
+   * the table's pin; setting this to that exact version proceeds anyway —
+   * an explicit, per-version acceptance, never a blanket one.
+   */
+  acceptGameVersion?: string;
+}
+
+export interface BuildOptions {
+  /**
+   * The vanilla view the mod is built against. When present, a content id
+   * colliding with a real vanilla id is a hard error (a define must not
+   * silently override someone else's content), and every patch must come
+   * from this exact view. Without it, only the prefix warning stands.
+   */
+  readonly vanilla?: VanillaView;
+}
+
+/** One emitted file: path plus the entries serialized into it, in order. */
+export interface EmittedFile {
+  readonly relPath: string;
+  readonly entries: readonly PdxEntry[];
+}
+
+interface ContentFile extends EmittedFile {
+  readonly type: ContentTypeName;
+  readonly ids: readonly string[];
+}
+
+/** The assembled mod: a value, not a builder. `render(mod)` consumes it. */
+export interface PureMod {
+  readonly config: ModConfig;
+  readonly warnings: readonly ModWarning[];
+  /** Content emission, grouped by registry then collection file. */
+  readonly contentFiles: readonly ContentFile[];
+  /** Event emission: one file per stem, one namespace per file. */
+  readonly eventFiles: readonly EmittedFile[];
+  readonly events: readonly EventItemBase[];
+  /** The on-action hook blocks, already in emission order. */
+  readonly onActions: readonly PdxEntry[];
+  readonly loc: ReadonlyMap<string, string>;
+  readonly shipOfSizeLimits: ReadonlySet<string>;
+  readonly patchPlan: PatchPlan | undefined;
+  /** Normalized vanilla paths for render's collision check; set when patched. */
+  readonly vanillaPaths: ReadonlySet<string> | undefined;
+}
+
+/** `<outputDir>/<prefix>_<stem>.txt`. Stems are validated flat snake_case,
+ * so the emitted path is total and safe by construction. */
+function emissionPath(prefix: string, outputDir: string, stem: string): string {
+  return `${outputDir}/${prefix}_${stem}.txt`;
+}
+
+/** The numeric half of `namespace.N`. Only ever called for events already
+ * grouped under that namespace, so the slice is total. */
+function eventNumber(event: EventItemBase, namespace: string): number {
+  return Number(event.id.slice(namespace.length + 1));
+}
+
+export function buildMod(
+  config: ModConfig,
+  collections: readonly ModItemInput[],
+  options: BuildOptions = {}
+): PureMod {
+  if (!PREFIX_PATTERN.test(config.prefix)) {
+    throw new Error(`Mod prefix "${config.prefix}" must be lowercase snake_case ([a-z][a-z0-9_]*)`);
+  }
+  const flat = flattenItems(collections);
+  const warnings: ModWarning[] = [];
+  const loc = new Map<string, string>();
+
+  const registerLocEntries = (entries: readonly (readonly [string, string])[]): void => {
+    const pending = new Set<string>();
+    for (const [key] of entries) {
+      if (loc.has(key) || pending.has(key)) {
+        throw new Error(`Duplicate localization key "${key}"`);
+      }
+      pending.add(key);
+    }
+    for (const [key, source] of entries) {
+      let text = source;
+      if (text.includes('"')) {
+        warnings.push({
+          code: "loc-quote-replaced",
+          message: `Localization "${key}": Paradox yml has no quote escaping; replacing " with '`,
+        });
+        text = text.replaceAll('"', "'");
+      }
+      loc.set(key, text);
+    }
+  };
+
+  const content = new ContentAuthoring(
+    config.prefix,
+    CONTENT_REGISTRIES,
+    registerLocEntries,
+    (message) => warnings.push({ code: "missing-prefix", message })
+  );
+
+  // Vanilla ids by output directory: the collision guard's index. Only
+  // directories the view actually parsed can guard — honest about coverage.
+  const vanillaKeysByDir = new Map<string, Set<string>>();
+  for (const file of options.vanilla?.files ?? []) {
+    const dir = file.path.slice(0, file.path.lastIndexOf("/"));
+    const keys = vanillaKeysByDir.get(dir) ?? new Set<string>();
+    for (const key of file.keys) {
+      keys.add(key);
+    }
+    vanillaKeysByDir.set(dir, keys);
+  }
+  const descriptorByType = new Map(
+    CONTENT_REGISTRIES.map((descriptor) => [descriptor.type as ContentTypeName, descriptor])
+  );
+
+  // Every own-prefixed content reference the build writes, with the thing that
+  // wrote it. Filled while lowering (and by the patch and contribution folds),
+  // resolved against the built ids once every collection has been seen.
+  const refUses: { readonly owner: string; readonly use: ContentRefUse }[] = [];
+
+  // Content pass 1: collect the raw items into registry → emitted file →
+  // items, without defining any of them. Nothing here depends on the order
+  // the items arrived in — the unknown-type and vanilla-collision checks are
+  // per item — which is the point: `define` registers localization as a side
+  // effect, so it must not run until the canonical order is known, or the loc
+  // yml would follow item order while the txt files follow this one.
+  const rawByType = new Map<ContentTypeName, Map<string, ContentItem[]>>();
+  for (const { item, file } of flat) {
+    if (item.itemKind !== "content") {
+      continue;
+    }
+    const descriptor = descriptorByType.get(item.type);
+    if (descriptor === undefined) {
+      throw new Error(`Unknown generated content type "${item.type}"`);
+    }
+    const vanillaKeys = vanillaKeysByDir.get(descriptor.outputDir);
+    if (vanillaKeys?.has(item.def.id)) {
+      throw new Error(
+        `${item.type} id "${item.def.id}" collides with a vanilla ${item.type} of the same id — ` +
+          `defining it would silently override vanilla content; patch it instead`
+      );
+    }
+    const relPath = emissionPath(config.prefix, descriptor.outputDir, file ?? descriptor.fileStem);
+    const byPath = rawByType.get(item.type) ?? new Map<string, ContentItem[]>();
+    const group = byPath.get(relPath) ?? [];
+    group.push(item);
+    byPath.set(relPath, group);
+    rawByType.set(item.type, byPath);
+  }
+
+  // Content pass 2: define in canonical order (SDK-23) — registry declaration
+  // order, then emitted files by path bytes, then items by id bytes. Defining
+  // here rather than above is what keeps the localization insertion order and
+  // the emitted files one and the same order.
+  interface DefinedGroup {
+    readonly type: ContentTypeName;
+    readonly relPath: string;
+    readonly defined: readonly DefinedContent<string, { readonly id: string }>[];
+  }
+  const definedGroups: DefinedGroup[] = [];
+  for (const descriptor of CONTENT_REGISTRIES) {
+    const type = descriptor.type as ContentTypeName;
+    const byPath = rawByType.get(type);
+    if (byPath === undefined) {
+      continue;
+    }
+    for (const relPath of [...byPath.keys()].sort(compareUtf8)) {
+      const items = [...byPath.get(relPath)!].sort((a, b) => compareUtf8(a.def.id, b.def.id));
+      definedGroups.push({
+        type,
+        relPath,
+        defined: items.map((item) => content.define(item.type, item.def)),
+      });
+    }
+  }
+
+  // Content pass 3: lower. Separate from the defining loop, not merged into
+  // it, because lowering reads the modifierDescKeys WeakMap that defining
+  // writes — every define must precede every read, whatever the grouping.
+  const contentFiles: ContentFile[] = definedGroups.map((group) => ({
+    relPath: group.relPath,
+    type: group.type,
+    ids: group.defined.map((defined) => defined.id),
+    entries: group.defined.map((defined) =>
+      defined.toEntries((use) => {
+        refUses.push({ owner: `${group.type} "${defined.id}"`, use });
+      })
+    ),
+  }));
+
+  // Events arrive as finished data (closures ran at the definition site,
+  // where the namespace handle knew the namespace). The fold's jobs: the
+  // global duplicate check across handles, the loc merge, per-namespace prefix
+  // warnings, and file grouping with the one-namespace-per-file backstop.
+  const placedEvents = flat.filter(
+    (placed): placed is { item: EventItemBase; file: string | undefined } =>
+      placed.item.itemKind === "event"
+  );
+
+  // Grouping runs first now, so the duplicate check, the loc merge and the
+  // prefix warnings can all run in the canonical order below. One namespace
+  // per event file, checked here because a collection can be handed events
+  // from two namespaces and two collections can share one file stem.
+  const eventsByPath = new Map<string, { namespace: string; events: EventItemBase[] }>();
+  for (const { item, file } of placedEvents) {
+    const relPath = emissionPath(config.prefix, "events", file ?? "events");
+    const group = eventsByPath.get(relPath);
+    if (group === undefined) {
+      eventsByPath.set(relPath, { namespace: item.namespace, events: [item] });
+    } else if (group.namespace !== item.namespace) {
+      throw new Error(
+        `event file ${relPath} would mix namespaces "${group.namespace}" and ` +
+          `"${item.namespace}" — one namespace per file; give each namespace its own file stem`
+      );
+    } else {
+      group.events.push(item);
+    }
+  }
+  // The other half of the bijection (SDK-23 decision 1): the grouping above
+  // forbids two namespaces in one file, this forbids one namespace across two
+  // files. A split namespace splits its numeric id space across independent
+  // define-site duplicate checks, and makes which file an event lands in a
+  // fact about layout rather than about the event's identity.
+  const stemsByNamespace = new Map<string, Set<string>>();
+  for (const { item, file } of placedEvents) {
+    const stems = stemsByNamespace.get(item.namespace) ?? new Set<string>();
+    stems.add(file ?? "events");
+    stemsByNamespace.set(item.namespace, stems);
+  }
+  for (const [namespace, stems] of stemsByNamespace) {
+    if (stems.size > 1) {
+      const listed = [...stems].sort(compareUtf8).map((stem) => `"${stem}"`);
+      throw new Error(
+        `event namespace "${namespace}" is split across file stems ` +
+          `${listed.slice(0, -1).join(", ")} and ${listed.at(-1)} — one file per namespace; ` +
+          `give each namespace its own file stem`
+      );
+    }
+  }
+
+  // Files by path bytes; events inside a file by their *numeric* id, which is
+  // well defined because a file carries exactly one namespace (the backstop
+  // above). Sorting the full ids as text would file `ns.10` before `ns.2`.
+  const eventGroups = [...eventsByPath]
+    .sort(([a], [b]) => compareUtf8(a, b))
+    .map(([relPath, group]) => ({
+      relPath,
+      namespace: group.namespace,
+      events: [...group.events].sort(
+        (a, b) => eventNumber(a, group.namespace) - eventNumber(b, group.namespace)
+      ),
+    }));
+  const orderedEvents = eventGroups.flatMap((group) => group.events);
+
+  const eventIds = new Set<string>();
+  const namespaces: string[] = [];
+  for (const item of orderedEvents) {
+    if (eventIds.has(item.id)) {
+      throw new Error(`Duplicate event id "${item.id}"`);
+    }
+    eventIds.add(item.id);
+    // An event's closures ran at its definition site and reported what they
+    // wrote there; the references arrive as finished data like everything
+    // else on the item, and face the same guard as a declarative field.
+    for (const use of item.refs) {
+      refUses.push({ owner: `event "${item.id}"`, use });
+    }
+    registerLocEntries(item.locEntries);
+    if (!namespaces.includes(item.namespace)) {
+      namespaces.push(item.namespace);
+    }
+  }
+  for (const namespace of namespaces) {
+    if (namespace !== config.prefix && !namespace.startsWith(`${config.prefix}_`)) {
+      warnings.push({
+        code: "missing-prefix",
+        message:
+          `event namespace "${namespace}" should be the mod prefix "${config.prefix}" or start ` +
+          `with "${config.prefix}_" so its event ids cannot collide with vanilla or other mods`,
+      });
+    }
+  }
+
+  const eventFiles: EmittedFile[] = eventGroups.map((group) => ({
+    relPath: group.relPath,
+    entries: [kv("namespace", group.namespace), ...group.events.map((event) => event.entry)],
+  }));
+
+  // On-actions: ownership is membership in this build, by value identity.
+  const includedEvents = new Set<EventItemBase>(placedEvents.map(({ item }) => item));
+  const onActionAuthoring = new OnActionAuthoring((event) =>
+    includedEvents.has(event as unknown as EventItemBase)
+  );
+  // The array inside one `on()` call is author data. Which `on()` call comes
+  // first is not: two collections — or two discovered modules — can each bind
+  // the same hook, and collection order must never reach the output (SDK-23).
+  // So the calls are ordered by hook name, then by their event-id sequence,
+  // and only then registered straight down each array.
+  const bindings = flat.flatMap(({ item }) => (item.itemKind === "on-action" ? [item] : []));
+  const bindingOrder = (item: OnActionBindingItem): string =>
+    item.events.map((event) => event.id).join(" ");
+  const orderedBindings = [...bindings].sort(
+    (a, b) => compareUtf8(a.hook.name, b.hook.name) || compareUtf8(bindingOrder(a), bindingOrder(b))
+  );
+  for (const item of orderedBindings) {
+    for (const event of item.events) {
+      if (!includedEvents.has(event)) {
+        throw new Error(
+          `Event "${event.id}" is not among the collections passed to buildMod; ` +
+            `on-action "${item.hook.name}" can only fire this mod's own events`
+        );
+      }
+      onActionAuthoring.register(
+        item.hook,
+        event as DefinedEvent<ScopeName, ScopeName | undefined>
+      );
+    }
+  }
+  // The accumulator stays inside the fold; the mod carries only its finished
+  // entries. Handing out the live instance would let a caller register after
+  // `buildMod` returned and change what `render` emits — a builder backdoor
+  // around the collection fold and its ordering rules.
+  const onActions = onActionAuthoring.entries();
+
+  // Contributions: union into the shared sink; a limit listed twice emits
+  // once. The sink is a Set, which `render` iterates in insertion order, so
+  // the ids go in sorted — the emitted list is the content, not the order the
+  // contributions happened to arrive in.
+  const contributedLimits: string[] = [];
+  for (const { item } of flat) {
+    if (item.itemKind !== "contribution") {
+      continue;
+    }
+    for (const id of item.ids) {
+      contributedLimits.push(id);
+      refUses.push({
+        owner: `the ${item.registry} contribution`,
+        use: { targets: [item.refRegistry], id, field: `default.${item.registry}` },
+      });
+    }
+  }
+  const shipOfSizeLimits = new Set<string>(contributedLimits.sort(compareUtf8));
+
+  // Patches: seen together, so the duplicate and one-view checks live here.
+  const patches: PatchedTechnology[] = [];
+  for (const { item } of flat) {
+    if (item.itemKind !== "patch") {
+      continue;
+    }
+    const patched = item.patched;
+    if (patches.some((existing) => existing.id === patched.id)) {
+      throw new Error(`Duplicate patch for technology "${patched.id}"`);
+    }
+    const expected = options.vanilla?.manifestKey ?? patches[0]?.source.origin.manifestKey;
+    if (expected !== undefined && patched.source.origin.manifestKey !== expected) {
+      throw new Error(
+        `Patch for "${patched.id}" comes from a different vanilla load than ` +
+          `${options.vanilla !== undefined ? "the view passed to buildMod" : "earlier patches"} ` +
+          `(manifest ${patched.source.origin.manifestKey.slice(0, 12)} vs ${expected.slice(0, 12)}); ` +
+          `patch one mod from one view`
+      );
+    }
+    patches.push(patched);
+    for (const use of patched.refs) {
+      refUses.push({ owner: `the patch of ${patched.id}`, use });
+    }
+  }
+
+  // The dangling-reference guard: with plain string ids, firing an event
+  // whose collection was never passed to buildMod would silently emit a
+  // well-formed id with no definition behind it. Scan every emitted entry
+  // tree for scalars shaped like one of this mod's own event ids and demand
+  // a definition — the getter throw this replaces died with the stamp.
+  // The prefix is delimited, matching the namespaces the warning above accepts
+  // (`prefix` or `prefix_*`) rather than every namespace that merely starts
+  // with those characters: for prefix `foo`, a third-party `foobar.1` is
+  // somebody else's event, and firing it must not demand a definition here.
+  const ownEventId = new RegExp(`^${config.prefix}(_[a-z0-9_]*)?\\.\\d+$`);
+  const scanned: string[] = [];
+  const scan = (nodes: readonly PdxItem[]): void => {
+    for (const node of nodes) {
+      switch (node.kind) {
+        case "entry":
+          if (node.value.kind === "str") {
+            scanned.push(node.value.value);
+          } else if (node.value.kind === "container") {
+            scan(node.value.items);
+          }
+          break;
+        case "str":
+          scanned.push(node.value);
+          break;
+        case "container":
+        case "param":
+          scan(node.items);
+          break;
+        default:
+          break;
+      }
+    }
+  };
+  for (const file of contentFiles) {
+    scan(file.entries);
+  }
+  for (const file of eventFiles) {
+    scan(file.entries);
+  }
+  for (const value of scanned) {
+    if (ownEventId.test(value) && !eventIds.has(value)) {
+      throw new Error(
+        `"${value}" looks like one of this mod's event ids, but no such event is among the ` +
+          `collections passed to buildMod — was the collection holding it included?`
+      );
+    }
+  }
+
+  // The content half of the same guard. Where events are found by scanning
+  // emitted scalars for an id shape, content references are recorded as they
+  // are lowered, from field metadata that still says which registries the id
+  // may name. That is the difference between "an own-prefixed string" — flags,
+  // localization keys, saved event targets are all that — and a reference: only
+  // a field the rules say holds `<technology>` demands a built technology.
+  const authorableTypes = new Set<string>(CONTENT_REGISTRIES.map((descriptor) => descriptor.type));
+  const builtIds = new Map<string, Set<string>>();
+  for (const group of definedGroups) {
+    const ids = builtIds.get(group.type) ?? new Set<string>();
+    for (const defined of group.defined) {
+      ids.add(defined.id);
+    }
+    builtIds.set(group.type, ids);
+  }
+  for (const { owner, use } of refUses) {
+    // Vanilla and third-party ids are somebody else's to define, exactly as
+    // the prefix policy and the event scan have it.
+    if (!use.id.startsWith(`${config.prefix}_`)) {
+      continue;
+    }
+    // A target this SDK cannot author (`<technology_tier>`) or a field that
+    // also admits non-references excuses the id: nothing here could have
+    // defined it, so its absence is not evidence of a mistake.
+    if (use.targets.length === 0 || !use.targets.every((type) => authorableTypes.has(type))) {
+      continue;
+    }
+    if (use.targets.some((type) => builtIds.get(type)?.has(use.id))) {
+      continue;
+    }
+    const target = use.targets.join(" or ");
+    throw new Error(
+      `${owner} references ${target} "${use.id}" in "${use.field}", but no such ${target} is ` +
+        `among the collections passed to buildMod — the id carries this mod's prefix ` +
+        `"${config.prefix}_", so this build has to define it; was its collection passed to buildMod?`
+    );
+  }
+
+  // Patch emission is content too: the plan enumerates and serializes the
+  // patched entries, so they go in by id rather than by arrival.
+  const orderedPatches = [...patches].sort((a, b) => compareUtf8(a.id, b.id));
+  const patchPlan = planPatches(
+    config,
+    contentFiles.filter((file) => file.type === "technology"),
+    orderedPatches
+  );
+  const vanillaPaths =
+    orderedPatches.length > 0
+      ? new Set(orderedPatches[0]!.source.origin.files.map((file) => file.path))
+      : undefined;
+
+  return Object.freeze({
+    config,
+    warnings,
+    contentFiles,
+    eventFiles,
+    events: orderedEvents,
+    onActions,
+    loc,
+    shipOfSizeLimits,
+    patchPlan,
+    vanillaPaths,
+  });
+}
+
+/**
+ * The patch plan over explicit inputs, and over *every* one of the mod's own
+ * technology files rather than one fixed stem. With collections a registry can split, so each own file joins the
+ * surviving-file enumeration (its name competes for path order) and the
+ * reserved list (the patch file must not be named over it).
+ */
+function planPatches(
+  config: ModConfig,
+  techFiles: readonly ContentFile[],
+  patches: readonly PatchedTechnology[]
+): PatchPlan | undefined {
+  if (patches.length === 0) {
+    return undefined;
+  }
+  const { prefix } = config;
+  const origin = patches[0]!.source.origin;
+  if (
+    origin.gameVersion !== undefined &&
+    origin.gameVersion !== SUPPORTED_STELLARIS_BUILD &&
+    config.acceptGameVersion !== origin.gameVersion
+  ) {
+    throw new StaleRuleTableError(
+      `the install is Stellaris ${origin.gameVersion} but the rule table is verified against ` +
+        `${SUPPORTED_STELLARIS_BUILD} — re-verify the oracle runs, or set ` +
+        `acceptGameVersion: "${origin.gameVersion}" to proceed on the stale table`
+    );
+  }
+
+  const enumeration: VanillaFile[] = [
+    ...origin.files.filter((file) => file.path.startsWith("common/technology/")),
+    ...techFiles.map((file) => ({
+      path: normalizeLogicalPath(file.relPath),
+      sha256: sha256Hex(serialize(file.entries)),
+      keys: file.ids,
+    })),
+  ];
+
+  return planPatchEmission({
+    registry: "technologies",
+    patches: patches.map((patched) => {
+      const entry = patched.toEntries();
+      const fileLocals = origin.localVariables(patched.source.sourceFile);
+      const locals = new Map<string, number>();
+      for (const name of collectVarRefs(entry)) {
+        const value = fileLocals.get(name);
+        if (value !== undefined) {
+          locals.set(name, value);
+        }
+      }
+      return {
+        key: patched.id,
+        sourceFile: patched.source.sourceFile,
+        sourceSha256: patched.source.sourceSha256,
+        entry,
+        locals,
+      };
+    }),
+    enumeration,
+    reservedPaths: techFiles.map((file) => file.relPath),
+    prefix,
+  });
+}

@@ -36,7 +36,13 @@ export type DefinedCountryShipOfSizeLimit<Id extends string = string> = DefinedC
 >;
 
 export const COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS: readonly ContentField[] = [
-  { key: "ship_types", member: "shipTypes", shape: "valueList", conversion: "ref" },
+  {
+    key: "ship_types",
+    member: "shipTypes",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["ship_size"],
+  },
   { key: "base", member: "base", shape: "value", conversion: "identity" },
   { key: "max", member: "max", shape: "value", conversion: "identity" },
   { key: "naval_cap_fraction", member: "navalCapFraction", shape: "value", conversion: "identity" },

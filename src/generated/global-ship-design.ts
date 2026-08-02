@@ -21,7 +21,13 @@ export interface GlobalShipDesignGrowthStagesSectionComponent {
 
 export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_COMPONENT_FIELDS: readonly ContentField[] = [
   { key: "slot", member: "slot", shape: "value", conversion: "identity" },
-  { key: "template", member: "template", shape: "value", conversion: "ref" },
+  {
+    key: "template",
+    member: "template",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["component_template"],
+  },
 ];
 
 export interface GlobalShipDesignGrowthStagesSection {
@@ -31,7 +37,13 @@ export interface GlobalShipDesignGrowthStagesSection {
 }
 
 export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_SECTION_FIELDS: readonly ContentField[] = [
-  { key: "template", member: "template", shape: "value", conversion: "ref" },
+  {
+    key: "template",
+    member: "template",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["section_template"],
+  },
   { key: "slot", member: "slot", shape: "value", conversion: "identity" },
   {
     key: "component",
@@ -49,7 +61,13 @@ export interface GlobalShipDesignGrowthStages {
 }
 
 export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_FIELDS: readonly ContentField[] = [
-  { key: "ship_size", member: "shipSize", shape: "value", conversion: "ref" },
+  {
+    key: "ship_size",
+    member: "shipSize",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_size"],
+  },
   {
     key: "section",
     member: "section",
@@ -62,6 +80,7 @@ export const GLOBAL_SHIP_DESIGN_GROWTH_STAGES_FIELDS: readonly ContentField[] = 
     member: "requiredComponent",
     shape: "value",
     conversion: "ref",
+    refTypes: ["component_template.utility_component_template"],
     repeated: true,
   },
 ];
@@ -73,7 +92,13 @@ export interface GlobalShipDesignSectionComponent {
 
 export const GLOBAL_SHIP_DESIGN_SECTION_COMPONENT_FIELDS: readonly ContentField[] = [
   { key: "slot", member: "slot", shape: "value", conversion: "identity" },
-  { key: "template", member: "template", shape: "value", conversion: "ref" },
+  {
+    key: "template",
+    member: "template",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["component_template"],
+  },
 ];
 
 export interface GlobalShipDesignSection {
@@ -83,7 +108,13 @@ export interface GlobalShipDesignSection {
 }
 
 export const GLOBAL_SHIP_DESIGN_SECTION_FIELDS: readonly ContentField[] = [
-  { key: "template", member: "template", shape: "value", conversion: "ref" },
+  {
+    key: "template",
+    member: "template",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["section_template"],
+  },
   { key: "slot", member: "slot", shape: "value", conversion: "identity" },
   {
     key: "component",
@@ -131,10 +162,28 @@ export type DefinedGlobalShipDesign<Id extends string = string> = DefinedContent
 >;
 
 export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
-  { key: "ship_size", member: "shipSize", shape: "value", conversion: "ref" },
+  {
+    key: "ship_size",
+    member: "shipSize",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["ship_size"],
+  },
   { key: "hide_size", member: "hideSize", shape: "value", conversion: "identity" },
-  { key: "upgrades_to", member: "upgradesTo", shape: "value", conversion: "ref" },
-  { key: "newborn_ship_design", member: "newbornShipDesign", shape: "value", conversion: "ref" },
+  {
+    key: "upgrades_to",
+    member: "upgradesTo",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["global_ship_design"],
+  },
+  {
+    key: "newborn_ship_design",
+    member: "newbornShipDesign",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["global_ship_design"],
+  },
   {
     key: "creature_designer_template",
     member: "creatureDesignerTemplate",
@@ -170,7 +219,13 @@ export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "auto_gen_design", member: "autoGenDesign", shape: "value", conversion: "identity" },
-  { key: "country_type", member: "countryType", shape: "value", conversion: "ref" },
+  {
+    key: "country_type",
+    member: "countryType",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["country_type"],
+  },
   {
     key: "is_special_buildable",
     member: "isSpecialBuildable",
@@ -182,6 +237,7 @@ export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
     member: "allowBuildableTrigger",
     shape: "value",
     conversion: "ref",
+    refTypes: ["scripted_trigger"],
   },
   {
     key: "section",
@@ -195,6 +251,7 @@ export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
     member: "requiredComponent",
     shape: "value",
     conversion: "ref",
+    refTypes: ["component_template.utility_component_template"],
     repeated: true,
   },
 ];

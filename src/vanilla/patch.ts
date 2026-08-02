@@ -21,6 +21,7 @@ import {
   type PdxValue,
 } from "@pdx-ts/pdxscript";
 
+import type { ContentRefUse } from "../content.ts";
 import type { ResearchArea } from "../generated/enums.ts";
 import { refId, type TechnologyCategoryRef, type TechnologyRef } from "../generated/refs.ts";
 import type { Trigger } from "../trigger-core.ts";
@@ -47,6 +48,14 @@ export interface PatchedTechnology {
   readonly id: string;
   /** The vanilla technology this patch transforms — provenance for the win engine. */
   readonly source: ParsedTechnology;
+  /**
+   * The content references the patched fields write, for `buildMod`'s
+   * dangling-reference guard. A patch is the other way a definition of this
+   * mod's own gets named — appending an own technology to a vanilla tech's
+   * prerequisites is the calibration anchor itself — so the ids it writes have
+   * to resolve on the same terms a `define`'s do.
+   */
+  readonly refs: readonly ContentRefUse[];
   toEntries(): PdxEntry;
 }
 
@@ -104,14 +113,31 @@ function patchValues(patch: TechnologyPatch): Map<string, PdxValue> {
   return values;
 }
 
+/** The ids the patched reference fields name, with the registry each names. */
+function patchRefs(patch: TechnologyPatch): ContentRefUse[] {
+  const refs: ContentRefUse[] = [];
+  for (const item of patch.prerequisites ?? []) {
+    const options = typeof item !== "string" && "kind" in item ? item.options : [item];
+    for (const option of options) {
+      refs.push({ targets: ["technology"], id: refId<string>(option), field: "prerequisites" });
+    }
+  }
+  for (const item of patch.category ?? []) {
+    refs.push({ targets: ["technology_category"], id: refId<string>(item), field: "category" });
+  }
+  return refs;
+}
+
 export function patchTechnology<T extends ParsedTechnology>(
   tech: T,
   patch: (tech: T) => TechnologyPatch
 ): PatchedTechnology {
-  const values = patchValues(patch(tech));
+  const patched = patch(tech);
+  const values = patchValues(patched);
   return {
     id: tech.id,
     source: tech,
+    refs: patchRefs(patched),
     toEntries(): PdxEntry {
       const body: PdxEntry[] = [];
       const substituted = new Set<string>();

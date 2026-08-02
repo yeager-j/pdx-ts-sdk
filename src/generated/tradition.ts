@@ -38,7 +38,13 @@ export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
   { key: "inherit_icon", member: "inheritIcon", shape: "value", conversion: "identity" },
   { key: "inherit_name", member: "inheritName", shape: "value", conversion: "identity" },
   { key: "inherit_effects", member: "inheritEffects", shape: "value", conversion: "identity" },
-  { key: "unlocks_agenda", member: "unlocksAgenda", shape: "value", conversion: "ref" },
+  {
+    key: "unlocks_agenda",
+    member: "unlocksAgenda",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["agenda"],
+  },
   {
     key: "custom_tooltip",
     member: "customTooltip",
@@ -69,7 +75,7 @@ export const TRADITION_SWAP_LOCALISATION: readonly ContentLocalisation[] = [
  * A tradition, as the game's rules describe it.
  * Generated from `type[tradition]` at `game/common/traditions`.
  */
-export interface TraditionFields<Id extends string = string> {
+export interface TraditionFields {
   /** English text emitted to localization under `<id>`. */
   name: string;
   /** English text emitted to localization under `<id>_delayed`. */
@@ -82,12 +88,12 @@ export interface TraditionFields<Id extends string = string> {
   onEnabled?: EffectBlock<"country">;
   customTooltip?: string[];
   customTooltipWithModifiers?: string[];
-  traditionSwap?: Readonly<Record<Id, TraditionSwapFields>>;
+  traditionSwap?: Readonly<Record<string, TraditionSwapFields>>;
   /** the ai_weight in traditions applies both to the main traditions and the tradition swaps, there are no seperate fields. */
   aiWeight?: WeightBlock<"country">;
 }
 
-export interface TraditionDef<Id extends string = string> extends TraditionFields<Id> {
+export interface TraditionDef<Id extends string = string> extends TraditionFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
@@ -98,7 +104,13 @@ export type DefinedTradition<Id extends string = string> = DefinedContent<
 >;
 
 export const TRADITION_FIELDS: readonly ContentField[] = [
-  { key: "unlocks_agenda", member: "unlocksAgenda", shape: "value", conversion: "ref" },
+  {
+    key: "unlocks_agenda",
+    member: "unlocksAgenda",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["agenda"],
+  },
   { key: "modifier", member: "modifier", shape: "modifierBlock" },
   { key: "possible", member: "possible", shape: "trigger" },
   { key: "on_enabled", member: "onEnabled", shape: "effect" },

@@ -1,0 +1,5 @@
+pp_mod_tech_chimeric_grafts = {
+	area = society
+	tier = 3
+	category = { biology }
+}

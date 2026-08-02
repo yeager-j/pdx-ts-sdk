@@ -6,21 +6,11 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
-import { eventTarget } from "../src/effect-core.ts";
-import { Mod } from "../src/mod.ts";
-
-function makeMod(): Mod<"st_test"> {
-  return new Mod({
-    name: "Situation target type tests",
-    prefix: "st_test",
-    supportedVersion: "4.4.*",
-  });
-}
+import { defineSituationType, eventTarget, namespace } from "../src/index.ts";
 
 describe("the declared situation target contract", () => {
   it("carries the declared scope on the defined object", () => {
-    const mod = makeMod();
-    const sit = mod.defineSituationType({
+    const sit = defineSituationType({
       id: "st_test_sit",
       name: "S",
       monthlyProgress: { base: 1 },
@@ -28,7 +18,7 @@ describe("the declared situation target contract", () => {
     });
     expectTypeOf(sit.targetScope).toEqualTypeOf<"planet">();
 
-    const undeclared = mod.defineSituationType({
+    const undeclared = defineSituationType({
       id: "st_test_sit_undeclared",
       name: "S2",
       monthlyProgress: { base: 1 },
@@ -37,15 +27,15 @@ describe("the declared situation target contract", () => {
   });
 
   it("requires a matching target ref at start sites", () => {
-    const mod = makeMod();
-    const planetSit = mod.defineSituationType({
+    const events = namespace("st_test");
+    const planetSit = defineSituationType({
       id: "st_test_sit_planet",
       name: "S",
       monthlyProgress: { base: 1 },
       targetScope: "planet",
     });
     const world = eventTarget<"planet">("st_test_world");
-    mod.defineCountryEvent({
+    events.defineCountryEvent({
       id: 1,
       hideWindow: true,
       isTriggeredOnly: true,
@@ -61,8 +51,8 @@ describe("the declared situation target contract", () => {
   });
 
   it("keeps the string-typed path for undeclared and vanilla situations", () => {
-    const mod = makeMod();
-    mod.defineCountryEvent({
+    const events = namespace("st_test_vanilla");
+    events.defineCountryEvent({
       id: 2,
       hideWindow: true,
       isTriggeredOnly: true,

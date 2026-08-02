@@ -71,7 +71,13 @@ export type DefinedCouncilor<Id extends string = string> = DefinedContent<
 >;
 
 export const COUNCILOR_FIELDS: readonly ContentField[] = [
-  { key: "leader_class", member: "leaderClass", shape: "valueList", conversion: "ref" },
+  {
+    key: "leader_class",
+    member: "leaderClass",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["leader_class"],
+  },
   { key: "possible", member: "possible", shape: "trigger" },
   { key: "is_leader_possible", member: "isLeaderPossible", shape: "trigger" },
   {
@@ -80,7 +86,13 @@ export const COUNCILOR_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "identity",
   },
-  { key: "civic", member: "civic", shape: "value", conversion: "ref" },
+  {
+    key: "civic",
+    member: "civic",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["civic_or_origin.civic"],
+  },
   {
     key: "custom_unlock_title",
     member: "customUnlockTitle",
@@ -101,7 +113,7 @@ export const COUNCILOR_FIELDS: readonly ContentField[] = [
     shape: "value",
     conversion: "identity",
   },
-  { key: "icon", member: "icon", shape: "value", conversion: "ref" },
+  { key: "icon", member: "icon", shape: "value", conversion: "ref", refTypes: ["sprite"] },
   { key: "ai_priority", member: "aiPriority", shape: "value", conversion: "identity" },
   { key: "optional", member: "optional", shape: "trigger" },
   { key: "ai_hiring_weight", member: "aiHiringWeight", shape: "weightBlock" },
@@ -122,8 +134,15 @@ export const COUNCILOR_FIELDS: readonly ContentField[] = [
     member: "removedPlanetTypes",
     shape: "valueList",
     conversion: "ref",
+    refTypes: ["planet_class"],
   },
-  { key: "added_planet_types", member: "addedPlanetTypes", shape: "valueList", conversion: "ref" },
+  {
+    key: "added_planet_types",
+    member: "addedPlanetTypes",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["planet_class"],
+  },
 ];
 
 export const COUNCILOR_LOCALISATION: readonly ContentLocalisation[] = [

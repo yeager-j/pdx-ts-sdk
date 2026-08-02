@@ -78,7 +78,14 @@ export interface CivicOrOriginTraits {
 }
 
 export const CIVIC_OR_ORIGIN_TRAITS_FIELDS: readonly ContentField[] = [
-  { key: "trait", member: "trait", shape: "value", conversion: "ref", repeated: true },
+  {
+    key: "trait",
+    member: "trait",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["trait.species_trait"],
+    repeated: true,
+  },
 ];
 
 export interface CivicOrOriginHasSecondarySpeciesTraits {
@@ -86,7 +93,14 @@ export interface CivicOrOriginHasSecondarySpeciesTraits {
 }
 
 export const CIVIC_OR_ORIGIN_HAS_SECONDARY_SPECIES_TRAITS_FIELDS: readonly ContentField[] = [
-  { key: "trait", member: "trait", shape: "value", conversion: "ref", repeated: true },
+  {
+    key: "trait",
+    member: "trait",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["trait.species_trait"],
+    repeated: true,
+  },
 ];
 
 export interface CivicOrOriginHasSecondarySpecies {
@@ -109,7 +123,14 @@ export interface CivicOrOriginSoftTraits {
 }
 
 export const CIVIC_OR_ORIGIN_SOFT_TRAITS_FIELDS: readonly ContentField[] = [
-  { key: "trait", member: "trait", shape: "value", conversion: "ref", repeated: true },
+  {
+    key: "trait",
+    member: "trait",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["trait.species_trait"],
+    repeated: true,
+  },
 ];
 
 /**
@@ -255,7 +276,13 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     member: "multiplyByHabitabilityEffectModifier",
     shape: "modifierBlock",
   },
-  { key: "starting_colony", member: "startingColony", shape: "value", conversion: "ref" },
+  {
+    key: "starting_colony",
+    member: "startingColony",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["planet_class"],
+  },
   {
     key: "custom_tooltip",
     member: "customTooltip",
@@ -303,11 +330,24 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     member: "alternateCivicVersion",
     shape: "value",
     conversion: "ref",
+    refTypes: ["civic_or_origin.civic"],
   },
   { key: "is_origin", member: "isOrigin", shape: "value", conversion: "identity" },
-  { key: "picture", member: "picture", shape: "value", conversion: "ref" },
-  { key: "initializers", member: "initializers", shape: "valueList", conversion: "ref" },
-  { key: "portrait", member: "portrait", shape: "value", conversion: "ref" },
+  { key: "picture", member: "picture", shape: "value", conversion: "ref", refTypes: ["sprite"] },
+  {
+    key: "initializers",
+    member: "initializers",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["solar_system_initializer"],
+  },
+  {
+    key: "portrait",
+    member: "portrait",
+    shape: "value",
+    conversion: "ref",
+    refTypes: ["portrait"],
+  },
   { key: "max_once_global", member: "maxOnceGlobal", shape: "value", conversion: "identity" },
   { key: "advanced_start", member: "advancedStart", shape: "value", conversion: "identity" },
   {
@@ -327,6 +367,7 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     member: "habitabilityPreference",
     shape: "value",
     conversion: "ref",
+    refTypes: ["planet_class"],
   },
   {
     key: "preferred_planet_class_neighbor",
@@ -346,6 +387,7 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     member: "cityGraphicalCulture",
     shape: "value",
     conversion: "ref",
+    refTypes: ["graphical_culture"],
   },
   { key: "leader_background_job_weight", member: "leaderBackgroundJobWeight", shape: "scalarMap" },
   { key: "random_weight", member: "randomWeight", shape: "weightBlock" },
@@ -362,12 +404,19 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     shape: "valueList",
     conversion: "identity",
   },
-  { key: "added_planet_types", member: "addedPlanetTypes", shape: "valueList", conversion: "ref" },
+  {
+    key: "added_planet_types",
+    member: "addedPlanetTypes",
+    shape: "valueList",
+    conversion: "ref",
+    refTypes: ["planet_class"],
+  },
   {
     key: "removed_planet_types",
     member: "removedPlanetTypes",
     shape: "valueList",
     conversion: "ref",
+    refTypes: ["planet_class"],
   },
 ];
 

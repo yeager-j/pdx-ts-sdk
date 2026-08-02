@@ -68,7 +68,7 @@ export const ASCENSION_PERK_SWAP_LOCALISATION: readonly ContentLocalisation[] = 
  * An ascension_perk, as the game's rules describe it.
  * Generated from `type[ascension_perk]` at `game/common/ascension_perks`.
  */
-export interface AscensionPerkFields<Id extends string = string> {
+export interface AscensionPerkFields {
   /** English text emitted to localization under `<id>`. */
   name: string;
   /** English text emitted to localization under `<id>_desc`. */
@@ -80,10 +80,10 @@ export interface AscensionPerkFields<Id extends string = string> {
   triggeredModifier?: TriggeredModifier<"country">[];
   aiWeight?: WeightBlock<"country">;
   customTooltip?: string;
-  traditionSwap?: Readonly<Record<Id, AscensionPerkSwapFields>>;
+  traditionSwap?: Readonly<Record<string, AscensionPerkSwapFields>>;
 }
 
-export interface AscensionPerkDef<Id extends string = string> extends AscensionPerkFields<Id> {
+export interface AscensionPerkDef<Id extends string = string> extends AscensionPerkFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }

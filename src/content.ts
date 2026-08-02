@@ -15,6 +15,7 @@ import {
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
+import { underField, type ContentRefSink, type ContentRefUse } from "./content-refs.ts";
 import {
   makeScope,
   modifierEntry,
@@ -160,12 +161,25 @@ interface ContentFieldBase {
   readonly repeated?: boolean;
 }
 
-interface ContentValueField extends ContentFieldBase {
+/**
+ * The content types an id-valued field may name, present only when the rules
+ * say *every* form the field admits is a `<type>` reference.
+ *
+ * It is what makes the dangling-reference guard registry-aware rather than
+ * merely existence-aware: a technology named as a prerequisite has to be a
+ * built technology, not any built thing. A field that also admits plain
+ * scalars carries none, because an id-shaped value in it proves nothing.
+ */
+interface ContentRefTypes {
+  readonly refTypes?: readonly string[];
+}
+
+interface ContentValueField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "value";
   readonly conversion: "identity" | "ref";
 }
 
-interface ContentValueListField extends ContentFieldBase {
+interface ContentValueListField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "valueList";
   readonly conversion: "identity" | "ref";
   readonly quoted?: boolean;
@@ -219,7 +233,7 @@ interface ContentWeightWithLocField extends ContentFieldBase {
  * (`stages.end = 100` versus `end = { base = 100 modifier = { ... } }`),
  * lowered by whichever form the author passes.
  */
-interface ContentValueOrWeightField extends ContentFieldBase {
+interface ContentValueOrWeightField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "valueOrWeightBlock";
   readonly conversion: "identity" | "ref";
 }
@@ -228,7 +242,7 @@ interface ContentValueOrWeightField extends ContentFieldBase {
  * A block of `<weight> = <event>` rows (`random_events = { 100 = my_event.1
  * 20 = 0 }`). An entry with no `event` emits the `0` nothing-happens arm.
  */
-interface ContentWeightedEventsField extends ContentFieldBase {
+interface ContentWeightedEventsField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "weightedEvents";
   readonly conversion: "identity" | "ref";
 }
@@ -388,6 +402,11 @@ export interface ContentRegistryDescriptor {
   readonly keyedBy?: { readonly keyword: string; readonly nameField: string };
 }
 
+/** The reference vocabulary lives in `content-refs.ts` because the trigger and
+ * effect encoders record them too; it is re-exported here where content
+ * lowering — the first and densest producer — is defined. */
+export type { ContentRefSink, ContentRefUse } from "./content-refs.ts";
+
 /** A definition registered with a mod and usable as a typed cross-reference. */
 export interface DefinedContent<
   K extends string,
@@ -395,15 +414,60 @@ export interface DefinedContent<
 > extends TypedRef<K> {
   readonly id: D["id"];
   readonly def: D;
-  toEntries(): PdxEntry;
+  /** Lowers the definition, reporting every reference it writes to `collect`. */
+  toEntries(collect?: ContentRefSink): PdxEntry;
 }
 
 type ContentDef = { readonly id: string };
 type LocalisationEntry = readonly [key: string, text: string];
 type RegisterLoc = (entries: readonly LocalisationEntry[]) => void;
 
-function contentScalar(value: unknown, conversion: "identity" | "ref", quote: boolean): PdxScalar {
-  const converted = conversion === "ref" ? refId(value as TypedRef<string> | string) : value;
+/** Accumulates the reference sink plus the dotted path to the current level. */
+interface LoweringContext {
+  readonly collect: ContentRefSink;
+  readonly path: string;
+}
+
+function childContext(
+  ctx: LoweringContext | undefined,
+  segment: string
+): LoweringContext | undefined {
+  return ctx === undefined ? ctx : { collect: ctx.collect, path: joinPath(ctx.path, segment) };
+}
+
+function joinPath(path: string, segment: string): string {
+  return path === "" ? segment : `${path}.${segment}`;
+}
+
+/** Reports references a spliced trigger or effect closure recorded, re-rooted
+ * under the field that holds them so the diagnostic names the whole path. */
+function collectRefs(
+  ctx: LoweringContext | undefined,
+  refs: readonly ContentRefUse[],
+  segment: string
+): void {
+  if (ctx === undefined) {
+    return;
+  }
+  for (const use of underField(refs, joinPath(ctx.path, segment))) {
+    ctx.collect(use);
+  }
+}
+
+function contentScalar(
+  value: unknown,
+  field: ContentFieldBase & ContentRefTypes & { readonly conversion: "identity" | "ref" },
+  quote: boolean,
+  ctx?: LoweringContext
+): PdxScalar {
+  const converted = field.conversion === "ref" ? refId(value as TypedRef<string> | string) : value;
+  if (ctx !== undefined && field.refTypes !== undefined && typeof converted === "string") {
+    ctx.collect({
+      targets: field.refTypes,
+      id: converted,
+      field: joinPath(ctx.path, field.key),
+    });
+  }
   if (quote) {
     return quoted(String(converted));
   }
@@ -445,12 +509,14 @@ function modifierBlock(key: string, value: ModifierClosure): PdxEntry {
   return block(key, modifierEntries(value));
 }
 
-function weightBlock(key: string, value: WeightBlock<ScopeName>): PdxEntry {
+function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringContext): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.base !== undefined) {
     entries.push(kv("base", value.base));
   }
-  entries.push(...(value.modifiers ?? []).map(modifierEntry));
+  const refs: ContentRefUse[] = [];
+  entries.push(...(value.modifiers ?? []).map((modifier) => modifierEntry(modifier, refs)));
+  collectRefs(ctx, refs, key);
   return block(key, entries);
 }
 
@@ -461,10 +527,15 @@ function repeatedNumbers(key: string, value: number | readonly number[] | undefi
   return (Array.isArray(value) ? value : [value]).map((item) => kv(key, item));
 }
 
-function economicOperation(key: string, value: EconomicResourceOperation<ScopeName>): PdxEntry {
+function economicOperation(
+  key: string,
+  value: EconomicResourceOperation<ScopeName>,
+  ctx?: LoweringContext
+): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.when !== undefined) {
     entries.push(block("trigger", [...value.when.entries]));
+    collectRefs(ctx, value.when.refs, `${key}.trigger`);
   }
   entries.push(...Object.entries(value.amounts).map(([resource, amount]) => kv(resource, amount)));
   entries.push(...repeatedNumbers("multiplier", value.multiplier));
@@ -472,24 +543,41 @@ function economicOperation(key: string, value: EconomicResourceOperation<ScopeNa
   return block(key, entries);
 }
 
-function economicResourceBlock(key: string, value: EconomicResourceBlock<ScopeName>): PdxEntry {
+function economicResourceBlock(
+  key: string,
+  value: EconomicResourceBlock<ScopeName>,
+  ctx?: LoweringContext
+): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.category !== undefined) {
-    entries.push(kv("category", refId(value.category)));
+    const category = refId(value.category);
+    // The one reference this shared shape holds; its registry is written into
+    // the interface above rather than into any generated field table.
+    ctx?.collect({
+      targets: ["economic_category"],
+      id: category,
+      field: joinPath(ctx.path, `${key}.category`),
+    });
+    entries.push(kv("category", category));
   }
   for (const operation of ["cost", "produces", "upkeep", "logistics"] as const) {
     const arm = value[operation];
     if (arm !== undefined) {
-      entries.push(economicOperation(operation, arm));
+      entries.push(economicOperation(operation, arm, childContext(ctx, key)));
     }
   }
   return block(key, entries);
 }
 
-function triggeredModifierBlock(key: string, value: TriggeredModifier<ScopeName>): PdxEntry {
+function triggeredModifierBlock(
+  key: string,
+  value: TriggeredModifier<ScopeName>,
+  ctx?: LoweringContext
+): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.when !== undefined) {
     entries.push(block("potential", [...value.when.entries]));
+    collectRefs(ctx, value.when.refs, `${key}.potential`);
   }
   if (value.key !== undefined) {
     entries.push(kv("key", value.key));
@@ -528,7 +616,11 @@ function triggeredModifierBlock(key: string, value: TriggeredModifier<ScopeName>
   return block(key, entries);
 }
 
-function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly ContentField[]) {
+function fieldEntries(
+  def: Readonly<Record<string, unknown>>,
+  fields: readonly ContentField[],
+  ctx?: LoweringContext
+) {
   const entries: PdxEntry[] = [];
   for (const field of fields) {
     const value = def[field.member];
@@ -539,7 +631,7 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
       case "value": {
         const values = field.repeated ? (value as readonly unknown[]) : [value];
         for (const item of values) {
-          entries.push(kv(field.key, contentScalar(item, field.conversion, false)));
+          entries.push(kv(field.key, contentScalar(item, field, false, ctx)));
         }
         break;
       }
@@ -549,7 +641,7 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
           entries.push(
             list(
               field.key,
-              values.map((item) => contentScalar(item, field.conversion, field.quoted ?? false))
+              values.map((item) => contentScalar(item, field, field.quoted ?? false, ctx))
             )
           );
         }
@@ -557,25 +649,31 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
       }
       case "trigger":
         entries.push(block(field.key, [...(value as Trigger<ScopeName>).entries]));
+        collectRefs(ctx, (value as Trigger<ScopeName>).refs, field.key);
         break;
       case "effect": {
         const child: PdxEntry[] = [];
-        (value as EffectBlock<ScopeName>)(makeScope(child));
+        // A reference written inside a script closure is a reference like any
+        // other; the recorder reports them here so they face the same
+        // integrity check as the declarative fields around them.
+        const recorded: ContentRefUse[] = [];
+        (value as EffectBlock<ScopeName>)(makeScope(child, recorded));
         entries.push(block(field.key, child));
+        collectRefs(ctx, recorded, field.key);
         break;
       }
       case "economicResources": {
         const values = field.repeated
           ? (value as readonly EconomicResourceBlock<ScopeName>[])
           : [value as EconomicResourceBlock<ScopeName>];
-        entries.push(...values.map((item) => economicResourceBlock(field.key, item)));
+        entries.push(...values.map((item) => economicResourceBlock(field.key, item, ctx)));
         break;
       }
       case "triggeredModifierBlock": {
         const values = field.repeated
           ? (value as readonly TriggeredModifier<ScopeName>[])
           : [value as TriggeredModifier<ScopeName>];
-        entries.push(...values.map((item) => triggeredModifierBlock(field.key, item)));
+        entries.push(...values.map((item) => triggeredModifierBlock(field.key, item, ctx)));
         break;
       }
       case "modifierBlock":
@@ -586,13 +684,13 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
         break;
       case "weightBlock":
       case "weightBlockWithLoc":
-        entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));
+        entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>, ctx));
         break;
       case "valueOrWeightBlock":
         if (typeof value === "object") {
-          entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>));
+          entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>, ctx));
         } else {
-          entries.push(kv(field.key, contentScalar(value, field.conversion, false)));
+          entries.push(kv(field.key, contentScalar(value, field, false, ctx)));
         }
         break;
       case "weightedEvents": {
@@ -603,7 +701,7 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
             arms.map((arm) =>
               kv(
                 String(arm.weight),
-                arm.event === undefined ? 0 : contentScalar(arm.event, field.conversion, false)
+                arm.event === undefined ? 0 : contentScalar(arm.event, field, false, ctx)
               )
             )
           )
@@ -616,7 +714,11 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
           entries.push(
             kv(
               field.key,
-              container(items.map((item) => container(fieldEntries(item, field.fields))))
+              container(
+                items.map((item) =>
+                  container(fieldEntries(item, field.fields, childContext(ctx, field.key)))
+                )
+              )
             )
           );
           break;
@@ -624,7 +726,11 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
         const values = field.repeated
           ? (value as readonly Readonly<Record<string, unknown>>[])
           : [value as Readonly<Record<string, unknown>>];
-        entries.push(...values.map((item) => block(field.key, fieldEntries(item, field.fields))));
+        entries.push(
+          ...values.map((item) =>
+            block(field.key, fieldEntries(item, field.fields, childContext(ctx, field.key)))
+          )
+        );
         break;
       }
       case "aliasStruct": {
@@ -632,7 +738,11 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
         const values = field.repeated
           ? (value as readonly Readonly<Record<string, unknown>>[])
           : [value as Readonly<Record<string, unknown>>];
-        entries.push(...values.map((item) => block(field.key, fieldEntries(item, nested))));
+        entries.push(
+          ...values.map((item) =>
+            block(field.key, fieldEntries(item, nested, childContext(ctx, field.key)))
+          )
+        );
         break;
       }
       case "structMap": {
@@ -641,7 +751,7 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
           block(
             field.key,
             Object.entries(record).map(([name, item]) =>
-              block(name, fieldEntries(item, field.fields))
+              block(name, fieldEntries(item, field.fields, childContext(ctx, field.key)))
             )
           )
         );
@@ -664,7 +774,7 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
             block(
               field.key,
               Object.entries(record).map(([id, item]) =>
-                block(id, fieldEntries(item, field.fields))
+                block(id, fieldEntries(item, field.fields, childContext(ctx, field.key)))
               )
             )
           );
@@ -672,7 +782,10 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
         }
         for (const [id, item] of Object.entries(record)) {
           entries.push(
-            block(field.key, [kv(field.identityKey!, id), ...fieldEntries(item, field.fields)])
+            block(field.key, [
+              kv(field.identityKey!, id),
+              ...fieldEntries(item, field.fields, childContext(ctx, field.key)),
+            ])
           );
         }
         break;
@@ -682,8 +795,16 @@ function fieldEntries(def: Readonly<Record<string, unknown>>, fields: readonly C
   return entries;
 }
 
-function toEntry(def: ContentDef, descriptor: ContentRegistryDescriptor): PdxEntry {
-  const fields = fieldEntries(def as Readonly<Record<string, unknown>>, descriptor.fields);
+function toEntry(
+  def: ContentDef,
+  descriptor: ContentRegistryDescriptor,
+  collect?: ContentRefSink
+): PdxEntry {
+  const fields = fieldEntries(
+    def as Readonly<Record<string, unknown>>,
+    descriptor.fields,
+    collect === undefined ? undefined : { collect, path: "" }
+  );
   if (descriptor.keyedBy === undefined) {
     return block(def.id, fields);
   }
@@ -703,8 +824,8 @@ class ContentDefinition<K extends string, D extends ContentDef> implements Defin
     this.descriptor = descriptor;
   }
 
-  toEntries(): PdxEntry {
-    return toEntry(this.def, this.descriptor);
+  toEntries(collect?: ContentRefSink): PdxEntry {
+    return toEntry(this.def, this.descriptor, collect);
   }
 }
 

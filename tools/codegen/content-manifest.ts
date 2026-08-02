@@ -65,12 +65,21 @@ export const CONTENT_MANIFEST = [
   { type: "ship_size", source: "common/ship_sizes.cwt" },
   { type: "opinion_modifier", source: "common/modifiers.cwt" },
   { type: "static_modifier", source: "common/modifiers.cwt" },
-  { type: "scripted_modifier", source: "common/scripted_modifiers.cwt" },
+  {
+    type: "scripted_modifier",
+    source: "common/scripted_modifiers.cwt",
+  },
   { type: "casus_belli", source: "common/casus_belli_and_war_goals.cwt" },
   { type: "war_goal", source: "common/casus_belli_and_war_goals.cwt" },
   { type: "agreement_preset", source: "common/agreements.cwt" },
-  { type: "bombardment_stance", source: "common/bombardment_stances.cwt" },
-  { type: "archaeological_site_type", source: "common/archaeology.cwt" },
+  {
+    type: "bombardment_stance",
+    source: "common/bombardment_stances.cwt",
+  },
+  {
+    type: "archaeological_site_type",
+    source: "common/archaeology.cwt",
+  },
   { type: "situation_type", source: "common/situations.cwt" },
   {
     type: "scripted_loc",
@@ -78,17 +87,37 @@ export const CONTENT_MANIFEST = [
     keyword: "defined_text",
   },
   { type: "councilor", source: "common/governments.cwt" },
-  { type: "economic_category", source: "common/economic_categories.cwt" },
+  {
+    type: "economic_category",
+    source: "common/economic_categories.cwt",
+  },
   { type: "civic_or_origin", source: "common/governments.cwt" },
-  { type: "component_set", source: "common/components.cwt", keyword: "component_set" },
+  {
+    type: "component_set",
+    source: "common/components.cwt",
+    keyword: "component_set",
+  },
   {
     type: "section_template",
     source: "common/section_templates.cwt",
     keyword: "ship_section_template",
   },
-  { type: "ambient_object", source: "common/ambient_objects.cwt", keyword: "ambient_object" },
-  { type: "graphical_culture", source: "common/graphical_cultures.cwt" },
-  { type: "starbase_level", source: "common/starbases_consolidated.cwt" },
+  {
+    type: "ambient_object",
+    source: "common/ambient_objects.cwt",
+    keyword: "ambient_object",
+  },
+  {
+    type: "graphical_culture",
+    source: "common/graphical_cultures.cwt",
+  },
+  {
+    type: "starbase_level",
+    source: "common/starbases_consolidated.cwt",
+  },
   { type: "species_class", source: "common/species_consolidated.cwt" },
-  { type: "country_ship_of_size_limit", source: "common/country_limits.cwt" },
+  {
+    type: "country_ship_of_size_limit",
+    source: "common/country_limits.cwt",
+  },
 ] as const satisfies readonly ContentManifestEntry[];
