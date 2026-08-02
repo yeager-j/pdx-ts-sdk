@@ -6,12 +6,11 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
-import { createEvents, createSituationTypes, eventTarget } from "../src/index.ts";
+import { defineSituationType, eventTarget, namespace } from "../src/index.ts";
 
 describe("the declared situation target contract", () => {
   it("carries the declared scope on the defined object", () => {
-    const situations = createSituationTypes();
-    const sit = situations.defineSituationType({
+    const sit = defineSituationType({
       id: "st_test_sit",
       name: "S",
       monthlyProgress: { base: 1 },
@@ -19,7 +18,7 @@ describe("the declared situation target contract", () => {
     });
     expectTypeOf(sit.targetScope).toEqualTypeOf<"planet">();
 
-    const undeclared = situations.defineSituationType({
+    const undeclared = defineSituationType({
       id: "st_test_sit_undeclared",
       name: "S2",
       monthlyProgress: { base: 1 },
@@ -28,9 +27,8 @@ describe("the declared situation target contract", () => {
   });
 
   it("requires a matching target ref at start sites", () => {
-    const situations = createSituationTypes();
-    const events = createEvents("st_test_events", "st_test");
-    const planetSit = situations.defineSituationType({
+    const events = namespace("st_test");
+    const planetSit = defineSituationType({
       id: "st_test_sit_planet",
       name: "S",
       monthlyProgress: { base: 1 },
@@ -53,7 +51,7 @@ describe("the declared situation target contract", () => {
   });
 
   it("keeps the string-typed path for undeclared and vanilla situations", () => {
-    const events = createEvents("st_test_vanilla_events", "st_test_vanilla");
+    const events = namespace("st_test_vanilla");
     events.defineCountryEvent({
       id: 2,
       hideWindow: true,

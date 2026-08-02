@@ -16,7 +16,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 
-import { buildMod, createTechnologies, render } from "../src/index.ts";
+import { buildMod, collection, defineTechnology, patchTechnology, render } from "../src/index.ts";
 import { compareLogicalPaths } from "../src/resolver/path-order.ts";
 import { SUPPORTED_STELLARIS_BUILD } from "../src/resolver/rules.ts";
 import { load } from "../src/stellaris/load.ts";
@@ -78,21 +78,21 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
         ? { acceptGameVersion: vanilla.gameVersion }
         : {}),
     };
-    const technologies = createTechnologies();
-    const myNewTech = technologies.defineTechnology({
+    const myNewTech = defineTechnology({
       id: "pp_real_tech_marker",
       name: "Probe Marker",
       area: "society",
       tier: 1,
       category: "biology",
     });
-    technologies.patchTechnology(
+    const geneTailoringPatch = patchTechnology(
       vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
       (t) => ({
         cost: t.cost.value * 2,
         prerequisites: [...t.prerequisites, myNewTech],
       })
     );
+    const technologies = collection(undefined, [myNewTech, geneTailoringPatch]);
     const mod = buildMod(config, [technologies], { vanilla });
 
     const plan = mod.patchPlan!;

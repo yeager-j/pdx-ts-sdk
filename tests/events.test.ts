@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { eventTarget } from "../src/effect-core.ts";
-import { buildMod, createEvents, createSituationTypes, render } from "../src/index.ts";
+import { buildMod, collection, defineSituationType, namespace, render } from "../src/index.ts";
 
 const CONFIG = {
   name: "Event runtime tests",
@@ -10,10 +10,10 @@ const CONFIG = {
 };
 
 function makeEvents() {
-  return createEvents("events", "event_test");
+  return namespace("event_test");
 }
 
-describe("event definitions on a collection", () => {
+describe("event definitions in a namespace", () => {
   it("rejects duplicate event ids within the namespace", () => {
     const events = makeEvents();
     events.defineCountryEvent({ id: 1, hideWindow: true, isTriggeredOnly: true });
@@ -24,14 +24,14 @@ describe("event definitions on a collection", () => {
 
   it("registers title, desc, and option localization under the event id", () => {
     const events = makeEvents();
-    events.defineCountryEvent({
+    const titled = events.defineCountryEvent({
       id: 2,
       title: "A Title",
       desc: "A description.",
       isTriggeredOnly: true,
       options: [{ name: "First." }, { name: "Second." }],
     });
-    const loc = render(buildMod(CONFIG, [events])).get(
+    const loc = render(buildMod(CONFIG, [collection("events", [titled])])).get(
       "localisation/english/event_test_l_english.yml"
     )!;
     expect(loc).toContain(' event_test.2.name:0 "A Title"');
@@ -42,13 +42,15 @@ describe("event definitions on a collection", () => {
 
   it("writes the namespace declaration first in the events file", () => {
     const events = makeEvents();
-    events.defineCountryEvent({
+    const once = events.defineCountryEvent({
       id: 3,
       hideWindow: true,
       isTriggeredOnly: true,
       fireOnlyOnce: true,
     });
-    const rendered = render(buildMod(CONFIG, [events])).get("events/event_test_events.txt")!;
+    const rendered = render(buildMod(CONFIG, [collection("events", [once])])).get(
+      "events/event_test_events.txt"
+    )!;
     expect(rendered).toMatch(/^namespace = event_test\n/);
     expect(rendered).toContain("fire_only_once = yes");
     expect(rendered).toContain("hide_window = yes");
@@ -61,7 +63,7 @@ describe("event definitions on a collection", () => {
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    events.defineSituationEvent({
+    const firing = events.defineSituationEvent({
       id: 11,
       hideWindow: true,
       isTriggeredOnly: true,
@@ -69,7 +71,9 @@ describe("event definitions on a collection", () => {
         situation.situationEvent({ id: chained, days: 30 });
       },
     });
-    const rendered = render(buildMod(CONFIG, [events])).get("events/event_test_events.txt")!;
+    const rendered = render(buildMod(CONFIG, [collection("events", [chained, firing])])).get(
+      "events/event_test_events.txt"
+    )!;
     expect(rendered).toContain("situation_event = {\n\tid = event_test.10");
     expect(rendered).toContain("situation_event = {\n\t\t\tid = event_test.10\n\t\t\tdays = 30");
   });
@@ -83,7 +87,7 @@ describe("event definitions on a collection", () => {
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    events.definePlanetEvent({
+    const observer = events.definePlanetEvent({
       id: 13,
       hideWindow: true,
       isTriggeredOnly: true,
@@ -91,21 +95,22 @@ describe("event definitions on a collection", () => {
         planet.observerEvent({ id: observed });
       },
     });
-    const rendered = render(buildMod(CONFIG, [events])).get("events/event_test_events.txt")!;
+    const rendered = render(buildMod(CONFIG, [collection("events", [observed, observer])])).get(
+      "events/event_test_events.txt"
+    )!;
     expect(rendered).toContain("observer_event = {\n\t\t\tid = event_test.12");
   });
 
   it("threads the declared target contract through start_situation", () => {
-    const situations = createSituationTypes();
     const events = makeEvents();
-    const sit = situations.defineSituationType({
+    const sit = defineSituationType({
       id: "event_test_sit",
       name: "S",
       monthlyProgress: { base: 1 },
       targetScope: "planet",
     });
     const world = eventTarget<"planet">("event_test_world");
-    events.defineCountryEvent({
+    const starter = events.defineCountryEvent({
       id: 20,
       hideWindow: true,
       isTriggeredOnly: true,
@@ -113,7 +118,9 @@ describe("event definitions on a collection", () => {
         country.startSituation({ type: sit, target: world });
       },
     });
-    const files = render(buildMod(CONFIG, [situations, events]));
+    const files = render(
+      buildMod(CONFIG, [collection(undefined, [sit]), collection("events", [starter])])
+    );
     const rendered = files.get("events/event_test_events.txt")!;
     expect(rendered).toContain("type = event_test_sit");
     expect(rendered).toContain("target = event_target:event_test_world");

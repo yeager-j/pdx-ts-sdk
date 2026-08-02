@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { TechnologyDef } from "../src/generated/technology.ts";
-import { createTechnologies } from "../src/index.ts";
+import { defineTechnology } from "../src/index.ts";
 import {
   and,
   hasCountryFlag,
@@ -100,21 +100,19 @@ describe("content ids", () => {
   } as const;
 
   it("preserves the id's literal type through the definer", () => {
-    const techs = createTechnologies();
-    const tech = techs.defineTechnology({ ...techDef, id: "mymod_tech_x" });
+    const tech = defineTechnology({ ...techDef, id: "mymod_tech_x" });
     expectTypeOf(tech.id).toEqualTypeOf<"mymod_tech_x">();
   });
 
   it("leaves prefix compliance to the build-time warning", () => {
     // The class API constrained every id to the `mymod_${string}` pattern type
     // its `Mod<P>` generic carried, so an unprefixed id was a compile error.
-    // A factory knows no prefix — the mod config is only read at `buildMod` —
+    // A definer knows no prefix — the mod config is only read at `buildMod` —
     // so the same ids type-check here and surface as a `missing-prefix`
     // warning on the built value instead (tests/pure-api.test.ts pins it).
-    const techs = createTechnologies();
-    const foreign = techs.defineTechnology({ ...techDef, id: "othermod_tech_x" });
+    const foreign = defineTechnology({ ...techDef, id: "othermod_tech_x" });
     expectTypeOf(foreign.id).toEqualTypeOf<"othermod_tech_x">();
-    const bare = techs.defineTechnology({ ...techDef, id: "mymod" });
+    const bare = defineTechnology({ ...techDef, id: "mymod" });
     expectTypeOf(bare.id).toEqualTypeOf<"mymod">();
   });
 });

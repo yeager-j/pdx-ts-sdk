@@ -10,16 +10,22 @@ import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-import { buildMod, createTechnologies, render, stellaris, write } from "../../src/index.ts";
+import {
+  buildMod,
+  collection,
+  defineTechnology,
+  patchTechnology,
+  render,
+  stellaris,
+  write,
+} from "../../src/index.ts";
 
 const vanilla = stellaris.load();
-
-const technologies = createTechnologies();
 
 // Auto-researched at game start (tier 0 start tech), so appending it as a
 // prerequisite never gates the patched tech — it only has to *show up* in
 // the prerequisite list, a second observable on top of the cost.
-const marker = technologies.defineTechnology({
+const marker = defineTechnology({
   id: "pdx_calib_tech_marker",
   name: "Calibration Marker",
   desc: "If you can read this in the technology tooltip, the SDK's patch file won the override.",
@@ -32,10 +38,12 @@ const marker = technologies.defineTechnology({
 const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
 const vanillaCost = geneTailoring.cost.value;
 
-technologies.patchTechnology(geneTailoring, (t) => ({
+const geneTailoringPatch = patchTechnology(geneTailoring, (t) => ({
   cost: t.cost.value * 2,
   prerequisites: [...t.prerequisites, marker],
 }));
+
+const technologies = collection(undefined, [marker, geneTailoringPatch]);
 
 // The patch guards — one vanilla view per mod, no duplicate patch, no id
 // colliding with a real vanilla technology — are checked here, at the fold.

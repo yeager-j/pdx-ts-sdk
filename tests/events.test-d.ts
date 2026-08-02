@@ -1,16 +1,16 @@
 /**
  * The FROM contract, held against the pure authoring API — the probe's claims
- * 5, 5b, and 7 (see docs/verdict-effects-probe.md) pinned on the factory
+ * 5, 5b, and 7 (see docs/verdict-effects-probe.md) pinned on the namespace
  * definers mod authors actually call.
  */
 
 import { describe, it } from "vitest";
 
-import { createEvents } from "../src/index.ts";
+import { namespace } from "../src/index.ts";
 
 describe("the FROM contract on the real event API", () => {
   it("requires a witness when the fired event declared from:", () => {
-    const events = createEvents("from_contract_a", "from_contract_a");
+    const events = namespace("from_contract_a");
     const needsCountryFrom = events.definePlanetEvent({
       id: 1,
       from: "country",
@@ -29,7 +29,7 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("rejects a witness of the wrong scope", () => {
-    const events = createEvents("from_contract_b", "from_contract_b");
+    const events = namespace("from_contract_b");
     const needsCountryFrom = events.definePlanetEvent({
       id: 3,
       from: "country",
@@ -48,7 +48,7 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("accepts a matching witness", () => {
-    const events = createEvents("from_contract_c", "from_contract_c");
+    const events = namespace("from_contract_c");
     const needsCountryFrom = events.definePlanetEvent({
       id: 5,
       from: "country",
@@ -68,7 +68,7 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("holds the FROM contract on a generated kind beyond the original two", () => {
-    const events = createEvents("from_contract_d", "from_contract_d");
+    const events = namespace("from_contract_d");
     const needsCountryFrom = events.defineSituationEvent({
       id: 20,
       from: "country",
@@ -89,7 +89,7 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("makes an undeclared FROM unusable rather than any-typed", () => {
-    const events = createEvents("from_contract_e", "from_contract_e");
+    const events = namespace("from_contract_e");
     events.defineCountryEvent({
       id: 7,
       hideWindow: true,

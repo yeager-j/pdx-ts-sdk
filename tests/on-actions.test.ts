@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildMod, createEvents, createOnActions, onActions, render } from "../src/index.ts";
+import { buildMod, collection, namespace, on, onActions, render } from "../src/index.ts";
 
 const CONFIG = {
   name: "On-action runtime tests",
@@ -10,8 +10,7 @@ const CONFIG = {
 
 describe("on-action authoring", () => {
   it("renders one deterministic additive file and preserves event order", () => {
-    const events = createEvents("events", "on_action_test");
-    const hooks = createOnActions();
+    const events = namespace("on_action_test");
     const first = events.defineCountryEvent({ id: 1, isTriggeredOnly: true });
     const second = events.defineCountryEvent({ id: 2, isTriggeredOnly: true });
     const diplomacy = events.defineCountryEvent({
@@ -20,15 +19,17 @@ describe("on-action authoring", () => {
       isTriggeredOnly: true,
     });
 
-    hooks.on(onActions.onGameStartCountry, first);
-    hooks.on(onActions.onGameStartCountry, second);
-    hooks.on(onActions.onCustomDiplomacy, diplomacy);
+    const hooks = collection(undefined, [
+      on(onActions.onGameStartCountry, [first]),
+      on(onActions.onGameStartCountry, [second]),
+      on(onActions.onCustomDiplomacy, [diplomacy]),
+    ]);
 
     // Hook blocks come out sorted by hook name — `on_custom_diplomacy` was
     // registered last and is emitted first (SDK-23: order is a function of
     // content). The event list inside a hook is author data and keeps the
     // order it was registered in.
-    const mod = buildMod(CONFIG, [events, hooks]);
+    const mod = buildMod(CONFIG, [collection("events", [first, second, diplomacy]), hooks]);
     expect(render(mod).get("common/on_actions/on_action_test_on_actions.txt"))
       .toMatchInlineSnapshot(`
         "on_custom_diplomacy = {
@@ -44,22 +45,22 @@ describe("on-action authoring", () => {
   });
 
   it("rejects duplicate registrations of one event on one hook", () => {
-    const events = createEvents("events", "on_action_test");
-    const hooks = createOnActions();
+    const events = namespace("on_action_test");
     const event = events.defineCountryEvent({ id: 4, isTriggeredOnly: true });
-    hooks.on(onActions.onGameStartCountry, event);
-    hooks.on(onActions.onGameStartCountry, event);
+    const hooks = collection(undefined, [
+      on(onActions.onGameStartCountry, [event]),
+      on(onActions.onGameStartCountry, [event]),
+    ]);
 
-    expect(() => buildMod(CONFIG, [events, hooks])).toThrow(
+    expect(() => buildMod(CONFIG, [collection("events", [event]), hooks])).toThrow(
       /already registered on on-action "on_game_start_country"/
     );
   });
 
   it("rejects events from a collection outside the build", () => {
-    const foreign = createEvents("events", "other_mod");
-    const hooks = createOnActions();
+    const foreign = namespace("other_mod");
     const event = foreign.defineCountryEvent({ id: 5, isTriggeredOnly: true });
-    hooks.on(onActions.onGameStartCountry, event);
+    const hooks = collection(undefined, [on(onActions.onGameStartCountry, [event])]);
 
     expect(() => buildMod(CONFIG, [hooks])).toThrow(
       /is not among the collections passed to buildMod/

@@ -1,8 +1,8 @@
 /**
  * Mainline artifact 1 of the testing probe: the mod under test, written with
  * the REAL SDK exactly as a modder would — zero casts, no probe-local
- * recording machinery. (Migrated from the `Mod` builder to the collection
- * factories when the pure API landed; same content, same intent.) It replicates the example mod's event chain
+ * recording machinery. (Migrated from the `Mod` builder to the free definers
+ * when the pure API landed; same content, same intent.) It replicates the example mod's event chain
  * (examples/hello-galaxy/mod.ts) and extends the follow-up with a tech grant,
  * because the probe's end-to-end case asserts `player.has(tech)` after the
  * chain runs.
@@ -14,15 +14,16 @@
 
 import {
   and,
+  collection,
   countryFlags,
-  createEvents,
-  createTechnologies,
+  defineTechnology,
   eventTarget,
   globalFlags,
   hasCountryFlag,
   hasGlobalFlag,
   hasOwner,
   isAtWar,
+  namespace,
   not,
 } from "../../src/index.ts";
 
@@ -36,10 +37,9 @@ export const config = {
   supportedVersion: "4.0.*",
 } as const;
 
-export const technologies = createTechnologies();
-export const events = createEvents("events", "testing_probe");
+const eventNamespace = namespace("testing_probe");
 
-export const resonanceTheory = technologies.defineTechnology({
+export const resonanceTheory = defineTechnology({
   id: "testing_probe_tech_resonance_theory",
   name: "Crystal Resonance Theory",
   cost: 2000,
@@ -61,7 +61,7 @@ export const resonancePotential = and(
   not(hasCountryFlag(flags.tp_pacifist_path))
 );
 
-export const resonanceWeapons = technologies.defineTechnology({
+export const resonanceWeapons = defineTechnology({
   id: "testing_probe_tech_resonance_weapons",
   name: "Resonance Disruptors",
   cost: 6000,
@@ -76,7 +76,7 @@ export const resonanceWeapons = technologies.defineTechnology({
 
 export const stormWorld = eventTarget<"planet">("tp_storm_world");
 
-export const aftershock = events.definePlanetEvent({
+export const aftershock = eventNamespace.definePlanetEvent({
   id: 2,
   from: "country",
   title: "Aftershock",
@@ -91,7 +91,7 @@ export const aftershock = events.definePlanetEvent({
   options: [{ name: "Noted." }],
 });
 
-export const humReturns = events.defineCountryEvent({
+export const humReturns = eventNamespace.defineCountryEvent({
   id: 1,
   title: "The Hum Returns",
   desc: "Deep in the lattice, something answers back.",
@@ -121,3 +121,6 @@ export const humReturns = events.defineCountryEvent({
   },
   options: [{ name: "Fascinating." }],
 });
+
+export const technologies = collection(undefined, [resonanceTheory, resonanceWeapons]);
+export const events = collection("events", [aftershock, humReturns]);

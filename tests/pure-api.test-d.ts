@@ -270,14 +270,14 @@ describe("the free on() contract", () => {
 
 describe("buildMod's input", () => {
   it("takes collections, never loose items", () => {
-    const techs = createTechnologies();
-    const tech = techs.defineTechnology({
+    const tech = defineTechnology({
       id: "probe_neg_loose",
       name: "L",
       area: "physics",
       tier: 1,
       category: "particles",
     });
+    const techs = collection(undefined, [tech]);
     const config = { name: "N", prefix: "probe_neg", supportedVersion: "4.4.*" };
     buildMod(config, [techs]);
     // @ts-expect-error — a bare content item is not a collection

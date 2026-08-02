@@ -43,10 +43,10 @@ import {
   createOnActions,
   createSituationTypes,
   createTechnologies,
-  createTraditions,
   defineCountryShipOfSizeLimit,
   defineSituationType,
   defineTechnology,
+  defineTradition,
   eventTarget,
   hasOwner,
   hasTechnology,
@@ -57,6 +57,8 @@ import {
   patchTechnology,
   render,
   type Collection,
+  type EventItem,
+  type ModItem,
   type ModItemInput,
 } from "../src/index.ts";
 import { viewFromFiles } from "../src/vanilla/surface.ts";
@@ -241,15 +243,16 @@ function goldenPath(relPath: string): string {
 }
 
 function techsWith(file: string | undefined, ...ids: string[]): Collection {
-  const techs = createTechnologies(file);
-  for (const id of ids) {
-    techs.defineTechnology({ id, name: id, area: "physics", tier: 1, category: "particles" });
-  }
-  return techs;
+  return collection(
+    file,
+    ids.map((id) =>
+      defineTechnology({ id, name: id, area: "physics", tier: 1, category: "particles" })
+    )
+  );
 }
 
 describe("parity with the deleted class builder", () => {
-  const pure = buildMod(CONFIG, pureCollections(), { vanilla });
+  const pure = buildMod(CONFIG, freeCollections(), { vanilla });
   const files = render(pure);
 
   // The path list is the guard on the goldens themselves: a missing golden is
@@ -352,35 +355,37 @@ describe("assembly-time validation", () => {
   });
 
   it("rejects duplicate localization keys across definitions", () => {
-    const techs = createTechnologies();
-    techs.defineTechnology({
-      id: "pp_mod_a",
-      name: "A",
-      desc: "first",
-      area: "physics",
-      tier: 1,
-      category: "particles",
-    });
-    // Its name key is "pp_mod_a_desc" — exactly the first tech's desc key.
-    techs.defineTechnology({
-      id: "pp_mod_a_desc",
-      name: "B",
-      area: "physics",
-      tier: 1,
-      category: "particles",
-    });
+    const techs = collection(undefined, [
+      defineTechnology({
+        id: "pp_mod_a",
+        name: "A",
+        desc: "first",
+        area: "physics",
+        tier: 1,
+        category: "particles",
+      }),
+      // Its name key is "pp_mod_a_desc" — exactly the first tech's desc key.
+      defineTechnology({
+        id: "pp_mod_a_desc",
+        name: "B",
+        area: "physics",
+        tier: 1,
+        category: "particles",
+      }),
+    ]);
     expect(() => buildMod(CONFIG, [techs])).toThrow('Duplicate localization key "pp_mod_a_desc"');
   });
 
   it("reports quote replacement as a warning datum, not console output", () => {
-    const techs = createTechnologies();
-    techs.defineTechnology({
-      id: "pp_mod_quoted",
-      name: 'The "Hum"',
-      area: "physics",
-      tier: 1,
-      category: "particles",
-    });
+    const techs = collection(undefined, [
+      defineTechnology({
+        id: "pp_mod_quoted",
+        name: 'The "Hum"',
+        area: "physics",
+        tier: 1,
+        category: "particles",
+      }),
+    ]);
     const mod = buildMod(CONFIG, [techs]);
     expect(mod.warnings.map((warning) => warning.code)).toEqual(["loc-quote-replaced"]);
     expect(render(mod).get("localisation/english/pp_mod_l_english.yml")).toContain(
@@ -389,29 +394,44 @@ describe("assembly-time validation", () => {
   });
 });
 
-describe("event factories", () => {
+describe("event namespaces", () => {
   it("rejects a duplicate id at the definition site, with its namespace", () => {
-    const events = createEvents("events", "pp_mod_dup");
+    const events = namespace("pp_mod_dup");
     events.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
     expect(() => events.defineCountryEvent({ id: 1, isTriggeredOnly: true })).toThrow(
       'Duplicate event id "pp_mod_dup.1"'
     );
   });
 
-  it("rejects the same full id from two factories sharing a file", () => {
+  it("rejects the same full id from two namespace handles sharing a file", () => {
     // Same stem and same namespace is a legal merge — the bijection below
     // holds — so this is exactly the case the define-site check cannot see:
-    // each factory has its own `used` set, and only the global check across
-    // every collection knows the two collided.
-    const first = createEvents("shared_events", "pp_mod_shared");
-    first.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
-    const second = createEvents("shared_events", "pp_mod_shared");
-    second.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
+    // each namespace handle has its own `used` set, and only the global check
+    // across every collection knows the two collided.
+    const first = collection("shared_events", [
+      namespace("pp_mod_shared").defineCountryEvent({
+        id: 1,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
+    const second = collection("shared_events", [
+      namespace("pp_mod_shared").defineCountryEvent({
+        id: 1,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
     expect(() => buildMod(CONFIG, [first, second])).toThrow('Duplicate event id "pp_mod_shared.1"');
     // The merge itself is fine: distinct ids in the two collections land in
     // one file, exactly as two same-stem content collections do.
-    const third = createEvents("shared_events", "pp_mod_shared");
-    third.defineCountryEvent({ id: 2, isTriggeredOnly: true, hideWindow: true });
+    const third = collection("shared_events", [
+      namespace("pp_mod_shared").defineCountryEvent({
+        id: 2,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
     const merged = render(buildMod(CONFIG, [first, third])).get("events/pp_mod_shared_events.txt")!;
     expect(merged).toContain("id = pp_mod_shared.1");
     expect(merged).toContain("id = pp_mod_shared.2");
@@ -421,10 +441,20 @@ describe("event factories", () => {
     // SDK-23 decision 1. A namespace split across two files splits its
     // numeric id space across two independent define-site checks, and makes
     // the emitted file a fact about layout rather than about identity.
-    const first = createEvents("a_events", "pp_mod_shared");
-    first.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
-    const second = createEvents("b_events", "pp_mod_shared");
-    second.defineCountryEvent({ id: 2, isTriggeredOnly: true, hideWindow: true });
+    const first = collection("a_events", [
+      namespace("pp_mod_shared").defineCountryEvent({
+        id: 1,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
+    const second = collection("b_events", [
+      namespace("pp_mod_shared").defineCountryEvent({
+        id: 2,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
     expect(() => buildMod(CONFIG, [first, second])).toThrow(
       'event namespace "pp_mod_shared" is split across file stems "a_events" and "b_events" — ' +
         "one file per namespace; give each namespace its own file stem"
@@ -432,20 +462,40 @@ describe("event factories", () => {
   });
 
   it("keeps one namespace per emitted file, catching same-stem merges", () => {
-    const alpha = createEvents("shared", "pp_mod_alpha");
-    alpha.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
-    const beta = createEvents("shared", "pp_mod_beta");
-    beta.defineCountryEvent({ id: 2, isTriggeredOnly: true, hideWindow: true });
+    const alpha = collection("shared", [
+      namespace("pp_mod_alpha").defineCountryEvent({
+        id: 1,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
+    const beta = collection("shared", [
+      namespace("pp_mod_beta").defineCountryEvent({
+        id: 2,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
     expect(() => buildMod(CONFIG, [alpha, beta])).toThrow(
       'event file events/pp_mod_shared.txt would mix namespaces "pp_mod_alpha" and "pp_mod_beta"'
     );
   });
 
   it("gives each namespace its own numeric id space and file", () => {
-    const alpha = createEvents("alpha_events", "pp_mod_alpha");
-    alpha.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
-    const beta = createEvents("beta_events", "pp_mod_beta");
-    beta.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
+    const alpha = collection("alpha_events", [
+      namespace("pp_mod_alpha").defineCountryEvent({
+        id: 1,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
+    const beta = collection("beta_events", [
+      namespace("pp_mod_beta").defineCountryEvent({
+        id: 1,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }),
+    ]);
     const files = render(buildMod(CONFIG, [alpha, beta]));
     const alphaFile = files.get("events/pp_mod_alpha_events.txt")!;
     const betaFile = files.get("events/pp_mod_beta_events.txt")!;
@@ -456,33 +506,38 @@ describe("event factories", () => {
   });
 
   it("warns when a namespace does not carry the mod prefix", () => {
-    const events = createEvents("events", "rogue_ns");
-    events.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
+    const events = collection("events", [
+      namespace("rogue_ns").defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true }),
+    ]);
     const mod = buildMod(CONFIG, [events]);
     expect(mod.warnings.map((warning) => warning.code)).toEqual(["missing-prefix"]);
     expect(mod.warnings[0]!.message).toContain('event namespace "rogue_ns"');
   });
 
-  it("rejects a namespace that is not snake_case at the factory", () => {
-    expect(() => createEvents("events", "Bad.Namespace")).toThrow(
+  it("rejects a namespace that is not snake_case when it is opened", () => {
+    expect(() => namespace("Bad.Namespace")).toThrow(
       'Event namespace "Bad.Namespace" must be lowercase snake_case'
     );
   });
 
   it("fails loudly on a fired event whose collection was not passed", () => {
-    const orphans = createEvents("orphan_events", "pp_mod_orphans");
-    const orphan = orphans.definePlanetEvent({ id: 22, from: "country", isTriggeredOnly: true });
-    const included = createEvents("events", "pp_mod");
-    included.defineCountryEvent({
-      id: 21,
+    const orphan = namespace("pp_mod_orphans").definePlanetEvent({
+      id: 22,
+      from: "country",
       isTriggeredOnly: true,
-      hideWindow: true,
-      immediate: (country, ctx) => {
-        country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
-          planet.planetEvent({ id: orphan, from: ctx.self });
-        });
-      },
     });
+    const included = collection("events", [
+      namespace("pp_mod").defineCountryEvent({
+        id: 21,
+        isTriggeredOnly: true,
+        hideWindow: true,
+        immediate: (country, ctx) => {
+          country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+            planet.planetEvent({ id: orphan, from: ctx.self });
+          });
+        },
+      }),
+    ]);
     // `orphans` is never passed — the emitted id has no definition behind it.
     expect(() => buildMod(CONFIG, [included])).toThrow(
       '"pp_mod_orphans.22" looks like one of this mod\'s event ids'
@@ -490,10 +545,8 @@ describe("event factories", () => {
   });
 
   it("requires on-action events to be collections of the same build", () => {
-    const foreign = createEvents("events", "pp_mod");
-    const event = foreign.defineCountryEvent({ id: 31, isTriggeredOnly: true });
-    const hooks = createOnActions();
-    hooks.on(onActions.onGameStartCountry, event);
+    const event = namespace("pp_mod").defineCountryEvent({ id: 31, isTriggeredOnly: true });
+    const hooks = collection(undefined, [on(onActions.onGameStartCountry, [event])]);
     expect(() => buildMod(CONFIG, [hooks])).toThrow(
       'Event "pp_mod.31" is not among the collections passed to buildMod'
     );
@@ -503,15 +556,16 @@ describe("event factories", () => {
 describe("content reference integrity", () => {
   it("resolves a reference across two collections of the same build", () => {
     const base = techsWith("base_techs", "pp_mod_tech_base");
-    const derived = createTechnologies("derived_techs");
-    derived.defineTechnology({
-      id: "pp_mod_tech_derived",
-      name: "Derived",
-      area: "physics",
-      tier: 2,
-      category: "particles",
-      prerequisites: ["pp_mod_tech_base"],
-    });
+    const derived = collection("derived_techs", [
+      defineTechnology({
+        id: "pp_mod_tech_derived",
+        name: "Derived",
+        area: "physics",
+        tier: 2,
+        category: "particles",
+        prerequisites: ["pp_mod_tech_base"],
+      }),
+    ]);
     const files = render(buildMod(CONFIG, [base, derived]));
     expect(files.get("common/technology/pp_mod_derived_techs.txt")).toContain(
       'prerequisites = { "pp_mod_tech_base" }'
@@ -519,23 +573,23 @@ describe("content reference integrity", () => {
   });
 
   it("fails loudly on a reference whose collection was not passed", () => {
-    const orphans = createTechnologies("orphan_techs");
-    const orphan = orphans.defineTechnology({
+    const orphan = defineTechnology({
       id: "pp_mod_tech_orphan",
       name: "Orphan",
       area: "physics",
       tier: 1,
       category: "particles",
     });
-    const included = createTechnologies();
-    included.defineTechnology({
-      id: "pp_mod_tech_dependent",
-      name: "Dependent",
-      area: "physics",
-      tier: 2,
-      category: "particles",
-      prerequisites: [orphan],
-    });
+    const included = collection(undefined, [
+      defineTechnology({
+        id: "pp_mod_tech_dependent",
+        name: "Dependent",
+        area: "physics",
+        tier: 2,
+        category: "particles",
+        prerequisites: [orphan],
+      }),
+    ]);
     // `orphans` is never passed — the emitted id has no definition behind it.
     expect(() => buildMod(CONFIG, [included])).toThrow(
       'technology "pp_mod_tech_dependent" references technology "pp_mod_tech_orphan" in ' +
@@ -545,21 +599,23 @@ describe("content reference integrity", () => {
 
   it("names the registry, not merely the id: a tradition is not a technology", () => {
     // Same id, different registry. An existence-only check would pass this.
-    const traditions = createTraditions();
-    traditions.defineTradition({
-      id: "pp_mod_ghost",
-      name: "Ghost",
-      effects: "Nothing at all.",
-    });
-    const techs = createTechnologies();
-    techs.defineTechnology({
-      id: "pp_mod_tech_haunted",
-      name: "Haunted",
-      area: "physics",
-      tier: 2,
-      category: "particles",
-      prerequisites: ["pp_mod_ghost"],
-    });
+    const traditions = collection(undefined, [
+      defineTradition({
+        id: "pp_mod_ghost",
+        name: "Ghost",
+        effects: "Nothing at all.",
+      }),
+    ]);
+    const techs = collection(undefined, [
+      defineTechnology({
+        id: "pp_mod_tech_haunted",
+        name: "Haunted",
+        area: "physics",
+        tier: 2,
+        category: "particles",
+        prerequisites: ["pp_mod_ghost"],
+      }),
+    ]);
     expect(() => buildMod(CONFIG, [traditions, techs])).toThrow(
       'references technology "pp_mod_ghost" in "prerequisites"'
     );
@@ -568,66 +624,68 @@ describe("content reference integrity", () => {
   it("checks an own-prefixed raw string exactly like a branded ref", () => {
     // The prefix is per-mod, so an own-prefixed string in a reference field is
     // this mod's content however it was written — which is what catches typos.
-    const techs = createTechnologies();
-    techs.defineTechnology({
-      id: "pp_mod_tech_base",
-      name: "Base",
-      area: "physics",
-      tier: 1,
-      category: "particles",
-    });
-    techs.defineTechnology({
-      id: "pp_mod_tech_typo",
-      name: "Typo",
-      area: "physics",
-      tier: 2,
-      category: "particles",
-      prerequisites: ["pp_mod_tech_bass"],
-    });
+    const techs = collection(undefined, [
+      defineTechnology({
+        id: "pp_mod_tech_base",
+        name: "Base",
+        area: "physics",
+        tier: 1,
+        category: "particles",
+      }),
+      defineTechnology({
+        id: "pp_mod_tech_typo",
+        name: "Typo",
+        area: "physics",
+        tier: 2,
+        category: "particles",
+        prerequisites: ["pp_mod_tech_bass"],
+      }),
+    ]);
     expect(() => buildMod(CONFIG, [techs])).toThrow(
       'references technology "pp_mod_tech_bass" in "prerequisites"'
     );
   });
 
   it("exempts vanilla and third-party ids, and fields no registry backs", () => {
-    const techs = createTechnologies();
-    techs.defineTechnology({
-      id: "pp_mod_tech_open",
-      name: "Open",
-      area: "physics",
-      // `<technology_tier>` is not a registry this SDK authors, so nothing
-      // here could have defined it and its absence proves nothing.
-      tier: "pp_mod_tier_custom",
-      category: "particles",
-      prerequisites: ["tech_lasers_2", "someone_elses_tech"],
-    });
+    const techs = collection(undefined, [
+      defineTechnology({
+        id: "pp_mod_tech_open",
+        name: "Open",
+        area: "physics",
+        // `<technology_tier>` is not a registry this SDK authors, so nothing
+        // here could have defined it and its absence proves nothing.
+        tier: "pp_mod_tier_custom",
+        category: "particles",
+        prerequisites: ["tech_lasers_2", "someone_elses_tech"],
+      }),
+    ]);
     expect(buildMod(CONFIG, [techs]).warnings).toEqual([]);
   });
 
   it("leaves own-prefixed flags, targets and loc keys alone", () => {
     // The scalars a post-hoc scan of the emitted tree would trip over: all
     // own-prefixed, none of them content references.
-    const events = createEvents("events", "pp_mod");
-    events.defineCountryEvent({
-      id: 40,
-      title: "Hum",
-      isTriggeredOnly: true,
-      immediate: (country) => {
-        country.setCountryFlag("pp_mod_heard_the_hum");
-        country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
-          planet.saveEventTargetAs(eventTarget<"planet">("pp_mod_storm_world"));
-        });
-      },
-      options: [{ name: "Noted." }],
-    });
+    const events = collection("events", [
+      namespace("pp_mod").defineCountryEvent({
+        id: 40,
+        title: "Hum",
+        isTriggeredOnly: true,
+        immediate: (country) => {
+          country.setCountryFlag("pp_mod_heard_the_hum");
+          country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+            planet.saveEventTargetAs(eventTarget<"planet">("pp_mod_storm_world"));
+          });
+        },
+        options: [{ name: "Noted." }],
+      }),
+    ]);
     expect(buildMod(CONFIG, [events]).warnings).toEqual([]);
   });
 
   it("holds a patch's references to the same standard", () => {
     // The calibration anchor's shape: a vanilla technology patched to require
     // one of this mod's own. In the build it resolves; alone it cannot.
-    const orphans = createTechnologies("orphan_techs");
-    const marker = orphans.defineTechnology({
+    const marker = defineTechnology({
       id: "pp_mod_tech_marker",
       name: "Marker",
       area: "society",
@@ -635,11 +693,12 @@ describe("content reference integrity", () => {
       category: "biology",
       startTech: true,
     });
-    const patches = createTechnologies();
-    patches.patchTechnology(
-      vanilla.technology("tech_gene_forging").require("prerequisites"),
-      (t) => ({ prerequisites: [...t.prerequisites, marker] })
-    );
+    const orphans = collection("orphan_techs", [marker]);
+    const patches = collection(undefined, [
+      patchTechnology(vanilla.technology("tech_gene_forging").require("prerequisites"), (t) => ({
+        prerequisites: [...t.prerequisites, marker],
+      })),
+    ]);
     expect(
       render(buildMod(CONFIG, [orphans, patches], { vanilla })).get(
         "common/technology/pp_mod_orphan_techs.txt"
@@ -652,20 +711,21 @@ describe("content reference integrity", () => {
   });
 
   it("holds the contribution sink to the same standard", () => {
-    const limits = createCountryShipOfSizeLimits();
-    const titan = limits.defineCountryShipOfSizeLimit({
+    const titan = defineCountryShipOfSizeLimit({
       id: "pp_mod_limit_titan",
       shipTypes: ["ship_size_titan"],
       base: 80,
       show: isScopeValid(),
     });
-    limits.addShipOfSizeLimits([titan, "third_party_limit"]);
+    const limits = collection(undefined, [
+      titan,
+      addShipOfSizeLimits([titan, "third_party_limit"]),
+    ]);
     expect(buildMod(CONFIG, [limits]).shipOfSizeLimits).toEqual(
       new Set(["pp_mod_limit_titan", "third_party_limit"])
     );
 
-    const dangling = createCountryShipOfSizeLimits();
-    dangling.addShipOfSizeLimits(["pp_mod_limit_never_defined"]);
+    const dangling = collection(undefined, [addShipOfSizeLimits(["pp_mod_limit_never_defined"])]);
     expect(() => buildMod(CONFIG, [dangling])).toThrow(
       "the ship_of_size_limits contribution references country_ship_of_size_limit " +
         '"pp_mod_limit_never_defined" in "default.ship_of_size_limits"'
@@ -701,10 +761,11 @@ describe("collections", () => {
   it("orders events inside a file numerically, not lexically", () => {
     // `ns.10` after `ns.2` — the reason the event sort reads the numeric half
     // of the id instead of comparing the full id as text.
-    const events = createEvents("events", "pp_mod");
-    for (const id of [10, 2, 1]) {
-      events.defineCountryEvent({ id, isTriggeredOnly: true, hideWindow: true });
-    }
+    const ns = namespace("pp_mod");
+    const events = collection(
+      "events",
+      [10, 2, 1].map((id) => ns.defineCountryEvent({ id, isTriggeredOnly: true, hideWindow: true }))
+    );
     const file = render(buildMod(CONFIG, [events])).get("events/pp_mod_events.txt")!;
     expect([...file.matchAll(/id = (pp_mod\.\d+)/g)].map((match) => match[1])).toEqual([
       "pp_mod.1",
@@ -717,11 +778,11 @@ describe("collections", () => {
     // Registries do not read subdirectories (common/technology/category/ is
     // a different registry, not layout), and the same check keeps the
     // emitted path safe by construction.
-    expect(() => createTechnologies("category/dawn")).toThrow(
+    expect(() => collection("category/dawn", [])).toThrow(
       'Collection file stem "category/dawn" must be lowercase snake_case'
     );
-    expect(() => createEvents("../escape", "pp_mod")).toThrow(/must be lowercase snake_case/);
-    // A hand-built Collection value bypasses the factories; flattening
+    expect(() => collection("../escape", [])).toThrow(/must be lowercase snake_case/);
+    // A hand-built Collection value bypasses `collection()`; flattening
     // re-asserts every stem.
     const forged: Collection = {
       itemKind: "collection",
@@ -736,10 +797,11 @@ describe("collections", () => {
     // BOTH own files — the SDK-19 constraint with teeth.
     const alpha = techsWith("alpha_techs", "pp_mod_tech_alpha");
     const beta = techsWith("beta_techs", "pp_mod_tech_beta");
-    const patches = createTechnologies();
-    patches.patchTechnology(vanilla.technology("tech_gene_forging").require("cost"), (t) => ({
-      cost: t.cost.value * 2,
-    }));
+    const patches = collection(undefined, [
+      patchTechnology(vanilla.technology("tech_gene_forging").require("cost"), (t) => ({
+        cost: t.cost.value * 2,
+      })),
+    ]);
     const mod = buildMod(CONFIG, [alpha, beta, patches], { vanilla });
     const files = render(mod);
     const ownPaths = [
@@ -760,7 +822,7 @@ describe("lowering determinism", () => {
     // Shares one set of collections across two builds: the modifierDescKeys
     // WeakMap is re-registered with identical derived keys, and rendering
     // the earlier build after the later one must not change a byte.
-    const collections = pureCollections();
+    const collections = freeCollections();
     const first = buildMod(CONFIG, collections, { vanilla });
     const second = buildMod(CONFIG, collections, { vanilla });
     const secondFiles = render(second);
@@ -803,59 +865,68 @@ tech_probe_zeta = {
   );
 
   function orderProbe(reversed: boolean): ModItemInput[] {
-    const alpha = createTechnologies("alpha_techs");
-    const beta = createTechnologies("beta_techs");
-    const limits = createCountryShipOfSizeLimits();
-    const events = createEvents("events", "pp_mod");
-    const zetaEvents = createEvents("zeta_events", "pp_mod_zeta");
-    const hooks = createOnActions();
+    const events = namespace("pp_mod");
+    const zetaNamespace = namespace("pp_mod_zeta");
+
+    const alphaItems: ModItem[] = [];
+    const betaItems: ModItem[] = [];
+    const limitItems: ModItem[] = [];
+    const eventItems: EventItem[] = [];
+    const zetaEventItems: EventItem[] = [];
+    const hookItems: ModItem[] = [];
 
     const steps: (() => void)[] = [
       () => {
         // Two ids in one file, out of sorted order among themselves.
-        beta.defineTechnology({
-          id: "pp_mod_tech_beta_two",
-          name: "Beta Two",
-          area: "physics",
-          tier: 1,
-          category: "particles",
-        });
+        betaItems.push(
+          defineTechnology({
+            id: "pp_mod_tech_beta_two",
+            name: "Beta Two",
+            area: "physics",
+            tier: 1,
+            category: "particles",
+          })
+        );
       },
       () => {
-        beta.defineTechnology({
-          id: "pp_mod_tech_beta_one",
-          name: "Beta One",
-          area: "physics",
-          tier: 1,
-          category: "particles",
-        });
+        betaItems.push(
+          defineTechnology({
+            id: "pp_mod_tech_beta_one",
+            name: "Beta One",
+            area: "physics",
+            tier: 1,
+            category: "particles",
+          })
+        );
       },
       () => {
-        alpha.defineTechnology({
-          id: "pp_mod_tech_alpha_one",
-          name: "Alpha One",
-          area: "physics",
-          tier: 1,
-          category: "particles",
-        });
+        alphaItems.push(
+          defineTechnology({
+            id: "pp_mod_tech_alpha_one",
+            name: "Alpha One",
+            area: "physics",
+            tier: 1,
+            category: "particles",
+          })
+        );
       },
       () => {
-        const limit = limits.defineCountryShipOfSizeLimit({
+        const limit = defineCountryShipOfSizeLimit({
           id: "pp_mod_limit_zeta",
           shipTypes: ["ship_size_titan"],
           base: 1,
           show: isScopeValid(),
         });
-        limits.addShipOfSizeLimits([limit]);
+        limitItems.push(limit, addShipOfSizeLimits([limit]));
       },
       () => {
-        const limit = limits.defineCountryShipOfSizeLimit({
+        const limit = defineCountryShipOfSizeLimit({
           id: "pp_mod_limit_alpha",
           shipTypes: ["ship_size_juggernaut"],
           base: 2,
           show: isScopeValid(),
         });
-        limits.addShipOfSizeLimits([limit]);
+        limitItems.push(limit, addShipOfSizeLimits([limit]));
       },
       () => {
         // 10 before 2: the numeric event sort, from both directions.
@@ -865,7 +936,8 @@ tech_probe_zeta = {
           isTriggeredOnly: true,
           options: [{ name: "Noted." }],
         });
-        hooks.on(onActions.onGameStartCountry, event);
+        eventItems.push(event);
+        hookItems.push(on(onActions.onGameStartCountry, [event]));
       },
       () => {
         const event = events.defineCountryEvent({
@@ -874,33 +946,47 @@ tech_probe_zeta = {
           isTriggeredOnly: true,
           options: [{ name: "Fascinating." }],
         });
+        eventItems.push(event);
         // A different hook, so the two registrations are hook-block ordering
         // rather than the within-hook list the author owns.
-        hooks.on(onActions.onDecadePulseCountry, event);
+        hookItems.push(on(onActions.onDecadePulseCountry, [event]));
       },
       () => {
-        zetaEvents.defineCountryEvent({
-          id: 1,
-          title: "Zeta",
-          isTriggeredOnly: true,
-          options: [{ name: "Noted." }],
-        });
+        zetaEventItems.push(
+          zetaNamespace.defineCountryEvent({
+            id: 1,
+            title: "Zeta",
+            isTriggeredOnly: true,
+            options: [{ name: "Noted." }],
+          })
+        );
       },
       () => {
-        beta.patchTechnology(probeVanilla.technology("tech_probe_zeta").require("cost"), (t) => ({
-          cost: t.cost.value * 2,
-        }));
+        betaItems.push(
+          patchTechnology(probeVanilla.technology("tech_probe_zeta").require("cost"), (t) => ({
+            cost: t.cost.value * 2,
+          }))
+        );
       },
       () => {
-        alpha.patchTechnology(probeVanilla.technology("tech_probe_alpha").require("cost"), (t) => ({
-          cost: t.cost.value * 3,
-        }));
+        alphaItems.push(
+          patchTechnology(probeVanilla.technology("tech_probe_alpha").require("cost"), (t) => ({
+            cost: t.cost.value * 3,
+          }))
+        );
       },
     ];
     for (const step of reversed ? [...steps].reverse() : steps) {
       step();
     }
-    const collections = [alpha, beta, limits, events, zetaEvents, hooks];
+    const collections = [
+      collection("alpha_techs", alphaItems),
+      collection("beta_techs", betaItems),
+      collection(undefined, limitItems),
+      collection("events", eventItems),
+      collection("zeta_events", zetaEventItems),
+      collection(undefined, hookItems),
+    ];
     return reversed ? [...collections].reverse() : collections;
   }
 

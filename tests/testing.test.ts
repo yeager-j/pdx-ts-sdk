@@ -2,7 +2,7 @@ import { kv } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { countryFlags, globalFlags } from "../src/generated/value-sets.ts";
-import { createEvents, eventTarget } from "../src/index.ts";
+import { eventTarget, namespace } from "../src/index.ts";
 import { evaluate, fixture } from "../src/testing/index.ts";
 import { hasCountryFlag, hasGlobalFlag, or, trigger } from "../src/triggers.ts";
 
@@ -45,7 +45,7 @@ describe("production testing module", () => {
   });
 
   it("does not carry saved event targets into delayed delivery", () => {
-    const events = createEvents("events", "target_lifetime");
+    const events = namespace("target_lifetime");
     const target = eventTarget<"planet">("target_lifetime_planet");
     const followup = events.defineCountryEvent({
       id: 2,

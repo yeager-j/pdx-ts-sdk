@@ -1,13 +1,14 @@
 import {
   and,
   buildMod,
+  collection,
   countryFlags,
-  createEvents,
-  createTechnologies,
+  defineTechnology,
   eventTarget,
   hasCountryFlag,
   hasOwner,
   isAtWar,
+  namespace,
   not,
   type PureMod,
   type TechnologyItem,
@@ -30,16 +31,12 @@ const config = {
 };
 
 export function defineHelloGalaxy(): PureMod {
-  // Each factory is a collection: creating content through it registers the
-  // content, and the collection names the file it lands in. No stem means
-  // the registry default, `common/technology/hello_galaxy_technology.txt`.
-  const techs = createTechnologies();
-  // Event identity is authored, never inferred from layout: the file stem
-  // and the namespace are declared together, so every id below is
-  // `hello_galaxy.<n>` from birth.
-  const events = createEvents("events", "hello_galaxy");
+  // Event identity is authored, never inferred from layout: the namespace is
+  // declared here, so every id below is `hello_galaxy.<n>` from birth. The
+  // file the events land in is named by the `collection(...)` at the fold.
+  const events = namespace("hello_galaxy");
 
-  const resonanceTheory = techs.defineTechnology({
+  const resonanceTheory = defineTechnology({
     id: "hello_galaxy_tech_resonance_theory",
     name: "Crystal Resonance Theory",
     desc: "The lattice hums at frequencies we are only beginning to hear.",
@@ -50,7 +47,7 @@ export function defineHelloGalaxy(): PureMod {
     weight: 100,
   });
 
-  techs.defineTechnology({
+  const resonanceWeapons = defineTechnology({
     id: "hello_galaxy_tech_resonance_weapons",
     name: "Resonance Disruptors",
     desc: "Weaponized harmonics that shatter hulls from within.",
@@ -69,6 +66,7 @@ export function defineHelloGalaxy(): PureMod {
 
   // Build-time loop: one definition, five tiers of amplifier techs, each
   // requiring the previous — the "generate fifty variants" superpower.
+  const amplifiers: TechnologyItem[] = [];
   let previous: TechnologyItem = resonanceTheory;
   for (const [index, adjective] of [
     "Attuned",
@@ -78,7 +76,7 @@ export function defineHelloGalaxy(): PureMod {
     "Transcendent",
   ].entries()) {
     const tier = index + 1;
-    previous = techs.defineTechnology({
+    previous = defineTechnology({
       id: `hello_galaxy_tech_amplifier_${tier}`,
       name: `${adjective} Resonance Amplifiers`,
       cost: 1000 * 2 ** tier,
@@ -88,6 +86,7 @@ export function defineHelloGalaxy(): PureMod {
       prerequisites: [previous],
       weight: 100 - 10 * tier,
     });
+    amplifiers.push(previous);
   }
 
   // The event chain: a country event whose immediate runs in-game control
@@ -110,7 +109,7 @@ export function defineHelloGalaxy(): PureMod {
     options: [{ name: "Noted." }],
   });
 
-  events.defineCountryEvent({
+  const humReturns = events.defineCountryEvent({
     id: 1,
     title: "The Hum Returns",
     desc: "Deep in the lattice, something answers back.",
@@ -141,7 +140,14 @@ export function defineHelloGalaxy(): PureMod {
     options: [{ name: "Fascinating." }],
   });
 
+  // `collection(file, items)` places what the definers made. No stem means
+  // the registry default, `common/technology/hello_galaxy_technology.txt`;
+  // the events land in `events/hello_galaxy_events.txt`.
+  //
   // `buildMod` is the fold: collections in, an assembled value out. Nothing
   // is written and nothing is serialized until `render`/`write`.
-  return buildMod(config, [techs, events]);
+  return buildMod(config, [
+    collection(undefined, [resonanceTheory, resonanceWeapons, ...amplifiers]),
+    collection("events", [aftershock, humReturns]),
+  ]);
 }

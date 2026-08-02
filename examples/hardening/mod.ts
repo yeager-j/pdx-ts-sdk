@@ -1,18 +1,20 @@
 import {
   buildMod,
+  collection,
   countryFlags,
-  createAgendas,
-  createBuildings,
-  createEdicts,
-  createEvents,
-  createOnActions,
-  createTechnologies,
-  createTraditionCategories,
-  createTraditions,
+  defineAgenda,
+  defineBuilding,
+  defineEdict,
+  defineTechnology,
+  defineTradition,
+  defineTraditionCategory,
   eventTarget,
   hasAuthority,
+  namespace,
   numOwnedPlanets,
+  on,
   onActions,
+  patchTechnology,
   type VanillaView,
 } from "../../src/index.ts";
 
@@ -27,18 +29,9 @@ const config = {
 };
 
 export function defineHardening(vanilla: VanillaView) {
-  // One collection per registry the corpus covers; each takes the registry's
-  // default file stem, so the emitted paths are the same ones the goldens pin.
-  const technologies = createTechnologies();
-  const buildings = createBuildings();
-  const agendas = createAgendas();
-  const traditions = createTraditions();
-  const traditionCategories = createTraditionCategories();
-  const edicts = createEdicts();
-  const events = createEvents("events", "pdx_hardening");
-  const hooks = createOnActions();
+  const events = namespace("pdx_hardening");
 
-  const markerTechnology = technologies.defineTechnology({
+  const markerTechnology = defineTechnology({
     id: "pdx_hardening_tech_marker",
     name: "SDK Hardening Marker",
     desc: "A harmless marker proving generated technology content loaded.",
@@ -50,7 +43,7 @@ export function defineHardening(vanilla: VanillaView) {
     weight: 0,
   });
 
-  buildings.defineBuilding({
+  const markerBuilding = defineBuilding({
     id: "pdx_hardening_building_marker",
     name: "SDK Hardening Lab",
     desc: "A harmless building definition used by the hardening calibration.",
@@ -65,7 +58,7 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const agenda = agendas.defineAgenda({
+  const agenda = defineAgenda({
     id: "pdx_hardening_agenda_marker",
     name: "SDK Hardening",
     desc: "Keep generated definitions observable and boring.",
@@ -73,7 +66,7 @@ export function defineHardening(vanilla: VanillaView) {
     effect: (country) => country.log("PDX_HARDENING_AGENDA"),
   });
 
-  const tradition = traditions.defineTradition({
+  const tradition = defineTradition({
     id: "pdx_hardening_tradition_marker",
     name: "Hardening Discipline",
     effects: "The SDK seams remain observable.",
@@ -84,7 +77,7 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  traditionCategories.defineTraditionCategory({
+  const traditionCategory = defineTraditionCategory({
     id: "pdx_hardening_tradition_category_marker",
     name: "SDK Hardening",
     desc: "A one-node category for integration coverage.",
@@ -94,7 +87,7 @@ export function defineHardening(vanilla: VanillaView) {
     traditions: [tradition],
   });
 
-  edicts.defineEdict({
+  const markerEdict = defineEdict({
     id: "pdx_hardening_edict_marker",
     name: "SDK Hardening Marker",
     description: "A harmless edict definition used by the hardening calibration.",
@@ -182,18 +175,29 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  hooks.on(onActions.onGameStartCountry, entryEvent);
+  const entryHook = on(onActions.onGameStartCountry, [entryEvent]);
 
   const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
-  technologies.patchTechnology(geneTailoring, (technology) => ({
+  const geneTailoringPatch = patchTechnology(geneTailoring, (technology) => ({
     cost: technology.cost.value * 2,
     prerequisites: [...technology.prerequisites, markerTechnology],
   }));
 
+  // One collection per registry the corpus covers; each takes the registry's
+  // default file stem, so the emitted paths are the same ones the goldens pin.
   return {
     mod: buildMod(
       config,
-      [technologies, buildings, agendas, traditions, traditionCategories, edicts, events, hooks],
+      [
+        collection(undefined, [markerTechnology, geneTailoringPatch]),
+        collection(undefined, [markerBuilding]),
+        collection(undefined, [agenda]),
+        collection(undefined, [tradition]),
+        collection(undefined, [traditionCategory]),
+        collection(undefined, [markerEdict]),
+        collection("events", [cascade, delayedA, delayedB, expiredTargetProbe, entryEvent]),
+        collection(undefined, [entryHook]),
+      ],
       { vanilla }
     ),
     entryEvent,
