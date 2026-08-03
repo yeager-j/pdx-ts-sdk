@@ -9,6 +9,7 @@ export * from "./generated/value-sets.ts";
 export * from "./triggers.ts";
 export {
   eventTarget,
+  isEffectKey,
   makeScope,
   type EventTarget,
   type IfChain,

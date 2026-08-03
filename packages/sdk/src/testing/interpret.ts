@@ -13,8 +13,7 @@
 
 import type { PdxEntry, PdxScalar } from "@pdx-ts/pdxscript";
 
-import { makeScope } from "../effect-core.ts";
-import { EFFECT_META } from "../generated/effect-meta.ts";
+import { isEffectKey, makeScope } from "../effect-core.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
 import { EVENT_KINDS } from "../generated/events.ts";
 import type { Trigger } from "../trigger-core.ts";
@@ -246,9 +245,6 @@ function evaluateLimit(entries: readonly PdxEntry[], scope: EntityId, ex: ExecCt
 const FIRE_KEYS = new Map<string, (typeof EVENT_KINDS)[keyof typeof EVENT_KINDS]>(
   Object.values(EVENT_KINDS).map((kind) => [kind.key, kind])
 );
-const REAL_EFFECT_KEYS = new Set(
-  Object.values(EFFECT_META).flatMap((meta) => (meta === undefined ? [] : [meta.key]))
-);
 
 function requireBlock(entry: PdxEntry): readonly PdxEntry[] {
   if (entry.value.kind !== "container") {
@@ -450,7 +446,7 @@ export function applyEffectEntries(
       effect.apply(entry, scope, ex);
       continue;
     }
-    const known = REAL_EFFECT_KEYS.has(entry.key) || STRUCTURAL_SEMANTICS[entry.key] !== undefined;
+    const known = isEffectKey(entry.key) || STRUCTURAL_SEMANTICS[entry.key] !== undefined;
     throw new InterpreterError(
       known
         ? `Effect "${entry.key}" is real but unimplemented in the testing interpreter. ` +
