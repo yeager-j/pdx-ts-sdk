@@ -30,6 +30,7 @@ import {
   defineSpeciesClass,
   defineStarbaseLevel,
   defineStaticModifier,
+  defineStrikeCraftComponentTemplate,
   defineTradition,
   defineUtilityComponentTemplate,
   defineWarGoal,
@@ -57,6 +58,8 @@ import {
   type ComponentTemplateUtilityComponentTemplateRef,
   type ContentItem,
   type DecisionRef,
+  type EconomicResourceBlock,
+  type EconomicResourceBlockNoProduce,
   type EdictRef,
   type EventFleetRef,
   type GovernmentTriggerBlock,
@@ -65,10 +68,14 @@ import {
   type OpinionModifierRef,
   type ScopeRef,
   type SectionTemplateFields,
+  type StrikeCraftComponentTemplateFields,
   type TechnologyRef,
   type TraditionSwapFields,
   type Trigger,
+  type TriggeredModifier,
+  type UtilityComponentTemplateFields,
   type WarGoalRef,
+  type WeaponComponentTemplateFields,
 } from "../src/index.ts";
 
 describe("generated content authoring types", () => {
@@ -644,6 +651,112 @@ describe("generated content authoring types", () => {
       id: "content_types_ship_design_components",
       shipSize: "ship_size_corvette",
       growthStages: [{ shipSize: "ship_size_corvette", requiredComponent: [util] }],
+    });
+  });
+
+  it("authors component template resources/modifier, SMALL_SHIELD_1's missing fields (componentTemplateResources)", () => {
+    // SDK-31: utility_component_template.resources/modifier carry
+    // `## replace_scopes = { this = ship root = ship }`
+    // (weapon/ship_design_modifier: `{ this = design root = design }`), so
+    // the generated shape is exactly ModifierClosure<"ship">/<"design">, the
+    // same per-field scope pinning section_template's modifier/ship_modifier
+    // already exercises just above.
+    expectTypeOf<UtilityComponentTemplateFields["resources"]>().toEqualTypeOf<
+      EconomicResourceBlock<"ship">[] | undefined
+    >();
+    expectTypeOf<UtilityComponentTemplateFields["modifier"]>().toEqualTypeOf<
+      ModifierClosure<"ship"> | undefined
+    >();
+    expectTypeOf<UtilityComponentTemplateFields["shipDesignModifier"]>().toEqualTypeOf<
+      ModifierClosure<"design"> | undefined
+    >();
+    expectTypeOf<UtilityComponentTemplateFields["triggeredShipModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"ship">[] | undefined
+    >();
+    // weapon/strike-craft splice economic_template_no_produce, not plain
+    // economic_template (components.cwt:189, :338 vs :405), so their
+    // resources arm is EconomicResourceBlockNoProduce rather than
+    // EconomicResourceBlock — no `produces` member at all.
+    expectTypeOf<WeaponComponentTemplateFields["resources"]>().toEqualTypeOf<
+      EconomicResourceBlockNoProduce<"ship">[] | undefined
+    >();
+    expectTypeOf<WeaponComponentTemplateFields["modifier"]>().toEqualTypeOf<
+      ModifierClosure<"ship"> | undefined
+    >();
+    // strike_craft_component_template declares only resources and
+    // ship_modifier (components.cwt:332-343) — no modifier of its own.
+    expectTypeOf<StrikeCraftComponentTemplateFields["shipModifier"]>().toEqualTypeOf<
+      ModifierClosure<"ship"> | undefined
+    >();
+    expectTypeOf<StrikeCraftComponentTemplateFields["resources"]>().toEqualTypeOf<
+      EconomicResourceBlockNoProduce<"ship">[] | undefined
+    >();
+
+    // A ported SMALL_SHIELD_1: before this cluster, both fields below
+    // type-checked as extra properties (Fields interfaces are not `exact`,
+    // so an author never got a compile error) and were silently dropped by
+    // the writer, which only iterates the declared ContentField[]. Now they
+    // are real, declared members.
+    defineUtilityComponentTemplate({
+      id: "content_types_small_shield",
+      icon: "GFX_shield",
+      power: 5,
+      size: "small",
+      resources: [{ category: "ship_components", cost: { amounts: { alloys: 20 } } }],
+      modifier: (m) => m.unchecked("ship_shield_hit_points_add", 200),
+    });
+
+    // Utility splices plain economic_template, so `produces` is genuinely
+    // legal there and stays authorable.
+    defineUtilityComponentTemplate({
+      id: "content_types_utility_produces",
+      icon: "GFX_x",
+      resources: [{ category: "ship_components", produces: { amounts: { energy: 1 } } }],
+    });
+
+    defineWeaponComponentTemplate({
+      id: "content_types_weapon_resources",
+      icon: "GFX_x",
+      resources: [{ category: "ship_weapon_components", cost: { amounts: { alloys: 10 } } }],
+      shipModifier: (m) => m.unchecked("ship_weapon_damage_mult", 0.1),
+      shipDesignModifier: (m) => m.unchecked("design_ship_weapon_damage_mult", 0.1),
+    });
+
+    // The produces question (SDK-31 constraint (a), closed by the
+    // EconomicResourceBlockNoProduce follow-up): weapon/strike-craft splice
+    // economic_template_no_produce in CWT, so `produces` is not game-legal on
+    // either, and it no longer type-checks on either registry's resources.
+    defineWeaponComponentTemplate({
+      id: "content_types_weapon_produces_illegal",
+      icon: "GFX_x",
+      resources: [
+        {
+          category: "ship_weapon_components",
+          // @ts-expect-error — weapon_component_template splices economic_template_no_produce
+          produces: { amounts: { alloys: 1 } },
+        },
+      ],
+    });
+
+    defineStrikeCraftComponentTemplate({
+      id: "content_types_strike_craft_resources",
+      icon: "GFX_x",
+      resources: [{ category: "ship_components", cost: { amounts: { alloys: 15 } } }],
+      shipModifier: (m) => m.unchecked("ship_hull_add", 10),
+      // @ts-expect-error — strike_craft_component_template declares no modifier of its own
+      modifier: (m) => m.unchecked("ship_hull_add", 10),
+    });
+
+    defineStrikeCraftComponentTemplate({
+      id: "content_types_strike_craft_produces_illegal",
+      icon: "GFX_x",
+      resources: [
+        {
+          category: "ship_components",
+          // @ts-expect-error — strike_craft_component_template splices economic_template_no_produce
+          produces: { amounts: { alloys: 1 } },
+        },
+      ],
     });
   });
 

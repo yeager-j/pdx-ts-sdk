@@ -734,6 +734,75 @@ describe("content-type codegen", () => {
     expect(sectionTemplate?.machineryBacklog).toEqual([]);
   });
 
+  it("lowers component templates' resources/modifier fields via overlay shapes (componentTemplateResources)", () => {
+    // SDK-31: none of the three component_template registries had a single
+    // field override before this cluster landed, so resources and modifier
+    // were present in components.cwt but absent from CONTENT_FIELD_OVERRIDES
+    // — the writer only emits declared ContentField[] members, so a ported
+    // SMALL_SHIELD_1 occupied a slot, cost nothing, and granted nothing.
+    const utility = emissions.get("utility_component_template");
+    expect(utility?.code).toContain("export interface UtilityComponentTemplateDef");
+    expect(utility?.code).toContain('resources?: EconomicResourceBlock<"ship">[];');
+    expect(utility?.code).toContain('modifier?: ModifierClosure<"ship">;');
+    expect(utility?.code).toContain('shipModifier?: ModifierClosure<"ship">;');
+    expect(utility?.code).toContain('shipDesignModifier?: ModifierClosure<"design">;');
+    expect(utility?.code).toContain('triggeredShipModifier?: TriggeredModifier<"ship">[];');
+    expect(utility?.code).toContain('triggeredShipDesignModifier?: TriggeredModifier<"design">[];');
+    expect(fieldNames(utility!.emittedFields)).toContain("resources");
+    expect(fieldNames(utility!.emittedFields)).toContain("modifier");
+    // target_weights and the friendly_aura/hostile_aura nested modifiers are
+    // pre-existing gaps this ticket does not touch — exact-line membership so
+    // this assertion does not accidentally require fixing them too (their
+    // report lines are prefixed with "friendly_aura."/"hostile_aura.").
+    expect(utility?.unsupported).not.toContain("resources (no declaration the emitter can lower)");
+    expect(utility?.unsupported).not.toContain("modifier (no declaration the emitter can lower)");
+
+    const weapon = emissions.get("weapon_component_template");
+    expect(weapon?.code).toContain("export interface WeaponComponentTemplateDef");
+    // Splices economic_template_no_produce (components.cwt:189), not plain
+    // economic_template like utility's own resources above — `produces` is
+    // not game-legal here, so the row requests economicResourcesNoProduce
+    // rather than economicResources and the member type has no `produces` arm.
+    expect(weapon?.code).toContain('resources?: EconomicResourceBlockNoProduce<"ship">[];');
+    expect(weapon?.code).toContain('shape: "economicResourcesNoProduce"');
+    expect(weapon?.code).not.toContain('resources?: EconomicResourceBlock<"ship">[];');
+    expect(weapon?.code).toContain('modifier?: ModifierClosure<"ship">;');
+    expect(weapon?.code).toContain('shipDesignModifier?: ModifierClosure<"design">;');
+    expect(fieldNames(weapon!.emittedFields)).toContain("resources");
+    expect(fieldNames(weapon!.emittedFields)).toContain("modifier");
+
+    // strike_craft_component_template only declares resources and
+    // ship_modifier (components.cwt:332-343) — no modifier,
+    // ship_design_modifier, or either triggered variant, unlike weapon and
+    // utility above. Those four remain unsupported here because the same
+    // CWT body backs all three registries and mergeByName folds weapon's and
+    // utility's declarations of those names into strike_craft's field group
+    // too; with no strike_craft-specific override they correctly stay
+    // unlowered rather than borrowing a shape strike craft never declares.
+    const strikeCraft = emissions.get("strike_craft_component_template");
+    expect(strikeCraft?.code).toContain("export interface StrikeCraftComponentTemplateDef");
+    // Same economic_template_no_produce splice as weapon's above
+    // (components.cwt:338).
+    expect(strikeCraft?.code).toContain('resources?: EconomicResourceBlockNoProduce<"ship">[];');
+    expect(strikeCraft?.code).toContain('shape: "economicResourcesNoProduce"');
+    expect(strikeCraft?.code).not.toContain('resources?: EconomicResourceBlock<"ship">[];');
+    expect(strikeCraft?.code).toContain('shipModifier?: ModifierClosure<"ship">;');
+    expect(fieldNames(strikeCraft!.emittedFields)).toContain("resources");
+    expect(fieldNames(strikeCraft!.emittedFields)).toContain("ship_modifier");
+    expect(strikeCraft?.unsupported).not.toContain(
+      "resources (no declaration the emitter can lower)"
+    );
+    expect(strikeCraft?.unsupported).not.toContain(
+      "ship_modifier (no declaration the emitter can lower)"
+    );
+    // Confirms the four fields strike_craft genuinely does not declare stay
+    // unsupported rather than silently picking up weapon's/utility's shapes.
+    expect(strikeCraft?.unsupported).toContain("modifier (no declaration the emitter can lower)");
+    expect(strikeCraft?.unsupported).toContain(
+      "ship_design_modifier (no declaration the emitter can lower)"
+    );
+  });
+
   it("generates ambient_object as a name_field registry keyed by name", () => {
     const ambientObject = emissions.get("ambient_object");
     expect(ambientObject?.code).toContain("export interface AmbientObjectDef");

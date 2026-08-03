@@ -203,6 +203,7 @@ export type {
   CustomModifiers,
   DefinedContent,
   EconomicResourceBlock,
+  EconomicResourceBlockNoProduce,
   EconomicResourceOperation,
   EffectBlock,
   ModifierBlock,

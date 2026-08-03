@@ -99,6 +99,29 @@ export interface EconomicResourceBlock<S extends ScopeName> {
 }
 
 /**
+ * {@link EconomicResourceBlock} without `produces`, for CWT's
+ * `economic_template_no_produce` splice — the same open resource-name map,
+ * minus the one arm that splice does not admit.
+ *
+ * Derived with `Omit` rather than duplicating the other three members so a
+ * future change to {@link EconomicResourceBlock} (a new arm, a widened
+ * `category`) flows through here automatically instead of risking drift
+ * between two hand-kept copies.
+ *
+ * `economic_template_no_produce` is spliced at three sites in the vendored
+ * rules today: `weapon_component_template` and
+ * `strike_craft_component_template`'s own `resources`
+ * (`components.cwt:189`, `:338`), and `espionage_operation.resources`
+ * (`espionage.cwt:113`), not yet an exposed registry. This type exists so the
+ * next registry that splices it gets correct typing for free rather than
+ * needing its own overlay investigation.
+ */
+export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
+  EconomicResourceBlock<S>,
+  "produces"
+>;
+
+/**
  * A `modifier_rule` block: optional base weight plus gated adjustments.
  *
  * `M` defaults to plain {@link Modifier} (`desc` optional); `WeightBlockWithLoc`
@@ -239,6 +262,17 @@ interface ContentEffectField extends ContentFieldBase {
 
 interface ContentEconomicResourcesField extends ContentFieldBase {
   readonly shape: "economicResources";
+}
+
+/**
+ * {@link ContentEconomicResourcesField} for a field CWT splices from
+ * `economic_template_no_produce` rather than plain `economic_template` — the
+ * writer iterates a different, `produces`-free operation list for this shape
+ * (see `economicResourceBlock` below), so a cast that forces a `produces` arm
+ * past {@link EconomicResourceBlockNoProduce}'s type is still unemittable.
+ */
+interface ContentEconomicResourcesNoProduceField extends ContentFieldBase {
+  readonly shape: "economicResourcesNoProduce";
 }
 
 interface ContentTriggeredModifierField extends ContentFieldBase {
@@ -411,6 +445,7 @@ export type ContentField =
   | ContentTriggerField
   | ContentEffectField
   | ContentEconomicResourcesField
+  | ContentEconomicResourcesNoProduceField
   | ContentTriggeredModifierField
   | ContentModifierField
   | ContentInlineModifiersField
@@ -523,6 +558,7 @@ function acceptsFromClosure(field: ContentField): boolean {
     case "weightBlock":
     case "weightBlockWithLoc":
     case "economicResources":
+    case "economicResourcesNoProduce":
     case "triggeredModifierBlock":
       return true;
     case "dual":
@@ -790,9 +826,37 @@ function economicOperation(
   return block(key, entries);
 }
 
+/** Every operation {@link economicResourceBlock} can iterate, in emission order. */
+type EconomicResourceOperationKey = "cost" | "produces" | "upkeep" | "logistics";
+
+/** The full arm list — every registry splicing plain `economic_template`. */
+const ECONOMIC_RESOURCE_OPERATIONS: readonly EconomicResourceOperationKey[] = [
+  "cost",
+  "produces",
+  "upkeep",
+  "logistics",
+];
+
+/**
+ * `economic_template_no_produce`'s arm list — `produces` left out entirely.
+ *
+ * `economicResourcesNoProduce` fields are typed as
+ * {@link EconomicResourceBlockNoProduce}, which already keeps `produces`
+ * uncompilable, but a cast can still force one past that type. Iterating this
+ * shorter list rather than filtering the four-element one at the value level
+ * is what keeps a cast-forced `produces` unemitted too: the loop below never
+ * reads the key, so it does not matter whether the object carries it.
+ */
+const ECONOMIC_RESOURCE_OPERATIONS_NO_PRODUCE: readonly EconomicResourceOperationKey[] = [
+  "cost",
+  "upkeep",
+  "logistics",
+];
+
 function economicResourceBlock(
   key: string,
   value: EconomicResourceBlock<ScopeName>,
+  operations: readonly EconomicResourceOperationKey[],
   ctx?: LoweringContext
 ): PdxEntry {
   const entries: PdxEntry[] = [];
@@ -807,7 +871,7 @@ function economicResourceBlock(
     });
     entries.push(kv("category", category));
   }
-  for (const operation of ["cost", "produces", "upkeep", "logistics"] as const) {
+  for (const operation of operations) {
     const arm = value[operation];
     if (arm !== undefined) {
       entries.push(economicOperation(operation, arm, childContext(ctx, key)));
@@ -917,7 +981,27 @@ function fieldEntries(
         const values = field.repeated
           ? (value as readonly EconomicResourceBlock<ScopeName>[])
           : [value as EconomicResourceBlock<ScopeName>];
-        entries.push(...values.map((item) => economicResourceBlock(field.key, item, ctx)));
+        entries.push(
+          ...values.map((item) =>
+            economicResourceBlock(field.key, item, ECONOMIC_RESOURCE_OPERATIONS, ctx)
+          )
+        );
+        break;
+      }
+      case "economicResourcesNoProduce": {
+        const values = field.repeated
+          ? (value as readonly EconomicResourceBlockNoProduce<ScopeName>[])
+          : [value as EconomicResourceBlockNoProduce<ScopeName>];
+        entries.push(
+          ...values.map((item) =>
+            economicResourceBlock(
+              field.key,
+              item as EconomicResourceBlock<ScopeName>,
+              ECONOMIC_RESOURCE_OPERATIONS_NO_PRODUCE,
+              ctx
+            )
+          )
+        );
         break;
       }
       case "triggeredModifierBlock": {

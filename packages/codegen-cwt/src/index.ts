@@ -393,6 +393,7 @@ async function main(): Promise<void> {
       "ContentLocalisation",
       "DefinedContent",
       "EconomicResourceBlock",
+      "EconomicResourceBlockNoProduce",
       "EffectBlock",
       "ModifierBlock",
       "ModifierClosure",

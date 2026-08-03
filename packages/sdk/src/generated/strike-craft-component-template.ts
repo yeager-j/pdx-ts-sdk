@@ -6,7 +6,10 @@ import type {
   ContentField,
   ContentLocalisation,
   DefinedContent,
+  EconomicResourceBlock,
+  EconomicResourceBlockNoProduce,
   EffectBlock,
+  ModifierClosure,
   WeightBlock,
   WithFrom,
 } from "../content.ts";
@@ -470,6 +473,12 @@ export interface StrikeCraftComponentTemplateFields {
    * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
    * Only when strike_craft_component_template subtype `utility_component_template` applies.
    */
+  resources?: EconomicResourceBlockNoProduce<"ship">[];
+  /**
+   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
+   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
+   * Only when strike_craft_component_template subtype `utility_component_template` applies.
+   */
   power?: number;
   /**
    * Only when strike_craft_component_template subtype `weapon_component_template` applies.
@@ -483,6 +492,12 @@ export interface StrikeCraftComponentTemplateFields {
   hideDamageValuesFromTooltip?: boolean;
   /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
   targetableShipSizes?: (ShipSizeRef | string | "null")[];
+  /**
+   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
+   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
+   * Only when strike_craft_component_template subtype `utility_component_template` applies.
+   */
+  shipModifier?: ModifierClosure<"ship">;
   /**
    * Only when strike_craft_component_template subtype `weapon_component_template` applies.
    * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
@@ -772,6 +787,13 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   },
   { key: "valid_for_country", member: "validForCountry", shape: "trigger", form: "trigger" },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
+  {
+    key: "resources",
+    member: "resources",
+    shape: "economicResourcesNoProduce",
+    form: "list",
+    repeated: true,
+  },
   { key: "power", member: "power", shape: "value", form: "scalar", conversion: "identity" },
   { key: "size", member: "size", shape: "value", form: "scalar", conversion: "identity" },
   { key: "type", member: "type", shape: "value", form: "scalar", conversion: "identity" },
@@ -789,6 +811,7 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     form: "list",
     conversion: "ref",
   },
+  { key: "ship_modifier", member: "shipModifier", shape: "modifierBlock", form: "closure" },
   {
     key: "projectile_gfx",
     member: "projectileGfx",

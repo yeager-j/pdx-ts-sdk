@@ -39,6 +39,7 @@ export function authoredForm(field: {
       return field.repeated === true || field.wrapped === true ? "list" : "block";
     case "value":
     case "economicResources":
+    case "economicResourcesNoProduce":
     case "triggeredModifierBlock":
     case "aliasStruct":
       return field.repeated === true ? "list" : field.shape === "value" ? "scalar" : "block";

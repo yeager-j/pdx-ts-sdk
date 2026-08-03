@@ -6,7 +6,12 @@ import type {
   ContentField,
   ContentLocalisation,
   DefinedContent,
+  EconomicResourceBlock,
+  EconomicResourceBlockNoProduce,
   EffectBlock,
+  ModifierBlock,
+  ModifierClosure,
+  TriggeredModifier,
   WeightBlock,
   WithFrom,
 } from "../content.ts";
@@ -466,6 +471,12 @@ export interface WeaponComponentTemplateFields {
    * Only when weapon_component_template subtype `strike_craft_component_template` applies.
    * Only when weapon_component_template subtype `utility_component_template` applies.
    */
+  resources?: EconomicResourceBlockNoProduce<"ship">[];
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
   power?: number;
   /**
    * Only when weapon_component_template subtype `weapon_component_template` applies.
@@ -479,6 +490,32 @@ export interface WeaponComponentTemplateFields {
   hideDamageValuesFromTooltip?: boolean;
   /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   targetableShipSizes?: (ShipSizeRef | string | "null")[];
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
+  modifier?: ModifierClosure<"ship">;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
+  shipModifier?: ModifierClosure<"ship">;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
+  shipDesignModifier?: ModifierClosure<"design">;
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
+  triggeredShipModifier?: TriggeredModifier<"ship">[];
+  /**
+   * Only when weapon_component_template subtype `weapon_component_template` applies.
+   * Only when weapon_component_template subtype `utility_component_template` applies.
+   */
+  triggeredShipDesignModifier?: TriggeredModifier<"design">[];
   /**
    * Only when weapon_component_template subtype `weapon_component_template` applies.
    * Only when weapon_component_template subtype `strike_craft_component_template` applies.
@@ -768,6 +805,13 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   },
   { key: "valid_for_country", member: "validForCountry", shape: "trigger", form: "trigger" },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
+  {
+    key: "resources",
+    member: "resources",
+    shape: "economicResourcesNoProduce",
+    form: "list",
+    repeated: true,
+  },
   { key: "power", member: "power", shape: "value", form: "scalar", conversion: "identity" },
   { key: "size", member: "size", shape: "value", form: "scalar", conversion: "identity" },
   { key: "type", member: "type", shape: "value", form: "scalar", conversion: "identity" },
@@ -784,6 +828,28 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     shape: "valueList",
     form: "list",
     conversion: "ref",
+  },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
+  { key: "ship_modifier", member: "shipModifier", shape: "modifierBlock", form: "closure" },
+  {
+    key: "ship_design_modifier",
+    member: "shipDesignModifier",
+    shape: "modifierBlock",
+    form: "closure",
+  },
+  {
+    key: "triggered_ship_modifier",
+    member: "triggeredShipModifier",
+    shape: "triggeredModifierBlock",
+    form: "list",
+    repeated: true,
+  },
+  {
+    key: "triggered_ship_design_modifier",
+    member: "triggeredShipDesignModifier",
+    shape: "triggeredModifierBlock",
+    form: "list",
+    repeated: true,
   },
   {
     key: "projectile_gfx",
