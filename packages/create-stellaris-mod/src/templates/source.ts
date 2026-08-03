@@ -226,7 +226,7 @@ export function contentExampleTestTs(resolved: Resolved): string {
  * meant, not that the game agrees about everything around it.
  */
 
-import { fixture } from "@pdx-ts/sdk/testing";
+import { fixture } from "@pdx-ts/sdk-testing";
 import { describe, expect, it } from "vitest";
 
 import { flags } from "../flags.ts";

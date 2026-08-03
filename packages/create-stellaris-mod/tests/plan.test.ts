@@ -181,8 +181,8 @@ describe("the generated sources", () => {
       if (relPath === "README.md") {
         continue; // Prose about the opt-in, not an import.
       }
-      expect(contents, relPath).not.toContain("@pdx-ts/sdk/testing/matchers");
+      expect(contents, relPath).not.toContain("@pdx-ts/sdk-testing/matchers");
     }
-    expect(plan().get("README.md")).toContain("@pdx-ts/sdk/testing/matchers");
+    expect(plan().get("README.md")).toContain("@pdx-ts/sdk-testing/matchers");
   });
 });

@@ -1,0 +1,36 @@
+{
+  "name": "@pdx-ts/sdk-testing",
+  "version": "0.1.0",
+  "description": "Test Stellaris mod logic without launching the game — a whitelist interpreter over the triggers and effects @pdx-ts/sdk records",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./matchers": "./src/matchers.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "src"
+  ],
+  "keywords": [
+    "stellaris",
+    "paradox",
+    "modding",
+    "testing",
+    "vitest"
+  ],
+  "peerDependencies": {
+    "@pdx-ts/sdk": "*",
+    "vitest": ">=3"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@pdx-ts/pdxscript": "*"
+  }
+}

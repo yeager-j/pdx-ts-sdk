@@ -98,7 +98,7 @@ export function readme(resolved: Resolved): string {
     "",
     "```ts",
     "// vitest.setup.ts",
-    'import { installMatchers } from "@pdx-ts/sdk/testing/matchers";',
+    'import { installMatchers } from "@pdx-ts/sdk-testing/matchers";',
     "",
     "installMatchers();",
     "```",

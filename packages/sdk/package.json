@@ -6,20 +6,10 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
-    "./stellaris": "./src/stellaris/index.ts",
-    "./testing": "./src/testing/index.ts",
-    "./testing/matchers": "./src/testing/matchers.ts"
+    "./stellaris": "./src/stellaris/index.ts"
   },
   "dependencies": {
     "@pdx-ts/pdxscript": "*"
-  },
-  "peerDependencies": {
-    "vitest": ">=3"
-  },
-  "peerDependenciesMeta": {
-    "vitest": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@pdx-ts/codegen-cwt": "*"

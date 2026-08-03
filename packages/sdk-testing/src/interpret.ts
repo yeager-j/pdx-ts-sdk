@@ -12,11 +12,8 @@
  */
 
 import type { PdxEntry, PdxScalar } from "@pdx-ts/pdxscript";
+import { EVENT_KINDS, isEffectKey, makeScope, type ScopeObjOf, type Trigger } from "@pdx-ts/sdk";
 
-import { isEffectKey, makeScope } from "../effect-core.ts";
-import type { ScopeObjOf } from "../generated/effects.ts";
-import { EVENT_KINDS } from "../generated/events.ts";
-import type { Trigger } from "../trigger-core.ts";
 import {
   cloneState,
   Country,

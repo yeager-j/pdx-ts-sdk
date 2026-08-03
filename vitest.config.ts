@@ -14,7 +14,10 @@ export default defineConfig({
           exclude: ["packages/stellaris-ids/tests/**"],
           typecheck: {
             enabled: true,
-            include: ["packages/sdk/tests/**/*.test-d.ts"],
+            include: [
+              "packages/sdk/tests/**/*.test-d.ts",
+              "packages/sdk-testing/tests/**/*.test-d.ts",
+            ],
           },
         },
       },

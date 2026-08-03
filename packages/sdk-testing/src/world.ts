@@ -18,9 +18,8 @@
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
+import type { DefinedEvent, EventRef, ScopeName } from "@pdx-ts/sdk";
 
-import type { DefinedEvent, EventRef } from "../events.ts";
-import type { ScopeName } from "../generated/scopes.ts";
 import { applyEffectEntries, type ForcedArms } from "./interpret.ts";
 import {
   buildState,

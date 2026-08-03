@@ -357,6 +357,7 @@ and the override didn't take" becomes a build error.
 | --- | --- |
 | [create-stellaris-mod](packages/create-stellaris-mod/README.md) | `npx create-stellaris-mod my-mod` — detects your install and scaffolds a project that builds on the first `npm install` |
 | [@pdx-ts/sdk](packages/sdk/README.md) | The SDK: definers, triggers/effects, scope safety, building, rendering, vanilla patching, mod-logic testing |
+| [@pdx-ts/sdk-testing](packages/sdk-testing/README.md) | Test mod logic without launching the game: a whitelist interpreter over the recorded triggers and effects, plus vitest matchers |
 | [@pdx-ts/pdxscript](packages/pdxscript/README.md) | Standalone PDXScript parser/serializer — order-preserving, round-trip-verified, game-semantics-free |
 | [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md) | Every identifier a real install defines, as version-pinned types — makes vanilla references compile-checked |
 | [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md) | Rules-derived generator: emits the SDK's typed surface from the vendored cwtools rules |

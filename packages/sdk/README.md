@@ -173,7 +173,6 @@ src/
 ├── vanilla/           install-derived surface: VanillaView, patches, the version pin
 ├── stellaris/         locateInstall, stellaris.load(), the parse cache
 ├── resolver/          load-order model, per-registry override rules, patch planning
-├── testing/           the whitelist mod-logic evaluator (see Testing)
 └── generated/         committed codegen output — never edit by hand
 ```
 
@@ -232,11 +231,11 @@ Evidence comes in four kinds, and new registries are expected to add all four:
   (corpus conformance, patch calibration, ids-package drift) run wherever one
   exists and skip elsewhere.
 
-For testing *mod logic* — the SDK's user-facing feature — the
-`@pdx-ts/sdk/testing` subpath ships a whitelist interpreter over the recorded
-ASTs: `fixture()` builds a world, `world.fire`/`world.advance` drive events,
-`evaluate`/`explain` answer why a trigger fails by naming the failing
-subcondition. Every implemented trigger, effect, iterator, and link carries a
-one-line defense of its semantics; anything unimplemented throws rather than
-guessing. Vitest matchers are separate at `@pdx-ts/sdk/testing/matchers`, so
-the evaluator itself has no test-framework dependency.
+For testing *mod logic* — the SDK's user-facing feature —
+[@pdx-ts/sdk-testing](../sdk-testing/README.md) ships a whitelist interpreter
+over the recorded ASTs: `fixture()` builds a world, `world.fire`/`world.advance`
+drive events, `evaluate`/`explain` answer why a trigger fails by naming the
+failing subcondition. It is a separate package because its matchers integrate
+with a test framework, and a peer dependency on vitest does not belong in an SDK
+whose job is emitting game files. Consuming this package through its public
+interface is also what keeps that interface honest.

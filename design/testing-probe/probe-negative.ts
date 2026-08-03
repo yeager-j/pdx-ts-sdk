@@ -8,13 +8,13 @@
 
 import { expect } from "vitest";
 
+import { evaluate } from "../../packages/sdk-testing/src/interpret.ts";
 import { countryFlags, planetFlags } from "../../packages/sdk/src/generated/value-sets.ts";
-import { evaluate } from "../../packages/sdk/src/testing/interpret.ts";
 
-import "../../packages/sdk/src/testing/matchers.ts";
+import "../../packages/sdk-testing/src/matchers.ts";
 
-import type { Country, Planet } from "../../packages/sdk/src/testing/state.ts";
-import { declareFrom, fixture, type World } from "../../packages/sdk/src/testing/world.ts";
+import type { Country, Planet } from "../../packages/sdk-testing/src/state.ts";
+import { declareFrom, fixture, type World } from "../../packages/sdk-testing/src/world.ts";
 import { hasCountryFlag } from "../../packages/sdk/src/triggers.ts";
 import { aftershock, humReturns } from "./probe-mod.ts";
 

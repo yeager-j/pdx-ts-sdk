@@ -1,10 +1,17 @@
 import { kv } from "@pdx-ts/pdxscript";
+import {
+  countryFlags,
+  eventTarget,
+  globalFlags,
+  hasCountryFlag,
+  hasGlobalFlag,
+  namespace,
+  or,
+  trigger,
+} from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
-import { countryFlags, globalFlags } from "../src/generated/value-sets.ts";
-import { eventTarget, namespace } from "../src/index.ts";
-import { evaluate, fixture } from "../src/testing/index.ts";
-import { hasCountryFlag, hasGlobalFlag, or, trigger } from "../src/triggers.ts";
+import { evaluate, fixture } from "../src/index.ts";
 
 const flags = countryFlags("testing_group_left", "testing_group_right");
 const globals = globalFlags("testing_group_middle");

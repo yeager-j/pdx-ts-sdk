@@ -13,9 +13,9 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { expect } from "vitest";
 
-import { explainFor, renderExplanation } from "../../packages/sdk/src/testing/interpret.ts";
-import type { Country, FiredRecord, Planet } from "../../packages/sdk/src/testing/state.ts";
-import { containsFired, renderFiredRecords } from "../../packages/sdk/src/testing/world.ts";
+import { explainFor, renderExplanation } from "../../packages/sdk-testing/src/interpret.ts";
+import type { Country, FiredRecord, Planet } from "../../packages/sdk-testing/src/state.ts";
+import { containsFired, renderFiredRecords } from "../../packages/sdk-testing/src/world.ts";
 
 interface ProbeMatchers<R = unknown> {
   toContainEvent(

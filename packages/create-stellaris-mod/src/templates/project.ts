@@ -22,7 +22,8 @@ const VERSIONS = {
   eslint: "^9.0.0",
   eslint_js: "^9.0.0",
   typescript_eslint: "^8.0.0",
-  sdk: "^1.0.0",
+  sdk: "^0.1.0",
+  sdkTesting: "^0.1.0",
 } as const;
 
 function json(value: unknown): string {
@@ -46,6 +47,20 @@ function sdkDependencies(resolved: Resolved): Record<string, string> {
   };
 }
 
+/**
+ * The mod-logic interpreter, a devDependency because it never ships with the
+ * mod — it is a separate package from the SDK precisely because its matchers
+ * integrate with a test framework.
+ */
+function testingDependency(resolved: Resolved): Record<string, string> {
+  return {
+    "@pdx-ts/sdk-testing":
+      resolved.localSdk === undefined
+        ? VERSIONS.sdkTesting
+        : `file:${resolved.localSdk}/packages/sdk-testing`,
+  };
+}
+
 function idsDependency(resolved: Resolved): Record<string, string> {
   if (resolved.gameVersion === undefined || !/^\d+\.\d+\.\d+$/.test(resolved.gameVersion)) {
     return {};
@@ -64,6 +79,7 @@ export function packageJson(resolved: Resolved, packageName: string): string {
     "@types/node": VERSIONS.types_node,
     typescript: VERSIONS.typescript,
     vitest: VERSIONS.vitest,
+    ...testingDependency(resolved),
   };
   if (resolved.eslint) {
     devDependencies["@eslint/js"] = VERSIONS.eslint_js;

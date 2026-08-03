@@ -40,7 +40,7 @@ let projectDir: string;
 function linkDependencies(dir: string): void {
   const modules = path.join(dir, "node_modules");
   mkdirSync(path.join(modules, "@pdx-ts"), { recursive: true });
-  for (const pkg of ["sdk", "pdxscript", "stellaris-ids"]) {
+  for (const pkg of ["sdk", "sdk-testing", "pdxscript", "stellaris-ids"]) {
     symlinkSync(path.join(REPO, "packages", pkg), path.join(modules, "@pdx-ts", pkg), "dir");
   }
   for (const dep of ["typescript", "vitest", "@types"]) {
