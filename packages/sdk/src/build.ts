@@ -169,16 +169,31 @@ export function buildMod(
   const flat = flattenItems(collections);
   const warnings: ModWarning[] = [];
   const loc = new Map<string, string>();
+  // Raw (pre quote-replacement) source text per key, kept only to tell a
+  // benign re-registration — the same key registered twice with the exact
+  // same English text, which two modifier rows sharing one tooltip under
+  // different `when` conditions legitimately do (SDK-48) — from a genuine
+  // collision, where two different pieces of content computed the same key
+  // for different text. `loc` itself holds the quote-replaced text, which a
+  // raw-source comparison must not be compared against directly.
+  const locSource = new Map<string, string>();
 
   const registerLocEntries = (entries: readonly (readonly [string, string])[]): void => {
-    const pending = new Set<string>();
-    for (const [key] of entries) {
-      if (loc.has(key) || pending.has(key)) {
+    const pending = new Map<string, string>();
+    for (const [key, source] of entries) {
+      const existing = pending.get(key) ?? locSource.get(key);
+      if (existing !== undefined && existing !== source) {
         throw new Error(`Duplicate localization key "${key}"`);
       }
-      pending.add(key);
+      pending.set(key, source);
     }
     for (const [key, source] of entries) {
+      // Already registered, either earlier in this same batch or by a prior
+      // call — the first loop already proved the text matches, so this is
+      // the benign re-registration, not a collision. Register once.
+      if (loc.has(key)) {
+        continue;
+      }
       let text = source;
       if (text.includes('"')) {
         warnings.push({
@@ -188,6 +203,7 @@ export function buildMod(
         text = text.replaceAll('"', "'");
       }
       loc.set(key, text);
+      locSource.set(key, source);
     }
   };
 

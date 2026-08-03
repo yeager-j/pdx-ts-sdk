@@ -2078,6 +2078,65 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     );
   });
 
+  it("builds when two rows share identical unpinned desc text under different conditions", () => {
+    // Two rows can legitimately want the exact same tooltip gated on
+    // different conditions — "insufficient resources" under one flag, the
+    // same line under another. Hashing only the desc text (no descKey given)
+    // produces the same slug, and therefore the same full key, for both
+    // rows. That must not be treated as a collision: the game shows the
+    // same string either way, so registering the identical key/text once
+    // is correct, not a bug the duplicate-key guard should catch. This must
+    // fail on the branch tip before this fix, where the guard rejected any
+    // repeated key regardless of whether the text matched.
+    const desc = "Insufficient resources.";
+    const situation = defineSituationType({
+      id: "desc_key_test_situation_shared_text",
+      name: "Shared Text Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          { subtract: 1, desc, when: hasSituationFlag("desc_key_test_flag_a") },
+          { factor: 2, desc, when: hasSituationFlag("desc_key_test_flag_b") },
+        ],
+      },
+    });
+
+    const mod = buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])]);
+    const expectedSlug = createHash("sha256").update(desc).digest("hex").slice(0, 8);
+    const expectedKey = `desc_key_test_situation_shared_text_monthly_progress_${expectedSlug}`;
+
+    // One yml entry, not two identical ones.
+    expect(mod.loc.get(expectedKey)).toBe(desc);
+    expect([...mod.loc.values()].filter((text) => text === desc)).toHaveLength(1);
+
+    // Both modifier rows reference that same key in the emitted content.
+    const content = render(mod).get("common/situations/desc_key_test_situations.txt")!;
+    const descLines = content.split("\n").filter((line) => line.includes("desc ="));
+    expect(descLines).toEqual([`\t\t\tdesc = ${expectedKey}`, `\t\t\tdesc = ${expectedKey}`]);
+  });
+
+  it("still rejects a genuine collision — same key, different text", () => {
+    // Two rows deliberately sharing a descKey but carrying different desc
+    // text compute the same localisation key for different English strings.
+    // That is exactly what the duplicate-key guard exists to catch, and the
+    // benign same-text exemption above must not weaken it.
+    const situation = defineSituationType({
+      id: "desc_key_test_situation_collision",
+      name: "Collision Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          { subtract: 1, desc: "Text A.", descKey: "shared_key", when: always() },
+          { factor: 2, desc: "Text B.", descKey: "shared_key", when: always() },
+        ],
+      },
+    });
+
+    expect(() => buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])])).toThrow(
+      'Duplicate localization key "desc_key_test_situation_collision_monthly_progress_shared_key"'
+    );
+  });
+
   it("matches the golden localisation and content for a mix of pinned and unpinned desc keys", async () => {
     const situation = defineSituationType({
       id: "desc_key_test_situation_golden",
