@@ -107,6 +107,11 @@ function collect(spec: RegistrySpec, items: readonly PdxItem[], add: (id: string
     if (item.kind !== "entry" || item.value.kind !== "container") {
       continue;
     }
+    // A sibling type sharing this directory, told apart by its root key. Not
+    // one of ours however the rest of the spec reads it.
+    if (item.key === spec.excludedKey) {
+      continue;
+    }
     if (spec.skipRootKey !== null) {
       if (item.key !== spec.skipRootKey || spec.nameField === null) {
         continue;

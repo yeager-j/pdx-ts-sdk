@@ -30,6 +30,17 @@ export interface RegistrySpec {
   /** Root block the definitions sit one level inside, e.g. `spriteTypes`. */
   readonly skipRootKey: string | null;
   /**
+   * A top-level key that is *not* one of this registry's definitions, from a
+   * negated `## type_key_filter <> key`.
+   *
+   * Two CWT types can share a directory and be told apart by their root key.
+   * `common/solar_system_initializers` holds both `solar_system_initializer`
+   * and `solar_system_initializer_random_list`, the latter written under
+   * `random_list`. Without this an id-keyed registry reads every top-level key
+   * as one of its own and would emit `random_list` as an initializer id.
+   */
+  readonly excludedKey: string | null;
+  /**
    * `path_strict`: read `path` itself and no subdirectory of it. Only
    * `technology` needs it among the registries here, and it needs it badly —
    * `common/technology/tier` and `common/technology/category` hold two other
@@ -87,9 +98,16 @@ function resolveRow(row: VanillaIdRow, type: ContentType | undefined): RegistryS
         "needs the keyword its entries are written under"
     );
   }
-  if (type.keyFilter !== null && keyword !== null && keyword !== type.keyFilter) {
+  // A negated filter says which key the entries are *not* written under, so it
+  // constrains nothing about the keyword and cannot contradict it.
+  if (
+    type.keyFilter !== null &&
+    !type.keyFilter.negated &&
+    keyword !== null &&
+    keyword !== type.keyFilter.key
+  ) {
     throw new Error(
-      `type[${row.type}] declares ## type_key_filter = ${type.keyFilter} but the manifest ` +
+      `type[${row.type}] declares ## type_key_filter = ${type.keyFilter.key} but the manifest ` +
         `claims keyword ${keyword}`
     );
   }
@@ -100,6 +118,7 @@ function resolveRow(row: VanillaIdRow, type: ContentType | undefined): RegistryS
     keyword,
     nameField: type.nameField,
     skipRootKey,
+    excludedKey: type.keyFilter?.negated === true ? type.keyFilter.key : null,
     pathStrict: type.pathStrict ?? false,
     bucket: row.bucket ?? "stripped-file",
   };

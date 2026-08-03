@@ -37,6 +37,7 @@ import {
   defineSectionTemplate,
   defineShipSize,
   defineSituationType,
+  defineSolarSystemInitializer,
   defineSpeciesClass,
   defineStarbaseLevel,
   defineStaticModifier,
@@ -870,6 +871,66 @@ function defineContentExample(): PureMod {
   // Not a define: the ownership limit has no id this mod owns.
   const ownershipLimits = addShipOfSizeLimits([titanLimit]);
 
+  // The neighbor a system links to, defined first so the link below is a
+  // branded ref into this same registry rather than a raw string.
+  const neighborSystem = defineSolarSystemInitializer({
+    id: "content_test_system_outpost",
+    class: "sc_g",
+    usage: ["misc_system_init"],
+    planet: [{ class: "star", size: 20, orbitDistance: 0, orbitAngle: 0 }],
+  });
+
+  // Modeled on the vanilla custom_starting_init_* entries: a star, then a
+  // planet carrying its own moons, then a second planet nested one level
+  // deeper. `changeOrbit` sits between the planet and its moons on purpose —
+  // it advances the orbit cursor, so its position among the siblings is the
+  // geometry, and the emitter has to preserve declaration order to keep it.
+  const homeSystem = defineSolarSystemInitializer({
+    id: "content_test_system_home",
+    class: "rl_standard_stars",
+    flags: ["content_test_home_system"],
+    usage: ["custom_empire"],
+    usageOdds: 5,
+    asteroidBelt: [{ type: "rocky_asteroid_belt", radius: { min: 400, max: 450 } }],
+    initEffect: (system) => {
+      system.setStarFlag("content_test_surveyed");
+    },
+    planet: [
+      { count: 1, class: "star", orbitDistance: 0, orbitAngle: 0, size: { min: 30, max: 35 } },
+      {
+        name: "NAME_Content_Test_Prime",
+        class: "pc_continental",
+        orbitDistance: 60,
+        orbitAngle: { min: 90, max: 270 },
+        size: 20,
+        hasRing: false,
+        homePlanet: true,
+        initEffect: (planet) => {
+          planet.setCapital(true);
+        },
+        changeOrbit: 12,
+        moon: [
+          { class: "pc_barren", size: 8, orbitDistance: 10 },
+          {
+            class: "pc_frozen",
+            size: 6,
+            orbitDistance: 8,
+            moon: [{ class: "pc_barren", size: 4 }],
+          },
+        ],
+      },
+      {
+        class: "pc_gas_giant",
+        orbitDistance: 90,
+        size: 25,
+        planet: [{ class: "pc_asteroid", size: 4, orbitDistance: 15 }],
+      },
+    ],
+    neighborSystem: [
+      { initializer: neighborSystem, distance: { min: 20, max: 40 }, hyperlaneJumps: 1 },
+    ],
+  });
+
   return buildMod(CONFIG, [
     collection(undefined, [
       agenda,
@@ -902,6 +963,8 @@ function defineContentExample(): PureMod {
       speciesClass,
       titanLimit,
       ownershipLimits,
+      neighborSystem,
+      homeSystem,
     ]),
     collection("events", digEvents),
   ]);
@@ -935,6 +998,41 @@ describe("generated content registries", () => {
     );
     expect(rendered).not.toContain("name =");
     expect(rendered).not.toContain("desc =");
+  });
+
+  it("writes a solar system's planets and moons as ordered anonymous siblings", () => {
+    // The whole registry rests on this byte shape. `planet` is not a keyed
+    // collection and not one block: it is N sibling blocks with no id, whose
+    // order is the geometry, nested to whatever depth the author wrote.
+    const rendered = files.get(
+      "common/solar_system_initializers/content_test_solar_system_initializers.txt"
+    )!;
+    const home = rendered.slice(0, rendered.indexOf("content_test_system_outpost = {"));
+    expect(home.match(/^\tplanet = \{$/gm)).toHaveLength(3);
+    // A moon inside a planet, and a moon inside that moon — the recursion is
+    // resolved through registerAliasStructFields at write time, since the
+    // field table cannot reference itself.
+    expect(rendered).toContain("\t\tmoon = {\n\t\t\tclass = pc_frozen");
+    expect(rendered).toContain("\t\t\tmoon = {\n\t\t\t\tclass = pc_barren");
+    // And a planet inside a planet, the other half of the mutual recursion.
+    expect(rendered).toContain("\t\tplanet = {\n\t\t\tclass = pc_asteroid");
+    // `change_orbit` advances the orbit cursor, so it has to precede the moons
+    // it applies to. This is what the declaration-ordered splice emission buys:
+    // emitting the splice member first would put every moon ahead of it.
+    //
+    // Only the nested case. At the *top* level the same key cannot be
+    // interleaved between planets at all — members are emitted one key at a
+    // time, so every planet lands before every orbit change, and 280 of the 360
+    // shipped initializers are written the other way. SDK-30 tracks the ordered
+    // sequence shape that would fix it; the README documents the workaround.
+    const prime = rendered.slice(rendered.indexOf("NAME_Content_Test_Prime"));
+    expect(prime.indexOf("change_orbit")).toBeLessThan(prime.indexOf("moon = {"));
+    // A neighbour link is a branded ref into this same registry, so it carries
+    // the other definition's prefixed id rather than whatever was typed.
+    expect(rendered).toContain("initializer = content_test_system_outpost");
+    // No id and no localisation anywhere below the top level: a planet is
+    // author data, not a definition.
+    expect(rendered).not.toContain("\t\tid =");
   });
 
   it("lowers recorder paths, raw names, and unchecked names identically", () => {

@@ -27,6 +27,7 @@
 // From: common/starbases_consolidated.cwt
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
+// From: common/solar_system_initializers.cwt
 // From: content-manifest.ts (VANILLA_REF_EXTRAS)
 
 import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../vanilla-ids.ts";
@@ -60,6 +61,7 @@ import type {
   SectionTemplateRef,
   ShipSizeRef,
   SituationTypeRef,
+  SolarSystemInitializerRef,
   SoundEffectRef,
   SoundRef,
   SpeciesClassRef,
@@ -477,6 +479,18 @@ export function speciesClass<const Id extends VanillaId<"species_class">>(
 export function countryShipOfSizeLimit<const Id extends VanillaId<"country_ship_of_size_limit">>(
   id: Id
 ): CountryShipOfSizeLimitRef & { readonly id: Id } {
+  return { id };
+}
+
+/**
+ * A checked reference to a vanilla solar system initializer id.
+ * Checked against @pdx-ts/stellaris-ids when it is installed; any
+ * string otherwise. Zero runtime validation either way — this only
+ * constructs the branded reference the rest of the SDK already accepts.
+ */
+export function solarSystemInitializer<const Id extends VanillaId<"solar_system_initializer">>(
+  id: Id
+): SolarSystemInitializerRef & { readonly id: Id } {
   return { id };
 }
 

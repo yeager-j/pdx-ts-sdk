@@ -251,6 +251,23 @@ export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
       "`Trigger` — its members are a fixed value/OR/NOT/NOR clause template plus " +
       "self-recursive OR/AND/limit combinators, emitted by emit/alias-struct.ts.",
   ],
+  [
+    "planet_initializer",
+    "The planet grammar `solar_system_initializer` splices unkeyed at its own top " +
+      "level. One member, `planet`, whose declaration is a block that splices " +
+      "`planet_initializer` and `moon_initializer` back into itself — so a system's " +
+      "planets are anonymous, ordered and repeated, and nest without bound. Emitted " +
+      "by emit/alias-splice.ts as `PlanetInitializerFields`, whose field table has to " +
+      "be resolved through `registerAliasStructFields` at write time because it " +
+      "refers to itself.",
+  ],
+  [
+    "moon_initializer",
+    "The moon half of the same grammar, spliced from inside `planet` and from inside " +
+      "itself. One member, `moon`. Kept separate because CWT declares it separately, " +
+      "and because a moon admits a strictly smaller body — no `namelist`, no " +
+      "`satellite_naming_policy`, and no nested `planet`.",
+  ],
 ]);
 
 export interface FieldWidening {
@@ -921,6 +938,53 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "of which satisfies that type, and the field controls the country's naval-capacity " +
         "tooltip on a registry named country_ship_of_size_limit. Without this the field is " +
         "emitted but can hold nothing any real definition writes.",
+    },
+  ],
+  // The four rows below are all one defect, twice per alias category. CWT
+  // declares each of these keys as a scalar and as a `{ min max }` block and
+  // annotates *both* `cardinality = 0..inf`, so both arms author as arrays,
+  // `lowerDual` cannot tell them apart, and the field collapses to whichever
+  // arm is declared first. The corpus contradicts that collapse outright, and
+  // the repetition CWT claims is one upstream copy-paste per ~2,000 blocks.
+  [
+    "planet_initializer.orbit_angle",
+    {
+      arity: "single",
+      reason:
+        'Collapses to `"random"[]` against 805 of the 1,803 shipped planets that write the ' +
+        "`{ min max }` block. Exactly one planet block in 2,031 repeats the key, and it is a " +
+        "quirk rather than a list: fallen_empire_initializers.txt's The Preserve writes " +
+        "`orbit_angle = { min = 90 max = 270 }` and then `orbit_angle = 60`, contradicting " +
+        "itself for the game to resolve last-wins. Same shape as job.auto_generate_description.",
+    },
+  ],
+  [
+    "planet_initializer.size",
+    {
+      arity: "single",
+      reason:
+        "Collapses to `number[]` against 470 of the 1,337 shipped planets that write " +
+        "`{ min max }`. The one block in 2,031 that repeats it — special_system_initializers' " +
+        "Hillos B, `size = 15` then `size = { min = 5 max = 10 }` — is the same self-" +
+        "contradicting copy-paste, not a planet with two sizes.",
+    },
+  ],
+  [
+    "moon_initializer.orbit_angle",
+    {
+      arity: "single",
+      reason:
+        "The same declaration one level down, and the corpus leans harder: 417 of the 604 " +
+        "shipped moons that set it write the block form. No moon block repeats the key.",
+    },
+  ],
+  [
+    "moon_initializer.size",
+    {
+      arity: "single",
+      reason:
+        "As planet_initializer.size: 79 of the 358 shipped moons that set it write " +
+        "`{ min max }`, and no moon block repeats the key.",
     },
   ],
   [

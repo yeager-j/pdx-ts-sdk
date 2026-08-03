@@ -101,6 +101,21 @@ export function indefiniteArticle(name: string): "a" | "an" {
   return /^[aeiou]/i.test(name) ? "an" : "a";
 }
 
+/**
+ * The plural of a generated collection name — `starFlags`, `customStarNames`.
+ *
+ * Appending `s` unconditionally is right for every name that does not already
+ * end in one, and `custom_star_names` / `custom_planet_names` are the first that
+ * do: they arrived with the solar system initializer registry and spelled
+ * themselves `customStarNamess`. Only the doubling is worth fixing — these are
+ * snake_case rule keys, so there are no `-y`/`-ch` cases to pluralize and no
+ * irregulars, and a name already ending in `s` is already the plural the caller
+ * wants.
+ */
+export function pluralize(name: string): string {
+  return name.endsWith("s") ? name : `${name}s`;
+}
+
 /** A reserved word gets a trailing underscore: `if` becomes `if_`. */
 export function safeIdentifier(name: string): string {
   return RESERVED.has(name) ? `${name}_` : name;

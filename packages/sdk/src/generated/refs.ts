@@ -504,6 +504,11 @@ export type SpriteRef = TypedRef<"sprite" | `sprite.${string}`>;
 /** A reference to a `<star_class>`. */
 export type StarClassRef = TypedRef<"star_class" | `star_class.${string}`>;
 
+/** A reference to a `<star_class_random_list>`. */
+export type StarClassRandomListRef = TypedRef<
+  "star_class_random_list" | `star_class_random_list.${string}`
+>;
+
 /** A reference to a `<starbase_building>`. */
 export type StarbaseBuildingRef = TypedRef<"starbase_building" | `starbase_building.${string}`>;
 

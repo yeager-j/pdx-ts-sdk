@@ -1,6 +1,6 @@
 /** Emitters for the small supporting modules: scopes, enums, and references. */
 
-import { camelCase, docComment, pascalCase } from "../naming.ts";
+import { camelCase, docComment, pascalCase, pluralize } from "../naming.ts";
 import { EXTRA_SCOPES } from "../overlay.ts";
 import type { Emitter } from "./types.ts";
 
@@ -79,7 +79,7 @@ export function emitValueSets(emitter: Emitter): string {
           `Declares ${name} names, so they autocomplete and cannot be`,
           "confused with a name from another set.",
         ]) +
-        `export const ${camelCase(name)}s = declare<${JSON.stringify(name)}>();\n`
+        `export const ${pluralize(camelCase(name))} = declare<${JSON.stringify(name)}>();\n`
       );
     })
     .join("\n");

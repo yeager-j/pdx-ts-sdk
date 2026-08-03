@@ -97,8 +97,17 @@ export interface ContentType {
    * has no file layout to describe.
    */
   readonly pathStrict?: boolean;
-  /** Type-level `## type_key_filter`, when the type declares exactly one. */
-  readonly keyFilter: string | null;
+  /**
+   * Type-level `## type_key_filter`, when the type declares exactly one.
+   *
+   * Carries the negation because CWT writes it both ways and the two mean
+   * opposite things: `## type_key_filter = random_list` says the type's entries
+   * are *only* the `random_list` ones, while `## type_key_filter <> random_list`
+   * says they are everything *but*. Storing the bare key would read the second
+   * as the first — so a consumer matching a keyword against it has to check
+   * `negated` before believing the key names what the entries are written under.
+   */
+  readonly keyFilter: { readonly key: string; readonly negated: boolean } | null;
   readonly subtypes: readonly ContentSubtype[];
   readonly localisation: readonly { key: string; pattern: string; required: boolean }[];
 }
@@ -434,7 +443,10 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
           extensionNode?.value.kind === "scalar" ? dotted(extensionNode.value.text) : null,
         skipRootKey: skipRootKeyNode?.value.kind === "scalar" ? skipRootKeyNode.value.text : null,
         pathStrict: pathStrictNode?.value.kind === "scalar" && pathStrictNode.value.text === "yes",
-        keyFilter: typeKeyFilter?.value?.kind === "scalar" ? typeKeyFilter.value.text : null,
+        keyFilter:
+          typeKeyFilter?.value?.kind === "scalar"
+            ? { key: typeKeyFilter.value.text, negated: typeKeyFilter.negated }
+            : null,
         subtypes: inner.flatMap((node) => {
           const subtype = BRACKET_KEY.exec(node.key.text);
           if (subtype === null || subtype[1] !== "subtype") {

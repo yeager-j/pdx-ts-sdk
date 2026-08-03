@@ -16,10 +16,12 @@ import {
   type ContentManifestEntry,
 } from "./content-manifest.ts";
 import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
-import { emitAliasStruct, type AliasStructEmission } from "./emit/alias-struct.ts";
+import { emitAliasSplice, type AliasSpliceEmission } from "./emit/alias-splice.ts";
+import { emitAliasStruct } from "./emit/alias-struct.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
+import { structuralSpliceOf } from "./emit/fields.ts";
 import { classifyLinks, emitTriggerLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
@@ -159,33 +161,6 @@ async function main(): Promise<void> {
   const effects = emitEffects(emitter, docs.effects, index, classifiedLinks.links);
   const effectUsage = emitter.endFile();
 
-  // Categories a content field lowers onto via `shape: "aliasStruct"` each need
-  // their own shared `<Name>Block` module — `government_trigger` is the first,
-  // via `civic_or_origin.potential`/`possible`. Collected from the overlay
-  // rather than hardcoded so a future aliasStruct consumer picks this up for
-  // free.
-  const aliasStructCategories = [
-    ...CONTENT_FIELD_OVERRIDES.values(),
-    ...REPEATED_STRUCT_FIELD_OVERRIDES.values(),
-  ]
-    .filter((override) => override.shape === "aliasStruct")
-    .map((override) => override.category!)
-    .filter((category, index, categories) => categories.indexOf(category) === index);
-  const aliasStructs = new Map<string, AliasStructEmission & { usage: Usage }>();
-  for (const category of aliasStructCategories) {
-    const members = rules.aliasCategories.get(category);
-    if (members === undefined || members.size === 0) {
-      throw new Error(
-        `overlay requests aliasStruct category "${category}" but the rules declare no ` +
-          `alias[${category}:...] members — add it to EXTRA_ALIAS_CATEGORIES`
-      );
-    }
-    emitter.beginFile();
-    const emission = emitAliasStruct(emitter, category, members);
-    const usage = emitter.endFile();
-    aliasStructs.set(category, { ...emission, usage });
-  }
-
   const contents: Array<{
     manifest: (typeof CONTENT_MANIFEST)[number];
     /** Registry name: the CWT type unless the manifest renames it via `as`. */
@@ -218,9 +193,16 @@ async function main(): Promise<void> {
           "entry needs the keyword its entries are written under"
       );
     }
-    if (type.keyFilter !== null && keyword !== undefined && keyword !== type.keyFilter) {
+    // A negated filter says which key the entries are *not* written under, so
+    // it constrains nothing about the keyword and cannot contradict it.
+    if (
+      type.keyFilter !== null &&
+      !type.keyFilter.negated &&
+      keyword !== undefined &&
+      keyword !== type.keyFilter.key
+    ) {
       throw new Error(
-        `type[${manifest.type}] declares ## type_key_filter = ${type.keyFilter} but the ` +
+        `type[${manifest.type}] declares ## type_key_filter = ${type.keyFilter.key} but the ` +
           `manifest claims keyword ${keyword}`
       );
     }
@@ -236,6 +218,83 @@ async function main(): Promise<void> {
       emission,
       usage,
     });
+  }
+
+  // An alias category emitted as its own shared module, from either of the two
+  // reasons a category needs one: an overlay row lowering a *keyed* field onto
+  // it (`civic_or_origin.potential` -> `government_trigger`), or a body
+  // splicing it unkeyed (`solar_system_initializer` -> `planet_initializer`).
+  // Both produce a named interface plus a `registerAliasStructFields` call, so
+  // they share a write loop and a report line.
+  //
+  // A worklist rather than a flat list, because a spliced category can splice
+  // further categories: `planet_initializer` reaches `moon_initializer`, which
+  // reaches itself. Runs after the content loop so the splice seeds exist.
+  const aliasCategories = new Map<
+    string,
+    {
+      readonly code: string;
+      readonly typeName: string;
+      readonly usage: Usage;
+      readonly emittedMembers: readonly string[];
+      readonly declinedMembers: readonly string[];
+    }
+  >();
+  const aliasSplices = new Map<string, AliasSpliceEmission>();
+  const emitCategory = (category: string, kind: "struct" | "splice"): void => {
+    if (aliasCategories.has(category)) {
+      return;
+    }
+    if (kind === "struct") {
+      // An overlay row naming a category the rules do not declare is a
+      // mistake in the row, so this throws rather than emitting nothing.
+      const members = rules.aliasCategories.get(category);
+      if (members === undefined || members.size === 0) {
+        throw new Error(
+          `overlay requests aliasStruct category "${category}" but the rules declare no ` +
+            `alias[${category}:...] members — add it to EXTRA_ALIAS_CATEGORIES`
+        );
+      }
+      emitter.beginFile();
+      const emission = emitAliasStruct(emitter, category, members);
+      aliasCategories.set(category, { ...emission, usage: emitter.endFile() });
+      return;
+    }
+    // A splice seed is different: not every spliced category is structural, and
+    // a non-structural one is not an error. `static_modifier` splices
+    // `modifier`, whose authoring member is the `ModifierClosure` the runtime
+    // already knows and whose members the rules keep outside `aliasCategories`
+    // entirely — so there is no interface and no field table to emit.
+    if (structuralSpliceOf(emitter, category) === null) {
+      return;
+    }
+    emitter.beginFile();
+    const emission = emitAliasSplice(emitter, category)!;
+    const usage = emitter.endFile();
+    aliasSplices.set(category, emission);
+    aliasCategories.set(category, {
+      code: emission.code,
+      typeName: emission.typeName,
+      usage,
+      emittedMembers: emission.emittedFields.map((field) => field.field),
+      declinedMembers: [...emission.declinedFields, ...emission.unsupported],
+    });
+    for (const nested of emission.spliceCategories) {
+      emitCategory(nested, "splice");
+    }
+  };
+  for (const override of [
+    ...CONTENT_FIELD_OVERRIDES.values(),
+    ...REPEATED_STRUCT_FIELD_OVERRIDES.values(),
+  ]) {
+    if (override.shape === "aliasStruct") {
+      emitCategory(override.category!, "struct");
+    }
+  }
+  for (const content of contents) {
+    for (const category of content.emission.inlineSplices) {
+      emitCategory(category, "splice");
+    }
   }
 
   // Registers every ref this namespace names (including the ref-only extras —
@@ -272,11 +331,43 @@ async function main(): Promise<void> {
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       modifiers.code
   );
-  for (const [category, emission] of aliasStructs) {
+  // A module referencing another alias category's interface needs both a type
+  // import and a bare side-effect import: the type import is erased at build
+  // time, and only the side effect guarantees that category's
+  // `registerAliasStructFields` call has run before anything is serialized.
+  // Categories reference each other (`planet_initializer` holds
+  // `MoonInitializerFields`) and registries reference categories, so both write
+  // loops resolve it the same way.
+  const aliasCategoryImports = (code: string, self?: string): string =>
+    [...aliasCategories]
+      .filter(([category, emission]) => category !== self && code.includes(emission.typeName))
+      .map(([category, emission]) => {
+        const file = `./${category.replaceAll("_", "-")}.ts`;
+        return (
+          `import type { ${emission.typeName} } from ${JSON.stringify(file)};\n` +
+          `import ${JSON.stringify(file)};\n`
+        );
+      })
+      .join("");
+  for (const [category, emission] of aliasCategories) {
+    // `ContentField` is always used — every category emits a field table — and
+    // the rest only when the category's own members reach for them. Matched on
+    // `EffectBlock<`/`Trigger<` rather than the bare name, since `Trigger`
+    // is a substring of `GovernmentTriggerBlock`.
+    const runtimeTypes = ["ContentField", "EffectBlock<", "ModifierClosure"]
+      .filter((name) => emission.code.includes(name))
+      .map((name) => name.replace("<", ""));
     await write(
       `${category.replaceAll("_", "-")}.ts`,
       header(commit, [`alias[${category}:...] across the rule files`]) +
-        'import { registerAliasStructFields, type ContentField } from "../content.ts";\n' +
+        `import { registerAliasStructFields, type ${runtimeTypes.join(", type ")} } ` +
+        'from "../content.ts";\n' +
+        (emission.code.includes("Trigger<")
+          ? 'import type { Trigger } from "../trigger-core.ts";\n'
+          : "") +
+        (emission.code.includes("ScopeName")
+          ? 'import type { ScopeName } from "./scopes.ts";\n'
+          : "") +
         importList(
           "./enums.ts",
           emission.usage.enums.map((name) => emitter.enumTypeName(name))
@@ -289,6 +380,9 @@ async function main(): Promise<void> {
           "./value-sets.ts",
           emission.usage.valueSets.map((name) => emitter.valueSetTypeName(name))
         ) +
+        // A category whose own interface is self-recursive imports nothing for
+        // itself; `self` keeps it from importing its own module.
+        aliasCategoryImports(emission.code, category) +
         "\n" +
         emission.code
     );
@@ -307,22 +401,7 @@ async function main(): Promise<void> {
       "WeightBlockWithLoc",
       "WithFrom",
     ].filter((name) => content.emission.code.includes(name));
-    // A field lowered through `shape: "aliasStruct"` (see civic_or_origin's
-    // potential/possible) references a shared `<Name>Block` type generated
-    // into its own category file. The type import alone would be erased at
-    // build time, so a bare side-effect import guarantees the category's
-    // `registerAliasStructFields` call actually runs before this registry's
-    // definitions are ever serialized.
-    const aliasStructImports = [...aliasStructs]
-      .filter(([, aliasEmission]) => content.emission.code.includes(aliasEmission.typeName))
-      .map(([category, aliasEmission]) => {
-        const file = `./${category.replaceAll("_", "-")}.ts`;
-        return (
-          `import type { ${aliasEmission.typeName} } from ${JSON.stringify(file)};\n` +
-          `import ${JSON.stringify(file)};\n`
-        );
-      })
-      .join("");
+    const aliasStructImports = aliasCategoryImports(content.emission.code);
     await write(
       `${content.registry.replaceAll("_", "-")}.ts`,
       header(commit, [content.manifest.source]) +
@@ -503,10 +582,19 @@ async function main(): Promise<void> {
   console.log(
     `on-actions: ${onActions.emitted} emitted (${onActions.noScope} scopeless and currently rejected)`
   );
-  for (const [category, emission] of aliasStructs) {
+  for (const [category, emission] of aliasCategories) {
+    // The two kinds count different things, so they say different things. A
+    // struct category lowers the category's own members, and the interesting
+    // number is how many of them survived. A splice category has exactly one
+    // member by construction; what it lowers is the fields *inside* that
+    // member's block, so "of 1 declared" would be true and useless.
+    const splice = aliasSplices.get(category);
     console.log(
-      `${category}: ${emission.emittedMembers.length} alias-struct members emitted` +
-        ` of ${rules.aliasCategories.get(category)?.size ?? 0} declared`
+      splice === undefined
+        ? `${category}: ${emission.emittedMembers.length} alias-struct members emitted` +
+            ` of ${rules.aliasCategories.get(category)?.size ?? 0} declared`
+        : `${category}: ${emission.emittedMembers.length} fields emitted into ` +
+            `${splice.typeName}, spliced as \`${splice.memberKey}\``
     );
     reportSection(`${category} members declined`, emission.declinedMembers);
   }
