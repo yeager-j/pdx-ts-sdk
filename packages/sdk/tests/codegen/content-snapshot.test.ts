@@ -3,7 +3,8 @@ import { CONTENT_MANIFEST, type ContentManifestEntry } from "@pdx-ts/codegen-cwt
 import type { CwtDiagnostic } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import driftBaseline from "@pdx-ts/codegen-cwt/drift-baseline.json" with { type: "json" };
-import { emitContentType, type EmittedField } from "@pdx-ts/codegen-cwt/emit/content-type";
+import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
+import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import {

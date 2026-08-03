@@ -26,7 +26,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parse, type PdxContainer, type PdxValue } from "@pdx-ts/pdxscript";
 
-import type { EmittedField } from "./emit/content-type.ts";
+import type { EmittedField } from "./emit/fields.ts";
 
 /**
  * What the corpus writes under one key, counted once per definition.
