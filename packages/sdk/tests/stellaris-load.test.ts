@@ -10,9 +10,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { InstallNotFoundError } from "../src/errors.ts";
+import { GameVersionError, InstallNotFoundError } from "../src/errors.ts";
+import { buildMod } from "../src/index.ts";
+import { describeInstall } from "../src/stellaris/describe.ts";
 import { load } from "../src/stellaris/load.ts";
 import { locateInstall } from "../src/stellaris/locate.ts";
+import {
+  readGameVersion,
+  requireGameVersion,
+  supportedVersionFor,
+} from "../src/stellaris/version.ts";
 
 const FIXTURE = join(import.meta.dirname, "../../../fixtures/fake-install");
 
@@ -127,5 +134,114 @@ describe("load", () => {
     rmSync(join(install, "launcher-settings.json"));
     const view = load({ installPath: install, cache: false });
     expect(view.gameVersion).toBeUndefined();
+  });
+});
+
+/** An install whose `launcher-settings.json` has been replaced with `body`. */
+function installStating(body: string): string {
+  const install = tempDir();
+  cpSync(FIXTURE, install, { recursive: true });
+  writeFileSync(join(install, "launcher-settings.json"), body, "utf8");
+  return install;
+}
+
+describe("describeInstall", () => {
+  it("reports the path and the build without parsing the install", () => {
+    expect(describeInstall(FIXTURE)).toEqual({
+      installPath: FIXTURE,
+      gameVersion: "4.4.6",
+    });
+  });
+
+  it("reports a path with no version rather than failing", () => {
+    const install = tempDir();
+    cpSync(FIXTURE, install, { recursive: true });
+    rmSync(join(install, "launcher-settings.json"));
+    expect(describeInstall(install)).toEqual({ installPath: install, gameVersion: undefined });
+  });
+
+  it("still refuses a path that is not an install", () => {
+    expect(() => describeInstall(tempDir())).toThrow(InstallNotFoundError);
+  });
+});
+
+describe("readGameVersion", () => {
+  it("strips the leading v the launcher writes", () => {
+    expect(readGameVersion(FIXTURE)).toBe("4.4.6");
+  });
+
+  it.each([
+    ["no launcher-settings.json", undefined],
+    ["malformed JSON", "{ not json"],
+    ["no rawVersion key", '{ "gameId": "stellaris" }'],
+    ["a non-string rawVersion", '{ "rawVersion": 446 }'],
+  ])("returns undefined for %s", (_case, body) => {
+    const install = tempDir();
+    cpSync(FIXTURE, install, { recursive: true });
+    if (body === undefined) {
+      rmSync(join(install, "launcher-settings.json"));
+    } else {
+      writeFileSync(join(install, "launcher-settings.json"), body, "utf8");
+    }
+    expect(readGameVersion(install)).toBeUndefined();
+  });
+
+  it("passes a four-part version through rather than swallowing it", () => {
+    // The staleness gate and the identifier-package pin both compare this
+    // string and name it when they fail. Returning undefined here would turn
+    // two loud failures into silent passes, which is the whole reason the
+    // lenient reader does not validate the shape.
+    expect(readGameVersion(installStating('{ "rawVersion": "v4.4.6.1" }'))).toBe("4.4.6.1");
+  });
+});
+
+describe("requireGameVersion", () => {
+  it("agrees with the lenient reader on a well-formed install", () => {
+    expect(requireGameVersion(FIXTURE)).toBe(readGameVersion(FIXTURE));
+  });
+
+  it.each([
+    ["is missing", undefined, /launcher-settings\.json is missing/],
+    ["is malformed JSON", "{ not json", /is not valid JSON/],
+    ["states no rawVersion", '{ "gameId": "stellaris" }', /has no rawVersion string/],
+    ["states an empty rawVersion", '{ "rawVersion": "" }', /has no rawVersion string/],
+    [
+      "states a four-part version",
+      '{ "rawVersion": "v4.4.6.1" }',
+      /states rawVersion v4\.4\.6\.1, which is not major\.minor\.patch/,
+    ],
+  ])("throws when the file %s", (_case, body, message) => {
+    const install = tempDir();
+    cpSync(FIXTURE, install, { recursive: true });
+    if (body === undefined) {
+      rmSync(join(install, "launcher-settings.json"));
+    } else {
+      writeFileSync(join(install, "launcher-settings.json"), body, "utf8");
+    }
+    expect(() => requireGameVersion(install)).toThrow(GameVersionError);
+    expect(() => requireGameVersion(install)).toThrow(message);
+  });
+});
+
+describe("supportedVersionFor", () => {
+  it.each([
+    ["4.4.6", "v4.4.*"],
+    ["v4.4.6", "v4.4.*"],
+    ["4.0.12", "v4.0.*"],
+    ["10.11.12", "v10.11.*"],
+  ])("derives %s into %s", (gameVersion, expected) => {
+    expect(supportedVersionFor(gameVersion)).toBe(expected);
+  });
+
+  it("produces something buildMod accepts", () => {
+    // The two halves of the same convention: what the SDK derives must be what
+    // the SDK is willing to emit.
+    expect(() =>
+      buildMod({ name: "V", prefix: "vv", supportedVersion: supportedVersionFor("4.4.6") }, [])
+    ).not.toThrow();
+  });
+
+  it.each(["4.4", "", "sometime", "v4"])("refuses %o rather than guessing", (input) => {
+    expect(() => supportedVersionFor(input)).toThrow(GameVersionError);
   });
 });

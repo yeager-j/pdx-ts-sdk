@@ -7,9 +7,9 @@
  * Reads are non-recursive by evidence: the resolver-evaluation spike
  * measured `common/technology` flat, so a subdirectory appearing there is a
  * loud error, not a silent widen. The game build is read from
- * `launcher-settings.json` and carried on the view; the rule-table
- * staleness check happens where win-assertions are made, not here — parsing
- * is version-agnostic.
+ * `launcher-settings.json` (see `version.ts`) and carried on the view; the
+ * rule-table staleness check happens where win-assertions are made, not here —
+ * parsing is version-agnostic, which is why this side takes the lenient reader.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -18,6 +18,7 @@ import { join } from "node:path";
 import { parseStrict, sha256Hex, VanillaView, type ParsedSource } from "../vanilla/surface.ts";
 import { cacheKey, readCache, writeCache } from "./cache.ts";
 import { locateInstall } from "./locate.ts";
+import { readGameVersion } from "./version.ts";
 
 export interface LoadOptions {
   /** Game root; wins over STELLARIS_PATH and the platform defaults. */
@@ -93,22 +94,4 @@ export function load(options: LoadOptions = {}): VanillaView {
     writeCache(cacheDir, key, sources);
   }
   return new VanillaView(sources, { installPath, gameVersion });
-}
-
-function readGameVersion(installPath: string): string | undefined {
-  let raw: string;
-  try {
-    raw = readFileSync(join(installPath, "launcher-settings.json"), "utf8");
-  } catch {
-    return undefined;
-  }
-  try {
-    const settings = JSON.parse(raw) as { rawVersion?: unknown };
-    if (typeof settings.rawVersion !== "string") {
-      return undefined;
-    }
-    return settings.rawVersion.replace(/^v/, "");
-  } catch {
-    return undefined;
-  }
 }

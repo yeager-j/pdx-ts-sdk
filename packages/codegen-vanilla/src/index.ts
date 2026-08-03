@@ -14,7 +14,7 @@
 import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { locateInstall } from "@pdx-ts/sdk/stellaris";
+import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/stellaris";
 
 import { formatEmitted } from "./format.ts";
 import { generateVanillaPackage, type VanillaReport } from "./generate.ts";
@@ -57,36 +57,27 @@ function existingFiles(dir: string, prefix = ""): string[] {
 }
 
 /**
- * The install's own version, or a loud stop.
+ * The install's own version, or a loud stop — with this generator's own
+ * consequence attached.
  *
- * The package version *is* the game version, so a missing or unexpected version
- * string cannot be defaulted past: it would stamp a package that claims to
- * describe a build nobody can identify. Paradox occasionally ships a four-part
- * version, which npm cannot express — that needs a deliberate mapping decision,
- * not a silent truncation.
+ * `requireGameVersion` states the fact (what the file says and why it is not a
+ * usable version); the rethrow below states what that costs *here*, which the
+ * SDK has no business knowing. The package version *is* the game version, so a
+ * missing or unexpected version string cannot be defaulted past: it would stamp
+ * a package claiming to describe a build nobody can identify.
  */
 function readGameVersion(installRoot: string): string {
-  const file = path.join(installRoot, "launcher-settings.json");
-  let raw: string;
   try {
-    raw = readFileSync(file, "utf8");
-  } catch {
-    throw new Error(`${file} is missing, so the install states no version to stamp`);
-  }
-  const settings = JSON.parse(raw) as { rawVersion?: unknown };
-  if (typeof settings.rawVersion !== "string" || settings.rawVersion === "") {
-    throw new Error(`${file} has no rawVersion string`);
-  }
-  const version = settings.rawVersion.replace(/^v/, "");
-  if (!/^\d+\.\d+\.\d+$/.test(version)) {
+    return requireGameVersion(installRoot);
+  } catch (error) {
     throw new Error(
-      `${file} states rawVersion ${settings.rawVersion}, which is not major.minor.patch. ` +
+      `${error instanceof Error ? error.message : String(error)}. ` +
         "The package version is the game version, so a four-part Paradox version needs a " +
         "deliberate mapping to semver (and a note in PROVENANCE.md) before regenerating — " +
-        "pick the npm version by hand rather than letting this script guess."
+        "pick the npm version by hand rather than letting this script guess.",
+      { cause: error }
     );
   }
-  return version;
 }
 
 function stampVersion(version: string): void {
