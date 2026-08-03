@@ -315,6 +315,7 @@ export {
   type ScriptedEffectName,
   type ScriptedParams,
   type ScriptedParamValue,
+  type ScriptedTriggerArgs,
   type ScriptedTriggerBinding,
   type ScriptedTriggerName,
 } from "./scripted.ts";

@@ -201,7 +201,12 @@ immediate: (s) => {
 ```
 
 Every binding is a function, parameterless ones included, and the `$PARAM$`
-list is typed — a wrong or misspelled parameter is a compile error.
+list is typed — a wrong or misspelled parameter is a compile error. A
+parameterless trigger also takes an optional `boolean`, defaulting to `true`:
+`isMachineEmpire(false)` writes `is_machine_empire = no`, the negated form
+vanilla itself writes at roughly a quarter of all scripted-trigger call sites.
+A trigger with `$PARAM$`s does not get this — vanilla always substitutes those
+into a block, never into the call site itself.
 
 **The scope is inferred, not asserted.** `isFallenEmpire()` is a
 `Trigger<"country">` because its body evaluates `is_country_type` and nothing

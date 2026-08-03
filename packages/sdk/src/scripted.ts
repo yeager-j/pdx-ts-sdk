@@ -117,6 +117,38 @@ export type ScriptedArgs<P> = [keyof P] extends [never]
     ? [args?: Widened<P>]
     : [args: Widened<P>];
 
+/**
+ * {@link ScriptedArgs}, but for triggers: a scripted trigger with no
+ * `$PARAM$`s doubles as a boolean condition. Vanilla writes the negated form
+ * as `name = no` at 7,746 call sites — roughly a quarter of all
+ * scripted-trigger uses — right beside 23,174 affirmative ones, and nothing
+ * at the call site distinguishes a scripted trigger from a native one like
+ * `is_nomadic`, which already accepts `(false)`. Default stays `true`, so
+ * every existing `binding()` call keeps meaning what it always meant.
+ *
+ * A trigger that *does* take `$PARAM$`s does not get this. Vanilla always
+ * substitutes those into a block (`some_trigger = { X = 1 }`), never
+ * `some_trigger = no` — a corpus sweep of every parameterless top-level
+ * scripted-trigger and scripted-effect name against every `= no` call site in
+ * the vanilla install turned up negation only for triggers, and only ever
+ * bare (never alongside a parameter block) — so a `boolean` is not a
+ * meaningful call form there and the object-args branches are unchanged.
+ *
+ * `string extends keyof P` is what still widens despite a nonempty `keyof`:
+ * it is true only for the unchecked fallback (`ScriptedParams`'s index
+ * signature), used both when `@pdx-ts/stellaris-ids` is absent and for a
+ * name the installed package does not recognize. Either way the real arity
+ * is unknown, so the boolean form has to stay legal alongside the object
+ * form rather than falling to a known trigger's object-only branch.
+ */
+export type ScriptedTriggerArgs<P> = [keyof P] extends [never]
+  ? [value?: boolean]
+  : string extends keyof P
+    ? [args?: Widened<P> | boolean]
+    : {} extends P
+      ? [args?: Widened<P>]
+      : [args: Widened<P>];
+
 // ---------------------------------------------------------------------------
 // Names
 // ---------------------------------------------------------------------------
@@ -145,7 +177,7 @@ type EffectParams<N> = [N] extends [keyof VanillaScriptedEffects]
  * the call.
  */
 export type ScriptedTriggerBinding<N extends string, S extends ScopeName> = N extends unknown
-  ? (...args: ScriptedArgs<TriggerParams<N>>) => Trigger<S>
+  ? (...args: ScriptedTriggerArgs<TriggerParams<N>>) => Trigger<S>
   : never;
 
 export type ScriptedEffectBinding<N extends string, S extends ScopeName> = N extends unknown
@@ -204,7 +236,8 @@ function scriptedEntry(name: string, args: ScriptedParams | undefined): PdxEntry
 // ---------------------------------------------------------------------------
 
 function triggerBinding(name: string) {
-  return (args?: ScriptedParams): Trigger<ScopeName> => trigger([scriptedEntry(name, args)]);
+  return (args?: ScriptedParams | boolean): Trigger<ScopeName> =>
+    trigger([typeof args === "boolean" ? kv(name, args) : scriptedEntry(name, args)]);
 }
 
 function effectBinding(name: string) {
@@ -224,7 +257,9 @@ function effectBinding(name: string) {
  * from the rules rather than claimed.
  *
  * `scriptedTrigger.unchecked` takes any *name* — another mod's trigger, or one
- * newer than the pinned package. The scope is an assertion either way.
+ * newer than the pinned package. The scope is an assertion either way, and
+ * the real arity is always unknown, so — like the package-absent fallback —
+ * the parameterless boolean call form stays legal alongside the object form.
  */
 export const scriptedTrigger: {
   <const N extends ScriptedTriggerName, const A extends ScopeClaim>(
@@ -234,7 +269,7 @@ export const scriptedTrigger: {
   unchecked<const A extends ScopeClaim>(
     name: string,
     scope: A
-  ): (args?: ScriptedParams) => Trigger<AssertedScope<A>>;
+  ): (args?: ScriptedParams | boolean) => Trigger<AssertedScope<A>>;
 } = Object.assign(triggerBinding as never, { unchecked: triggerBinding as never });
 
 /**
