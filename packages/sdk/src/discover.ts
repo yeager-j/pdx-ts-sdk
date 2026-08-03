@@ -47,7 +47,7 @@ import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { collection, type Collection, type ModItem } from "./items.ts";
+import { collection, FILE_STEM_PATTERN, type Collection, type ModItem } from "./items.ts";
 import { compareLogicalPaths, normalizeLogicalPath } from "./resolver/path-order.ts";
 
 const ITEM_KINDS = new Set<string>(["content", "event", "on-action", "patch", "contribution"]);
@@ -122,12 +122,43 @@ export async function discoverContent(
     throw new Error(emptyWalkMessage(root, include, candidates));
   }
 
+  // Stems are the same grammar `collection` enforces, but checking every one
+  // here — before any module is imported — fails a bad basename immediately
+  // and names every offender at once, rather than one at a time interleaved
+  // with each module's (possibly side-effecting) import.
+  const stemmed = modules.map((module) => ({ ...module, stem: fileStemOf(module.absolute) }));
+  assertModuleStems(stemmed);
+
   const collections: Collection[] = [];
-  for (const module of modules) {
+  for (const module of stemmed) {
     const exports = (await import(pathToFileURL(module.absolute).href)) as Record<string, unknown>;
-    collections.push(collectModule(module.relative, fileStemOf(module.absolute), exports));
+    collections.push(collectModule(module.relative, module.stem, exports));
   }
   return collections;
+}
+
+/**
+ * A module's stem comes from its filename on disk, discovered at build time —
+ * there is no static type a compiler could check it against, so this is
+ * necessarily a runtime gate. What it can control is when and how loudly it
+ * fails: every offending file, named up front, before the walk imports
+ * anything.
+ */
+function assertModuleStems(
+  modules: readonly { readonly relative: string; readonly stem: string }[]
+): void {
+  const invalid = modules.filter((module) => !FILE_STEM_PATTERN.test(module.stem));
+  if (invalid.length === 0) {
+    return;
+  }
+  throw new Error(
+    `${invalid.length} discovered module basename${invalid.length === 1 ? "" : "s"} ` +
+      `${invalid.length === 1 ? "does" : "do"} not reduce to lowercase snake_case ` +
+      `([a-z][a-z0-9_]*), the emitted file stem grammar — the basename up to its first "." ` +
+      `names the file the module emits:\n` +
+      invalid.map((module) => `  - ${module.relative} → "${module.stem}"`).join("\n") +
+      `\nRename the file, or narrow \`include\` to exclude it, before any discovered module is imported.`
+  );
 }
 
 /**

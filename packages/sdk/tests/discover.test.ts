@@ -353,13 +353,27 @@ describe("discoverContent rejecting a module it cannot place", () => {
     );
   });
 
-  it("refuses a filename that cannot be a file stem, naming the module", async () => {
+  it("refuses a filename that cannot be a file stem, naming the module up front", async () => {
     const dir = moduleTree({
       "my-technology.ts":
         sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
     });
     await expect(discoverContent(dir)).rejects.toThrow(
-      /my-technology\.ts names the file it emits, so its basename is the file stem: Collection file stem "my-technology" must be lowercase snake_case/
+      /1 discovered module basename does not reduce to lowercase snake_case.*\n\s*- my-technology\.ts → "my-technology"/
+    );
+  });
+
+  it("names every bad basename at once, before importing any module", async () => {
+    // Two offenders sort before a module that would throw on import (a
+    // non-definer export) — proof the stem check runs, and fails, before the
+    // walk imports anything at all.
+    const dir = moduleTree({
+      "bad-one.ts": sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
+      "bad-two.ts": sdk("defineTechnology") + `export const b = ${tech("pp_disco_tech_b")};\n`,
+      "zzz_importable.ts": `export const boom = (() => { throw new Error("must not run"); })();\n`,
+    });
+    await expect(discoverContent(dir)).rejects.toThrow(
+      /2 discovered module basenames do not reduce to lowercase snake_case[\s\S]*bad-one\.ts[\s\S]*bad-two\.ts/
     );
   });
 });
