@@ -26,7 +26,7 @@
  * repo root, so no step needs the network.
  */
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -223,6 +223,41 @@ describe("a scaffolded project", () => {
       expect(output).toContain("Installed Smoke Mod for the launcher:");
       expect(readdirSync(modDir).length).toBeGreaterThan(0);
     } finally {
+      rmSync(modDir, { recursive: true, force: true });
+    }
+  });
+
+  it("surfaces build warnings on install-mod, not just on build (SDK-54)", () => {
+    // On the pre-fix template, `install.ts` had no warning loop of its own —
+    // it only appeared to report `mod.warnings` because importing `config`
+    // from `src/index.ts` forced that build's warning loop to run first, as a
+    // side effect. This mutates the scaffolded example to trigger a real,
+    // nonfatal warning (a localization value containing a quote, which
+    // Paradox's yml format cannot escape) and proves `install.ts` reports it
+    // through its own loop, independent of that accident.
+    const examplePath = path.join(projectDir, "src/content/example.ts");
+    const original = readFileSync(examplePath, "utf8");
+    const withQuotedDesc = original.replace(
+      'desc: "The first technology this mod adds.",',
+      "desc: 'A \"quoted\" description, to trigger a real build warning.',"
+    );
+    expect(withQuotedDesc).not.toBe(original);
+    writeFileSync(examplePath, withQuotedDesc);
+
+    const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-warn-"));
+    try {
+      // spawnSync, not execFileSync: the warning is nonfatal (exit 0), and
+      // console.warn writes to stderr, which execFileSync's return value
+      // does not include.
+      const result = spawnSync(process.execPath, ["src/install.ts"], {
+        cwd: projectDir,
+        encoding: "utf8",
+        env: { ...process.env, PDX_NO_VANILLA: "1", STELLARIS_MOD_DIR: modDir },
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout + result.stderr).toContain("warning (loc-quote-replaced)");
+    } finally {
+      writeFileSync(examplePath, original);
       rmSync(modDir, { recursive: true, force: true });
     }
   });

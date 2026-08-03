@@ -111,7 +111,9 @@ export function installTs(): string {
  * This shares \`buildTheMod\` with \`src/index.ts\` rather than folding content a
  * second time, so the mod that gets installed is built with the same vanilla
  * view (id collision checks included) as the one \`npm run build\` writes to
- * \`out/\` — never a second, unchecked build.
+ * \`out/\` — never a second, unchecked build. It also has its own warning
+ * loop, for the same reason: nothing here can lean on \`src/index.ts\` printing
+ * \`mod.warnings\` for it.
  *
  * Enable the mod in a launcher playset afterwards; the launcher only rescans
  * this directory on startup, so restart it if the mod does not appear.
@@ -122,6 +124,11 @@ import { install } from "@pdx-ts/sdk";
 import { buildTheMod, config } from "./mod.ts";
 
 const mod = await buildTheMod();
+
+for (const warning of mod.warnings) {
+  console.warn(\`warning (\${warning.code}): \${warning.message}\`);
+}
+
 const { contentDir, descriptorPath } = await install(mod);
 
 console.log(\`Installed \${config.name} for the launcher:\`);
