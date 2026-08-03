@@ -17,7 +17,7 @@ my-mod/
 ├── .prettierrc            (--no-prettier to skip)
 ├── eslint.config.js       (--no-eslint to skip)
 └── src/
-    ├── mod.ts              config + the pure fold from content/ to a built mod
+    ├── mod.ts              config + buildTheMod(): discover content/, fold it into a mod
     ├── index.ts            build: render the fold and write it to out/
     ├── install.ts          build + drop it where the launcher looks
     ├── vanilla.ts          the parsed install, when one was found
@@ -27,12 +27,15 @@ my-mod/
         └── example.test.ts colocated, and skipped by discovery
 ```
 
-Importing `mod.ts` only reads — building the mod value touches no disk — so
-`index.ts` and `install.ts` each import its `buildTheMod()` and add their own
-single disk-touching step (`write` vs `install`) on top, rather than each
-folding `content/` a second time. That is what keeps a build with a vanilla
-view (id collision checks included) from quietly running twice, once checked
-and once not.
+Importing `mod.ts` builds nothing — `config` is a plain value — so `index.ts`
+and `install.ts` each import its `buildTheMod()` and add their own single
+disk-touching step (`write` vs `install`) on top, rather than each folding
+`content/` a second time. That is what keeps a build with a vanilla view (id
+collision checks included) from quietly running twice, once checked and once
+not. `buildTheMod()` itself is the impure discovery shell around the SDK's
+pure fold, not a pure function on its own: calling it walks `content/` and
+imports every module in it, and — with a vanilla install found — parses the
+game and may write a cache under `node_modules/.cache`.
 
 ## Options
 

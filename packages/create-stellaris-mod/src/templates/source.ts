@@ -33,18 +33,21 @@ export function modTs(resolved: Resolved): string {
         `  return buildMod(config, collections, vanilla === undefined ? {} : { vanilla });`;
 
   return `/**
- * The mod definition: config, plus the pure fold that turns \`src/content/\`
- * into a built \`PureMod\` value. Importing this file only reads — discovering
- * and folding content touches no disk — so \`npm run build\` (\`src/index.ts\`)
- * and \`npm run install-mod\` (\`src/install.ts\`) can both import it and add
- * their own single disk-touching step (\`write\` vs \`install\`) on top, instead
- * of each running its own copy of the fold. Importing \`config\` alone, the way
- * a test would to read the mod's prefix, never builds or writes anything.
+ * The mod definition: config, plus \`buildTheMod()\` — the impure discovery
+ * shell around the SDK's pure fold. Importing this file builds nothing:
+ * \`config\` is a plain value, so a test — or anything else — that only wants
+ * the mod's prefix can import it without triggering a build as a side effect.
+ * \`npm run build\` (\`src/index.ts\`) and \`npm run install-mod\`
+ * (\`src/install.ts\`) both call \`buildTheMod()\` once and add their own single
+ * disk-touching step (\`write\` vs \`install\`) on top, instead of each folding
+ * \`src/content/\` a second time.
  *
- * The pipeline is the SDK's: \`discoverContent\` imports every module under
- * \`src/content/\` and turns each one's exports into a collection named after the
- * file, and \`buildMod\` folds those into the value \`render\`/\`write\`/\`install\`
- * consume.
+ * \`buildTheMod()\` itself is not pure: \`discoverContent\` walks \`src/content/\`
+ * and imports every module under it — real disk reads, running your code — to
+ * turn each one's exports into a collection named after the file, and (when a
+ * vanilla install was found) \`loadVanilla()\` parses the game and may write a
+ * cache under \`node_modules/.cache\`. \`buildMod\`, which folds the result into
+ * the \`PureMod\` value \`render\`/\`write\`/\`install\` consume, is the pure part.
  */
 
 import { buildMod, discoverContent, type ModConfig, type PureMod } from "@pdx-ts/sdk";
