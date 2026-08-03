@@ -19,6 +19,7 @@ import {
   type RuleType,
   type ScopeContext,
 } from "../cwt/model.ts";
+import type { AliasDecl } from "../cwt/rules.ts";
 import { camelCase, docComment, indefiniteArticle, isPlainName, pascalCase } from "../naming.ts";
 import { CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS, type ContentFieldOverride } from "../overlay.ts";
 import { authoredForm } from "./authored-form.ts";
@@ -249,7 +250,7 @@ function scopeType(
   return canonical === null ? unpinned : { type: JSON.stringify(canonical), scopes: [canonical] };
 }
 
-function flatten(fields: readonly RuleField[], typeName: string): RuleField[] {
+export function flatten(fields: readonly RuleField[], typeName: string): RuleField[] {
   return fields.flatMap((field) => {
     if (field.key.kind !== "subtype") {
       return [field];
@@ -303,19 +304,103 @@ export interface LoweredSplice {
   readonly memberType: string;
   readonly metadata: string;
   readonly docs: readonly string[];
+  /**
+   * The block key the writer emits each entry under, for a splice whose entries
+   * are keyed blocks rather than bare rows. Absent for `inlineModifiers`, whose
+   * whole point is that its rows carry no enclosing key — which is also why
+   * that one contributes no {@link EmittedField}.
+   */
+  readonly key?: string;
+  /** What the lowering admits, for the corpus gate. Set whenever `key` is. */
+  readonly admits?: Omit<EmittedField, "field">;
+}
+
+/**
+ * A *structural* alias category: one whose single member is a block, so the
+ * category names a nested body rather than a vocabulary of rules.
+ *
+ * `alias[planet_initializer:planet]` is the case. Splicing that category into a
+ * body means "a `planet = { ... }` block may appear here", and since `planet`'s
+ * own body splices `planet_initializer` and `moon_initializer` back into itself,
+ * the grammar is recursive and the nesting unbounded.
+ *
+ * The single-member invariant is enforced rather than worked around: a category
+ * with two block members would need a naming scheme for the interfaces, and no
+ * such category exists. Declining reports the gap instead of inventing one.
+ */
+export function structuralSpliceOf(
+  emitter: Emitter,
+  category: string
+): { readonly memberKey: string; readonly declaration: AliasDecl } | null {
+  const members = emitter.rules.aliasCategories.get(category);
+  if (members === undefined || members.size !== 1) {
+    return null;
+  }
+  const [memberKey, declarations] = [...members][0]!;
+  if (!isPlainName(memberKey) || declarations.length !== 1) {
+    return null;
+  }
+  const declaration = declarations[0]!;
+  return declaration.type.kind === "block" ? { memberKey, declaration } : null;
+}
+
+/**
+ * Lowers a structural splice to one authoring member holding an ordered array
+ * of that category's blocks.
+ *
+ * The array is unconditional, and so is its optionality: the cardinality on the
+ * `alias_name` line is ignored. A splice is a grammar production rather than a
+ * field — the block is legal absent and legal repeated wherever the category is
+ * spliced — and CWT annotates the two ends inconsistently anyway. The top-level
+ * `alias_name[planet_initializer]` carries `0..inf`, but the recursive ones
+ * inside `planet` and `moon` carry nothing at all, which `cardinalityOf` reads
+ * as required — and would make every planet demand a sub-planet, forever.
+ * {@link aliasScalarFields} already reasons this way for the scalar case.
+ */
+export function lowerStructuralSplice(
+  emitter: Emitter,
+  category: string,
+  docs: readonly string[]
+): LoweredSplice | null {
+  const splice = structuralSpliceOf(emitter, category);
+  if (splice === null) {
+    return null;
+  }
+  const member = camelCase(splice.memberKey);
+  const shape = { shape: "aliasStruct", repeated: true } as const;
+  return {
+    member,
+    key: splice.memberKey,
+    memberType: arrayType(spliceTypeName(category)),
+    metadata:
+      `{ key: ${JSON.stringify(splice.memberKey)}, member: ${JSON.stringify(member)}, ` +
+      `shape: "aliasStruct", form: ${JSON.stringify(authoredForm(shape))}, ` +
+      `category: ${JSON.stringify(category)}, repeated: true }`,
+    admits: shape,
+    docs: [...docs, ...splice.declaration.docs],
+  };
+}
+
+/** The interface one structural alias category's blocks are authored as. */
+export function spliceTypeName(category: string): string {
+  return `${pascalCase(category)}Fields`;
 }
 
 /**
  * Lowers one top-level splice to a single authoring member whose entries the
  * writer emits at the block root rather than under a key.
  *
- * Only `modifier` lowers today, as `ModifierClosure` — the same closure every
+ * Two kinds lower. `modifier` becomes `ModifierClosure` — the same closure every
  * keyed `modifier = { ... }` field already authors, spliced instead of wrapped,
- * exactly as `TriggeredModifier.modifiers` already does one level down. Every
- * other category a body splices this way (`game_rule`'s `trigger`,
- * `script_value`'s `modifier_rule`, `deposit`'s `resources_template_optional`)
- * belongs to a type the manifest does not expose; returning `null` reports the
- * splice rather than inventing a member name and a shape for it.
+ * exactly as `TriggeredModifier.modifiers` already does one level down. A
+ * *structural* category (see {@link lowerStructuralSplice}) becomes an ordered
+ * array of its own block interface.
+ *
+ * Everything else returns `null` and is reported: the remaining categories a
+ * body splices this way (`game_rule`'s `trigger`, `script_value`'s
+ * `modifier_rule`, `deposit`'s `resources_template_optional`) belong to types
+ * the manifest does not expose, and naming a member for one would be inventing
+ * an authoring surface rather than lowering a declared one.
  */
 export function lowerTopLevelSplice(
   emitter: Emitter,
@@ -323,7 +408,7 @@ export function lowerTopLevelSplice(
   ctx: FieldContext
 ): LoweredSplice | null {
   if (field.key.category !== "modifier") {
-    return null;
+    return lowerStructuralSplice(emitter, field.key.category, field.docs);
   }
   const scope = scopeType(emitter, field, ctx);
   return {

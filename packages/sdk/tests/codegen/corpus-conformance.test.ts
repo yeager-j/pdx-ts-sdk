@@ -23,11 +23,14 @@ import {
   conformance,
   readRegistryCorpus,
   shapeConformance,
+  spliceMembersOf,
   type RepeatedStructField,
   type RuleScopes,
 } from "@pdx-ts/codegen-cwt/corpus";
 import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
+import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
 import { joinModifierScopes } from "@pdx-ts/codegen-cwt/emit/modifiers";
 import { canonicalScopeSet, declaredScopes } from "@pdx-ts/codegen-cwt/emit/shape";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
@@ -71,6 +74,17 @@ const ACKNOWLEDGED = new Map<string, string>([
       "which one a value belongs to. `title` and `desc` dual cleanly because their scalar arm is " +
       "`0..1`. An `arity` assertion cannot help: it would narrow the block arm too, and the block " +
       "form really does repeat.",
+  ],
+  [
+    "solar_system_initializer.change_orbit form",
+    "Declared twice, as `int` and as `{ min max }`, and both carry `cardinality = 0..inf` — the " +
+      "situation_type.picture shape exactly, so both arms author as arrays and the writer cannot " +
+      "tell which one a value belongs to. An `arity` assertion is what fixes the same collapse " +
+      "on planet_initializer.orbit_angle/size, and here it would be false: change_orbit advances " +
+      "the orbit cursor between planets, so 144 of the 292 shipped initializers write it more " +
+      "than once. The scalar arm is the one worth keeping — 2 definitions write the block. " +
+      "Authors reach the same geometry by folding the offset into the next planet's " +
+      "orbit_distance.",
   ],
   [
     "global_ship_design.growth_stages form",
@@ -173,18 +187,46 @@ function repeatedStructFieldsOf(registry: string): readonly RepeatedStructField[
     }));
 }
 
+/**
+ * One emission per structural alias category, memoized.
+ *
+ * Memoized because a category is reached once per registry that splices it and
+ * once per recursion through the splice tree, and re-emitting would re-enter
+ * `emitter.usedRefs` each time. Both the corpus descent and the emitted-field
+ * list come from this, so the two cannot disagree about what was lowered.
+ */
+const spliceEmissions = new Map<string, ReturnType<typeof emitAliasSplice>>();
+function spliceEmission(category: string): ReturnType<typeof emitAliasSplice> {
+  if (!spliceEmissions.has(category)) {
+    emitter.beginFile();
+    spliceEmissions.set(category, emitAliasSplice(emitter, category));
+    emitter.endFile();
+  }
+  return spliceEmissions.get(category)!;
+}
+
+/** Every field lowered into the categories a registry splices, `planet.class` and friends. */
+function spliceFieldsOf(categories: readonly string[]): EmittedField[] {
+  const seen = new Set<string>();
+  const collect = (list: readonly string[]): EmittedField[] =>
+    list.flatMap((category) => {
+      if (seen.has(category)) {
+        return [];
+      }
+      seen.add(category);
+      const emission = spliceEmission(category);
+      return emission === null
+        ? []
+        : [...emission.emittedFields, ...collect(emission.spliceCategories)];
+    });
+  return collect(categories);
+}
+
 const reports = (installPath === undefined ? [] : CONTENT_MANIFEST).map((manifest) => {
   const entry = manifest as { type: string; keyword?: string; as?: string };
   const registry = entry.as ?? entry.type;
   const type = rules.contentTypes.get(entry.type);
   const registryPath = type?.path?.replace(/^game\//, "") ?? "";
-  const corpus = readRegistryCorpus(
-    installPath!,
-    registryPath,
-    entry.keyword ?? null,
-    type?.nameField ?? null,
-    repeatedStructFieldsOf(registry)
-  );
   const body = rules.bodies.get(entry.type);
   emitter.beginFile();
   const emission =
@@ -192,12 +234,25 @@ const reports = (installPath === undefined ? [] : CONTENT_MANIFEST).map((manifes
       ? null
       : emitContentType(emitter, type, body, registry);
   emitter.endFile();
+  // Emitted before the corpus is read, because which blocks the reader must
+  // descend into is the emitter's answer: a registry splicing
+  // `planet_initializer` writes `planet = { ... }` trees whose contents are
+  // otherwise invisible behind one top-level key.
+  const corpus = readRegistryCorpus(
+    installPath!,
+    registryPath,
+    entry.keyword ?? null,
+    type?.nameField ?? null,
+    repeatedStructFieldsOf(registry),
+    spliceMembersOf(emission?.inlineSplices ?? [], (category) => spliceEmission(category))
+  );
   // Nested paths come back prefixed with the registry (`situation_type.stages.icon`,
   // matching the dotted paths CONTENT_DECLINED_FIELDS/CONTENT_FIELD_OVERRIDES use)
   // — strip that prefix so they line up with the corpus's own unprefixed dotted
   // paths (`stages.icon`).
   const emitted = [
     ...(emission?.emittedFields ?? []),
+    ...spliceFieldsOf(emission?.inlineSplices ?? []),
     ...(emission?.nestedEmittedFields ?? []).map((field) => ({
       ...field,
       field: field.field.slice(registry.length + 1),

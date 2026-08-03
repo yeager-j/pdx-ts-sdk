@@ -135,6 +135,10 @@ export const CONTENT_MANIFEST = [
     type: "country_ship_of_size_limit",
     source: "common/country_limits.cwt",
   },
+  {
+    type: "solar_system_initializer",
+    source: "common/solar_system_initializers.cwt",
+  },
 ] as const satisfies readonly ContentManifestEntry[];
 
 /**

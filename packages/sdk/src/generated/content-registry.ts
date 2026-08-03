@@ -27,6 +27,7 @@
 // From: common/starbases_consolidated.cwt
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
+// From: common/solar_system_initializers.cwt
 
 import type { ContentRegistryDescriptor } from "../content.ts";
 import { AGENDA_FIELDS, AGENDA_LOCALISATION } from "./agenda.ts";
@@ -65,6 +66,10 @@ import { SCRIPTED_MODIFIER_FIELDS, SCRIPTED_MODIFIER_LOCALISATION } from "./scri
 import { SECTION_TEMPLATE_FIELDS, SECTION_TEMPLATE_LOCALISATION } from "./section-template.ts";
 import { SHIP_SIZE_FIELDS, SHIP_SIZE_LOCALISATION } from "./ship-size.ts";
 import { SITUATION_TYPE_FIELDS, SITUATION_TYPE_LOCALISATION } from "./situation-type.ts";
+import {
+  SOLAR_SYSTEM_INITIALIZER_FIELDS,
+  SOLAR_SYSTEM_INITIALIZER_LOCALISATION,
+} from "./solar-system-initializer.ts";
 import { SPECIES_CLASS_FIELDS, SPECIES_CLASS_LOCALISATION } from "./species-class.ts";
 import { STARBASE_LEVEL_FIELDS, STARBASE_LEVEL_LOCALISATION } from "./starbase-level.ts";
 import { STATIC_MODIFIER_FIELDS, STATIC_MODIFIER_LOCALISATION } from "./static-modifier.ts";
@@ -334,6 +339,13 @@ export const CONTENT_REGISTRIES = [
     fileStem: "ship_of_size_limits",
     fields: COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS,
     localisation: COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION,
+  },
+  {
+    type: "solar_system_initializer",
+    outputDir: "common/solar_system_initializers",
+    fileStem: "solar_system_initializers",
+    fields: SOLAR_SYSTEM_INITIALIZER_FIELDS,
+    localisation: SOLAR_SYSTEM_INITIALIZER_LOCALISATION,
   },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 

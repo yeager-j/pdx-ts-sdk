@@ -6,7 +6,7 @@
  * lowering itself lives in `fields.ts`, shared with the alias emitters.
  */
 
-import { isOptional, type RuleField, type ScopeContext } from "../cwt/model.ts";
+import { isOptional, type RuleField } from "../cwt/model.ts";
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
 import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
 import {
@@ -22,12 +22,12 @@ import {
 import {
   capitalizedArticle,
   constantCase,
+  flatten,
   lowerTopLevelSplice,
   mergeByName,
   metadata,
   pickOrdinary,
   repeatsSiblings,
-  topLevelSplices,
   wildcardBlockOf,
   type EmittedField,
   type FieldContext,
@@ -460,7 +460,69 @@ export function emitContentType(
   // order. The SDK's promise is that a mod author does not run out of API, so a
   // field is in unless something objects: either the emitter cannot express it,
   // or CONTENT_DECLINED_FIELDS refuses it outright.
-  for (const [name, group] of grouped) {
+  //
+  // Named fields and top-level splices share this one pass, because a splice
+  // can be *positional*. Inside a solar system initializer's `planet`,
+  // `change_orbit` advances the orbit cursor and is declared before the `moon`
+  // blocks it applies to, so emitting splice members first would describe
+  // different geometry. Iterating the flattened declarations also collapses a
+  // splice that several subtype arms each declare — the planet tree is declared
+  // twice, once per subtype — which a second pass would instead report as a
+  // member-name collision.
+  const seenNames = new Set<string>();
+  const seenCategories = new Set<string>();
+  for (const declaration of flatten(body.fields, type.name)) {
+    const key = declaration.key;
+    if (key.kind === "aliasName") {
+      const category = key.category;
+      if (seenCategories.has(category)) {
+        continue;
+      }
+      seenCategories.add(category);
+      // Rebuilt with the narrowed key: `AliasNameField` is an intersection, and
+      // narrowing `declaration.key` does not re-type `declaration` itself.
+      const lowered = lowerTopLevelSplice(emitter, { ...declaration, key }, fieldContext);
+      if (lowered === null) {
+        unsupported.push(
+          `alias_name[${category}] (spliced unkeyed at the top level; that category has ` +
+            "no authoring member)"
+        );
+        continue;
+      }
+      if (emittedMembers.has(lowered.member) || localisationMemberNames.has(lowered.member)) {
+        unsupported.push(
+          `alias_name[${category}] (spliced unkeyed at the top level; its "${lowered.member}" ` +
+            "member is already taken)"
+        );
+        continue;
+      }
+      members.push(
+        docComment(lowered.docs, "  ") + `  ${lowered.member}?: ${lowered.memberType};\n`
+      );
+      fieldMetadata.push(lowered.metadata);
+      emittedMembers.add(lowered.member);
+      inlineSplices.push(category);
+      // A structural splice names a real key the corpus can be measured
+      // against; `inlineModifiers` does not, since its rows carry no key.
+      if (lowered.key !== undefined) {
+        emittedFields.push({ field: lowered.key, ...lowered.admits! });
+      }
+      continue;
+    }
+    if (key.kind !== "name") {
+      continue;
+    }
+    const name = key.name;
+    if (seenNames.has(name)) {
+      continue;
+    }
+    seenNames.add(name);
+    const group = grouped.get(name);
+    // Absent only for the name field, dropped above: the writer emits it from
+    // the definition's id, so it is not an authoring member.
+    if (group === undefined) {
+      continue;
+    }
     const path = `${type.name}.${name}`;
     const declined = CONTENT_DECLINED_FIELDS.get(path);
     if (declined !== undefined) {
@@ -541,36 +603,6 @@ export function emitContentType(
     emittedFields.push({ field: name, ...underParameter(lowered.admits, parameter) });
   }
 
-  // Emitted ahead of the named fields, matching both the rules' declaration
-  // order and how vanilla writes these files: `empire_base` opens with its
-  // modifier rows and closes with `icon`.
-  const spliceMembers: string[] = [];
-  const spliceMetadata: string[] = [];
-  for (const splice of topLevelSplices(body.fields, type.name)) {
-    const category = splice.key.category;
-    const lowered = lowerTopLevelSplice(emitter, splice, fieldContext);
-    if (lowered === null) {
-      unsupported.push(
-        `alias_name[${category}] (spliced unkeyed at the top level; that category has ` +
-          "no authoring member)"
-      );
-      continue;
-    }
-    if (emittedMembers.has(lowered.member) || localisationMemberNames.has(lowered.member)) {
-      unsupported.push(
-        `alias_name[${category}] (spliced unkeyed at the top level; its "${lowered.member}" ` +
-          "member is already taken)"
-      );
-      continue;
-    }
-    spliceMembers.push(
-      docComment(lowered.docs, "  ") + `  ${lowered.member}?: ${lowered.memberType};\n`
-    );
-    spliceMetadata.push(lowered.metadata);
-    emittedMembers.add(lowered.member);
-    inlineSplices.push(category);
-  }
-
   const typeName = pascalCase(type.name);
   const fieldsConstant = `${type.name.toUpperCase()}_FIELDS`;
   const localisationConstant = `${type.name.toUpperCase()}_LOCALISATION`;
@@ -612,7 +644,6 @@ export function emitContentType(
     `export interface ${typeName}Fields${generic} {\n` +
     scopeMember +
     localisationMembers(type, localisationPlan) +
-    spliceMembers.join("") +
     members.join("") +
     "}\n\n" +
     (parameter === null
@@ -628,7 +659,7 @@ export function emitContentType(
     `  ${typeName}Def<Id>\n` +
     ">;\n\n" +
     `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
-    [...spliceMetadata, ...fieldMetadata].map((entry) => `  ${entry},\n`).join("") +
+    fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
     "];\n\n" +
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
     `${localisationMetadata(type, localisationPlan)};\n`;

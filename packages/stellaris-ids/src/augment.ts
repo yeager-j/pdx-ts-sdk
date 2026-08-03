@@ -25,6 +25,7 @@ import type { VanillaScriptedModifierId } from "./registries/scripted-modifier.t
 import type { VanillaSectionTemplateId } from "./registries/section-template.ts";
 import type { VanillaShipSizeId } from "./registries/ship-size.ts";
 import type { VanillaSituationTypeId } from "./registries/situation-type.ts";
+import type { VanillaSolarSystemInitializerId } from "./registries/solar-system-initializer.ts";
 import type { VanillaSoundEffectId } from "./registries/sound-effect.ts";
 import type { VanillaSoundEffectTrie } from "./registries/sound-effect/index.ts";
 import type { VanillaSoundId } from "./registries/sound.ts";
@@ -81,6 +82,7 @@ declare module "@pdx-ts/sdk" {
     readonly starbase_level: VanillaStarbaseLevelId;
     readonly species_class: VanillaSpeciesClassId;
     readonly country_ship_of_size_limit: VanillaCountryShipOfSizeLimitId;
+    readonly solar_system_initializer: VanillaSolarSystemInitializerId;
     readonly sound: VanillaSoundId;
     readonly sound_effect: VanillaSoundEffectId;
     readonly sprite: VanillaSpriteId;

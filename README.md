@@ -308,6 +308,49 @@ against 4,860 of vanilla's own call sites, which it contradicts nowhere.
 `examples/hello-galaxy/content/resonance.ts` uses all three forms, including a
 scripted effect whose `TECH` parameter is handed the mod's own technology.
 
+## Nested content stays nested
+
+Some registries are trees. A solar system initializer holds planets, planets
+hold moons, and moons hold moons, to whatever depth you write:
+
+```ts
+const home = defineSolarSystemInitializer({
+  id: "hello_galaxy_system_home",
+  class: "rl_standard_stars",
+  usage: ["custom_empire"],
+  planet: [
+    { count: 1, class: "star", orbitDistance: 0, size: { min: 30, max: 35 } },
+    {
+      name: "NAME_Resonance_Prime",
+      class: "pc_continental",
+      orbitDistance: 60,
+      size: 20,
+      homePlanet: true,
+      initEffect: (planet) => planet.setCapital(true),
+      changeOrbit: 12,
+      moon: [{ class: "pc_barren", size: 8, orbitDistance: 10 }],
+    },
+  ],
+  neighborSystem: [{ initializer: outpost, hyperlaneJumps: 1 }],
+});
+```
+
+These blocks are anonymous and ordered — they have no ids, and their array
+order is the order the game reads them in, so it is preserved exactly as
+written. That is the one place array order is author data rather than something
+the SDK sorts. `changeOrbit` above is why: it advances the orbit cursor, so it
+has to sit between the planet and the moons it applies to.
+
+The scopes follow the nesting too. The initializer's own `initEffect` runs in
+system scope and a planet's runs in planet scope, so `setCapital` is available
+on the inner one and not the outer.
+
+One wrinkle worth knowing: the game also lets `change_orbit` be written as
+`{ min max }`, and the SDK only accepts the number. CWT declares both forms as
+repeatable, which leaves no way to tell one authored value from the other — two
+of the 292 shipped initializers use the block form, and both are reachable by
+folding the offset into the next planet's `orbitDistance`.
+
 ## Testing mod logic
 
 Because triggers and effects are recorded as data, mod logic can be

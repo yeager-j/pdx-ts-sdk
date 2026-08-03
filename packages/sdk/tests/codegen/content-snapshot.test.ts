@@ -3,6 +3,7 @@ import { CONTENT_MANIFEST, type ContentManifestEntry } from "@pdx-ts/codegen-cwt
 import type { CwtDiagnostic } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import driftBaseline from "@pdx-ts/codegen-cwt/drift-baseline.json" with { type: "json" };
+import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
@@ -759,6 +760,71 @@ describe("content-type codegen", () => {
       "COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION: readonly ContentLocalisation[] = [\n];"
     );
     expect(countryShipOfSizeLimit?.machineryBacklog).toEqual([]);
+  });
+
+  it("lowers the solar system initializer's planet splice onto a category interface", () => {
+    const solarSystem = emissions.get("solar_system_initializer");
+    expect(solarSystem?.code).toContain("export interface SolarSystemInitializerDef");
+    // The planet tree arrives as `alias_name[planet_initializer]`, spliced
+    // unkeyed at the top level. It lowers to a named member holding an ordered
+    // array, with the field table resolved by category at write time.
+    expect(solarSystem?.code).toContain("planet?: PlanetInitializerFields[];");
+    expect(solarSystem?.code).toContain('category: "planet_initializer"');
+    expect(solarSystem?.code).toContain('shape: "aliasStruct"');
+    // Declared once per subtype arm; both arms describe the same tree, so the
+    // emitter records one splice rather than reporting the second as a
+    // member-name collision.
+    expect(solarSystem?.inlineSplices).toEqual(["planet_initializer"]);
+    expect(solarSystem?.machineryBacklog).toEqual([]);
+    // Members follow the rules' declaration order, splices included. Here that
+    // puts `planet` ahead of `changeOrbit`, which is what the CWT body says;
+    // the case where the order carries meaning is one level down, inside
+    // `planet` — see the category test below.
+    expect(solarSystem?.code.indexOf("planet?:")).toBeLessThan(
+      solarSystem!.code.indexOf("changeOrbit?:")
+    );
+    // Two fields with no overlay help: `class` unions both ref arms the rules
+    // declare, and `flags = { value_set[star_flag] }` reads as a bare list.
+    expect(solarSystem?.code).toContain("class: StarClassRef | string | StarClassRandomListRef;");
+    expect(solarSystem?.code).toContain("flags?: StarFlag[];");
+    // The planet member is a measured field, not just a reported splice — the
+    // corpus gate can hold it to a shape.
+    expect(fieldNames(solarSystem?.emittedFields ?? [])).toContain("planet");
+  });
+
+  it("emits the planet and moon categories as mutually recursive blocks", () => {
+    const planet = emitAliasSplice(emitter, "planet_initializer");
+    const moon = emitAliasSplice(emitter, "moon_initializer");
+    expect(planet?.memberKey).toBe("planet");
+    expect(planet?.spliceCategories).toEqual(["planet_initializer", "moon_initializer"]);
+    // The interface refers to itself and to the moon's; the *table* cannot, so
+    // it is registered under the category name and resolved at write time.
+    expect(planet?.code).toContain("planet?: PlanetInitializerFields[];");
+    expect(planet?.code).toContain("moon?: MoonInitializerFields[];");
+    expect(planet?.code).toContain(
+      'registerAliasStructFields("planet_initializer", PLANET_INITIALIZER_FIELDS)'
+    );
+    // A moon carries moons and never planets, which is what makes the two
+    // categories worth keeping separate.
+    expect(moon?.code).toContain("moon?: MoonInitializerFields[];");
+    expect(moon?.code).not.toContain("planet?:");
+    expect(moon?.spliceCategories).toEqual(["moon_initializer"]);
+    // Scope comes from the nested `## replace_scopes`, not an overlay row.
+    expect(planet?.code).toContain('initEffect?: EffectBlock<"planet">;');
+    // Where splice order carries meaning: `change_orbit` advances the orbit
+    // cursor, so it has to precede the moons it applies to. Emitting splice
+    // members ahead of the named fields would invert this.
+    expect(planet!.code.indexOf("changeOrbit?:")).toBeLessThan(planet!.code.indexOf("moon?:"));
+    // The four arity rows: without them both keys collapse to arrays, because
+    // CWT declares each arm `0..inf`.
+    expect(planet?.code).toContain('orbitAngle?: "random" | number | PlanetInitializerOrbitAngle;');
+    expect(planet?.code).toContain("size?: number | PlanetInitializerSize;");
+    // Fields are rooted at the member key so the corpus gate can line them up
+    // with the real files, where they are written inside `planet = { ... }`.
+    expect(fieldNames(planet?.emittedFields ?? [])).toContain("planet.class");
+    expect(fieldNames(planet?.emittedFields ?? [])).toContain("planet.moon");
+    expect(planet?.unsupported).toEqual([]);
+    expect(moon?.unsupported).toEqual([]);
   });
 });
 

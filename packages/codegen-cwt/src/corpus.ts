@@ -147,6 +147,75 @@ function descendRepeatedStruct(
   }
 }
 
+/**
+ * One structural alias splice the reader descends into, e.g. `planet`.
+ *
+ * `members` is a thunk because these are mutually recursive: a `planet` holds
+ * `planet` and `moon`, and a `moon` holds `moon`.
+ */
+export interface SpliceMember {
+  readonly key: string;
+  readonly members: () => readonly SpliceMember[];
+}
+
+/**
+ * Records everything written inside a spliced block, at any depth, under that
+ * block's own key.
+ *
+ * The flattening is the point rather than a shortcut. The emitter produces one
+ * field table per alias category and reuses it at every level — a third-level
+ * moon's `size` is described by the same lowering as a first-level one — so the
+ * corpus has to aggregate the same way for the two sides to line up. Recursion
+ * terminates on the data, since real files nest three deep, not on a cap.
+ */
+function descendSplice(
+  value: PdxContainer,
+  member: SpliceMember,
+  seen: Map<string, PdxValue[]>
+): void {
+  const nested = new Map(member.members().map((inner) => [inner.key, inner]));
+  for (const leaf of value.items) {
+    if (leaf.kind !== "entry") {
+      continue;
+    }
+    const path = `${member.key}.${leaf.key}`;
+    seen.set(path, [...(seen.get(path) ?? []), leaf.value]);
+    const inner = nested.get(leaf.key);
+    if (inner !== undefined && leaf.value.kind === "container") {
+      descendSplice(leaf.value, inner, seen);
+    }
+  }
+}
+
+/**
+ * Builds the splice tree for a set of categories, tying the recursive knot.
+ *
+ * Takes a resolver rather than the emitter itself, so the corpus reader stays a
+ * reader: the emitter is the authority on which categories are structural and
+ * what key each is written under, and this only needs the answer.
+ */
+export function spliceMembersOf(
+  categories: readonly string[],
+  resolve: (
+    category: string
+  ) => { readonly memberKey: string; readonly spliceCategories: readonly string[] } | null
+): SpliceMember[] {
+  return categories.flatMap((category) => {
+    const resolved = resolve(category);
+    return resolved === null
+      ? []
+      : [
+          {
+            key: resolved.memberKey,
+            // Lazily, and re-entering `spliceMembersOf` rather than caching a
+            // node per category: `planet_initializer` reaches itself, so
+            // building the children eagerly would not terminate.
+            members: () => spliceMembersOf(resolved.spliceCategories, resolve),
+          },
+        ];
+  });
+}
+
 function sameKeys(left: ReadonlySet<string>, right: ReadonlySet<string>): boolean {
   return left.size === right.size && [...left].every((key) => right.has(key));
 }
@@ -260,7 +329,8 @@ export function readRegistryCorpus(
   registryPath: string,
   keyword: string | null,
   nameField: string | null,
-  repeatedStructFields: readonly RepeatedStructField[] = []
+  repeatedStructFields: readonly RepeatedStructField[] = [],
+  spliceMembers: readonly SpliceMember[] = []
 ): RegistryCorpus {
   const dir = path.join(root, registryPath);
   let names: string[];
@@ -270,6 +340,7 @@ export function readRegistryCorpus(
     return { definitions: 0, files: 0, occurrences: new Map() };
   }
   const structByField = new Map(repeatedStructFields.map((field) => [field.field, field]));
+  const spliceByKey = new Map(spliceMembers.map((member) => [member.key, member]));
   const occurrences = new Map<string, FieldObservation>();
   let definitions = 0;
   for (const name of names) {
@@ -291,6 +362,10 @@ export function readRegistryCorpus(
         const struct = structByField.get(field.key);
         if (struct !== undefined && field.value.kind === "container") {
           descendRepeatedStruct(field.value, struct, written);
+        }
+        const splice = spliceByKey.get(field.key);
+        if (splice !== undefined && field.value.kind === "container") {
+          descendSplice(field.value, splice, written);
         }
       }
       observe(occurrences, written);

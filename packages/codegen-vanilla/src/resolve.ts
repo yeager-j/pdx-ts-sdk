@@ -87,9 +87,16 @@ function resolveRow(row: VanillaIdRow, type: ContentType | undefined): RegistryS
         "needs the keyword its entries are written under"
     );
   }
-  if (type.keyFilter !== null && keyword !== null && keyword !== type.keyFilter) {
+  // A negated filter says which key the entries are *not* written under, so it
+  // constrains nothing about the keyword and cannot contradict it.
+  if (
+    type.keyFilter !== null &&
+    !type.keyFilter.negated &&
+    keyword !== null &&
+    keyword !== type.keyFilter.key
+  ) {
     throw new Error(
-      `type[${row.type}] declares ## type_key_filter = ${type.keyFilter} but the manifest ` +
+      `type[${row.type}] declares ## type_key_filter = ${type.keyFilter.key} but the manifest ` +
         `claims keyword ${keyword}`
     );
   }
