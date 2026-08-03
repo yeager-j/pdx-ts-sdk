@@ -1,4 +1,4 @@
-import { pluralize } from "@pdx-ts/codegen-cwt/naming";
+import { pluralize, referencesIdentifier } from "@pdx-ts/codegen-cwt/naming";
 import { describe, expect, it } from "vitest";
 
 describe("pluralize", () => {
@@ -14,5 +14,33 @@ describe("pluralize", () => {
     // evidence otherwise is two lines of committed generated output.
     expect(pluralize("customStarNames")).toBe("customStarNames");
     expect(pluralize("customPlanetNames")).toBe("customPlanetNames");
+  });
+});
+
+describe("referencesIdentifier", () => {
+  it("matches a name used as its own type", () => {
+    expect(referencesIdentifier("modifier?: ModifierBlock;", "ModifierBlock")).toBe(true);
+  });
+
+  it("does not match a name that is only a substring of a longer identifier", () => {
+    // The bug this guards: a bare `code.includes(name)` false-matches
+    // `ModifierBlock` inside the shape string `triggeredModifierBlock` (the
+    // character before `M` is `d`, a word character, so there is no boundary
+    // there) and `EconomicResourceBlock` inside
+    // `EconomicResourceBlockNoProduce` (the character after `Block` is `N`, a
+    // word character, so there is no boundary there either).
+    expect(referencesIdentifier('shape: "triggeredModifierBlock"', "ModifierBlock")).toBe(false);
+    expect(
+      referencesIdentifier("value: EconomicResourceBlockNoProduce;", "EconomicResourceBlock")
+    ).toBe(false);
+  });
+
+  it("still matches the longer name when it is what was asked for", () => {
+    expect(
+      referencesIdentifier(
+        "value: EconomicResourceBlockNoProduce;",
+        "EconomicResourceBlockNoProduce"
+      )
+    ).toBe(true);
   });
 });

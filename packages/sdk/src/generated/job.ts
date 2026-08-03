@@ -7,7 +7,6 @@ import type {
   ContentLocalisation,
   DefinedContent,
   EconomicResourceBlock,
-  ModifierBlock,
   ModifierClosure,
   TriggeredModifier,
   WeightBlock,

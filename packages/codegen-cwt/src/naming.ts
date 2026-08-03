@@ -125,6 +125,22 @@ export function quoteLiteral(value: string): string {
   return JSON.stringify(value);
 }
 
+/**
+ * Whether generated `code` names `identifier` as a whole word, not merely as a
+ * substring.
+ *
+ * Deciding which types a generated file needs to import reads emitted source
+ * back with this check. A bare `code.includes(identifier)` false-matches
+ * whenever `identifier` occurs inside a longer identifier or string literal —
+ * `ModifierBlock` inside `shape: "triggeredModifierBlock"`, or
+ * `EconomicResourceBlock` inside `EconomicResourceBlockNoProduce` — which pulls
+ * in an unused `import type`. Every candidate this is called with is a plain
+ * identifier, so a literal `\b` regex is exact; no escaping is needed.
+ */
+export function referencesIdentifier(code: string, identifier: string): boolean {
+  return new RegExp(`\\b${identifier}\\b`).test(code);
+}
+
 export function docComment(lines: readonly string[], indent = ""): string {
   const body = lines.filter((line) => line.trim() !== "");
   if (body.length === 0) {
