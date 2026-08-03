@@ -102,6 +102,7 @@ export const STRUCTURAL_EFFECT_METHODS = new Set([
   "saveEventTargetAs",
   "saveGlobalEventTargetAs",
   "addResource",
+  "run",
 ]);
 
 /**

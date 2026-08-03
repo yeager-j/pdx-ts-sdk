@@ -19,3 +19,19 @@ fake_conditional = {
 	]
 	is_country_type = default
 }
+
+# Two cases the scope inference has to widen on rather than narrow, so the
+# generator's attribution report is testable without an install.
+
+# A key no rule declares — a mod's, or one a game patch introduced. The
+# inference must report it and leave the binding unconstrained.
+fake_unknown_key = {
+	some_key_no_rule_declares = yes
+}
+
+# Two conditions whose scopes are disjoint, so the intersection empties. The
+# fallback is unconstrained; the report names it rather than hiding it.
+fake_dual_scope = {
+	is_country_type = default
+	is_planet_class = pc_continental
+}

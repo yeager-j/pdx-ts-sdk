@@ -1,6 +1,11 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["src", "tests"],
+  // `examples/` compiles here rather than in the root program: hello-galaxy
+  // imports this package, and that is the point — the showcase should be the
+  // setup a real mod author has. A module augmentation is global to a program,
+  // so it cannot be in both worlds, and the root program is the one that has to
+  // stay package-absent.
+  "include": ["src", "tests", "../../examples"],
   // The root tsconfig excludes this package's own directory (so the root
   // program can model the package-absent world without this package's
   // augmentation ever joining it) — that exclude is inherited verbatim and

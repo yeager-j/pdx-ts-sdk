@@ -1,7 +1,22 @@
+/**
+ * The showcase example, rendered and frozen.
+ *
+ * It lives in this package's project rather than the SDK's because the example
+ * imports `@pdx-ts/stellaris-ids/triggers` — the setup a real mod author has —
+ * and a module augmentation is global to a TypeScript program. The root program
+ * has to stay package-absent so `packages/sdk/tests/vanilla-refs.test-d.ts` can
+ * assert the unchecked degradation, so the example compiles here instead.
+ *
+ * What it pins is identity, not just bytes: hello-galaxy's ids, event
+ * namespace, and localization keys are frozen across its restructure into
+ * feature modules, because emission order is a function of the content and
+ * never of source layout.
+ */
+
+import { render } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
 import { defineHelloGalaxy } from "../../../examples/hello-galaxy/mod.ts";
-import { render } from "../src/index.ts";
 
 // Top-level await: the example discovers its content from the filesystem, so
 // the file set is only known after the import walk. Rendering here rather than

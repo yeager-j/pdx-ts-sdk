@@ -26,10 +26,18 @@ const OPTIONS = {
   installRoot: path.join(ROOT, "fixtures/fake-install"),
   gameVersion: "4.4.6",
   configRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/config"),
+  docsRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1"),
   trieThreshold: 5,
 };
 
 const generated = generateVanillaPackage(OPTIONS);
+
+/**
+ * The two files that carry runtime, and the only two. Everything else the
+ * generator emits is types with zero payload; these hold one bound call per
+ * scripted definition (SDK-13).
+ */
+const BINDING_FILES = new Set(["triggers.ts", "effects.ts"]);
 
 describe("assertVanillaIdentifier", () => {
   it("passes the names the game actually defines", () => {
@@ -110,8 +118,11 @@ describe("generated output", () => {
     expect(checked).toBeGreaterThan(20);
   });
 
-  it("is types only — no runtime export and no import but the augmentation", () => {
+  it("keeps every id and parameter table types-only", () => {
     for (const [name, text] of generated.files) {
+      if (BINDING_FILES.has(name)) {
+        continue;
+      }
       expect(text, name).not.toMatch(/\bexport\s+(const|let|var|function|class|default|enum)\b/);
       for (const line of text.split("\n")) {
         if (!line.startsWith("import")) {
@@ -121,6 +132,32 @@ describe("generated output", () => {
           true
         );
       }
+    }
+  });
+
+  /**
+   * The binding files are the package's only runtime, and this pins how little
+   * of it there is. Every line is one `scriptedTrigger`/`scriptedEffect` call
+   * naming a definition and the scope inferred for it — no bodies, no logic, no
+   * data structure that could carry either. A generator change that started
+   * emitting anything else would land here first.
+   */
+  it("keeps the binding files to one call per definition", () => {
+    for (const name of BINDING_FILES) {
+      const text = generated.files.get(name);
+      expect(text, `${name} was not emitted`).toBeDefined();
+      const body = text!
+        .split("\n")
+        .filter((line) => line !== "" && !line.startsWith("//") && !line.startsWith("import"));
+      expect(body.length, name).toBeGreaterThan(0);
+      for (const line of body) {
+        expect(line, name).toMatch(
+          /^export const [A-Za-z_$][\w$]* = \/\*#__PURE__\*\/ scripted(Trigger|Effect)\("[\w.]+", (?:"[\w]+"|\["[\w]+"(?:, "[\w]+")*\])\);$/
+        );
+      }
+    }
+    for (const name of BINDING_FILES) {
+      expect(generated.files.get(name), name).toContain('import "./augment.ts";');
     }
   });
 });

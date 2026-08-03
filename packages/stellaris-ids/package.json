@@ -6,6 +6,8 @@
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
+    "./triggers": "./src/triggers.ts",
+    "./effects": "./src/effects.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {

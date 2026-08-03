@@ -178,8 +178,7 @@ entry, raw-emit escape hatch, or explicit non-support.
 
 ### Bind vanilla scripted triggers and effects
 
-- [ ] **Blocking.** Without it most DoA `potential`/`allow`/`trigger` blocks
-      cannot be expressed.
+- [x] **Landed 2026-08-02** (SDK-13). Was the survey's one blocking gap.
 
 DoA calls `is_fallen_empire` 214 times. It is in neither the generated surface
 nor the CWT rules, because it isn't a game primitive — it's vanilla _script_, in
@@ -187,14 +186,17 @@ nor the CWT rules, because it isn't a game primitive — it's vanilla _script_, 
 triggers and ~1455 scripted effects there. No amount of codegen from `vendor/`
 will produce them.
 
-Use `@pdx-ts/pdxscript` with the existing `VanillaView`/`viewFromFiles` machinery
-(`src/vanilla/surface.ts`) to read the install at build time and generate typed
-bindings, rather than hand-listing them.
+This section proposed reading the install at build time via
+`VanillaView`/`viewFromFiles`. SDK-12 superseded that: the names come from the
+version-pinned `@pdx-ts/stellaris-ids`, so nothing about authoring against them
+needs an install.
 
-**Resolved 2026-07-31 — see [handoff-vanilla-surface.md](handoff-vanilla-surface.md).**
-Scope is settled by opt-in assertion at the declaration; body inference is
-rejected. Existence and `$PARAM$` lists are checked, only scope is asserted. This
-item is now downstream of the vanilla identifier package described in that note.
+**Landed 2026-08-02.** All 1,618 scripted triggers and 1,657 scripted effects
+ship bound, under `@pdx-ts/stellaris-ids/triggers` and `/effects`, with names,
+`$PARAM$` lists, and scopes all checked. The handoff's ruling against inferring
+scope was reversed on a different argument — see
+[verdict-scripted-scope.md](verdict-scripted-scope.md) and the roadmap entry.
+`is_fallen_empire` infers `country` exactly.
 
 ### Generalize event kinds
 

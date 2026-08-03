@@ -605,8 +605,11 @@ the correct type — "runs in an unknown scope" is exactly true — and what is
 missing is a way to narrow _inside_ the clause: `inScope("starbase", condition)`,
 the type-level counterpart of the runtime test vanilla already uses, sound
 because a condition guarded by `is_scope_type` is simply false in other scopes.
-That is SDK-24, and it waits on the vanilla scripted-trigger binding, since most
-bodies here delegate to triggers the SDK cannot name yet.
+That is SDK-24, unblocked as of SDK-13 — and the inference met the same shape
+from the other side: `titan_possible_construction` and its two siblings are the
+only scripted triggers whose scope intersection went empty, because each
+branches on `is_scope_type` at runtime. `inScope` is what would make those
+expressible rather than merely wide.
 
 Two mechanisms, then, for two different facts: **the definition knows its scope**
 (a parameter) versus **the clause discovers it** (a narrowing combinator).
@@ -620,15 +623,42 @@ worth remembering that the gate's reach stops at the first level of a block.
 
 ### Bind vanilla scripted triggers and effects
 
-`is_fallen_empire` appears 214 times in DoA and is in neither the generated
-surface nor the CWT rules, because it is vanilla _script_ — vanilla ships ~1449
-scripted triggers and ~1455 scripted effects in `common/scripted_triggers/` and
-`common/scripted_effects/`.
+**Landed 2026-08-02** (SDK-13). `is_fallen_empire` appears 214 times in DoA and
+is in neither the generated surface nor the CWT rules, because it is vanilla
+_script_. All 1,618 scripted triggers and 1,657 scripted effects now ship bound,
+under `@pdx-ts/stellaris-ids/triggers` and `/effects` — `isFallenEmpire()` is a
+`Trigger<"country">`, and `scope.run(giveAscensionPerkEffect({ PERK }))` records
+an effect. Name, `$PARAM$` list, and scope are all checked.
 
-Decided: opt-in scope assertion at the declaration, existence and `$PARAM$`
-lists checked, only scope asserted. Body inference rejected. Downstream of the
-vanilla identifier package. See
-[handoff-vanilla-surface.md](handoff-vanilla-surface.md).
+**The scope is inferred, and the handoff's ruling against that was reversed on a
+different argument.** What it rejected was heuristics over what a body _means_:
+"confidently right on the easy majority and quietly wrong on the rest." What
+landed intersects the scopes the CWT rules already declare for the keys a body
+evaluates — `is_country_type` is country-scoped, so a body that evaluates only
+it can only be a country trigger — and every key the rules do not cover
+contributes nothing rather than a guess. `OR` unions its arms, a pushed scope
+contributes nothing to its caller, `[[FLAG]]` blocks contribute nothing, and an
+empty intersection falls back to unconstrained. The result can be too wide,
+which is the `Trigger<ScopeName>` that shipping nothing would have given; it
+cannot be silently wrong.
+
+Measured: 90.4% of triggers narrowed (42.0% to one scope, 77.7% to five or fewer
+out of 41), 62.6% of effects. Zero contradictions across 4,860 real call sites
+covering 894 definitions, and the check is mutation-tested — making a link's
+body constrain its caller produces 328. See
+[verdict-scripted-scope.md](verdict-scripted-scope.md) and the probe in
+`design/scripted-scope-probe/`.
+
+The hand-declared `scriptedTrigger(name, scope)` survives as the third-party
+hatch: another mod's definition, or one newer than the pinned package. There the
+scope is the author's assertion, `"any"` is the deliberate opt-out, and
+`.unchecked` relaxes the _name_.
+
+Deliberately left: block-valued parameters (`$PRE_LOOP_EFFECTS$` used as a bare
+statement) still type as `string | number`; effect coverage is held back by
+`inline_script`, `save_global_event_target_as`, and `modifier` weight blocks,
+all of which widen rather than narrow; and the testing interpreter refuses a
+scripted trigger and always will, since the package carries no bodies.
 
 ### Vanilla identifier package
 
