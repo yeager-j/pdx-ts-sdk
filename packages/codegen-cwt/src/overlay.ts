@@ -572,6 +572,30 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "building.triggered_planet_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map " +
+        "(buildings.cwt:227). Found via the SDK-39 sweep: 672 shipped buildings write this key " +
+        "and the row was missing, so the writer silently dropped it. building's sibling triggered_* " +
+        "fields (triggered_planet_pop_group_modifier_for_species/_for_all, triggered_country_modifier, " +
+        "triggered_army_modifier) splice the by_pop_group/by_planet clause variants instead of plain " +
+        "triggered_modifier_clause and are a separate, not-yet-evidenced gap left for a follow-up.",
+    },
+  ],
+  [
+    "tradition.triggered_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map " +
+        "(traditions.cwt:70), the same shape ascension_perk.triggered_modifier already uses. Found " +
+        "via SDK-39: the row was missing so the writer silently dropped the field even though 30 " +
+        "shipped traditions/swaps write it.",
+    },
+  ],
+  [
     "tradition_category.desc",
     {
       member: "conditionalDesc",
@@ -771,6 +795,19 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     {
       shape: "modifierBlock",
       reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "job.triggered_planet_pop_group_modifier_for_species",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_pop_group_clause (pop_jobs.cwt:205) is the pop_group-scoped " +
+        "variant of triggered_modifier_clause: identical potential/modifier/description/mult/" +
+        "multiplier template, plus one field (divide_over_pop_groups) TriggeredModifier does not " +
+        "model. Found via the SDK-39 sweep: 7 shipped jobs write this key and the row was missing, " +
+        "so it was silently dropped in full. Reusing the plain triggeredModifierBlock shape drops " +
+        "only divide_over_pop_groups, which zero shipped jobs write.",
     },
   ],
   [
@@ -1364,6 +1401,16 @@ export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverr
     {
       shape: "modifierBlock",
       reason: "Nested modifier_clause is the same open modifier-name map as its parent.",
+    },
+  ],
+  [
+    "tradition.tradition_swap.triggered_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "Nested triggered_modifier_clause (traditions.cwt:126) is the same shape as the top " +
+        "level's tradition.triggered_modifier — combines a potential trigger with an open " +
+        "modifier-name map. Found via the SDK-39 sweep alongside its top-level sibling.",
     },
   ],
   [

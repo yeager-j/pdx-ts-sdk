@@ -1690,6 +1690,81 @@ describe("generated content registries", () => {
       "possible_pre_triggers = {\n\t\thas_owner = yes\n\t\tis_enslaved = no\n\t\tis_robotic = yes\n\t}"
     );
   });
+
+  it("emits tradition.triggeredModifier and tradition_swap.triggeredModifier (sdk39TriggeredModifier)", () => {
+    // SDK-39: both were silently dropped for want of a CONTENT_FIELD_OVERRIDES
+    // row, even though the runtime TriggeredModifier writer already supported
+    // the shape (ascension_perk, edict, job, councilor, situation_type all
+    // had the row already).
+    const tradition = defineTradition({
+      id: "sdk39_tradition_triggered_modifier",
+      name: "Sdk39 Tradition",
+      triggeredModifier: [
+        {
+          when: hasAuthority("auth_democratic"),
+          modifiers: (m) => m.country.unity.produces.mult(0.1),
+        },
+      ],
+      traditionSwap: {
+        sdk39_tradition_swap_triggered_modifier: {
+          name: "Sdk39 Swap",
+          triggeredModifier: [
+            {
+              when: hasAuthority("auth_oligarchic"),
+              modifiers: (m) => m.country.unity.produces.mult(0.2),
+            },
+          ],
+        },
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("SDK-39 test", "sdk39"), [collection(undefined, [tradition])])
+    ).get("common/traditions/sdk39_traditions.txt")!;
+    expect(rendered).toContain(
+      "triggered_modifier = {\n\t\tpotential = {\n\t\t\thas_authority = auth_democratic\n\t\t}\n" +
+        "\t\tcountry_unity_produces_mult = 0.1\n\t}"
+    );
+    expect(rendered).toContain(
+      "triggered_modifier = {\n\t\t\tpotential = {\n\t\t\t\thas_authority = auth_oligarchic\n\t\t\t}\n" +
+        "\t\t\tcountry_unity_produces_mult = 0.2\n\t\t}"
+    );
+  });
+
+  it("emits building.triggeredPlanetModifier and job.triggeredPlanetPopGroupModifierForSpecies (sdk39TriggeredModifier)", () => {
+    // The sweep's other two finds: building's own plain triggered_modifier_clause
+    // field (672 shipped buildings write it) and job's pop_group-clause variant
+    // (7 shipped jobs write it, reusing the shape and dropping only
+    // divide_over_pop_groups, which zero shipped jobs set).
+    const building = defineBuilding({
+      id: "sdk39_building_triggered_planet_modifier",
+      name: "Sdk39 Building",
+      triggeredPlanetModifier: [
+        {
+          when: always(),
+          modifiers: (m) => m.planet.pop.assembly.mult(0.1),
+        },
+      ],
+    });
+    const job = defineJob({
+      id: "sdk39_job_triggered_pop_group_modifier",
+      name: "Sdk39 Job",
+      triggeredPlanetPopGroupModifierForSpecies: [
+        {
+          when: always(),
+          modifiers: (m) => m.pop.happiness(0.1),
+        },
+      ],
+    });
+    const rendered = render(
+      buildMod(configFor("SDK-39 test", "sdk39"), [collection(undefined, [building, job])])
+    );
+    expect(rendered.get("common/buildings/sdk39_buildings.txt")).toContain(
+      "triggered_planet_modifier = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n"
+    );
+    expect(rendered.get("common/pop_jobs/sdk39_pop_jobs.txt")).toContain(
+      "triggered_planet_pop_group_modifier_for_species = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n"
+    );
+  });
 });
 
 /**
