@@ -13,6 +13,14 @@
   "dependencies": {
     "@pdx-ts/pdxscript": "*"
   },
+  "peerDependencies": {
+    "vitest": ">=3"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@pdx-ts/codegen-cwt": "*"
   }
