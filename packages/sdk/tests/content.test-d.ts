@@ -952,6 +952,56 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("rejects a literal reference into a side of the definition that declares nothing at all (SDK-52)", () => {
+    // Approach/Stage default to `never`, not `string`: omitting `approach` or
+    // `stages` entirely declares an empty set, and nothing is a member of
+    // `never` — so a direct literal reference into the missing side is
+    // rejected, the mirror image of the typo case above. Plain and
+    // combinator-produced (unbranded) triggers still flow regardless, since
+    // both phantom brands stay optional — confirmed at the end of this test.
+    defineSituationType({
+      id: "content_types_situation_approach_only",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      approach: {
+        content_types_situation_approach_only_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — no `stages` declared anywhere in this definition
+          allow: currentStage("no_stage_could_ever_satisfy_this"),
+        },
+      },
+    });
+
+    defineSituationType({
+      id: "content_types_situation_stage_only",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      stages: {
+        content_types_situation_stage_only_stage: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — no `approach` declared anywhere in this definition
+          potential: currentSituationApproach("no_approach_could_ever_satisfy_this"),
+        },
+      },
+      // @ts-expect-error — same, at the top-level abortTrigger position
+      abortTrigger: currentSituationApproach("still_no_approach_declared"),
+    });
+
+    // Plain/combinator triggers still type-check with neither side declared —
+    // the `never` default narrows only the direct-literal path, not the
+    // graceful-degradation boundary itself.
+    defineSituationType({
+      id: "content_types_situation_neither_declared",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      abortTrigger: or(always(), always()),
+    });
+  });
+
   it("keeps modifier recorders numeric and weight conditions scoped", () => {
     defineTradition({
       id: "content_types_tradition_modifier",

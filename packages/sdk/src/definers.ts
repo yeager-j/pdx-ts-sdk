@@ -74,6 +74,13 @@ type CheckedStageFields<Approach extends string, Stage extends string> = Omit<
  * optional), degrading to unchecked the same as an id whose situation
  * identity genuinely is not known.
  *
+ * `Approach`/`Stage` default to `never`, not `string`: a definition that
+ * omits `approach` or `stages` entirely declares an empty set, and `never`
+ * is the type for which nothing is a member, so a direct literal reference
+ * into the missing side is rejected rather than silently accepted. Plain and
+ * combinator-produced values still flow through the same optional brands as
+ * above, so this narrows only the direct-literal path, not the boundary.
+ *
  * `links.cwt` gives the situation `target` link `output_scope = any`, so no
  * reading of the rules could produce the `targetScope` signature either.
  * `targetScope` is authored and emits nothing — it is stripped out of `def`,
@@ -83,8 +90,8 @@ type CheckedStageFields<Approach extends string, Stage extends string> = Omit<
 export function defineSituationType<
   const Id extends string,
   T extends ScopeName | undefined = undefined,
-  const Approach extends string = string,
-  const Stage extends string = string,
+  const Approach extends string = never,
+  const Stage extends string = never,
 >(
   def: Omit<SituationTypeDef<Id>, "approach" | "stages" | "abortTrigger"> & {
     readonly targetScope?: T;
