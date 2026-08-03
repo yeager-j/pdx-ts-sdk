@@ -358,6 +358,61 @@ export const REQUIRED_LOCALISATION = new Set([
   "archaeological_site_type.name",
 ]);
 
+export interface ConditionalLocalisation {
+  /** The sibling boolean member that waives the slot when `true`. */
+  readonly unless: string;
+  readonly reason: string;
+}
+
+/**
+ * Localisation slots the rules require *unless* the definition opts out —
+ * distinct from {@link REQUIRED_LOCALISATION}'s always-on rows because a flat
+ * `required: true` would reject every definition that legitimately omits the
+ * slot.
+ *
+ * `swapped_tradition`/`swapped_ascension_perk` (traditions.cwt:14-46,
+ * ascension_perks.cwt:15-...) declare `name = "$"` inside
+ * `subtype[not_inheriting_name]`, which `cwt/rules.ts`'s `readLocalisation`
+ * flattens away — it recurses into every `subtype[...]` and drops which one a
+ * slot came from, the same way ordinary field flattening drops which subtype a
+ * field came from (see `ship_size.modifier`'s overlay row). CWT's own
+ * `## required` marker never applies here regardless, since the requirement
+ * is conditional rather than unconditional. A real-install sweep of every
+ * shipped `tradition_swap` found 131 of 195 blocks in the requiring subtype
+ * (no `inherit_name = yes`), all 131 carrying a `name`; the same sweep found
+ * 6 of 9 shipped ascension-perk swaps in the requiring subtype, all 6 naming
+ * themselves. Nothing in the corpus omits the slot while requiring it, but
+ * the SDK's own writer emits a raw key straight to the game with no warning
+ * if an author does, which is the failure this row closes off.
+ *
+ * The key names the vendored localisation type carrying the slot
+ * (`swapped_tradition`, `swapped_ascension_perk`) rather than the owning
+ * registry, because that is what `content-type.ts`'s `localisationMembers`/
+ * `localisationMetadata` are keyed on for a repeated-struct field's own
+ * `type[...]`.
+ */
+export const CONDITIONALLY_REQUIRED_LOCALISATION = new Map<string, ConditionalLocalisation>([
+  [
+    "swapped_tradition.name",
+    {
+      unless: "inheritName",
+      reason:
+        "traditions.cwt's type[swapped_tradition] requires name unless " +
+        "subtype[not_inheriting_name] does not apply, i.e. unless inherit_name = yes.",
+    },
+  ],
+  [
+    "swapped_ascension_perk.name",
+    {
+      unless: "inheritName",
+      reason:
+        "ascension_perks.cwt's type[swapped_ascension_perk] requires name unless " +
+        "subtype[not_inheriting_name] does not apply, i.e. unless inherit_name = yes — the same " +
+        "shape as swapped_tradition.name.",
+    },
+  ],
+]);
+
 /**
  * Fields the emitter can lower but that review has decided not to emit, with
  * the reason.

@@ -139,6 +139,8 @@ export const GLOBAL_SHIP_DESIGN_SECTION_FIELDS: readonly ContentField[] = [
  * Generated from `type[global_ship_design]` at `game/common/global_ship_designs`.
  */
 export interface GlobalShipDesignFields {
+  /** English text emitted to localization under `<id>`. */
+  name?: string;
   shipSize?: ShipSizeRef | string;
   hideSize?: boolean;
   upgradesTo?: GlobalShipDesignRef | string;
@@ -296,4 +298,6 @@ export const GLOBAL_SHIP_DESIGN_FIELDS: readonly ContentField[] = [
   },
 ];
 
-export const GLOBAL_SHIP_DESIGN_LOCALISATION: readonly ContentLocalisation[] = [];
+export const GLOBAL_SHIP_DESIGN_LOCALISATION: readonly ContentLocalisation[] = [
+  { member: "name", pattern: "$", required: false },
+];

@@ -32,6 +32,7 @@ import {
   defineDecision,
   defineEconomicCategory,
   defineEdict,
+  defineGlobalShipDesign,
   defineGraphicalCulture,
   defineJob,
   defineOpinionModifier,
@@ -1800,6 +1801,56 @@ describe("generated content registries", () => {
         "\t\t\tcivics = {\n\t\t\t\tvalue = sdk42_sovereign_civic\n\t\t\t}\n\t\t}\n\t}"
     );
     expect(rendered.match(/OR = \{/g)).toHaveLength(1);
+  });
+});
+
+describe("SDK-44: conditionally-required localization and the global_ship_design name hole", () => {
+  it("requires tradition_swap.name unless inheritName is set (sdk44ConditionalRequired)", () => {
+    const missingName = defineTradition({
+      id: "sdk44_tradition_requires_swap_name",
+      name: "Sdk44 Tradition",
+      traditionSwap: {
+        sdk44_swap_missing_name: {},
+      },
+    });
+    expect(() =>
+      render(buildMod(configFor("SDK-44 test", "sdk44"), [collection(undefined, [missingName])]))
+    ).toThrow('Missing required localization "name" for "sdk44_swap_missing_name"');
+
+    const inheritedName = defineTradition({
+      id: "sdk44_tradition_inherits_swap_name",
+      name: "Sdk44 Tradition 2",
+      traditionSwap: {
+        sdk44_swap_inherits_name: { inheritName: true },
+      },
+    });
+    // No throw: inheritName waives the requirement.
+    expect(() =>
+      render(buildMod(configFor("SDK-44 test", "sdk44"), [collection(undefined, [inheritedName])]))
+    ).not.toThrow();
+  });
+
+  it("gives global_ship_design a real name text slot (sdk44GlobalShipDesignName)", () => {
+    // Before SDK-44, `global_ship_design` had no localisation member at all —
+    // the emitter recognized `localisation = { name = "$" }` but dropped the
+    // `localisation = { name = name }` form (a bare pointer at the type's own
+    // name_field, structurally equivalent to "$" for a name_field registry).
+    const design = defineGlobalShipDesign({
+      id: "sdk44_global_ship_design_named",
+      name: "Sdk44 Cruiser",
+    });
+    const files = render(
+      buildMod(configFor("SDK-44 test", "sdk44"), [collection(undefined, [design])])
+    );
+    const rendered = files.get("common/global_ship_designs/sdk44_global_ship_designs.txt")!;
+    // The body's `name` key still carries the id (it is the name_field), not
+    // the English text.
+    expect(rendered).toContain("ship_design = {\n\tname = sdk44_global_ship_design_named\n");
+    expect(rendered).not.toContain("Sdk44 Cruiser");
+    // The real English text goes to localisation, keyed off the id.
+    expect(files.get("localisation/english/sdk44_l_english.yml")).toContain(
+      'sdk44_global_ship_design_named:0 "Sdk44 Cruiser"'
+    );
   });
 });
 

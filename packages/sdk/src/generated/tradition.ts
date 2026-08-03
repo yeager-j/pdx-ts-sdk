@@ -96,7 +96,7 @@ export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
 ];
 
 export const TRADITION_SWAP_LOCALISATION: readonly ContentLocalisation[] = [
-  { member: "name", pattern: "$", required: false },
+  { member: "name", pattern: "$", required: false, requiredUnless: "inheritName" },
   { member: "flavor", pattern: "$_delayed", required: false },
   { member: "effects", pattern: "$_desc", required: false },
 ];

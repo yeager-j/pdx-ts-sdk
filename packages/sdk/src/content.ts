@@ -214,6 +214,15 @@ export interface ContentLocalisation {
   readonly member: string;
   readonly pattern: string;
   readonly required: boolean;
+  /**
+   * Names a sibling boolean member that waives {@link required} when it is
+   * `true` — a slot the rules require unless the definition opts out of
+   * needing its own text (`tradition_swap.name`, required unless
+   * `inherit_name = yes`). `required` itself stays the type's static
+   * optionality (`name?: string`, since the field is genuinely optional on
+   * *some* definitions); this only sharpens the runtime check.
+   */
+  readonly requiredUnless?: string;
 }
 
 interface ContentFieldBase {
@@ -1291,7 +1300,8 @@ export class ContentAuthoring {
     for (const slot of slots) {
       const text = def[slot.member];
       if (text === undefined) {
-        if (slot.required) {
+        const waived = slot.requiredUnless !== undefined && def[slot.requiredUnless] === true;
+        if (slot.required || (slot.requiredUnless !== undefined && !waived)) {
           throw new Error(`Missing required localization "${slot.member}" for "${id}"`);
         }
         continue;

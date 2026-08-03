@@ -10,6 +10,7 @@ import { isOptional, type RuleField } from "../cwt/model.ts";
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
 import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
 import {
+  CONDITIONALLY_REQUIRED_LOCALISATION,
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_SCOPE_PARAMETERS,
@@ -170,9 +171,14 @@ function localisationMetadata(type: ContentType, plan = planLocalisation(type)):
       .map((entry) => {
         const member = camelCase(entry.key);
         const required = entry.required || REQUIRED_LOCALISATION.has(`${type.name}.${member}`);
+        const conditional = CONDITIONALLY_REQUIRED_LOCALISATION.get(`${type.name}.${member}`);
+        const requiredUnless =
+          conditional === undefined
+            ? ""
+            : `, requiredUnless: ${JSON.stringify(conditional.unless)}`;
         return (
           `  { member: ${JSON.stringify(member)}, pattern: ${JSON.stringify(entry.pattern)}, ` +
-          `required: ${required} },\n`
+          `required: ${required}${requiredUnless} },\n`
         );
       })
       .join("") +

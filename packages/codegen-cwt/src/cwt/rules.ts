@@ -387,19 +387,40 @@ export function readAliases(
   }
 }
 
-function readLocalisation(block: CwtAssignment): ContentType["localisation"] {
+/**
+ * `nameField` carries the type's own `name_field`, when it has one. A
+ * `name_field` registry's id is not a top-level key an author writes — it is
+ * the *value* of that one body field — so a localisation entry that points
+ * back at the same field (`localisation = { name = name }` alongside
+ * `name_field = name`, as `global_ship_design` and five other vendored types
+ * declare) is a bare pointer meaning "this slot's key is the id", the exact
+ * thing pattern `"$"` already means for an ordinarily id-keyed registry.
+ * Recognized structurally — the pointer's target equals `nameField` — rather
+ * than by type name, so any future `name_field` registry gets the same
+ * treatment without a new row. A pointer at any *other* field (astral_rift's
+ * `name = name` with no `name_field` at all, where the body's own `name` is
+ * typed `localisation` and an author writes a foreign loc key into it
+ * directly) is a different, still-unhandled shape — SDK-44 found it but left
+ * it alone, since no exposed registry currently uses it.
+ */
+function readLocalisation(
+  block: CwtAssignment,
+  nameField: string | null
+): ContentType["localisation"] {
   if (block.value.kind !== "block") {
     return [];
   }
   return assignments(block.value.nodes).flatMap((entry) => {
     const subtype = BRACKET_KEY.exec(entry.key.text);
     if (subtype !== null && subtype[1] === "subtype") {
-      return readLocalisation(entry);
+      return readLocalisation(entry, nameField);
     }
+    const rawPattern = entry.value.kind === "scalar" ? entry.value.text : "";
+    const pattern = nameField !== null && rawPattern === nameField ? "$" : rawPattern;
     return [
       {
         key: entry.key.text,
-        pattern: entry.value.kind === "scalar" ? entry.value.text : "",
+        pattern,
         required: entry.options.some((option) => option.name === "required"),
       },
     ];
@@ -435,10 +456,11 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
       const skipRootKeyNode = inner.find((node) => node.key.text === "skip_root_key");
       const pathStrictNode = inner.find((node) => node.key.text === "path_strict");
       const typeKeyFilter = findOption(entry.options, "type_key_filter");
+      const nameField = nameFieldNode?.value.kind === "scalar" ? nameFieldNode.value.text : null;
       into.set(match[2]!, {
         name: match[2]!,
         path: pathNode?.value.kind === "scalar" ? pathNode.value.text : null,
-        nameField: nameFieldNode?.value.kind === "scalar" ? nameFieldNode.value.text : null,
+        nameField,
         pathExtension:
           extensionNode?.value.kind === "scalar" ? dotted(extensionNode.value.text) : null,
         skipRootKey: skipRootKeyNode?.value.kind === "scalar" ? skipRootKeyNode.value.text : null,
@@ -466,7 +488,7 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
             },
           ];
         }),
-        localisation: localisation === undefined ? [] : readLocalisation(localisation),
+        localisation: localisation === undefined ? [] : readLocalisation(localisation, nameField),
       });
     }
   }
