@@ -164,6 +164,21 @@ function execCtxFor(scope: SimScope<SimScopeName>): ExecCtx {
   };
 }
 
+/**
+ * Appended to both "I do not know this key" errors, because the likeliest cause
+ * is now a scripted binding rather than a codegen gap — and the two want
+ * completely different responses.
+ *
+ * A vanilla scripted trigger will never be implementable here: the identifier
+ * package carries names, parameters and scopes and never bodies, by a licensing
+ * constraint the generator enforces. So this is not a backlog item, and saying
+ * only "unimplemented" sends the reader looking for one.
+ */
+const SCRIPTED_HINT =
+  "A vanilla or third-party scripted trigger/effect lands here and always will: " +
+  "the SDK binds them by name and never reads their bodies, so the interpreter " +
+  "has nothing to evaluate. Assert against the emitted script instead.";
+
 export function explain<S extends SimScopeName>(
   trigger: Trigger<S>,
   scope: SimScope<S>
@@ -179,7 +194,7 @@ export function explain<S extends SimScopeName>(
       `This trigger uses ${evaluated.size} condition${evaluated.size === 1 ? "" : "s"}; ` +
         `${missing.size} unimplemented: ${[...missing].join(", ")}. ` +
         `The interpreter whitelists semantics deliberately; nothing evaluates silently. ` +
-        coverageSummary()
+        `${SCRIPTED_HINT} ${coverageSummary()}`
     );
   }
   return explainEntries(trigger.entries, scope.id, execCtxFor(scope));
@@ -449,7 +464,7 @@ export function applyEffectEntries(
         ? `Effect "${entry.key}" is real but unimplemented in the testing interpreter. ` +
             coverageSummary()
         : `Unknown key "${entry.key}" — not a whitelisted semantic and not in the SDK's ` +
-            `effect meta table. ${coverageSummary()}`
+            `effect meta table. ${SCRIPTED_HINT} ${coverageSummary()}`
     );
   }
 }

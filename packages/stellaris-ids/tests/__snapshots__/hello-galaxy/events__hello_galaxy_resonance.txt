@@ -9,11 +9,20 @@ country_event = {
 		random_list = {
 			60 = {
 				set_country_flag = hello_galaxy_heard_the_hum
+				give_tech_option_or_progress_effect = {
+					TECH = hello_galaxy_tech_resonance_theory
+				}
 			}
 			40 = {
 				modifier = {
 					factor = 2
 					is_at_war = yes
+				}
+				modifier = {
+					factor = 3
+					has_actual_deficit = {
+						RESOURCE = minerals
+					}
 				}
 				every_owned_planet = {
 					limit = {

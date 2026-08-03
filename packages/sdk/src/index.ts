@@ -288,4 +288,19 @@ export type {
   VanillaTrie,
   VanillaTries,
 } from "./vanilla-ids.ts";
+export {
+  scriptedEffect,
+  scriptedTrigger,
+  type AssertedScope,
+  type ScopeAssertion,
+  type ScopeClaim,
+  type ScriptedArgs,
+  type ScriptedEffectBinding,
+  type ScriptedEffectCall,
+  type ScriptedEffectName,
+  type ScriptedParams,
+  type ScriptedParamValue,
+  type ScriptedTriggerBinding,
+  type ScriptedTriggerName,
+} from "./scripted.ts";
 export * as vanilla from "./generated/vanilla-refs.ts";

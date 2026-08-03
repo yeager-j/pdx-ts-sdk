@@ -13,10 +13,15 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import {
   defineTechnology,
+  scriptedEffect,
+  scriptedTrigger,
   vanilla,
   type EventDef,
+  type ScopeName,
+  type ScriptedEffectCall,
   type SpriteRef,
   type TechnologyRef,
+  type Trigger,
   type VanillaId,
 } from "../src/index.ts";
 
@@ -67,6 +72,61 @@ describe("VanillaId resolution without the package", () => {
   it("is plain string for every registry", () => {
     expectTypeOf<VanillaId<"technology">>().toEqualTypeOf<string>();
     expectTypeOf<VanillaId<"sprite">>().toEqualTypeOf<string>();
+  });
+});
+
+describe("scripted bindings without the package", () => {
+  it("accepts any name", () => {
+    // The pre-bound `@pdx-ts/stellaris-ids/triggers` exports are gone with the
+    // package; the hand-declared form is what remains, and without an id set to
+    // check against it accepts whatever the author writes.
+    expectTypeOf(scriptedTrigger("no_such_trigger_anywhere", "country")()).toEqualTypeOf<
+      Trigger<"country">
+    >();
+  });
+
+  it("compiles BOTH call forms, which is the whole degradation story", () => {
+    // This is the assertion the design turns on. With the package installed a
+    // parameterless binding takes no arguments and a parameterized one requires
+    // them; without it the SDK cannot tell which a name is, so the argument is
+    // optional and both call forms stay legal. Any source that compiles with
+    // the package therefore still compiles without it.
+    const binding = scriptedTrigger("is_fallen_empire", "country");
+    expectTypeOf(binding()).toEqualTypeOf<Trigger<"country">>();
+    expectTypeOf(binding({ SCOPE: "root" })).toEqualTypeOf<Trigger<"country">>();
+  });
+
+  it("still enforces the asserted scope", () => {
+    // Losing the id sets must not lose scope checking: the assertion is the
+    // author's either way, and the brand is what makes it bite.
+    const inPlanet = (_condition: Trigger<"planet">): void => undefined;
+    inPlanet(scriptedTrigger("x", "planet")());
+    // @ts-expect-error a country assertion does not satisfy a planet slot.
+    inPlanet(scriptedTrigger("x", "country")());
+  });
+
+  it("gives `.unchecked` the same shape as the plain form", () => {
+    // With no set to check against there is nothing to relax, so the escape
+    // hatch and the checked form coincide — and code written against either
+    // keeps compiling when the package arrives.
+    expectTypeOf(scriptedTrigger.unchecked("pd_habitability_check", "planet")()).toEqualTypeOf<
+      Trigger<"planet">
+    >();
+  });
+
+  it("widens `any` to every scope and a set to its union", () => {
+    expectTypeOf(scriptedTrigger("x", "any")()).toEqualTypeOf<Trigger<ScopeName>>();
+    expectTypeOf(scriptedTrigger("x", ["country", "sector"])()).toEqualTypeOf<
+      Trigger<"country" | "sector">
+    >();
+  });
+
+  it("keeps effect calls out of condition position", () => {
+    const call = scriptedEffect("some_effect", "country")();
+    expectTypeOf(call).toEqualTypeOf<ScriptedEffectCall<"country">>();
+    // @ts-expect-error an effect call is not a condition, however alike they
+    // serialize.
+    const _condition: Trigger<"country"> = call;
   });
 });
 

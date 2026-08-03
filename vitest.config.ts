@@ -55,6 +55,9 @@ export default defineConfig({
           // The package-present world: this project's typecheck resolves
           // `@pdx-ts/sdk` via the package's own tsconfig, so the augmentation
           // in `packages/stellaris-ids/src/augment.ts` actually activates.
+          // `examples/` compiles here too — the showcase imports this package,
+          // which is the setup a real mod author has, and an augmentation is
+          // global to a program so it cannot also be in the root one.
           include: ["packages/stellaris-ids/tests/**/*.test.ts"],
           typecheck: {
             enabled: true,

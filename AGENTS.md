@@ -91,15 +91,27 @@ not the package itself, and never reads an install.
 
 - `npm run codegen:vanilla` regenerates `packages/stellaris-ids/src` and its `package.json`
   version from a clean, pinned-version install. Read the report it prints (per-registry id counts,
-  parameterized scripted trigger/effect counts, diagnostics, and any licensing-chokepoint
-  rejections — there should be zero of the last).
+  parameterized scripted trigger/effect counts, inferred-scope shares, binding renames, diagnostics,
+  and any licensing-chokepoint rejections — there should be zero of the last). A collapse in the
+  inferred-scope share is not a broken build — an unreadable body widens rather than narrowing — but
+  it means the emitted types quietly got weaker and the analysis needs a look.
 - Review the complete `packages/stellaris-ids/src` diff as a public-API change, the same way a
   `src/generated/` diff is reviewed. Commit the generated output together with the change that
   produced it (a game patch, a generator fix).
 - Licensing boundary, enforced by the generator itself rather than left to convention: this package
-  emits ids, definition names, scripted trigger/effect names and their `$PARAM$` lists, and event
-  ids/namespaces — never script bodies, localized text, descriptions, or asset data. See
-  `packages/stellaris-ids/PROVENANCE.md`.
+  emits ids, definition names, scripted trigger/effect names and their `$PARAM$` lists, event
+  ids/namespaces, and the scope each scripted definition is legal in — never script bodies,
+  localized text, descriptions, or asset data. See `packages/stellaris-ids/PROVENANCE.md`.
+- The scopes are the one thing derived from a body rather than read off one, so the boundary there
+  is worth stating: `infer-scopes.ts` intersects the scopes cwtools' rules already declare for the
+  keys a body evaluates and keeps a `scopes.cwt` scope name; the body reaches no emitter. The
+  bindings are also the package's only runtime — `src/triggers.ts` and `src/effects.ts`, one
+  `scriptedTrigger`/`scriptedEffect` call per definition — and `licensing.test.ts` pins that shape.
+  The SDK's side is `packages/sdk/src/scripted.ts`, which consumes the `VanillaScriptedTriggers` /
+  `VanillaScriptedEffects` merge targets and supplies the hand-declared escape hatch.
+- `packages/codegen-vanilla/tests/callsites.test.ts` is the standing falsification gate for the
+  inference: it measures the emitted scopes against ~4,800 real vanilla call sites and fails on any
+  contradiction. Install-gated, so run it before committing a regeneration.
 - `npm run codegen:vanilla:check` is maintainer-local, inherently install-gated — CI has no
   Stellaris install to regenerate against, so this check cannot run there and is never made to pass
   vacuously in its absence.

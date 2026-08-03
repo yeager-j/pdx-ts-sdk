@@ -1,7 +1,14 @@
 # Handoff: the vanilla surface
 
-> **Proposal, 2026-07-31. Nothing implemented.** Two problems that turned out to
-> share one answer: type-safe references to vanilla content, and binding vanilla
+> **Both parts landed.** Part 1 as SDK-12 (2026-08-02), Part 2 as SDK-13
+> (2026-08-02). Kept as the design record — but read
+> [verdict-scripted-scope.md](verdict-scripted-scope.md) before treating Part 2
+> as current: **its ruling against inferring scope was reversed**, and what
+> shipped infers scope for 90% of scripted triggers. The rest of Part 2 stands,
+> as the fallback for definitions no install-derived package can know.
+>
+> Originally: a proposal of 2026-07-31, on two problems that turned out to share
+> one answer — type-safe references to vanilla content, and binding vanilla
 > scripted triggers and effects. Supersedes the "audited overlay vs. body
 > inference" framing in
 > [coverage-dawn-of-ascension.md](coverage-dawn-of-ascension.md).
@@ -160,6 +167,38 @@ The whitelist-based mod-testing evaluator is a natural backstop — an
 asserted-scope trigger evaluated in the wrong scope is exactly what it could
 catch. Worth designing toward even if not built now.
 
+## What changed, and why the reversal is not a contradiction
+
+**"Why not body inference" was answered against a different proposal than the
+one that shipped.** The objection was that inference is "unfalsifiable where it
+matters" and would be "confidently right on the easy majority and quietly wrong
+on the rest." That is true of heuristics over what a body _means_ — reading
+`exists = owner` and deciding what the author intended.
+
+What shipped never asks. It intersects the scopes the CWT rules already declare
+for the keys a body evaluates: `is_country_type` is country-scoped, so a body
+that evaluates only it can only be a country trigger. Every key the rules do not
+cover contributes nothing rather than a guess, `OR` unions rather than
+intersects, a pushed scope contributes nothing to its caller, and an empty
+result falls back to unconstrained. The distribution of errors is therefore
+inverted from the one this note feared: too wide is the `Trigger<ScopeName>`
+that shipping nothing would have given, and too narrow is a compile error with
+an escape hatch. Neither is silent.
+
+It is also falsifiable, which was the sharpest word in the original objection.
+Vanilla's own event files declare their scope, so 4,860 real call sites can be
+checked against the inference; zero contradict it, and mutating the analysis to
+mishandle nesting produces 328. The evidence is in
+[verdict-scripted-scope.md](verdict-scripted-scope.md).
+
+**The open question at the bottom of this note is answered: yes.** Scripted
+effects need one thing beyond the trigger treatment. A trigger is a value that
+travels, so a binding returns a `Trigger`; an effect records into a sink the
+scope object closes over and nothing outside can reach, so a binding returns an
+inert call that `scope.run(...)` splices. Exposing the sink instead would have
+put the scope check on structural typing and opened the recorder to arbitrary
+entries.
+
 ## Decided
 
 - Separate install-derived package, version-pinned to the game
@@ -167,8 +206,10 @@ catch. Worth designing toward even if not built now.
 - Per-registry segmentation, for the measured editor-performance reason
 - Does not absorb `modifiers.log`; does not replace `stellaris.load()`
 - Emits identifiers only, never script bodies or localized text
-- Opt-in scope assertion for scripted triggers and effects, asserted once at the
-  declaration, with existence and parameters checked
+- ~~Opt-in scope assertion for scripted triggers and effects, asserted once at
+  the declaration, with existence and parameters checked~~ — **superseded.**
+  Scope is inferred where the rules support it and asserted only for definitions
+  no install-derived package can know.
 
 ## Open
 

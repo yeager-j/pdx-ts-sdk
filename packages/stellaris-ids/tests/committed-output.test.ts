@@ -27,6 +27,7 @@ const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const PACKAGE = fileURLToPath(new URL("../", import.meta.url));
 const OUT = path.join(PACKAGE, "src");
 const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
+const DOCS = path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1");
 
 let installRoot: string | undefined;
 try {
@@ -61,6 +62,7 @@ const regenerated =
           installRoot,
           gameVersion: manifest.version,
           configRoot: CONFIG,
+          docsRoot: DOCS,
         }).files,
         OUT
       );

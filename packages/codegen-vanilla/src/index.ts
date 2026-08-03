@@ -25,6 +25,7 @@ import { generateVanillaPackage, type VanillaReport } from "./generate.ts";
  */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
+const DOCS = path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1");
 /** Repo-relative, for the report; {@link PACKAGE_DIR} is what the writes use. */
 const PACKAGE = "packages/stellaris-ids";
 const PACKAGE_DIR = path.join(ROOT, PACKAGE);
@@ -139,8 +140,51 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
         (one.missing ? " — DIRECTORY MISSING" : "")
     )
   );
+  reportSection("Inferred scopes", report.scripted.map(scopeLine));
+  reportSection(
+    "Keys the rules do not cover, by bindings they cost a narrowing",
+    report.scripted.flatMap((one) =>
+      one.unknownKeys.map(([key, count]) => `${one.registry}: ${count} × ${key}`)
+    )
+  );
+  reportSection(
+    "Scope intersections that emptied and fell back to unconstrained",
+    report.scripted.flatMap((one) => one.emptied.map((name) => `${one.registry}: ${name}`))
+  );
+  reportSection(
+    "Bindings renamed to avoid a collision",
+    report.scripted.flatMap((one) => one.renamed)
+  );
   reportSection("Registries with no definitions found", emptyRegistries(report));
   reportSection("Stale generated files removed", removed);
+}
+
+/**
+ * What the scope inference achieved, per registry.
+ *
+ * Read this after a game patch. Every binding is *correct* whatever the numbers
+ * say — an unreadable body widens to `any`, it never narrows wrongly — so a
+ * collapse toward "unconstrained" is not a broken build. It means vanilla
+ * started writing something the rules do not cover, the emitted types quietly
+ * got weaker, and the analysis needs a look.
+ *
+ * The two sections after this one are what make that look possible: they name
+ * the keys that cost the narrowings and the definitions whose intersection
+ * emptied. A share on its own says coverage moved without saying what moved it.
+ */
+function scopeLine(one: VanillaReport["scripted"][number]): string {
+  const total = one.definitions;
+  const at = (size: number) => one.scopeSizes.get(size) ?? 0;
+  const within = (limit: number) =>
+    [...one.scopeSizes].reduce(
+      (sum, [size, count]) => (size >= 1 && size <= limit ? sum + count : sum),
+      0
+    );
+  const share = (count: number) => (total === 0 ? "n/a" : `${((count / total) * 100).toFixed(1)}%`);
+  return (
+    `${one.registry}: ${share(total - at(0))} narrowed — ` +
+    `${at(1)} to one scope, ${within(5)} to five or fewer, ${at(0)} unconstrained`
+  );
 }
 
 function suffix(one: VanillaReport["registries"][number]): string {
@@ -167,6 +211,7 @@ async function main(): Promise<void> {
     installRoot,
     gameVersion,
     configRoot: CONFIG,
+    docsRoot: DOCS,
   });
 
   // Only ever inside `src/`: package.json, LICENSE, PROVENANCE.md, README.md,

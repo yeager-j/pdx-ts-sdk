@@ -12,12 +12,16 @@
 
 import { basename } from "node:path";
 import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
+import { loadScopeFacts, type RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 
 import {
+  bindingsFile,
+  compareIdentifiers,
   createChokepoint,
   emitAugment,
   emitIdUnion,
   emitIndex,
+  emitScriptedBindings,
   emitScriptedParams,
   emitTrie,
   idTypeName,
@@ -27,6 +31,7 @@ import {
   trieIndexFile,
   type AugmentPlan,
 } from "./emit.ts";
+import { inferScopes, type InferredScope, type Registry } from "./infer-scopes.ts";
 import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./manifest.ts";
 import { readRegistryIds } from "./read-ids.ts";
 import { readScriptedDefinitions } from "./read-scripted.ts";
@@ -40,6 +45,12 @@ export interface GenerateOptions {
   readonly gameVersion: string;
   /** The vendored cwtools config root. */
   readonly configRoot: string;
+  /**
+   * The vendored script-docs root, holding `triggers.log`, `effects.log`, and
+   * `scopes.log`. Read for the scope facts the binding inference intersects —
+   * the same cross-check the CWT generator uses where the rules go quiet.
+   */
+  readonly docsRoot: string;
   /**
    * How many ids a registry needs before it gets a trie. Overridable so a
    * fixture can exercise the trie without shipping 2,000 fake sprites.
@@ -80,6 +91,29 @@ export interface ScriptedReport {
   readonly files: number;
   readonly diagnostics: number;
   readonly missing: boolean;
+  /**
+   * How many bindings landed on each scope-set size, `0` being unconstrained.
+   * This is the number to read after a game patch: a collapse toward 0 means
+   * vanilla started writing something the rules do not cover, and the emitted
+   * bindings quietly got weaker rather than wrong.
+   */
+  readonly scopeSizes: ReadonlyMap<number, number>;
+  /**
+   * Body keys the CWT rules do not cover, and how many definitions each cost a
+   * narrowing, most expensive first. This is what makes `scopeSizes` actionable:
+   * the share says coverage moved, and this says which key moved it. A game
+   * patch that introduces a new keyword shows up here as one name at the top.
+   */
+  readonly unknownKeys: readonly (readonly [string, number])[];
+  /**
+   * Definitions whose scope intersection went empty and fell back to
+   * unconstrained. Each is either a genuinely multi-scope definition — one that
+   * branches on `is_scope_type` at runtime — or a shape the analysis mishandles,
+   * and the fallback hides which, so they are named rather than counted.
+   */
+  readonly emptied: readonly string[];
+  /** Definitions whose camelCased name collided and took a numbered suffix. */
+  readonly renamed: readonly string[];
 }
 
 export interface VanillaReport {
@@ -93,6 +127,49 @@ export interface VanillaReport {
   readonly identifiersChecked: number;
   /** Always zero: a rejection throws and there is no output to report on. */
   readonly rejections: number;
+}
+
+/** How many definitions to name in the report before the tail is noise. */
+const REPORTED_UNKNOWN_KEYS = 25;
+
+/**
+ * Turns the inference's per-definition diagnostics into the two aggregates the
+ * report needs.
+ *
+ * Without these, a regeneration can show that inferred-scope coverage collapsed
+ * and give no way to find out why — which is the opposite of what `AGENTS.md`
+ * asks of this report. A widening is never a wrong binding, so it is not a
+ * build failure; it is exactly the kind of quiet weakening that needs a name
+ * attached to be actionable.
+ */
+function attribute(inferred: readonly InferredScope[]): {
+  unknownKeys: readonly (readonly [string, number])[];
+  emptied: readonly string[];
+} {
+  const unknown = new Map<string, number>();
+  const emptied: string[] = [];
+  for (const one of inferred) {
+    // Per definition, not per occurrence: the question is how many bindings a
+    // key cost, and one body naming it ten times still lost one binding.
+    const keys = new Set<string>();
+    for (const diagnostic of one.diagnostics) {
+      if (diagnostic.kind === "unknown-key") {
+        keys.add(diagnostic.detail);
+      }
+      if (diagnostic.kind === "emptied" && diagnostic.detail === one.name) {
+        emptied.push(one.name);
+      }
+    }
+    for (const key of keys) {
+      unknown.set(key, (unknown.get(key) ?? 0) + 1);
+    }
+  }
+  return {
+    unknownKeys: [...unknown]
+      .sort((left, right) => right[1] - left[1] || compareIdentifiers(left[0], right[0]))
+      .slice(0, REPORTED_UNKNOWN_KEYS),
+    emptied,
+  };
 }
 
 export function generateVanillaPackage(options: GenerateOptions): {
@@ -150,9 +227,25 @@ export function generateVanillaPackage(options: GenerateOptions): {
     });
   }
 
+  // Bodies in, scopes out. The inference reads the CWT rules' own scope
+  // declarations and intersects them over each body; the bodies never leave
+  // this function, and what reaches an emitter is a scope name from
+  // `scopes.cwt`. See `docs/verdict-scripted-scope.md`.
+  const reads = new Map(
+    scriptedRows.map((row) => [
+      row.registry,
+      readScriptedDefinitions(options.installRoot, row.registry, row.dir),
+    ])
+  );
+  const definitionsFor = (registry: string) => reads.get(registry)?.definitions ?? [];
+  const inferred = inferScopes(loadScopeFacts(options.configRoot, options.docsRoot), {
+    trigger: definitionsFor("scripted_trigger"),
+    effect: definitionsFor("scripted_effect"),
+  });
+
   const scripted: ScriptedReport[] = [];
   for (const row of scriptedRows) {
-    const read = readScriptedDefinitions(options.installRoot, row.registry, row.dir);
+    const read = reads.get(row.registry)!;
     const file = scriptedFile(row.registry);
     files.set(file, emitScriptedParams(row.registry, read.definitions, gate, gameVersion));
     exports.push({ name: scriptedTypeName(row.registry), file });
@@ -163,6 +256,20 @@ export function generateVanillaPackage(options: GenerateOptions): {
       registry: row.registry,
       file,
     });
+
+    const registry: Registry = row.registry === "scripted_trigger" ? "trigger" : "effect";
+    const scopes = new Map<string, RuleScopes>(
+      inferred[registry].map((one) => [one.name.toLowerCase(), one.scopes])
+    );
+    const bindings = emitScriptedBindings(
+      row.registry,
+      read.definitions,
+      scopes,
+      gate,
+      gameVersion
+    );
+    files.set(bindingsFile(row.registry), bindings.code);
+
     scripted.push({
       registry: row.registry,
       definitions: read.definitions.length,
@@ -170,6 +277,9 @@ export function generateVanillaPackage(options: GenerateOptions): {
       files: read.files,
       diagnostics: read.diagnostics,
       missing: read.missing,
+      scopeSizes: bindings.bySize,
+      ...attribute(inferred[registry]),
+      renamed: bindings.renamed,
     });
   }
 

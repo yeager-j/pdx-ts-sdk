@@ -10,6 +10,16 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./triggers": {
+      "pdx-source": "./src/triggers.ts",
+      "types": "./dist/triggers.d.ts",
+      "default": "./dist/triggers.js"
+    },
+    "./effects": {
+      "pdx-source": "./src/effects.ts",
+      "types": "./dist/effects.d.ts",
+      "default": "./dist/effects.js"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

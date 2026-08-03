@@ -25,5 +25,13 @@
     "target": "ES2024",
     "types": ["node"]
   },
-  "exclude": ["node_modules", "dist", "packages/stellaris-ids"]
+  // The package-absent world. `packages/stellaris-ids` is excluded so its
+  // `declare module "@pdx-ts/sdk"` augmentation never joins this program, which
+  // is what lets `packages/sdk/tests/vanilla-refs.test-d.ts` assert the
+  // unchecked degradation. `examples/` is excluded for the mirror reason: the
+  // example imports that package, and a module augmentation is global to a
+  // program — one import anywhere would make this program the present world.
+  // The example compiles under `packages/stellaris-ids/tsconfig.json` instead,
+  // which is the world a real mod author is in.
+  "exclude": ["node_modules", "dist", "packages/stellaris-ids", "examples"]
 }
