@@ -19,7 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { formatEmitted } from "@pdx-ts/codegen-vanilla/format";
 import { generateVanillaPackage } from "@pdx-ts/codegen-vanilla/generate";
-import { locateInstall } from "@pdx-ts/sdk/stellaris";
+import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */
@@ -41,15 +41,7 @@ const manifest = JSON.parse(readFileSync(path.join(PACKAGE, "package.json"), "ut
 };
 
 /** The install's own statement of its build, as `major.minor.patch`. */
-function installGameVersion(root: string): string {
-  const settings = JSON.parse(readFileSync(path.join(root, "launcher-settings.json"), "utf8")) as {
-    rawVersion?: unknown;
-  };
-  if (typeof settings.rawVersion !== "string") {
-    throw new Error("the install's launcher-settings.json states no rawVersion");
-  }
-  return settings.rawVersion.replace(/^v/, "");
-}
+const installGameVersion = requireGameVersion;
 
 function committedFiles(dir: string, prefix = ""): string[] {
   return readdirSync(dir)

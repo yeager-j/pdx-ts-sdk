@@ -1,0 +1,21 @@
+{
+  // The one package in this workspace with a build step, and it is forced
+  // rather than chosen: `npx` installs a CLI into a real `node_modules`
+  // directory, and Node refuses to strip types from anything under one
+  // (ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING). Every other package is
+  // consumed through a workspace symlink, whose realpath escapes node_modules,
+  // which is why they can ship raw `.ts` and this cannot.
+  //
+  // Compiling is also what lets `engines` say `>=20` instead of `>=22.18`: the
+  // CLI stops needing type stripping, and only the project it generates still
+  // does — a requirement it states in its own package.json.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": false,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}

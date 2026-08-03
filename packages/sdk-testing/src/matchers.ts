@@ -7,6 +7,14 @@
  *   message prints the full fired log — the rich log doubling as the trace.
  * - `toHoldFor(scope)` on a `Trigger`; the failure message is the rendered
  *   explain tree, so it names the failing subcondition.
+ *
+ * This is the one module in the package that imports Vitest, which is why the
+ * package declares it as an *optional* peer dependency: the subpath boundary
+ * keeps it out of every program that does not ask for it (`src/index.ts` does
+ * not re-export `./testing`), so a consumer without Vitest is a supported
+ * configuration and one importing this file without Vitest installed gets an
+ * npm warning instead of a broken build. SDK-28 moves this into its own
+ * package; until then the dependency is at least declared rather than implied.
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";

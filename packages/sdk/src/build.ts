@@ -54,6 +54,15 @@ import { sha256Hex, type VanillaFile, type VanillaView } from "./vanilla/surface
 
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 
+/**
+ * A launcher `supported_version`: one to three dot-separated parts, each a
+ * number or `*`, with an optional leading `v`. Both spellings of the `v` are
+ * accepted because both load — `supportedVersionFor` picks which one the SDK
+ * *writes*, and normalizing an author's own string into emitted bytes would be
+ * a worse trade than tolerating theirs.
+ */
+const SUPPORTED_VERSION_PATTERN = /^v?(\d+|\*)(\.(\d+|\*)){0,2}$/;
+
 /** The mod's identity and launcher metadata: `buildMod`'s first argument. */
 export interface ModConfig<P extends string = string> {
   /** Display name shown in the launcher. */
@@ -131,6 +140,24 @@ export function buildMod(
 ): PureMod {
   if (!PREFIX_PATTERN.test(config.prefix)) {
     throw new Error(`Mod prefix "${config.prefix}" must be lowercase snake_case ([a-z][a-z0-9_]*)`);
+  }
+  if (config.name.includes('"')) {
+    // `descriptor.mod` writes `name="<name>"`, and PDXScript has no quote
+    // escaping to rescue it — the launcher answers the malformed result by
+    // refusing the mod without saying why. Localization already replaces quotes
+    // rather than emitting them; a mod's own name is identity, so it is refused
+    // instead of silently rewritten.
+    throw new Error(
+      `Mod name ${JSON.stringify(config.name)} cannot contain a double quote: it is written ` +
+        `verbatim into descriptor.mod, which has no way to escape one.`
+    );
+  }
+  if (!SUPPORTED_VERSION_PATTERN.test(config.supportedVersion)) {
+    throw new Error(
+      `supportedVersion "${config.supportedVersion}" is not a launcher version pattern ` +
+        `(e.g. "v4.4.*", "v4.*", "v4.4.6"). It is written verbatim into descriptor.mod, and ` +
+        `the launcher answers an unreadable one by silently refusing the mod.`
+    );
   }
   const flat = flattenItems(collections);
   const warnings: ModWarning[] = [];

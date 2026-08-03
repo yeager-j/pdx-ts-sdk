@@ -7,6 +7,7 @@
  */
 
 import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
+import { explain, fixture } from "@pdx-ts/sdk-testing";
 import { describe, expect, it } from "vitest";
 
 import { EFFECT_META } from "../src/generated/effect-meta.ts";
@@ -23,7 +24,6 @@ import {
   vanilla,
   type ModConfig,
 } from "../src/index.ts";
-import { explain, fixture } from "../src/testing/index.ts";
 
 const CONFIG: ModConfig = {
   name: "Scripted",

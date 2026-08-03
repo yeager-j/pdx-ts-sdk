@@ -1,32 +1,25 @@
-import { writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
-import { render, stellaris, write } from "@pdx-ts/sdk";
+import { basename, dirname, resolve } from "node:path";
+import { install, render, stellaris } from "@pdx-ts/sdk";
 
 import { defineHardening } from "./mod.ts";
 
 const vanilla = stellaris.load();
 const hardening = defineHardening(vanilla);
-const outDir = resolve(process.argv[2] ?? new URL("./out/", import.meta.url).pathname);
 
-const files = render(hardening.mod);
-await write(outDir, files);
-const launcherDescriptor = `${outDir}.mod`;
-await writeFile(
-  launcherDescriptor,
-  [
-    'name="PDX SDK Hardening"',
-    'version="1.0.0"',
-    'supported_version="v4.4.*"',
-    `path="${outDir}"`,
-    "",
-  ].join("\n"),
-  "utf8"
-);
+// Defaults to a local `./out/` so the build is inspectable in place; pass a
+// path to install somewhere else, or the launcher's own mod directory to skip
+// the move. `install` places content at <dir> and the launcher descriptor at
+// <dir>.mod, which is the layout this example has always produced.
+const outDir = resolve(process.argv[2] ?? new URL("./out/", import.meta.url).pathname);
+const { contentDir, descriptorPath } = await install(hardening.mod, {
+  modDir: dirname(outDir),
+  dirName: basename(outDir),
+});
 
 console.log(`Built PDX SDK Hardening for Stellaris ${vanilla.gameVersion ?? "unknown"}`);
-console.log(`Content directory: ${outDir}`);
-console.log(`Launcher descriptor: ${launcherDescriptor}`);
-for (const relPath of files.keys()) {
+console.log(`Content directory: ${contentDir}`);
+console.log(`Launcher descriptor: ${descriptorPath}`);
+for (const relPath of render(hardening.mod).keys()) {
   console.log(`  wrote ${relPath}`);
 }
 console.log("");

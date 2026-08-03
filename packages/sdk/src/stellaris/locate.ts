@@ -16,18 +16,27 @@ import { InstallNotFoundError } from "../errors.ts";
 
 const SENTINEL = join("common", "technology");
 
-function platformDefaults(): string[] {
-  switch (process.platform) {
+/**
+ * The candidates for a platform, home injected — the same seam `modDirFor`
+ * uses, and for the same reason: reading `process.platform` inline would leave
+ * two of the three branches uncheckable on any given machine.
+ */
+export function platformDefaultsFor(platform: NodeJS.Platform, home: string): string[] {
+  switch (platform) {
     case "darwin":
-      return [join(homedir(), "Library/Application Support/Steam/steamapps/common/Stellaris")];
+      return [join(home, "Library/Application Support/Steam/steamapps/common/Stellaris")];
     case "win32":
       return ["C:\\Program Files (x86)\\Steam\\steamapps\\common\\Stellaris"];
     default:
       return [
-        join(homedir(), ".local/share/Steam/steamapps/common/Stellaris"),
-        join(homedir(), ".steam/steam/steamapps/common/Stellaris"),
+        join(home, ".local/share/Steam/steamapps/common/Stellaris"),
+        join(home, ".steam/steam/steamapps/common/Stellaris"),
       ];
   }
+}
+
+function platformDefaults(): string[] {
+  return platformDefaultsFor(process.platform, homedir());
 }
 
 function qualifies(root: string): boolean {

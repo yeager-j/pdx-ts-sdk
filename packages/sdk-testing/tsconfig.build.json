@@ -1,0 +1,16 @@
+{
+  // Publishing shape. `exports` points at `dist/`, not `src/`, because Node
+  // refuses to strip types from anything under `node_modules` — a published
+  // package shipping raw `.ts` dies at a consumer's first import. The workspace
+  // hides that: npm links members by symlink, whose realpath escapes
+  // node_modules, so stripping applies during development and nowhere else.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": false,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}

@@ -20,14 +20,14 @@ import {
   explain,
   renderExplanation,
   run,
-} from "../../packages/sdk/src/testing/interpret.ts";
-import { installMatchers } from "../../packages/sdk/src/testing/matchers.ts";
+} from "../../packages/sdk-testing/src/interpret.ts";
+import { installMatchers } from "../../packages/sdk-testing/src/matchers.ts";
 import {
   declareFrom,
   fixture,
   renderFired,
   type World,
-} from "../../packages/sdk/src/testing/world.ts";
+} from "../../packages/sdk-testing/src/world.ts";
 import { trigger } from "../../packages/sdk/src/trigger-core.ts";
 import { isAtWar, numOwnedPlanets } from "../../packages/sdk/src/triggers.ts";
 import {

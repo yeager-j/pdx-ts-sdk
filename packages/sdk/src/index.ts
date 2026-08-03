@@ -9,6 +9,7 @@ export * from "./generated/value-sets.ts";
 export * from "./triggers.ts";
 export {
   eventTarget,
+  isEffectKey,
   makeScope,
   type EventTarget,
   type IfChain,
@@ -214,8 +215,15 @@ export {
   type ModConfig,
   type PureMod,
 } from "./build.ts";
-export { render, write } from "./render.ts";
-export { discoverContent } from "./discover.ts";
+export {
+  install,
+  render,
+  renderLauncherDescriptor,
+  write,
+  type InstallOptions,
+  type InstallResult,
+} from "./render.ts";
+export { DEFAULT_CONTENT_PATTERN, discoverContent, type DiscoverOptions } from "./discover.ts";
 // One free definer per content registry — `defineTechnology`,
 // `defineAscensionPerk`, ... — plus `patchTechnology`, `addShipOfSizeLimits`,
 // and every registry's `XItem` union.
@@ -242,6 +250,7 @@ export {
 } from "./items.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
+  GameVersionError,
   InstallNotFoundError,
   LogicalPathError,
   NoWinningFilenameError,

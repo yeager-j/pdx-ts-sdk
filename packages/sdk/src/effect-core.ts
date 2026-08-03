@@ -604,6 +604,32 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[]): unknown {
  * written into a declarative content field. Callers that have no build to
  * check against (the testing helpers) can let it default and discard them.
  */
+/**
+ * The PDXScript keys the generated effect table knows, by the name they are
+ * *written* as — `set_country_flag`, not `setCountryFlag`.
+ *
+ * Built once, lazily, because the table has a few thousand entries and most
+ * builds never ask this question.
+ */
+let effectKeys: Set<string> | undefined;
+
+/**
+ * Is `key` a real game effect the SDK knows how to write?
+ *
+ * Exists so a consumer can tell "a real effect this tool has not implemented"
+ * apart from "not an effect at all" — a distinction that changes what the
+ * reader should do about it, and the only thing outside this module has ever
+ * wanted from `EFFECT_META`. Narrow on purpose: the meta table is generated
+ * output whose shape belongs to codegen, and exporting it would freeze that
+ * shape into the public API to answer a yes/no question.
+ */
+export function isEffectKey(key: string): boolean {
+  effectKeys ??= new Set(
+    Object.values(EFFECT_META).flatMap((meta) => (meta === undefined ? [] : [meta.key]))
+  );
+  return effectKeys.has(key);
+}
+
 export function makeScope<S extends ScopeName>(
   sink: PdxEntry[],
   refs: ContentRefUse[] = []

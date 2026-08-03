@@ -7,7 +7,7 @@
  * step, and it is nine lines.
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
@@ -15,6 +15,7 @@ import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 import type { PureMod } from "./build.ts";
 import { VanillaPathCollisionError } from "./errors.ts";
 import { normalizeLogicalPath } from "./resolver/path-order.ts";
+import { modDir } from "./stellaris/mod-dir.ts";
 
 export function render(mod: PureMod): Map<string, string> {
   const { prefix } = mod.config;
@@ -71,7 +72,57 @@ export async function write(
   }
 }
 
-function renderDescriptor(mod: PureMod): string {
+export interface InstallOptions {
+  /** The launcher's mod directory. Defaults to `stellaris.modDir()`. */
+  readonly modDir?: string;
+  /** The content folder's name inside it. Defaults to the mod's prefix. */
+  readonly dirName?: string;
+}
+
+export interface InstallResult {
+  readonly contentDir: string;
+  readonly descriptorPath: string;
+}
+
+/**
+ * Put the mod where the launcher will find it: the content into
+ * `<modDir>/<dirName>/`, and the `<dirName>.mod` descriptor beside it.
+ *
+ * `render` + `write` + `renderLauncherDescriptor`, composed — a sink over a
+ * built `PureMod`, never a second way into the fold. Everything about what the
+ * mod *is* was decided by `buildMod`; this only decides where it lands.
+ *
+ * **The content directory is replaced, not merged into.** `write` only
+ * overwrites the paths it is given, so renaming a feature module across two
+ * installs would leave the old emitted file in place — and the game would load
+ * both, which is a duplicate-id error at best and two live copies of a
+ * definition at worst. Since this directory is emitted output that `install`
+ * owns entirely, the honest fix is to clear it: what lands is exactly what the
+ * current build renders. Anything hand-edited in there is by definition not
+ * part of the mod and does not survive, which is why the SDK writes it and the
+ * author does not.
+ */
+export async function install(mod: PureMod, options: InstallOptions = {}): Promise<InstallResult> {
+  const root = options.modDir ?? modDir();
+  const dirName = options.dirName ?? mod.config.prefix;
+  const contentDir = path.join(root, dirName);
+  const descriptorPath = path.join(root, `${dirName}.mod`);
+
+  await rm(contentDir, { recursive: true, force: true });
+  await write(contentDir, render(mod));
+  await mkdir(root, { recursive: true });
+  await writeFile(descriptorPath, renderLauncherDescriptor(mod, contentDir), "utf8");
+  return { contentDir, descriptorPath };
+}
+
+/**
+ * The fields both descriptors share, in the order Stellaris writes them. There
+ * are two descriptors — the one inside the mod folder and the one beside it
+ * that the launcher reads — and they differ by exactly one line. Deriving both
+ * from this is what stops them drifting, which is what happened to the two
+ * hand-rolled copies that used to live in `examples/`.
+ */
+function descriptorLines(mod: PureMod): string[] {
   const { name, version, tags, supportedVersion } = mod.config;
   const lines = [`name="${name}"`];
   if (version !== undefined) {
@@ -81,7 +132,24 @@ function renderDescriptor(mod: PureMod): string {
     lines.push("tags={", ...tags.map((tag) => `\t"${tag}"`), "}");
   }
   lines.push(`supported_version="${supportedVersion}"`);
-  return lines.join("\n") + "\n";
+  return lines;
+}
+
+function renderDescriptor(mod: PureMod): string {
+  return descriptorLines(mod).join("\n") + "\n";
+}
+
+/**
+ * The launcher-side `<prefix>.mod`: the mod's own descriptor plus the `path=`
+ * line telling the launcher where the content is.
+ *
+ * Not a key in `render()`'s map, and that is the point — that map is
+ * mod-root-relative, and this file lives *outside* the mod directory, beside
+ * it. Its content also depends on where the mod is being installed, which
+ * render has no business knowing.
+ */
+export function renderLauncherDescriptor(mod: PureMod, contentDir: string): string {
+  return [...descriptorLines(mod), `path="${contentDir}"`].join("\n") + "\n";
 }
 
 function renderLocalization(mod: PureMod): string {

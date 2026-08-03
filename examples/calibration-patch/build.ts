@@ -6,17 +6,14 @@
  * game, and record the result in the verdict doc.
  */
 
-import { writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import {
   buildMod,
   collection,
   defineTechnology,
+  install,
   patchTechnology,
   render,
   stellaris,
-  write,
 } from "@pdx-ts/sdk";
 
 const vanilla = stellaris.load();
@@ -57,21 +54,13 @@ const mod = buildMod(
   { vanilla }
 );
 
-const modRoot = join(homedir(), "Documents/Paradox Interactive/Stellaris/mod");
-const contentDir = join(modRoot, "pdx_calib");
-const files = render(mod);
-await write(contentDir, files);
-
-// The launcher-side descriptor: same fields as descriptor.mod plus the path.
-await writeFile(
-  join(modRoot, "pdx_calib.mod"),
-  `name="PDX Calibration Patch"\nversion="1.0"\nsupported_version="v4.4.*"\npath="${contentDir}"\n`,
-  "utf8"
-);
+// `install` puts the content under the launcher's mod directory and writes the
+// sibling `pdx_calib.mod` beside it — the same descriptor plus a `path=` line.
+const { contentDir } = await install(mod);
 
 const plan = mod.patchPlan!;
 console.log(`Installed to ${contentDir}`);
-for (const relPath of files.keys()) {
+for (const relPath of render(mod).keys()) {
   console.log(`  wrote ${relPath}`);
 }
 console.log(

@@ -18,6 +18,9 @@ export class LogicalPathError extends PdxSdkError {}
 /** No Stellaris install at any searched location. */
 export class InstallNotFoundError extends PdxSdkError {}
 
+/** The install states no usable game version, or one that cannot be mapped. */
+export class GameVersionError extends PdxSdkError {}
+
 /** The install's game build differs from the rule table's verified pin. */
 export class StaleRuleTableError extends PdxSdkError {}
 

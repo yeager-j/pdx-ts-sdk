@@ -819,6 +819,34 @@ describe("collections", () => {
     expect(() => buildMod(CONFIG, [forged])).toThrow(/must be lowercase snake_case/);
   });
 
+  it("rejects a mod name the descriptor cannot express", () => {
+    // `descriptor.mod` writes name="<name>" and PDXScript has no quote escape,
+    // so a quote produces a descriptor the launcher refuses without saying why.
+    expect(() => buildMod({ ...CONFIG, name: 'The "Real" Mod' }, [])).toThrow(
+      /cannot contain a double quote/
+    );
+    expect(() => buildMod({ ...CONFIG, name: "The 'Real' Mod" }, [])).not.toThrow();
+  });
+
+  it("rejects a supportedVersion the launcher could not read", () => {
+    // It is written verbatim into descriptor.mod, and the launcher answers an
+    // unreadable one by refusing the mod without saying so — the exact silent
+    // failure the build is supposed to convert into an error.
+    for (const supportedVersion of ["totally bogus", "4.4.x", "", "v", "4.4.6.1"]) {
+      expect(() => buildMod({ ...CONFIG, supportedVersion }, [])).toThrow(
+        /is not a launcher version pattern/
+      );
+    }
+  });
+
+  it("accepts a launcher version pattern with or without the leading v", () => {
+    // Both load, so neither is rewritten into an author's emitted bytes; the
+    // SDK picks a side only for what it derives itself.
+    for (const supportedVersion of ["v4.4.*", "4.4.*", "v4.*", "4.4.6", "*"]) {
+      expect(() => buildMod({ ...CONFIG, supportedVersion }, [])).not.toThrow();
+    }
+  });
+
   it("feeds every own technology file into the patch plan's path order", () => {
     // Split tech emission + a patch: the plan must reserve and enumerate
     // BOTH own files — the SDK-19 constraint with teeth.

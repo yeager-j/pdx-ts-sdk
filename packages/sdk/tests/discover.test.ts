@@ -14,7 +14,14 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { buildMod, discoverContent, render, type ModConfig } from "../src/index.ts";
+import {
+  assertFileStem,
+  buildMod,
+  DEFAULT_CONTENT_PATTERN,
+  discoverContent,
+  render,
+  type ModConfig,
+} from "../src/index.ts";
 
 const FIXTURE = join(import.meta.dirname, "fixtures/content-discovery");
 const SDK = join(import.meta.dirname, "../src/index.ts");
@@ -184,6 +191,127 @@ describe("discoverContent walking a tree", () => {
     const first = render(buildMod(config, await discoverContent(forwards)));
     const second = render(buildMod(config, await discoverContent(backwards)));
     expect([...second]).toEqual([...first]);
+  });
+});
+
+describe("discoverContent choosing which files are modules", () => {
+  /**
+   * A module body that throws on import. Any test using it as a companion
+   * proves the file was skipped *before* the import, not merely ignored after.
+   */
+  const TRIPWIRE = `throw new Error("companion was imported");\n`;
+
+  it("skips a colocated test module without importing it", async () => {
+    const dir = moduleTree({
+      "technology.ts": sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
+      "technology.test.ts": TRIPWIRE,
+    });
+    const collections = await discoverContent(dir);
+    expect(collections.map((entry) => entry.file)).toEqual(["technology"]);
+  });
+
+  it.each([".test.ts", ".test-d.ts", ".spec.ts", ".bench.ts", ".d.ts"])(
+    "skips a companion module ending %s",
+    async (suffix) => {
+      const dir = moduleTree({
+        "technology.ts": sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
+        [`technology${suffix}`]: TRIPWIRE,
+      });
+      const collections = await discoverContent(dir);
+      expect(collections.map((entry) => entry.file)).toEqual(["technology"]);
+    }
+  );
+
+  it("skips nothing that could have been a legal file stem", () => {
+    // The default's safety argument, as a check rather than a comment: every
+    // suffix it excludes puts a `.` in the basename, and a stem with a `.` was
+    // already rejected — so the default can only silence an impossible module.
+    for (const suffix of [".test.ts", ".test-d.ts", ".spec.ts", ".bench.ts", ".d.ts"]) {
+      expect(DEFAULT_CONTENT_PATTERN.test(`technology${suffix}`)).toBe(false);
+      expect(() => assertFileStem(`technology${suffix}`.slice(0, -".ts".length))).toThrow();
+    }
+    expect(DEFAULT_CONTENT_PATTERN.test("technology.ts")).toBe(true);
+  });
+
+  it("renders identically whether or not colocated tests are present", async () => {
+    const content = {
+      "technology.ts": sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
+      "alpha/technology.ts":
+        sdk("defineTechnology") + `export const b = ${tech("pp_disco_tech_b")};\n`,
+    };
+    const bare = moduleTree(content);
+    const tested = moduleTree({
+      ...content,
+      "technology.test.ts": TRIPWIRE,
+      "alpha/technology.spec.ts": TRIPWIRE,
+    });
+    const first = render(buildMod(config, await discoverContent(bare)));
+    const second = render(buildMod(config, await discoverContent(tested)));
+    expect([...second]).toEqual([...first]);
+  });
+
+  it("takes a custom pattern and stems the basename at its first dot", async () => {
+    const dir = moduleTree({
+      "technology.mod.ts":
+        sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
+      "helpers.ts": TRIPWIRE,
+    });
+    const collections = await discoverContent(dir, { include: /\.mod\.ts$/ });
+    expect(collections.map((entry) => entry.file)).toEqual(["technology"]);
+    const files = render(buildMod(config, collections));
+    expect([...files.keys()]).toContain("common/technology/pp_disco_technology.txt");
+  });
+
+  it("merges a dotted module with its undotted namesake, since both stem the same", async () => {
+    const dir = moduleTree({
+      "technology.ts": sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
+      "technology.mod.ts":
+        sdk("defineTechnology") + `export const b = ${tech("pp_disco_tech_b")};\n`,
+    });
+    const collections = await discoverContent(dir, { include: /\.ts$/ });
+    expect(collections.map((entry) => entry.file)).toEqual(["technology", "technology"]);
+    const files = render(buildMod(config, collections));
+    expect([...files.keys()]).toContain("common/technology/pp_disco_technology.txt");
+    expect([...files.keys()]).not.toContain("common/technology/pp_disco_technology.mod.txt");
+  });
+
+  it("lets a custom pattern deliberately take test files back", async () => {
+    const dir = moduleTree({
+      "technology.test.ts":
+        sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
+    });
+    const collections = await discoverContent(dir, { include: /\.ts$/ });
+    expect(collections.map((entry) => entry.file)).toEqual(["technology"]);
+  });
+
+  it("refuses a pattern that matches nothing, naming what it excluded", async () => {
+    const dir = moduleTree({
+      "technology.ts": sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
+      "alpha/expansion.ts": TRIPWIRE,
+    });
+    await expect(discoverContent(dir, { include: /\.mod\.ts$/ })).rejects.toThrow(
+      /matched none of the 2 TypeScript files there[\s\S]*alpha\/expansion\.ts[\s\S]*technology\.ts/
+    );
+  });
+
+  it("distinguishes a directory holding no TypeScript from a rejecting pattern", async () => {
+    const dir = moduleTree({ "notes.md": "# not a module\n" });
+    await expect(discoverContent(dir)).rejects.toThrow(/holds no TypeScript at all/);
+  });
+
+  it("is unaffected by a global flag on the pattern", async () => {
+    // `RegExp.test` advances lastIndex on /g, so an unguarded pattern would
+    // skip every other file and make the walk depend on directory order.
+    const dir = moduleTree({
+      "alpha/technology.ts":
+        sdk("defineTechnology") + `export const a = ${tech("pp_disco_tech_a")};\n`,
+      "beta/technology.ts":
+        sdk("defineTechnology") + `export const b = ${tech("pp_disco_tech_b")};\n`,
+      "gamma/technology.ts":
+        sdk("defineTechnology") + `export const g = ${tech("pp_disco_tech_g")};\n`,
+    });
+    const collections = await discoverContent(dir, { include: /\.ts$/g });
+    expect(collections).toHaveLength(3);
   });
 });
 

@@ -1,0 +1,53 @@
+{
+  "name": "create-stellaris-mod",
+  "version": "0.1.0",
+  "description": "Scaffold a Stellaris mod project that builds with @pdx-ts/sdk",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "create-stellaris-mod": "dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "pdx-source": "./src/cli.ts",
+      "types": "./dist/cli.d.ts",
+      "default": "./dist/cli.js"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "stellaris",
+    "paradox",
+    "modding",
+    "scaffold",
+    "create"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.7.0"
+  },
+  "devDependencies": {
+    "@pdx-ts/sdk": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yeager-j/pdx-ts-sdk.git",
+    "directory": "packages/create-stellaris-mod"
+  },
+  "homepage": "https://github.com/yeager-j/pdx-ts-sdk/tree/main/packages/create-stellaris-mod#readme",
+  "bugs": {
+    "url": "https://github.com/yeager-j/pdx-ts-sdk/issues"
+  }
+}

@@ -382,7 +382,9 @@ and the override didn't take" becomes a build error.
 
 | Package | What it is |
 | --- | --- |
+| [create-stellaris-mod](packages/create-stellaris-mod/README.md) | `npx create-stellaris-mod my-mod` — detects your install and scaffolds a project that builds on the first `npm install` |
 | [@pdx-ts/sdk](packages/sdk/README.md) | The SDK: definers, triggers/effects, scope safety, building, rendering, vanilla patching, mod-logic testing |
+| [@pdx-ts/sdk-testing](packages/sdk-testing/README.md) | Test mod logic without launching the game: a whitelist interpreter over the recorded triggers and effects, plus vitest matchers |
 | [@pdx-ts/pdxscript](packages/pdxscript/README.md) | Standalone PDXScript parser/serializer — order-preserving, round-trip-verified, game-semantics-free |
 | [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md) | Every identifier a real install defines, as version-pinned types, plus vanilla's scripted triggers and effects bound at their inferred scopes |
 | [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md) | Rules-derived generator: emits the SDK's typed surface from the vendored cwtools rules |
@@ -402,13 +404,23 @@ npm workspace; every command runs from the repository root.
 npm test                     # all suites, all packages (vitest)
 npm run typecheck            # tsc --noEmit
 npm run typecheck:ids        # the stellaris-ids-present type program
-npm run build                # emit dist/
+npm run build                # emit each package's dist/
 npm run example              # build examples/hello-galaxy/out/
 npm run codegen              # regenerate the SDK's types from the cwt rules
 npm run codegen:check        # ...and fail if committed output moved
 npm run codegen:vanilla      # regenerate stellaris-ids (needs an install)
 npm run codegen:vanilla:check
+npm run scaffold             # drive create-stellaris-mod from source
 ```
+
+Every publishable package builds to `dist/`, because Node refuses to strip
+types from anything under `node_modules` — a package shipping raw `.ts` dies at
+a consumer's first import. The workspace hides that completely, since npm links
+members as symlinks whose realpath escapes `node_modules`, so during development
+nothing is built. `exports` therefore names both worlds: a `pdx-source`
+condition pointing at `src/`, and `types`/`default` pointing at `dist/`. This
+repo passes that condition (tsconfig `customConditions`, Node `--conditions`,
+Vite `resolve.conditions`); a published consumer never does, and gets `dist/`.
 
 Contributor rules — codegen discipline, the content-registry procedure,
 design boundaries — live in [AGENTS.md](AGENTS.md).

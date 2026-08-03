@@ -1,10 +1,10 @@
 import { join } from "node:path";
+import { declareFrom, fixture, renderFired } from "@pdx-ts/sdk-testing";
 import { describe, expect, it } from "vitest";
 
 import { defineHardening } from "../../../examples/hardening/mod.ts";
 import { render } from "../src/index.ts";
 import { load } from "../src/stellaris/load.ts";
-import { declareFrom, fixture, renderFired } from "../src/testing/index.ts";
 
 const vanilla = load({
   installPath: join(import.meta.dirname, "../../../fixtures/fake-install"),

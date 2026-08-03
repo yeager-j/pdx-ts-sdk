@@ -4,7 +4,9 @@ const config = {
   name: "Hello Galaxy",
   prefix: "hello_galaxy",
   version: "0.1.0",
-  supportedVersion: "4.0.*",
+  // The `v` is the form every shipped mod's descriptor uses, and the form
+  // `stellaris.supportedVersionFor` derives; the launcher reads it verbatim.
+  supportedVersion: "v4.0.*",
   tags: ["Technologies"],
 };
 
