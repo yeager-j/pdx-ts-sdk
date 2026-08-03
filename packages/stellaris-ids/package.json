@@ -1,7 +1,7 @@
 {
   "name": "@pdx-ts/stellaris-ids",
   "version": "4.4.6",
-  "description": "Vanilla Stellaris identifiers (technologies, scripted triggers/effects, sprites, sounds, ...), install-derived and version-pinned to the game \u2014 declaration-merges into @pdx-ts/sdk to check vanilla references at compile time",
+  "description": "Vanilla Stellaris identifiers (technologies, scripted triggers/effects, sprites, sounds, ...), install-derived and version-pinned to the game — declaration-merges into @pdx-ts/sdk to check vanilla references at compile time",
   "type": "module",
   "license": "MIT",
   "exports": {
