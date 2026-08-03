@@ -45,8 +45,18 @@ export interface Trigger<S extends ScopeName = ScopeName> {
    * does (`./triggers.ts`) — declarative, not mutating. `a`, `b`, and `c` are
    * unchanged; the method returns a new `Trigger` and records nothing on its
    * own, the same as every other combinator.
+   *
+   * `T` is the method's own type parameter, not `S` — inferred fresh at each
+   * call from `this` and every operand together, the same simultaneous,
+   * contravariant unification `and()` itself relies on for "infers the scope
+   * intersection" (`scope-safety.test-d.ts`). Binding to the interface's own
+   * `S` instead would fix the combined scope to whatever the *receiver*
+   * happened to be instantiated at, checking every later operand against
+   * that alone — order-dependent, and rejecting valid conjunctions like
+   * `hasGlobalFlag("x").and(hasCountryFlag("y"))` where the receiver is
+   * wider than a later operand.
    */
-  and(this: Trigger<S>, ...others: readonly Trigger<S>[]): Trigger<S>;
+  and<T extends ScopeName>(this: Trigger<T>, ...others: readonly Trigger<T>[]): Trigger<T>;
   readonly [scopeBrand]: (scope: S) => void;
 }
 
@@ -83,7 +93,7 @@ export function trigger<S extends ScopeName>(
       kind: "trigger",
       entries,
       refs,
-      and(this: Trigger<S>, ...others: readonly Trigger<S>[]): Trigger<S> {
+      and<T extends ScopeName>(this: Trigger<T>, ...others: readonly Trigger<T>[]): Trigger<T> {
         return conjoin([this, ...others]);
       },
     } as const
