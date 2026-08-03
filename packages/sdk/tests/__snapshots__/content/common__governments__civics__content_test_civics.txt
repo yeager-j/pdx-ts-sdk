@@ -16,14 +16,10 @@ content_test_civic_meritocracy = {
 		}
 	}
 	possible = {
-		OR = {
-			authority = {
+		authority = {
+			OR = {
+				text = content_test_meritocracy_oligarchic
 				value = auth_democratic
-			}
-		}
-		OR = {
-			text = content_test_meritocracy_oligarchic
-			authority = {
 				value = auth_oligarchic
 			}
 		}

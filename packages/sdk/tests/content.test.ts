@@ -711,11 +711,19 @@ function defineContentExample(): PureMod {
       // would (rightly) fail the reference guard, same as `alternateCivicVersion`.
       civics: { not: [{ values: ["civic_shadow_council"] }] },
     },
+    // SDK-42: a same-domain disjunction ("authority is democratic or
+    // oligarchic") belongs in the *clause*-level `or` (one group, two
+    // `values`) — the block-level `orGroups` ANDs its repeated elements, so
+    // two single-value groups there would require both authorities at once.
     possible: {
-      or: [
-        { authority: { value: "auth_democratic" } },
-        { text: "content_test_meritocracy_oligarchic", authority: { value: "auth_oligarchic" } },
-      ],
+      authority: {
+        or: [
+          {
+            text: "content_test_meritocracy_oligarchic",
+            values: ["auth_democratic", "auth_oligarchic"],
+          },
+        ],
+      },
     },
     modifier: (m) => m.country.unity.produces.mult(0.05),
     cost: 1,
@@ -855,7 +863,8 @@ function defineContentExample(): PureMod {
       authority: { value: "auth_democratic" },
     },
     possibleSecondary: {
-      or: [{ ethics: { value: "ethic_xenophile" } }],
+      // SDK-42: one `orGroups` element — a single OR block, correct as-is.
+      orGroups: [{ ethics: { value: "ethic_xenophile" } }],
     },
     resources: [{ category: "species", cost: { amounts: { unity: 50 } } }],
     ethicsToPrefer: ["ethic_xenophile"],
@@ -1765,6 +1774,33 @@ describe("generated content registries", () => {
       "triggered_planet_pop_group_modifier_for_species = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n"
     );
   });
+
+  it("emits one orGroups element with two domain members as a single OR block (sdk42OrGroups)", () => {
+    // SDK-42's corrected form: one array element, two clause members inside
+    // it — a genuine disjunction ("corporate authority or the sovereign
+    // civic"), unlike a two-element array, which the game ANDs.
+    const civic = defineCivicOrOrigin({
+      id: "sdk42_civic_or_groups",
+      name: "Sdk42 Civic",
+      possible: {
+        orGroups: [
+          {
+            authority: { value: "auth_corporate" },
+            civics: { value: "sdk42_sovereign_civic" },
+          },
+        ],
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("SDK-42 test", "sdk42"), [collection(undefined, [civic])])
+    ).get("common/governments/civics/sdk42_civics.txt")!;
+    // One OR block, both members inside it — not two sibling OR blocks.
+    expect(rendered).toContain(
+      "possible = {\n\t\tOR = {\n\t\t\tauthority = {\n\t\t\t\tvalue = auth_corporate\n\t\t\t}\n" +
+        "\t\t\tcivics = {\n\t\t\t\tvalue = sdk42_sovereign_civic\n\t\t\t}\n\t\t}\n\t}"
+    );
+    expect(rendered.match(/OR = \{/g)).toHaveLength(1);
+  });
 });
 
 /**
@@ -1975,8 +2011,12 @@ describe("alias-struct serialization", () => {
     { key: "ethics", member: "ethics", shape: "struct", form: "block", fields: CLAUSE_FIELDS },
     { key: "civics", member: "civics", shape: "struct", form: "block", fields: CLAUSE_FIELDS },
     {
+      // SDK-42: the block-level combinator's member is "orGroups", not "or"
+      // — repeated `OR` keys here are ANDed by the game, unlike the
+      // clause-level `or` above (CLAUSE_FIELDS), which is a genuine
+      // disjunction. Same CWT key, deliberately different member name.
       key: "OR",
-      member: "or",
+      member: "orGroups",
       shape: "aliasStruct",
       form: "list",
       category: "government_trigger",
@@ -2064,15 +2104,19 @@ describe("alias-struct serialization", () => {
     );
   });
 
-  it("recurses through the OR combinator via the category table", () => {
-    // The self-reference the module-level table exists for: an `OR` inside
-    // `possible` holds a whole government_trigger block again, repeated once
-    // per entry rather than merged, exactly as the game reads it.
+  it("recurses through the OR combinator via the category table (SDK-42: orGroups, ANDed as written)", () => {
+    // The self-reference the module-level table exists for: an `orGroups`
+    // entry inside `possible` holds a whole government_trigger block again,
+    // repeated once per array element rather than merged — and, per SDK-42,
+    // each repeated `OR` key the game reads back is ANDed with its siblings,
+    // not ORed the way the array might suggest. `orGroups` (not `or`) is the
+    // member name precisely so this two-element array does not read as
+    // "either", which it is not.
     expect(
       renderCivic({
         id: "gt_test_civic_corporate_dominion",
         possible: {
-          or: [
+          orGroups: [
             { authority: { value: "auth_oligarchic" } },
             { text: "gt_test_tooltip", always: true, hostHasDlc: "Overlord" },
           ],

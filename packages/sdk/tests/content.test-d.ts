@@ -1052,7 +1052,7 @@ describe("generated content authoring types", () => {
       // The requirements DSL: a plain object, matched against empire setup —
       // not a script condition tree.
       potential: { authority: { value: "auth_democratic" } },
-      possible: { or: [{ civics: { value: "content_types_civic_other" } }] },
+      possible: { orGroups: [{ civics: { value: "content_types_civic_other" } }] },
     });
     defineCivicOrOrigin({
       id: "content_types_civic_dsl_rejects_trigger",
@@ -1178,7 +1178,7 @@ describe("generated content authoring types", () => {
       id: "content_types_species_class_dsl",
       name: "X",
       possible: { authority: { value: "auth_democratic" } },
-      possibleSecondary: { or: [{ ethics: { value: "ethic_xenophile" } }] },
+      possibleSecondary: { orGroups: [{ ethics: { value: "ethic_xenophile" } }] },
     });
     defineSpeciesClass({
       id: "content_types_species_class_dsl_rejects_trigger",

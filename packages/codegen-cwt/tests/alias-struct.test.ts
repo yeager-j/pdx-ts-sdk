@@ -123,8 +123,14 @@ describe("government_trigger emission", () => {
   it("lowers the combinators as self-references through the category table", () => {
     // The whole reason for the aliasStruct shape: OR/AND/limit each splice the
     // category back into itself, so their field table cannot be written inline.
+    // SDK-42: "OR" lowers to member "orGroups", not "or" — its CWT key
+    // collides with the domain clause's own genuinely-disjunctive "or" group
+    // two levels down, and a repeated `OR` combinator here is ANDed by the
+    // game rather than ORed the way a bare "or" array would misread. "AND"
+    // and "limit" name nothing a clause also uses, so they keep their plain
+    // member names.
     for (const [member, key] of [
-      ["or", "OR"],
+      ["orGroups", "OR"],
       ["and", "AND"],
       ["limit", "limit"],
     ] as const) {

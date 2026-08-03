@@ -9,11 +9,31 @@
  *
  *  - a *domain clause* — `authority = { value = x OR = { text = t value = a
  *    value = b } }` — one uniform template shared by ten members, differing
- *    only in which content type the values reference;
+ *    only in which content type the values reference. Two of the ten
+ *    (`civics`, `## cardinality = 0..2`; `ethics`, `## cardinality = 0..3`)
+ *    let the direct `value` key repeat, unlike the other eight's `0..1`, but
+ *    the template stays singular for all ten: a real-install sweep of every
+ *    shipped `civics =` / `ethics =` clause (SDK-45) found zero of 259 civics
+ *    blocks and zero of 233 ethics blocks writing a second direct `value` —
+ *    every multi-value clause in the corpus goes through `OR`/`NOT`/`NOR`
+ *    instead, which `GovernmentTriggerClauseGroup` already models as a list.
+ *    Widening `value` to an array for two of ten domains would cost every
+ *    consumer a union-vs-array branch for a form nothing in the corpus uses;
+ *    the singular field stays, and this note is the evidence trail if that
+ *    ever needs revisiting;
  *  - a *scalar* — `host_has_dlc = enum[dlc]`, `is_nomadic = bool`;
  *  - a *combinator* — `OR`/`AND`/`limit`, each splicing the whole category back
  *    into itself, plus the block-level `text`/`always` fields that the
- *    consuming `potential`/`possible` blocks carry too.
+ *    consuming `potential`/`possible` blocks carry too. Each combinator is
+ *    "repeat this key and the game ANDs the repeats" (55 vanilla `potential`/
+ *    `possible` blocks write exactly one direct `OR`, zero write two — SDK-42),
+ *    which an array member can misread as "any one of these" — exactly
+ *    backwards, and exactly the reading a *domain clause*'s own `or` invites
+ *    two members up (`GovernmentTriggerClauseGroup`, genuine disjunction). A
+ *    combinator whose CWT key collides with a clause group key (`OR` is the
+ *    one government_trigger has) is emitted as `<key>Groups` rather than
+ *    `<key>` to keep that reading from crossing levels; see
+ *    `combinatorMemberName`.
  *
  * The clause and its groups lower onto the runtime shapes that already exist
  * (`struct` plus repeated `value`). Only the combinators need the `aliasStruct`
@@ -52,6 +72,26 @@ const GROUP_KEYS = new Set(["OR", "NOT", "NOR"]);
  */
 function memberName(key: string): string {
   return camelCase(key.toLowerCase());
+}
+
+/**
+ * The member name for a block-level combinator (`OR`/`AND`/`limit`, each
+ * splicing the whole category back into itself as a list of sibling blocks
+ * the game ANDs together).
+ *
+ * `GROUP_KEYS` (`OR`/`NOT`/`NOR`) are the *same* CWT keys a domain clause
+ * uses for its own grouped operands (`GovernmentTriggerClauseGroup`, where
+ * `or` really does mean disjunction). A combinator whose key collides with a
+ * group key would emit a same-named member one level up with the opposite
+ * meaning — `or: [a, b]` reading as "a OR b" when the game ANDs the two
+ * blocks — so a colliding combinator gets a `Groups` suffix to keep the
+ * repeated-block sense visible at the type. `AND`/`limit` (government_trigger's
+ * other two combinators) name nothing a clause also uses, so they are left
+ * alone: an array of AND-blocks or limit-blocks does not invite the same
+ * misreading.
+ */
+function combinatorMemberName(key: string): string {
+  return GROUP_KEYS.has(key) ? `${memberName(key)}Groups` : memberName(key);
 }
 
 function keyOf(field: RuleField): string | null {
@@ -338,9 +378,9 @@ export function emitAliasStruct(
         clauseFieldsCode(shape.ref, memberClauseFieldsConstant, memberGroupFieldsConstant)
       );
     } else {
-      blockMembers.push(`${docs}  ${memberName(name)}?: readonly ${typeName}[];\n`);
+      blockMembers.push(`${docs}  ${combinatorMemberName(name)}?: readonly ${typeName}[];\n`);
       metadata.push(
-        `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(memberName(name))}, ` +
+        `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(combinatorMemberName(name))}, ` +
           `shape: "aliasStruct", form: ${JSON.stringify(authoredForm({ shape: "aliasStruct", repeated: true }))}, ` +
           `category: ${JSON.stringify(category)}, repeated: true },\n`
       );
