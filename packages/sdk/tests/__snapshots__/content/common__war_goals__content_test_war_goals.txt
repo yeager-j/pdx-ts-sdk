@@ -23,7 +23,7 @@ content_test_war_goal_liberation = {
 		base = 5
 		modifier = {
 			factor = 2
-			desc = content_test_war_goal_liberation_ai_weight_0
+			desc = content_test_war_goal_liberation_ai_weight_cbc51c94
 			from = {
 				has_authority = auth_machine_intelligence
 			}

@@ -3,6 +3,8 @@
  * content-type description.
  */
 
+import { createHash } from "node:crypto";
+
 import {
   block,
   container,
@@ -1169,6 +1171,9 @@ function localisationKey(pattern: string, id: string): string {
   return pattern.replace("$", id);
 }
 
+/** `Modifier.descKey`'s required shape — lowercase snake_case, matching content ids. */
+const DESC_KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
+
 export class ContentAuthoring {
   private readonly prefix: string;
   private readonly descriptors: readonly ContentRegistryDescriptor[];
@@ -1177,12 +1182,14 @@ export class ContentAuthoring {
   private readonly nestedIds = new Map<string, Set<string>>();
   private readonly registerLoc: RegisterLoc;
   private readonly onPrefixViolation: (message: string) => void;
+  private readonly onUnstableDescKey: (message: string) => void;
 
   constructor(
     prefix: string,
     descriptors: readonly ContentRegistryDescriptor[],
     registerLoc: RegisterLoc,
-    onPrefixViolation?: (message: string) => void
+    onPrefixViolation?: (message: string) => void,
+    onUnstableDescKey?: (message: string) => void
   ) {
     this.prefix = prefix;
     this.descriptors = descriptors;
@@ -1193,6 +1200,7 @@ export class ContentAuthoring {
       ((message) => {
         throw new Error(message);
       });
+    this.onUnstableDescKey = onUnstableDescKey ?? (() => {});
   }
 
   define<K extends string, D extends ContentDef>(type: K, rawDef: D): DefinedContent<K, D> {
@@ -1377,12 +1385,26 @@ export class ContentAuthoring {
   /**
    * Registers one localisation key per desc-bearing modifier row in a
    * `WeightBlock`. Modifier rows are anonymous and repeated with no id of
-   * their own, so the key is derived rather than author-supplied:
-   * `<ownerId>_<fieldPath>_<index>`. `ownerId` and `fieldPath` are already
-   * unique per definition (mod-prefixed and duplicate-checked, or a fixed
-   * field key/struct path), and `index` disambiguates multiple modifier rows
-   * on the same field — deterministic across runs, and never collides for
-   * legitimate input with several modifiers on one definition.
+   * their own, so the key cannot ride the row's own identity and is derived
+   * instead: `<ownerId>_<fieldPath>_<descKey-or-hash>`. `ownerId` and
+   * `fieldPath` are already unique per definition (mod-prefixed and
+   * duplicate-checked, or a fixed field key/struct path); what disambiguates
+   * multiple modifier rows on the same field must be a function of the row's
+   * own content, never of its position in the array — an index-derived key
+   * repoints at whatever row now occupies that index after an insertion or
+   * reorder, silently misaligning any shipped translation with no build
+   * error and no symptom until a player reads that language (SDK-48).
+   *
+   * An author-supplied `descKey` is preferred when given: stable under
+   * reordering and under text edits, so it is the only scheme translations
+   * can safely be pinned against long-term. Without one, the key falls back
+   * to a short hash of the `desc` text itself — still a function of content
+   * rather than position, so it survives reordering and insertion, but it
+   * changes (and orphans any existing translation) whenever the English text
+   * is edited. That silent case is made loud instead of staying silent: it
+   * reports a `mod.warnings` entry recommending a `descKey` for anyone who
+   * ships translations, rather than failing the build outright (the
+   * fallback is otherwise correct and unattended authoring stays possible).
    */
   private collectModifierDescs(
     ownerId: string,
@@ -1390,13 +1412,30 @@ export class ContentAuthoring {
     weight: WeightBlock<ScopeName>,
     into: LocalisationEntry[]
   ): void {
-    (weight.modifiers ?? []).forEach((modifier, index) => {
+    for (const modifier of weight.modifiers ?? []) {
       if (modifier.desc === undefined) {
-        return;
+        continue;
       }
-      const key = `${ownerId}_${fieldPath}_${index}`;
+      let slug: string;
+      if (modifier.descKey !== undefined) {
+        if (!DESC_KEY_PATTERN.test(modifier.descKey)) {
+          throw new Error(
+            `Modifier.descKey "${modifier.descKey}" on "${ownerId}" (${fieldPath}) must be ` +
+              `lowercase snake_case (e.g. "flesh_is_weak")`
+          );
+        }
+        slug = modifier.descKey;
+      } else {
+        slug = createHash("sha256").update(modifier.desc).digest("hex").slice(0, 8);
+        this.onUnstableDescKey(
+          `Modifier desc on "${ownerId}" (${fieldPath}) has no descKey; its localisation key ` +
+            `is a hash of the desc text and will change if that text is edited, silently ` +
+            `orphaning any existing translation. Set descKey to pin a stable key.`
+        );
+      }
+      const key = `${ownerId}_${fieldPath}_${slug}`;
       into.push([key, modifier.desc]);
       registerModifierDescKey(modifier, key);
-    });
+    }
   }
 }

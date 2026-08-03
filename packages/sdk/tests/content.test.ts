@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -1957,5 +1959,151 @@ describe("registries that share an outputDir (SDK-32)", () => {
         '"common/component_templates", where the game merges every file it loads by id, so only ' +
         "one definition would survive and which one is undetermined; give one of them a different id"
     );
+  });
+});
+
+describe("modifier desc keys are content-derived, not positional (SDK-48)", () => {
+  const DESC_KEY_CONFIG = configFor("Desc key test", "desc_key_test");
+
+  function situationWithRows(descs: readonly string[]) {
+    return defineSituationType({
+      id: "desc_key_test_situation_reorder",
+      name: "Reorder Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: descs.map((desc) => ({ subtract: 1, desc, when: always() })),
+      },
+    });
+  }
+
+  function keyForText(loc: ReadonlyMap<string, string>, text: string): string | undefined {
+    for (const [key, value] of loc) {
+      if (value === text) {
+        return key;
+      }
+    }
+    return undefined;
+  }
+
+  it("keeps every pre-existing row's key stable when a new row is inserted mid-list", () => {
+    // The reproduction from the ticket: 11 rows, one inserted at index 2. On
+    // main, collectModifierDescs derives the key from the row's index in
+    // `weight.modifiers`, so every row from index 2 down shifts to the next
+    // localisation key and silently repoints at whichever row now sits
+    // there — no build error, and no symptom until a shipped translation is
+    // read in that language. This must fail on main and pass once the key is
+    // a function of the row's own content instead.
+    const descs = Array.from({ length: 11 }, (_, i) => `Row ${i} of the uprising.`);
+    const before = buildMod(DESC_KEY_CONFIG, [
+      collection(undefined, [situationWithRows(descs)]),
+    ]);
+    const withInsertion = [
+      ...descs.slice(0, 2),
+      "A newly inserted row at index 2.",
+      ...descs.slice(2),
+    ];
+    const after = buildMod(DESC_KEY_CONFIG, [
+      collection(undefined, [situationWithRows(withInsertion)]),
+    ]);
+
+    for (const desc of descs) {
+      expect(keyForText(after.loc, desc)).toBe(keyForText(before.loc, desc));
+      expect(keyForText(after.loc, desc)).toBeDefined();
+    }
+  });
+
+  it("derives the key from an author-supplied descKey and emits no warning", () => {
+    const situation = defineSituationType({
+      id: "desc_key_test_situation_pinned",
+      name: "Pinned Key Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          {
+            subtract: 1,
+            desc: "The Flesh is Weak.",
+            descKey: "flesh_is_weak",
+            when: always(),
+          },
+        ],
+      },
+    });
+
+    const mod = buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])]);
+
+    expect(mod.loc.get("desc_key_test_situation_pinned_monthly_progress_flesh_is_weak")).toBe(
+      "The Flesh is Weak."
+    );
+    expect(mod.warnings).toEqual([]);
+  });
+
+  it("falls back to a hash of the desc text and warns when no descKey is given", () => {
+    const desc = "Machine intelligence keeps the uprising contained.";
+    const expectedSlug = createHash("sha256").update(desc).digest("hex").slice(0, 8);
+    const situation = defineSituationType({
+      id: "desc_key_test_situation_unkeyed",
+      name: "Unkeyed Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [{ subtract: 1, desc, when: always() }],
+      },
+    });
+
+    const mod = buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])]);
+
+    const expectedKey = `desc_key_test_situation_unkeyed_monthly_progress_${expectedSlug}`;
+    expect(mod.loc.get(expectedKey)).toBe(desc);
+    expect(mod.warnings).toEqual([
+      {
+        code: "unstable-desc-key",
+        message:
+          'Modifier desc on "desc_key_test_situation_unkeyed" (monthly_progress) has no ' +
+          "descKey; its localisation key is a hash of the desc text and will change if that " +
+          "text is edited, silently orphaning any existing translation. Set descKey to pin a " +
+          "stable key.",
+      },
+    ]);
+  });
+
+  it("rejects a descKey that is not lowercase snake_case", () => {
+    const situation = defineSituationType({
+      id: "desc_key_test_situation_bad_key",
+      name: "Bad Key Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          { subtract: 1, desc: "Bad key.", descKey: "Flesh-Is-Weak", when: always() },
+        ],
+      },
+    });
+
+    expect(() => buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])])).toThrow(
+      'Modifier.descKey "Flesh-Is-Weak" on "desc_key_test_situation_bad_key" ' +
+        '(monthly_progress) must be lowercase snake_case (e.g. "flesh_is_weak")'
+    );
+  });
+
+  it("matches the golden localisation and content for a mix of pinned and unpinned desc keys", async () => {
+    const situation = defineSituationType({
+      id: "desc_key_test_situation_golden",
+      name: "Golden Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          {
+            subtract: 1,
+            desc: "The Flesh is Weak.",
+            descKey: "flesh_is_weak",
+            when: always(),
+          },
+          { factor: 2, desc: "An unpinned row.", when: always() },
+        ],
+      },
+    });
+
+    const files = render(buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])]));
+    const loc = files.get("localisation/english/desc_key_test_l_english.yml")!;
+
+    await expect(loc).toMatchFileSnapshot("__snapshots__/content/desc-key-localisation.yml");
   });
 });

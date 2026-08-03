@@ -3,7 +3,7 @@ pp_mod_situation_probe = {
 		base = 2
 		modifier = {
 			mult = 1.5
-			desc = pp_mod_situation_probe_monthly_progress_0
+			desc = pp_mod_situation_probe_monthly_progress_probe_is_spreading
 			always = yes
 		}
 	}

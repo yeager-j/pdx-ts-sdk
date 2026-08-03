@@ -195,7 +195,8 @@ export function buildMod(
     config.prefix,
     CONTENT_REGISTRIES,
     registerLocEntries,
-    (message) => warnings.push({ code: "missing-prefix", message })
+    (message) => warnings.push({ code: "missing-prefix", message }),
+    (message) => warnings.push({ code: "unstable-desc-key", message })
   );
 
   // Vanilla ids by output directory: the collision guard's index. Only
