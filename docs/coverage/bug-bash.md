@@ -511,43 +511,35 @@ unblock arc sites is the five subtype window flags.
 **Resolution.** Kept hand-written per the ticket's explicit scope (generating
 the event surface is a separate architectural decision, not taken here).
 Added the five window flags (`archaeology`, `firstContact`,
-`espionageOperation`, `astralRift`, `diplomatic`) plus `difficulty`, and 21
-more `EventDef`/`EventOption` members — every unconditionally-declared field
-the ticket named, `location` and `meanTimeToHappen` besides, and all nine
-omitted `EventOption` fields. The four kind-gated window flags condition
-their type on `S` (`S extends "fleet" ? boolean : never`), so
-`defineCountryEvent({ archaeology: true })` is a compile error; `diplomatic`
-is an attribute subtype (driven by its own value, not the event's kind) and
-stays unconditional, matching the precedent `hideWindow`/`isTriggeredOnly`
-already set. See `packages/sdk/src/events.ts` and
-`packages/sdk/tests/event-fields.test.ts`/`event-fields.test-d.ts`.
+`espionageOperation`, `astralRift`, `diplomatic`) plus `difficulty`, and 32
+more `EventDef`/`EventOption` members — every unconditionally-declared field the
+ticket named, `location` and `meanTimeToHappen` besides, all nine omitted
+`EventOption` fields, and a second pass closing `diplomatic_title`,
+`event_window_type`, `event_picture_background`, `notification_event_icon`,
+`force_open`, `major_trigger`, and `weight_multiplier`. The four kind-gated
+window flags condition their type on `S` (`S extends "fleet" ? boolean :
+never`), so `defineCountryEvent({ archaeology: true })` is a compile error;
+`diplomatic` and `major_trigger`/`weight_multiplier` are attribute subtypes
+(driven by their own value — `diplomatic`, `major`, `isTriggeredOnly` — not
+by the event's kind) and stay unconditional, matching the precedent
+`hideWindow`/`isTriggeredOnly` already set. See `packages/sdk/src/events.ts`
+and `packages/sdk/tests/event-fields.test.ts`/`event-fields.test-d.ts`.
 
 Remaining gap list, precise by CWT site:
 
 - Event inheritance (`base = <event>`, the `*_clear` directives,
   `events.cwt:159-171`) — a whole authoring mode, not a field.
-- `diplomatic_title` (`events.cwt:197`, `:474`) — trivial follow-up, same
-  shape as `title`/`desc`.
 - Repeated/conditional `desc` blocks (`events.cwt:200-209`) — `desc` here
   only supports the flat loc-key form; the conditional-array form is
   unmodeled.
 - Repeated/conditional `picture` blocks (`events.cwt:213-231`) and
   `picture_event_data` (`events.cwt:233-285`) — same gap as `desc`, plus a
   large cosmetic nested structure of low authoring value.
-- `event_window_type`, `event_picture_background`, `notification_event_icon`
-  (`events.cwt:287-291`) — trivial follow-ups, omitted for time.
 - Repeated/conditional `show_sound` blocks (`events.cwt:296-302`) —
   `showSound` only supports the flat ref form.
-- `force_open` (`events.cwt:305`) — trivial follow-up, omitted for time.
 - `option.name`'s conditional dual forms (`events.cwt:325-335`) — the corpus
   (`arcsite_events.txt`) uses the flat `name` + sibling `option.trigger` form
   exclusively, which is what's supported.
-- `major_trigger` (`subtype[major]`, `events.cwt:423-425`) — same
-  `Trigger<S>` shape as `abortTrigger`; the highest-priority fast follow-up
-  left on the table, omitted purely for time.
-- `weight_multiplier` (`subtype[triggered]`, `events.cwt:447-452`) — the same
-  `modifierRows()` helper built for `meanTimeToHappen`/`aiChance` would cover
-  it in a few lines; second-priority fast follow-up.
 - `custom_gui`/`custom_gui_option` (event-level, `subtype[diplomatic]`,
   `events.cwt:476-478`) — niche diplomatic-screen customization.
 - `pre_triggers` (`subtype[colony]`/`[carrier]`/`[country]`,

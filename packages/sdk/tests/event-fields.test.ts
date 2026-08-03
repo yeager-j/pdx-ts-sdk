@@ -169,37 +169,83 @@ describe("previously-omitted EventDef fields", () => {
     );
   });
 
+  it("lowers weight_multiplier with its factor and modifier rows", () => {
+    const events = makeEvents();
+    const scheduled = events.defineCountryEvent({
+      id: 1014,
+      hideWindow: true,
+      isTriggeredOnly: true,
+      weightMultiplier: {
+        factor: 5,
+        modifiers: [{ factor: 3, when: hasGlobalFlag("event_fields_weighted") }],
+      },
+    });
+    const rendered = render(buildMod(CONFIG, [collection("events", [scheduled])])).get(
+      "events/event_fields_events.txt"
+    )!;
+    expect(rendered).toContain(
+      "weight_multiplier = {\n\t\tfactor = 5\n\t\tmodifier = {\n\t\t\tfactor = 3\n\t\t\thas_global_flag = event_fields_weighted"
+    );
+  });
+
+  it("lowers major_trigger, an attribute-subtype trigger gated on major's own value", () => {
+    const events = makeEvents();
+    const flagged = events.defineCountryEvent({
+      id: 1015,
+      hideWindow: true,
+      isTriggeredOnly: true,
+      major: true,
+      majorTrigger: hasGlobalFlag("event_fields_materialist"),
+    });
+    const rendered = render(buildMod(CONFIG, [collection("events", [flagged])])).get(
+      "events/event_fields_events.txt"
+    )!;
+    expect(rendered).toContain("major = yes");
+    expect(rendered).toContain("major_trigger = {\n\t\thas_global_flag = event_fields_materialist");
+  });
+
   it("lowers the plain unconditional booleans, refs, and text fields", () => {
     const events = makeEvents();
     const flagged = events.defineCountryEvent({
       id: 1012,
       hideWindow: true,
       isTriggeredOnly: true,
+      diplomaticTitle: "A diplomatic screen title.",
       messageDesc: "A message feed entry.",
       eventMessageType: "event",
       eventChain: "event_fields_chain",
       specimen: "event_fields_specimen",
+      eventPictureBackground: "GFX_evt_background",
+      notificationEventIcon: "GFX_notification_icon",
+      eventWindowType: "leader_conversation",
       major: true,
       trackable: true,
       isAdvisorEvent: true,
       autoSelect: true,
       autoOpens: true,
       isTestEvent: true,
+      forceOpen: true,
     });
     const files = render(buildMod(CONFIG, [collection("events", [flagged])]));
     const rendered = files.get("events/event_fields_events.txt")!;
     expect(rendered).toContain("event_message_type = event");
     expect(rendered).toContain("event_chain = event_fields_chain");
     expect(rendered).toContain("specimen = event_fields_specimen");
+    expect(rendered).toContain("event_picture_background = GFX_evt_background");
+    expect(rendered).toContain("notification_event_icon = GFX_notification_icon");
+    expect(rendered).toContain("event_window_type = leader_conversation");
     expect(rendered).toContain("major = yes");
     expect(rendered).toContain("trackable = yes");
     expect(rendered).toContain("is_advisor_event = yes");
     expect(rendered).toContain("auto_select = yes");
     expect(rendered).toContain("auto_opens = yes");
     expect(rendered).toContain("is_test_event = yes");
+    expect(rendered).toContain("force_open = yes");
     expect(rendered).toContain("message_desc = event_fields.1012.message_desc");
+    expect(rendered).toContain("diplomatic_title = event_fields.1012.diplomatic_title");
     const loc = files.get("localisation/english/event_fields_l_english.yml")!;
     expect(loc).toContain(' event_fields.1012.message_desc:0 "A message feed entry."');
+    expect(loc).toContain(' event_fields.1012.diplomatic_title:0 "A diplomatic screen title."');
   });
 
   it("lowers a situation reference", () => {

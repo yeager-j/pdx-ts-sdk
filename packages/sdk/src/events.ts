@@ -163,16 +163,48 @@ export interface MeanTimeToHappen<S extends ScopeName> {
   readonly modifiers?: readonly Modifier<S>[];
 }
 
+/**
+ * A `weight_multiplier` block (`events.cwt:448-452`, `subtype[triggered]`):
+ * the same `modifier_rule` shape as {@link MeanTimeToHappen}'s modifier rows,
+ * with a leading `factor` in place of days/months/years. Declared under
+ * `subtype[triggered]`, but — like `meanTimeToHappen`'s `subtype[!triggered]`
+ * — that is an attribute subtype driven by `isTriggeredOnly`'s own value, not
+ * by the event's kind, so it stays an unconditional field rather than a
+ * second `S`-conditioned generic parameter.
+ */
+export interface WeightMultiplier<S extends ScopeName> {
+  readonly factor?: number;
+  readonly modifiers?: readonly Modifier<S>[];
+}
+
+/**
+ * `event_window_type` (`events.cwt:287-288`, `enum[event_window_type]`): the
+ * four leader-conversation window styles the enum block at the bottom of
+ * `events.cwt` declares. A closed, small vocabulary with no existing
+ * generated home, so it is inlined here rather than routed through the
+ * content-registry enum machinery.
+ */
+export type EventWindowType =
+  "leader_recruit" | "leader_story" | "leader_conversation" | "crisis_leader_conversation";
+
 export interface EventDef<S extends ScopeName, From extends ScopeName | undefined> {
   /** Numeric id within the mod's namespace; the full id is `namespace.id`. */
   readonly id: number;
   /** English title text; omit for hidden events. */
   readonly title?: string;
   readonly desc?: string;
+  /** Localized title shown at the top of the diplomatic screen (`events.cwt:197`, `:474`). */
+  readonly diplomaticTitle?: string;
   /** Localized text for the message-feed entry, distinct from `desc` (`events.cwt:402`). */
   readonly messageDesc?: string;
   readonly picture?: SpriteRef | string;
   readonly showSound?: SoundEffectRef | string;
+  /** The event window's background image (`events.cwt:289-290`). */
+  readonly eventPictureBackground?: SpriteRef | string;
+  /** The icon shown for this event's entry in the notification feed (`events.cwt:291-292`). */
+  readonly notificationEventIcon?: SpriteRef | string;
+  /** Which of the four leader-conversation window styles renders this event (`events.cwt:287-288`). */
+  readonly eventWindowType?: EventWindowType;
   /** A `<message_type>` reference controlling the message-feed presentation (`events.cwt:393`). */
   readonly eventMessageType?: MessageTypeRef | string;
   /** The `<event_chain>` this event belongs to (`events.cwt:396`). */
@@ -192,12 +224,20 @@ export interface EventDef<S extends ScopeName, From extends ScopeName | undefine
   readonly hideWindow?: boolean;
   /** Renders the event in the diplomatic screen instead of the ordinary event window (`events.cwt:311`). */
   readonly diplomatic?: boolean;
-  /**
-   * Shows the event to other countries (`events.cwt:421`). The rules also
-   * declare a `subtype[major]` `major_trigger` narrowing which countries see
-   * it — omitted here; see the field's gap-list entry.
-   */
+  /** Forces a diplomatic event to be viewed rather than queued (`events.cwt:303-305`). */
+  readonly forceOpen?: boolean;
+  /** Shows the event to other countries (`events.cwt:421`). */
   readonly major?: boolean;
+  /**
+   * Narrows which countries see a `major` event (`events.cwt:423-425`,
+   * `subtype[major]`). `subtype[major]` is an attribute subtype driven by
+   * `major`'s own value, not by the event's kind — the same class as
+   * `diplomatic`/`subtype[diplomatic]` — so this stays an unconditional
+   * `Trigger<S>` rather than a second `S`-conditioned parameter; it is
+   * simply inert unless `major: true` is also set, the same way
+   * `meanTimeToHappen` is inert alongside `isTriggeredOnly: true`.
+   */
+  readonly majorTrigger?: Trigger<S>;
   /** Whether the event is trackable from the outliner (`events.cwt:438`). */
   readonly trackable?: boolean;
   /** Marks the event as coming from an advisor (`events.cwt:441`). */
@@ -232,6 +272,8 @@ export interface EventDef<S extends ScopeName, From extends ScopeName | undefine
   readonly abortEffect?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
   /** Scheduling weight for a non-triggered event (`events.cwt:456`). */
   readonly meanTimeToHappen?: MeanTimeToHappen<S>;
+  /** AI scheduling weight for a triggered event (`events.cwt:448-452`, `subtype[triggered]`). */
+  readonly weightMultiplier?: WeightMultiplier<S>;
   readonly immediate?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
   readonly after?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
   readonly options?: ReadonlyArray<EventOption<S, From>>;
@@ -310,6 +352,10 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     loc.register(`${id}.desc`, def.desc);
     entries.push(kv("desc", `${id}.desc`));
   }
+  if (def.diplomaticTitle !== undefined) {
+    loc.register(`${id}.diplomatic_title`, def.diplomaticTitle);
+    entries.push(kv("diplomatic_title", `${id}.diplomatic_title`));
+  }
   if (def.messageDesc !== undefined) {
     loc.register(`${id}.message_desc`, def.messageDesc);
     entries.push(kv("message_desc", `${id}.message_desc`));
@@ -319,6 +365,15 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   }
   if (def.showSound !== undefined) {
     entries.push(kv("show_sound", refId(def.showSound)));
+  }
+  if (def.eventPictureBackground !== undefined) {
+    entries.push(kv("event_picture_background", refId(def.eventPictureBackground)));
+  }
+  if (def.notificationEventIcon !== undefined) {
+    entries.push(kv("notification_event_icon", refId(def.notificationEventIcon)));
+  }
+  if (def.eventWindowType !== undefined) {
+    entries.push(kv("event_window_type", def.eventWindowType));
   }
   if (def.eventMessageType !== undefined) {
     entries.push(kv("event_message_type", refId(def.eventMessageType)));
@@ -341,6 +396,9 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   }
   if (def.diplomatic === true) {
     entries.push(kv("diplomatic", true));
+  }
+  if (def.forceOpen === true) {
+    entries.push(kv("force_open", true));
   }
   if (def.major === true) {
     entries.push(kv("major", true));
@@ -386,6 +444,10 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     entries.push(block("trigger", [...def.trigger.entries]));
     refs.push(...underField(def.trigger.refs, "trigger"));
   }
+  if (def.majorTrigger !== undefined) {
+    entries.push(block("major_trigger", [...def.majorTrigger.entries]));
+    refs.push(...underField(def.majorTrigger.refs, "major_trigger"));
+  }
   if (def.abortTrigger !== undefined) {
     entries.push(block("abort_trigger", [...def.abortTrigger.entries]));
     refs.push(...underField(def.abortTrigger.refs, "abort_trigger"));
@@ -412,6 +474,17 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     mtthEntries.push(...modifierRows(mtth.modifiers, mtthRefs));
     entries.push(block("mean_time_to_happen", mtthEntries));
     refs.push(...underField(mtthRefs, "mean_time_to_happen"));
+  }
+  if (def.weightMultiplier !== undefined) {
+    const weight = def.weightMultiplier;
+    const weightEntries: PdxEntry[] = [];
+    if (weight.factor !== undefined) {
+      weightEntries.push(kv("factor", weight.factor));
+    }
+    const weightRefs: ContentRefUse[] = [];
+    weightEntries.push(...modifierRows(weight.modifiers, weightRefs));
+    entries.push(block("weight_multiplier", weightEntries));
+    refs.push(...underField(weightRefs, "weight_multiplier"));
   }
   if (def.immediate !== undefined) {
     const recorded: ContentRefUse[] = [];
