@@ -152,8 +152,14 @@ pre-review of a list.
      member the definer strips. All three need evidence, and shape conformance is where that
      evidence comes from — never assert one from a reading of the rules alone.
    - `CONTENT_DECLINED_FIELDS`, the only way to keep a field the emitter *can* lower out of the
-     authoring surface. It is currently empty and should stay that way: a field whose lowered shape
-     is wrong is better measured and fixed than withheld.
+     authoring surface. It should stay nearly empty: a field whose lowered shape is wrong is better
+     measured and fixed than withheld. Its one entry so far (`change_orbit`, SDK-30) is not that
+     case — the field is positional sugar the SDK has no way to preserve the position of once
+     multiple repeated occurrences collapse into one array-shaped member, and a mod author loses
+     nothing by declining it: the long form (`class: "none", orbitDistance: n` on the next
+     `planet`/`moon` block) already types and emits the identical geometry, correctly positioned.
+     A future row needs that same property — a genuine second spelling of a capability the SDK
+     already emits correctly, not a shape the emitter merely lowers badly — to clear the bar.
 4. Re-run codegen and inspect its report and generated files. Fix the generic model when a shape is
    reusable. Do not add `if (type === "...")` branches to the generic writer or emitter.
 5. Export the new generated public types from `packages/sdk/src/index.ts`.

@@ -97,7 +97,6 @@ export interface PlanetInitializerFields {
   orbitDistance?: ScriptValue | PlanetInitializerOrbitDistance;
   orbitalLine?: PlanetInitializerOrbitalLine[];
   hasIndependentOrbitalLine?: boolean;
-  changeOrbit?: number;
   flags?: PlanetFlag[];
   orbitAngle?: "random" | number | PlanetInitializerOrbitAngle;
   size?: number | PlanetInitializerSize;
@@ -183,13 +182,6 @@ export const PLANET_INITIALIZER_FIELDS: readonly ContentField[] = [
   {
     key: "has_independent_orbital_line",
     member: "hasIndependentOrbitalLine",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "change_orbit",
-    member: "changeOrbit",
     shape: "value",
     form: "scalar",
     conversion: "identity",

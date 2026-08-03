@@ -901,9 +901,12 @@ function defineContentExample(): PureMod {
 
   // Modeled on the vanilla custom_starting_init_* entries: a star, then a
   // planet carrying its own moons, then a second planet nested one level
-  // deeper. `changeOrbit` sits between the planet and its moons on purpose —
-  // it advances the orbit cursor, so its position among the siblings is the
-  // geometry, and the emitter has to preserve declaration order to keep it.
+  // deeper. SDK-30: there is no `changeOrbit` field — `change_orbit` is
+  // positional sugar for advancing the orbit cursor, which a field cannot
+  // represent once repeated occurrences collapse into one array member, so
+  // the long form (a `class: "none"` sibling with its own `orbitDistance`)
+  // is the only spelling. It sits between the planet and its moons on
+  // purpose, the same position `change_orbit` itself would occupy.
   const homeSystem = defineSolarSystemInitializer({
     id: "content_test_system_home",
     class: "rl_standard_stars",
@@ -927,8 +930,11 @@ function defineContentExample(): PureMod {
         initEffect: (planet) => {
           planet.setCapital(true);
         },
-        changeOrbit: 12,
         moon: [
+          // The long form of `change_orbit = 12`: a "none" sibling advancing
+          // the orbit cursor, positioned exactly where the field would have
+          // sat.
+          { class: "none", orbitDistance: 12 },
           { class: "pc_barren", size: 8, orbitDistance: 10 },
           {
             class: "pc_frozen",
@@ -1035,17 +1041,14 @@ describe("generated content registries", () => {
     expect(rendered).toContain("\t\t\tmoon = {\n\t\t\t\tclass = pc_barren");
     // And a planet inside a planet, the other half of the mutual recursion.
     expect(rendered).toContain("\t\tplanet = {\n\t\t\tclass = pc_asteroid");
-    // `change_orbit` advances the orbit cursor, so it has to precede the moons
-    // it applies to. This is what the declaration-ordered splice emission buys:
-    // emitting the splice member first would put every moon ahead of it.
-    //
-    // Only the nested case. At the *top* level the same key cannot be
-    // interleaved between planets at all — members are emitted one key at a
-    // time, so every planet lands before every orbit change, and 280 of the 360
-    // shipped initializers are written the other way. SDK-30 tracks the ordered
-    // sequence shape that would fix it; the README documents the workaround.
+    // SDK-30: there is no `changeOrbit` field to emit — the orbit-cursor
+    // advance is an ordinary `class: "none"` moon sibling, so its position
+    // among the moons is just array order, the same as any other sibling.
+    // "moon = { class = none" has to precede the real moon it advances past.
     const prime = rendered.slice(rendered.indexOf("NAME_Content_Test_Prime"));
-    expect(prime.indexOf("change_orbit")).toBeLessThan(prime.indexOf("moon = {"));
+    expect(prime.indexOf("moon = {\n\t\t\tclass = none")).toBeLessThan(
+      prime.indexOf("moon = {\n\t\t\tclass = pc_barren")
+    );
     // A neighbour link is a branded ref into this same registry, so it carries
     // the other definition's prefixed id rather than whatever was typed.
     expect(rendered).toContain("initializer = content_test_system_outpost");

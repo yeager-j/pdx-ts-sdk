@@ -470,9 +470,47 @@ export const SYNTHETIC_LOCALISATION = new Map<string, SyntheticLocalisation>([
  * a field out of the authoring surface deliberately. It should stay nearly
  * empty: a field the emitter cannot lower is detected mechanically and belongs
  * in no list, and a field whose lowered type is wrong is better fixed than
- * hidden.
+ * hidden. That bar does not cover every row that could ever land here —
+ * `change_orbit` (SDK-30) is the one case it was never meant to: not a field
+ * whose *lowered shape* is wrong, but a second spelling of a capability the
+ * SDK already emits correctly (see the entry below), so declining it
+ * withholds nothing an author cannot already do. A future row needs the same
+ * property — a genuine second spelling of existing capability, not a
+ * shape the emitter merely lowers badly — to clear this bar.
  */
-export const CONTENT_DECLINED_FIELDS = new Map<string, string>([]);
+export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
+  [
+    "solar_system_initializer.change_orbit",
+    "At the top level, change_orbit is positional sugar: written between two `planet` blocks, " +
+      "it advances the orbit cursor for the planets that follow it, so its position among them " +
+      "is the geometry. `changeOrbit?: number[]` collects every value into one array field with " +
+      "one fixed emission slot, which cannot represent that position — 288 of 355 shipped " +
+      "top-level initializer blocks interleave `change_orbit` between `planet` blocks, and the " +
+      "SDK silently emitted every one of them after every planet, where none of them shift " +
+      'anything. Nothing is lost by declining it: `class: "none", orbitDistance: n` on the ' +
+      "next `planet` block (a real `PlanetInitializerFields`, `none` is in `SolarSysInitPlanetClass`) " +
+      "already types and emits the same geometry, in the position that matters, with no runtime " +
+      "shape needed for a spelling the game already documents as sugar.",
+  ],
+  [
+    "planet_initializer.change_orbit",
+    "The moon-level twin of the row above, inside one planet's own `moon` list: " +
+      "`alias[planet_initializer:planet]`'s own change_orbit (cardinality 0..1, singular — at " +
+      "most one cursor jump per planet, unlike the top level's repeatable one) advances the " +
+      "orbit cursor for the moons that follow it within that planet, so where it is *written* " +
+      "among that planet's `moon` blocks is still the geometry, same as the top level. " +
+      "`changeOrbit?: number` collapses it to one fixed-position field just the same. The long " +
+      'form (`class: "none", orbitDistance: n` on the next `moon` block) already types and ' +
+      "emits it correctly positioned.",
+  ],
+  [
+    "moon_initializer.change_orbit",
+    "The same field one level further down, inside a moon's own nested `moon` list (moons nest " +
+      "without bound per EXTRA_ALIAS_CATEGORIES). `alias[moon_initializer:moon]`'s own " +
+      "change_orbit is the identical singular, positional-sugar shape as " +
+      "`planet_initializer.change_orbit` above, declined for the same reason.",
+  ],
+]);
 
 export interface ContentScopeParameter {
   /** Every scope a definition may declare, canonical names. */
