@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { eventTarget } from "../src/effect-core.ts";
+import { countryFlags } from "../src/generated/value-sets.ts";
 import { buildMod, collection, defineSituationType, namespace, render } from "../src/index.ts";
+
+const flags = countryFlags("event_test_flag");
 
 const CONFIG = {
   name: "Event runtime tests",
@@ -127,5 +130,42 @@ describe("event definitions in a namespace", () => {
     // The declaration is a compile-time contract only; it never serializes.
     const situationsFile = files.get("common/situations/event_test_situations.txt")!;
     expect(situationsFile).not.toContain("target");
+  });
+
+  it("ergonomics: opens the situation's declared target with no explicit <T>", () => {
+    // SDK-53: `targetScope` is declared once on `defineSituationType`, so the
+    // `effect` body's `.target(...)` no longer restates it — unlike the
+    // free-standing `target<S>(...)` trigger, which still has to (no
+    // definition object is in scope there).
+    const events = makeEvents();
+    const sit = defineSituationType({
+      id: "event_test_sit_ergo",
+      name: "S",
+      monthlyProgress: { base: 1 },
+      targetScope: "country",
+    });
+    const world = eventTarget<"country">("event_test_ergo_target");
+    const starter = events.defineCountryEvent({
+      id: 21,
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.startSituation({
+          type: sit,
+          target: world,
+          effect: (situation) => {
+            situation.target((targetCountry) => {
+              targetCountry.setCountryFlag(flags.event_test_flag);
+            });
+          },
+        });
+      },
+    });
+    const rendered = render(
+      buildMod(CONFIG, [collection(undefined, [sit]), collection("events", [starter])])
+    ).get("events/event_test_events.txt")!;
+    expect(rendered).toContain(
+      "effect = {\n\t\t\t\ttarget = {\n\t\t\t\t\tset_country_flag = event_test_flag"
+    );
   });
 });
