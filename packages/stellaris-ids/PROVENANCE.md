@@ -27,7 +27,7 @@ package's `package.json` version and refuses to build silently on a mismatch
 (`VanillaPackageMismatchError`; `buildMod`'s `acceptGameVersion` is the
 deliberate escape).
 
-The 4.4.6 generation read 38 registries and 29,725 ids, plus 1,618 scripted
+The 4.4.6 generation read 39 registries and 30,085 ids, plus 1,618 scripted
 triggers (86 parameterized) and 1,657 scripted effects (382 parameterized).
 `sprite`, `sound`, `sound_effect`, and `static_modifier` are large enough to be
 emitted as navigable tries as well as flat unions. The first three nest by name

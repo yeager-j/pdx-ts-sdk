@@ -15,6 +15,10 @@ const rules = loadRules(CONFIG);
 const docs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
 const index = scopeIndex(rules);
 const join = joinModifierScopes(rules, docs, (token) => index.get(token.toLowerCase()) ?? null);
+// Hoisted for the same reason the join above is: emitting 45,501 names into the
+// scope tries is seconds of work, and inside an `it` it competes with every
+// other test file for CPU and intermittently blows the 5s per-test timeout.
+const emission = emitModifiers(join);
 
 describe("the modifier dump", () => {
   it("reads every entry", () => {
@@ -51,7 +55,6 @@ describe("the modifier scope join", () => {
   });
 
   it("holds the version-pinned shape, so a game bump is a reviewed number change", () => {
-    const emission = emitModifiers(join);
     expect(join.universal).toHaveLength(1360);
     expect(join.groups.size).toBe(29);
     expect(emission.scopes).toBe(19);

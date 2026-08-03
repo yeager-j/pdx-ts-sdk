@@ -134,6 +134,16 @@ export type {
   SituationTypeDef,
   SituationTypeFields,
 } from "./generated/situation-type.ts";
+// The planet/moon grammar a solar system initializer splices into itself. Both
+// interfaces are mutually recursive and neither has a definer of its own: they
+// are authored as arrays inside `defineSolarSystemInitializer`.
+export type { MoonInitializerFields } from "./generated/moon-initializer.ts";
+export type { PlanetInitializerFields } from "./generated/planet-initializer.ts";
+export type {
+  DefinedSolarSystemInitializer,
+  SolarSystemInitializerDef,
+  SolarSystemInitializerFields,
+} from "./generated/solar-system-initializer.ts";
 export type {
   DefinedSpeciesClass,
   SpeciesClassDef,

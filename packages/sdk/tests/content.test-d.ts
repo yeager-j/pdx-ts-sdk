@@ -25,6 +25,7 @@ import {
   defineSectionTemplate,
   defineShipSize,
   defineSituationType,
+  defineSolarSystemInitializer,
   defineSpeciesClass,
   defineStarbaseLevel,
   defineStaticModifier,
@@ -729,5 +730,76 @@ describe("generated content authoring types", () => {
     // @ts-expect-error — a definition from another registry is rejected: items
     // carry their registry's brand, so this needs no hand-branded stand-in.
     addShipOfSizeLimits([wrongRegistry]);
+  });
+
+  it("types a solar system initializer's planet tree recursively", () => {
+    const outpost = defineSolarSystemInitializer({
+      id: "content_types_system_outpost",
+      class: "sc_g",
+    });
+    // The literal id survives the definer, the same as every other registry.
+    expectTypeOf(outpost.id).toEqualTypeOf<"content_types_system_outpost">();
+    defineSolarSystemInitializer({
+      id: "content_types_system_deep",
+      class: "sc_g",
+      // Four levels, alternating both arms of the mutual recursion: the
+      // interfaces refer to each other by name, so depth is unbounded.
+      planet: [{ planet: [{ moon: [{ moon: [{ size: 4 }] }] }] }],
+      // A branded ref into this registry's own reference field, and a raw
+      // vanilla id beside it.
+      neighborSystem: [{ initializer: outpost }, { initializer: "sol_system_initializer" }],
+    });
+  });
+
+  it("keeps the planet and moon bodies distinct, and the registry's refs branded", () => {
+    const outpost = defineSolarSystemInitializer({
+      id: "content_types_system_for_refs",
+      class: "sc_g",
+    });
+    defineSolarSystemInitializer({
+      id: "content_types_system_bad_moon",
+      class: "sc_g",
+      // @ts-expect-error — CWT declares no nested `planet` inside `moon`, so a
+      // moon cannot carry planets even though a planet can carry moons.
+      planet: [{ moon: [{ planet: [{ size: 4 }] }] }],
+    });
+    const wrongRegistry = defineBuilding({
+      id: "content_types_system_wrong_registry",
+      name: "X",
+    });
+    defineSolarSystemInitializer({
+      id: "content_types_system_wrong_ref",
+      class: "sc_g",
+      // @ts-expect-error — a BuildingRef is not a SolarSystemInitializerRef.
+      neighborSystem: [{ initializer: wrongRegistry }],
+    });
+    // A system flows into another registry's field that names this one:
+    // governments.cwt types civic/origin `initializers` as
+    // `<solar_system_initializer>`.
+    defineCivicOrOrigin({
+      id: "content_types_origin_with_system",
+      name: "X",
+      initializers: [outpost],
+    });
+  });
+
+  it("scopes a solar system initializer's effect clauses by depth", () => {
+    defineSolarSystemInitializer({
+      id: "content_types_system_scopes",
+      class: "sc_g",
+      // The top-level clause runs in the system (galactic_object) scope...
+      initEffect: (system) => {
+        system.setStarFlag("content_types_flag");
+      },
+      planet: [
+        {
+          // ...and a planet's own runs in planet scope, from the nested
+          // `## replace_scopes = { this = planet }` rather than any overlay row.
+          initEffect: (planet) => {
+            planet.setCapital(true);
+          },
+        },
+      ],
+    });
   });
 });

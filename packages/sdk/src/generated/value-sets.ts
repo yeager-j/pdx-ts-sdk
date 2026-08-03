@@ -129,6 +129,24 @@ export type CountryFlag = ValueSetMember<"country_flag">;
  */
 export const countryFlags = declare<"country_flag">();
 
+/** A name belonging to `value[custom_planet_names]`. */
+export type CustomPlanetNames = ValueSetMember<"custom_planet_names">;
+
+/**
+ * Declares custom_planet_names names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const customPlanetNames = declare<"custom_planet_names">();
+
+/** A name belonging to `value[custom_star_names]`. */
+export type CustomStarNames = ValueSetMember<"custom_star_names">;
+
+/**
+ * Declares custom_star_names names, so they autocomplete and cannot be
+ * confused with a name from another set.
+ */
+export const customStarNames = declare<"custom_star_names">();
+
 /** A name belonging to `value[deposit_flag]`. */
 export type DepositFlag = ValueSetMember<"deposit_flag">;
 

@@ -27,6 +27,7 @@
 // From: common/starbases_consolidated.cwt
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
+// From: common/solar_system_initializers.cwt
 
 import type { ContentItem, ContributionItem, TechnologyPatchItem } from "../items.ts";
 import { patchTechnology as transformTechnology, type TechnologyPatch } from "../vanilla/patch.ts";
@@ -56,6 +57,7 @@ import type { ScriptedModifierDef } from "./scripted-modifier.ts";
 import type { SectionTemplateDef } from "./section-template.ts";
 import type { ShipSizeDef } from "./ship-size.ts";
 import type { SituationTypeDef } from "./situation-type.ts";
+import type { SolarSystemInitializerDef } from "./solar-system-initializer.ts";
 import type { SpeciesClassDef } from "./species-class.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
 import type { StaticModifierDef } from "./static-modifier.ts";
@@ -579,4 +581,21 @@ export function addShipOfSizeLimits(
     refRegistry: "country_ship_of_size_limit",
     ids: shipOfSizeLimits.map((entry) => String(refId(entry))),
   };
+}
+
+/** What a solar system initializer collection can contain. */
+export type SolarSystemInitializerItem = ContentItem<
+  "solar_system_initializer",
+  SolarSystemInitializerDef
+>;
+
+/**
+ * Defines a solar system initializer in this mod. The returned item is the
+ * definition as a value and a reference to it; place it in a
+ * `collection(...)` — or export it from a discovered module — to emit it.
+ */
+export function defineSolarSystemInitializer<const Id extends string>(
+  def: SolarSystemInitializerDef<Id>
+): ContentItem<"solar_system_initializer", SolarSystemInitializerDef<Id>> {
+  return { itemKind: "content", type: "solar_system_initializer", id: def.id, def };
 }

@@ -1,7 +1,7 @@
 # @pdx-ts/stellaris-ids
 
 Every identifier a real, installed copy of Stellaris defines — content ids for
-38 registries, scripted trigger and effect names with their `$PARAM$` lists,
+39 registries, scripted trigger and effect names with their `$PARAM$` lists,
 sprite and sound names — shipped as TypeScript literal-union types,
 version-pinned to the game build. The package's npm version *is* the game
 version: `@pdx-ts/stellaris-ids@4.4.6` carries the identifiers of Stellaris
@@ -93,7 +93,7 @@ Two guards keep the pin honest:
 src/
 ├── index.ts             side-effect imports + type re-exports; zero runtime
 ├── augment.ts           the single `declare module "@pdx-ts/sdk"` augmentation
-├── registries/          one file per registry (38): literal-union id types;
+├── registries/          one file per registry (39): literal-union id types;
 │                        the four oversized registries are directories of
 │                        per-bucket trie files instead
 │                        (registries/sprite/eventpictures.ts, ...)

@@ -269,6 +269,9 @@ export type ResearchArea = "physics" | "society" | "engineering";
 /** `enum[resolution_position]`. */
 export type ResolutionPosition = "support" | "oppose" | "abstain";
 
+/** `enum[satellite_naming_policy]`. */
+export type SatelliteNamingPolicy = "upper_case_roman_numerals" | "lower_case_latin_letters";
+
 /** `enum[scope_type_token]`. */
 export type ScopeTypeToken =
   | "none"
@@ -369,6 +372,16 @@ export type SituationCategory = "positive" | "negative" | "neutral";
  */
 export type SituationStage = string;
 
+/** `enum[solar_sys_init_planet_class]`. */
+export type SolarSysInitPlanetClass =
+  | "random"
+  | "random_colonizable"
+  | "random_non_ideal"
+  | "random_non_colonizable"
+  | "ideal_planet_class"
+  | "random_asteroid"
+  | "none";
+
 /** `enum[species_rights_type]`. */
 export type SpeciesRightsType =
   | "citizenship"
@@ -410,6 +423,15 @@ export type TruceType = "war" | "liberation" | "alliance" | "guarantee" | "none"
 
 /** `enum[tutorial_level]`. */
 export type TutorialLevel = "0" | "1" | "2" | "full" | "medium" | "none";
+
+/** `enum[usage_type]`. */
+export type UsageType =
+  | "empire_init"
+  | "misc_system_init"
+  | "custom_empire"
+  | "fallen_empire_init"
+  | "origin"
+  | "nomad_init";
 
 /** `enum[utility_component_slot]`. */
 export type UtilityComponentSlot =

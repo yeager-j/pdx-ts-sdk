@@ -1,0 +1,85 @@
+content_test_system_home = {
+	class = rl_standard_stars
+	flags = { content_test_home_system }
+	asteroid_belt = {
+		type = rocky_asteroid_belt
+		radius = {
+			min = 400
+			max = 450
+		}
+	}
+	usage = custom_empire
+	usage_odds = 5
+	planet = {
+		count = 1
+		class = star
+		orbit_distance = 0
+		orbit_angle = 0
+		size = {
+			min = 30
+			max = 35
+		}
+	}
+	planet = {
+		name = NAME_Content_Test_Prime
+		class = pc_continental
+		orbit_distance = 60
+		change_orbit = 12
+		orbit_angle = {
+			min = 90
+			max = 270
+		}
+		size = 20
+		has_ring = no
+		home_planet = yes
+		init_effect = {
+			set_capital = yes
+		}
+		moon = {
+			class = pc_barren
+			orbit_distance = 10
+			size = 8
+		}
+		moon = {
+			class = pc_frozen
+			orbit_distance = 8
+			size = 6
+			moon = {
+				class = pc_barren
+				size = 4
+			}
+		}
+	}
+	planet = {
+		class = pc_gas_giant
+		orbit_distance = 90
+		size = 25
+		planet = {
+			class = pc_asteroid
+			orbit_distance = 15
+			size = 4
+		}
+	}
+	init_effect = {
+		set_star_flag = content_test_surveyed
+	}
+	neighbor_system = {
+		initializer = content_test_system_outpost
+		distance = {
+			min = 20
+			max = 40
+		}
+		hyperlane_jumps = 1
+	}
+}
+
+content_test_system_outpost = {
+	class = sc_g
+	usage = misc_system_init
+	planet = {
+		class = star
+		orbit_distance = 0
+		orbit_angle = 0
+		size = 20
+	}
+}
