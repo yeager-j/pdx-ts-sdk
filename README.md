@@ -354,7 +354,7 @@ Members are emitted one key at a time, so `planet: [a, b]` with
 `changeOrbit: [30]` emits both planets and *then* the orbit change — different
 geometry, silently. Until the SDK can express an ordered sequence mixing the two,
 set each planet's own `orbitDistance` instead, which is absolute and needs no
-cursor. `changeOrbit` *inside* a planet is unaffected: it is emitted in
+cursor. `changeOrbit` *inside* a planet is unaffected — it is emitted in
 declaration order, ahead of that planet's moons, which is where the corpus puts
 it.
 

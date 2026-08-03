@@ -998,6 +998,12 @@ describe("generated content registries", () => {
     // `change_orbit` advances the orbit cursor, so it has to precede the moons
     // it applies to. This is what the declaration-ordered splice emission buys:
     // emitting the splice member first would put every moon ahead of it.
+    //
+    // Only the nested case. At the *top* level the same key cannot be
+    // interleaved between planets at all — members are emitted one key at a
+    // time, so every planet lands before every orbit change, and 280 of the 360
+    // shipped initializers are written the other way. SDK-30 tracks the ordered
+    // sequence shape that would fix it; the README documents the workaround.
     const prime = rendered.slice(rendered.indexOf("NAME_Content_Test_Prime"));
     expect(prime.indexOf("change_orbit")).toBeLessThan(prime.indexOf("moon = {"));
     // A neighbour link is a branded ref into this same registry, so it carries
