@@ -643,6 +643,33 @@ export function buildMod(
     }
     builtIds.set(group.type, ids);
   }
+  // Nested-definition ids that double as their owning registry's own
+  // reference target (SDK-38): the vendored rules declare a `base_type`
+  // relationship (`traditions.cwt:17` `base_type = tradition`,
+  // `ascension_perks.cwt:16` `base_type = ascension_perk`) that codegen does
+  // not currently carry into generated field metadata, so it is spelled out
+  // here rather than derived — `@pdx-ts/codegen-cwt` is a devDependency only
+  // and unreachable from this runtime. Both identities are
+  // `${registryType}.${fieldKey}` from `ContentAuthoring`'s own nested-id
+  // bookkeeping (`content.ts`'s `collectRepeatedStructs`), so folding them in
+  // only ever adds ids to the *same* registry's built-id set — it cannot
+  // loosen the guard for any other registry (situations' `stages`/`approach`
+  // carry no such relationship and are deliberately left out).
+  const NESTED_BASE_TYPE_IDENTITIES: ReadonlyMap<string, string> = new Map([
+    ["tradition.tradition_swap", "tradition"],
+    ["ascension_perk.tradition_swap", "ascension_perk"],
+  ]);
+  for (const [identity, registryType] of NESTED_BASE_TYPE_IDENTITIES) {
+    const nested = content.nestedIdsFor(identity);
+    if (nested === undefined) {
+      continue;
+    }
+    const ids = builtIds.get(registryType) ?? new Set<string>();
+    for (const id of nested) {
+      ids.add(id);
+    }
+    builtIds.set(registryType, ids);
+  }
   for (const { owner, use } of refUses) {
     // Vanilla and third-party ids are somebody else's to define, exactly as
     // the prefix policy and the event scan have it.
