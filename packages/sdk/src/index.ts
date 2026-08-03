@@ -210,6 +210,7 @@ export type {
   ModifierClosure,
   TriggeredModifier,
   WeightBlock,
+  WeightBlockOperations,
   WeightBlockWithLoc,
   WithFrom,
 } from "./content.ts";

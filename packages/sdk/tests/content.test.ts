@@ -1266,6 +1266,32 @@ describe("generated content registries", () => {
     );
   });
 
+  it("lowers a WeightBlock top-level operation beside base (SDK-35)", () => {
+    // Real vanilla, verbatim: common/traditions/01_cloning.txt's
+    // tr_cloning_evolutionary_extrapolation sets `ai_weight = { factor = 5000 }`
+    // with no `base` at all — a bare top-level `complex_maths_enum` member,
+    // which WeightBlock could only express before this fix by lying and
+    // calling it `base`. 292 of 293 weight/ai_weight blocks in this same
+    // directory use a top-level operation rather than `base`.
+    const tradition = defineTradition({
+      id: "wb_test_tradition_extrapolation",
+      name: "Evolutionary Extrapolation",
+      customTooltipWithModifiers: ["wb_test_tradition_extrapolation_tt"],
+      modifier: (m) => {
+        m.unchecked("category_biology_research_speed_mult", 0.15);
+        m.unchecked("planet_buildings_clone_vats_upkeep_mult", -0.5);
+      },
+      aiWeight: { factor: 5000 },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block operation test", "wb_test"), [
+        collection(undefined, [tradition]),
+      ])
+    ).get("common/traditions/wb_test_traditions.txt");
+    expect(rendered).toContain("ai_weight = {\n\t\tfactor = 5000\n\t}");
+    expect(rendered).not.toContain("ai_weight = {\n\t\tbase = 5000");
+  });
+
   it("contributes ship-of-size limits under the engine's `default` key", () => {
     // The ownership limit is not a define: its key belongs to the engine and
     // the game reads it additively, so the API takes no id and the mod-prefix

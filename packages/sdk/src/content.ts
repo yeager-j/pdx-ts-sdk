@@ -124,14 +124,35 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
 >;
 
 /**
- * A `modifier_rule` block: optional base weight plus gated adjustments.
+ * The `complex_maths_enum` operations `modifier_rule.cwt:1-3` allows directly
+ * alongside `base`, sibling to the `modifier` rows rather than inside one —
+ * the same measured member set {@link Modifier} carries at row level, minus
+ * `desc`/`when` which only make sense on a gated row. `Omit` rather than a
+ * hand-kept duplicate, so a future change to `Modifier`'s numeric arms flows
+ * through here automatically, the same reasoning as {@link
+ * EconomicResourceBlockNoProduce}.
+ *
+ * Vanilla favors this top-level spelling for a block's own always-applied
+ * weight: in `common/traditions/`, 292 of 293 `weight`/`ai_weight` blocks set
+ * a top-level `factor` rather than `base`, and across all `ai_weight` blocks
+ * under `common/`, top-level `weight` (2,255) outnumbers `base` (848).
+ */
+export type WeightBlockOperations<S extends ScopeName> = Omit<Modifier<S>, "desc" | "when">;
+
+/**
+ * A `modifier_rule` block: optional base weight, the same weight operations
+ * directly as siblings of `base` (see {@link WeightBlockOperations}), plus
+ * gated adjustments.
  *
  * `M` defaults to plain {@link Modifier} (`desc` optional); `WeightBlockWithLoc`
  * below is the same shape with `M` pinned to {@link ModifierWithLoc} for
  * `modifier_rule_with_loc` consumers, not a separate runtime concept — the
  * writer lowers both through the same `weightBlock` function.
  */
-export interface WeightBlock<S extends ScopeName, M extends Modifier<S> = Modifier<S>> {
+export interface WeightBlock<
+  S extends ScopeName,
+  M extends Modifier<S> = Modifier<S>,
+> extends WeightBlockOperations<S> {
   /** Starting weight before modifiers. */
   readonly base?: number;
   /** Conditional adjustments emitted as repeated `modifier` blocks. */
@@ -833,11 +854,50 @@ function modifierBlock(key: string, value: ModifierClosure): PdxEntry {
   return block(key, modifierEntries(value));
 }
 
+/**
+ * Lowers {@link WeightBlockOperations}'s numeric arms in a fixed sequence —
+ * mirroring `modifierEntry`'s row-level order, since both read the same
+ * `complex_maths_enum` — so emission never depends on the order an author's
+ * object literal happened to declare its members in.
+ */
+function weightOperationEntries(value: WeightBlockOperations<ScopeName>): PdxEntry[] {
+  const entries: PdxEntry[] = [];
+  if (value.factor !== undefined) {
+    entries.push(kv("factor", value.factor));
+  }
+  if (value.add !== undefined) {
+    entries.push(kv("add", value.add));
+  }
+  if (value.weight !== undefined) {
+    entries.push(kv("weight", value.weight));
+  }
+  if (value.subtract !== undefined) {
+    entries.push(kv("subtract", value.subtract));
+  }
+  if (value.mult !== undefined) {
+    entries.push(kv("mult", value.mult));
+  }
+  if (value.multiplier !== undefined) {
+    entries.push(kv("multiply", value.multiplier));
+  }
+  if (value.divide !== undefined) {
+    entries.push(kv("divide", value.divide));
+  }
+  if (value.minValue !== undefined) {
+    entries.push(kv("min", value.minValue));
+  }
+  if (value.maxValue !== undefined) {
+    entries.push(kv("max", value.maxValue));
+  }
+  return entries;
+}
+
 function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringContext): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.base !== undefined) {
     entries.push(kv("base", value.base));
   }
+  entries.push(...weightOperationEntries(value));
   const refs: ContentRefUse[] = [];
   entries.push(...(value.modifiers ?? []).map((modifier) => modifierEntry(modifier, refs)));
   collectRefs(ctx, refs, key);

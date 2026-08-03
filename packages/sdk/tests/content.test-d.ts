@@ -1045,6 +1045,16 @@ describe("generated content authoring types", () => {
     expectTypeOf(hasAuthority("auth_democratic")).toExtend<Trigger<"country">>();
   });
 
+  it("widens WeightBlock to top-level operations (SDK-35)", () => {
+    // A `complex_maths_enum` operation (`factor` here) is legal directly on
+    // the block, sibling to `base`, not only inside a `modifier` row.
+    defineTradition({
+      id: "content_types_tradition_weight_operation",
+      name: "X",
+      aiWeight: { factor: 5000 },
+    });
+  });
+
   it("types civic_or_origin's potential/possible as the government_trigger DSL, not a Trigger", () => {
     defineCivicOrOrigin({
       id: "content_types_civic_dsl",
