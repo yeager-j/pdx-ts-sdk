@@ -46,6 +46,49 @@ export const SIM_SCOPE_NAMES = [
   "archaeological_site",
 ] as const;
 
+/**
+ * The generated `ScopeName` union's approximate size, for the diagnostic
+ * below — see the comment on {@link SimScopeName}. Update if `scopes.ts`
+ * drifts meaningfully; it is descriptive, not a correctness-critical count.
+ */
+const TOTAL_STELLARIS_SCOPE_COUNT = 41;
+
+/**
+ * The message behind SDK-49's second half: a scope outside {@link
+ * SimScopeName} used to surface only as a bare TypeScript assignability
+ * failure ("Type '\"leader\"' is not assignable to type 'SimScopeName'") —
+ * it names the type but never says how many scopes that type covers or what
+ * to do next, so a developer cannot tell an unsupported scope from a typo.
+ * This is the shared wording behind every runtime guard that catches a scope
+ * name outside the union (`fixture`/`World.fire` registration, events built
+ * dynamically rather than through the typed definers) so the answer is
+ * always the same one, worded in one place.
+ */
+export function describeUnsupportedSimScope(scope: string): string {
+  return (
+    `The testing harness models ${SIM_SCOPE_NAMES.length} of Stellaris's ` +
+    `~${TOTAL_STELLARIS_SCOPE_COUNT} scopes today: ${SIM_SCOPE_NAMES.join(", ")}. "${scope}" is ` +
+    `not one of them. If it genuinely needs modeling, widen SimScopeName in ` +
+    `packages/sdk-testing/src/state.ts (see AGENTS.md's testing-helpers section) with real state ` +
+    `and real transitions — never a guess. If this was a typo, check the scope name against the ` +
+    `SDK's generated ScopeName union.`
+  );
+}
+
+/**
+ * Throws {@link describeUnsupportedSimScope}'s message, prefixed with where
+ * the bad scope was found, unless `scope` is one of {@link SIM_SCOPE_NAMES}.
+ * The static types already forbid this everywhere a scope flows through
+ * `SimScope<S>`; this is the runtime backstop for the paths that build or
+ * register events from data rather than through the typed definers.
+ */
+export function assertSupportedSimScope(scope: string, where: string): void {
+  if ((SIM_SCOPE_NAMES as readonly string[]).includes(scope)) {
+    return;
+  }
+  throw new Error(`${where}: ${describeUnsupportedSimScope(scope)}`);
+}
+
 export interface PlanetSpec {
   /** For messages and the fired log; defaults to `planet<n>`. */
   readonly name?: string;

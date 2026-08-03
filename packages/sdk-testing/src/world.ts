@@ -23,6 +23,7 @@ import type { DefinedEvent, EventRef, ScopeName } from "@pdx-ts/sdk";
 import { applyEffectEntries, type ForcedArms } from "./interpret.ts";
 import {
   ArchaeologicalSite,
+  assertSupportedSimScope,
   buildState,
   Country,
   Fleet,
@@ -106,6 +107,17 @@ export class World {
     for (const registration of options.events) {
       const entry: EventRegistryEntry =
         "event" in registration ? registration : { event: registration, from: undefined };
+      // The static types already require every registered event's scope (and
+      // declared FROM) to be a SimScopeName; this is the runtime backstop for
+      // events built from data rather than through the typed definers — see
+      // `assertSupportedSimScope`'s doc comment.
+      assertSupportedSimScope(entry.event.scope, `Registering event "${entry.event.id}"`);
+      if (entry.from !== undefined) {
+        assertSupportedSimScope(
+          entry.from,
+          `Registering event "${entry.event.id}"'s declared FROM contract`
+        );
+      }
       this.registry.set(entry.event.id, entry);
     }
   }
@@ -166,6 +178,7 @@ export class World {
       : [opts?: ForcedArms & { readonly from?: never }]
   ): void;
   fire(event: SimEvent, scope: SimScope<SimScopeName>, opts?: HarnessFireOpts): void {
+    assertSupportedSimScope(event.scope, `Firing event "${event.id}"`);
     const registered = this.registry.get(event.id);
     if (registered !== undefined && registered.from !== undefined) {
       if (opts?.from === undefined || opts.from.id.kind !== registered.from) {

@@ -15,6 +15,7 @@ export {
 export {
   ArchaeologicalSite,
   Country,
+  describeUnsupportedSimScope,
   Fleet,
   Planet,
   SIM_SCOPE_NAMES,
