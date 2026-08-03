@@ -41,8 +41,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { locateInstall } from "../../sdk/src/stellaris/locate.ts";
+import { locateInstall, readGameVersion } from "../../sdk/src/stellaris/index.ts";
 import { main } from "../src/cli.ts";
+
+const REPO = path.resolve(import.meta.dirname, "../../..");
+const ROOT_MODULES = path.join(REPO, "node_modules");
+const WORKSPACE_PACKAGES = ["sdk", "sdk-testing", "pdxscript", "stellaris-ids"] as const;
 
 /** Absent when no real Stellaris install is on this machine. */
 let realInstallPath: string | undefined;
@@ -51,10 +55,41 @@ try {
 } catch {
   realInstallPath = undefined;
 }
+const realInstallGameVersion =
+  realInstallPath === undefined ? undefined : readGameVersion(realInstallPath);
 
-const REPO = path.resolve(import.meta.dirname, "../../..");
-const ROOT_MODULES = path.join(REPO, "node_modules");
-const WORKSPACE_PACKAGES = ["sdk", "sdk-testing", "pdxscript", "stellaris-ids"] as const;
+/**
+ * `@pdx-ts/stellaris-ids`'s npm version *is* the game version it was
+ * generated from (AGENTS.md, "Vanilla identifier package") — it is
+ * regenerated from a pinned install, not derived live, so a game update
+ * alone can leave the workspace-built tarball this suite installs pinned to
+ * a version the currently detected install no longer matches.
+ */
+function stellarisIdsPackageVersion(): string {
+  const pkg = JSON.parse(
+    readFileSync(path.join(REPO, "packages/stellaris-ids/package.json"), "utf8")
+  ) as { version: string };
+  // major.minor.patch only, matching checkVanillaPackagePin's own comparison
+  // (packages/sdk/src/vanilla/package-pin.ts): a regen-fix release like
+  // "4.4.6-r2" still pins install "4.4.6".
+  return pkg.version.split(/[-+]/, 1)[0]!;
+}
+
+/**
+ * `checkVanillaPackagePin` (packages/sdk/src/vanilla/package-pin.ts) throws
+ * `VanillaPackageMismatchError` whenever a `VanillaView` and the installed
+ * `@pdx-ts/stellaris-ids` disagree about which game build they describe.
+ * That is a real, useful guard — but a mismatch here would make the
+ * real-vanilla suite below fail for a reason SDK-54 has nothing to do with:
+ * the workspace tarball this suite installs was built once, pinned to
+ * whatever `@pdx-ts/stellaris-ids` happened to be regenerated against, and
+ * a game update since then leaves it stale. Skip that suite rather than let
+ * it fail on an unrelated, pre-existing mismatch.
+ */
+const realVanillaSuiteRunnable =
+  realInstallPath !== undefined &&
+  realInstallGameVersion !== undefined &&
+  stellarisIdsPackageVersion() === realInstallGameVersion;
 
 let projectDir: string;
 let tarballDir: string;
@@ -268,7 +303,10 @@ describe("a scaffolded project", () => {
  * vanilla view rejects a content id that collides with one vanilla already
  * defines — rather than silently overriding it. This only means anything
  * against the real installed game, so it is skipped where SDK-54's fix can't
- * be exercised end to end.
+ * be exercised end to end — including when the install exists but its game
+ * build has drifted from the workspace `@pdx-ts/stellaris-ids` tarball this
+ * suite installs (see `realVanillaSuiteRunnable`), which would fail this
+ * suite for a reason unrelated to SDK-54.
  *
  * Before the fix, `install.ts` built its own `PureMod` with no vanilla
  * argument, so `buildMod`'s collision guard had no vanilla ids to compare
@@ -278,7 +316,7 @@ describe("a scaffolded project", () => {
  * throw first. `installs cleanly...` below proves the checked build is now
  * the *only* one `npm run install-mod` runs.
  */
-describe.skipIf(realInstallPath === undefined)(
+describe.skipIf(!realVanillaSuiteRunnable)(
   "npm run install-mod against a real vanilla view (SDK-54)",
   () => {
     let collisionProjectDir: string;
