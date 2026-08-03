@@ -6,7 +6,6 @@ import type {
   ContentField,
   ContentLocalisation,
   DefinedContent,
-  EconomicResourceBlock,
   EconomicResourceBlockNoProduce,
   EffectBlock,
   ModifierClosure,

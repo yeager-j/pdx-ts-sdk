@@ -40,7 +40,7 @@ import { emitVanillaRefs } from "./emit/vanilla-refs.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
-import { camelCase, docComment, indefiniteArticle } from "./naming.ts";
+import { camelCase, docComment, indefiniteArticle, referencesIdentifier } from "./naming.ts";
 import {
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_FIELD_OVERRIDES,
@@ -340,7 +340,9 @@ async function main(): Promise<void> {
   // loops resolve it the same way.
   const aliasCategoryImports = (code: string, self?: string): string =>
     [...aliasCategories]
-      .filter(([category, emission]) => category !== self && code.includes(emission.typeName))
+      .filter(
+        ([category, emission]) => category !== self && referencesIdentifier(code, emission.typeName)
+      )
       .map(([category, emission]) => {
         const file = `./${category.replaceAll("_", "-")}.ts`;
         return (
@@ -355,7 +357,11 @@ async function main(): Promise<void> {
     // `EffectBlock<`/`Trigger<` rather than the bare name, since `Trigger`
     // is a substring of `GovernmentTriggerBlock`.
     const runtimeTypes = ["ContentField", "EffectBlock<", "ModifierClosure"]
-      .filter((name) => emission.code.includes(name))
+      .filter((name) =>
+        name.endsWith("<")
+          ? emission.code.includes(name)
+          : referencesIdentifier(emission.code, name)
+      )
       .map((name) => name.replace("<", ""));
     await write(
       `${category.replaceAll("_", "-")}.ts`,
@@ -401,7 +407,7 @@ async function main(): Promise<void> {
       "WeightBlock",
       "WeightBlockWithLoc",
       "WithFrom",
-    ].filter((name) => content.emission.code.includes(name));
+    ].filter((name) => referencesIdentifier(content.emission.code, name));
     const aliasStructImports = aliasCategoryImports(content.emission.code);
     await write(
       `${content.registry.replaceAll("_", "-")}.ts`,

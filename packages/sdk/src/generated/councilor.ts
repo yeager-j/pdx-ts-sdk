@@ -6,7 +6,6 @@ import type {
   ContentField,
   ContentLocalisation,
   DefinedContent,
-  ModifierBlock,
   ModifierClosure,
   TriggeredModifier,
   WeightBlock,

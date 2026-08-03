@@ -8,7 +8,6 @@ import type {
   DefinedContent,
   EconomicResourceBlock,
   EffectBlock,
-  ModifierBlock,
   ModifierClosure,
   TriggeredModifier,
   WeightBlock,
