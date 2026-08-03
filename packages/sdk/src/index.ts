@@ -215,7 +215,7 @@ export {
   type PureMod,
 } from "./build.ts";
 export { render, write } from "./render.ts";
-export { discoverContent } from "./discover.ts";
+export { DEFAULT_CONTENT_PATTERN, discoverContent, type DiscoverOptions } from "./discover.ts";
 // One free definer per content registry — `defineTechnology`,
 // `defineAscensionPerk`, ... — plus `patchTechnology`, `addShipOfSizeLimits`,
 // and every registry's `XItem` union.

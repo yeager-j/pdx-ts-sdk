@@ -15,20 +15,32 @@
  * unchanged, which is why discovery needs no cooperation from `buildMod`.
  *
  * What the walk does:
- * - Recurses the directory; files ending `.ts` are modules, everything else
- *   (assets, `.md` notes, `.json` data the modules read) is silently ignored.
+ * - Recurses the directory; files matching the content pattern are modules,
+ *   everything else (assets, `.md` notes, `.json` data the modules read, and
+ *   by default a module's colocated tests) is ignored before it is imported.
  * - Imports in logical-path order, so a build is a pure function of the tree
  *   and not of `readdir`'s arbitrary directory order.
- * - Names each collection with the module's basename minus `.ts`, so
+ * - Names each collection with the module's basename up to its first `.`, so
  *   `content/economy/technology.ts` and `content/military/technology.ts` both
  *   emit into `<prefix>_technology.txt` — grouping by feature in source,
  *   grouping by registry in output.
  *
+ * Which files count is the author's to decide (`options.include`). The default
+ * takes `.ts` and leaves out a module's companions — its tests, its benchmarks,
+ * its ambient declarations. That default is safe by construction: every
+ * companion suffix puts a `.` inside the basename, and a stem containing `.`
+ * is already illegal, so nothing the default skips could ever have named an
+ * emitted file. A custom pattern has no such guarantee, which is why a pattern
+ * matching nothing is an error rather than an empty mod.
+ *
  * Order caveat: emission order is a pure function of content (SDK-23), so
- * neither export order nor file order can change the emitted bytes. The one
- * order that is author data is a hook's event list, and that order is written
- * inside a single `on(hook, [first, second, third])` call — never by which
- * module or which export a binding happens to come from.
+ * neither export order nor file order can change the emitted bytes — and
+ * neither can the pattern, which is a predicate applied before the sort, and a
+ * subsequence of an ordered sequence keeps its order. The invariant is: same
+ * directory plus same pattern, same bytes. The one order that is author data is
+ * a hook's event list, and that order is written inside a single
+ * `on(hook, [first, second, third])` call — never by which module or which
+ * export a binding happens to come from.
  */
 
 import { readdir } from "node:fs/promises";
@@ -43,28 +55,109 @@ const ITEM_KINDS = new Set<string>(["content", "event", "on-action", "patch", "c
 const DEFINER_LIST =
   "defineTechnology, namespace(...).defineCountryEvent, on, patchTechnology, addShipOfSizeLimits, ...";
 
-export async function discoverContent(dir: string | URL): Promise<Collection[]> {
+/**
+ * The default set of content modules: `.ts`, minus the companion files a
+ * module keeps beside itself. Every excluded suffix carries a `.` inside the
+ * basename, which `FILE_STEM_PATTERN` already forbids — so this can only ever
+ * skip a file that would have thrown, never one that was working.
+ */
+export const DEFAULT_CONTENT_PATTERN = /(?<!\.(?:test|test-d|spec|bench|d))\.ts$/;
+
+export interface DiscoverOptions {
+  /**
+   * Which files under `dir` are content modules, matched against each file's
+   * `/`-separated path relative to `dir`. Supplying one *replaces*
+   * `DEFAULT_CONTENT_PATTERN` rather than narrowing it: pass `/\.mod\.ts$/` to
+   * discover only those, or `/\.ts$/` to deliberately take test files too.
+   */
+  readonly include?: RegExp;
+}
+
+/**
+ * `RegExp.test` advances `lastIndex` on a `/g` or `/y` pattern, so the same
+ * regex would answer differently for the same path depending on how many files
+ * preceded it. Dropping those two flags is what keeps the walk a pure function
+ * of the tree; every other flag is the author's business.
+ */
+function stateless(pattern: RegExp): RegExp {
+  const flags = pattern.flags.replace(/[gy]/g, "");
+  return flags === pattern.flags ? pattern : new RegExp(pattern.source, flags);
+}
+
+/**
+ * The emitted file's stem: the basename up to its first `.`, so a module
+ * discovered as `resonance.mod.ts` still emits `<prefix>_resonance.txt`. Any
+ * name this truncates was previously rejected outright, since a stem may not
+ * contain `.`.
+ */
+function fileStemOf(absolute: string): string {
+  const basename = path.basename(absolute);
+  const dot = basename.indexOf(".");
+  return dot === -1 ? basename : basename.slice(0, dot);
+}
+
+export async function discoverContent(
+  dir: string | URL,
+  options: DiscoverOptions = {}
+): Promise<Collection[]> {
+  const include = stateless(options.include ?? DEFAULT_CONTENT_PATTERN);
   const root = dir instanceof URL ? fileURLToPath(dir) : dir;
   const entries = await readdir(root, { recursive: true, withFileTypes: true });
-  const modules = entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".ts"))
+  const candidates = entries
+    .filter((entry) => entry.isFile())
     .map((entry) => {
       const absolute = path.join(entry.parentPath, entry.name);
       // `normalizeLogicalPath` speaks the game's `/`-separated dialect, so the
       // platform separator is translated before it is ever shown one.
       const relative = path.relative(root, absolute).split(path.sep).join("/");
       return { absolute, relative: normalizeLogicalPath(relative) };
-    })
+    });
+  // Filtering happens before the import, so a module the pattern excludes never
+  // runs — which is the whole point for a colocated test file.
+  const modules = candidates
+    .filter((module) => include.test(module.relative))
     .sort((a, b) => compareLogicalPaths(a.relative, b.relative));
+
+  if (modules.length === 0) {
+    throw new Error(emptyWalkMessage(root, include, candidates));
+  }
 
   const collections: Collection[] = [];
   for (const module of modules) {
     const exports = (await import(pathToFileURL(module.absolute).href)) as Record<string, unknown>;
-    collections.push(
-      collectModule(module.relative, path.basename(module.absolute, ".ts"), exports)
-    );
+    collections.push(collectModule(module.relative, fileStemOf(module.absolute), exports));
   }
   return collections;
+}
+
+/**
+ * A pattern that matches nothing would otherwise build a mod with no content
+ * at all, which is a typo rendering as a successful build. The two ways to get
+ * here read differently and are reported differently: a directory holding
+ * TypeScript the pattern rejected is a pattern problem, and one holding none is
+ * a path problem.
+ */
+function emptyWalkMessage(
+  root: string,
+  include: RegExp,
+  candidates: readonly { readonly relative: string }[]
+): string {
+  const excluded = candidates
+    .filter((entry) => entry.relative.endsWith(".ts"))
+    .map((entry) => entry.relative)
+    .sort();
+  if (excluded.length === 0) {
+    return (
+      `No content modules under ${root}: it holds no TypeScript at all. Check the directory ` +
+      `path — discovery imports modules, so an empty tree can only produce an empty mod.`
+    );
+  }
+  return (
+    `No content modules under ${root}: ${include} matched none of the ${excluded.length} ` +
+    `TypeScript files there. Excluded:\n` +
+    excluded.map((relPath) => `  - ${relPath}`).join("\n") +
+    `\nThe default (${DEFAULT_CONTENT_PATTERN}) takes .ts and leaves out colocated tests.`
+  );
 }
 
 /**
