@@ -214,7 +214,14 @@ export {
   type ModConfig,
   type PureMod,
 } from "./build.ts";
-export { render, write } from "./render.ts";
+export {
+  install,
+  render,
+  renderLauncherDescriptor,
+  write,
+  type InstallOptions,
+  type InstallResult,
+} from "./render.ts";
 export { DEFAULT_CONTENT_PATTERN, discoverContent, type DiscoverOptions } from "./discover.ts";
 // One free definer per content registry — `defineTechnology`,
 // `defineAscensionPerk`, ... — plus `patchTechnology`, `addShipOfSizeLimits`,
