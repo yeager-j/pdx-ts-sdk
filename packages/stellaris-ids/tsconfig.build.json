@@ -1,0 +1,22 @@
+{
+  // `src/index.ts` does `import "./augment.ts"` — a *runtime* specifier, even
+  // though the file it names contains only declarations. So this package needs
+  // building like any other: a consumer's `import "@pdx-ts/stellaris-ids"` has
+  // to resolve to something Node can load, and raw `.ts` under node_modules is
+  // not that. The emitted JS is empty modules; the `.d.ts` beside them carries
+  // the id unions and the `declare module` augmentation that is the whole point.
+  //
+  // The root tsconfig excludes this package (so the root program models the
+  // package-absent world); overriding `exclude` back to empty is what lets this
+  // build see its own sources, the same trick tsconfig.json here uses.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": false,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "exclude": []
+}

@@ -1,17 +1,21 @@
 {
   "name": "@pdx-ts/pdxscript",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Parser and serializer for PDXScript, the Clausewitz engine script format (Stellaris-tested): order-preserving, duplicate-preserving, semantic round-trip",
   "type": "module",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "pdx-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "publishConfig": {
     "access": "public"
   },
   "files": [
-    "src",
+    "dist",
     "GRAMMAR.md"
   ],
   "keywords": [
@@ -25,5 +29,14 @@
   "devDependencies": {
     "fast-check": "^4.9.0",
     "jomini": "^0.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacksonyeager/pdx-ts.git",
+    "directory": "packages/pdxscript"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build"
   }
 }

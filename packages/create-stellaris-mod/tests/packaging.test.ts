@@ -29,11 +29,17 @@ describe("the published package", () => {
     // Not a style choice. `npx` installs into a real `node_modules`, and Node
     // refuses to strip types from anything under one — so a `.ts` bin would
     // fail at load, before any of this code could print a useful message.
-    expect(manifest.bin["create-stellaris-mod"]).toMatch(/^\.\/dist\//);
+    // No leading `./`: npm rewrites it at pack time and warns that it
+    // "auto-corrected" the bin, which reads exactly like it dropped it.
+    expect(manifest.bin["create-stellaris-mod"]).toBe("dist/bin.js");
     expect(manifest.files).toContain("dist");
     expect(manifest.files).not.toContain("src");
     expect(manifest.scripts["build"]).toBeDefined();
-    expect(manifest.scripts["prepublishOnly"]).toContain("build");
+    // `prepack`, not `prepublishOnly`: the latter does not run on `npm pack`,
+    // so a packed tarball would carry no dist and the packaging checks would
+    // be rehearsing something other than what publish produces.
+    expect(manifest.scripts["prepack"]).toContain("build");
+    expect(manifest.scripts["prepublishOnly"]).toBeUndefined();
   });
 
   it("keeps the SDK a devDependency, so the CLI's release is not coupled to it", () => {

@@ -377,7 +377,7 @@ npm workspace; every command runs from the repository root.
 npm test                     # all suites, all packages (vitest)
 npm run typecheck            # tsc --noEmit
 npm run typecheck:ids        # the stellaris-ids-present type program
-npm run build                # emit dist/
+npm run build                # emit each package's dist/
 npm run example              # build examples/hello-galaxy/out/
 npm run codegen              # regenerate the SDK's types from the cwt rules
 npm run codegen:check        # ...and fail if committed output moved
@@ -386,12 +386,14 @@ npm run codegen:vanilla:check
 npm run scaffold             # drive create-stellaris-mod from source
 ```
 
-`create-stellaris-mod` is the one package with a build step, and it is forced
-rather than chosen: `npx` installs a CLI into a real `node_modules`, and Node
-refuses to strip types from anything under one. Every other package is consumed
-through a workspace symlink, whose realpath escapes `node_modules` — which is
-also why the SDK cannot be published in its current raw-`.ts` export shape, and
-why a scaffolded project uses `--local` until that changes.
+Every publishable package builds to `dist/`, because Node refuses to strip
+types from anything under `node_modules` — a package shipping raw `.ts` dies at
+a consumer's first import. The workspace hides that completely, since npm links
+members as symlinks whose realpath escapes `node_modules`, so during development
+nothing is built. `exports` therefore names both worlds: a `pdx-source`
+condition pointing at `src/`, and `types`/`default` pointing at `dist/`. This
+repo passes that condition (tsconfig `customConditions`, Node `--conditions`,
+Vite `resolve.conditions`); a published consumer never does, and gets `dist/`.
 
 Contributor rules — codegen discipline, the content-registry procedure,
 design boundaries — live in [AGENTS.md](AGENTS.md).

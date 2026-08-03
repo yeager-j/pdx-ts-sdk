@@ -8,17 +8,17 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "codegen": "node packages/codegen-cwt/src/index.ts",
-    "codegen:check": "node packages/codegen-cwt/src/index.ts && git diff --exit-code packages/sdk/src/generated",
-    "codegen:vanilla": "node packages/codegen-vanilla/src/index.ts",
-    "codegen:vanilla:check": "node packages/codegen-vanilla/src/index.ts && git diff --exit-code packages/stellaris-ids/src packages/stellaris-ids/package.json",
+    "build": "npm run build --workspaces --if-present",
+    "codegen": "node --conditions=pdx-source packages/codegen-cwt/src/index.ts",
+    "codegen:check": "node --conditions=pdx-source packages/codegen-cwt/src/index.ts && git diff --exit-code packages/sdk/src/generated",
+    "codegen:vanilla": "node --conditions=pdx-source packages/codegen-vanilla/src/index.ts",
+    "codegen:vanilla:check": "node --conditions=pdx-source packages/codegen-vanilla/src/index.ts && git diff --exit-code packages/stellaris-ids/src packages/stellaris-ids/package.json",
     "typecheck": "tsc --noEmit",
     "typecheck:ids": "tsc -p packages/stellaris-ids",
     "test": "vitest run",
     "test:watch": "vitest",
-    "example": "node examples/hello-galaxy/build.ts",
-    "scaffold": "node packages/create-stellaris-mod/src/bin.ts",
+    "example": "node --conditions=pdx-source examples/hello-galaxy/build.ts",
+    "scaffold": "node --conditions=pdx-source packages/create-stellaris-mod/src/bin.ts",
     "prepare": "husky"
   },
   "lint-staged": {

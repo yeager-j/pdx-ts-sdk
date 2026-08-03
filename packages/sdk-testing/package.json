@@ -1,18 +1,26 @@
 {
   "name": "@pdx-ts/sdk-testing",
   "version": "0.1.0",
-  "description": "Test Stellaris mod logic without launching the game — a whitelist interpreter over the triggers and effects @pdx-ts/sdk records",
+  "description": "Test Stellaris mod logic without launching the game \u2014 a whitelist interpreter over the triggers and effects @pdx-ts/sdk records",
   "type": "module",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts",
-    "./matchers": "./src/matchers.ts"
+    ".": {
+      "pdx-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./matchers": {
+      "pdx-source": "./src/matchers.ts",
+      "types": "./dist/matchers.d.ts",
+      "default": "./dist/matchers.js"
+    }
   },
   "publishConfig": {
     "access": "public"
   },
   "files": [
-    "src"
+    "dist"
   ],
   "keywords": [
     "stellaris",
@@ -22,7 +30,7 @@
     "vitest"
   ],
   "peerDependencies": {
-    "@pdx-ts/sdk": "*",
+    "@pdx-ts/sdk": "^0.1.0",
     "vitest": ">=3"
   },
   "peerDependenciesMeta": {
@@ -31,6 +39,15 @@
     }
   },
   "dependencies": {
-    "@pdx-ts/pdxscript": "*"
+    "@pdx-ts/pdxscript": "^0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacksonyeager/pdx-ts.git",
+    "directory": "packages/sdk-testing"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build"
   }
 }

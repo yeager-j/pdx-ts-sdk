@@ -2,6 +2,10 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
+    // Resolve workspace packages to their sources. Their `exports`
+    // otherwise point at `dist/`, which is what a published consumer
+    // must get and what this repo never builds during development.
+    "customConditions": ["pdx-source"],
     "declaration": true,
     "declarationMap": true,
     "erasableSyntaxOnly": true,

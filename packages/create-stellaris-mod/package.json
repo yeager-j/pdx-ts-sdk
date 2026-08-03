@@ -5,10 +5,14 @@
   "type": "module",
   "license": "MIT",
   "bin": {
-    "create-stellaris-mod": "./dist/bin.js"
+    "create-stellaris-mod": "dist/bin.js"
   },
   "exports": {
-    ".": "./src/cli.ts"
+    ".": {
+      "pdx-source": "./src/cli.ts",
+      "types": "./dist/cli.d.ts",
+      "default": "./dist/cli.js"
+    }
   },
   "engines": {
     "node": ">=20"
@@ -29,7 +33,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "prepublishOnly": "npm run build"
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0"

@@ -9,18 +9,25 @@
  * tsconfig can typecheck the SDK's raw-`.ts` exports from inside a consumer
  * program, which is the likeliest thing to be subtly wrong.
  *
- * Dependencies are symlinked rather than installed: no network, deterministic,
- * and — the part that matters — a symlink is exactly what npm materializes for
- * the `file:` dependencies the CLI writes under `--local`.
+ * The workspace packages are installed from real `npm pack` tarballs, unpacked
+ * into `node_modules` as ordinary directories. That is the point, and it is not
+ * incidental: Node refuses to strip types from anything under `node_modules`
+ * (ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING), and the workspace hides that
+ * completely by linking members as symlinks whose realpath escapes. Only an
+ * unpacked tarball reproduces what a stranger's `npm install` produces — so
+ * this is at once the scaffolder's end-to-end test and the gate on the packages
+ * being publishable at all.
  *
- * When `@pdx-ts/sdk` is published, this test becomes the publish gate by
- * swapping the symlinks for an `npm pack` tarball. That is the one check that
- * reproduces a real `node_modules` directory, where Node refuses to strip types
- * (ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING).
+ * Tarballs also mean the packages are exercised through their *published*
+ * `exports`, which resolve to `dist/`. Nothing here can pass by accident on the
+ * `pdx-source` condition the repo uses internally.
+ *
+ * The toolchain (typescript, vitest, @types/node) is still symlinked from the
+ * repo root, so no step needs the network.
  */
 
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -29,20 +36,48 @@ import { main } from "../src/cli.ts";
 
 const REPO = path.resolve(import.meta.dirname, "../../..");
 const ROOT_MODULES = path.join(REPO, "node_modules");
+const WORKSPACE_PACKAGES = ["sdk", "sdk-testing", "pdxscript", "stellaris-ids"] as const;
 
 let projectDir: string;
+let tarballDir: string;
+
+/** `npm pack` each package; `prepack` builds `dist/` on the way. */
+function packWorkspacePackages(destination: string): void {
+  for (const pkg of WORKSPACE_PACKAGES) {
+    execFileSync("npm", ["pack", "--pack-destination", destination], {
+      cwd: path.join(REPO, "packages", pkg),
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  }
+}
 
 /**
- * The dependency tree a published install would produce, without the registry.
- * The workspace packages point at their real directories; the toolchain comes
- * from the repo root, which already has the versions the templates pin.
+ * Unpack each tarball into `node_modules/@pdx-ts/<name>` as a real directory —
+ * what npm would have produced from the registry — and symlink the toolchain.
  */
-function linkDependencies(dir: string): void {
+function installTarballs(dir: string, tarballs: string): void {
   const modules = path.join(dir, "node_modules");
-  mkdirSync(path.join(modules, "@pdx-ts"), { recursive: true });
-  for (const pkg of ["sdk", "sdk-testing", "pdxscript", "stellaris-ids"]) {
-    symlinkSync(path.join(REPO, "packages", pkg), path.join(modules, "@pdx-ts", pkg), "dir");
+  const scope = path.join(modules, "@pdx-ts");
+  mkdirSync(scope, { recursive: true });
+
+  const files = readdirSync(tarballs).filter((name) => name.endsWith(".tgz"));
+  for (const pkg of WORKSPACE_PACKAGES) {
+    const tarball = files.find((name) => name.startsWith(`pdx-ts-${pkg}-`));
+    if (tarball === undefined) {
+      throw new Error(`no tarball packed for @pdx-ts/${pkg} (found: ${files.join(", ")})`);
+    }
+    const target = path.join(scope, pkg);
+    mkdirSync(target, { recursive: true });
+    // The tarball's single `package/` root is stripped, exactly as npm does.
+    execFileSync("tar", [
+      "-xzf",
+      path.join(tarballs, tarball),
+      "-C",
+      target,
+      "--strip-components=1",
+    ]);
   }
+
   for (const dep of ["typescript", "vitest", "@types"]) {
     symlinkSync(path.join(ROOT_MODULES, dep), path.join(modules, dep), "dir");
   }
@@ -62,7 +97,11 @@ function runIn(dir: string, command: string, args: readonly string[]): string {
 }
 
 beforeAll(async () => {
-  projectDir = path.join(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-")), "smoke-mod");
+  const root = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-"));
+  projectDir = path.join(root, "smoke-mod");
+  tarballDir = path.join(root, "tarballs");
+  mkdirSync(tarballDir, { recursive: true });
+
   const code = await main([
     "--yes",
     "--no-git",
@@ -73,8 +112,10 @@ beforeAll(async () => {
     projectDir,
   ]);
   expect(code).toBe(0);
-  linkDependencies(projectDir);
-}, 120_000);
+
+  packWorkspacePackages(tarballDir);
+  installTarballs(projectDir, tarballDir);
+}, 300_000);
 
 afterAll(() => {
   if (projectDir !== undefined) {

@@ -1,17 +1,48 @@
 {
   "name": "@pdx-ts/sdk",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "TypeScript SDK for generating Stellaris mods",
   "type": "module",
-  "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./stellaris": "./src/stellaris/index.ts"
+    ".": {
+      "pdx-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./stellaris": {
+      "pdx-source": "./src/stellaris/index.ts",
+      "types": "./dist/stellaris/index.d.ts",
+      "default": "./dist/stellaris/index.js"
+    }
   },
   "dependencies": {
-    "@pdx-ts/pdxscript": "*"
+    "@pdx-ts/pdxscript": "^0.1.0"
   },
   "devDependencies": {
     "@pdx-ts/codegen-cwt": "*"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacksonyeager/pdx-ts.git",
+    "directory": "packages/sdk"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "stellaris",
+    "paradox",
+    "modding",
+    "pdxscript",
+    "typescript",
+    "codegen"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build"
   }
 }
