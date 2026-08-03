@@ -44,11 +44,9 @@ describe("Technology", () => {
       	weight = 85
       	prerequisites = { "mymod_tech_base" "tech_lasers_1" }
       	potential = {
-      		AND = {
-      			has_country_flag = chosen_ones
-      			NOT = {
-      				has_technology = mymod_tech_base
-      			}
+      		has_country_flag = chosen_ones
+      		NOT = {
+      			has_technology = mymod_tech_base
       		}
       	}
       	is_rare = yes

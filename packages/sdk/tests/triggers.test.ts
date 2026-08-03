@@ -33,14 +33,15 @@ describe("trigger builders", () => {
     `);
   });
 
-  it("emits a scope link as one navigation block", () => {
+  it("emits a scope link as one navigation block, and() spliced flat inside it", () => {
+    // `owner = { ... }` is already an implicit AND, the same as vanilla's own
+    // spelling — the nested `AND` wrapper `and()` used to add here said
+    // nothing the block did not already say.
     const condition = owner(and(isAi(), hasCountryFlag("ascended")));
     expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
       "owner = {
-      	AND = {
-      		is_ai = yes
-      		has_country_flag = ascended
-      	}
+      	is_ai = yes
+      	has_country_flag = ascended
       }
       "
     `);
@@ -56,13 +57,12 @@ describe("trigger builders", () => {
     `);
   });
 
-  it("flattens and() operands into one AND block", () => {
+  it("and() operands splice flat, with no AND wrapper, matching vanilla's implicit AND", () => {
     const condition = and(hasCountryFlag("ascended"), yearsPassed(">=", 50));
     expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
-      "AND = {
-      	has_country_flag = ascended
-      	years_passed >= 50
-      }
+      "has_country_flag = ascended
+
+      years_passed >= 50
       "
     `);
   });
@@ -74,24 +74,46 @@ describe("trigger builders", () => {
     const fluent = hasCountryFlag("ascended").and(yearsPassed(">=", 50));
     const free = and(hasCountryFlag("ascended"), yearsPassed(">=", 50));
     expect(serialize([...fluent.entries])).toBe(serialize([...free.entries]));
+    expect(serialize([...fluent.entries])).toMatchInlineSnapshot(`
+      "has_country_flag = ascended
+
+      years_passed >= 50
+      "
+    `);
+  });
+
+  it("re-groups a flattened and() under NOT, so NOT(AND) stays a NAND and does not become a NOR", () => {
+    // NOT's immediate children get NOR semantics ("neither"), not NAND ("not
+    // both") — an unwrapped `and()` spliced flat under NOT would silently
+    // swap one for the other, so `not()` re-wraps a multi-entry operand.
+    const condition = not(and(hasCountryFlag("ascended"), yearsPassed(">=", 50)));
+    expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
+      "NOT = {
+      	AND = {
+      		has_country_flag = ascended
+      		years_passed >= 50
+      	}
+      }
+      "
+    `);
   });
 
   it("splices hidden_trigger operands flat, changing no scope", () => {
     // Tooltip visibility, not logic: the conditions still have to hold, and
     // the block changes no scope — so it takes conditions rather than a
-    // closure, and its own scope is theirs.
+    // closure, and its own scope is theirs. and()'s own flattening applies
+    // here too, so the outer AND wrapper is gone as well.
     const condition = and(
       isAi(),
       hiddenTrigger(hasCountryFlag("ascended"), owner(hasCountryFlag("patron")))
     );
     expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
-      "AND = {
-      	is_ai = yes
-      	hidden_trigger = {
-      		has_country_flag = ascended
-      		owner = {
-      			has_country_flag = patron
-      		}
+      "is_ai = yes
+
+      hidden_trigger = {
+      	has_country_flag = ascended
+      	owner = {
+      		has_country_flag = patron
       	}
       }
       "

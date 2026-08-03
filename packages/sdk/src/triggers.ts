@@ -8,10 +8,10 @@
  * operands" or "this one infers the scope intersection of its arguments".
  */
 
-import { block, kv } from "@pdx-ts/pdxscript";
+import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ScopeName } from "./generated/scopes.ts";
-import { trigger, type Trigger } from "./trigger-core.ts";
+import { conjoin, trigger, type Trigger } from "./trigger-core.ts";
 
 export type { ScopeName } from "./generated/scopes.ts";
 export { trigger, type Trigger } from "./trigger-core.ts";
@@ -97,16 +97,34 @@ function operandRefs<S extends ScopeName>(triggers: readonly Trigger<S>[]) {
   return triggers.flatMap((operand) => [...operand.refs]);
 }
 
+/**
+ * `and(a, b)`'s operands splice flat, with no `AND` wrapper — the same tree
+ * `a.and(b)` builds (`./trigger-core.ts`). PDXScript blocks are already an
+ * implicit AND of their members, so a nested `AND = { ... }` inside another
+ * implicit-AND context (a content field, a `limit`, a scope link, another
+ * `and(...)`) says nothing vanilla's own spelling does not already say.
+ *
+ * That flattening is only safe where the *parent* is implicit-AND. A `NOT`
+ * (or `OR`) block gives its immediate children a different meaning — `NOT =
+ * { a b }` is "neither a nor b" (a NOR), not "not both" (a NAND) — so a
+ * grouped operand has to stay grouped there. `grouped()` below is what
+ * `or()`/`not()` use to re-wrap a multi-entry operand for exactly that
+ * reason; `and()` itself never needs to, since AND-of-AND is still AND and
+ * associativity lets it flatten unconditionally.
+ */
 export function and<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
-  return trigger(
-    [
-      block(
-        "AND",
-        triggers.flatMap((t) => [...t.entries])
-      ),
-    ],
-    operandRefs(triggers)
-  );
+  return conjoin(triggers);
+}
+
+/**
+ * A multi-entry operand as one grouped unit: `[...t.entries]` when there is
+ * only one (already a single self-contained block — a leaf, or another named
+ * combinator), or `[AND = { ...t.entries }]` when there are several (an
+ * unwrapped `and()`, or any other multi-entry trigger) so the grouping is not
+ * lost by splicing its members in flat.
+ */
+function grouped<S extends ScopeName>(t: Trigger<S>): PdxEntry[] {
+  return t.entries.length === 1 ? [...t.entries] : [block("AND", [...t.entries])];
 }
 
 export function or<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
@@ -114,17 +132,22 @@ export function or<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
     [
       block(
         "OR",
-        triggers.flatMap((operand) =>
-          operand.entries.length === 1 ? [...operand.entries] : [block("AND", [...operand.entries])]
-        )
+        triggers.flatMap((operand) => grouped(operand))
       ),
     ],
     operandRefs(triggers)
   );
 }
 
+/**
+ * `NOT = { ... }` negates the AND of its immediate children as one unit — a
+ * single-entry condition negates directly, and a multi-entry one (an
+ * unwrapped `and()`) is re-grouped first, or the flattening would silently
+ * turn "not (a and b)" into "not a and not b" (NAND into NOR — see `and()`'s
+ * doc comment).
+ */
 export function not<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {
-  return trigger([block("NOT", [...condition.entries])], [...condition.refs]);
+  return trigger([block("NOT", grouped(condition))], [...condition.refs]);
 }
 
 /**

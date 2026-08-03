@@ -150,6 +150,15 @@ describe("parity with the class builder", () => {
   // those goldens — so the SDK-22 bytes are frozen here instead, beside the
   // frozen pipeline that produced them. This directory is a design record: it
   // is not regenerated, and the shipping suites are the live evidence.
+  //
+  // The one exception (SDK-53): the fixture composes triggers with the live
+  // `and()` from "../../packages/sdk/src/index.ts", so this record was never
+  // fully independent of ongoing combinator changes despite the frozen fold
+  // around it. SDK-53 dropped `and()`'s redundant `AND` wrapper to match
+  // vanilla's own implicit-AND spelling — a deliberate, reviewed emission
+  // change, not drift — so `common__..._ship_of_size_limits...txt` was
+  // updated to the new (unwrapped) `show = { ... }` bytes rather than left
+  // red for a spelling this record was never trying to pin.
   const goldenDir = new URL("./goldens/", import.meta.url);
   const golden = (relPath: string): string =>
     readFileSync(new URL(relPath.replaceAll("/", "__"), goldenDir), "utf8");

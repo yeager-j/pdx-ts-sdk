@@ -1,4 +1,4 @@
-import { block, type PdxEntry } from "@pdx-ts/pdxscript";
+import type { PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "./content-refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
@@ -58,19 +58,15 @@ const POISON_MESSAGE =
   "scope.if(trigger, (s) => ...).elseIf(...).else(...).";
 
 /**
- * The conjunction tree every `and`-shaped combinator builds: an `AND` block
- * wrapping every operand's entries, in argument order. `./triggers.ts`
+ * The flat-conjunction tree every `and`-shaped combinator builds: operands'
+ * entries and refs concatenate in argument order with no wrapper block,
+ * matching the implicit AND every PDXScript block already is. `./triggers.ts`
  * exports this same shape as the free `and()` function; `trigger()` wires it
  * to every value's `.and()` method so the two spellings never drift apart.
  */
 export function conjoin<S extends ScopeName>(operands: readonly Trigger<S>[]): Trigger<S> {
   return trigger(
-    [
-      block(
-        "AND",
-        operands.flatMap((operand) => [...operand.entries])
-      ),
-    ],
+    operands.flatMap((operand) => [...operand.entries]),
     operands.flatMap((operand) => [...operand.refs])
   );
 }

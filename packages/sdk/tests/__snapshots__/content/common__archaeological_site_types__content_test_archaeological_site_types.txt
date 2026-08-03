@@ -16,11 +16,9 @@ content_test_archaeological_site_type_derelict = {
 		can_go_mia = yes
 	}
 	allow = {
-		AND = {
-			can_go_mia = yes
-			from = {
-				is_site_locked = no
-			}
+		can_go_mia = yes
+		from = {
+			is_site_locked = no
 		}
 	}
 	visible = {

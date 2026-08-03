@@ -204,10 +204,8 @@ describe("in a built mod", () => {
         "\ttier = 1\n" +
         "\tcategory = { computing }\n" +
         "\tpotential = {\n" +
-        "\t\tAND = {\n" +
-        "\t\t\tis_fallen_empire = yes\n" +
-        "\t\t\tis_regular_empire = yes\n" +
-        "\t\t}\n" +
+        "\t\tis_fallen_empire = yes\n" +
+        "\t\tis_regular_empire = yes\n" +
         "\t}\n" +
         "}\n"
     );

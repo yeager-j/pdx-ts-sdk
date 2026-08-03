@@ -14,13 +14,11 @@ hello_galaxy_tech_resonance_weapons = {
 	weight = 70
 	prerequisites = { "hello_galaxy_tech_resonance_theory" "tech_lasers_2" }
 	potential = {
-		AND = {
-			has_country_flag = hello_galaxy_heard_the_hum
-			NOT = {
-				has_country_flag = hello_galaxy_pacifist_path
-			}
-			is_regular_empire = yes
+		has_country_flag = hello_galaxy_heard_the_hum
+		NOT = {
+			has_country_flag = hello_galaxy_pacifist_path
 		}
+		is_regular_empire = yes
 	}
 	is_rare = yes
 }
