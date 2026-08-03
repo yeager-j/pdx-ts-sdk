@@ -281,6 +281,33 @@ hasCountryFlag(planetFlags("surveyed").surveyed);    // wrong kind: compile erro
 hasCountryFlag("some_vanilla_flag");                 // raw strings still work
 ```
 
+## Vanilla's own script is callable, and knows its scope
+
+Most of what a real mod's conditions do is call vanilla's scripted triggers.
+`is_fallen_empire` appears 214 times in one surveyed mod, and it is not a game
+primitive the rules describe — it is script, in a file the game ships. Install
+the identifier package and all ~1,600 of them arrive already bound:
+
+```ts
+import { isFallenEmpire, hasCrisisStage } from "@pdx-ts/stellaris-ids/triggers";
+import { giveAscensionPerkEffect } from "@pdx-ts/stellaris-ids/effects";
+
+potential: and(isFallenEmpire(), hasCrisisStage({ STAGE: 2 })),
+immediate: (s) => {
+  s.run(giveAscensionPerkEffect({ PERK: "ap_mind_over_matter" }));
+},
+```
+
+The parameter lists are typed, and so is the scope: `isFallenEmpire()` is a
+`Trigger<"country">`, so using it where a planet condition belongs is a compile
+error. That scope is derived rather than asserted — the generator intersects
+the scopes the rules already declare for the keys each body evaluates, and a
+body it cannot read widens to every scope instead of guessing. It is checked
+against 4,860 of vanilla's own call sites, which it contradicts nowhere.
+
+`examples/hello-galaxy/content/resonance.ts` uses all three forms, including a
+scripted effect whose `TECH` parameter is handed the mod's own technology.
+
 ## Testing mod logic
 
 Because triggers and effects are recorded as data, mod logic can be
@@ -357,7 +384,7 @@ and the override didn't take" becomes a build error.
 | --- | --- |
 | [@pdx-ts/sdk](packages/sdk/README.md) | The SDK: definers, triggers/effects, scope safety, building, rendering, vanilla patching, mod-logic testing |
 | [@pdx-ts/pdxscript](packages/pdxscript/README.md) | Standalone PDXScript parser/serializer — order-preserving, round-trip-verified, game-semantics-free |
-| [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md) | Every identifier a real install defines, as version-pinned types — makes vanilla references compile-checked |
+| [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md) | Every identifier a real install defines, as version-pinned types, plus vanilla's scripted triggers and effects bound at their inferred scopes |
 | [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md) | Rules-derived generator: emits the SDK's typed surface from the vendored cwtools rules |
 | [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md) | Install-derived generator: emits @pdx-ts/stellaris-ids from an installed copy of the game |
 

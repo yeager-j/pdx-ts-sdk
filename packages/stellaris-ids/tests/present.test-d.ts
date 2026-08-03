@@ -15,16 +15,30 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import "../src/index.ts";
 
+import type { PdxEntry } from "@pdx-ts/pdxscript";
 import {
   defineTechnology,
+  makeScope,
   vanilla,
+  type ScopeName,
+  type ScriptedEffectCall,
   type SpriteRef,
   type StaticModifierRef,
   type TechnologyRef,
+  type Trigger,
   type VanillaId,
   type VanillaScriptedTriggers,
   type VanillaTries,
 } from "@pdx-ts/sdk";
+
+import { setMerchantGovernmentEffect } from "../src/effects.ts";
+import {
+  canColonizePlanetTrigger,
+  hasAnyMegastructureInEmpire,
+  hasCrisisStage,
+  isFallenEmpire,
+  isPirateSystem,
+} from "../src/triggers.ts";
 
 describe("checked registry helpers", () => {
   it("preserves the literal id and brands it for its own registry", () => {
@@ -168,6 +182,73 @@ describe("scripted trigger parameters (the SDK-13 payload)", () => {
     expectTypeOf<VanillaScriptedTriggers["can_colonize_planet_trigger"]>().toEqualTypeOf<{
       readonly SCOPE: string | number;
     }>();
+  });
+});
+
+describe("the generated bindings", () => {
+  it("carries the ticket's own example at exactly its inferred scope", () => {
+    // `is_fallen_empire` is `OR = { is_country_type = fallen_empire
+    // is_country_type = awakened_fallen_empire }` and nothing else, so the
+    // inference has one country-scoped key to intersect. DoA calls it 214 times.
+    expectTypeOf(isFallenEmpire()).toEqualTypeOf<Trigger<"country">>();
+  });
+
+  it("takes no arguments when the definition takes no parameters", () => {
+    // @ts-expect-error a parameterless binding's argument list is empty, so an
+    // argument object is not merely ignored — it does not typecheck.
+    isFallenEmpire({ ANYTHING: 1 });
+  });
+
+  it("makes a defaulted parameter optional and a bare one required", () => {
+    expectTypeOf(hasCrisisStage()).toEqualTypeOf<Trigger<ScopeName>>();
+    expectTypeOf(hasCrisisStage({ STAGE: 2 })).toEqualTypeOf<Trigger<ScopeName>>();
+    // @ts-expect-error `can_colonize_planet_trigger` writes a bare `$SCOPE$`.
+    canColonizePlanetTrigger();
+  });
+
+  it("rejects a parameter the definition does not declare", () => {
+    // @ts-expect-error `STAGE` is the only parameter `has_crisis_stage` takes.
+    hasCrisisStage({ STAEG: 2 });
+  });
+
+  it("accepts a branded reference where the package types a bare scalar", () => {
+    // The package types every parameter `string | number` because a scripted
+    // definition substitutes text. The SDK widens that to the references it
+    // already models, so an id does not have to be unwrapped by hand.
+    expectTypeOf(hasCrisisStage({ STAGE: vanilla.resource("energy") })).toEqualTypeOf<
+      Trigger<ScopeName>
+    >();
+  });
+
+  it("carries a multi-scope definition as the union the inference derived", () => {
+    // `has_any_megastructure_in_empire` iterates `any_owned_planet`, which the
+    // rules make legal in country and sector, and nothing in the body narrows
+    // further. A union is not a failure to infer: against `ScopeName`'s 41
+    // members it still rejects 39.
+    expectTypeOf(hasAnyMegastructureInEmpire()).toEqualTypeOf<Trigger<"country" | "sector">>();
+    // And a narrowing derived through a scope link rather than a plain key.
+    expectTypeOf(isPirateSystem()).toEqualTypeOf<Trigger<"system">>();
+  });
+
+  it("keeps a wrong-scope binding out of a narrower slot", () => {
+    const inCountry = (_condition: Trigger<"country">): void => undefined;
+    inCountry(hasAnyMegastructureInEmpire());
+    // @ts-expect-error a system-scoped trigger is not a country condition.
+    inCountry(isPirateSystem());
+  });
+
+  it("binds effects as calls that only `run` accepts", () => {
+    expectTypeOf(setMerchantGovernmentEffect()).toEqualTypeOf<ScriptedEffectCall<"country">>();
+    // A trigger and an effect call serialize alike and are still different
+    // things; each brand refuses the other's position.
+    expectTypeOf(setMerchantGovernmentEffect()).not.toExtend<Trigger<"country">>();
+  });
+
+  it("rejects a wrong-scope effect call at `run`", () => {
+    const sink: PdxEntry[] = [];
+    makeScope<"country">(sink).run(setMerchantGovernmentEffect());
+    // @ts-expect-error a country-scoped effect cannot run in a planet closure.
+    makeScope<"planet">(sink).run(setMerchantGovernmentEffect());
   });
 });
 

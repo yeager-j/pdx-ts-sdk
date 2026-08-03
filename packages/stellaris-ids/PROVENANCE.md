@@ -5,10 +5,15 @@
 Every identifier vanilla Stellaris defines — content ids, scripted trigger and
 effect names with their `$PARAM$` lists, event ids and namespaces, sprite and
 sound names, resource keys — read out of a real, installed copy of the game
-and shipped as TypeScript types. It carries no runtime code: `@pdx-ts/sdk`
-declaration-merges against it (`import "@pdx-ts/stellaris-ids";`) so a
-vanilla reference is checked at compile time instead of degrading to an
-unchecked string.
+and shipped as TypeScript types. `@pdx-ts/sdk` declaration-merges against it
+(`import "@pdx-ts/stellaris-ids";`) so a vanilla reference is checked at
+compile time instead of degrading to an unchecked string.
+
+The identifier surface is types with zero runtime payload. Two subpaths are the
+exception: `./triggers` and `./effects` carry one bound call per scripted
+definition, each a single `scriptedTrigger`/`scriptedEffect` call naming the
+definition and the scope inferred for it. They are `/*#__PURE__*/`-annotated so
+a bundler drops the ones a mod does not import.
 
 ## Game version
 
@@ -37,8 +42,17 @@ This is a licensing boundary the generator enforces, not merely a convention:
 
 - **Here:** ids, definition names, scripted trigger/effect names and their
   `$PARAM$` lists, event ids and namespaces, sprite and sound names, resource
-  keys.
+  keys, and the scope each scripted definition is legal in.
 - **Never here:** script bodies, localized text, descriptions, or asset data.
+
+The scopes are the one entry derived from a body rather than read off one, so it
+is worth being precise about what crosses. The generator parses each scripted
+definition, intersects the scopes cwtools' own rules declare for the keys it
+evaluates, and keeps the resulting scope name — `country`, from `scopes.cwt`,
+which is upstream rule data rather than anything Paradox ships. The body itself
+is discarded in the same function that read it and reaches no emitter. What
+ships is one enum-like word per definition, which answers "where may I call
+this" and still never "what does it do".
 
 Nothing this package emits could substitute for owning the game. It answers
 "does this id exist and what does it need," never "what does it do" or "what

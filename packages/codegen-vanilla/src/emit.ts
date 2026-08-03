@@ -15,7 +15,8 @@
  * and is short.
  */
 
-import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
+import { camelCase, pascalCase, safeIdentifier } from "@pdx-ts/codegen-cwt/naming";
+import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 
 import type { ScriptedDefinition } from "./read-scripted.ts";
 import type { TrieNode } from "./trie.ts";
@@ -262,6 +263,96 @@ export function emitScriptedParams(
     `${header(gameVersion)}export interface ${scriptedTypeName(registry)} {\n` +
     `${members.join("\n")}\n}\n`
   );
+}
+
+/**
+ * The subpath a registry's bindings ship under: `scripted_trigger` becomes
+ * `./triggers`, `scripted_effect` becomes `./effects`. The params table already
+ * owns `scripted-triggers.ts`, and these are a different thing — the callable
+ * bindings rather than the interface behind them.
+ */
+export function bindingsFile(registry: string): string {
+  return `${registry.replace(/^scripted_/, "")}s.ts`;
+}
+
+export interface BindingsEmission {
+  readonly code: string;
+  /** Definitions whose camelCased name collided and took a numbered suffix. */
+  readonly renamed: readonly string[];
+  /** Scope-set size -> how many bindings landed on it; 0 is unconstrained. */
+  readonly bySize: ReadonlyMap<number, number>;
+}
+
+/**
+ * One callable binding per definition, with the scope the inference derived.
+ *
+ * Emitted as a call rather than a spelled-out signature so the diff reads as
+ * the two facts a reviewer needs — the script name and the scope claimed for it
+ * — and the parameter types come from the merged params table rather than being
+ * restated. `@pdx-ts/sdk`'s `scriptedTrigger` resolves the rest.
+ *
+ * `/*#__PURE__*\/` because a mod imports a handful of these out of ~1,600 and
+ * a bundler must be free to drop the rest.
+ *
+ * The side-effect import of `./augment.ts` is load-bearing: without it a
+ * consumer who imports only this subpath gets bindings whose parameter types
+ * resolve against the SDK's empty merge targets.
+ */
+export function emitScriptedBindings(
+  registry: string,
+  definitions: readonly ScriptedDefinition[],
+  scopes: ReadonlyMap<string, RuleScopes>,
+  gate: Chokepoint,
+  gameVersion: string
+): BindingsEmission {
+  const factory = registry === "scripted_trigger" ? "scriptedTrigger" : "scriptedEffect";
+  const taken = new Set<string>([factory]);
+  const renamed: string[] = [];
+  const bySize = new Map<number, number>();
+  const lines: string[] = [];
+
+  for (const definition of definitions) {
+    const scope = scopes.get(definition.name.toLowerCase()) ?? "universal";
+    const size = scope === "universal" ? 0 : scope.length;
+    bySize.set(size, (bySize.get(size) ?? 0) + 1);
+
+    // Lowercased first, because a handful of vanilla names shout a whole
+    // segment (`can_destroy_planet_with_PLANET_KILLER_CRACKER`) or the lot
+    // (`STORM_FEVER_ENABLE_CHALLENGE_2`), and camelCasing those as written
+    // yields `sTORMFEVERENABLECHALLENGE2`. Only the identifier changes; the
+    // emitted string stays the name the game reads.
+    const candidate = safeIdentifier(camelCase(definition.name.toLowerCase()));
+    const identifier = unique(candidate, taken);
+    if (identifier !== candidate) {
+      renamed.push(`${definition.name} -> ${identifier} (${candidate} was taken)`);
+    }
+
+    // Scope names come from cwtools' `scopes.cwt`, not from a game file, so
+    // they are not what the gate was written to catch — but they are literals
+    // reaching emitted text, and the one rule here is that all of those are
+    // inspected. The context string keeps them legible in an audit.
+    const claim =
+      scope === "universal"
+        ? gate.literal("any", "inferred scope")
+        : scope.length === 1
+          ? gate.literal(scope[0]!, "inferred scope")
+          : `[${scope.map((one) => gate.literal(one, "inferred scope")).join(", ")}]`;
+
+    lines.push(
+      `export const ${identifier} = /*#__PURE__*/ ${factory}(` +
+        `${gate.literal(definition.name, `${registry} name`)}, ${claim});`
+    );
+  }
+
+  return {
+    code:
+      header(gameVersion) +
+      `import { ${factory} } from "@pdx-ts/sdk";\n\n` +
+      `import "./augment.ts";\n\n` +
+      `${lines.join("\n")}\n`,
+    renamed,
+    bySize,
+  };
 }
 
 export interface AugmentPlan {

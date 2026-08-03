@@ -124,6 +124,56 @@ every helper accepts any string — the degradation is exactly the unchecked
 status quo. `buildMod` refuses a build whose loaded install version disagrees
 with the package's pin unless `acceptGameVersion` accepts it.
 
+### Vanilla scripted triggers and effects
+
+`is_fallen_empire` is not a game primitive, so no amount of codegen from the
+rules produces it — it is vanilla _script_, one of ~1,600 definitions under
+`common/scripted_triggers`. The identifier package ships every one of them
+already bound:
+
+```ts
+import { isFallenEmpire, hasCrisisStage } from "@pdx-ts/stellaris-ids/triggers";
+import { giveAscensionPerkEffect } from "@pdx-ts/stellaris-ids/effects";
+
+potential: and(isFallenEmpire(), hasCrisisStage({ STAGE: 2 })),
+immediate: (s) => {
+  s.run(giveAscensionPerkEffect({ PERK: "ap_mind_over_matter" }));
+},
+```
+
+Every binding is a function, parameterless ones included, and the `$PARAM$`
+list is typed — a wrong or misspelled parameter is a compile error.
+
+**The scope is inferred, not asserted.** `isFallenEmpire()` is a
+`Trigger<"country">` because its body evaluates `is_country_type` and nothing
+else, and the rules say where that is legal. The inference only ever reads what
+the rules already state; a body it cannot read widens to every scope rather than
+guessing, so a binding is sometimes less specific than it could be and never
+wrong. 90% of scripted triggers narrow, 78% to five scopes or fewer out of 41.
+See [the verdict](../../docs/verdict-scripted-scope.md) for the evidence,
+including the 4,860 vanilla call sites the result is checked against.
+
+Effects go through `scope.run(...)` rather than being methods on the scope
+object: the recorder's sink is closed over, and keeping it that way is what
+stops arbitrary entries reaching the output.
+
+For a definition no install-derived package can know — another mod's, or one
+newer than the pinned package — bind it by hand. There the scope _is_ your
+assertion, and only the name and parameters go unchecked with `.unchecked`:
+
+```ts
+const pdHabitable = scriptedTrigger("pd_habitability_check", "planet");
+const modTrigger = scriptedTrigger.unchecked("othermod_check", ["country", "sector"]);
+```
+
+`"any"` is the deliberate opt-out, and yields a trigger that fits everywhere.
+
+Without the package installed, both call forms of a binding still compile and
+every name is accepted — the same degradation as the rest of the vanilla
+surface. One thing does not degrade: the mod-testing evaluator refuses a
+scripted trigger and always will, because the package carries names and scopes
+and never bodies, so there is nothing for it to evaluate.
+
 ### Patching vanilla
 
 PDXScript overrides are whole-object replacement, so patching requires the real
@@ -168,6 +218,8 @@ src/
 ├── events.ts          EventDef, event lowering, namespace()
 ├── on-actions.ts      on(hook, [events])
 ├── situations.ts      the situation target contract
+├── scripted.ts        scriptedTrigger/scriptedEffect bindings and their lowering
+├── scalar.ts          lowering a branded ref or scope ref to one PDXScript scalar
 ├── vanilla-ids.ts     VanillaIds merge targets + VanillaId/CheckedVanillaId resolvers
 ├── vanilla-trie.ts    makeIdTrie: the navigable-id runtime (one Proxy)
 ├── vanilla/           install-derived surface: VanillaView, patches, the version pin
@@ -212,16 +264,17 @@ codegen time.
 ```bash
 npm test               # all suites (vitest), including type-level tests
 npm run typecheck      # tsc --noEmit (models the ids-package-absent world)
-npm run typecheck:ids  # the package-present world (packages/stellaris-ids)
+npm run typecheck:ids  # the package-present world (packages/stellaris-ids + examples/)
 ```
 
 Evidence comes in four kinds, and new registries are expected to add all four:
 
 - **Golden PDXScript** under `tests/__snapshots__/` — real emitted `.txt`/
-  `.yml`/`.mod` files, reviewed in PRs. `example-mod.test.ts` additionally
-  freezes the quickstart example's ids, event namespace, and localization
-  bytes across restructures, and `pure-api.test.ts` proves two reversed
-  authoring orders render identically.
+  `.yml`/`.mod` files, reviewed in PRs. `pure-api.test.ts` proves two reversed
+  authoring orders render identically. The quickstart example's own goldens —
+  which freeze its ids, event namespace, and localization bytes across
+  restructures — live in `packages/stellaris-ids/tests/`, because the example
+  imports that package and a module augmentation is global to a program.
 - **Type-level tests** (`tests/*.test-d.ts`), run by vitest's typecheck:
   literal-id preservation, scope safety, cross-registry reference rejection.
 - **Corpus conformance** (`tests/codegen/corpus-conformance.test.ts`) parses

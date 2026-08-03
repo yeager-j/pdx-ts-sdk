@@ -1,7 +1,8 @@
+import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { TechnologyDef } from "../src/generated/technology.ts";
-import { defineTechnology } from "../src/index.ts";
+import { defineTechnology, makeScope, scriptedEffect, scriptedTrigger } from "../src/index.ts";
 import {
   and,
   hasCountryFlag,
@@ -114,5 +115,48 @@ describe("content ids", () => {
     expectTypeOf(foreign.id).toEqualTypeOf<"othermod_tech_x">();
     const bare = defineTechnology({ ...techDef, id: "mymod" });
     expectTypeOf(bare.id).toEqualTypeOf<"mymod">();
+  });
+});
+
+describe("scope safety for scripted bindings", () => {
+  it("rejects a country-asserted binding where a planet trigger is required", () => {
+    // The binding is an ordinary `Trigger` once called, so the contravariant
+    // brand does the work — nothing about scripted triggers needs its own
+    // checking mechanism.
+    planetSlot(scriptedTrigger("pd_habitability_check", "planet")());
+    // @ts-expect-error — a country assertion does not fit a planet slot
+    planetSlot(scriptedTrigger("is_fallen_empire", "country")());
+  });
+
+  it("lets `any` fit everywhere, which is what makes it the opt-out", () => {
+    const anywhere = scriptedTrigger("some_trigger", "any");
+    countrySlot(anywhere());
+    planetSlot(anywhere());
+    situationSlot(anywhere());
+  });
+
+  it("still infers the narrow scope when an `any` binding joins a combinator", () => {
+    // `and` intersects its operands' scopes, and a universal operand is the
+    // identity — so reaching for the opt-out on one condition does not widen
+    // the clause around it.
+    expectTypeOf(and(scriptedTrigger("some_trigger", "any")(), hasCountryFlag("x"))).toEqualTypeOf<
+      Trigger<"country">
+    >();
+  });
+
+  it("rejects a wrong-scope effect call at `run`", () => {
+    const sink: PdxEntry[] = [];
+    const countryOnly = scriptedEffect("set_merchant_government_effect", "country");
+    makeScope<"country">(sink).run(countryOnly());
+    // @ts-expect-error — a country-scoped effect cannot run in a planet closure
+    makeScope<"planet">(sink).run(countryOnly());
+  });
+
+  it("keeps a trigger out of `run` and an effect call out of a condition", () => {
+    const sink: PdxEntry[] = [];
+    // @ts-expect-error — a Trigger is not a scripted effect call
+    makeScope<"country">(sink).run(hasCountryFlag("x"));
+    // @ts-expect-error — a scripted effect call is not a condition
+    countrySlot(scriptedEffect("some_effect", "country")());
   });
 });

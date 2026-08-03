@@ -27,6 +27,7 @@ const OPTIONS = {
   installRoot: path.join(ROOT, "fixtures/fake-install"),
   gameVersion: "4.4.6",
   configRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/config"),
+  docsRoot: path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1"),
   trieThreshold: 5,
 };
 

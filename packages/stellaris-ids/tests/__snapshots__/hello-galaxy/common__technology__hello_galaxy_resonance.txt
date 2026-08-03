@@ -19,6 +19,7 @@ hello_galaxy_tech_resonance_weapons = {
 			NOT = {
 				has_country_flag = hello_galaxy_pacifist_path
 			}
+			is_regular_empire = yes
 		}
 	}
 	is_rare = yes

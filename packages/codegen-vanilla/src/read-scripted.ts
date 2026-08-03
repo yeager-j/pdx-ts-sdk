@@ -12,6 +12,12 @@
  * `[[FLAG] ... ]` block is only substituted when the block is active, so it is
  * optional too — and `FLAG` itself, the block's own condition, is the archetype
  * of an optional parameter.
+ *
+ * The parsed body is carried alongside, for `infer-scopes.ts` to measure. It is
+ * in-memory only and no emitter may read it: what leaves this generator is a
+ * name, a parameter list, and — since SDK-13 — a scope name from `scopes.cwt`.
+ * The licensing chokepoint in `emit.ts` is what actually enforces that, and it
+ * inspects every literal regardless of where the emitter thinks it came from.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -28,6 +34,8 @@ export interface ScriptedParam {
 export interface ScriptedDefinition {
   readonly name: string;
   readonly params: readonly ScriptedParam[];
+  /** The parsed body. Read by the scope inference; never emitted. */
+  readonly body: readonly PdxItem[];
 }
 
 export interface ScriptedRegistry {
@@ -129,6 +137,10 @@ function merge(left: ScriptedDefinition, right: ScriptedDefinition): ScriptedDef
     params: [...optional]
       .map(([name, isOptional]) => ({ name, optional: isOptional }))
       .sort((one, other) => compareIdentifiers(one.name, other.name)),
+    // Parameters union because a caller who satisfies the union satisfies
+    // either body; the body itself is last-wins, because exactly one of them is
+    // what the game loads (`packages/sdk/src/resolver/rules.ts`).
+    body: right.body,
   };
 }
 
@@ -169,7 +181,11 @@ export function readScriptedDefinitions(
       if (item.kind !== "entry" || item.value.kind !== "container") {
         continue;
       }
-      const definition = { name: item.key, params: paramsOf(item.value.items) };
+      const definition = {
+        name: item.key,
+        params: paramsOf(item.value.items),
+        body: item.value.items,
+      };
       const previous = byName.get(item.key);
       byName.set(item.key, previous === undefined ? definition : merge(previous, definition));
     }

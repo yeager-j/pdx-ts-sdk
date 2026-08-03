@@ -11,6 +11,13 @@
  * The technologies gate on flags the events set, which is exactly the coupling
  * that a content-type-shaped source tree would have split across two folders.
  *
+ * It also reaches into vanilla's own script. `isRegularEmpire`,
+ * `hasActualDeficit` and `giveTechOptionOrProgressEffect` are not rules the SDK
+ * generates from — they are scripted triggers and effects the game ships, bound
+ * by `@pdx-ts/stellaris-ids` with their names, `$PARAM$` lists, and scopes all
+ * checked. Nothing here asserts a scope; each was derived from what the rules
+ * already say about the keys those bodies evaluate.
+ *
  * Event identity is authored, never inferred from layout: `namespace(...)`
  * declares it, so every event id below is `hello_galaxy.<n>` from birth. A
  * namespace belongs to exactly one file, which is why a namespace's events are
@@ -26,7 +33,10 @@ import {
   isAtWar,
   namespace,
   not,
+  vanilla,
 } from "@pdx-ts/sdk";
+import { giveTechOptionOrProgressEffect } from "@pdx-ts/stellaris-ids/effects";
+import { hasActualDeficit, isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
 
 import { flags } from "../flags.ts";
 
@@ -52,9 +62,15 @@ export const resonanceWeapons = defineTechnology({
   prerequisites: [resonanceTheory, "tech_lasers_2"],
   isRare: true,
   weight: 70,
+  // `isRegularEmpire` is vanilla *script*, not a rule the SDK generates from —
+  // it lives in `common/scripted_triggers/` and is bound by the identifier
+  // package. Its scope was inferred rather than asserted: the body is an `OR`
+  // of `is_country_type` and a `NOT has_ethic`, both country-scoped, so this is
+  // a `Trigger<"country">` and using it on a planet would not compile.
   potential: and(
     hasCountryFlag(flags.hello_galaxy_heard_the_hum),
-    not(hasCountryFlag(flags.hello_galaxy_pacifist_path))
+    not(hasCountryFlag(flags.hello_galaxy_pacifist_path)),
+    isRegularEmpire()
   ),
 });
 
@@ -91,11 +107,25 @@ export const humReturns = events.defineCountryEvent({
     country.randomList([
       {
         weight: 60,
-        do: (c) => c.setCountryFlag(flags.hello_galaxy_heard_the_hum),
+        do: (c) => {
+          c.setCountryFlag(flags.hello_galaxy_heard_the_hum);
+          // A vanilla scripted *effect*, invoked through `run` — effects record
+          // into a sink the scope object closes over, so a binding hands back a
+          // call rather than recording itself. Its `TECH` parameter takes this
+          // mod's own technology: the package types parameters as bare scalars,
+          // and the SDK widens that to the references it already models.
+          c.run(giveTechOptionOrProgressEffect({ TECH: resonanceTheory }));
+        },
       },
       {
         weight: 40,
-        modifiers: [{ factor: 2, when: isAtWar() }],
+        modifiers: [
+          { factor: 2, when: isAtWar() },
+          // A parameterized scripted trigger. The `$PARAM$` list is typed, so
+          // a misspelled `RESOURCE` is a compile error rather than a condition
+          // that is silently never true.
+          { factor: 3, when: hasActualDeficit({ RESOURCE: vanilla.resource("minerals") }) },
+        ],
         do: (c) => {
           c.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
             planet.saveEventTargetAs(stormWorld);

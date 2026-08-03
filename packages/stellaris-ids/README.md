@@ -40,9 +40,31 @@ vanilla.soundEffect.toxoids.events.tox_events.event_first_contact_toxoid;
 vanilla.sprite("GFX_evt_ship_in_orbit"); // the checked call form, for copy-paste
 ```
 
-Scripted trigger and effect names carry their parameter lists, including
-optionality — this is what lets the SDK's scripted-trigger bindings check
-existence and arguments offline, with no install present.
+### Scripted triggers and effects
+
+Every one of vanilla's ~1,600 scripted triggers and ~1,650 scripted effects
+ships already bound, under its own subpath:
+
+```ts
+import { isFallenEmpire, hasCrisisStage } from "@pdx-ts/stellaris-ids/triggers";
+import { giveAscensionPerkEffect } from "@pdx-ts/stellaris-ids/effects";
+
+potential: and(isFallenEmpire(), hasCrisisStage({ STAGE: 2 })),
+immediate: (s) => {
+  s.run(giveAscensionPerkEffect({ PERK: "ap_mind_over_matter" }));
+},
+```
+
+Names and `$PARAM$` lists are checked offline, with no install present. So is
+the **scope**: `isFallenEmpire()` is a `Trigger<"country">`, derived by
+intersecting the scopes cwtools' rules declare for the keys the definition's
+body evaluates. A body the analysis cannot read widens to every scope rather
+than guessing, so a binding may be less specific than it could be and is never
+wrong — see [the verdict](../../docs/verdict-scripted-scope.md).
+
+These two subpaths are the package's only runtime, one call per definition and
+`/*#__PURE__*/`-annotated so unused ones drop out of a bundle. Everything else
+here is types with no payload.
 
 ### Without the package
 
@@ -76,7 +98,9 @@ src/
 │                        per-bucket trie files instead
 │                        (registries/sprite/eventpictures.ts, ...)
 ├── scripted-triggers.ts name → parameter-object tables (1,618 triggers)
-└── scripted-effects.ts  same for effects (1,657)
+├── scripted-effects.ts  same for effects (1,657)
+├── triggers.ts          the bound scripted triggers, with inferred scopes
+└── effects.ts           the bound scripted effects
 ```
 
 Everything under `src/` is generated — never edit it by hand.
@@ -94,7 +118,8 @@ report; the diff is reviewed as a public-API change.
 `tests/present.test-d.ts` is the package-present world: literal preservation,
 typo rejection, cross-registry rejection, trie navigation to real leaves,
 scripted-trigger parameter shapes cross-checked against the game's own files,
-and a guard that the trie'd registries match the SDK's oversized list. The
+the bound scripted triggers and effects at their inferred scopes, and a guard
+that the trie'd registries match the SDK's oversized list. The
 package-absent world is covered from the SDK's own test program, which
 excludes this package on purpose. `tests/committed-output.test.ts` regenerates
 in memory wherever an install exists and fails on any divergence from the

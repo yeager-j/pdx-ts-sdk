@@ -20,6 +20,8 @@ import { EFFECT_META, type EffectFieldMeta } from "./generated/effect-meta.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import { EVENT_KINDS } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
+import { toScalar } from "./scalar.ts";
+import type { ScriptedEffectCall } from "./scripted.ts";
 import type { Trigger } from "./trigger-core.ts";
 
 // ---------------------------------------------------------------------------
@@ -300,6 +302,23 @@ export interface StructuralEffects<S extends ScopeName> {
   /** Like `saveEventTargetAs`, but the target survives the event chain. */
   saveGlobalEventTargetAs(target: EventTarget<S>): void;
 
+  /**
+   * Runs a scripted effect bound by `scriptedEffect` or imported from
+   * `@pdx-ts/stellaris-ids/effects`:
+   * `give_ascension_perk_effect = { PERK = ap_mind_over_matter }`.
+   *
+   * ```ts
+   * scope.run(giveAscensionPerkEffect({ PERK: "ap_mind_over_matter" }));
+   * ```
+   *
+   * The call carries the scope its binding claims, so a country-scoped effect
+   * inside a planet closure is a compile error. It goes through a method rather
+   * than recording itself because the recorder's sink is closed over and
+   * nothing outside the scope object can reach it — which is the property that
+   * keeps arbitrary entries out of the output.
+   */
+  run(effect: ScriptedEffectCall<S>): void;
+
   /** Adds resources to the scope's stockpile: `add_resource = { energy = 50 }`. */
   addResource(args: { resource: string; amount: number; mult?: number }): void;
 }
@@ -307,19 +326,6 @@ export interface StructuralEffects<S extends ScopeName> {
 // ---------------------------------------------------------------------------
 // The recorder
 // ---------------------------------------------------------------------------
-
-function toScalar(value: unknown): string | number | boolean {
-  if (typeof value === "object" && value !== null) {
-    if ("path" in value) {
-      return (value as ScopeRef).path;
-    }
-    if ("id" in value) {
-      return (value as { id: string }).id;
-    }
-    throw new Error(`Cannot serialize ${JSON.stringify(value)} as an effect argument`);
-  }
-  return value as string | number | boolean;
-}
 
 /**
  * Records an id-valued argument as a content reference when the generated meta
@@ -461,6 +467,10 @@ const STRUCTURAL: Record<
 
   saveGlobalEventTargetAs: (sink) => (target: EventTarget) => {
     sink.push(kv("save_global_event_target_as", target.name));
+  },
+
+  run: (sink) => (effect: ScriptedEffectCall) => {
+    sink.push(...effect.entries);
   },
 
   addResource: (sink) => (args: { resource: string; amount: number; mult?: number }) => {
