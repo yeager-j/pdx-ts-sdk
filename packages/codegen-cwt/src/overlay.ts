@@ -416,6 +416,18 @@ export const CONDITIONALLY_REQUIRED_LOCALISATION = new Map<string, ConditionalLo
 export interface SyntheticLocalisation {
   /** The `$`-bearing pattern to synthesize, e.g. `"$_desc"`. */
   readonly pattern: string;
+  /**
+   * The renamed raw-key body member (a `CONTENT_FIELD_OVERRIDES` `member`)
+   * that the vendored rules' bare pointer (`desc = desc`) actually reads at
+   * runtime. A synthetic slot only gives an author a real text-authoring
+   * path; the game still resolves the display text through that pointer, so
+   * `ContentAuthoring.define` sets this member to the synthesized slot's
+   * computed key whenever the slot's text is present and the author has not
+   * already written the pointer themselves — otherwise the text lands in
+   * localisation with nothing in the definition body pointing at it, the
+   * same silent failure this whole table exists to close.
+   */
+  readonly pointerMember: string;
   readonly reason: string;
 }
 
@@ -447,12 +459,24 @@ export interface SyntheticLocalisation {
  * `conditionalDesc`'s raw-key arms (the top-level scalar and
  * `ArchaeologicalSiteTypeDesc.text`) a genuine optional escape hatch instead
  * of being the only route.
+ *
+ * A generated key is only half the fix: `type[archaeological_site_type]`
+ * reads that text through the body's own `desc` pointer (renamed
+ * `conditionalDesc`, per the `CONTENT_FIELD_OVERRIDES` row beside this one),
+ * so a definition that sets only the synthetic `desc` member and never
+ * touches `conditionalDesc` would populate the `.yml` with real text and
+ * emit no `desc = <id>_desc` anywhere in its own body — reachable nowhere in
+ * game, the identical silent failure this table exists to close, one step
+ * removed. `pointerMember` is what closes that: `ContentAuthoring.define`
+ * defaults it to the synthesized key whenever the text member is set and the
+ * author has not written the pointer themselves.
  */
 export const SYNTHETIC_LOCALISATION = new Map<string, SyntheticLocalisation>([
   [
     "archaeological_site_type.desc",
     {
       pattern: "$_desc",
+      pointerMember: "conditionalDesc",
       reason:
         "archaeology.cwt declares no `$`-bearing pattern for desc at all (only the excluded " +
         'bare pointer `desc = desc`), unlike situation_type\'s `desc = "$_desc"` sitting beside ' +

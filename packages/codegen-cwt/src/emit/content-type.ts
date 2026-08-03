@@ -188,9 +188,14 @@ function localisationMetadata(type: ContentType, plan = planLocalisation(type)):
           conditional === undefined
             ? ""
             : `, requiredUnless: ${JSON.stringify(conditional.unless)}`;
+        const synthetic = SYNTHETIC_LOCALISATION.get(`${type.name}.${member}`);
+        const pointerMember =
+          synthetic === undefined
+            ? ""
+            : `, pointerMember: ${JSON.stringify(synthetic.pointerMember)}`;
         return (
           `  { member: ${JSON.stringify(member)}, pattern: ${JSON.stringify(entry.pattern)}, ` +
-          `required: ${required}${requiredUnless} },\n`
+          `required: ${required}${requiredUnless}${pointerMember} },\n`
         );
       })
       .join("") +

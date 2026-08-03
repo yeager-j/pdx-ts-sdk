@@ -223,6 +223,17 @@ export interface ContentLocalisation {
    * *some* definitions); this only sharpens the runtime check.
    */
   readonly requiredUnless?: string;
+  /**
+   * Names the raw-key body member the game actually reads this slot's text
+   * through (SDK-50's synthetic localisation slots — see
+   * `SYNTHETIC_LOCALISATION`). A generated key with nothing in the
+   * definition body pointing at it is unreachable in game, so
+   * `ContentAuthoring.define` defaults this member to the slot's own
+   * computed key whenever the slot's text is set and the pointer member is
+   * not already set by the author — the two are produced together, never as
+   * something an author can end up with only half of.
+   */
+  readonly pointerMember?: string;
 }
 
 interface ContentFieldBase {
@@ -1248,15 +1259,20 @@ export class ContentAuthoring {
     }
     // Before anything reads a field: a closure form is authoring sugar, and
     // everything below — desc keys, dual arms, the writer — works on values.
-    const def = resolveFromClosures(
+    const resolved = resolveFromClosures(
       rawDef as Readonly<Record<string, unknown>>,
       descriptor.fields
     ) as D;
-    this.assertPrefixed(type, def.id);
+    this.assertPrefixed(type, resolved.id);
     const definitions = this.definitions.get(type) ?? [];
-    if (definitions.some((existing) => existing.id === def.id)) {
-      throw new Error(`Duplicate ${type} id "${def.id}"`);
+    if (definitions.some((existing) => existing.id === resolved.id)) {
+      throw new Error(`Duplicate ${type} id "${resolved.id}"`);
     }
+    // A synthetic localisation slot's generated key is only reachable in
+    // game through the body pointer the vendored rules actually read; fill
+    // it in before either the .yml text or the body fields get collected, so
+    // the two are never produced apart.
+    const def = this.applySyntheticPointers(resolved, descriptor.localisation) as D;
     const localisation: LocalisationEntry[] = [];
     const nestedIds = new Map<string, Set<string>>();
     this.collectLocalisation(def.id, def, descriptor.localisation, localisation);
@@ -1305,6 +1321,49 @@ export class ContentAuthoring {
           "so it cannot collide with vanilla or other mods"
       );
     }
+  }
+
+  /**
+   * Defaults a synthetic localisation slot's `pointerMember` to the slot's
+   * own computed key, whenever the slot's text is present and the author has
+   * not already written the pointer themselves.
+   *
+   * A synthetic slot (`SYNTHETIC_LOCALISATION`) only adds a place to author
+   * real text; the game still finds that text by reading a body field the
+   * vendored rules point at (`archaeological_site_type`'s `desc = desc`, an
+   * ordinary raw-key field renamed to `conditionalDesc`). Setting the text
+   * member alone, with no matching pointer anywhere in the body, reproduces
+   * the exact silent failure SDK-50 exists to close, one step removed: a
+   * populated `.yml` and a clean build, with the game showing nothing. If the
+   * author *has* written the pointer — to the same key or a different one —
+   * that is a deliberate choice this leaves alone; two independently-set
+   * values pointing at different keys is an authoring conflict, not
+   * something this method can resolve, so it throws rather than guessing
+   * which one the definition should show.
+   */
+  private applySyntheticPointers(
+    def: Readonly<Record<string, unknown>>,
+    slots: readonly ContentLocalisation[]
+  ): Readonly<Record<string, unknown>> {
+    let patched: Record<string, unknown> | undefined;
+    for (const slot of slots) {
+      if (slot.pointerMember === undefined || def[slot.member] === undefined) {
+        continue;
+      }
+      if (def[slot.pointerMember] !== undefined) {
+        throw new Error(
+          `"${def["id"] as string}" sets both "${slot.member}" and "${slot.pointerMember}" — ` +
+            `${slot.member}'s text is only reachable in game through the ${slot.pointerMember} ` +
+            `pointer, so setting both is ambiguous. Set only ${slot.member} (the pointer is ` +
+            `generated) or only ${slot.pointerMember} (write the key yourself).`
+        );
+      }
+      (patched ??= { ...def })[slot.pointerMember] = localisationKey(
+        slot.pattern,
+        def["id"] as string
+      );
+    }
+    return patched ?? def;
   }
 
   private collectLocalisation(

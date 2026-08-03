@@ -220,5 +220,5 @@ export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
 
 export const ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
-  { member: "desc", pattern: "$_desc", required: false },
+  { member: "desc", pattern: "$_desc", required: false, pointerMember: "conditionalDesc" },
 ];

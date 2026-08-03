@@ -1858,7 +1858,12 @@ describe("SDK-44: conditionally-required localization and the global_ship_design
 });
 
 describe("SDK-50: identity-conversion text fields", () => {
-  it("gives archaeological_site_type.desc a real text slot, distinct from the raw-key conditionalDesc", () => {
+  it("gives archaeological_site_type.desc a real text slot, coupled to its emitted raw-key pointer", () => {
+    // A generated key alone is unreachable: type[archaeological_site_type]
+    // reads the display text through the body's own `desc` pointer (renamed
+    // `conditionalDesc`), so setting only the synthetic `desc` member must
+    // also emit that pointer — not just populate the .yml — or the text is
+    // exactly as silently orphaned as the original bug SDK-50 fixed.
     const site = defineArchaeologicalSiteType({
       id: "sdk50_archaeological_site_type_desc",
       name: "Sdk50 Site",
@@ -1876,8 +1881,29 @@ describe("SDK-50: identity-conversion text fields", () => {
     )!;
     // The raw prose never lands in the script file as a key.
     expect(rendered).not.toContain("A crumbling ruin");
+    // The definition emits the pointer the game actually reads...
+    expect(rendered).toContain("desc = sdk50_archaeological_site_type_desc_desc");
+    // ...and the localisation entry it points at exists.
     expect(files.get("localisation/english/sdk50_l_english.yml")).toContain(
       'sdk50_archaeological_site_type_desc_desc:0 "A crumbling ruin, half swallowed by the dust."'
+    );
+  });
+
+  it("rejects setting both the synthetic desc and its own pointer, rather than guessing which wins", () => {
+    const site = defineArchaeologicalSiteType({
+      id: "sdk50_archaeological_site_type_desc_conflict",
+      name: "Sdk50 Site",
+      desc: "Some prose the author also pointed elsewhere.",
+      conditionalDesc: "SDK50_HAND_WRITTEN_KEY",
+      allow: always(),
+      visible: always(),
+      stages: 1,
+      onRollFailed: () => {},
+    });
+    expect(() =>
+      render(buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])]))
+    ).toThrow(
+      '"sdk50_archaeological_site_type_desc_conflict" sets both "desc" and "conditionalDesc"'
     );
   });
 
