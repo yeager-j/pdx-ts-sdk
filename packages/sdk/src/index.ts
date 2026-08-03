@@ -11,13 +11,16 @@ export {
   eventTarget,
   isEffectKey,
   makeScope,
+  recordEffects,
   type EventTarget,
   type IfChain,
   type Modifier,
   type ModifierWithLoc,
   type RandomListArm,
   type ScopeRef,
+  type ScriptCtx,
   type StructuralEffects,
+  type UndeclaredFrom,
 } from "./effect-core.ts";
 export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
 export type { SituationTargetContract } from "./situations.ts";
@@ -179,12 +182,10 @@ export type {
 export type { DefinedWarGoal, WarGoalDef, WarGoalFields } from "./generated/war-goal.ts";
 export type {
   DefinedEvent,
-  EventCtx,
   EventDef,
   EventOption,
   EventRef,
   FireEventArgs,
-  UndeclaredFrom,
   WitnessedFireEventArgs,
 } from "./events.ts";
 export type {
@@ -198,6 +199,7 @@ export type {
   TriggeredModifier,
   WeightBlock,
   WeightBlockWithLoc,
+  WithFrom,
 } from "./content.ts";
 export type {
   ModifierBlockByScope,

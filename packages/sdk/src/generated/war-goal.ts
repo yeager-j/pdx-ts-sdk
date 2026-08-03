@@ -8,6 +8,7 @@ import type {
   DefinedContent,
   EffectBlock,
   WeightBlock,
+  WithFrom,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { CedeClaim, PeaceOffer, WarGoalHide } from "./enums.ts";
@@ -73,19 +74,19 @@ export interface WarGoalFields {
   /** default: no */
   showAgreementTerms?: boolean;
   /** FROM = The targeted country, THIS = The acting country */
-  potential?: Trigger<"country">;
+  potential?: WithFrom<Trigger<"country">, "country", "country">;
   /** FROM = The targeted country, THIS = The acting country */
-  possible?: Trigger<"country">;
+  possible?: WithFrom<Trigger<"country">, "country", "country">;
   /** Set what peace offers are allowed. Leaving this out means no peace, which is usually a bug, hence making this a necessary field. */
   allowedPeaceOffers?: PeaceOffer[];
   /** Run when war ends in status quo. The targeted country, THIS = The acting country */
-  onStatusQuo?: EffectBlock<"country">;
-  onWargoalSet?: EffectBlock<"country">;
+  onStatusQuo?: EffectBlock<"country", "country">;
+  onWargoalSet?: EffectBlock<"country", "country">;
   /** Run when target surrenders after claims are ceded. The targeted country, THIS = The acting country */
-  onAccept?: EffectBlock<"country">;
+  onAccept?: EffectBlock<"country", "country">;
   /** FROM = The targeted country, THIS = The acting country */
-  aiWeight?: WeightBlock<"country">;
-  galacticEmpireJoinsDefender?: Trigger<"country">;
+  aiWeight?: WithFrom<WeightBlock<"country">, "country", "country">;
+  galacticEmpireJoinsDefender?: WithFrom<Trigger<"country">, "country", "country">;
   /** Starbases are destroyed instead of ownership being transferred */
   destroyStarbases?: true;
   shouldIgnoreFederations?: boolean;

@@ -58,7 +58,7 @@ describe("production testing module", () => {
       id: 2,
       isTriggeredOnly: true,
       immediate: (country) => {
-        country.within(target, (planet) => planet.log("should_not_run"));
+        target.effects((planet) => planet.log("should_not_run"));
       },
     });
     const entry = events.defineCountryEvent({

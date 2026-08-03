@@ -23,7 +23,10 @@ content_test_war_goal_liberation = {
 		base = 5
 		modifier = {
 			factor = 2
-			has_authority = auth_machine_intelligence
+			desc = content_test_war_goal_liberation_ai_weight_0
+			from = {
+				has_authority = auth_machine_intelligence
+			}
 		}
 	}
 	destroy_starbases = yes

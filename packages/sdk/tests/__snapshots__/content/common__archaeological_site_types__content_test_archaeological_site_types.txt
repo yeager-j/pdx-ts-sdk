@@ -16,7 +16,12 @@ content_test_archaeological_site_type_derelict = {
 		can_go_mia = yes
 	}
 	allow = {
-		can_go_mia = yes
+		AND = {
+			can_go_mia = yes
+			from = {
+				is_site_locked = no
+			}
+		}
 	}
 	visible = {
 		has_authority = auth_machine_intelligence
@@ -36,7 +41,11 @@ content_test_archaeological_site_type_derelict = {
 		icon = GFX_archaeology_runes_E3
 		event = content_test.3
 	}
-	on_roll_failed = {}
+	on_roll_failed = {
+		from = {
+			expire_site_event = content_test.1
+		}
+	}
 	on_create = {}
 	on_visible = {
 		set_country_flag = content_test_site_visible

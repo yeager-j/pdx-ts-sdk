@@ -93,7 +93,7 @@ function pureCollections(): ModItemInput[] {
     title: "Aftershock",
     isTriggeredOnly: true,
     immediate: (planet, ctx) => {
-      planet.within(ctx.from, (country) => {
+      ctx.from.effects((country) => {
         country.addResource({ resource: "influence", amount: 50 });
       });
     },

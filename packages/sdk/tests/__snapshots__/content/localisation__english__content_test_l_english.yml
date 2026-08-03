@@ -31,6 +31,7 @@
  casus_belli_content_test_casus_belli_manufactured_grievance_acquire_hint:0 "Fabricate a pretext for war."
  war_goal_content_test_war_goal_liberation:0 "Liberation"
  war_goal_content_test_war_goal_liberation_desc:0 "Free the occupied systems."
+ content_test_war_goal_liberation_ai_weight_0:0 "The target is a rival."
  content_test_agreement_preset_tribute:0 "Tribute"
  content_test_agreement_preset_tribute_desc:0 "A modest tribute agreement."
  content_test_agreement_preset_tribute_flavor_desc:0 "Coin for peace."

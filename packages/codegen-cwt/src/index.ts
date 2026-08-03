@@ -290,6 +290,7 @@ async function main(): Promise<void> {
       "TriggeredModifier",
       "WeightBlock",
       "WeightBlockWithLoc",
+      "WithFrom",
     ].filter((name) => content.emission.code.includes(name));
     // A field lowered through `shape: "aliasStruct"` (see civic_or_origin's
     // potential/possible) references a shared `<Name>Block` type generated

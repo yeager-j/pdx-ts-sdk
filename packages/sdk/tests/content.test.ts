@@ -50,6 +50,7 @@ import {
   hasTechnology,
   isCapital,
   isScopeValid,
+  isSiteLocked,
   namespace,
   render,
   type PureMod,
@@ -429,10 +430,20 @@ function defineContentExample(): PureMod {
     possible: always(),
     allowedPeaceOffers: ["status_quo", "surrender"],
     onStatusQuo: (country) => country.setCountryFlag("content_test_status_quo"),
-    aiWeight: {
+    // The closure form of a weight block, whose FROM is the targeted country.
+    // The `desc` row is the point: its generated localisation key is registered
+    // against the row's object identity, so the closure has to run once and
+    // once only — see `resolveFromClosures`.
+    aiWeight: (ctx) => ({
       base: 5,
-      modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
-    },
+      modifiers: [
+        {
+          factor: 2,
+          desc: "The target is a rival.",
+          when: ctx.from.trigger(hasAuthority("auth_machine_intelligence")),
+        },
+      ],
+    }),
     destroyStarbases: true,
     forbiddenPeaceOffers: {
       demandSurrender: "content_test_war_goal_liberation_no_demand",
@@ -506,10 +517,17 @@ function defineContentExample(): PureMod {
       { difficulty: 2, icon: "GFX_archaeology_runes_E2", event: digEvents[1]! },
       { difficulty: 3, icon: "GFX_archaeology_runes_E3", event: digEvents[2]! },
     ],
+    // Both forms of a FROM-bearing trigger field, side by side: the plain
+    // value where the condition never names FROM, the closure where it does.
     potential: canGoMia(),
-    allow: canGoMia(),
+    allow: (ctx) => and(canGoMia(), ctx.from.trigger(isSiteLocked(false))),
     visible: hasAuthority("auth_machine_intelligence"),
-    onRollFailed: () => {},
+    // The rules scope this block this=fleet, from=archaeological site, and the
+    // vanilla shape for it opens FROM. `ctx.from` is what makes that sayable,
+    // and a reference written inside it is still recorded and resolved.
+    onRollFailed: (fleet, ctx) => {
+      ctx.from.effects((site) => site.expireSiteEvent(digEvents[0]!));
+    },
     onCreate: () => {},
     onVisible: (country) => country.setCountryFlag("content_test_site_visible"),
   });

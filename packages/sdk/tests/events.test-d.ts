@@ -96,7 +96,7 @@ describe("the FROM contract on the real event API", () => {
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
         // @ts-expect-error — this event declared no `from:`; ctx.from is an inert sentinel, not a ScopeRef
-        country.within(ctx.from, () => {});
+        ctx.from.effects(() => {});
       },
     });
   });

@@ -2,7 +2,13 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/agreements.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
+import type {
+  ContentField,
+  ContentLocalisation,
+  DefinedContent,
+  WeightBlock,
+  WithFrom,
+} from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type {
   AgreementPresetRef,
@@ -137,9 +143,9 @@ export interface AgreementPresetFields {
   icon?: SpriteRef | string;
   specialistType?: AgreementTermValueSpecialistTypeRef | string;
   termData: AgreementPresetTermData;
-  overlordWeight?: WeightBlock<"country">;
-  subjectWeight?: WeightBlock<"country">;
-  potential?: Trigger<"country">;
+  overlordWeight?: WithFrom<WeightBlock<"country">, "country", "country">;
+  subjectWeight?: WithFrom<WeightBlock<"country">, "country", "country">;
+  potential?: WithFrom<Trigger<"country">, "country", "country">;
   /** Whether the term should show up on the agreement negotiation screen (default: no) */
   hidden?: boolean;
   /** The ai will skip this when trying to find best/preffered agreement preset to negotiate existing or propose new agreement (default: yes) */

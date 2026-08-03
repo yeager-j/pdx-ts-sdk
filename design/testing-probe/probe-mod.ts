@@ -83,7 +83,7 @@ export const aftershock = eventNamespace.definePlanetEvent({
   desc: "The crystal hum lingers over this world.",
   isTriggeredOnly: true,
   immediate: (planet, ctx) => {
-    planet.within(ctx.from, (country) => {
+    ctx.from.effects((country) => {
       country.addResource({ resource: "influence", amount: 50 });
       country.giveTechnology({ tech: resonanceTheory });
     });
@@ -115,7 +115,7 @@ export const humReturns = eventNamespace.defineCountryEvent({
     ]);
     country
       .if(hasCountryFlag(flags.tp_heard_the_hum), (c) => {
-        c.within(stormWorld, (planet) => planet.addDeposit("d_minerals_1"));
+        stormWorld.effects((planet) => planet.addDeposit("d_minerals_1"));
       })
       .else((c) => c.log("the hum went unheard"));
   },

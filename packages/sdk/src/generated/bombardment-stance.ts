@@ -2,7 +2,13 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/bombardment_stances.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
+import type {
+  ContentField,
+  ContentLocalisation,
+  DefinedContent,
+  WeightBlock,
+  WithFrom,
+} from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { ScopeName } from "./scopes.ts";
 
@@ -35,7 +41,7 @@ export interface BombardmentStanceFields {
   /** Will this stance attempt to abduct pops to your own planets instead of killing them? default = no */
   abductPops?: boolean;
   /** General scale of damage to planet, default = 1.0 */
-  planetDamage?: number | WeightBlock<"fleet">;
+  planetDamage?: number | WithFrom<WeightBlock<"fleet">, "fleet", "planet">;
   /** General scale of damage to armies, default = 1.0 */
   armyDamage?: number;
   /** Chance that a pop_group is killed when planetary damage reaches 100%, default = 0 */
@@ -43,7 +49,7 @@ export interface BombardmentStanceFields {
   /** Will not kill/abduct pops if pops <= this number already, default = 0. Doesn't work for nations that doesn't have diplomatic wars! */
   minPopsToKillPop?: number;
   killPopAmount?: BombardmentStanceKillPopAmount;
-  aiWeight: WeightBlock<"fleet">;
+  aiWeight: WithFrom<WeightBlock<"fleet">, "fleet", "planet">;
 }
 
 export interface BombardmentStanceDef<Id extends string = string> extends BombardmentStanceFields {

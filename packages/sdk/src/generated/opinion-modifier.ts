@@ -2,7 +2,13 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/modifiers.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
+import type {
+  ContentField,
+  ContentLocalisation,
+  DefinedContent,
+  WeightBlock,
+  WithFrom,
+} from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 
 /**
@@ -12,11 +18,11 @@ import type { Trigger } from "../trigger-core.ts";
 export interface OpinionModifierFields {
   /** English text emitted to localization under `<id>`. */
   name: string;
-  opinion: WeightBlock<"country"> | number;
+  opinion: WithFrom<WeightBlock<"country">, "country", "country"> | number;
   /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
-  decay?: number | WeightBlock<"country">;
+  decay?: number | WithFrom<WeightBlock<"country">, "country", "country">;
   /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
-  growth?: number | WeightBlock<"country">;
+  growth?: number | WithFrom<WeightBlock<"country">, "country", "country">;
   /**
    * No by default
    * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
@@ -49,7 +55,7 @@ export interface OpinionModifierFields {
    * root = country with the opinion, from = country it has the opinion of
    * Only when opinion_modifier subtype `triggered_opinion_modifier` applies.
    */
-  trigger?: Trigger<"country">;
+  trigger?: WithFrom<Trigger<"country">, "country", "country">;
 }
 
 export interface OpinionModifierDef<Id extends string = string> extends OpinionModifierFields {

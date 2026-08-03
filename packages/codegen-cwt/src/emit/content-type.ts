@@ -264,6 +264,35 @@ interface FieldScope {
   readonly type: string;
   /** The same thing as data, `"any"` where nothing pinned it. */
   readonly scopes: readonly string[] | "any";
+  /**
+   * The scope FROM holds inside this block, as a TS literal type, when the
+   * rules name one. `null` where they do not — including their `from = any`,
+   * which names no scope and must stay unreadable rather than lower to
+   * something an author could navigate through.
+   *
+   * Read from the rules even when `asserted` overrides `this`: an overlay row
+   * corrects the scope a block *runs* in, which says nothing about what the
+   * game hands it as FROM.
+   */
+  readonly from: string | null;
+}
+
+/**
+ * The scope FROM holds inside one field's block.
+ *
+ * A field's own `replace_scopes` states the whole context, so a FROM it leaves
+ * out is cleared rather than inherited — unlike `this`, which every annotation
+ * names. Only a `push_scope` (or no annotation at all) leaves the enclosing
+ * definition's FROM standing.
+ */
+function fromType(emitter: Emitter, field: RuleField, ctx: FieldContext): string | null {
+  const declared =
+    field.scope?.replaces === true ? field.scope.from : (field.scope?.from ?? ctx.scope?.from);
+  if (declared === undefined || declared === null) {
+    return null;
+  }
+  const canonical = emitter.canonicalScope(declared);
+  return canonical === null ? null : JSON.stringify(canonical);
 }
 
 function scopeType(
@@ -272,20 +301,46 @@ function scopeType(
   ctx: FieldContext,
   asserted?: string
 ): FieldScope {
+  const from = fromType(emitter, field, ctx);
   if (asserted !== undefined) {
     const canonical = emitter.canonicalScope(asserted);
     if (canonical === null) {
       throw new Error(`Overlay asserts unknown scope "${asserted}"`);
     }
-    return { type: JSON.stringify(canonical), scopes: [canonical] };
+    return { type: JSON.stringify(canonical), scopes: [canonical], from };
   }
-  const unpinned: FieldScope = { type: ctx.unpinned, scopes: "any" };
+  const unpinned: FieldScope = { type: ctx.unpinned, scopes: "any", from };
   const declared = field.scope?.this ?? ctx.scope?.this;
   if (declared === undefined || declared === null) {
     return unpinned;
   }
   const canonical = emitter.canonicalScope(declared);
-  return canonical === null ? unpinned : { type: JSON.stringify(canonical), scopes: [canonical] };
+  return canonical === null
+    ? unpinned
+    : { type: JSON.stringify(canonical), scopes: [canonical], from };
+}
+
+/**
+ * `EffectBlock`'s type arguments: the block's own scope, plus the scope its
+ * closure's `ctx.from` holds where the rules declare one. A block with no
+ * declared FROM emits the one-argument form, so the default keeps FROM
+ * unreadable there rather than admitting a ref the game will not honour.
+ */
+function effectBlockArgs(scope: FieldScope): string {
+  return scope.from === null ? scope.type : `${scope.type}, ${scope.from}`;
+}
+
+/**
+ * Wraps a declarative member type in `WithFrom` where the rules give the block
+ * a FROM, adding the closure form that can reach it.
+ *
+ * A trigger and a weight block are values rather than closures, so unlike an
+ * effect field there is no argument list to hand FROM to — the closure form is
+ * that argument list. Only fields with a FROM get it: the plain form stays the
+ * only way to write a condition that has no FROM to name.
+ */
+function withFrom(inner: string, scope: FieldScope): string {
+  return scope.from === null ? inner : `WithFrom<${inner}, ${scope.type}, ${scope.from}>`;
 }
 
 function flatten(fields: readonly RuleField[], typeName: string): RuleField[] {
@@ -732,7 +787,7 @@ function lowerOrdinary(
   if (requested === "weightBlock") {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: `WeightBlock<${scope.type}>`,
+      memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlock"),
       admits: admitsBlock(field, "weightBlock", scope),
     };
@@ -740,7 +795,7 @@ function lowerOrdinary(
   if (requested === "weightBlockWithLoc") {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: `WeightBlockWithLoc<${scope.type}>`,
+      memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlockWithLoc"),
       admits: admitsBlock(field, "weightBlockWithLoc", scope),
     };
@@ -761,7 +816,7 @@ function lowerOrdinary(
   if (requested === "trigger" || (requested === undefined && category === "trigger")) {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: `Trigger<${scope.type}>`,
+      memberType: withFrom(`Trigger<${scope.type}>`, scope),
       metadata: metadata(field, name, "trigger"),
       admits: admitsBlock(field, "trigger", scope, "trigger"),
     };
@@ -769,7 +824,7 @@ function lowerOrdinary(
   if (requested === "effect" || (requested === undefined && category === "effect")) {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: `EffectBlock<${scope.type}>`,
+      memberType: `EffectBlock<${effectBlockArgs(scope)}>`,
       metadata: metadata(field, name, "effect"),
       admits: admitsBlock(field, "effect", scope, "effect"),
     };
@@ -777,7 +832,7 @@ function lowerOrdinary(
   if (requested === undefined && category === "modifier_rule") {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: `WeightBlock<${scope.type}>`,
+      memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlock"),
       admits: admitsBlock(field, "weightBlock", scope),
     };
@@ -785,7 +840,7 @@ function lowerOrdinary(
   if (requested === undefined && category === "modifier_rule_with_loc") {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: `WeightBlockWithLoc<${scope.type}>`,
+      memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlockWithLoc"),
       admits: admitsBlock(field, "weightBlockWithLoc", scope),
     };
@@ -806,7 +861,10 @@ function lowerOrdinary(
     const scope = scopeType(emitter, field, ctx, override?.scope);
     const memberType = `EconomicResourceBlock<${scope.type}>`;
     return {
-      memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+      memberType: withFrom(
+        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+        scope
+      ),
       metadata: metadata(field, name, "economicResources"),
       admits: admitsBlock(field, "economicResources", scope),
     };
@@ -815,7 +873,10 @@ function lowerOrdinary(
     const scope = scopeType(emitter, field, ctx, override?.scope);
     const memberType = `TriggeredModifier<${scope.type}>`;
     return {
-      memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+      memberType: withFrom(
+        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+        scope
+      ),
       metadata: metadata(field, name, "triggeredModifierBlock"),
       admits: admitsBlock(field, "triggeredModifierBlock", scope),
     };

@@ -127,7 +127,7 @@ export function defineHardening(vanilla: VanillaView) {
     isTriggeredOnly: true,
     immediate: (country, ctx) => {
       country.log("PDX_HARDENING_ORDER_A");
-      country.within(ctx.from, (planet) => planet.log("PDX_HARDENING_FROM_OVERRIDE_IS_PLANET"));
+      ctx.from.effects((planet) => planet.log("PDX_HARDENING_FROM_OVERRIDE_IS_PLANET"));
       country.countryEvent({ id: cascade, days: 0 });
     },
   });
@@ -145,7 +145,7 @@ export function defineHardening(vanilla: VanillaView) {
     isTriggeredOnly: true,
     immediate: (country) => {
       country.log("PDX_HARDENING_EXPIRY_PROBE_STARTED");
-      country.within(hardeningTarget, (planet) =>
+      hardeningTarget.effects((planet) =>
         planet.log("PDX_HARDENING_TARGET_STILL_AVAILABLE_AFTER_CHAIN")
       );
     },
@@ -162,9 +162,7 @@ export function defineHardening(vanilla: VanillaView) {
         scopedCountry.everyOwnedPlanet({}, (planet) => {
           planet.saveEventTargetAs(hardeningTarget);
         });
-        scopedCountry.within(hardeningTarget, (planet) =>
-          planet.log("PDX_HARDENING_TARGET_AVAILABLE_IN_ENTRY")
-        );
+        hardeningTarget.effects((planet) => planet.log("PDX_HARDENING_TARGET_AVAILABLE_IN_ENTRY"));
         scopedCountry.countryEvent({
           id: delayedA,
           from: hardeningTarget,

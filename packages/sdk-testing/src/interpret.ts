@@ -12,7 +12,13 @@
  */
 
 import type { PdxEntry, PdxScalar } from "@pdx-ts/pdxscript";
-import { EVENT_KINDS, isEffectKey, makeScope, type ScopeObjOf, type Trigger } from "@pdx-ts/sdk";
+import {
+  EVENT_KINDS,
+  isEffectKey,
+  recordEffects,
+  type ScopeObjOf,
+  type Trigger,
+} from "@pdx-ts/sdk";
 
 import {
   cloneState,
@@ -491,8 +497,9 @@ export function run<S extends SimScopeName>(
   scope: SimScope<S>,
   opts?: ForcedArms
 ): RunResult<S> {
-  const sink: PdxEntry[] = [];
-  effect(makeScope<S>(sink));
+  // Through recordEffects, not makeScope: an author's closure may open a ref
+  // with `.effects()`, and that needs a live recording to write into.
+  const sink = recordEffects<S>([], effect);
 
   const clone = cloneState(scope.state);
   const queueBase = clone.queue.length;

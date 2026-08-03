@@ -34,7 +34,9 @@ import {
   hasCountryFlag,
   hasPlanetFlag,
   hasShipFlag,
+  isAtWar,
   isCapital,
+  isSiteLocked,
   type AgendaRef,
   type AgreementPresetRef,
   type ArchaeologicalSiteTypeRef,
@@ -51,6 +53,7 @@ import {
   type JobRef,
   type ModifierClosure,
   type OpinionModifierRef,
+  type ScopeRef,
   type SectionTemplateFields,
   type TechnologyRef,
   type TraditionSwapFields,
@@ -250,6 +253,95 @@ describe("generated content authoring types", () => {
         base: 1,
         // @ts-expect-error — archaeological site weight gates run in planet scope
         modifiers: [{ factor: 2, when: hasCountryFlag("country_only") }],
+      },
+    });
+  });
+
+  it("hands an effect block the FROM its rules declare, at that scope", () => {
+    // `on_roll_failed` runs with this=fleet and from=archaeological site, and
+    // the common vanilla shape for it is a `from = { ... }` block. Without a
+    // typed ctx the author has no way to name FROM at all.
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_from",
+      name: "X",
+      stages: 1,
+      allow: canGoMia(),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: (fleet, ctx) => {
+        expectTypeOf(ctx.from).toEqualTypeOf<ScopeRef<"archaeological_site">>();
+        ctx.from.effects((site) => {
+          site.addExpeditionLogEntry({ title: "The dig fails." });
+        });
+      },
+      onCreate: (site, ctx) => {
+        // Same registry, and CWT gives this one a `push_scope` with no FROM:
+        // the ctx is still there, and reading FROM through it does not compile.
+        site.addExpeditionLogEntry({ title: "The dig begins." });
+        // @ts-expect-error — on_create declares no FROM; ctx.from is an inert sentinel
+        ctx.from.effects(() => {});
+      },
+    });
+  });
+
+  it("offers a declarative field the same FROM, as a closure form", () => {
+    // A trigger is a value, so a FROM-bearing trigger field takes either the
+    // value or a closure that produces it — the closure being the only place
+    // an argument list exists to hand FROM to.
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_trigger_from",
+      name: "X",
+      stages: 1,
+      allow: (ctx) => ctx.from.trigger(isSiteLocked()),
+      // The plain form is untouched: a condition with no FROM to name has no
+      // reason to grow a closure around it.
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+    });
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_trigger_scope",
+      name: "X",
+      stages: 1,
+      // @ts-expect-error — FROM is the archaeological site here, not a country
+      allow: (ctx) => ctx.from.trigger(hasCountryFlag("country_only")),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+    });
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_trigger_plain_scope",
+      name: "X",
+      stages: 1,
+      // @ts-expect-error — and the closure form does not weaken the plain one:
+      // a trigger's own scope is still checked against the field
+      allow: hasCountryFlag("country_only"),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+    });
+    defineWarGoal({
+      id: "content_types_war_goal_weight_from",
+      name: "X",
+      casusBelli: "cb_humiliation",
+      // A weight block's rows are conditions too, so the same form covers them.
+      aiWeight: (ctx) => ({
+        base: 10,
+        modifiers: [{ factor: 2, when: ctx.from.trigger(isAtWar()) }],
+      }),
+    });
+  });
+
+  it("scopes an effect block's FROM per registry, not per SDK convention", () => {
+    // A war goal's FROM is the targeted country, so the ref lands in country
+    // scope — the type follows each registry's own rules rather than a shared
+    // guess about what FROM tends to be.
+    defineWarGoal({
+      id: "content_types_war_goal_from",
+      name: "X",
+      casusBelli: "cb_humiliation",
+      onAccept: (country, ctx) => {
+        ctx.from.effects((target) => {
+          target.setCountryFlag("content_types_war_goal_accepted");
+          // @ts-expect-error — FROM is a country here, not a planet
+          target.setPlanetFlag("planet_only");
+        });
       },
     });
   });

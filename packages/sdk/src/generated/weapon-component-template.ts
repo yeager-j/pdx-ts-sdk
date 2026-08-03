@@ -8,6 +8,7 @@ import type {
   DefinedContent,
   EffectBlock,
   WeightBlock,
+  WithFrom,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type {
@@ -515,7 +516,7 @@ export interface WeaponComponentTemplateFields {
   /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   prioProjectile?: boolean;
   /** Only when weapon_component_template subtype `weapon_component_template` applies. */
-  possible?: Trigger<"design">;
+  possible?: WithFrom<Trigger<"design">, "design", "country">;
   /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   staticRotation?: boolean;
   /** Only when weapon_component_template subtype `weapon_component_template` applies. */
@@ -599,7 +600,7 @@ export interface WeaponComponentTemplateFields {
    * apply effects to target on hit. Scope = ship (target), from = ship (shooter)
    * Only when weapon_component_template subtype `weapon_component_template` applies.
    */
-  onHit?: EffectBlock<"ship">;
+  onHit?: EffectBlock<"ship", "ship">;
   /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
   weaponType?: WeaponType2;
   /**
@@ -647,8 +648,8 @@ export interface WeaponComponentTemplateFields {
   hyperlaneRange?: number;
   /** Only when weapon_component_template subtype `utility_component_template` applies. */
   scriptedAction?: (ScriptedActionRef | string)[];
-  potential?: Trigger<"design">;
-  showTechUnlockIf?: Trigger<"country">;
+  potential?: WithFrom<Trigger<"design">, "design", "country">;
+  showTechUnlockIf?: WithFrom<Trigger<"country">, "country", "country">;
   friendlyAura?: WeaponComponentTemplateFriendlyAura[];
   hostileAura?: WeaponComponentTemplateHostileAura[];
 }

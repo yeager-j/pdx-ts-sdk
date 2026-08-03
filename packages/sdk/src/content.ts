@@ -17,11 +17,13 @@ import {
 
 import { underField, type ContentRefSink, type ContentRefUse } from "./content-refs.ts";
 import {
-  makeScope,
   modifierEntry,
+  recordEffects,
   registerModifierDescKey,
+  scriptCtx,
   type Modifier,
   type ModifierWithLoc,
+  type ScriptCtx,
 } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "./generated/modifiers.ts";
@@ -117,8 +119,42 @@ export interface WeightBlock<S extends ScopeName, M extends Modifier<S> = Modifi
  */
 export type WeightBlockWithLoc<S extends ScopeName> = WeightBlock<S, ModifierWithLoc<S>>;
 
-/** A script effect block recorded against the scope declared by the content rules. */
-export type EffectBlock<S extends ScopeName> = (scope: ScopeObjOf<S>) => void;
+/**
+ * A script effect block recorded against the scope declared by the content
+ * rules, with the ambient scopes that block runs in as a second argument.
+ *
+ * `From` is the scope the game hands the block as FROM, where the rules name
+ * one (`## replace_scopes = { this = fleet from = archaeological_site }`):
+ *
+ *     onRollFailed: (fleet, ctx) => {
+ *       ctx.from.effects((site) => { ... });
+ *     }
+ *
+ * It defaults to undeclared, and `ctx.from` is then an inert sentinel rather
+ * than a ref — a block whose FROM nothing describes must not be navigated.
+ */
+export type EffectBlock<S extends ScopeName, From extends ScopeName | undefined = undefined> = (
+  scope: ScopeObjOf<S>,
+  ctx: ScriptCtx<S, From>
+) => void;
+
+/**
+ * A declarative field whose rules give the block a FROM: the value itself, or
+ * a closure handed the block's scopes that returns it.
+ *
+ *     allow: (ctx) => ctx.from.trigger(hasSiteFlag("x"))
+ *
+ * A trigger and a weight block are values, not closures, so there is no
+ * argument list to put FROM in — this adds one. The plain form stays: a
+ * condition that never names FROM has no reason to grow a closure around it.
+ *
+ * Emitted only where the rules name a FROM, so the type's presence on a field
+ * *is* the statement that FROM means something there. The closure runs once,
+ * at definition time (see `ContentAuthoring.define`), so what the definition
+ * carries from then on is the ordinary value.
+ */
+export type WithFrom<T, S extends ScopeName, From extends ScopeName | undefined = undefined> =
+  T | ((ctx: ScriptCtx<S, From>) => T);
 
 /** The common potential-plus-modifiers form behind `triggered_modifier_clause`. */
 export interface TriggeredModifier<S extends ScopeName> {
@@ -474,6 +510,96 @@ function dualArm(field: ContentDualField, value: unknown): ContentDualArm {
   return arm;
 }
 
+/**
+ * Shapes a {@link WithFrom} closure can stand in for: the declarative values
+ * that can hold a condition, and so can want FROM.
+ *
+ * `effect` and `modifierBlock` are closures already and are not in this set —
+ * their closure *is* the value, not a way of computing one.
+ */
+function acceptsFromClosure(field: ContentField): boolean {
+  switch (field.shape) {
+    case "trigger":
+    case "weightBlock":
+    case "weightBlockWithLoc":
+    case "economicResources":
+    case "triggeredModifierBlock":
+      return true;
+    case "dual":
+      return field.arms.some(acceptsFromClosure);
+    default:
+      return false;
+  }
+}
+
+/**
+ * Collapses a field's closure form to the value it returns.
+ *
+ * A `Trigger` is itself callable — the poisoned signature that makes
+ * `if (someTrigger)` a compile error — so `typeof value === "function"` is not
+ * enough to tell a closure from a condition, exactly as in {@link authoredForm}.
+ */
+function resolveFromClosure(field: ContentField, value: unknown): unknown {
+  if (typeof value !== "function" || !acceptsFromClosure(field)) {
+    return value;
+  }
+  if ((value as { readonly kind?: unknown }).kind === "trigger") {
+    return value;
+  }
+  return (value as (ctx: ScriptCtx<ScopeName, ScopeName>) => unknown)(
+    scriptCtx<ScopeName, ScopeName>()
+  );
+}
+
+/**
+ * Runs every {@link WithFrom} closure in a definition, once, and returns the
+ * definition with their results in their place.
+ *
+ * Once, and here, because a modifier row's generated `desc` key is registered
+ * against the row's object identity — running the closure again at write time
+ * would produce a different object and lose the key. Resolving at definition
+ * time also keeps what `DefinedContent.def` carries plain data: everything
+ * downstream sees the same value the plain form would have produced.
+ *
+ * Recurses the same three ways the definition walk does — `dual` arms, plain
+ * and repeated `struct` nesting, and `repeatedStruct` entries — since a
+ * condition several levels down is scoped by the rules just the same.
+ */
+function resolveFromClosures(
+  def: Readonly<Record<string, unknown>>,
+  fields: readonly ContentField[]
+): Readonly<Record<string, unknown>> {
+  const resolved: Record<string, unknown> = { ...def };
+  for (const field of fields) {
+    const value = def[field.member];
+    if (value === undefined) {
+      continue;
+    }
+    if (acceptsFromClosure(field)) {
+      resolved[field.member] = resolveFromClosure(field, value);
+      continue;
+    }
+    if (field.shape === "struct") {
+      resolved[field.member] = field.repeated
+        ? (value as readonly Readonly<Record<string, unknown>>[]).map((item) =>
+            resolveFromClosures(item, field.fields)
+          )
+        : resolveFromClosures(value as Readonly<Record<string, unknown>>, field.fields);
+      continue;
+    }
+    if (field.shape === "repeatedStruct") {
+      const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+      resolved[field.member] = Object.fromEntries(
+        Object.entries(record).map(([id, nested]) => [
+          id,
+          resolveFromClosures(nested, field.fields),
+        ])
+      );
+    }
+  }
+  return resolved;
+}
+
 const ALIAS_STRUCT_FIELDS = new Map<string, readonly ContentField[]>();
 
 /**
@@ -765,12 +891,16 @@ function fieldEntries(
         collectRefs(ctx, (value as Trigger<ScopeName>).refs, field.key);
         break;
       case "effect": {
-        const child: PdxEntry[] = [];
         // A reference written inside a script closure is a reference like any
         // other; the recorder reports them here so they face the same
         // integrity check as the declarative fields around them.
         const recorded: ContentRefUse[] = [];
-        (value as EffectBlock<ScopeName>)(makeScope(child, recorded));
+        // Every effect block gets the same ctx object: `this` and `from` are
+        // fixed script paths, and which of them the block may *read* is the
+        // generated signature's business, settled before this runs.
+        const child = recordEffects(recorded, (scope) =>
+          (value as EffectBlock<ScopeName, ScopeName>)(scope, scriptCtx<ScopeName, ScopeName>())
+        );
         entries.push(block(field.key, child));
         collectRefs(ctx, recorded, field.key);
         break;
@@ -973,11 +1103,17 @@ export class ContentAuthoring {
       });
   }
 
-  define<K extends string, D extends ContentDef>(type: K, def: D): DefinedContent<K, D> {
+  define<K extends string, D extends ContentDef>(type: K, rawDef: D): DefinedContent<K, D> {
     const descriptor = this.byType.get(type);
     if (descriptor === undefined) {
       throw new Error(`Unknown generated content type "${type}"`);
     }
+    // Before anything reads a field: a closure form is authoring sugar, and
+    // everything below — desc keys, dual arms, the writer — works on values.
+    const def = resolveFromClosures(
+      rawDef as Readonly<Record<string, unknown>>,
+      descriptor.fields
+    ) as D;
     this.assertPrefixed(type, def.id);
     const definitions = this.definitions.get(type) ?? [];
     if (definitions.some((existing) => existing.id === def.id)) {

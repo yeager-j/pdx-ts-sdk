@@ -1,7 +1,7 @@
 import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { eventTarget, makeScope } from "../src/effect-core.ts";
+import { eventTarget, makeScope, recordEffects, scopeRef } from "../src/effect-core.ts";
 import { countryFlags } from "../src/generated/value-sets.ts";
 import { hasOwner, isAtWar } from "../src/triggers.ts";
 
@@ -105,6 +105,53 @@ add_resource = {
 		}
 		log = "war doubles this arm"
 	}
+}
+`);
+  });
+
+  it("opens a ref's block where it is written, not where its scope object came from", () => {
+    // The property the recording stack exists for. `from = { }` written inside
+    // `every_owned_planet = { }` runs once per planet; at the top level it runs
+    // once. Both are legal script and they mean different things, so the block
+    // has to land where the author put the call — which is why the ref cannot
+    // simply hold the sink it was created against.
+    const from = scopeRef<"planet">("from");
+    const sink = recordEffects<"country">([], (country) => {
+      from.effects((planet) => planet.log("outer"));
+      country.everyOwnedPlanet({ limit: hasOwner() }, () => {
+        from.effects((planet) => planet.log("inner"));
+      });
+    });
+
+    expect(serialize(sink)).toBe(`from = {
+	log = outer
+}
+
+every_owned_planet = {
+	limit = {
+		has_owner = yes
+	}
+	from = {
+		log = inner
+	}
+}
+`);
+  });
+
+  it("throws when a ref is opened with no block to record into", () => {
+    // Escaping the closure is the one way to reach this: nothing outside a
+    // recording has a sink, and guessing one would silently drop the entries.
+    expect(() => stormWorld.effects((planet) => planet.destroyColony())).toThrow(
+      /outside any effect closure/
+    );
+  });
+
+  it("opens a ref as a condition without any recording at all", () => {
+    // The trigger side is a pure value, so it works anywhere — no sink, no
+    // stack, nothing to escape from.
+    expect(serialize([...stormWorld.trigger(hasOwner()).entries]))
+      .toBe(`event_target:effects_test_target = {
+	has_owner = yes
 }
 `);
   });

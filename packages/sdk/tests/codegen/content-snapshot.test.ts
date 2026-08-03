@@ -180,7 +180,9 @@ describe("content-type codegen", () => {
   it("generates decisions and jobs without registry-specific code", () => {
     const decision = emissions.get("decision");
     expect(decision?.code).toContain("export interface DecisionDef");
-    expect(decision?.code).toContain("resources?: EconomicResourceBlock<NoInfer<S>>[];");
+    expect(decision?.code).toContain(
+      'resources?: WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, "country">;'
+    );
     expect(decision?.code).toContain("prerequisites?: (TechnologyRef | string)[];");
     expect(decision?.code).toContain('shape: "economicResources"');
 
@@ -244,7 +246,9 @@ describe("content-type codegen", () => {
     const warGoal = emissions.get("war_goal");
     expect(warGoal?.code).toContain("export interface WarGoalDef");
     expect(warGoal?.code).toContain("casusBelli: CasusBelliRef | string;");
-    expect(warGoal?.code).toContain('aiWeight?: WeightBlock<"country">;');
+    expect(warGoal?.code).toContain(
+      'aiWeight?: WithFrom<WeightBlock<"country">, "country", "country">;'
+    );
     // forbidden_peace_offers is a fixed-shape anonymous block — the same struct
     // shape shape 3 generalizes down to cardinality 0..1 — so it is no longer
     // stuck on the machinery backlog.
@@ -261,14 +265,57 @@ describe("content-type codegen", () => {
     // to the union and the writer dispatches on what the author passes. The arms read
     // in CWT's own declaration order, which is why the two differ.
     const bombardmentStance = emissions.get("bombardment_stance");
-    expect(bombardmentStance?.code).toContain('planetDamage?: number | WeightBlock<"fleet">;');
+    expect(bombardmentStance?.code).toContain(
+      'planetDamage?: number | WithFrom<WeightBlock<"fleet">, "fleet", "planet">;'
+    );
     // A pure modifier_rule splice needs no overlay row either — it infers weightBlock.
-    expect(bombardmentStance?.code).toContain('aiWeight: WeightBlock<"fleet">;');
+    expect(bombardmentStance?.code).toContain(
+      'aiWeight: WithFrom<WeightBlock<"fleet">, "fleet", "planet">;'
+    );
 
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
     expect(archaeologicalSiteType?.code).toContain('weight?: WeightBlock<"planet"> | number;');
     expect(archaeologicalSiteType?.code).toContain(
       '{ key: "weight", member: "weight", shape: "dual", arms: ['
+    );
+  });
+
+  it("carries a block's declared FROM scope into its effect closure", () => {
+    // `## replace_scopes = { this = fleet from = archaeological_site }` states
+    // two facts, and only one of them used to survive into the emitted type.
+    // FROM is what half these blocks are for — vanilla's own `on_roll_failed`
+    // is a `from = { ... }` block — so the closure gets it as `ctx.from`.
+    const archaeologicalSiteType = emissions.get("archaeological_site_type");
+    expect(archaeologicalSiteType?.code).toContain(
+      'onRollFailed: EffectBlock<"fleet", "archaeological_site">;'
+    );
+    // A `push_scope` names `this` and leaves FROM alone, so the same registry's
+    // on_create keeps the one-argument form and its ctx.from stays unreadable.
+    expect(archaeologicalSiteType?.code).toContain(
+      'onCreate?: EffectBlock<"archaeological_site">;'
+    );
+    // Each registry's own rules decide the scope, rather than one convention:
+    // a war goal's FROM is the targeted country.
+    expect(emissions.get("war_goal")?.code).toContain(
+      'onAccept?: EffectBlock<"country", "country">;'
+    );
+  });
+
+  it("gives a declarative field with a FROM the closure form too", () => {
+    // A trigger and a weight block are values, so FROM reaches them through an
+    // added closure form rather than through an argument list they never had.
+    const archaeologicalSiteType = emissions.get("archaeological_site_type");
+    expect(archaeologicalSiteType?.code).toContain(
+      'allow: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site">;'
+    );
+    // A field with no FROM keeps the plain type: the closure form exists to
+    // carry FROM, so a field without one has nothing to offer it.
+    expect(emissions.get("building")?.code).toContain('allow?: Trigger<"colony">;');
+    expect(emissions.get("building")?.code).not.toContain("WithFrom");
+    // A dual keeps arm-by-arm dispatch: only the arm that can hold a condition
+    // grows the closure form.
+    expect(emissions.get("opinion_modifier")?.code).toContain(
+      'opinion: WithFrom<WeightBlock<"country">, "country", "country"> | number;'
     );
   });
 
@@ -557,7 +604,9 @@ describe("content-type codegen", () => {
     // The assertion is surgical, and its counterpart is a different mechanism:
     // a decision's scope really does vary per definition, so it takes a scope
     // parameter rather than an asserted constant.
-    expect(emissions.get("decision")?.code).toContain("potential?: Trigger<NoInfer<S>>;");
+    expect(emissions.get("decision")?.code).toContain(
+      'potential?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;'
+    );
   });
 
   it("parameterises a registry whose scope is a property of the definition", () => {
@@ -571,7 +620,7 @@ describe("content-type codegen", () => {
     expect(decision.code).toContain('export type DecisionScope = "planet" | "ship";');
     expect(decision.code).toContain("export interface DecisionFields<S extends DecisionScope");
     expect(decision.code).toContain("  scope?: S;");
-    expect(decision.code).toContain("effect: EffectBlock<NoInfer<S>>;");
+    expect(decision.code).toContain('effect: EffectBlock<NoInfer<S>, "country">;');
     // A field CWT does pin keeps its own scope: the parameter fills the gap
     // rather than flattening everything into it.
     expect(decision.code).toContain('showTechUnlockIf?: Trigger<"country">;');
@@ -589,7 +638,7 @@ describe("content-type codegen", () => {
       ...body,
       fields: body.fields.map((field) =>
         field.key.kind === "name" && field.key.name === "show"
-          ? { ...field, scope: { this: "planet", root: null } }
+          ? { ...field, scope: { this: "planet", root: null, from: null, replaces: false } }
           : field
       ),
     };
@@ -698,7 +747,9 @@ describe("content-type codegen", () => {
     expect(graphicalCulture?.code).toContain("export interface GraphicalCultureDef");
     expect(graphicalCulture?.code).toContain("randomized?: Trigger<ScopeName>;");
     expect(graphicalCulture?.code).toContain("selectable?: Trigger<ScopeName>;");
-    expect(graphicalCulture?.code).toContain('shipSelectionWeight?: WeightBlock<"species">;');
+    expect(graphicalCulture?.code).toContain(
+      'shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", "country">;'
+    );
     expect(graphicalCulture?.machineryBacklog).toEqual([]);
   });
 

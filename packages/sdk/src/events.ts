@@ -17,7 +17,7 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import { underField, type ContentRefUse } from "./content-refs.ts";
-import { makeScope, scopeRef, type ScopeRef } from "./effect-core.ts";
+import { recordEffects, scriptCtx, type ScopeRef, type ScriptCtx } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { EventKindKey } from "./generated/events.ts";
 import { refId, type SoundEffectRef, type SpriteRef } from "./generated/refs.ts";
@@ -48,30 +48,6 @@ export interface EventRef<
   readonly [eventFromBrand]?: From;
 }
 
-/**
- * The sentinel behind `ctx.from` on an event with no `from:` declaration.
- * Deliberately NOT a `ScopeRef` (and not `never`, which would assign
- * anywhere), so every use site fails with this type's name in the message.
- */
-export interface UndeclaredFrom {
-  readonly kind: "undeclared-from";
-  readonly hint: 'Declare the FROM contract on the event (`from: "country"`) to read FROM.';
-}
-
-/**
- * The second argument every event closure receives. `self` doubles as the
- * FROM witness at fire sites: passing `from: ctx.self` proves the fired
- * event's declared FROM matches this event's own scope.
- */
-export interface EventCtx<Self extends ScopeName, From extends ScopeName | undefined> {
-  readonly self: ScopeRef<Self>;
-  /**
-   * FROM, as declared by this event's `from:` field. Undeclared events get
-   * an inert sentinel — touching FROM without declaring it is a compile error.
-   */
-  readonly from: [From] extends [ScopeName] ? ScopeRef<From> : UndeclaredFrom;
-}
-
 export interface EventOption<S extends ScopeName, From extends ScopeName | undefined> {
   /** English text; the localization key rides along on the definition. */
   readonly name: string;
@@ -80,7 +56,7 @@ export interface EventOption<S extends ScopeName, From extends ScopeName | undef
   /** Availability gate — the option shows greyed out when this fails. */
   readonly allow?: Trigger<S>;
   readonly hideIfNotAllowed?: boolean;
-  readonly effects?: (scope: ScopeObjOf<S>, ctx: EventCtx<S, From>) => void;
+  readonly effects?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
 }
 
 export interface EventDef<S extends ScopeName, From extends ScopeName | undefined> {
@@ -99,8 +75,8 @@ export interface EventDef<S extends ScopeName, From extends ScopeName | undefine
   readonly isTriggeredOnly?: boolean;
   readonly hideWindow?: boolean;
   readonly fireOnlyOnce?: boolean;
-  readonly immediate?: (scope: ScopeObjOf<S>, ctx: EventCtx<S, From>) => void;
-  readonly after?: (scope: ScopeObjOf<S>, ctx: EventCtx<S, From>) => void;
+  readonly immediate?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
+  readonly after?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
   readonly options?: ReadonlyArray<EventOption<S, From>>;
 }
 
@@ -133,10 +109,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   loc: LocSink
 ): DefinedEvent<S, From> {
   const id = `${namespace}.${def.id}`;
-  const ctx = {
-    self: scopeRef("this"),
-    from: scopeRef("from"),
-  } as EventCtx<S, From>;
+  const ctx = scriptCtx<S, From>();
 
   const entries: PdxEntry[] = [kv("id", id)];
   if (def.title !== undefined) {
@@ -164,16 +137,14 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   }
   const refs: ContentRefUse[] = [];
   if (def.immediate !== undefined) {
-    const sink: PdxEntry[] = [];
     const recorded: ContentRefUse[] = [];
-    def.immediate(makeScope<S>(sink, recorded), ctx);
+    const sink = recordEffects<S>(recorded, (scope) => def.immediate!(scope, ctx));
     entries.push(block("immediate", sink));
     refs.push(...underField(recorded, "immediate"));
   }
   if (def.after !== undefined) {
-    const sink: PdxEntry[] = [];
     const recorded: ContentRefUse[] = [];
-    def.after(makeScope<S>(sink, recorded), ctx);
+    const sink = recordEffects<S>(recorded, (scope) => def.after!(scope, ctx));
     entries.push(block("after", sink));
     refs.push(...underField(recorded, "after"));
   }
@@ -194,9 +165,8 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
       optionEntries.push(kv("hide_option_if_not_allowed", true));
     }
     if (option.effects !== undefined) {
-      const sink: PdxEntry[] = [];
       const recorded: ContentRefUse[] = [];
-      option.effects(makeScope<S>(sink, recorded), ctx);
+      const sink = recordEffects<S>(recorded, (scope) => option.effects!(scope, ctx));
       optionEntries.push(...sink);
       refs.push(...underField(recorded, where));
     }

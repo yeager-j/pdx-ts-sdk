@@ -92,6 +92,52 @@ export const humReturns = events.defineCountryEvent({
 export const gameStart = on(onActions.onGameStartCountry, [humReturns]);
 ```
 
+Every effect closure gets a second argument, `ctx`, holding the ambient scopes
+the block runs in. `ctx.self` is the block's own scope — the FROM witness at
+fire sites, above. `ctx.from` is FROM, typed at whatever scope the rules say the
+game hands the block. A scope reference is both a bare word and the key of a
+block that opens it, so `.effects(...)` writes that block:
+
+```ts
+defineArchaeologicalSiteType({
+  id: "mymod_derelict_outpost",
+  name: "Derelict Outpost",
+  stages: 3,
+  // on_roll_failed runs in fleet scope, with the site as FROM
+  onRollFailed: (fleet, ctx) => {
+    ctx.from.effects((site) => site.addExpeditionLogEntry({ title: "..." }));
+  },
+});
+```
+
+Where nothing declares a FROM — an event with no `from:`, a block the rules give
+a bare `push_scope` — `ctx.from` is an inert sentinel, so reading it is a
+compile error rather than a ref pointing at whatever the game happens to have.
+
+The same ref opens a condition block with `.trigger(...)`, which takes the
+condition as a value since a trigger is one. Triggers and weight blocks are
+values rather than closures, so a *declarative* field whose rules give it a FROM
+accepts either form — the closure being the only place an argument list exists
+to hand FROM to:
+
+```ts
+  potential: canGoMia(), // no FROM to name, so no closure needed
+  allow: (ctx) => and(canGoMia(), ctx.from.trigger(isSiteLocked(false))),
+```
+
+Event targets work the same way, since `event_target:x = { ... }` is the same
+shape of block:
+
+```ts
+const stormWorld = eventTarget<"planet">("mymod_storm_world");
+
+planet.saveEventTargetAs(stormWorld); // the bare word
+stormWorld.effects((planet) => planet.addDeposit("d_minerals_1")); // the block
+```
+
+The closure runs once, at definition time, and what the definition carries from
+then on is the value it returned.
+
 In-game branching inside effects is `scope.if(trigger, body).elseIf(...).else(...)`;
 a TypeScript `if` branches at build time. Using a trigger in a TS `if` is a
 compile error.
