@@ -647,6 +647,25 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("brands an event by its CWT subtype, which is not always its scope", () => {
+    // `observer_event` is subtype `observer` in country scope, and
+    // `cosmic_storm_event` is subtype `cosmic_storm` in storm scope. Branding
+    // by the scope would call an observer event an `<event.country>` — a
+    // reference the rules never write for it — and let an ordinary country
+    // event be fired as one, which is a different event type to the game.
+    const events = namespace("content_types_event_kind");
+    const observer = events.defineObserverEvent({ id: 1, isTriggeredOnly: true });
+    const country = events.defineCountryEvent({ id: 2, isTriggeredOnly: true });
+    const scope = makeScope<"country">([]);
+
+    scope.observerEvent({ id: observer });
+    scope.countryEvent({ id: country });
+    // @ts-expect-error — an observer event is not what `country_event` fires
+    scope.countryEvent({ id: observer });
+    // @ts-expect-error — nor is a country event what `observer_event` fires
+    scope.observerEvent({ id: country });
+  });
+
   it("lets an unqualified reference field take any of that type's subtypes", () => {
     // `set_next_astral_rift_event` takes `<event>` — the whole type, subtypes
     // included — so an event of any scope satisfies it. The relation runs only

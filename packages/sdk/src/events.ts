@@ -3,7 +3,7 @@
  *
  * An event declares the scope it expects FROM to be (`from: "country"`) as a
  * phantom type; every fire site is then checked against it by passing a
- * witness ref — usually `ctx.self`, proving the firing event's own scope is
+ * witness value — usually `ctx.self`, proving the firing event's own scope is
  * the FROM the target expects. A witness that is any other ref emits the
  * game's own `scopes = { from = ... }` override block. Validated by the
  * probe: see `docs/verdict-effects-probe.md` (including why the witness needs
@@ -17,7 +17,7 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import { underField, type ContentRefUse } from "./content-refs.ts";
-import { recordEffects, scriptCtx, type ScopeRef, type ScriptCtx } from "./effect-core.ts";
+import { recordEffects, scriptCtx, type ScopeValue, type ScriptCtx } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { EventKindKey } from "./generated/events.ts";
 import { refId, type SoundEffectRef, type SpriteRef, type TypedRef } from "./generated/refs.ts";
@@ -41,16 +41,20 @@ declare const eventFromBrand: unique symbol;
  * brand is optional and `id: string` was the whole of the rest: a country event
  * satisfied `<event.fleet>`, and a `<technology>` field too.
  *
- * The scope, not the event kind, brands it. The two agree wherever the rules
- * name a subtype (`event.fleet`, `event.situation`), and where they part —
- * `observer_event` pushes country scope — the SDK already models the kind as
- * its scope, so an observer event is a country event here and this changes
- * nothing about that.
+ * `Kind` is the CWT subtype the event's own definer declares, which is what
+ * the rules name a reference after. It is not always the scope the body runs
+ * in: `observer_event` is subtype `observer` in country scope, and
+ * `cosmic_storm_event` is subtype `cosmic_storm` in storm scope. Branding by
+ * scope would make an observer event an `<event.country>` and leave it unable
+ * to satisfy the reference the rules actually write for it, so the definers
+ * pass their subtype and it defaults to the scope only for the kinds where the
+ * two coincide.
  */
 export interface EventRef<
   S extends ScopeName = ScopeName,
   From extends ScopeName | undefined = ScopeName | undefined,
-> extends TypedRef<`event.${S}`> {
+  Kind extends string = S,
+> extends TypedRef<`event.${Kind}`> {
   readonly kind: "event-ref";
   /** The event's main scope. */
   readonly scope: S;
@@ -93,10 +97,11 @@ export interface EventDef<S extends ScopeName, From extends ScopeName | undefine
   readonly options?: ReadonlyArray<EventOption<S, From>>;
 }
 
-export type DefinedEvent<S extends ScopeName, From extends ScopeName | undefined> = EventRef<
-  S,
-  From
-> & {
+export type DefinedEvent<
+  S extends ScopeName,
+  From extends ScopeName | undefined,
+  Kind extends string = S,
+> = EventRef<S, From, Kind> & {
   readonly entry: PdxEntry;
   /**
    * Content references the event's closures and option conditions wrote. The
@@ -193,8 +198,17 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
 // Fire effects: typed signatures over the runtime encoders
 // ---------------------------------------------------------------------------
 
-export interface FireEventArgs<S extends ScopeName, From extends ScopeName | undefined> {
-  readonly id: EventRef<S, From>;
+export interface FireEventArgs<
+  S extends ScopeName,
+  From extends ScopeName | undefined,
+  Kind extends string = S,
+> {
+  /**
+   * The event to fire. `Kind` pins it to the subtype this fire effect writes:
+   * `observer_event = { id = ... }` dispatches an observer event, and an
+   * ordinary country event is not one however alike their scopes are.
+   */
+  readonly id: EventRef<S, From, Kind>;
   readonly days?: number;
   readonly months?: number;
   readonly years?: number;
@@ -205,12 +219,13 @@ export interface FireEventArgs<S extends ScopeName, From extends ScopeName | und
 export interface WitnessedFireEventArgs<
   S extends ScopeName,
   F extends ScopeName,
-> extends FireEventArgs<S, F> {
+  Kind extends string = S,
+> extends FireEventArgs<S, F, Kind> {
   /**
    * Proof the fired event's declared FROM is satisfied: usually `ctx.self`.
    * Any other ref emits the game's `scopes = { from = ... }` override.
    * `NoInfer` keeps the event ref the single inference source, so a
    * wrong-scope witness fails instead of unifying.
    */
-  readonly from: ScopeRef<NoInfer<F>>;
+  readonly from: ScopeValue<NoInfer<F>>;
 }

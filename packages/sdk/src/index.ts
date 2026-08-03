@@ -18,6 +18,7 @@ export {
   type ModifierWithLoc,
   type RandomListArm,
   type ScopeRef,
+  type ScopeValue,
   type ScriptCtx,
   type StructuralEffects,
   type UndeclaredFrom,

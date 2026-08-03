@@ -522,7 +522,7 @@ async function main(): Promise<void> {
       'import { buildEvent, type EventDef } from "../events.ts";\n' +
       'import { assertNamespace } from "../items.ts";\n' +
       'import type { EventItem } from "../items.ts";\n' +
-      'import type { EventKindKey } from "./events.ts";\n' +
+      'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.definerCode
   );

@@ -4,7 +4,7 @@
 
 import { buildEvent, type EventDef } from "../events.ts";
 import { assertNamespace, type EventItem } from "../items.ts";
-import type { EventKindKey } from "./events.ts";
+import { EVENT_KINDS, type EventKindKey } from "./events.ts";
 import type { ScopeName } from "./scopes.ts";
 
 /**
@@ -31,7 +31,7 @@ export interface EventNamespace {
    */
   defineAgreementEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"agreement", From>
-  ): EventItem<"agreement", From>;
+  ): EventItem<"agreement", From, "agreement">;
 
   /**
    * Defines an astral rift event in this namespace; the full id is
@@ -40,7 +40,7 @@ export interface EventNamespace {
    */
   defineAstralRiftEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"astral_rift", From>
-  ): EventItem<"astral_rift", From>;
+  ): EventItem<"astral_rift", From, "astral_rift">;
 
   /**
    * Defines a bypass event in this namespace; the full id is
@@ -49,7 +49,7 @@ export interface EventNamespace {
    */
   defineBypassEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"bypass", From>
-  ): EventItem<"bypass", From>;
+  ): EventItem<"bypass", From, "bypass">;
 
   /**
    * Defines a carrier event in this namespace; the full id is
@@ -58,7 +58,7 @@ export interface EventNamespace {
    */
   defineCarrierEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"carrier", From>
-  ): EventItem<"carrier", From>;
+  ): EventItem<"carrier", From, "carrier">;
 
   /**
    * Defines a colony event in this namespace; the full id is
@@ -67,7 +67,7 @@ export interface EventNamespace {
    */
   defineColonyEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"colony", From>
-  ): EventItem<"colony", From>;
+  ): EventItem<"colony", From, "colony">;
 
   /**
    * Defines a cosmic storm event in this namespace; the full id is
@@ -76,7 +76,7 @@ export interface EventNamespace {
    */
   defineCosmicStormEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"storm", From>
-  ): EventItem<"storm", From>;
+  ): EventItem<"storm", From, "cosmic_storm">;
 
   /**
    * Defines a cosmic storm influence field event in this namespace; the full id is
@@ -85,7 +85,7 @@ export interface EventNamespace {
    */
   defineCosmicStormInfluenceFieldEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"cosmic_storm_influence_field", From>
-  ): EventItem<"cosmic_storm_influence_field", From>;
+  ): EventItem<"cosmic_storm_influence_field", From, "cosmic_storm_influence_field">;
 
   /**
    * Defines a country event in this namespace; the full id is
@@ -94,7 +94,7 @@ export interface EventNamespace {
    */
   defineCountryEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"country", From>
-  ): EventItem<"country", From>;
+  ): EventItem<"country", From, "country">;
 
   /**
    * Defines an espionage operation event in this namespace; the full id is
@@ -103,7 +103,7 @@ export interface EventNamespace {
    */
   defineEspionageOperationEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"espionage_operation", From>
-  ): EventItem<"espionage_operation", From>;
+  ): EventItem<"espionage_operation", From, "espionage_operation">;
 
   /**
    * Defines a first contact event in this namespace; the full id is
@@ -112,7 +112,7 @@ export interface EventNamespace {
    */
   defineFirstContactEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"first_contact", From>
-  ): EventItem<"first_contact", From>;
+  ): EventItem<"first_contact", From, "first_contact">;
 
   /**
    * Defines a fleet event in this namespace; the full id is
@@ -121,7 +121,7 @@ export interface EventNamespace {
    */
   defineFleetEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"fleet", From>
-  ): EventItem<"fleet", From>;
+  ): EventItem<"fleet", From, "fleet">;
 
   /**
    * Defines a leader event in this namespace; the full id is
@@ -130,7 +130,7 @@ export interface EventNamespace {
    */
   defineLeaderEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"leader", From>
-  ): EventItem<"leader", From>;
+  ): EventItem<"leader", From, "leader">;
 
   /**
    * Defines an observer event in this namespace; the full id is
@@ -139,7 +139,7 @@ export interface EventNamespace {
    */
   defineObserverEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"country", From>
-  ): EventItem<"country", From>;
+  ): EventItem<"country", From, "observer">;
 
   /**
    * Defines a planet event in this namespace; the full id is
@@ -148,7 +148,7 @@ export interface EventNamespace {
    */
   definePlanetEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"planet", From>
-  ): EventItem<"planet", From>;
+  ): EventItem<"planet", From, "planet">;
 
   /**
    * Defines a pop faction event in this namespace; the full id is
@@ -157,7 +157,7 @@ export interface EventNamespace {
    */
   definePopFactionEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"pop_faction", From>
-  ): EventItem<"pop_faction", From>;
+  ): EventItem<"pop_faction", From, "pop_faction">;
 
   /**
    * Defines a pop group event in this namespace; the full id is
@@ -166,7 +166,7 @@ export interface EventNamespace {
    */
   definePopGroupEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"pop_group", From>
-  ): EventItem<"pop_group", From>;
+  ): EventItem<"pop_group", From, "pop_group">;
 
   /**
    * Defines a ship event in this namespace; the full id is
@@ -175,7 +175,7 @@ export interface EventNamespace {
    */
   defineShipEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"ship", From>
-  ): EventItem<"ship", From>;
+  ): EventItem<"ship", From, "ship">;
 
   /**
    * Defines a situation event in this namespace; the full id is
@@ -184,7 +184,7 @@ export interface EventNamespace {
    */
   defineSituationEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"situation", From>
-  ): EventItem<"situation", From>;
+  ): EventItem<"situation", From, "situation">;
 
   /**
    * Defines a starbase event in this namespace; the full id is
@@ -193,7 +193,7 @@ export interface EventNamespace {
    */
   defineStarbaseEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"starbase", From>
-  ): EventItem<"starbase", From>;
+  ): EventItem<"starbase", From, "starbase">;
 
   /**
    * Defines a system event in this namespace; the full id is
@@ -202,7 +202,7 @@ export interface EventNamespace {
    */
   defineSystemEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"system", From>
-  ): EventItem<"system", From>;
+  ): EventItem<"system", From, "system">;
 }
 
 /**
@@ -222,10 +222,10 @@ export function namespace(ns: string): EventNamespace {
   assertNamespace(ns);
   const used = new Set<number>();
   const definerOf =
-    <S extends ScopeName>(kind: EventKindKey, scope: S) =>
+    <const K extends EventKindKey, S extends ScopeName>(kind: K, scope: S) =>
     <From extends ScopeName | undefined = undefined>(
       def: EventDef<S, From>
-    ): EventItem<S, From> => {
+    ): EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]> => {
       if (used.has(def.id)) {
         throw new Error(`Duplicate event id "${ns}.${def.id}"`);
       }
@@ -235,7 +235,7 @@ export function namespace(ns: string): EventNamespace {
         register: (key, text) => locEntries.push([key, text]),
       });
       const item = { ...built, itemKind: "event" as const, namespace: ns, locEntries };
-      return item as EventItem<S, From>;
+      return item as EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]>;
     };
   return {
     kind: "event-namespace",

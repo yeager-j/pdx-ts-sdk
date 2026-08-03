@@ -83,7 +83,8 @@ export interface EventItemBase {
 export type EventItem<
   S extends ScopeName = ScopeName,
   From extends ScopeName | undefined = ScopeName | undefined,
-> = DefinedEvent<S, From> & {
+  Kind extends string = S,
+> = DefinedEvent<S, From, Kind> & {
   readonly itemKind: "event";
   readonly namespace: string;
   readonly locEntries: ReadonlyArray<readonly [string, string]>;

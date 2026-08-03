@@ -19,8 +19,12 @@ describe("generated event surface", () => {
     expect(definers).toContain(
       "  defineCountryEvent<From extends ScopeName | undefined = undefined>(\n" +
         '    def: EventDef<"country", From>\n' +
-        '  ): EventItem<"country", From>;'
+        '  ): EventItem<"country", From, "country">;'
     );
+    // The kind's subtype, not its scope: an observer event runs in country
+    // scope and is still not a country event to the rules.
+    expect(definers).toContain('  ): EventItem<"country", From, "observer">;');
+    expect(definers).toContain('  ): EventItem<"storm", From, "cosmic_storm">;');
     expect(definers).toContain(
       "  defineSituationEvent<From extends ScopeName | undefined = undefined>("
     );
@@ -56,16 +60,24 @@ describe("generated event surface", () => {
   it("emits the witness-overload pair for every fire effect", () => {
     expect(fires).toContain('declare module "./effects.ts"');
     expect(fires).toContain("interface SituationScope {");
-    expect(fires).toContain('situationEvent(args: FireEventArgs<"situation", undefined>): void;');
     expect(fires).toContain(
-      'situationEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"situation", F>): void;'
+      'situationEvent(args: FireEventArgs<"situation", undefined, "situation">): void;'
+    );
+    expect(fires).toContain(
+      "situationEvent<F extends ScopeName>(\n" +
+        '      args: WitnessedFireEventArgs<"situation", F, "situation">\n' +
+        "    ): void;"
     );
   });
 
   it("puts observer_event on UniversalEffects, per its `## scopes = any`", () => {
     expect(fires).toContain("interface UniversalEffects {");
     const universal = fires.slice(fires.indexOf("interface UniversalEffects {"));
-    expect(universal).toContain('observerEvent(args: FireEventArgs<"country", undefined>): void;');
+    // Pinned with its subtype: firing an ordinary country event through
+    // `observer_event = { ... }` is a different event type to the game.
+    expect(universal).toContain(
+      'observerEvent(args: FireEventArgs<"country", undefined, "observer">): void;'
+    );
   });
 
   it("keeps startSituation on the EffectsInCountry cluster", () => {

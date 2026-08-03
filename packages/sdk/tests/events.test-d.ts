@@ -6,7 +6,7 @@
 
 import { describe, it } from "vitest";
 
-import { namespace } from "../src/index.ts";
+import { eventTarget, namespace } from "../src/index.ts";
 
 describe("the FROM contract on the real event API", () => {
   it("requires a witness when the fired event declared from:", () => {
@@ -86,6 +86,34 @@ describe("the FROM contract on the real event API", () => {
     });
     // @ts-expect-error — a situation-scoped def does not fit defineCountryEvent
     events.defineCountryEvent({ id: 22, immediate: (s) => s.setSituationFlag("x") });
+  });
+
+  it("lets FROM open a block but not self, whose path is relative", () => {
+    const events = namespace("self_is_a_value");
+    const aftershockFrom = events.definePlanetEvent({
+      id: 9,
+      from: "country",
+      isTriggeredOnly: true,
+    });
+    const target = eventTarget<"planet">("self_is_a_value_planet");
+    events.defineCountryEvent({
+      id: 1,
+      from: "planet",
+      isTriggeredOnly: true,
+      immediate: (country, ctx) => {
+        // FROM and a saved target name their scope absolutely, so both open.
+        ctx.from.effects((planet) => planet.setPlanetFlag("x"));
+        target.effects((planet) => planet.setPlanetFlag("y"));
+        // `this` does not: inside a scope transition it is that scope, so a
+        // block opened through it would run somewhere its type does not say.
+        // @ts-expect-error — ctx.self is a value, not an openable ref
+        ctx.self.effects(() => {});
+        // It stays exactly as useful as a value, which is all it ever was.
+        country.everyOwnedPlanet({}, (planet) => {
+          planet.planetEvent({ id: aftershockFrom, from: ctx.self });
+        });
+      },
+    });
   });
 
   it("makes an undeclared FROM unusable rather than any-typed", () => {

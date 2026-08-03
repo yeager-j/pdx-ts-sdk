@@ -15,140 +15,164 @@ import type { ScopeName } from "./scopes.ts";
 declare module "./effects.ts" {
   interface AgreementScope {
     /** Fires an agreement event for the scoped agreement, after any delay. */
-    agreementEvent(args: FireEventArgs<"agreement", undefined>): void;
-    agreementEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"agreement", F>): void;
+    agreementEvent(args: FireEventArgs<"agreement", undefined, "agreement">): void;
+    agreementEvent<F extends ScopeName>(
+      args: WitnessedFireEventArgs<"agreement", F, "agreement">
+    ): void;
   }
 
   interface AstralRiftScope {
     /** Fires an astral rift event for the scoped astral_rift, after any delay. */
-    astralRiftEvent(args: FireEventArgs<"astral_rift", undefined>): void;
-    astralRiftEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"astral_rift", F>): void;
+    astralRiftEvent(args: FireEventArgs<"astral_rift", undefined, "astral_rift">): void;
+    astralRiftEvent<F extends ScopeName>(
+      args: WitnessedFireEventArgs<"astral_rift", F, "astral_rift">
+    ): void;
   }
 
   interface BypassScope {
     /** Fires a bypass event for the scoped bypass, after any delay. */
-    bypassEvent(args: FireEventArgs<"bypass", undefined>): void;
-    bypassEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"bypass", F>): void;
+    bypassEvent(args: FireEventArgs<"bypass", undefined, "bypass">): void;
+    bypassEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"bypass", F, "bypass">): void;
   }
 
   interface CarrierScope {
     /** Fires a carrier event for the scoped carrier, after any delay. */
-    carrierEvent(args: FireEventArgs<"carrier", undefined>): void;
-    carrierEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"carrier", F>): void;
+    carrierEvent(args: FireEventArgs<"carrier", undefined, "carrier">): void;
+    carrierEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"carrier", F, "carrier">): void;
   }
 
   interface ColonyScope {
     /** Fires a carrier event for the scoped carrier, after any delay. */
-    carrierEvent(args: FireEventArgs<"carrier", undefined>): void;
-    carrierEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"carrier", F>): void;
+    carrierEvent(args: FireEventArgs<"carrier", undefined, "carrier">): void;
+    carrierEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"carrier", F, "carrier">): void;
 
     /** Fires a colony event for the scoped colony, after any delay. */
-    colonyEvent(args: FireEventArgs<"colony", undefined>): void;
-    colonyEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"colony", F>): void;
+    colonyEvent(args: FireEventArgs<"colony", undefined, "colony">): void;
+    colonyEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"colony", F, "colony">): void;
   }
 
   interface CosmicStormInfluenceFieldScope {
     /** Fires a cosmic storm influence field event for the scoped cosmic_storm_influence_field, after any delay. */
     cosmicStormInfluenceFieldEvent(
-      args: FireEventArgs<"cosmic_storm_influence_field", undefined>
+      args: FireEventArgs<"cosmic_storm_influence_field", undefined, "cosmic_storm_influence_field">
     ): void;
     cosmicStormInfluenceFieldEvent<F extends ScopeName>(
-      args: WitnessedFireEventArgs<"cosmic_storm_influence_field", F>
+      args: WitnessedFireEventArgs<
+        "cosmic_storm_influence_field",
+        F,
+        "cosmic_storm_influence_field"
+      >
     ): void;
   }
 
   interface CountryScope {
     /** Fires a country event for the scoped country, after any delay. */
-    countryEvent(args: FireEventArgs<"country", undefined>): void;
-    countryEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"country", F>): void;
+    countryEvent(args: FireEventArgs<"country", undefined, "country">): void;
+    countryEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"country", F, "country">): void;
   }
 
   interface EspionageOperationScope {
     /** Fires an espionage operation event for the scoped espionage_operation, after any delay. */
-    espionageOperationEvent(args: FireEventArgs<"espionage_operation", undefined>): void;
+    espionageOperationEvent(
+      args: FireEventArgs<"espionage_operation", undefined, "espionage_operation">
+    ): void;
     espionageOperationEvent<F extends ScopeName>(
-      args: WitnessedFireEventArgs<"espionage_operation", F>
+      args: WitnessedFireEventArgs<"espionage_operation", F, "espionage_operation">
     ): void;
   }
 
   interface FirstContactScope {
     /** Fires a first contact event for the scoped first_contact, after any delay. */
-    firstContactEvent(args: FireEventArgs<"first_contact", undefined>): void;
-    firstContactEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"first_contact", F>): void;
+    firstContactEvent(args: FireEventArgs<"first_contact", undefined, "first_contact">): void;
+    firstContactEvent<F extends ScopeName>(
+      args: WitnessedFireEventArgs<"first_contact", F, "first_contact">
+    ): void;
   }
 
   interface FleetScope {
     /** Fires a fleet event for the scoped fleet, after any delay. */
-    fleetEvent(args: FireEventArgs<"fleet", undefined>): void;
-    fleetEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"fleet", F>): void;
+    fleetEvent(args: FireEventArgs<"fleet", undefined, "fleet">): void;
+    fleetEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"fleet", F, "fleet">): void;
   }
 
   interface LeaderScope {
     /** Fires a leader event for the scoped leader, after any delay. */
-    leaderEvent(args: FireEventArgs<"leader", undefined>): void;
-    leaderEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"leader", F>): void;
+    leaderEvent(args: FireEventArgs<"leader", undefined, "leader">): void;
+    leaderEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"leader", F, "leader">): void;
   }
 
   interface PlanetScope {
     /** Fires a carrier event for the scoped carrier, after any delay. */
-    carrierEvent(args: FireEventArgs<"carrier", undefined>): void;
-    carrierEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"carrier", F>): void;
+    carrierEvent(args: FireEventArgs<"carrier", undefined, "carrier">): void;
+    carrierEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"carrier", F, "carrier">): void;
 
     /** Fires a planet event for the scoped planet, after any delay. */
-    planetEvent(args: FireEventArgs<"planet", undefined>): void;
-    planetEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"planet", F>): void;
+    planetEvent(args: FireEventArgs<"planet", undefined, "planet">): void;
+    planetEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"planet", F, "planet">): void;
   }
 
   interface PopFactionScope {
     /** Fires a pop faction event for the scoped pop_faction, after any delay. */
-    popFactionEvent(args: FireEventArgs<"pop_faction", undefined>): void;
-    popFactionEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"pop_faction", F>): void;
+    popFactionEvent(args: FireEventArgs<"pop_faction", undefined, "pop_faction">): void;
+    popFactionEvent<F extends ScopeName>(
+      args: WitnessedFireEventArgs<"pop_faction", F, "pop_faction">
+    ): void;
   }
 
   interface PopGroupScope {
     /** Fires a pop group event for the scoped pop_group, after any delay. */
-    popGroupEvent(args: FireEventArgs<"pop_group", undefined>): void;
-    popGroupEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"pop_group", F>): void;
+    popGroupEvent(args: FireEventArgs<"pop_group", undefined, "pop_group">): void;
+    popGroupEvent<F extends ScopeName>(
+      args: WitnessedFireEventArgs<"pop_group", F, "pop_group">
+    ): void;
   }
 
   interface ShipScope {
     /** Fires a carrier event for the scoped carrier, after any delay. */
-    carrierEvent(args: FireEventArgs<"carrier", undefined>): void;
-    carrierEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"carrier", F>): void;
+    carrierEvent(args: FireEventArgs<"carrier", undefined, "carrier">): void;
+    carrierEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"carrier", F, "carrier">): void;
 
     /** Fires a ship event for the scoped ship, after any delay. */
-    shipEvent(args: FireEventArgs<"ship", undefined>): void;
-    shipEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"ship", F>): void;
+    shipEvent(args: FireEventArgs<"ship", undefined, "ship">): void;
+    shipEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"ship", F, "ship">): void;
   }
 
   interface SituationScope {
     /** Fires a situation event for the scoped situation, after any delay. */
-    situationEvent(args: FireEventArgs<"situation", undefined>): void;
-    situationEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"situation", F>): void;
+    situationEvent(args: FireEventArgs<"situation", undefined, "situation">): void;
+    situationEvent<F extends ScopeName>(
+      args: WitnessedFireEventArgs<"situation", F, "situation">
+    ): void;
   }
 
   interface StarbaseScope {
     /** Fires a starbase event for the scoped starbase, after any delay. */
-    starbaseEvent(args: FireEventArgs<"starbase", undefined>): void;
-    starbaseEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"starbase", F>): void;
+    starbaseEvent(args: FireEventArgs<"starbase", undefined, "starbase">): void;
+    starbaseEvent<F extends ScopeName>(
+      args: WitnessedFireEventArgs<"starbase", F, "starbase">
+    ): void;
   }
 
   interface StormScope {
     /** Fires a cosmic storm event for the scoped storm, after any delay. */
-    cosmicStormEvent(args: FireEventArgs<"storm", undefined>): void;
-    cosmicStormEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"storm", F>): void;
+    cosmicStormEvent(args: FireEventArgs<"storm", undefined, "cosmic_storm">): void;
+    cosmicStormEvent<F extends ScopeName>(
+      args: WitnessedFireEventArgs<"storm", F, "cosmic_storm">
+    ): void;
   }
 
   interface SystemScope {
     /** Fires a system event for the scoped system, after any delay. */
-    systemEvent(args: FireEventArgs<"system", undefined>): void;
-    systemEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"system", F>): void;
+    systemEvent(args: FireEventArgs<"system", undefined, "system">): void;
+    systemEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"system", F, "system">): void;
   }
 
   interface UniversalEffects {
     /** Fires an observer event for the scoped country, after any delay. */
-    observerEvent(args: FireEventArgs<"country", undefined>): void;
-    observerEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"country", F>): void;
+    observerEvent(args: FireEventArgs<"country", undefined, "observer">): void;
+    observerEvent<F extends ScopeName>(
+      args: WitnessedFireEventArgs<"country", F, "observer">
+    ): void;
   }
 }
 

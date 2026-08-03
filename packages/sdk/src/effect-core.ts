@@ -50,10 +50,26 @@ declare const refScopeBrand: unique symbol;
  * The brand is covariant: a ref of unknown scope does not assign where a
  * specific scope is required.
  */
-export interface ScopeRef<S extends ScopeName = ScopeName> {
+export interface ScopeValue<S extends ScopeName = ScopeName> {
   readonly kind: "scope-ref";
   /** The script path this serializes to: `this`, `from`, `event_target:x`. */
   readonly path: string;
+  readonly [refScopeBrand]?: S;
+}
+
+/**
+ * A {@link ScopeValue} whose path means the same thing wherever it is written,
+ * so it can also be *opened* as a block.
+ *
+ * That is the whole distinction. `from` and `event_target:x` name their scope
+ * absolutely: nesting inside `every_owned_planet = { ... }` does not change
+ * what either resolves to. `this` does not — inside that block it is the
+ * planet — so `ctx.self` is a plain {@link ScopeValue}, and the one thing you
+ * cannot do with it is open a block whose contents would run in a scope its
+ * type does not describe. As a value it stays exactly as useful: the FROM
+ * witness at a fire site, a situation's target, a scripted effect's argument.
+ */
+export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S> {
   /**
    * Opens the ref as an effect block: `from = { <effects> }`.
    *
@@ -71,7 +87,6 @@ export interface ScopeRef<S extends ScopeName = ScopeName> {
    * to run it against.
    */
   trigger(condition: Trigger<S>): Trigger<ScopeName>;
-  readonly [refScopeBrand]?: S;
 }
 
 /**
@@ -88,11 +103,15 @@ export function eventTarget<S extends ScopeName>(name: string): EventTarget<S> {
   return { ...scopeRef<S>(`event_target:${name}`), name };
 }
 
-/** SDK-internal: an unchecked ref for well-known paths (`this`, `from`). */
+/** SDK-internal: an unchecked value for a well-known path (`this`). */
+export function scopeValue<S extends ScopeName>(path: string): ScopeValue<S> {
+  return { kind: "scope-ref", path };
+}
+
+/** SDK-internal: an unchecked openable ref for absolute paths (`from`). */
 export function scopeRef<S extends ScopeName>(path: string): ScopeRef<S> {
   return {
-    kind: "scope-ref",
-    path,
+    ...scopeValue<S>(path),
     effects(body) {
       const recording = activeRecording(path);
       recording.sink.push(block(path, recordEffects(recording.refs, body)));
@@ -155,7 +174,12 @@ export interface UndeclaredFrom {
  * `ctx.from.effects((site) => ...)` opens the site.
  */
 export interface ScriptCtx<Self extends ScopeName, From extends ScopeName | undefined> {
-  readonly self: ScopeRef<Self>;
+  /**
+   * The scope this block runs in, as a value — the FROM witness at a fire
+   * site. Not openable: `this` is relative to the block it is written in, so
+   * inside a scope transition it would name that scope rather than this one.
+   */
+  readonly self: ScopeValue<Self>;
   /**
    * FROM, where something declares what it holds — an event's `from:` field, a
    * content field's `replace_scopes` in the rules. Everywhere else this is an
@@ -172,7 +196,7 @@ export function scriptCtx<Self extends ScopeName, From extends ScopeName | undef
   Self,
   From
 > {
-  return { self: scopeRef("this"), from: scopeRef("from") } as ScriptCtx<Self, From>;
+  return { self: scopeValue("this"), from: scopeRef("from") } as ScriptCtx<Self, From>;
 }
 
 // ---------------------------------------------------------------------------

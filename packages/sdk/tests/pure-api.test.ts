@@ -44,6 +44,7 @@ import {
   defineTechnology,
   defineTradition,
   defineUtilityComponentTemplate,
+  defineWeaponComponentTemplate,
   eventTarget,
   hasOwner,
   hasTechnology,
@@ -645,6 +646,31 @@ describe("content reference integrity", () => {
       defineUtilityComponentTemplate({ id: "pp_mod_component_missing", icon: "GFX_x" }),
     ]);
     expect(() => buildMod(CONFIG, [designs, components])).not.toThrow();
+  });
+
+  it("resolves an unqualified reference across every registry split out of its type", () => {
+    // `template` holds a bare `<component_template>`, which any of the three
+    // subtype registries satisfies. Keying only by the qualified names left
+    // the bare type absent from the map, so these references — the majority
+    // of them — read as unauthorable and went unchecked.
+    const designs = collection(undefined, [
+      defineGlobalShipDesign({
+        id: "pp_mod_design_ghost_template",
+        shipSize: "ship_size_corvette",
+        section: [
+          { slot: "mid", component: [{ slot: "aux", template: "pp_mod_template_missing" }] },
+        ],
+      }),
+    ]);
+    expect(() => buildMod(CONFIG, [designs])).toThrow(
+      'references component_template "pp_mod_template_missing"'
+    );
+
+    // Any of the three registries accounts for it, since the field takes any.
+    const weapons = collection(undefined, [
+      defineWeaponComponentTemplate({ id: "pp_mod_template_missing", icon: "GFX_x" }),
+    ]);
+    expect(() => buildMod(CONFIG, [designs, weapons])).not.toThrow();
   });
 
   it("checks an own-prefixed raw string exactly like a branded ref", () => {

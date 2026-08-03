@@ -68,13 +68,14 @@ function definerSignature(kind: EmittedKind & { scope: string }): string {
     ) +
     `  define${pascalCase(kind.key)}<From extends ScopeName | undefined = undefined>(\n` +
     `    def: EventDef<${scope}, From>\n` +
-    `  ): EventItem<${scope}, From>;\n`
+    `  ): EventItem<${scope}, From, ${JSON.stringify(kind.subtype)}>;\n`
   );
 }
 
 function fireOverloads(kind: EmittedKind & { scope: string }): string {
   const method = camelCase(kind.key);
   const scope = JSON.stringify(kind.scope);
+  const subtype = JSON.stringify(kind.subtype);
   const spoken = kind.key.replaceAll("_", " ");
   return (
     docComment(
@@ -84,8 +85,10 @@ function fireOverloads(kind: EmittedKind & { scope: string }): string {
       ],
       "    "
     ) +
-    `    ${method}(args: FireEventArgs<${scope}, undefined>): void;\n` +
-    `    ${method}<F extends ScopeName>(args: WitnessedFireEventArgs<${scope}, F>): void;\n`
+    `    ${method}(args: FireEventArgs<${scope}, undefined, ${subtype}>): void;\n` +
+    `    ${method}<F extends ScopeName>(\n` +
+    `      args: WitnessedFireEventArgs<${scope}, F, ${subtype}>\n` +
+    `    ): void;\n`
   );
 }
 
@@ -175,11 +178,15 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     "export function namespace(ns: string): EventNamespace {\n" +
     "  assertNamespace(ns);\n" +
     "  const used = new Set<number>();\n" +
+    // `Kind` rides in from the key rather than the call sites: the subtype is
+    // a fact the EVENT_KINDS table already records, and a kind whose subtype
+    // and scope differ (observer, cosmic_storm) would otherwise have to repeat
+    // it at every binding below.
     "  const definerOf =\n" +
-    "    <S extends ScopeName>(kind: EventKindKey, scope: S) =>\n" +
+    "    <const K extends EventKindKey, S extends ScopeName>(kind: K, scope: S) =>\n" +
     "    <From extends ScopeName | undefined = undefined>(\n" +
     "      def: EventDef<S, From>\n" +
-    "    ): EventItem<S, From> => {\n" +
+    '    ): EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]> => {\n' +
     "      if (used.has(def.id)) {\n" +
     '        throw new Error(`Duplicate event id "${ns}.${def.id}"`);\n' +
     "      }\n" +
@@ -189,7 +196,7 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     "        register: (key, text) => locEntries.push([key, text]),\n" +
     "      });\n" +
     '      const item = { ...built, itemKind: "event" as const, namespace: ns, locEntries };\n' +
-    "      return item as EventItem<S, From>;\n" +
+    '      return item as EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]>;\n' +
     "    };\n" +
     "  return {\n" +
     '    kind: "event-namespace",\n' +
