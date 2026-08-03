@@ -26,8 +26,13 @@ export interface VanillaRefsEmission {
 interface VanillaRefRow {
   /** Registry name: what the function or trie root is called after. */
   readonly registry: string;
-  /** The CWT `<type>` name backing the ref — differs from `registry` only for
-   * the `component_template` registries that share one CWT type via `as`. */
+  /**
+   * The CWT reference the id satisfies — differs from `registry` only for the
+   * `component_template` registries that share one CWT type via `as`, where it
+   * is the qualified `component_template.utility_component_template` the rules
+   * actually use. A vanilla id is the same kind of thing as a defined one, so
+   * it wears the same brand `ContentItem` does.
+   */
   readonly refSource: string;
   /** Whether the registry is large enough to get the navigable trie. */
   readonly oversized: boolean;
@@ -36,14 +41,18 @@ interface VanillaRefRow {
 export function emitVanillaRefs(
   emitter: Emitter,
   manifest: readonly ContentManifestEntry[],
-  extras: readonly VanillaRefExtra[]
+  extras: readonly VanillaRefExtra[],
+  referenceNames: ReadonlyMap<string, string>
 ): VanillaRefsEmission {
   const rows: VanillaRefRow[] = [
-    ...manifest.map((entry): VanillaRefRow => ({
-      registry: entry.as ?? entry.type,
-      refSource: entry.type,
-      oversized: entry.oversized ?? false,
-    })),
+    ...manifest.map((entry): VanillaRefRow => {
+      const registry = entry.as ?? entry.type;
+      return {
+        registry,
+        refSource: referenceNames.get(registry) ?? entry.type,
+        oversized: entry.oversized ?? false,
+      };
+    }),
     ...extras.map((extra): VanillaRefRow => ({
       registry: extra.type,
       refSource: extra.type,

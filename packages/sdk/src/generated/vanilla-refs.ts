@@ -42,7 +42,9 @@ import type {
   CasusBelliRef,
   CivicOrOriginRef,
   ComponentSetRef,
-  ComponentTemplateRef,
+  ComponentTemplateStrikeCraftComponentTemplateRef,
+  ComponentTemplateUtilityComponentTemplateRef,
+  ComponentTemplateWeaponComponentTemplateRef,
   CouncilorRef,
   CountryShipOfSizeLimitRef,
   DecisionRef,
@@ -194,7 +196,7 @@ export function globalShipDesign<const Id extends VanillaId<"global_ship_design"
  */
 export function utilityComponentTemplate<const Id extends VanillaId<"utility_component_template">>(
   id: Id
-): ComponentTemplateRef & { readonly id: Id } {
+): ComponentTemplateUtilityComponentTemplateRef & { readonly id: Id } {
   return { id };
 }
 
@@ -206,7 +208,7 @@ export function utilityComponentTemplate<const Id extends VanillaId<"utility_com
  */
 export function weaponComponentTemplate<const Id extends VanillaId<"weapon_component_template">>(
   id: Id
-): ComponentTemplateRef & { readonly id: Id } {
+): ComponentTemplateWeaponComponentTemplateRef & { readonly id: Id } {
   return { id };
 }
 
@@ -218,7 +220,7 @@ export function weaponComponentTemplate<const Id extends VanillaId<"weapon_compo
  */
 export function strikeCraftComponentTemplate<
   const Id extends VanillaId<"strike_craft_component_template">,
->(id: Id): ComponentTemplateRef & { readonly id: Id } {
+>(id: Id): ComponentTemplateStrikeCraftComponentTemplateRef & { readonly id: Id } {
   return { id };
 }
 

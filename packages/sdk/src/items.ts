@@ -16,7 +16,7 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "./content-refs.ts";
 import type { DefinedEvent } from "./events.ts";
-import type { ContentTypeName } from "./generated/content-registry.ts";
+import type { ContentReferenceName, ContentTypeName } from "./generated/content-registry.ts";
 import type { TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import type { OnActionRef } from "./on-actions.ts";
@@ -30,16 +30,23 @@ export interface ModWarning {
 /**
  * A content definition as a value: a `TypedRef` for its own registry, so it
  * flows into that registry's reference fields (`prerequisites: [tech]`) and
- * nowhere else. Extending `TypedRef<K>` carries the registry brand without
- * this module naming the phantom symbol — the same trick `EventItem` uses
- * through `DefinedEvent`. The brand stays optional and phantom (raw vanilla
- * id strings still assign to a `TypedRef`); what it buys is that two items
- * with mismatched `K` conflict, so a building is not a `TechnologyRef`.
+ * nowhere else. Extending `TypedRef` carries the registry brand without this
+ * module naming the phantom symbol — the same trick `EventItem` uses through
+ * `DefinedEvent`. The brand stays optional and phantom (raw vanilla id strings
+ * still assign to a `TypedRef`); what it buys is that two items with
+ * mismatched `K` conflict, so a building is not a `TechnologyRef`.
+ *
+ * The brand is the registry's CWT *reference* name rather than `K` itself.
+ * They differ only where the manifest splits one CWT type into several
+ * registries: a utility component template is `<component_template
+ * .utility_component_template>` to the rules, and branding it
+ * `"utility_component_template"` — a name no rule uses — left it unable to
+ * reach any field that references one.
  */
 export interface ContentItem<
   K extends ContentTypeName = ContentTypeName,
   D extends { readonly id: string } = { readonly id: string },
-> extends TypedRef<K> {
+> extends TypedRef<ContentReferenceName<K>> {
   readonly itemKind: "content";
   readonly type: K;
   readonly id: D["id"];

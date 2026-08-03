@@ -152,9 +152,17 @@ export type ComponentSlotTemplateRef = TypedRef<
 /** A reference to a `<component_template>`. */
 export type ComponentTemplateRef = TypedRef<"component_template" | `component_template.${string}`>;
 
+/** A reference to a `<component_template.strike_craft_component_template>`. */
+export type ComponentTemplateStrikeCraftComponentTemplateRef =
+  TypedRef<"component_template.strike_craft_component_template">;
+
 /** A reference to a `<component_template.utility_component_template>`. */
 export type ComponentTemplateUtilityComponentTemplateRef =
   TypedRef<"component_template.utility_component_template">;
+
+/** A reference to a `<component_template.weapon_component_template>`. */
+export type ComponentTemplateWeaponComponentTemplateRef =
+  TypedRef<"component_template.weapon_component_template">;
 
 /** A reference to a `<councilor>`. */
 export type CouncilorRef = TypedRef<"councilor" | `councilor.${string}`>;

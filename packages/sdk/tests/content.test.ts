@@ -1509,6 +1509,7 @@ describe("alias-struct serialization", () => {
 
   const descriptor: ContentRegistryDescriptor = {
     type: "civic_or_origin",
+    referenceName: "civic_or_origin",
     outputDir: "common/governments/civics",
     fileStem: "civics",
     fields: [

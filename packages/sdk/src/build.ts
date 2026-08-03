@@ -513,7 +513,15 @@ export function buildMod(
   // may name. That is the difference between "an own-prefixed string" — flags,
   // localization keys, saved event targets are all that — and a reference: only
   // a field the rules say holds `<technology>` demands a built technology.
-  const authorableTypes = new Set<string>(CONTENT_REGISTRIES.map((descriptor) => descriptor.type));
+  // Keyed by the CWT reference each registry answers to, which is what a
+  // field's `refTypes` names. For most registries that is their own name; for
+  // one the manifest split out of a shared CWT type it is the qualified
+  // `component_template.utility_component_template`, and keying by the registry
+  // name meant no such field ever matched — so every component template
+  // reference read as "somebody else's to define" and went unchecked.
+  const authorableTypes = new Map<string, string>(
+    CONTENT_REGISTRIES.map((descriptor) => [descriptor.referenceName, descriptor.type])
+  );
   const builtIds = new Map<string, Set<string>>();
   for (const group of definedGroups) {
     const ids = builtIds.get(group.type) ?? new Set<string>();
@@ -534,7 +542,7 @@ export function buildMod(
     if (use.targets.length === 0 || !use.targets.every((type) => authorableTypes.has(type))) {
       continue;
     }
-    if (use.targets.some((type) => builtIds.get(type)?.has(use.id))) {
+    if (use.targets.some((type) => builtIds.get(authorableTypes.get(type)!)?.has(use.id))) {
       continue;
     }
     const target = use.targets.join(" or ");

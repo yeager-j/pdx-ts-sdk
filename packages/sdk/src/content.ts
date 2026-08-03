@@ -628,6 +628,14 @@ function aliasStructFieldsOf(category: string): readonly ContentField[] {
 /** Generated description of one authorable content registry. */
 export interface ContentRegistryDescriptor {
   readonly type: string;
+  /**
+   * The CWT reference this registry's definitions satisfy — usually its own
+   * name, and `component_template.utility_component_template` for a registry
+   * the manifest split out of a shared CWT type. It is what a field holding
+   * `<component_template>` is asking for, so it is what an item brands itself
+   * with and what the build's dangling-reference guard resolves against.
+   */
+  readonly referenceName: string;
   readonly outputDir: string;
   readonly fileStem: string;
   readonly fields: readonly ContentField[];

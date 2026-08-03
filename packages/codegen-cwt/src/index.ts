@@ -190,6 +190,8 @@ async function main(): Promise<void> {
     manifest: (typeof CONTENT_MANIFEST)[number];
     /** Registry name: the CWT type unless the manifest renames it via `as`. */
     registry: string;
+    /** The CWT reference this registry's definitions satisfy. */
+    referenceName: string;
     /** Top-level keyword, for registries CWT marks with `name_field`. */
     keyword: string | undefined;
     type: ContentType;
@@ -225,14 +227,27 @@ async function main(): Promise<void> {
     emitter.beginFile();
     const emission = emitContentType(emitter, type, body, registry);
     const usage = emitter.endFile();
-    contents.push({ manifest, registry, keyword, type, emission, usage });
+    contents.push({
+      manifest,
+      registry,
+      referenceName: referenceNameOf(entry, type),
+      keyword,
+      type,
+      emission,
+      usage,
+    });
   }
 
   // Registers every ref this namespace names (including the ref-only extras —
   // sound, sound_effect, sprite, resource) with `emitter.usedRefs` before
   // `refs.ts` is written below, so their `XRef` aliases survive even if
   // nothing else in the rules happens to reference them.
-  const vanillaRefs = emitVanillaRefs(emitter, CONTENT_MANIFEST, VANILLA_REF_EXTRAS);
+  const vanillaRefs = emitVanillaRefs(
+    emitter,
+    CONTENT_MANIFEST,
+    VANILLA_REF_EXTRAS,
+    new Map(contents.map((content) => [content.registry, content.referenceName]))
+  );
 
   await write(
     "scopes.ts",
@@ -705,10 +720,41 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
   return { code: imports + "\n" + chunks.join("\n"), definers: contents.length, grafted };
 }
 
+/**
+ * The CWT reference a registry's definitions satisfy — what a field holding
+ * `<component_template>` is actually asking for.
+ *
+ * The registry name answers this for every registry that is a whole CWT type.
+ * An `as` rename is not: three registries share `type[component_template]`,
+ * one per subtype, and the rules refer to them as
+ * `<component_template.utility_component_template>`. Branding those with the
+ * SDK's own registry name left a defined component template unable to reach
+ * any field that references one — the name it carried was not a name the rules
+ * have.
+ *
+ * `as` therefore has to be the subtype's own name, and codegen says so rather
+ * than inventing a reference the rules would not recognise.
+ */
+function referenceNameOf(entry: ContentManifestEntry, type: ContentType): string {
+  if (entry.as === undefined) {
+    return type.name;
+  }
+  const subtype = type.subtypes.find((candidate) => candidate.name === entry.as);
+  if (subtype === undefined) {
+    const declared = type.subtypes.map((candidate) => candidate.name).join(", ");
+    throw new Error(
+      `The manifest renames type[${type.name}] to "${entry.as}", but that names no subtype ` +
+        `of it, so the rules have no reference for the registry. Declared subtypes: ${declared}`
+    );
+  }
+  return `${type.name}.${subtype.name}`;
+}
+
 function contentRegistry(
   contents: readonly {
     manifest: (typeof CONTENT_MANIFEST)[number];
     registry: string;
+    referenceName: string;
     keyword: string | undefined;
     type: ContentType;
     emission: ContentEmission;
@@ -732,6 +778,7 @@ function contentRegistry(
       return (
         "  {\n" +
         `    type: ${JSON.stringify(content.registry)},\n` +
+        `    referenceName: ${JSON.stringify(content.referenceName)},\n` +
         `    outputDir: ${JSON.stringify(outputDir)},\n` +
         `    fileStem: ${JSON.stringify(fileStem)},\n` +
         `    fields: ${content.emission.fieldsConstant},\n` +
@@ -751,7 +798,18 @@ function contentRegistry(
     "export const CONTENT_REGISTRIES = [\n" +
     descriptors +
     "] as const satisfies readonly ContentRegistryDescriptor[];\n\n" +
-    'export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];\n'
+    'export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];\n\n' +
+    docComment([
+      "The CWT reference a registry's definitions satisfy, as a type.",
+      "",
+      "The same thing `referenceName` carries as data, and the brand a",
+      "`ContentItem` for that registry wears — which is what makes a defined",
+      "component template reach a field holding `<component_template>`.",
+    ]) +
+    "export type ContentReferenceName<K extends ContentTypeName> = Extract<\n" +
+    "  (typeof CONTENT_REGISTRIES)[number],\n" +
+    "  { type: K }\n" +
+    '>["referenceName"];\n'
   );
 }
 

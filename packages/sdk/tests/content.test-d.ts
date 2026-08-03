@@ -19,6 +19,7 @@ import {
   defineDecision,
   defineEconomicCategory,
   defineEdict,
+  defineGlobalShipDesign,
   defineJob,
   defineOpinionModifier,
   defineScriptedModifier,
@@ -29,7 +30,9 @@ import {
   defineStarbaseLevel,
   defineStaticModifier,
   defineTradition,
+  defineUtilityComponentTemplate,
   defineWarGoal,
+  defineWeaponComponentTemplate,
   hasAuthority,
   hasCountryFlag,
   hasPlanetFlag,
@@ -39,6 +42,7 @@ import {
   isSiteLocked,
   makeScope,
   namespace,
+  vanilla,
   type AgendaRef,
   type AgreementPresetRef,
   type ArchaeologicalSiteTypeRef,
@@ -48,6 +52,8 @@ import {
   type BuildingItem,
   type BuildingRef,
   type CasusBelliRef,
+  type ComponentTemplateRef,
+  type ComponentTemplateUtilityComponentTemplateRef,
   type ContentItem,
   type DecisionRef,
   type EdictRef,
@@ -598,6 +604,45 @@ describe("generated content authoring types", () => {
         // @ts-expect-error — the reported bug: a country event in a fleet event's field
         { difficulty: 2, icon: "GFX_x", event: countryEvent },
       ],
+    });
+  });
+
+  it("brands a registry split off a shared CWT type by the reference the rules use", () => {
+    // Three registries share `type[component_template]`, one per subtype, so
+    // the SDK names them after the subtype and the rules refer to them as
+    // `<component_template.utility_component_template>`. Branding a definition
+    // with the SDK's own registry name — a name no rule uses — left it unable
+    // to reach any field that references one, in either form.
+    const util = defineUtilityComponentTemplate({
+      id: "content_types_util_component",
+      icon: "GFX_x",
+      power: -10,
+    });
+    const weapon = defineWeaponComponentTemplate({
+      id: "content_types_weapon_component",
+      icon: "GFX_x",
+    });
+
+    const unqualified: ComponentTemplateRef = util;
+    const qualified: ComponentTemplateUtilityComponentTemplateRef = util;
+    void unqualified;
+    void qualified;
+    // @ts-expect-error — the subtypes stay distinct: a weapon is not a utility component
+    const wrongSubtype: ComponentTemplateUtilityComponentTemplateRef = weapon;
+    void wrongSubtype;
+    // @ts-expect-error — nor does the shared CWT type make it some other registry
+    const wrongRegistry: TechnologyRef = util;
+    void wrongRegistry;
+
+    // A vanilla id is the same kind of thing, so it wears the same brand.
+    const fromVanilla: ComponentTemplateUtilityComponentTemplateRef =
+      vanilla.utilityComponentTemplate("SHIELD_1");
+    void fromVanilla;
+
+    defineGlobalShipDesign({
+      id: "content_types_ship_design_components",
+      shipSize: "ship_size_corvette",
+      growthStages: [{ shipSize: "ship_size_corvette", requiredComponent: [util] }],
     });
   });
 
