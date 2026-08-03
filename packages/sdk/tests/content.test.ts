@@ -1292,6 +1292,66 @@ describe("generated content registries", () => {
     expect(rendered).not.toContain("ai_weight = {\n\t\tbase = 5000");
   });
 
+  it("lowers a complex_trigger_modifier row alongside a Modifier row (SDK-36)", () => {
+    // Real vanilla, verbatim: common/inline_scripts/solar_system_initializers/
+    // initializer_modifiers_habitable_world_systems.txt, spliced into every
+    // unique_system_initializer's usage_odds (e.g. unique_system_initializer_02,
+    // "Larionessi Refuge") as `base = @spawn_system_base` (= 1):
+    //
+    //     usage_odds = {
+    //         base = 1
+    //         modifier = { factor = 0  OR = { is_fe_cluster = yes  is_marauder_cluster = yes  has_star_flag = empire_cluster } }
+    //         complex_trigger_modifier = { trigger = check_galaxy_setup_value  parameters = { setting = habitable_worlds_scale }  mode = factor }
+    //     }
+    //
+    // This is the row an earlier dogfood port of this exact system had to
+    // drop, because WeightBlock could not express complex_trigger_modifier —
+    // ported here to prove it now can. The `modifier` row's gate is not
+    // reproduced verbatim: `usage_odds` lowers to `WeightBlock<ScopeName>`
+    // (the field's rules never narrow its scope, an existing looseness this
+    // ticket does not touch), so a `when` here has to type-check for every
+    // scope — `is_fe_cluster`/`is_marauder_cluster`/`has_star_flag` do not,
+    // and neither does anything short of `always()`. The
+    // complex_trigger_modifier row carries the actual evidence and is exact.
+    const system = defineSolarSystemInitializer({
+      id: "wb_test_system_unique",
+      class: "sc_neutron_star",
+      usage: ["misc_system_init"],
+      usageOdds: {
+        base: 1,
+        modifiers: [
+          { factor: 0, when: always() },
+          {
+            trigger: "check_galaxy_setup_value",
+            parameters: { setting: "habitable_worlds_scale" },
+            mode: "factor",
+          },
+        ],
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block complex trigger modifier test", "wb_test"), [
+        collection(undefined, [system]),
+      ])
+    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    expect(rendered).toContain(
+      "usage_odds = {\n" +
+        "\t\tbase = 1\n" +
+        "\t\tmodifier = {\n" +
+        "\t\t\tfactor = 0\n" +
+        "\t\t\talways = yes\n" +
+        "\t\t}\n" +
+        "\t\tcomplex_trigger_modifier = {\n" +
+        "\t\t\ttrigger = check_galaxy_setup_value\n" +
+        "\t\t\tparameters = {\n" +
+        "\t\t\t\tsetting = habitable_worlds_scale\n" +
+        "\t\t\t}\n" +
+        "\t\t\tmode = factor\n" +
+        "\t\t}\n" +
+        "\t}"
+    );
+  });
+
   it("contributes ship-of-size limits under the engine's `default` key", () => {
     // The ownership limit is not a define: its key belongs to the engine and
     // the game reads it additively, so the API takes no id and the mod-prefix

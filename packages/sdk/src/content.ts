@@ -18,11 +18,14 @@ import {
 
 import { underField, type ContentRefSink, type ContentRefUse } from "./content-refs.ts";
 import {
+  complexTriggerModifierEntry,
   modifierDescKey,
   modifierEntry,
   recordEffects,
+  registerComplexTriggerModifierDescKey,
   registerModifierDescKey,
   scriptCtx,
+  type ComplexTriggerModifier,
   type Modifier,
   type ModifierWithLoc,
   type ScriptCtx,
@@ -125,12 +128,12 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
 
 /**
  * The `complex_maths_enum` operations `modifier_rule.cwt:1-3` allows directly
- * alongside `base`, sibling to the `modifier` rows rather than inside one —
- * the same measured member set {@link Modifier} carries at row level, minus
- * `desc`/`when` which only make sense on a gated row. `Omit` rather than a
- * hand-kept duplicate, so a future change to `Modifier`'s numeric arms flows
- * through here automatically, the same reasoning as {@link
- * EconomicResourceBlockNoProduce}.
+ * alongside `base`, sibling to the `modifier`/`complex_trigger_modifier` rows
+ * rather than inside one of them — the same measured member set {@link
+ * Modifier} carries at row level, minus `desc`/`when` which only make sense
+ * on a gated row. `Omit` rather than a hand-kept duplicate, so a future
+ * change to `Modifier`'s numeric arms flows through here automatically, the
+ * same reasoning as {@link EconomicResourceBlockNoProduce}.
  *
  * Vanilla favors this top-level spelling for a block's own always-applied
  * weight: in `common/traditions/`, 292 of 293 `weight`/`ai_weight` blocks set
@@ -138,6 +141,16 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
  * under `common/`, top-level `weight` (2,255) outnumbers `base` (848).
  */
 export type WeightBlockOperations<S extends ScopeName> = Omit<Modifier<S>, "desc" | "when">;
+
+/**
+ * Every row shape a {@link WeightBlock}'s `modifiers` array can hold: a
+ * gated fixed adjustment ({@link Modifier}, or {@link ModifierWithLoc} via
+ * `M`), or a named trigger's result feeding a weight operation directly
+ * ({@link ComplexTriggerModifier}) — `modifier_rule.cwt`'s two splice-level
+ * row kinds (`:5-13`, `:32-53`).
+ */
+export type WeightBlockRow<S extends ScopeName, M extends Modifier<S> = Modifier<S>> =
+  M | ComplexTriggerModifier<S>;
 
 /**
  * A `modifier_rule` block: optional base weight, the same weight operations
@@ -155,13 +168,17 @@ export interface WeightBlock<
 > extends WeightBlockOperations<S> {
   /** Starting weight before modifiers. */
   readonly base?: number;
-  /** Conditional adjustments emitted as repeated `modifier` blocks. */
-  readonly modifiers?: readonly M[];
+  /** Conditional adjustments emitted as repeated `modifier` or `complex_trigger_modifier` blocks. */
+  readonly modifiers?: readonly WeightBlockRow<S, M>[];
 }
 
 /**
- * A {@link WeightBlock} whose rows require `desc`, matching
+ * A {@link WeightBlock} whose {@link Modifier} rows require `desc`, matching
  * `modifier_rule_with_loc` (e.g. `situation_type.monthly_progress`).
+ * `ComplexTriggerModifier` rows stay optional-`desc` in both variants —
+ * `modifier_rule_with_loc:complex_trigger_modifier` (`:67-81`) is a real
+ * splice arm, but no current registry exercises it, so tightening it is
+ * speculative until one does.
  */
 export type WeightBlockWithLoc<S extends ScopeName> = WeightBlock<S, ModifierWithLoc<S>>;
 
@@ -892,6 +909,19 @@ function weightOperationEntries(value: WeightBlockOperations<ScopeName>): PdxEnt
   return entries;
 }
 
+/**
+ * Discriminates a {@link WeightBlockRow} structurally: {@link
+ * ComplexTriggerModifier} is the only row kind with a required `trigger`
+ * member, `Modifier`/`ModifierWithLoc` the only kind with a required `when` —
+ * the same shape-from-presence approach `dualArm` uses for content fields,
+ * rather than a runtime brand neither row kind otherwise needs.
+ */
+function isComplexTriggerModifier(
+  row: WeightBlockRow<ScopeName>
+): row is ComplexTriggerModifier<ScopeName> {
+  return "trigger" in row;
+}
+
 function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringContext): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.base !== undefined) {
@@ -899,7 +929,13 @@ function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringC
   }
   entries.push(...weightOperationEntries(value));
   const refs: ContentRefUse[] = [];
-  entries.push(...(value.modifiers ?? []).map((modifier) => modifierEntry(modifier, refs)));
+  entries.push(
+    ...(value.modifiers ?? []).map((row) =>
+      isComplexTriggerModifier(row)
+        ? complexTriggerModifierEntry(row, refs)
+        : modifierEntry(row, refs)
+    )
+  );
   collectRefs(ctx, refs, key);
   return block(key, entries);
 }
@@ -1554,9 +1590,19 @@ export class ContentAuthoring {
 
   /**
    * Registers one localisation key per desc-bearing modifier row in a
-   * `WeightBlock`, via the shared derivation `modifierDescKey` — see its doc
-   * comment in `effect-core.ts` for the key shape, the `descKey`/hash-fallback
-   * split, and why the derivation lives there rather than here.
+   * `WeightBlock`. `Modifier` rows go through the shared derivation
+   * `modifierDescKey` — see its doc comment in `effect-core.ts` for the key
+   * shape, the `descKey`/hash-fallback split, and why the derivation lives
+   * there rather than here (`events.ts`'s `registerModifierDescs` is the
+   * other caller).
+   *
+   * `ComplexTriggerModifier` rows have no `descKey` field to pin against —
+   * `complex_trigger_modifier`'s own name/parameter pair is already the
+   * row's content-derived identity — so they key as
+   * `<ownerId>_<fieldPath>_<index>` directly, keeping every row on the field
+   * counted (both kinds together) so a `Modifier` and a
+   * `ComplexTriggerModifier` sharing one `modifiers` array never collide on
+   * the same key either.
    */
   private collectModifierDescs(
     ownerId: string,
@@ -1564,20 +1610,26 @@ export class ContentAuthoring {
     weight: WeightBlock<ScopeName>,
     into: LocalisationEntry[]
   ): void {
-    for (const modifier of weight.modifiers ?? []) {
-      if (modifier.desc === undefined) {
-        continue;
+    weight.modifiers?.forEach((row, index) => {
+      if (row.desc === undefined) {
+        return;
+      }
+      if (isComplexTriggerModifier(row)) {
+        const key = `${ownerId}_${fieldPath}_${index}`;
+        into.push([key, row.desc]);
+        registerComplexTriggerModifierDescKey(row, key);
+        return;
       }
       const { key, unstableWarning } = modifierDescKey(
         ownerId,
         fieldPath,
-        modifier as ModifierWithLoc<ScopeName>
+        row as ModifierWithLoc<ScopeName>
       );
       if (unstableWarning !== undefined) {
         this.onUnstableDescKey(unstableWarning);
       }
-      into.push([key, modifier.desc]);
-      registerModifierDescKey(modifier, key);
-    }
+      into.push([key, row.desc]);
+      registerModifierDescKey(row, key);
+    });
   }
 }

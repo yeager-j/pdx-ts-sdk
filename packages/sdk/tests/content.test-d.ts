@@ -1045,13 +1045,72 @@ describe("generated content authoring types", () => {
     expectTypeOf(hasAuthority("auth_democratic")).toExtend<Trigger<"country">>();
   });
 
-  it("widens WeightBlock to top-level operations (SDK-35)", () => {
-    // A `complex_maths_enum` operation (`factor` here) is legal directly on
-    // the block, sibling to `base`, not only inside a `modifier` row.
+  it("widens WeightBlock to top-level operations and a complex_trigger_modifier row (SDK-35, SDK-36)", () => {
+    // SDK-35: a `complex_maths_enum` operation (`factor` here) is legal
+    // directly on the block, sibling to `base`, not only inside a `modifier`
+    // row.
     defineTradition({
       id: "content_types_tradition_weight_operation",
       name: "X",
       aiWeight: { factor: 5000 },
+    });
+    // SDK-36: a complex_trigger_modifier row (no `when`) sits in the same
+    // `modifiers` array as an ordinary Modifier row (which has `when` but no
+    // `trigger`/`mode`).
+    defineSolarSystemInitializer({
+      id: "content_types_system_complex_trigger_modifier",
+      class: "sc_g",
+      usageOdds: {
+        base: 1,
+        modifiers: [
+          { factor: 0, when: always() },
+          {
+            trigger: "check_galaxy_setup_value",
+            parameters: { setting: "habitable_worlds_scale" },
+            mode: "factor",
+          },
+        ],
+      },
+    });
+    // A row must satisfy one arm or the other: `factor` alone, with neither
+    // `when` nor `trigger`/`mode`, is not a legal row of either kind.
+    defineTradition({
+      id: "content_types_tradition_weight_row_shape",
+      name: "X",
+      aiWeight: {
+        modifiers: [
+          // @ts-expect-error — neither a Modifier's `when` nor a
+          // ComplexTriggerModifier's `trigger`/`mode` is present
+          { factor: 2 },
+        ],
+      },
+    });
+    // A complex_trigger_modifier's own `potential` gate is checked exactly
+    // like a Modifier's `when` — archaeological site weight runs in planet
+    // scope, so a country-scoped potential does not compile.
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_complex_trigger_modifier",
+      name: "X",
+      stages: 1,
+      allow: canGoMia(),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+      weight: {
+        base: 1,
+        modifiers: [
+          {
+            trigger: "some_scripted_trigger",
+            mode: "factor",
+            potential: hasPlanetFlag("content_types_planet_only"),
+          },
+          {
+            trigger: "some_scripted_trigger",
+            mode: "factor",
+            // @ts-expect-error — archaeological site weight gates run in planet scope
+            potential: hasCountryFlag("country_only"),
+          },
+        ],
+      },
     });
   });
 

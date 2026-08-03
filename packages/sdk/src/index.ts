@@ -12,6 +12,8 @@ export {
   isEffectKey,
   makeScope,
   recordEffects,
+  type ComplexTriggerModifier,
+  type ComplexTriggerModifierMode,
   type EventTarget,
   type IfChain,
   type Modifier,
@@ -211,6 +213,7 @@ export type {
   TriggeredModifier,
   WeightBlock,
   WeightBlockOperations,
+  WeightBlockRow,
   WeightBlockWithLoc,
   WithFrom,
 } from "./content.ts";

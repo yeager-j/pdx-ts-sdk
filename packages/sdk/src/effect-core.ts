@@ -408,6 +408,139 @@ export function modifierEntry(modifier: Modifier<ScopeName>, refs?: ContentRefUs
   return block("modifier", entries);
 }
 
+/**
+ * The `mode` a {@link ComplexTriggerModifier} row feeds its trigger result
+ * into. Same `complex_maths_enum` source as {@link Modifier}'s operations,
+ * restricted the same way — by what the corpus actually exercises for `mode`
+ * specifically: add 474, subtract 45, mult 19, divide 8, factor 4, weight 1.
+ * The unmeasured members (`set`, `multiply`, `modulo`, `round_to`, `max`,
+ * `min`, `pow`) stay out until a real consumer needs them, matching
+ * {@link Modifier}'s own convention.
+ */
+export type ComplexTriggerModifierMode =
+  "add" | "subtract" | "mult" | "divide" | "factor" | "weight";
+
+/**
+ * A `complex_trigger_modifier = { ... }` row (`modifier_rule.cwt:32-53`): a
+ * named trigger's result feeds a weight operation directly, rather than
+ * gating a fixed adjustment the way {@link Modifier} does. 552 occurrences
+ * across 42 files in `common/`. The vanilla `usage_odds` row that scales a
+ * `solar_system_initializer`'s spawn odds by the habitable-worlds galaxy
+ * setting is one (`initializer_modifiers_habitable_world_systems.txt`):
+ *
+ *     complex_trigger_modifier = {
+ *         trigger = check_galaxy_setup_value
+ *         parameters = { setting = habitable_worlds_scale }
+ *         mode = factor
+ *     }
+ *
+ * `trigger` names a scripted trigger by its key rather than splicing a nested
+ * block, so — unlike {@link Modifier}'s `when` — this needs no scope type
+ * parameter of its own: `triggerScope` names whatever scope the trigger
+ * should run in as a raw scope path (`"owner"`, `"target.solar_system"`,
+ * ...), the same way the game writes it, not a checked reference. `S` only
+ * surfaces through the optional `potential` gate, an ordinary scoped trigger
+ * clause evaluated alongside the named trigger.
+ *
+ * `mult`/`multiplier`/`min_value`/`max_value` are this row's own fields per
+ * the CWT alias, spelled distinctly from {@link Modifier}'s `mult`/`multiply`/
+ * `min`/`max` — the two row kinds share no field names beyond `mult` itself,
+ * so the lowering keeps them separate rather than reusing `Modifier`'s
+ * mapping.
+ */
+export interface ComplexTriggerModifier<S extends ScopeName> {
+  /** The scripted trigger's key, evaluated with `parameters` as arguments. */
+  readonly trigger: string;
+  /** Scope path the trigger runs in (defaults to `this` when omitted). */
+  readonly triggerScope?: string;
+  /** Arguments passed to the named trigger. */
+  readonly parameters?: Readonly<Record<string, string | number>>;
+  /** Which operation the trigger's result feeds. */
+  readonly mode: ComplexTriggerModifierMode;
+  readonly mult?: number;
+  readonly multiplier?: number;
+  readonly divide?: number;
+  readonly minValue?: number;
+  readonly maxValue?: number;
+  /**
+   * Display text for this row's tooltip, auto-registered as localisation the
+   * same way {@link Modifier.desc} is — see `ContentAuthoring`'s
+   * modifier-desc collection in `content.ts`. `complexTriggerModifierEntry`
+   * below throws if `desc` reaches it unresolved.
+   */
+  readonly desc?: string;
+  /** Additional gate evaluated alongside the named trigger. */
+  readonly potential?: Trigger<S>;
+}
+
+/**
+ * Resolved `desc` keys for {@link ComplexTriggerModifier} rows, by object
+ * identity — the same scheme as {@link modifierDescKeys}, kept as a separate
+ * map because the two row kinds are separate types with no shared identity.
+ */
+const complexTriggerModifierDescKeys = new WeakMap<ComplexTriggerModifier<ScopeName>, string>();
+
+/** SDK-internal: records the localisation key a complex-trigger-modifier row's `desc` resolved to. */
+export function registerComplexTriggerModifierDescKey(
+  modifier: ComplexTriggerModifier<ScopeName>,
+  key: string
+): void {
+  complexTriggerModifierDescKeys.set(modifier, key);
+}
+
+/** SDK-internal shared lowering for a `complex_trigger_modifier` row.
+ * `refs`, when given, collects the content references `potential` writes. */
+export function complexTriggerModifierEntry(
+  modifier: ComplexTriggerModifier<ScopeName>,
+  refs?: ContentRefUse[]
+): PdxEntry {
+  const entries: PdxEntry[] = [kv("trigger", modifier.trigger)];
+  if (modifier.triggerScope !== undefined) {
+    entries.push(kv("trigger_scope", modifier.triggerScope));
+  }
+  if (modifier.parameters !== undefined) {
+    entries.push(
+      block(
+        "parameters",
+        Object.entries(modifier.parameters).map(([name, value]) => kv(name, value))
+      )
+    );
+  }
+  entries.push(kv("mode", modifier.mode));
+  if (modifier.mult !== undefined) {
+    entries.push(kv("mult", modifier.mult));
+  }
+  if (modifier.multiplier !== undefined) {
+    entries.push(kv("multiplier", modifier.multiplier));
+  }
+  if (modifier.divide !== undefined) {
+    entries.push(kv("divide", modifier.divide));
+  }
+  if (modifier.minValue !== undefined) {
+    entries.push(kv("min_value", modifier.minValue));
+  }
+  if (modifier.maxValue !== undefined) {
+    entries.push(kv("max_value", modifier.maxValue));
+  }
+  if (modifier.desc !== undefined) {
+    const key = complexTriggerModifierDescKeys.get(modifier);
+    if (key === undefined) {
+      throw new Error(
+        "ComplexTriggerModifier.desc is display text that must be registered as localization " +
+          "before it can be lowered, and this row was never registered. desc is only supported " +
+          "on complex trigger modifiers inside a content definition's WeightBlock — see " +
+          "Modifier.desc for the same constraint on the sibling row kind."
+      );
+    }
+    entries.push(kv("desc", key));
+  }
+  if (modifier.potential !== undefined) {
+    entries.push(block("potential", [...modifier.potential.entries]));
+    refs?.push(...modifier.potential.refs);
+  }
+  return block("complex_trigger_modifier", entries);
+}
+
 // ---------------------------------------------------------------------------
 // In-game branching
 // ---------------------------------------------------------------------------

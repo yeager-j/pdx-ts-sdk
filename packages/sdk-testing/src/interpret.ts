@@ -16,9 +16,11 @@ import {
   EVENT_KINDS,
   isEffectKey,
   recordEffects,
+  type ComplexTriggerModifier,
   type Modifier,
   type ScopeObjOf,
   type Trigger,
+  type WeightBlockRow,
 } from "@pdx-ts/sdk";
 
 import {
@@ -595,16 +597,12 @@ const MODIFIER_OPS = [
 
 /**
  * Every numeric operation `Modifier<S>` (`packages/sdk/src/effect-core.ts`)
- * declares, minus the members that are not operations: `desc` and its
- * companion `descKey` (localisation, SDK-48) and `when` (the gating trigger).
- * `applyModifierRow`'s multi-operation guard is only as complete as
- * `MODIFIER_OPS` — a member present on `Modifier` but missing here would let
- * a row that combines it with a recognized operation silently evaluate only
- * the recognized one, exactly the guessing this guard exists to refuse.
- *
- * Adding a non-operation member to `Modifier` therefore means excluding it
- * here as well. The guard below is what makes that a build failure rather
- * than a silent gap — it is doing its job when it fires.
+ * declares, minus the three members that are not operations (`desc`,
+ * `descKey`, `when`). `applyModifierRow`'s multi-operation guard is only as
+ * complete as `MODIFIER_OPS` — a member present on `Modifier` but missing
+ * here would let a row that combines it with a recognized operation
+ * silently evaluate only the recognized one, exactly the guessing this
+ * guard exists to refuse.
  */
 type ModifierOpKey = Exclude<keyof Modifier<never>, "desc" | "descKey" | "when">;
 
@@ -621,10 +619,28 @@ type SameKeys<A extends string, B extends string> = [A] extends [B]
 // the multi-operation check into a build failure instead.
 const _modifierOpsMatchModifier: SameKeys<(typeof MODIFIER_OPS)[number], ModifierOpKey> = true;
 
-/** The shape `evaluateWeightBlock` needs — `WeightBlock`/`WeightBlockWithLoc` both satisfy it. */
+/**
+ * The shape `evaluateWeightBlock` needs — `WeightBlock`/`WeightBlockWithLoc`
+ * both satisfy it. `modifiers` is `WeightBlockRow<S, Modifier<S>>`
+ * (`Modifier | ComplexTriggerModifier`), the same wider row union PR #16
+ * gave `WeightBlock` itself, rather than `Modifier<S>` alone — otherwise a
+ * real `situation.monthlyProgress` value (which can legally contain a
+ * `complex_trigger_modifier` row) would not type-check as an argument here
+ * even when every row it actually carries is a plain `Modifier`.
+ * `evaluateWeightBlock` refuses a `ComplexTriggerModifier` row at the one
+ * point it would otherwise reach `.when` on something that does not have
+ * one, rather than admitting only `Modifier<S>[]` and pushing that
+ * narrowing burden onto every call site.
+ */
 export interface WeightBlockLike<S extends SimScopeName> {
   readonly base?: number;
-  readonly modifiers?: readonly Modifier<S>[];
+  readonly modifiers?: readonly WeightBlockRow<S, Modifier<S>>[];
+}
+
+function isComplexTriggerModifierRow<S extends SimScopeName>(
+  row: WeightBlockRow<S, Modifier<S>>
+): row is ComplexTriggerModifier<S> {
+  return "trigger" in row;
 }
 
 /**
@@ -643,17 +659,29 @@ export interface WeightBlockLike<S extends SimScopeName> {
  * interpreter's whitelist exists to avoid. The numeric v1 line applies too —
  * a row whose operand is a script value or variable (not a fixture-evaluable
  * literal) throws instead of silently reading as 0/NaN.
+ *
+ * A `complex_trigger_modifier` row (PR #16) is refused the same way: its
+ * value depends on a named trigger's runtime result, which nothing here
+ * evaluates, so guessing a number for it would be exactly the invented
+ * semantic this interpreter exists to avoid.
  */
 export function evaluateWeightBlock<S extends SimScopeName>(
   block: WeightBlockLike<S>,
   scope: SimScope<S>
 ): number {
   let value = block.base ?? 0;
-  for (const modifier of block.modifiers ?? []) {
-    if (!evaluate(modifier.when, scope)) {
+  for (const row of block.modifiers ?? []) {
+    if (isComplexTriggerModifierRow(row)) {
+      throw new InterpreterError(
+        `A monthly-progress row names a scripted trigger ("${row.trigger}") instead of a when ` +
+          `condition — complex_trigger_modifier rows depend on that trigger's runtime result, ` +
+          `which this interpreter does not evaluate. ${coverageSummary()}`
+      );
+    }
+    if (!evaluate(row.when, scope)) {
       continue;
     }
-    value = applyModifierRow(modifier, value);
+    value = applyModifierRow(row, value);
   }
   return value;
 }
