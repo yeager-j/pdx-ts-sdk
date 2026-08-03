@@ -20,6 +20,7 @@ import { underField, type ContentRefUse } from "./content-refs.ts";
 import {
   modifierEntry,
   recordEffects,
+  registerModifierDescKey,
   scriptCtx,
   type Modifier,
   type ScopeValue,
@@ -315,6 +316,32 @@ function modifierRows<S extends ScopeName>(
 }
 
 /**
+ * Registers one localisation key per desc-bearing row in a modifier list,
+ * mirroring `content.ts`'s `collectModifierDescs`: `<ownerId>_<fieldPath>_<index>`
+ * — deterministic, and never colliding for legitimate input since `ownerId`
+ * is already unique per event (mod-prefixed and duplicate-checked) and
+ * `fieldPath` is fixed per call site. Must run before `modifierRows` lowers
+ * the same array: `modifierEntry` throws if a row's `desc` reaches it
+ * unregistered, and an event has the stable id and `LocSink` a registration
+ * needs, the same as every other definition-attached localization slot.
+ */
+function registerModifierDescs<S extends ScopeName>(
+  loc: LocSink,
+  ownerId: string,
+  fieldPath: string,
+  modifiers: readonly Modifier<S>[] | undefined
+): void {
+  (modifiers ?? []).forEach((modifier, index) => {
+    if (modifier.desc === undefined) {
+      return;
+    }
+    const key = `${ownerId}_${fieldPath}_${index}`;
+    loc.register(key, modifier.desc);
+    registerModifierDescKey(modifier as Modifier<ScopeName>, key);
+  });
+}
+
+/**
  * SDK-internal cast for the four kind-gated window flags: `EventDef`
  * conditions their types on `S` so a wrong-kind `defineXEvent` call is a
  * compile error, but that makes them `S extends "fleet" ? boolean : never`
@@ -470,6 +497,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     if (mtth.days !== undefined) {
       mtthEntries.push(kv("days", mtth.days));
     }
+    registerModifierDescs(loc, id, "mean_time_to_happen", mtth.modifiers);
     const mtthRefs: ContentRefUse[] = [];
     mtthEntries.push(...modifierRows(mtth.modifiers, mtthRefs));
     entries.push(block("mean_time_to_happen", mtthEntries));
@@ -481,6 +509,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     if (weight.factor !== undefined) {
       weightEntries.push(kv("factor", weight.factor));
     }
+    registerModifierDescs(loc, id, "weight_multiplier", weight.modifiers);
     const weightRefs: ContentRefUse[] = [];
     weightEntries.push(...modifierRows(weight.modifiers, weightRefs));
     entries.push(block("weight_multiplier", weightEntries));
@@ -535,6 +564,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
       if (option.aiChance.factor !== undefined) {
         aiChanceEntries.push(kv("factor", option.aiChance.factor));
       }
+      registerModifierDescs(loc, id, `option_${index}.ai_chance`, option.aiChance.modifiers);
       const aiChanceRefs: ContentRefUse[] = [];
       aiChanceEntries.push(...modifierRows(option.aiChance.modifiers, aiChanceRefs));
       optionEntries.push(block("ai_chance", aiChanceEntries));

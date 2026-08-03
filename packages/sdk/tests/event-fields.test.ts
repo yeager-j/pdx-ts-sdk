@@ -316,3 +316,66 @@ describe("previously-omitted EventOption fields", () => {
     expect(loc).toContain(' event_fields.1020.a.response:0 "The AI\'s response."');
   });
 });
+
+describe("PR #15 review follow-ups (SDK-46)", () => {
+  it("registers a localisation key for modifier desc in mean_time_to_happen, weight_multiplier, and option.ai_chance, instead of throwing", () => {
+    const events = makeEvents();
+    // The real proof: this builds at all. Before this fix, modifierEntry threw
+    // "this row was never registered" for every one of these three fields —
+    // a hard crash on a legal `Modifier<S>` input (modifier_rule.cwt's `desc`).
+    const scheduled = events.defineCountryEvent({
+      id: 1030,
+      hideWindow: true,
+      meanTimeToHappen: {
+        days: 5,
+        modifiers: [
+          { factor: 2, desc: "MTTH modifier tooltip.", when: hasGlobalFlag("event_fields_mtth") },
+        ],
+      },
+      weightMultiplier: {
+        factor: 1,
+        modifiers: [
+          {
+            factor: 3,
+            desc: "Weight modifier tooltip.",
+            when: hasGlobalFlag("event_fields_weight"),
+          },
+        ],
+      },
+      options: [
+        {
+          name: "First",
+          aiChance: {
+            factor: 10,
+            modifiers: [
+              {
+                factor: 4,
+                desc: "AI chance modifier tooltip.",
+                when: hasGlobalFlag("event_fields_ai"),
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const files = render(buildMod(CONFIG, [collection("events", [scheduled])]));
+    const rendered = files.get("events/event_fields_events.txt")!;
+    expect(rendered).toContain(
+      "mean_time_to_happen = {\n\t\tdays = 5\n\t\tmodifier = {\n\t\t\tfactor = 2\n\t\t\tdesc = event_fields.1030_mean_time_to_happen_0"
+    );
+    expect(rendered).toContain(
+      "weight_multiplier = {\n\t\tfactor = 1\n\t\tmodifier = {\n\t\t\tfactor = 3\n\t\t\tdesc = event_fields.1030_weight_multiplier_0"
+    );
+    expect(rendered).toContain(
+      "ai_chance = {\n\t\t\tfactor = 10\n\t\t\tmodifier = {\n\t\t\t\tfactor = 4\n\t\t\t\tdesc = event_fields.1030_option_0.ai_chance_0"
+    );
+
+    const loc = files.get("localisation/english/event_fields_l_english.yml")!;
+    expect(loc).toContain(' event_fields.1030_mean_time_to_happen_0:0 "MTTH modifier tooltip."');
+    expect(loc).toContain(' event_fields.1030_weight_multiplier_0:0 "Weight modifier tooltip."');
+    expect(loc).toContain(
+      ' event_fields.1030_option_0.ai_chance_0:0 "AI chance modifier tooltip."'
+    );
+  });
+});
