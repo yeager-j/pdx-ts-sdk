@@ -918,6 +918,18 @@ function lowerOrdinary(
       admits: admitsBlock(field, "economicResources", scope),
     };
   }
+  if (requested === "economicResourcesNoProduce") {
+    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const memberType = `EconomicResourceBlockNoProduce<${scope.type}>`;
+    return {
+      memberType: withFrom(
+        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+        scope
+      ),
+      metadata: metadata(field, name, "economicResourcesNoProduce"),
+      admits: admitsBlock(field, "economicResourcesNoProduce", scope),
+    };
+  }
   if (requested === "triggeredModifierBlock") {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     const memberType = `TriggeredModifier<${scope.type}>`;

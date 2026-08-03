@@ -398,6 +398,21 @@ export type ContentFieldShape =
   | "trigger"
   | "effect"
   | "economicResources"
+  /**
+   * The same `economicResources` shape, minus the `produces` arm — for a
+   * field CWT splices from `economic_template_no_produce` rather than plain
+   * `economic_template`. Lowers to `EconomicResourceBlockNoProduce<S>`
+   * (`Omit<EconomicResourceBlock<S>, "produces">`) and the writer iterates a
+   * `produces`-free operation list, so the illegal arm is unwritable and
+   * unemittable rather than merely undocumented.
+   *
+   * `economic_template_no_produce` is spliced at three sites in the vendored
+   * rules: `weapon_component_template` and `strike_craft_component_template`
+   * (`components.cwt:189`, `:338`), and `espionage_operation.resources`
+   * (`espionage.cwt:113`, not yet an exposed registry) — genuinely reusable,
+   * not a two-registry special case.
+   */
+  | "economicResourcesNoProduce"
   | "triggeredModifierBlock"
   | "modifierBlock"
   | "weightBlock"
@@ -1069,22 +1084,24 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   // resources, 355 write modifier. weapon_component_template and
   // strike_craft_component_template splice economic_template_no_produce
   // (components.cwt:189, :338) rather than plain economic_template
-  // (components.cwt:405) — `produces` is not game-legal there — but
-  // EconomicResourceBlock (packages/sdk/src/content.ts:88) has no arm that
-  // distinguishes the two splices, and restructuring it is SDK-45's job, not
-  // this ticket's. Left over-permissive: `produces` type-checks on weapon and
-  // strike-craft resources today and is silently dropped by the writer if
-  // written, the same way any field CWT does not declare there always has
-  // been. No CONTENT_DECLINED_FIELDS row exists to suppress it without also
-  // touching the shared type.
+  // (components.cwt:405) — `produces` is not game-legal there — so their
+  // `resources` rows below use `economicResourcesNoProduce`
+  // (`EconomicResourceBlockNoProduce<S>`) rather than `economicResources`:
+  // `produces` does not type-check on either row, and the writer's
+  // `economicResourceBlock` iterates a `produces`-free operation list for
+  // this shape regardless of what a cast forces past the type, so it is
+  // unemittable there even so. utility_component_template splices plain
+  // economic_template (components.cwt:405), where `produces` is genuinely
+  // legal, so its own `resources` row below keeps `economicResources`.
   [
     "weapon_component_template.resources",
     {
-      shape: "economicResources",
+      shape: "economicResourcesNoProduce",
       reason:
-        "Same category-plus-economic_template-splice shape as job.resources, repeated 0..inf " +
-        "(components.cwt:184-190). Spliced category is economic_template_no_produce, so " +
-        "`produces` is not actually game-legal here — see the cluster note above.",
+        "Same category-plus-economic_template_no_produce-splice shape as " +
+        "espionage_operation.resources (espionage.cwt:113), repeated 0..inf " +
+        "(components.cwt:184-190) — `produces` is not game-legal on this splice, unlike " +
+        "job.resources' plain economic_template.",
     },
   ],
   [
@@ -1135,11 +1152,11 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   [
     "strike_craft_component_template.resources",
     {
-      shape: "economicResources",
+      shape: "economicResourcesNoProduce",
       reason:
-        "Same category-plus-economic_template-splice shape as job.resources, repeated 0..inf " +
-        "(components.cwt:333-339). Spliced category is economic_template_no_produce, so " +
-        "`produces` is not actually game-legal here — see the cluster note above.",
+        "Same category-plus-economic_template_no_produce-splice shape as " +
+        "weapon_component_template.resources above, repeated 0..inf (components.cwt:333-339) " +
+        "— `produces` is not game-legal on this splice.",
     },
   ],
   [

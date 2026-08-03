@@ -1309,12 +1309,11 @@ describe("generated content registries", () => {
     // dropped all of them. A ported SMALL_SHIELD_1 occupied a slot, cost
     // nothing, and granted nothing; this is that repro, now fixed.
     //
-    // Each registry renders through its own buildMod call rather than a
-    // shared collection: all three share one output file
-    // (common/component_templates/<prefix>_component_templates.txt), and
-    // `render` writes one `ContentFile` per relPath with a plain `Map.set`
-    // rather than an append — a real, pre-existing collision this ticket did
-    // not introduce and does not fix, filed separately.
+    // All three share one output file
+    // (common/component_templates/<prefix>_component_templates.txt) and can
+    // sit in one collection: SDK-32 made `render` merge content files that
+    // share an emitted relPath instead of the later one clobbering the
+    // earlier ones.
     const shield = defineUtilityComponentTemplate({
       id: "ctr_test_small_shield_1",
       icon: "GFX_shield_1",
@@ -1323,16 +1322,6 @@ describe("generated content registries", () => {
       resources: [{ category: "ship_components", cost: { amounts: { alloys: 20 } } }],
       modifier: (m) => m.unchecked("ship_shield_hit_points_add", 200),
     });
-    const utilityRendered = render(
-      buildMod(configFor("Component template resources test", "ctr_test"), [
-        collection(undefined, [shield]),
-      ])
-    ).get("common/component_templates/ctr_test_component_templates.txt")!;
-    expect(utilityRendered).toContain(
-      "resources = {\n\t\tcategory = ship_components\n\t\tcost = {\n\t\t\talloys = 20\n\t\t}\n\t}"
-    );
-    expect(utilityRendered).toContain("modifier = {\n\t\tship_shield_hit_points_add = 200\n\t}");
-
     const weapon = defineWeaponComponentTemplate({
       id: "ctr_test_weapon_1",
       icon: "GFX_weapon_1",
@@ -1340,19 +1329,6 @@ describe("generated content registries", () => {
       shipModifier: (m) => m.unchecked("ship_weapon_damage_mult", 0.1),
       shipDesignModifier: (m) => m.unchecked("design_ship_weapon_damage_mult", 0.1),
     });
-    const weaponRendered = render(
-      buildMod(configFor("Component template resources test", "ctr_test"), [
-        collection(undefined, [weapon]),
-      ])
-    ).get("common/component_templates/ctr_test_component_templates.txt")!;
-    expect(weaponRendered).toContain(
-      "resources = {\n\t\tcategory = ship_weapon_components\n\t\tcost = {\n\t\t\talloys = 10\n\t\t}\n\t}"
-    );
-    expect(weaponRendered).toContain("ship_modifier = {\n\t\tship_weapon_damage_mult = 0.1\n\t}");
-    expect(weaponRendered).toContain(
-      "ship_design_modifier = {\n\t\tdesign_ship_weapon_damage_mult = 0.1\n\t}"
-    );
-
     // strike_craft_component_template declares only resources and
     // ship_modifier (components.cwt:332-343), not modifier.
     const strikeCraft = defineStrikeCraftComponentTemplate({
@@ -1361,15 +1337,75 @@ describe("generated content registries", () => {
       resources: [{ category: "ship_components", cost: { amounts: { alloys: 15 } } }],
       shipModifier: (m) => m.unchecked("ship_hull_add", 10),
     });
-    const strikeCraftRendered = render(
+    const rendered = render(
       buildMod(configFor("Component template resources test", "ctr_test"), [
-        collection(undefined, [strikeCraft]),
+        collection(undefined, [shield, weapon, strikeCraft]),
       ])
     ).get("common/component_templates/ctr_test_component_templates.txt")!;
-    expect(strikeCraftRendered).toContain(
+
+    expect(rendered).toContain(
+      "resources = {\n\t\tcategory = ship_components\n\t\tcost = {\n\t\t\talloys = 20\n\t\t}\n\t}"
+    );
+    expect(rendered).toContain("modifier = {\n\t\tship_shield_hit_points_add = 200\n\t}");
+    expect(rendered).toContain(
+      "resources = {\n\t\tcategory = ship_weapon_components\n\t\tcost = {\n\t\t\talloys = 10\n\t\t}\n\t}"
+    );
+    expect(rendered).toContain("ship_modifier = {\n\t\tship_weapon_damage_mult = 0.1\n\t}");
+    expect(rendered).toContain(
+      "ship_design_modifier = {\n\t\tdesign_ship_weapon_damage_mult = 0.1\n\t}"
+    );
+    expect(rendered).toContain(
       "resources = {\n\t\tcategory = ship_components\n\t\tcost = {\n\t\t\talloys = 15\n\t\t}\n\t}"
     );
-    expect(strikeCraftRendered).toContain("ship_modifier = {\n\t\tship_hull_add = 10\n\t}");
+    expect(rendered).toContain("ship_modifier = {\n\t\tship_hull_add = 10\n\t}");
+  });
+
+  it("never emits produces on weapon/strike-craft resources, even forced past a cast (componentTemplateResources)", () => {
+    // weapon_component_template and strike_craft_component_template splice
+    // economic_template_no_produce (components.cwt:189, :338), so `produces`
+    // is not game-legal there. EconomicResourceBlockNoProduce already keeps
+    // it from type-checking (see content.test-d.ts), but this proves the
+    // deeper claim: the writer's economicResourceBlock iterates a
+    // produces-free operation list for this shape, so a value that carries a
+    // `produces` property past a type-level escape hatch still does not
+    // reach the emitted file.
+    const weapon = defineWeaponComponentTemplate({
+      id: "ctr_test_weapon_no_produce",
+      icon: "GFX_weapon_no_produce",
+      resources: [
+        {
+          category: "ship_weapon_components",
+          cost: { amounts: { alloys: 10 } },
+          produces: { amounts: { energy: 3 } },
+        } as any,
+      ],
+    });
+    const strikeCraft = defineStrikeCraftComponentTemplate({
+      id: "ctr_test_strike_craft_no_produce",
+      icon: "GFX_strike_craft_no_produce",
+      resources: [
+        {
+          category: "ship_components",
+          cost: { amounts: { alloys: 15 } },
+          produces: { amounts: { energy: 3 } },
+        } as any,
+      ],
+    });
+    const rendered = render(
+      buildMod(configFor("Component template no-produce test", "npr_test"), [
+        collection(undefined, [weapon, strikeCraft]),
+      ])
+    ).get("common/component_templates/npr_test_component_templates.txt")!;
+
+    expect(rendered).not.toContain("produces");
+    expect(rendered).not.toContain("energy = 3");
+    // The legal arms still render, so this is not just an empty block.
+    expect(rendered).toContain(
+      "resources = {\n\t\tcategory = ship_weapon_components\n\t\tcost = {\n\t\t\talloys = 10\n\t\t}\n\t}"
+    );
+    expect(rendered).toContain(
+      "resources = {\n\t\tcategory = ship_components\n\t\tcost = {\n\t\t\talloys = 15\n\t\t}\n\t}"
+    );
   });
 
   it("lowers every arm of a dual declaration by what the author passed", () => {

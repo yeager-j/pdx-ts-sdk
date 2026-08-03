@@ -484,6 +484,7 @@ const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
   ["trigger", "block"],
   ["effect", "block"],
   ["economicResources", "block"],
+  ["economicResourcesNoProduce", "block"],
   ["triggeredModifierBlock", "block"],
   ["modifierBlock", "block"],
   ["weightBlock", "block"],

@@ -759,7 +759,13 @@ describe("content-type codegen", () => {
 
     const weapon = emissions.get("weapon_component_template");
     expect(weapon?.code).toContain("export interface WeaponComponentTemplateDef");
-    expect(weapon?.code).toContain('resources?: EconomicResourceBlock<"ship">[];');
+    // Splices economic_template_no_produce (components.cwt:189), not plain
+    // economic_template like utility's own resources above — `produces` is
+    // not game-legal here, so the row requests economicResourcesNoProduce
+    // rather than economicResources and the member type has no `produces` arm.
+    expect(weapon?.code).toContain('resources?: EconomicResourceBlockNoProduce<"ship">[];');
+    expect(weapon?.code).toContain('shape: "economicResourcesNoProduce"');
+    expect(weapon?.code).not.toContain('resources?: EconomicResourceBlock<"ship">[];');
     expect(weapon?.code).toContain('modifier?: ModifierClosure<"ship">;');
     expect(weapon?.code).toContain('shipDesignModifier?: ModifierClosure<"design">;');
     expect(fieldNames(weapon!.emittedFields)).toContain("resources");
@@ -775,7 +781,11 @@ describe("content-type codegen", () => {
     // unlowered rather than borrowing a shape strike craft never declares.
     const strikeCraft = emissions.get("strike_craft_component_template");
     expect(strikeCraft?.code).toContain("export interface StrikeCraftComponentTemplateDef");
-    expect(strikeCraft?.code).toContain('resources?: EconomicResourceBlock<"ship">[];');
+    // Same economic_template_no_produce splice as weapon's above
+    // (components.cwt:338).
+    expect(strikeCraft?.code).toContain('resources?: EconomicResourceBlockNoProduce<"ship">[];');
+    expect(strikeCraft?.code).toContain('shape: "economicResourcesNoProduce"');
+    expect(strikeCraft?.code).not.toContain('resources?: EconomicResourceBlock<"ship">[];');
     expect(strikeCraft?.code).toContain('shipModifier?: ModifierClosure<"ship">;');
     expect(fieldNames(strikeCraft!.emittedFields)).toContain("resources");
     expect(fieldNames(strikeCraft!.emittedFields)).toContain("ship_modifier");

@@ -7,6 +7,7 @@ import type {
   ContentLocalisation,
   DefinedContent,
   EconomicResourceBlock,
+  EconomicResourceBlockNoProduce,
   EffectBlock,
   ModifierClosure,
   WeightBlock,
@@ -472,7 +473,7 @@ export interface StrikeCraftComponentTemplateFields {
    * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
    * Only when strike_craft_component_template subtype `utility_component_template` applies.
    */
-  resources?: EconomicResourceBlock<"ship">[];
+  resources?: EconomicResourceBlockNoProduce<"ship">[];
   /**
    * Only when strike_craft_component_template subtype `weapon_component_template` applies.
    * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
@@ -789,7 +790,7 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   {
     key: "resources",
     member: "resources",
-    shape: "economicResources",
+    shape: "economicResourcesNoProduce",
     form: "list",
     repeated: true,
   },

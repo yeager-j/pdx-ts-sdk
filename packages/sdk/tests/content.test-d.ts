@@ -59,6 +59,7 @@ import {
   type ContentItem,
   type DecisionRef,
   type EconomicResourceBlock,
+  type EconomicResourceBlockNoProduce,
   type EdictRef,
   type EventFleetRef,
   type GovernmentTriggerBlock,
@@ -672,8 +673,12 @@ describe("generated content authoring types", () => {
     expectTypeOf<UtilityComponentTemplateFields["triggeredShipModifier"]>().toEqualTypeOf<
       TriggeredModifier<"ship">[] | undefined
     >();
+    // weapon/strike-craft splice economic_template_no_produce, not plain
+    // economic_template (components.cwt:189, :338 vs :405), so their
+    // resources arm is EconomicResourceBlockNoProduce rather than
+    // EconomicResourceBlock — no `produces` member at all.
     expectTypeOf<WeaponComponentTemplateFields["resources"]>().toEqualTypeOf<
-      EconomicResourceBlock<"ship">[] | undefined
+      EconomicResourceBlockNoProduce<"ship">[] | undefined
     >();
     expectTypeOf<WeaponComponentTemplateFields["modifier"]>().toEqualTypeOf<
       ModifierClosure<"ship"> | undefined
@@ -682,6 +687,9 @@ describe("generated content authoring types", () => {
     // ship_modifier (components.cwt:332-343) — no modifier of its own.
     expectTypeOf<StrikeCraftComponentTemplateFields["shipModifier"]>().toEqualTypeOf<
       ModifierClosure<"ship"> | undefined
+    >();
+    expectTypeOf<StrikeCraftComponentTemplateFields["resources"]>().toEqualTypeOf<
+      EconomicResourceBlockNoProduce<"ship">[] | undefined
     >();
 
     // A ported SMALL_SHIELD_1: before this cluster, both fields below
@@ -698,6 +706,14 @@ describe("generated content authoring types", () => {
       modifier: (m) => m.unchecked("ship_shield_hit_points_add", 200),
     });
 
+    // Utility splices plain economic_template, so `produces` is genuinely
+    // legal there and stays authorable.
+    defineUtilityComponentTemplate({
+      id: "content_types_utility_produces",
+      icon: "GFX_x",
+      resources: [{ category: "ship_components", produces: { amounts: { energy: 1 } } }],
+    });
+
     defineWeaponComponentTemplate({
       id: "content_types_weapon_resources",
       icon: "GFX_x",
@@ -706,15 +722,20 @@ describe("generated content authoring types", () => {
       shipDesignModifier: (m) => m.unchecked("design_ship_weapon_damage_mult", 0.1),
     });
 
-    // The produces question (SDK-31 constraint (a)): weapon/strike-craft
-    // splice economic_template_no_produce in CWT, so `produces` is not
-    // actually game-legal on either — but EconomicResourceBlock does not
-    // model that distinction (a change left to SDK-45), so it stays
-    // authorable here without a compile error. Documented, not fixed.
+    // The produces question (SDK-31 constraint (a), closed by the
+    // EconomicResourceBlockNoProduce follow-up): weapon/strike-craft splice
+    // economic_template_no_produce in CWT, so `produces` is not game-legal on
+    // either, and it no longer type-checks on either registry's resources.
     defineWeaponComponentTemplate({
-      id: "content_types_weapon_over_permissive_produces",
+      id: "content_types_weapon_produces_illegal",
       icon: "GFX_x",
-      resources: [{ produces: { amounts: { alloys: 1 } } }],
+      resources: [
+        {
+          category: "ship_weapon_components",
+          // @ts-expect-error — weapon_component_template splices economic_template_no_produce
+          produces: { amounts: { alloys: 1 } },
+        },
+      ],
     });
 
     defineStrikeCraftComponentTemplate({
@@ -724,6 +745,18 @@ describe("generated content authoring types", () => {
       shipModifier: (m) => m.unchecked("ship_hull_add", 10),
       // @ts-expect-error — strike_craft_component_template declares no modifier of its own
       modifier: (m) => m.unchecked("ship_hull_add", 10),
+    });
+
+    defineStrikeCraftComponentTemplate({
+      id: "content_types_strike_craft_produces_illegal",
+      icon: "GFX_x",
+      resources: [
+        {
+          category: "ship_components",
+          // @ts-expect-error — strike_craft_component_template splices economic_template_no_produce
+          produces: { amounts: { alloys: 1 } },
+        },
+      ],
     });
   });
 
