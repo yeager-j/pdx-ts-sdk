@@ -6,6 +6,14 @@
  * one mod and differ by a single line, and before this they were three
  * hand-rolled copies in `examples/` that had already diverged. Asserting the
  * relationship rather than the bytes is what keeps them from diverging again.
+ *
+ * Verified in game 2026-08-03, Stellaris Pegasus 4.4.6. A project scaffolded by
+ * `create-stellaris-mod` was installed with `npm run install-mod` — so through
+ * `install()`, not a hand-written descriptor — and Jackson confirmed the
+ * launcher listed it, the `on_game_start_country` event fired, and the mod's
+ * technology was present. That is the one claim no test here can make: these
+ * assertions prove the bytes are what we intended, and only the running game
+ * proves the launcher agrees they are a mod.
  */
 
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
