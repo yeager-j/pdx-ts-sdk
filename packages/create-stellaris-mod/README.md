@@ -17,7 +17,8 @@ my-mod/
 ├── .prettierrc            (--no-prettier to skip)
 ├── eslint.config.js       (--no-eslint to skip)
 └── src/
-    ├── index.ts            config + the build
+    ├── mod.ts              config + the pure fold from content/ to a built mod
+    ├── index.ts            build: render the fold and write it to out/
     ├── install.ts          build + drop it where the launcher looks
     ├── vanilla.ts          the parsed install, when one was found
     ├── flags.ts            shared values — outside content/, deliberately
@@ -25,6 +26,13 @@ my-mod/
         ├── example.ts      a technology, an event, and the hook that fires it
         └── example.test.ts colocated, and skipped by discovery
 ```
+
+Importing `mod.ts` only reads — building the mod value touches no disk — so
+`index.ts` and `install.ts` each import its `buildTheMod()` and add their own
+single disk-touching step (`write` vs `install`) on top, rather than each
+folding `content/` a second time. That is what keeps a build with a vanilla
+view (id collision checks included) from quietly running twice, once checked
+and once not.
 
 ## Options
 

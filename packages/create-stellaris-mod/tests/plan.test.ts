@@ -46,6 +46,7 @@ describe("the scaffolded tree", () => {
       "src/flags.ts",
       "src/index.ts",
       "src/install.ts",
+      "src/mod.ts",
       "src/vanilla.ts",
       "tsconfig.json",
       "vitest.config.ts",
@@ -75,7 +76,7 @@ describe("the scaffolded tree", () => {
     // install would put a file in the project that cannot do its job.
     const files = plan({ installPath: undefined, gameVersion: undefined });
     expect(files.has("src/vanilla.ts")).toBe(false);
-    expect(files.get("src/index.ts")).not.toContain("./vanilla.ts");
+    expect(files.get("src/mod.ts")).not.toContain("./vanilla.ts");
   });
 
   it("emits strict JSON where the format is strict", () => {
@@ -108,7 +109,7 @@ describe("the scaffolded tree", () => {
 
   it("carries the author's prefix into every place the SDK will read it", () => {
     const files = plan({ prefix: "aurora", name: "Aurora" });
-    expect(files.get("src/index.ts")).toContain('prefix: "aurora"');
+    expect(files.get("src/mod.ts")).toContain('prefix: "aurora"');
     expect(files.get("src/flags.ts")).toContain('countryFlags("aurora_welcomed")');
     expect(files.get("src/content/example.ts")).toContain('id: "aurora_tech_first_steps"');
     expect(files.get("src/content/example.ts")).toContain('namespace("aurora")');
@@ -116,7 +117,7 @@ describe("the scaffolded tree", () => {
   });
 
   it("quotes a mod name that would otherwise break the file it lands in", () => {
-    expect(plan({ name: 'The "Real" Mod' }).get("src/index.ts")).toContain(
+    expect(plan({ name: 'The "Real" Mod' }).get("src/mod.ts")).toContain(
       'name: "The \\"Real\\" Mod"'
     );
   });
@@ -148,7 +149,7 @@ describe("dependency resolution", () => {
     const { dependencies } = manifest(plan({ installPath: undefined, gameVersion: undefined }));
     expect(dependencies!["@pdx-ts/stellaris-ids"]).toBeUndefined();
     expect(
-      plan({ installPath: undefined, gameVersion: undefined }).get("src/index.ts")
+      plan({ installPath: undefined, gameVersion: undefined }).get("src/mod.ts")
     ).not.toContain("@pdx-ts/stellaris-ids");
   });
 
@@ -166,7 +167,7 @@ describe("dependency resolution", () => {
       const files = plan({ gameVersion });
       const { dependencies } = manifest(files);
       expect(dependencies!["@pdx-ts/stellaris-ids"], String(gameVersion)).toBeUndefined();
-      expect(files.get("src/index.ts"), String(gameVersion)).not.toContain("@pdx-ts/stellaris-ids");
+      expect(files.get("src/mod.ts"), String(gameVersion)).not.toContain("@pdx-ts/stellaris-ids");
     }
   });
 
@@ -218,5 +219,36 @@ describe("the generated sources", () => {
       expect(contents, relPath).not.toContain("@pdx-ts/sdk-testing/matchers");
     }
     expect(plan().get("README.md")).toContain("@pdx-ts/sdk-testing/matchers");
+  });
+});
+
+describe("SDK-54: config has no build side effect", () => {
+  it("keeps src/mod.ts free of any disk-touching call", () => {
+    // config lives here specifically so importing it — the way a test reading
+    // the mod's prefix would — never builds or writes anything. `render`,
+    // `write` and `install` are the SDK's only disk-touching exports; none of
+    // them belongs in this file.
+    const mod = plan().get("src/mod.ts")!;
+    expect(mod).toContain("export const config");
+    expect(mod).toContain("export async function buildTheMod");
+    expect(mod).not.toContain("render(");
+    expect(mod).not.toContain("write(");
+    expect(mod).not.toContain("install(");
+  });
+
+  it("gives src/index.ts and src/install.ts exactly one fold to share, instead of one each", () => {
+    // Before the fix, src/install.ts constructed its own PureMod via a second
+    // buildMod(config, discoverContent(...)) call that never received the
+    // vanilla view — the id-collision guard had no vanilla ids to compare
+    // against and could not fire. Both entrypoints now import the same
+    // buildTheMod() from src/mod.ts, so there is exactly one fold, built once,
+    // with whatever vanilla view src/mod.ts resolved.
+    const files = plan();
+    for (const relPath of ["src/index.ts", "src/install.ts"]) {
+      const contents = files.get(relPath)!;
+      expect(contents, relPath).toContain("buildTheMod");
+      expect(contents, relPath).not.toContain("discoverContent");
+      expect(contents, relPath).not.toMatch(/\bbuildMod\(/);
+    }
   });
 });
