@@ -40,5 +40,14 @@
   },
   "devDependencies": {
     "@pdx-ts/sdk": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yeager-j/pdx-ts-sdk.git",
+    "directory": "packages/create-stellaris-mod"
+  },
+  "homepage": "https://github.com/yeager-j/pdx-ts-sdk/tree/main/packages/create-stellaris-mod#readme",
+  "bugs": {
+    "url": "https://github.com/yeager-j/pdx-ts-sdk/issues"
   }
 }

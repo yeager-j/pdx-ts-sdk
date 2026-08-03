@@ -5,7 +5,7 @@ export function readme(resolved: Resolved): string {
   const lines = [
     `# ${resolved.name}`,
     "",
-    "A Stellaris mod written in TypeScript with [@pdx-ts/sdk](https://github.com/).",
+    "A Stellaris mod written in TypeScript with [@pdx-ts/sdk](https://github.com/yeager-j/pdx-ts-sdk).",
     "Your code runs once, at build time, and produces an ordinary mod folder — the",
     "game never sees anything but normal PDXScript.",
     "",

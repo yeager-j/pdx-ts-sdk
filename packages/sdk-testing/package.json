@@ -43,11 +43,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jacksonyeager/pdx-ts.git",
+    "url": "git+https://github.com/yeager-j/pdx-ts-sdk.git",
     "directory": "packages/sdk-testing"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "prepack": "npm run build"
+  },
+  "homepage": "https://github.com/yeager-j/pdx-ts-sdk/tree/main/packages/sdk-testing#readme",
+  "bugs": {
+    "url": "https://github.com/yeager-j/pdx-ts-sdk/issues"
   }
 }
