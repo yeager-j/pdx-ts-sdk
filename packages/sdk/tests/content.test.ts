@@ -495,8 +495,11 @@ function defineContentExample(): PureMod {
   // The site stages fire this mod's own events. Under the pure API a scalar
   // shaped like one of the mod's event ids must have a definition in the
   // build, so the three dig events the stages reference are defined here.
+  // Fleet events, because that is what a stage's `event` is: `<event.fleet>`.
+  // They were country events until the ref brand started checking, which is
+  // the whole point of the brand — the game would have refused these.
   const digEvents = [1, 2, 3].map((id) =>
-    events.defineCountryEvent({ id, hideWindow: true, isTriggeredOnly: true })
+    events.defineFleetEvent({ id, hideWindow: true, isTriggeredOnly: true })
   );
 
   const archaeologicalSiteType = defineArchaeologicalSiteType({

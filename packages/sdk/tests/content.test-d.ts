@@ -37,6 +37,8 @@ import {
   isAtWar,
   isCapital,
   isSiteLocked,
+  makeScope,
+  namespace,
   type AgendaRef,
   type AgreementPresetRef,
   type ArchaeologicalSiteTypeRef,
@@ -49,6 +51,7 @@ import {
   type ContentItem,
   type DecisionRef,
   type EdictRef,
+  type EventFleetRef,
   type GovernmentTriggerBlock,
   type JobRef,
   type ModifierClosure,
@@ -563,6 +566,53 @@ describe("generated content authoring types", () => {
     // @ts-expect-error — a building reference is not a technology reference
     const technology: TechnologyRef = buildingRef;
     void technology;
+  });
+
+  it("brands a defined event by its scope, so an event reference is checked too", () => {
+    // An event carried no brand at all, and `TypedRef`'s is optional — so an
+    // event was structurally a reference for *every* registry. A country event
+    // satisfied an archaeology stage's `<event.fleet>`, and a `<technology>`
+    // field just as readily. The game would have refused both.
+    const events = namespace("content_types_event_brand");
+    const fleetEvent = events.defineFleetEvent({ id: 1, isTriggeredOnly: true });
+    const countryEvent = events.defineCountryEvent({ id: 2, isTriggeredOnly: true });
+
+    const fleetRef: EventFleetRef = fleetEvent;
+    void fleetRef;
+    // @ts-expect-error — a stage's event is <event.fleet>; a country event is not one
+    const wrongScope: EventFleetRef = countryEvent;
+    void wrongScope;
+    // @ts-expect-error — nor is an event a reference into some unrelated registry
+    const wrongRegistry: TechnologyRef = countryEvent;
+    void wrongRegistry;
+
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_stage_event",
+      name: "X",
+      stages: 1,
+      allow: canGoMia(),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+      stage: [
+        { difficulty: 1, icon: "GFX_x", event: fleetEvent },
+        // @ts-expect-error — the reported bug: a country event in a fleet event's field
+        { difficulty: 2, icon: "GFX_x", event: countryEvent },
+      ],
+    });
+  });
+
+  it("lets an unqualified reference field take any of that type's subtypes", () => {
+    // `set_next_astral_rift_event` takes `<event>` — the whole type, subtypes
+    // included — so an event of any scope satisfies it. The relation runs only
+    // that way: an `<event.fleet>` field still refuses a bare `<event>`, which
+    // proves nothing about which subtype it is (covered by the case above).
+    const events = namespace("content_types_event_any");
+    const astralRiftEvent = events.defineAstralRiftEvent({ id: 1, isTriggeredOnly: true });
+    const fleetEvent = events.defineFleetEvent({ id: 2, isTriggeredOnly: true });
+    const rift = makeScope<"astral_rift">([]);
+
+    rift.setNextAstralRiftEvent({ id: astralRiftEvent, onRollFailed: fleetEvent });
+    rift.setNextAstralRiftEvent({ id: "vanilla_rift.1" });
   });
 
   it("types a definer's return as its own registry's content item, branded", () => {

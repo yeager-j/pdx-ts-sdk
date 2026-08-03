@@ -20,7 +20,7 @@ import { underField, type ContentRefUse } from "./content-refs.ts";
 import { recordEffects, scriptCtx, type ScopeRef, type ScriptCtx } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { EventKindKey } from "./generated/events.ts";
-import { refId, type SoundEffectRef, type SpriteRef } from "./generated/refs.ts";
+import { refId, type SoundEffectRef, type SpriteRef, type TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import type { Trigger } from "./trigger-core.ts";
 // The typed fire signatures for every event kind are generated into the
@@ -33,11 +33,24 @@ declare const eventFromBrand: unique symbol;
  * A defined event, usable as the `id` of a fire effect. `From` is the scope
  * the event declared it will be fired from — the phantom that makes firing a
  * `from: "country"` event without a country witness a compile error.
+ *
+ * It is a `TypedRef` for its own scope's event subtype, which is what makes an
+ * event flow into the reference fields that take one — an archaeology stage's
+ * `event` is `<event.fleet>`, and a country event is not that. Without the
+ * brand an event was structurally a `TypedRef` for *every* registry, since the
+ * brand is optional and `id: string` was the whole of the rest: a country event
+ * satisfied `<event.fleet>`, and a `<technology>` field too.
+ *
+ * The scope, not the event kind, brands it. The two agree wherever the rules
+ * name a subtype (`event.fleet`, `event.situation`), and where they part —
+ * `observer_event` pushes country scope — the SDK already models the kind as
+ * its scope, so an observer event is a country event here and this changes
+ * nothing about that.
  */
 export interface EventRef<
   S extends ScopeName = ScopeName,
   From extends ScopeName | undefined = ScopeName | undefined,
-> {
+> extends TypedRef<`event.${S}`> {
   readonly kind: "event-ref";
   /** The event's main scope. */
   readonly scope: S;
