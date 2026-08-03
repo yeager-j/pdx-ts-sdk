@@ -9,6 +9,7 @@ import type {
   EconomicResourceBlock,
   EffectBlock,
   WeightBlock,
+  WithFrom,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { DecisionRef, SoundEffectRef, SoundRef, TechnologyRef } from "./refs.ts";
@@ -36,16 +37,16 @@ export interface DecisionFields<S extends DecisionScope = "planet"> {
   enactmentTime?: number;
   sound?: SoundRef | string | SoundEffectRef;
   icon?: string | DecisionRef;
-  resources?: EconomicResourceBlock<NoInfer<S>>[];
+  resources?: WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, "country">;
   showTechUnlockIf?: Trigger<"country">;
-  potential?: Trigger<NoInfer<S>>;
-  allow?: Trigger<NoInfer<S>>;
-  abortTrigger?: Trigger<NoInfer<S>>;
-  abortEffect?: EffectBlock<NoInfer<S>>;
-  onQueued?: EffectBlock<NoInfer<S>>;
-  onUnqueued?: EffectBlock<NoInfer<S>>;
-  effect: EffectBlock<NoInfer<S>>;
-  aiWeight?: WeightBlock<NoInfer<S>>;
+  potential?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;
+  allow?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;
+  abortTrigger?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;
+  abortEffect?: EffectBlock<NoInfer<S>, "country">;
+  onQueued?: EffectBlock<NoInfer<S>, "country">;
+  onUnqueued?: EffectBlock<NoInfer<S>, "country">;
+  effect: EffectBlock<NoInfer<S>, "country">;
+  aiWeight?: WithFrom<WeightBlock<NoInfer<S>>, NoInfer<S>, "country">;
   prerequisites?: (TechnologyRef | string)[];
 }
 

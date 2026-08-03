@@ -25,6 +25,12 @@ export interface ContentManifestEntry {
    * Generated name, when one CWT type backs several registries. Three keywords
    * share `type[component_template]`, and a weapon slot should not accept a
    * utility template, so each gets its own branded type and `defineX`.
+   *
+   * It must name a subtype the CWT type declares, and codegen fails if it does
+   * not: the split is by subtype, and the subtype is what the rules call the
+   * registry in a reference (`<component_template.utility_component_template>`).
+   * A name of our own invention here would brand definitions with a reference
+   * no field asks for, leaving them unable to reach any of them.
    */
   readonly as?: string;
   /**

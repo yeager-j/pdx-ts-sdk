@@ -65,7 +65,7 @@ export const humReturns = events.defineCountryEvent({
     ]);
     country
       .if(hasCountryFlag(flags.hello_galaxy_heard_the_hum), (c) => {
-        c.within(stormWorld, (planet) => planet.addDeposit("d_minerals_1"));
+        stormWorld.effects((planet) => planet.addDeposit("d_minerals_1"));
       })
       .else((c) => c.log("the hum went unheard"));
   },

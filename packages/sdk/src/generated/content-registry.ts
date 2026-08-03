@@ -96,6 +96,7 @@ import {
 export const CONTENT_REGISTRIES = [
   {
     type: "technology",
+    referenceName: "technology",
     outputDir: "common/technology",
     fileStem: "technology",
     fields: TECHNOLOGY_FIELDS,
@@ -103,6 +104,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "building",
+    referenceName: "building",
     outputDir: "common/buildings",
     fileStem: "buildings",
     fields: BUILDING_FIELDS,
@@ -110,6 +112,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "tradition",
+    referenceName: "tradition",
     outputDir: "common/traditions",
     fileStem: "traditions",
     fields: TRADITION_FIELDS,
@@ -117,6 +120,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "tradition_category",
+    referenceName: "tradition_category",
     outputDir: "common/tradition_categories",
     fileStem: "tradition_categories",
     fields: TRADITION_CATEGORY_FIELDS,
@@ -124,6 +128,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "ascension_perk",
+    referenceName: "ascension_perk",
     outputDir: "common/ascension_perks",
     fileStem: "ascension_perks",
     fields: ASCENSION_PERK_FIELDS,
@@ -131,6 +136,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "agenda",
+    referenceName: "agenda",
     outputDir: "common/council_agendas",
     fileStem: "council_agendas",
     fields: AGENDA_FIELDS,
@@ -138,6 +144,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "edict",
+    referenceName: "edict",
     outputDir: "common/edicts",
     fileStem: "edicts",
     fields: EDICT_FIELDS,
@@ -145,6 +152,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "decision",
+    referenceName: "decision",
     outputDir: "common/decisions",
     fileStem: "decisions",
     fields: DECISION_FIELDS,
@@ -152,6 +160,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "job",
+    referenceName: "job",
     outputDir: "common/pop_jobs",
     fileStem: "pop_jobs",
     fields: JOB_FIELDS,
@@ -159,6 +168,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "global_ship_design",
+    referenceName: "global_ship_design",
     outputDir: "common/global_ship_designs",
     fileStem: "global_ship_designs",
     fields: GLOBAL_SHIP_DESIGN_FIELDS,
@@ -167,6 +177,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "utility_component_template",
+    referenceName: "component_template.utility_component_template",
     outputDir: "common/component_templates",
     fileStem: "component_templates",
     fields: UTILITY_COMPONENT_TEMPLATE_FIELDS,
@@ -175,6 +186,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "weapon_component_template",
+    referenceName: "component_template.weapon_component_template",
     outputDir: "common/component_templates",
     fileStem: "component_templates",
     fields: WEAPON_COMPONENT_TEMPLATE_FIELDS,
@@ -183,6 +195,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "strike_craft_component_template",
+    referenceName: "component_template.strike_craft_component_template",
     outputDir: "common/component_templates",
     fileStem: "component_templates",
     fields: STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS,
@@ -191,6 +204,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "ship_size",
+    referenceName: "ship_size",
     outputDir: "common/ship_sizes",
     fileStem: "ship_sizes",
     fields: SHIP_SIZE_FIELDS,
@@ -198,6 +212,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "opinion_modifier",
+    referenceName: "opinion_modifier",
     outputDir: "common/opinion_modifiers",
     fileStem: "opinion_modifiers",
     fields: OPINION_MODIFIER_FIELDS,
@@ -205,6 +220,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "static_modifier",
+    referenceName: "static_modifier",
     outputDir: "common/static_modifiers",
     fileStem: "static_modifiers",
     fields: STATIC_MODIFIER_FIELDS,
@@ -212,6 +228,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "scripted_modifier",
+    referenceName: "scripted_modifier",
     outputDir: "common/scripted_modifiers",
     fileStem: "scripted_modifiers",
     fields: SCRIPTED_MODIFIER_FIELDS,
@@ -219,6 +236,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "casus_belli",
+    referenceName: "casus_belli",
     outputDir: "common/casus_belli",
     fileStem: "casus_belli",
     fields: CASUS_BELLI_FIELDS,
@@ -226,6 +244,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "war_goal",
+    referenceName: "war_goal",
     outputDir: "common/war_goals",
     fileStem: "war_goals",
     fields: WAR_GOAL_FIELDS,
@@ -233,6 +252,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "agreement_preset",
+    referenceName: "agreement_preset",
     outputDir: "common/agreement_presets",
     fileStem: "agreement_presets",
     fields: AGREEMENT_PRESET_FIELDS,
@@ -240,6 +260,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "bombardment_stance",
+    referenceName: "bombardment_stance",
     outputDir: "common/bombardment_stances",
     fileStem: "bombardment_stances",
     fields: BOMBARDMENT_STANCE_FIELDS,
@@ -247,6 +268,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "archaeological_site_type",
+    referenceName: "archaeological_site_type",
     outputDir: "common/archaeological_site_types",
     fileStem: "archaeological_site_types",
     fields: ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
@@ -254,6 +276,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "situation_type",
+    referenceName: "situation_type",
     outputDir: "common/situations",
     fileStem: "situations",
     fields: SITUATION_TYPE_FIELDS,
@@ -261,6 +284,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "scripted_loc",
+    referenceName: "scripted_loc",
     outputDir: "common/scripted_loc",
     fileStem: "scripted_loc",
     fields: SCRIPTED_LOC_FIELDS,
@@ -269,6 +293,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "councilor",
+    referenceName: "councilor",
     outputDir: "common/governments/councilors",
     fileStem: "councilors",
     fields: COUNCILOR_FIELDS,
@@ -276,6 +301,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "economic_category",
+    referenceName: "economic_category",
     outputDir: "common/economic_categories",
     fileStem: "economic_categories",
     fields: ECONOMIC_CATEGORY_FIELDS,
@@ -283,6 +309,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "civic_or_origin",
+    referenceName: "civic_or_origin",
     outputDir: "common/governments/civics",
     fileStem: "civics",
     fields: CIVIC_OR_ORIGIN_FIELDS,
@@ -290,6 +317,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "component_set",
+    referenceName: "component_set",
     outputDir: "common/component_sets",
     fileStem: "component_sets",
     fields: COMPONENT_SET_FIELDS,
@@ -298,6 +326,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "section_template",
+    referenceName: "section_template",
     outputDir: "common/section_templates",
     fileStem: "section_templates",
     fields: SECTION_TEMPLATE_FIELDS,
@@ -306,6 +335,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "ambient_object",
+    referenceName: "ambient_object",
     outputDir: "common/ambient_objects",
     fileStem: "ambient_objects",
     fields: AMBIENT_OBJECT_FIELDS,
@@ -314,6 +344,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "graphical_culture",
+    referenceName: "graphical_culture",
     outputDir: "common/graphical_culture",
     fileStem: "graphical_culture",
     fields: GRAPHICAL_CULTURE_FIELDS,
@@ -321,6 +352,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "starbase_level",
+    referenceName: "starbase_level",
     outputDir: "common/starbase_levels",
     fileStem: "starbase_levels",
     fields: STARBASE_LEVEL_FIELDS,
@@ -328,6 +360,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "species_class",
+    referenceName: "species_class",
     outputDir: "common/species_classes",
     fileStem: "species_classes",
     fields: SPECIES_CLASS_FIELDS,
@@ -335,6 +368,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "country_ship_of_size_limit",
+    referenceName: "country_ship_of_size_limit",
     outputDir: "common/country_limits/ship_of_size_limits",
     fileStem: "ship_of_size_limits",
     fields: COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS,
@@ -342,6 +376,7 @@ export const CONTENT_REGISTRIES = [
   },
   {
     type: "solar_system_initializer",
+    referenceName: "solar_system_initializer",
     outputDir: "common/solar_system_initializers",
     fileStem: "solar_system_initializers",
     fields: SOLAR_SYSTEM_INITIALIZER_FIELDS,
@@ -350,3 +385,14 @@ export const CONTENT_REGISTRIES = [
 ] as const satisfies readonly ContentRegistryDescriptor[];
 
 export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];
+
+/**
+ * The CWT reference a registry's definitions satisfy, as a type.
+ * The same thing `referenceName` carries as data, and the brand a
+ * `ContentItem` for that registry wears — which is what makes a defined
+ * component template reach a field holding `<component_template>`.
+ */
+export type ContentReferenceName<K extends ContentTypeName> = Extract<
+  (typeof CONTENT_REGISTRIES)[number],
+  { type: K }
+>["referenceName"];

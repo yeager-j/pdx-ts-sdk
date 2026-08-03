@@ -116,13 +116,29 @@ export function emitValueSets(emitter: Emitter): string {
   );
 }
 
+/**
+ * The brand an alias for `<name>` accepts.
+ *
+ * A qualified reference names one subtype and takes exactly it. An unqualified
+ * one is the whole type, subtypes included — the rules write both `<event>`
+ * (`set_next_astral_rift_event`'s id) and `<event.fleet>` (an archaeology
+ * stage's), and a fleet event satisfies the first as surely as the second.
+ * The relation only runs that way: a `<event.fleet>` field still refuses a
+ * value branded with the bare type, which proves nothing about its subtype.
+ */
+function refBrandType(name: string): string {
+  return name.includes(".")
+    ? JSON.stringify(name)
+    : `${JSON.stringify(name)} | \`${name}.\${string}\``;
+}
+
 export function emitRefs(emitter: Emitter): string {
   const aliases = [...emitter.usedRefs]
     .sort()
     .map(
       (name) =>
         docComment([`A reference to a \`<${name}>\`.`]) +
-        `export type ${pascalCase(name)}Ref = TypedRef<${JSON.stringify(name)}>;\n`
+        `export type ${pascalCase(name)}Ref = TypedRef<${refBrandType(name)}>;\n`
     )
     .join("\n");
 

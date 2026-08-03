@@ -31,13 +31,13 @@ export function refId<T extends string | number | boolean>(
 }
 
 /** A reference to a `<agenda>`. */
-export type AgendaRef = TypedRef<"agenda">;
+export type AgendaRef = TypedRef<"agenda" | `agenda.${string}`>;
 
 /** A reference to a `<agreement_preset>`. */
-export type AgreementPresetRef = TypedRef<"agreement_preset">;
+export type AgreementPresetRef = TypedRef<"agreement_preset" | `agreement_preset.${string}`>;
 
 /** A reference to a `<agreement_term>`. */
-export type AgreementTermRef = TypedRef<"agreement_term">;
+export type AgreementTermRef = TypedRef<"agreement_term" | `agreement_term.${string}`>;
 
 /** A reference to a `<agreement_term.discrete>`. */
 export type AgreementTermDiscreteRef = TypedRef<"agreement_term.discrete">;
@@ -49,7 +49,9 @@ export type AgreementTermDiscreteNumberRef = TypedRef<"agreement_term.discrete_n
 export type AgreementTermSpecialistTypeRef = TypedRef<"agreement_term.specialist_type">;
 
 /** A reference to a `<agreement_term_value>`. */
-export type AgreementTermValueRef = TypedRef<"agreement_term_value">;
+export type AgreementTermValueRef = TypedRef<
+  "agreement_term_value" | `agreement_term_value.${string}`
+>;
 
 /** A reference to a `<agreement_term_value.discrete>`. */
 export type AgreementTermValueDiscreteRef = TypedRef<"agreement_term_value.discrete">;
@@ -64,43 +66,45 @@ export type AgreementTermValueResourceRef = TypedRef<"agreement_term_value.resou
 export type AgreementTermValueSpecialistTypeRef = TypedRef<"agreement_term_value.specialist_type">;
 
 /** A reference to a `<ai_personality>`. */
-export type AiPersonalityRef = TypedRef<"ai_personality">;
+export type AiPersonalityRef = TypedRef<"ai_personality" | `ai_personality.${string}`>;
 
 /** A reference to a `<ambient_object>`. */
-export type AmbientObjectRef = TypedRef<"ambient_object">;
+export type AmbientObjectRef = TypedRef<"ambient_object" | `ambient_object.${string}`>;
 
 /** A reference to a `<anomaly_category>`. */
-export type AnomalyCategoryRef = TypedRef<"anomaly_category">;
+export type AnomalyCategoryRef = TypedRef<"anomaly_category" | `anomaly_category.${string}`>;
 
 /** A reference to a `<archaeological_site_type>`. */
-export type ArchaeologicalSiteTypeRef = TypedRef<"archaeological_site_type">;
+export type ArchaeologicalSiteTypeRef = TypedRef<
+  "archaeological_site_type" | `archaeological_site_type.${string}`
+>;
 
 /** A reference to a `<army>`. */
-export type ArmyRef = TypedRef<"army">;
+export type ArmyRef = TypedRef<"army" | `army.${string}`>;
 
 /** A reference to a `<ascension_perk>`. */
-export type AscensionPerkRef = TypedRef<"ascension_perk">;
+export type AscensionPerkRef = TypedRef<"ascension_perk" | `ascension_perk.${string}`>;
 
 /** A reference to a `<asset_selector.room>`. */
 export type AssetSelectorRoomRef = TypedRef<"asset_selector.room">;
 
 /** A reference to a `<asteroid_belt_type>`. */
-export type AsteroidBeltTypeRef = TypedRef<"asteroid_belt_type">;
+export type AsteroidBeltTypeRef = TypedRef<"asteroid_belt_type" | `asteroid_belt_type.${string}`>;
 
 /** A reference to a `<astral_action.uses_custom_cooldown>`. */
 export type AstralActionUsesCustomCooldownRef = TypedRef<"astral_action.uses_custom_cooldown">;
 
 /** A reference to a `<astral_rift>`. */
-export type AstralRiftRef = TypedRef<"astral_rift">;
+export type AstralRiftRef = TypedRef<"astral_rift" | `astral_rift.${string}`>;
 
 /** A reference to a `<authority>`. */
-export type AuthorityRef = TypedRef<"authority">;
+export type AuthorityRef = TypedRef<"authority" | `authority.${string}`>;
 
 /** A reference to a `<bombardment_stance>`. */
-export type BombardmentStanceRef = TypedRef<"bombardment_stance">;
+export type BombardmentStanceRef = TypedRef<"bombardment_stance" | `bombardment_stance.${string}`>;
 
 /** A reference to a `<building>`. */
-export type BuildingRef = TypedRef<"building">;
+export type BuildingRef = TypedRef<"building" | `building.${string}`>;
 
 /** A reference to a `<building.corporate>`. */
 export type BuildingCorporateRef = TypedRef<"building.corporate">;
@@ -109,16 +113,16 @@ export type BuildingCorporateRef = TypedRef<"building.corporate">;
 export type BuildingHoldingRef = TypedRef<"building.holding">;
 
 /** A reference to a `<bypass>`. */
-export type BypassRef = TypedRef<"bypass">;
+export type BypassRef = TypedRef<"bypass" | `bypass.${string}`>;
 
 /** A reference to a `<casus_belli>`. */
-export type CasusBelliRef = TypedRef<"casus_belli">;
+export type CasusBelliRef = TypedRef<"casus_belli" | `casus_belli.${string}`>;
 
 /** A reference to a `<citizenship_type>`. */
-export type CitizenshipTypeRef = TypedRef<"citizenship_type">;
+export type CitizenshipTypeRef = TypedRef<"citizenship_type" | `citizenship_type.${string}`>;
 
 /** A reference to a `<civic_or_origin>`. */
-export type CivicOrOriginRef = TypedRef<"civic_or_origin">;
+export type CivicOrOriginRef = TypedRef<"civic_or_origin" | `civic_or_origin.${string}`>;
 
 /** A reference to a `<civic_or_origin.civic>`. */
 export type CivicOrOriginCivicRef = TypedRef<"civic_or_origin.civic">;
@@ -127,95 +131,115 @@ export type CivicOrOriginCivicRef = TypedRef<"civic_or_origin.civic">;
 export type CivicOrOriginOriginRef = TypedRef<"civic_or_origin.origin">;
 
 /** A reference to a `<colonization_control>`. */
-export type ColonizationControlRef = TypedRef<"colonization_control">;
+export type ColonizationControlRef = TypedRef<
+  "colonization_control" | `colonization_control.${string}`
+>;
 
 /** A reference to a `<colony_type>`. */
-export type ColonyTypeRef = TypedRef<"colony_type">;
+export type ColonyTypeRef = TypedRef<"colony_type" | `colony_type.${string}`>;
 
 /** A reference to a `<component_set>`. */
-export type ComponentSetRef = TypedRef<"component_set">;
+export type ComponentSetRef = TypedRef<"component_set" | `component_set.${string}`>;
 
 /** A reference to a `<component_set.required_component>`. */
 export type ComponentSetRequiredComponentRef = TypedRef<"component_set.required_component">;
 
 /** A reference to a `<component_slot_template>`. */
-export type ComponentSlotTemplateRef = TypedRef<"component_slot_template">;
+export type ComponentSlotTemplateRef = TypedRef<
+  "component_slot_template" | `component_slot_template.${string}`
+>;
 
 /** A reference to a `<component_template>`. */
-export type ComponentTemplateRef = TypedRef<"component_template">;
+export type ComponentTemplateRef = TypedRef<"component_template" | `component_template.${string}`>;
+
+/** A reference to a `<component_template.strike_craft_component_template>`. */
+export type ComponentTemplateStrikeCraftComponentTemplateRef =
+  TypedRef<"component_template.strike_craft_component_template">;
 
 /** A reference to a `<component_template.utility_component_template>`. */
 export type ComponentTemplateUtilityComponentTemplateRef =
   TypedRef<"component_template.utility_component_template">;
 
+/** A reference to a `<component_template.weapon_component_template>`. */
+export type ComponentTemplateWeaponComponentTemplateRef =
+  TypedRef<"component_template.weapon_component_template">;
+
 /** A reference to a `<councilor>`. */
-export type CouncilorRef = TypedRef<"councilor">;
+export type CouncilorRef = TypedRef<"councilor" | `councilor.${string}`>;
 
 /** A reference to a `<country_card_categories>`. */
-export type CountryCardCategoriesRef = TypedRef<"country_card_categories">;
+export type CountryCardCategoriesRef = TypedRef<
+  "country_card_categories" | `country_card_categories.${string}`
+>;
 
 /** A reference to a `<country_focus_cards>`. */
-export type CountryFocusCardsRef = TypedRef<"country_focus_cards">;
+export type CountryFocusCardsRef = TypedRef<
+  "country_focus_cards" | `country_focus_cards.${string}`
+>;
 
 /** A reference to a `<country_ship_of_size_limit>`. */
-export type CountryShipOfSizeLimitRef = TypedRef<"country_ship_of_size_limit">;
+export type CountryShipOfSizeLimitRef = TypedRef<
+  "country_ship_of_size_limit" | `country_ship_of_size_limit.${string}`
+>;
 
 /** A reference to a `<country_type>`. */
-export type CountryTypeRef = TypedRef<"country_type">;
+export type CountryTypeRef = TypedRef<"country_type" | `country_type.${string}`>;
 
 /** A reference to a `<crisis_level>`. */
-export type CrisisLevelRef = TypedRef<"crisis_level">;
+export type CrisisLevelRef = TypedRef<"crisis_level" | `crisis_level.${string}`>;
 
 /** A reference to a `<crisis_objective>`. */
-export type CrisisObjectiveRef = TypedRef<"crisis_objective">;
+export type CrisisObjectiveRef = TypedRef<"crisis_objective" | `crisis_objective.${string}`>;
 
 /** A reference to a `<crisis_path>`. */
-export type CrisisPathRef = TypedRef<"crisis_path">;
+export type CrisisPathRef = TypedRef<"crisis_path" | `crisis_path.${string}`>;
 
 /** A reference to a `<decision>`. */
-export type DecisionRef = TypedRef<"decision">;
+export type DecisionRef = TypedRef<"decision" | `decision.${string}`>;
 
 /** A reference to a `<deed>`. */
-export type DeedRef = TypedRef<"deed">;
+export type DeedRef = TypedRef<"deed" | `deed.${string}`>;
 
 /** A reference to a `<deposit>`. */
-export type DepositRef = TypedRef<"deposit">;
+export type DepositRef = TypedRef<"deposit" | `deposit.${string}`>;
 
 /** A reference to a `<deposit.blocker>`. */
 export type DepositBlockerRef = TypedRef<"deposit.blocker">;
 
 /** A reference to a `<deposit_category>`. */
-export type DepositCategoryRef = TypedRef<"deposit_category">;
+export type DepositCategoryRef = TypedRef<"deposit_category" | `deposit_category.${string}`>;
 
 /** A reference to a `<diplomatic_action>`. */
-export type DiplomaticActionRef = TypedRef<"diplomatic_action">;
+export type DiplomaticActionRef = TypedRef<"diplomatic_action" | `diplomatic_action.${string}`>;
 
 /** A reference to a `<district>`. */
-export type DistrictRef = TypedRef<"district">;
+export type DistrictRef = TypedRef<"district" | `district.${string}`>;
 
 /** A reference to a `<dust_clouds>`. */
-export type DustCloudsRef = TypedRef<"dust_clouds">;
+export type DustCloudsRef = TypedRef<"dust_clouds" | `dust_clouds.${string}`>;
 
 /** A reference to a `<economic_category>`. */
-export type EconomicCategoryRef = TypedRef<"economic_category">;
+export type EconomicCategoryRef = TypedRef<"economic_category" | `economic_category.${string}`>;
 
 /** A reference to a `<edict>`. */
-export type EdictRef = TypedRef<"edict">;
+export type EdictRef = TypedRef<"edict" | `edict.${string}`>;
 
 /** A reference to a `<espionage_asset>`. */
-export type EspionageAssetRef = TypedRef<"espionage_asset">;
+export type EspionageAssetRef = TypedRef<"espionage_asset" | `espionage_asset.${string}`>;
 
 /** A reference to a `<espionage_category>`. */
-export type EspionageCategoryRef = TypedRef<"espionage_category">;
+export type EspionageCategoryRef = TypedRef<"espionage_category" | `espionage_category.${string}`>;
 
 /** A reference to a `<espionage_operation>`. */
-export type EspionageOperationRef = TypedRef<"espionage_operation">;
+export type EspionageOperationRef = TypedRef<
+  "espionage_operation" | `espionage_operation.${string}`
+>;
 
 /** A reference to a `<ethic>`. */
-export type EthicRef = TypedRef<"ethic">;
+export type EthicRef = TypedRef<"ethic" | `ethic.${string}`>;
 
 /** A reference to a `<event>`. */
-export type EventRef = TypedRef<"event">;
+export type EventRef = TypedRef<"event" | `event.${string}`>;
 
 /** A reference to a `<event.fleet>`. */
 export type EventFleetRef = TypedRef<"event.fleet">;
@@ -227,289 +251,313 @@ export type EventScopelessRef = TypedRef<"event.scopeless">;
 export type EventSituationRef = TypedRef<"event.situation">;
 
 /** A reference to a `<event_chain>`. */
-export type EventChainRef = TypedRef<"event_chain">;
+export type EventChainRef = TypedRef<"event_chain" | `event_chain.${string}`>;
 
 /** A reference to a `<federation_law>`. */
-export type FederationLawRef = TypedRef<"federation_law">;
+export type FederationLawRef = TypedRef<"federation_law" | `federation_law.${string}`>;
 
 /** A reference to a `<federation_law_category>`. */
-export type FederationLawCategoryRef = TypedRef<"federation_law_category">;
+export type FederationLawCategoryRef = TypedRef<
+  "federation_law_category" | `federation_law_category.${string}`
+>;
 
 /** A reference to a `<federation_perk>`. */
-export type FederationPerkRef = TypedRef<"federation_perk">;
+export type FederationPerkRef = TypedRef<"federation_perk" | `federation_perk.${string}`>;
 
 /** A reference to a `<federation_type>`. */
-export type FederationTypeRef = TypedRef<"federation_type">;
+export type FederationTypeRef = TypedRef<"federation_type" | `federation_type.${string}`>;
 
 /** A reference to a `<first_contact_stage>`. */
-export type FirstContactStageRef = TypedRef<"first_contact_stage">;
+export type FirstContactStageRef = TypedRef<
+  "first_contact_stage" | `first_contact_stage.${string}`
+>;
 
 /** A reference to a `<galaxy_shape>`. */
-export type GalaxyShapeRef = TypedRef<"galaxy_shape">;
+export type GalaxyShapeRef = TypedRef<"galaxy_shape" | `galaxy_shape.${string}`>;
 
 /** A reference to a `<global_ship_design>`. */
-export type GlobalShipDesignRef = TypedRef<"global_ship_design">;
+export type GlobalShipDesignRef = TypedRef<"global_ship_design" | `global_ship_design.${string}`>;
 
 /** A reference to a `<government>`. */
-export type GovernmentRef = TypedRef<"government">;
+export type GovernmentRef = TypedRef<"government" | `government.${string}`>;
 
 /** A reference to a `<graphical_culture>`. */
-export type GraphicalCultureRef = TypedRef<"graphical_culture">;
+export type GraphicalCultureRef = TypedRef<"graphical_culture" | `graphical_culture.${string}`>;
 
 /** A reference to a `<intel_category>`. */
-export type IntelCategoryRef = TypedRef<"intel_category">;
+export type IntelCategoryRef = TypedRef<"intel_category" | `intel_category.${string}`>;
 
 /** A reference to a `<job>`. */
-export type JobRef = TypedRef<"job">;
+export type JobRef = TypedRef<"job" | `job.${string}`>;
 
 /** A reference to a `<leader_class>`. */
-export type LeaderClassRef = TypedRef<"leader_class">;
+export type LeaderClassRef = TypedRef<"leader_class" | `leader_class.${string}`>;
 
 /** A reference to a `<leader_tier>`. */
-export type LeaderTierRef = TypedRef<"leader_tier">;
+export type LeaderTierRef = TypedRef<"leader_tier" | `leader_tier.${string}`>;
 
 /** A reference to a `<living_standard>`. */
-export type LivingStandardRef = TypedRef<"living_standard">;
+export type LivingStandardRef = TypedRef<"living_standard" | `living_standard.${string}`>;
 
 /** A reference to a `<map_setup_scenario>`. */
-export type MapSetupScenarioRef = TypedRef<"map_setup_scenario">;
+export type MapSetupScenarioRef = TypedRef<"map_setup_scenario" | `map_setup_scenario.${string}`>;
 
 /** A reference to a `<megastructure>`. */
-export type MegastructureRef = TypedRef<"megastructure">;
+export type MegastructureRef = TypedRef<"megastructure" | `megastructure.${string}`>;
 
 /** A reference to a `<menace_perk>`. */
-export type MenacePerkRef = TypedRef<"menace_perk">;
+export type MenacePerkRef = TypedRef<"menace_perk" | `menace_perk.${string}`>;
 
 /** A reference to a `<message_type>`. */
-export type MessageTypeRef = TypedRef<"message_type">;
+export type MessageTypeRef = TypedRef<"message_type" | `message_type.${string}`>;
 
 /** A reference to a `<migration_control>`. */
-export type MigrationControlRef = TypedRef<"migration_control">;
+export type MigrationControlRef = TypedRef<"migration_control" | `migration_control.${string}`>;
 
 /** A reference to a `<military_service_type>`. */
-export type MilitaryServiceTypeRef = TypedRef<"military_service_type">;
+export type MilitaryServiceTypeRef = TypedRef<
+  "military_service_type" | `military_service_type.${string}`
+>;
 
 /** A reference to a `<mission>`. */
-export type MissionRef = TypedRef<"mission">;
+export type MissionRef = TypedRef<"mission" | `mission.${string}`>;
 
 /** A reference to a `<mission.contract>`. */
 export type MissionContractRef = TypedRef<"mission.contract">;
 
 /** A reference to a `<mission_category>`. */
-export type MissionCategoryRef = TypedRef<"mission_category">;
+export type MissionCategoryRef = TypedRef<"mission_category" | `mission_category.${string}`>;
 
 /** A reference to a `<model_entity>`. */
-export type ModelEntityRef = TypedRef<"model_entity">;
+export type ModelEntityRef = TypedRef<"model_entity" | `model_entity.${string}`>;
 
 /** A reference to a `<modifier>`. */
-export type ModifierRef = TypedRef<"modifier">;
+export type ModifierRef = TypedRef<"modifier" | `modifier.${string}`>;
 
 /** A reference to a `<named_color>`. */
-export type NamedColorRef = TypedRef<"named_color">;
+export type NamedColorRef = TypedRef<"named_color" | `named_color.${string}`>;
 
 /** A reference to a `<notification_modifier>`. */
-export type NotificationModifierRef = TypedRef<"notification_modifier">;
+export type NotificationModifierRef = TypedRef<
+  "notification_modifier" | `notification_modifier.${string}`
+>;
 
 /** A reference to a `<observation_station_mission>`. */
-export type ObservationStationMissionRef = TypedRef<"observation_station_mission">;
+export type ObservationStationMissionRef = TypedRef<
+  "observation_station_mission" | `observation_station_mission.${string}`
+>;
 
 /** A reference to a `<on_action>`. */
-export type OnActionRef = TypedRef<"on_action">;
+export type OnActionRef = TypedRef<"on_action" | `on_action.${string}`>;
 
 /** A reference to a `<opinion_modifier>`. */
-export type OpinionModifierRef = TypedRef<"opinion_modifier">;
+export type OpinionModifierRef = TypedRef<"opinion_modifier" | `opinion_modifier.${string}`>;
 
 /** A reference to a `<patron_type>`. */
-export type PatronTypeRef = TypedRef<"patron_type">;
+export type PatronTypeRef = TypedRef<"patron_type" | `patron_type.${string}`>;
 
 /** A reference to a `<planet_class>`. */
-export type PlanetClassRef = TypedRef<"planet_class">;
+export type PlanetClassRef = TypedRef<"planet_class" | `planet_class.${string}`>;
 
 /** A reference to a `<planet_class.habitable_planet>`. */
 export type PlanetClassHabitablePlanetRef = TypedRef<"planet_class.habitable_planet">;
 
 /** A reference to a `<planet_class_random_list>`. */
-export type PlanetClassRandomListRef = TypedRef<"planet_class_random_list">;
+export type PlanetClassRandomListRef = TypedRef<
+  "planet_class_random_list" | `planet_class_random_list.${string}`
+>;
 
 /** A reference to a `<planet_modifier>`. */
-export type PlanetModifierRef = TypedRef<"planet_modifier">;
+export type PlanetModifierRef = TypedRef<"planet_modifier" | `planet_modifier.${string}`>;
 
 /** A reference to a `<policy>`. */
-export type PolicyRef = TypedRef<"policy">;
+export type PolicyRef = TypedRef<"policy" | `policy.${string}`>;
 
 /** A reference to a `<pop_category>`. */
-export type PopCategoryRef = TypedRef<"pop_category">;
+export type PopCategoryRef = TypedRef<"pop_category" | `pop_category.${string}`>;
 
 /** A reference to a `<pop_faction>`. */
-export type PopFactionRef = TypedRef<"pop_faction">;
+export type PopFactionRef = TypedRef<"pop_faction" | `pop_faction.${string}`>;
 
 /** A reference to a `<population_control>`. */
-export type PopulationControlRef = TypedRef<"population_control">;
+export type PopulationControlRef = TypedRef<"population_control" | `population_control.${string}`>;
 
 /** A reference to a `<portrait>`. */
-export type PortraitRef = TypedRef<"portrait">;
+export type PortraitRef = TypedRef<"portrait" | `portrait.${string}`>;
 
 /** A reference to a `<portrait_group>`. */
-export type PortraitGroupRef = TypedRef<"portrait_group">;
+export type PortraitGroupRef = TypedRef<"portrait_group" | `portrait_group.${string}`>;
 
 /** A reference to a `<pre_ftl_age>`. */
-export type PreFtlAgeRef = TypedRef<"pre_ftl_age">;
+export type PreFtlAgeRef = TypedRef<"pre_ftl_age" | `pre_ftl_age.${string}`>;
 
 /** A reference to a `<precursors>`. */
-export type PrecursorsRef = TypedRef<"precursors">;
+export type PrecursorsRef = TypedRef<"precursors" | `precursors.${string}`>;
 
 /** A reference to a `<projectile>`. */
-export type ProjectileRef = TypedRef<"projectile">;
+export type ProjectileRef = TypedRef<"projectile" | `projectile.${string}`>;
 
 /** A reference to a `<psionic_aura>`. */
-export type PsionicAuraRef = TypedRef<"psionic_aura">;
+export type PsionicAuraRef = TypedRef<"psionic_aura" | `psionic_aura.${string}`>;
 
 /** A reference to a `<purge_type>`. */
-export type PurgeTypeRef = TypedRef<"purge_type">;
+export type PurgeTypeRef = TypedRef<"purge_type" | `purge_type.${string}`>;
 
 /** A reference to a `<relic>`. */
-export type RelicRef = TypedRef<"relic">;
+export type RelicRef = TypedRef<"relic" | `relic.${string}`>;
 
 /** A reference to a `<resolution>`. */
-export type ResolutionRef = TypedRef<"resolution">;
+export type ResolutionRef = TypedRef<"resolution" | `resolution.${string}`>;
 
 /** A reference to a `<resolution_category>`. */
-export type ResolutionCategoryRef = TypedRef<"resolution_category">;
+export type ResolutionCategoryRef = TypedRef<
+  "resolution_category" | `resolution_category.${string}`
+>;
 
 /** A reference to a `<resource>`. */
-export type ResourceRef = TypedRef<"resource">;
+export type ResourceRef = TypedRef<"resource" | `resource.${string}`>;
 
 /** A reference to a `<resource_converter>`. */
-export type ResourceConverterRef = TypedRef<"resource_converter">;
+export type ResourceConverterRef = TypedRef<"resource_converter" | `resource_converter.${string}`>;
 
 /** A reference to a `<scripted_action>`. */
-export type ScriptedActionRef = TypedRef<"scripted_action">;
+export type ScriptedActionRef = TypedRef<"scripted_action" | `scripted_action.${string}`>;
 
 /** A reference to a `<scripted_effect>`. */
-export type ScriptedEffectRef = TypedRef<"scripted_effect">;
+export type ScriptedEffectRef = TypedRef<"scripted_effect" | `scripted_effect.${string}`>;
 
 /** A reference to a `<scripted_loc>`. */
-export type ScriptedLocRef = TypedRef<"scripted_loc">;
+export type ScriptedLocRef = TypedRef<"scripted_loc" | `scripted_loc.${string}`>;
 
 /** A reference to a `<scripted_modifier>`. */
-export type ScriptedModifierRef = TypedRef<"scripted_modifier">;
+export type ScriptedModifierRef = TypedRef<"scripted_modifier" | `scripted_modifier.${string}`>;
 
 /** A reference to a `<scripted_trigger>`. */
-export type ScriptedTriggerRef = TypedRef<"scripted_trigger">;
+export type ScriptedTriggerRef = TypedRef<"scripted_trigger" | `scripted_trigger.${string}`>;
 
 /** A reference to a `<section_template>`. */
-export type SectionTemplateRef = TypedRef<"section_template">;
+export type SectionTemplateRef = TypedRef<"section_template" | `section_template.${string}`>;
 
 /** A reference to a `<sector_type>`. */
-export type SectorTypeRef = TypedRef<"sector_type">;
+export type SectorTypeRef = TypedRef<"sector_type" | `sector_type.${string}`>;
 
 /** A reference to a `<ship_behavior>`. */
-export type ShipBehaviorRef = TypedRef<"ship_behavior">;
+export type ShipBehaviorRef = TypedRef<"ship_behavior" | `ship_behavior.${string}`>;
 
 /** A reference to a `<ship_categories>`. */
-export type ShipCategoriesRef = TypedRef<"ship_categories">;
+export type ShipCategoriesRef = TypedRef<"ship_categories" | `ship_categories.${string}`>;
 
 /** A reference to a `<ship_category>`. */
-export type ShipCategoryRef = TypedRef<"ship_category">;
+export type ShipCategoryRef = TypedRef<"ship_category" | `ship_category.${string}`>;
 
 /** A reference to a `<ship_size>`. */
-export type ShipSizeRef = TypedRef<"ship_size">;
+export type ShipSizeRef = TypedRef<"ship_size" | `ship_size.${string}`>;
 
 /** A reference to a `<ship_size.starbase>`. */
 export type ShipSizeStarbaseRef = TypedRef<"ship_size.starbase">;
 
 /** A reference to a `<situation_log_category>`. */
-export type SituationLogCategoryRef = TypedRef<"situation_log_category">;
+export type SituationLogCategoryRef = TypedRef<
+  "situation_log_category" | `situation_log_category.${string}`
+>;
 
 /** A reference to a `<situation_type>`. */
-export type SituationTypeRef = TypedRef<"situation_type">;
+export type SituationTypeRef = TypedRef<"situation_type" | `situation_type.${string}`>;
 
 /** A reference to a `<slavery_type>`. */
-export type SlaveryTypeRef = TypedRef<"slavery_type">;
+export type SlaveryTypeRef = TypedRef<"slavery_type" | `slavery_type.${string}`>;
 
 /** A reference to a `<solar_system_initializer>`. */
-export type SolarSystemInitializerRef = TypedRef<"solar_system_initializer">;
+export type SolarSystemInitializerRef = TypedRef<
+  "solar_system_initializer" | `solar_system_initializer.${string}`
+>;
 
 /** A reference to a `<sound>`. */
-export type SoundRef = TypedRef<"sound">;
+export type SoundRef = TypedRef<"sound" | `sound.${string}`>;
 
 /** A reference to a `<sound_effect>`. */
-export type SoundEffectRef = TypedRef<"sound_effect">;
+export type SoundEffectRef = TypedRef<"sound_effect" | `sound_effect.${string}`>;
 
 /** A reference to a `<special_project>`. */
-export type SpecialProjectRef = TypedRef<"special_project">;
+export type SpecialProjectRef = TypedRef<"special_project" | `special_project.${string}`>;
 
 /** A reference to a `<specialist_subject_perk>`. */
-export type SpecialistSubjectPerkRef = TypedRef<"specialist_subject_perk">;
+export type SpecialistSubjectPerkRef = TypedRef<
+  "specialist_subject_perk" | `specialist_subject_perk.${string}`
+>;
 
 /** A reference to a `<species_archetype>`. */
-export type SpeciesArchetypeRef = TypedRef<"species_archetype">;
+export type SpeciesArchetypeRef = TypedRef<"species_archetype" | `species_archetype.${string}`>;
 
 /** A reference to a `<species_class>`. */
-export type SpeciesClassRef = TypedRef<"species_class">;
+export type SpeciesClassRef = TypedRef<"species_class" | `species_class.${string}`>;
 
 /** A reference to a `<species_named_list>`. */
-export type SpeciesNamedListRef = TypedRef<"species_named_list">;
+export type SpeciesNamedListRef = TypedRef<"species_named_list" | `species_named_list.${string}`>;
 
 /** A reference to a `<specimen>`. */
-export type SpecimenRef = TypedRef<"specimen">;
+export type SpecimenRef = TypedRef<"specimen" | `specimen.${string}`>;
 
 /** A reference to a `<sprite>`. */
-export type SpriteRef = TypedRef<"sprite">;
+export type SpriteRef = TypedRef<"sprite" | `sprite.${string}`>;
 
 /** A reference to a `<star_class>`. */
-export type StarClassRef = TypedRef<"star_class">;
+export type StarClassRef = TypedRef<"star_class" | `star_class.${string}`>;
 
 /** A reference to a `<star_class_random_list>`. */
-export type StarClassRandomListRef = TypedRef<"star_class_random_list">;
+export type StarClassRandomListRef = TypedRef<
+  "star_class_random_list" | `star_class_random_list.${string}`
+>;
 
 /** A reference to a `<starbase_building>`. */
-export type StarbaseBuildingRef = TypedRef<"starbase_building">;
+export type StarbaseBuildingRef = TypedRef<"starbase_building" | `starbase_building.${string}`>;
 
 /** A reference to a `<starbase_level>`. */
-export type StarbaseLevelRef = TypedRef<"starbase_level">;
+export type StarbaseLevelRef = TypedRef<"starbase_level" | `starbase_level.${string}`>;
 
 /** A reference to a `<starbase_module>`. */
-export type StarbaseModuleRef = TypedRef<"starbase_module">;
+export type StarbaseModuleRef = TypedRef<"starbase_module" | `starbase_module.${string}`>;
 
 /** A reference to a `<starbase_type>`. */
-export type StarbaseTypeRef = TypedRef<"starbase_type">;
+export type StarbaseTypeRef = TypedRef<"starbase_type" | `starbase_type.${string}`>;
 
 /** A reference to a `<static_modifier>`. */
-export type StaticModifierRef = TypedRef<"static_modifier">;
+export type StaticModifierRef = TypedRef<"static_modifier" | `static_modifier.${string}`>;
 
 /** A reference to a `<storm_types>`. */
-export type StormTypesRef = TypedRef<"storm_types">;
+export type StormTypesRef = TypedRef<"storm_types" | `storm_types.${string}`>;
 
 /** A reference to a `<target_type>`. */
-export type TargetTypeRef = TypedRef<"target_type">;
+export type TargetTypeRef = TypedRef<"target_type" | `target_type.${string}`>;
 
 /** A reference to a `<technology>`. */
-export type TechnologyRef = TypedRef<"technology">;
+export type TechnologyRef = TypedRef<"technology" | `technology.${string}`>;
 
 /** A reference to a `<technology_category>`. */
-export type TechnologyCategoryRef = TypedRef<"technology_category">;
+export type TechnologyCategoryRef = TypedRef<
+  "technology_category" | `technology_category.${string}`
+>;
 
 /** A reference to a `<technology_tier>`. */
-export type TechnologyTierRef = TypedRef<"technology_tier">;
+export type TechnologyTierRef = TypedRef<"technology_tier" | `technology_tier.${string}`>;
 
 /** A reference to a `<text_color>`. */
-export type TextColorRef = TypedRef<"text_color">;
+export type TextColorRef = TypedRef<"text_color" | `text_color.${string}`>;
 
 /** A reference to a `<timeline_events>`. */
-export type TimelineEventsRef = TypedRef<"timeline_events">;
+export type TimelineEventsRef = TypedRef<"timeline_events" | `timeline_events.${string}`>;
 
 /** A reference to a `<tradable_action>`. */
-export type TradableActionRef = TypedRef<"tradable_action">;
+export type TradableActionRef = TypedRef<"tradable_action" | `tradable_action.${string}`>;
 
 /** A reference to a `<tradition>`. */
-export type TraditionRef = TypedRef<"tradition">;
+export type TraditionRef = TypedRef<"tradition" | `tradition.${string}`>;
 
 /** A reference to a `<tradition_category>`. */
-export type TraditionCategoryRef = TypedRef<"tradition_category">;
+export type TraditionCategoryRef = TypedRef<"tradition_category" | `tradition_category.${string}`>;
 
 /** A reference to a `<trait>`. */
-export type TraitRef = TypedRef<"trait">;
+export type TraitRef = TypedRef<"trait" | `trait.${string}`>;
 
 /** A reference to a `<trait.leader_trait>`. */
 export type TraitLeaderTraitRef = TypedRef<"trait.leader_trait">;
@@ -518,13 +566,13 @@ export type TraitLeaderTraitRef = TypedRef<"trait.leader_trait">;
 export type TraitSpeciesTraitRef = TypedRef<"trait.species_trait">;
 
 /** A reference to a `<variable>`. */
-export type VariableRef = TypedRef<"variable">;
+export type VariableRef = TypedRef<"variable" | `variable.${string}`>;
 
 /** A reference to a `<war_goal>`. */
-export type WarGoalRef = TypedRef<"war_goal">;
+export type WarGoalRef = TypedRef<"war_goal" | `war_goal.${string}`>;
 
 /** A reference to a `<zone>`. */
-export type ZoneRef = TypedRef<"zone">;
+export type ZoneRef = TypedRef<"zone" | `zone.${string}`>;
 
 /** A reference to a `<zone_slots>`. */
-export type ZoneSlotsRef = TypedRef<"zone_slots">;
+export type ZoneSlotsRef = TypedRef<"zone_slots" | `zone_slots.${string}`>;

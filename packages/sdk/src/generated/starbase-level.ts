@@ -2,12 +2,18 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/starbases_consolidated.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
+import type {
+  ContentField,
+  ContentLocalisation,
+  DefinedContent,
+  WeightBlock,
+  WithFrom,
+} from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { ShipSizeRef, SpriteRef, StarbaseLevelRef } from "./refs.ts";
 
 export interface StarbaseLevelPicture {
-  trigger: Trigger<"starbase">;
+  trigger: WithFrom<Trigger<"starbase">, "starbase", "country">;
   picture: SpriteRef | string;
 }
 
@@ -41,7 +47,7 @@ export interface StarbaseLevelFields {
   /** Default 0, used for claim cost and required module/building level */
   levelWeight?: number;
   /** Determines which levels are more important to upgrade from */
-  aiWeight?: WeightBlock<"starbase">;
+  aiWeight?: WithFrom<WeightBlock<"starbase">, "starbase", "country">;
   /** Optional - determines the image used when viewing the starbase. Default is GFX_starbase_background which */
   picture?: StarbaseLevelPicture | SpriteRef | string;
   /** Default no, if yes starbase may be used as homebase for fleets */

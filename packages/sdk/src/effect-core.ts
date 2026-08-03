@@ -22,7 +22,7 @@ import { EVENT_KINDS } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { toScalar } from "./scalar.ts";
 import type { ScriptedEffectCall } from "./scripted.ts";
-import type { Trigger } from "./trigger-core.ts";
+import { trigger, type Trigger } from "./trigger-core.ts";
 
 // ---------------------------------------------------------------------------
 // Scope references
@@ -32,17 +32,61 @@ declare const refScopeBrand: unique symbol;
 
 /**
  * A reference to a scope reachable by name from inside script: an event
- * target, `from`, `this`, or (later) `prev`. Usable wherever the rules expect
- * a `scope[X]` value, and openable as a block via `within`.
+ * target, `from`, `this`, or (later) `prev`.
+ *
+ * Two things at once, as the game writes it. A bare word wherever the rules
+ * expect a `scope[X]` value (`save_event_target_as`, a scripted effect's
+ * parameter), and the key of a block that opens it — `from = { ... }`,
+ * `event_target:storm_world = { ... }`. The block is what `effects` and
+ * `trigger` write; which one you reach for is which side of the API you are
+ * on, so the ref never has to guess.
+ *
+ * Deliberately a plain object with methods rather than a callable, even though
+ * the script's `from = { }` reads like a call: `toScalar` and the content
+ * writer's dual-arm dispatcher both tell an authored value from an authored
+ * closure by `typeof`, and a callable ref would land on the wrong side of every
+ * one of those tests.
  *
  * The brand is covariant: a ref of unknown scope does not assign where a
  * specific scope is required.
  */
-export interface ScopeRef<S extends ScopeName = ScopeName> {
+export interface ScopeValue<S extends ScopeName = ScopeName> {
   readonly kind: "scope-ref";
   /** The script path this serializes to: `this`, `from`, `event_target:x`. */
   readonly path: string;
   readonly [refScopeBrand]?: S;
+}
+
+/**
+ * A {@link ScopeValue} whose path means the same thing wherever it is written,
+ * so it can also be *opened* as a block.
+ *
+ * That is the whole distinction. `from` and `event_target:x` name their scope
+ * absolutely: nesting inside `every_owned_planet = { ... }` does not change
+ * what either resolves to. `this` does not — inside that block it is the
+ * planet — so `ctx.self` is a plain {@link ScopeValue}, and the one thing you
+ * cannot do with it is open a block whose contents would run in a scope its
+ * type does not describe. As a value it stays exactly as useful: the FROM
+ * witness at a fire site, a situation's target, a scripted effect's argument.
+ */
+export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S> {
+  /**
+   * Opens the ref as an effect block: `from = { <effects> }`.
+   *
+   * Records into the block being recorded around the call, so a call inside a
+   * loop body lands inside that loop — which is where the game would run it.
+   * Calling it outside any effect closure throws rather than guessing a home
+   * for the entries.
+   */
+  effects(body: (scope: ScopeObjOf<S>) => void): void;
+  /**
+   * Opens the ref as a condition block: `from = { <condition> }`.
+   *
+   * Takes the condition as a value, like the `target(...)` combinator it sits
+   * beside — a trigger is a value, so there is nothing to record and nothing
+   * to run it against.
+   */
+  trigger(condition: Trigger<S>): Trigger<ScopeName>;
 }
 
 /**
@@ -56,12 +100,103 @@ export interface EventTarget<S extends ScopeName = ScopeName> extends ScopeRef<S
 }
 
 export function eventTarget<S extends ScopeName>(name: string): EventTarget<S> {
-  return { kind: "scope-ref", path: `event_target:${name}`, name };
+  return { ...scopeRef<S>(`event_target:${name}`), name };
 }
 
-/** SDK-internal: an unchecked ref for well-known paths (`this`, `from`). */
-export function scopeRef<S extends ScopeName>(path: string): ScopeRef<S> {
+/** SDK-internal: an unchecked value for a well-known path (`this`). */
+export function scopeValue<S extends ScopeName>(path: string): ScopeValue<S> {
   return { kind: "scope-ref", path };
+}
+
+/** SDK-internal: an unchecked openable ref for absolute paths (`from`). */
+export function scopeRef<S extends ScopeName>(path: string): ScopeRef<S> {
+  return {
+    ...scopeValue<S>(path),
+    effects(body) {
+      const recording = activeRecording(path);
+      recording.sink.push(block(path, recordEffects(recording.refs, body)));
+    },
+    trigger(condition) {
+      return trigger([block(path, [...condition.entries])], [...condition.refs]);
+    },
+  };
+}
+
+/**
+ * The block effects are being recorded into, innermost first.
+ *
+ * A ref opens a block relative to wherever the author is writing — `from = { }`
+ * inside `every_owned_ship = { }` runs once per ship, and at the top level once
+ * — so `effects` needs the *lexically* enclosing block, not the one whose scope
+ * object happens to be in a variable. Recording is synchronous and eager
+ * (closures run inside `define`), so the innermost live recording is exactly
+ * that block.
+ */
+interface Recording {
+  readonly sink: PdxEntry[];
+  readonly refs: ContentRefUse[];
+}
+
+const RECORDINGS: Recording[] = [];
+
+function activeRecording(path: string): Recording {
+  const recording = RECORDINGS.at(-1);
+  if (recording === undefined) {
+    throw new Error(
+      `'${path}' was opened with .effects() outside any effect closure, so there is no ` +
+        "block for its entries to land in. Call it inside the closure that should contain " +
+        "it — a definition's effect field, an event's immediate/after/option — rather than " +
+        "storing the result and using it later."
+    );
+  }
+  return recording;
+}
+
+/**
+ * The sentinel behind `ctx.from` where nothing declared a FROM scope.
+ * Deliberately NOT a `ScopeRef` (and not `never`, which would assign
+ * anywhere), so every use site fails with this type's name in the message.
+ */
+export interface UndeclaredFrom {
+  readonly kind: "undeclared-from";
+  readonly hint: "Nothing declares what FROM holds here; read it only where the rules name a FROM scope.";
+}
+
+/**
+ * The ambient scopes a script block runs in, handed to every closure that
+ * records effects: an event's `immediate`/`after`/option effects, and a
+ * content definition's effect fields.
+ *
+ * `self` doubles as the FROM witness at fire sites: passing `from: ctx.self`
+ * proves the fired event's declared FROM matches the scope this block runs in.
+ * `from` is the block's own FROM, which the game supplies and the rules name —
+ * `on_roll_failed` runs in fleet scope with the archaeological site as FROM, so
+ * `ctx.from.effects((site) => ...)` opens the site.
+ */
+export interface ScriptCtx<Self extends ScopeName, From extends ScopeName | undefined> {
+  /**
+   * The scope this block runs in, as a value — the FROM witness at a fire
+   * site. Not openable: `this` is relative to the block it is written in, so
+   * inside a scope transition it would name that scope rather than this one.
+   */
+  readonly self: ScopeValue<Self>;
+  /**
+   * FROM, where something declares what it holds — an event's `from:` field, a
+   * content field's `replace_scopes` in the rules. Everywhere else this is an
+   * inert sentinel, so touching an undeclared FROM is a compile error.
+   */
+  readonly from: [From] extends [ScopeName] ? ScopeRef<From> : UndeclaredFrom;
+}
+
+/**
+ * The one runtime shape behind every {@link ScriptCtx}: `this` and `from` are
+ * fixed script paths, so what varies between blocks is only the type.
+ */
+export function scriptCtx<Self extends ScopeName, From extends ScopeName | undefined>(): ScriptCtx<
+  Self,
+  From
+> {
+  return { self: scopeValue("this"), from: scopeRef("from") } as ScriptCtx<Self, From>;
 }
 
 // ---------------------------------------------------------------------------
@@ -228,9 +363,7 @@ class IfChainRecorder {
 
   else(body: (scope: unknown) => void): void {
     this.guard("else");
-    const child: PdxEntry[] = [];
-    body(makeAnyScope(child, this.refs));
-    this.sink.push(block("else", child));
+    this.sink.push(block("else", recordEffects(this.refs, body)));
     this.mark = this.sink.length;
   }
 }
@@ -243,7 +376,7 @@ function conditionalBlock(
 ): PdxEntry {
   const child: PdxEntry[] = [block("limit", [...condition.entries])];
   refs.push(...condition.refs);
-  body(makeAnyScope(child, refs));
+  recordEffects(refs, body, child);
   return block(key, child);
 }
 
@@ -271,8 +404,14 @@ export interface StructuralEffects<S extends ScopeName> {
    */
   if(condition: Trigger<S>, body: (scope: ScopeObjOf<S>) => void): IfChain<S>;
 
-  /** Opens a saved target / FROM ref as a block and records inside it. */
-  within<S2 extends ScopeName>(ref: ScopeRef<S2>, body: (scope: ScopeObjOf<S2>) => void): void;
+  /**
+   * Keeps the enclosed effects out of generated tooltips:
+   * `hidden_effect = { ... }`. They still run; the player is just not shown
+   * them. The block changes no scope, so the closure gets the same scope back
+   * — it takes one at all because the entries have to land inside the hidden
+   * block rather than beside it.
+   */
+  hiddenEffect(body: (scope: ScopeObjOf<S>) => void): void;
 
   /** Picks one arm at random, weighted; modifiers adjust weights in-game. */
   randomList(arms: ReadonlyArray<RandomListArm<S>>): void;
@@ -376,12 +515,9 @@ function fieldEntries(
         entries.push(block(field.key, [...(value as Trigger).entries]));
         refs.push(...(value as Trigger).refs);
         break;
-      case "effect": {
-        const child: PdxEntry[] = [];
-        (value as (scope: unknown) => void)(makeAnyScope(child, refs));
-        entries.push(block(field.key, child));
+      case "effect":
+        entries.push(block(field.key, recordEffects(refs, value as (scope: unknown) => void)));
         break;
-      }
       case "modifiers":
         entries.push(
           block(
@@ -403,7 +539,7 @@ function weightedList(key: string, sink: PdxEntry[], refs: ContentRefUse[]) {
       const child: PdxEntry[] = (arm.modifiers ?? []).map((modifier) =>
         modifierEntry(modifier, refs)
       );
-      (arm.do as (scope: unknown) => void)(makeAnyScope(child, refs));
+      recordEffects(refs, arm.do as (scope: unknown) => void, child);
       return block(String(arm.weight), child);
     });
     sink.push(block(key, armBlocks));
@@ -419,16 +555,12 @@ const STRUCTURAL: Record<
     return new IfChainRecorder(sink, refs);
   },
 
-  within: (sink, refs) => (ref: ScopeRef, body: (scope: unknown) => void) => {
-    const child: PdxEntry[] = [];
-    body(makeAnyScope(child, refs));
-    sink.push(block(ref.path, child));
+  target: (sink, refs) => (body: (scope: unknown) => void) => {
+    sink.push(block("target", recordEffects(refs, body)));
   },
 
-  target: (sink, refs) => (body: (scope: unknown) => void) => {
-    const child: PdxEntry[] = [];
-    body(makeAnyScope(child, refs));
-    sink.push(block("target", child));
+  hiddenEffect: (sink, refs) => (body: (scope: unknown) => void) => {
+    sink.push(block("hidden_effect", recordEffects(refs, body)));
   },
 
   randomList: (sink, refs) => weightedList("random_list", sink, refs),
@@ -442,7 +574,7 @@ const STRUCTURAL: Record<
     ) => {
       const child: PdxEntry[] = [kv("chance", args.chance)];
       child.push(...(args.modifiers ?? []).map((modifier) => modifierEntry(modifier, refs)));
-      body(makeAnyScope(child, refs));
+      recordEffects(refs, body, child);
       sink.push(block("random", child));
     },
 
@@ -457,7 +589,7 @@ const STRUCTURAL: Record<
         child.push(block("limit", [...args.limit.entries]));
         refs.push(...args.limit.refs);
       }
-      body(makeAnyScope(child, refs));
+      recordEffects(refs, body, child);
       sink.push(block("while", child));
     },
 
@@ -579,14 +711,12 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[]): unknown {
         case "wrapper":
           if (shape.fields === null) {
             return (body: (scope: unknown) => void) => {
-              const child: PdxEntry[] = [];
-              body(makeAnyScope(child, refs));
-              sink.push(block(meta.key, child));
+              sink.push(block(meta.key, recordEffects(refs, body)));
             };
           }
           return (args: Record<string, unknown>, body: (scope: unknown) => void) => {
             const child: PdxEntry[] = fieldEntries(shape.fields ?? [], args, meta.key, refs);
-            body(makeAnyScope(child, refs));
+            recordEffects(refs, body, child);
             sink.push(block(meta.key, child));
           };
       }
@@ -635,4 +765,29 @@ export function makeScope<S extends ScopeName>(
   refs: ContentRefUse[] = []
 ): ScopeObjOf<S> {
   return makeAnyScope(sink, refs) as ScopeObjOf<S>;
+}
+
+/**
+ * Runs one effect closure against a fresh block, and returns its entries.
+ *
+ * The single entry point for "record effects into a new block", used by the
+ * recorder's own nested blocks and by every caller that starts one — an
+ * event's `immediate`, a content definition's effect field. Going through here
+ * is what keeps {@link ScopeRef.effects} writing into the innermost block: the
+ * recording is on the stack for exactly as long as the body runs.
+ */
+export function recordEffects<S extends ScopeName>(
+  refs: ContentRefUse[],
+  body: (scope: ScopeObjOf<S>) => void,
+  into: PdxEntry[] = []
+): PdxEntry[] {
+  RECORDINGS.push({ sink: into, refs });
+  try {
+    body(makeAnyScope(into, refs) as ScopeObjOf<S>);
+  } finally {
+    // Popped even when the body throws: an author's error inside one closure
+    // must not leave every later closure recording into a dead block.
+    RECORDINGS.pop();
+  }
+  return into;
 }

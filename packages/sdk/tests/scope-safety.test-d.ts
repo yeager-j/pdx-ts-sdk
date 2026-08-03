@@ -8,6 +8,7 @@ import {
   hasCountryFlag,
   hasGlobalFlag,
   hasPlanetFlag,
+  hiddenTrigger,
   isAtWar,
   overlord,
   owner,
@@ -50,6 +51,24 @@ describe("scope safety", () => {
   it("infers the scope intersection for and()", () => {
     const combined = and(hasCountryFlag("x"), hasGlobalFlag("y"));
     expectTypeOf(combined).toExtend<Trigger<"country">>();
+  });
+
+  it("keeps hidden_trigger and hidden_effect at the scope that encloses them", () => {
+    // Both hide from tooltips and neither changes scope, so each is checked at
+    // the scope it sits in — the same rule as any other condition or effect
+    // written there, which is the point of hiding being a tooltip concern.
+    const hidden = hiddenTrigger(hasCountryFlag("x"), isAtWar());
+    expectTypeOf(hidden).toExtend<Trigger<"country">>();
+    countrySlot(hiddenTrigger(hasCountryFlag("x")));
+    // @ts-expect-error — a planet condition is no more legal hidden than shown
+    countrySlot(hiddenTrigger(hasPlanetFlag("y")));
+
+    const planet = makeScope<"planet">([]);
+    planet.hiddenEffect((scope) => {
+      scope.setPlanetFlag("still_a_planet");
+      // @ts-expect-error — hiding an effect does not move it to country scope
+      scope.setCountryFlag("country_only");
+    });
   });
 
   it("keeps universal triggers universal under combinators", () => {

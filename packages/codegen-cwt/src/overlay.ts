@@ -53,8 +53,16 @@ export const SPECIAL_SCOPE_PATHS = new Set([
  * SDK gives them signatures the rules cannot express: `and()` flattens its
  * operands into one block, and all three infer the scope intersection of their
  * arguments.
+ *
+ * `hidden_trigger` is here for a plainer reason — it is declared in
+ * `scope_links.cwt`, which this generator does not load *because* that file
+ * also declares the combinators above. It shares their shape (a flat splice
+ * that changes no scope), so `src/triggers.ts` writes it beside them, and
+ * `hidden_effect` sits in HAND_WRITTEN_EFFECTS for the same reason. Both
+ * appear in the drift baseline as documented-but-unruled, which is exactly
+ * what they are.
  */
-export const HAND_WRITTEN_TRIGGERS = new Set(["and", "or", "not", "nand", "nor"]);
+export const HAND_WRITTEN_TRIGGERS = new Set(["and", "or", "not", "nand", "nor", "hidden_trigger"]);
 
 /**
  * Structural effects the SDK models by hand rather than generating.
@@ -81,6 +89,7 @@ export const HAND_WRITTEN_EFFECTS = new Set([
   "save_event_target_as",
   "save_global_event_target_as",
   "add_resource",
+  "hidden_effect",
 ]);
 
 /**
@@ -93,8 +102,8 @@ export const HAND_WRITTEN_EFFECTS = new Set([
  */
 export const STRUCTURAL_EFFECT_METHODS = new Set([
   "if",
-  "within",
   "target",
+  "hiddenEffect",
   "randomList",
   "lockedRandomList",
   "random",

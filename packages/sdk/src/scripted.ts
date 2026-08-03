@@ -35,7 +35,7 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { ScopeRef } from "./effect-core.ts";
+import type { ScopeValue } from "./effect-core.ts";
 import type { TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { compareUtf8 } from "./resolver/path-order.ts";
@@ -99,7 +99,7 @@ export type ScriptedParams = Readonly<Record<string, ScriptedParamValue | undefi
  * the package types every parameter `string | number` today — and would then
  * silently widen away any parameter it ever types more narrowly.
  */
-type Widened<P> = { readonly [K in keyof P]: P[K] | boolean | TypedRef<string> | ScopeRef };
+type Widened<P> = { readonly [K in keyof P]: P[K] | boolean | TypedRef<string> | ScopeValue };
 
 /**
  * The argument list a binding takes, resolved once where the name is known.

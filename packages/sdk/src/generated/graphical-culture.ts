@@ -2,7 +2,13 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/graphical_cultures.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
+import type {
+  ContentField,
+  ContentLocalisation,
+  DefinedContent,
+  WeightBlock,
+  WithFrom,
+} from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { GraphicalCultureRef, ShipCategoriesRef } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
@@ -128,7 +134,7 @@ export interface GraphicalCultureFields {
   selectable?: Trigger<ScopeName>;
   shipKinds?: (ShipCategoriesRef | string)[];
   /** the scope contains the species this is for. from contains the country this is for. the country's gfx culture is set to this gfx culture for easy access */
-  shipSelectionWeight?: WeightBlock<"species">;
+  shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", "country">;
 }
 
 export interface GraphicalCultureDef<Id extends string = string> extends GraphicalCultureFields {

@@ -6,6 +6,22 @@ import type { ScopeName } from "./generated/scopes.ts";
 declare const scopeBrand: unique symbol;
 
 /**
+ * What the poison call signature "returns". Nothing produces one and nothing
+ * accepts one — calling a trigger throws.
+ *
+ * Deliberately not `never`, which is assignable to every type and so made
+ * every trigger a structurally valid closure: `Trigger<"planet">` is `() =>
+ * never`, which satisfies any `(...args) => Trigger<"country">`. That defeated
+ * scope checking on every field whose type admits a closure returning a
+ * trigger — a wrong-scope condition passed as the closure instead.
+ */
+export interface TriggerNotCalled {
+  readonly [triggerNotCalled]: true;
+}
+
+declare const triggerNotCalled: unique symbol;
+
+/**
  * A declarative in-game condition, valid in every scope named by S.
  *
  * Triggers are expression trees, not booleans: they describe a condition the
@@ -14,7 +30,7 @@ declare const scopeBrand: unique symbol;
  * is a compile error, and calling the trigger throws.
  */
 export interface Trigger<in S extends ScopeName = ScopeName> {
-  (): never;
+  (): TriggerNotCalled;
   readonly kind: "trigger";
   readonly entries: readonly PdxEntry[];
   /**

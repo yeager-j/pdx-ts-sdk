@@ -19,6 +19,7 @@ import {
   defineDecision,
   defineEconomicCategory,
   defineEdict,
+  defineGlobalShipDesign,
   defineJob,
   defineOpinionModifier,
   defineScriptedModifier,
@@ -30,12 +31,19 @@ import {
   defineStarbaseLevel,
   defineStaticModifier,
   defineTradition,
+  defineUtilityComponentTemplate,
   defineWarGoal,
+  defineWeaponComponentTemplate,
   hasAuthority,
   hasCountryFlag,
   hasPlanetFlag,
   hasShipFlag,
+  isAtWar,
   isCapital,
+  isSiteLocked,
+  makeScope,
+  namespace,
+  vanilla,
   type AgendaRef,
   type AgreementPresetRef,
   type ArchaeologicalSiteTypeRef,
@@ -45,13 +53,17 @@ import {
   type BuildingItem,
   type BuildingRef,
   type CasusBelliRef,
+  type ComponentTemplateRef,
+  type ComponentTemplateUtilityComponentTemplateRef,
   type ContentItem,
   type DecisionRef,
   type EdictRef,
+  type EventFleetRef,
   type GovernmentTriggerBlock,
   type JobRef,
   type ModifierClosure,
   type OpinionModifierRef,
+  type ScopeRef,
   type SectionTemplateFields,
   type TechnologyRef,
   type TraditionSwapFields,
@@ -251,6 +263,95 @@ describe("generated content authoring types", () => {
         base: 1,
         // @ts-expect-error — archaeological site weight gates run in planet scope
         modifiers: [{ factor: 2, when: hasCountryFlag("country_only") }],
+      },
+    });
+  });
+
+  it("hands an effect block the FROM its rules declare, at that scope", () => {
+    // `on_roll_failed` runs with this=fleet and from=archaeological site, and
+    // the common vanilla shape for it is a `from = { ... }` block. Without a
+    // typed ctx the author has no way to name FROM at all.
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_from",
+      name: "X",
+      stages: 1,
+      allow: canGoMia(),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: (fleet, ctx) => {
+        expectTypeOf(ctx.from).toEqualTypeOf<ScopeRef<"archaeological_site">>();
+        ctx.from.effects((site) => {
+          site.addExpeditionLogEntry({ title: "The dig fails." });
+        });
+      },
+      onCreate: (site, ctx) => {
+        // Same registry, and CWT gives this one a `push_scope` with no FROM:
+        // the ctx is still there, and reading FROM through it does not compile.
+        site.addExpeditionLogEntry({ title: "The dig begins." });
+        // @ts-expect-error — on_create declares no FROM; ctx.from is an inert sentinel
+        ctx.from.effects(() => {});
+      },
+    });
+  });
+
+  it("offers a declarative field the same FROM, as a closure form", () => {
+    // A trigger is a value, so a FROM-bearing trigger field takes either the
+    // value or a closure that produces it — the closure being the only place
+    // an argument list exists to hand FROM to.
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_trigger_from",
+      name: "X",
+      stages: 1,
+      allow: (ctx) => ctx.from.trigger(isSiteLocked()),
+      // The plain form is untouched: a condition with no FROM to name has no
+      // reason to grow a closure around it.
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+    });
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_trigger_scope",
+      name: "X",
+      stages: 1,
+      // @ts-expect-error — FROM is the archaeological site here, not a country
+      allow: (ctx) => ctx.from.trigger(hasCountryFlag("country_only")),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+    });
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_trigger_plain_scope",
+      name: "X",
+      stages: 1,
+      // @ts-expect-error — and the closure form does not weaken the plain one:
+      // a trigger's own scope is still checked against the field
+      allow: hasCountryFlag("country_only"),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+    });
+    defineWarGoal({
+      id: "content_types_war_goal_weight_from",
+      name: "X",
+      casusBelli: "cb_humiliation",
+      // A weight block's rows are conditions too, so the same form covers them.
+      aiWeight: (ctx) => ({
+        base: 10,
+        modifiers: [{ factor: 2, when: ctx.from.trigger(isAtWar()) }],
+      }),
+    });
+  });
+
+  it("scopes an effect block's FROM per registry, not per SDK convention", () => {
+    // A war goal's FROM is the targeted country, so the ref lands in country
+    // scope — the type follows each registry's own rules rather than a shared
+    // guess about what FROM tends to be.
+    defineWarGoal({
+      id: "content_types_war_goal_from",
+      name: "X",
+      casusBelli: "cb_humiliation",
+      onAccept: (country, ctx) => {
+        ctx.from.effects((target) => {
+          target.setCountryFlag("content_types_war_goal_accepted");
+          // @ts-expect-error — FROM is a country here, not a planet
+          target.setPlanetFlag("planet_only");
+        });
       },
     });
   });
@@ -472,6 +573,111 @@ describe("generated content authoring types", () => {
     // @ts-expect-error — a building reference is not a technology reference
     const technology: TechnologyRef = buildingRef;
     void technology;
+  });
+
+  it("brands a defined event by its scope, so an event reference is checked too", () => {
+    // An event carried no brand at all, and `TypedRef`'s is optional — so an
+    // event was structurally a reference for *every* registry. A country event
+    // satisfied an archaeology stage's `<event.fleet>`, and a `<technology>`
+    // field just as readily. The game would have refused both.
+    const events = namespace("content_types_event_brand");
+    const fleetEvent = events.defineFleetEvent({ id: 1, isTriggeredOnly: true });
+    const countryEvent = events.defineCountryEvent({ id: 2, isTriggeredOnly: true });
+
+    const fleetRef: EventFleetRef = fleetEvent;
+    void fleetRef;
+    // @ts-expect-error — a stage's event is <event.fleet>; a country event is not one
+    const wrongScope: EventFleetRef = countryEvent;
+    void wrongScope;
+    // @ts-expect-error — nor is an event a reference into some unrelated registry
+    const wrongRegistry: TechnologyRef = countryEvent;
+    void wrongRegistry;
+
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_stage_event",
+      name: "X",
+      stages: 1,
+      allow: canGoMia(),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+      stage: [
+        { difficulty: 1, icon: "GFX_x", event: fleetEvent },
+        // @ts-expect-error — the reported bug: a country event in a fleet event's field
+        { difficulty: 2, icon: "GFX_x", event: countryEvent },
+      ],
+    });
+  });
+
+  it("brands a registry split off a shared CWT type by the reference the rules use", () => {
+    // Three registries share `type[component_template]`, one per subtype, so
+    // the SDK names them after the subtype and the rules refer to them as
+    // `<component_template.utility_component_template>`. Branding a definition
+    // with the SDK's own registry name — a name no rule uses — left it unable
+    // to reach any field that references one, in either form.
+    const util = defineUtilityComponentTemplate({
+      id: "content_types_util_component",
+      icon: "GFX_x",
+      power: -10,
+    });
+    const weapon = defineWeaponComponentTemplate({
+      id: "content_types_weapon_component",
+      icon: "GFX_x",
+    });
+
+    const unqualified: ComponentTemplateRef = util;
+    const qualified: ComponentTemplateUtilityComponentTemplateRef = util;
+    void unqualified;
+    void qualified;
+    // @ts-expect-error — the subtypes stay distinct: a weapon is not a utility component
+    const wrongSubtype: ComponentTemplateUtilityComponentTemplateRef = weapon;
+    void wrongSubtype;
+    // @ts-expect-error — nor does the shared CWT type make it some other registry
+    const wrongRegistry: TechnologyRef = util;
+    void wrongRegistry;
+
+    // A vanilla id is the same kind of thing, so it wears the same brand.
+    const fromVanilla: ComponentTemplateUtilityComponentTemplateRef =
+      vanilla.utilityComponentTemplate("SHIELD_1");
+    void fromVanilla;
+
+    defineGlobalShipDesign({
+      id: "content_types_ship_design_components",
+      shipSize: "ship_size_corvette",
+      growthStages: [{ shipSize: "ship_size_corvette", requiredComponent: [util] }],
+    });
+  });
+
+  it("brands an event by its CWT subtype, which is not always its scope", () => {
+    // `observer_event` is subtype `observer` in country scope, and
+    // `cosmic_storm_event` is subtype `cosmic_storm` in storm scope. Branding
+    // by the scope would call an observer event an `<event.country>` — a
+    // reference the rules never write for it — and let an ordinary country
+    // event be fired as one, which is a different event type to the game.
+    const events = namespace("content_types_event_kind");
+    const observer = events.defineObserverEvent({ id: 1, isTriggeredOnly: true });
+    const country = events.defineCountryEvent({ id: 2, isTriggeredOnly: true });
+    const scope = makeScope<"country">([]);
+
+    scope.observerEvent({ id: observer });
+    scope.countryEvent({ id: country });
+    // @ts-expect-error — an observer event is not what `country_event` fires
+    scope.countryEvent({ id: observer });
+    // @ts-expect-error — nor is a country event what `observer_event` fires
+    scope.observerEvent({ id: country });
+  });
+
+  it("lets an unqualified reference field take any of that type's subtypes", () => {
+    // `set_next_astral_rift_event` takes `<event>` — the whole type, subtypes
+    // included — so an event of any scope satisfies it. The relation runs only
+    // that way: an `<event.fleet>` field still refuses a bare `<event>`, which
+    // proves nothing about which subtype it is (covered by the case above).
+    const events = namespace("content_types_event_any");
+    const astralRiftEvent = events.defineAstralRiftEvent({ id: 1, isTriggeredOnly: true });
+    const fleetEvent = events.defineFleetEvent({ id: 2, isTriggeredOnly: true });
+    const rift = makeScope<"astral_rift">([]);
+
+    rift.setNextAstralRiftEvent({ id: astralRiftEvent, onRollFailed: fleetEvent });
+    rift.setNextAstralRiftEvent({ id: "vanilla_rift.1" });
   });
 
   it("types a definer's return as its own registry's content item, branded", () => {

@@ -12,7 +12,7 @@
  * trigger), since the definition object is not in scope there.
  */
 
-import type { ScopeRef } from "./effect-core.ts";
+import type { ScopeValue } from "./effect-core.ts";
 import type { TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 
@@ -39,7 +39,7 @@ declare module "./generated/effects.ts" {
      */
     startSituation<T extends ScopeName>(args: {
       type: SituationTargetContract<T>;
-      target: ScopeRef<NoInfer<T>>;
+      target: ScopeValue<NoInfer<T>>;
       effect?: (scope: SituationScope) => void;
     }): void;
   }

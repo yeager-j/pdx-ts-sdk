@@ -1,7 +1,7 @@
 import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { eventTarget, makeScope } from "../src/effect-core.ts";
+import { eventTarget, makeScope, recordEffects, scopeRef } from "../src/effect-core.ts";
 import { countryFlags } from "../src/generated/value-sets.ts";
 import { hasOwner, isAtWar } from "../src/triggers.ts";
 
@@ -105,6 +105,78 @@ add_resource = {
 		}
 		log = "war doubles this arm"
 	}
+}
+`);
+  });
+
+  it("keeps a hidden_effect's entries inside it, at the enclosing scope", () => {
+    // `hidden_effect` changes no scope, so the closure gets the same scope
+    // back. It takes one at all because the entries have to land inside the
+    // block: the enclosing scope object writes to the enclosing block, which
+    // is the whole difference between hiding an effect and not.
+    const from = scopeRef<"planet">("from");
+    const sink = recordEffects<"country">([], (country) => {
+      country.log("shown");
+      country.hiddenEffect((hidden) => {
+        hidden.log("not shown");
+        from.effects((planet) => planet.log("nested"));
+      });
+    });
+
+    expect(serialize(sink)).toBe(`log = shown
+
+hidden_effect = {
+	log = "not shown"
+	from = {
+		log = nested
+	}
+}
+`);
+  });
+
+  it("opens a ref's block where it is written, not where its scope object came from", () => {
+    // The property the recording stack exists for. `from = { }` written inside
+    // `every_owned_planet = { }` runs once per planet; at the top level it runs
+    // once. Both are legal script and they mean different things, so the block
+    // has to land where the author put the call — which is why the ref cannot
+    // simply hold the sink it was created against.
+    const from = scopeRef<"planet">("from");
+    const sink = recordEffects<"country">([], (country) => {
+      from.effects((planet) => planet.log("outer"));
+      country.everyOwnedPlanet({ limit: hasOwner() }, () => {
+        from.effects((planet) => planet.log("inner"));
+      });
+    });
+
+    expect(serialize(sink)).toBe(`from = {
+	log = outer
+}
+
+every_owned_planet = {
+	limit = {
+		has_owner = yes
+	}
+	from = {
+		log = inner
+	}
+}
+`);
+  });
+
+  it("throws when a ref is opened with no block to record into", () => {
+    // Escaping the closure is the one way to reach this: nothing outside a
+    // recording has a sink, and guessing one would silently drop the entries.
+    expect(() => stormWorld.effects((planet) => planet.destroyColony())).toThrow(
+      /outside any effect closure/
+    );
+  });
+
+  it("opens a ref as a condition without any recording at all", () => {
+    // The trigger side is a pure value, so it works anywhere — no sink, no
+    // stack, nothing to escape from.
+    expect(serialize([...stormWorld.trigger(hasOwner()).entries]))
+      .toBe(`event_target:effects_test_target = {
+	has_owner = yes
 }
 `);
   });

@@ -60,10 +60,25 @@ export interface Cardinality {
 
 export const REQUIRED: Cardinality = { min: 1, max: 1 };
 
-/** The scope a nested block runs in, from `## replace_scope` / `## push_scope`. */
+/**
+ * The scope context a nested block runs in, from `## replace_scope` /
+ * `## push_scope`.
+ *
+ * `from` is as much a part of that context as `this` is: half the blocks the
+ * game evaluates read FROM, and the rules say which scope it holds
+ * (`## replace_scopes = { this = fleet from = archaeological_site }`).
+ * `push_scope` leaves FROM alone, so it contributes `this` only.
+ */
 export interface ScopeContext {
   readonly this: string | null;
   readonly root: string | null;
+  readonly from: string | null;
+  /**
+   * True for `replace_scope(s)`, which states the whole context — a scope it
+   * leaves out is cleared, not inherited. `push_scope` states only `this`, so
+   * everything else carries over from the enclosing block.
+   */
+  readonly replaces: boolean;
 }
 
 export interface RuleField {
@@ -250,7 +265,7 @@ export function cardinalityOf(options: readonly CwtOption[]): Cardinality {
 export function scopeOf(options: readonly CwtOption[]): ScopeContext | null {
   const pushed = findOption(options, "push_scope");
   if (pushed?.value?.kind === "scalar") {
-    return { this: pushed.value.text, root: null };
+    return { this: pushed.value.text, root: null, from: null, replaces: false };
   }
   const replaced = findOption(options, "replace_scope") ?? findOption(options, "replace_scopes");
   const block = replaced?.value;
@@ -264,7 +279,7 @@ export function scopeOf(options: readonly CwtOption[]): ScopeContext | null {
     );
     return node !== undefined && node.value.kind === "scalar" ? node.value.text : null;
   };
-  return { this: read("this"), root: read("root") };
+  return { this: read("this"), root: read("root"), from: read("from"), replaces: true };
 }
 
 /**

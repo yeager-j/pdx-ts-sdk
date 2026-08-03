@@ -55,6 +55,29 @@ export function not<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {
 }
 
 /**
+ * Hides the enclosed conditions from generated tooltips: `hidden_trigger = { ... }`.
+ *
+ * Tooltip visibility, not logic — the conditions still have to hold, and the
+ * block changes no scope, so `this`, `from`, and `root` inside it are what
+ * they are outside it. That is why it takes conditions rather than a closure:
+ * there is no new scope to hand anyone, and a trigger is a value.
+ *
+ * Operands splice in flat, the way the game writes them, so `hiddenTrigger(a, b)`
+ * is `hidden_trigger = { a b }` rather than a nested `AND`.
+ */
+export function hiddenTrigger<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
+  return trigger(
+    [
+      block(
+        "hidden_trigger",
+        triggers.flatMap((t) => [...t.entries])
+      ),
+    ],
+    operandRefs(triggers)
+  );
+}
+
+/**
  * The `target` scope link: a situation's (or spy network's, espionage
  * operation's, agreement's) target. Its landing scope varies per definition
  * (`output_scope = any`) and is declared nowhere the SDK can read, so — unlike

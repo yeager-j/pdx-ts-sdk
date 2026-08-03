@@ -513,7 +513,27 @@ export function buildMod(
   // may name. That is the difference between "an own-prefixed string" — flags,
   // localization keys, saved event targets are all that — and a reference: only
   // a field the rules say holds `<technology>` demands a built technology.
-  const authorableTypes = new Set<string>(CONTENT_REGISTRIES.map((descriptor) => descriptor.type));
+  // Keyed by the CWT reference a field can name, which is what its `refTypes`
+  // says — not by the registry name, which no field ever names and which meant
+  // that for a registry the manifest split out of a shared CWT type, no field
+  // matched at all and every reference to one went unchecked.
+  //
+  // One target can answer to several registries. A qualified reference names
+  // exactly one (`<component_template.utility_component_template>`), while the
+  // bare type names every registry split out of it: a field holding
+  // `<component_template>` takes a utility, weapon, or strike-craft template,
+  // so an id is accounted for if any of the three defined it.
+  const registriesByTarget = new Map<string, string[]>();
+  for (const descriptor of CONTENT_REGISTRIES) {
+    const qualifier = descriptor.referenceName.indexOf(".");
+    const targets =
+      qualifier === -1
+        ? [descriptor.referenceName]
+        : [descriptor.referenceName, descriptor.referenceName.slice(0, qualifier)];
+    for (const target of targets) {
+      registriesByTarget.set(target, [...(registriesByTarget.get(target) ?? []), descriptor.type]);
+    }
+  }
   const builtIds = new Map<string, Set<string>>();
   for (const group of definedGroups) {
     const ids = builtIds.get(group.type) ?? new Set<string>();
@@ -531,10 +551,14 @@ export function buildMod(
     // A target this SDK cannot author (`<technology_tier>`) or a field that
     // also admits non-references excuses the id: nothing here could have
     // defined it, so its absence is not evidence of a mistake.
-    if (use.targets.length === 0 || !use.targets.every((type) => authorableTypes.has(type))) {
+    if (use.targets.length === 0 || !use.targets.every((type) => registriesByTarget.has(type))) {
       continue;
     }
-    if (use.targets.some((type) => builtIds.get(type)?.has(use.id))) {
+    if (
+      use.targets.some((type) =>
+        registriesByTarget.get(type)!.some((registry) => builtIds.get(registry)?.has(use.id))
+      )
+    ) {
       continue;
     }
     const target = use.targets.join(" or ");

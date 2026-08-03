@@ -39,9 +39,12 @@ import {
   buildMod,
   collection,
   defineCountryShipOfSizeLimit,
+  defineGlobalShipDesign,
   defineSituationType,
   defineTechnology,
   defineTradition,
+  defineUtilityComponentTemplate,
+  defineWeaponComponentTemplate,
   eventTarget,
   hasOwner,
   hasTechnology,
@@ -117,7 +120,7 @@ function freeCollections(): ModItemInput[] {
     title: "Aftershock",
     isTriggeredOnly: true,
     immediate: (planet, ctx) => {
-      planet.within(ctx.from, (country) => {
+      ctx.from.effects((country) => {
         country.addResource({ resource: "influence", amount: 50 });
       });
     },
@@ -613,6 +616,61 @@ describe("content reference integrity", () => {
     expect(() => buildMod(CONFIG, [traditions, techs])).toThrow(
       'references technology "pp_mod_ghost" in "prerequisites"'
     );
+  });
+
+  it("checks a reference whose registry the manifest split off a shared CWT type", () => {
+    // The guard matches a field's declared `refTypes` against the registries
+    // this SDK can author. Those refTypes are CWT names — a component
+    // template's is `component_template.utility_component_template` — so
+    // keying by the registry name meant nothing ever matched and every
+    // component template reference read as somebody else's to define.
+    const designs = collection(undefined, [
+      defineGlobalShipDesign({
+        id: "pp_mod_design_ghost_component",
+        shipSize: "ship_size_corvette",
+        growthStages: [
+          {
+            shipSize: "ship_size_corvette",
+            requiredComponent: ["pp_mod_component_missing"],
+          },
+        ],
+      }),
+    ]);
+    expect(() => buildMod(CONFIG, [designs])).toThrow(
+      'references component_template.utility_component_template "pp_mod_component_missing"'
+    );
+
+    // Defined, it passes — and the id is matched against that registry's own
+    // definitions, not merely against something built somewhere.
+    const components = collection(undefined, [
+      defineUtilityComponentTemplate({ id: "pp_mod_component_missing", icon: "GFX_x" }),
+    ]);
+    expect(() => buildMod(CONFIG, [designs, components])).not.toThrow();
+  });
+
+  it("resolves an unqualified reference across every registry split out of its type", () => {
+    // `template` holds a bare `<component_template>`, which any of the three
+    // subtype registries satisfies. Keying only by the qualified names left
+    // the bare type absent from the map, so these references — the majority
+    // of them — read as unauthorable and went unchecked.
+    const designs = collection(undefined, [
+      defineGlobalShipDesign({
+        id: "pp_mod_design_ghost_template",
+        shipSize: "ship_size_corvette",
+        section: [
+          { slot: "mid", component: [{ slot: "aux", template: "pp_mod_template_missing" }] },
+        ],
+      }),
+    ]);
+    expect(() => buildMod(CONFIG, [designs])).toThrow(
+      'references component_template "pp_mod_template_missing"'
+    );
+
+    // Any of the three registries accounts for it, since the field takes any.
+    const weapons = collection(undefined, [
+      defineWeaponComponentTemplate({ id: "pp_mod_template_missing", icon: "GFX_x" }),
+    ]);
+    expect(() => buildMod(CONFIG, [designs, weapons])).not.toThrow();
   });
 
   it("checks an own-prefixed raw string exactly like a branded ref", () => {

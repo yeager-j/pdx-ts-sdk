@@ -211,6 +211,10 @@ export const COMBINATOR_SEMANTICS: Readonly<Record<string, CombinatorImpl>> = {
     note: "Paradox's NOT is actually NOR over its entries: true iff every entry is false.",
     mode: "none",
   },
+  hidden_trigger: {
+    note: "Transparent: every entry must hold, exactly as AND. Hiding is a tooltip concern with no bearing on whether the condition holds, and the block changes no scope.",
+    mode: "all",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -299,6 +303,9 @@ export const STRUCTURAL_SEMANTICS: Readonly<Record<string, { readonly note: stri
   if: { note: "Evaluates `limit` via the trigger walker, then applies the body." },
   else_if: { note: "Associated with the preceding if by position, as the game does." },
   else: { note: "Runs iff no preceding if/else_if in the chain applied." },
+  hidden_effect: {
+    note: "Transparent: the entries run as they would unwrapped. Hiding is a tooltip concern and the block changes no scope, so there is nothing to simulate.",
+  },
 };
 
 // Fire effects (`planet_event = { id = ... }`) are recognized via the

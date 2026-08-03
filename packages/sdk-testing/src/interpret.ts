@@ -12,7 +12,13 @@
  */
 
 import type { PdxEntry, PdxScalar } from "@pdx-ts/pdxscript";
-import { EVENT_KINDS, isEffectKey, makeScope, type ScopeObjOf, type Trigger } from "@pdx-ts/sdk";
+import {
+  EVENT_KINDS,
+  isEffectKey,
+  recordEffects,
+  type ScopeObjOf,
+  type Trigger,
+} from "@pdx-ts/sdk";
 
 import {
   cloneState,
@@ -436,6 +442,13 @@ export function applyEffectEntries(
     }
     chain = undefined;
 
+    if (entry.key === "hidden_effect") {
+      // Transparent: hiding is a tooltip concern, and the block changes no
+      // scope. Its entries run exactly as they would unwrapped, which is what
+      // the game does — nothing here is a guess about semantics.
+      applyEffectEntries(requireBlock(entry), scope, ex);
+      continue;
+    }
     if (entry.key === "random_list") {
       applyRandomList(entry, scope, ex);
       continue;
@@ -491,8 +504,9 @@ export function run<S extends SimScopeName>(
   scope: SimScope<S>,
   opts?: ForcedArms
 ): RunResult<S> {
-  const sink: PdxEntry[] = [];
-  effect(makeScope<S>(sink));
+  // Through recordEffects, not makeScope: an author's closure may open a ref
+  // with `.effects()`, and that needs a live recording to write into.
+  const sink = recordEffects<S>([], effect);
 
   const clone = cloneState(scope.state);
   const queueBase = clone.queue.length;

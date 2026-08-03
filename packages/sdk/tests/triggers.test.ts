@@ -7,6 +7,7 @@ import {
   hasCountryFlag,
   hasGlobalFlag,
   hasTechnology,
+  hiddenTrigger,
   isAi,
   not,
   or,
@@ -61,6 +62,28 @@ describe("trigger builders", () => {
       "AND = {
       	has_country_flag = ascended
       	years_passed >= 50
+      }
+      "
+    `);
+  });
+
+  it("splices hidden_trigger operands flat, changing no scope", () => {
+    // Tooltip visibility, not logic: the conditions still have to hold, and
+    // the block changes no scope — so it takes conditions rather than a
+    // closure, and its own scope is theirs.
+    const condition = and(
+      isAi(),
+      hiddenTrigger(hasCountryFlag("ascended"), owner(hasCountryFlag("patron")))
+    );
+    expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
+      "AND = {
+      	is_ai = yes
+      	hidden_trigger = {
+      		has_country_flag = ascended
+      		owner = {
+      			has_country_flag = patron
+      		}
+      	}
       }
       "
     `);

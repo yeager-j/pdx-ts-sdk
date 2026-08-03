@@ -9,16 +9,16 @@
  * scripted trigger/effect bindings both do.
  */
 
-import type { ScopeRef } from "./effect-core.ts";
+import type { ScopeValue } from "./effect-core.ts";
 import type { TypedRef } from "./generated/refs.ts";
 
 /** Anything that lowers to one PDXScript scalar. */
-export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeRef;
+export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValue;
 
 export function toScalar(value: unknown): string | number | boolean {
   if (typeof value === "object" && value !== null) {
     if ("path" in value) {
-      return (value as ScopeRef).path;
+      return (value as ScopeValue).path;
     }
     if ("id" in value) {
       return (value as { id: string }).id;
