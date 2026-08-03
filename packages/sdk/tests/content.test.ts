@@ -52,6 +52,7 @@ import {
   hasShipFlag,
   hasSituationFlag,
   hasTechnology,
+  isBottleneckSystem,
   isCapital,
   isScopeValid,
   isSiteLocked,
@@ -1633,6 +1634,100 @@ describe("generated content registries", () => {
     expect(rendered).toContain(
       "possible_pre_triggers = {\n\t\thas_owner = yes\n\t\tis_enslaved = no\n\t\tis_robotic = yes\n\t}"
     );
+  });
+});
+
+/**
+ * Runtime serialization evidence for widenedLowering (SDK-33, SDK-47).
+ *
+ * Both fixes stop collapsing a richer `RuleType` down to a narrower one: an
+ * unannotated CWT scope now lowers to unchecked (`Trigger<never>`/
+ * `WeightBlock<never>`) instead of the unsatisfiable `Trigger<ScopeName>`,
+ * and `value_field` now lowers to `ScriptValue` (number widens in for free)
+ * instead of plain `number`. Compile-time coverage lives in
+ * content.test-d.ts; this is the matching runtime proof that the widened
+ * types actually serialize.
+ */
+describe("widenedLowering: unpinned scope and value_field widening", () => {
+  it("writes a real single-scope trigger through an unpinned-scope field (SDK-33)", () => {
+    // tradition_category.conditionalDesc.trigger (the `desc` key's repeated
+    // trigger+text block form) carries no `## replace_scopes` anywhere in its
+    // chain, so before the fix it lowered to `Trigger<ScopeName>` —
+    // contravariant, so only a universal trigger like always() type-checked.
+    // The overlay's `country` scope assertion (backed by all 25 shipped
+    // desc.trigger conditions) buys back real checking; this proves a real
+    // country-scoped trigger both type-checks and serializes.
+    const traditionCategory = collection(undefined, [
+      defineTraditionCategory({
+        id: "wl_test_widened_tradition_category",
+        name: "Widened Futures",
+        treeTemplate: "tree_template_5",
+        adoptionBonus: "tr_placeholder",
+        finishBonus: "tr_placeholder",
+        traditions: ["tr_placeholder"],
+        conditionalDesc: [
+          {
+            trigger: hasAuthority("auth_machine_intelligence"),
+            text: "Only machine empires walk this path.",
+          },
+        ],
+      }),
+    ]);
+    const rendered = render(
+      buildMod(configFor("Widened lowering test", "wl_test"), [traditionCategory])
+    ).get("common/tradition_categories/wl_test_tradition_categories.txt")!;
+    expect(rendered).toContain(
+      "\tdesc = {\n\t\ttrigger = {\n\t\t\thas_authority = auth_machine_intelligence\n\t\t}\n" +
+        '\t\ttext = "Only machine empires walk this path."\n\t}'
+    );
+  });
+
+  it("writes a real system-scoped weight block through an unpinned-scope field (SDK-33)", () => {
+    // solar_system_initializer.usage_odds carries no `## replace_scopes` and
+    // the registry has no body-level push_scope either, so before the fix it
+    // lowered to `WeightBlock<ScopeName>`. The overlay's `system` scope
+    // assertion buys back real checking.
+    const initializer = collection(undefined, [
+      defineSolarSystemInitializer({
+        id: "wl_test_widened_solar_system",
+        class: "star1",
+        usageOdds: {
+          base: 10,
+          modifiers: [{ factor: 2, when: isBottleneckSystem() }],
+        },
+      }),
+    ]);
+    const rendered = render(
+      buildMod(configFor("Widened lowering test", "wl_test"), [initializer])
+    ).get("common/solar_system_initializers/wl_test_solar_system_initializers.txt")!;
+    expect(rendered).toContain("\tusage_odds = {\n\t\tbase = 10\n\t\tmodifier = {");
+    expect(rendered).toContain("is_bottleneck_system = yes");
+  });
+
+  it("accepts and serializes both a plain number and a script-value string for the same field (SDK-47)", () => {
+    // country_ship_of_size_limit.base is `country_limits.cwt`'s `value_field`,
+    // not `float`. A plain number keeps working unchanged (the widening's
+    // whole point); a scripted-variable string is a form the old `number`
+    // type could not express at all.
+    const limits = collection(undefined, [
+      defineCountryShipOfSizeLimit({
+        id: "wl_test_numeric_limit",
+        shipTypes: ["ship_size_titan"],
+        base: 80,
+        show: isScopeValid(),
+      }),
+      defineCountryShipOfSizeLimit({
+        id: "wl_test_script_value_limit",
+        shipTypes: ["ship_size_titan"],
+        base: "some_scripted_variable",
+        show: isScopeValid(),
+      }),
+    ]);
+    const rendered = render(buildMod(configFor("Widened lowering test", "wl_test"), [limits])).get(
+      "common/country_limits/ship_of_size_limits/wl_test_ship_of_size_limits.txt"
+    )!;
+    expect(rendered).toContain("base = 80");
+    expect(rendered).toContain("base = some_scripted_variable");
   });
 });
 

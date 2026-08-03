@@ -22,7 +22,7 @@ import { EVENT_KINDS } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { toScalar } from "./scalar.ts";
 import type { ScriptedEffectCall } from "./scripted.ts";
-import { trigger, type Trigger } from "./trigger-core.ts";
+import { trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";
 
 // ---------------------------------------------------------------------------
 // Scope references
@@ -216,17 +216,23 @@ export function scriptCtx<Self extends ScopeName, From extends ScopeName | undef
  * `min`/`max` read as comparisons rather than assignments. `set`, `modulo`,
  * `round_to`, and `pow` are declared but unmeasured anywhere in the corpus
  * and stay out until a real consumer needs them.
+ *
+ * Every operation here is `modifier_rule.cwt`'s `value_field`, not `float`:
+ * a literal, a scripted variable, a `scope.variable` path, or
+ * `value:<script_value>`. Across every modifier operand in vanilla's
+ * `common/`, 12% are one of those non-literal forms, so `ScriptValue` (which
+ * a plain number already widens into) rather than `number` alone.
  */
 export interface Modifier<S extends ScopeName> {
-  readonly factor?: number;
-  readonly add?: number;
-  readonly weight?: number;
-  readonly subtract?: number;
-  readonly mult?: number;
-  readonly multiplier?: number;
-  readonly divide?: number;
-  readonly minValue?: number;
-  readonly maxValue?: number;
+  readonly factor?: ScriptValue;
+  readonly add?: ScriptValue;
+  readonly weight?: ScriptValue;
+  readonly subtract?: ScriptValue;
+  readonly mult?: ScriptValue;
+  readonly multiplier?: ScriptValue;
+  readonly divide?: ScriptValue;
+  readonly minValue?: ScriptValue;
+  readonly maxValue?: ScriptValue;
   /**
    * Display text for this modifier row's tooltip (`desc = localisation` in
    * `modifier_rule.cwt`). Like every other definition-attached localization

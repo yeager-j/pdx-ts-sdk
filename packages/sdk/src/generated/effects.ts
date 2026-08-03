@@ -9,7 +9,7 @@
 import type { PdxOp } from "@pdx-ts/pdxscript";
 
 import type { Modifier, StructuralEffects } from "../effect-core.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type {
   AddDepositType,
   AggroRangeMeasureFrom,
@@ -292,9 +292,9 @@ export interface EffectsIn16Scopes674a {
     days?: number;
     months?: number;
     years?: number;
-    mult?: number;
-    multiplier?: number;
-    timeMultiplier?: number;
+    mult?: ScriptValue;
+    multiplier?: ScriptValue;
+    timeMultiplier?: ScriptValue;
     clearOnOwnerChange?: "yes";
   }): void;
 
@@ -354,7 +354,7 @@ export interface EffectsIn29Scopes878c {
    * add_variable = { which = <string> value = <float>/<variable>/<scope.variable>/trigger:<trigger> }
    * ```
    */
-  addVariable(args: { which: Variable; value: number }): void;
+  addVariable(args: { which: Variable; value: ScriptValue }): void;
 
   /**
    * Rounds a previously-set variable up to the next integer.
@@ -370,7 +370,7 @@ export interface EffectsIn29Scopes878c {
    * change_variable = { which = <string> value = <float>/<variable>/<scope.variable>/trigger:<trigger> }
    * ```
    */
-  changeVariable(args: { which: Variable; value: number }): void;
+  changeVariable(args: { which: Variable; value: ScriptValue }): void;
 
   /**
    * Clears a previously-set variable from the game.
@@ -386,7 +386,7 @@ export interface EffectsIn29Scopes878c {
    * divide_variable = { which = <string> value = <float>/<variable>/<scope.variable>/trigger:<trigger> }
    * ```
    */
-  divideVariable(args: { which: Variable; value: number }): void;
+  divideVariable(args: { which: Variable; value: ScriptValue }): void;
 
   /**
    * Exports the value of a trigger to a specified variable (so for num_pops, it'll export the number of pops).
@@ -420,7 +420,7 @@ export interface EffectsIn29Scopes878c {
    * modulo_variable = { which = <string> value = <float>/<variable>/<scope.variable>/trigger:<trigger> }
    * ```
    */
-  moduloVariable(args: { which: Variable; value: number }): void;
+  moduloVariable(args: { which: Variable; value: ScriptValue }): void;
 
   /**
    * Multiplies a previously-set variable by a specific amount
@@ -428,7 +428,7 @@ export interface EffectsIn29Scopes878c {
    * multiply_variable = { which = <string> value = <float>/<variable>/<scope.variable>/trigger:<trigger> }
    * ```
    */
-  multiplyVariable(args: { which: Variable; value: number }): void;
+  multiplyVariable(args: { which: Variable; value: ScriptValue }): void;
 
   /**
    * Rounds a previously-set variable to the closest integer.
@@ -447,7 +447,7 @@ export interface EffectsIn29Scopes878c {
    * }
    * ```
    */
-  roundVariableToClosest(args: { which: Variable; value: number }): void;
+  roundVariableToClosest(args: { which: Variable; value: ScriptValue }): void;
 
   /**
    * Sets an arbitrarily-named date flag for the scoped object. Acts both as an <scope object>_flag and as a means for saving a date. The flag can then be referred to in localisations [This.<flag>] to produce the date.
@@ -459,7 +459,7 @@ export interface EffectsIn29Scopes878c {
    * }
    * ```
    */
-  setSavedDate(args: { key: Variable; daysFromPresent?: number; expires?: number }): void;
+  setSavedDate(args: { key: Variable; daysFromPresent?: ScriptValue; expires?: ScriptValue }): void;
 
   /**
    * Sets or creates an arbitrarily-named variable with a specific value in the current scope (Note: Colony doesn't store variables. Using any of the variable effects/triggers in colony scope will access variables in the colony carrier instead.)
@@ -468,7 +468,7 @@ export interface EffectsIn29Scopes878c {
    * set_variable = { which = <string> value = <float>/<variable>/<scope.variable>/trigger:<trigger> }
    * ```
    */
-  setVariable(args: { which: Variable; value: number }): void;
+  setVariable(args: { which: Variable; value: ScriptValue }): void;
 
   /**
    * Sets a variable to a random value within the specified bounds
@@ -478,8 +478,8 @@ export interface EffectsIn29Scopes878c {
    */
   setVariableToRandomValue(args: {
     which: Variable;
-    min: number;
-    max: number;
+    min: ScriptValue;
+    max: ScriptValue;
     rounded?: boolean;
   }): void;
 
@@ -489,7 +489,7 @@ export interface EffectsIn29Scopes878c {
    * subtract_variable = { which = <string> value = <float>/<variable>/<scope.variable>/trigger:<trigger> }
    * ```
    */
-  subtractVariable(args: { which: Variable; value: number }): void;
+  subtractVariable(args: { which: Variable; value: ScriptValue }): void;
 }
 
 /** Effects valid in: country, fleet, planet, pop_group. */
@@ -567,7 +567,7 @@ export interface EffectsIn4Scopes2b24 {
    * add_planet_devastation = 5
    * ```
    */
-  addPlanetDevastation(value: number): void;
+  addPlanetDevastation(value: ScriptValue): void;
 
   /**
    * Adds zone to the district of the planet
@@ -602,7 +602,7 @@ export interface EffectsIn4Scopes2b24 {
    * change_planet_size = <+/- int>
    * ```
    */
-  changePlanetSize(value: number): void;
+  changePlanetSize(value: ScriptValue): void;
 
   /**
    * Immediately runs a job evaluation on the colony, firing and employing pops as needed
@@ -754,7 +754,7 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   orderedDeposit(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"deposit"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"deposit"> },
     body: (scope: DepositScope) => void
   ): void;
 
@@ -771,7 +771,7 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   orderedGroundCombatAttacker(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"army"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"army"> },
     body: (scope: ArmyScope) => void
   ): void;
 
@@ -788,7 +788,7 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   orderedGroundCombatDefender(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"army"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"army"> },
     body: (scope: ArmyScope) => void
   ): void;
 
@@ -805,7 +805,7 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   orderedMoon(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"planet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"planet"> },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -822,7 +822,7 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   orderedPlanetArmy(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"army"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"army"> },
     body: (scope: ArmyScope) => void
   ): void;
 
@@ -839,7 +839,12 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   orderedTargetingSituation(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"situation"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"situation">;
+    },
     body: (scope: SituationScope) => void
   ): void;
 
@@ -1134,7 +1139,7 @@ export interface EffectsIn4Scopes2b24 {
    * set_planet_size = <int>
    * ```
    */
-  setPlanetSize(value: number): void;
+  setPlanetSize(value: ScriptValue): void;
 
   /**
    * Sets the planet's ascension tier to the specified value
@@ -1142,7 +1147,7 @@ export interface EffectsIn4Scopes2b24 {
    * set_planetary_ascension_tier = 3
    * ```
    */
-  setPlanetaryAscensionTier(value: number): void;
+  setPlanetaryAscensionTier(value: ScriptValue): void;
 
   /**
    * Sets the scoped planet to be the capital of the sector it is part of. If used in the capital sector, it will shift the empire capital. Warning: Experimental, may have unintended consequences.
@@ -1171,9 +1176,9 @@ export interface EffectsIn4Scopes2b24 {
    */
   setTimedCarrierFlag(args: {
     flag: CarrierFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -1312,7 +1317,7 @@ export interface EffectsIn5Scopes3588 {
    * ```
    */
   orderedEnslavedSpecies(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"species"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"species"> },
     body: (scope: SpeciesScope) => void
   ): void;
 
@@ -1329,7 +1334,7 @@ export interface EffectsIn5Scopes3588 {
    * ```
    */
   orderedOwnedSpecies(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"species"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"species"> },
     body: (scope: SpeciesScope) => void
   ): void;
 
@@ -1396,7 +1401,7 @@ export interface EffectsIn5Scopes5d7d {
    * ```
    */
   orderedFleetInOrbit(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"fleet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"fleet"> },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -1543,7 +1548,7 @@ export interface EffectsIn6Scopes6eb9 {
    * add_threat = { who = <country> amount = 4/variable }
    * ```
    */
-  addThreat(args: { who: string; amount: number }): void;
+  addThreat(args: { who: string; amount: ScriptValue }): void;
 }
 
 /** Effects valid in: army, country, leader, pop_group, ship, species. */
@@ -1621,7 +1626,7 @@ export interface EffectsIn7Scopesdd2e {
    * ```
    */
   orderedOwnedPopJob(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"pop_job"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"pop_job"> },
     body: (scope: PopJobScope) => void
   ): void;
 
@@ -1714,7 +1719,12 @@ export interface EffectsIn8Scopes75eb {
    * ```
    */
   orderedOwnedPopGroup(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"pop_group"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"pop_group">;
+    },
     body: (scope: PopGroupScope) => void
   ): void;
 
@@ -1777,11 +1787,11 @@ export interface EffectsIn9Scopes5f8a {
    * ```
    */
   spawnSystem(args: {
-    minDistance?: number;
-    maxDistance?: number;
+    minDistance?: ScriptValue;
+    maxDistance?: ScriptValue;
     direction?: SystemDirection;
-    minJumps?: number;
-    maxJumps?: number;
+    minJumps?: ScriptValue;
+    maxJumps?: ScriptValue;
     initializer: SolarSystemInitializerRef | string | "random";
     hyperlane?: boolean;
     isDiscovered?: boolean;
@@ -1811,7 +1821,7 @@ export interface EffectsInAgreement {
    * add_loyalty = 5
    * ```
    */
-  addLoyalty(value: number): void;
+  addLoyalty(value: ScriptValue): void;
 
   /**
    * Starts the process of converting the subject of the scoped agreement to the given specialist type.
@@ -1924,9 +1934,9 @@ export interface EffectsInAgreement {
    */
   setTimedAgreementFlag(args: {
     flag: AgreementFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 }
 
@@ -2054,9 +2064,9 @@ export interface EffectsInArchaeologicalSite {
    */
   setTimedArchaeologyFlag(args: {
     flag: ArchaeologyFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /** Scopes from an arc site to the fleet whose leader is currently investigating it. */
@@ -2071,7 +2081,7 @@ export interface EffectsInArchaeologicalSiteAstralRiftFirstContact {
    * add_stage_clues = <int>
    * ```
    */
-  addStageClues(value: number | "lower_insight_reward" | "higher_insight_reward"): void;
+  addStageClues(value: ScriptValue | "lower_insight_reward" | "higher_insight_reward"): void;
 }
 
 /** Effects valid in: archaeological_site, first_contact. */
@@ -2093,7 +2103,7 @@ export interface EffectsInArmy {
    * damage_army = 250
    * ```
    */
-  damageArmy(value: number): void;
+  damageArmy(value: ScriptValue): void;
 
   /**
    * Removes the scoped army
@@ -2128,7 +2138,12 @@ export interface EffectsInArmy {
    * }
    * ```
    */
-  setTimedArmyFlag(args: { flag: ArmyFlag; days?: number; months?: number; years?: number }): void;
+  setTimedArmyFlag(args: {
+    flag: ArmyFlag;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
+  }): void;
 
   /** Scopes from an army to the planet that spawned it. */
   spawnerPlanet(body: (scope: PlanetScope) => void): void;
@@ -2249,7 +2264,7 @@ export interface EffectsInBypass {
    * lock_bypass = { country = owner duration = 360 }
    * ```
    */
-  lockBypass(args: { country: string; duration: number }): void;
+  lockBypass(args: { country: string; duration: ScriptValue }): void;
 
   /**
    * Renew a Bypass Lock's duration as if it was just built.
@@ -2277,7 +2292,7 @@ export interface EffectsInBypassSystem {
 /** Effects valid in: carrier, planet, ship. */
 export interface EffectsInCarrierPlanetShip {
   /** Adds terraforming progress to scoped planet, finishes the terraformation, if enough progress is reached */
-  addTerraformProgress(value: number): void;
+  addTerraformProgress(value: ScriptValue): void;
 
   /**
    * Adds a percentage to the total time of the current terraformation process on the planet
@@ -2285,7 +2300,7 @@ export interface EffectsInCarrierPlanetShip {
    * terraformation_total_time_mult = <value>
    * ```
    */
-  addTerraformationTotalTimeMult(value: number): void;
+  addTerraformationTotalTimeMult(value: ScriptValue): void;
 
   /**
    * Cancels terraformation of the scoped planet
@@ -2334,7 +2349,7 @@ export interface EffectsInCarrierPlanetShip {
   setRing(value?: boolean): void;
 
   /** Sets terraforming progress to scoped planet, finishes the terraformation, if enough progress is reached */
-  setTerraformProgress(value: number): void;
+  setTerraformProgress(value: ScriptValue): void;
 }
 
 /** Effects valid in: colony. */
@@ -2369,7 +2384,7 @@ export interface EffectsInCosmicStormInfluenceField {
    * ```
    */
   orderedSystemInCosmicStormInfluenceField(
-    args: { limit?: Trigger<"system">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -2467,7 +2482,7 @@ export interface EffectsInCountry {
    * add_casus_belli = { type = cb_subjugation who = <country> days = 10/variable }
    * ```
    */
-  addCasusBelli(args: { type: CasusBelliRef | string; who: string; days: number }): void;
+  addCasusBelli(args: { type: CasusBelliRef | string; who: string; days: ScriptValue }): void;
 
   /**
    * Instantly adds council agenda progress
@@ -2483,7 +2498,7 @@ export interface EffectsInCountry {
    * add_council_agenda_progress_percent = <float>/<variable>
    * ```
    */
-  addCouncilAgendaProgressPercent(value: number): void;
+  addCouncilAgendaProgressPercent(value: ScriptValue): void;
 
   /**
    * Adds given edict to scoped country's government
@@ -2502,7 +2517,7 @@ export interface EffectsInCountry {
   addEventChainCounter(args: {
     eventChain: EventChainRef | string;
     counter: string;
-    amount: number;
+    amount: ScriptValue;
   }): void;
 
   /**
@@ -2514,7 +2529,7 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  addFavors(args: { target: string; value: number }): void;
+  addFavors(args: { target: string; value: ScriptValue }): void;
 
   /**
    * Adds the defined amount of focus progress in the defined focus category
@@ -2522,7 +2537,10 @@ export interface EffectsInCountry {
    * add_focus_progress = { category = <focus_category_key> amount = <float>/<variable> }
    * ```
    */
-  addFocusProgress(args: { category: CountryCardCategoriesRef | string; amount: number }): void;
+  addFocusProgress(args: {
+    category: CountryCardCategoriesRef | string;
+    amount: ScriptValue;
+  }): void;
 
   /**
    * Adds the defined amount of intel toward the target empire.
@@ -2530,7 +2548,7 @@ export interface EffectsInCountry {
    * add_intel = { amount = <float>/<variable> who = <target> }
    * ```
    */
-  addIntel(args: { who: string; amount: number }): void;
+  addIntel(args: { who: string; amount: ScriptValue }): void;
 
   /**
    * Adds the intel level for the category selected. Default duration (0) is forever.
@@ -2553,10 +2571,10 @@ export interface EffectsInCountry {
    */
   addMonthlyResourceMult(args: {
     resource: ResourceRef | string;
-    value: number;
+    value: ScriptValue;
     min?: number;
     max?: number;
-    mult?: number;
+    mult?: ScriptValue;
   }): void;
 
   /**
@@ -2585,7 +2603,11 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  addPatronObjectiveCounter(args: { counter: string; amount: number; multiplier?: number }): void;
+  addPatronObjectiveCounter(args: {
+    counter: string;
+    amount: ScriptValue;
+    multiplier?: ScriptValue;
+  }): void;
 
   /**
    * Gives provided country a permanent position on the Galactic Council
@@ -2615,7 +2637,7 @@ export interface EffectsInCountry {
     category?: TechnologyCategoryRef | string;
     area?: TechnologyArea;
     tier?: TechnologyTierRef | string;
-    addProgress?: number;
+    addProgress?: ScriptValue;
     failEffects?: (scope: ScopeObjOf<"country">) => void;
     ignorePrereqs?: boolean;
     onlyRare?: boolean;
@@ -2676,7 +2698,7 @@ export interface EffectsInCountry {
   addStaticWarExhaustion(args: {
     attacker: string;
     location: string;
-    valueForPlanetDestruction: number;
+    valueForPlanetDestruction: ScriptValue;
   }): void;
 
   /**
@@ -2685,7 +2707,7 @@ export interface EffectsInCountry {
    * add_tech_progress = { tech = <key> progress = <float>/<variable> }
    * ```
    */
-  addTechProgress(args: { tech: TechnologyRef | string; progress: number }): void;
+  addTechProgress(args: { tech: TechnologyRef | string; progress: ScriptValue }): void;
 
   /**
    * Tries to add the scoped country to the Galactic Community
@@ -2720,7 +2742,7 @@ export interface EffectsInCountry {
   addToVivarium(args: {
     design?: GlobalShipDesignRef | string | "last_created_design";
     rarity?: ShipRarity;
-    amount?: number;
+    amount?: ScriptValue;
   }): void;
 
   /**
@@ -2737,7 +2759,7 @@ export interface EffectsInCountry {
    * add_trust = { amount = <amount>/<variable> who = <target> }
    * ```
    */
-  addTrust(args: { amount: number; who: string }): void;
+  addTrust(args: { amount: ScriptValue; who: string }): void;
 
   /**
    * Adds victory score to a country
@@ -2745,7 +2767,7 @@ export interface EffectsInCountry {
    * add_victory_score = { source=<loc_key> score=<value>/<variable> }
    * ```
    */
-  addVictoryScore(args: { source: string; score: number }): void;
+  addVictoryScore(args: { source: string; score: ScriptValue }): void;
 
   /**
    * Used after an advanced authority swap to make sure things are changed properly
@@ -2896,7 +2918,7 @@ export interface EffectsInCountry {
     who: string;
     category?: TechnologyCategoryRef | string;
     area?: ResearchArea;
-    progress?: number;
+    progress?: ScriptValue;
   }): void;
 
   /**
@@ -2922,7 +2944,7 @@ export interface EffectsInCountry {
    * create_fleet_from_naval_cap = { fraction = 0.5 can_overflow = yes/no (default yes) ship_owner_type = <country/federation/galactic_community>
    * ```
    */
-  createFleetFromNavalCap(value: number): void;
+  createFleetFromNavalCap(value: ScriptValue): void;
 
   /**
    * Creates a relation with Shroud patron
@@ -2961,7 +2983,7 @@ export interface EffectsInCountry {
    */
   effectOnBlob(args: {
     center: string;
-    ownedPlanetsPercentage: number;
+    ownedPlanetsPercentage: ScriptValue;
     planetLimit: Trigger<"colony">;
     effect: (scope: SystemScope) => void;
   }): void;
@@ -3474,7 +3496,7 @@ export interface EffectsInCountry {
    */
   giveCullingRewards(args: {
     design?: GlobalShipDesignRef | string | "last_created_design";
-    mult?: number;
+    mult?: ScriptValue;
   }): void;
 
   /**
@@ -3606,7 +3628,7 @@ export interface EffectsInCountry {
   orderedActiveFirstContact(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"first_contact">;
     },
@@ -3626,7 +3648,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedAvailableDebris(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"debris"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"debris"> },
     body: (scope: DebrisScope) => void
   ): void;
 
@@ -3643,7 +3665,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedControlledColony(
-    args: { limit?: Trigger<"colony">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"colony">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -3660,7 +3682,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedControlledFleet(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"fleet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"fleet"> },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -3677,7 +3699,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedControlledPlanet(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"planet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"planet"> },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -3694,7 +3716,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedEnvoy(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"leader"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"leader"> },
     body: (scope: LeaderScope) => void
   ): void;
 
@@ -3711,7 +3733,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedFederationAlly(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -3730,7 +3752,7 @@ export interface EffectsInCountry {
   orderedFirstContact(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"first_contact">;
     },
@@ -3750,7 +3772,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedIssuedMission(
-    args: { limit?: Trigger<"mission">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"mission">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: MissionScope) => void
   ): void;
 
@@ -3767,7 +3789,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedNeighborCountry(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -3784,7 +3806,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedArmy(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"army"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"army"> },
     body: (scope: ArmyScope) => void
   ): void;
 
@@ -3801,7 +3823,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedContract(
-    args: { limit?: Trigger<"mission">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"mission">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: MissionScope) => void
   ): void;
 
@@ -3818,7 +3840,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedDesign(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"design"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"design"> },
     body: (scope: DesignScope) => void
   ): void;
 
@@ -3835,7 +3857,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedFleet(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"fleet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"fleet"> },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -3852,7 +3874,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedLeader(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"leader"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"leader"> },
     body: (scope: LeaderScope) => void
   ): void;
 
@@ -3871,7 +3893,7 @@ export interface EffectsInCountry {
   orderedOwnedMegastructure(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"megastructure">;
     },
@@ -3891,7 +3913,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedMission(
-    args: { limit?: Trigger<"mission">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"mission">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: MissionScope) => void
   ): void;
 
@@ -3908,7 +3930,12 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedNonprimaryStarbase(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"starbase"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"starbase">;
+    },
     body: (scope: StarbaseScope) => void
   ): void;
 
@@ -3925,7 +3952,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedPopSpecies(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"species"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"species"> },
     body: (scope: SpeciesScope) => void
   ): void;
 
@@ -3942,7 +3969,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedSector(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"sector"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"sector"> },
     body: (scope: SectorScope) => void
   ): void;
 
@@ -3959,7 +3986,12 @@ export interface EffectsInCountry {
    * ```
    */
   orderedOwnedStarbase(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"starbase"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"starbase">;
+    },
     body: (scope: StarbaseScope) => void
   ): void;
 
@@ -3979,7 +4011,7 @@ export interface EffectsInCountry {
     args: {
       limit?: Trigger<"cosmic_storm_influence_field">;
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
     },
     body: (scope: CosmicStormInfluenceFieldScope) => void
@@ -3998,7 +4030,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedPlanetWithinBorder(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"planet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"planet"> },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -4015,7 +4047,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedPoolLeader(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"leader"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"leader"> },
     body: (scope: LeaderScope) => void
   ): void;
 
@@ -4032,7 +4064,12 @@ export interface EffectsInCountry {
    * ```
    */
   orderedPopFaction(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"pop_faction"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"pop_faction">;
+    },
     body: (scope: PopFactionScope) => void
   ): void;
 
@@ -4049,7 +4086,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedRelation(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -4066,7 +4103,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedRivalCountry(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -4083,7 +4120,12 @@ export interface EffectsInCountry {
    * ```
    */
   orderedSituation(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"situation"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"situation">;
+    },
     body: (scope: SituationScope) => void
   ): void;
 
@@ -4100,7 +4142,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedSubject(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -4117,7 +4159,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedSystemWithAura(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"system"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"system"> },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -4134,7 +4176,7 @@ export interface EffectsInCountry {
    * ```
    */
   orderedWar(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"war"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"war"> },
     body: (scope: WarScope) => void
   ): void;
 
@@ -4208,7 +4250,7 @@ export interface EffectsInCountry {
    * progress_all_researches = 0.2
    * ```
    */
-  progressAllResearches(value: number): void;
+  progressAllResearches(value: ScriptValue): void;
 
   /**
    * Proposes the resolution of the given type
@@ -4903,7 +4945,7 @@ export interface EffectsInCountry {
    * value = <value/all/variable> }
    * ```
    */
-  removeFavors(args: { target: string; value: number | "any" }): void;
+  removeFavors(args: { target: string; value: ScriptValue | "any" }): void;
 
   /**
    * The scoped country is removed from any federation its in
@@ -5135,7 +5177,7 @@ export interface EffectsInCountry {
    * set_attunement = { value = <value> patron = <patron> }
    * ```
    */
-  setAttunement(args: { value: number; patron: PatronTypeRef | string }): void;
+  setAttunement(args: { value: ScriptValue; patron: PatronTypeRef | string }): void;
 
   /**
    * Sets awareness for the scoped (pre-FTL) country
@@ -5171,7 +5213,7 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  setClosedBorders(args: { who: string; status: boolean; forced?: number }): void;
+  setClosedBorders(args: { who: string; status: boolean; forced?: ScriptValue }): void;
 
   /**
    * Set the Country's council agenda
@@ -5319,7 +5361,7 @@ export interface EffectsInCountry {
    * set_government_cooldown = 500/default/no
    * ```
    */
-  setGovernmentCooldown(value: number | "default" | "no"): void;
+  setGovernmentCooldown(value: ScriptValue | "default" | "no"): void;
 
   /**
    * Sets the target leader to be the scoped country's heir
@@ -5367,7 +5409,11 @@ export interface EffectsInCountry {
    * set_mission_counter = { mission = <key> counter = <key> amount = <int>/<variable> }
    * ```
    */
-  setMissionCounter(args: { mission: MissionRef | string; counter: string; amount: number }): void;
+  setMissionCounter(args: {
+    mission: MissionRef | string;
+    counter: string;
+    amount: ScriptValue;
+  }): void;
 
   /**
    * Sets the country's origin to a certain value. Note: This will not run effects executed during galaxy generation.
@@ -5443,7 +5489,7 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  setResource(args: { resource: ResourceRef | string; value: number }): void;
+  setResource(args: { resource: ResourceRef | string; value: ScriptValue }): void;
 
   /**
    * Sets the resource currency converter for the country
@@ -5504,9 +5550,9 @@ export interface EffectsInCountry {
    */
   setTimedCountryFlag(args: {
     flag: CountryFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -5522,9 +5568,9 @@ export interface EffectsInCountry {
   setTimedRelationFlag(args: {
     who: string;
     flag: RelationFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -5596,7 +5642,7 @@ export interface EffectsInCountry {
   stealSpecimens(args: {
     who: string;
     category: ShipCategoriesRef | string | "all" | "any";
-    count: number;
+    count: ScriptValue;
     showNotification?: boolean;
   }): void;
 
@@ -5735,7 +5781,7 @@ export interface EffectsInCountryFleet {
    * ```
    */
   orderedControlledShip(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"ship"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"ship"> },
     body: (scope: ShipScope) => void
   ): void;
 
@@ -5752,7 +5798,7 @@ export interface EffectsInCountryFleet {
    * ```
    */
   orderedOwnedShip(
-    args: { position?: number; orderBy?: number; inverse?: boolean; limit?: Trigger<"ship"> },
+    args: { position?: number; orderBy?: ScriptValue; inverse?: boolean; limit?: Trigger<"ship"> },
     body: (scope: ShipScope) => void
   ): void;
 
@@ -5798,7 +5844,7 @@ export interface EffectsInCountryFleet {
    * set_aggro_range = <int>
    * ```
    */
-  setAggroRange(value: number): void;
+  setAggroRange(value: ScriptValue): void;
 
   /**
    * Determines whether the scoped fleet/country's aggro range is measured from the fleet's current position or its spawn location
@@ -5829,7 +5875,11 @@ export interface EffectsInCountryMission {
    * }
    * ```
    */
-  addMissionCounter(args: { mission: MissionRef | string; counter: string; amount: number }): void;
+  addMissionCounter(args: {
+    mission: MissionRef | string;
+    counter: string;
+    amount: ScriptValue;
+  }): void;
 }
 
 /** Effects valid in: country, no_scope. */
@@ -5869,7 +5919,12 @@ export interface EffectsInCountryNoScope {
    * ```
    */
   orderedAgreement(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"agreement"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"agreement">;
+    },
     body: (scope: AgreementScope) => void
   ): void;
 
@@ -5886,7 +5941,12 @@ export interface EffectsInCountryNoScope {
    * ```
    */
   orderedSpynetwork(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"spy_network"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"spy_network">;
+    },
     body: (scope: SpyNetworkScope) => void
   ): void;
 
@@ -5955,7 +6015,7 @@ export interface EffectsInCountryNoScopeSpyNetwork {
   orderedEspionageOperation(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"espionage_operation">;
     },
@@ -6094,7 +6154,7 @@ export interface EffectsInCountrySector {
    * ```
    */
   orderedObservedPreFtlWithinBorder(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -6111,7 +6171,7 @@ export interface EffectsInCountrySector {
    * ```
    */
   orderedOwnedColony(
-    args: { limit?: Trigger<"colony">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"colony">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -6128,7 +6188,7 @@ export interface EffectsInCountrySector {
    * ```
    */
   orderedOwnedPlanet(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"planet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"planet"> },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -6145,7 +6205,7 @@ export interface EffectsInCountrySector {
    * ```
    */
   orderedPreFtlWithinBorder(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -6162,7 +6222,7 @@ export interface EffectsInCountrySector {
    * ```
    */
   orderedSystemWithinBorder(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"system"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"system"> },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -6280,7 +6340,7 @@ export interface EffectsInCountrySystem {
    * ```
    */
   orderedOrbitalStation(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"fleet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"fleet"> },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -6375,9 +6435,9 @@ export interface EffectsInDeposit {
    */
   setTimedDepositFlag(args: {
     flag: DepositFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 }
 
@@ -6437,9 +6497,9 @@ export interface EffectsInEspionageAsset {
    */
   setTimedEspionageAssetFlag(args: {
     flag: EspionageAssetFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 }
 
@@ -6451,7 +6511,7 @@ export interface EffectsInEspionageOperation {
    * add_espionage_information = <value>
    * ```
    */
-  addEspionageInformation(value: number): void;
+  addEspionageInformation(value: ScriptValue): void;
 
   /**
    * Assigns espionage asset to the scope operation from owning spy network
@@ -6506,9 +6566,9 @@ export interface EffectsInEspionageOperation {
    */
   setTimedEspionageOperationFlag(args: {
     flag: EspionageOperationFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -6554,7 +6614,7 @@ export interface EffectsInEspionageOperationNoScopeSpyNetwork {
   orderedEspionageAsset(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"espionage_asset">;
     },
@@ -6607,7 +6667,7 @@ export interface EffectsInFederation {
    * add_cohesion = <value>
    * ```
    */
-  addCohesion(value: number): void;
+  addCohesion(value: ScriptValue): void;
 
   /**
    * Adds experience to the scoped federation
@@ -6615,7 +6675,7 @@ export interface EffectsInFederation {
    * add_federation_experience = <federation experience>
    * ```
    */
-  addFederationExperience(value: number): void;
+  addFederationExperience(value: ScriptValue): void;
 
   /**
    * Dissolved the current federation
@@ -6654,7 +6714,7 @@ export interface EffectsInFederation {
    * ```
    */
   orderedAssociate(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -6671,7 +6731,7 @@ export interface EffectsInFederation {
    * ```
    */
   orderedMember(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -6823,9 +6883,9 @@ export interface EffectsInFederation {
    */
   setTimedFederationFlag(args: {
     flag: FederationFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /** Scopes from a federation to the empire leading it. */
@@ -6877,9 +6937,9 @@ export interface EffectsInFirstContact {
    */
   setTimedFirstContactFlag(args: {
     flag: FirstContactFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /** Scopes from a first contact site to the country that the owner of the site is seeking to establish communications with. */
@@ -6897,7 +6957,7 @@ export interface EffectsInFleet {
    * add_mission_progress = <+/- float>
    * ```
    */
-  addMissionProgress(value: number): void;
+  addMissionProgress(value: ScriptValue): void;
 
   /**
    * Clears all queued fleet actions for target fleet
@@ -6980,7 +7040,7 @@ export interface EffectsInFleet {
    * }
    * ```
    */
-  giveFleet(args: { controller: string; days: number }): void;
+  giveFleet(args: { controller: string; days: ScriptValue }): void;
 
   /**
    * Forces scoped fleet to retreat to friendly territory
@@ -7003,7 +7063,7 @@ export interface EffectsInFleet {
    * ```
    */
   orderedCombatantFleet(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"fleet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"fleet"> },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -7013,7 +7073,7 @@ export interface EffectsInFleet {
    * prolong_fleet_contract = { days = <number of days> }
    * ```
    */
-  prolongFleetContract(args: { days: number }): void;
+  prolongFleetContract(args: { days: ScriptValue }): void;
 
   /**
    * Iterate through each fleet this fleet is in combat with - executes the enclosed effects on one of them for which the limit triggers return true. Picks the specific object randomly.
@@ -7114,7 +7174,7 @@ export interface EffectsInFleet {
    * set_formation_scale = <float>
    * ```
    */
-  setFormationScale(value: number): void;
+  setFormationScale(value: ScriptValue): void;
 
   /**
    * Set the home base of the scoped fleet to the specified starbase
@@ -7138,7 +7198,7 @@ export interface EffectsInFleet {
    * set_mia_return_delay = <int>
    * ```
    */
-  setMiaReturnDelay(value: number): void;
+  setMiaReturnDelay(value: ScriptValue): void;
 
   /**
    * Sets the current mission of an observation station
@@ -7159,9 +7219,9 @@ export interface EffectsInFleet {
    */
   setTimedAmbientObjectFlag(args: {
     flag: AmbientObjectFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -7175,9 +7235,9 @@ export interface EffectsInFleet {
    */
   setTimedFleetFlag(args: {
     flag: FleetFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -7230,7 +7290,7 @@ export interface EffectsInFleetShip {
    * add_growth = 120
    * ```
    */
-  addGrowth(value: number): void;
+  addGrowth(value: ScriptValue): void;
 
   /**
    * Makes a fleet or ship auto-move to target fleet and potentially attack it
@@ -7261,7 +7321,7 @@ export interface EffectsInFleetShip {
    * damage_ship = { amount = 120 attacker = <ATTACKER SHIP OR COUNTRY> }
    * ```
    */
-  damageShip(value: number): void;
+  damageShip(value: ScriptValue): void;
 
   /**
    * Sets the current ship or fleet to be destroyed and spawn a debris project for the specified country.
@@ -7301,7 +7361,7 @@ export interface EffectsInFleetShip {
    * repair_amount = 10.0
    * ```
    */
-  repairAmount(value: number): void;
+  repairAmount(value: ScriptValue): void;
 
   /**
    * Restores a certain amount of armor points to the scoped ship or fleet
@@ -7309,7 +7369,7 @@ export interface EffectsInFleetShip {
    * repair_armor_amount = 10.0
    * ```
    */
-  repairArmorAmount(value: number): void;
+  repairArmorAmount(value: ScriptValue): void;
 
   /**
    * Restores a certain percentage of armor points to the scoped ship
@@ -7317,7 +7377,7 @@ export interface EffectsInFleetShip {
    * repair_armor_percentage = 0.1
    * ```
    */
-  repairArmorPercentage(value: number): void;
+  repairArmorPercentage(value: ScriptValue): void;
 
   /**
    * Restores a certain percentage of hull points to the scoped ship
@@ -7325,7 +7385,7 @@ export interface EffectsInFleetShip {
    * repair_percentage = 0.1
    * ```
    */
-  repairPercentage(value: number): void;
+  repairPercentage(value: ScriptValue): void;
 
   /**
    * Restores a certain amount of shield points to the scoped ship or fleet
@@ -7333,7 +7393,7 @@ export interface EffectsInFleetShip {
    * repair_shield_amount = 10.0
    * ```
    */
-  repairShieldAmount(value: number): void;
+  repairShieldAmount(value: ScriptValue): void;
 
   /**
    * Restores a certain percentage of shield points to the scoped ship or fleet
@@ -7341,7 +7401,7 @@ export interface EffectsInFleetShip {
    * repair_shield_percentage = 0.1
    * ```
    */
-  repairShieldPercentage(value: number): void;
+  repairShieldPercentage(value: ScriptValue): void;
 
   /**
    * Resets growth to zero (non-fauna ships)
@@ -7365,7 +7425,7 @@ export interface EffectsInFleetShip {
    * set_disable_at_health = <0-1 float> | no
    * ```
    */
-  setDisableAtHealth(value: boolean | number): void;
+  setDisableAtHealth(value: boolean | ScriptValue): void;
 
   /**
    * Changes which design a ship uses/all ships in a fleet use, to the target design
@@ -7398,7 +7458,7 @@ export interface EffectsInLeader {
    * add_age = <int>
    * ```
    */
-  addAge(value: number): void;
+  addAge(value: ScriptValue): void;
 
   /**
    * Adds a sum of experience points to the scoped leader
@@ -7406,7 +7466,7 @@ export interface EffectsInLeader {
    * add_experience = 200
    * ```
    */
-  addExperience(value: number): void;
+  addExperience(value: ScriptValue): void;
 
   /**
    * Adds to the scoped leader's skill level
@@ -7414,7 +7474,7 @@ export interface EffectsInLeader {
    * add_skill = 2
    * ```
    */
-  addSkill(value: number): void;
+  addSkill(value: ScriptValue): void;
 
   /**
    * Adds to the scoped leader's skill level but does not select any traits
@@ -7422,7 +7482,7 @@ export interface EffectsInLeader {
    * add_skill_without_trait_selection = 2
    * ```
    */
-  addSkillWithoutTraitSelection(value: number): void;
+  addSkillWithoutTraitSelection(value: ScriptValue): void;
 
   /**
    * Adds a specific trait to the scoped leader for a specific duration
@@ -7432,9 +7492,9 @@ export interface EffectsInLeader {
    */
   addTimedTrait(args: {
     trait: TraitRef | string;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -7545,7 +7605,7 @@ export interface EffectsInLeader {
    * set_age = <int>
    * ```
    */
-  setAge(value: number): void;
+  setAge(value: ScriptValue): void;
 
   /**
    * Locks the leader in its current role for the next X days.
@@ -7553,7 +7613,7 @@ export interface EffectsInLeader {
    * set_cooldown = int
    * ```
    */
-  setCooldown(value: number): void;
+  setCooldown(value: ScriptValue): void;
 
   /**
    * Sets the scoped leader immortal. The 'no' case will not override immortality granted by species characteristics (but will disable immortality granted by this effect).
@@ -7601,7 +7661,7 @@ export interface EffectsInLeader {
    * set_skill = 3
    * ```
    */
-  setSkill(value: number): void;
+  setSkill(value: ScriptValue): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped leader for a set duration
@@ -7614,9 +7674,9 @@ export interface EffectsInLeader {
    */
   setTimedLeaderFlag(args: {
     flag: LeaderFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -7686,7 +7746,7 @@ export interface EffectsInLeaderPopGroupSpecies {
     args: {
       limit?: Trigger<"species_trait">;
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
     },
     body: (scope: SpeciesTraitScope) => void
@@ -7709,7 +7769,7 @@ export interface EffectsInLeaderPopGroupSpecies {
     args: {
       limit?: Trigger<"species_trait">;
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
     },
     body: (scope: SpeciesTraitScope) => void
@@ -7896,7 +7956,7 @@ export interface EffectsInMegastructure {
    * set_halted = nDays
    * ```
    */
-  setHalted(value: number): void;
+  setHalted(value: ScriptValue): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped mega structure
@@ -7917,9 +7977,9 @@ export interface EffectsInMegastructure {
    */
   setTimedMegastructureFlag(args: {
     flag: MegastructureFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -7973,7 +8033,7 @@ export interface EffectsInPlanet {
    * add_colony_progress = <0.0-1.0>
    * ```
    */
-  addColonyProgress(value: number): void;
+  addColonyProgress(value: ScriptValue): void;
 
   /**
    * Adds random non-blocker resource deposit to the scoped planet of a certain category
@@ -7997,7 +8057,7 @@ export interface EffectsInPlanet {
    * change_colony_foundation_date = <+/- int>
    * ```
    */
-  changeColonyFoundationDate(value: number): void;
+  changeColonyFoundationDate(value: ScriptValue): void;
 
   /**
    * Conquers the planet by setting its owner to target country and adding an unhappiness modifier
@@ -8058,9 +8118,9 @@ export interface EffectsInPlanet {
    */
   setTimedPlanetFlag(args: {
     flag: PlanetFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -8074,8 +8134,8 @@ export interface EffectsInPlanet {
     planet: string;
     who: string;
     resource?: ResourceRef | string | "all";
-    maxAmount?: number;
-    percentage?: number;
+    maxAmount?: ScriptValue;
+    percentage?: ScriptValue;
     mode?: "steal" | "duplicate";
     notificationMode?: "none" | "thief_only" | "both";
     showInMonthlyResourcesMode?: "none" | "thief_only" | "both";
@@ -8164,9 +8224,9 @@ export interface EffectsInPopFactionPopGroup {
    */
   setTimedPopFactionFlag(args: {
     flag: PopFactionFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 }
 
@@ -8184,7 +8244,7 @@ export interface EffectsInPopGroup {
    * 	}
    * ```
    */
-  addPopAmount(value: number): void;
+  addPopAmount(value: ScriptValue): void;
 
   /**
    * Raises on_pop_displaced on_action
@@ -8195,7 +8255,11 @@ export interface EffectsInPopGroup {
    * }
    * ```
    */
-  displacePopAmount(args: { amount?: number; percentage?: number; random?: number }): void;
+  displacePopAmount(args: {
+    amount?: ScriptValue;
+    percentage?: ScriptValue;
+    random?: ScriptValue;
+  }): void;
 
   /**
    * Forces target pop group to immediately evaluate their attraction to various pop factions
@@ -8217,9 +8281,9 @@ export interface EffectsInPopGroup {
    */
   popChangeEthic(args: {
     ethic: EthicRef | string;
-    amount?: number;
-    percentage?: number;
-    random?: number;
+    amount?: ScriptValue;
+    percentage?: ScriptValue;
+    random?: ScriptValue;
   }): void;
 
   /**
@@ -8234,9 +8298,9 @@ export interface EffectsInPopGroup {
    */
   popForceAddEthic(args: {
     ethic: EthicRef | string;
-    amount?: number;
-    percentage?: number;
-    random?: number;
+    amount?: ScriptValue;
+    percentage?: ScriptValue;
+    random?: ScriptValue;
   }): void;
 
   /**
@@ -8251,9 +8315,9 @@ export interface EffectsInPopGroup {
    */
   popRemoveEthic(args: {
     ethic: EthicRef | string;
-    amount?: number;
-    percentage?: number;
-    random?: number;
+    amount?: ScriptValue;
+    percentage?: ScriptValue;
+    random?: ScriptValue;
   }): void;
 
   /**
@@ -8268,7 +8332,7 @@ export interface EffectsInPopGroup {
    * 	}
    * ```
    */
-  removePopAmount(value: number): void;
+  removePopAmount(value: ScriptValue): void;
 
   /**
    * Removes a flag from the scoped pop_group
@@ -8284,7 +8348,7 @@ export interface EffectsInPopGroup {
    * scale_pop_amount = <value>
    * ```
    */
-  scalePopAmount(value: number): void;
+  scalePopAmount(value: ScriptValue): void;
 
   /**
    * Sets the scoped pop_group to belong to a specific pop_group faction
@@ -8313,9 +8377,9 @@ export interface EffectsInPopGroup {
    */
   setTimedPopGroupFlag(args: {
     flag: PopGroupFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 }
 
@@ -8345,9 +8409,9 @@ export interface EffectsInPopJob {
    */
   killAssignedPopAmount(args: {
     limit?: Trigger<"pop_job">;
-    amount?: number;
-    random?: number;
-    percentage?: number;
+    amount?: ScriptValue;
+    random?: ScriptValue;
+    percentage?: ScriptValue;
     growthCategory?: string;
   }): void;
 
@@ -8364,7 +8428,12 @@ export interface EffectsInPopJob {
    * ```
    */
   orderedJobPopGroup(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"pop_group"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"pop_group">;
+    },
     body: (scope: PopGroupScope) => void
   ): void;
 
@@ -8397,8 +8466,8 @@ export interface EffectsInPopJob {
    */
   sacrificeAssignedPopAmount(args: {
     limit?: Trigger<"pop_job">;
-    amount?: number;
-    percentage?: number;
+    amount?: ScriptValue;
+    percentage?: ScriptValue;
   }): void;
 }
 
@@ -8431,9 +8500,9 @@ export interface EffectsInSector {
    */
   setTimedSectorFlag(args: {
     flag: SectorFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /** Scopes from a sector to its capital colony. */
@@ -8449,7 +8518,7 @@ export interface EffectsInShip {
    * ```
    */
   createSmallerSizeCreatureInFleet(args: {
-    count: number;
+    count: ScriptValue;
     effect?: (scope: ScopeObjOf<"ship">) => void;
   }): void;
 
@@ -8459,7 +8528,7 @@ export interface EffectsInShip {
    * reduce_hp = 120
    * ```
    */
-  reduceHp(value: number): void;
+  reduceHp(value: ScriptValue): void;
 
   /**
    * Reduces the hull points of the scoped ship by a relative amount
@@ -8467,7 +8536,7 @@ export interface EffectsInShip {
    * reduce_hp_percent = 0.25
    * ```
    */
-  reduceHpPercent(value: number): void;
+  reduceHpPercent(value: ScriptValue): void;
 
   /**
    * Reduces the shield points of the scoped ship by a specific amount
@@ -8475,7 +8544,7 @@ export interface EffectsInShip {
    * reduce_shield = 120
    * ```
    */
-  reduceShield(value: number): void;
+  reduceShield(value: ScriptValue): void;
 
   /**
    * Removes a flag from the scoped ship
@@ -8518,7 +8587,12 @@ export interface EffectsInShip {
    * }
    * ```
    */
-  setTimedShipFlag(args: { flag: ShipFlag; days?: number; months?: number; years?: number }): void;
+  setTimedShipFlag(args: {
+    flag: ShipFlag;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
+  }): void;
 
   /**
    * Transfers all resources from the scoped ship to another ship or country:
@@ -8546,7 +8620,7 @@ export interface EffectsInSituation {
    * add_situation_progress = 5.5
    * ```
    */
-  addSituationProgress(value: number): void;
+  addSituationProgress(value: ScriptValue): void;
 
   /**
    * Changes the target of a Situation.
@@ -8594,7 +8668,7 @@ export interface EffectsInSituation {
    * set_situation_progress = 5.5
    * ```
    */
-  setSituationProgress(value: number): void;
+  setSituationProgress(value: ScriptValue): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped situation for a set duration
@@ -8607,9 +8681,9 @@ export interface EffectsInSituation {
    */
   setTimedSituationFlag(args: {
     flag: SituationFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 }
 
@@ -8682,7 +8756,12 @@ export interface EffectsInSpecies {
    * ```
    */
   orderedSpeciesPopGroup(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"pop_group"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"pop_group">;
+    },
     body: (scope: PopGroupScope) => void
   ): void;
 
@@ -8772,9 +8851,9 @@ export interface EffectsInSpecies {
    */
   setTimedSpeciesFlag(args: {
     flag: SpeciesFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 }
 
@@ -8786,7 +8865,7 @@ export interface EffectsInSpyNetwork {
    * add_spy_network_level = <int>
    * ```
    */
-  addSpyNetworkLevel(value: number): void;
+  addSpyNetworkLevel(value: ScriptValue): void;
 
   /**
    * Creates espionage asset within a given spy network
@@ -8829,9 +8908,9 @@ export interface EffectsInSpyNetwork {
    */
   setTimedSpynetworkFlag(args: {
     flag: SpynetworkFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 }
 
@@ -8869,7 +8948,12 @@ export interface EffectsInStarbase {
    * ```
    */
   orderedStarbaseInNetwork(
-    args: { limit?: Trigger<"starbase">; position: number; orderBy: number; inverse?: boolean },
+    args: {
+      limit?: Trigger<"starbase">;
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+    },
     body: (scope: StarbaseScope) => void
   ): void;
 
@@ -9002,9 +9086,9 @@ export interface EffectsInStarbase {
    */
   setTimedStarbaseFlag(args: {
     flag: StarbaseFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 }
 
@@ -9062,7 +9146,7 @@ export interface EffectsInStorm {
    * ```
    */
   orderedSystemAddedToStorm(
-    args: { limit?: Trigger<"system">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -9079,7 +9163,7 @@ export interface EffectsInStorm {
    * ```
    */
   orderedSystemRemovedFromStorm(
-    args: { limit?: Trigger<"system">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -9096,7 +9180,7 @@ export interface EffectsInStorm {
    * ```
    */
   orderedSystemWithinStorm(
-    args: { limit?: Trigger<"system">; position: number; orderBy: number; inverse: boolean },
+    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse: boolean },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -9185,7 +9269,7 @@ export interface EffectsInSystem {
    * add_aura_intensity = <int>
    * ```
    */
-  addAuraIntensity(value: number): void;
+  addAuraIntensity(value: ScriptValue): void;
 
   /**
    * Adds claims on target system
@@ -9207,7 +9291,7 @@ export interface EffectsInSystem {
    */
   createNebula(args: {
     name?: string;
-    radius: number;
+    radius: ScriptValue;
     effect?: (scope: SystemScope) => void;
   }): void;
 
@@ -9339,11 +9423,11 @@ export interface EffectsInSystem {
    */
   moveSystem(args: {
     target: string;
-    minDistance?: number;
-    maxDistance?: number;
+    minDistance?: ScriptValue;
+    maxDistance?: ScriptValue;
     direction?: SystemDirection;
-    minJumps?: number;
-    maxJumps?: number;
+    minJumps?: ScriptValue;
+    maxJumps?: ScriptValue;
     hyperlane?: boolean;
     resetTerraIncognita?: boolean;
   }): void;
@@ -9361,7 +9445,7 @@ export interface EffectsInSystem {
    * ```
    */
   orderedBypassInSystem(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"bypass"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"bypass"> },
     body: (scope: BypassScope) => void
   ): void;
 
@@ -9378,7 +9462,7 @@ export interface EffectsInSystem {
    * ```
    */
   orderedCountryNeighborToSystem(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -9395,7 +9479,7 @@ export interface EffectsInSystem {
    * ```
    */
   orderedFleetInSystem(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"fleet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"fleet"> },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -9412,7 +9496,7 @@ export interface EffectsInSystem {
    * ```
    */
   orderedNeighborSystem(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"system"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"system"> },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -9429,7 +9513,7 @@ export interface EffectsInSystem {
    * ```
    */
   orderedNeighborSystemEuclidean(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"system"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"system"> },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -9446,7 +9530,7 @@ export interface EffectsInSystem {
    * ```
    */
   orderedShipInSystem(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"ship"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"ship"> },
     body: (scope: ShipScope) => void
   ): void;
 
@@ -9463,7 +9547,12 @@ export interface EffectsInSystem {
    * ```
    */
   orderedStarbaseInSystem(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"starbase"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"starbase">;
+    },
     body: (scope: StarbaseScope) => void
   ): void;
 
@@ -9482,7 +9571,7 @@ export interface EffectsInSystem {
   orderedSystemAmbientObject(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"ambient_object">;
     },
@@ -9502,7 +9591,7 @@ export interface EffectsInSystem {
    * ```
    */
   orderedSystemPlanet(
-    args: { position?: number; orderBy: number; inverse?: boolean; limit?: Trigger<"planet"> },
+    args: { position?: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"planet"> },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -9519,7 +9608,7 @@ export interface EffectsInSystem {
    * ```
    */
   orderedSystemPlanetColony(
-    args: { limit?: Trigger<"colony">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"colony">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -9536,7 +9625,7 @@ export interface EffectsInSystem {
    * ```
    */
   orderedSystemShipColony(
-    args: { limit?: Trigger<"colony">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"colony">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -9744,7 +9833,7 @@ export interface EffectsInSystem {
    * remove_claims = { who = <country> num_of_claims = x }
    * ```
    */
-  removeClaims(args: { who: string; numOfClaims?: number }): void;
+  removeClaims(args: { who: string; numOfClaims?: ScriptValue }): void;
 
   /**
    * Removes a flag from the scoped system
@@ -9771,7 +9860,7 @@ export interface EffectsInSystem {
    * set_aura_intensity = <int>
    * ```
    */
-  setAuraIntensity(value: number): void;
+  setAuraIntensity(value: ScriptValue): void;
 
   /**
    * Sets a storm on a system
@@ -9805,7 +9894,12 @@ export interface EffectsInSystem {
    * 	days/months/years = <int>/<variable>
    * ```
    */
-  setTimedStarFlag(args: { flag: StarFlag; days?: number; months?: number; years?: number }): void;
+  setTimedStarFlag(args: {
+    flag: StarFlag;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
+  }): void;
 
   /**
    * Spawns a Psionic Aura in scoped system, where country is the aura's owner.
@@ -9871,7 +9965,7 @@ export interface EffectsInWar {
    * ```
    */
   orderedAttacker(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -9888,7 +9982,7 @@ export interface EffectsInWar {
    * ```
    */
   orderedDefender(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -9905,7 +9999,7 @@ export interface EffectsInWar {
    * ```
    */
   orderedWarParticipant(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -9988,7 +10082,12 @@ export interface EffectsInWar {
    * }
    * ```
    */
-  setTimedWarFlag(args: { flag: WarFlag; days?: number; months?: number; years?: number }): void;
+  setTimedWarFlag(args: {
+    flag: WarFlag;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
+  }): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped war
@@ -10043,7 +10142,7 @@ export interface UniversalEffects {
    * add_custodian_term_days = <days>
    * ```
    */
-  addCustodianTermDays(value: number): void;
+  addCustodianTermDays(value: ScriptValue): void;
 
   /**
    * Adds a specific global design to the game
@@ -10067,7 +10166,7 @@ export interface UniversalEffects {
    * add_imperial_authority = <value>
    * ```
    */
-  addImperialAuthority(value: number): void;
+  addImperialAuthority(value: ScriptValue): void;
 
   /**
    * Starts a situation log event chain for target country
@@ -10176,9 +10275,9 @@ export interface UniversalEffects {
   createCosmicStorm(args: {
     stormStartPosition?: string;
     stormEndPosition?: string;
-    stormMinRadius?: number;
-    stormMaxRadius?: number;
-    stormMaxRange?: number;
+    stormMinRadius?: ScriptValue;
+    stormMaxRadius?: ScriptValue;
+    stormMaxRange?: ScriptValue;
     type?: StormTypesRef | string;
     immediate?: boolean;
     cosmicStormStartPosition?: string | "random";
@@ -10270,7 +10369,7 @@ export interface UniversalEffects {
    * }
    * ```
    */
-  deleteFleetNavalCap(args: { target: string; navalCap?: number; killLeader?: boolean }): void;
+  deleteFleetNavalCap(args: { target: string; navalCap?: ScriptValue; killLeader?: boolean }): void;
 
   /**
    * Deletes the target mega structure (no death graphics)
@@ -10343,7 +10442,11 @@ export interface UniversalEffects {
    * }
    * ```
    */
-  destroyFleetNavalCap(args: { target: string; navalCap?: number; killLeader?: boolean }): void;
+  destroyFleetNavalCap(args: {
+    target: string;
+    navalCap?: ScriptValue;
+    killLeader?: boolean;
+  }): void;
 
   /**
    * Destroys the target ship (with death graphics)
@@ -10645,9 +10748,9 @@ export interface UniversalEffects {
    */
   killPopGroup(args: {
     popGroup: string;
-    amount?: number;
-    percentage?: number;
-    random?: number;
+    amount?: ScriptValue;
+    percentage?: ScriptValue;
+    random?: ScriptValue;
     growthCategory?: string;
   }): void;
 
@@ -10663,7 +10766,7 @@ export interface UniversalEffects {
    * multiply_crisis_strength = 1.5
    * ```
    */
-  multiplyCrisisStrength(value: number): void;
+  multiplyCrisisStrength(value: ScriptValue): void;
 
   /**
    * Iterate through every ambient object in the game - executes the enclosed effects on one of them for which the limit triggers return true. Picks the specific object according to the order specified (position 0, order_by = trigger:num_pops would run the effects on the X with the most pops)
@@ -10680,7 +10783,7 @@ export interface UniversalEffects {
   orderedAmbientObject(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"ambient_object">;
     },
@@ -10702,7 +10805,7 @@ export interface UniversalEffects {
   orderedArchaeologicalSite(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"archaeological_site">;
     },
@@ -10722,7 +10825,12 @@ export interface UniversalEffects {
    * ```
    */
   orderedAstralRift(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"astral_rift"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"astral_rift">;
+    },
     body: (scope: AstralRiftScope) => void
   ): void;
 
@@ -10739,7 +10847,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedBypass(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"bypass"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"bypass"> },
     body: (scope: BypassScope) => void
   ): void;
 
@@ -10756,7 +10864,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedCosmicStorm(
-    args: { limit?: Trigger<"storm">; position: number; orderBy: number; inverse: boolean },
+    args: { limit?: Trigger<"storm">; position: number; orderBy: ScriptValue; inverse: boolean },
     body: (scope: StormScope) => void
   ): void;
 
@@ -10773,7 +10881,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedCosmicStormEndPosition(
-    args: { limit?: Trigger<"storm">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"storm">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: StormScope) => void
   ): void;
 
@@ -10790,7 +10898,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedCosmicStormStartPosition(
-    args: { limit?: Trigger<"storm">; position: number; orderBy: number; inverse?: boolean },
+    args: { limit?: Trigger<"storm">; position: number; orderBy: ScriptValue; inverse?: boolean },
     body: (scope: StormScope) => void
   ): void;
 
@@ -10807,7 +10915,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedCouncilMember(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -10824,7 +10932,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedCountry(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -10844,7 +10952,7 @@ export interface UniversalEffects {
     args: {
       limit?: Trigger<"species_trait">;
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
     },
     body: (scope: SpeciesTraitScope) => void
@@ -10863,7 +10971,12 @@ export interface UniversalEffects {
    * ```
    */
   orderedFederation(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"federation"> },
+    args: {
+      position: number;
+      orderBy: ScriptValue;
+      inverse?: boolean;
+      limit?: Trigger<"federation">;
+    },
     body: (scope: FederationScope) => void
   ): void;
 
@@ -10880,7 +10993,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedGalaxyFleet(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"fleet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"fleet"> },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -10897,7 +11010,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedGalaxyPlanet(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"planet"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"planet"> },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -10914,7 +11027,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedGalaxySector(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"sector"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"sector"> },
     body: (scope: SectorScope) => void
   ): void;
 
@@ -10931,7 +11044,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedGalaxySpecies(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"species"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"species"> },
     body: (scope: SpeciesScope) => void
   ): void;
 
@@ -10948,7 +11061,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedGalcomMember(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -10967,7 +11080,7 @@ export interface UniversalEffects {
   orderedMegastructure(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"megastructure">;
     },
@@ -10987,7 +11100,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedPlayableCountry(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"country"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"country"> },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -11004,7 +11117,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedRimSystem(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"system"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"system"> },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -11021,7 +11134,7 @@ export interface UniversalEffects {
    * ```
    */
   orderedSystem(
-    args: { position: number; orderBy: number; inverse?: boolean; limit?: Trigger<"system"> },
+    args: { position: number; orderBy: ScriptValue; inverse?: boolean; limit?: Trigger<"system"> },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -11040,7 +11153,7 @@ export interface UniversalEffects {
   orderedSystemMegastructure(
     args: {
       position: number;
-      orderBy: number;
+      orderBy: ScriptValue;
       inverse?: boolean;
       limit?: Trigger<"megastructure">;
     },
@@ -11482,7 +11595,11 @@ export interface UniversalEffects {
    * sacrifice_pop_group = { pop_group = <target pop group> amount = <amount killed> OR percentage = <percentage killed> }
    * ```
    */
-  sacrificePopGroup(args: { popGroup: string; amount?: number; percentage?: number }): void;
+  sacrificePopGroup(args: {
+    popGroup: string;
+    amount?: ScriptValue;
+    percentage?: ScriptValue;
+  }): void;
 
   /**
    * Sets whether council members can propose emergency measures or not
@@ -11498,7 +11615,7 @@ export interface UniversalEffects {
    * set_council_size = <int>
    * ```
    */
-  setCouncilSize(value: number): void;
+  setCouncilSize(value: ScriptValue): void;
 
   /**
    * Sets whether council members can veto resolutions or not
@@ -11522,13 +11639,13 @@ export interface UniversalEffects {
    * set_custodian_term_days = <days>
    * ```
    */
-  setCustodianTermDays(value: number): void;
+  setCustodianTermDays(value: ScriptValue): void;
 
   /** Sets whether the emergency fund should be active or not. */
   setEmergencyFundActive(value?: boolean): void;
 
   /** Sets rate for contributions to the emergency fund. */
-  setEmergencyFundContributionRate(value: number): void;
+  setEmergencyFundContributionRate(value: ScriptValue): void;
 
   /**
    * Sets whether the Galactic Emperor can change Imperial Council members or not
@@ -11574,9 +11691,9 @@ export interface UniversalEffects {
    */
   setTimedGlobalFlag(args: {
     flag: GlobalFlag;
-    days?: number;
-    months?: number;
-    years?: number;
+    days?: ScriptValue;
+    months?: ScriptValue;
+    years?: ScriptValue;
   }): void;
 
   /**
@@ -11654,9 +11771,9 @@ export interface UniversalEffects {
   transferPopAmount(args: {
     source: string;
     target: string;
-    amount?: number;
-    percentage?: number;
-    random?: number;
+    amount?: ScriptValue;
+    percentage?: ScriptValue;
+    random?: ScriptValue;
     growthCategory?: string;
   }): void;
 

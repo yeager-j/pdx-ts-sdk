@@ -14,7 +14,7 @@ import type { ScopeName } from "./generated/scopes.ts";
 import { trigger, type Trigger } from "./trigger-core.ts";
 
 export type { ScopeName } from "./generated/scopes.ts";
-export { trigger, type Trigger } from "./trigger-core.ts";
+export { trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";
 export * from "./generated/triggers.ts";
 export * from "./generated/links.ts";
 

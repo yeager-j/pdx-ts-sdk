@@ -29,7 +29,7 @@ import type { ScopeObjOf } from "./generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "./generated/modifiers.ts";
 import { refId, type TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
-import type { Trigger } from "./trigger-core.ts";
+import type { ScriptValue, Trigger } from "./trigger-core.ts";
 
 /**
  * The declared escape hatch for modifier names the generated tables cannot
@@ -79,9 +79,9 @@ export interface EconomicResourceOperation<S extends ScopeName> {
   /** Optional in-game condition for applying this arm. */
   readonly when?: Trigger<S>;
   /** Repeated scripted multipliers, emitted under `multiplier`. */
-  readonly multiplier?: number | readonly number[];
+  readonly multiplier?: ScriptValue | readonly ScriptValue[];
   /** Repeated scripted multipliers, emitted under the game's shorter `mult` spelling. */
-  readonly mult?: number | readonly number[];
+  readonly mult?: ScriptValue | readonly ScriptValue[];
 }
 
 /** A reusable economic-template block used by edicts and dozens of other registries. */
@@ -202,9 +202,9 @@ export interface TriggeredModifier<S extends ScopeName> {
   /** Custom tooltip localization key. */
   readonly customTooltip?: string;
   /** Repeated scripted multipliers emitted under `mult`. */
-  readonly mult?: number | readonly number[];
+  readonly mult?: ScriptValue | readonly ScriptValue[];
   /** Repeated scripted multipliers emitted under `multiplier`. */
-  readonly multiplier?: number | readonly number[];
+  readonly multiplier?: ScriptValue | readonly ScriptValue[];
 }
 
 /** Generated description of one localization slot on a content definition. */
@@ -803,7 +803,10 @@ function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringC
   return block(key, entries);
 }
 
-function repeatedNumbers(key: string, value: number | readonly number[] | undefined): PdxEntry[] {
+function repeatedNumbers(
+  key: string,
+  value: ScriptValue | readonly ScriptValue[] | undefined
+): PdxEntry[] {
   if (value === undefined) {
     return [];
   }

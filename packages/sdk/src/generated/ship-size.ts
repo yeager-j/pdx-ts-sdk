@@ -10,7 +10,7 @@ import type {
   ModifierClosure,
   WeightBlock,
 } from "../content.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type { ComponentTag, MutationComponentsSize, ShipClass } from "./enums.ts";
 import type {
   ComponentSetRequiredComponentRef,
@@ -48,7 +48,7 @@ export const SHIP_SIZE_SECTION_SLOTS_FIELDS: readonly ContentField[] = [
 
 export interface ShipSizeTriggeredShipRoles {
   name: ComponentTag;
-  trigger: Trigger<ScopeName>;
+  trigger: Trigger<never>;
 }
 
 export const SHIP_SIZE_TRIGGERED_SHIP_ROLES_FIELDS: readonly ContentField[] = [
@@ -147,10 +147,10 @@ export const SHIP_SIZE_SPACE_FAUNA_VALUES_FIELDS: readonly ContentField[] = [
 ];
 
 export interface ShipSizeAiShipData {
-  min?: number;
-  max?: number;
-  systemMult?: number;
-  planetMult?: number;
+  min?: ScriptValue;
+  max?: ScriptValue;
+  systemMult?: ScriptValue;
+  planetMult?: ScriptValue;
   fraction?: WeightBlock<"country"> | number;
 }
 
@@ -343,7 +343,7 @@ export interface ShipSizeFields {
   enableDefaultDesign?: boolean;
   /** if yes, ship design will have a 3d view in the ship browser */
   enable3dviewInShipBrowser?: boolean;
-  selectable?: Trigger<ScopeName>;
+  selectable?: Trigger<never>;
   defaultBehavior?: ShipBehaviorRef | string;
   shipRoles?: (ComponentTag | "citadel")[];
   triggeredShipRoles?: ShipSizeTriggeredShipRoles[];
@@ -382,8 +382,8 @@ export interface ShipSizeFields {
   possibleCountry?: Trigger<"country">;
   potentialPlanet?: Trigger<"planet">;
   possiblePlanet?: Trigger<"planet">;
-  potentialConstruction?: Trigger<ScopeName>;
-  possibleConstruction?: Trigger<ScopeName>;
+  potentialConstruction?: Trigger<never>;
+  possibleConstruction?: Trigger<never>;
   resources?: EconomicResourceBlock<ScopeName>[];
   minUpgradeCost?: Readonly<Record<string, number>>;
   /** Removes the chance for the ship size to instantly get killed by emergency ftl. It can still be killed by the random Emergency FTL damage effect. */

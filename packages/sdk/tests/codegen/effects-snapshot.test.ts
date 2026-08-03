@@ -38,15 +38,18 @@ describe("emitted effect signatures", () => {
   });
 
   it("fields: enum-expanded keys become named optional fields", () => {
+    // mult/multiplier/timeMultiplier are `effects.cwt`'s `value_field`, not
+    // `float`, so they lower to the widened `ScriptValue` (widenedLowering)
+    // rather than plain `number` — a number still assigns unchanged.
     expect(signature("addModifier")).toMatchInlineSnapshot(`
       "addModifier(args: {
           modifier: StaticModifierRef | string;
           days?: number;
           months?: number;
           years?: number;
-          mult?: number;
-          multiplier?: number;
-          timeMultiplier?: number;
+          mult?: ScriptValue;
+          multiplier?: ScriptValue;
+          timeMultiplier?: ScriptValue;
           clearOnOwnerChange?: "yes";
         }): void;"
     `);

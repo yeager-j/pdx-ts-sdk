@@ -103,7 +103,7 @@ export interface SectionTemplateFields {
   mediumUtilitySlots?: number;
   largeUtilitySlots?: number;
   auxUtilitySlots?: number;
-  aiWeight?: WeightBlock<ScopeName>;
+  aiWeight?: WeightBlock<never>;
   modifier?: ModifierClosure<"ship">;
   shipModifier?: ModifierClosure<"ship">;
 }

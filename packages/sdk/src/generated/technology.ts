@@ -6,7 +6,6 @@ import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } f
 import type { Trigger } from "../trigger-core.ts";
 import type { ResearchArea, TechAiType } from "./enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
 import type { FeatureFlag, TechWeightGroup } from "./value-sets.ts";
 
 export interface TechnologyTechnologySwap {
@@ -17,7 +16,7 @@ export interface TechnologyTechnologySwap {
   trigger?: Trigger<"country">;
   area?: ResearchArea;
   category?: (TechnologyCategoryRef | string)[];
-  weight?: number | WeightBlock<ScopeName>;
+  weight?: number | WeightBlock<never>;
 }
 
 export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
@@ -81,7 +80,7 @@ export interface TechnologyFields {
    * Only when technology subtype `start` applies.
    * Only when technology subtype not `start` applies.
    */
-  cost?: number | WeightBlock<ScopeName>;
+  cost?: number | WeightBlock<never>;
   /**
    * Only when technology subtype `start` applies.
    * Only when technology subtype not `start` applies.

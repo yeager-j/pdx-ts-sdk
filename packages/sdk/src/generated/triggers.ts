@@ -7,7 +7,7 @@
 import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "../content-refs.ts";
-import { trigger, type Trigger } from "../trigger-core.ts";
+import { trigger, type ScriptValue, type Trigger } from "../trigger-core.ts";
 import type {
   AiAttitudeBehaviour,
   AnyOrBool,
@@ -15084,7 +15084,7 @@ export function resourceStockpileCompare(
 
 export interface ResourceStockpilePercentArgs {
   resource: ResourceRef | string;
-  value: number;
+  value: ScriptValue;
 }
 
 /**

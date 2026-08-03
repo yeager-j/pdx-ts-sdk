@@ -10,7 +10,6 @@ import type {
   WithFrom,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
-import type { ScopeName } from "./scopes.ts";
 
 export interface BombardmentStanceKillPopAmount {
   min: number;
@@ -45,7 +44,7 @@ export interface BombardmentStanceFields {
   /** General scale of damage to armies, default = 1.0 */
   armyDamage?: number;
   /** Chance that a pop_group is killed when planetary damage reaches 100%, default = 0 */
-  killPopChance?: WeightBlock<ScopeName>;
+  killPopChance?: WeightBlock<never>;
   /** Will not kill/abduct pops if pops <= this number already, default = 0. Doesn't work for nations that doesn't have diplomatic wars! */
   minPopsToKillPop?: number;
   killPopAmount?: BombardmentStanceKillPopAmount;

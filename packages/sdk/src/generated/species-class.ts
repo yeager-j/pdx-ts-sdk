@@ -108,8 +108,8 @@ export interface SpeciesClassFields {
   remnantPlural?: string;
   archetype?: SpeciesArchetypeRef | string;
   modifier?: ModifierClosure<"pop_group">;
-  playable?: Trigger<ScopeName>;
-  randomized?: boolean | Trigger<ScopeName>;
+  playable?: Trigger<never>;
+  randomized?: boolean | Trigger<never>;
   upliftedInto?: SpeciesClassRef | string;
   upliftedPortraits?: (PortraitRef | string | PortraitGroupRef)[];
   possible?: GovernmentTriggerBlock;
@@ -126,9 +126,9 @@ export interface SpeciesClassFields {
   leaderAgeMin?: number;
   leaderAgeMax?: number;
   resources?: EconomicResourceBlock<ScopeName>[];
-  randomWeight?: WeightBlock<ScopeName>;
+  randomWeight?: WeightBlock<never>;
   ethicsToPrefer?: (EthicRef | string)[];
-  preferredEthicsWeight?: WeightBlock<ScopeName>;
+  preferredEthicsWeight?: WeightBlock<never>;
   trait?: TraitRef | string;
   generateShipset?: boolean;
   addedClimateLabels?: (CustomizeSpeciesEditorHeader | string)[];

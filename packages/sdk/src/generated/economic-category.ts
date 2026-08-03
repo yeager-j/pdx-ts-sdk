@@ -10,13 +10,12 @@ import type {
   ScriptedModifierCategory,
 } from "./enums.ts";
 import type { EconomicCategoryRef, ResourceRef } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
 
 export interface EconomicCategoryTriggeredCostModifier {
   key: EconomicCategoryRef | string;
   useParentIcon?: true;
   modifierTypes: EconomicModifierType[];
-  trigger?: Trigger<ScopeName>;
+  trigger?: Trigger<never>;
 }
 
 export const ECONOMIC_CATEGORY_TRIGGERED_COST_MODIFIER_FIELDS: readonly ContentField[] = [
@@ -42,7 +41,7 @@ export interface EconomicCategoryTriggeredProducesModifier {
   key: EconomicCategoryRef | string;
   useParentIcon?: true;
   modifierTypes: EconomicModifierType[];
-  trigger?: Trigger<ScopeName>;
+  trigger?: Trigger<never>;
 }
 
 export const ECONOMIC_CATEGORY_TRIGGERED_PRODUCES_MODIFIER_FIELDS: readonly ContentField[] = [
@@ -68,7 +67,7 @@ export interface EconomicCategoryTriggeredUpkeepModifier {
   key: EconomicCategoryRef | string;
   useParentIcon?: true;
   modifierTypes: EconomicModifierType[];
-  trigger?: Trigger<ScopeName>;
+  trigger?: Trigger<never>;
 }
 
 export const ECONOMIC_CATEGORY_TRIGGERED_UPKEEP_MODIFIER_FIELDS: readonly ContentField[] = [
@@ -94,7 +93,7 @@ export interface EconomicCategoryTriggeredLogisticsModifier {
   key: EconomicCategoryRef | string;
   useParentIcon?: true;
   modifierTypes: EconomicModifierType[];
-  trigger?: Trigger<ScopeName>;
+  trigger?: Trigger<never>;
 }
 
 export const ECONOMIC_CATEGORY_TRIGGERED_LOGISTICS_MODIFIER_FIELDS: readonly ContentField[] = [

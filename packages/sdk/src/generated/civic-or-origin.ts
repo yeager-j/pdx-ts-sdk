@@ -35,7 +35,7 @@ export interface CivicOrOriginSwapType {
    */
   description?: string;
   negativeDescription?: string;
-  trigger: Trigger<ScopeName>;
+  trigger: Trigger<never>;
   /** modifier that is applied to the country when triggers are evaluated as true */
   modifier?: ModifierClosure<ScopeName>;
   /** default: no */
@@ -71,8 +71,8 @@ export const CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS: readonly ContentField[] = [
 
 export interface CivicOrOriginModification {
   moddableConditionsCustomTooltip?: string;
-  add?: Trigger<ScopeName>;
-  remove?: Trigger<ScopeName>;
+  add?: Trigger<never>;
+  remove?: Trigger<never>;
 }
 
 export const CIVIC_OR_ORIGIN_MODIFICATION_FIELDS: readonly ContentField[] = [

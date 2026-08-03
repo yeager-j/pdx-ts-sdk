@@ -5,10 +5,9 @@
 import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { TraditionRef } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
 
 export interface TraditionCategoryDesc {
-  trigger?: Trigger<ScopeName>;
+  trigger?: Trigger<"country">;
   text?: string;
 }
 

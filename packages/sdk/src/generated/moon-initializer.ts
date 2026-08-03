@@ -3,6 +3,7 @@
 // From: alias[moon_initializer:...] across the rule files
 
 import { registerAliasStructFields, type ContentField, type EffectBlock } from "../content.ts";
+import type { ScriptValue } from "../trigger-core.ts";
 import type { SolarSysInitPlanetClass } from "./enums.ts";
 import type {
   AnomalyCategoryRef,
@@ -26,8 +27,8 @@ export const MOON_INITIALIZER_COUNT_FIELDS: readonly ContentField[] = [
 ];
 
 export interface MoonInitializerOrbitDistance {
-  min: number;
-  max: number;
+  min: ScriptValue;
+  max: ScriptValue;
 }
 
 export const MOON_INITIALIZER_ORBIT_DISTANCE_FIELDS: readonly ContentField[] = [
@@ -89,7 +90,7 @@ export interface MoonInitializerFields {
     | "star"
     | SolarSysInitPlanetClass
     | "ideal_design_class";
-  orbitDistance?: number | MoonInitializerOrbitDistance;
+  orbitDistance?: ScriptValue | MoonInitializerOrbitDistance;
   orbitalLine?: MoonInitializerOrbitalLine[];
   hasIndependentOrbitalLine?: boolean;
   changeOrbit?: number;

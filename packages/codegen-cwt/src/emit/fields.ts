@@ -305,6 +305,31 @@ function withFrom(inner: string, scope: FieldScope): string {
   return scope.from === null ? inner : `WithFrom<${inner}, ${scope.type}, ${scope.from}>`;
 }
 
+/**
+ * As {@link scopeType}, for shapes whose scope parameter reaches a
+ * `Trigger<S>` contravariantly — a trigger field itself, and a weight block,
+ * whose rows carry `when: Trigger<S>`.
+ *
+ * `Trigger<in S>` is contravariant, so the unpinned literal `ScopeName`
+ * ("valid in every scope") types the field as accepting only conditions
+ * legal in every scope — for most fields none, which makes the field
+ * unwritable rather than unchecked. `never` is the top of that lattice:
+ * substituting it is what "the rules did not say" should mean, the same way
+ * an unknown reference target lowers to `| string` rather than to something
+ * nothing can satisfy. Only the truly-unpinned case changes — a field a
+ * `CONTENT_SCOPE_PARAMETERS` row threads through as `NoInfer<S>`, or one an
+ * override or the rules themselves pin to a real scope, is untouched.
+ */
+function contravariantScopeType(
+  emitter: Emitter,
+  field: RuleField,
+  ctx: FieldContext,
+  asserted?: string
+): FieldScope {
+  const scope = scopeType(emitter, field, ctx, asserted);
+  return scope.type === "ScopeName" ? { ...scope, type: "never" } : scope;
+}
+
 export function flatten(fields: readonly RuleField[], typeName: string): RuleField[] {
   return fields.flatMap((field) => {
     if (field.key.kind !== "subtype") {
@@ -834,7 +859,7 @@ function lowerOrdinary(
     };
   }
   if (requested === "weightBlock") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlock"),
@@ -842,7 +867,7 @@ function lowerOrdinary(
     };
   }
   if (requested === "weightBlockWithLoc") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlockWithLoc"),
@@ -863,7 +888,7 @@ function lowerOrdinary(
   }
   const category = spliceCategory(field.type);
   if (requested === "trigger" || (requested === undefined && category === "trigger")) {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`Trigger<${scope.type}>`, scope),
       metadata: metadata(field, name, "trigger"),
@@ -879,7 +904,7 @@ function lowerOrdinary(
     };
   }
   if (requested === undefined && category === "modifier_rule") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlock"),
@@ -887,7 +912,7 @@ function lowerOrdinary(
     };
   }
   if (requested === undefined && category === "modifier_rule_with_loc") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlockWithLoc"),
