@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-
 import { describe, expect, it } from "vitest";
 
 import {
@@ -1994,9 +1993,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     // read in that language. This must fail on main and pass once the key is
     // a function of the row's own content instead.
     const descs = Array.from({ length: 11 }, (_, i) => `Row ${i} of the uprising.`);
-    const before = buildMod(DESC_KEY_CONFIG, [
-      collection(undefined, [situationWithRows(descs)]),
-    ]);
+    const before = buildMod(DESC_KEY_CONFIG, [collection(undefined, [situationWithRows(descs)])]);
     const withInsertion = [
       ...descs.slice(0, 2),
       "A newly inserted row at index 2.",
@@ -2071,9 +2068,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       name: "Bad Key Test",
       monthlyProgress: {
         base: 1,
-        modifiers: [
-          { subtract: 1, desc: "Bad key.", descKey: "Flesh-Is-Weak", when: always() },
-        ],
+        modifiers: [{ subtract: 1, desc: "Bad key.", descKey: "Flesh-Is-Weak", when: always() }],
       },
     });
 
