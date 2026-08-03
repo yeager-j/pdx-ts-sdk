@@ -218,12 +218,32 @@ export function buildMod(
   // resolved against the built ids once every collection has been seen.
   const refUses: { readonly owner: string; readonly use: ContentRefUse }[] = [];
 
+  // Own ids by output directory (SDK-32): the same index shape as the
+  // vanilla-collision guard below, for the same reason — the game loads
+  // every file it finds in a directory and merges their keys into one
+  // namespace, so `outputDir` is the scope a key must be unique in, not
+  // `relPath`. That was always true, but unreachable, for two *own*
+  // definitions before this build started merging same-relPath registries
+  // (SDK-32 above): two different registries could not previously land two
+  // definitions in the game's eyes one directory apart with different stems
+  // and still collide, because nothing forced them into the same file to
+  // notice. `component_template`'s three subtypes are exactly that case —
+  // CWT itself models them as one `type[component_template]` — and a
+  // same-outputDir, different-stem collision is exactly as broken in-game
+  // (an undetermined last-loaded winner) as the same-file collision the
+  // merge above now allows, so both are checked here rather than only the
+  // same-file one. Per-registry duplicate ids are still `ContentAuthoring
+  // .define`'s job in pass 2; this only catches two different registries
+  // claiming the same id.
+  const ownIdsByDir = new Map<string, Map<string, ContentTypeName>>();
+
   // Content pass 1: collect the raw items into registry → emitted file →
   // items, without defining any of them. Nothing here depends on the order
-  // the items arrived in — the unknown-type and vanilla-collision checks are
-  // per item — which is the point: `define` registers localization as a side
-  // effect, so it must not run until the canonical order is known, or the loc
-  // yml would follow item order while the txt files follow this one.
+  // the items arrived in — the unknown-type, vanilla-collision, and own-id
+  // checks are per item — which is the point: `define` registers
+  // localization as a side effect, so it must not run until the canonical
+  // order is known, or the loc yml would follow item order while the txt
+  // files follow this one.
   const rawByType = new Map<ContentTypeName, Map<string, ContentItem[]>>();
   for (const { item, file } of flat) {
     if (item.itemKind !== "content") {
@@ -240,6 +260,18 @@ export function buildMod(
           `defining it would silently override vanilla content; patch it instead`
       );
     }
+    const ownIds = ownIdsByDir.get(descriptor.outputDir) ?? new Map<string, ContentTypeName>();
+    const otherType = ownIds.get(item.def.id);
+    if (otherType !== undefined && otherType !== item.type) {
+      throw new Error(
+        `${item.type} id "${item.def.id}" collides with a ${otherType} of the same id — both are ` +
+          `emitted under "${descriptor.outputDir}", where the game merges every file it loads by ` +
+          `id, so only one definition would survive and which one is undetermined; give one of them ` +
+          `a different id`
+      );
+    }
+    ownIds.set(item.def.id, item.type);
+    ownIdsByDir.set(descriptor.outputDir, ownIds);
     const relPath = emissionPath(config.prefix, descriptor.outputDir, file ?? descriptor.fileStem);
     const byPath = rawByType.get(item.type) ?? new Map<string, ContentItem[]>();
     const group = byPath.get(relPath) ?? [];

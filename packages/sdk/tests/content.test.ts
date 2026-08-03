@@ -1818,4 +1818,35 @@ describe("registries that share an outputDir (SDK-32)", () => {
       expect(content).toContain(id);
     }
   });
+
+  it("rejects two component-template subtypes sharing an id, even when the loc guard misses it", () => {
+    // The loc-duplicate guard only fires when both definitions register a
+    // loc key for the shared id — omitting the optional `name` on one of
+    // them (as here) means no loc key collides, so it never runs. The
+    // per-registry duplicate check in `ContentAuthoring.define` also misses
+    // it: it dedups within one registry's own id list, and these are two
+    // different registries. Only the own-id-by-outputDir check in build.ts's
+    // content pass 1 catches this, the same way — and for the same reason —
+    // the neighbouring vanilla-collision check is keyed by outputDir: the
+    // game merges every file in a directory into one id-keyed namespace, so
+    // two subtypes sharing an id here is unusable output, not merely odd.
+    const weapon = defineWeaponComponentTemplate({
+      id: "shared_output_dir_test_shared_id",
+      icon: "GFX_ship_part_mass_driver",
+    });
+    const utility = defineUtilityComponentTemplate({
+      id: "shared_output_dir_test_shared_id",
+      name: "Armor Plating",
+      icon: "GFX_ship_part_armor",
+    });
+
+    expect(() =>
+      buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [weapon, utility])])
+    ).toThrow(
+      'utility_component_template id "shared_output_dir_test_shared_id" collides with a ' +
+        "weapon_component_template of the same id — both are emitted under " +
+        '"common/component_templates", where the game merges every file it loads by id, so only ' +
+        "one definition would survive and which one is undetermined; give one of them a different id"
+    );
+  });
 });
