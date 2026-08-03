@@ -594,6 +594,17 @@ export function buildMod(
   // bare type names every registry split out of it: a field holding
   // `<component_template>` takes a utility, weapon, or strike-craft template,
   // so an id is accounted for if any of the three defined it.
+  //
+  // Only the registry → target direction was covered here (SDK-37): a registry
+  // whose own `referenceName` is qualified also registers its bare prefix, so
+  // a bare-target field resolves. The reverse never held — a registry whose
+  // `referenceName` is itself bare (`civic_or_origin`, `component_set`, never
+  // split by the manifest) registers only that bare key, while its own fields
+  // can still target a *subtype* of it (`civic_or_origin.civic`,
+  // `component_set.required_component`) when the vendored rules declare one.
+  // `resolveTargetRegistries` below tries the exact target first and only
+  // then falls back to the bare prefix, so both directions resolve through
+  // the same map without registering every subtype combination up front.
   const registriesByTarget = new Map<string, string[]>();
   for (const descriptor of CONTENT_REGISTRIES) {
     const qualifier = descriptor.referenceName.indexOf(".");
@@ -605,6 +616,25 @@ export function buildMod(
       registriesByTarget.set(target, [...(registriesByTarget.get(target) ?? []), descriptor.type]);
     }
   }
+  /**
+   * Resolves a `refTypes` target to the registries that can satisfy it: the
+   * exact target if a registry registered it, else — for a qualified target
+   * like `"civic_or_origin.civic"` — the bare registry it qualifies, if that
+   * registry exists and was never itself split into subtypes. A registry
+   * this bare fallback resolves does not distinguish which subtype an id
+   * belongs to (the guard only proves the id exists, not that it exists as
+   * the *right* subtype) — see SDK-41 for the subtype split that would close
+   * that gap; unresolvable here for either form is still "nothing here could
+   * have defined it".
+   */
+  const resolveTargetRegistries = (target: string): readonly string[] | undefined => {
+    const exact = registriesByTarget.get(target);
+    if (exact !== undefined) {
+      return exact;
+    }
+    const qualifier = target.indexOf(".");
+    return qualifier === -1 ? undefined : registriesByTarget.get(target.slice(0, qualifier));
+  };
   const builtIds = new Map<string, Set<string>>();
   for (const group of definedGroups) {
     const ids = builtIds.get(group.type) ?? new Set<string>();
@@ -622,12 +652,16 @@ export function buildMod(
     // A target this SDK cannot author (`<technology_tier>`) or a field that
     // also admits non-references excuses the id: nothing here could have
     // defined it, so its absence is not evidence of a mistake.
-    if (use.targets.length === 0 || !use.targets.every((type) => registriesByTarget.has(type))) {
+    const resolvedTargets = use.targets.map(resolveTargetRegistries);
+    if (
+      use.targets.length === 0 ||
+      resolvedTargets.some((registries) => registries === undefined)
+    ) {
       continue;
     }
     if (
-      use.targets.some((type) =>
-        registriesByTarget.get(type)!.some((registry) => builtIds.get(registry)?.has(use.id))
+      resolvedTargets.some((registries) =>
+        registries!.some((registry) => builtIds.get(registry)?.has(use.id))
       )
     ) {
       continue;

@@ -201,11 +201,62 @@ function conversionOf(value: TsValue): "identity" | "ref" {
   return value.toScalar("x") === "x" ? "identity" : "ref";
 }
 
+/**
+ * `, refTypes: [...]` when every form the value admits is a `<type>`
+ * reference, else `""` — the same convention `emit/fields.ts`'
+ * `scalarMetadata` and `emit/effects.ts`' `refTypesMeta` use for ordinary
+ * fields. Without this, a clause's `value` field records "this looks like a
+ * reference" but never says to *what*, and `buildMod`'s dangling-reference
+ * guard cannot resolve a target it was never told.
+ */
+function refTypesSuffix(value: TsValue): string {
+  return value.refTypes === undefined ? "" : `, refTypes: ${JSON.stringify(value.refTypes)}`;
+}
+
 function valueField(key: string, value: TsValue): string {
   return (
     `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
     `shape: "value", form: ${JSON.stringify(authoredForm({ shape: "value" }))}, ` +
-    `conversion: ${JSON.stringify(conversionOf(value))} },\n`
+    `conversion: ${JSON.stringify(conversionOf(value))}${refTypesSuffix(value)} },\n`
+  );
+}
+
+/**
+ * One clause member's own field tables (group plus clause), keyed by its own
+ * `ref` rather than a category-wide one. `authority`, `civics`, `origin` and
+ * the rest of `government_trigger`'s domain clauses share one template but
+ * each names a different `<type>` — `clauseShape` already tracks that per
+ * member (it is what parameterizes `GovernmentTriggerClause<R>`), so the
+ * runtime table has to be per member too, or every clause after the first one
+ * `shapes` yields would silently carry someone else's `refTypes`.
+ */
+function clauseFieldsCode(
+  ref: TsValue,
+  clauseFieldsConstant: string,
+  groupFieldsConstant: string
+): string {
+  const suffix = refTypesSuffix(ref);
+  return (
+    `export const ${groupFieldsConstant}: readonly ContentField[] = [\n` +
+    `  { key: "text", member: "text", shape: "value", ` +
+    `form: ${JSON.stringify(authoredForm({ shape: "value" }))}, conversion: "identity" },\n` +
+    `  { key: "value", member: "values", shape: "value", ` +
+    `form: ${JSON.stringify(authoredForm({ shape: "value", repeated: true }))}, ` +
+    `conversion: ${JSON.stringify(conversionOf(ref))}${suffix}, repeated: true },\n` +
+    "];\n\n" +
+    `export const ${clauseFieldsConstant}: readonly ContentField[] = [\n` +
+    `  { key: "value", member: "value", shape: "value", ` +
+    `form: ${JSON.stringify(authoredForm({ shape: "value" }))}, ` +
+    `conversion: ${JSON.stringify(conversionOf(ref))}${suffix} },\n` +
+    [...GROUP_KEYS]
+      .map(
+        (key) =>
+          `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
+          `shape: "struct", form: ${JSON.stringify(authoredForm({ shape: "struct", repeated: true }))}, ` +
+          `fields: ${groupFieldsConstant}, repeated: true },\n`
+      )
+      .join("") +
+    "];\n\n"
   );
 }
 
@@ -219,8 +270,6 @@ export function emitAliasStruct(
   const groupName = `${clauseName}Group`;
   const constant = category.toUpperCase();
   const fieldsConstant = `${constant}_FIELDS`;
-  const clauseFieldsConstant = `${constant}_CLAUSE_FIELDS`;
-  const groupFieldsConstant = `${constant}_CLAUSE_GROUP_FIELDS`;
 
   const shapes = new Map<string, MemberShape>();
   const declinedMembers: string[] = [];
@@ -255,6 +304,11 @@ export function emitAliasStruct(
   const blockMembers: string[] = [];
   const metadata: string[] = [];
   const emittedMembers: string[] = [];
+  // One field-table pair per clause member (SDK-37), keyed by that member's
+  // own `ref` — `authority`, `civics`, `origin`, ... each name a different
+  // `<type>`, so a category-wide pair would carry (at best) only the first
+  // member's `refTypes` and leave the guard unable to resolve the rest.
+  const clauseTables: string[] = [];
   for (const [key, value] of scalars) {
     blockMembers.push(`  ${memberName(key)}?: ${value.type};\n`);
     metadata.push(valueField(key, value));
@@ -271,11 +325,17 @@ export function emitAliasStruct(
       blockMembers.push(`${docs}  ${memberName(name)}?: ${shape.value.type};\n`);
       metadata.push(valueField(name, shape.value));
     } else if (shape.kind === "clause") {
+      const memberConstant = `${constant}_${name.toUpperCase()}`;
+      const memberClauseFieldsConstant = `${memberConstant}_CLAUSE_FIELDS`;
+      const memberGroupFieldsConstant = `${memberConstant}_CLAUSE_GROUP_FIELDS`;
       blockMembers.push(`${docs}  ${memberName(name)}?: ${clauseName}<${shape.ref.type}>;\n`);
       metadata.push(
         `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(memberName(name))}, ` +
           `shape: "struct", form: ${JSON.stringify(authoredForm({ shape: "struct" }))}, ` +
-          `fields: ${clauseFieldsConstant} },\n`
+          `fields: ${memberClauseFieldsConstant} },\n`
+      );
+      clauseTables.push(
+        clauseFieldsCode(shape.ref, memberClauseFieldsConstant, memberGroupFieldsConstant)
       );
     } else {
       blockMembers.push(`${docs}  ${memberName(name)}?: readonly ${typeName}[];\n`);
@@ -288,63 +348,44 @@ export function emitAliasStruct(
     emittedMembers.push(name);
   }
 
-  const groupValue = [...shapes.values()].find(
-    (shape): shape is ClauseShape => shape.kind === "clause"
-  );
-  const clauseCode =
-    groupValue === undefined
-      ? ""
-      : docComment([
-          `One \`OR\`/\`NOT\`/\`NOR\` group inside a ${category} clause.`,
-          "",
-          "The game reads the repeated `value` keys as the group's operands and",
-          "`text` as the tooltip shown when the group decides the outcome.",
-        ]) +
-        `export interface ${groupName}<R> {\n` +
-        "  /** Localization key for the tooltip this group produces. */\n" +
-        "  text?: string;\n" +
-        "  /** The group's operands, emitted as repeated `value` keys. */\n" +
-        "  values: readonly R[];\n" +
-        "}\n\n" +
-        docComment([
-          `One requirement inside a ${category} block.`,
-          "",
-          "Every domain member of the category shares this template and differs",
-          "only in which content type `R` references.",
-        ]) +
-        `export interface ${clauseName}<R> {\n` +
-        "  /** The single value the requirement accepts. */\n" +
-        "  value?: R;\n" +
-        "  /** Groups where any operand satisfies the requirement. */\n" +
-        `  or?: readonly ${groupName}<R>[];\n` +
-        "  /** Groups whose operands must not be present. */\n" +
-        `  not?: readonly ${groupName}<R>[];\n` +
-        "  /** Groups where no operand may be present. */\n" +
-        `  nor?: readonly ${groupName}<R>[];\n` +
-        "}\n\n" +
-        `export const ${groupFieldsConstant}: readonly ContentField[] = [\n` +
-        `  { key: "text", member: "text", shape: "value", ` +
-        `form: ${JSON.stringify(authoredForm({ shape: "value" }))}, conversion: "identity" },\n` +
-        `  { key: "value", member: "values", shape: "value", ` +
-        `form: ${JSON.stringify(authoredForm({ shape: "value", repeated: true }))}, ` +
-        `conversion: ${JSON.stringify(conversionOf(groupValue.ref))}, repeated: true },\n` +
-        "];\n\n" +
-        `export const ${clauseFieldsConstant}: readonly ContentField[] = [\n` +
-        `  { key: "value", member: "value", shape: "value", ` +
-        `form: ${JSON.stringify(authoredForm({ shape: "value" }))}, ` +
-        `conversion: ${JSON.stringify(conversionOf(groupValue.ref))} },\n` +
-        [...GROUP_KEYS]
-          .map(
-            (key) =>
-              `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
-              `shape: "struct", form: ${JSON.stringify(authoredForm({ shape: "struct", repeated: true }))}, ` +
-              `fields: ${groupFieldsConstant}, repeated: true },\n`
-          )
-          .join("") +
-        "];\n\n";
+  const hasClauseMember = [...shapes.values()].some((shape) => shape.kind === "clause");
+  // The clause and group interfaces stay generic and category-wide — only
+  // their runtime field tables (above) need to be per member, since the
+  // interfaces carry no `refTypes` of their own.
+  const clauseInterfaces = !hasClauseMember
+    ? ""
+    : docComment([
+        `One \`OR\`/\`NOT\`/\`NOR\` group inside a ${category} clause.`,
+        "",
+        "The game reads the repeated `value` keys as the group's operands and",
+        "`text` as the tooltip shown when the group decides the outcome.",
+      ]) +
+      `export interface ${groupName}<R> {\n` +
+      "  /** Localization key for the tooltip this group produces. */\n" +
+      "  text?: string;\n" +
+      "  /** The group's operands, emitted as repeated `value` keys. */\n" +
+      "  values: readonly R[];\n" +
+      "}\n\n" +
+      docComment([
+        `One requirement inside a ${category} block.`,
+        "",
+        "Every domain member of the category shares this template and differs",
+        "only in which content type `R` references.",
+      ]) +
+      `export interface ${clauseName}<R> {\n` +
+      "  /** The single value the requirement accepts. */\n" +
+      "  value?: R;\n" +
+      "  /** Groups where any operand satisfies the requirement. */\n" +
+      `  or?: readonly ${groupName}<R>[];\n` +
+      "  /** Groups whose operands must not be present. */\n" +
+      `  not?: readonly ${groupName}<R>[];\n` +
+      "  /** Groups where no operand may be present. */\n" +
+      `  nor?: readonly ${groupName}<R>[];\n` +
+      "}\n\n";
 
   const code =
-    clauseCode +
+    clauseInterfaces +
+    clauseTables.join("") +
     docComment([
       `A \`${category}\` requirements block, as the game's rules describe it.`,
       "",

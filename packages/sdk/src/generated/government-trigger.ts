@@ -45,7 +45,7 @@ export interface GovernmentTriggerClause<R> {
   nor?: readonly GovernmentTriggerClauseGroup<R>[];
 }
 
-export const GOVERNMENT_TRIGGER_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
+export const GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
   { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "value",
@@ -53,18 +53,26 @@ export const GOVERNMENT_TRIGGER_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "ref",
+    refTypes: ["authority"],
     repeated: true,
   },
 ];
 
-export const GOVERNMENT_TRIGGER_CLAUSE_FIELDS: readonly ContentField[] = [
-  { key: "value", member: "value", shape: "value", form: "scalar", conversion: "ref" },
+export const GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["authority"],
+  },
   {
     key: "OR",
     member: "or",
     shape: "struct",
     form: "list",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_GROUP_FIELDS,
+    fields: GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_GROUP_FIELDS,
     repeated: true,
   },
   {
@@ -72,7 +80,7 @@ export const GOVERNMENT_TRIGGER_CLAUSE_FIELDS: readonly ContentField[] = [
     member: "not",
     shape: "struct",
     form: "list",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_GROUP_FIELDS,
+    fields: GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_GROUP_FIELDS,
     repeated: true,
   },
   {
@@ -80,7 +88,440 @@ export const GOVERNMENT_TRIGGER_CLAUSE_FIELDS: readonly ContentField[] = [
     member: "nor",
     shape: "struct",
     form: "list",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_GROUP_FIELDS,
+    fields: GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "value",
+    member: "values",
+    shape: "value",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["country_type"],
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["country_type"],
+  },
+  {
+    key: "OR",
+    member: "or",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOT",
+    member: "not",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOR",
+    member: "nor",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_ETHICS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "value",
+    member: "values",
+    shape: "value",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["ethic"],
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_ETHICS_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["ethic"],
+  },
+  {
+    key: "OR",
+    member: "or",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_ETHICS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOT",
+    member: "not",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_ETHICS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOR",
+    member: "nor",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_ETHICS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_CIVICS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "value",
+    member: "values",
+    shape: "value",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["civic_or_origin.civic"],
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_CIVICS_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["civic_or_origin.civic"],
+  },
+  {
+    key: "OR",
+    member: "or",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_CIVICS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOT",
+    member: "not",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_CIVICS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOR",
+    member: "nor",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_CIVICS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "value",
+    member: "values",
+    shape: "value",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["civic_or_origin.origin"],
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["civic_or_origin.origin"],
+  },
+  {
+    key: "OR",
+    member: "or",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOT",
+    member: "not",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOR",
+    member: "nor",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_TRAITS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "value",
+    member: "values",
+    shape: "value",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["trait.species_trait"],
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_TRAITS_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["trait.species_trait"],
+  },
+  {
+    key: "OR",
+    member: "or",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_TRAITS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOT",
+    member: "not",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_TRAITS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOR",
+    member: "nor",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_TRAITS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "value",
+    member: "values",
+    shape: "value",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["species_class"],
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["species_class"],
+  },
+  {
+    key: "OR",
+    member: "or",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOT",
+    member: "not",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOR",
+    member: "nor",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "value",
+    member: "values",
+    shape: "value",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["species_archetype"],
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["species_archetype"],
+  },
+  {
+    key: "OR",
+    member: "or",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOT",
+    member: "not",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOR",
+    member: "nor",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_GROUP_FIELDS: readonly ContentField[] =
+  [
+    { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+    {
+      key: "value",
+      member: "values",
+      shape: "value",
+      form: "list",
+      conversion: "ref",
+      refTypes: ["planet_class"],
+      repeated: true,
+    },
+  ];
+
+export const GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["planet_class"],
+  },
+  {
+    key: "OR",
+    member: "or",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOT",
+    member: "not",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOR",
+    member: "nor",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "value",
+    member: "values",
+    shape: "value",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["graphical_culture"],
+    repeated: true,
+  },
+];
+
+export const GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_FIELDS: readonly ContentField[] = [
+  {
+    key: "value",
+    member: "value",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["graphical_culture"],
+  },
+  {
+    key: "OR",
+    member: "or",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOT",
+    member: "not",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_GROUP_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "NOR",
+    member: "nor",
+    shape: "struct",
+    form: "list",
+    fields: GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_GROUP_FIELDS,
     repeated: true,
   },
 ];
@@ -118,63 +559,63 @@ export const GOVERNMENT_TRIGGER_FIELDS: readonly ContentField[] = [
     member: "authority",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_FIELDS,
   },
   {
     key: "country_type",
     member: "countryType",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_FIELDS,
   },
   {
     key: "ethics",
     member: "ethics",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_ETHICS_CLAUSE_FIELDS,
   },
   {
     key: "civics",
     member: "civics",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_CIVICS_CLAUSE_FIELDS,
   },
   {
     key: "origin",
     member: "origin",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_FIELDS,
   },
   {
     key: "traits",
     member: "traits",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_TRAITS_CLAUSE_FIELDS,
   },
   {
     key: "species_class",
     member: "speciesClass",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_FIELDS,
   },
   {
     key: "species_archetype",
     member: "speciesArchetype",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_FIELDS,
   },
   {
     key: "preferred_planet_class",
     member: "preferredPlanetClass",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_FIELDS,
   },
   {
     key: "OR",
@@ -212,7 +653,7 @@ export const GOVERNMENT_TRIGGER_FIELDS: readonly ContentField[] = [
     member: "graphicalCulture",
     shape: "struct",
     form: "block",
-    fields: GOVERNMENT_TRIGGER_CLAUSE_FIELDS,
+    fields: GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_FIELDS,
   },
   {
     key: "is_nomadic",
