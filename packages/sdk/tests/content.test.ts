@@ -1352,6 +1352,151 @@ describe("generated content registries", () => {
     );
   });
 
+  // Emission order is a function of the content, never of source position —
+  // AGENTS.md's headline invariant, standing evidence in pure-api.test.ts's
+  // "order purity" suite and content.test.ts's SDK-32 merged-file test. Both
+  // new WeightBlock shapes (SDK-35, SDK-36) put several sibling keys inside
+  // one block for the first time, lowered by hand-written `if (x !==
+  // undefined)` chains rather than a `for...of`/`Object.keys` walk — correct
+  // by construction today, but nothing else in the suite would fail if a
+  // later refactor swapped that chain for a key iteration and made emission
+  // depend on the author's object-literal order. These two tests build the
+  // same block twice, with every reversible key in reverse order the second
+  // time, and pin both that the two authored orders render byte-identically
+  // and what the one true emitted order actually is.
+  function weightBlockOperationOrderProbe(reversed: boolean) {
+    return defineTradition({
+      id: "wb_test_tradition_operation_order",
+      name: "Operation Order",
+      aiWeight: reversed
+        ? {
+            maxValue: 9,
+            minValue: 8,
+            divide: 7,
+            multiplier: 6,
+            mult: 5,
+            subtract: 4,
+            weight: 3,
+            add: 2,
+            factor: 1,
+          }
+        : {
+            factor: 1,
+            add: 2,
+            weight: 3,
+            subtract: 4,
+            mult: 5,
+            multiplier: 6,
+            divide: 7,
+            minValue: 8,
+            maxValue: 9,
+          },
+    });
+  }
+
+  it("renders WeightBlock's top-level operations byte-identically regardless of authored key order (SDK-35)", () => {
+    const forwardContent = render(
+      buildMod(configFor("Weight block operation order test", "wb_test"), [
+        collection(undefined, [weightBlockOperationOrderProbe(false)]),
+      ])
+    ).get("common/traditions/wb_test_traditions.txt");
+    const backwardContent = render(
+      buildMod(configFor("Weight block operation order test", "wb_test"), [
+        collection(undefined, [weightBlockOperationOrderProbe(true)]),
+      ])
+    ).get("common/traditions/wb_test_traditions.txt");
+    expect(forwardContent).toBeDefined();
+    expect(backwardContent).toEqual(forwardContent);
+    // Pins the actual fixed sequence, not just that the two authored orders
+    // agree with each other — a chain reordered without updating both
+    // branches above would still agree with itself.
+    expect(forwardContent).toContain(
+      "ai_weight = {\n" +
+        "\t\tfactor = 1\n" +
+        "\t\tadd = 2\n" +
+        "\t\tweight = 3\n" +
+        "\t\tsubtract = 4\n" +
+        "\t\tmult = 5\n" +
+        "\t\tmultiply = 6\n" +
+        "\t\tdivide = 7\n" +
+        "\t\tmin = 8\n" +
+        "\t\tmax = 9\n" +
+        "\t}"
+    );
+  });
+
+  function complexTriggerModifierOperationOrderProbe(reversed: boolean) {
+    return defineSolarSystemInitializer({
+      id: "wb_test_system_operation_order",
+      class: "sc_g",
+      usageOdds: {
+        modifiers: [
+          reversed
+            ? {
+                potential: always(),
+                desc: "Operation order probe",
+                maxValue: 8,
+                minValue: 7,
+                divide: 6,
+                multiplier: 5,
+                mult: 4,
+                mode: "factor",
+                parameters: { setting: "habitable_worlds_scale" },
+                triggerScope: "this",
+                trigger: "check_galaxy_setup_value",
+              }
+            : {
+                trigger: "check_galaxy_setup_value",
+                triggerScope: "this",
+                parameters: { setting: "habitable_worlds_scale" },
+                mode: "factor",
+                mult: 4,
+                multiplier: 5,
+                divide: 6,
+                minValue: 7,
+                maxValue: 8,
+                desc: "Operation order probe",
+                potential: always(),
+              },
+        ],
+      },
+    });
+  }
+
+  it("renders a complex_trigger_modifier row's fields byte-identically regardless of authored key order (SDK-36)", () => {
+    const forwardContent = render(
+      buildMod(configFor("Weight block ctm operation order test", "wb_test"), [
+        collection(undefined, [complexTriggerModifierOperationOrderProbe(false)]),
+      ])
+    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    const backwardContent = render(
+      buildMod(configFor("Weight block ctm operation order test", "wb_test"), [
+        collection(undefined, [complexTriggerModifierOperationOrderProbe(true)]),
+      ])
+    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    expect(forwardContent).toBeDefined();
+    expect(backwardContent).toEqual(forwardContent);
+    expect(forwardContent).toContain(
+      "complex_trigger_modifier = {\n" +
+        "\t\t\ttrigger = check_galaxy_setup_value\n" +
+        "\t\t\ttrigger_scope = this\n" +
+        "\t\t\tparameters = {\n" +
+        "\t\t\t\tsetting = habitable_worlds_scale\n" +
+        "\t\t\t}\n" +
+        "\t\t\tmode = factor\n" +
+        "\t\t\tmult = 4\n" +
+        "\t\t\tmultiplier = 5\n" +
+        "\t\t\tdivide = 6\n" +
+        "\t\t\tmin_value = 7\n" +
+        "\t\t\tmax_value = 8\n" +
+        "\t\t\tdesc = wb_test_system_operation_order_usage_odds_0\n" +
+        "\t\t\tpotential = {\n" +
+        "\t\t\t\talways = yes\n" +
+        "\t\t\t}\n" +
+        "\t\t}"
+    );
+  });
+
   it("contributes ship-of-size limits under the engine's `default` key", () => {
     // The ownership limit is not a define: its key belongs to the engine and
     // the game reads it additively, so the API takes no id and the mod-prefix
