@@ -109,6 +109,31 @@ add_resource = {
 `);
   });
 
+  it("keeps a hidden_effect's entries inside it, at the enclosing scope", () => {
+    // `hidden_effect` changes no scope, so the closure gets the same scope
+    // back. It takes one at all because the entries have to land inside the
+    // block: the enclosing scope object writes to the enclosing block, which
+    // is the whole difference between hiding an effect and not.
+    const from = scopeRef<"planet">("from");
+    const sink = recordEffects<"country">([], (country) => {
+      country.log("shown");
+      country.hiddenEffect((hidden) => {
+        hidden.log("not shown");
+        from.effects((planet) => planet.log("nested"));
+      });
+    });
+
+    expect(serialize(sink)).toBe(`log = shown
+
+hidden_effect = {
+	log = "not shown"
+	from = {
+		log = nested
+	}
+}
+`);
+  });
+
   it("opens a ref's block where it is written, not where its scope object came from", () => {
     // The property the recording stack exists for. `from = { }` written inside
     // `every_owned_planet = { }` runs once per planet; at the top level it runs

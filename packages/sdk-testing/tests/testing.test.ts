@@ -5,6 +5,7 @@ import {
   globalFlags,
   hasCountryFlag,
   hasGlobalFlag,
+  hiddenTrigger,
   namespace,
   or,
   trigger,
@@ -49,6 +50,40 @@ describe("production testing module", () => {
         world.country(0)
       )
     ).toBe(true);
+  });
+
+  it("runs hidden effects and evaluates hidden conditions, transparently", () => {
+    // Both hide from tooltips and neither changes what happens, so the
+    // interpreter treats them as the wrappers they are rather than refusing
+    // them as unknown semantics — the one case where transparency is the
+    // whole meaning, not a guess about it.
+    const events = namespace("hidden_semantics");
+    const entry = events.defineCountryEvent({
+      id: 1,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.hiddenEffect((hidden) => hidden.setCountryFlag(flags.testing_group_left));
+      },
+    });
+    const world = fixture({ countries: [{ name: "player" }] }, { events: [entry] });
+
+    expect(
+      evaluate(hiddenTrigger(hasCountryFlag(flags.testing_group_left)), world.country(0))
+    ).toBe(false);
+    world.fire(entry, world.country(0));
+    expect(
+      evaluate(hiddenTrigger(hasCountryFlag(flags.testing_group_left)), world.country(0))
+    ).toBe(true);
+    // And it is AND, not OR: every entry still has to hold.
+    expect(
+      evaluate(
+        hiddenTrigger(
+          hasCountryFlag(flags.testing_group_left),
+          hasCountryFlag(flags.testing_group_right)
+        ),
+        world.country(0)
+      )
+    ).toBe(false);
   });
 
   it("does not carry saved event targets into delayed delivery", () => {

@@ -138,6 +138,19 @@ stormWorld.effects((planet) => planet.addDeposit("d_minerals_1")); // the block
 The closure runs once, at definition time, and what the definition carries from
 then on is the value it returned.
 
+`hidden_trigger` and `hidden_effect` hide from generated tooltips without
+changing anything else — neither moves scope, so `this`, `from`, and `root`
+inside are what they are outside. The trigger is a combinator beside `and`/`or`,
+since a condition is a value; the effect is a block on the scope, whose closure
+takes the same scope back so its entries land inside it:
+
+```ts
+  allow: and(isShipClass("shipclass_science_ship"), hiddenTrigger(exists("owner"))),
+  effect: (country) => {
+    country.hiddenEffect((hidden) => hidden.setCountryFlag("mymod_quietly"));
+  },
+```
+
 In-game branching inside effects is `scope.if(trigger, body).elseIf(...).else(...)`;
 a TypeScript `if` branches at build time. Using a trigger in a TS `if` is a
 compile error.

@@ -380,6 +380,15 @@ export interface StructuralEffects<S extends ScopeName> {
    */
   if(condition: Trigger<S>, body: (scope: ScopeObjOf<S>) => void): IfChain<S>;
 
+  /**
+   * Keeps the enclosed effects out of generated tooltips:
+   * `hidden_effect = { ... }`. They still run; the player is just not shown
+   * them. The block changes no scope, so the closure gets the same scope back
+   * — it takes one at all because the entries have to land inside the hidden
+   * block rather than beside it.
+   */
+  hiddenEffect(body: (scope: ScopeObjOf<S>) => void): void;
+
   /** Picks one arm at random, weighted; modifiers adjust weights in-game. */
   randomList(arms: ReadonlyArray<RandomListArm<S>>): void;
 
@@ -524,6 +533,10 @@ const STRUCTURAL: Record<
 
   target: (sink, refs) => (body: (scope: unknown) => void) => {
     sink.push(block("target", recordEffects(refs, body)));
+  },
+
+  hiddenEffect: (sink, refs) => (body: (scope: unknown) => void) => {
+    sink.push(block("hidden_effect", recordEffects(refs, body)));
   },
 
   randomList: (sink, refs) => weightedList("random_list", sink, refs),

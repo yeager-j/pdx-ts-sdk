@@ -442,6 +442,13 @@ export function applyEffectEntries(
     }
     chain = undefined;
 
+    if (entry.key === "hidden_effect") {
+      // Transparent: hiding is a tooltip concern, and the block changes no
+      // scope. Its entries run exactly as they would unwrapped, which is what
+      // the game does — nothing here is a guess about semantics.
+      applyEffectEntries(requireBlock(entry), scope, ex);
+      continue;
+    }
     if (entry.key === "random_list") {
       applyRandomList(entry, scope, ex);
       continue;
