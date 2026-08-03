@@ -1,0 +1,9 @@
+utility_component_template = {
+	key = shared_output_dir_test_utility_armor_plating
+	icon = GFX_ship_part_armor
+}
+
+weapon_component_template = {
+	key = shared_output_dir_test_weapon_mass_driver
+	icon = GFX_ship_part_mass_driver
+}

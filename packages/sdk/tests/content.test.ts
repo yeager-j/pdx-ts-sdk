@@ -43,7 +43,9 @@ import {
   defineStaticModifier,
   defineTradition,
   defineTraditionCategory,
+  defineUtilityComponentTemplate,
   defineWarGoal,
+  defineWeaponComponentTemplate,
   hasAuthority,
   hasPlanetFlag,
   hasShipFlag,
@@ -1729,6 +1731,122 @@ describe("alias-struct serialization", () => {
     authoring.define("civic_or_origin", { id: "gt_test_civic_unregistered", potential: {} });
     expect(() => authoring.render()).toThrow(
       'No field table registered for alias category "species_trigger"'
+    );
+  });
+});
+
+describe("registries that share an outputDir (SDK-32)", () => {
+  // utility_component_template, weapon_component_template and
+  // strike_craft_component_template are the only three of the SDK's 35
+  // content registries that share an `outputDir` and file stem — mirroring
+  // the game's own `components.cwt` — so one feature module fanning out
+  // across two of them (the pattern AGENTS.md teaches) used to have the
+  // second registry's file silently overwrite the first in `render`'s path
+  // map, with no warning and a `.yml` still advertising the dropped id.
+  const SHARED_OUTPUT_DIR_CONFIG = configFor("Shared output dir test", "shared_output_dir_test");
+  const SHARED_OUTPUT_DIR_RELPATH =
+    "common/component_templates/shared_output_dir_test_component_templates.txt";
+  const SHARED_OUTPUT_DIR_LOC_RELPATH = "localisation/english/shared_output_dir_test_l_english.yml";
+
+  function sharedOutputDirTemplates() {
+    const weapon = defineWeaponComponentTemplate({
+      id: "shared_output_dir_test_weapon_mass_driver",
+      name: "Mass Driver",
+      icon: "GFX_ship_part_mass_driver",
+    });
+    const utility = defineUtilityComponentTemplate({
+      id: "shared_output_dir_test_utility_armor_plating",
+      name: "Armor Plating",
+      icon: "GFX_ship_part_armor",
+    });
+    return { weapon, utility };
+  }
+
+  it("merges a weapon and a utility template into one file instead of the second overwriting the first", () => {
+    const { weapon, utility } = sharedOutputDirTemplates();
+    const mod = buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [weapon, utility])]);
+    const files = render(mod);
+
+    expect([...files.keys()]).toContain(SHARED_OUTPUT_DIR_RELPATH);
+    const content = files.get(SHARED_OUTPUT_DIR_RELPATH)!;
+    expect(content).toContain("shared_output_dir_test_weapon_mass_driver");
+    expect(content).toContain("shared_output_dir_test_utility_armor_plating");
+    expect(mod.warnings).toEqual([]);
+  });
+
+  it("renders the merged file identically regardless of authoring order", () => {
+    const forward = sharedOutputDirTemplates();
+    const forwardContent = render(
+      buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [forward.weapon, forward.utility])])
+    ).get(SHARED_OUTPUT_DIR_RELPATH);
+
+    const backward = sharedOutputDirTemplates();
+    const backwardContent = render(
+      buildMod(SHARED_OUTPUT_DIR_CONFIG, [
+        collection(undefined, [backward.utility, backward.weapon]),
+      ])
+    ).get(SHARED_OUTPUT_DIR_RELPATH);
+
+    expect(forwardContent).toBeDefined();
+    expect(backwardContent).toEqual(forwardContent);
+  });
+
+  it("matches the merged component-templates golden", async () => {
+    const { weapon, utility } = sharedOutputDirTemplates();
+    const content = render(
+      buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [weapon, utility])])
+    ).get(SHARED_OUTPUT_DIR_RELPATH);
+
+    await expect(content).toMatchFileSnapshot(
+      "__snapshots__/content/shared-output-dir-component-templates.txt"
+    );
+  });
+
+  it("keeps localization consistent with the merged file — no id advertised that has no definition", () => {
+    const { weapon, utility } = sharedOutputDirTemplates();
+    const files = render(
+      buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [weapon, utility])])
+    );
+
+    const loc = files.get(SHARED_OUTPUT_DIR_LOC_RELPATH)!;
+    const content = files.get(SHARED_OUTPUT_DIR_RELPATH)!;
+    for (const id of [
+      "shared_output_dir_test_weapon_mass_driver",
+      "shared_output_dir_test_utility_armor_plating",
+    ]) {
+      expect(loc).toContain(`${id}:0`);
+      expect(content).toContain(id);
+    }
+  });
+
+  it("rejects two component-template subtypes sharing an id, even when the loc guard misses it", () => {
+    // The loc-duplicate guard only fires when both definitions register a
+    // loc key for the shared id — omitting the optional `name` on one of
+    // them (as here) means no loc key collides, so it never runs. The
+    // per-registry duplicate check in `ContentAuthoring.define` also misses
+    // it: it dedups within one registry's own id list, and these are two
+    // different registries. Only the own-id-by-outputDir check in build.ts's
+    // content pass 1 catches this, the same way — and for the same reason —
+    // the neighbouring vanilla-collision check is keyed by outputDir: the
+    // game merges every file in a directory into one id-keyed namespace, so
+    // two subtypes sharing an id here is unusable output, not merely odd.
+    const weapon = defineWeaponComponentTemplate({
+      id: "shared_output_dir_test_shared_id",
+      icon: "GFX_ship_part_mass_driver",
+    });
+    const utility = defineUtilityComponentTemplate({
+      id: "shared_output_dir_test_shared_id",
+      name: "Armor Plating",
+      icon: "GFX_ship_part_armor",
+    });
+
+    expect(() =>
+      buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [weapon, utility])])
+    ).toThrow(
+      'utility_component_template id "shared_output_dir_test_shared_id" collides with a ' +
+        "weapon_component_template of the same id — both are emitted under " +
+        '"common/component_templates", where the game merges every file it loads by id, so only ' +
+        "one definition would survive and which one is undetermined; give one of them a different id"
     );
   });
 });

@@ -99,7 +99,14 @@ export interface EmittedFile {
 }
 
 interface ContentFile extends EmittedFile {
-  readonly type: ContentTypeName;
+  /**
+   * Every registry that lowered a definition into this file, in registry
+   * declaration order. Usually one entry — distinct registries only share a
+   * `relPath` when they share an `outputDir` and file stem, which today is
+   * true of exactly the three component-template registries (SDK-32),
+   * mirroring the game's own `components.cwt` layout.
+   */
+  readonly types: readonly ContentTypeName[];
   readonly ids: readonly string[];
 }
 
@@ -211,12 +218,32 @@ export function buildMod(
   // resolved against the built ids once every collection has been seen.
   const refUses: { readonly owner: string; readonly use: ContentRefUse }[] = [];
 
+  // Own ids by output directory (SDK-32): the same index shape as the
+  // vanilla-collision guard below, for the same reason — the game loads
+  // every file it finds in a directory and merges their keys into one
+  // namespace, so `outputDir` is the scope a key must be unique in, not
+  // `relPath`. That was always true, but unreachable, for two *own*
+  // definitions before this build started merging same-relPath registries
+  // (SDK-32 above): two different registries could not previously land two
+  // definitions in the game's eyes one directory apart with different stems
+  // and still collide, because nothing forced them into the same file to
+  // notice. `component_template`'s three subtypes are exactly that case —
+  // CWT itself models them as one `type[component_template]` — and a
+  // same-outputDir, different-stem collision is exactly as broken in-game
+  // (an undetermined last-loaded winner) as the same-file collision the
+  // merge above now allows, so both are checked here rather than only the
+  // same-file one. Per-registry duplicate ids are still `ContentAuthoring
+  // .define`'s job in pass 2; this only catches two different registries
+  // claiming the same id.
+  const ownIdsByDir = new Map<string, Map<string, ContentTypeName>>();
+
   // Content pass 1: collect the raw items into registry → emitted file →
   // items, without defining any of them. Nothing here depends on the order
-  // the items arrived in — the unknown-type and vanilla-collision checks are
-  // per item — which is the point: `define` registers localization as a side
-  // effect, so it must not run until the canonical order is known, or the loc
-  // yml would follow item order while the txt files follow this one.
+  // the items arrived in — the unknown-type, vanilla-collision, and own-id
+  // checks are per item — which is the point: `define` registers
+  // localization as a side effect, so it must not run until the canonical
+  // order is known, or the loc yml would follow item order while the txt
+  // files follow this one.
   const rawByType = new Map<ContentTypeName, Map<string, ContentItem[]>>();
   for (const { item, file } of flat) {
     if (item.itemKind !== "content") {
@@ -233,6 +260,18 @@ export function buildMod(
           `defining it would silently override vanilla content; patch it instead`
       );
     }
+    const ownIds = ownIdsByDir.get(descriptor.outputDir) ?? new Map<string, ContentTypeName>();
+    const otherType = ownIds.get(item.def.id);
+    if (otherType !== undefined && otherType !== item.type) {
+      throw new Error(
+        `${item.type} id "${item.def.id}" collides with a ${otherType} of the same id — both are ` +
+          `emitted under "${descriptor.outputDir}", where the game merges every file it loads by ` +
+          `id, so only one definition would survive and which one is undetermined; give one of them ` +
+          `a different id`
+      );
+    }
+    ownIds.set(item.def.id, item.type);
+    ownIdsByDir.set(descriptor.outputDir, ownIds);
     const relPath = emissionPath(config.prefix, descriptor.outputDir, file ?? descriptor.fileStem);
     const byPath = rawByType.get(item.type) ?? new Map<string, ContentItem[]>();
     const group = byPath.get(relPath) ?? [];
@@ -267,19 +306,51 @@ export function buildMod(
     }
   }
 
-  // Content pass 3: lower. Separate from the defining loop, not merged into
-  // it, because lowering reads the modifierDescKeys WeakMap that defining
-  // writes — every define must precede every read, whatever the grouping.
-  const contentFiles: ContentFile[] = definedGroups.map((group) => ({
-    relPath: group.relPath,
-    type: group.type,
-    ids: group.defined.map((defined) => defined.id),
-    entries: group.defined.map((defined) =>
-      defined.toEntries((use) => {
-        refUses.push({ owner: `${group.type} "${defined.id}"`, use });
-      })
-    ),
-  }));
+  // Content pass 3: lower, merging groups that land at the same relPath
+  // (SDK-32). Separate from the defining loop, not merged into it, because
+  // lowering reads the modifierDescKeys WeakMap that defining writes — every
+  // define must precede every read, whatever the grouping.
+  //
+  // Distinct registries can resolve to the same emitted path (only the three
+  // component-template registries do, since only they share an `outputDir` —
+  // the game's own `components.cwt` groups them the same way), and `render`
+  // keys its file map by relPath, so two registries landing on one path have
+  // to merge into a single file here rather than let the second silently win
+  // a `Map.set`. `definedGroups` is already walked in the required order —
+  // `CONTENT_REGISTRIES` declaration order outer, path bytes middle, id bytes
+  // inner — so appending each group's entries to its path's file in
+  // encounter order keeps a merged file in "registry declaration order, then
+  // id" with no extra sort, and keeps a non-colliding file identical to
+  // before. That also preserves order-purity: which module or collection
+  // authored a definition never decided this order, so it still doesn't.
+  interface MergedFile {
+    readonly types: ContentTypeName[];
+    readonly ids: string[];
+    readonly entries: PdxEntry[];
+  }
+  const filesByPath = new Map<string, MergedFile>();
+  const pathOrder: string[] = [];
+  for (const group of definedGroups) {
+    let file = filesByPath.get(group.relPath);
+    if (file === undefined) {
+      file = { types: [], ids: [], entries: [] };
+      filesByPath.set(group.relPath, file);
+      pathOrder.push(group.relPath);
+    }
+    file.types.push(group.type);
+    for (const defined of group.defined) {
+      file.ids.push(defined.id);
+      file.entries.push(
+        defined.toEntries((use) => {
+          refUses.push({ owner: `${group.type} "${defined.id}"`, use });
+        })
+      );
+    }
+  }
+  const contentFiles: ContentFile[] = pathOrder.map((relPath) => {
+    const file = filesByPath.get(relPath)!;
+    return { relPath, types: file.types, ids: file.ids, entries: file.entries };
+  });
 
   // Events arrive as finished data (closures ran at the definition site,
   // where the namespace handle knew the namespace). The fold's jobs: the
@@ -574,7 +645,7 @@ export function buildMod(
   const orderedPatches = [...patches].sort((a, b) => compareUtf8(a.id, b.id));
   const patchPlan = planPatches(
     config,
-    contentFiles.filter((file) => file.type === "technology"),
+    contentFiles.filter((file) => file.types.includes("technology")),
     orderedPatches
   );
   const vanillaPaths =
