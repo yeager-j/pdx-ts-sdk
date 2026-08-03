@@ -930,7 +930,23 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     "ship_size.modifier",
     {
       shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields. Lowers to " +
+        'ModifierClosure<"starbase">, the scope of the first-declared arm (ship_sizes.cwt:107-116 ' +
+        "declares this field twice, once per mutually exclusive subtype, this=starbase and " +
+        "this=ship) — first-declared-wins is a codegen artifact (flatten/mergeByName/pickOrdinary), " +
+        "not a claim that starbase is the intended scope. SDK-45 investigated pinning `scope: " +
+        '"ship"` instead (the more common case: 278 of 319 shipped ship sizes are !starbase) and ' +
+        "found the opposite fix is also wrong by corpus evidence: all 41 starbase-subtype ship " +
+        "sizes write starbase-only modifier names (starbase_building_capacity_add and siblings) " +
+        'that ModifierClosure<"ship"> cannot express, so `scope: "ship"` would newly break real ' +
+        "vanilla content. Neither fixed scope is correct — the field genuinely needs two, selected " +
+        "by which subtype the definition declares — and no `CONTENT_FIELD_OVERRIDES.scope` row can " +
+        "express that; it needs a subtype-conditional lowering (a `lowerScopeUnion` beside " +
+        "`lowerDual`/`lowerScalarUnion` in emit/fields.ts) that does not exist yet. Left unchanged " +
+        "pending that work. Also: corpus-conformance's scope-mismatch check only gates fields whose " +
+        "`field.clause` is set (trigger/effect shapes), so this mispin is invisible to that gate " +
+        "regardless of which scope is pinned here.",
     },
   ],
   [

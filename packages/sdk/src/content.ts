@@ -29,7 +29,7 @@ import {
 } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "./generated/modifiers.ts";
-import { refId, type TypedRef } from "./generated/refs.ts";
+import { refId, type EconomicCategoryRef, type TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { scriptValueScalar, type ScriptValue, type Trigger } from "./trigger-core.ts";
 
@@ -89,7 +89,7 @@ export interface EconomicResourceOperation<S extends ScopeName> {
 /** A reusable economic-template block used by edicts and dozens of other registries. */
 export interface EconomicResourceBlock<S extends ScopeName> {
   /** Economic category used to generate modifier names and tooltips. */
-  readonly category?: TypedRef<"economic_category"> | string;
+  readonly category?: EconomicCategoryRef | string;
   /** Resources paid when the owning definition activates. */
   readonly cost?: EconomicResourceOperation<S>;
   /** Resources produced by the owning definition. */
