@@ -366,12 +366,6 @@ export type SituationApproach = string;
 /** `enum[situation_category]`. */
 export type SituationCategory = "positive" | "negative" | "neutral";
 
-/**
- * `enum[situation_stage]`.
- * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
- */
-export type SituationStage = string;
-
 /** `enum[solar_sys_init_planet_class]`. */
 export type SolarSysInitPlanetClass =
   | "random"

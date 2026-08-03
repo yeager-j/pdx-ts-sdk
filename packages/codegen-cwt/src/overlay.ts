@@ -61,8 +61,30 @@ export const SPECIAL_SCOPE_PATHS = new Set([
  * `hidden_effect` sits in HAND_WRITTEN_EFFECTS for the same reason. Both
  * appear in the drift baseline as documented-but-unruled, which is exactly
  * what they are.
+ *
+ * `current_situation_approach`, `current_stage`, and
+ * `can_set_situation_approach` are here for a third reason (SDK-52): each is
+ * an ordinary leaf condition — the rules describe it correctly, and a
+ * mechanical `(value: SituationApproach | SituationStage): Trigger<"situation">`
+ * would be a faithful reading — but the SDK's own `SituationTrigger` return
+ * type (a `Trigger<"situation">` carrying the literal id as an optional
+ * phantom brand, `src/triggers.ts`) is checked against `defineSituationType`'s
+ * own declared `approach`/`stages` keys, a contract the rules have no way to
+ * express. Skip-listing here keeps generation and the hand-written override in
+ * `src/triggers.ts` from disagreeing about which one is the real export: only
+ * the hand-written module ever supplies these three names now.
  */
-export const HAND_WRITTEN_TRIGGERS = new Set(["and", "or", "not", "nand", "nor", "hidden_trigger"]);
+export const HAND_WRITTEN_TRIGGERS = new Set([
+  "and",
+  "or",
+  "not",
+  "nand",
+  "nor",
+  "hidden_trigger",
+  "current_situation_approach",
+  "current_stage",
+  "can_set_situation_approach",
+]);
 
 /**
  * Structural effects the SDK models by hand rather than generating.

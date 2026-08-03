@@ -37,8 +37,6 @@ import type {
   ShipClass,
   ShipOwnerType,
   ShipRarity,
-  SituationApproach,
-  SituationStage,
   SpeciesRightsType,
   SpecimensRarity,
   SpecimenType,
@@ -1741,16 +1739,6 @@ export function canSetPolicy(args: CanSetPolicyArgs): Trigger<"country"> {
   refs.push({ targets: ["policy"], id: id0, field: "can_set_policy.policy" });
   entries.push(kv("option", args.option));
   return trigger([block("can_set_policy", entries)], refs);
-}
-
-/**
- * Checks if the specified approach is allowed to be picked (according to potential and allow triggers) on the scoped situation.
- * ```
- * can_set_situation_approach = <approach> (name field of the approach)
- * ```
- */
-export function canSetSituationApproach(value: SituationApproach): Trigger<"situation"> {
-  return trigger([kv("can_set_situation_approach", value)]);
 }
 
 /**
@@ -5812,26 +5800,6 @@ export function countWarParticipants(args: CountWarParticipantsArgs): Trigger<"w
  */
 export function currentAwarenessLevel(value: AwarenessLevel): Trigger<"country"> {
   return trigger([kv("current_awareness_level", value)]);
-}
-
-/**
- * Checks if the specified approach has been picked on the scoped situation.
- * ```
- * current_situation_approach = <approach> (name field of the approach)
- * ```
- */
-export function currentSituationApproach(value: SituationApproach): Trigger<"situation"> {
-  return trigger([kv("current_situation_approach", value)]);
-}
-
-/**
- * Checks if the specified stage is currently active in the scoped situation.
- * ```
- * current_stage = <stage> (name defined in situation's stages)
- * ```
- */
-export function currentStage(value: SituationStage): Trigger<"situation"> {
-  return trigger([kv("current_stage", value)]);
 }
 
 export interface CustomProgressArgs {
