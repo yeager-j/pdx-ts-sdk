@@ -1060,6 +1060,153 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "other government_trigger consumer species_consolidated.cwt declares alongside it.",
     },
   ],
+  // component_template (SDK-31): none of the three subtypes had a single field
+  // override before this cluster landed, so a ported SMALL_SHIELD_1 occupied a
+  // slot, cost nothing, and granted nothing — resources and modifier were
+  // present in components.cwt but absent from CONTENT_FIELD_OVERRIDES, so the
+  // writer, which only emits declared ContentField[] members, silently dropped
+  // both. 1,193 of 1,500 vanilla component templates write a top-level
+  // resources, 355 write modifier. weapon_component_template and
+  // strike_craft_component_template splice economic_template_no_produce
+  // (components.cwt:189, :338) rather than plain economic_template
+  // (components.cwt:405) — `produces` is not game-legal there — but
+  // EconomicResourceBlock (packages/sdk/src/content.ts:88) has no arm that
+  // distinguishes the two splices, and restructuring it is SDK-45's job, not
+  // this ticket's. Left over-permissive: `produces` type-checks on weapon and
+  // strike-craft resources today and is silently dropped by the writer if
+  // written, the same way any field CWT does not declare there always has
+  // been. No CONTENT_DECLINED_FIELDS row exists to suppress it without also
+  // touching the shared type.
+  [
+    "weapon_component_template.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "Same category-plus-economic_template-splice shape as job.resources, repeated 0..inf " +
+        "(components.cwt:184-190). Spliced category is economic_template_no_produce, so " +
+        "`produces` is not actually game-legal here — see the cluster note above.",
+    },
+  ],
+  [
+    "weapon_component_template.modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(components.cwt:205-207).",
+    },
+  ],
+  [
+    "weapon_component_template.ship_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(components.cwt:208-210).",
+    },
+  ],
+  [
+    "weapon_component_template.ship_design_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(components.cwt:211-213).",
+    },
+  ],
+  [
+    "weapon_component_template.triggered_ship_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map, " +
+        "repeated 0..inf (components.cwt:215-217).",
+    },
+  ],
+  [
+    "weapon_component_template.triggered_ship_design_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map, " +
+        "repeated 0..inf (components.cwt:218-220).",
+    },
+  ],
+  [
+    "strike_craft_component_template.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "Same category-plus-economic_template-splice shape as job.resources, repeated 0..inf " +
+        "(components.cwt:333-339). Spliced category is economic_template_no_produce, so " +
+        "`produces` is not actually game-legal here — see the cluster note above.",
+    },
+  ],
+  [
+    "strike_craft_component_template.ship_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(components.cwt:341-343). This subtype declares no modifier, ship_design_modifier, " +
+        "triggered_ship_modifier, or triggered_ship_design_modifier — only ship_modifier.",
+    },
+  ],
+  [
+    "utility_component_template.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "Same category-plus-economic_template-splice shape as job.resources, repeated 0..inf " +
+        "(components.cwt:400-406). Spliced category is plain economic_template, so `produces` " +
+        "is genuinely authorable here — no caveat, unlike the weapon/strike-craft rows above.",
+    },
+  ],
+  [
+    "utility_component_template.modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(components.cwt:420-422).",
+    },
+  ],
+  [
+    "utility_component_template.ship_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(components.cwt:423-425).",
+    },
+  ],
+  [
+    "utility_component_template.ship_design_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(components.cwt:426-428).",
+    },
+  ],
+  [
+    "utility_component_template.triggered_ship_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map, " +
+        "repeated 0..inf (components.cwt:430-432).",
+    },
+  ],
+  [
+    "utility_component_template.triggered_ship_design_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map, " +
+        "repeated 0..inf (components.cwt:433-435).",
+    },
+  ],
 ]);
 
 export interface RepeatedStructDefinition {

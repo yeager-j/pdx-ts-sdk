@@ -41,6 +41,7 @@ import {
   defineSpeciesClass,
   defineStarbaseLevel,
   defineStaticModifier,
+  defineStrikeCraftComponentTemplate,
   defineTradition,
   defineTraditionCategory,
   defineUtilityComponentTemplate,
@@ -1297,6 +1298,78 @@ describe("generated content registries", () => {
     // The declaration is authoring-only: it names a fact the engine already
     // knows, and writing it into the file would be a key the game cannot read.
     expect(rendered).not.toContain("scope =");
+  });
+
+  it("serializes a ported SMALL_SHIELD_1's resources and modifier (componentTemplateResources)", () => {
+    // SDK-31: utility_component_template/weapon_component_template/
+    // strike_craft_component_template had no CONTENT_FIELD_OVERRIDES rows for
+    // resources/modifier/ship_modifier/ship_design_modifier/
+    // triggered_ship_modifier/triggered_ship_design_modifier, so the writer —
+    // which only iterates a registry's declared ContentField[] — silently
+    // dropped all of them. A ported SMALL_SHIELD_1 occupied a slot, cost
+    // nothing, and granted nothing; this is that repro, now fixed.
+    //
+    // Each registry renders through its own buildMod call rather than a
+    // shared collection: all three share one output file
+    // (common/component_templates/<prefix>_component_templates.txt), and
+    // `render` writes one `ContentFile` per relPath with a plain `Map.set`
+    // rather than an append — a real, pre-existing collision this ticket did
+    // not introduce and does not fix, filed separately.
+    const shield = defineUtilityComponentTemplate({
+      id: "ctr_test_small_shield_1",
+      icon: "GFX_shield_1",
+      power: 6,
+      size: "small",
+      resources: [{ category: "ship_components", cost: { amounts: { alloys: 20 } } }],
+      modifier: (m) => m.unchecked("ship_shield_hit_points_add", 200),
+    });
+    const utilityRendered = render(
+      buildMod(configFor("Component template resources test", "ctr_test"), [
+        collection(undefined, [shield]),
+      ])
+    ).get("common/component_templates/ctr_test_component_templates.txt")!;
+    expect(utilityRendered).toContain(
+      "resources = {\n\t\tcategory = ship_components\n\t\tcost = {\n\t\t\talloys = 20\n\t\t}\n\t}"
+    );
+    expect(utilityRendered).toContain("modifier = {\n\t\tship_shield_hit_points_add = 200\n\t}");
+
+    const weapon = defineWeaponComponentTemplate({
+      id: "ctr_test_weapon_1",
+      icon: "GFX_weapon_1",
+      resources: [{ category: "ship_weapon_components", cost: { amounts: { alloys: 10 } } }],
+      shipModifier: (m) => m.unchecked("ship_weapon_damage_mult", 0.1),
+      shipDesignModifier: (m) => m.unchecked("design_ship_weapon_damage_mult", 0.1),
+    });
+    const weaponRendered = render(
+      buildMod(configFor("Component template resources test", "ctr_test"), [
+        collection(undefined, [weapon]),
+      ])
+    ).get("common/component_templates/ctr_test_component_templates.txt")!;
+    expect(weaponRendered).toContain(
+      "resources = {\n\t\tcategory = ship_weapon_components\n\t\tcost = {\n\t\t\talloys = 10\n\t\t}\n\t}"
+    );
+    expect(weaponRendered).toContain("ship_modifier = {\n\t\tship_weapon_damage_mult = 0.1\n\t}");
+    expect(weaponRendered).toContain(
+      "ship_design_modifier = {\n\t\tdesign_ship_weapon_damage_mult = 0.1\n\t}"
+    );
+
+    // strike_craft_component_template declares only resources and
+    // ship_modifier (components.cwt:332-343), not modifier.
+    const strikeCraft = defineStrikeCraftComponentTemplate({
+      id: "ctr_test_strike_craft_1",
+      icon: "GFX_strike_craft_1",
+      resources: [{ category: "ship_components", cost: { amounts: { alloys: 15 } } }],
+      shipModifier: (m) => m.unchecked("ship_hull_add", 10),
+    });
+    const strikeCraftRendered = render(
+      buildMod(configFor("Component template resources test", "ctr_test"), [
+        collection(undefined, [strikeCraft]),
+      ])
+    ).get("common/component_templates/ctr_test_component_templates.txt")!;
+    expect(strikeCraftRendered).toContain(
+      "resources = {\n\t\tcategory = ship_components\n\t\tcost = {\n\t\t\talloys = 15\n\t\t}\n\t}"
+    );
+    expect(strikeCraftRendered).toContain("ship_modifier = {\n\t\tship_hull_add = 10\n\t}");
   });
 
   it("lowers every arm of a dual declaration by what the author passed", () => {
