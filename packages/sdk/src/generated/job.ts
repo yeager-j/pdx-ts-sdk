@@ -23,7 +23,14 @@ export interface JobSwappableDataDefault {
 }
 
 export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
-  { key: "desc", member: "desc", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "desc",
+    member: "desc",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "ref" },
   {
     key: "building_icon",
@@ -38,6 +45,7 @@ export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
 ];
 
@@ -54,7 +62,14 @@ export interface JobSwappableDataSwapType {
 export const JOB_SWAPPABLE_DATA_SWAP_TYPE_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   { key: "name", member: "name", shape: "value", form: "scalar", conversion: "ref" },
-  { key: "desc", member: "desc", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "desc",
+    member: "desc",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   { key: "icon", member: "icon", shape: "value", form: "scalar", conversion: "ref" },
   {
     key: "building_icon",
@@ -69,6 +84,7 @@ export const JOB_SWAPPABLE_DATA_SWAP_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "weight",

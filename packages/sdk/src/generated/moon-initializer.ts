@@ -113,7 +113,14 @@ export interface MoonInitializerFields {
 }
 
 export const MOON_INITIALIZER_FIELDS: readonly ContentField[] = [
-  { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "name",
+    member: "name",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "count",
     member: "count",

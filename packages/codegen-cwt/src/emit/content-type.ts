@@ -18,6 +18,7 @@ import {
   REPEATED_STRUCT_DEFINITIONS,
   REPEATED_STRUCT_FIELD_OVERRIDES,
   REQUIRED_LOCALISATION,
+  SYNTHETIC_LOCALISATION,
   type RepeatedStructDefinition,
 } from "../overlay.ts";
 import {
@@ -110,6 +111,10 @@ function syntheticIdentityLocalisation(typeName: string): ContentType {
  * patterns. Emitting one interface member per surviving entry means either
  * collision left standing would be a duplicate TypeScript property, so the
  * first-declared entry wins and the rest collapse to aliases.
+ *
+ * {@link SYNTHETIC_LOCALISATION} adds slots the rules never declare at all,
+ * after the rules-derived collapse — a synthetic row never displaces a real
+ * declared slot, it only fills a gap one leaves.
  */
 function planLocalisation(type: ContentType): LocalisationPlan {
   const byPattern = new Map<string, ContentType["localisation"][number]>();
@@ -146,6 +151,13 @@ function planLocalisation(type: ContentType): LocalisationPlan {
     }
     byPattern.set(entry.pattern, entry);
     byMember.set(member, entry);
+  }
+  for (const [path, synthetic] of SYNTHETIC_LOCALISATION) {
+    const [typeName, member] = path.split(".");
+    if (typeName !== type.name || byMember.has(member!)) {
+      continue;
+    }
+    byMember.set(member!, { key: member!, pattern: synthetic.pattern, required: false });
   }
   return { entries: [...byMember.values()], aliases };
 }

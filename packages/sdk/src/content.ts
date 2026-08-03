@@ -255,6 +255,15 @@ interface ContentRefTypes {
 interface ContentValueField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "value";
   readonly conversion: "identity" | "ref";
+  /**
+   * The rules type this field's raw value as a localisation key rather than
+   * free text (CWT's bare `= localisation`, distinct from a `"$"`-pattern
+   * slot the {@link ContentLocalisation} pipeline auto-generates a key for).
+   * `contentScalar` uses it to warn when an authored value looks like prose
+   * rather than a key (SDK-50) — the game shows an unresolved key verbatim,
+   * with no error, so this is the closest the SDK can get to catching it.
+   */
+  readonly locKey?: true;
 }
 
 interface ContentValueListField extends ContentFieldBase, ContentRefTypes {
@@ -1205,13 +1214,15 @@ export class ContentAuthoring {
   private readonly registerLoc: RegisterLoc;
   private readonly onPrefixViolation: (message: string) => void;
   private readonly onUnstableDescKey: (message: string) => void;
+  private readonly onLocKeyLooksLikeText: (message: string) => void;
 
   constructor(
     prefix: string,
     descriptors: readonly ContentRegistryDescriptor[],
     registerLoc: RegisterLoc,
     onPrefixViolation?: (message: string) => void,
-    onUnstableDescKey?: (message: string) => void
+    onUnstableDescKey?: (message: string) => void,
+    onLocKeyLooksLikeText?: (message: string) => void
   ) {
     this.prefix = prefix;
     this.descriptors = descriptors;
@@ -1223,6 +1234,11 @@ export class ContentAuthoring {
         throw new Error(message);
       });
     this.onUnstableDescKey = onUnstableDescKey ?? (() => {});
+    // A warning, not an invariant: the SDK cannot know whether the string is
+    // really prose or a real (if unconventional) key, so the no-op default
+    // does not reject anything a direct `ContentAuthoring` caller writes.
+    // `buildMod` supplies the callback that surfaces it on `mod.warnings`.
+    this.onLocKeyLooksLikeText = onLocKeyLooksLikeText ?? ((): void => {});
   }
 
   define<K extends string, D extends ContentDef>(type: K, rawDef: D): DefinedContent<K, D> {
@@ -1312,15 +1328,17 @@ export class ContentAuthoring {
 
   /**
    * Walks every field level (top, plain `struct` nesting, and `repeatedStruct`
-   * nesting) for the two things that need a stable identity to resolve
-   * against: repeated-struct ids (prefix and duplicate checks, matched
-   * against localisation) and `WeightBlock`/`WeightBlockWithLoc` modifier
-   * rows carrying `desc` (registered as localisation via
-   * {@link collectModifierDescs}). `ownerId` is the nearest enclosing
-   * identity — the definition id, or a repeated-struct entry's own id once
-   * recursion crosses one — and `path` accumulates plain `struct` field keys
-   * since the last identity, so a modifier's generated key is unique even
-   * when a WeightBlock sits several `struct` levels deep.
+   * nesting) for three things that need this same recursive descent:
+   * repeated-struct ids (prefix and duplicate checks, matched against
+   * localisation), `WeightBlock`/`WeightBlockWithLoc` modifier rows carrying
+   * `desc` (registered as localisation via {@link collectModifierDescs}), and
+   * `locKey`-tagged scalar values that look like literal text rather than a
+   * localisation key (SDK-50, via {@link onLocKeyLooksLikeText}). `ownerId` is
+   * the nearest enclosing identity — the definition id, or a repeated-struct
+   * entry's own id once recursion crosses one — and `path` accumulates plain
+   * `struct` field keys since the last identity, so a modifier's generated key
+   * (and a loc-key warning's field path) stays unique even several `struct`
+   * levels deep.
    */
   private collectRepeatedStructs(
     ownerId: string,
@@ -1339,6 +1357,19 @@ export class ContentAuthoring {
         continue;
       }
       const fieldPath = path === "" ? field.key : `${path}_${field.key}`;
+      if (field.shape === "value" && field.locKey === true) {
+        const values = field.repeated ? (raw as readonly unknown[]) : [raw];
+        for (const item of values) {
+          if (typeof item === "string" && item.includes(" ")) {
+            this.onLocKeyLooksLikeText(
+              `${ownerType}.${fieldPath} for "${ownerId}" is a localisation key, not free text, ` +
+                `but contains a space: ${JSON.stringify(item)}. The game shows this string ` +
+                "verbatim if no localisation entry defines that key."
+            );
+          }
+        }
+        continue;
+      }
       if (field.shape === "weightBlock" || field.shape === "weightBlockWithLoc") {
         this.collectModifierDescs(ownerId, fieldPath, raw as WeightBlock<ScopeName>, localisation);
         continue;

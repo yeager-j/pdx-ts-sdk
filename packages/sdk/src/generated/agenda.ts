@@ -64,6 +64,7 @@ export const AGENDA_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   { key: "init_effect", member: "initEffect", shape: "effect", form: "closure" },
   { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },

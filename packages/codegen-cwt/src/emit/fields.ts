@@ -622,9 +622,18 @@ function lowerValue(
         ? "false"
         : value.type;
   const base = literalType + (widening === undefined ? "" : ` | ${widening}`);
+  // `field.type.kind === "localisation"` is CWT's own way of typing a plain
+  // body field as "this value is a localisation key, not free text" — the
+  // same RuleType `job.condition_string` and `global_ship_design`'s name_field
+  // pointer both use. It lowers to the same `string`, `conversion: "identity"`
+  // shape ordinary scalars do (`emit/types.ts`'s `valueFor`), so nothing
+  // downstream can otherwise tell "raw key" from "any other string field" —
+  // `locKey: true` is that signal, consumed by the runtime's
+  // `onLocKeyLooksLikeText` check (SDK-50).
+  const locKeyExtra = field.type.kind === "localisation" ? ["locKey: true"] : [];
   return {
     memberType: repeated ? arrayType(base) : base,
-    metadata: metadata(field, name, "value", scalarMetadata(value)),
+    metadata: metadata(field, name, "value", [...scalarMetadata(value), ...locKeyExtra]),
     // A widening opens the set: it exists precisely to admit forms the rules do
     // not name, so the closed arm no longer describes everything legal.
     admits: admitsScalars(field, "value", widening === undefined ? value : null),

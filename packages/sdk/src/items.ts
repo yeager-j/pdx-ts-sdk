@@ -23,7 +23,11 @@ import type { OnActionRef } from "./on-actions.ts";
 import type { PatchedTechnology } from "./vanilla/patch.ts";
 
 export interface ModWarning {
-  readonly code: "missing-prefix" | "loc-quote-replaced" | "unstable-desc-key";
+  readonly code:
+    | "missing-prefix"
+    | "loc-quote-replaced"
+    | "unstable-desc-key"
+    | "loc-key-looks-like-text";
   readonly message: string;
 }
 

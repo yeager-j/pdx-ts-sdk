@@ -277,7 +277,14 @@ export type DefinedSolarSystemInitializer<Id extends string = string> = DefinedC
 >;
 
 export const SOLAR_SYSTEM_INITIALIZER_FIELDS: readonly ContentField[] = [
-  { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "name",
+    member: "name",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   { key: "namelist", member: "namelist", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "class",

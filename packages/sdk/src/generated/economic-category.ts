@@ -199,6 +199,7 @@ export const ECONOMIC_CATEGORY_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "generate_add_modifiers",

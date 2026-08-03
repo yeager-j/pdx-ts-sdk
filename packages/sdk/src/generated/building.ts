@@ -23,7 +23,14 @@ export interface BuildingDesc {
 
 export const BUILDING_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
 ];
 
 export interface BuildingTriggeredDesc {
@@ -33,7 +40,14 @@ export interface BuildingTriggeredDesc {
 
 export const BUILDING_TRIGGERED_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
 ];
 
 /**
@@ -404,6 +418,7 @@ export const BUILDING_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
 ];
 

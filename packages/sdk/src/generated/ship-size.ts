@@ -514,6 +514,7 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   { key: "entity", member: "entity", shape: "value", form: "scalar", conversion: "ref" },
   {
@@ -966,6 +967,7 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "is_bio_ship",
@@ -980,6 +982,7 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "growth_stage_descriptor",
@@ -987,6 +990,7 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "bioship_growth_progress_required",

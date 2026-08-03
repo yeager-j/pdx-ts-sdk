@@ -413,6 +413,55 @@ export const CONDITIONALLY_REQUIRED_LOCALISATION = new Map<string, ConditionalLo
   ],
 ]);
 
+export interface SyntheticLocalisation {
+  /** The `$`-bearing pattern to synthesize, e.g. `"$_desc"`. */
+  readonly pattern: string;
+  readonly reason: string;
+}
+
+/**
+ * A localisation slot the rules never declare at all, added because the
+ * registry needs the same real, auto-keyed authoring path a sibling registry
+ * gets for free from the rules.
+ *
+ * `archaeological_site_type` is the case this exists for (SDK-50).
+ * `type[archaeological_site_type].localisation` (archaeology.cwt:5-8) declares
+ * only `name = "$"` and `desc = desc` — a bare pointer with no `$`, meaning
+ * `planLocalisation` excludes it outright (same rule SDK-44's `name = name`
+ * fix relies on) and the registry ends up with *no* slot where an author can
+ * write real flavor text and get a generated key. The body's own `desc` field
+ * (`archaeology.cwt:44`, dual with the `triggered_desc_clause` block form,
+ * renamed to `conditionalDesc` by the `CONTENT_FIELD_OVERRIDES` row beside
+ * this one) is `conversion: "identity"` either way its dual resolves — a raw
+ * key, never auto-generated — so writing English into it is accepted and
+ * silently wrong: no warning, no error, the game shows the literal string.
+ * `situation_type`, by contrast, needs no such row: situations.cwt:17 already
+ * declares `desc = "$_desc"` *alongside* the same bare `desc = desc` pointer
+ * (:18), so the real slot already exists there and the pointer simply loses
+ * the member-name collision — evidence this is a genuine asymmetry in the
+ * vendored rules, not a design position the SDK is second-guessing.
+ *
+ * A row here does not claim the game reads a `<id>_desc` key today — it adds
+ * one, matching the convention every other `desc`-bearing registry in
+ * {@link REQUIRED_LOCALISATION}'s neighborhood already follows, and gives
+ * `conditionalDesc`'s raw-key arms (the top-level scalar and
+ * `ArchaeologicalSiteTypeDesc.text`) a genuine optional escape hatch instead
+ * of being the only route.
+ */
+export const SYNTHETIC_LOCALISATION = new Map<string, SyntheticLocalisation>([
+  [
+    "archaeological_site_type.desc",
+    {
+      pattern: "$_desc",
+      reason:
+        "archaeology.cwt declares no `$`-bearing pattern for desc at all (only the excluded " +
+        'bare pointer `desc = desc`), unlike situation_type\'s `desc = "$_desc"` sitting beside ' +
+        "its own identical pointer — so archaeological_site_type has no real flavor-text slot " +
+        "without this row. See SDK-50.",
+    },
+  ],
+]);
+
 /**
  * Fields the emitter can lower but that review has decided not to emit, with
  * the reason.
@@ -616,6 +665,17 @@ export interface ContentFieldOverride {
  * localization identity.
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+  [
+    "archaeological_site_type.desc",
+    {
+      member: "conditionalDesc",
+      reason:
+        "The dual of the bare identity-conversion scalar and the desc key's repeated " +
+        "trigger+text block form (both raw-key arms, archaeology.cwt:44+48); renamed so it does " +
+        "not collide with the desc flavor-text localisation slot SYNTHETIC_LOCALISATION adds " +
+        "(SDK-50). Named like building.desc for consistency.",
+    },
+  ],
   [
     "building.desc",
     {

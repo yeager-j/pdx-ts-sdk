@@ -20,7 +20,14 @@ export interface ArchaeologicalSiteTypeDesc {
 
 export const ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
 ];
 
 export interface ArchaeologicalSiteTypeStageDifficulty {
@@ -89,10 +96,12 @@ export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS: readonly ContentField[] = [
 export interface ArchaeologicalSiteTypeFields {
   /** English text emitted to localization under `<id>`. */
   name: string;
+  /** English text emitted to localization under `<id>_desc`. */
+  desc?: string;
   /** GFX_* sprite key for the sites image */
   picture?: SpriteRef | string;
   /** Description generator for the site, with scope this=archaeological site. */
-  desc?: string | ArchaeologicalSiteTypeDesc[];
+  conditionalDesc?: string | ArchaeologicalSiteTypeDesc[];
   situationLogCategory?: SituationLogCategoryRef | string;
   /** Max instances of this type a galaxy can have, only checked when using 'create_archaeological_site = random' */
   maxInstances?: number;
@@ -140,13 +149,20 @@ export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
   },
   {
     key: "desc",
-    member: "desc",
+    member: "conditionalDesc",
     shape: "dual",
     arms: [
-      { key: "desc", member: "desc", shape: "value", form: "scalar", conversion: "identity" },
       {
         key: "desc",
-        member: "desc",
+        member: "conditionalDesc",
+        shape: "value",
+        form: "scalar",
+        conversion: "identity",
+        locKey: true,
+      },
+      {
+        key: "desc",
+        member: "conditionalDesc",
         shape: "struct",
         form: "list",
         fields: ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS,
@@ -204,4 +220,5 @@ export const ARCHAEOLOGICAL_SITE_TYPE_FIELDS: readonly ContentField[] = [
 
 export const ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION: readonly ContentLocalisation[] = [
   { member: "name", pattern: "$", required: true },
+  { member: "desc", pattern: "$_desc", required: false },
 ];

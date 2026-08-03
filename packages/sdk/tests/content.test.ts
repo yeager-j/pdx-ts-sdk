@@ -1854,6 +1854,69 @@ describe("SDK-44: conditionally-required localization and the global_ship_design
   });
 });
 
+describe("SDK-50: identity-conversion text fields", () => {
+  it("gives archaeological_site_type.desc a real text slot, distinct from the raw-key conditionalDesc", () => {
+    const site = defineArchaeologicalSiteType({
+      id: "sdk50_archaeological_site_type_desc",
+      name: "Sdk50 Site",
+      desc: "A crumbling ruin, half swallowed by the dust.",
+      allow: always(),
+      visible: always(),
+      stages: 1,
+      onRollFailed: () => {},
+    });
+    const files = render(
+      buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])])
+    );
+    const rendered = files.get(
+      "common/archaeological_site_types/sdk50_archaeological_site_types.txt"
+    )!;
+    // The raw prose never lands in the script file as a key.
+    expect(rendered).not.toContain("A crumbling ruin");
+    expect(files.get("localisation/english/sdk50_l_english.yml")).toContain(
+      'sdk50_archaeological_site_type_desc_desc:0 "A crumbling ruin, half swallowed by the dust."'
+    );
+  });
+
+  it("warns when a locKey-tagged field looks like literal text (sdk50IdentityLocalisation)", () => {
+    // conditionalDesc's scalar arm is conversion: "identity" — a raw key, by
+    // design (it duals with the triggered_desc_clause block form). Writing
+    // English into it used to fail silently; it now warns.
+    const site = defineArchaeologicalSiteType({
+      id: "sdk50_archaeological_site_type_loc_key_warning",
+      name: "Sdk50 Site",
+      conditionalDesc: "this looks like a sentence, not a key",
+      allow: always(),
+      visible: always(),
+      stages: 1,
+      onRollFailed: () => {},
+    });
+    const mod = buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])]);
+    expect(mod.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "loc-key-looks-like-text",
+          message: expect.stringContaining("this looks like a sentence, not a key"),
+        }),
+      ])
+    );
+  });
+
+  it("does not warn when a locKey-tagged field looks like a real key", () => {
+    const site = defineArchaeologicalSiteType({
+      id: "sdk50_archaeological_site_type_real_key",
+      name: "Sdk50 Site",
+      conditionalDesc: "SDK50_REAL_LOC_KEY",
+      allow: always(),
+      visible: always(),
+      stages: 1,
+      onRollFailed: () => {},
+    });
+    const mod = buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])]);
+    expect(mod.warnings).toEqual([]);
+  });
+});
+
 /**
  * Runtime serialization evidence for widenedLowering (SDK-33, SDK-47).
  *

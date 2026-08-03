@@ -27,6 +27,7 @@ export const WAR_GOAL_FORBIDDEN_PEACE_OFFERS_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "status_quo",
@@ -34,8 +35,16 @@ export const WAR_GOAL_FORBIDDEN_PEACE_OFFERS_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
-  { key: "surrender", member: "surrender", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "surrender",
+    member: "surrender",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
 ];
 
 /**

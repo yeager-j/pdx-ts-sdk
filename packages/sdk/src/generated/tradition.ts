@@ -72,6 +72,7 @@ export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   {
@@ -80,6 +81,7 @@ export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
@@ -159,6 +161,7 @@ export const TRADITION_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   {
@@ -167,6 +170,7 @@ export const TRADITION_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   {
