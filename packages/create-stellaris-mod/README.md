@@ -52,30 +52,35 @@ vanilla ids as unchecked strings.
 npx create-stellaris-mod my-mod --local ~/code/pdx-sdk
 ```
 
-That writes `file:` dependencies, which npm materializes as symlinks — and the
-symlink is load-bearing. Node **refuses to strip types from any file under
-`node_modules`**, and the SDK's `exports` currently point at raw `.ts` sources;
-a symlink's realpath escapes `node_modules`, so stripping applies and the
-project builds. A registry install would produce a real directory and fail at
-the first import. Making the SDK publishable — built JS plus `.d.ts` — is
-tracked separately.
+That writes `file:` dependencies pointing at the checkout. **Build it first** —
+`npm run build` in the pdx-sdk root — because a scaffolded project consumes
+those packages through their published `exports`, which resolve to `dist/`. The
+repo skips that internally with a `pdx-source` export condition it passes to
+tsc, Node and Vite; a scaffolded project is an ordinary consumer and does not.
+The CLI checks, and names the command if the checkout is unbuilt.
 
 ## Why this package has a build step
 
-It is the only one in the workspace that does, and the reason is the same fact:
-`npx` installs a CLI into a real `node_modules`, so a `.ts` entry point would
-fail at load with `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING` — before any of
-its own code could parse, let alone print something helpful. Compiling also
-lets `engines` say `>=20` rather than `>=22.18`; only the *generated project*
-still needs type stripping, and it declares that itself.
+Every publishable package here builds now, for one shared reason: Node refuses
+to strip types from anything under `node_modules`, so a package shipping raw
+`.ts` dies at a consumer's first import. For this package the consequence is
+sharper still — `npx` installs a CLI into exactly that directory, so a `.ts`
+entry point would fail at *load*, before any of its own code could parse, let
+alone print something helpful. Compiling also lets `engines` say `>=20` rather
+than `>=22.18`; only the *generated project* still needs type stripping, and it
+declares that itself.
 
 ## Development
 
 ```bash
-node packages/create-stellaris-mod/src/bin.ts --help
-node packages/create-stellaris-mod/src/bin.ts --dry-run --yes /tmp/demo
-npm test    # from the repo root
+npm run scaffold -- --help                    # from the repo root
+npm run scaffold -- --dry-run --yes /tmp/demo
+npm test
 ```
+
+The `scaffold` script exists because running `src/bin.ts` directly needs
+`node --conditions=pdx-source`, the condition that resolves workspace packages
+to their sources rather than the `dist/` they publish.
 
 `src/plan.ts` is pure — a resolved config in, a path-to-contents map out,
 deliberately the same shape as the SDK's own `render` — so most assertions run

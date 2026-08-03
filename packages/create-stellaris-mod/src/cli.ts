@@ -5,6 +5,7 @@
  * `process.exit`, so the tests can drive the whole thing in-process.
  */
 
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { toPackageName } from "./derive.ts";
@@ -71,6 +72,7 @@ export async function main(argv: readonly string[], cwd = process.cwd()): Promis
   }
 
   try {
+    checkLocalCheckout(resolved.localSdk);
     await preflight(targetDir);
     await writeTree(targetDir, files);
   } catch (error) {
@@ -104,6 +106,32 @@ function shortestPath(targetDir: string, cwd = process.cwd()): string {
     return ".";
   }
   return relative.startsWith("..") && relative.length >= targetDir.length ? targetDir : relative;
+}
+
+/**
+ * `--local` writes `file:` dependencies at a checkout, and npm materializes
+ * those as symlinks — but the generated project resolves those packages through
+ * their published `exports`, which point at `dist/`. The repo itself skips that
+ * via a `pdx-source` condition it passes internally; a scaffolded project is a
+ * consumer and does not. So the checkout has to have been built.
+ *
+ * Saying so here turns a confusing "cannot find module" at the author's first
+ * build into one sentence naming the command that fixes it.
+ */
+function checkLocalCheckout(localSdk: string | undefined): void {
+  if (localSdk === undefined) {
+    return;
+  }
+  const missing = ["sdk", "sdk-testing", "pdxscript"].filter(
+    (pkg) => !existsSync(path.join(localSdk, "packages", pkg, "dist"))
+  );
+  if (missing.length > 0) {
+    throw new Error(
+      `${localSdk} has not been built, so ${missing.map((p) => `@pdx-ts/${p}`).join(", ")} ` +
+        `would resolve to a dist/ that does not exist.\n\n  cd ${localSdk} && npm run build\n\n` +
+        `then re-run this command.`
+    );
+  }
 }
 
 function plannedCommands(resolved: Resolved): string[] {

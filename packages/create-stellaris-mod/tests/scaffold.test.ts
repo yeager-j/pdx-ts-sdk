@@ -6,8 +6,8 @@
  * produce. This is what pays that back — and it is a stronger check than
  * typechecking a template directory would have been, because it checks the
  * *interpolated* result. It is also the only thing that proves the generated
- * tsconfig can typecheck the SDK's raw-`.ts` exports from inside a consumer
- * program, which is the likeliest thing to be subtly wrong.
+ * tsconfig can typecheck against the SDK's published `.d.ts` from inside a
+ * consumer program, which is the likeliest thing to be subtly wrong.
  *
  * The workspace packages are installed from real `npm pack` tarballs, unpacked
  * into `node_modules` as ordinary directories. That is the point, and it is not
@@ -125,8 +125,6 @@ afterAll(() => {
 
 describe("a scaffolded project", () => {
   it("typechecks with the toolchain it asked for", () => {
-    // `skipLibCheck` does not save this: while the SDK ships raw `.ts`, the
-    // consumer's program compiles SDK *sources*, not declarations.
     expect(() =>
       runIn(projectDir, path.join(projectDir, "node_modules/.bin/tsc"), ["--noEmit"])
     ).not.toThrow();

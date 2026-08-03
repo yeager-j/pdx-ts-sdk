@@ -33,9 +33,8 @@ function json(value: unknown): string {
 /**
  * `@pdx-ts/sdk` and `@pdx-ts/pdxscript` resolve either from the registry or
  * from a local checkout. The local form exists because the packages are not
- * published yet, and it is not a hack: npm materializes a `file:` dependency as
- * a symlink, whose realpath escapes `node_modules`, which is the only reason
- * Node will strip types from the SDK's raw `.ts` sources at all.
+ * published yet; either way the project consumes their built `dist/`, so a
+ * `--local` checkout has to have been built (the CLI checks, and says so).
  */
 function sdkDependencies(resolved: Resolved): Record<string, string> {
   if (resolved.localSdk === undefined) {
