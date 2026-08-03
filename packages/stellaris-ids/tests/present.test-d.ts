@@ -31,7 +31,7 @@ import {
   type VanillaTries,
 } from "@pdx-ts/sdk";
 
-import { setMerchantGovernmentEffect } from "../src/effects.ts";
+import { giveTechNoErrorEffect, setMerchantGovernmentEffect } from "../src/effects.ts";
 import {
   canColonizePlanetTrigger,
   hasAnyMegastructureInEmpire,
@@ -218,6 +218,16 @@ describe("the generated bindings", () => {
     expectTypeOf(hasCrisisStage({ STAGE: vanilla.resource("energy") })).toEqualTypeOf<
       Trigger<ScopeName>
     >();
+  });
+
+  it("accepts a boolean where the game reads the substitution as yes/no", () => {
+    // The package types every parameter `string | number` — it cannot know a
+    // slot is boolean — but vanilla writes `give_tech_no_error_effect = {
+    // MESSAGE = no }` at 51 sites. The SDK widens so `true` means here what it
+    // means everywhere else rather than needing `"yes"` in this one position.
+    expectTypeOf(
+      giveTechNoErrorEffect({ MESSAGE: false, TECH: vanilla.technology("tech_lasers_1") })
+    ).toEqualTypeOf<ScriptedEffectCall<"country">>();
   });
 
   it("carries a multi-scope definition as the union the inference derived", () => {

@@ -16,6 +16,7 @@ import { loadScopeFacts, type RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts
 
 import {
   bindingsFile,
+  compareIdentifiers,
   createChokepoint,
   emitAugment,
   emitIdUnion,
@@ -30,7 +31,7 @@ import {
   trieIndexFile,
   type AugmentPlan,
 } from "./emit.ts";
-import { inferScopes, type Registry } from "./infer-scopes.ts";
+import { inferScopes, type InferredScope, type Registry } from "./infer-scopes.ts";
 import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./manifest.ts";
 import { readRegistryIds } from "./read-ids.ts";
 import { readScriptedDefinitions } from "./read-scripted.ts";
@@ -97,6 +98,20 @@ export interface ScriptedReport {
    * bindings quietly got weaker rather than wrong.
    */
   readonly scopeSizes: ReadonlyMap<number, number>;
+  /**
+   * Body keys the CWT rules do not cover, and how many definitions each cost a
+   * narrowing, most expensive first. This is what makes `scopeSizes` actionable:
+   * the share says coverage moved, and this says which key moved it. A game
+   * patch that introduces a new keyword shows up here as one name at the top.
+   */
+  readonly unknownKeys: readonly (readonly [string, number])[];
+  /**
+   * Definitions whose scope intersection went empty and fell back to
+   * unconstrained. Each is either a genuinely multi-scope definition — one that
+   * branches on `is_scope_type` at runtime — or a shape the analysis mishandles,
+   * and the fallback hides which, so they are named rather than counted.
+   */
+  readonly emptied: readonly string[];
   /** Definitions whose camelCased name collided and took a numbered suffix. */
   readonly renamed: readonly string[];
 }
@@ -112,6 +127,49 @@ export interface VanillaReport {
   readonly identifiersChecked: number;
   /** Always zero: a rejection throws and there is no output to report on. */
   readonly rejections: number;
+}
+
+/** How many definitions to name in the report before the tail is noise. */
+const REPORTED_UNKNOWN_KEYS = 25;
+
+/**
+ * Turns the inference's per-definition diagnostics into the two aggregates the
+ * report needs.
+ *
+ * Without these, a regeneration can show that inferred-scope coverage collapsed
+ * and give no way to find out why — which is the opposite of what `AGENTS.md`
+ * asks of this report. A widening is never a wrong binding, so it is not a
+ * build failure; it is exactly the kind of quiet weakening that needs a name
+ * attached to be actionable.
+ */
+function attribute(inferred: readonly InferredScope[]): {
+  unknownKeys: readonly (readonly [string, number])[];
+  emptied: readonly string[];
+} {
+  const unknown = new Map<string, number>();
+  const emptied: string[] = [];
+  for (const one of inferred) {
+    // Per definition, not per occurrence: the question is how many bindings a
+    // key cost, and one body naming it ten times still lost one binding.
+    const keys = new Set<string>();
+    for (const diagnostic of one.diagnostics) {
+      if (diagnostic.kind === "unknown-key") {
+        keys.add(diagnostic.detail);
+      }
+      if (diagnostic.kind === "emptied" && diagnostic.detail === one.name) {
+        emptied.push(one.name);
+      }
+    }
+    for (const key of keys) {
+      unknown.set(key, (unknown.get(key) ?? 0) + 1);
+    }
+  }
+  return {
+    unknownKeys: [...unknown]
+      .sort((left, right) => right[1] - left[1] || compareIdentifiers(left[0], right[0]))
+      .slice(0, REPORTED_UNKNOWN_KEYS),
+    emptied,
+  };
 }
 
 export function generateVanillaPackage(options: GenerateOptions): {
@@ -220,6 +278,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
       diagnostics: read.diagnostics,
       missing: read.missing,
       scopeSizes: bindings.bySize,
+      ...attribute(inferred[registry]),
       renamed: bindings.renamed,
     });
   }

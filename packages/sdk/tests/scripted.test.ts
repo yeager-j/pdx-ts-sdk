@@ -68,6 +68,17 @@ describe("lowering", () => {
     expect(serialize([...binding({ STAGE: undefined }).entries])).toBe("has_crisis_stage = yes\n");
   });
 
+  it("lowers a boolean parameter to yes/no", () => {
+    // Vanilla substitutes parameters into boolean slots at 120 call sites
+    // (`give_tech_no_error_effect = { MESSAGE = no }` and a dozen others), so
+    // `true` has to mean here what it means everywhere else in the SDK rather
+    // than forcing the author to spell it `"yes"` in this one position.
+    const binding = scriptedTrigger.unchecked("give_tech_no_error_effect", "country");
+    expect(serialize([...binding({ MESSAGE: false, LOUD: true }).entries])).toBe(
+      "give_tech_no_error_effect = {\n\tLOUD = yes\n\tMESSAGE = no\n}\n"
+    );
+  });
+
   it("unwraps branded references and scope references", () => {
     const binding = scriptedTrigger.unchecked("needs_resource", "country");
     const target = eventTarget<"planet">("colony");

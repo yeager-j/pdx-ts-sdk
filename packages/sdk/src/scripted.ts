@@ -39,7 +39,7 @@ import type { ScopeRef } from "./effect-core.ts";
 import type { TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { compareUtf8 } from "./resolver/path-order.ts";
-import { toScalar } from "./scalar.ts";
+import { toScalar, type ScalarArg } from "./scalar.ts";
 import { trigger, type Trigger } from "./trigger-core.ts";
 import type { VanillaScriptedEffects, VanillaScriptedTriggers } from "./vanilla-ids.ts";
 
@@ -70,14 +70,19 @@ export type AssertedScope<A> = [A] extends [readonly (infer Member)[]]
 // ---------------------------------------------------------------------------
 
 /**
- * What a `$PARAM$` may be given. The package types every parameter
- * `string | number`, because a scripted definition substitutes text and the
- * rules say nothing about what kind of text. Widening to the SDK's branded
- * references is ergonomics, not a claim: vanilla passes ids and scope paths
- * constantly (`RESOURCE = rare_crystals` at 111 sites), and `.id` / `.path` at
- * every call site would be noise.
+ * What a `$PARAM$` may be given: anything that lowers to one PDXScript scalar.
+ *
+ * The package types every parameter `string | number`, because a scripted
+ * definition substitutes text and the rules say nothing about what kind of
+ * text. Widening past that is ergonomics rather than a claim, and each widening
+ * is there because vanilla's own call sites need it: ids and scope paths
+ * (`RESOURCE = rare_crystals`, 111 sites), and booleans, where a parameter
+ * lands in a slot the game reads as `yes`/`no` (`MESSAGE = no`, 120 sites
+ * across `give_tech_no_error_effect`, `ethic_leader_creator` and a dozen
+ * others). Without the last, `true` — which the SDK lowers to `yes` everywhere
+ * else — would have to be spelled `"yes"` here and nowhere else.
  */
-export type ScriptedParamValue = string | number | TypedRef<string> | ScopeRef;
+export type ScriptedParamValue = ScalarArg;
 
 /**
  * The unchecked parameter bag: what a name outside the pinned set may carry.
@@ -89,7 +94,12 @@ export type ScriptedParamValue = string | number | TypedRef<string> | ScopeRef;
  */
 export type ScriptedParams = Readonly<Record<string, ScriptedParamValue | undefined>>;
 
-type Widened<P> = { readonly [K in keyof P]: P[K] | TypedRef<string> | ScopeRef };
+/**
+ * Additive on purpose. `P[K] | ScalarArg` would collapse to `ScalarArg`, since
+ * the package types every parameter `string | number` today — and would then
+ * silently widen away any parameter it ever types more narrowly.
+ */
+type Widened<P> = { readonly [K in keyof P]: P[K] | boolean | TypedRef<string> | ScopeRef };
 
 /**
  * The argument list a binding takes, resolved once where the name is known.

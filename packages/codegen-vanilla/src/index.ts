@@ -151,6 +151,16 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
   );
   reportSection("Inferred scopes", report.scripted.map(scopeLine));
   reportSection(
+    "Keys the rules do not cover, by bindings they cost a narrowing",
+    report.scripted.flatMap((one) =>
+      one.unknownKeys.map(([key, count]) => `${one.registry}: ${count} × ${key}`)
+    )
+  );
+  reportSection(
+    "Scope intersections that emptied and fell back to unconstrained",
+    report.scripted.flatMap((one) => one.emptied.map((name) => `${one.registry}: ${name}`))
+  );
+  reportSection(
     "Bindings renamed to avoid a collision",
     report.scripted.flatMap((one) => one.renamed)
   );
@@ -166,6 +176,10 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
  * collapse toward "unconstrained" is not a broken build. It means vanilla
  * started writing something the rules do not cover, the emitted types quietly
  * got weaker, and the analysis needs a look.
+ *
+ * The two sections after this one are what make that look possible: they name
+ * the keys that cost the narrowings and the definitions whose intersection
+ * emptied. A share on its own says coverage moved without saying what moved it.
  */
 function scopeLine(one: VanillaReport["scripted"][number]): string {
   const total = one.definitions;

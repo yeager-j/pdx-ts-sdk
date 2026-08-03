@@ -194,10 +194,12 @@ describe("scripted parameters", () => {
         readonly fake_defaulted: {
           readonly YEARS: string | number;
         };
+        readonly fake_dual_scope: {};
         readonly fake_no_params: {};
         readonly fake_required: {
           readonly TECH: string | number;
         };
+        readonly fake_unknown_key: {};
       }
       "
     `);
@@ -226,9 +228,40 @@ describe("scripted parameters", () => {
 
   it("counts definitions and parameterized definitions", () => {
     expect(generated.report.scripted).toMatchObject([
-      { registry: "scripted_trigger", definitions: 4, parameterized: 3, files: 2 },
+      { registry: "scripted_trigger", definitions: 6, parameterized: 3, files: 2 },
       { registry: "scripted_effect", definitions: 2, parameterized: 1, files: 1 },
     ]);
+  });
+});
+
+describe("inferred scopes", () => {
+  const triggers = generated.report.scripted.find((one) => one.registry === "scripted_trigger")!;
+
+  it("binds each definition at the scope its body supports", () => {
+    // `fake_no_params` is one country-scoped key, so it narrows. The two
+    // widening cases below do not, and every binding is emitted either way.
+    expect(file("triggers.ts")).toContain(
+      'export const fakeNoParams = /*#__PURE__*/ scriptedTrigger("fake_no_params", "country");'
+    );
+    expect(file("triggers.ts")).toContain(
+      'export const fakeUnknownKey = /*#__PURE__*/ scriptedTrigger("fake_unknown_key", "any");'
+    );
+    expect(file("triggers.ts")).toContain(
+      'export const fakeDualScope = /*#__PURE__*/ scriptedTrigger("fake_dual_scope", "any");'
+    );
+  });
+
+  it("names the key that cost a narrowing, not just the count", () => {
+    // A coverage share on its own says something moved without saying what.
+    // After a game patch this is the line that turns "the numbers dropped" into
+    // a keyword to go look at.
+    expect(triggers.unknownKeys).toEqual([["some_key_no_rule_declares", 1]]);
+  });
+
+  it("names the definitions whose intersection emptied", () => {
+    // ∅ falls back to unconstrained, which is right and also indistinguishable
+    // in the output from "the rules said nothing" — so it is reported by name.
+    expect(triggers.emptied).toEqual(["fake_dual_scope"]);
   });
 });
 
