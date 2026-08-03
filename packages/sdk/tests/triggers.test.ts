@@ -67,6 +67,15 @@ describe("trigger builders", () => {
     `);
   });
 
+  it("a.and(b) is and(a, b): same tree, fluent spelling", () => {
+    // SDK-53: `Trigger` had no methods, so `someTrigger.and(other)` used to
+    // fail with "Property 'and' does not exist on type 'Trigger<...>'" — a
+    // compile error, not a runtime one (see scope-safety.test-d.ts).
+    const fluent = hasCountryFlag("ascended").and(yearsPassed(">=", 50));
+    const free = and(hasCountryFlag("ascended"), yearsPassed(">=", 50));
+    expect(serialize([...fluent.entries])).toBe(serialize([...free.entries]));
+  });
+
   it("splices hidden_trigger operands flat, changing no scope", () => {
     // Tooltip visibility, not logic: the conditions still have to hold, and
     // the block changes no scope — so it takes conditions rather than a

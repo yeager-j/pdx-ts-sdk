@@ -1,4 +1,4 @@
-import type { PdxEntry } from "@pdx-ts/pdxscript";
+import { block, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "./content-refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
@@ -29,7 +29,7 @@ declare const triggerNotCalled: unique symbol;
  * The call signature exists purely to poison truthiness — `if (someTrigger)`
  * is a compile error, and calling the trigger throws.
  */
-export interface Trigger<in S extends ScopeName = ScopeName> {
+export interface Trigger<S extends ScopeName = ScopeName> {
   (): TriggerNotCalled;
   readonly kind: "trigger";
   readonly entries: readonly PdxEntry[];
@@ -40,6 +40,13 @@ export interface Trigger<in S extends ScopeName = ScopeName> {
    * rather than expecting each splice site to rediscover them.
    */
   readonly refs: readonly ContentRefUse[];
+  /**
+   * Fluent conjunction: `a.and(b, c)` builds the same tree `and(a, b, c)`
+   * does (`./triggers.ts`) — declarative, not mutating. `a`, `b`, and `c` are
+   * unchanged; the method returns a new `Trigger` and records nothing on its
+   * own, the same as every other combinator.
+   */
+  and(this: Trigger<S>, ...others: readonly Trigger<S>[]): Trigger<S>;
   readonly [scopeBrand]: (scope: S) => void;
 }
 
@@ -50,6 +57,24 @@ const POISON_MESSAGE =
   "an effect's 'limit'), or for in-game branching inside an effect closure use " +
   "scope.if(trigger, (s) => ...).elseIf(...).else(...).";
 
+/**
+ * The conjunction tree every `and`-shaped combinator builds: an `AND` block
+ * wrapping every operand's entries, in argument order. `./triggers.ts`
+ * exports this same shape as the free `and()` function; `trigger()` wires it
+ * to every value's `.and()` method so the two spellings never drift apart.
+ */
+export function conjoin<S extends ScopeName>(operands: readonly Trigger<S>[]): Trigger<S> {
+  return trigger(
+    [
+      block(
+        "AND",
+        operands.flatMap((operand) => [...operand.entries])
+      ),
+    ],
+    operands.flatMap((operand) => [...operand.refs])
+  );
+}
+
 export function trigger<S extends ScopeName>(
   entries: PdxEntry[],
   refs: readonly ContentRefUse[] = []
@@ -58,6 +83,13 @@ export function trigger<S extends ScopeName>(
     () => {
       throw new Error(POISON_MESSAGE);
     },
-    { kind: "trigger", entries, refs } as const
+    {
+      kind: "trigger",
+      entries,
+      refs,
+      and(this: Trigger<S>, ...others: readonly Trigger<S>[]): Trigger<S> {
+        return conjoin([this, ...others]);
+      },
+    } as const
   ) as unknown as Trigger<S>;
 }

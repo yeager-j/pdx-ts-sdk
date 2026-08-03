@@ -53,6 +53,17 @@ describe("scope safety", () => {
     expectTypeOf(combined).toExtend<Trigger<"country">>();
   });
 
+  it("ergonomics: a.and(b) is a method now, not a compile error", () => {
+    // SDK-53: `Trigger` had no methods, so `someTrigger.and(other)` used to
+    // fail with "Property 'and' does not exist on type 'Trigger<...>'" —
+    // the friction was a type error, not a runtime one.
+    const combined = hasCountryFlag("x").and(hasGlobalFlag("y"));
+    expectTypeOf(combined).toExtend<Trigger<"country">>();
+    countrySlot(hasCountryFlag("x").and(hasGlobalFlag("y")));
+    // @ts-expect-error — has_planet_flag is not valid in country scope; the fluent form is checked the same as and()
+    countrySlot(hasCountryFlag("x").and(hasPlanetFlag("y")));
+  });
+
   it("keeps hidden_trigger and hidden_effect at the scope that encloses them", () => {
     // Both hide from tooltips and neither changes scope, so each is checked at
     // the scope it sits in — the same rule as any other condition or effect
