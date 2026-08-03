@@ -1,20 +1,20 @@
 # Effects probe verdict: the model holds
 
 Stage 0 of the events-and-effects slice, per the
-[handoff doc](handoff-events-and-effects.md)'s suggested first probe. The
-probe lives in `design/effects-probe/` and stays there — it is the design
+[handoff doc](../handoff/handoff-events-and-effects.md)'s suggested first probe. The
+probe lives in `../../design/effects-probe` and stays there — it is the design
 record, not the implementation.
 
 ## The judgment
 
 **Recorded-closure effects hold with zero escape hatches in the mainline.**
-[probe.ts](../design/effects-probe/probe.ts) writes the nastiest realistic
+[probe.ts](../../design/effects-probe/probe.ts) writes the nastiest realistic
 case — `random_list` with weight modifiers, a nested `every_owned_planet`
 saving an event target and firing a follow-up event, the follow-up reading the
 firing country back through `FROM` — with no casts, no `any`, and no raw scope
 strings outside sanctioned type-level declarations (`eventTarget<"planet">`,
 `from: "country"`). The recorded output byte-matches a golden written by hand
-before the recorder ran ([probe.test.ts](../design/effects-probe/probe.test.ts)).
+before the recorder ran ([probe.test.ts](../../design/effects-probe/probe.test.ts)).
 
 Acceptance results:
 
@@ -72,7 +72,7 @@ Acceptance results:
 ## Deviations from the plan, for the record
 
 - Event definition got its own probe file
-  ([events-sample.ts](../design/effects-probe/events-sample.ts)) instead of
+  ([events-sample.ts](../../design/effects-probe/events-sample.ts)) instead of
   living in scopes-sample.
 - `latency-sim.ts` is gitignored; regenerate with
   `node design/effects-probe/gen-latency-sim.ts` and measure with

@@ -30,7 +30,7 @@ The gap is registries and plumbing, not the expression layer.
 ## Flat registries — the documented recipe
 
 CWT type exists, keyed by id, no new machinery expected. Each follows "Adding a
-new content type" in `AGENTS.md`: manifest entry, `CONTENT_EMITTED_FIELDS`
+new content type" in `../../AGENTS.md`: manifest entry, `CONTENT_EMITTED_FIELDS`
 allowlist, overlay rows, and three kinds of evidence.
 
 Batch 1 — empire/government:
@@ -164,7 +164,7 @@ the flat registries this has real internal structure — stages, approaches,
 
 ## Registries with no CWT type
 
-No type declaration anywhere in `vendor/cwtools-stellaris-config`, so the codegen
+No type declaration anywhere in `../../vendor/cwtools-stellaris-config`, so the codegen
 pipeline has no source to read. Each needs a deliberate decision: audited overlay
 entry, raw-emit escape hatch, or explicit non-support.
 
@@ -183,7 +183,7 @@ entry, raw-emit escape hatch, or explicit non-support.
 DoA calls `is_fallen_empire` 214 times. It is in neither the generated surface
 nor the CWT rules, because it isn't a game primitive — it's vanilla _script_, in
 `common/scripted_triggers/00_scripted_triggers.txt`. Vanilla ships ~1449 scripted
-triggers and ~1455 scripted effects there. No amount of codegen from `vendor/`
+triggers and ~1455 scripted effects there. No amount of codegen from `../../vendor`
 will produce them.
 
 This section proposed reading the install at build time via
@@ -195,7 +195,7 @@ needs an install.
 ship bound, under `@pdx-ts/stellaris-ids/triggers` and `/effects`, with names,
 `$PARAM$` lists, and scopes all checked. The handoff's ruling against inferring
 scope was reversed on a different argument — see
-[verdict-scripted-scope.md](verdict-scripted-scope.md) and the roadmap entry.
+[verdict-scripted-scope.md](../verdict/verdict-scripted-scope.md) and the roadmap entry.
 `is_fallen_empire` infers `country` exactly.
 
 ### Generalize event kinds
@@ -259,7 +259,7 @@ Diversity scripted triggers (`pd_is_planet_class_*`,
 load-order hack the resolver exists to replace.
 
 The second checkbox is the harder one: the SDK cannot see a third-party mod's
-load order from the vanilla install. Per `AGENTS.md`, `patchX` needs per-registry
+load order from the vanilla install. Per `../../AGENTS.md`, `patchX` needs per-registry
 load-order and emission verification — deliberately not free once `defineX`
 exists.
 

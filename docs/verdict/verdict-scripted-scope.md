@@ -1,7 +1,7 @@
 # Scripted-scope verdict: the inference holds, and it is not the inference the handoff rejected
 
-Stage 0 of SDK-13, per [the plan](handoff-vanilla-surface.md)'s Part 2 being
-reopened. The probe lives in `design/scripted-scope-probe/` and stays there — it
+Stage 0 of SDK-13, per [the plan](../handoff/handoff-vanilla-surface.md)'s Part 2 being
+reopened. The probe lives in `../../design/scripted-scope-probe` and stays there — it
 is the design record, not the implementation.
 
 ## The judgment
@@ -93,7 +93,7 @@ can produce a silently wrong emission, which was the whole objection.
 
 The golden is a control: it proves the walk agrees with a hand-application of
 its own rules. It cannot prove those rules match the game.
-`design/scripted-scope-probe/callsites.ts` can, in the direction that matters.
+`../../design/scripted-scope-probe/callsites.ts` can, in the direction that matters.
 An event declares its own scope in its key (`country_event` runs in country
 scope, from the generated `EVENT_KINDS`), so anything called at the top of that
 event's `trigger`, `immediate`, `after`, or `option` blocks must admit country.
@@ -164,7 +164,7 @@ have.
   false narrowing; dropping the rule widens.
 - **Cycles are answered but not memoized.** A result computed across a broken
   cycle depends on which definition the walk entered from, and caching it would
-  make the output order-dependent — which `AGENTS.md` forbids for emission and
+  make the output order-dependent — which `../../AGENTS.md` forbids for emission and
   which would be worse here, since it would be invisible.
 - **Scope names are emitted through the licensing chokepoint with their own
   context string.** `assertVanillaIdentifier` is a content filter with no notion
@@ -175,7 +175,7 @@ have.
 
 - **`TRIGGER_META` and `LINK_META` are the shipping form of
   `scope-tables.ts`.** The trigger half is currently built twice at test time —
-  once here, once in `packages/sdk/tests/codegen/corpus-conformance.test.ts`
+  once here, once in `../../packages/sdk/tests/codegen/corpus-conformance.test.ts`
   (lines 129-158). Emitting it once from `@pdx-ts/codegen-cwt` retires both
   copies, and `corpus.ts`'s `workableScopes` becomes the flat special case of
   the nesting-aware walk rather than a separate implementation.

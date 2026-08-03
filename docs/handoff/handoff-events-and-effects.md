@@ -3,7 +3,7 @@
 The next vertical. Written after the codegen slice landed, for whoever picks
 this up.
 
-Read [the README](../README.md) for how codegen works, and the design notes
+Read [the README](../../README.md) for how codegen works, and the design notes
 (`pdx-ts.md`, kept outside this repo) for the model this is trying to build. This
 file only covers what is specific to events and effects.
 

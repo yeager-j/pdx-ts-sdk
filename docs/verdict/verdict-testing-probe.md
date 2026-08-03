@@ -1,18 +1,18 @@
 # Testing probe verdict: the model holds
 
 Stage 0 of the mod-testing evaluator, per the
-[handoff doc](handoff-mod-testing.md)'s suggested first probe. The probe lives
-in `design/testing-probe/` and stays there — it is the design record, not the
+[handoff doc](../handoff/handoff-mod-testing.md)'s suggested first probe. The probe lives
+in `../../design/testing-probe` and stays there — it is the design record, not the
 implementation.
 
 ## The judgment
 
 **A whitelisted interpreter over the recorded ASTs holds, with zero casts in
 the mainline and nothing evaluated silently.**
-[probe-mod.ts](../design/testing-probe/probe-mod.ts) defines the chain with
+[probe-mod.ts](../../design/testing-probe/probe-mod.ts) defines the chain with
 the real SDK (the example mod's humReturns/aftershock shape plus a tech-grant
 follow-up);
-[probe.test.ts](../design/testing-probe/probe.test.ts) runs the handoff's
+[probe.test.ts](../../design/testing-probe/probe.test.ts) runs the handoff's
 end-to-end case — fixture with two countries and owned planets, `evaluate` +
 `explain` failing on one named subcondition, `world.fire` with a forced
 `random_list` arm, the nested iterator saving an event target, two delayed
@@ -31,7 +31,7 @@ Acceptance results:
 | Hand-written goldens byte-match | Pass, first run |
 | Unimplemented trigger throws with key + coverage summary | Pass |
 | `explain` matcher names the failing subcondition | Pass (`tp_pacifist_path` in the failure message) |
-| Full suite: `examples/` and `tests/` goldens untouched | Pass (118 tests) |
+| Full suite: `../../examples` and `tests/` goldens untouched | Pass (118 tests) |
 | One interpreter under both layers (`run()` reuses the walker unchanged) | Pass |
 
 ## Findings the probe caught (why probes exist)
@@ -45,7 +45,7 @@ Acceptance results:
    not block inference through a conditional tuple). The design that holds:
    **infer the whole event type `E` and derive both the scope kind and the
    FROM kind from it** (`EventScope<E>`, `EventFromKind<E>` in
-   [world.ts](../design/testing-probe/world.ts)), making the event the only
+   [world.ts](../../design/testing-probe/world.ts)), making the event the only
    inference site *by construction* rather than by annotation. This is the
    testing-API sibling of the effects probe's `NoInfer` finding, and the
    emitter should use the same shape if fire-effect types are ever
@@ -100,7 +100,7 @@ Acceptance results:
   (each generated leaf is one entry); no re-architecture of the combinators
   was needed for the probe.
 - **The whitelist as one audited table with defense notes**
-  ([whitelist.ts](../design/testing-probe/whitelist.ts)): 5 triggers, 3
+  ([whitelist.ts](../../design/testing-probe/whitelist.ts)): 5 triggers, 3
   combinators, 6 effects, 4 structural forms, 1 iterator, 2 links. Every
   entry carries a one-line defense against the real game; `NOT`-is-NOR is
   written down where it belongs.
@@ -115,7 +115,7 @@ Acceptance results:
   tech-granting follow-up the example lacks, and the example's events are
   not exported. The probe defines the same chain with the real `Mod` and
   recording machinery (identical fidelity, golden-pinned) and adds the tech
-  grant; `examples/` and its goldens are untouched. User-approved.
+  grant; `../../examples` and its goldens are untouched. User-approved.
 - The `potential` gained a `has_global_flag` conjunct beyond the example's,
   to exercise global flags in the explain tree.
 

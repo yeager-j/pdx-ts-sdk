@@ -60,7 +60,7 @@ the **scope**: `isFallenEmpire()` is a `Trigger<"country">`, derived by
 intersecting the scopes cwtools' rules declare for the keys the definition's
 body evaluates. A body the analysis cannot read widens to every scope rather
 than guessing, so a binding may be less specific than it could be and is never
-wrong — see [the verdict](../../docs/verdict-scripted-scope.md).
+wrong — see [the verdict](../../docs/verdict/verdict-scripted-scope.md).
 
 These two subpaths are the package's only runtime, one call per definition and
 `/*#__PURE__*/`-annotated so unused ones drop out of a bundle. Everything else

@@ -2,7 +2,7 @@
 
 > **Both parts landed.** Part 1 as SDK-12 (2026-08-02), Part 2 as SDK-13
 > (2026-08-02). Kept as the design record — but read
-> [verdict-scripted-scope.md](verdict-scripted-scope.md) before treating Part 2
+> [verdict-scripted-scope.md](../verdict/verdict-scripted-scope.md) before treating Part 2
 > as current: **its ruling against inferring scope was reversed**, and what
 > shipped infers scope for 90% of scripted triggers. The rest of Part 2 stands,
 > as the fallback for definitions no install-derived package can know.
@@ -11,11 +11,11 @@
 > one answer — type-safe references to vanilla content, and binding vanilla
 > scripted triggers and effects. Supersedes the "audited overlay vs. body
 > inference" framing in
-> [coverage-dawn-of-ascension.md](coverage-dawn-of-ascension.md).
+> [coverage-dawn-of-ascension.md](../coverage/coverage-dawn-of-ascension.md).
 
 ## The problem
 
-`AGENTS.md` states the boundary: cross-content references stay branded objects
+`../../AGENTS.md` states the boundary: cross-content references stay branded objects
 "where the generated rules know the registry. Use raw strings only for
 intentional vanilla or third-party references supported by the API."
 
@@ -189,7 +189,7 @@ It is also falsifiable, which was the sharpest word in the original objection.
 Vanilla's own event files declare their scope, so 4,860 real call sites can be
 checked against the inference; zero contradict it, and mutating the analysis to
 mishandle nesting produces 328. The evidence is in
-[verdict-scripted-scope.md](verdict-scripted-scope.md).
+[verdict-scripted-scope.md](../verdict/verdict-scripted-scope.md).
 
 **The open question at the bottom of this note is answered: yes.** Scripted
 effects need one thing beyond the trigger treatment. A trigger is a value that

@@ -209,7 +209,7 @@ else, and the rules say where that is legal. The inference only ever reads what
 the rules already state; a body it cannot read widens to every scope rather than
 guessing, so a binding is sometimes less specific than it could be and never
 wrong. 90% of scripted triggers narrow, 78% to five scopes or fewer out of 41.
-See [the verdict](../../docs/verdict-scripted-scope.md) for the evidence,
+See [the verdict](../../docs/verdict/verdict-scripted-scope.md) for the evidence,
 including the 4,860 vanilla call sites the result is checked against.
 
 Effects go through `scope.run(...)` rather than being methods on the scope

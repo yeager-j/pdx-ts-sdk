@@ -4,7 +4,7 @@ The next spike. Written after the events-and-effects vertical landed, for
 whoever picks this up.
 
 Read [handoff-effects-followups.md](handoff-effects-followups.md) for the
-current state of the SDK, and [verdict-effects-probe.md](verdict-effects-probe.md)
+current state of the SDK, and [verdict-effects-probe.md](../verdict/verdict-effects-probe.md)
 for how the last spike was gated — this one follows the same playbook. This
 file only covers what is specific to testing.
 
@@ -139,7 +139,7 @@ patches, like the drift baseline but against reality instead of the dump.
 ## Suggested first probe
 
 Same playbook as last time: hand-write the target API for the nastiest
-realistic case before building anything, in `design/testing-probe/`, with a
+realistic case before building anything, in `../../design/testing-probe`, with a
 hand-written interpreter for ~20 whitelisted triggers/effects. The case,
 end to end in one test file:
 
@@ -168,7 +168,7 @@ success of the spike.
   real game.
 - Nothing silently evaluated; unimplemented constructs throw with the
   trigger/effect name and the test's whitelist coverage summary.
-- The probe stays in `design/`, the verdict goes in `docs/`, golden files
+- The probe stays in `../../design`, the verdict goes in `..`, golden files
   remain the acceptance test.
 - Derived interpreters (value-set reads/writes) come from the rules;
   hand-written semantics (iterators, links, arithmetic) are listed and

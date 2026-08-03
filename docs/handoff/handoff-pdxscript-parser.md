@@ -3,7 +3,7 @@
 The next spike. Written after the mod-testing evaluator passed its gate, for
 whoever picks this up.
 
-Read [verdict-testing-probe.md](verdict-testing-probe.md) for how the last
+Read [verdict-testing-probe.md](../verdict/verdict-testing-probe.md) for how the last
 spike was gated — this one follows the same playbook. This file only covers
 what is specific to the parser.
 
@@ -172,7 +172,7 @@ today.)
 ## Suggested first probe
 
 Same playbook as last time: hand-write the goldens for the nastiest
-realistic case before building anything, in `design/parser-probe/`. The
+realistic case before building anything, in `../../design/parser-probe`. The
 case, chosen from the install:
 
 > A structural clone of `tech_gene_tailoring` (`common/technology/00_soc_tech.txt`),
@@ -203,7 +203,7 @@ success of the spike.
 
 ## Conventions worth keeping
 
-- The probe stays in `design/`, the verdict goes in `docs/`, golden files
+- The probe stays in `../../design`, the verdict goes in `..`, golden files
   remain the acceptance test — written by hand before the implementation
   runs, immutable; a wrong golden is a recorded finding, not an edit.
 - Nothing dropped silently: an unknown `@variable`, an unlexable character,

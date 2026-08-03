@@ -39,7 +39,7 @@
 
 The SDK-22 spike: pure authoring functions, `buildMod` as the explicit fold
 the `Mod` builder already was, `render`/`write` as free functions. The probe
-lives in `design/pure-api-probe/` and stays there — it is the design record,
+lives in `../../design/pure-api-probe` and stays there — it is the design record,
 not the implementation. The only `src/` change is an optional
 prefix-violation policy hook on `ContentAuthoring`'s constructor (the
 decided warning behavior is unreachable otherwise, since the throw preceded
@@ -54,14 +54,14 @@ this doc describes the final shape.
 
 **The pure API reproduces the class builder byte-for-byte with no lost
 validation, and the refactor is as mechanical as the ticket claimed.**
-[probe.test.ts](../design/pure-api-probe/probe.test.ts) pushes a fixture
+[probe.test.ts](../../design/pure-api-probe/probe.test.ts) pushes a fixture
 exercising every emission channel — technology with a cross-reference,
 situation type with the `targetScope` graft and desc-bearing weight
 modifiers, cross-firing events, an on-action binding, the
 ship-of-size-limits contribution, and a vanilla technology patch — through
 both APIs: identical file maps, patch plan and win assertions included.
 All existing gates (540 tests, typecheck, build) pass untouched; the probe
-never ships (`tsconfig.build.json` excludes `design/`).
+never ships (`tsconfig.build.json` excludes `../../design`).
 
 Acceptance results:
 
@@ -83,7 +83,7 @@ Acceptance results:
 ## The authoring shape
 
 Every piece of content is created through a **registry-typed collection
-factory** ([factories.ts](../design/pure-api-probe/factories.ts)); `buildMod`
+factory** ([factories.ts](../../design/pure-api-probe/factories.ts)); `buildMod`
 takes collections — never loose items (pinned at the type level):
 
 ```ts
@@ -118,7 +118,7 @@ Why this shape won:
   site** — one namespace per event file holds by construction, visible while
   authoring, not discovered at build (see events section).
 - A pack is a module exporting a collection or array of collections
-  ([pack.ts](../design/pure-api-probe/pack.ts)); nested arrays flatten.
+  ([pack.ts](../../design/pure-api-probe/pack.ts)); nested arrays flatten.
 
 In the migration the factories are emitted by codegen, one per registry,
 replacing the `GeneratedContentMethods`/`GeneratedEventMethods` classes.
@@ -327,7 +327,7 @@ chunk.
    wrapper). Export the new surface from `src/index.ts` alongside `Mod`.
    Port the probe's evidence to permanent homes: `probe.test.ts` →
    `tests/pure-api.test.ts` (parity vs `Mod` included), `probe-negative.ts`
-   claims → `tests/pure-api.test-d.ts`. Leave `design/pure-api-probe/`
+   claims → `tests/pure-api.test-d.ts`. Leave `../../design/pure-api-probe`
    untouched (design record). Done when both APIs coexist and all gates
    pass.
 2. **Emit the factories from codegen.** `tools/codegen/index.ts`
@@ -342,10 +342,10 @@ chunk.
    classes this chunk. Update codegen snapshot tests, run `npm run
 codegen`, read the report, inspect the full `src/generated/` diff as a
    public-API change, commit generated output with the emitter change.
-3. **Migrate the examples and README.** `examples/hello-galaxy`,
-   `examples/hardening`, `examples/calibration-patch` to
+3. **Migrate the examples and README.** `../../examples/hello-galaxy`,
+   `../../examples/hardening`, `../../examples/calibration-patch` to
    factories/`buildMod`/`render`/`write`; README samples; any load-bearing
-   `docs/` snippets. Regenerate the committed `examples/*/out/` trees and
+   `..` snippets. Regenerate the committed `examples/*/out/` trees and
    inspect diffs (loc-line order may shift — the accepted deviation).
    `npm run example` joins the gates for this chunk.
 4. **Migrate the runtime tests.** The 12 runtime test files
@@ -365,9 +365,9 @@ codegen`, read the report, inspect the full `src/generated/` diff as a
    `event-methods.ts`; drop `ContentDefMap`/`DefinedContentMap`/`PrefixedId`
    if nothing references them), overhaul `src/index.ts`. Rework the two
    design records that reference `Mod` so they still compile:
-   `design/pure-api-probe/probe.test.ts` swaps its class-API twin for
+   `../../design/pure-api-probe/probe.test.ts` swaps its class-API twin for
    goldens captured in chunk 1's parity test, and
-   `design/testing-probe/probe-mod.ts` migrates to the factories (records
+   `../../design/testing-probe/probe-mod.ts` migrates to the factories (records
    stay frozen in intent, not in compiler errors). Update the AGENTS.md
    "Adding a new content type" recipe, roadmap, and doc status headers.
    Full gates plus `npm run codegen:check` and `npm run example`.

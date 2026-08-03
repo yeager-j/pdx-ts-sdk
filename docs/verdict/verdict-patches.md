@@ -1,8 +1,8 @@
 # Patches verdict: the model holds
 
 The "patches that provably win" slice, per the
-[handoff doc](handoff-patches.md). No probe stage this time — the typed
-surface was probed (`design/parser-probe/`, its record unchanged), so this
+[handoff doc](../handoff/handoff-patches.md). No probe stage this time — the typed
+surface was probed (`../../design/parser-probe`, its record unchanged), so this
 went straight to `src/` with the handoff's three probe scenarios landing as
 committed acceptance tests.
 
@@ -79,7 +79,7 @@ Acceptance results:
   `acceptGameVersion: "<exact version>"` proceeds, per-version.
 - **`stellaris.load()` is synchronous**, matching the handoff snippet; the
   cache ([src/stellaris/cache.ts](../src/stellaris/cache.ts)) is
-  content-addressed JSON under `node_modules/.cache/pdx-ts-sdk`. Honesty
+  content-addressed JSON under `../../node_modules/.cache/pdx-ts-sdk`. Honesty
   note: at technology-only scope it saves ~15 ms; it exists so the load
   layer keeps its shape when the full `common/` tree lands, and the manifest
   hashing it rides on is the version-drift input regardless.
@@ -94,7 +94,7 @@ Acceptance results:
 ## The calibration anchor (verified 2026-07-31)
 
 Jackson ran the in-game check against **Stellaris Pegasus v4.4.6**, using
-the mod built by [examples/calibration-patch/build.ts](../examples/calibration-patch/build.ts)
+the mod built by [examples/calibration-patch/build.ts](../../examples/calibration-patch/build.ts)
 (`tech_gene_tailoring`: `cost.value * 2` → 8000, plus one appended
 prerequisite on a tier-0 start tech the mod defines):
 
@@ -116,8 +116,8 @@ game.
 ## Follow-ups, deliberately not in this slice
 
 - Migrate the three duplicated `STELLARIS_DIR` literals
-  (`packages/pdxscript/tests/corpus.test.ts`, `differential.test.ts`,
-  `design/parser-probe/probe.test.ts`) onto `locateInstall()`.
+  (`../../packages/pdxscript/tests/corpus.test.ts`, `differential.test.ts`,
+  `../../design/parser-probe/probe.test.ts`) onto `locateInstall()`.
 - A lockfile-style drift warning: the emitted header records each patch's
   source sha256, but nothing yet diffs a *previously shipped* mod against a
   changed install ("vanilla changed under your patch, review the diff").

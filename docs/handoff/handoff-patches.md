@@ -3,7 +3,7 @@
 The next vertical. Written after the parser landed as `@pdx-ts/pdxscript`,
 for whoever picks this up.
 
-Read [verdict-parser-probe.md](verdict-parser-probe.md) for the typed-surface
+Read [verdict-parser-probe.md](../verdict/verdict-parser-probe.md) for the typed-surface
 decisions this builds on. The empirical spine of this slice is external:
 `stellaris-docs/docs/spikes/resolver-evaluation.md` (Jackson's
 resolver-evaluation spike, pinned to Pegasus v4.4.6) — every override-
@@ -106,7 +106,7 @@ the claim later without changing the API.
 |  |  |
 | --- | --- |
 | The parser, gated four ways | `@pdx-ts/pdxscript` — fixpoint over all of vanilla `common/`, jomini differential, properties |
-| The typed surface design, verdict-bound | `design/parser-probe/` — `ParsedNumber`, `require()`, in-place substitution, `rest` carry-through |
+| The typed surface design, verdict-bound | `../../design/parser-probe` — `ParsedNumber`, `require()`, in-place substitution, `rest` carry-through |
 | Positions on every entry | the linter's citations (`file:line`) come free from the package |
 | The install, already exercised | corpus tests locate and parse it today |
 | Version-drift hashing inputs | the model layer holds the vanilla bytes; hash at parse time |
@@ -183,7 +183,7 @@ calibration anchor — do it once, record it, pin the build number.
   fallback.
 - Complete objects, always; namespaced filenames, always; ASCII filenames,
   by policy.
-- The probe (if run) stays in `design/`, the verdict goes in `docs/`,
+- The probe (if run) stays in `../../design`, the verdict goes in `..`,
   goldens are the acceptance test.
 - The game build is part of every claim. Pegasus v4.4.6 today; an update
   invalidates until re-verified.

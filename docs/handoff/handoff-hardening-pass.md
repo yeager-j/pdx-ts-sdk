@@ -4,8 +4,8 @@ The next implementation pass. Written after content codegen was generalized
 across technologies, buildings, traditions/categories, agendas, and edicts.
 
 Start from [handoff-content-codegen.md](handoff-content-codegen.md) for the
-current content architecture, [verdict-testing-probe.md](verdict-testing-probe.md)
-for the testing design that held, and [verdict-patches.md](verdict-patches.md)
+current content architecture, [verdict-testing-probe.md](../verdict/verdict-testing-probe.md)
+for the testing design that held, and [verdict-patches.md](../verdict/verdict-patches.md)
 for the already calibrated override path. Do not reopen those designs. This
 pass closes four known gaps, proves them together in one real mod, and then
 hands the repository over to content expansion.
@@ -64,7 +64,7 @@ Do not format snapshot `.yml` files; their BOM is significant.
 ## Stage 1: repair `or()` grouping
 
 The bug is documented in
-[verdict-testing-probe.md](verdict-testing-probe.md#findings-the-probe-caught-why-probes-exist).
+[verdict-testing-probe.md](../verdict/verdict-testing-probe.md#findings-the-probe-caught-why-probes-exist).
 `or()` currently splices every operand's entries directly into one `OR` block.
 A hand-built trigger containing two entries therefore changes from
 `A AND B` to `A OR B`.
@@ -90,9 +90,9 @@ Acceptance:
 ## Stage 2: typed on-action registration
 
 The relevant rules are already present in
-`vendor/cwtools-stellaris-config/config/common/on_actions.cwt`, while the
+`../../vendor/cwtools-stellaris-config/config/common/on_actions.cwt`, while the
 available named hooks and their scopes are documented in
-`vendor/cwtools-stellaris-config/config/on_actions.cwt`.
+`../../vendor/cwtools-stellaris-config/config/on_actions.cwt`.
 
 Add an authoring surface to `Mod` that registers a `DefinedEvent` with a named
 on-action and emits:
@@ -147,9 +147,9 @@ Acceptance:
 
 ## Stage 3: promote the mod-testing evaluator
 
-The gated implementation in `design/testing-probe/` is the executable design
+The gated implementation in `../../design/testing-probe` is the executable design
 record. Its model and decisions are binding; read
-[verdict-testing-probe.md](verdict-testing-probe.md) before moving code.
+[verdict-testing-probe.md](../verdict/verdict-testing-probe.md) before moving code.
 The broader rationale and public capability are in
 [handoff-mod-testing.md](handoff-mod-testing.md). Do not invent a second
 interpreter or expand the fixture into a general game simulation.
@@ -163,7 +163,7 @@ Move the capability into a cohesive `src/testing/` module:
 - the single audited interpreter whitelist;
 - the small Vitest matcher surface.
 
-The design artifacts remain under `design/testing-probe/`; production code must
+The design artifacts remain under `../../design/testing-probe`; production code must
 not import from them. Share production behavior through the new module and
 rewrite the probe tests as production tests rather than deleting the evidence.
 Expose the harness intentionally from the package without making Vitest a
@@ -195,11 +195,11 @@ Acceptance:
 - the unimplemented trigger path remains loud;
 - the `explain` matcher still identifies the failing subcondition;
 - public imports are covered by a consumer-shaped type test;
-- no production file imports from `design/`.
+- no production file imports from `../../design`.
 
 ## Stage 4: one hardening mod and one calibration corpus
 
-Create `examples/hardening/` rather than overloading `hello-galaxy` or the
+Create `../../examples/hardening` rather than overloading `hello-galaxy` or the
 existing patch calibration. It should be small enough to inspect as a golden,
 but cross every implemented seam:
 
@@ -215,7 +215,7 @@ but cross every implemented seam:
 - an event/effect chain containing an explicit FROM override, a saved event
   target, and multiple delayed deliveries whose order is observable.
 
-Reuse the shapes already demonstrated in `README.md`; this is an integration
+Reuse the shapes already demonstrated in `../../README.md`; this is an integration
 artifact, not a showcase mod. Prefer explicit log markers and harmless flags or
 resources over gameplay-changing effects. The build script must accept the
 normal install discovery path and synthesize a launcher-ready mod without
@@ -238,7 +238,7 @@ location. A human must launch Stellaris and report the observations; do not mark
 this stage complete merely because the generated files look correct.
 
 Record the exact game build and observed evidence under
-`examples/hardening/calibration/`. Keep the evidence compact: a README with the
+`../../examples/hardening/calibration`. Keep the evidence compact: a README with the
 procedure and conclusion plus normalized golden log excerpts is sufficient.
 Do not commit saves, launcher state, machine paths, or the full game log.
 
@@ -272,9 +272,9 @@ This hardening pass is complete only when:
 - the full baseline command set is green;
 - the hardening example builds from a real install;
 - the manual calibration evidence names the game build and is committed;
-- `README.md` describes mod testing as implemented rather than awaiting
+- `../../README.md` describes mod testing as implemented rather than awaiting
   implementation;
-- `README.md` links the hardening example and calibration record;
+- `../../README.md` links the hardening example and calibration record;
 - the generated report contains no unexplained new skip class;
 - `git diff --check` is clean.
 

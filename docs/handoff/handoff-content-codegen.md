@@ -16,15 +16,15 @@ The API-breadth phase. Originally written after the patches slice landed and
 passed its in-game calibration (2026-07-31), before the content-type codegen
 was generalized.
 
-Read [verdict-patches.md](verdict-patches.md) for the state of the world and
-[verdict-effects-probe.md](verdict-effects-probe.md) for the precedent that
+Read [verdict-patches.md](../verdict/verdict-patches.md) for the state of the world and
+[verdict-effects-probe.md](../verdict/verdict-effects-probe.md) for the precedent that
 matters most here: codegen-at-scale already worked once (1054 triggers, 976
 effects, 87 scope clusters from one pipeline). This slice applies the same
 move to content types.
 
 ## The problem
 
-`vendor/cwtools-stellaris-config/config/common/` currently holds **129 top-level
+`../../vendor/cwtools-stellaris-config/config/common` currently holds **129 top-level
 rule files**, declaring 213 content types. The SDK originally loaded exactly
 one (`technologies_consolidated.cwt`, via the pinned `RULE_FILES` allowlist in
 `tools/codegen/cwt/rules.ts`) and emitted it through a **bespoke emitter**

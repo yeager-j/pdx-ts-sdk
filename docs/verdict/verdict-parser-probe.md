@@ -1,8 +1,8 @@
 # Parser probe verdict: the model holds
 
 Stage 0 of the PDXScript parser, per the
-[handoff doc](handoff-pdxscript-parser.md)'s suggested first probe. The probe
-lives in `design/parser-probe/` and stays there — it is the design record,
+[handoff doc](../handoff/handoff-pdxscript-parser.md)'s suggested first probe. The probe
+lives in `../../design/parser-probe` and stays there — it is the design record,
 not the implementation.
 
 ## The judgment
@@ -10,7 +10,7 @@ not the implementation.
 **A parsed vanilla technology unifies with the SDK's typed model — per-field,
 with honest widenings — and survives parse → typed surface → patch → re-emit
 with nothing dropped, nothing reordered, and nothing resolved silently.**
-[probe.ts](../design/parser-probe/probe.ts) is the mainline: parse the
+[probe.ts](../../design/parser-probe/probe.ts) is the mainline: parse the
 fixture (a structural clone of `tech_gene_tailoring`, the nastiest realistic
 tech — cross-file `@variables`, a file-local variable, `technology_swap`,
 `potential` with `OR`, a six-modifier `weight_modifier` with inline comments,
@@ -30,7 +30,7 @@ Acceptance results:
 | `@references` re-emit as references; only the patched `cost` baked | Pass |
 | Emission is a fixpoint: parse → emit → re-parse → emit is byte-stable | Pass |
 | Real install: fixpoint over `common/technology`, refusals pinned | Pass — 28 of 33 files (525 KiB, 546 techs, ~10 ms); 5 refused for OR-prerequisites, list pinned |
-| Full suite: `examples/` and `tests/` goldens untouched | Pass (134 tests) |
+| Full suite: `../../examples` and `tests/` goldens untouched | Pass (134 tests) |
 
 ## Findings the probe caught (why probes exist)
 

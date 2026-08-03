@@ -7,8 +7,8 @@
 > ("Dawn of Ascension" milestone; the two post-MVP items carry no milestone).
 > Linear is now the worklist; this file stays as the design record behind
 > those tickets. Evidence and measurements live in
-> [coverage-dawn-of-ascension.md](coverage-dawn-of-ascension.md); design
-> decisions in [handoff-vanilla-surface.md](handoff-vanilla-surface.md).
+> [coverage-dawn-of-ascension.md](coverage/coverage-dawn-of-ascension.md); design
+> decisions in [handoff-vanilla-surface.md](handoff/handoff-vanilla-surface.md).
 
 Yardstick: **Dawn Of Ascension** (Steam workshop `2816360131`). The goal is
 being equipped to build a mod of that size, not porting it.
@@ -646,7 +646,7 @@ Measured: 90.4% of triggers narrowed (42.0% to one scope, 77.7% to five or fewer
 out of 41), 62.6% of effects. Zero contradictions across 4,860 real call sites
 covering 894 definitions, and the check is mutation-tested — making a link's
 body constrain its caller produces 328. See
-[verdict-scripted-scope.md](verdict-scripted-scope.md) and the probe in
+[verdict-scripted-scope.md](verdict/verdict-scripted-scope.md) and the probe in
 `design/scripted-scope-probe/`.
 
 The hand-declared `scriptedTrigger(name, scope)` survives as the third-party
@@ -806,7 +806,7 @@ on a collection is also the SDK-19 splitting primitive (below).
 Two deviations from the spike's own plan, both decided during it: events are
 _not_ deferred/stamped in `buildMod` (so forward references stay illegal, as
 under the builder), and the item vocabulary is collection-typed rather than one
-flat tagged-value array. The [verdict](verdict-pure-api-probe.md) records the
+flat tagged-value array. The [verdict](verdict/verdict-pure-api-probe.md) records the
 full evolution.
 
 Migrated in six sequential chunks on `feature/pure-api` (9dd8857 promote,

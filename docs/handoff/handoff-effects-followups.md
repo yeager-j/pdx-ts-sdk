@@ -1,7 +1,7 @@
 # Handoff: after the events-and-effects vertical
 
 > **Superseded 2026-08-02 — this is no longer the live list.** Tracking moved
-> to Linear (see [roadmap.md](roadmap.md)'s header). Follow-ups 1, 2, and 6
+> to Linear (see [roadmap.md](../roadmap.md)'s header). Follow-ups 1, 2, and 6
 > below landed; the resolution is noted inline on each. The rest are still
 > open and are recorded in the roadmap. The "what landed" and "sharp edges"
 > sections stay as written, with the authoring surface updated where the
@@ -9,7 +9,7 @@
 
 Written after the vertical landed, for whoever continues. The predecessor is
 [handoff-events-and-effects.md](handoff-events-and-effects.md); the spike's
-gate verdict is [verdict-effects-probe.md](verdict-effects-probe.md).
+gate verdict is [verdict-effects-probe.md](../verdict/verdict-effects-probe.md).
 
 ## What landed
 
