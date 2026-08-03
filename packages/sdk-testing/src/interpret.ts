@@ -16,14 +16,18 @@ import {
   EVENT_KINDS,
   isEffectKey,
   recordEffects,
+  type Modifier,
   type ScopeObjOf,
   type Trigger,
 } from "@pdx-ts/sdk";
 
 import {
+  ArchaeologicalSite,
   cloneState,
   Country,
+  Fleet,
   Planet,
+  Situation,
   type EntityId,
   type HandleOf,
   type SimScope,
@@ -107,6 +111,13 @@ function unimplementedTriggerKeys(entries: readonly PdxEntry[], found: Set<strin
       }
       continue;
     }
+    const link = LINK_SEMANTICS[entry.key];
+    if (link !== undefined) {
+      if (entry.value.kind === "container") {
+        unimplementedTriggerKeys(itemsAsEntries(entry.value.items, entry.key), found);
+      }
+      continue;
+    }
     if (TRIGGER_SEMANTICS[entry.key] === undefined) {
       found.add(entry.key);
     }
@@ -139,6 +150,22 @@ function explainEntry(entry: PdxEntry, scope: EntityId, ex: ExecCtx): Explanatio
       result: combine(combinator.mode, children),
       children,
     };
+  }
+  // Scope links (`target = { ... }`, `from = { ... }`) are structurally like
+  // a combinator block, but their children evaluate against a different
+  // scope — the one thing COMBINATOR_SEMANTICS's same-scope recursion cannot
+  // express, so this is a second, scope-changing arm rather than a special
+  // case bolted onto the first.
+  const link = LINK_SEMANTICS[entry.key];
+  if (link !== undefined) {
+    if (entry.value.kind !== "container") {
+      throw new InterpreterError(`${entry.key}: expected a block. ${coverageSummary()}`);
+    }
+    const target = link.resolve(scope, ex);
+    const children = itemsAsEntries(entry.value.items, entry.key).map((child) =>
+      explainEntry(child, target, ex)
+    );
+    return { kind: "all", label: entry.key, result: combine("all", children), children };
   }
   const impl = TRIGGER_SEMANTICS[entry.key];
   if (impl === undefined) {
@@ -208,7 +235,10 @@ export function explain<S extends SimScopeName>(
 
 function collectTriggerKeys(entries: readonly PdxEntry[], found: Set<string>): void {
   for (const entry of entries) {
-    if (COMBINATOR_SEMANTICS[entry.key] !== undefined && entry.value.kind === "container") {
+    const recurses =
+      (COMBINATOR_SEMANTICS[entry.key] !== undefined || LINK_SEMANTICS[entry.key] !== undefined) &&
+      entry.value.kind === "container";
+    if (recurses) {
       collectTriggerKeys(itemsAsEntries(entry.value.items, entry.key), found);
     } else {
       found.add(entry.key);
@@ -461,7 +491,7 @@ export function applyEffectEntries(
       applyIterator(entry, scope, ex);
       continue;
     }
-    if (entry.key === "from" || entry.key.startsWith(EVENT_TARGET_PREFIX)) {
+    if (entry.key.startsWith(EVENT_TARGET_PREFIX) || LINK_SEMANTICS[entry.key] !== undefined) {
       const target = resolveScopePath(entry.key, scope, ex);
       applyEffectEntries(requireBlock(entry), target, ex);
       continue;
@@ -529,9 +559,111 @@ export function run<S extends SimScopeName>(
   };
 }
 
-export function handleFor(state: WorldState, id: EntityId): Country | Planet {
-  if (id.kind === "country") {
-    return new Country(state, id.country);
+export function handleFor(
+  state: WorldState,
+  id: EntityId
+): Country | Planet | Fleet | Situation | ArchaeologicalSite {
+  switch (id.kind) {
+    case "country":
+      return new Country(state, id.country);
+    case "planet":
+      return new Planet(state, id.country, id.planet);
+    case "fleet":
+      return new Fleet(state, id.fleet);
+    case "situation":
+      return new Situation(state, id.situation);
+    case "archaeological_site":
+      return new ArchaeologicalSite(state, id.site);
   }
-  return new Planet(state, id.country, id.planet);
+}
+
+// ---------------------------------------------------------------------------
+// Weight-block arithmetic — a situation's `monthlyProgress` and friends
+// ---------------------------------------------------------------------------
+
+const MODIFIER_OPS = [
+  "add",
+  "subtract",
+  "mult",
+  "multiplier",
+  "factor",
+  "divide",
+  "minValue",
+  "maxValue",
+] as const;
+
+/** The shape `evaluateWeightBlock` needs — `WeightBlock`/`WeightBlockWithLoc` both satisfy it. */
+export interface WeightBlockLike<S extends SimScopeName> {
+  readonly base?: number;
+  readonly modifiers?: readonly Modifier<S>[];
+}
+
+/**
+ * Computes a `modifier_rule` block's value: a starting `base`, then each
+ * `modifier` row whose `when` trigger holds applies its one operation in
+ * order. The operation set and spellings mirror `Modifier` itself
+ * (`packages/sdk/src/effect-core.ts`) — `add`/`subtract`/`mult`/`multiplier`/
+ * `factor`/`divide` change the running value, `minValue`/`maxValue` clamp it
+ * — because that interface's own comment is the corpus-measured account of
+ * which operations `modifier_rule.cwt`'s consumers actually use.
+ *
+ * A row combining more than one operation is refused rather than guessed:
+ * nothing in the corpus measures a cross-operation order within one row, so
+ * asserting one here would be exactly the kind of invented semantic this
+ * interpreter's whitelist exists to avoid. The numeric v1 line applies too —
+ * a row whose operand is a script value or variable (not a fixture-evaluable
+ * literal) throws instead of silently reading as 0/NaN.
+ */
+export function evaluateWeightBlock<S extends SimScopeName>(
+  block: WeightBlockLike<S>,
+  scope: SimScope<S>
+): number {
+  let value = block.base ?? 0;
+  for (const modifier of block.modifiers ?? []) {
+    if (!evaluate(modifier.when, scope)) {
+      continue;
+    }
+    value = applyModifierRow(modifier, value);
+  }
+  return value;
+}
+
+function applyModifierRow<S extends SimScopeName>(modifier: Modifier<S>, value: number): number {
+  const present = MODIFIER_OPS.filter((op) => modifier[op] !== undefined);
+  if (present.length !== 1) {
+    throw new InterpreterError(
+      `A monthly-progress row${modifier.desc !== undefined ? ` ("${modifier.desc}")` : ""} sets ` +
+        `${present.length} operation${present.length === 1 ? "" : "s"}` +
+        `${present.length === 0 ? "" : ` (${present.join(", ")})`} — the testing interpreter ` +
+        `evaluates exactly one operation per row; combining operations on one row has no ` +
+        `corpus-measured evaluation order. ${coverageSummary()}`
+    );
+  }
+  const [op] = present;
+  if (op === undefined) {
+    throw new InterpreterError("unreachable: present.length === 1 was just checked");
+  }
+  const amount = modifier[op];
+  if (typeof amount !== "number") {
+    throw new InterpreterError(
+      `${op} ${String(amount)}: expected a number — the numeric v1 line evaluates literals and ` +
+        `fixture-stored numbers only; script values and variables are out. ${coverageSummary()}`
+    );
+  }
+  switch (op) {
+    case "add":
+      return value + amount;
+    case "subtract":
+      return value - amount;
+    case "mult":
+    case "multiplier":
+    case "factor":
+      return value * amount;
+    case "divide":
+      return value / amount;
+    case "minValue":
+      return Math.max(value, amount);
+    case "maxValue":
+      return Math.min(value, amount);
+  }
 }

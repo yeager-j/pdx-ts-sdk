@@ -14,9 +14,11 @@
 import type { PdxEntry, PdxItem, PdxScalar } from "@pdx-ts/pdxscript";
 
 import {
+  archaeologicalSiteState,
   countryState,
   describeEntity,
   planetState,
+  situationState,
   type EntityId,
   type WorldState,
 } from "./state.ts";
@@ -129,6 +131,36 @@ function compare(actual: number, op: PdxEntry["op"], expected: number): boolean 
   }
 }
 
+/**
+ * The variable store a scope's `set_variable`/`change_variable`/
+ * `multiply_variable`/`check_variable`/`is_variable_set` read and write.
+ * Modeled for situation scope only — the one scope this harness's evidence
+ * needed it for; every other scope throws loudly rather than silently
+ * pretending to have variable storage it does not.
+ */
+function variablesOf(state: WorldState, scope: EntityId): Map<string, number> {
+  if (scope.kind !== "situation") {
+    throw new InterpreterError(
+      `Variables are modeled for situation scope only; ${describeEntity(state, scope)} has no ` +
+        `variable storage in the fixture. ${coverageSummary()}`
+    );
+  }
+  return situationState(state, scope).variables;
+}
+
+/** `which`/`value` field pair shared by `set_variable`/`change_variable`/`multiply_variable`. */
+function whichValueArgs(entry: PdxEntry): { readonly which: string; readonly value: number } {
+  const fields = blockEntries(entry);
+  const whichField = fields.find((field) => field.key === "which");
+  const valueField = fields.find((field) => field.key === "value");
+  if (whichField === undefined || valueField === undefined) {
+    throw new InterpreterError(
+      `${entry.key}: expected "which" and "value" fields. ${coverageSummary()}`
+    );
+  }
+  return { which: stringArg(whichField), value: numberArg(valueField) };
+}
+
 // ---------------------------------------------------------------------------
 // Leaf triggers
 // ---------------------------------------------------------------------------
@@ -189,6 +221,54 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
       return {
         result: compare(actual, entry.op, expected),
         detail: `${actual} owned planet${actual === 1 ? "" : "s"}`,
+      };
+    },
+  },
+  is_variable_set: {
+    note: "Checks the scope's variable store (situation scope only — see variablesOf) for the name.",
+    eval: (entry, scope, ex) => {
+      const name = stringArg(entry);
+      const result = variablesOf(ex.state, scope).has(name);
+      return { result, detail: result ? `"${name}" is set` : `"${name}" is not set` };
+    },
+  },
+  check_variable: {
+    note: "Compares a stored variable's value; an unset variable fails every comparison, the same reason `is_variable_set` exists to guard against reading one.",
+    eval: (entry, scope, ex) => {
+      const fields = blockEntries(entry);
+      const whichField = fields.find((field) => field.key === "which");
+      const valueField = fields.find((field) => field.key === "value");
+      if (whichField === undefined || valueField === undefined) {
+        throw new InterpreterError(
+          `check_variable: expected "which" and "value" fields. ${coverageSummary()}`
+        );
+      }
+      const which = stringArg(whichField);
+      const current = variablesOf(ex.state, scope).get(which);
+      if (current === undefined) {
+        return { result: false, detail: `"${which}" is not set` };
+      }
+      const result = compare(current, valueField.op, numberArg(valueField));
+      return { result, detail: `${which} = ${current}` };
+    },
+  },
+  situation_progress: {
+    note: "Compares the situation's stored progress value.",
+    eval: (entry, scope, ex) => {
+      const progress = situationState(ex.state, scope).progress;
+      const expected = numberArg(entry);
+      return { result: compare(progress, entry.op, expected), detail: `progress ${progress}` };
+    },
+  },
+  current_situation_approach: {
+    note: "Compares the id of the approach currently picked on the situation.",
+    eval: (entry, scope, ex) => {
+      const approach = situationState(ex.state, scope).approach;
+      const expected = stringArg(entry);
+      const result = approach === expected;
+      return {
+        result,
+        detail: approach === undefined ? "no approach picked" : `approach is "${approach}"`,
       };
     },
   },
@@ -290,6 +370,35 @@ export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
       ex.state.log.push(stringArg(entry));
     },
   },
+  set_site_progress_locked: {
+    note: "Locks/unlocks the archaeological site's progress bar — plain boolean state on the site.",
+    apply: (entry, scope, ex) => {
+      archaeologicalSiteState(ex.state, scope).progressLocked = boolArg(entry);
+    },
+  },
+  set_variable: {
+    note: "Overwrites a stored variable (situation scope only — see variablesOf).",
+    apply: (entry, scope, ex) => {
+      const { which, value } = whichValueArgs(entry);
+      variablesOf(ex.state, scope).set(which, value);
+    },
+  },
+  change_variable: {
+    note: "Increments a stored variable by an amount, starting from 0 if it was unset — the game's own default.",
+    apply: (entry, scope, ex) => {
+      const { which, value } = whichValueArgs(entry);
+      const vars = variablesOf(ex.state, scope);
+      vars.set(which, (vars.get(which) ?? 0) + value);
+    },
+  },
+  multiply_variable: {
+    note: "Multiplies a stored variable by an amount, treating an unset variable as 0 like `change_variable` — a missing variable's product stays 0, which is the honest answer rather than a guessed one.",
+    apply: (entry, scope, ex) => {
+      const { which, value } = whichValueArgs(entry);
+      const vars = variablesOf(ex.state, scope);
+      vars.set(which, (vars.get(which) ?? 0) * value);
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -348,6 +457,13 @@ export interface LinkImpl {
   readonly resolve: (scope: EntityId, ex: ExecCtx) => EntityId;
 }
 
+/**
+ * Named scope-changing navigation, shared by the effect walker's block
+ * entries (`from = { ... }`, `target = { ... }`) and the trigger walker's
+ * scope-link blocks — the same table either side reads, since resolving
+ * "what scope does this name land in" does not care whether the entries
+ * being evaluated afterward are effects or conditions.
+ */
 export const LINK_SEMANTICS: Readonly<Record<string, LinkImpl>> = {
   from: {
     note: "Resolves to the FROM bound by the harness fire or the queued fire's contract; unbound FROM is a loud error, not an empty scope.",
@@ -360,6 +476,10 @@ export const LINK_SEMANTICS: Readonly<Record<string, LinkImpl>> = {
       }
       return ex.from;
     },
+  },
+  target: {
+    note: "A situation's declared target (see SituationSpec.targetCountry) — the same link `target<S>()` and `situation.target<S>(body)` name in the authoring API. `links.cwt` gives it `output_scope = any`; the fixture resolves it through the situation's own declared target rather than reading anything from the trigger or effect body.",
+    resolve: (scope, ex) => situationState(ex.state, scope).targetId,
   },
 };
 

@@ -2,6 +2,7 @@ export {
   DAYS_PER_MONTH,
   DAYS_PER_YEAR,
   evaluate,
+  evaluateWeightBlock,
   explain,
   InterpreterError,
   renderExplanation,
@@ -9,16 +10,25 @@ export {
   type Explanation,
   type ForcedArms,
   type RunResult,
+  type WeightBlockLike,
 } from "./interpret.ts";
 export {
+  ArchaeologicalSite,
   Country,
+  Fleet,
   Planet,
+  SIM_SCOPE_NAMES,
+  Situation,
+  type AnySimHandle,
+  type ArchaeologicalSiteSpec,
   type CountrySpec,
   type FiredRecord,
   type FixtureSpec,
+  type FleetSpec,
   type PlanetSpec,
   type SimScope,
   type SimScopeName,
+  type SituationSpec,
 } from "./state.ts";
 export {
   declareFrom,

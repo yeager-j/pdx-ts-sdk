@@ -1,14 +1,17 @@
 /**
  * The fixture's state model — the validated answer to the handoff's open
- * question 1. Only countries and planets exist, because nothing the
- * whitelisted semantics touch needs more; ownership is expressed by nesting
- * in the spec and by index in the state. Everything is plain data (sets,
- * maps, arrays) so `run()` can clone the world cheaply.
+ * question 1. Countries, planets, fleets, situations and archaeological
+ * sites exist because the whitelisted semantics touch them; ownership is
+ * expressed by nesting in the spec and by index in the state where the game
+ * models ownership (country -> planet), and by an explicit link where the
+ * game models a link instead (situation -> its declared target). Everything
+ * is plain data (sets, maps, arrays) so `run()` can clone the world cheaply.
  *
- * The handles (`Country`, `Planet`) are the public face of the fixture and
- * double as scope witnesses: they are branded by scope name, so passing a
- * planet handle where a country-scoped trigger is evaluated is a compile
- * error via `Trigger`'s contravariant scope parameter.
+ * The handles (`Country`, `Planet`, `Fleet`, `Situation`,
+ * `ArchaeologicalSite`) are the public face of the fixture and double as
+ * scope witnesses: they are branded by scope name, so passing a planet
+ * handle where a country-scoped trigger is evaluated is a compile error via
+ * `Trigger`'s contravariant scope parameter.
  */
 
 import {
@@ -19,8 +22,29 @@ import {
   type TypedRef,
 } from "@pdx-ts/sdk";
 
-/** The scopes the fixture models. The interpreter refuses everything else. */
-export type SimScopeName = "country" | "planet";
+/**
+ * The scopes the fixture models. The interpreter refuses everything else.
+ *
+ * This is a small, deliberately curated slice of the roughly 40 scopes the
+ * generated `ScopeName` union carries (`packages/sdk/src/generated/scopes.ts`
+ * has 41 members as of this writing) — only what somebody actually built
+ * real state and real transitions for. `SIM_SCOPE_NAMES` below is the single
+ * source of truth this type is derived from, so a diagnostic can always list
+ * exactly what is modeled rather than repeating the list by hand.
+ *
+ * Widening this is SDK-49's first half: add a scope only once its state and
+ * legal transitions are modeled, per AGENTS.md's testing-helpers section —
+ * a scope that is present but wrong is worse than one that is absent.
+ */
+export type SimScopeName = (typeof SIM_SCOPE_NAMES)[number];
+
+export const SIM_SCOPE_NAMES = [
+  "country",
+  "planet",
+  "fleet",
+  "situation",
+  "archaeological_site",
+] as const;
 
 export interface PlanetSpec {
   /** For messages and the fired log; defaults to `planet<n>`. */
@@ -39,14 +63,65 @@ export interface CountrySpec {
   readonly planets?: readonly PlanetSpec[];
 }
 
+/**
+ * A fleet the fixture models. Fleets are not owned by nesting — nothing
+ * whitelisted here needs a fleet's owner — so a fleet is just enough
+ * identity to be a scope: a fire target and a `from:` witness for the
+ * archaeological-site excavation events that run in fleet scope.
+ */
+export interface FleetSpec {
+  /** For messages and the fired log; defaults to `fleet<n>`. */
+  readonly name?: string;
+}
+
+/**
+ * An archaeological site the fixture models: identity plus the one piece of
+ * mutable state the whitelisted effect (`set_site_progress_locked`) touches.
+ * Not owned by nesting for the same reason a fleet is not — a site is
+ * reached as a fleet event's FROM, never navigated to from a country or
+ * planet in the semantics this harness implements.
+ */
+export interface ArchaeologicalSiteSpec {
+  /** For messages and the fired log; defaults to `site<n>`. */
+  readonly name?: string;
+  readonly progressLocked?: boolean;
+}
+
+/**
+ * A situation the fixture models. Unlike a planet's ownership-by-nesting, a
+ * situation's relationship to its target is a link (`target = { ... }`), not
+ * ownership — `links.cwt` gives it `output_scope = any` and the SDK's own
+ * `defineSituationType({ targetScope })` treats it the same way (see
+ * `packages/sdk/src/situations.ts`). The fixture only models country
+ * targets today (`targetCountry` indexes `FixtureSpec.countries`), matching
+ * every situation this harness's probes needed; a situation targeting
+ * anything else would need that scope modeled first.
+ */
+export interface SituationSpec {
+  /** For messages and the fired log; defaults to `situation<n>`. */
+  readonly name?: string;
+  /** Index into `FixtureSpec.countries` — the situation's declared target. */
+  readonly targetCountry: number;
+  readonly initialProgress?: number;
+  /** The id of the currently-picked approach, if any. */
+  readonly approach?: string;
+  readonly variables?: Readonly<Record<string, number>>;
+}
+
 export interface FixtureSpec {
   readonly countries?: readonly CountrySpec[];
   readonly globalFlags?: readonly GlobalFlag[];
+  readonly fleets?: readonly FleetSpec[];
+  readonly archaeologicalSites?: readonly ArchaeologicalSiteSpec[];
+  readonly situations?: readonly SituationSpec[];
 }
 
 export type EntityId =
   | { readonly kind: "country"; readonly country: number }
-  | { readonly kind: "planet"; readonly country: number; readonly planet: number };
+  | { readonly kind: "planet"; readonly country: number; readonly planet: number }
+  | { readonly kind: "fleet"; readonly fleet: number }
+  | { readonly kind: "situation"; readonly situation: number }
+  | { readonly kind: "archaeological_site"; readonly site: number };
 
 export interface CountryState {
   name: string;
@@ -59,6 +134,24 @@ export interface PlanetState {
   name: string;
   readonly flags: Set<string>;
   readonly deposits: string[];
+}
+
+export interface FleetState {
+  name: string;
+}
+
+export interface ArchaeologicalSiteState {
+  name: string;
+  progressLocked: boolean;
+}
+
+export interface SituationState {
+  name: string;
+  progress: number;
+  approach: string | undefined;
+  readonly variables: Map<string, number>;
+  /** The situation's declared target — see {@link SituationSpec}. */
+  readonly targetId: EntityId;
 }
 
 export interface PendingFire {
@@ -89,6 +182,9 @@ export interface WorldState {
   readonly countries: CountryState[];
   /** `planets[c][p]` is planet p of country c — the ownership relation. */
   readonly planets: PlanetState[][];
+  readonly fleets: FleetState[];
+  readonly sites: ArchaeologicalSiteState[];
+  readonly situations: SituationState[];
   readonly queue: PendingFire[];
   readonly fired: FiredRecord[];
   readonly log: string[];
@@ -112,12 +208,37 @@ export function buildState(spec: FixtureSpec): WorldState {
       }))
     );
   });
+  const fleets: FleetState[] = (spec.fleets ?? []).map((fleetSpec, f) => ({
+    name: fleetSpec.name ?? `fleet${f}`,
+  }));
+  const sites: ArchaeologicalSiteState[] = (spec.archaeologicalSites ?? []).map((siteSpec, s) => ({
+    name: siteSpec.name ?? `site${s}`,
+    progressLocked: siteSpec.progressLocked ?? false,
+  }));
+  const situations: SituationState[] = (spec.situations ?? []).map((situationSpec, i) => {
+    if (countries[situationSpec.targetCountry] === undefined) {
+      throw new Error(
+        `situations[${i}] targets country ${situationSpec.targetCountry}, but the fixture only ` +
+          `has ${countries.length} countr${countries.length === 1 ? "y" : "ies"}.`
+      );
+    }
+    return {
+      name: situationSpec.name ?? `situation${i}`,
+      progress: situationSpec.initialProgress ?? 0,
+      approach: situationSpec.approach,
+      variables: new Map(Object.entries(situationSpec.variables ?? {})),
+      targetId: { kind: "country", country: situationSpec.targetCountry },
+    };
+  });
   return {
     day: 0,
     seq: 0,
     globalFlags: new Set(spec.globalFlags ?? []),
     countries,
     planets,
+    fleets,
+    sites,
+    situations,
     queue: [],
     fired: [],
     log: [],
@@ -142,6 +263,15 @@ export function cloneState(state: WorldState): WorldState {
         deposits: [...planet.deposits],
       }))
     ),
+    fleets: state.fleets.map((fleet) => ({ name: fleet.name })),
+    sites: state.sites.map((site) => ({ name: site.name, progressLocked: site.progressLocked })),
+    situations: state.situations.map((situation) => ({
+      name: situation.name,
+      progress: situation.progress,
+      approach: situation.approach,
+      variables: new Map(situation.variables),
+      targetId: situation.targetId,
+    })),
     queue: [...state.queue],
     fired: [...state.fired],
     log: [...state.log],
@@ -170,33 +300,90 @@ export function planetState(state: WorldState, id: EntityId): PlanetState {
   return planet;
 }
 
+export function fleetState(state: WorldState, id: EntityId): FleetState {
+  if (id.kind !== "fleet") {
+    throw new Error(`Expected a fleet scope, got ${describeEntity(state, id)}`);
+  }
+  const fleet = state.fleets[id.fleet];
+  if (fleet === undefined) {
+    throw new Error(`No fleet at index ${id.fleet}`);
+  }
+  return fleet;
+}
+
+export function archaeologicalSiteState(state: WorldState, id: EntityId): ArchaeologicalSiteState {
+  if (id.kind !== "archaeological_site") {
+    throw new Error(`Expected an archaeological_site scope, got ${describeEntity(state, id)}`);
+  }
+  const site = state.sites[id.site];
+  if (site === undefined) {
+    throw new Error(`No archaeological site at index ${id.site}`);
+  }
+  return site;
+}
+
+export function situationState(state: WorldState, id: EntityId): SituationState {
+  if (id.kind !== "situation") {
+    throw new Error(`Expected a situation scope, got ${describeEntity(state, id)}`);
+  }
+  const situation = state.situations[id.situation];
+  if (situation === undefined) {
+    throw new Error(`No situation at index ${id.situation}`);
+  }
+  return situation;
+}
+
 /** `country "player"` — for explain details and error messages. */
 export function describeEntity(state: WorldState, id: EntityId): string {
-  if (id.kind === "country") {
-    return `country "${state.countries[id.country]?.name ?? id.country}"`;
+  switch (id.kind) {
+    case "country":
+      return `country "${state.countries[id.country]?.name ?? id.country}"`;
+    case "planet":
+      return `planet "${state.planets[id.country]?.[id.planet]?.name ?? `${id.country}.${id.planet}`}"`;
+    case "fleet":
+      return `fleet "${state.fleets[id.fleet]?.name ?? id.fleet}"`;
+    case "situation":
+      return `situation "${state.situations[id.situation]?.name ?? id.situation}"`;
+    case "archaeological_site":
+      return `archaeological_site "${state.sites[id.site]?.name ?? id.site}"`;
   }
-  return `planet "${state.planets[id.country]?.[id.planet]?.name ?? `${id.country}.${id.planet}`}"`;
 }
 
 /** `country(0) "player"` / `planet(0.1) "beta"` — for the fired log. */
 export function renderEntity(state: WorldState, id: EntityId): string {
-  if (id.kind === "country") {
-    return `country(${id.country}) "${state.countries[id.country]?.name ?? "?"}"`;
+  switch (id.kind) {
+    case "country":
+      return `country(${id.country}) "${state.countries[id.country]?.name ?? "?"}"`;
+    case "planet":
+      return `planet(${id.country}.${id.planet}) "${state.planets[id.country]?.[id.planet]?.name ?? "?"}"`;
+    case "fleet":
+      return `fleet(${id.fleet}) "${state.fleets[id.fleet]?.name ?? "?"}"`;
+    case "situation":
+      return `situation(${id.situation}) "${state.situations[id.situation]?.name ?? "?"}"`;
+    case "archaeological_site":
+      return `archaeological_site(${id.site}) "${state.sites[id.site]?.name ?? "?"}"`;
   }
-  return `planet(${id.country}.${id.planet}) "${state.planets[id.country]?.[id.planet]?.name ?? "?"}"`;
 }
 
 export function sameEntity(a: EntityId | undefined, b: EntityId | undefined): boolean {
   if (a === undefined || b === undefined) {
     return a === b;
   }
-  if (a.kind === "country" && b.kind === "country") {
-    return a.country === b.country;
+  if (a.kind !== b.kind) {
+    return false;
   }
-  if (a.kind === "planet" && b.kind === "planet") {
-    return a.country === b.country && a.planet === b.planet;
+  switch (a.kind) {
+    case "country":
+      return b.kind === "country" && a.country === b.country;
+    case "planet":
+      return b.kind === "planet" && a.country === b.country && a.planet === b.planet;
+    case "fleet":
+      return b.kind === "fleet" && a.fleet === b.fleet;
+    case "situation":
+      return b.kind === "situation" && a.situation === b.situation;
+    case "archaeological_site":
+      return b.kind === "archaeological_site" && a.site === b.site;
   }
-  return false;
 }
 
 /**
@@ -282,4 +469,89 @@ export class Planet implements SimScope<"planet"> {
   }
 }
 
-export type HandleOf<S extends SimScopeName> = S extends "country" ? Country : Planet;
+export class Fleet implements SimScope<"fleet"> {
+  readonly simScope: "fleet" = "fleet";
+  readonly id: EntityId;
+  readonly state: WorldState;
+
+  constructor(state: WorldState, index: number) {
+    this.state = state;
+    this.id = { kind: "fleet", fleet: index };
+  }
+
+  get name(): string {
+    return fleetState(this.state, this.id).name;
+  }
+}
+
+export class ArchaeologicalSite implements SimScope<"archaeological_site"> {
+  readonly simScope: "archaeological_site" = "archaeological_site";
+  readonly id: EntityId;
+  readonly state: WorldState;
+
+  constructor(state: WorldState, index: number) {
+    this.state = state;
+    this.id = { kind: "archaeological_site", site: index };
+  }
+
+  get name(): string {
+    return archaeologicalSiteState(this.state, this.id).name;
+  }
+
+  /** `set_site_progress_locked`'s target — the one piece of site state the whitelist touches. */
+  get progressLocked(): boolean {
+    return archaeologicalSiteState(this.state, this.id).progressLocked;
+  }
+}
+
+export class Situation implements SimScope<"situation"> {
+  readonly simScope: "situation" = "situation";
+  readonly id: EntityId;
+  readonly state: WorldState;
+
+  constructor(state: WorldState, index: number) {
+    this.state = state;
+    this.id = { kind: "situation", situation: index };
+  }
+
+  get name(): string {
+    return situationState(this.state, this.id).name;
+  }
+
+  /** The situation's stored progress value — what `situationProgress(...)` compares against. */
+  get progress(): number {
+    return situationState(this.state, this.id).progress;
+  }
+
+  /** The id of the currently-picked approach, or `undefined` if none has been. */
+  get approach(): string | undefined {
+    return situationState(this.state, this.id).approach;
+  }
+
+  /** Reads a situation variable; `undefined` if it was never set — see `is_variable_set`. */
+  variable(name: string): number | undefined {
+    return situationState(this.state, this.id).variables.get(name);
+  }
+
+  /** The situation's declared target — see {@link SituationSpec}. */
+  get target(): Country {
+    const targetId = situationState(this.state, this.id).targetId;
+    if (targetId.kind !== "country") {
+      throw new Error("unreachable: the fixture only builds country-targeted situations");
+    }
+    return new Country(this.state, targetId.country);
+  }
+}
+
+export type HandleOf<S extends SimScopeName> = S extends "country"
+  ? Country
+  : S extends "planet"
+    ? Planet
+    : S extends "fleet"
+      ? Fleet
+      : S extends "situation"
+        ? Situation
+        : ArchaeologicalSite;
+
+/** Any handle the fixture can hand back — the union `explainFor`/the matcher pack accept. */
+export type AnySimHandle = Country | Planet | Fleet | Situation | ArchaeologicalSite;

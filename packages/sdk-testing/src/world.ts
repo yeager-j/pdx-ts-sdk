@@ -22,10 +22,13 @@ import type { DefinedEvent, EventRef, ScopeName } from "@pdx-ts/sdk";
 
 import { applyEffectEntries, type ForcedArms } from "./interpret.ts";
 import {
+  ArchaeologicalSite,
   buildState,
   Country,
+  Fleet,
   renderEntity,
   sameEntity,
+  Situation,
   type FiredRecord,
   type FixtureSpec,
   type PendingFire,
@@ -112,6 +115,27 @@ export class World {
       throw new Error(`No country at index ${index} in this fixture`);
     }
     return new Country(this.state, index);
+  }
+
+  fleet(index: number): Fleet {
+    if (this.state.fleets[index] === undefined) {
+      throw new Error(`No fleet at index ${index} in this fixture`);
+    }
+    return new Fleet(this.state, index);
+  }
+
+  archaeologicalSite(index: number): ArchaeologicalSite {
+    if (this.state.sites[index] === undefined) {
+      throw new Error(`No archaeological site at index ${index} in this fixture`);
+    }
+    return new ArchaeologicalSite(this.state, index);
+  }
+
+  situation(index: number): Situation {
+    if (this.state.situations[index] === undefined) {
+      throw new Error(`No situation at index ${index} in this fixture`);
+    }
+    return new Situation(this.state, index);
   }
 
   get day(): number {
