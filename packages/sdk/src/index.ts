@@ -250,6 +250,7 @@ export {
 } from "./items.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
+  GameVersionError,
   InstallNotFoundError,
   LogicalPathError,
   NoWinningFilenameError,

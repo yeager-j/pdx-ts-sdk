@@ -7,7 +7,7 @@
  * step, and it is nine lines.
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
@@ -91,6 +91,16 @@ export interface InstallResult {
  * `render` + `write` + `renderLauncherDescriptor`, composed — a sink over a
  * built `PureMod`, never a second way into the fold. Everything about what the
  * mod *is* was decided by `buildMod`; this only decides where it lands.
+ *
+ * **The content directory is replaced, not merged into.** `write` only
+ * overwrites the paths it is given, so renaming a feature module across two
+ * installs would leave the old emitted file in place — and the game would load
+ * both, which is a duplicate-id error at best and two live copies of a
+ * definition at worst. Since this directory is emitted output that `install`
+ * owns entirely, the honest fix is to clear it: what lands is exactly what the
+ * current build renders. Anything hand-edited in there is by definition not
+ * part of the mod and does not survive, which is why the SDK writes it and the
+ * author does not.
  */
 export async function install(mod: PureMod, options: InstallOptions = {}): Promise<InstallResult> {
   const root = options.modDir ?? modDir();
@@ -98,6 +108,7 @@ export async function install(mod: PureMod, options: InstallOptions = {}): Promi
   const contentDir = path.join(root, dirName);
   const descriptorPath = path.join(root, `${dirName}.mod`);
 
+  await rm(contentDir, { recursive: true, force: true });
   await write(contentDir, render(mod));
   await mkdir(root, { recursive: true });
   await writeFile(descriptorPath, renderLauncherDescriptor(mod, contentDir), "utf8");

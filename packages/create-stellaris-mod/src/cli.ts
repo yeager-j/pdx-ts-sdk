@@ -58,7 +58,13 @@ export async function main(argv: readonly string[], cwd = process.cwd()): Promis
 
   const targetDir = path.resolve(cwd, resolved.targetDir);
   const packageName = toPackageName(path.basename(targetDir));
-  const files = planFiles({ ...resolved, targetDir }, packageName);
+  // `--local ../pdx-sdk` is resolved against *this* process's cwd, but the
+  // `file:` dependency it becomes is resolved by npm against the scaffolded
+  // project's package.json. Canonicalizing here makes the two agree, and makes
+  // the checkout check below test the same directory npm will.
+  const localSdk =
+    resolved.localSdk === undefined ? undefined : path.resolve(cwd, resolved.localSdk);
+  const files = planFiles({ ...resolved, targetDir, localSdk }, packageName);
 
   if (parsed.values["dry-run"] === true) {
     process.stdout.write(`Would scaffold ${targetDir}:\n`);
@@ -72,7 +78,7 @@ export async function main(argv: readonly string[], cwd = process.cwd()): Promis
   }
 
   try {
-    checkLocalCheckout(resolved.localSdk);
+    checkLocalCheckout(localSdk);
     await preflight(targetDir);
     await writeTree(targetDir, files);
   } catch (error) {
@@ -80,15 +86,18 @@ export async function main(argv: readonly string[], cwd = process.cwd()): Promis
     return 1;
   }
 
+  // Install first, so the lockfile it produces is part of the initial commit.
+  // The other order leaves a freshly scaffolded repository immediately dirty,
+  // with its first commit describing a dependency graph that was never resolved.
+  let installed = false;
+  if (resolved.install) {
+    installed = (await run(installCommand(resolved.packageManager), targetDir)) === 0;
+  }
+
   if (resolved.git && !(await insideGitWorkTree(targetDir))) {
     for (const command of gitInitCommands()) {
       await run(command, targetDir);
     }
-  }
-
-  let installed = false;
-  if (resolved.install) {
-    installed = (await run(installCommand(resolved.packageManager), targetDir)) === 0;
   }
 
   process.stdout.write(nextSteps(resolved, targetDir, installed));

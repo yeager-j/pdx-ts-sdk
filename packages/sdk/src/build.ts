@@ -141,6 +141,17 @@ export function buildMod(
   if (!PREFIX_PATTERN.test(config.prefix)) {
     throw new Error(`Mod prefix "${config.prefix}" must be lowercase snake_case ([a-z][a-z0-9_]*)`);
   }
+  if (config.name.includes('"')) {
+    // `descriptor.mod` writes `name="<name>"`, and PDXScript has no quote
+    // escaping to rescue it — the launcher answers the malformed result by
+    // refusing the mod without saying why. Localization already replaces quotes
+    // rather than emitting them; a mod's own name is identity, so it is refused
+    // instead of silently rewritten.
+    throw new Error(
+      `Mod name ${JSON.stringify(config.name)} cannot contain a double quote: it is written ` +
+        `verbatim into descriptor.mod, which has no way to escape one.`
+    );
+  }
   if (!SUPPORTED_VERSION_PATTERN.test(config.supportedVersion)) {
     throw new Error(
       `supportedVersion "${config.supportedVersion}" is not a launcher version pattern ` +

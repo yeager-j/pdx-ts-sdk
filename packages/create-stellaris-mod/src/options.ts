@@ -71,6 +71,13 @@ export interface Resolved {
   readonly tags: readonly string[];
   /** Absent when no install was found or the author declined to name one. */
   readonly installPath: string | undefined;
+  /**
+   * True when the author named the path rather than detection finding it at a
+   * platform default. The generated project bakes it in only in that case:
+   * otherwise its own detection will find the same install, and an absolute
+   * machine path in a committed file is noise a teammate has to delete.
+   */
+  readonly installPathIsExplicit: boolean;
   /** The detected build, used to pin `@pdx-ts/stellaris-ids`. */
   readonly gameVersion: string | undefined;
   /** A local pdx-sdk checkout to depend on via `file:`, when given. */

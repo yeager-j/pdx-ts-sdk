@@ -819,6 +819,15 @@ describe("collections", () => {
     expect(() => buildMod(CONFIG, [forged])).toThrow(/must be lowercase snake_case/);
   });
 
+  it("rejects a mod name the descriptor cannot express", () => {
+    // `descriptor.mod` writes name="<name>" and PDXScript has no quote escape,
+    // so a quote produces a descriptor the launcher refuses without saying why.
+    expect(() => buildMod({ ...CONFIG, name: 'The "Real" Mod' }, [])).toThrow(
+      /cannot contain a double quote/
+    );
+    expect(() => buildMod({ ...CONFIG, name: "The 'Real' Mod" }, [])).not.toThrow();
+  });
+
   it("rejects a supportedVersion the launcher could not read", () => {
     // It is written verbatim into descriptor.mod, and the launcher answers an
     // unreadable one by refusing the mod without saying so — the exact silent

@@ -17,6 +17,22 @@ import type { ParsedArgv, Resolved } from "./options.ts";
 /** The build the SDK's rule table is verified against — the no-install fallback. */
 export const FALLBACK_GAME_VERSION = "4.4.6";
 
+/**
+ * Why a name may not contain a double quote: it is written verbatim into
+ * `descriptor.mod` as `name="<name>"`, and PDXScript has no escape for one, so
+ * the launcher silently refuses the malformed result. `buildMod` rejects it too
+ * — this is the same rule said early, where the author can still retype.
+ */
+export function nameProblem(name: string): string | undefined {
+  if (name.trim() === "") {
+    return "A mod name cannot be empty.";
+  }
+  if (name.includes('"')) {
+    return "A mod name cannot contain a double quote — the launcher descriptor has no way to escape it.";
+  }
+  return undefined;
+}
+
 function stop(): never {
   cancel("Nothing was written.");
   process.exit(130);
@@ -51,7 +67,12 @@ export function resolveNonInteractive(argv: ParsedArgv, targetDir: string): Reso
   const { values } = argv;
   const dirName = targetDir.split(/[\\/]/).pop() ?? "my-stellaris-mod";
   const name = flag(values, "name") ?? toDisplayName(dirName);
-  const detected = detectInstall(flag(values, "stellaris-path"));
+  const problem = nameProblem(name);
+  if (problem !== undefined) {
+    throw new Error(`${problem} (--name ${JSON.stringify(name)})`);
+  }
+  const explicitPath = flag(values, "stellaris-path");
+  const detected = detectInstall(explicitPath);
   const gameVersion = detected?.gameVersion;
 
   return {
@@ -64,6 +85,7 @@ export function resolveNonInteractive(argv: ParsedArgv, targetDir: string): Reso
       "v4.4.*",
     tags: toTags(flag(values, "tags")),
     installPath: detected?.installPath,
+    installPathIsExplicit: explicitPath !== undefined && explicitPath !== "",
     gameVersion,
     localSdk: flag(values, "local"),
     prettier: boolFlag(values, "prettier") ?? true,
@@ -96,12 +118,7 @@ export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
         message: "What is the mod called?",
         placeholder: toDisplayName(dirName),
         defaultValue: toDisplayName(dirName),
-        validate: (value = "") =>
-          value.includes('"')
-            ? // It lands unescaped in descriptor.mod, and PDXScript has no
-              // quote escaping to save it.
-              "A mod name cannot contain a double quote — the launcher descriptor has no way to escape it."
-            : undefined,
+        validate: (value = "") => nameProblem(value),
       })
     );
 
@@ -150,6 +167,7 @@ export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
     supportedVersion,
     tags: toTags(flag(values, "tags")),
     installPath: install?.installPath,
+    installPathIsExplicit: install?.isExplicit ?? false,
     gameVersion: install?.gameVersion,
     localSdk: flag(values, "local"),
     prettier,
@@ -167,7 +185,10 @@ export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
  */
 async function askInstall(
   explicit: string | undefined
-): Promise<{ installPath: string; gameVersion: string | undefined } | undefined> {
+): Promise<
+  { installPath: string; gameVersion: string | undefined; isExplicit: boolean } | undefined
+> {
+  const fromFlag = explicit !== undefined && explicit !== "";
   const detected = detectInstall(explicit);
   if (detected !== undefined) {
     const version = detected.gameVersion ?? "unknown build";
@@ -175,7 +196,7 @@ async function askInstall(
       await confirm({ message: `Found Stellaris ${version} at ${detected.installPath}. Use it?` })
     );
     if (useIt) {
-      return detected;
+      return { ...detected, isExplicit: fromFlag };
     }
   } else {
     log.warn("No Stellaris install found where the SDK looks.");
@@ -199,7 +220,8 @@ async function askInstall(
       return undefined;
     }
     if (isInstall(typed)) {
-      return { installPath: typed, gameVersion: readGameVersion(typed) };
+      // Typed by hand, so detection in the generated project would not find it.
+      return { installPath: typed, gameVersion: readGameVersion(typed), isExplicit: true };
     }
     log.error(`${typed} is not a Stellaris install — no common/technology inside it.`);
   }

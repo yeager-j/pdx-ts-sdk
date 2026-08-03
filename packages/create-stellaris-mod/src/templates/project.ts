@@ -60,8 +60,23 @@ function testingDependency(resolved: Resolved): Record<string, string> {
   };
 }
 
+/**
+ * Whether the identifier package can be pinned at all.
+ *
+ * Its npm version *is* the game version, so only a plain `major.minor.patch`
+ * has a counterpart to install — a four-part Paradox build has none. Exported
+ * because the source templates must ask the same question: emitting the
+ * `import "@pdx-ts/stellaris-ids"` side effect for a dependency this declined
+ * to add produces a scaffold that fails on a missing package, instead of
+ * degrading to unchecked strings the way a no-install scaffold does.
+ */
+export function canPinIds(resolved: Resolved): boolean {
+  return resolved.gameVersion !== undefined && /^\d+\.\d+\.\d+$/.test(resolved.gameVersion);
+}
+
 function idsDependency(resolved: Resolved): Record<string, string> {
-  if (resolved.gameVersion === undefined || !/^\d+\.\d+\.\d+$/.test(resolved.gameVersion)) {
+  const gameVersion = resolved.gameVersion;
+  if (!canPinIds(resolved) || gameVersion === undefined) {
     return {};
   }
   if (resolved.localSdk !== undefined) {
@@ -70,7 +85,7 @@ function idsDependency(resolved: Resolved): Record<string, string> {
   // The package's npm version *is* the game version, so this is an exact pin
   // rather than a range: 4.4.6 carries the identifiers of Stellaris 4.4.6 and
   // the SDK refuses a build whose install disagrees.
-  return { "@pdx-ts/stellaris-ids": resolved.gameVersion };
+  return { "@pdx-ts/stellaris-ids": gameVersion };
 }
 
 export function packageJson(resolved: Resolved, packageName: string): string {

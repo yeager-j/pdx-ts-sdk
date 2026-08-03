@@ -15,6 +15,7 @@ const base: Resolved = {
   supportedVersion: "v4.4.*",
   tags: ["Technologies"],
   installPath: "/games/Stellaris",
+  installPathIsExplicit: false,
   gameVersion: "4.4.6",
   localSdk: undefined,
   prettier: true,
@@ -156,9 +157,42 @@ describe("dependency resolution", () => {
     expect(dependencies!["@pdx-ts/stellaris-ids"]).toBeUndefined();
   });
 
+  it("does not import a package it declined to add", () => {
+    // A four-part Paradox version has no npm counterpart, so the dependency is
+    // omitted — and the side-effect import has to be omitted with it, or the
+    // scaffold fails on a missing package instead of degrading to unchecked
+    // strings the way a no-install scaffold does.
+    for (const gameVersion of [undefined, "4.4.6.1"]) {
+      const files = plan({ gameVersion });
+      const { dependencies } = manifest(files);
+      expect(dependencies!["@pdx-ts/stellaris-ids"], String(gameVersion)).toBeUndefined();
+      expect(files.get("src/index.ts"), String(gameVersion)).not.toContain("@pdx-ts/stellaris-ids");
+    }
+  });
+
   it("requires the Node version its own build script needs", () => {
     // `npm run build` is `node src/index.ts`, which needs type stripping.
     expect(manifest(plan())["engines"]!["node"]).toBe(">=22.18.0");
+  });
+});
+
+describe("the vanilla view the project loads", () => {
+  it("bakes in a path the author named, since detection would miss it", () => {
+    const vanilla = plan({ installPath: "/weird/place", installPathIsExplicit: true }).get(
+      "src/vanilla.ts"
+    )!;
+    expect(vanilla).toContain('const SCAFFOLDED_INSTALL = "/weird/place"');
+    // STELLARIS_PATH has to win: `load({ installPath })` outranks the env var,
+    // so a teammate could not otherwise override a path off their machine.
+    expect(vanilla).toContain('process.env["STELLARIS_PATH"] ? {} : { installPath:');
+  });
+
+  it("bakes in nothing when detection found the install on its own", () => {
+    // The generated project's own detection will find it again, and an absolute
+    // machine path in a committed file is noise a teammate has to delete.
+    const vanilla = plan({ installPathIsExplicit: false }).get("src/vanilla.ts")!;
+    expect(vanilla).not.toContain("SCAFFOLDED_INSTALL");
+    expect(vanilla).toContain("stellaris.load()");
   });
 });
 

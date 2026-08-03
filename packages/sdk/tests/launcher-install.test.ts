@@ -16,9 +16,9 @@
  * proves the launcher agrees they are a mod.
  */
 
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -156,6 +156,23 @@ describe("install", () => {
     expect(readFileSync(result.descriptorPath, "utf8")).toContain(
       `path="${join(root, "custom_name")}"`
     );
+  });
+
+  it("replaces the content directory rather than merging into it", async () => {
+    // The failure this prevents: rename a feature module, reinstall, and the
+    // previous file is still there — so the game loads both and sees the same
+    // ids twice. `write` only overwrites the paths it is handed, so the stale
+    // one survives unless the directory is cleared.
+    const root = tempDir();
+    const { contentDir } = await install(mod, { modDir: root });
+    const stale = join(contentDir, "common/technology/lp_probe_old_feature.txt");
+    mkdirSync(dirname(stale), { recursive: true });
+    writeFileSync(stale, "lp_probe_tech_marker = { }\n", "utf8");
+
+    await install(mod, { modDir: root });
+
+    expect(existsSync(stale)).toBe(false);
+    expect(existsSync(join(contentDir, "common/technology/lp_probe_technology.txt"))).toBe(true);
   });
 
   it("creates a mod directory that does not exist yet", async () => {

@@ -6,6 +6,7 @@
  */
 
 import type { Resolved } from "../options.ts";
+import { canPinIds } from "./project.ts";
 
 /** A TS string literal, so a mod name with an apostrophe cannot break the file. */
 function quote(value: string): string {
@@ -13,12 +14,13 @@ function quote(value: string): string {
 }
 
 export function indexTs(resolved: Resolved): string {
-  const idsImport =
-    resolved.gameVersion === undefined
-      ? ""
-      : `// One line, for its type-level side effect: it merges the real game's id\n` +
-        `// unions into the SDK, so \`vanilla.technology("tech_lazers_1")\` stops being\n` +
-        `// a string and starts being a compile error.\nimport "@pdx-ts/stellaris-ids";\n`;
+  // The same predicate the dependency uses: importing a package the manifest
+  // declined to add would fail the build rather than degrade.
+  const idsImport = !canPinIds(resolved)
+    ? ""
+    : `// One line, for its type-level side effect: it merges the real game's id\n` +
+      `// unions into the SDK, so \`vanilla.technology("tech_lazers_1")\` stops being\n` +
+      `// a string and starts being a compile error.\nimport "@pdx-ts/stellaris-ids";\n`;
 
   const vanillaWiring =
     resolved.installPath === undefined ? "" : `import { loadVanilla } from "./vanilla.ts";\n`;
@@ -97,7 +99,7 @@ console.log(\`  descriptor: \${descriptorPath}\`);
 `;
 }
 
-export function vanillaTs(): string {
+export function vanillaTs(resolved: Resolved): string {
   return `/**
  * The vanilla view: the installed game, parsed.
  *
@@ -112,13 +114,13 @@ export function vanillaTs(): string {
  */
 
 import { stellaris, type VanillaView } from "@pdx-ts/sdk";
-
+${fallbackConst(resolved)}
 export function loadVanilla(): VanillaView | undefined {
   if (process.env["PDX_NO_VANILLA"] === "1") {
     return undefined;
   }
   try {
-    return stellaris.load();
+    return stellaris.load(${loadArgument(resolved)});
   } catch (error) {
     console.warn(
       \`Building without the vanilla view: \${error instanceof Error ? error.message : String(error)}\`
@@ -255,4 +257,36 @@ describe("the welcome event", () => {
   });
 });
 `;
+}
+
+/**
+ * Where the game was when this project was scaffolded — emitted only when the
+ * author named the path, since that is exactly the case the SDK's own detection
+ * would miss. A path found at a platform default is left out: detection will
+ * find it again, and an absolute machine path in a committed file is noise
+ * every teammate has to delete.
+ */
+function fallbackConst(resolved: Resolved): string {
+  if (!resolved.installPathIsExplicit || resolved.installPath === undefined) {
+    return "";
+  }
+  return `
+/**
+ * The install this project was scaffolded against. Machine-specific: set
+ * \`STELLARIS_PATH\` instead if you share this repository, which wins over it.
+ */
+const SCAFFOLDED_INSTALL = ${quote(resolved.installPath)};
+`;
+}
+
+/**
+ * `stellaris.load({ installPath })` outranks `STELLARIS_PATH`, so the baked-in
+ * path is passed only when the environment has nothing to say. Otherwise a
+ * teammate could not override a path that is not on their machine.
+ */
+function loadArgument(resolved: Resolved): string {
+  if (!resolved.installPathIsExplicit || resolved.installPath === undefined) {
+    return "";
+  }
+  return `process.env["STELLARIS_PATH"] ? {} : { installPath: SCAFFOLDED_INSTALL }`;
 }

@@ -54,7 +54,7 @@ export function planFiles(resolved: Resolved, packageName?: string): Map<string,
   // shipping it unconditionally would put a file in the project whose whole
   // purpose is unavailable.
   if (resolved.installPath !== undefined) {
-    files.set("src/vanilla.ts", vanillaTs());
+    files.set("src/vanilla.ts", vanillaTs(resolved));
   }
 
   // Sorted, so the scaffold is a function of the config and not of the order

@@ -6,32 +6,33 @@ import { mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /**
- * Files that may already sit in the target directory without it counting as
- * occupied — what `git init` and a fresh repo checkout leave behind. Anything
- * else and we stop: overwriting somebody's work is not recoverable, and a
- * scaffolder is the last tool that should do it.
+ * Refuse a target that already exists.
+ *
+ * The tempting version of this tolerates "harmless" leftovers — a `.git`, a
+ * README, a `.gitignore` — so you can scaffold into a freshly initialized
+ * repository. That is exactly where it goes wrong: the scaffold *writes* a
+ * README and a `.gitignore`, so the files it waves through are the ones it
+ * then destroys, and silently.
+ *
+ * Refusing outright is the standard behavior and needs no list to keep correct.
+ * A new directory is the only thing that cannot be somebody's work.
  */
-const HARMLESS = new Set([".git", ".gitignore", "LICENSE", "LICENSE.md", "README.md", ".DS_Store"]);
-
 export async function preflight(targetDir: string): Promise<void> {
   let entries: string[];
   try {
     entries = await readdir(targetDir);
   } catch {
-    return; // Does not exist yet, which is the common case.
+    return; // Does not exist, which is the only safe case.
   }
-  const blocking = entries.filter((entry) => !HARMLESS.has(entry));
-  if (blocking.length > 0) {
-    throw new Error(
-      `${targetDir} is not empty, so scaffolding into it could overwrite work:\n` +
-        blocking
-          .slice(0, 10)
-          .map((entry) => `  - ${entry}`)
-          .join("\n") +
-        (blocking.length > 10 ? `\n  ... and ${blocking.length - 10} more` : "") +
-        `\nPick an empty directory, or clear this one first.`
-    );
-  }
+  const summary =
+    entries.length === 0
+      ? "it already exists"
+      : `it already exists and holds ${entries.length} entr${entries.length === 1 ? "y" : "ies"}`;
+  throw new Error(
+    `Cannot scaffold into ${targetDir}: ${summary}.\n` +
+      `Pick a path that does not exist yet — the scaffold writes a README, a .gitignore ` +
+      `and a src/ tree, and will not overwrite anything to do it.`
+  );
 }
 
 export async function writeTree(
