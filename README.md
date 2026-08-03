@@ -345,11 +345,23 @@ The scopes follow the nesting too. The initializer's own `initEffect` runs in
 system scope and a planet's runs in planet scope, so `setCapital` is available
 on the inner one and not the outer.
 
-One wrinkle worth knowing: the game also lets `change_orbit` be written as
-`{ min max }`, and the SDK only accepts the number. CWT declares both forms as
-repeatable, which leaves no way to tell one authored value from the other — two
-of the 292 shipped initializers use the block form, and both are reachable by
-folding the offset into the next planet's `orbitDistance`.
+Two limits on `change_orbit` are worth knowing before you reach for it.
+
+**At the top level it cannot be interleaved between planets.** The game reads
+`planet { … } change_orbit = 30 planet { … }` as "advance the cursor, then place
+the next planet", and 280 of the 360 shipped initializers are written that way.
+Members are emitted one key at a time, so `planet: [a, b]` with
+`changeOrbit: [30]` emits both planets and *then* the orbit change — different
+geometry, silently. Until the SDK can express an ordered sequence mixing the two,
+set each planet's own `orbitDistance` instead, which is absolute and needs no
+cursor. `changeOrbit` *inside* a planet is unaffected: it is emitted in
+declaration order, ahead of that planet's moons, which is where the corpus puts
+it.
+
+**The `{ min max }` form is not accepted.** CWT declares both that and the plain
+number as repeatable, which leaves the writer no way to tell one authored value
+from the other. Two of the 292 shipped initializers use it, and both are
+reachable by folding the offset into the next planet's `orbitDistance`.
 
 ## Testing mod logic
 

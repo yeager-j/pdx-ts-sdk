@@ -244,7 +244,8 @@ const reports = (installPath === undefined ? [] : CONTENT_MANIFEST).map((manifes
     entry.keyword ?? null,
     type?.nameField ?? null,
     repeatedStructFieldsOf(registry),
-    spliceMembersOf(emission?.inlineSplices ?? [], (category) => spliceEmission(category))
+    spliceMembersOf(emission?.inlineSplices ?? [], (category) => spliceEmission(category)),
+    type?.keyFilter?.negated === true ? type.keyFilter.key : null
   );
   // Nested paths come back prefixed with the registry (`situation_type.stages.icon`,
   // matching the dotted paths CONTENT_DECLINED_FIELDS/CONTENT_FIELD_OVERRIDES use)

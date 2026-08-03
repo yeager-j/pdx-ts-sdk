@@ -171,18 +171,30 @@ export interface SpliceMember {
 function descendSplice(
   value: PdxContainer,
   member: SpliceMember,
-  seen: Map<string, PdxValue[]>
+  seen: Map<string, PdxValue[]>,
+  spliceArity: Map<string, boolean>
 ): void {
   const nested = new Map(member.members().map((inner) => [inner.key, inner]));
+  // Per block, not per definition. A system with eight planets that each write
+  // `size` once must not read as `planet.size` repeating — arity is a property
+  // of one block, and the accumulated `seen` map cannot express that because
+  // every planet at every depth pours into the same path. Counting here, where
+  // the block boundary still exists, is the only place it can be seen.
+  const withinThisBlock = new Set<string>();
   for (const leaf of value.items) {
     if (leaf.kind !== "entry") {
       continue;
     }
     const path = `${member.key}.${leaf.key}`;
+    // Presence marks the path as splice-owned even when it never repeats, so
+    // `observe` knows to take its arity from here rather than from the
+    // flattened value list.
+    spliceArity.set(path, (spliceArity.get(path) ?? false) || withinThisBlock.has(path));
+    withinThisBlock.add(path);
     seen.set(path, [...(seen.get(path) ?? []), leaf.value]);
     const inner = nested.get(leaf.key);
     if (inner !== undefined && leaf.value.kind === "container") {
-      descendSplice(leaf.value, inner, seen);
+      descendSplice(leaf.value, inner, seen, spliceArity);
     }
   }
 }
@@ -244,12 +256,25 @@ function scalarText(value: PdxValue): string | null {
  * weighting by repetition would let one verbose entry dominate coverage. The
  * repetition itself is not lost — it is what `repeated` records.
  */
-function observe(into: Map<string, FieldObservation>, written: ReadonlyMap<string, PdxValue[]>) {
+function observe(
+  into: Map<string, FieldObservation>,
+  written: ReadonlyMap<string, PdxValue[]>,
+  /**
+   * Splice-owned paths, each mapped to whether it repeated inside a single
+   * block — counted at a boundary the accumulated `written` map has already
+   * flattened away, see {@link descendSplice}. For these, `values.length` is
+   * the count across every block in the definition and says nothing about
+   * arity, so this decides it instead. Repeated-struct paths are dotted too but
+   * are absent here, and keep the ordinary rule.
+   */
+  spliceArity: ReadonlyMap<string, boolean> = new Map()
+) {
   for (const [key, values] of written) {
     const previous = into.get(key);
+    const repeats = spliceArity.get(key) ?? values.length > 1;
     const observation = {
       definitions: (previous?.definitions ?? 0) + 1,
-      repeated: (previous?.repeated ?? 0) + (values.length > 1 ? 1 : 0),
+      repeated: (previous?.repeated ?? 0) + (repeats ? 1 : 0),
       scalars: previous?.scalars ?? 0,
       blocks: previous?.blocks ?? 0,
       bareBlocks: previous?.bareBlocks ?? 0,
@@ -330,7 +355,14 @@ export function readRegistryCorpus(
   keyword: string | null,
   nameField: string | null,
   repeatedStructFields: readonly RepeatedStructField[] = [],
-  spliceMembers: readonly SpliceMember[] = []
+  spliceMembers: readonly SpliceMember[] = [],
+  /**
+   * A top-level key belonging to a sibling type that shares this directory,
+   * from a negated `## type_key_filter <> key` — `random_list` under
+   * `common/solar_system_initializers`. Counting one as a definition would
+   * measure another type's body against this registry's fields.
+   */
+  excludedKey: string | null = null
 ): RegistryCorpus {
   const dir = path.join(root, registryPath);
   let names: string[];
@@ -352,8 +384,12 @@ export function readRegistryCorpus(
       if (keyword !== null && item.key !== keyword) {
         continue;
       }
+      if (item.key === excludedKey) {
+        continue;
+      }
       definitions += 1;
       const written = new Map<string, PdxValue[]>();
+      const spliceArity = new Map<string, boolean>();
       for (const field of item.value.items) {
         if (field.kind !== "entry" || field.key === nameField) {
           continue;
@@ -365,10 +401,10 @@ export function readRegistryCorpus(
         }
         const splice = spliceByKey.get(field.key);
         if (splice !== undefined && field.value.kind === "container") {
-          descendSplice(field.value, splice, written);
+          descendSplice(field.value, splice, written, spliceArity);
         }
       }
-      observe(occurrences, written);
+      observe(occurrences, written, spliceArity);
     }
   }
   return { definitions, files: names.length, occurrences };
