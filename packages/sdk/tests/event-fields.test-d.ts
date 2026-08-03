@@ -84,3 +84,24 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
     });
   });
 });
+
+describe("PR #15 review follow-ups (SDK-46)", () => {
+  it("requires weightMultiplier.factor (events.cwt:448, unannotated cardinality is 1..1)", () => {
+    const events = namespace("event_fields_types_h");
+    events.defineCountryEvent({
+      id: 1,
+      hideWindow: true,
+      isTriggeredOnly: true,
+      weightMultiplier: { factor: 5 },
+    });
+    events.defineCountryEvent({
+      id: 2,
+      hideWindow: true,
+      isTriggeredOnly: true,
+      // @ts-expect-error — factor is required on weight_multiplier (events.cwt:448); the block has
+      // no other member the rules mark 1..1, so omitting it would silently serialize a
+      // rule-invalid event.
+      weightMultiplier: { modifiers: [] },
+    });
+  });
+});

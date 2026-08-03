@@ -172,9 +172,16 @@ export interface MeanTimeToHappen<S extends ScopeName> {
  * — that is an attribute subtype driven by `isTriggeredOnly`'s own value, not
  * by the event's kind, so it stays an unconditional field rather than a
  * second `S`-conditioned generic parameter.
+ *
+ * `factor` is required, not optional: `events.cwt:448` declares `factor =
+ * float` with no `## cardinality` annotation immediately above it, unlike
+ * the `alias_name[modifier_rule]` line right below it which is explicitly
+ * `0..100` — the rules' convention for an unannotated field is cardinality
+ * `1..1`. An optional `factor` would let the SDK silently emit a
+ * `weight_multiplier` the game rejects for missing its required member.
  */
 export interface WeightMultiplier<S extends ScopeName> {
-  readonly factor?: number;
+  readonly factor: number;
   readonly modifiers?: readonly Modifier<S>[];
 }
 
@@ -505,10 +512,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   }
   if (def.weightMultiplier !== undefined) {
     const weight = def.weightMultiplier;
-    const weightEntries: PdxEntry[] = [];
-    if (weight.factor !== undefined) {
-      weightEntries.push(kv("factor", weight.factor));
-    }
+    const weightEntries: PdxEntry[] = [kv("factor", weight.factor)];
     registerModifierDescs(loc, id, "weight_multiplier", weight.modifiers);
     const weightRefs: ContentRefUse[] = [];
     weightEntries.push(...modifierRows(weight.modifiers, weightRefs));
