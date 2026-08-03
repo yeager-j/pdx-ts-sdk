@@ -703,7 +703,9 @@ function defineContentExample(): PureMod {
     // as a script condition tree.
     potential: {
       authority: { value: "auth_democratic" },
-      civics: { not: [{ values: ["content_test_civic_incompatible"] }] },
+      // A vanilla civic id, not this mod's own: an own-prefixed value here
+      // would (rightly) fail the reference guard, same as `alternateCivicVersion`.
+      civics: { not: [{ values: ["civic_shadow_council"] }] },
     },
     possible: {
       or: [
