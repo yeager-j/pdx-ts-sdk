@@ -37,6 +37,7 @@ import {
   hasAnyMegastructureInEmpire,
   hasCrisisStage,
   isFallenEmpire,
+  isMachineEmpire,
   isPirateSystem,
 } from "../src/triggers.ts";
 
@@ -197,6 +198,23 @@ describe("the generated bindings", () => {
     // @ts-expect-error a parameterless binding's argument list is empty, so an
     // argument object is not merely ignored — it does not typecheck.
     isFallenEmpire({ ANYTHING: 1 });
+  });
+
+  it("accepts an explicit boolean for a parameterless trigger, negated included (SDK-43)", () => {
+    // `isMachineEmpire(false)` was the ticket's own example of a compile
+    // error with nothing at the call site to explain it — `isNomadic(false)`,
+    // a native trigger, compiled beside it. The negated and affirmative forms
+    // return the exact same type; only the emitted `yes`/`no` differs.
+    expectTypeOf(isMachineEmpire(false)).toEqualTypeOf(isMachineEmpire());
+    expectTypeOf(isFallenEmpire(true)).toEqualTypeOf(isFallenEmpire());
+  });
+
+  it("keeps the boolean form off a trigger that takes parameters", () => {
+    // Vanilla always substitutes `$PARAM$`s into a block, never into the call
+    // site itself — there is no `has_crisis_stage = no` to widen for, so this
+    // one stays object-args only even though its one parameter is optional.
+    // @ts-expect-error
+    hasCrisisStage(false);
   });
 
   it("makes a defaulted parameter optional and a bare one required", () => {

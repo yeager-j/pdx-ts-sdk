@@ -44,6 +44,28 @@ describe("lowering", () => {
     expect(serialize([...isFallenEmpire().entries])).toBe("is_fallen_empire = yes\n");
   });
 
+  it("writes an explicit `false` as `= no` (SDK-43)", () => {
+    // `isMachineEmpire(false)` was a compile error while `isNomadic(false)`
+    // compiled beside it — 7,746 negated scripted-trigger call sites in
+    // vanilla against 23,174 affirmative ones, and nothing at the call site
+    // told an author which form was legal.
+    const isFallenEmpire = scriptedTrigger("is_fallen_empire", "country");
+    expect(serialize([...isFallenEmpire(false).entries])).toBe("is_fallen_empire = no\n");
+  });
+
+  it("writes an explicit `true` byte-identical to the default", () => {
+    const isFallenEmpire = scriptedTrigger("is_fallen_empire", "country");
+    expect(serialize([...isFallenEmpire(true).entries])).toBe(
+      serialize([...isFallenEmpire().entries])
+    );
+  });
+
+  it("accepts the boolean form through `.unchecked` too, since the arity is unknown there either way", () => {
+    const binding = scriptedTrigger.unchecked("some_scripted_trigger", "any");
+    expect(serialize([...binding(false).entries])).toBe("some_scripted_trigger = no\n");
+    expect(serialize([...binding(true).entries])).toBe("some_scripted_trigger = yes\n");
+  });
+
   it("writes a parameterized call as a block of its arguments", () => {
     const canColonize = scriptedTrigger("can_colonize_planet_trigger", "planet");
     expect(serialize([...canColonize({ SCOPE: "root" }).entries])).toBe(

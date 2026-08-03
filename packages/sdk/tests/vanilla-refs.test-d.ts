@@ -96,6 +96,16 @@ describe("scripted bindings without the package", () => {
     expectTypeOf(binding({ SCOPE: "root" })).toEqualTypeOf<Trigger<"country">>();
   });
 
+  it("also accepts a boolean, negated included, since the arity is unknown either way (SDK-43)", () => {
+    // Without the package the SDK cannot tell a parameterless trigger from a
+    // parameterized one, so — same as the object-args form above — the
+    // boolean call form has to stay legal too, not only for names the
+    // installed package would resolve to an empty parameter list.
+    const binding = scriptedTrigger("is_fallen_empire", "country");
+    expectTypeOf(binding(false)).toEqualTypeOf<Trigger<"country">>();
+    expectTypeOf(binding(true)).toEqualTypeOf<Trigger<"country">>();
+  });
+
   it("still enforces the asserted scope", () => {
     // Losing the id sets must not lose scope checking: the assertion is the
     // author's either way, and the brand is what makes it bite.
