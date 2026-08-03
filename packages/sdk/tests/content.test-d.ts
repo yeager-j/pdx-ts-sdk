@@ -6,6 +6,8 @@ import {
   canGoMia,
   canJoinFactions,
   collection,
+  currentSituationApproach,
+  currentStage,
   defineAgenda,
   defineAmbientObject,
   defineArchaeologicalSiteType,
@@ -44,6 +46,7 @@ import {
   isSiteLocked,
   makeScope,
   namespace,
+  or,
   vanilla,
   type AgendaRef,
   type AgreementPresetRef,
@@ -847,6 +850,103 @@ describe("generated content authoring types", () => {
           iconBackground: "GFX_x_bg",
           // @ts-expect-error — approach allow runs in situation scope, not country
           allow: hasAuthority("auth_democratic"),
+        },
+      },
+    });
+  });
+
+  it("checks situationApproach/situationStage ids against this same definition's own declared keys (SDK-52)", () => {
+    // The id `currentSituationApproach`/`currentStage` names is declared a few
+    // lines away in the same object literal that uses it — checked here
+    // because both fields below assign the value straight to `allow`/
+    // `potential`, the boundary `defineSituationType` can actually reach.
+    defineSituationType({
+      id: "content_types_situation_approach_checked",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      stages: {
+        content_types_situation_approach_stage_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // Valid — this approach id is declared below, in this same call's `approach`.
+          potential: currentSituationApproach("content_types_situation_approach_calm"),
+        },
+        content_types_situation_approach_stage_typo: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — misspelled: not one of this situation's own approach ids
+          potential: currentSituationApproach("content_types_situation_approach_calmm"),
+        },
+      },
+      approach: {
+        content_types_situation_approach_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // Valid — this stage id is declared above, in this same call's `stages`.
+          allow: currentStage("content_types_situation_approach_stage_calm"),
+        },
+        content_types_situation_approach_aggressive: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — misspelled: not one of this situation's own stage ids
+          allow: currentStage("content_types_situation_approach_stage_typoo"),
+        },
+      },
+    });
+  });
+
+  it("does not let one situation's approach id satisfy an unrelated situation's check (SDK-52)", () => {
+    defineSituationType({
+      id: "content_types_situation_approach_other",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      approach: {
+        content_types_situation_approach_other_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+        },
+      },
+    });
+    defineSituationType({
+      id: "content_types_situation_approach_self",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      approach: {
+        content_types_situation_approach_self_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+        },
+      },
+      // @ts-expect-error — this approach id belongs to a different situation's own approach set
+      abortTrigger: currentSituationApproach("content_types_situation_approach_other_calm"),
+    });
+  });
+
+  it("degrades to unchecked once an approach id is composed inside a combinator (SDK-52)", () => {
+    // The checking boundary: real vanilla `current_situation_approach` usage
+    // is near-universally wrapped in a combinator (`and`/`or`/`not`) or
+    // written inside an effect closure's `scope.if(...)`, neither of which
+    // can thread a phantom brand through arbitrary composition. A misspelled
+    // id there still type-checks — degrading to unchecked, the same as an id
+    // whose situation identity genuinely is not known elsewhere in the SDK —
+    // rather than failing in a way that would make this previously-writable
+    // field unwritable (SDK-33).
+    defineSituationType({
+      id: "content_types_situation_approach_boundary",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      approach: {
+        content_types_situation_approach_boundary_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          allow: or(currentSituationApproach("this_id_names_nothing_declared_anywhere")),
         },
       },
     });

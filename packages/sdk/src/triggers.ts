@@ -8,7 +8,7 @@
  * operands" or "this one infers the scope intersection of its arguments".
  */
 
-import { block } from "@pdx-ts/pdxscript";
+import { block, kv } from "@pdx-ts/pdxscript";
 
 import type { ScopeName } from "./generated/scopes.ts";
 import { trigger, type Trigger } from "./trigger-core.ts";
@@ -17,6 +17,79 @@ export type { ScopeName } from "./generated/scopes.ts";
 export { trigger, type Trigger } from "./trigger-core.ts";
 export * from "./generated/triggers.ts";
 export * from "./generated/links.ts";
+
+declare const situationApproachBrand: unique symbol;
+declare const situationStageBrand: unique symbol;
+
+/**
+ * A `Trigger<"situation">` optionally carrying the literal approach and/or
+ * stage id it names — phantom only, never read at runtime (SDK-52).
+ *
+ * `defineSituationType` narrows its `approach`, `stages`, and `abortTrigger`
+ * fields to this type with `Approach`/`Stage` bound to that same call's own
+ * declared `approach`/`stages` keys (see `definers.ts`), so a value built by
+ * `currentSituationApproach`/`currentStage`/`canSetSituationApproach` is
+ * checked directly against them wherever one is assigned straight to such a
+ * field. Both brands are optional, so a plain `Trigger<"situation">` — what
+ * every combinator (`and`, `or`, `not`, `customTooltipFail`) and every effect
+ * closure (`scope.if(...)`) returns, having no way to thread a phantom brand
+ * through arbitrary composition — still satisfies it. That is the checking
+ * boundary: real vanilla `current_situation_approach`/`current_stage` usage is
+ * near-universally nested inside one of those two forms, and there it degrades
+ * to unchecked, the same as an id whose situation identity genuinely is not
+ * known elsewhere in the SDK.
+ */
+export type SituationTrigger<
+  Approach extends string = string,
+  Stage extends string = string,
+> = Trigger<"situation"> & {
+  readonly [situationApproachBrand]?: Approach;
+  readonly [situationStageBrand]?: Stage;
+};
+
+/**
+ * Checks if the specified approach has been picked on the scoped situation.
+ *
+ * Hand-written over the generated `current_situation_approach` leaf so the
+ * return type can carry the literal approach id — see `SituationTrigger`.
+ * ```
+ * current_situation_approach = <approach> (name field of the approach)
+ * ```
+ */
+export function currentSituationApproach<const Approach extends string>(
+  value: Approach
+): SituationTrigger<Approach, never> {
+  return trigger([kv("current_situation_approach", value)]) as SituationTrigger<Approach, never>;
+}
+
+/**
+ * Checks if the specified stage is currently active in the scoped situation.
+ *
+ * Hand-written for the same reason as `currentSituationApproach`.
+ * ```
+ * current_stage = <stage> (name defined in situation's stages)
+ * ```
+ */
+export function currentStage<const Stage extends string>(
+  value: Stage
+): SituationTrigger<never, Stage> {
+  return trigger([kv("current_stage", value)]) as SituationTrigger<never, Stage>;
+}
+
+/**
+ * Checks if the specified approach is allowed to be picked (according to
+ * potential and allow triggers) on the scoped situation.
+ *
+ * Hand-written for the same reason as `currentSituationApproach`.
+ * ```
+ * can_set_situation_approach = <approach> (name field of the approach)
+ * ```
+ */
+export function canSetSituationApproach<const Approach extends string>(
+  value: Approach
+): SituationTrigger<Approach, never> {
+  return trigger([kv("can_set_situation_approach", value)]) as SituationTrigger<Approach, never>;
+}
 
 /** Operand references travel with the combinator: a technology named inside an
  * `and(...)` is referenced just as surely as one named at the top level. */
