@@ -1,0 +1,1379 @@
+{
+  "registry": "job",
+  "definitions": 365,
+  "files": 22,
+  "fingerprint": "68d257215d89d114d7d12d30b7e3f947b39e435f116de2a5257485da61aa7f33",
+  "fields": {
+    "auto_generate_description": {
+      "definitions": 2,
+      "repeated": 1,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_be_automated": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_set_priority": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "category": {
+      "definitions": 345,
+      "repeated": 0,
+      "scalars": 345,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "assimilation",
+        "bio_trophy",
+        "bio_trophy_unemployment",
+        "chip_slave",
+        "civilian",
+        "complex_drone",
+        "corrupt_drone",
+        "criminal",
+        "cruise_passenger",
+        "cruise_passenger_unemployment",
+        "deep_sleep",
+        "deviant_drone",
+        "maintenance_drone",
+        "pre_sapients",
+        "precursor",
+        "purge",
+        "ruler",
+        "simple_drone",
+        "slave_unemployment",
+        "specialist",
+        "wilderness_heart_strata",
+        "worker",
+        "xeno_ward"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "contributes_to_diplo_weight": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 20,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "count_as_available_for_ai": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "country_modifier": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 14,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category_psionics_draw_chance_mult",
+        "country_naval_cap_add",
+        "country_starbase_capacity_mult",
+        "knight_quest_progress_add",
+        "logistic_growth_mult",
+        "planet_pops_trade_produces_mult",
+        "pop_amenities_usage_mult",
+        "ship_armor_mult",
+        "ship_fire_rate_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "category_psionics_draw_chance_mult"
+        ],
+        [
+          "country_naval_cap_add"
+        ],
+        [
+          "country_naval_cap_add",
+          "knight_quest_progress_add"
+        ],
+        [
+          "country_starbase_capacity_mult"
+        ],
+        [
+          "logistic_growth_mult"
+        ],
+        [
+          "planet_pops_trade_produces_mult",
+          "pop_amenities_usage_mult"
+        ],
+        [
+          "ship_armor_mult",
+          "ship_fire_rate_mult"
+        ]
+      ]
+    },
+    "exempt_from_ai_amenity_prioritization": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "first_come_first_served": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ignores_sapience": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 146,
+      "repeated": 34,
+      "scalars": 144,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [
+        "jobs/academia_recruiter_naval_cap_add",
+        "jobs/automodding_priority_alloys",
+        "jobs/automodding_priority_charisma",
+        "jobs/automodding_priority_consumer_goods",
+        "jobs/automodding_priority_energy",
+        "jobs/automodding_priority_food",
+        "jobs/automodding_priority_minerals",
+        "jobs/automodding_priority_research",
+        "jobs/automodding_priority_trade",
+        "jobs/automodding_priority_unity",
+        "jobs/ethic_job_modifiers",
+        "jobs/ethic_job_modifiers_memorialist",
+        "jobs/inf_navalcap_jobs",
+        "jobs/job_enforcer",
+        "jobs/job_enforcer_additional_modifiers",
+        "jobs/job_telepath",
+        "jobs/job_telepath_additional_modifiers",
+        "output/colony_support_contract_modifiers",
+        "output/foundry_nomad_triggered_modifiers",
+        "output/genomic_triggered_modifiers",
+        "output/healthcare_triggered_modifiers",
+        "output/soldier_triggered_modifiers"
+      ],
+      "keys": [
+        "CATEGORY",
+        "CONDITION_STRING",
+        "POSSIBLE_PRECALC",
+        "script"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "CATEGORY",
+          "CONDITION_STRING",
+          "POSSIBLE_PRECALC",
+          "script"
+        ]
+      ]
+    },
+    "is_capped_by_modifier": {
+      "definitions": 158,
+      "repeated": 0,
+      "scalars": 158,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "overlord_resources": {
+      "definitions": 62,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 62,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "produces"
+      ],
+      "keysByDefinition": [
+        [
+          "category",
+          "produces"
+        ]
+      ]
+    },
+    "planet_modifier": {
+      "definitions": 52,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 52,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "arkship_action_speed",
+        "arkship_harvest_resources_produces_mult",
+        "bonus_automated_workforce_mult",
+        "bonus_pop_growth_mult",
+        "branch_office_criminal_syndicate_value_add",
+        "logistic_growth_mult",
+        "planet_crime_add",
+        "planet_crime_no_happiness_add",
+        "planet_defense_armies_add",
+        "planet_jobs_simple_drone_produces_mult",
+        "planet_jobs_trade_produces_mult",
+        "planet_jobs_worker_produces_mult",
+        "planet_pop_assembly_add",
+        "planet_pops_consumer_goods_upkeep_mult",
+        "planet_stability_add",
+        "pop_artisan_drone_bonus_workforce_mult",
+        "pop_cat_complex_drone_bonus_workforce_mult",
+        "pop_cat_simple_drone_bonus_workforce_mult",
+        "pop_cat_specialist_bonus_workforce_mult",
+        "pop_cat_worker_bonus_workforce_mult",
+        "pop_environment_tolerance",
+        "pop_experiment_engineer_bonus_workforce_mult",
+        "pop_happiness",
+        "pop_test_subject_bonus_workforce_mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "arkship_action_speed",
+          "arkship_harvest_resources_produces_mult"
+        ],
+        [
+          "bonus_automated_workforce_mult"
+        ],
+        [
+          "bonus_pop_growth_mult",
+          "logistic_growth_mult",
+          "pop_environment_tolerance"
+        ],
+        [
+          "branch_office_criminal_syndicate_value_add"
+        ],
+        [
+          "planet_crime_add",
+          "planet_defense_armies_add"
+        ],
+        [
+          "planet_crime_add",
+          "planet_defense_armies_add",
+          "planet_stability_add"
+        ],
+        [
+          "planet_crime_add",
+          "planet_stability_add"
+        ],
+        [
+          "planet_crime_no_happiness_add"
+        ],
+        [
+          "planet_crime_no_happiness_add",
+          "planet_defense_armies_add"
+        ],
+        [
+          "planet_defense_armies_add"
+        ],
+        [
+          "planet_defense_armies_add",
+          "planet_stability_add"
+        ],
+        [
+          "planet_jobs_simple_drone_produces_mult"
+        ],
+        [
+          "planet_jobs_trade_produces_mult"
+        ],
+        [
+          "planet_jobs_worker_produces_mult"
+        ],
+        [
+          "planet_pop_assembly_add"
+        ],
+        [
+          "planet_pops_consumer_goods_upkeep_mult"
+        ],
+        [
+          "planet_stability_add"
+        ],
+        [
+          "pop_artisan_drone_bonus_workforce_mult",
+          "pop_cat_simple_drone_bonus_workforce_mult"
+        ],
+        [
+          "pop_cat_complex_drone_bonus_workforce_mult"
+        ],
+        [
+          "pop_cat_specialist_bonus_workforce_mult",
+          "pop_cat_worker_bonus_workforce_mult"
+        ],
+        [
+          "pop_environment_tolerance"
+        ],
+        [
+          "pop_experiment_engineer_bonus_workforce_mult",
+          "pop_test_subject_bonus_workforce_mult"
+        ],
+        [
+          "pop_happiness"
+        ]
+      ]
+    },
+    "possible": {
+      "definitions": 317,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 317,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "always",
+        "battle_thrall_job_check_trigger",
+        "can_take_servant_job",
+        "can_think",
+        "colony",
+        "colony.controller?",
+        "colony?",
+        "complex_specialist_job_check_trigger",
+        "else",
+        "entertainer_job_check_trigger",
+        "exists",
+        "has_citizenship_type",
+        "has_disconnected_drone_citizenship_type",
+        "has_global_flag",
+        "has_pop_group_flag",
+        "has_psionic_species_trait",
+        "has_purge_type",
+        "has_slavery_type",
+        "has_trait",
+        "has_virtual_species_trait",
+        "hidden_trigger",
+        "if",
+        "is_infernal",
+        "is_lithoid",
+        "is_livestock",
+        "is_robotic_species",
+        "is_same_species",
+        "owner",
+        "owner?",
+        "simple_drone_trigger",
+        "soldier_job_check_trigger",
+        "species"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "always"
+        ],
+        [
+          "battle_thrall_job_check_trigger"
+        ],
+        [
+          "can_take_servant_job"
+        ],
+        [
+          "can_think"
+        ],
+        [
+          "can_think",
+          "has_psionic_species_trait"
+        ],
+        [
+          "can_think",
+          "is_lithoid"
+        ],
+        [
+          "colony"
+        ],
+        [
+          "colony?"
+        ],
+        [
+          "colony?",
+          "has_citizenship_type",
+          "hidden_trigger"
+        ],
+        [
+          "colony?",
+          "has_citizenship_type",
+          "owner?"
+        ],
+        [
+          "colony?",
+          "has_trait",
+          "is_lithoid"
+        ],
+        [
+          "colony?",
+          "has_trait",
+          "owner?"
+        ],
+        [
+          "colony?",
+          "has_virtual_species_trait",
+          "owner"
+        ],
+        [
+          "colony?",
+          "hidden_trigger",
+          "owner"
+        ],
+        [
+          "colony?",
+          "is_lithoid"
+        ],
+        [
+          "complex_specialist_job_check_trigger"
+        ],
+        [
+          "else",
+          "if"
+        ],
+        [
+          "entertainer_job_check_trigger"
+        ],
+        [
+          "entertainer_job_check_trigger",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_citizenship_type"
+        ],
+        [
+          "exists",
+          "has_purge_type"
+        ],
+        [
+          "has_citizenship_type"
+        ],
+        [
+          "has_citizenship_type",
+          "has_slavery_type"
+        ],
+        [
+          "has_disconnected_drone_citizenship_type",
+          "is_livestock"
+        ],
+        [
+          "has_pop_group_flag"
+        ],
+        [
+          "has_purge_type"
+        ],
+        [
+          "has_slavery_type",
+          "owner?"
+        ],
+        [
+          "hidden_trigger",
+          "owner"
+        ],
+        [
+          "is_lithoid"
+        ],
+        [
+          "is_lithoid",
+          "owner"
+        ],
+        [
+          "is_robotic_species"
+        ],
+        [
+          "is_robotic_species",
+          "simple_drone_trigger"
+        ],
+        [
+          "is_same_species"
+        ],
+        [
+          "is_same_species",
+          "owner"
+        ],
+        [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "OR"
+        ],
+        [
+          "NOR",
+          "OR",
+          "is_lithoid"
+        ],
+        [
+          "NOT",
+          "colony?"
+        ],
+        [
+          "NOT",
+          "colony?",
+          "is_lithoid"
+        ],
+        [
+          "NOT",
+          "colony?",
+          "owner"
+        ],
+        [
+          "NOT",
+          "is_robotic_species"
+        ],
+        [
+          "NOT",
+          "is_robotic_species",
+          "simple_drone_trigger"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "OR",
+          "colony?",
+          "hidden_trigger",
+          "owner"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "colony?",
+          "has_citizenship_type",
+          "owner?"
+        ],
+        [
+          "OR",
+          "colony?",
+          "has_slavery_type",
+          "is_lithoid"
+        ],
+        [
+          "OR",
+          "colony.controller?",
+          "has_global_flag"
+        ],
+        [
+          "OR",
+          "colony",
+          "exists",
+          "is_lithoid"
+        ],
+        [
+          "OR",
+          "colony",
+          "has_slavery_type",
+          "is_lithoid"
+        ],
+        [
+          "OR",
+          "complex_specialist_job_check_trigger"
+        ],
+        [
+          "OR",
+          "has_slavery_type",
+          "is_infernal"
+        ],
+        [
+          "OR",
+          "has_slavery_type",
+          "is_infernal",
+          "is_lithoid"
+        ],
+        [
+          "OR",
+          "has_slavery_type",
+          "is_lithoid"
+        ],
+        [
+          "OR",
+          "is_infernal"
+        ],
+        [
+          "OR",
+          "is_infernal",
+          "is_lithoid"
+        ],
+        [
+          "OR",
+          "is_lithoid"
+        ],
+        [
+          "OR",
+          "is_robotic_species"
+        ],
+        [
+          "OR",
+          "owner"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner",
+          "soldier_job_check_trigger"
+        ],
+        [
+          "owner",
+          "species"
+        ],
+        [
+          "simple_drone_trigger"
+        ]
+      ]
+    },
+    "possible_pre_triggers": {
+      "definitions": 290,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 290,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_owner",
+        "has_planet",
+        "is_being_assimilated",
+        "is_being_purged",
+        "is_enslaved",
+        "is_robotic",
+        "is_sapient"
+      ],
+      "keysByDefinition": [
+        [
+          "has_owner",
+          "has_planet",
+          "is_being_purged"
+        ],
+        [
+          "has_owner",
+          "has_planet",
+          "is_sapient"
+        ],
+        [
+          "has_owner",
+          "is_being_assimilated",
+          "is_being_purged"
+        ],
+        [
+          "has_owner",
+          "is_being_assimilated",
+          "is_being_purged",
+          "is_enslaved",
+          "is_sapient"
+        ],
+        [
+          "has_owner",
+          "is_being_assimilated",
+          "is_being_purged",
+          "is_sapient"
+        ],
+        [
+          "has_owner",
+          "is_being_purged"
+        ],
+        [
+          "has_owner",
+          "is_being_purged",
+          "is_robotic"
+        ],
+        [
+          "has_owner",
+          "is_robotic",
+          "is_sapient"
+        ],
+        [
+          "has_owner",
+          "is_sapient"
+        ],
+        [
+          "has_planet",
+          "is_enslaved",
+          "is_robotic",
+          "is_sapient"
+        ],
+        [
+          "has_planet",
+          "is_enslaved",
+          "is_sapient"
+        ],
+        [
+          "has_planet",
+          "is_sapient"
+        ],
+        [
+          "is_enslaved",
+          "is_robotic",
+          "is_sapient"
+        ],
+        [
+          "is_robotic",
+          "is_sapient"
+        ],
+        [
+          "is_sapient"
+        ]
+      ]
+    },
+    "possible_precalc": {
+      "definitions": 215,
+      "repeated": 0,
+      "scalars": 215,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "can_fill_drone_job",
+        "can_fill_precursor_job",
+        "can_fill_ruler_job",
+        "can_fill_specialist_job",
+        "can_fill_worker_job"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "purge": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "purge_clips",
+        "purge_cosmogenesis",
+        "purge_normal"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "resources": {
+      "definitions": 265,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 265,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "inline_script",
+        "produces",
+        "upkeep"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "category"
+        ],
+        [
+          "category",
+          "inline_script"
+        ],
+        [
+          "category",
+          "inline_script",
+          "produces"
+        ],
+        [
+          "category",
+          "inline_script",
+          "produces",
+          "upkeep"
+        ],
+        [
+          "category",
+          "produces"
+        ],
+        [
+          "category",
+          "produces",
+          "upkeep"
+        ],
+        [
+          "category",
+          "upkeep"
+        ]
+      ]
+    },
+    "swappable_data": {
+      "definitions": 342,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 342,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "default",
+        "swap_type"
+      ],
+      "keysByDefinition": [
+        [
+          "default"
+        ],
+        [
+          "default",
+          "swap_type"
+        ]
+      ]
+    },
+    "system_modifier": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "defensive_stations_tracking_add",
+        "defensive_stations_weapon_range_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "defensive_stations_tracking_add",
+          "defensive_stations_weapon_range_mult"
+        ]
+      ]
+    },
+    "tags": {
+      "definitions": 255,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 255,
+      "bareBlocks": 198,
+      "values": [
+        "alloys",
+        "amenities",
+        "assimilation",
+        "astral_threads",
+        "consumer_goods",
+        "crime",
+        "cruise_passenger",
+        "cruise_passenger_unemployment",
+        "energy",
+        "energy_thrall",
+        "enforcer",
+        "exotic_gases",
+        "experiment_engineer",
+        "food",
+        "loyalty",
+        "minerals",
+        "minor_artifacts",
+        "pop_assembly",
+        "pop_growth",
+        "psionic_aura",
+        "rare_crystals",
+        "research",
+        "soldier",
+        "sr_living_metal",
+        "strategic_resource",
+        "telepath",
+        "test_subject",
+        "trade",
+        "unity",
+        "volatile_motes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_country_modifier": {
+      "definitions": 11,
+      "repeated": 3,
+      "scalars": 0,
+      "blocks": 11,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "artisan_jobs_bonus_workforce_mult",
+        "biologist_jobs_bonus_workforce_mult",
+        "bureaucrat_jobs_bonus_workforce_mult",
+        "country_edict_fund_add",
+        "country_naval_cap_add",
+        "diplo_weight_mult",
+        "engineer_jobs_bonus_workforce_mult",
+        "foundry_jobs_bonus_workforce_mult",
+        "leader_lifespan_mult",
+        "modifier",
+        "mult",
+        "physicist_jobs_bonus_workforce_mult",
+        "planet_pop_assembly_add",
+        "potential",
+        "psionic_aura_effectiveness_mult",
+        "species_leader_exp_gain"
+      ],
+      "keysByDefinition": [
+        [
+          "artisan_jobs_bonus_workforce_mult",
+          "biologist_jobs_bonus_workforce_mult",
+          "bureaucrat_jobs_bonus_workforce_mult",
+          "engineer_jobs_bonus_workforce_mult",
+          "foundry_jobs_bonus_workforce_mult",
+          "physicist_jobs_bonus_workforce_mult",
+          "planet_pop_assembly_add",
+          "potential"
+        ],
+        [
+          "country_edict_fund_add",
+          "mult",
+          "potential"
+        ],
+        [
+          "country_edict_fund_add",
+          "potential"
+        ],
+        [
+          "country_naval_cap_add",
+          "diplo_weight_mult",
+          "leader_lifespan_mult",
+          "potential",
+          "psionic_aura_effectiveness_mult"
+        ],
+        [
+          "country_naval_cap_add",
+          "potential"
+        ],
+        [
+          "modifier",
+          "mult",
+          "potential"
+        ],
+        [
+          "potential",
+          "species_leader_exp_gain"
+        ]
+      ]
+    },
+    "triggered_planet_modifier": {
+      "definitions": 120,
+      "repeated": 41,
+      "scalars": 0,
+      "blocks": 120,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "artisan_jobs_bonus_workforce_mult",
+        "biologist_jobs_bonus_workforce_mult",
+        "bonus_pop_growth_mult",
+        "branch_office_criminal_syndicate_value_add",
+        "branch_office_value_mult",
+        "bureaucrat_jobs_bonus_workforce_mult",
+        "custom_tooltip",
+        "engineer_jobs_bonus_workforce_mult",
+        "fake_pop_growth_mod",
+        "foundry_jobs_bonus_workforce_mult",
+        "logistic_growth_mult",
+        "modifier",
+        "mult",
+        "physicist_jobs_bonus_workforce_mult",
+        "planet_amenities_add",
+        "planet_amenities_no_happiness_add",
+        "planet_crime_no_happiness_add",
+        "planet_cruise_passengers_produces_mult",
+        "planet_defense_armies_add",
+        "planet_jobs_produces_mult",
+        "planet_jobs_simple_drone_produces_mult",
+        "planet_jobs_worker_produces_mult",
+        "planet_knights_upkeep_mult",
+        "planet_metallurgists_produces_mult",
+        "planet_miners_produces_mult",
+        "planet_pop_assembly_add",
+        "planet_pops_consumer_goods_upkeep_mult",
+        "planet_stability_add",
+        "planet_stability_mult",
+        "pop_bio_trophy_bonus_workforce_mult",
+        "pop_bureaucrat_bonus_workforce_mult",
+        "pop_cat_complex_drone_bonus_workforce_mult",
+        "pop_cat_ruler_bonus_workforce_mult",
+        "pop_cat_specialist_bonus_workforce_mult",
+        "pop_government_ethic_attraction",
+        "pop_knight_bonus_workforce_mult",
+        "pop_knight_commander_bonus_workforce_mult",
+        "potential",
+        "ship_shield_mult",
+        "ship_shield_regen_mult",
+        "ship_speed_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "artisan_jobs_bonus_workforce_mult",
+          "biologist_jobs_bonus_workforce_mult",
+          "branch_office_value_mult",
+          "bureaucrat_jobs_bonus_workforce_mult",
+          "engineer_jobs_bonus_workforce_mult",
+          "fake_pop_growth_mod",
+          "foundry_jobs_bonus_workforce_mult",
+          "mult",
+          "physicist_jobs_bonus_workforce_mult",
+          "planet_amenities_add",
+          "planet_pop_assembly_add",
+          "potential"
+        ],
+        [
+          "bonus_pop_growth_mult",
+          "fake_pop_growth_mod",
+          "logistic_growth_mult",
+          "mult",
+          "planet_amenities_no_happiness_add",
+          "potential"
+        ],
+        [
+          "branch_office_criminal_syndicate_value_add",
+          "mult",
+          "planet_amenities_add",
+          "potential"
+        ],
+        [
+          "branch_office_criminal_syndicate_value_add",
+          "mult",
+          "potential"
+        ],
+        [
+          "branch_office_value_mult",
+          "mult",
+          "planet_amenities_add",
+          "potential"
+        ],
+        [
+          "custom_tooltip",
+          "potential"
+        ],
+        [
+          "fake_pop_growth_mod",
+          "modifier",
+          "mult",
+          "planet_amenities_add",
+          "planet_defense_armies_add",
+          "planet_knights_upkeep_mult",
+          "pop_knight_bonus_workforce_mult",
+          "pop_knight_commander_bonus_workforce_mult",
+          "potential"
+        ],
+        [
+          "fake_pop_growth_mod",
+          "modifier",
+          "mult",
+          "planet_amenities_no_happiness_add",
+          "potential"
+        ],
+        [
+          "fake_pop_growth_mod",
+          "mult",
+          "planet_amenities_add",
+          "potential"
+        ],
+        [
+          "fake_pop_growth_mod",
+          "potential"
+        ],
+        [
+          "logistic_growth_mult",
+          "mult",
+          "planet_amenities_add",
+          "planet_pop_assembly_add",
+          "potential"
+        ],
+        [
+          "modifier",
+          "mult",
+          "planet_amenities_no_happiness_add",
+          "planet_jobs_simple_drone_produces_mult",
+          "potential"
+        ],
+        [
+          "modifier",
+          "mult",
+          "planet_amenities_no_happiness_add",
+          "potential"
+        ],
+        [
+          "modifier",
+          "planet_amenities_no_happiness_add",
+          "planet_crime_no_happiness_add",
+          "planet_defense_armies_add",
+          "planet_metallurgists_produces_mult",
+          "planet_miners_produces_mult",
+          "planet_stability_add",
+          "planet_stability_mult",
+          "potential"
+        ],
+        [
+          "modifier",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_amenities_add",
+          "planet_cruise_passengers_produces_mult",
+          "pop_bureaucrat_bonus_workforce_mult",
+          "pop_cat_ruler_bonus_workforce_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_amenities_add",
+          "planet_jobs_produces_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_amenities_add",
+          "planet_jobs_worker_produces_mult",
+          "planet_stability_add",
+          "pop_government_ethic_attraction",
+          "potential",
+          "ship_speed_mult"
+        ],
+        [
+          "mult",
+          "planet_amenities_add",
+          "planet_jobs_worker_produces_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_amenities_add",
+          "planet_stability_add",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_amenities_add",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_amenities_no_happiness_add"
+        ],
+        [
+          "mult",
+          "planet_amenities_no_happiness_add",
+          "planet_cruise_passengers_produces_mult",
+          "pop_bio_trophy_bonus_workforce_mult",
+          "pop_cat_complex_drone_bonus_workforce_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_amenities_no_happiness_add",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_stability_add",
+          "potential"
+        ],
+        [
+          "planet_jobs_worker_produces_mult",
+          "potential"
+        ],
+        [
+          "planet_pop_assembly_add",
+          "potential"
+        ],
+        [
+          "planet_pops_consumer_goods_upkeep_mult",
+          "potential"
+        ],
+        [
+          "pop_cat_complex_drone_bonus_workforce_mult",
+          "pop_cat_specialist_bonus_workforce_mult",
+          "potential"
+        ],
+        [
+          "potential",
+          "ship_shield_mult",
+          "ship_shield_regen_mult",
+          "ship_speed_mult"
+        ]
+      ]
+    },
+    "triggered_planet_pop_group_modifier_for_all": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "bonus_pop_growth",
+        "potential"
+      ],
+      "keysByDefinition": [
+        [
+          "bonus_pop_growth",
+          "potential"
+        ]
+      ]
+    },
+    "triggered_planet_pop_group_modifier_for_species": {
+      "definitions": 6,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 6,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "bonus_pop_growth",
+        "potential"
+      ],
+      "keysByDefinition": [
+        [
+          "bonus_pop_growth",
+          "potential"
+        ]
+      ]
+    },
+    "triggered_tags": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "tags",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "tags",
+          "trigger"
+        ]
+      ]
+    },
+    "weight": {
+      "definitions": 286,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 286,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "add",
+        "factor",
+        "modifier",
+        "mult",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "add",
+          "factor",
+          "weight"
+        ],
+        [
+          "factor",
+          "weight"
+        ],
+        [
+          "modifier",
+          "mult"
+        ],
+        [
+          "modifier",
+          "mult",
+          "weight"
+        ],
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "mult",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    }
+  }
+}

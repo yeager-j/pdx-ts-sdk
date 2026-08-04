@@ -165,12 +165,22 @@ pre-review of a list.
 5. Export the new generated public types from `packages/sdk/src/index.ts`.
 6. Add all four kinds of evidence, all of them written through the free definer:
    - codegen coverage in `packages/sdk/tests/codegen/content-snapshot.test.ts`
-   - corpus coverage in `packages/sdk/tests/codegen/corpus-conformance.test.ts` — it parses the real
-     installed game and measures the emitted interface against every shipped definition, both for
-     presence and for shape. A field the emitter invents with zero real precedent is worth verifying
-     by hand against the vendored rules; a registry parsing to zero definitions means the path or
-     keyword is wrong. A new `form` or `scope` mismatch fails: it names a field the game writes and
-     no author can produce, so fix the lowering rather than acknowledging it.
+   - corpus coverage in `packages/sdk/tests/codegen/corpus-conformance.test.ts` — hermetic: it
+     measures the emitted interface against the committed corpus fixture under
+     `packages/sdk/tests/fixtures/corpus/` (derived observations of every shipped definition —
+     field names, forms, counts — extracted from the real installed game), both for presence and
+     for shape, so it runs in plain `npm test` and CI. Adding a registry means regenerating the
+     fixture: run `npm run corpus:extract` (install-gated, like `codegen:vanilla`), read its
+     report, and review and commit the fixture diff with the change. A registry recording zero
+     definitions means the path or keyword is wrong. A field the game writes at the presence floor
+     or above that no author can produce fails — fix the lowering, or acknowledge it with a reason
+     and issue in `packages/sdk/tests/codegen/corpus-gaps.ts`, which is measurement for review,
+     not acceptance. A new `form` or `scope` mismatch fails the same way: fix the lowering rather
+     than acknowledging it. A field the emitter invents with zero real precedent is worth verifying
+     by hand against the vendored rules. `npm run corpus:check` re-extracts and diffs against the
+     committed fixture — maintainer-local and install-gated, mirroring `codegen:vanilla:check` —
+     and the test's version canary warns, never fails, when a local install has patched past the
+     fixture.
    - compile-time API and scope/reference safety in `packages/sdk/tests/content.test-d.ts`: the
      definer preserves the literal id, the returned item flows into its own registry's reference
      fields, and another registry's item does not.

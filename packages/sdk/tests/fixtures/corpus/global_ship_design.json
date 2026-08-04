@@ -1,0 +1,401 @@
+{
+  "registry": "global_ship_design",
+  "definitions": 436,
+  "files": 39,
+  "fingerprint": "b871ed2888a73ded4fd34a98ed2d0677add9559784564833ddcff88b4df9b4b4",
+  "fields": {
+    "allow_buildable_trigger": {
+      "definitions": 39,
+      "repeated": 0,
+      "scalars": 39,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "is_fallen_empire_hive",
+        "is_fallen_empire_machine",
+        "is_fallen_empire_materialist",
+        "is_fallen_empire_spiritualist",
+        "is_fallen_empire_xenophile",
+        "is_fallen_empire_xenophobe"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "country_type": {
+      "definitions": 27,
+      "repeated": 0,
+      "scalars": 27,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ai_empire",
+        "extradimensional",
+        "extradimensional_2",
+        "extradimensional_3",
+        "swarm",
+        "synth_queen"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "creature_designer_template": {
+      "definitions": 17,
+      "repeated": 0,
+      "scalars": 17,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "custom_trade_weight": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "growth_stages": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 2,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hide_size": {
+      "definitions": 89,
+      "repeated": 0,
+      "scalars": 89,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_event_design": {
+      "definitions": 136,
+      "repeated": 0,
+      "scalars": 136,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_special_buildable": {
+      "definitions": 76,
+      "repeated": 0,
+      "scalars": 76,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "newborn_ship_design": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 20,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "NAME_Cutholoids_Hatchling",
+        "NAME_Small_Crystal_Entity_Blue",
+        "NAME_Small_Crystal_Entity_Green",
+        "NAME_Small_Crystal_Entity_Red",
+        "NAME_Small_Crystal_Entity_Yellow",
+        "NAME_Small_Space_Organism_Blue",
+        "NAME_Small_Space_Organism_Orange",
+        "NAME_Small_Space_Organism_Teal",
+        "NAME_Small_Space_Organism_Zebra",
+        "NAME_Tiyanki_Hatchling",
+        "NAME_Voidworms_Nymph"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "regenerates_when_disabled": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "required_component": {
+      "definitions": 424,
+      "repeated": 357,
+      "scalars": 424,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "AI_CORE_DETECTOR",
+        "BATTLESHIP_BIO_DARK_MATTER_REACTOR",
+        "BEHEMOTH_PROPULSION_1",
+        "BEHEMOTH_PROPULSION_2",
+        "BEHEMOTH_PROPULSION_3",
+        "BEHEMOTH_PROPULSION_4",
+        "BIOSHIP_SENSOR_1",
+        "BIOSHIP_SENSOR_2",
+        "BIOSHIP_SENSOR_3",
+        "BIOSHIP_SENSOR_4",
+        "BIO_COMBAT_COMPUTER_ARTILLERY_AUTONOMOUS",
+        "BIO_COMBAT_COMPUTER_BUFFER_AUTONOMOUS",
+        "BIO_COMBAT_COMPUTER_COLOSSUS",
+        "BIO_COMBAT_COMPUTER_DEBUFFER_AUTONOMOUS",
+        "BIO_COMBAT_COMPUTER_PICKET_AUTONOMOUS",
+        "BIO_COMBAT_COMPUTER_PLATFORM_SAPIENT",
+        "BIO_COMBAT_COMPUTER_SWARM_ADVANCED",
+        "BIO_COMBAT_COMPUTER_SWARM_AUTONOMOUS",
+        "BIO_COMBAT_COMPUTER_SWARM_BASIC",
+        "BIO_DRIVE_4",
+        "BIO_HYPER_DRIVE_1",
+        "BIO_HYPER_DRIVE_2",
+        "BIO_HYPER_DRIVE_3",
+        "BIO_JUMP_DRIVE_1",
+        "BIO_SENSORS_2",
+        "BIO_SHIP_THRUSTER_5",
+        "COLOSSUS_DARK_MATTER_REACTOR",
+        "COLOSSUS_SHIP_THRUSTER_4",
+        "COLOSSUS_SHIP_THRUSTER_5",
+        "COMBAT_COMPUTER_ARTILLERY_BASIC",
+        "COMBAT_COMPUTER_LINE_ADVANCED",
+        "COMBAT_COMPUTER_LINE_DEFAULT",
+        "COMBAT_COMPUTER_LINE_SAPIENT",
+        "COMBAT_COMPUTER_PICKET_SAPIENT",
+        "CORVETTE_BIO_DARK_MATTER_REACTOR",
+        "CRUISER_BIO_DARK_MATTER_REACTOR",
+        "CRUISER_FISSION_REACTOR",
+        "DESTROYER_BIO_DARK_MATTER_REACTOR",
+        "DSC_AURA_COMMUNICATIONS_JAMMER",
+        "EXTRADIMENSIONAL_STABILIZING_AURA",
+        "HARBINGER_CHITIN_2",
+        "HYPER_DRIVE_1",
+        "HYPER_DRIVE_3",
+        "JUGGERNAUT_DARK_MATTER_REACTOR",
+        "JUMP_DRIVE_1",
+        "MAULER_BITER_2",
+        "MAULER_PURSUIT_2",
+        "PLATFORM_BIO_DARK_MATTER_REACTOR",
+        "PSI_JUMP_DRIVE_1",
+        "SENSOR_1",
+        "SENSOR_4",
+        "SHIP_AURA_STRIKE_CRAFT",
+        "SHIP_BEHEMOTH_GROWTH",
+        "SHIP_BEHEMOTH_GROWTH_CLOAKING",
+        "SHIP_BEHEMOTH_RAGE",
+        "SHIP_COSMOGENESIS_EXODUS",
+        "SHIP_THRUSTER_1",
+        "SHIP_THRUSTER_4",
+        "STARBASE_AURA_FTL_INHIBITOR",
+        "STARBASE_BIO_DARK_MATTER_REACTOR",
+        "STARBASE_COMBAT_COMPUTER_3",
+        "STINGER_FIRE_RATE_2",
+        "TITAN_BIO_DARK_MATTER_REACTOR",
+        "WEAVER_BOOSTER_2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "section": {
+      "definitions": 431,
+      "repeated": 36,
+      "scalars": 0,
+      "blocks": 431,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "component",
+        "slot",
+        "template"
+      ],
+      "keysByDefinition": [
+        [
+          "component",
+          "slot",
+          "template"
+        ],
+        [
+          "slot",
+          "template"
+        ]
+      ]
+    },
+    "ship_size": {
+      "definitions": 434,
+      "repeated": 0,
+      "scalars": 434,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "behemoth_01",
+        "behemoth_02",
+        "behemoth_03",
+        "behemoth_04",
+        "blue_core_ai",
+        "blue_military_station_large_ai",
+        "blue_military_station_small_ai",
+        "blue_transport_ship_ai",
+        "colonizer",
+        "colony_ship_ai",
+        "colossus",
+        "conduit_station",
+        "construction_ship_ai",
+        "constructor",
+        "core_ai",
+        "crystal_ship_large_blue",
+        "crystal_ship_large_blue_elite",
+        "crystal_ship_large_green",
+        "crystal_ship_large_green_elite",
+        "crystal_ship_large_red",
+        "crystal_ship_large_yellow",
+        "crystal_ship_large_yellow_elite",
+        "crystal_ship_medium_blue",
+        "crystal_ship_medium_blue_elite",
+        "crystal_ship_medium_green",
+        "crystal_ship_medium_green_elite",
+        "crystal_ship_medium_red",
+        "crystal_ship_medium_yellow",
+        "crystal_ship_medium_yellow_elite",
+        "crystal_ship_small_blue",
+        "crystal_ship_small_blue_elite",
+        "crystal_ship_small_green",
+        "crystal_ship_small_green_elite",
+        "crystal_ship_small_red",
+        "crystal_ship_small_yellow",
+        "crystal_ship_small_yellow_elite",
+        "ember_battleship",
+        "ember_cruiser",
+        "entropy_conduit",
+        "final_core_ai",
+        "large_fallen_harbinger",
+        "large_fallen_mauler",
+        "large_fallen_stinger",
+        "large_fallen_weaver",
+        "large_ship_ai",
+        "large_ship_ed",
+        "medium_ship_ed",
+        "military_station_large_ai",
+        "military_station_small_ai",
+        "military_station_small_fallen_empire",
+        "monadic_qerr",
+        "small_fallen_weaver",
+        "small_ship_ai",
+        "small_ship_ed",
+        "star_eater",
+        "starbase_ai",
+        "starbase_deep_space_citadel_1",
+        "starbase_deep_space_citadel_2",
+        "starbase_deep_space_citadel_3",
+        "starbase_exd",
+        "starbase_fe_outpost",
+        "starbase_hatchery",
+        "transport_ship_ai",
+        "voidspawn_boss"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "upgrades_to": {
+      "definitions": 29,
+      "repeated": 0,
+      "scalars": 28,
+      "blocks": 1,
+      "bareBlocks": 1,
+      "values": [
+        "NAME_Cutholoids",
+        "NAME_Cutholoids_Juvenile",
+        "NAME_Large_Crystal_Entity_Blue",
+        "NAME_Large_Crystal_Entity_Blue_Elite",
+        "NAME_Large_Crystal_Entity_Green",
+        "NAME_Large_Crystal_Entity_Green_Elite",
+        "NAME_Large_Crystal_Entity_Red",
+        "NAME_Large_Crystal_Entity_Red_Elite",
+        "NAME_Large_Crystal_Entity_Yellow",
+        "NAME_Large_Crystal_Entity_Yellow_Elite",
+        "NAME_Large_Space_Organism_Blue",
+        "NAME_Large_Space_Organism_Orange",
+        "NAME_Large_Space_Organism_Teal",
+        "NAME_Large_Space_Organism_Zebra",
+        "NAME_Medium_Crystal_Entity_Blue",
+        "NAME_Medium_Crystal_Entity_Blue_Elite",
+        "NAME_Medium_Crystal_Entity_Green",
+        "NAME_Medium_Crystal_Entity_Green_Elite",
+        "NAME_Medium_Crystal_Entity_Red",
+        "NAME_Medium_Crystal_Entity_Red_Elite",
+        "NAME_Medium_Crystal_Entity_Yellow",
+        "NAME_Medium_Crystal_Entity_Yellow_Elite",
+        "NAME_Tiyanki_Bull",
+        "NAME_Tiyanki_Calf",
+        "NAME_Tiyanki_Cow",
+        "NAME_Tiyanki_Ox_Clonable",
+        "NAME_Voidworms_Juvenile",
+        "NAME_Voidworms_Mature",
+        "NAME_Voidworms_Troika"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "use_design_name": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

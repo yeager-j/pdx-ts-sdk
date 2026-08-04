@@ -1,0 +1,464 @@
+{
+  "registry": "species_class",
+  "definitions": 42,
+  "files": 2,
+  "fingerprint": "6ba538b14b25be4ec4ba88b50c6bcd6b4f20134688bf3018130208df072d0578",
+  "fields": {
+    "added_climate_labels": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 1,
+      "values": [
+        "TYPE_HEADER_04"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "added_planet_types": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 1,
+      "values": [
+        "pc_volcanic"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "archetype": {
+      "definitions": 36,
+      "repeated": 0,
+      "scalars": 36,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "BIOLOGICAL",
+        "LITHOID",
+        "MACHINE",
+        "OTHER",
+        "PRESAPIENT",
+        "ROBOT"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ethics_to_prefer": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 1,
+      "values": [
+        "ethic_gestalt_consciousness"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "gender": {
+      "definitions": 17,
+      "repeated": 0,
+      "scalars": 17,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "generate_shipset": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "graphical_culture": {
+      "definitions": 42,
+      "repeated": 0,
+      "scalars": 42,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ai_01",
+        "aquatic_01",
+        "arthropoid_01",
+        "avian_01",
+        "biogenesis_01",
+        "biogenesis_02",
+        "cybernetics_01",
+        "extra_dimensional_01",
+        "fungoid_01",
+        "humanoid_01",
+        "infernal_01",
+        "lithoid_01",
+        "mammalian_01",
+        "mindwarden_01",
+        "molluscoid_01",
+        "necroid_01",
+        "nemesis_01",
+        "plantoid_01",
+        "psionic_01",
+        "reptilian_01",
+        "solarpunk_01",
+        "swarm_01",
+        "synthetics_01",
+        "toxoid_01",
+        "wilderness_01"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "leader_age_max": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "10"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "leader_age_min": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "move_pop_sound_effect": {
+      "definitions": 36,
+      "repeated": 0,
+      "scalars": 36,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "arthopoid_pops_move",
+        "avian_pops_move",
+        "fungoid_pops_move",
+        "molluscoid_pops_move",
+        "moving_pop_confirmation",
+        "reptilian_pops_move",
+        "robot_pops_move"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "playable": {
+      "definitions": 33,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 33,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "always",
+        "has_biogenesis_dlc",
+        "has_first_contact_dlc",
+        "has_global_flag",
+        "has_infernals",
+        "has_lithoids",
+        "has_nemesis",
+        "has_shroud_dlc",
+        "has_toxoids"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "has_biogenesis_dlc"
+        ],
+        [
+          "has_first_contact_dlc"
+        ],
+        [
+          "has_global_flag"
+        ],
+        [
+          "has_infernals"
+        ],
+        [
+          "has_lithoids"
+        ],
+        [
+          "has_nemesis"
+        ],
+        [
+          "has_shroud_dlc"
+        ],
+        [
+          "has_toxoids"
+        ],
+        [
+          "OR"
+        ]
+      ]
+    },
+    "portrait_modding": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 16,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "AND",
+        "authority"
+      ],
+      "keysByDefinition": [
+        [
+          "AND"
+        ],
+        [
+          "authority"
+        ]
+      ]
+    },
+    "possible_secondary": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "civics",
+        "origin",
+        "text"
+      ],
+      "keysByDefinition": [
+        [
+          "civics",
+          "origin",
+          "text"
+        ]
+      ]
+    },
+    "preferred_ethics_weight": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base"
+      ],
+      "keysByDefinition": [
+        [
+          "base"
+        ]
+      ]
+    },
+    "random_weight": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base"
+      ],
+      "keysByDefinition": [
+        [
+          "base"
+        ]
+      ]
+    },
+    "randomized": {
+      "definitions": 33,
+      "repeated": 0,
+      "scalars": 20,
+      "blocks": 13,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [
+        "OR",
+        "always",
+        "has_biogenesis_dlc",
+        "has_infernals",
+        "has_lithoids",
+        "has_necroids",
+        "has_toxoids"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "always"
+        ],
+        [
+          "has_biogenesis_dlc"
+        ],
+        [
+          "has_infernals"
+        ],
+        [
+          "has_lithoids"
+        ],
+        [
+          "has_necroids"
+        ],
+        [
+          "has_toxoids"
+        ],
+        [
+          "OR"
+        ]
+      ]
+    },
+    "removed_climate_labels": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 1,
+      "values": [
+        "TYPE_HEADER_03"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "removed_planet_types": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 1,
+      "values": [
+        "pc_alpine",
+        "pc_arctic",
+        "pc_tundra"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "resources": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 16,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "trait": {
+      "definitions": 29,
+      "repeated": 0,
+      "scalars": 29,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "trait_exd",
+        "trait_infernal",
+        "trait_lithoid",
+        "trait_machine_unit",
+        "trait_organic"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "uplifted_into": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "AQUATIC",
+        "ART",
+        "AVI",
+        "FUN",
+        "INF",
+        "LITHOID",
+        "MAM",
+        "MOL",
+        "PLANT",
+        "REP",
+        "TOX"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "use_climate_preference": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

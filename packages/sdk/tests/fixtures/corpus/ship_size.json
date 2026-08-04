@@ -1,0 +1,2686 @@
+{
+  "registry": "ship_size",
+  "definitions": 319,
+  "files": 40,
+  "fingerprint": "4bb78726634d701fe9555ad5b491ba1e5005c2c7cb8c345100bdabd357d1161f",
+  "fields": {
+    "acceleration": {
+      "definitions": 319,
+      "repeated": 3,
+      "scalars": 319,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "0.04",
+        "0.05",
+        "0.1",
+        "0.15",
+        "0.2",
+        "0.25",
+        "0.3",
+        "0.325",
+        "0.35",
+        "0.4",
+        "0.5",
+        "0.6",
+        "0.65",
+        "0.8",
+        "0.9",
+        "1",
+        "10"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "accepts_all_modifiers": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_ship_data": {
+      "definitions": 108,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 108,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "fraction",
+        "max",
+        "min",
+        "planet_mult",
+        "system_mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "fraction"
+        ],
+        [
+          "max",
+          "min"
+        ],
+        [
+          "max",
+          "min",
+          "planet_mult"
+        ],
+        [
+          "max",
+          "min",
+          "system_mult"
+        ],
+        [
+          "min"
+        ]
+      ]
+    },
+    "arkship_picture": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "arkship_civilian",
+        "arkship_military",
+        "arkship_science"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "auto_upgrade": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 23,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "automation_icon": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_fleet_order_auto_construct",
+        "GFX_fleet_order_auto_explore_arkship"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "available_to_everyone": {
+      "definitions": 62,
+      "repeated": 0,
+      "scalars": 62,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "base_buildtime": {
+      "definitions": 154,
+      "repeated": 0,
+      "scalars": 154,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1080",
+        "120",
+        "1440",
+        "150",
+        "1800",
+        "200",
+        "24",
+        "30",
+        "360",
+        "60",
+        "600",
+        "6000",
+        "720",
+        "900"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "base_ship_size": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "civilian_arkship_tier_1",
+        "military_arkship_tier_1",
+        "science_arkship_tier_1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "bioship_growth_progress_required": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 18,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "150",
+        "300"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "build_block_radius": {
+      "definitions": 69,
+      "repeated": 0,
+      "scalars": 69,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "build_time": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "360"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_be_inspected": {
+      "definitions": 47,
+      "repeated": 0,
+      "scalars": 47,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_disable": {
+      "definitions": 43,
+      "repeated": 0,
+      "scalars": 43,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_have_federation_design": {
+      "definitions": 108,
+      "repeated": 0,
+      "scalars": 108,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "carries_colony": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "pc_ark"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "class": {
+      "definitions": 319,
+      "repeated": 1,
+      "scalars": 319,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "shipclass_colonizer",
+        "shipclass_constructor",
+        "shipclass_entropy_conduit",
+        "shipclass_gravity_snare",
+        "shipclass_habitat_station",
+        "shipclass_military",
+        "shipclass_military_special",
+        "shipclass_military_station",
+        "shipclass_mining_station",
+        "shipclass_observation_station",
+        "shipclass_research_station",
+        "shipclass_science_ship",
+        "shipclass_starbase",
+        "shipclass_transport"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cloaking_forbidden": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "collects_stockpile_from": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 11,
+      "bareBlocks": 11,
+      "values": [
+        "shipclass_constructor",
+        "shipclass_starbase"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "collects_stockpile_to_country": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "collision_radius": {
+      "definitions": 159,
+      "repeated": 0,
+      "scalars": 159,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.1",
+        "1",
+        "12",
+        "15",
+        "16",
+        "17",
+        "2",
+        "2.5",
+        "3",
+        "4",
+        "4.5",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "combat_disengage_chance": {
+      "definitions": 83,
+      "repeated": 0,
+      "scalars": 83,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-1",
+        "0.2",
+        "0.5",
+        "1",
+        "1.25",
+        "1.5",
+        "2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "combat_size_multiplier": {
+      "definitions": 73,
+      "repeated": 0,
+      "scalars": 73,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "10",
+        "100",
+        "175",
+        "20",
+        "200",
+        "25",
+        "250",
+        "40",
+        "5",
+        "500",
+        "60",
+        "80"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "components_add_to_cost": {
+      "definitions": 157,
+      "repeated": 0,
+      "scalars": 157,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "construction_capabilities": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 10,
+      "bareBlocks": 10,
+      "values": [
+        "automated_collection",
+        "automated_construction",
+        "megastructure",
+        "mining_station",
+        "observation_station",
+        "research_station",
+        "starbase"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "construction_offset_mult": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "construction_type": {
+      "definitions": 131,
+      "repeated": 0,
+      "scalars": 85,
+      "blocks": 46,
+      "bareBlocks": 46,
+      "values": [
+        "starbase_beastport",
+        "starbase_defenses",
+        "starbase_hatchery",
+        "starbase_shipyard"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "default_behavior": {
+      "definitions": 56,
+      "repeated": 0,
+      "scalars": 56,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "artillery",
+        "carrier",
+        "line",
+        "picket",
+        "swarm",
+        "torpedo"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "display_attack_neutral_fleet_button": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "enable_3dview_in_ship_browser": {
+      "definitions": 57,
+      "repeated": 0,
+      "scalars": 57,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "enable_default_design": {
+      "definitions": 136,
+      "repeated": 4,
+      "scalars": 136,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "entity": {
+      "definitions": 171,
+      "repeated": 0,
+      "scalars": 171,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "abandoned_ship_section_entity",
+        "ai_01_science_ship_entity",
+        "avian_01_construction_ship_entity",
+        "biogenesis_01_fallen_empire_harbinger_stage_3_ship_entity",
+        "biogenesis_01_fallen_empire_mauler_ship_entity",
+        "biogenesis_01_fallen_empire_stinger_stage_3_ship_entity",
+        "biogenesis_01_fallen_empire_weaver_stage_3_ship_entity",
+        "cargo_transport_containers_entity",
+        "cargo_transport_tanker_entity",
+        "corvette_entity",
+        "crystal_ship_blue_elite_entity",
+        "crystal_ship_blue_entity",
+        "crystal_ship_green_elite_entity",
+        "crystal_ship_green_entity",
+        "crystal_ship_large_blue_elite_entity",
+        "crystal_ship_large_blue_entity",
+        "crystal_ship_large_green_elite_entity",
+        "crystal_ship_large_green_entity",
+        "crystal_ship_large_red_entity",
+        "crystal_ship_large_yellow_elite_entity",
+        "crystal_ship_large_yellow_entity",
+        "crystal_ship_red_entity",
+        "crystal_ship_small_blue_elite_entity",
+        "crystal_ship_small_blue_entity",
+        "crystal_ship_small_green_elite_entity",
+        "crystal_ship_small_green_entity",
+        "crystal_ship_small_red_elite_entity",
+        "crystal_ship_small_red_entity",
+        "crystal_ship_small_yellow_elite_entity",
+        "crystal_ship_small_yellow_entity",
+        "crystal_ship_yellow_elite_entity",
+        "crystal_ship_yellow_entity",
+        "deep_space_01_starbase_citadel_frame_entity",
+        "deep_space_02_starbase_citadel_entity",
+        "deep_space_03_starbase_citadel_entity",
+        "enclave_station_entity",
+        "eventship_02_entity",
+        "eventship_04_blue_entity",
+        "gatebuilder_01_cruiser_entity",
+        "gatebuilder_01_mothership_entity",
+        "harbinger_stage_1_entity",
+        "harbinger_stage_2_entity",
+        "harbinger_stage_3_entity",
+        "lithoid_01_meteor_colonyship_entity",
+        "mauler_stage_1_entity",
+        "mauler_stage_2_entity",
+        "mauler_stage_3_entity",
+        "payback_warship_frame_entity",
+        "pre_ftl_chemical_ship_entity",
+        "pre_ftl_colony_vessel_entity",
+        "pre_ftl_laser_ship_entity",
+        "starbase_citadel_entity",
+        "starbase_starfortress_entity",
+        "starbase_starhold_entity",
+        "starbase_starport_entity",
+        "stinger_stage_1_entity",
+        "stinger_stage_2_entity",
+        "stinger_stage_3_entity",
+        "synth_queen_01_big_starbase_entity",
+        "synth_queen_01_small_starbase_entity",
+        "titan_entity",
+        "weaver_stage_1_entity",
+        "weaver_stage_2_entity",
+        "weaver_stage_3_entity"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "evaluation_resource": {
+      "definitions": 34,
+      "repeated": 0,
+      "scalars": 34,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "food"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "fleet_slot_size": {
+      "definitions": 317,
+      "repeated": 0,
+      "scalars": 317,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "10",
+        "100",
+        "16",
+        "2",
+        "3",
+        "32",
+        "4",
+        "40",
+        "6",
+        "8"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "flip_control_on_disable": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "force_show_ship_class_icon_frame": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "formation_priority": {
+      "definitions": 96,
+      "repeated": 0,
+      "scalars": 96,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "graphical_culture": {
+      "definitions": 263,
+      "repeated": 6,
+      "scalars": 161,
+      "blocks": 106,
+      "bareBlocks": 106,
+      "values": [
+        "ai_01",
+        "ancient",
+        "biogenesis_01",
+        "biogenesis_01_fallen_empire",
+        "biogenesis_02",
+        "caravaneer_01",
+        "civilian_arkship",
+        "drone",
+        "extra_dimensional_01",
+        "extra_dimensional_02",
+        "extra_dimensional_03",
+        "fallen_empire_01",
+        "fallen_empire_02",
+        "fallen_empire_03",
+        "fallen_empire_04",
+        "fallen_machine_empire_01",
+        "military_arkship",
+        "no",
+        "npf_01",
+        "npf_01_dirty",
+        "pirate_01",
+        "science_arkship",
+        "slaver_01",
+        "swarm_01",
+        "synth_queen_01",
+        "techno",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "growth_stage_descriptor": {
+      "definitions": 24,
+      "repeated": 0,
+      "scalars": 24,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ship_growth_stage_1",
+        "ship_growth_stage_2",
+        "ship_growth_stage_3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hero_ship": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 15,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "capabilities",
+        "custom_class_text_color",
+        "custom_state_loc_prefix",
+        "hero_ship_fleet_background"
+      ],
+      "keysByDefinition": [
+        [
+          "capabilities",
+          "hero_ship_fleet_background"
+        ],
+        [
+          "custom_class_text_color",
+          "hero_ship_fleet_background"
+        ],
+        [
+          "custom_state_loc_prefix",
+          "hero_ship_fleet_background"
+        ]
+      ]
+    },
+    "hull_scale": {
+      "definitions": 35,
+      "repeated": 0,
+      "scalars": 35,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.2",
+        "0.25",
+        "0.33",
+        "0.75",
+        "1",
+        "1.35",
+        "1.5",
+        "1.75",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 308,
+      "repeated": 2,
+      "scalars": 308,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ship_size_behemoth",
+        "ship_size_civilian_arkship_tier_1",
+        "ship_size_civilian_arkship_tier_2",
+        "ship_size_civilian_arkship_tier_3",
+        "ship_size_colonizer",
+        "ship_size_constructor",
+        "ship_size_crystalline_entity",
+        "ship_size_cutholoid",
+        "ship_size_harbinger_stage_1",
+        "ship_size_harbinger_stage_2",
+        "ship_size_harbinger_stage_3",
+        "ship_size_mauler_stage_1",
+        "ship_size_mauler_stage_2",
+        "ship_size_mauler_stage_3",
+        "ship_size_military_1",
+        "ship_size_military_16",
+        "ship_size_military_1_torpedo",
+        "ship_size_military_2",
+        "ship_size_military_32",
+        "ship_size_military_4",
+        "ship_size_military_64",
+        "ship_size_military_8",
+        "ship_size_military_arkship_tier_1",
+        "ship_size_military_arkship_tier_2",
+        "ship_size_military_arkship_tier_3",
+        "ship_size_military_station",
+        "ship_size_paladin",
+        "ship_size_science",
+        "ship_size_science_arkship_tier_1",
+        "ship_size_science_arkship_tier_2",
+        "ship_size_science_arkship_tier_3",
+        "ship_size_space_amoeba",
+        "ship_size_space_monster",
+        "ship_size_stinger_stage_1",
+        "ship_size_stinger_stage_2",
+        "ship_size_stinger_stage_3",
+        "ship_size_tiyanki",
+        "ship_size_transport",
+        "ship_size_voidworm",
+        "ship_size_voidworm_troika",
+        "ship_size_weaver_stage_1",
+        "ship_size_weaver_stage_2",
+        "ship_size_weaver_stage_3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon_cloned": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 38,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ship_size_military_1",
+        "ship_size_military_16",
+        "ship_size_military_2",
+        "ship_size_military_4",
+        "ship_size_military_8"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon_frame": {
+      "definitions": 43,
+      "repeated": 0,
+      "scalars": 43,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-1",
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "2",
+        "3",
+        "4",
+        "5",
+        "7",
+        "8",
+        "9"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_bio_ship": {
+      "definitions": 33,
+      "repeated": 0,
+      "scalars": 33,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_civilian": {
+      "definitions": 73,
+      "repeated": 0,
+      "scalars": 73,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_designable": {
+      "definitions": 249,
+      "repeated": 3,
+      "scalars": 249,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_entropy_conduit": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_listed": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_orbital_ring": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_reanimated": {
+      "definitions": 19,
+      "repeated": 0,
+      "scalars": 19,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_reckoning_ship": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_space_fauna_ship": {
+      "definitions": 63,
+      "repeated": 0,
+      "scalars": 63,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_space_object": {
+      "definitions": 111,
+      "repeated": 0,
+      "scalars": 111,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_space_station": {
+      "definitions": 226,
+      "repeated": 0,
+      "scalars": 226,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_starting_arkship": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "map_counter_icon": {
+      "definitions": 300,
+      "repeated": 0,
+      "scalars": 300,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ship_counter_128",
+        "ship_counter_16",
+        "ship_counter_32",
+        "ship_counter_4",
+        "ship_counter_64",
+        "ship_counter_8"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "map_icon_override": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 16,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "cloaked",
+        "encamped",
+        "mixed",
+        "normal"
+      ],
+      "keysByDefinition": [
+        [
+          "cloaked",
+          "encamped",
+          "mixed",
+          "normal"
+        ],
+        [
+          "cloaked",
+          "mixed",
+          "normal"
+        ]
+      ]
+    },
+    "max_hitpoints": {
+      "definitions": 319,
+      "repeated": 0,
+      "scalars": 319,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "100",
+        "1000",
+        "10000",
+        "100000",
+        "1000000",
+        "1100",
+        "1200",
+        "12000",
+        "120000",
+        "1250",
+        "125000",
+        "140000",
+        "1500",
+        "15000",
+        "150000",
+        "1500000",
+        "175000",
+        "1750000",
+        "1800",
+        "1920",
+        "200",
+        "2000",
+        "20000",
+        "200000",
+        "22500",
+        "240",
+        "2400",
+        "250",
+        "300",
+        "30000",
+        "350",
+        "400",
+        "4000",
+        "40000",
+        "437500",
+        "450",
+        "480",
+        "50",
+        "500",
+        "5000",
+        "50000",
+        "600",
+        "6000",
+        "700",
+        "800",
+        "8000",
+        "80000",
+        "900",
+        "9000"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "max_speed": {
+      "definitions": 319,
+      "repeated": 0,
+      "scalars": 319,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "0.1",
+        "0.5",
+        "200",
+        "210",
+        "3.75",
+        "6"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "min_upgrade_cost": {
+      "definitions": 58,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 58,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "alloys"
+      ],
+      "keysByDefinition": [
+        [
+          "alloys"
+        ]
+      ]
+    },
+    "modifier": {
+      "definitions": 316,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 316,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "planet_max_districts_add",
+        "ship_armor_add",
+        "ship_armor_mult",
+        "ship_armor_regen_add_perc",
+        "ship_armor_regen_add_static",
+        "ship_base_speed_mult",
+        "ship_disengage_chance_mult",
+        "ship_disengage_opportunities_add",
+        "ship_evasion_add",
+        "ship_evasion_mult",
+        "ship_fire_rate_mult",
+        "ship_hull_add",
+        "ship_hull_mult",
+        "ship_hull_regen_add_perc",
+        "ship_hull_regen_add_static",
+        "ship_hyperlane_range_add",
+        "ship_reactor_power_mult",
+        "ship_sensor_range_add",
+        "ship_shield_add",
+        "ship_shield_mult",
+        "ship_shield_regen_add_perc",
+        "ship_shield_regen_add_static",
+        "ship_speed_mult",
+        "ship_target_weight_mult",
+        "ship_weapon_damage",
+        "ship_weapon_range_mult",
+        "ships_upkeep_mult",
+        "starbase_building_capacity_add",
+        "starbase_collected_system_resources_mult",
+        "starbase_defense_platform_capacity_add",
+        "starbase_module_capacity_add",
+        "starbase_shipyard_capacity_add",
+        "starbase_stockpile_capacity_add"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "planet_max_districts_add",
+          "ship_armor_add",
+          "ship_evasion_add",
+          "ship_hyperlane_range_add",
+          "ship_sensor_range_add",
+          "ship_shield_add",
+          "ship_shield_regen_add_static",
+          "starbase_building_capacity_add",
+          "starbase_module_capacity_add"
+        ],
+        [
+          "planet_max_districts_add",
+          "ship_armor_add",
+          "ship_evasion_add",
+          "ship_sensor_range_add",
+          "ship_shield_add",
+          "ship_shield_regen_add_static",
+          "starbase_building_capacity_add",
+          "starbase_module_capacity_add"
+        ],
+        [
+          "ship_armor_add"
+        ],
+        [
+          "ship_armor_add",
+          "ship_armor_regen_add_static",
+          "ship_evasion_add",
+          "ship_hull_regen_add_static"
+        ],
+        [
+          "ship_armor_add",
+          "ship_disengage_chance_mult",
+          "ship_evasion_add",
+          "ship_fire_rate_mult",
+          "ship_shield_add",
+          "ship_shield_regen_add_perc",
+          "ship_weapon_damage",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_add"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_add",
+          "ship_hull_regen_add_perc"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_add",
+          "ship_shield_add",
+          "ship_shield_regen_add_static",
+          "starbase_building_capacity_add",
+          "starbase_module_capacity_add"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_add",
+          "ship_shield_add",
+          "ship_speed_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_add",
+          "ship_shield_mult",
+          "ship_weapon_damage",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_add",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_sensor_range_add",
+          "starbase_collected_system_resources_mult",
+          "starbase_module_capacity_add",
+          "starbase_stockpile_capacity_add"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_sensor_range_add",
+          "starbase_module_capacity_add",
+          "starbase_stockpile_capacity_add"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_shield_add"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_shield_mult",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_weapon_range_mult",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_fire_rate_mult",
+          "ship_shield_add",
+          "ship_weapon_damage"
+        ],
+        [
+          "ship_armor_add",
+          "ship_shield_add",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_armor_mult",
+          "ship_evasion_add",
+          "ship_hull_mult",
+          "ship_reactor_power_mult",
+          "ship_shield_mult",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_armor_mult",
+          "ship_evasion_add",
+          "ship_hull_mult",
+          "ship_shield_mult",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_armor_mult",
+          "ship_evasion_mult",
+          "ship_fire_rate_mult",
+          "ship_shield_mult"
+        ],
+        [
+          "ship_armor_regen_add_perc",
+          "ship_evasion_add",
+          "ship_hull_regen_add_perc"
+        ],
+        [
+          "ship_armor_regen_add_perc",
+          "ship_evasion_mult",
+          "ship_hull_regen_add_perc",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_base_speed_mult",
+          "ship_disengage_chance_mult",
+          "ship_disengage_opportunities_add",
+          "ship_evasion_add"
+        ],
+        [
+          "ship_evasion_add"
+        ],
+        [
+          "ship_evasion_add",
+          "ship_hull_add",
+          "ship_shield_add"
+        ],
+        [
+          "ship_evasion_add",
+          "ship_reactor_power_mult"
+        ],
+        [
+          "ship_evasion_add",
+          "ship_shield_add",
+          "ship_shield_regen_add_static"
+        ],
+        [
+          "ship_evasion_add",
+          "ship_target_weight_mult"
+        ],
+        [
+          "ship_evasion_add",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_evasion_add",
+          "starbase_shipyard_capacity_add"
+        ],
+        [
+          "ship_evasion_mult"
+        ],
+        [
+          "ship_evasion_mult",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_sensor_range_add"
+        ],
+        [
+          "ship_sensor_range_add",
+          "starbase_building_capacity_add",
+          "starbase_defense_platform_capacity_add"
+        ],
+        [
+          "ship_sensor_range_add",
+          "starbase_building_capacity_add",
+          "starbase_defense_platform_capacity_add",
+          "starbase_module_capacity_add"
+        ],
+        [
+          "ship_sensor_range_add",
+          "starbase_defense_platform_capacity_add"
+        ],
+        [
+          "starbase_building_capacity_add",
+          "starbase_defense_platform_capacity_add",
+          "starbase_module_capacity_add"
+        ],
+        [
+          "starbase_defense_platform_capacity_add",
+          "starbase_shipyard_capacity_add"
+        ]
+      ]
+    },
+    "mutation_components_size": {
+      "definitions": 17,
+      "repeated": 0,
+      "scalars": 17,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "extra_large",
+        "large",
+        "medium",
+        "small"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "never_lost": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "never_mia": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "num_target_locators": {
+      "definitions": 316,
+      "repeated": 0,
+      "scalars": 316,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "9"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_click_sound": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 18,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "arkship_civilian_selection",
+        "arkship_military_selection",
+        "arkship_science_selection",
+        "deep_space_citadel_select",
+        "hero_ship_selection",
+        "ui_kaiju_select_fleet"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "planet_view_header": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_arkship_planetview_header_civilian",
+        "GFX_arkship_planetview_header_military",
+        "GFX_arkship_planetview_header_scientific"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible_construction": {
+      "definitions": 33,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 33,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "AND",
+        "OR",
+        "always",
+        "colossus_possible_construction",
+        "custom_tooltip",
+        "juggernaut_possible_construction",
+        "titan_possible_construction"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "AND"
+        ],
+        [
+          "colossus_possible_construction"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "juggernaut_possible_construction"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "titan_possible_construction"
+        ]
+      ]
+    },
+    "possible_country": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "is_part_of_galactic_council"
+      ],
+      "keysByDefinition": [
+        [
+          "is_part_of_galactic_council"
+        ]
+      ]
+    },
+    "potential_construction": {
+      "definitions": 46,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 46,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "AND",
+        "NOT",
+        "OR",
+        "always",
+        "colossus_potential_construction",
+        "is_arkship_starbase",
+        "is_primary_star",
+        "is_scope_type",
+        "is_waystation_starbase",
+        "juggernaut_potential_construction",
+        "titan_potential_construction"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "AND"
+        ],
+        [
+          "colossus_potential_construction"
+        ],
+        [
+          "is_arkship_starbase",
+          "is_scope_type",
+          "is_waystation_starbase"
+        ],
+        [
+          "is_scope_type"
+        ],
+        [
+          "juggernaut_potential_construction"
+        ],
+        [
+          "NOT",
+          "is_primary_star",
+          "is_scope_type"
+        ],
+        [
+          "OR",
+          "is_scope_type"
+        ],
+        [
+          "titan_potential_construction"
+        ]
+      ]
+    },
+    "potential_country": {
+      "definitions": 69,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 69,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "country_uses_bio_ships",
+        "has_crisis_level",
+        "has_dna",
+        "has_global_flag",
+        "has_origin",
+        "has_technology",
+        "has_tradition",
+        "is_active_resolution",
+        "is_dragon_breeder_country",
+        "is_eager_explorer_empire",
+        "is_fallen_empire",
+        "is_guided_sapience_empire",
+        "is_mercenary",
+        "is_nomadic",
+        "is_wilderness_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "country_uses_bio_ships",
+          "has_technology"
+        ],
+        [
+          "has_crisis_level"
+        ],
+        [
+          "has_dna"
+        ],
+        [
+          "has_global_flag",
+          "is_active_resolution"
+        ],
+        [
+          "has_origin"
+        ],
+        [
+          "has_tradition"
+        ],
+        [
+          "is_dragon_breeder_country"
+        ],
+        [
+          "is_eager_explorer_empire"
+        ],
+        [
+          "is_eager_explorer_empire",
+          "is_nomadic"
+        ],
+        [
+          "is_fallen_empire"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "country_uses_bio_ships",
+          "has_technology"
+        ],
+        [
+          "NOT",
+          "OR",
+          "is_mercenary"
+        ],
+        [
+          "OR",
+          "has_origin",
+          "is_guided_sapience_empire",
+          "is_nomadic"
+        ],
+        [
+          "OR",
+          "is_guided_sapience_empire",
+          "is_nomadic"
+        ],
+        [
+          "OR",
+          "is_guided_sapience_empire",
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR",
+          "is_nomadic"
+        ]
+      ]
+    },
+    "pre_communications_name": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "NO_COMMUNICATIONS_AMOEBA"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prerequisites": {
+      "definitions": 105,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 105,
+      "bareBlocks": 105,
+      "values": [
+        "tech_arkship_tier_2",
+        "tech_arkship_tier_3",
+        "tech_battleships",
+        "tech_civilian_arkship",
+        "tech_colonization_1",
+        "tech_colossus",
+        "tech_corvettes",
+        "tech_cosmogenesis_FE_titan",
+        "tech_cruisers",
+        "tech_deep_space_citadel",
+        "tech_destroyers",
+        "tech_habitat_1",
+        "tech_harbinger_growth_1",
+        "tech_harbinger_growth_2",
+        "tech_harbingers",
+        "tech_improved_incubators",
+        "tech_juggernaut",
+        "tech_mauler_growth_1",
+        "tech_mauler_growth_2",
+        "tech_maulers",
+        "tech_metabolic_gases",
+        "tech_military_arkship",
+        "tech_orbital_ring_tier_1",
+        "tech_science_arkship",
+        "tech_space_defense_station_1",
+        "tech_space_exploration",
+        "tech_starbase_1",
+        "tech_starbase_2",
+        "tech_starbase_3",
+        "tech_starbase_4",
+        "tech_starbase_5",
+        "tech_starfire_cannon",
+        "tech_stinger_growth_1",
+        "tech_stinger_growth_2",
+        "tech_stingers",
+        "tech_titans",
+        "tech_torpedoes_1",
+        "tech_waystation_1",
+        "tech_waystation_2",
+        "tech_waystation_3",
+        "tech_weaver_growth_1",
+        "tech_weaver_growth_2",
+        "tech_weavers"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "preserve_movement_animation_progress": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "required_component_set": {
+      "definitions": 191,
+      "repeated": 185,
+      "scalars": 191,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "aura_components",
+        "bio_ship_unique_components",
+        "combat_computers",
+        "corvette_combat_computers",
+        "dsc_aura_components",
+        "ftl_components",
+        "ftl_components_bio",
+        "ftl_inhibitor",
+        "neurochips",
+        "paladin_crest",
+        "power_core",
+        "science_cloaking_components",
+        "sensor_components",
+        "sensor_components_bio",
+        "ship_aura_components",
+        "station_large_aura_components",
+        "thruster_components",
+        "thruster_components_bio"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "resources": {
+      "definitions": 240,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 240,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost",
+        "inline_script",
+        "logistics",
+        "upkeep"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "category"
+        ],
+        [
+          "category",
+          "cost"
+        ],
+        [
+          "category",
+          "cost",
+          "inline_script"
+        ],
+        [
+          "category",
+          "cost",
+          "logistics",
+          "upkeep"
+        ],
+        [
+          "category",
+          "cost",
+          "upkeep"
+        ],
+        [
+          "category",
+          "inline_script"
+        ],
+        [
+          "category",
+          "logistics",
+          "upkeep"
+        ],
+        [
+          "category",
+          "upkeep"
+        ]
+      ]
+    },
+    "role_background": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_role_selection_background",
+        "GFX_role_selection_battleship",
+        "GFX_role_selection_bio_titan",
+        "GFX_role_selection_corvette",
+        "GFX_role_selection_cruiser",
+        "GFX_role_selection_defense_platform",
+        "GFX_role_selection_destroyer",
+        "GFX_role_selection_frigate",
+        "GFX_role_selection_harbinger",
+        "GFX_role_selection_mauler",
+        "GFX_role_selection_stinger",
+        "GFX_role_selection_titan",
+        "GFX_role_selection_weaver"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "rotation_speed": {
+      "definitions": 319,
+      "repeated": 0,
+      "scalars": 319,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "0.002",
+        "0.01",
+        "0.02",
+        "0.03",
+        "0.05",
+        "0.07",
+        "0.075",
+        "0.1",
+        "0.13",
+        "0.15",
+        "0.175",
+        "0.2",
+        "0.25",
+        "0.3",
+        "0.35",
+        "0.5",
+        "0.8",
+        "1",
+        "10",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "scales_with_planet": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "scripted_action": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 2,
+      "values": [
+        "collect_waystation_stockpile",
+        "logistic_drop_off_stockpile",
+        "logistic_harvest_resources"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "section_slots": {
+      "definitions": 315,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 315,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "bot_1",
+        "bot_2",
+        "bot_3",
+        "bow",
+        "core",
+        "east",
+        "mid",
+        "mutations",
+        "north",
+        "part1",
+        "ship",
+        "south",
+        "spinal_mount_1",
+        "stern",
+        "west"
+      ],
+      "keysByDefinition": [
+        [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "core"
+        ],
+        [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "mid",
+          "spinal_mount_1"
+        ],
+        [
+          "1",
+          "2",
+          "3",
+          "4",
+          "core"
+        ],
+        [
+          "1",
+          "2",
+          "3",
+          "4",
+          "mid"
+        ],
+        [
+          "1",
+          "2",
+          "3",
+          "core"
+        ],
+        [
+          "1",
+          "2",
+          "core"
+        ],
+        [
+          "1",
+          "2",
+          "mid"
+        ],
+        [
+          "bot_1",
+          "bot_2",
+          "bot_3",
+          "mid"
+        ],
+        [
+          "bow",
+          "mid",
+          "stern"
+        ],
+        [
+          "bow",
+          "stern"
+        ],
+        [
+          "core"
+        ],
+        [
+          "east",
+          "north",
+          "south",
+          "west"
+        ],
+        [
+          "east",
+          "west"
+        ],
+        [
+          "mid"
+        ],
+        [
+          "mid",
+          "mutations"
+        ],
+        [
+          "part1"
+        ],
+        [
+          "ship"
+        ],
+        [
+          "west"
+        ]
+      ]
+    },
+    "selectable": {
+      "definitions": 37,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 37,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_biogenesis_dlc",
+        "host_has_dlc"
+      ],
+      "keysByDefinition": [
+        [
+          "has_biogenesis_dlc"
+        ],
+        [
+          "host_has_dlc"
+        ]
+      ]
+    },
+    "ship_category": {
+      "definitions": 86,
+      "repeated": 0,
+      "scalars": 86,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "bio_ship",
+        "crystalline_entity",
+        "cutholoid",
+        "space_amoeba",
+        "tiyanki",
+        "voidworm"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_class_icon_frame": {
+      "definitions": 24,
+      "repeated": 0,
+      "scalars": 24,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "21",
+        "26",
+        "35",
+        "56",
+        "57",
+        "58",
+        "61",
+        "63",
+        "64",
+        "65",
+        "66",
+        "67"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_family_name": {
+      "definitions": 24,
+      "repeated": 0,
+      "scalars": 24,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "harbinger_class",
+        "mauler_class",
+        "offspring_harbinger_class",
+        "offspring_mauler_class",
+        "offspring_stinger_class",
+        "offspring_weaver_class",
+        "stinger_class",
+        "weaver_class"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_modifier": {
+      "definitions": 91,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 91,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "arkship_harvest_resources_produces_mult",
+        "damage_vs_country_type_behemoth_hatchling_mult",
+        "mod_ship_naval_cap_usage_mult",
+        "science_ship_survey_speed",
+        "ship_armor_add",
+        "ship_armor_mult",
+        "ship_disengage_chance_mult",
+        "ship_evasion_mult",
+        "ship_fire_rate_mult",
+        "ship_hyperlane_range_add",
+        "ship_shield_add",
+        "ship_shield_hardening_add",
+        "ship_shield_mult",
+        "ship_shield_regen_add_static",
+        "ship_starbase_stockpile_collection_rate_add",
+        "ship_weapon_damage",
+        "ship_weapon_range_mult",
+        "ship_windup_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "arkship_harvest_resources_produces_mult",
+          "ship_starbase_stockpile_collection_rate_add"
+        ],
+        [
+          "damage_vs_country_type_behemoth_hatchling_mult",
+          "ship_disengage_chance_mult",
+          "ship_fire_rate_mult",
+          "ship_weapon_damage"
+        ],
+        [
+          "damage_vs_country_type_behemoth_hatchling_mult",
+          "ship_disengage_chance_mult",
+          "ship_fire_rate_mult",
+          "ship_weapon_damage",
+          "ship_windup_mult"
+        ],
+        [
+          "mod_ship_naval_cap_usage_mult"
+        ],
+        [
+          "science_ship_survey_speed",
+          "ship_starbase_stockpile_collection_rate_add"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_fire_rate_mult",
+          "ship_shield_add",
+          "ship_shield_regen_add_static",
+          "ship_weapon_damage",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_fire_rate_mult",
+          "ship_shield_add",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_fire_rate_mult",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_shield_add",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_evasion_mult",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_armor_add",
+          "ship_shield_add",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_armor_mult",
+          "ship_evasion_mult",
+          "ship_fire_rate_mult",
+          "ship_shield_mult"
+        ],
+        [
+          "ship_disengage_chance_mult"
+        ],
+        [
+          "ship_evasion_mult",
+          "ship_shield_add",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_fire_rate_mult",
+          "ship_starbase_stockpile_collection_rate_add",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_fire_rate_mult",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_hyperlane_range_add"
+        ],
+        [
+          "ship_shield_hardening_add"
+        ],
+        [
+          "ship_weapon_range_mult"
+        ]
+      ]
+    },
+    "ship_roles": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 61,
+      "bareBlocks": 61,
+      "values": [
+        "artillery",
+        "brawler",
+        "buffer_role",
+        "carrier",
+        "citadel",
+        "debuffer_role",
+        "energy_torpedoes",
+        "explosive",
+        "gunship",
+        "screen"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_stockpile_capacity": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "2500"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "size_multiplier": {
+      "definitions": 315,
+      "repeated": 0,
+      "scalars": 315,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "10",
+        "100",
+        "120",
+        "15",
+        "16",
+        "160",
+        "2",
+        "20",
+        "200",
+        "250",
+        "30",
+        "32",
+        "320",
+        "4",
+        "40",
+        "5",
+        "500",
+        "60",
+        "640",
+        "8",
+        "80"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "space_fauna_values": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 38,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "age_threshold",
+        "breeding_cooldown_months",
+        "can_breed_alone",
+        "culling_value",
+        "icon_frame",
+        "merge_with_individuals_amount_to_upgrade",
+        "monthly_increased_breeding_chance",
+        "monthly_initial_breeding_chance",
+        "reanimated_ship_design"
+      ],
+      "keysByDefinition": [
+        [
+          "age_threshold",
+          "breeding_cooldown_months",
+          "can_breed_alone",
+          "culling_value",
+          "icon_frame",
+          "monthly_increased_breeding_chance",
+          "monthly_initial_breeding_chance",
+          "reanimated_ship_design"
+        ],
+        [
+          "age_threshold",
+          "breeding_cooldown_months",
+          "culling_value",
+          "icon_frame",
+          "monthly_increased_breeding_chance",
+          "monthly_initial_breeding_chance"
+        ],
+        [
+          "age_threshold",
+          "breeding_cooldown_months",
+          "culling_value",
+          "icon_frame",
+          "monthly_increased_breeding_chance",
+          "monthly_initial_breeding_chance",
+          "reanimated_ship_design"
+        ],
+        [
+          "age_threshold",
+          "culling_value",
+          "icon_frame"
+        ],
+        [
+          "age_threshold",
+          "culling_value",
+          "icon_frame",
+          "merge_with_individuals_amount_to_upgrade",
+          "reanimated_ship_design"
+        ],
+        [
+          "age_threshold",
+          "culling_value",
+          "icon_frame",
+          "reanimated_ship_design"
+        ]
+      ]
+    },
+    "stay_disabled": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "takes_name_from_ship_design": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_ship_roles": {
+      "definitions": 43,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 43,
+      "bareBlocks": 43,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "upgrades_to": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 16,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "harbinger_stage_2",
+        "harbinger_stage_3",
+        "mauler_stage_2",
+        "mauler_stage_3",
+        "offspring_harbinger_stage_2",
+        "offspring_harbinger_stage_3",
+        "offspring_mauler_stage_2",
+        "offspring_mauler_stage_3",
+        "offspring_stinger_stage_2",
+        "offspring_stinger_stage_3",
+        "offspring_weaver_stage_2",
+        "offspring_weaver_stage_3",
+        "stinger_stage_2",
+        "stinger_stage_3",
+        "weaver_stage_2",
+        "weaver_stage_3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "use_shipnames_from": {
+      "definitions": 92,
+      "repeated": 0,
+      "scalars": 92,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "battleship",
+        "colonizer",
+        "colossus",
+        "constructor",
+        "corvette",
+        "cruiser",
+        "destroyer",
+        "juggernaut",
+        "military_station_small",
+        "science",
+        "titan"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "uses_name_prefix": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "valid_target_aggressive_stance": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 16,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

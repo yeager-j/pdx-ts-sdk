@@ -1,0 +1,1772 @@
+{
+  "registry": "technology",
+  "definitions": 679,
+  "files": 33,
+  "fingerprint": "c4c879d5c74e529315e104e371cdbd46ab8dc14eb54624a72e030357e24ddf17",
+  "fields": {
+    "ai_update_type": {
+      "definitions": 264,
+      "repeated": 0,
+      "scalars": 264,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "all",
+        "military"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_weight": {
+      "definitions": 492,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 492,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "factor",
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ],
+        [
+          "factor"
+        ],
+        [
+          "factor",
+          "modifier"
+        ],
+        [
+          "modifier"
+        ],
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "area": {
+      "definitions": 679,
+      "repeated": 0,
+      "scalars": 679,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "engineering",
+        "physics",
+        "society"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "category": {
+      "definitions": 679,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 679,
+      "bareBlocks": 679,
+      "values": [
+        "archaeostudies",
+        "biology",
+        "computing",
+        "field_manipulation",
+        "industry",
+        "materials",
+        "military_theory",
+        "new_worlds",
+        "particles",
+        "propulsion",
+        "psionics",
+        "statecraft",
+        "voidcraft"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cost": {
+      "definitions": 674,
+      "repeated": 0,
+      "scalars": 664,
+      "blocks": 10,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "10000",
+        "100000",
+        "2000",
+        "200000",
+        "30000",
+        "300000",
+        "50000",
+        "6000",
+        "75000"
+      ],
+      "keys": [
+        "factor",
+        "inline_script"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "factor",
+          "inline_script"
+        ]
+      ]
+    },
+    "cost_per_level": {
+      "definitions": 26,
+      "repeated": 0,
+      "scalars": 26,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "feature_flags": {
+      "definitions": 37,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 37,
+      "bareBlocks": 37,
+      "values": [
+        "active_reconnaissance_unlocked",
+        "alien_cloning_unlocked",
+        "allow_psionic_aura_intensity_growth",
+        "allow_psionic_aura_intensity_spread",
+        "assist_cloaking_detection_unlocked",
+        "bliss_standard",
+        "build_terraform_station",
+        "campaign_edicts",
+        "droids",
+        "experimental_subspace_navigation",
+        "gateway_activation",
+        "gateway_construction",
+        "habitability_gene_modding",
+        "hyper_relay_construction",
+        "jump_method",
+        "megaengineering",
+        "modify_robots",
+        "modify_traits",
+        "mutations",
+        "planetary_ftl_inhibitor",
+        "pop_self_modification",
+        "robot_leaders",
+        "robots",
+        "sustain_cosmic_storm_unlocked",
+        "synths",
+        "tech_automated_exploration",
+        "terraform_inhabited",
+        "unity_ambitions",
+        "unlock_arcane_deciphering",
+        "unlock_astral_rift_exploration",
+        "unlock_astral_threads_actions",
+        "unlock_gravity_snares",
+        "unlock_psionic_aura",
+        "unlocks_auto_research",
+        "uplifting",
+        "wormhole_stabilization"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "gateway": {
+      "definitions": 52,
+      "repeated": 0,
+      "scalars": 52,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "bio_ships",
+        "biological",
+        "capital",
+        "cloaking",
+        "detection",
+        "energy_weapons",
+        "espionage",
+        "infrastructure",
+        "kinetic_weapons",
+        "node_culling",
+        "node_reformatting",
+        "power_generation",
+        "psionics",
+        "robotics",
+        "ship",
+        "snare_capacity",
+        "tech_advanced_industrial_storm_protection",
+        "tech_advanced_storm_manipulation",
+        "tech_ship_hull_storm_breaker",
+        "tech_ship_hull_storm_weapons",
+        "tech_storm_prediction",
+        "zone"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "tech_archeology_lab",
+        "tech_covenant_composer",
+        "tech_covenant_cradle",
+        "tech_covenant_eater",
+        "tech_covenant_instrument",
+        "tech_covenant_whisperers",
+        "tech_exotic_gases",
+        "tech_mechanized_mining",
+        "tech_mega_assembly",
+        "tech_psionic_barrier",
+        "tech_volatile_motes",
+        "tech_xeno_linguistics"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_dangerous": {
+      "definitions": 52,
+      "repeated": 1,
+      "scalars": 52,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_insight": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 13,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_rare": {
+      "definitions": 237,
+      "repeated": 0,
+      "scalars": 237,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_reverse_engineerable": {
+      "definitions": 43,
+      "repeated": 0,
+      "scalars": 43,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "levels": {
+      "definitions": 26,
+      "repeated": 0,
+      "scalars": 26,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-1",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "mod_weight_if_group_picked": {
+      "definitions": 34,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 34,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "deposit_blockers",
+        "repeatable"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "deposit_blockers"
+        ],
+        [
+          "repeatable"
+        ]
+      ]
+    },
+    "modifier": {
+      "definitions": 243,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 243,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "BIOLOGICAL_logistic_growth_mult",
+        "BIOLOGICAL_species_trait_points_add",
+        "MACHINE_species_trait_points_add",
+        "ROBOT_species_trait_points_add",
+        "add_base_country_intel",
+        "all_technology_research_speed",
+        "arc_furnace_limit_add",
+        "army_attack_damage_mult",
+        "army_attack_morale_mult",
+        "army_damage_mult",
+        "army_defense_damage_mult",
+        "army_defense_health_mult",
+        "army_health",
+        "army_morale",
+        "army_morale_damage_taken_mult",
+        "ascension_perks_add",
+        "command_limit_add",
+        "councilor_exp_gain",
+        "councilor_skill_add",
+        "country_capture_amount_add",
+        "country_capture_amount_mult",
+        "country_capture_chance_add",
+        "country_claim_influence_cost_mult",
+        "country_commander_cap_add",
+        "country_edict_fund_add",
+        "country_government_civic_points_add",
+        "country_insult_efficiency",
+        "country_naval_cap_add",
+        "country_occupation_armies_add",
+        "country_official_cap_add",
+        "country_resource_max_add",
+        "country_scientist_cap_add",
+        "country_starbase_capacity_add",
+        "country_storm_location_intel_add",
+        "country_storm_movement_intel_add",
+        "country_storm_protection_tech_level_add",
+        "country_tech_influence_produces_add",
+        "country_unity_produces_mult",
+        "country_war_exhaustion_mult",
+        "custom_tooltip",
+        "damage_vs_country_type_frenzied_voidworms_mult",
+        "damage_vs_country_type_voidworms_crisis_mult",
+        "damage_vs_country_type_voidworms_mult",
+        "damage_vs_country_type_voidworms_treasure_hunters_mult",
+        "damage_vs_rival_mult",
+        "deep_space_citadel_limit_add",
+        "description",
+        "description_parameters",
+        "diplo_weight_mult",
+        "dyson_swarm_limit_add",
+        "empire_size_districts_mult",
+        "empire_size_penalty_mult",
+        "empire_size_pops_mult",
+        "envoys_add",
+        "espionage_operation_difficulty_add",
+        "espionage_operation_speed_mult",
+        "external_leader_pool_add",
+        "first_contact_speed_mult",
+        "fleet_mia_time_mult",
+        "habitat_max_districts_add",
+        "intel_decryption_add",
+        "intel_encryption_add",
+        "leader_lifespan_add",
+        "leader_organic_lifespan_mult",
+        "logistic_growth_mult",
+        "megastructures_hyper_relay_unity_produces_add",
+        "mutation_slots_add",
+        "nomadic_constructor_limit_add",
+        "num_tech_alternatives_add",
+        "pc_nuked_habitability",
+        "planet_amenities_mult",
+        "planet_amenities_no_happiness_mult",
+        "planet_artisans_produces_mult",
+        "planet_building_build_speed_mult",
+        "planet_buildings_cost_mult",
+        "planet_colony_development_speed_mult",
+        "planet_crime_mult",
+        "planet_crime_no_happiness_mult",
+        "planet_districts_cost_mult",
+        "planet_farmers_food_produces_mult",
+        "planet_jobs_energy_produces_mult",
+        "planet_jobs_food_produces_mult",
+        "planet_jobs_minerals_produces_mult",
+        "planet_jobs_produces_mult",
+        "planet_jobs_specialist_produces_mult",
+        "planet_jobs_trade_produces_mult",
+        "planet_metallurgists_alloys_produces_add",
+        "planet_metallurgists_produces_mult",
+        "planet_miners_minerals_produces_mult",
+        "planet_non_artificial_max_districts_add",
+        "planet_pop_assembly_mult",
+        "planet_researchers_upkeep_mult",
+        "planet_resettlement_unemployed_mult",
+        "planet_structures_cost_mult",
+        "planet_technician_energy_produces_mult",
+        "pop_environment_tolerance",
+        "pop_factions_produces_mult",
+        "pop_organic_resettlement_cost_mult",
+        "restored_node_bonus_skill",
+        "robotic_pop_bonus_workforce_mult",
+        "science_ship_survey_speed",
+        "ship_anomaly_generation_chance_mult",
+        "ship_anomaly_research_speed_mult",
+        "ship_archaeological_site_clues_add",
+        "ship_armor_mult",
+        "ship_battleship_cost_mult",
+        "ship_corvette_cost_mult",
+        "ship_cruiser_cost_mult",
+        "ship_destroyer_cost_mult",
+        "ship_fire_rate_mult",
+        "ship_harbinger_cost_mult",
+        "ship_mauler_cost_mult",
+        "ship_shield_mult",
+        "ship_speed_mult",
+        "ship_stinger_cost_mult",
+        "ship_weaver_cost_mult",
+        "shipclass_military_station_damage_mult",
+        "shipclass_military_station_hull_mult",
+        "ships_upkeep_mult",
+        "shipsize_battleship_build_speed_mult",
+        "shipsize_battleship_hull_mult",
+        "shipsize_corvette_build_speed_mult",
+        "shipsize_corvette_hull_mult",
+        "shipsize_cruiser_build_speed_mult",
+        "shipsize_cruiser_hull_mult",
+        "shipsize_destroyer_build_speed_mult",
+        "shipsize_destroyer_hull_mult",
+        "shipsize_frigate_build_speed_mult",
+        "shipsize_frigate_hull_mult",
+        "shipsize_harbinger_stage_1_build_speed_mult",
+        "shipsize_harbinger_stage_2_build_speed_mult",
+        "shipsize_harbinger_stage_3_build_speed_mult",
+        "shipsize_mauler_stage_1_build_speed_mult",
+        "shipsize_mauler_stage_2_build_speed_mult",
+        "shipsize_mauler_stage_3_build_speed_mult",
+        "shipsize_military_station_small_hull_mult",
+        "shipsize_nomads_constructor_stockpile_capacity_mult",
+        "shipsize_offspring_battleship_build_speed_mult",
+        "shipsize_offspring_battleship_hull_mult",
+        "shipsize_offspring_corvette_build_speed_mult",
+        "shipsize_offspring_corvette_hull_mult",
+        "shipsize_offspring_cruiser_build_speed_mult",
+        "shipsize_offspring_cruiser_hull_mult",
+        "shipsize_offspring_destroyer_build_speed_mult",
+        "shipsize_offspring_destroyer_hull_mult",
+        "shipsize_offspring_harbinger_stage_1_build_speed_mult",
+        "shipsize_offspring_harbinger_stage_2_build_speed_mult",
+        "shipsize_offspring_harbinger_stage_3_build_speed_mult",
+        "shipsize_offspring_mauler_stage_1_build_speed_mult",
+        "shipsize_offspring_mauler_stage_2_build_speed_mult",
+        "shipsize_offspring_mauler_stage_3_build_speed_mult",
+        "shipsize_offspring_stinger_stage_1_build_speed_mult",
+        "shipsize_offspring_stinger_stage_2_build_speed_mult",
+        "shipsize_offspring_stinger_stage_3_build_speed_mult",
+        "shipsize_offspring_weaver_stage_1_build_speed_mult",
+        "shipsize_offspring_weaver_stage_2_build_speed_mult",
+        "shipsize_offspring_weaver_stage_3_build_speed_mult",
+        "shipsize_stinger_stage_1_build_speed_mult",
+        "shipsize_stinger_stage_2_build_speed_mult",
+        "shipsize_stinger_stage_3_build_speed_mult",
+        "shipsize_titan_hull_mult",
+        "shipsize_weaver_stage_1_build_speed_mult",
+        "shipsize_weaver_stage_2_build_speed_mult",
+        "shipsize_weaver_stage_3_build_speed_mult",
+        "show_only_custom_tooltip",
+        "society_tech_cost_mult",
+        "species_leader_exp_gain",
+        "starbase_buildings_cost_mult",
+        "starbase_modules_cost_mult",
+        "starbase_shipyard_build_speed_mult",
+        "starbase_upgrade_cost_mult",
+        "starbase_upgrade_speed_mult",
+        "station_gatherers_produces_mult",
+        "station_researchers_produces_mult",
+        "stations_upkeep_mult",
+        "storm_ship_hull_breaker_mult",
+        "weapon_type_energy_weapon_damage_mult",
+        "weapon_type_energy_weapon_fire_rate_mult",
+        "weapon_type_explosive_weapon_damage_mult",
+        "weapon_type_explosive_weapon_fire_rate_mult",
+        "weapon_type_kinetic_weapon_damage_mult",
+        "weapon_type_kinetic_weapon_fire_rate_mult",
+        "weapon_type_strike_craft_weapon_damage_mult",
+        "weapon_type_strike_craft_weapon_fire_rate_mult",
+        "worker_and_simple_drone_cat_bonus_workforce_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "add_base_country_intel",
+          "country_edict_fund_add"
+        ],
+        [
+          "all_technology_research_speed"
+        ],
+        [
+          "all_technology_research_speed",
+          "envoys_add"
+        ],
+        [
+          "all_technology_research_speed",
+          "planet_researchers_upkeep_mult"
+        ],
+        [
+          "arc_furnace_limit_add"
+        ],
+        [
+          "arc_furnace_limit_add",
+          "country_resource_max_add",
+          "country_starbase_capacity_add",
+          "dyson_swarm_limit_add"
+        ],
+        [
+          "army_attack_damage_mult",
+          "army_attack_morale_mult"
+        ],
+        [
+          "army_damage_mult"
+        ],
+        [
+          "army_damage_mult",
+          "army_health",
+          "pop_environment_tolerance"
+        ],
+        [
+          "army_damage_mult",
+          "worker_and_simple_drone_cat_bonus_workforce_mult"
+        ],
+        [
+          "army_defense_damage_mult",
+          "custom_tooltip",
+          "show_only_custom_tooltip"
+        ],
+        [
+          "army_defense_health_mult"
+        ],
+        [
+          "army_health"
+        ],
+        [
+          "army_morale"
+        ],
+        [
+          "army_morale_damage_taken_mult",
+          "empire_size_pops_mult"
+        ],
+        [
+          "ascension_perks_add"
+        ],
+        [
+          "BIOLOGICAL_logistic_growth_mult",
+          "leader_organic_lifespan_mult"
+        ],
+        [
+          "BIOLOGICAL_species_trait_points_add",
+          "description",
+          "description_parameters"
+        ],
+        [
+          "command_limit_add"
+        ],
+        [
+          "councilor_exp_gain",
+          "restored_node_bonus_skill"
+        ],
+        [
+          "councilor_skill_add",
+          "restored_node_bonus_skill"
+        ],
+        [
+          "country_capture_amount_add",
+          "country_capture_chance_add"
+        ],
+        [
+          "country_capture_amount_mult",
+          "country_capture_chance_add"
+        ],
+        [
+          "country_claim_influence_cost_mult",
+          "country_war_exhaustion_mult"
+        ],
+        [
+          "country_commander_cap_add",
+          "country_official_cap_add",
+          "country_scientist_cap_add"
+        ],
+        [
+          "country_commander_cap_add",
+          "country_official_cap_add",
+          "country_scientist_cap_add",
+          "envoys_add",
+          "external_leader_pool_add"
+        ],
+        [
+          "country_commander_cap_add",
+          "country_official_cap_add",
+          "country_scientist_cap_add",
+          "external_leader_pool_add"
+        ],
+        [
+          "country_edict_fund_add"
+        ],
+        [
+          "country_government_civic_points_add"
+        ],
+        [
+          "country_insult_efficiency",
+          "envoys_add"
+        ],
+        [
+          "country_naval_cap_add"
+        ],
+        [
+          "country_occupation_armies_add"
+        ],
+        [
+          "country_starbase_capacity_add"
+        ],
+        [
+          "country_starbase_capacity_add",
+          "nomadic_constructor_limit_add",
+          "shipsize_nomads_constructor_stockpile_capacity_mult"
+        ],
+        [
+          "country_storm_location_intel_add",
+          "country_storm_movement_intel_add",
+          "custom_tooltip"
+        ],
+        [
+          "country_storm_protection_tech_level_add"
+        ],
+        [
+          "country_storm_protection_tech_level_add",
+          "show_only_custom_tooltip"
+        ],
+        [
+          "country_tech_influence_produces_add",
+          "envoys_add"
+        ],
+        [
+          "country_unity_produces_mult"
+        ],
+        [
+          "country_unity_produces_mult",
+          "custom_tooltip",
+          "show_only_custom_tooltip"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "first_contact_speed_mult",
+          "show_only_custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "planet_building_build_speed_mult",
+          "show_only_custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "ship_battleship_cost_mult",
+          "shipsize_battleship_build_speed_mult",
+          "shipsize_offspring_battleship_build_speed_mult"
+        ],
+        [
+          "custom_tooltip",
+          "ship_corvette_cost_mult",
+          "shipsize_corvette_build_speed_mult",
+          "shipsize_frigate_build_speed_mult",
+          "shipsize_offspring_corvette_build_speed_mult"
+        ],
+        [
+          "custom_tooltip",
+          "ship_cruiser_cost_mult",
+          "shipsize_cruiser_build_speed_mult",
+          "shipsize_offspring_cruiser_build_speed_mult"
+        ],
+        [
+          "custom_tooltip",
+          "ship_destroyer_cost_mult",
+          "shipsize_destroyer_build_speed_mult",
+          "shipsize_offspring_destroyer_build_speed_mult"
+        ],
+        [
+          "custom_tooltip",
+          "ship_harbinger_cost_mult",
+          "shipsize_harbinger_stage_1_build_speed_mult",
+          "shipsize_harbinger_stage_2_build_speed_mult",
+          "shipsize_harbinger_stage_3_build_speed_mult",
+          "shipsize_offspring_harbinger_stage_1_build_speed_mult",
+          "shipsize_offspring_harbinger_stage_2_build_speed_mult",
+          "shipsize_offspring_harbinger_stage_3_build_speed_mult"
+        ],
+        [
+          "custom_tooltip",
+          "ship_mauler_cost_mult",
+          "shipsize_mauler_stage_1_build_speed_mult",
+          "shipsize_mauler_stage_2_build_speed_mult",
+          "shipsize_mauler_stage_3_build_speed_mult",
+          "shipsize_offspring_mauler_stage_1_build_speed_mult",
+          "shipsize_offspring_mauler_stage_2_build_speed_mult",
+          "shipsize_offspring_mauler_stage_3_build_speed_mult"
+        ],
+        [
+          "custom_tooltip",
+          "ship_stinger_cost_mult",
+          "shipsize_offspring_stinger_stage_1_build_speed_mult",
+          "shipsize_offspring_stinger_stage_2_build_speed_mult",
+          "shipsize_offspring_stinger_stage_3_build_speed_mult",
+          "shipsize_stinger_stage_1_build_speed_mult",
+          "shipsize_stinger_stage_2_build_speed_mult",
+          "shipsize_stinger_stage_3_build_speed_mult"
+        ],
+        [
+          "custom_tooltip",
+          "ship_weaver_cost_mult",
+          "shipsize_offspring_weaver_stage_1_build_speed_mult",
+          "shipsize_offspring_weaver_stage_2_build_speed_mult",
+          "shipsize_offspring_weaver_stage_3_build_speed_mult",
+          "shipsize_weaver_stage_1_build_speed_mult",
+          "shipsize_weaver_stage_2_build_speed_mult",
+          "shipsize_weaver_stage_3_build_speed_mult"
+        ],
+        [
+          "custom_tooltip",
+          "shipsize_battleship_hull_mult",
+          "shipsize_offspring_battleship_hull_mult"
+        ],
+        [
+          "custom_tooltip",
+          "shipsize_corvette_hull_mult",
+          "shipsize_frigate_hull_mult",
+          "shipsize_offspring_corvette_hull_mult"
+        ],
+        [
+          "custom_tooltip",
+          "shipsize_cruiser_hull_mult",
+          "shipsize_offspring_cruiser_hull_mult"
+        ],
+        [
+          "custom_tooltip",
+          "shipsize_destroyer_hull_mult",
+          "shipsize_offspring_destroyer_hull_mult"
+        ],
+        [
+          "custom_tooltip",
+          "show_only_custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "storm_ship_hull_breaker_mult"
+        ],
+        [
+          "damage_vs_country_type_frenzied_voidworms_mult",
+          "damage_vs_country_type_voidworms_crisis_mult",
+          "damage_vs_country_type_voidworms_mult",
+          "damage_vs_country_type_voidworms_treasure_hunters_mult",
+          "description"
+        ],
+        [
+          "damage_vs_rival_mult",
+          "envoys_add"
+        ],
+        [
+          "deep_space_citadel_limit_add"
+        ],
+        [
+          "description"
+        ],
+        [
+          "diplo_weight_mult"
+        ],
+        [
+          "dyson_swarm_limit_add"
+        ],
+        [
+          "empire_size_districts_mult",
+          "envoys_add",
+          "planet_districts_cost_mult"
+        ],
+        [
+          "empire_size_penalty_mult",
+          "envoys_add"
+        ],
+        [
+          "envoys_add"
+        ],
+        [
+          "envoys_add",
+          "espionage_operation_difficulty_add",
+          "espionage_operation_speed_mult"
+        ],
+        [
+          "envoys_add",
+          "fleet_mia_time_mult"
+        ],
+        [
+          "envoys_add",
+          "megastructures_hyper_relay_unity_produces_add"
+        ],
+        [
+          "envoys_add",
+          "planet_metallurgists_alloys_produces_add"
+        ],
+        [
+          "envoys_add",
+          "planet_non_artificial_max_districts_add"
+        ],
+        [
+          "envoys_add",
+          "station_gatherers_produces_mult",
+          "station_researchers_produces_mult",
+          "stations_upkeep_mult"
+        ],
+        [
+          "habitat_max_districts_add"
+        ],
+        [
+          "habitat_max_districts_add",
+          "planet_building_build_speed_mult",
+          "planet_colony_development_speed_mult",
+          "planet_structures_cost_mult"
+        ],
+        [
+          "intel_decryption_add"
+        ],
+        [
+          "intel_encryption_add"
+        ],
+        [
+          "leader_lifespan_add"
+        ],
+        [
+          "leader_lifespan_add",
+          "pop_environment_tolerance"
+        ],
+        [
+          "leader_lifespan_add",
+          "species_leader_exp_gain"
+        ],
+        [
+          "logistic_growth_mult"
+        ],
+        [
+          "MACHINE_species_trait_points_add",
+          "ROBOT_species_trait_points_add"
+        ],
+        [
+          "mutation_slots_add"
+        ],
+        [
+          "num_tech_alternatives_add"
+        ],
+        [
+          "pc_nuked_habitability"
+        ],
+        [
+          "planet_amenities_mult",
+          "planet_crime_mult"
+        ],
+        [
+          "planet_amenities_no_happiness_mult",
+          "planet_crime_no_happiness_mult"
+        ],
+        [
+          "planet_artisans_produces_mult"
+        ],
+        [
+          "planet_building_build_speed_mult"
+        ],
+        [
+          "planet_buildings_cost_mult"
+        ],
+        [
+          "planet_colony_development_speed_mult"
+        ],
+        [
+          "planet_farmers_food_produces_mult"
+        ],
+        [
+          "planet_jobs_energy_produces_mult"
+        ],
+        [
+          "planet_jobs_food_produces_mult"
+        ],
+        [
+          "planet_jobs_minerals_produces_mult"
+        ],
+        [
+          "planet_jobs_produces_mult"
+        ],
+        [
+          "planet_jobs_specialist_produces_mult"
+        ],
+        [
+          "planet_jobs_trade_produces_mult"
+        ],
+        [
+          "planet_metallurgists_produces_mult"
+        ],
+        [
+          "planet_miners_minerals_produces_mult"
+        ],
+        [
+          "planet_pop_assembly_mult"
+        ],
+        [
+          "planet_resettlement_unemployed_mult"
+        ],
+        [
+          "planet_technician_energy_produces_mult"
+        ],
+        [
+          "pop_environment_tolerance"
+        ],
+        [
+          "pop_factions_produces_mult"
+        ],
+        [
+          "pop_organic_resettlement_cost_mult"
+        ],
+        [
+          "robotic_pop_bonus_workforce_mult"
+        ],
+        [
+          "science_ship_survey_speed"
+        ],
+        [
+          "ship_anomaly_generation_chance_mult",
+          "ship_anomaly_research_speed_mult"
+        ],
+        [
+          "ship_archaeological_site_clues_add"
+        ],
+        [
+          "ship_armor_mult"
+        ],
+        [
+          "ship_fire_rate_mult"
+        ],
+        [
+          "ship_shield_mult"
+        ],
+        [
+          "ship_speed_mult"
+        ],
+        [
+          "shipclass_military_station_damage_mult"
+        ],
+        [
+          "shipclass_military_station_hull_mult"
+        ],
+        [
+          "ships_upkeep_mult",
+          "starbase_shipyard_build_speed_mult"
+        ],
+        [
+          "shipsize_military_station_small_hull_mult"
+        ],
+        [
+          "shipsize_titan_hull_mult"
+        ],
+        [
+          "society_tech_cost_mult"
+        ],
+        [
+          "starbase_buildings_cost_mult",
+          "starbase_modules_cost_mult"
+        ],
+        [
+          "starbase_upgrade_cost_mult",
+          "starbase_upgrade_speed_mult"
+        ],
+        [
+          "station_gatherers_produces_mult"
+        ],
+        [
+          "station_researchers_produces_mult"
+        ],
+        [
+          "weapon_type_energy_weapon_damage_mult"
+        ],
+        [
+          "weapon_type_energy_weapon_fire_rate_mult"
+        ],
+        [
+          "weapon_type_explosive_weapon_damage_mult"
+        ],
+        [
+          "weapon_type_explosive_weapon_fire_rate_mult"
+        ],
+        [
+          "weapon_type_kinetic_weapon_damage_mult"
+        ],
+        [
+          "weapon_type_kinetic_weapon_fire_rate_mult"
+        ],
+        [
+          "weapon_type_strike_craft_weapon_damage_mult"
+        ],
+        [
+          "weapon_type_strike_craft_weapon_fire_rate_mult"
+        ]
+      ]
+    },
+    "potential": {
+      "definitions": 376,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 376,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "allows_slavery",
+        "can_get_planet_smelter",
+        "country_uses_bio_ships",
+        "country_uses_consumer_goods",
+        "has_ancrel",
+        "has_ascension_perk",
+        "has_astral_planes_dlc",
+        "has_biogenesis_dlc",
+        "has_cosmic_storms_dlc",
+        "has_country_flag",
+        "has_encountered_psionic_auras",
+        "has_ethic",
+        "has_federations_dlc",
+        "has_first_contact_dlc",
+        "has_grand_archive_dlc",
+        "has_infernals",
+        "has_machine_age_dlc",
+        "has_megacorp",
+        "has_nemesis",
+        "has_nomads_dlc",
+        "has_origin",
+        "has_overlord_dlc",
+        "has_paragon_dlc",
+        "has_psionic_ascension",
+        "has_shroud_dlc",
+        "has_technology",
+        "has_valid_civic",
+        "host_has_dlc",
+        "is_gestalt",
+        "is_hive_empire",
+        "is_homicidal",
+        "is_individual_machine",
+        "is_machine_empire",
+        "is_megacorp",
+        "is_natural_design_empire",
+        "is_nomadic",
+        "is_pacifist",
+        "is_regular_empire",
+        "is_spiritualist",
+        "is_wilderness_empire",
+        "is_world_forger_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "allows_slavery",
+          "is_regular_empire"
+        ],
+        [
+          "can_get_planet_smelter",
+          "has_country_flag",
+          "host_has_dlc"
+        ],
+        [
+          "country_uses_bio_ships"
+        ],
+        [
+          "country_uses_bio_ships",
+          "has_machine_age_dlc"
+        ],
+        [
+          "country_uses_consumer_goods"
+        ],
+        [
+          "has_ancrel"
+        ],
+        [
+          "has_ancrel",
+          "host_has_dlc"
+        ],
+        [
+          "has_ancrel",
+          "is_nomadic"
+        ],
+        [
+          "has_ancrel",
+          "is_wilderness_empire"
+        ],
+        [
+          "has_ascension_perk",
+          "has_country_flag",
+          "has_nemesis"
+        ],
+        [
+          "has_ascension_perk",
+          "has_machine_age_dlc"
+        ],
+        [
+          "has_ascension_perk",
+          "has_machine_age_dlc",
+          "has_technology"
+        ],
+        [
+          "has_astral_planes_dlc"
+        ],
+        [
+          "has_biogenesis_dlc",
+          "is_nomadic"
+        ],
+        [
+          "has_cosmic_storms_dlc"
+        ],
+        [
+          "has_cosmic_storms_dlc",
+          "is_wilderness_empire"
+        ],
+        [
+          "has_country_flag",
+          "has_machine_age_dlc"
+        ],
+        [
+          "has_country_flag",
+          "has_origin"
+        ],
+        [
+          "has_country_flag",
+          "has_psionic_ascension",
+          "host_has_dlc",
+          "is_spiritualist"
+        ],
+        [
+          "has_country_flag",
+          "has_valid_civic",
+          "host_has_dlc"
+        ],
+        [
+          "has_country_flag",
+          "host_has_dlc"
+        ],
+        [
+          "has_country_flag",
+          "host_has_dlc",
+          "is_pacifist"
+        ],
+        [
+          "has_encountered_psionic_auras",
+          "has_shroud_dlc"
+        ],
+        [
+          "has_ethic"
+        ],
+        [
+          "has_federations_dlc",
+          "is_nomadic"
+        ],
+        [
+          "has_first_contact_dlc"
+        ],
+        [
+          "has_grand_archive_dlc"
+        ],
+        [
+          "has_infernals"
+        ],
+        [
+          "has_machine_age_dlc"
+        ],
+        [
+          "has_megacorp",
+          "is_nomadic"
+        ],
+        [
+          "has_nomads_dlc",
+          "is_nomadic"
+        ],
+        [
+          "has_origin"
+        ],
+        [
+          "has_overlord_dlc"
+        ],
+        [
+          "has_overlord_dlc",
+          "is_nomadic"
+        ],
+        [
+          "has_paragon_dlc"
+        ],
+        [
+          "has_paragon_dlc",
+          "is_gestalt",
+          "is_homicidal",
+          "is_regular_empire"
+        ],
+        [
+          "has_shroud_dlc"
+        ],
+        [
+          "has_shroud_dlc",
+          "is_nomadic"
+        ],
+        [
+          "host_has_dlc"
+        ],
+        [
+          "is_gestalt"
+        ],
+        [
+          "is_gestalt",
+          "is_individual_machine"
+        ],
+        [
+          "is_gestalt",
+          "is_nomadic"
+        ],
+        [
+          "is_hive_empire"
+        ],
+        [
+          "is_hive_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_individual_machine",
+          "is_regular_empire"
+        ],
+        [
+          "is_machine_empire"
+        ],
+        [
+          "is_machine_empire",
+          "is_natural_design_empire"
+        ],
+        [
+          "is_machine_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_megacorp"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_regular_empire"
+        ],
+        [
+          "is_wilderness_empire"
+        ],
+        [
+          "is_world_forger_empire"
+        ],
+        [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "OR"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "has_ascension_perk",
+          "has_machine_age_dlc"
+        ],
+        [
+          "NOT",
+          "has_country_flag"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "has_country_flag",
+          "host_has_dlc",
+          "is_pacifist"
+        ],
+        [
+          "OR",
+          "has_first_contact_dlc"
+        ],
+        [
+          "OR",
+          "has_grand_archive_dlc"
+        ],
+        [
+          "OR",
+          "has_overlord_dlc"
+        ],
+        [
+          "OR",
+          "is_natural_design_empire"
+        ],
+        [
+          "OR",
+          "is_natural_design_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR",
+          "is_wilderness_empire"
+        ]
+      ]
+    },
+    "prereqfor_desc": {
+      "definitions": 125,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 125,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "component",
+        "custom",
+        "diplo_action",
+        "hide_prereq_for_desc",
+        "ship"
+      ],
+      "keysByDefinition": [
+        [
+          "component"
+        ],
+        [
+          "custom"
+        ],
+        [
+          "custom",
+          "hide_prereq_for_desc"
+        ],
+        [
+          "custom",
+          "ship"
+        ],
+        [
+          "diplo_action"
+        ],
+        [
+          "hide_prereq_for_desc"
+        ],
+        [
+          "hide_prereq_for_desc",
+          "ship"
+        ],
+        [
+          "ship"
+        ]
+      ]
+    },
+    "prerequisites": {
+      "definitions": 504,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 504,
+      "bareBlocks": 491,
+      "values": [
+        "tech_archaeostudies",
+        "tech_battleship_hull_1",
+        "tech_battleships",
+        "tech_colossus",
+        "tech_corvette_hull_1",
+        "tech_corvettes",
+        "tech_cruiser_hull_1",
+        "tech_cruisers",
+        "tech_destroyer_hull_1",
+        "tech_destroyers",
+        "tech_growth_chamber_1",
+        "tech_habitat_1",
+        "tech_harbinger_growth_1",
+        "tech_harbingers",
+        "tech_industrial_storm_protection",
+        "tech_mandibles_2",
+        "tech_mauler_growth_1",
+        "tech_maulers",
+        "tech_sensors_2",
+        "tech_ship_hull_storm_breaker_1",
+        "tech_ship_storm_weapons_1",
+        "tech_space_construction",
+        "tech_starbase_1",
+        "tech_starbase_2",
+        "tech_starbase_3",
+        "tech_starbase_4",
+        "tech_stinger_growth_1",
+        "tech_stingers",
+        "tech_storm_manipulation",
+        "tech_storm_prediction_1",
+        "tech_titan_hull_1",
+        "tech_titans",
+        "tech_weaver_bio_anti_evasion_1",
+        "tech_weaver_bio_anti_evasion_2",
+        "tech_weaver_bio_anti_evasion_3",
+        "tech_weaver_bio_anti_evasion_4",
+        "tech_weaver_bio_anti_evasion_5",
+        "tech_weaver_bio_anti_fire_rate_1",
+        "tech_weaver_bio_anti_fire_rate_2",
+        "tech_weaver_bio_anti_fire_rate_3",
+        "tech_weaver_bio_anti_fire_rate_4",
+        "tech_weaver_bio_anti_fire_rate_5",
+        "tech_weaver_bio_confuser_1",
+        "tech_weaver_bio_confuser_2",
+        "tech_weaver_bio_confuser_3",
+        "tech_weaver_bio_confuser_4",
+        "tech_weaver_bio_confuser_5",
+        "tech_weaver_bio_evasion_1",
+        "tech_weaver_bio_evasion_2",
+        "tech_weaver_bio_evasion_3",
+        "tech_weaver_bio_evasion_4",
+        "tech_weaver_bio_evasion_5",
+        "tech_weaver_bio_fire_rate_1",
+        "tech_weaver_bio_fire_rate_2",
+        "tech_weaver_bio_fire_rate_3",
+        "tech_weaver_bio_fire_rate_4",
+        "tech_weaver_bio_fire_rate_5",
+        "tech_weaver_bio_healing_1",
+        "tech_weaver_bio_healing_2",
+        "tech_weaver_bio_healing_3",
+        "tech_weaver_bio_healing_4",
+        "tech_weaver_bio_healing_5",
+        "tech_weaver_growth_1",
+        "tech_weavers"
+      ],
+      "keys": [
+        "OR"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "OR"
+        ]
+      ]
+    },
+    "start_tech": {
+      "definitions": 47,
+      "repeated": 3,
+      "scalars": 47,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "starting_potential": {
+      "definitions": 19,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 19,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_uses_bio_ships",
+        "has_origin",
+        "is_eager_explorer_empire",
+        "is_low_tech_start",
+        "is_nomadic",
+        "is_wilderness_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "country_uses_bio_ships",
+          "is_low_tech_start"
+        ],
+        [
+          "has_origin"
+        ],
+        [
+          "is_eager_explorer_empire"
+        ],
+        [
+          "is_low_tech_start"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "is_wilderness_empire"
+        ]
+      ]
+    },
+    "technology_swap": {
+      "definitions": 180,
+      "repeated": 16,
+      "scalars": 0,
+      "blocks": 180,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "area",
+        "category",
+        "inherit_effects",
+        "inherit_icon",
+        "modifier",
+        "name",
+        "prereqfor_desc",
+        "trigger",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "area",
+          "category",
+          "inherit_effects",
+          "inherit_icon",
+          "name",
+          "prereqfor_desc",
+          "trigger"
+        ],
+        [
+          "area",
+          "category",
+          "inherit_effects",
+          "inherit_icon",
+          "name",
+          "trigger"
+        ],
+        [
+          "area",
+          "category",
+          "inherit_effects",
+          "inherit_icon",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "modifier",
+          "name",
+          "prereqfor_desc",
+          "trigger"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "modifier",
+          "name",
+          "prereqfor_desc",
+          "trigger",
+          "weight"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "modifier",
+          "name",
+          "trigger"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "modifier",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "name",
+          "prereqfor_desc",
+          "trigger"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "name",
+          "prereqfor_desc",
+          "trigger",
+          "weight"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "name",
+          "trigger"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "inherit_effects",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "inherit_icon",
+          "modifier",
+          "name",
+          "trigger"
+        ],
+        [
+          "modifier",
+          "name",
+          "trigger",
+          "weight"
+        ]
+      ]
+    },
+    "tier": {
+      "definitions": 679,
+      "repeated": 0,
+      "scalars": 679,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "weight": {
+      "definitions": 641,
+      "repeated": 3,
+      "scalars": 641,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "60",
+        "70"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "weight_groups": {
+      "definitions": 34,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 34,
+      "bareBlocks": 33,
+      "values": [
+        "deposit_blockers",
+        "repeatable"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "weight_modifier": {
+      "definitions": 562,
+      "repeated": 3,
+      "scalars": 0,
+      "blocks": 562,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "factor",
+        "inline_script",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "factor"
+        ],
+        [
+          "factor",
+          "inline_script",
+          "modifier"
+        ],
+        [
+          "factor",
+          "modifier"
+        ],
+        [
+          "inline_script"
+        ],
+        [
+          "inline_script",
+          "modifier"
+        ],
+        [
+          "modifier"
+        ]
+      ]
+    }
+  }
+}

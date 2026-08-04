@@ -1,0 +1,256 @@
+{
+  "registry": "agreement_preset",
+  "definitions": 56,
+  "files": 9,
+  "fingerprint": "1559f0966e4dc6d55387292c6264798bcaa7c085564298457c94c83ffe08ccd4",
+  "fields": {
+    "can_preset_be_changed": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hidden": {
+      "definitions": 37,
+      "repeated": 0,
+      "scalars": 37,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 37,
+      "repeated": 0,
+      "scalars": 37,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_diplomacy_status_is_dominion",
+        "GFX_diplomacy_status_is_herald",
+        "GFX_diplomacy_status_is_luminarium",
+        "GFX_diplomacy_status_is_political_client",
+        "GFX_diplomacy_status_is_protectorate",
+        "GFX_diplomacy_status_is_satellite",
+        "GFX_diplomacy_status_is_satrapy",
+        "GFX_diplomacy_status_is_scion",
+        "GFX_diplomacy_status_is_signatory",
+        "GFX_diplomacy_status_is_subsidiary",
+        "GFX_diplomacy_status_is_thrall",
+        "GFX_diplomacy_status_is_tributary",
+        "GFX_diplomacy_status_is_vassal"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "overlord_weight": {
+      "definitions": 44,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 44,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "parent": {
+      "definitions": 36,
+      "repeated": 0,
+      "scalars": 36,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "preset_bulwark",
+        "preset_prospectorium",
+        "preset_scholarium",
+        "preset_subsidiary",
+        "preset_vassal"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "potential": {
+      "definitions": 44,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 44,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "FROM",
+        "NOR",
+        "NOT",
+        "OR",
+        "always",
+        "any_agreement",
+        "exists",
+        "from",
+        "has_been_declared_crisis",
+        "has_overlord_dlc",
+        "is_nomadic",
+        "is_same_value",
+        "tech_unlocked_ratio"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "any_agreement",
+          "from"
+        ],
+        [
+          "exists",
+          "is_same_value"
+        ],
+        [
+          "from"
+        ],
+        [
+          "FROM",
+          "NOR",
+          "OR",
+          "has_overlord_dlc",
+          "is_nomadic"
+        ],
+        [
+          "from",
+          "tech_unlocked_ratio"
+        ],
+        [
+          "NOT",
+          "from",
+          "has_been_declared_crisis",
+          "tech_unlocked_ratio"
+        ],
+        [
+          "NOT",
+          "from",
+          "tech_unlocked_ratio"
+        ],
+        [
+          "NOT",
+          "OR",
+          "from"
+        ]
+      ]
+    },
+    "should_ai_use_for_proposals": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "specialist_type": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 18,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "specialist_bulwark",
+        "specialist_prospectorium",
+        "specialist_scholarium"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "subject_weight": {
+      "definitions": 45,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 45,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "term_data": {
+      "definitions": 56,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 56,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "discrete_terms",
+        "forced_initial_loyalty",
+        "has_cooldown_on_first_renegotiation",
+        "resource_terms"
+      ],
+      "keysByDefinition": [
+        [
+          "discrete_terms"
+        ],
+        [
+          "discrete_terms",
+          "forced_initial_loyalty",
+          "has_cooldown_on_first_renegotiation"
+        ],
+        [
+          "discrete_terms",
+          "forced_initial_loyalty",
+          "has_cooldown_on_first_renegotiation",
+          "resource_terms"
+        ],
+        [
+          "discrete_terms",
+          "resource_terms"
+        ],
+        [
+          "forced_initial_loyalty",
+          "has_cooldown_on_first_renegotiation"
+        ]
+      ]
+    }
+  }
+}

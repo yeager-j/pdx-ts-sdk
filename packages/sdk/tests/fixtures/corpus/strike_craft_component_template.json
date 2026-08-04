@@ -1,0 +1,812 @@
+{
+  "registry": "strike_craft_component_template",
+  "definitions": 61,
+  "files": 55,
+  "fingerprint": "e74f0bec626860dfae2c4aa1a6398cfa7a7b9ed30d5cb25df8e93b8684006c48",
+  "fields": {
+    "acceleration": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.5",
+        "1",
+        "2.5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "accuracy": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.7",
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_tags": {
+      "definitions": 51,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 51,
+      "bareBlocks": 51,
+      "values": [
+        "carrier",
+        "weapon_role_anti_shield",
+        "weapon_role_point_defense"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_weight": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 12,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "weight"
+        ]
+      ]
+    },
+    "armor": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "10",
+        "12.5",
+        "17",
+        "20",
+        "5",
+        "50",
+        "7.5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "armor_damage": {
+      "definitions": 46,
+      "repeated": 0,
+      "scalars": 46,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1.5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "armor_penetration": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.66",
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "attack_range": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "120"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "component_set": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "AI_STRIKE_CRAFT_1",
+        "AMOEBA_STRIKE_CRAFT_1",
+        "AMOEBA_STRIKE_CRAFT_1_BIO",
+        "ANCIENT_DRILLER_BEASTS",
+        "ARCHAEO_STRIKECRAFT",
+        "BIO_ARCHAEO_STRIKECRAFT",
+        "BIO_PSIONIC_STRIKE_CRAFT",
+        "BIO_SCOUT_HANGAR_1",
+        "BIO_STRIKE_CRAFT_HANGAR_1",
+        "BIO_STRIKE_CRAFT_HANGAR_2",
+        "BIO_STRIKE_CRAFT_HANGAR_3",
+        "BIO_STRIKE_CRAFT_SKRAND",
+        "CYBER_FLAGELLA",
+        "DRONE_STRIKE_CRAFT",
+        "ENHANCED_FLAGELLA",
+        "FLAGELLA_MARSUPIUM",
+        "FLAGELLA_SWARMERS",
+        "HIVE_STRIKE_CRAFT_1",
+        "LEECHCRAFT",
+        "PSIONIC_SAPPERS",
+        "PSIONIC_STRIKE_CRAFT",
+        "SCOURGE_SWARMERS",
+        "SCOUT_HANGAR_1",
+        "STRIKE_CRAFT_CETANA",
+        "STRIKE_CRAFT_HANGAR_1",
+        "STRIKE_CRAFT_HANGAR_2",
+        "STRIKE_CRAFT_HANGAR_3",
+        "STRIKE_CRAFT_SKRAND",
+        "SUPER_FLAGELLA",
+        "SWARM_STRIKE_CRAFT_1",
+        "WARMASTER_FLAGELLA"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cooldown": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "2",
+        "2.3",
+        "4",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "count": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "2",
+        "20",
+        "3",
+        "5",
+        "8"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "damage": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 61,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "max",
+        "min"
+      ],
+      "keysByDefinition": [
+        [
+          "max",
+          "min"
+        ]
+      ]
+    },
+    "engagement_range": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "100",
+        "120",
+        "80"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "entity": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ai_01_fighter_entity",
+        "ancient_corvette_hull_entity",
+        "bomber_entity",
+        "gatebuilder_01_strikecraft_entity",
+        "hive_asteroid_05_entity",
+        "space_amoeba_small_entity",
+        "swarm_01_fighter_entity"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "evasion": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.4",
+        "0.5",
+        "0.6",
+        "0.65",
+        "0.8",
+        "0.85",
+        "0.9"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "health": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "10",
+        "100",
+        "12",
+        "13",
+        "2.5",
+        "20",
+        "3.5",
+        "40",
+        "5",
+        "50",
+        "6",
+        "6.5",
+        "7",
+        "80"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hidden": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hull_damage": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1.25"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_mutation_ancient_driller_beasts",
+        "GFX_mutation_flagella_marsupium_0",
+        "GFX_mutation_flagella_marsupium_1",
+        "GFX_mutation_flagella_marsupium_2",
+        "GFX_mutation_flagella_marsupium_3",
+        "GFX_mutation_flagella_marsupium_4",
+        "GFX_mutation_flagella_swarmers",
+        "GFX_mutation_leechcraft",
+        "GFX_mutation_psionic_sappers",
+        "GFX_mutation_scourge_swarmers",
+        "GFX_ship_part_amoeba_strike_craft_1",
+        "GFX_ship_part_archaeo_strike_craft",
+        "GFX_ship_part_psionic_bombers",
+        "GFX_ship_part_strike_craft_fighter_1",
+        "GFX_ship_part_strike_craft_fighter_2",
+        "GFX_ship_part_strike_craft_fighter_3",
+        "GFX_ship_part_strike_craft_scout_1",
+        "GFX_ship_part_strike_craft_skrand",
+        "GFX_ship_part_swarm_strike_craft_1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon_frame": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "launch_time": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.2",
+        "1",
+        "1.5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "point_defence_targets": {
+      "definitions": 44,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 44,
+      "bareBlocks": 44,
+      "values": [
+        "strike_craft"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "potential": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 16,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "from",
+        "is_arkship_ship"
+      ],
+      "keysByDefinition": [
+        [
+          "from",
+          "is_arkship_ship"
+        ],
+        [
+          "OR"
+        ]
+      ]
+    },
+    "power": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 23,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-30",
+        "-50",
+        "-60",
+        "-80",
+        "0"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prerequisites": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 48,
+      "bareBlocks": 48,
+      "values": [
+        "tech_amoeba_strike_craft_1",
+        "tech_archaeo_strike_crafts",
+        "tech_psionic_bombers",
+        "tech_strike_craft_1",
+        "tech_strike_craft_2",
+        "tech_strike_craft_3",
+        "tech_strike_craft_skrand",
+        "tech_swarm_strike_craft_1",
+        "tech_unique_mutation_space_amoeba"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "projectile_gfx": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "gamma_laser_s",
+        "psionic_strike_craft_laser",
+        "scout_laser_1",
+        "small_space_amoeba_weapon",
+        "space_amoeba_weapon",
+        "strike_craft_laser_1",
+        "strike_craft_laser_2",
+        "strike_craft_laser_3",
+        "techno_strike_craft_laser_3",
+        "toxic_god_strike_craft_weapon"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "range": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "10",
+        "20",
+        "40"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "regeneration_per_day": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.5",
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "resources": {
+      "definitions": 60,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 60,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost",
+        "inline_script",
+        "upkeep"
+      ],
+      "keysByDefinition": [
+        [
+          "category",
+          "cost"
+        ],
+        [
+          "category",
+          "cost",
+          "inline_script"
+        ],
+        [
+          "category",
+          "cost",
+          "upkeep"
+        ],
+        [
+          "category",
+          "inline_script"
+        ]
+      ]
+    },
+    "rotation_speed": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.2",
+        "0.3",
+        "0.5",
+        "0.75",
+        "0.8"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "shield": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "10",
+        "15",
+        "2.5",
+        "20",
+        "25",
+        "35",
+        "50"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "shield_damage": {
+      "definitions": 24,
+      "repeated": 0,
+      "scalars": 24,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.5",
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "shield_penetration": {
+      "definitions": 55,
+      "repeated": 0,
+      "scalars": 55,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_behavior": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "bombers_behavior",
+        "fighters_behavior"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_modifier": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "component_lifesteal_add"
+      ],
+      "keysByDefinition": [
+        [
+          "component_lifesteal_add"
+        ]
+      ]
+    },
+    "show_tech_unlock_if": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 14,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_uses_bio_ships"
+      ],
+      "keysByDefinition": [
+        [
+          "country_uses_bio_ships"
+        ]
+      ]
+    },
+    "size": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "LARGE",
+        "extra_large",
+        "large",
+        "medium",
+        "small"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "size_damage_factor": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "speed": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "300",
+        "400",
+        "500",
+        "600",
+        "750"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tags": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 61,
+      "bareBlocks": 61,
+      "values": [
+        "weapon_archaeotech",
+        "weapon_swarm",
+        "weapon_type_psionic",
+        "weapon_type_space_fauna",
+        "weapon_type_strike_craft"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tracking": {
+      "definitions": 60,
+      "repeated": 0,
+      "scalars": 60,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.3",
+        "0.35",
+        "0.5",
+        "0.7",
+        "0.8",
+        "0.9",
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "upgrades_to": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "BIO_STRIKE_CRAFT_HANGAR_1",
+        "BIO_STRIKE_CRAFT_HANGAR_2",
+        "BIO_STRIKE_CRAFT_HANGAR_3",
+        "BIO_STRIKE_CRAFT_SKRAND",
+        "STRIKE_CRAFT_HANGAR_1",
+        "STRIKE_CRAFT_HANGAR_2",
+        "STRIKE_CRAFT_HANGAR_3",
+        "STRIKE_CRAFT_SKRAND"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "weapon_type": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "instant",
+        "point_defence"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

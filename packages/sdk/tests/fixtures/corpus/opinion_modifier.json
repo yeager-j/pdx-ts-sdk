@@ -1,0 +1,558 @@
+{
+  "registry": "opinion_modifier",
+  "definitions": 493,
+  "files": 17,
+  "fingerprint": "347049b6bc1d8a1ed923084cf177d90ab1182786062137cc102c19f7966b7a22",
+  "fields": {
+    "accumulative": {
+      "definitions": 121,
+      "repeated": 0,
+      "scalars": 121,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "block_triggered": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "decay": {
+      "definitions": 295,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 294,
+      "bareBlocks": 0,
+      "values": [
+        "2"
+      ],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "max": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "100",
+        "200",
+        "50"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "min": {
+      "definitions": 69,
+      "repeated": 0,
+      "scalars": 69,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-100",
+        "-1000",
+        "-150",
+        "-1500",
+        "-200",
+        "-2000",
+        "-25",
+        "-250",
+        "-300",
+        "-3000",
+        "-400",
+        "-4000",
+        "-50",
+        "-500",
+        "-5000"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "monthly": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "months": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "12"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "opinion": {
+      "definitions": 493,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 489,
+      "bareBlocks": 0,
+      "values": [
+        "-400",
+        "100",
+        "200"
+      ],
+      "keys": [
+        "base",
+        "modifier",
+        "mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ],
+        [
+          "base",
+          "mult"
+        ],
+        [
+          "modifier"
+        ]
+      ]
+    },
+    "trigger": {
+      "definitions": 114,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 114,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "AND",
+        "FROM",
+        "NAND",
+        "NOR",
+        "NOT",
+        "OR",
+        "any_neighbor_country",
+        "exists",
+        "from",
+        "has_ai_personality",
+        "has_country_flag",
+        "has_ethic",
+        "has_origin",
+        "has_policy_flag",
+        "has_valid_civic",
+        "is_authoritarian",
+        "is_country_type",
+        "is_cyborg_empire",
+        "is_democratic_authority",
+        "is_dictatorial_authority",
+        "is_diplomatic",
+        "is_fallen_empire",
+        "is_fanatic_materialist",
+        "is_fanatic_xenophile",
+        "is_galactic_community_member",
+        "is_gestalt",
+        "is_hive_empire",
+        "is_homicidal",
+        "is_imperial_authority",
+        "is_in_breach_of_any",
+        "is_in_federation_with",
+        "is_individual_machine",
+        "is_machine_empire",
+        "is_materialist",
+        "is_mechanical_empire",
+        "is_militarist",
+        "is_natural_design_empire",
+        "is_nomadic",
+        "is_oligarchic_authority",
+        "is_organic_species",
+        "is_pacifist",
+        "is_robot_empire",
+        "is_same_species_class",
+        "is_spiritualist",
+        "is_wilderness_empire",
+        "is_xenophile",
+        "is_xenophobe",
+        "species"
+      ],
+      "keysByDefinition": [
+        [
+          "AND",
+          "FROM",
+          "NOR",
+          "is_country_type",
+          "is_cyborg_empire",
+          "is_individual_machine",
+          "is_mechanical_empire"
+        ],
+        [
+          "exists",
+          "is_xenophile"
+        ],
+        [
+          "from"
+        ],
+        [
+          "FROM"
+        ],
+        [
+          "FROM",
+          "has_ai_personality"
+        ],
+        [
+          "FROM",
+          "has_country_flag"
+        ],
+        [
+          "FROM",
+          "has_ethic"
+        ],
+        [
+          "FROM",
+          "has_ethic",
+          "is_country_type",
+          "is_cyborg_empire",
+          "is_individual_machine",
+          "is_mechanical_empire"
+        ],
+        [
+          "from",
+          "has_ethic",
+          "is_cyborg_empire",
+          "is_mechanical_empire"
+        ],
+        [
+          "FROM",
+          "has_origin"
+        ],
+        [
+          "FROM",
+          "has_origin",
+          "is_spiritualist"
+        ],
+        [
+          "FROM",
+          "has_valid_civic",
+          "is_country_type"
+        ],
+        [
+          "from",
+          "is_country_type"
+        ],
+        [
+          "FROM",
+          "is_country_type",
+          "is_democratic_authority"
+        ],
+        [
+          "FROM",
+          "is_country_type",
+          "is_dictatorial_authority"
+        ],
+        [
+          "FROM",
+          "is_country_type",
+          "is_gestalt"
+        ],
+        [
+          "FROM",
+          "is_country_type",
+          "is_imperial_authority"
+        ],
+        [
+          "FROM",
+          "is_country_type",
+          "is_individual_machine",
+          "is_spiritualist"
+        ],
+        [
+          "FROM",
+          "is_country_type",
+          "is_oligarchic_authority"
+        ],
+        [
+          "from",
+          "is_cyborg_empire",
+          "is_machine_empire",
+          "is_materialist",
+          "is_mechanical_empire",
+          "is_spiritualist"
+        ],
+        [
+          "FROM",
+          "is_fallen_empire",
+          "is_homicidal",
+          "is_xenophobe"
+        ],
+        [
+          "FROM",
+          "is_fanatic_materialist"
+        ],
+        [
+          "FROM",
+          "is_gestalt"
+        ],
+        [
+          "FROM",
+          "is_hive_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "FROM",
+          "is_in_federation_with"
+        ],
+        [
+          "FROM",
+          "is_individual_machine"
+        ],
+        [
+          "FROM",
+          "is_machine_empire"
+        ],
+        [
+          "FROM",
+          "is_machine_empire",
+          "is_organic_species"
+        ],
+        [
+          "FROM",
+          "is_natural_design_empire"
+        ],
+        [
+          "from",
+          "is_nomadic"
+        ],
+        [
+          "from",
+          "is_nomadic",
+          "is_xenophile"
+        ],
+        [
+          "from",
+          "is_nomadic",
+          "is_xenophobe"
+        ],
+        [
+          "FROM",
+          "is_robot_empire"
+        ],
+        [
+          "FROM",
+          "is_wilderness_empire"
+        ],
+        [
+          "FROM",
+          "NOR",
+          "has_ethic"
+        ],
+        [
+          "FROM",
+          "NOR",
+          "is_country_type",
+          "is_individual_machine"
+        ],
+        [
+          "FROM",
+          "NOR",
+          "is_country_type",
+          "is_individual_machine",
+          "is_mechanical_empire"
+        ],
+        [
+          "FROM",
+          "NOR",
+          "NOT",
+          "is_country_type"
+        ],
+        [
+          "FROM",
+          "NOR",
+          "OR"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "is_authoritarian",
+          "is_country_type",
+          "is_militarist",
+          "is_pacifist"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "is_country_type"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "is_country_type",
+          "is_diplomatic"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "is_country_type",
+          "is_militarist"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "is_country_type",
+          "is_pacifist"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "is_machine_empire"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "OR"
+        ],
+        [
+          "FROM",
+          "OR",
+          "has_ethic",
+          "is_cyborg_empire",
+          "is_mechanical_empire"
+        ],
+        [
+          "FROM",
+          "OR",
+          "has_policy_flag"
+        ],
+        [
+          "FROM",
+          "OR",
+          "is_country_type"
+        ],
+        [
+          "FROM",
+          "OR",
+          "is_cyborg_empire",
+          "is_fanatic_xenophile",
+          "is_mechanical_empire"
+        ],
+        [
+          "FROM",
+          "OR",
+          "is_galactic_community_member"
+        ],
+        [
+          "FROM",
+          "OR",
+          "is_galactic_community_member",
+          "is_in_breach_of_any"
+        ],
+        [
+          "FROM",
+          "OR",
+          "is_spiritualist"
+        ],
+        [
+          "FROM",
+          "species"
+        ],
+        [
+          "NAND",
+          "exists",
+          "from"
+        ],
+        [
+          "NAND",
+          "from"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "from"
+        ],
+        [
+          "NOR",
+          "from"
+        ],
+        [
+          "NOT",
+          "any_neighbor_country"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_valid_civic"
+        ],
+        [
+          "NOT",
+          "from"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists",
+          "is_same_species_class"
+        ]
+      ]
+    },
+    "unique": {
+      "definitions": 40,
+      "repeated": 0,
+      "scalars": 40,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

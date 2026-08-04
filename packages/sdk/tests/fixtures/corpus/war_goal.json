@@ -1,0 +1,823 @@
+{
+  "registry": "war_goal",
+  "definitions": 87,
+  "files": 8,
+  "fingerprint": "9cd96626f33f2827c86189aaf1147a9d77b0c39db19fa40c69a2a3773bdcbf25",
+  "fields": {
+    "ai_weight": {
+      "definitions": 85,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 85,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "casus_belli": {
+      "definitions": 87,
+      "repeated": 0,
+      "scalars": 87,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "cb_ae_entertainment",
+        "cb_ae_total_war",
+        "cb_allegiance",
+        "cb_blaze",
+        "cb_claim",
+        "cb_colossus",
+        "cb_containment",
+        "cb_counterattack",
+        "cb_despoliation",
+        "cb_end_threat_renegade_containment",
+        "cb_end_threat_revenge_for_eaten_star",
+        "cb_event",
+        "cb_existential_expulsion",
+        "cb_expel_corp",
+        "cb_expel_nomads",
+        "cb_fe_punishment",
+        "cb_fired_dyson_gun",
+        "cb_galactic_empire",
+        "cb_galatron",
+        "cb_hegemon",
+        "cb_hostile_takeover",
+        "cb_humiliation",
+        "cb_hunger",
+        "cb_ideology",
+        "cb_imposed_inclusion",
+        "cb_megacorp_subjugate",
+        "cb_nomad_raid",
+        "cb_nomad_raid_contract",
+        "cb_payback",
+        "cb_payback_punishment",
+        "cb_pirate_raid",
+        "cb_proxy_war",
+        "cb_psionics_containment",
+        "cb_purification",
+        "cb_renegade_containment",
+        "cb_revenge_for_eaten_star",
+        "cb_scion",
+        "cb_secession",
+        "cb_steal_galatron",
+        "cb_stop_colossus",
+        "cb_stop_dyson_gun",
+        "cb_subject",
+        "cb_subjugation",
+        "cb_sublimation",
+        "cb_trial_of_advancement"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cede_claims": {
+      "definitions": 17,
+      "repeated": 0,
+      "scalars": 17,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "occupied_only"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "defender_default": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "destroy_starbases": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "forbidden_peace_offers": {
+      "definitions": 42,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 42,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "demand_surrender",
+        "status_quo",
+        "surrender"
+      ],
+      "keysByDefinition": [
+        [
+          "demand_surrender"
+        ],
+        [
+          "demand_surrender",
+          "status_quo",
+          "surrender"
+        ],
+        [
+          "demand_surrender",
+          "surrender"
+        ],
+        [
+          "status_quo"
+        ],
+        [
+          "surrender"
+        ]
+      ]
+    },
+    "galactic_empire_joins_defender": {
+      "definitions": 31,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 31,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "from",
+        "imperial_authority"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "from",
+          "imperial_authority"
+        ]
+      ]
+    },
+    "hide": {
+      "definitions": 57,
+      "repeated": 0,
+      "scalars": 57,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no_cb"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_accept": {
+      "definitions": 51,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 51,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "FROM",
+        "add_permanent_councillor",
+        "add_relic",
+        "add_resource",
+        "add_to_galactic_council",
+        "custom_tooltip",
+        "else",
+        "else_if",
+        "every_country",
+        "every_subject",
+        "from",
+        "generate_ae_entertainment_reward",
+        "hidden_effect",
+        "if",
+        "inline_script",
+        "random_war",
+        "refresh_species_rights",
+        "remove_country_flag",
+        "save_event_target_as",
+        "tooltip"
+      ],
+      "keysByDefinition": [
+        [
+          "add_permanent_councillor",
+          "add_to_galactic_council",
+          "from"
+        ],
+        [
+          "add_relic",
+          "from",
+          "hidden_effect"
+        ],
+        [
+          "add_resource",
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "from",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "from",
+          "save_event_target_as"
+        ],
+        [
+          "custom_tooltip",
+          "generate_ae_entertainment_reward",
+          "random_war"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "else_if",
+          "if"
+        ],
+        [
+          "else",
+          "from",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "else",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "else",
+          "if",
+          "inline_script"
+        ],
+        [
+          "every_country"
+        ],
+        [
+          "every_subject"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "hidden_effect"
+        ],
+        [
+          "FROM",
+          "hidden_effect"
+        ],
+        [
+          "from",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "from",
+          "hidden_effect",
+          "if",
+          "inline_script"
+        ],
+        [
+          "hidden_effect"
+        ],
+        [
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "hidden_effect",
+          "tooltip"
+        ],
+        [
+          "refresh_species_rights",
+          "remove_country_flag"
+        ]
+      ]
+    },
+    "on_status_quo": {
+      "definitions": 25,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 25,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "else",
+        "from",
+        "hidden_effect",
+        "if",
+        "refresh_species_rights",
+        "remove_country_flag"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "custom_tooltip",
+          "from",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "else",
+          "from",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "else",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "from"
+        ],
+        [
+          "hidden_effect"
+        ],
+        [
+          "if"
+        ],
+        [
+          "refresh_species_rights",
+          "remove_country_flag"
+        ]
+      ]
+    },
+    "on_wargoal_set": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "every_system_within_border",
+        "from",
+        "if",
+        "leave_alliance",
+        "remove_country_flag"
+      ],
+      "keysByDefinition": [
+        [
+          "every_system_within_border"
+        ],
+        [
+          "every_system_within_border",
+          "from",
+          "if",
+          "leave_alliance",
+          "remove_country_flag"
+        ]
+      ]
+    },
+    "possible": {
+      "definitions": 83,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 83,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "always",
+        "custom_tooltip",
+        "from",
+        "has_ai_personality_behaviour",
+        "if",
+        "is_fanatic_spiritualist",
+        "is_fanatic_xenophile",
+        "is_neighbor_of",
+        "is_subject"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "always"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "is_subject"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "has_ai_personality_behaviour"
+        ],
+        [
+          "from",
+          "is_fanatic_spiritualist"
+        ],
+        [
+          "from",
+          "is_fanatic_xenophile"
+        ],
+        [
+          "has_ai_personality_behaviour",
+          "is_neighbor_of"
+        ],
+        [
+          "if"
+        ],
+        [
+          "NOT"
+        ]
+      ]
+    },
+    "potential": {
+      "definitions": 85,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 85,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NAND",
+        "NOR",
+        "NOT",
+        "OR",
+        "always",
+        "from",
+        "has_ascension_perk",
+        "has_country_flag",
+        "has_event_chain",
+        "has_origin",
+        "has_policy_flag",
+        "has_shroud_dlc",
+        "has_total_war_cb",
+        "has_valid_civic",
+        "is_country_type",
+        "is_galactic_community_member",
+        "is_galactic_emperor",
+        "is_homicidal",
+        "is_machine_empire",
+        "is_megacorp",
+        "is_nomadic",
+        "is_pacifist"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "always"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "has_event_chain",
+          "has_origin",
+          "has_total_war_cb",
+          "is_country_type",
+          "is_homicidal",
+          "is_megacorp",
+          "is_pacifist"
+        ],
+        [
+          "from",
+          "has_event_chain",
+          "has_origin",
+          "is_country_type",
+          "is_pacifist"
+        ],
+        [
+          "from",
+          "has_origin"
+        ],
+        [
+          "from",
+          "has_total_war_cb",
+          "is_galactic_emperor"
+        ],
+        [
+          "from",
+          "has_total_war_cb",
+          "is_nomadic"
+        ],
+        [
+          "from",
+          "is_country_type"
+        ],
+        [
+          "from",
+          "is_galactic_emperor"
+        ],
+        [
+          "has_ascension_perk",
+          "is_megacorp"
+        ],
+        [
+          "has_country_flag"
+        ],
+        [
+          "has_country_flag",
+          "has_shroud_dlc"
+        ],
+        [
+          "has_country_flag",
+          "is_country_type"
+        ],
+        [
+          "has_total_war_cb"
+        ],
+        [
+          "NAND"
+        ],
+        [
+          "NAND",
+          "from"
+        ],
+        [
+          "NAND",
+          "from",
+          "has_total_war_cb",
+          "is_nomadic"
+        ],
+        [
+          "NAND",
+          "has_total_war_cb"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "from",
+          "has_event_chain",
+          "has_origin",
+          "has_total_war_cb",
+          "is_country_type"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "from",
+          "has_policy_flag",
+          "has_total_war_cb"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "has_total_war_cb",
+          "has_valid_civic"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "has_total_war_cb",
+          "is_megacorp"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "OR",
+          "has_total_war_cb"
+        ],
+        [
+          "NOR",
+          "has_total_war_cb"
+        ],
+        [
+          "NOR",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "is_country_type",
+          "is_machine_empire"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "has_total_war_cb",
+          "is_galactic_community_member"
+        ]
+      ]
+    },
+    "proxy_wars_only": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "release_occupied_systems_on_status_quo": {
+      "definitions": 21,
+      "repeated": 0,
+      "scalars": 21,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "secret_fealties_join_attacker": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "set_defender_wargoal": {
+      "definitions": 53,
+      "repeated": 0,
+      "scalars": 53,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "wg_absorption",
+        "wg_ae_domination",
+        "wg_assert_hegemony",
+        "wg_assert_overlordship",
+        "wg_cleansing",
+        "wg_colossus",
+        "wg_declared_crisis",
+        "wg_defend_allegiance",
+        "wg_end_threat",
+        "wg_end_threat_assimilators",
+        "wg_end_threat_colossus",
+        "wg_end_threat_crisis",
+        "wg_end_threat_dyson_gun",
+        "wg_end_threat_psionics",
+        "wg_end_threat_renegade_containment",
+        "wg_end_threat_revenge_for_eaten_star",
+        "wg_end_threat_swarm",
+        "wg_end_threat_vs_ae_subjugation",
+        "wg_fired_dyson_gun",
+        "wg_force_ideology",
+        "wg_fotd_really_bad_contact",
+        "wg_galactic_civil_war_rebels",
+        "wg_heirs_call_of_the_satrapies",
+        "wg_humiliation",
+        "wg_humiliation_imperium",
+        "wg_imperial_rebuke",
+        "wg_machine_uprising",
+        "wg_megacorp_subjugate",
+        "wg_nomad_raid",
+        "wg_payback_msi",
+        "wg_renegade_containment",
+        "wg_revenge_for_eaten_star",
+        "wg_war_in_heaven",
+        "wg_wipe_them_out"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "should_ignore_federations": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_agreement_terms": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "surrender_acceptance": {
+      "definitions": 62,
+      "repeated": 0,
+      "scalars": 62,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-100",
+        "-1000",
+        "-25",
+        "-40",
+        "-50",
+        "-500",
+        "-75",
+        "0"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "threat_multiplier": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.25",
+        "0.67",
+        "0.75"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "total_war": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 38,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "war_exhaustion": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 18,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.25",
+        "0.5",
+        "0.75",
+        "2.5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

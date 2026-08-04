@@ -1,45 +1,54 @@
 /**
- * The emitted interfaces, measured against what the game actually writes.
+ * The emitted interfaces, measured against what the game actually writes —
+ * hermetically, against the committed fixture under `tests/fixtures/corpus/`.
  *
- * Runs only where the install exists, like `real-install.test.ts` — the
- * committed gates stay hermetic. What it adds over the curated allowlists is
- * evidence: a field the SDK emits that no real definition writes is a
- * misreading of the rules, and it fails here rather than surviving review.
+ * The install-gated version of this gate skipped entirely without a local
+ * game, so CI never ran it, and it reported field-presence coverage instead of
+ * asserting it. The realized consequence, twice: fields the rules declare and
+ * the game writes heavily (`building.triggered_planet_modifier`, 672 shipped
+ * occurrences) were silently unauthorable with every gate green. Now the
+ * install-facing half lives in `npm run corpus:extract` / `corpus:check`
+ * (see `corpus-fixture.ts`), and this file loads what those commit — no
+ * skip, no install, every assertion in plain `npm test` and CI.
  *
- * Coverage is reported, not asserted. A registry sitting at 40% is a backlog,
- * not a defect, and the number belongs in the report where it can be watched
- * rather than in a threshold nobody can justify.
+ * Three kinds of assertion:
  *
- * Shape conformance is the other half: every lowered type measured against the
- * values behind it. `form` and `scope` mismatches are asserted against
- * {@link ACKNOWLEDGED}, because they name a field the SDK emits and no author
- * can fill; `arity` and `literal` are reported, because a list the game never
- * repeats and an oddly spelled scalar are both legal.
+ * - **Presence floor.** A field the game writes in `PRESENCE_FLOOR`+
+ *   definitions must be authorable, unless `CONTENT_DECLINED_FIELDS` declines
+ *   it or `corpus-gaps.ts` acknowledges it. Near-floor fields are reported,
+ *   not failed, so ratcheting the floor down is an informed move.
+ * - **Shape conformance.** Every lowered type measured against the values
+ *   behind it. `form` and `scope` mismatches are asserted against
+ *   {@link ACKNOWLEDGED}, because they name a field the SDK emits and no
+ *   author can fill; `arity` and `literal` are reported, because a list the
+ *   game never repeats and an oddly spelled scalar are both legal.
+ * - **Fixture integrity.** Every manifested registry has a fixture with a
+ *   nonzero definition count, and no stale fixture lingers.
+ *
+ * The version canary is the loop's freshness signal: with no local install it
+ * is silent; with an install whose build differs from the fixture's it prints
+ * a banner and skips a visibly named test — a warning, never a failure,
+ * because CI without an install must pass and a maintainer with a patched
+ * game must notice.
  */
 
-import { readFileSync } from "node:fs";
-import { CONTENT_MANIFEST } from "@pdx-ts/codegen-cwt/content-manifest";
-import {
-  conformance,
-  readRegistryCorpus,
-  shapeConformance,
-  spliceMembersOf,
-  type RepeatedStructField,
-  type RuleScopes,
-} from "@pdx-ts/codegen-cwt/corpus";
-import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
-import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
-import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
-import { joinModifierScopes } from "@pdx-ts/codegen-cwt/emit/modifiers";
-import { canonicalScopeSet, declaredScopes } from "@pdx-ts/codegen-cwt/emit/shape";
-import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
-import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
-import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { REPEATED_STRUCT_DEFINITIONS } from "@pdx-ts/codegen-cwt/overlay";
+import { conformance, shapeConformance, type RuleScopes } from "@pdx-ts/codegen-cwt/corpus";
 import { describe, expect, it } from "vitest";
 
-import { locateInstall } from "../../src/stellaris/locate.ts";
+import { InstallNotFoundError } from "../../src/errors.ts";
+import {
+  corpusOfFixture,
+  FIXTURE_PATH,
+  fixtureStems,
+  loadMeta,
+  loadRegistryFixture,
+  MEASUREMENTS,
+  NEAR_FLOOR,
+  PRESENCE_FLOOR,
+  ruleScopesOf,
+  versionCanary,
+} from "./corpus-fixture.ts";
+import { ACKNOWLEDGED_GAPS } from "./corpus-gaps.ts";
 
 /**
  * Shape mismatches that are real, understood, and not this gate's to fix, each
@@ -100,168 +109,34 @@ const ACKNOWLEDGED = new Map<string, string>([
   ],
 ]);
 
-let installPath: string | undefined;
-try {
-  installPath = locateInstall();
-} catch {
-  installPath = undefined;
-}
+const REMEDY = "run npm run corpus:extract and review the fixture diff";
 
-const rules = loadRules("vendor/cwtools-stellaris-config/config");
-const emitter = new Emitter(rules);
-const scopes = scopeIndex(rules);
-
-/**
- * Every modifier name the SDK's generated surface knows, from the same join
- * `emitModifiers` runs. A registry that splices `alias_name[modifier]` unkeyed
- * into its body admits all of them as top-level keys, so coverage has to
- * resolve the category rather than read a field list.
- */
-const MODIFIER_NAMES = (() => {
-  const join = joinModifierScopes(
-    rules,
-    parseModifierDocs(
-      readFileSync("vendor/cwtools-stellaris-config/script-docs/v4.4.1/modifiers.log", "utf8")
-    ),
-    (token) => emitter.canonicalScope(token)
-  );
-  return new Set([...join.universal, ...[...join.groups.values()].flat()]);
-})();
-
-/**
- * Which scopes each trigger and effect is legal in, resolved exactly the way
- * the trigger and effect emitters resolve it — the rules' own `## scopes`, with
- * the game's dump as fallback. A key neither source knows resolves to `null`,
- * which the shape gate skips: vanilla's ~1449 scripted triggers and every scope
- * link land there, and they are the vanilla-surface backlog rather than
- * evidence about the field holding them.
- */
-const RULE_SCOPES = (() => {
-  const dump = parseTriggerDocs(
-    readFileSync("vendor/cwtools-stellaris-config/script-docs/v4.4.1/triggers.log", "utf8"),
-    readFileSync("vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log", "utf8")
-  );
-  const resolve = (
-    table: typeof rules.triggers,
-    docs: typeof dump.triggers
-  ): Map<string, RuleScopes> => {
-    const out = new Map<string, RuleScopes>();
-    for (const [key, declarations] of table) {
-      const supported = declaredScopes(declarations, docs.get(key));
-      const set = supported.length === 0 ? null : canonicalScopeSet(supported, scopes);
-      if (set !== null) {
-        out.set(key.toLowerCase(), set);
-      }
-    }
-    return out;
-  };
-  return {
-    trigger: resolve(rules.triggers, dump.triggers),
-    effect: resolve(rules.effects, dump.effects),
-  };
-})();
-
-function splicedKeysOf(categories: readonly string[]): ReadonlySet<string> {
-  return categories.includes("modifier") ? MODIFIER_NAMES : new Set<string>();
-}
-
-/** This registry's repeated-struct fields, straight from the same overlay the emitter reads. */
-function repeatedStructFieldsOf(registry: string): readonly RepeatedStructField[] {
-  return [...REPEATED_STRUCT_DEFINITIONS]
-    .filter(([path]) => path.startsWith(`${registry}.`))
-    .map(([path, config]) => ({
-      field: path.slice(registry.length + 1),
-      keying: config.keying ?? "siblings",
-      identityKey: config.identityKey,
-    }));
-}
-
-/**
- * One emission per structural alias category, memoized.
- *
- * Memoized because a category is reached once per registry that splices it and
- * once per recursion through the splice tree, and re-emitting would re-enter
- * `emitter.usedRefs` each time. Both the corpus descent and the emitted-field
- * list come from this, so the two cannot disagree about what was lowered.
- */
-const spliceEmissions = new Map<string, ReturnType<typeof emitAliasSplice>>();
-function spliceEmission(category: string): ReturnType<typeof emitAliasSplice> {
-  if (!spliceEmissions.has(category)) {
-    emitter.beginFile();
-    spliceEmissions.set(category, emitAliasSplice(emitter, category));
-    emitter.endFile();
+const meta = loadMeta();
+const reports = MEASUREMENTS.flatMap((measurement) => {
+  const fixture = loadRegistryFixture(measurement.registry);
+  if (fixture === null) {
+    return [];
   }
-  return spliceEmissions.get(category)!;
-}
-
-/** Every field lowered into the categories a registry splices, `planet.class` and friends. */
-function spliceFieldsOf(categories: readonly string[]): EmittedField[] {
-  const seen = new Set<string>();
-  const collect = (list: readonly string[]): EmittedField[] =>
-    list.flatMap((category) => {
-      if (seen.has(category)) {
-        return [];
-      }
-      seen.add(category);
-      const emission = spliceEmission(category);
-      return emission === null
-        ? []
-        : [...emission.emittedFields, ...collect(emission.spliceCategories)];
-    });
-  return collect(categories);
-}
-
-const reports = (installPath === undefined ? [] : CONTENT_MANIFEST).map((manifest) => {
-  const entry = manifest as { type: string; keyword?: string; as?: string };
-  const registry = entry.as ?? entry.type;
-  const type = rules.contentTypes.get(entry.type);
-  const registryPath = type?.path?.replace(/^game\//, "") ?? "";
-  const body = rules.bodies.get(entry.type);
-  emitter.beginFile();
-  const emission =
-    type === undefined || body === undefined
-      ? null
-      : emitContentType(emitter, type, body, registry);
-  emitter.endFile();
-  // Emitted before the corpus is read, because which blocks the reader must
-  // descend into is the emitter's answer: a registry splicing
-  // `planet_initializer` writes `planet = { ... }` trees whose contents are
-  // otherwise invisible behind one top-level key.
-  const corpus = readRegistryCorpus(
-    installPath!,
-    registryPath,
-    entry.keyword ?? null,
-    type?.nameField ?? null,
-    repeatedStructFieldsOf(registry),
-    spliceMembersOf(emission?.inlineSplices ?? [], (category) => spliceEmission(category)),
-    type?.keyFilter?.negated === true ? type.keyFilter.key : null
-  );
-  // Nested paths come back prefixed with the registry (`situation_type.stages.icon`,
-  // matching the dotted paths CONTENT_DECLINED_FIELDS/CONTENT_FIELD_OVERRIDES use)
-  // — strip that prefix so they line up with the corpus's own unprefixed dotted
-  // paths (`stages.icon`).
-  const emitted = [
-    ...(emission?.emittedFields ?? []),
-    ...spliceFieldsOf(emission?.inlineSplices ?? []),
-    ...(emission?.nestedEmittedFields ?? []).map((field) => ({
-      ...field,
-      field: field.field.slice(registry.length + 1),
-    })),
+  const corpus = corpusOfFixture(fixture);
+  return [
+    {
+      measurement,
+      ...conformance(
+        measurement.registry,
+        corpus,
+        measurement.emitted.map((field) => field.field),
+        measurement.splicedKeys
+      ),
+      shape: shapeConformance(corpus, measurement.emitted, ruleScopesOf),
+    },
   ];
-  return {
-    ...conformance(
-      registry,
-      corpus,
-      emitted.map((field) => field.field),
-      splicedKeysOf(emission?.inlineSplices ?? [])
-    ),
-    shape: shapeConformance(
-      corpus,
-      emitted,
-      (clause, key) => RULE_SCOPES[clause].get(key.toLowerCase()) ?? null
-    ),
-  };
 });
+const byRegistry = new Map(reports.map((report) => [report.registry, report]));
+
+/** Observed fields nothing can author: unexpressed minus the declined rows. */
+function unauthorable(report: (typeof reports)[number]) {
+  return report.unexpressed.filter((entry) => !report.measurement.declinedPaths.has(entry.field));
+}
 
 /** Every shape mismatch, as `registry.field kind` keys matching {@link ACKNOWLEDGED}. */
 function mismatchesOfKind(kinds: readonly string[]): { key: string; detail: string }[] {
@@ -275,7 +150,37 @@ function mismatchesOfKind(kinds: readonly string[]): { key: string; detail: stri
   );
 }
 
-describe.skipIf(installPath === undefined)("corpus conformance", () => {
+describe("corpus conformance", () => {
+  it("has a committed fixture for every manifested registry", () => {
+    // The hermetic gate is only as honest as its evidence: a manifested
+    // registry with no fixture would silently measure nothing, which is the
+    // exact failure mode this rewrite exists to close.
+    const missing = MEASUREMENTS.filter(
+      (measurement) => loadRegistryFixture(measurement.registry) === null
+    ).map((measurement) => `${FIXTURE_PATH}/${measurement.registry}.json is missing — ${REMEDY}`);
+    if (meta === null) {
+      missing.push(`${FIXTURE_PATH}/meta.json is missing — ${REMEDY}`);
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("keeps no fixture for a registry no longer manifested", () => {
+    // The reverse direction: a stale fixture is dead evidence that would read
+    // as coverage. The extractor prunes these; a leftover means it never ran.
+    const manifested = new Set(MEASUREMENTS.map((measurement) => measurement.registry));
+    const stale = fixtureStems()
+      .filter((stem) => !manifested.has(stem))
+      .map((stem) => `${FIXTURE_PATH}/${stem}.json names no manifested registry — ${REMEDY}`);
+    expect(stale).toEqual([]);
+  });
+
+  it("records real definitions for every manifested registry", () => {
+    // A registry whose corpus records zero definitions means the path or the
+    // keyword is wrong, and every other number here would be vacuous.
+    const empty = reports.filter((report) => report.corpus.definitions === 0);
+    expect(empty.map((report) => report.registry)).toEqual([]);
+  });
+
   it("reports emitted fields the corpus never writes", () => {
     // NOT a failure. CWT is the authority on what is legal; the corpus only
     // shows what vanilla happens to write, so a field can be perfectly valid
@@ -297,14 +202,7 @@ describe.skipIf(installPath === undefined)("corpus conformance", () => {
     expect(reports.length).toBeGreaterThan(0);
   });
 
-  it("finds real definitions for every manifested registry", () => {
-    // A registry whose directory parses to zero definitions means the path or
-    // the keyword is wrong, and every other number here would be vacuous.
-    const empty = reports.filter((report) => report.corpus.definitions === 0);
-    expect(empty.map((report) => report.registry)).toEqual([]);
-  });
-
-  it("reports field coverage against the real corpus", () => {
+  it("reports field coverage against the corpus fixture", () => {
     const rows = reports
       .filter((report) => report.corpus.definitions > 0)
       .sort((a, b) => a.coverage - b.coverage)
@@ -323,6 +221,67 @@ describe.skipIf(installPath === undefined)("corpus conformance", () => {
       "\nregistry                        cover  defs    top unexpressed\n" + rows.join("\n")
     );
     expect(rows.length).toBeGreaterThan(0);
+  });
+
+  it("keeps every heavily written field authorable", () => {
+    // The presence floor. Below it the corpus stays a lower bound that proves
+    // nothing about absence; at or above it, absence is a hole in the SDK's
+    // "a mod author does not run out of API" promise, and it fails by name
+    // instead of sitting in a report nobody is obliged to read.
+    const acknowledged = new Set(ACKNOWLEDGED_GAPS.map((gap) => `${gap.registry}.${gap.field}`));
+    const failures = reports.flatMap((report) =>
+      unauthorable(report)
+        .filter(
+          (entry) =>
+            entry.count >= PRESENCE_FLOOR && !acknowledged.has(`${report.registry}.${entry.field}`)
+        )
+        .map(
+          (entry) =>
+            `${report.registry}.${entry.field}: ${entry.count} shipped definitions write it and ` +
+            `no author can — fix the lowering, or acknowledge it with a reason in corpus-gaps.ts`
+        )
+    );
+    expect(failures).toEqual([]);
+  });
+
+  it("keeps every acknowledged gap live", () => {
+    // The other direction: a row whose field became authorable, was declined,
+    // or fell below the floor is stale, and leaving it would quietly
+    // re-acknowledge the gap if it came back.
+    const stale = ACKNOWLEDGED_GAPS.flatMap((gap) => {
+      const name = `${gap.registry}.${gap.field}`;
+      const report = byRegistry.get(gap.registry);
+      if (report === undefined) {
+        return [`${name}: names no manifested registry — remove the row`];
+      }
+      const entry = unauthorable(report).find((one) => one.field === gap.field);
+      if (entry === undefined) {
+        return [`${name}: now authorable or declined — remove the row`];
+      }
+      if (entry.count < PRESENCE_FLOOR) {
+        return [`${name}: ${entry.count} occurrences is below the floor — remove the row`];
+      }
+      return [];
+    });
+    expect(stale).toEqual([]);
+  });
+
+  it("reports near-floor unauthorable fields", () => {
+    // Printed, not failed: what ratcheting PRESENCE_FLOOR down would add, so
+    // the next lowering (or the next floor) is chosen with the numbers in view.
+    const rows = reports.flatMap((report) =>
+      unauthorable(report)
+        .filter((entry) => entry.count >= NEAR_FLOOR && entry.count < PRESENCE_FLOOR)
+        .map((entry) => `  ${report.registry}.${entry.field} (${entry.count})`)
+    );
+    if (rows.length > 0) {
+      console.log(
+        `\nunauthorable below the presence floor (${NEAR_FLOOR}-${PRESENCE_FLOOR - 1}, ` +
+          "reported for future ratcheting):\n" +
+          rows.join("\n")
+      );
+    }
+    expect(reports.length).toBeGreaterThan(0);
   });
 
   it("emits no field the corpus proves unfillable", () => {
@@ -359,13 +318,115 @@ describe.skipIf(installPath === undefined)("corpus conformance", () => {
 });
 
 /**
+ * The freshness canary, computed once at collection so the mismatch can reach
+ * both the banner and the skipped test's name. A verdict, never a failure:
+ * see {@link versionCanary}.
+ */
+const canary = meta === null ? null : versionCanary(meta.gameVersion);
+if (canary?.kind === "mismatch") {
+  // Written to the stream rather than through console.error: the runner
+  // intercepts console output and its non-TTY reporter drops it, and a
+  // freshness warning a reporter can swallow is no warning. The skipped test
+  // below carries the same message into the run summary.
+  process.stderr.write(
+    "\n============================================================================\n" +
+      `STALE CORPUS FIXTURE: installed Stellaris is ${canary.installed}, but the committed\n` +
+      `fixture was extracted from ${canary.fixture}. The hermetic corpus gate is measuring\n` +
+      `against the old build — ${REMEDY}.\n` +
+      "============================================================================\n"
+  );
+}
+
+describe("corpus fixture version canary", () => {
+  it.skipIf(canary?.kind === "mismatch")(
+    canary?.kind === "mismatch"
+      ? `STALE FIXTURE: installed ${canary.installed} vs fixture ${canary.fixture} — ${REMEDY}`
+      : "committed fixture matches any locally installed game",
+    () => {
+      // Reached only for "no meta" (its own test above fails), "no-install"
+      // (nothing to compare, hermetic by design) and "match".
+      expect(canary?.kind === "mismatch").toBe(false);
+    }
+  );
+
+  // The three verdicts, each through the injected seams — the only way all of
+  // them are testable on one machine, and the proof CI's install-less branch
+  // takes the silent path rather than merely happening not to throw here.
+  const missing = (): string => {
+    throw new InstallNotFoundError("no install anywhere");
+  };
+
+  it("stays silent when no install exists", () => {
+    expect(versionCanary("4.4.6", missing)).toEqual({ kind: "no-install" });
+  });
+
+  it("treats a bad STELLARIS_PATH's loud error as no install", () => {
+    // `locateInstall` throws InstallNotFoundError for an explicit path that
+    // fails the sentinel too; for the canary that still means "no usable
+    // install", not a broken test run.
+    const explicit = (): string => {
+      throw new InstallNotFoundError("STELLARIS_PATH=/nowhere is not a Stellaris install");
+    };
+    expect(versionCanary("4.4.6", explicit)).toEqual({ kind: "no-install" });
+  });
+
+  it("matches when the installed version equals the fixture's", () => {
+    expect(
+      versionCanary(
+        "4.4.6",
+        () => "/game",
+        () => "4.4.6"
+      )
+    ).toEqual({
+      kind: "match",
+      version: "4.4.6",
+    });
+  });
+
+  it("flags a mismatched install, including one stating no version", () => {
+    expect(
+      versionCanary(
+        "4.4.6",
+        () => "/game",
+        () => "4.5.0"
+      )
+    ).toEqual({
+      kind: "mismatch",
+      installed: "4.5.0",
+      fixture: "4.4.6",
+    });
+    expect(
+      versionCanary(
+        "4.4.6",
+        () => "/game",
+        () => undefined
+      )
+    ).toEqual({
+      kind: "mismatch",
+      installed: "unknown (launcher-settings.json states no version)",
+      fixture: "4.4.6",
+    });
+  });
+
+  it("rethrows anything that is not an install-not-found", () => {
+    // Any other error is a real defect in the canary's own plumbing, and
+    // swallowing it would turn the canary into a silence generator.
+    const broken = (): string => {
+      throw new Error("EACCES");
+    };
+    expect(() => versionCanary("4.4.6", broken)).toThrow("EACCES");
+  });
+});
+
+/**
  * The gate's own logic, against a corpus built here rather than parsed.
  *
- * Hermetic on purpose, and outside the install-gated block above: a check that
- * has only ever been green proves nothing, and the real corpus cannot be made
- * to contain the case this has to detect. Every shipped decision picks one
- * scope, so only a synthetic definition shows that the parameter check is
- * per definition rather than per key.
+ * Hermetic on purpose, like everything else in this file now — but this one
+ * would stay even if the fixture vanished: a check that has only ever been
+ * green proves nothing, and the real corpus cannot be made to contain the case
+ * this has to detect. Every shipped decision picks one scope, so only a
+ * synthetic definition shows that the parameter check is per definition rather
+ * than per key.
  */
 describe("shape conformance, per-definition scope", () => {
   const RULES = new Map<string, RuleScopes>([

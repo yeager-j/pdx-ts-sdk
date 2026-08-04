@@ -1,0 +1,1040 @@
+{
+  "registry": "decision",
+  "definitions": 111,
+  "files": 22,
+  "fingerprint": "f003bd8bb46f721db1916a6aa5a09c3108d53d1f6dbefc8adb65bb5e478c0723",
+  "fields": {
+    "abort_effect": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "create_message",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "create_message",
+          "owner"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
+    "abort_trigger": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 6,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "exists",
+        "owner",
+        "ruler"
+      ],
+      "keysByDefinition": [
+        [
+          "exists",
+          "ruler"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
+    "ai_weight": {
+      "definitions": 103,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 103,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "allow": {
+      "definitions": 58,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 58,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "custom_tooltip",
+        "else",
+        "free_building_slots",
+        "free_district_slots",
+        "free_housing",
+        "from",
+        "has_building",
+        "has_deposit",
+        "has_modifier",
+        "has_storm_resistant_production_building",
+        "hidden_trigger",
+        "if",
+        "is_capital",
+        "num_assigned_jobs",
+        "num_districts",
+        "num_uncleared_blockers",
+        "owner",
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "else",
+          "if"
+        ],
+        [
+          "custom_tooltip",
+          "free_building_slots"
+        ],
+        [
+          "custom_tooltip",
+          "from"
+        ],
+        [
+          "custom_tooltip",
+          "has_deposit"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_trigger"
+        ],
+        [
+          "free_district_slots"
+        ],
+        [
+          "has_building"
+        ],
+        [
+          "has_modifier",
+          "has_storm_resistant_production_building"
+        ],
+        [
+          "if",
+          "num_uncleared_blockers"
+        ],
+        [
+          "is_capital"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "custom_tooltip"
+        ],
+        [
+          "NOT",
+          "custom_tooltip",
+          "free_housing"
+        ],
+        [
+          "NOT",
+          "has_storm_resistant_production_building"
+        ],
+        [
+          "NOT",
+          "num_assigned_jobs"
+        ],
+        [
+          "num_districts"
+        ],
+        [
+          "num_uncleared_blockers",
+          "owner"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner?"
+        ]
+      ]
+    },
+    "custom_tooltip": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "check_variable",
+        "count_deposits",
+        "owner",
+        "success_text"
+      ],
+      "keysByDefinition": [
+        [
+          "check_variable",
+          "success_text"
+        ],
+        [
+          "count_deposits",
+          "success_text"
+        ],
+        [
+          "NOT",
+          "success_text"
+        ],
+        [
+          "owner",
+          "success_text"
+        ]
+      ]
+    },
+    "effect": {
+      "definitions": 111,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 111,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "IF",
+        "add_building",
+        "add_deposit",
+        "add_modifier",
+        "add_planet_devastation",
+        "change_pc",
+        "change_planet_size",
+        "custom_tooltip",
+        "destroy_colony",
+        "else",
+        "else_if",
+        "from",
+        "hidden_effect",
+        "if",
+        "owner",
+        "random_playable_country",
+        "remove_carrier_flag",
+        "remove_deposit",
+        "remove_fauna_yuht",
+        "remove_modifier",
+        "set_carrier_flag",
+        "set_colony_type",
+        "set_timed_carrier_flag",
+        "switch"
+      ],
+      "keysByDefinition": [
+        [
+          "add_building",
+          "custom_tooltip",
+          "hidden_effect",
+          "set_colony_type"
+        ],
+        [
+          "add_deposit"
+        ],
+        [
+          "add_deposit",
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "add_deposit",
+          "hidden_effect"
+        ],
+        [
+          "add_deposit",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "add_deposit",
+          "hidden_effect",
+          "remove_deposit"
+        ],
+        [
+          "add_deposit",
+          "remove_carrier_flag"
+        ],
+        [
+          "add_deposit",
+          "remove_modifier"
+        ],
+        [
+          "add_modifier"
+        ],
+        [
+          "add_modifier",
+          "add_planet_devastation",
+          "remove_fauna_yuht"
+        ],
+        [
+          "add_modifier",
+          "custom_tooltip"
+        ],
+        [
+          "add_modifier",
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "add_modifier",
+          "custom_tooltip",
+          "set_carrier_flag"
+        ],
+        [
+          "add_modifier",
+          "hidden_effect"
+        ],
+        [
+          "add_modifier",
+          "hidden_effect",
+          "owner"
+        ],
+        [
+          "add_modifier",
+          "hidden_effect",
+          "remove_carrier_flag"
+        ],
+        [
+          "add_modifier",
+          "remove_carrier_flag",
+          "remove_modifier"
+        ],
+        [
+          "add_modifier",
+          "remove_modifier"
+        ],
+        [
+          "change_pc",
+          "hidden_effect"
+        ],
+        [
+          "change_planet_size"
+        ],
+        [
+          "change_planet_size",
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "from",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "owner",
+          "set_timed_carrier_flag"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "remove_carrier_flag"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "set_carrier_flag"
+        ],
+        [
+          "destroy_colony"
+        ],
+        [
+          "else_if",
+          "if"
+        ],
+        [
+          "else",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "hidden_effect"
+        ],
+        [
+          "hidden_effect",
+          "owner"
+        ],
+        [
+          "hidden_effect",
+          "owner",
+          "remove_modifier"
+        ],
+        [
+          "hidden_effect",
+          "remove_modifier"
+        ],
+        [
+          "IF"
+        ],
+        [
+          "IF",
+          "add_modifier"
+        ],
+        [
+          "if",
+          "random_playable_country",
+          "switch"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "remove_modifier"
+        ]
+      ]
+    },
+    "enactment_time": {
+      "definitions": 52,
+      "repeated": 0,
+      "scalars": 52,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "15",
+        "180",
+        "1800",
+        "260",
+        "2700",
+        "30",
+        "360",
+        "3600",
+        "60",
+        "720",
+        "800",
+        "900"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 98,
+      "repeated": 0,
+      "scalars": 98,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "decision_add_aura_blocker",
+        "decision_animal_wildlife",
+        "decision_arcology_project",
+        "decision_arctic_planet",
+        "decision_arid_planet",
+        "decision_art_monument",
+        "decision_banish",
+        "decision_burning_settlement",
+        "decision_colony_settlement",
+        "decision_crime",
+        "decision_cultivated_worldscaping",
+        "decision_deal",
+        "decision_deep_sleep",
+        "decision_deploy_temple_of_whispers",
+        "decision_display_microplanet_husk",
+        "decision_distribute_living_metal",
+        "decision_divine_algorithm",
+        "decision_dreamscaping",
+        "decision_engineering_research",
+        "decision_expel_population",
+        "decision_exploding_planet",
+        "decision_federation_fleet",
+        "decision_fractal_seed",
+        "decision_glitchy_matrix",
+        "decision_incubate_wind_creatures",
+        "decision_luxuries",
+        "decision_molten_planet",
+        "decision_museum",
+        "decision_penal_colony",
+        "decision_planet_beam",
+        "decision_politics",
+        "decision_prismatic_ice_exhibit",
+        "decision_psi_inoculate_pops",
+        "decision_reactor",
+        "decision_resort_colony",
+        "decision_resources",
+        "decision_rockworm_hive_dig",
+        "decision_satellite_in_orbit",
+        "decision_ship_in_orbit",
+        "decision_slave_colony",
+        "decision_smugglers_in_bar",
+        "decision_strip_mining",
+        "decision_surreal_visions",
+        "decision_thought_police",
+        "decision_tidal_lock_planet",
+        "decision_toxify_world",
+        "decision_victorious_army",
+        "descision_progenitor_empty",
+        "wilderness_planet_expand"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "important": {
+      "definitions": 27,
+      "repeated": 0,
+      "scalars": 27,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_queued": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 13,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "change_variable",
+        "clear_variable",
+        "divide_variable",
+        "else_if",
+        "export_modifier_to_variable",
+        "if",
+        "open_shroud_rift_effect",
+        "owner",
+        "set_carrier_flag",
+        "set_variable"
+      ],
+      "keysByDefinition": [
+        [
+          "change_variable",
+          "clear_variable",
+          "divide_variable",
+          "export_modifier_to_variable",
+          "owner",
+          "set_variable"
+        ],
+        [
+          "else_if",
+          "if"
+        ],
+        [
+          "open_shroud_rift_effect"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "set_carrier_flag"
+        ]
+      ]
+    },
+    "on_unqueued": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 12,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "close_shroud_rift_effect",
+        "owner",
+        "remove_carrier_flag",
+        "unqueue_biomass_effect"
+      ],
+      "keysByDefinition": [
+        [
+          "close_shroud_rift_effect"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "remove_carrier_flag"
+        ],
+        [
+          "unqueue_biomass_effect"
+        ]
+      ]
+    },
+    "owned_planets_only": {
+      "definitions": 106,
+      "repeated": 0,
+      "scalars": 106,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "potential": {
+      "definitions": 111,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 111,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "always",
+        "any_deposit",
+        "can_have_habitable_deposits",
+        "count_deposits",
+        "exists",
+        "free_district_slots",
+        "from",
+        "habitable_planet",
+        "habitable_planet_not_urban",
+        "has_building",
+        "has_carrier_flag",
+        "has_deposit",
+        "has_modifier",
+        "has_seeded_modifier",
+        "has_shroud_dlc",
+        "has_storm_resistant_production_building",
+        "if",
+        "is_active_resolution",
+        "is_artificial",
+        "is_astral_scar",
+        "is_capital",
+        "is_colonizable",
+        "is_moon",
+        "is_planet_class",
+        "is_ringworld",
+        "is_star",
+        "is_starting_planet_type",
+        "is_terraforming",
+        "leader",
+        "original_owner",
+        "owner",
+        "owner?",
+        "planet_crime",
+        "solar_system",
+        "space_owner",
+        "uses_district_set"
+      ],
+      "keysByDefinition": [
+        [
+          "count_deposits",
+          "exists",
+          "has_shroud_dlc",
+          "if",
+          "owner"
+        ],
+        [
+          "exists",
+          "free_district_slots",
+          "has_deposit",
+          "owner"
+        ],
+        [
+          "exists",
+          "from",
+          "has_carrier_flag"
+        ],
+        [
+          "exists",
+          "from",
+          "is_artificial",
+          "is_colonizable",
+          "space_owner"
+        ],
+        [
+          "exists",
+          "from",
+          "space_owner"
+        ],
+        [
+          "exists",
+          "has_building"
+        ],
+        [
+          "exists",
+          "has_building",
+          "has_carrier_flag"
+        ],
+        [
+          "exists",
+          "has_carrier_flag",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_carrier_flag",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_deposit",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_modifier",
+          "owner"
+        ],
+        [
+          "exists",
+          "is_artificial",
+          "is_planet_class",
+          "owner"
+        ],
+        [
+          "exists",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "exists",
+          "is_planet_class"
+        ],
+        [
+          "exists",
+          "is_planet_class",
+          "is_terraforming",
+          "owner"
+        ],
+        [
+          "exists",
+          "is_planet_class",
+          "owner"
+        ],
+        [
+          "exists",
+          "is_starting_planet_type",
+          "space_owner"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "from",
+          "habitable_planet",
+          "is_capital"
+        ],
+        [
+          "from",
+          "is_planet_class"
+        ],
+        [
+          "has_carrier_flag"
+        ],
+        [
+          "has_deposit",
+          "original_owner"
+        ],
+        [
+          "has_deposit",
+          "owner"
+        ],
+        [
+          "has_modifier"
+        ],
+        [
+          "has_modifier",
+          "has_storm_resistant_production_building"
+        ],
+        [
+          "has_seeded_modifier"
+        ],
+        [
+          "NOR",
+          "always",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "habitable_planet_not_urban",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "is_artificial",
+          "is_capital",
+          "owner"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "exists",
+          "from",
+          "is_artificial",
+          "is_astral_scar",
+          "is_ringworld",
+          "is_star",
+          "space_owner"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR",
+          "owner"
+        ],
+        [
+          "NOR",
+          "owner",
+          "planet_crime"
+        ],
+        [
+          "NOR",
+          "owner",
+          "uses_district_set"
+        ],
+        [
+          "NOT",
+          "any_deposit",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_have_habitable_deposits",
+          "exists",
+          "is_capital",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_have_habitable_deposits",
+          "is_capital",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_have_habitable_deposits",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_building"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_carrier_flag",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_modifier",
+          "is_moon",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_modifier",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "is_planet_class",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "leader"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT",
+          "has_carrier_flag"
+        ],
+        [
+          "NOT",
+          "has_storm_resistant_production_building"
+        ],
+        [
+          "NOT",
+          "is_active_resolution",
+          "owner"
+        ],
+        [
+          "NOT",
+          "is_artificial",
+          "is_capital",
+          "owner"
+        ],
+        [
+          "NOT",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOT",
+          "OR",
+          "exists",
+          "from"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "OR",
+          "from"
+        ],
+        [
+          "OR",
+          "from",
+          "owner"
+        ],
+        [
+          "OR",
+          "solar_system"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner?"
+        ]
+      ]
+    },
+    "prerequisites": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareBlocks": 4,
+      "values": [
+        "tech_penal_colonies",
+        "tech_resort_colonies",
+        "tech_slave_colonies",
+        "tech_starfire_cannon"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "resources": {
+      "definitions": 102,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 102,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "category"
+        ],
+        [
+          "category",
+          "cost"
+        ]
+      ]
+    },
+    "sound": {
+      "definitions": 66,
+      "repeated": 0,
+      "scalars": 66,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "event_activating_unknown_technology",
+        "event_administrative_work",
+        "event_dig_site",
+        "event_energy_field",
+        "event_georadiation_terraforming",
+        "event_laboratory_sound",
+        "event_space_crystals",
+        "event_structural_collapse"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

@@ -1,0 +1,257 @@
+{
+  "registry": "graphical_culture",
+  "definitions": 52,
+  "files": 2,
+  "fingerprint": "9eed50e64dfe449902d3d02548a1e6189f570430b6d9df964c683fcdafa767fe",
+  "fields": {
+    "fallback": {
+      "definitions": 51,
+      "repeated": 0,
+      "scalars": 51,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "avian_01",
+        "biogenesis_01",
+        "fallen_empire_01",
+        "fungoid_01",
+        "mammalian_01",
+        "reptilian_01"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "has_city_graphics": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "randomized": {
+      "definitions": 45,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 45,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "has_aquatics",
+        "has_biogenesis_dlc",
+        "has_first_contact_dlc",
+        "has_infernals",
+        "has_lithoids",
+        "has_machine_age_dlc",
+        "has_necroids",
+        "has_nemesis",
+        "has_plantoids",
+        "has_shroud_dlc",
+        "has_toxoids"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "has_aquatics"
+        ],
+        [
+          "has_biogenesis_dlc"
+        ],
+        [
+          "has_first_contact_dlc"
+        ],
+        [
+          "has_infernals"
+        ],
+        [
+          "has_lithoids"
+        ],
+        [
+          "has_machine_age_dlc"
+        ],
+        [
+          "has_necroids"
+        ],
+        [
+          "has_nemesis"
+        ],
+        [
+          "has_plantoids"
+        ],
+        [
+          "has_shroud_dlc"
+        ],
+        [
+          "has_toxoids"
+        ]
+      ]
+    },
+    "selectable": {
+      "definitions": 45,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 45,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "has_aquatics",
+        "has_biogenesis_dlc",
+        "has_first_contact_dlc",
+        "has_infernals",
+        "has_lithoids",
+        "has_machine_age_dlc",
+        "has_necroids",
+        "has_nemesis",
+        "has_plantoids",
+        "has_shroud_dlc",
+        "has_toxoids"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "has_aquatics"
+        ],
+        [
+          "has_biogenesis_dlc"
+        ],
+        [
+          "has_first_contact_dlc"
+        ],
+        [
+          "has_infernals"
+        ],
+        [
+          "has_lithoids"
+        ],
+        [
+          "has_machine_age_dlc"
+        ],
+        [
+          "has_necroids"
+        ],
+        [
+          "has_nemesis"
+        ],
+        [
+          "has_plantoids"
+        ],
+        [
+          "has_shroud_dlc"
+        ],
+        [
+          "has_toxoids"
+        ]
+      ]
+    },
+    "ship_color": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_kinds": {
+      "definitions": 27,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 27,
+      "bareBlocks": 27,
+      "values": [
+        "bio_ship",
+        "crystalline_entity",
+        "cutholoid",
+        "default_ship",
+        "space_amoeba",
+        "tiyanki",
+        "voidworm"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 48,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "ambient_far",
+        "ambient_near",
+        "cam_light_1_dir",
+        "cam_light_2_dir",
+        "cam_light_3_dir",
+        "far_value",
+        "intensity_far",
+        "intensity_near",
+        "near_value",
+        "rim_start_far",
+        "rim_start_near",
+        "rim_stop_far",
+        "rim_stop_near"
+      ],
+      "keysByDefinition": [
+        [
+          "ambient_far",
+          "ambient_near",
+          "cam_light_1_dir",
+          "cam_light_2_dir",
+          "cam_light_3_dir",
+          "far_value",
+          "intensity_far",
+          "intensity_near",
+          "near_value",
+          "rim_start_far",
+          "rim_start_near",
+          "rim_stop_far",
+          "rim_stop_near"
+        ]
+      ]
+    },
+    "ship_selection_weight": {
+      "definitions": 51,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 51,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    }
+  }
+}

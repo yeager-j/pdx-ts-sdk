@@ -1,0 +1,1000 @@
+{
+  "registry": "ascension_perk",
+  "definitions": 49,
+  "files": 2,
+  "fingerprint": "076a6fb50c036d38e299aaf2bfc86d8a74beb4e099d809e7c631ff201b727a72",
+  "fields": {
+    "ai_weight": {
+      "definitions": 46,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 46,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "complex_trigger_modifier",
+        "factor",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "base",
+          "complex_trigger_modifier",
+          "modifier"
+        ],
+        [
+          "factor"
+        ],
+        [
+          "factor",
+          "modifier"
+        ]
+      ]
+    },
+    "custom_tooltip": {
+      "definitions": 2,
+      "repeated": 1,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ap_defender_of_the_galaxy_modifier_desc",
+        "ap_defender_of_the_galaxy_voidworm_modifier_desc",
+        "synthetic_age_tooltip"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "custom_tooltip_with_modifiers": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ap_technological_ascendancy_tt"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "modifier": {
+      "definitions": 34,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 34,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "add_attunement_the_composer_of_strands",
+        "add_attunement_the_cradle_of_souls",
+        "add_attunement_the_eater_of_worlds",
+        "add_attunement_the_instrument_of_desire",
+        "arkship_fire_rate",
+        "command_limit_mult",
+        "council_agenda_progress_speed",
+        "country_commander_cap_add",
+        "country_edict_fund_add",
+        "country_enclave_capacity_add",
+        "country_megastructure_build_cap_add",
+        "country_naval_cap_add",
+        "country_official_cap_add",
+        "country_power_projection_influence_produces_add",
+        "country_scientist_cap_add",
+        "country_starbase_capacity_add",
+        "country_unity_produces_mult",
+        "country_war_exhaustion_mult",
+        "damage_vs_country_type_ai_empire_mult",
+        "damage_vs_country_type_awakened_fallen_empire_mult",
+        "damage_vs_country_type_awakened_synth_queen_mult",
+        "damage_vs_country_type_extradimensional_2_mult",
+        "damage_vs_country_type_extradimensional_3_mult",
+        "damage_vs_country_type_extradimensional_mult",
+        "damage_vs_country_type_fallen_empire_mult",
+        "damage_vs_country_type_frenzied_voidworms_mult",
+        "damage_vs_country_type_gate_builders_mult",
+        "damage_vs_country_type_gray_goo_mult",
+        "damage_vs_country_type_swarm_mult",
+        "damage_vs_country_type_synth_queen_convoys_mult",
+        "damage_vs_country_type_synth_queen_mult",
+        "damage_vs_country_type_synth_queen_outposts_mult",
+        "damage_vs_country_type_voidworms_crisis_mult",
+        "damage_vs_country_type_voidworms_mult",
+        "damage_vs_country_type_voidworms_treasure_hunters_mult",
+        "damage_vs_player_crisis_mult",
+        "deposit_blockers_cost_mult",
+        "diplo_weight_mult",
+        "diplo_weight_naval_mult",
+        "divided_patrongage_max_subjects",
+        "envoys_add",
+        "habitat_district_jobs_mult",
+        "habitat_districts_minor_add",
+        "habitat_max_districts_add",
+        "intel_encryption_add",
+        "l_slot_weapon_damage_mult",
+        "leaders_upkeep_mult",
+        "megastructure_build_speed_mult",
+        "megastructures_habitat_cost_mult",
+        "planet_branch_offices_cost_mult",
+        "planet_districts_hab_cost_mult",
+        "planet_resettlement_unemployed_destination_mult",
+        "rare_tech_draw_chance_mult",
+        "refugee_attraction",
+        "ship_home_territory_fire_rate_mult",
+        "ship_hull_mult",
+        "ship_military_station_small_upkeep_mult",
+        "shipclass_military_station_damage_mult",
+        "shipclass_starbase_damage_mult",
+        "shipclass_starbase_hull_mult",
+        "ships_upkeep_mult",
+        "specialist_subject_conversion_time_mult",
+        "species_leader_exp_gain",
+        "starbase_defense_platform_capacity_add",
+        "starbase_shipyard_build_minor_artifacts_cost_mult",
+        "starbase_waystations_alloys_cost_mult",
+        "t_slot_weapon_damage_mult",
+        "terraforming_cost_mult",
+        "terraforming_ocean_cost_mult",
+        "waystation_armor_hardening_add",
+        "waystation_hull_mult",
+        "waystation_shield_hardening_add",
+        "weapon_archaeotech_weapon_damage_mult",
+        "x_slot_weapon_damage_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "add_attunement_the_composer_of_strands"
+        ],
+        [
+          "add_attunement_the_composer_of_strands",
+          "country_starbase_capacity_add"
+        ],
+        [
+          "add_attunement_the_composer_of_strands",
+          "planet_resettlement_unemployed_destination_mult",
+          "refugee_attraction"
+        ],
+        [
+          "add_attunement_the_composer_of_strands",
+          "terraforming_cost_mult"
+        ],
+        [
+          "add_attunement_the_composer_of_strands",
+          "terraforming_ocean_cost_mult"
+        ],
+        [
+          "add_attunement_the_cradle_of_souls"
+        ],
+        [
+          "add_attunement_the_cradle_of_souls",
+          "arkship_fire_rate",
+          "country_commander_cap_add",
+          "ship_hull_mult",
+          "starbase_waystations_alloys_cost_mult",
+          "waystation_armor_hardening_add",
+          "waystation_hull_mult",
+          "waystation_shield_hardening_add"
+        ],
+        [
+          "add_attunement_the_cradle_of_souls",
+          "country_commander_cap_add",
+          "ship_home_territory_fire_rate_mult",
+          "ship_military_station_small_upkeep_mult",
+          "shipclass_military_station_damage_mult",
+          "shipclass_starbase_damage_mult",
+          "shipclass_starbase_hull_mult",
+          "starbase_defense_platform_capacity_add"
+        ],
+        [
+          "add_attunement_the_cradle_of_souls",
+          "damage_vs_country_type_ai_empire_mult",
+          "damage_vs_country_type_awakened_synth_queen_mult",
+          "damage_vs_country_type_extradimensional_2_mult",
+          "damage_vs_country_type_extradimensional_3_mult",
+          "damage_vs_country_type_extradimensional_mult",
+          "damage_vs_country_type_frenzied_voidworms_mult",
+          "damage_vs_country_type_gray_goo_mult",
+          "damage_vs_country_type_swarm_mult",
+          "damage_vs_country_type_synth_queen_convoys_mult",
+          "damage_vs_country_type_synth_queen_mult",
+          "damage_vs_country_type_synth_queen_outposts_mult",
+          "damage_vs_country_type_voidworms_crisis_mult",
+          "damage_vs_country_type_voidworms_mult",
+          "damage_vs_country_type_voidworms_treasure_hunters_mult",
+          "damage_vs_player_crisis_mult"
+        ],
+        [
+          "add_attunement_the_cradle_of_souls",
+          "damage_vs_country_type_awakened_fallen_empire_mult",
+          "damage_vs_country_type_fallen_empire_mult",
+          "damage_vs_country_type_gate_builders_mult",
+          "diplo_weight_mult"
+        ],
+        [
+          "add_attunement_the_cradle_of_souls",
+          "intel_encryption_add"
+        ],
+        [
+          "add_attunement_the_eater_of_worlds",
+          "command_limit_mult",
+          "country_commander_cap_add",
+          "country_naval_cap_add",
+          "country_power_projection_influence_produces_add"
+        ],
+        [
+          "add_attunement_the_eater_of_worlds",
+          "country_war_exhaustion_mult",
+          "ships_upkeep_mult"
+        ],
+        [
+          "add_attunement_the_eater_of_worlds",
+          "l_slot_weapon_damage_mult",
+          "t_slot_weapon_damage_mult",
+          "x_slot_weapon_damage_mult"
+        ],
+        [
+          "add_attunement_the_instrument_of_desire"
+        ],
+        [
+          "add_attunement_the_instrument_of_desire",
+          "council_agenda_progress_speed",
+          "country_edict_fund_add"
+        ],
+        [
+          "add_attunement_the_instrument_of_desire",
+          "country_official_cap_add",
+          "planet_branch_offices_cost_mult"
+        ],
+        [
+          "add_attunement_the_instrument_of_desire",
+          "deposit_blockers_cost_mult"
+        ],
+        [
+          "add_attunement_the_instrument_of_desire",
+          "divided_patrongage_max_subjects",
+          "envoys_add",
+          "specialist_subject_conversion_time_mult"
+        ],
+        [
+          "country_enclave_capacity_add",
+          "diplo_weight_naval_mult"
+        ],
+        [
+          "country_megastructure_build_cap_add",
+          "megastructure_build_speed_mult"
+        ],
+        [
+          "country_scientist_cap_add",
+          "leaders_upkeep_mult",
+          "species_leader_exp_gain"
+        ],
+        [
+          "country_scientist_cap_add",
+          "starbase_shipyard_build_minor_artifacts_cost_mult",
+          "weapon_archaeotech_weapon_damage_mult"
+        ],
+        [
+          "country_unity_produces_mult"
+        ],
+        [
+          "habitat_district_jobs_mult",
+          "habitat_districts_minor_add",
+          "habitat_max_districts_add",
+          "megastructures_habitat_cost_mult",
+          "planet_districts_hab_cost_mult"
+        ],
+        [
+          "rare_tech_draw_chance_mult"
+        ],
+        [
+          "refugee_attraction"
+        ]
+      ]
+    },
+    "on_enabled": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 38,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "activate_crisis_progression",
+        "custom_tooltip",
+        "else",
+        "else_if",
+        "hidden_effect",
+        "if",
+        "run_ai_strategic_data"
+      ],
+      "keysByDefinition": [
+        [
+          "activate_crisis_progression"
+        ],
+        [
+          "activate_crisis_progression",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "custom_tooltip",
+          "if"
+        ],
+        [
+          "else",
+          "else_if",
+          "if"
+        ],
+        [
+          "else",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "hidden_effect"
+        ],
+        [
+          "if"
+        ],
+        [
+          "run_ai_strategic_data"
+        ]
+      ]
+    },
+    "possible": {
+      "definitions": 33,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 33,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "OR",
+        "custom_tooltip",
+        "else_if",
+        "has_technology",
+        "if",
+        "is_nomadic",
+        "is_pacifist",
+        "is_xenophile"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "else_if",
+          "if"
+        ],
+        [
+          "custom_tooltip",
+          "has_technology"
+        ],
+        [
+          "custom_tooltip",
+          "if"
+        ],
+        [
+          "custom_tooltip",
+          "is_nomadic"
+        ],
+        [
+          "custom_tooltip",
+          "is_pacifist",
+          "is_xenophile"
+        ],
+        [
+          "NOR",
+          "custom_tooltip"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "has_technology"
+        ]
+      ]
+    },
+    "potential": {
+      "definitions": 49,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 49,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "always",
+        "any_relation",
+        "has_aquatics",
+        "has_biogenesis_dlc",
+        "has_civic",
+        "has_cosmic_storms_dlc",
+        "has_infernals",
+        "has_machine_age_dlc",
+        "has_necroids",
+        "has_nemesis",
+        "has_nomads_dlc",
+        "host_has_dlc",
+        "if",
+        "is_chosen_empire",
+        "is_criminal_syndicate",
+        "is_cyborg_empire",
+        "is_entropy_drinkers_empire",
+        "is_galvanic_empire",
+        "is_gestalt",
+        "is_hive_empire",
+        "is_individual_machine",
+        "is_lithoid_devouring_swarm",
+        "is_machine_empire",
+        "is_mechanical_empire",
+        "is_megacorp",
+        "is_natural_design_empire",
+        "is_nomadic",
+        "is_regular_empire",
+        "is_spiritualist",
+        "is_void_dweller_empire",
+        "is_wilderness_empire",
+        "owner_species"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "is_void_dweller_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "has_biogenesis_dlc"
+        ],
+        [
+          "NOR",
+          "has_civic",
+          "is_chosen_empire",
+          "is_entropy_drinkers_empire"
+        ],
+        [
+          "NOR",
+          "has_infernals"
+        ],
+        [
+          "NOR",
+          "has_machine_age_dlc",
+          "is_wilderness_empire"
+        ],
+        [
+          "NOR",
+          "has_nemesis",
+          "is_wilderness_empire"
+        ],
+        [
+          "NOR",
+          "has_nomads_dlc"
+        ],
+        [
+          "NOR",
+          "is_chosen_empire",
+          "is_entropy_drinkers_empire",
+          "is_gestalt",
+          "is_individual_machine",
+          "is_natural_design_empire",
+          "owner_species"
+        ],
+        [
+          "NOR",
+          "is_chosen_empire",
+          "is_entropy_drinkers_empire",
+          "is_hive_empire",
+          "is_natural_design_empire"
+        ],
+        [
+          "NOR",
+          "NOT"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "host_has_dlc"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "is_chosen_empire",
+          "is_cyborg_empire",
+          "is_entropy_drinkers_empire",
+          "is_individual_machine",
+          "is_mechanical_empire",
+          "is_natural_design_empire"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "is_chosen_empire",
+          "is_entropy_drinkers_empire",
+          "is_galvanic_empire",
+          "is_gestalt",
+          "is_individual_machine",
+          "is_mechanical_empire",
+          "is_natural_design_empire",
+          "owner_species"
+        ],
+        [
+          "NOR",
+          "OR",
+          "host_has_dlc"
+        ],
+        [
+          "NOR",
+          "OR",
+          "if",
+          "is_natural_design_empire"
+        ],
+        [
+          "NOR",
+          "OR",
+          "is_chosen_empire",
+          "is_entropy_drinkers_empire",
+          "is_natural_design_empire"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "any_relation"
+        ],
+        [
+          "NOT",
+          "has_cosmic_storms_dlc"
+        ],
+        [
+          "NOT",
+          "has_necroids",
+          "is_machine_empire"
+        ],
+        [
+          "NOT",
+          "has_nomads_dlc",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "host_has_dlc"
+        ],
+        [
+          "NOT",
+          "host_has_dlc",
+          "is_criminal_syndicate",
+          "is_megacorp"
+        ],
+        [
+          "NOT",
+          "host_has_dlc",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "host_has_dlc",
+          "is_regular_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "NOT",
+          "is_hive_empire",
+          "is_lithoid_devouring_swarm",
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "NOT",
+          "is_machine_empire",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "is_megacorp"
+        ],
+        [
+          "NOT",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "is_nomadic",
+          "is_spiritualist"
+        ],
+        [
+          "NOT",
+          "OR",
+          "has_aquatics",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "OR",
+          "host_has_dlc",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "OR",
+          "is_nomadic"
+        ]
+      ]
+    },
+    "tradition_swap": {
+      "definitions": 8,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 8,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "inherit_effects",
+        "inherit_icon",
+        "inherit_name",
+        "modifier",
+        "name",
+        "on_enabled",
+        "trigger",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip",
+          "inherit_effects",
+          "inherit_icon",
+          "inherit_name",
+          "on_enabled",
+          "trigger",
+          "weight"
+        ],
+        [
+          "custom_tooltip",
+          "inherit_effects",
+          "inherit_icon",
+          "modifier",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "inherit_name",
+          "modifier",
+          "trigger"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "inherit_name",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "modifier",
+          "name",
+          "on_enabled",
+          "trigger",
+          "weight"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "modifier",
+          "name",
+          "trigger"
+        ],
+        [
+          "inherit_effects",
+          "inherit_icon",
+          "name",
+          "trigger"
+        ]
+      ]
+    },
+    "tradition_swap.custom_tooltip": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ap_galactic_contender_voidworms_tt",
+        "synthetic_age_tooltip_machine_age"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tradition_swap.inherit_effects": {
+      "definitions": 8,
+      "repeated": 1,
+      "scalars": 8,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tradition_swap.inherit_icon": {
+      "definitions": 8,
+      "repeated": 1,
+      "scalars": 8,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tradition_swap.inherit_name": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tradition_swap.modifier": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "add_attunement_the_cradle_of_souls",
+        "add_attunement_the_instrument_of_desire",
+        "arkship_harvest_resources_produces_mult",
+        "country_naval_capacity_contribution_from_subjects_mult",
+        "damage_vs_country_type_awakened_fallen_empire_mult",
+        "damage_vs_country_type_fallen_empire_mult",
+        "damage_vs_country_type_frenzied_voidworms_mult",
+        "damage_vs_country_type_gate_builders_mult",
+        "damage_vs_country_type_voidworms_crisis_mult",
+        "damage_vs_country_type_voidworms_mult",
+        "damage_vs_country_type_voidworms_treasure_hunters_mult",
+        "diplo_weight_mult",
+        "divided_patrongage_max_subjects",
+        "envoys_add",
+        "intel_encryption_add",
+        "megastructures_arkships_cost_mult",
+        "pc_ark_habitability",
+        "pc_ark_max_districts_add",
+        "ship_cloaking_strength_add",
+        "ship_starbase_stockpile_collection_rate_mult",
+        "starbase_arkship_upgrades_cost_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "add_attunement_the_cradle_of_souls",
+          "damage_vs_country_type_awakened_fallen_empire_mult",
+          "damage_vs_country_type_fallen_empire_mult",
+          "damage_vs_country_type_frenzied_voidworms_mult",
+          "damage_vs_country_type_gate_builders_mult",
+          "damage_vs_country_type_voidworms_crisis_mult",
+          "damage_vs_country_type_voidworms_mult",
+          "damage_vs_country_type_voidworms_treasure_hunters_mult",
+          "diplo_weight_mult"
+        ],
+        [
+          "add_attunement_the_cradle_of_souls",
+          "intel_encryption_add",
+          "ship_cloaking_strength_add"
+        ],
+        [
+          "add_attunement_the_instrument_of_desire",
+          "arkship_harvest_resources_produces_mult",
+          "ship_starbase_stockpile_collection_rate_mult"
+        ],
+        [
+          "add_attunement_the_instrument_of_desire",
+          "country_naval_capacity_contribution_from_subjects_mult",
+          "divided_patrongage_max_subjects",
+          "envoys_add"
+        ],
+        [
+          "megastructures_arkships_cost_mult",
+          "pc_ark_habitability",
+          "pc_ark_max_districts_add",
+          "starbase_arkship_upgrades_cost_mult"
+        ]
+      ]
+    },
+    "tradition_swap.on_enabled": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "hidden_effect"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip"
+        ],
+        [
+          "hidden_effect"
+        ]
+      ]
+    },
+    "tradition_swap.trigger": {
+      "definitions": 8,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 8,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_first_contact_dlc",
+        "has_grand_archive_dlc",
+        "has_machine_age_dlc",
+        "has_shroud_dlc",
+        "is_nomadic",
+        "is_synthetic_empire",
+        "is_wilderness_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "has_first_contact_dlc"
+        ],
+        [
+          "has_grand_archive_dlc"
+        ],
+        [
+          "has_machine_age_dlc"
+        ],
+        [
+          "has_shroud_dlc",
+          "is_synthetic_empire"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_wilderness_empire"
+        ]
+      ]
+    },
+    "tradition_swap.weight": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "factor"
+      ],
+      "keysByDefinition": [
+        [
+          "factor"
+        ]
+      ]
+    },
+    "triggered_modifier": {
+      "definitions": 6,
+      "repeated": 4,
+      "scalars": 0,
+      "blocks": 6,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "add_attunement_the_cradle_of_souls",
+        "add_attunement_the_eater_of_worlds",
+        "country_claim_influence_cost_mult",
+        "country_official_cap_add",
+        "country_starbase_influence_cost_mult",
+        "deep_space_citadel_limit_add",
+        "empire_size_colonies_mult",
+        "empire_size_systems_mult",
+        "leaders_upkeep_mult",
+        "megastructures_waystations_influence_cost_mult",
+        "modifier",
+        "planet_max_districts_add",
+        "planetary_ascension_cost_mult",
+        "pop_cat_ruler_bonus_workforce_mult",
+        "pop_government_ethic_attraction",
+        "potential",
+        "shipsize_nomads_constructor_stockpile_capacity_mult",
+        "shipsize_nomads_engineer_vessel_stockpile_capacity_mult",
+        "starbase_stockpile_capacity_mult",
+        "tradition_cost_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "add_attunement_the_cradle_of_souls",
+          "planetary_ascension_cost_mult",
+          "pop_government_ethic_attraction",
+          "potential"
+        ],
+        [
+          "add_attunement_the_eater_of_worlds",
+          "country_claim_influence_cost_mult",
+          "country_starbase_influence_cost_mult",
+          "empire_size_systems_mult",
+          "megastructures_waystations_influence_cost_mult",
+          "potential",
+          "shipsize_nomads_constructor_stockpile_capacity_mult",
+          "shipsize_nomads_engineer_vessel_stockpile_capacity_mult",
+          "starbase_stockpile_capacity_mult"
+        ],
+        [
+          "country_official_cap_add",
+          "empire_size_colonies_mult",
+          "pop_cat_ruler_bonus_workforce_mult",
+          "potential"
+        ],
+        [
+          "deep_space_citadel_limit_add",
+          "potential"
+        ],
+        [
+          "leaders_upkeep_mult",
+          "planet_max_districts_add",
+          "potential",
+          "tradition_cost_mult"
+        ],
+        [
+          "modifier",
+          "potential"
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,461 @@
+{
+  "registry": "casus_belli",
+  "definitions": 45,
+  "files": 8,
+  "fingerprint": "3590613a19c882be7a7a76a7753733f40c10490ac1bef4ff90e1aa756704fd77",
+  "fields": {
+    "aggregated_message_key": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "MESSAGE_NEW_CASUS_BELLI_TRIAL_OF_ADVANCEMENT_TARGET"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "destroy_if": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "has_crisis_level",
+        "relative_power"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "has_crisis_level",
+          "relative_power"
+        ],
+        [
+          "relative_power"
+        ]
+      ]
+    },
+    "is_valid": {
+      "definitions": 42,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 42,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "allows_slavery",
+        "always",
+        "any_controlled_fleet",
+        "any_country",
+        "any_owned_planet",
+        "from",
+        "has_opinion_modifier",
+        "has_policy_flag",
+        "has_secret_fealty_from_subject_of",
+        "has_total_war_cb",
+        "if",
+        "is_galactic_community_member",
+        "is_subject",
+        "overlord",
+        "relative_power"
+      ],
+      "keysByDefinition": [
+        [
+          "allows_slavery",
+          "from"
+        ],
+        [
+          "always"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "has_total_war_cb"
+        ],
+        [
+          "NOR",
+          "from",
+          "has_total_war_cb"
+        ],
+        [
+          "NOR",
+          "OR",
+          "from"
+        ],
+        [
+          "NOT",
+          "any_country",
+          "from"
+        ],
+        [
+          "NOT",
+          "any_owned_planet",
+          "if"
+        ],
+        [
+          "NOT",
+          "from"
+        ],
+        [
+          "NOT",
+          "from",
+          "has_total_war_cb"
+        ],
+        [
+          "NOT",
+          "from",
+          "relative_power"
+        ],
+        [
+          "NOT",
+          "has_secret_fealty_from_subject_of",
+          "is_subject"
+        ],
+        [
+          "NOT",
+          "OR",
+          "any_controlled_fleet",
+          "has_total_war_cb"
+        ],
+        [
+          "NOT",
+          "OR",
+          "from"
+        ],
+        [
+          "NOT",
+          "OR",
+          "from",
+          "has_opinion_modifier",
+          "has_total_war_cb"
+        ],
+        [
+          "NOT",
+          "OR",
+          "from",
+          "has_policy_flag",
+          "has_total_war_cb"
+        ],
+        [
+          "NOT",
+          "OR",
+          "from",
+          "has_total_war_cb"
+        ],
+        [
+          "NOT",
+          "OR",
+          "from",
+          "is_galactic_community_member"
+        ],
+        [
+          "NOT",
+          "OR",
+          "has_total_war_cb"
+        ],
+        [
+          "NOT",
+          "OR",
+          "has_total_war_cb",
+          "if"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "overlord"
+        ]
+      ]
+    },
+    "on_proxy_war_start": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 41,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "pay_proxy_war_additional_resources"
+      ],
+      "keysByDefinition": [
+        [
+          "pay_proxy_war_additional_resources"
+        ]
+      ]
+    },
+    "potential": {
+      "definitions": 45,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 45,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "always",
+        "any_agreement",
+        "exists",
+        "federation",
+        "from",
+        "has_country_flag",
+        "has_event_chain",
+        "has_federation",
+        "has_galactic_emperor",
+        "has_global_flag",
+        "has_opinion_modifier",
+        "has_origin",
+        "has_policy_flag",
+        "has_technology",
+        "has_valid_civic",
+        "is_active_resolution",
+        "is_country_type",
+        "is_fallen_empire",
+        "is_federation_leader",
+        "is_galactic_community_member",
+        "is_galactic_council_established",
+        "is_galactic_emperor",
+        "is_homicidal",
+        "is_megacorp",
+        "is_nomadic",
+        "is_part_of_galactic_council",
+        "is_subject"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "any_agreement",
+          "is_country_type",
+          "is_subject"
+        ],
+        [
+          "federation",
+          "has_federation",
+          "is_federation_leader"
+        ],
+        [
+          "from",
+          "has_country_flag",
+          "is_country_type"
+        ],
+        [
+          "from",
+          "is_country_type"
+        ],
+        [
+          "from",
+          "is_country_type",
+          "is_megacorp"
+        ],
+        [
+          "has_country_flag",
+          "has_origin",
+          "is_country_type"
+        ],
+        [
+          "has_country_flag",
+          "is_country_type"
+        ],
+        [
+          "has_event_chain",
+          "has_origin",
+          "is_country_type"
+        ],
+        [
+          "has_galactic_emperor",
+          "is_active_resolution",
+          "is_galactic_community_member",
+          "is_galactic_council_established",
+          "is_galactic_emperor",
+          "is_part_of_galactic_council"
+        ],
+        [
+          "has_galactic_emperor",
+          "is_country_type",
+          "is_galactic_community_member",
+          "is_homicidal"
+        ],
+        [
+          "has_valid_civic"
+        ],
+        [
+          "has_valid_civic",
+          "is_country_type"
+        ],
+        [
+          "is_country_type"
+        ],
+        [
+          "is_country_type",
+          "is_megacorp",
+          "is_subject"
+        ],
+        [
+          "is_country_type",
+          "is_subject"
+        ],
+        [
+          "NOR",
+          "exists",
+          "is_country_type"
+        ],
+        [
+          "NOR",
+          "from",
+          "is_country_type"
+        ],
+        [
+          "NOR",
+          "has_global_flag",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "federation",
+          "has_country_flag",
+          "has_federation"
+        ],
+        [
+          "NOT",
+          "from",
+          "is_active_resolution",
+          "is_country_type",
+          "is_galactic_community_member"
+        ],
+        [
+          "NOT",
+          "from",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "from",
+          "is_country_type",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "from",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "has_global_flag",
+          "has_policy_flag",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "has_opinion_modifier",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "has_policy_flag",
+          "has_technology",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "is_country_type",
+          "is_megacorp"
+        ],
+        [
+          "NOT",
+          "is_country_type",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "OR",
+          "is_subject"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "is_country_type"
+        ],
+        [
+          "OR",
+          "is_fallen_empire"
+        ],
+        [
+          "OR",
+          "is_homicidal"
+        ]
+      ]
+    },
+    "proxy_war_resources": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 41,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost"
+      ],
+      "keysByDefinition": [
+        [
+          "category",
+          "cost"
+        ]
+      ]
+    },
+    "show_in_diplomacy": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 41,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_notification": {
+      "definitions": 45,
+      "repeated": 0,
+      "scalars": 45,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

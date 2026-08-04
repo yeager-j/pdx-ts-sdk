@@ -1,0 +1,530 @@
+{
+  "registry": "section_template",
+  "definitions": 482,
+  "files": 59,
+  "fingerprint": "5136c7a1f8e4e3f3fe5fecc19db1d202278a4cddbf93b96983f32a3e6f1ecebf",
+  "fields": {
+    "ai_tags": {
+      "definitions": 162,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 162,
+      "bareBlocks": 162,
+      "values": [
+        "artillery",
+        "artillery_stealth",
+        "brawler",
+        "brawler_stealth",
+        "buffer_role",
+        "buffer_role_stealth",
+        "carrier",
+        "carrier_stealth",
+        "citadel",
+        "debuffer_role",
+        "debuffer_role_stealth",
+        "energy_torpedoes",
+        "energy_torpedoes_stealth",
+        "explosive",
+        "explosive_stealth",
+        "gunship",
+        "gunship_stealth",
+        "screen",
+        "screen_stealth"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_weight": {
+      "definitions": 97,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 97,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "factor",
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "factor"
+        ],
+        [
+          "factor",
+          "modifier"
+        ],
+        [
+          "modifier"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "aux_utility_slots": {
+      "definitions": 319,
+      "repeated": 0,
+      "scalars": 319,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "11",
+        "2",
+        "20",
+        "3",
+        "4",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "compatible_with_all_ship_sizes": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "component_slot": {
+      "definitions": 421,
+      "repeated": 385,
+      "scalars": 0,
+      "blocks": 421,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "is_side_slot",
+        "locatorname",
+        "name",
+        "position",
+        "rotation",
+        "section_instance",
+        "template"
+      ],
+      "keysByDefinition": [
+        [
+          "is_side_slot",
+          "locatorname",
+          "name",
+          "position",
+          "rotation",
+          "template"
+        ],
+        [
+          "is_side_slot",
+          "locatorname",
+          "name",
+          "rotation",
+          "template"
+        ],
+        [
+          "is_side_slot",
+          "locatorname",
+          "name",
+          "section_instance",
+          "template"
+        ],
+        [
+          "is_side_slot",
+          "locatorname",
+          "name",
+          "template"
+        ],
+        [
+          "locatorname",
+          "name",
+          "position",
+          "rotation",
+          "template"
+        ],
+        [
+          "locatorname",
+          "name",
+          "rotation",
+          "section_instance",
+          "template"
+        ],
+        [
+          "locatorname",
+          "name",
+          "rotation",
+          "template"
+        ],
+        [
+          "locatorname",
+          "name",
+          "section_instance",
+          "template"
+        ],
+        [
+          "locatorname",
+          "name",
+          "template"
+        ]
+      ]
+    },
+    "entity": {
+      "definitions": 482,
+      "repeated": 0,
+      "scalars": 482,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ancient_corvette_hull_entity",
+        "ancient_destroyer_hull_entity",
+        "ancient_mining_drone_hull_entity",
+        "ancient_mining_expansion_barge_entity",
+        "battleship_bow_L1M1S2_entity",
+        "battleship_bow_L2_entity",
+        "battleship_bow_M1S2SHB_entity",
+        "battleship_bow_XL1_entity",
+        "battleship_mid_L2M2_entity",
+        "battleship_mid_L3_entity",
+        "battleship_mid_M4SHB_entity",
+        "battleship_mid_S4LHB_entity",
+        "battleship_stern_L1_entity",
+        "battleship_stern_M2_entity",
+        "biogenesis_01_fallen_empire_harbinger_stage_3_ship_entity",
+        "biogenesis_01_fallen_empire_mauler_ship_entity",
+        "biogenesis_01_fallen_empire_stinger_stage_3_ship_entity",
+        "biogenesis_01_fallen_empire_weaver_stage_3_ship_entity",
+        "blue_warship_large_entity",
+        "blue_warship_small_entity",
+        "colony_ship_ai_entity",
+        "colony_ship_entity",
+        "colossus_ship_entity",
+        "construction_ship_ai_entity",
+        "construction_ship_entity",
+        "core_ai_entity",
+        "corvette_M1S1_entity",
+        "corvette_S3_entity",
+        "cosmo_crisis_battlecruiser_entity",
+        "cosmo_crisis_destroyer_entity",
+        "cosmo_crisis_titan_section_entity",
+        "drone_homebase_hull_entity",
+        "empty_section_entity",
+        "final_core_ai_entity",
+        "harbinger_stage_1_ship_entity",
+        "harbinger_stage_2_ship_entity",
+        "harbinger_stage_3_ship_entity",
+        "kaiju_01_adult_ship_entity",
+        "kaiju_01_hatchling_ship_entity",
+        "kaiju_01_juvenile_ship_entity",
+        "leviathan_01_voidspawn_section_entity",
+        "lithoid_01_meteor_colonyship_empty_entity",
+        "mauler_stage_1_ship_entity",
+        "mauler_stage_2_ship_entity",
+        "mauler_stage_3_ship_entity",
+        "military_station_large_ai_entity",
+        "military_station_small_ai_entity",
+        "station_l_hull_entity",
+        "station_m_hull_entity",
+        "station_s_hull_entity",
+        "station_xl_hull_entity",
+        "station_xs_hull_entity",
+        "stinger_stage_1_ship_entity",
+        "stinger_stage_2_ship_entity",
+        "stinger_stage_3_ship_entity",
+        "titan_bow_entity",
+        "titan_mid_entity",
+        "titan_stern_entity",
+        "transport_ship_ai_entity",
+        "warship_large_entity",
+        "warship_small_entity",
+        "weaver_stage_1_ship_entity",
+        "weaver_stage_2_ship_entity",
+        "weaver_stage_3_ship_entity"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "fits_on_slot": {
+      "definitions": 482,
+      "repeated": 37,
+      "scalars": 482,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "bot_1",
+        "bot_2",
+        "bot_3",
+        "bow",
+        "core",
+        "east",
+        "mid",
+        "mutations",
+        "north",
+        "part1",
+        "ship",
+        "south",
+        "spinal_mount_1",
+        "stern",
+        "west"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 482,
+      "repeated": 1,
+      "scalars": 482,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_ship_part_core_bow",
+        "GFX_ship_part_core_mid",
+        "GFX_ship_part_core_stern"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon_frame": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "large_utility_slots": {
+      "definitions": 174,
+      "repeated": 0,
+      "scalars": 174,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "10",
+        "11",
+        "12",
+        "15",
+        "16",
+        "18",
+        "2",
+        "20",
+        "21",
+        "22",
+        "3",
+        "4",
+        "44",
+        "5",
+        "55",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "medium_utility_slots": {
+      "definitions": 120,
+      "repeated": 0,
+      "scalars": 120,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "8"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prerequisites": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 20,
+      "bareBlocks": 9,
+      "values": [
+        "tech_torpedoes_1"
+      ],
+      "keys": [
+        "OR"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "OR"
+        ]
+      ]
+    },
+    "resources": {
+      "definitions": 133,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 133,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost"
+      ],
+      "keysByDefinition": [
+        [
+          "category"
+        ],
+        [
+          "category",
+          "cost"
+        ]
+      ]
+    },
+    "ship_size": {
+      "definitions": 481,
+      "repeated": 43,
+      "scalars": 481,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ancient_corvette",
+        "ancient_destroyer",
+        "ancient_mining_drone",
+        "ancient_mining_expansion_barge",
+        "battleship",
+        "behemoth_01",
+        "behemoth_02",
+        "behemoth_03",
+        "behemoth_04",
+        "bio_titan",
+        "colonizer",
+        "colony_ship_ai",
+        "colossus",
+        "construction_ship_ai",
+        "constructor",
+        "core_ai",
+        "corvette",
+        "frigate",
+        "guided_sapience_colonizer",
+        "harbinger_stage_1",
+        "harbinger_stage_2",
+        "harbinger_stage_3",
+        "homebase",
+        "large_fallen_harbinger",
+        "large_fallen_mauler",
+        "large_fallen_stinger",
+        "large_fallen_weaver",
+        "large_ship_ai",
+        "lithoid_colonizer",
+        "mauler_stage_1",
+        "mauler_stage_2",
+        "mauler_stage_3",
+        "military_station_large_ai",
+        "military_station_small_ai",
+        "nomads_constructor",
+        "offspring_harbinger_stage_1",
+        "offspring_harbinger_stage_2",
+        "offspring_harbinger_stage_3",
+        "offspring_mauler_stage_1",
+        "offspring_mauler_stage_2",
+        "offspring_mauler_stage_3",
+        "offspring_stinger_stage_1",
+        "offspring_stinger_stage_2",
+        "offspring_stinger_stage_3",
+        "offspring_weaver_stage_1",
+        "offspring_weaver_stage_2",
+        "offspring_weaver_stage_3",
+        "small_fallen_weaver",
+        "small_ship_ai",
+        "sponsored_colonizer",
+        "starbase_ai",
+        "station_l",
+        "station_m",
+        "station_s",
+        "station_xl",
+        "station_xs",
+        "stinger_stage_1",
+        "stinger_stage_2",
+        "stinger_stage_3",
+        "transport_ship_ai",
+        "voidspawn_boss",
+        "weaver_stage_1",
+        "weaver_stage_2",
+        "weaver_stage_3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "should_draw_components": {
+      "definitions": 247,
+      "repeated": 0,
+      "scalars": 247,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "small_utility_slots": {
+      "definitions": 130,
+      "repeated": 0,
+      "scalars": 130,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "8"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

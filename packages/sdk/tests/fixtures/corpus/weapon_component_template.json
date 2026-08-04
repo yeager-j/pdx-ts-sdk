@@ -1,0 +1,1172 @@
+{
+  "registry": "weapon_component_template",
+  "definitions": 591,
+  "files": 55,
+  "fingerprint": "e74f0bec626860dfae2c4aa1a6398cfa7a7b9ed30d5cb25df8e93b8684006c48",
+  "fields": {
+    "accuracy": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_tag_weight": {
+      "definitions": 82,
+      "repeated": 0,
+      "scalars": 82,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "3",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_tags": {
+      "definitions": 505,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 505,
+      "bareBlocks": 505,
+      "values": [
+        "artillery",
+        "artillery_stealth",
+        "brawler",
+        "brawler_stealth",
+        "debuffer_role",
+        "debuffer_role_stealth",
+        "energy_torpedoes",
+        "energy_torpedoes_stealth",
+        "explosive",
+        "explosive_stealth",
+        "gunship",
+        "s_slot",
+        "screen",
+        "weapon_role_anti_armor",
+        "weapon_role_anti_hull",
+        "weapon_role_anti_shield",
+        "weapon_role_artillery",
+        "weapon_role_point_defense",
+        "weapon_type_space_fauna"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_weight": {
+      "definitions": 348,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 348,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "factor",
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "factor"
+        ],
+        [
+          "factor",
+          "modifier"
+        ],
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "can_destroy_stars": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "collateral_damage": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "collateral_range": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "component_set": {
+      "definitions": 501,
+      "repeated": 0,
+      "scalars": 501,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ARCHAEO_BIO_LASER",
+        "ARCHAEO_KINETIC",
+        "ARCHAEO_LASER",
+        "ARCHAEO_MISSILE",
+        "ARCHAEO_POINTDEFENCE",
+        "ARCHAEO_TITAN",
+        "ARCHAEO_X",
+        "ARKSHIP_DEVASTATOR_WEAPON",
+        "BEHEMOTH_LIGHTNING_WEAPON",
+        "BEHEMOTH_TITAN_WEAPON",
+        "BIO_ARCHAEO_KINETIC",
+        "BIO_ARCHAEO_POINTDEFENCE",
+        "BIO_ARCHAEO_X",
+        "BIO_ARC_EMITTER_1",
+        "BIO_ARC_EMITTER_2",
+        "BIO_AUTOCANNON_1",
+        "BIO_AUTOCANNON_2",
+        "BIO_AUTOCANNON_3",
+        "BIO_AUTOCANNON_4",
+        "BIO_DISRUPTOR_1",
+        "BIO_DISRUPTOR_2",
+        "BIO_DISRUPTOR_3",
+        "BIO_ENERGY_LANCE_1",
+        "BIO_ENERGY_LANCE_2",
+        "BIO_ENERGY_TORPEDO_1",
+        "BIO_ENERGY_TORPEDO_2",
+        "BIO_FLAK_BATTERY_1",
+        "BIO_FLAK_BATTERY_2",
+        "BIO_FLAK_BATTERY_3",
+        "BIO_FLAK_BATTERY_4",
+        "BIO_KINETIC_ARTILLERY_1",
+        "BIO_KINETIC_ARTILLERY_2",
+        "BIO_MASS_ACCELERATOR_1",
+        "BIO_MASS_ACCELERATOR_2",
+        "BIO_MASS_DRIVER_1",
+        "BIO_MASS_DRIVER_2",
+        "BIO_MASS_DRIVER_3",
+        "BIO_MASS_DRIVER_4",
+        "BIO_MASS_DRIVER_5",
+        "BIO_PLASMA_1",
+        "BIO_PLASMA_2",
+        "BIO_PLASMA_3",
+        "BIO_POINT_DEFENCE_1",
+        "BIO_POINT_DEFENCE_2",
+        "BIO_POINT_DEFENCE_3",
+        "BIO_PSIONIC_DISRUPTOR",
+        "BIO_PSIONIC_LIGHTNING",
+        "BIO_PSIONIC_TORPEDO",
+        "BIO_SWARMER_MISSILE_1",
+        "BIO_SWARMER_MISSILE_2",
+        "BLUE_BIO_LASER",
+        "GAMMA_BIO_LASER",
+        "LM_BIO_ACCELERATOR_SET",
+        "MANDIBLE_1",
+        "MANDIBLE_2",
+        "MANDIBLE_3",
+        "MINING_BIO_LASER",
+        "PLANET_KILLER_CRACKER",
+        "PSIONIC_DISRUPTOR",
+        "PSIONIC_LIGHTNING",
+        "PSIONIC_TORPEDO",
+        "RED_BIO_LASER",
+        "UV_BIO_LASER",
+        "XRAY_BIO_LASER"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "custom_tooltip": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "energy_siphon_l_tt",
+        "energy_siphon_m_tt",
+        "energy_siphon_s_tt",
+        "energy_siphon_xl_tt"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "entity": {
+      "definitions": 72,
+      "repeated": 0,
+      "scalars": 72,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "caravaneer_turret_01_entity",
+        "invisible_turret_entity",
+        "large_crystal_ship_weapon_entity",
+        "large_kinetic_gun_entity",
+        "large_laser_gun_entity",
+        "large_space_cloud_weapon_entity",
+        "medium_crystal_ship_weapon_entity",
+        "medium_event_laser_gun_entity",
+        "medium_kinetic_gun_entity",
+        "medium_mining_drone_weapon_entity",
+        "medium_probe_lightning_weapon_entity",
+        "medium_scourge_projectile_weapon_entity",
+        "small_crystal_ship_weapon_entity",
+        "small_event_laser_gun_entity",
+        "small_kinetic_gun_entity",
+        "small_mining_drone_weapon_entity",
+        "small_scourge_projectile_weapon_entity",
+        "small_space_whale_weapon_entity",
+        "turret_missile_large_entity",
+        "turret_torpedo_entity"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "firing_arc": {
+      "definitions": 75,
+      "repeated": 0,
+      "scalars": 75,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "10",
+        "15",
+        "25",
+        "35"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hidden": {
+      "definitions": 59,
+      "repeated": 0,
+      "scalars": 59,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 555,
+      "repeated": 0,
+      "scalars": 555,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_mutation_ancient_collapser_beam",
+        "GFX_mutation_ancient_fragmentor_artillery",
+        "GFX_mutation_ancient_macro_shard_batteries",
+        "GFX_mutation_ancient_web_slinger",
+        "GFX_mutation_barb_1",
+        "GFX_mutation_barb_2",
+        "GFX_mutation_barb_3",
+        "GFX_mutation_barb_4",
+        "GFX_mutation_beam_1",
+        "GFX_mutation_beam_2",
+        "GFX_mutation_bio_plasma_1",
+        "GFX_mutation_bio_plasma_2",
+        "GFX_mutation_bio_plasma_3",
+        "GFX_mutation_bombard_1",
+        "GFX_mutation_bombard_2",
+        "GFX_mutation_chitin_1",
+        "GFX_mutation_chitin_2",
+        "GFX_mutation_disruptor_1",
+        "GFX_mutation_disruptor_2",
+        "GFX_mutation_disruptor_3",
+        "GFX_mutation_eye_beam_1",
+        "GFX_mutation_eye_beam_2",
+        "GFX_mutation_eye_beam_3",
+        "GFX_mutation_eye_beam_4",
+        "GFX_mutation_eye_beam_5",
+        "GFX_mutation_laser_1",
+        "GFX_mutation_lightning_breath_1",
+        "GFX_mutation_lightning_emitter_1",
+        "GFX_mutation_lightning_emitter_2",
+        "GFX_mutation_psionic_bio_disruptor",
+        "GFX_mutation_psionic_bio_launcher",
+        "GFX_mutation_psionic_bio_lightning",
+        "GFX_mutation_shard_accelerator_1",
+        "GFX_mutation_shard_accelerator_2",
+        "GFX_mutation_shard_accelerator_3",
+        "GFX_mutation_shard_accelerator_4",
+        "GFX_mutation_shard_accelerator_5",
+        "GFX_mutation_spitter_gun_1",
+        "GFX_mutation_spitter_gun_2",
+        "GFX_mutation_spitter_gun_3",
+        "GFX_mutation_thrower_1",
+        "GFX_mutation_thrower_2",
+        "GFX_ship_part_archaeo_laser",
+        "GFX_ship_part_archaeo_mass_driver",
+        "GFX_ship_part_arkship_devastator",
+        "GFX_ship_part_bio_autocannon_1",
+        "GFX_ship_part_bio_autocannon_2",
+        "GFX_ship_part_bio_autocannon_3",
+        "GFX_ship_part_bio_autocannon_4",
+        "GFX_ship_part_bio_swarmer_missile_1",
+        "GFX_ship_part_bio_swarmer_missile_2",
+        "GFX_ship_part_energy_lance_2",
+        "GFX_ship_part_energy_torpedo_2",
+        "GFX_ship_part_laser_1",
+        "GFX_ship_part_laser_5",
+        "GFX_ship_part_lm_bio_accelerator",
+        "GFX_ship_part_mandible_1",
+        "GFX_ship_part_mandible_2",
+        "GFX_ship_part_mandible_3",
+        "GFX_ship_part_plasma_3",
+        "GFX_ship_part_preying_maw",
+        "GFX_ship_part_psionic_disruptor",
+        "GFX_ship_part_psionic_lightning",
+        "GFX_ship_part_psionic_torpedo"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon_frame": {
+      "definitions": 555,
+      "repeated": 0,
+      "scalars": 555,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "injected_modifier": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 20,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "stack_info"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "stack_info"
+        ]
+      ]
+    },
+    "inline_script": {
+      "definitions": 36,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 36,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "DARK_MATTER",
+        "EXOTIC_GASES",
+        "RARE_CRYSTALS",
+        "REPAIR_AMOUNT",
+        "TIER",
+        "VOLATILE_MOTES",
+        "script"
+      ],
+      "keysByDefinition": [
+        [
+          "DARK_MATTER",
+          "EXOTIC_GASES",
+          "REPAIR_AMOUNT",
+          "TIER",
+          "script"
+        ],
+        [
+          "DARK_MATTER",
+          "EXOTIC_GASES",
+          "TIER",
+          "script"
+        ],
+        [
+          "DARK_MATTER",
+          "RARE_CRYSTALS",
+          "REPAIR_AMOUNT",
+          "TIER",
+          "script"
+        ],
+        [
+          "DARK_MATTER",
+          "RARE_CRYSTALS",
+          "TIER",
+          "script"
+        ],
+        [
+          "DARK_MATTER",
+          "REPAIR_AMOUNT",
+          "TIER",
+          "VOLATILE_MOTES",
+          "script"
+        ],
+        [
+          "DARK_MATTER",
+          "TIER",
+          "VOLATILE_MOTES",
+          "script"
+        ]
+      ]
+    },
+    "min_range": {
+      "definitions": 83,
+      "repeated": 0,
+      "scalars": 83,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "10",
+        "30",
+        "45"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "modifier": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 8,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "ship_shield_add"
+      ],
+      "keysByDefinition": [
+        [
+          "ship_shield_add"
+        ]
+      ]
+    },
+    "on_hit": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 16,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "hidden_effect"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip",
+          "hidden_effect"
+        ]
+      ]
+    },
+    "planet_destruction_gfx": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "assimilation_nanobots_gfx",
+        "global_pacifier_gfx",
+        "gobble_planet_gfx",
+        "god_ray_gfx",
+        "neutron_planet_gfx",
+        "planet_deluge_gfx",
+        "planet_smelter_effect_gfx",
+        "planet_toxifier_gfx",
+        "shatter_planet_gfx",
+        "star_destroyer_effect_gfx"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "point_defence_targets": {
+      "definitions": 55,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 55,
+      "bareBlocks": 55,
+      "values": [
+        "missile",
+        "strike_craft"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "potential": {
+      "definitions": 232,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 232,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "from",
+        "is_arkship_ship",
+        "is_ship_size",
+        "ship_uses_colossus_components",
+        "ship_uses_harbinger_components",
+        "ship_uses_mauler_components",
+        "ship_uses_star_eater_components",
+        "ship_uses_titan_components",
+        "ship_uses_weaver_components"
+      ],
+      "keysByDefinition": [
+        [
+          "from"
+        ],
+        [
+          "from",
+          "is_arkship_ship"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_mauler_components"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_weaver_components"
+        ],
+        [
+          "is_ship_size"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "from",
+          "is_arkship_ship"
+        ],
+        [
+          "OR",
+          "ship_uses_mauler_components"
+        ],
+        [
+          "ship_uses_colossus_components"
+        ],
+        [
+          "ship_uses_harbinger_components",
+          "ship_uses_mauler_components"
+        ],
+        [
+          "ship_uses_mauler_components"
+        ],
+        [
+          "ship_uses_star_eater_components"
+        ],
+        [
+          "ship_uses_titan_components"
+        ]
+      ]
+    },
+    "prerequisites": {
+      "definitions": 464,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 464,
+      "bareBlocks": 464,
+      "values": [
+        "null_void_beam",
+        "tech_arc_emitter_1",
+        "tech_arc_emitter_2",
+        "tech_archaeo_lasers",
+        "tech_archaeo_mass_accelerator",
+        "tech_archaeo_mass_drivers",
+        "tech_archaeo_missiles",
+        "tech_archaeo_point_defence",
+        "tech_archaeo_titan_beam",
+        "tech_autocannons_1",
+        "tech_autocannons_2",
+        "tech_autocannons_3",
+        "tech_disruptors_1",
+        "tech_disruptors_2",
+        "tech_disruptors_3",
+        "tech_energy_lance_1",
+        "tech_energy_lance_2",
+        "tech_energy_torpedoes_1",
+        "tech_energy_torpedoes_2",
+        "tech_extradimensional_weapon_1",
+        "tech_flak_batteries_1",
+        "tech_flak_batteries_2",
+        "tech_flak_batteries_3",
+        "tech_kinetic_artillery_1",
+        "tech_kinetic_artillery_2",
+        "tech_lasers_1",
+        "tech_lasers_2",
+        "tech_lasers_3",
+        "tech_lasers_4",
+        "tech_lasers_5",
+        "tech_mandibles_2",
+        "tech_mandibles_3",
+        "tech_mass_accelerator_1",
+        "tech_mass_accelerator_2",
+        "tech_mass_drivers_1",
+        "tech_mass_drivers_2",
+        "tech_mass_drivers_3",
+        "tech_mass_drivers_4",
+        "tech_mass_drivers_5",
+        "tech_maulers",
+        "tech_mining_drone_weapon_1",
+        "tech_missiles_1",
+        "tech_missiles_2",
+        "tech_missiles_3",
+        "tech_missiles_4",
+        "tech_missiles_5",
+        "tech_nanite_autocannon",
+        "tech_nanite_flak_batteries",
+        "tech_pd_tracking_1",
+        "tech_pd_tracking_2",
+        "tech_pd_tracking_3",
+        "tech_plasma_1",
+        "tech_plasma_2",
+        "tech_plasma_3",
+        "tech_psionic_disruptor",
+        "tech_psionic_lightning",
+        "tech_scourge_missile_1",
+        "tech_space_cloud_weapon_1",
+        "tech_space_whale_weapon_1",
+        "tech_swarmer_missiles_1",
+        "tech_swarmer_missiles_2",
+        "tech_titans",
+        "tech_torpedoes_1",
+        "tech_zro_launcher"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prio_projectile": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "projectile_gfx": {
+      "definitions": 577,
+      "repeated": 0,
+      "scalars": 577,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "advanced_railgun_l",
+        "advanced_railgun_m",
+        "advanced_railgun_s",
+        "auto_cannons_l",
+        "auto_cannons_m",
+        "auto_cannons_s",
+        "behemoth_lightning_breath_laser",
+        "behemoth_titan_laser",
+        "biogenesis_01_mandible_attack",
+        "blue_laser_l",
+        "blue_laser_m",
+        "blue_laser_pd",
+        "blue_laser_s",
+        "coilgun_l",
+        "coilgun_m",
+        "coilgun_s",
+        "dark_matter_laser_l",
+        "dark_matter_laser_m",
+        "dark_matter_laser_s",
+        "disruptor_1_medium",
+        "disruptor_1_small",
+        "disruptor_2_medium",
+        "disruptor_2_small",
+        "disruptor_3_medium",
+        "disruptor_3_small",
+        "gamma_laser_l",
+        "gamma_laser_m",
+        "gamma_laser_s",
+        "gauss_cannon_l",
+        "gauss_cannon_m",
+        "gauss_cannon_s",
+        "infrared_laser_l",
+        "infrared_laser_m",
+        "infrared_laser_s",
+        "mass_driver_l",
+        "mass_driver_m",
+        "mass_driver_s",
+        "plasma_accelerator_l",
+        "plasma_accelerator_m",
+        "plasma_accelerator_s",
+        "plasma_cannon_l",
+        "plasma_cannon_m",
+        "plasma_cannon_s",
+        "plasma_thrower_l",
+        "plasma_thrower_m",
+        "plasma_thrower_s",
+        "railgun_l",
+        "railgun_m",
+        "railgun_s",
+        "red_laser_pd",
+        "ripper_auto_cannons_l",
+        "ripper_auto_cannons_m",
+        "ripper_auto_cannons_s",
+        "stormfire_auto_cannons_l",
+        "stormfire_auto_cannons_m",
+        "stormfire_auto_cannons_s",
+        "swarmer_missiles",
+        "swarmer_missiles_02",
+        "uv_laser_l",
+        "uv_laser_m",
+        "uv_laser_s",
+        "xray_laser_l",
+        "xray_laser_m",
+        "xray_laser_s"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "resources": {
+      "definitions": 503,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 503,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost",
+        "inline_script",
+        "upkeep"
+      ],
+      "keysByDefinition": [
+        [
+          "category",
+          "cost"
+        ],
+        [
+          "category",
+          "cost",
+          "inline_script"
+        ],
+        [
+          "category",
+          "cost",
+          "upkeep"
+        ],
+        [
+          "category",
+          "inline_script"
+        ],
+        [
+          "category",
+          "upkeep"
+        ]
+      ]
+    },
+    "show_tech_unlock_if": {
+      "definitions": 184,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 184,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_uses_bio_ships",
+        "is_galvanic_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "country_uses_bio_ships"
+        ],
+        [
+          "country_uses_bio_ships",
+          "is_galvanic_empire"
+        ]
+      ]
+    },
+    "size": {
+      "definitions": 555,
+      "repeated": 0,
+      "scalars": 555,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "engulf",
+        "extra_Large",
+        "extra_large",
+        "large",
+        "medium",
+        "planet_killer",
+        "point_defence",
+        "small",
+        "titanic",
+        "torpedo"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tags": {
+      "definitions": 543,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 543,
+      "bareBlocks": 543,
+      "values": [
+        "debuffer_role",
+        "g_slot",
+        "l_slot",
+        "m_slot",
+        "s_slot",
+        "t_slot",
+        "weapon_archaeotech",
+        "weapon_role_artillery",
+        "weapon_swarm",
+        "weapon_type_energy",
+        "weapon_type_explosive",
+        "weapon_type_kinetic",
+        "weapon_type_mandible",
+        "weapon_type_point_defense",
+        "weapon_type_psionic",
+        "weapon_type_space_fauna",
+        "x_slot"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "target_focus": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "spread"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "target_type": {
+      "definitions": 27,
+      "repeated": 0,
+      "scalars": 27,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "target_enemies"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "target_weights": {
+      "definitions": 25,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 25,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "battleship",
+        "corvette",
+        "cruiser",
+        "destroyer",
+        "frigate",
+        "harbinger_stage_1",
+        "harbinger_stage_2",
+        "harbinger_stage_3",
+        "mauler_stage_1",
+        "mauler_stage_2",
+        "mauler_stage_3",
+        "stinger_stage_1",
+        "stinger_stage_2",
+        "stinger_stage_3",
+        "titan",
+        "weaver_stage_1",
+        "weaver_stage_2",
+        "weaver_stage_3"
+      ],
+      "keysByDefinition": [
+        [
+          "battleship",
+          "stinger_stage_1",
+          "stinger_stage_2",
+          "stinger_stage_3",
+          "titan"
+        ],
+        [
+          "corvette",
+          "cruiser",
+          "destroyer",
+          "frigate",
+          "harbinger_stage_1",
+          "harbinger_stage_2",
+          "harbinger_stage_3",
+          "mauler_stage_1",
+          "mauler_stage_2",
+          "mauler_stage_3",
+          "weaver_stage_1",
+          "weaver_stage_2",
+          "weaver_stage_3"
+        ]
+      ]
+    },
+    "targetable_ship_sizes": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareBlocks": 3,
+      "values": [
+        "constructor",
+        "corvette",
+        "cruiser",
+        "crystal_ship_large_blue",
+        "crystal_ship_large_blue_elite",
+        "crystal_ship_large_green",
+        "crystal_ship_large_green_elite",
+        "crystal_ship_large_red",
+        "crystal_ship_large_red_elite",
+        "crystal_ship_large_yellow",
+        "crystal_ship_large_yellow_elite",
+        "crystal_ship_medium_blue",
+        "crystal_ship_medium_blue_elite",
+        "crystal_ship_medium_green",
+        "crystal_ship_medium_green_elite",
+        "crystal_ship_medium_red",
+        "crystal_ship_medium_red_elite",
+        "crystal_ship_medium_yellow",
+        "crystal_ship_medium_yellow_elite",
+        "crystal_ship_small_blue",
+        "crystal_ship_small_blue_elite",
+        "crystal_ship_small_green",
+        "crystal_ship_small_green_elite",
+        "crystal_ship_small_red",
+        "crystal_ship_small_red_elite",
+        "crystal_ship_small_yellow",
+        "crystal_ship_small_yellow_elite",
+        "destroyer",
+        "frigate",
+        "harbinger_stage_1",
+        "harbinger_stage_2",
+        "harbinger_stage_3",
+        "mauler_stage_1",
+        "mauler_stage_2",
+        "mauler_stage_3",
+        "nomads_constructor",
+        "science",
+        "space_amoeba",
+        "space_amoeba_mother",
+        "space_whale_1",
+        "space_whale_2",
+        "space_whale_3",
+        "space_whale_4",
+        "space_whale_5",
+        "voidworms_medium",
+        "voidworms_small",
+        "weaver_stage_1",
+        "weaver_stage_2",
+        "weaver_stage_3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "type": {
+      "definitions": 555,
+      "repeated": 0,
+      "scalars": 555,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "engulf",
+        "instant",
+        "missile",
+        "planet_killer",
+        "point_defence"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "upgrades_to": {
+      "definitions": 145,
+      "repeated": 0,
+      "scalars": 145,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "BIO_ARC_EMITTER_2",
+        "BIO_ENERGY_LANCE_2",
+        "BIO_ENERGY_TORPEDO_2",
+        "BIO_FLAK_BATTERY_2",
+        "BIO_FLAK_BATTERY_3",
+        "BIO_KINETIC_ARTILLERY_2",
+        "BIO_MASS_ACCELERATOR_2",
+        "BIO_POINT_DEFENCE_2",
+        "BIO_POINT_DEFENCE_3",
+        "CONFUSER_GUN_2",
+        "CONFUSER_GUN_3",
+        "CONFUSER_GUN_4",
+        "HEALING_GUN_2",
+        "HEALING_GUN_3",
+        "HEALING_GUN_4",
+        "HEALING_GUN_5",
+        "HEALING_GUN_6",
+        "LARGE_BIO_AUTOCANNON_2",
+        "LARGE_BIO_AUTOCANNON_3",
+        "LARGE_BIO_AUTOCANNON_4",
+        "LARGE_BIO_MASS_DRIVER_2",
+        "LARGE_BIO_MASS_DRIVER_3",
+        "LARGE_BIO_MASS_DRIVER_4",
+        "LARGE_BIO_MASS_DRIVER_5",
+        "LARGE_BIO_PLASMA_2",
+        "LARGE_BIO_PLASMA_3",
+        "LARGE_BLUE_BIO_LASER",
+        "LARGE_GAMMA_BIO_LASER",
+        "LARGE_UV_BIO_LASER",
+        "LARGE_XRAY_BIO_LASER",
+        "MANDIBLE_2",
+        "MANDIBLE_3",
+        "MEDIUM_BIO_AUTOCANNON_2",
+        "MEDIUM_BIO_AUTOCANNON_3",
+        "MEDIUM_BIO_AUTOCANNON_4",
+        "MEDIUM_BIO_DISRUPTOR_2",
+        "MEDIUM_BIO_DISRUPTOR_3",
+        "MEDIUM_BIO_MASS_DRIVER_2",
+        "MEDIUM_BIO_MASS_DRIVER_3",
+        "MEDIUM_BIO_MASS_DRIVER_4",
+        "MEDIUM_BIO_MASS_DRIVER_5",
+        "MEDIUM_BIO_PLASMA_2",
+        "MEDIUM_BIO_PLASMA_3",
+        "MEDIUM_BIO_SWARMER_MISSILE_2",
+        "MEDIUM_BLUE_BIO_LASER",
+        "MEDIUM_GAMMA_BIO_LASER",
+        "MEDIUM_UV_BIO_LASER",
+        "MEDIUM_XRAY_BIO_LASER",
+        "SMALL_BIO_AUTOCANNON_2",
+        "SMALL_BIO_AUTOCANNON_3",
+        "SMALL_BIO_AUTOCANNON_4",
+        "SMALL_BIO_DISRUPTOR_2",
+        "SMALL_BIO_DISRUPTOR_3",
+        "SMALL_BIO_MASS_DRIVER_2",
+        "SMALL_BIO_MASS_DRIVER_3",
+        "SMALL_BIO_MASS_DRIVER_4",
+        "SMALL_BIO_MASS_DRIVER_5",
+        "SMALL_BIO_PLASMA_2",
+        "SMALL_BIO_PLASMA_3",
+        "SMALL_BLUE_BIO_LASER",
+        "SMALL_GAMMA_BIO_LASER",
+        "SMALL_UV_BIO_LASER",
+        "SMALL_XRAY_BIO_LASER",
+        "TORPEDO_BIO_SWARMER_MISSILE_2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "use_ship_main_target": {
+      "definitions": 43,
+      "repeated": 0,
+      "scalars": 43,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "valid_for_country": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_ascension_perk",
+        "has_menace_perk"
+      ],
+      "keysByDefinition": [
+        [
+          "has_ascension_perk"
+        ],
+        [
+          "has_menace_perk"
+        ]
+      ]
+    }
+  }
+}
