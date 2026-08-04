@@ -49,7 +49,7 @@ export function emitOnActions(rules: RuleSet): OnActionsEmission {
 
   return {
     code:
-      'import type { OnActionRef } from "../on-actions.ts";\n\n' +
+      'import type { OnActionRef } from "../events/on-actions.ts";\n\n' +
       docComment([
         "Named Stellaris on-actions generated from `config/on_actions.cwt`.",
         "Scopeless hooks are present but cannot be registered until the SDK has a scopeless event kind.",

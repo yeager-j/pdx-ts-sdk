@@ -7,7 +7,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-import { FILE_STEM_PATTERN } from "../../sdk/src/items.ts";
+import { FILE_STEM_PATTERN } from "../../sdk/src/authoring/feature.ts";
 import { isValidPrefix, toDisplayName, toPackageName, toPrefix, toTags } from "../src/derive.ts";
 
 describe("toPrefix", () => {

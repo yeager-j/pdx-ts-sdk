@@ -3,7 +3,7 @@
 // From: events/events.cwt
 // From: effects.cwt
 
-import type { FireEventArgs, WitnessedFireEventArgs } from "../events.ts";
+import type { FireEventArgs, WitnessedFireEventArgs } from "../events/types.ts";
 import type { ScopeName } from "./scopes.ts";
 
 /**

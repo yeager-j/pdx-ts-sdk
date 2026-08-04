@@ -11,11 +11,16 @@
 
 import { describe, expect, it } from "vitest";
 
-import { buildMod as buildInternal } from "../src/build.ts";
 import {
-  defineSituationType as defineSituationTypeInternal,
-  on as onInternal,
-} from "../src/definers.ts";
+  collection as collectionInternal,
+  type Collection,
+  type EventItem,
+  type ModItem,
+  type ModItemInput,
+} from "../src/authoring/feature.ts";
+import { buildMod as buildInternal } from "../src/build.ts";
+import { defineSituationType as defineSituationTypeInternal } from "../src/content/situations.ts";
+import { on as onInternal } from "../src/events/on-actions.ts";
 import {
   addShipOfSizeLimits as addShipOfSizeLimitsInternal,
   defineCountryShipOfSizeLimit as defineCountryShipOfSizeLimitInternal,
@@ -41,13 +46,6 @@ import {
   type ModifierClosure,
   type ScopeObjOf,
 } from "../src/index.ts";
-import {
-  collection as collectionInternal,
-  type Collection,
-  type EventItem,
-  type ModItem,
-  type ModItemInput,
-} from "../src/items.ts";
 import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 import { resonancePack } from "./fixtures/resonance-pack.ts";
 import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";

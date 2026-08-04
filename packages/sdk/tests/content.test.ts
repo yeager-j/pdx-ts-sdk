@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import { collection as collectionInternal, type ModItem } from "../src/authoring/feature.ts";
 import { buildMod as buildInternal } from "../src/build.ts";
 import {
   ContentAuthoring,
@@ -9,7 +10,7 @@ import {
   type ContentField,
   type ContentRegistryDescriptor,
 } from "../src/content.ts";
-import { defineSituationType } from "../src/definers.ts";
+import { defineSituationType } from "../src/content/situations.ts";
 import {
   defineShipSize,
   defineTradition,
@@ -41,7 +42,6 @@ import {
   type ScopeName,
   type SpriteRef,
 } from "../src/index.ts";
-import { collection as collectionInternal, type ModItem } from "../src/items.ts";
 
 function configFor(name: string, prefix: string) {
   return { name, prefix, supportedVersion: "4.4.*" };

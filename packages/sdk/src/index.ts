@@ -30,7 +30,7 @@ export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
 export type { SituationTargetContract } from "./situations.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
 export { onActions } from "./generated/on-actions.ts";
-export type { OnActionRef } from "./on-actions.ts";
+export type { OnActionRef } from "./events/on-actions.ts";
 export type { AgendaDef, AgendaFields, DefinedAgenda } from "./generated/agenda.ts";
 export type {
   AgreementPresetDef,
@@ -201,7 +201,7 @@ export type {
   EventRef,
   FireEventArgs,
   WitnessedFireEventArgs,
-} from "./events.ts";
+} from "./events/types.ts";
 export type {
   CustomModifiers,
   DefinedContent,
@@ -238,12 +238,16 @@ export {
   type IdProfile,
   type MintedContentId,
   type ModCapability,
-} from "./mod-capability.ts";
+} from "./authoring/mod.ts";
 export { install, type InstallOptions, type InstallResult } from "./output/install.ts";
 export { render } from "./output/render.ts";
 export { renderLauncherDescriptor } from "./output/render.ts";
 export { write } from "./output/write.ts";
-export { DEFAULT_CONTENT_PATTERN, discoverFeatures, type DiscoverOptions } from "./discover.ts";
+export {
+  DEFAULT_CONTENT_PATTERN,
+  discoverFeatures,
+  type DiscoverOptions,
+} from "./authoring/discover.ts";
 // Generated item unions remain public; their raw constructors are internal
 // lowering machinery used by capability methods.
 export type * from "./generated/content-definers.ts";
@@ -259,7 +263,7 @@ export type {
   OnActionBindingItem,
   PlacedItem,
   TechnologyPatchItem,
-} from "./items.ts";
+} from "./authoring/feature.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
   GameVersionError,

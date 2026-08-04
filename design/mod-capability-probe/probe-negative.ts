@@ -1,4 +1,4 @@
-import { collection } from "../../packages/sdk/src/items.ts";
+import { collection } from "../../packages/sdk/src/authoring/feature.ts";
 import { createMod, stellarisIds, type MintedContentId } from "./capability.ts";
 
 const mod = createMod(

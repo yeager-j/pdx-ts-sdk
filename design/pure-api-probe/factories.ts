@@ -12,14 +12,15 @@
  * naming needs a codegen rule (`technology` → `createTechnologies`).
  */
 
-import { buildEvent, type DefinedEvent, type EventDef } from "../../packages/sdk/src/events.ts";
+import { buildEvent } from "../../packages/sdk/src/events/lower.ts";
+import type { OnActionRef } from "../../packages/sdk/src/events/on-actions.ts";
+import type { DefinedEvent, EventDef } from "../../packages/sdk/src/events/types.ts";
 import type { CountryShipOfSizeLimitDef } from "../../packages/sdk/src/generated/country-ship-of-size-limit.ts";
 import type { EventKindKey } from "../../packages/sdk/src/generated/events.ts";
 import { refId, type TypedRef } from "../../packages/sdk/src/generated/refs.ts";
 import type { ScopeName } from "../../packages/sdk/src/generated/scopes.ts";
 import type { SituationTypeDef } from "../../packages/sdk/src/generated/situation-type.ts";
 import type { TechnologyDef } from "../../packages/sdk/src/generated/technology.ts";
-import type { OnActionRef } from "../../packages/sdk/src/on-actions.ts";
 import {
   patchTechnology as transformTechnology,
   type TechnologyPatch,

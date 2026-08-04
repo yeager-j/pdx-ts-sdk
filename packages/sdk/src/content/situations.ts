@@ -16,15 +16,14 @@
  * available to package internals; public authors use mod capability methods.
  */
 
-import type { ScopeName } from "./generated/scopes.ts";
+import type { ContentItem } from "../authoring/feature.ts";
+import type { ScopeName } from "../generated/scopes.ts";
 import type {
   SituationApproachFields,
   SituationStageFields,
   SituationTypeDef,
-} from "./generated/situation-type.ts";
-import type { ContentItem, EventItem, EventItemBase, OnActionBindingItem } from "./items.ts";
-import type { OnActionRef } from "./on-actions.ts";
-import type { SituationTrigger } from "./triggers.ts";
+} from "../generated/situation-type.ts";
+import type { SituationTrigger } from "../triggers.ts";
 
 /**
  * `approach`'s and `stages`' own trigger fields, narrowed from
@@ -115,25 +114,4 @@ export function defineSituationType<
     def: rest as SituationTypeDef<Id>,
     targetScope: targetScope as T,
   };
-}
-
-/**
- * Internal on-action lowering primitive.
- *
- * The events are a non-empty tuple, and the list order is author data: the
- * game fires a hook's `events = { ... }` list as written, so `buildMod`
- * registers straight down the array and never sorts it. Two separate `on()`
- * items on the same hook still concatenate in the order they reach `buildMod`;
- * this is the form that puts that order fully in the author's hands.
- *
- * `NoInfer` makes the hook the only inference site, so a scope or FROM
- * mismatch is reported against the events rather than silently widening the
- * hook. The tuple has to be written as an array literal at the call site — a
- * variable of type `EventItem[]` has no non-empty proof to offer.
- */
-export function on<S extends ScopeName, From extends ScopeName | undefined>(
-  hook: OnActionRef<S, From>,
-  events: readonly [EventItem<NoInfer<S>, NoInfer<From>>, ...EventItem<NoInfer<S>, NoInfer<From>>[]]
-): OnActionBindingItem {
-  return { itemKind: "on-action", hook, events: events as readonly EventItemBase[] };
 }

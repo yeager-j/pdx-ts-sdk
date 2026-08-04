@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: on_actions.cwt
 
-import type { OnActionRef } from "../on-actions.ts";
+import type { OnActionRef } from "../events/on-actions.ts";
 
 /**
  * Named Stellaris on-actions generated from `config/on_actions.cwt`.

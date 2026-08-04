@@ -1064,7 +1064,7 @@ describe("generated content definers", () => {
     // level up: no mechanical defineSituationType is emitted beside the graft,
     // because `targetScope` is a contract the rules describe nowhere.
     expect(HAND_WRITTEN_CONTENT_DEFINERS.has("situation_type")).toBe(true);
-    expect(definers).toContain('export { defineSituationType } from "../definers.ts";');
+    expect(definers).toContain('export { defineSituationType } from "../content/situations.ts";');
     expect(definers).not.toContain("export function defineSituationType");
     expect(definers).not.toContain("defineSituationType<const Id");
   });

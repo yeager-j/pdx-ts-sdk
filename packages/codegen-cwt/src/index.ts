@@ -542,9 +542,10 @@ async function main(): Promise<void> {
   await write(
     "event-definers.ts",
     header(commit, ["events/events.cwt"]) +
-      'import { buildEvent, type EventDef, type EventRef } from "../events.ts";\n' +
-      'import { assertNamespace } from "../items.ts";\n' +
-      'import type { EventItem } from "../items.ts";\n' +
+      'import { buildEvent } from "../events/lower.ts";\n' +
+      'import type { EventDef, EventRef } from "../events/types.ts";\n' +
+      'import { assertNamespace } from "../authoring/feature.ts";\n' +
+      'import type { EventItem } from "../authoring/feature.ts";\n' +
       'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.definerCode
@@ -552,7 +553,7 @@ async function main(): Promise<void> {
   await write(
     "event-fires.ts",
     header(commit, ["events/events.cwt", "effects.cwt"]) +
-      'import type { FireEventArgs, WitnessedFireEventArgs } from "../events.ts";\n' +
+      'import type { FireEventArgs, WitnessedFireEventArgs } from "../events/types.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.firesCode
   );
@@ -670,7 +671,7 @@ async function main(): Promise<void> {
  * conditional in this emitter: `CONTENT_PATCH_REGISTRIES` adds a free `patchX`,
  * `CONTENT_CONTRIBUTION_SINKS` a free `addX` for the id-less sink, and
  * `HAND_WRITTEN_CONTENT_DEFINERS` replaces the mechanical `defineX` with a
- * re-export from `src/definers.ts`, so the internal lowering surface remains
+ * re-export from `src/content/situations.ts`, so the internal lowering surface remains
  * centralized in this module.
  *
  * The `XItem` union types are emitted here too. They remain public as type-only
@@ -902,7 +903,7 @@ function contentDefiners(
       definitions.push(
         `// define${name} is hand-written; re-exported here so every definer this\n` +
           "// SDK has comes from one module.\n" +
-          `export { define${name} } from "../definers.ts";\n`
+          `export { define${name} } from "../content/situations.ts";\n`
       );
     }
     if (patchable !== undefined) {
@@ -955,7 +956,7 @@ function contentDefiners(
     .map((content) => content.emission.typeName);
   const refImports = contents.some((content) => CONTENT_CONTRIBUTION_SINKS.has(content.registry));
   const imports =
-    importList("../items.ts", [...runtimeItemTypes]) +
+    importList("../authoring/feature.ts", [...runtimeItemTypes]) +
     (refImports ? 'import { refId, type TypedRef } from "./refs.ts";\n' : "") +
     patchNames
       .map(
@@ -980,11 +981,11 @@ function contentDefiners(
   const graftImports = contents.some((content) =>
     HAND_WRITTEN_CONTENT_DEFINERS.has(content.registry)
   )
-    ? 'import { defineSituationType, type SituationTypeCapabilityDef } from "../definers.ts";\n' +
+    ? 'import { defineSituationType, type SituationTypeCapabilityDef } from "../content/situations.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n'
     : "";
   const capabilityImports =
-    'import type { ContentItem } from "../items.ts";\n' +
+    'import type { ContentItem } from "../authoring/feature.ts";\n' +
     (capabilityRuntimeDefiners.size === 0
       ? ""
       : `import { ${[...capabilityRuntimeDefiners].sort().join(", ")} } from "./content-definers.ts";\n`) +

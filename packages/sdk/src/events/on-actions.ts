@@ -1,8 +1,9 @@
 import { block, list, scalar, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { DefinedEvent } from "./events.ts";
-import type { ScopeName } from "./generated/scopes.ts";
-import { compareUtf8 } from "./ordering.ts";
+import type { EventItem, EventItemBase, OnActionBindingItem } from "../authoring/feature.ts";
+import type { ScopeName } from "../generated/scopes.ts";
+import { compareUtf8 } from "../ordering.ts";
+import type { DefinedEvent } from "./types.ts";
 
 export interface OnActionRef<
   S extends ScopeName | null = ScopeName | null,
@@ -85,4 +86,12 @@ export class OnActionAuthoring {
 
 function contract(scope: ScopeName, from: ScopeName | undefined): string {
   return `${scope} scope${from === undefined ? " with no FROM" : ` with FROM ${from}`}`;
+}
+
+/** Creates one capability-owned on-action binding. */
+export function on<S extends ScopeName, From extends ScopeName | undefined>(
+  hook: OnActionRef<S, From>,
+  events: readonly [EventItem<NoInfer<S>, NoInfer<From>>, ...EventItem<NoInfer<S>, NoInfer<From>>[]]
+): OnActionBindingItem {
+  return { itemKind: "on-action", hook, events: events as readonly EventItemBase[] };
 }

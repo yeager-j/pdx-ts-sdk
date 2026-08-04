@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { collection } from "../src/authoring/feature.ts";
 import { buildMod } from "../src/build.ts";
-import { on } from "../src/definers.ts";
+import { on } from "../src/events/on-actions.ts";
 import { namespace } from "../src/generated/event-definers.ts";
 import { createMod, onActions, render } from "../src/index.ts";
-import { collection } from "../src/items.ts";
 
 const CONFIG = {
   name: "On-action runtime tests",

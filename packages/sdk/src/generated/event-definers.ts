@@ -2,8 +2,9 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: events/events.cwt
 
-import { buildEvent, type EventDef, type EventRef } from "../events.ts";
-import { assertNamespace, type EventItem } from "../items.ts";
+import { assertNamespace, type EventItem } from "../authoring/feature.ts";
+import { buildEvent } from "../events/lower.ts";
+import type { EventDef, EventRef } from "../events/types.ts";
 import { EVENT_KINDS, type EventKindKey } from "./events.ts";
 import type { ScopeName } from "./scopes.ts";
 

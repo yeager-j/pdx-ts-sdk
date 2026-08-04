@@ -25,13 +25,13 @@ import { kv, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 import type { ModConfig } from "../../packages/sdk/src/build.ts";
 import { ContentAuthoring, type DefinedContent } from "../../packages/sdk/src/content.ts";
 import { StaleRuleTableError } from "../../packages/sdk/src/errors.ts";
-import type { DefinedEvent } from "../../packages/sdk/src/events.ts";
+import { OnActionAuthoring } from "../../packages/sdk/src/events/on-actions.ts";
+import type { DefinedEvent } from "../../packages/sdk/src/events/types.ts";
 import {
   CONTENT_REGISTRIES,
   type ContentTypeName,
 } from "../../packages/sdk/src/generated/content-registry.ts";
 import type { ScopeName } from "../../packages/sdk/src/generated/scopes.ts";
-import { OnActionAuthoring } from "../../packages/sdk/src/on-actions.ts";
 import { normalizeLogicalPath } from "../../packages/sdk/src/ordering.ts";
 import {
   collectVarRefs,

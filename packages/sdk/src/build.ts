@@ -31,16 +31,6 @@
 
 import { kv, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
-import { ContentAuthoring, type ContentRefUse, type DefinedContent } from "./content.ts";
-import { StaleRuleTableError } from "./errors.ts";
-import type { DefinedEvent } from "./events.ts";
-import { CONTENT_REGISTRIES, type ContentTypeName } from "./generated/content-registry.ts";
-import type { ScopeName } from "./generated/scopes.ts";
-import {
-  checkVanillaPackagePin,
-  installedVanillaPackageVersion,
-  vanillaIdsCheckWarning,
-} from "./identifiers/package-pin.ts";
 import {
   flattenItems,
   type ContentItem,
@@ -48,8 +38,18 @@ import {
   type ModItemInput,
   type ModWarning,
   type OnActionBindingItem,
-} from "./items.ts";
-import { OnActionAuthoring } from "./on-actions.ts";
+} from "./authoring/feature.ts";
+import { ContentAuthoring, type ContentRefUse, type DefinedContent } from "./content.ts";
+import { StaleRuleTableError } from "./errors.ts";
+import { OnActionAuthoring } from "./events/on-actions.ts";
+import type { DefinedEvent } from "./events/types.ts";
+import { CONTENT_REGISTRIES, type ContentTypeName } from "./generated/content-registry.ts";
+import type { ScopeName } from "./generated/scopes.ts";
+import {
+  checkVanillaPackagePin,
+  installedVanillaPackageVersion,
+  vanillaIdsCheckWarning,
+} from "./identifiers/package-pin.ts";
 import { compareUtf8, normalizeLogicalPath } from "./ordering.ts";
 import {
   collectVarRefs,

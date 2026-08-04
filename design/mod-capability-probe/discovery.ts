@@ -2,13 +2,16 @@ import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { DEFAULT_CONTENT_PATTERN, type DiscoverOptions } from "../../packages/sdk/src/discover.ts";
+import {
+  DEFAULT_CONTENT_PATTERN,
+  type DiscoverOptions,
+} from "../../packages/sdk/src/authoring/discover.ts";
 import {
   collection,
   FILE_STEM_PATTERN,
   type Collection,
   type ModItem,
-} from "../../packages/sdk/src/items.ts";
+} from "../../packages/sdk/src/authoring/feature.ts";
 import { compareLogicalPaths, normalizeLogicalPath } from "../../packages/sdk/src/ordering.ts";
 import type { CapabilityFeature } from "./capability.ts";
 

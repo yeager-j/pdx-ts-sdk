@@ -7,11 +7,15 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
-import { buildMod as buildInternal } from "../src/build.ts";
 import {
-  defineSituationType as defineSituationTypeInternal,
-  on as onInternal,
-} from "../src/definers.ts";
+  collection as collectionInternal,
+  type Collection,
+  type ContentItem,
+  type EventItemBase,
+} from "../src/authoring/feature.ts";
+import { buildMod as buildInternal } from "../src/build.ts";
+import { defineSituationType as defineSituationTypeInternal } from "../src/content/situations.ts";
+import { on as onInternal } from "../src/events/on-actions.ts";
 import {
   defineTechnology as defineTechnologyInternal,
   defineTradition as defineTraditionInternal,
@@ -25,12 +29,6 @@ import {
   type TechnologyRef,
   type TraditionItem,
 } from "../src/index.ts";
-import {
-  collection as collectionInternal,
-  type Collection,
-  type ContentItem,
-  type EventItemBase,
-} from "../src/items.ts";
 
 /**
  * The definers, and what a definition is once no collection is in the way:
