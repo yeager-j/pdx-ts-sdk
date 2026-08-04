@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   and,
   anyCountry,
+  currentSituationApproach,
+  currentStage,
   hasCountryFlag,
   hasGlobalFlag,
   hasTechnology,
@@ -96,6 +98,37 @@ describe("trigger builders", () => {
       }
       "
     `);
+  });
+
+  it("composes SDK-52's branded SituationTrigger through and()/not()/.and() like any other trigger", () => {
+    // SituationTrigger (currentSituationApproach/currentStage) is a plain
+    // Trigger<"situation"> with an optional phantom brand, not a distinct
+    // combinator surface — the flattening (and()) and re-grouping (not())
+    // in this file apply to it unchanged.
+    const flat = and(currentSituationApproach("approach_a"), currentStage("stage_1"));
+    expect(serialize([...flat.entries])).toMatchInlineSnapshot(`
+      "current_situation_approach = approach_a
+
+      current_stage = stage_1
+      "
+    `);
+
+    const fluentBranded = currentSituationApproach("approach_a").and(currentStage("stage_1"));
+    expect(serialize([...fluentBranded.entries])).toBe(serialize([...flat.entries]));
+
+    // A single branded condition negates directly, no AND wrapper.
+    expect(serialize([...not(currentSituationApproach("approach_a")).entries])).toBe(
+      "NOT = {\n\tcurrent_situation_approach = approach_a\n}\n"
+    );
+    // A multi-entry branded conjunction keeps its AND wrapper under NOT (NAND, not NOR).
+    expect(serialize([...not(flat).entries])).toBe(
+      "NOT = {\n" +
+        "\tAND = {\n" +
+        "\t\tcurrent_situation_approach = approach_a\n" +
+        "\t\tcurrent_stage = stage_1\n" +
+        "\t}\n" +
+        "}\n"
+    );
   });
 
   it("splices hidden_trigger operands flat, changing no scope", () => {

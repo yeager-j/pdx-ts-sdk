@@ -1191,8 +1191,12 @@ describe("generated content registries", () => {
     const rendered = render(
       buildMod(configFor("Situation approach test", "sa_test"), [situationTypes])
     ).get("common/situations/sa_test_situations.txt");
+    // and()'s two operands splice flat with no AND wrapper (SDK-53) — each
+    // leaf's own emission is still the plain, unwrapped scalar this test
+    // pins; only the (already implicit-AND) abort_trigger block around them
+    // changed shape.
     expect(rendered).toContain(
-      "abort_trigger = {\n\t\tAND = {\n\t\t\tcurrent_situation_approach = sa_test_situation_approach_calm\n\t\t\tcurrent_stage = sa_test_situation_stage_1\n\t\t}\n\t}"
+      "abort_trigger = {\n\t\tcurrent_situation_approach = sa_test_situation_approach_calm\n\t\tcurrent_stage = sa_test_situation_stage_1\n\t}"
     );
     expect(rendered).toContain(
       "potential = {\n\t\t\t\tcurrent_situation_approach = sa_test_situation_approach_calm\n\t\t\t}"
