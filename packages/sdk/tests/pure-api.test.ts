@@ -56,8 +56,10 @@ import {
   render,
   type Collection,
   type EventItem,
+  type ModifierClosure,
   type ModItem,
   type ModItemInput,
+  type ScopeObjOf,
 } from "../src/index.ts";
 import { viewFromFiles } from "../src/vanilla/surface.ts";
 import { resonancePack } from "./fixtures/resonance-pack.ts";
@@ -948,6 +950,66 @@ describe("lowering determinism", () => {
     const secondFiles = render(second);
     const firstFiles = render(first);
     expect([...firstFiles.entries()]).toEqual([...secondFiles.entries()]);
+  });
+});
+
+/**
+ * A recorder is valid only inside the closure it was handed to.
+ *
+ * Both recorders — the effect scope object (`effect-core.ts`) and the modifier
+ * path recorder (`content.ts`) — are proxies over an entry array that the
+ * lowering keeps by reference. Stored somewhere longer-lived than the closure,
+ * either one used to record into an already-built, already-frozen `PureMod`:
+ * no error, and a second `render` of that same value emitting different bytes
+ * than the first. Determinism above is asserted over honest builds; this is
+ * the same property held against a caller actively trying to break it.
+ */
+describe("recorder liveness", () => {
+  it("refuses an effect recorded on a scope object that escaped its closure", () => {
+    let leaked: ScopeObjOf<"country"> | undefined;
+    const events = namespace("pp_mod_leak");
+    const event = events.defineCountryEvent({
+      id: 1,
+      title: "Leak",
+      desc: "Leak",
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        leaked = country;
+        country.log("recorded inside the closure");
+      },
+      options: [{ name: "ok" }],
+    });
+    const mod = buildMod(CONFIG, [collection(undefined, [event])]);
+    const before = render(mod);
+
+    expect(() => leaked!.log("recorded after the closure returned")).toThrow(
+      /scope object whose effect closure has already returned/
+    );
+
+    // The mutation attempt changed nothing: the same built value renders the
+    // same bytes it did before the attempt.
+    expect([...render(mod).entries()]).toEqual([...before.entries()]);
+  });
+
+  it("refuses a modifier recorded on a path recorder that escaped its closure", () => {
+    let leaked: Parameters<ModifierClosure<"country">>[0] | undefined;
+    const tradition = defineTradition({
+      id: "pp_mod_leaky_tradition",
+      name: "Leaky",
+      effects: "Nothing at all.",
+      modifier: (m) => {
+        leaked = m;
+        m.command.limit.add(1);
+      },
+    });
+    const mod = buildMod(CONFIG, [collection(undefined, [tradition])]);
+    const before = render(mod);
+
+    expect(() => leaked!.command.limit.add(2)).toThrow(
+      /modifier closure that has already returned/
+    );
+
+    expect([...render(mod).entries()]).toEqual([...before.entries()]);
   });
 });
 

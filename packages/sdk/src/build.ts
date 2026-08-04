@@ -48,7 +48,11 @@ import { OnActionAuthoring } from "./on-actions.ts";
 import { compareUtf8, normalizeLogicalPath } from "./resolver/path-order.ts";
 import { collectVarRefs, planPatchEmission, type PatchPlan } from "./resolver/plan.ts";
 import { SUPPORTED_STELLARIS_BUILD } from "./resolver/rules.ts";
-import { checkVanillaPackagePin, installedVanillaPackageVersion } from "./vanilla/package-pin.ts";
+import {
+  checkVanillaPackagePin,
+  installedVanillaPackageVersion,
+  vanillaIdsCheckWarning,
+} from "./vanilla/package-pin.ts";
 import type { PatchedTechnology } from "./vanilla/patch.ts";
 import { sha256Hex, type VanillaFile, type VanillaView } from "./vanilla/surface.ts";
 
@@ -80,6 +84,22 @@ export interface ModConfig<P extends string = string> {
    * an explicit, per-version acceptance, never a blanket one.
    */
   acceptGameVersion?: string;
+  /**
+   * Acknowledges authoring without compile-time vanilla id checking.
+   *
+   * `buildMod` warns when `@pdx-ts/stellaris-ids` is not doing its job —
+   * absent, or pinned to a different game build than the install — because
+   * that protection degrades silently to plain `string` and nothing else
+   * would say so (`vanillaIdsCheckWarning`, `vanilla/package-pin.ts`). Set
+   * this when the mod authors vanilla ids by hand on purpose, and the warning
+   * is a standing false alarm rather than news.
+   *
+   * No warning is not proof of checking: the package must also be *imported*
+   * somewhere in the project for its declaration merge to reach the compiler,
+   * and no runtime check can see whether it was — see
+   * `vanillaIdsCheckWarning` for why, and for what would close it.
+   */
+  uncheckedVanillaIds?: boolean;
 }
 
 export interface BuildOptions {
@@ -139,6 +159,104 @@ function emissionPath(prefix: string, outputDir: string, stem: string): string {
 function eventNumber(event: EventItemBase, namespace: string): number {
   return Number(event.id.slice(namespace.length + 1));
 }
+
+/**
+ * One registry whose nested "swap" definitions double as its own reference
+ * target (SDK-38, widened for the P1 in SDK-37's review).
+ */
+export interface SwapIdentity {
+  /** Registry the swap field lives on, and also the fold target — every
+   * `base_type` names its own declaring registry. */
+  readonly registryType: string;
+  /**
+   * The resolved `def`'s member path to the swap field (camelCase), walked
+   * from the definition root. Usually one segment; `job`'s swap field sits
+   * inside the `swappable_data` wrapper CWT declares alongside it
+   * (`swappableData.swapType`), so this is a path rather than a single member.
+   */
+  readonly path: readonly string[];
+  /**
+   * Where the swap ids are spelled in the value at `path`: the keys of a
+   * record (`repeatedStruct` with `keying: "siblings"`, CWT "shape 2"), or
+   * the `name` member of each element of an array (a repeated `struct`, CWT
+   * "shape 3").
+   *
+   * Data rather than the extraction function it selects, so the sync gate can
+   * compare it against the generated field metadata — a row whose shape is
+   * wrong extracts nothing and fails no type, it just silently stops
+   * accounting for a registry's swap ids.
+   */
+  readonly keying: "record-keys" | "array-names";
+}
+
+const readSwapPath = (value: unknown, path: readonly string[]): unknown =>
+  path.reduce<unknown>(
+    (current, segment) =>
+      current !== null && typeof current === "object"
+        ? (current as Readonly<Record<string, unknown>>)[segment]
+        : undefined,
+    value
+  );
+const swapIds = (value: unknown, keying: SwapIdentity["keying"]): readonly string[] => {
+  if (keying === "record-keys") {
+    return value !== null && typeof value === "object" && !Array.isArray(value)
+      ? Object.keys(value)
+      : [];
+  }
+  return Array.isArray(value)
+    ? value.flatMap((item: unknown) =>
+        typeof (item as { readonly name?: unknown } | null)?.name === "string"
+          ? [(item as { readonly name: string }).name]
+          : []
+      )
+    : [];
+};
+
+/**
+ * The registries whose swap ids join their own registry's built-id set.
+ *
+ * The vendored rules declare a `base_type` relationship for exactly five
+ * registries the SDK exposes, plus `authority`, which is not an SDK registry
+ * at all (`CONTENT_MANIFEST` never registers it, so there is no
+ * `defineAuthority` and no `builtIds` set for its swap ids to join).
+ *
+ * Every hand-copied part of a row is *checked*, not merely asserted here:
+ * `tests/reference-guard-swap-identities.test.ts` scans every vendored `.cwt`
+ * file for `base_type` declarations and fails naming any registry that is
+ * neither a row below nor an exclusion it documents — so a sixth appearing in
+ * a vendor bump is a failing test rather than a silent gap. It also derives
+ * each row's `path` and `keying` (from the rules' `type_key_filter` and
+ * `skip_root_key`, and from the generated field metadata) rather than trusting
+ * them, since a renamed or reshaped swap field breaks a row while leaving its
+ * `base_type` intact, and proves the `authority` exclusion still holds by
+ * asserting no such registry exists.
+ *
+ * Every row folds into *its own* registry's built-id set — `base_type` never
+ * names a different registry than the one declaring the swap field — so this
+ * cannot loosen the guard for an unrelated registry.
+ *
+ * `civic_or_origin.swap_type`, `technology.technology_swap`, and
+ * `job.swap_type` are CWT "shape 3": an anonymous repeated block
+ * (`name_field = "name"`) rather than `tradition.tradition_swap`'s
+ * record-keyed "shape 2". `ContentAuthoring`'s `nestedIds` bookkeeping
+ * (`content.ts`'s `collectRepeatedStructs`) only tracks the record-keyed
+ * shape, so all five are read directly off each definition's own resolved
+ * `def` instead — one mechanism for both shapes, rather than pairing this
+ * table with a second, codegen-side one that would need to stay in sync with
+ * it by hand. Teaching `collectRepeatedStructs` (or the generated field
+ * metadata) to recognize the shape-3 case is real codegen surgery — a new
+ * `ContentField` concept, `base_type`/`type_key_filter` cross-referencing to
+ * attribute a `type[swapped_x]` back to its owning field, and regenerating
+ * four files — with no behavioral upside over reading `def` directly, since
+ * the guard only needs the id strings.
+ */
+export const SWAP_IDENTITIES: readonly SwapIdentity[] = [
+  { registryType: "tradition", path: ["traditionSwap"], keying: "record-keys" },
+  { registryType: "ascension_perk", path: ["traditionSwap"], keying: "record-keys" },
+  { registryType: "civic_or_origin", path: ["swapType"], keying: "array-names" },
+  { registryType: "technology", path: ["technologySwap"], keying: "array-names" },
+  { registryType: "job", path: ["swappableData", "swapType"], keying: "array-names" },
+];
 
 export function buildMod(
   config: ModConfig,
@@ -490,12 +608,10 @@ export function buildMod(
   );
   for (const item of orderedBindings) {
     for (const event of item.events) {
-      if (!includedEvents.has(event)) {
-        throw new Error(
-          `Event "${event.id}" is not among the collections passed to buildMod; ` +
-            `on-action "${item.hook.name}" can only fire this mod's own events`
-        );
-      }
+      // Ownership is `OnActionAuthoring.register`'s check, not this loop's:
+      // the class advertises the invariant to every caller and holds the
+      // `ownsEvent` predicate this fold handed it, so a pre-check here would
+      // only be a second copy of the same message to keep in step.
       onActionAuthoring.register(
         item.hook,
         event as DefinedEvent<ScopeName, ScopeName | undefined>
@@ -665,93 +781,18 @@ export function buildMod(
     }
     builtIds.set(group.type, ids);
   }
-  // Nested "swap" definitions that double as their owning registry's own
-  // reference target (SDK-38, widened for the P1 in SDK-37's review): the
-  // vendored rules declare a `base_type` relationship for exactly five
-  // registries the SDK exposes, mechanically enumerated by
-  // `grep -rn "base_type" vendor/cwtools-stellaris-config/config/` against
-  // the pin this codegen ran against (`251fe1189b4e`) — every hit, so a
-  // sixth showing up in a future vendor bump is a diff on this list, not a
-  // silent gap:
-  //   - common/traditions.cwt:17                type[swapped_tradition]      base_type = tradition
-  //   - common/ascension_perks.cwt:16            type[swapped_ascension_perk] base_type = ascension_perk
-  //   - common/technologies_consolidated.cwt:58  type[swapped_technology]    base_type = technology
-  //   - common/pop_jobs.cwt:33                   type[swapped_job]           base_type = job
-  //   - common/governments.cwt:97                type[swapped_civic]         base_type = civic_or_origin.civic
-  //   - common/governments.cwt:20                type[swapped_authority]     base_type = authority
-  //     (excluded: `authority` has no `defineAuthority` — CONTENT_MANIFEST
-  //     never registers it as an SDK registry, so there is no `builtIds` set
-  //     for its swap ids to join)
-  // Every one of the five folds into *its own* registry's built-id set —
-  // `base_type` never names a different registry than the one declaring the
-  // swap field — so this cannot loosen the guard for an unrelated registry.
-  //
-  // `civic_or_origin.swap_type`, `technology.technology_swap`, and
-  // `job.swap_type` are CWT "shape 3": an anonymous repeated block
-  // (`name_field = "name"`) rather than `tradition.tradition_swap`'s
-  // record-keyed "shape 2". `ContentAuthoring`'s `nestedIds` bookkeeping
-  // (`content.ts`'s `collectRepeatedStructs`) only tracks the record-keyed
-  // shape, so all five are read directly off each definition's own resolved
-  // `def` here instead — one mechanism for both shapes, rather than pairing
-  // this table with a second, codegen-side one that would need to stay in
-  // sync with it by hand. Teaching `collectRepeatedStructs` (or the
-  // generated field metadata) to recognize the shape-3 case is real codegen
-  // surgery — a new `ContentField` concept, `base_type`/`type_key_filter`
-  // cross-referencing to attribute a `type[swapped_x]` back to its owning
-  // field, and regenerating four files — with no behavioral upside over
-  // reading `def` directly, since the guard only needs the id strings.
-  interface SwapIdentity {
-    /** Registry the swap field lives on, and also the fold target — every
-     * `base_type` above names its own declaring registry. */
-    readonly registryType: string;
-    /**
-     * The resolved `def`'s member path to the swap field (camelCase),
-     * walked from the definition root. Usually one segment; `job`'s swap
-     * field sits inside the `swappable_data` wrapper CWT declares alongside
-     * it (`swappableData.swapType`), so this is a path rather than a single
-     * member.
-     */
-    readonly path: readonly string[];
-    /** Reads swap ids off the value at `path`. */
-    readonly extract: (value: unknown) => readonly string[];
-  }
-  const readPath = (value: unknown, path: readonly string[]): unknown =>
-    path.reduce<unknown>(
-      (current, segment) =>
-        current !== null && typeof current === "object"
-          ? (current as Readonly<Record<string, unknown>>)[segment]
-          : undefined,
-      value
-    );
-  const recordKeys = (value: unknown): readonly string[] =>
-    value !== null && typeof value === "object" ? Object.keys(value) : [];
-  const arrayNames = (value: unknown): readonly string[] =>
-    Array.isArray(value)
-      ? value.flatMap((item: unknown) =>
-          typeof (item as { readonly name?: unknown } | null)?.name === "string"
-            ? [(item as { readonly name: string }).name]
-            : []
-        )
-      : [];
-  const SWAP_IDENTITIES: readonly SwapIdentity[] = [
-    { registryType: "tradition", path: ["traditionSwap"], extract: recordKeys },
-    { registryType: "ascension_perk", path: ["traditionSwap"], extract: recordKeys },
-    { registryType: "civic_or_origin", path: ["swapType"], extract: arrayNames },
-    { registryType: "technology", path: ["technologySwap"], extract: arrayNames },
-    { registryType: "job", path: ["swappableData", "swapType"], extract: arrayNames },
-  ];
   const definedByType = new Map<string, DefinedGroup["defined"][number][]>();
   for (const group of definedGroups) {
     definedByType.set(group.type, [...(definedByType.get(group.type) ?? []), ...group.defined]);
   }
-  for (const { registryType, path, extract } of SWAP_IDENTITIES) {
+  for (const { registryType, path, keying } of SWAP_IDENTITIES) {
     const defined = definedByType.get(registryType);
     if (defined === undefined) {
       continue;
     }
     const ids = builtIds.get(registryType) ?? new Set<string>();
     for (const definition of defined) {
-      for (const id of extract(readPath(definition.def, path))) {
+      for (const id of swapIds(readSwapPath(definition.def, path), keying)) {
         ids.add(id);
       }
     }
@@ -817,6 +858,44 @@ export function buildMod(
     );
   }
 
+  // The canary for the same package being *absent* rather than mismatched:
+  // vanilla id checking then degrades to plain `string` silently and by
+  // design, so a build with no identifier protection at all looks exactly
+  // like one with it. A warning rather than a refusal — authoring without
+  // the package is supported — and suppressible, since for a mod that does
+  // it deliberately this is news exactly once. Resolution is dynamic
+  // (`installedVanillaPackageVersion` requires a path, never imports the
+  // package), which is what keeps the package-absent world a first-class
+  // program for this file too. Silence here means "installed and pinned
+  // right", not "checking is on": whether the package was ever imported into
+  // the consumer's program is a compile-time fact no build-time check can
+  // reach, which `vanillaIdsCheckWarning` documents and both messages say.
+  if (config.uncheckedVanillaIds !== true) {
+    const idsWarning = vanillaIdsCheckWarning(
+      installedVanillaPackageVersion(),
+      options.vanilla?.gameVersion,
+      config.acceptGameVersion
+    );
+    if (idsWarning !== undefined) {
+      warnings.push({ code: "unchecked-vanilla-ids", message: idsWarning });
+    }
+  }
+
+  // Belt and braces over the recorders' own liveness checks (`assertLive` in
+  // effect-core.ts and content.ts): `Object.freeze` below makes the *value*
+  // immutable, but every entry tree on it is an array a recorder closure once
+  // held by reference, so a leaked recorder could still edit what a built mod
+  // renders. Both recorders now refuse that at the source; freezing the trees
+  // means the guarantee does not depend on having found every such path.
+  // ~1.2ms per 18k AST nodes, against a build an order of magnitude longer.
+  for (const file of contentFiles) {
+    freezeItems(file.entries);
+  }
+  for (const file of eventFiles) {
+    freezeItems(file.entries);
+  }
+  freezeItems(onActions);
+
   return Object.freeze({
     config,
     warnings,
@@ -829,6 +908,37 @@ export function buildMod(
     patchPlan,
     vanillaPaths,
   });
+}
+
+/**
+ * Deep-freezes an emitted entry tree. Nodes are shared — an event's `entry`
+ * is both on `mod.events` and inside its file — so an already-frozen node
+ * short-circuits rather than being walked twice.
+ */
+function freezeItems(items: readonly PdxItem[]): void {
+  Object.freeze(items);
+  for (const item of items) {
+    freezeNode(item);
+  }
+}
+
+function freezeNode(node: PdxItem): void {
+  if (Object.isFrozen(node)) {
+    return;
+  }
+  Object.freeze(node);
+  switch (node.kind) {
+    case "entry":
+      freezeNode(node.value);
+      break;
+    case "container":
+    case "param":
+      freezeItems(node.items);
+      break;
+    default:
+      // Scalars carry no children.
+      break;
+  }
 }
 
 /**

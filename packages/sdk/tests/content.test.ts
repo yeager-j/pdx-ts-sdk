@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -2619,7 +2620,10 @@ describe("alias-struct serialization", () => {
   function renderCivic(def: Record<string, unknown> & { id: string }): string {
     const authoring = new ContentAuthoring("gt_test", [descriptor], () => {});
     authoring.define("civic_or_origin", def);
-    return authoring.render().get("common/governments/civics/gt_test_civics.txt")!;
+    // Through the same serializer `render` puts every emitted file through;
+    // what this fixture is about is the lowered shape of one alias struct, and
+    // its registry descriptor is synthetic, so it never reaches `buildMod`.
+    return serialize(authoring.entries("civic_or_origin"));
   }
 
   it("writes a domain clause the way vanilla civics write it", () => {
@@ -2718,7 +2722,7 @@ describe("alias-struct serialization", () => {
       () => {}
     );
     authoring.define("civic_or_origin", { id: "gt_test_civic_unregistered", potential: {} });
-    expect(() => authoring.render()).toThrow(
+    expect(() => authoring.entries("civic_or_origin")).toThrow(
       'No field table registered for alias category "species_trigger"'
     );
   });
