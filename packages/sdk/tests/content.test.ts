@@ -3091,6 +3091,23 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
   // precedent). for_species was caught in review, not in the ticket's own
   // sweep — it matched the field name to job's identically-named field
   // instead of checking the registry.
+  //
+  // KNOWN GAP, also caught in bug-bash review: triggered_country_modifier,
+  // triggered_army_modifier, and triggered_planet_pop_group_modifier_for_all
+  // splice triggered_modifier_by_planet_clause, whose own `potential` field
+  // pushes to planet scope (aliases.cwt:114-115) independent of the scope
+  // each field's own replace_scopes declares for its *modifier* half. The
+  // hand-written TriggeredModifier<S> (packages/sdk/src/content.ts) has one
+  // scope parameter for both halves, so `when` is currently mis-typed for
+  // these three (and, pre-existing on main, situation_type's six
+  // triggered_modifier/triggered_target_modifier rows). This is a
+  // compile-time authoring-safety gap only — the tests below assert emitted
+  // PDXScript text, which is correct regardless, since TypeScript's `S` never
+  // reaches serialization. See each affected field's overlay.ts reason for
+  // the full account and why the type fix is tracked separately rather than
+  // built into this PR. triggered_planet_pop_group_modifier_for_species
+  // (splicing the pop_group variant) was checked for the same defect and is
+  // NOT affected — see its own overlay reason.
   const CONFIG = configFor("SDK-56 building modifiers test", "sdk56");
 
   it("emits building's plain modifier trio: country_modifier/army_modifier/system_modifier (buildingModifiers)", () => {

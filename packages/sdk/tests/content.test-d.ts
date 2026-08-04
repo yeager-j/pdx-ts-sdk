@@ -1395,6 +1395,29 @@ describe("generated content authoring types", () => {
       TriggeredModifier<"pop_group">[] | undefined
     >();
 
+    // KNOWN BUG (bug-bash finding, documented in overlay.ts's
+    // building.triggered_country_modifier reason, not fixed here):
+    // triggered_country_modifier splices triggered_modifier_by_planet_clause,
+    // whose own `potential` field pushes to PLANET scope (aliases.cwt:114-115)
+    // — independent of this field's own `## replace_scopes = { this = country
+    // ... }` (buildings.cwt:229-230), which governs only the *modifier* half.
+    // TriggeredModifier<"country">'s single scope parameter cannot represent
+    // that split, so hasAuthority() (country-scoped) below type-checks as a
+    // valid `when` even though the rules license only a planet-scope
+    // condition there — the accepting half of the same bug isCapital()'s
+    // rejection above demonstrates. Both directions need the same fix: a
+    // second, independent scope parameter on TriggeredModifier<S>.
+    defineBuilding({
+      id: "content_types_building_modifier_potential_scope_hole",
+      name: "X",
+      triggeredCountryModifier: [
+        {
+          when: hasAuthority("auth_democratic"),
+          modifiers: (m) => m.raw("country_edict_fund_add", 10),
+        },
+      ],
+    });
+
     defineBuilding({
       id: "content_types_building_modifier_scopes",
       name: "X",
@@ -1412,8 +1435,18 @@ describe("generated content authoring types", () => {
       },
       triggeredArmyModifier: [
         {
-          // @ts-expect-error — triggered_army_modifier's potential runs in
-          // army scope; isCapital is colony/planet/carrier/ship only
+          // @ts-expect-error — KNOWN BUG, pinned rather than endorsed (see
+          // building.triggered_army_modifier's overlay.ts reason and
+          // building.triggered_country_modifier's for the full account): the
+          // rules push `potential` to planet scope here
+          // (aliases.cwt:114-115), not army — so isCapital() (a real,
+          // legal planet-scope condition) is wrongly rejected by
+          // TriggeredModifier<"army">'s single scope parameter, and an
+          // army-scoped condition the rules do NOT license for `potential`
+          // would be wrongly accepted in its place. Fixing the type to
+          // reject correctly (and accept isCapital() here) needs a second,
+          // independent scope parameter on TriggeredModifier<S> — tracked
+          // separately, not built into this PR.
           when: isCapital(),
           modifiers: (m) => m.raw("armies_cost_mult", -0.05),
         },
