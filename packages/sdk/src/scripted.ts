@@ -231,6 +231,46 @@ function scriptedEntry(name: string, args: ScriptedParams | undefined): PdxEntry
       );
 }
 
+/**
+ * Builds a checked `{ trigger, parameters }` pair for a
+ * `ComplexTriggerModifier` row (`content.ts`, `effect-core.ts`): the name and
+ * its parameter bag are checked against `@pdx-ts/stellaris-ids`'s scripted
+ * triggers when it is installed — the same conditional machinery {@link
+ * scriptedTrigger} uses — and degrade to unchecked `string`/{@link
+ * ScriptedParams} when it is absent, so a typo (`check_galaxy_setup_vaule`),
+ * an unknown parameter, or a missing required one is a compile error in the
+ * checked configuration and compiles either way when the package is not
+ * installed.
+ *
+ * `complex_trigger_modifier`'s own `trigger` field draws from CWT's whole
+ * `alias_keys_field[trigger]` namespace (`modifier_rule.cwt:33`), which spans
+ * both install-derived *scripted* triggers (what this checks) and the SDK's
+ * own ~1,050 codegen'd *native* triggers (`generated/triggers.ts`) — e.g.
+ * `check_galaxy_setup_value`, the exact trigger the SDK-36 habitable-worlds
+ * port uses, which is a native trigger and therefore not a member of {@link
+ * ScriptedTriggerName} at all. Natives have no comparable name+parameter-bag
+ * surface to check against, so a `ComplexTriggerModifier` row's plain
+ * `{ trigger: "name", parameters: {...} }` object literal remains the way to
+ * name one of those, or a third-party mod's scripted trigger the installed
+ * package does not know — this function is strictly additive, an opt-in for
+ * the subset of rows that do name an install-known scripted trigger.
+ *
+ *     usageOdds: {
+ *       modifiers: [
+ *         { ...scriptedTriggerModifier("check_recent_migration", { AMOUNT: 5 }), mode: "factor" },
+ *       ],
+ *     }
+ */
+export function scriptedTriggerModifier<const N extends ScriptedTriggerName>(
+  name: N,
+  ...args: ScriptedArgs<TriggerParams<N>>
+): { readonly trigger: N; readonly parameters?: Readonly<Record<string, ScriptedParamValue>> } {
+  const [params] = args as [ScriptedParams?];
+  return params === undefined
+    ? { trigger: name }
+    : { trigger: name, parameters: params as Readonly<Record<string, ScriptedParamValue>> };
+}
+
 // ---------------------------------------------------------------------------
 // The factories
 // ---------------------------------------------------------------------------

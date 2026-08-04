@@ -62,7 +62,10 @@ import {
   isSiteLocked,
   namespace,
   render,
+  scriptedTriggerModifier,
+  type Modifier,
   type PureMod,
+  type ScopeName,
   type SpriteRef,
 } from "../src/index.ts";
 
@@ -1264,6 +1267,390 @@ describe("generated content registries", () => {
     expect(rendered).toContain(
       "on_monthly = {\n\t\trandom_events = {\n\t\t\t100 = re_test_event.1\n\t\t\t20 = 0\n\t\t}\n\t}"
     );
+  });
+
+  it("lowers a WeightBlock top-level operation beside base (SDK-35)", () => {
+    // Real vanilla, verbatim: common/traditions/01_cloning.txt's
+    // tr_cloning_evolutionary_extrapolation sets `ai_weight = { factor = 5000 }`
+    // with no `base` at all — a bare top-level `complex_maths_enum` member,
+    // which WeightBlock could only express before this fix by lying and
+    // calling it `base`. 292 of 293 weight/ai_weight blocks in this same
+    // directory use a top-level operation rather than `base`.
+    const tradition = defineTradition({
+      id: "wb_test_tradition_extrapolation",
+      name: "Evolutionary Extrapolation",
+      customTooltipWithModifiers: ["wb_test_tradition_extrapolation_tt"],
+      modifier: (m) => {
+        m.unchecked("category_biology_research_speed_mult", 0.15);
+        m.unchecked("planet_buildings_clone_vats_upkeep_mult", -0.5);
+      },
+      aiWeight: { factor: 5000 },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block operation test", "wb_test"), [
+        collection(undefined, [tradition]),
+      ])
+    ).get("common/traditions/wb_test_traditions.txt");
+    expect(rendered).toContain("ai_weight = {\n\t\tfactor = 5000\n\t}");
+    expect(rendered).not.toContain("ai_weight = {\n\t\tbase = 5000");
+  });
+
+  it("lowers a complex_trigger_modifier row alongside a Modifier row (SDK-36)", () => {
+    // Real vanilla, verbatim: common/inline_scripts/solar_system_initializers/
+    // initializer_modifiers_habitable_world_systems.txt, spliced into every
+    // unique_system_initializer's usage_odds (e.g. unique_system_initializer_02,
+    // "Larionessi Refuge") as `base = @spawn_system_base` (= 1):
+    //
+    //     usage_odds = {
+    //         base = 1
+    //         modifier = { factor = 0  OR = { is_fe_cluster = yes  is_marauder_cluster = yes  has_star_flag = empire_cluster } }
+    //         complex_trigger_modifier = { trigger = check_galaxy_setup_value  parameters = { setting = habitable_worlds_scale }  mode = factor }
+    //     }
+    //
+    // This is the row an earlier dogfood port of this exact system had to
+    // drop, because WeightBlock could not express complex_trigger_modifier —
+    // ported here to prove it now can. The `modifier` row's gate is not
+    // reproduced verbatim: `usage_odds` lowers to `WeightBlock<ScopeName>`
+    // (the field's rules never narrow its scope, an existing looseness this
+    // ticket does not touch), so a `when` here has to type-check for every
+    // scope — `is_fe_cluster`/`is_marauder_cluster`/`has_star_flag` do not,
+    // and neither does anything short of `always()`. The
+    // complex_trigger_modifier row carries the actual evidence and is exact.
+    const system = defineSolarSystemInitializer({
+      id: "wb_test_system_unique",
+      class: "sc_neutron_star",
+      usage: ["misc_system_init"],
+      usageOdds: {
+        base: 1,
+        modifiers: [
+          { factor: 0, when: always() },
+          {
+            trigger: "check_galaxy_setup_value",
+            parameters: { setting: "habitable_worlds_scale" },
+            mode: "factor",
+          },
+        ],
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block complex trigger modifier test", "wb_test"), [
+        collection(undefined, [system]),
+      ])
+    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    expect(rendered).toContain(
+      "usage_odds = {\n" +
+        "\t\tbase = 1\n" +
+        "\t\tmodifier = {\n" +
+        "\t\t\tfactor = 0\n" +
+        "\t\t\talways = yes\n" +
+        "\t\t}\n" +
+        "\t\tcomplex_trigger_modifier = {\n" +
+        "\t\t\ttrigger = check_galaxy_setup_value\n" +
+        "\t\t\tparameters = {\n" +
+        "\t\t\t\tsetting = habitable_worlds_scale\n" +
+        "\t\t\t}\n" +
+        "\t\t\tmode = factor\n" +
+        "\t\t}\n" +
+        "\t}"
+    );
+  });
+
+  // Emission order is a function of the content, never of source position —
+  // AGENTS.md's headline invariant, standing evidence in pure-api.test.ts's
+  // "order purity" suite and content.test.ts's SDK-32 merged-file test. Both
+  // new WeightBlock shapes (SDK-35, SDK-36) put several sibling keys inside
+  // one block for the first time, lowered by hand-written `if (x !==
+  // undefined)` chains rather than a `for...of`/`Object.keys` walk — correct
+  // by construction today, but nothing else in the suite would fail if a
+  // later refactor swapped that chain for a key iteration and made emission
+  // depend on the author's object-literal order. These two tests build the
+  // same block twice, with every reversible key in reverse order the second
+  // time, and pin both that the two authored orders render byte-identically
+  // and what the one true emitted order actually is.
+  function weightBlockOperationOrderProbe(reversed: boolean) {
+    return defineTradition({
+      id: "wb_test_tradition_operation_order",
+      name: "Operation Order",
+      aiWeight: reversed
+        ? {
+            maxValue: 9,
+            minValue: 8,
+            divide: 7,
+            multiplier: 6,
+            mult: 5,
+            subtract: 4,
+            weight: 3,
+            add: 2,
+            factor: 1,
+          }
+        : {
+            factor: 1,
+            add: 2,
+            weight: 3,
+            subtract: 4,
+            mult: 5,
+            multiplier: 6,
+            divide: 7,
+            minValue: 8,
+            maxValue: 9,
+          },
+    });
+  }
+
+  it("renders WeightBlock's top-level operations byte-identically regardless of authored key order (SDK-35)", () => {
+    const forwardContent = render(
+      buildMod(configFor("Weight block operation order test", "wb_test"), [
+        collection(undefined, [weightBlockOperationOrderProbe(false)]),
+      ])
+    ).get("common/traditions/wb_test_traditions.txt");
+    const backwardContent = render(
+      buildMod(configFor("Weight block operation order test", "wb_test"), [
+        collection(undefined, [weightBlockOperationOrderProbe(true)]),
+      ])
+    ).get("common/traditions/wb_test_traditions.txt");
+    expect(forwardContent).toBeDefined();
+    expect(backwardContent).toEqual(forwardContent);
+    // Pins the actual fixed sequence, not just that the two authored orders
+    // agree with each other — a chain reordered without updating both
+    // branches above would still agree with itself.
+    expect(forwardContent).toContain(
+      "ai_weight = {\n" +
+        "\t\tfactor = 1\n" +
+        "\t\tadd = 2\n" +
+        "\t\tweight = 3\n" +
+        "\t\tsubtract = 4\n" +
+        "\t\tmult = 5\n" +
+        "\t\tmultiply = 6\n" +
+        "\t\tdivide = 7\n" +
+        "\t\tmin = 8\n" +
+        "\t\tmax = 9\n" +
+        "\t}"
+    );
+  });
+
+  function complexTriggerModifierOperationOrderProbe(reversed: boolean) {
+    return defineSolarSystemInitializer({
+      id: "wb_test_system_operation_order",
+      class: "sc_g",
+      usageOdds: {
+        modifiers: [
+          reversed
+            ? {
+                potential: always(),
+                desc: "Operation order probe",
+                maxValue: 8,
+                minValue: 7,
+                divide: 6,
+                multiplier: 5,
+                mult: 4,
+                mode: "factor",
+                // Two parameter keys, authored in reverse of the forward
+                // branch below — `Object.entries` would otherwise leak this
+                // insertion order into the output (bug bash #16 finding 2).
+                parameters: { threshold: 5, setting: "habitable_worlds_scale" },
+                triggerScope: "this",
+                trigger: "check_galaxy_setup_value",
+              }
+            : {
+                trigger: "check_galaxy_setup_value",
+                triggerScope: "this",
+                parameters: { setting: "habitable_worlds_scale", threshold: 5 },
+                mode: "factor",
+                mult: 4,
+                multiplier: 5,
+                divide: 6,
+                minValue: 7,
+                maxValue: 8,
+                desc: "Operation order probe",
+                potential: always(),
+              },
+        ],
+      },
+    });
+  }
+
+  it("renders a complex_trigger_modifier row's fields byte-identically regardless of authored key order (SDK-36, bug bash #16 finding 2)", () => {
+    const forwardContent = render(
+      buildMod(configFor("Weight block ctm operation order test", "wb_test"), [
+        collection(undefined, [complexTriggerModifierOperationOrderProbe(false)]),
+      ])
+    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    const backwardContent = render(
+      buildMod(configFor("Weight block ctm operation order test", "wb_test"), [
+        collection(undefined, [complexTriggerModifierOperationOrderProbe(true)]),
+      ])
+    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    expect(forwardContent).toBeDefined();
+    expect(backwardContent).toEqual(forwardContent);
+    expect(forwardContent).toContain(
+      "complex_trigger_modifier = {\n" +
+        "\t\t\ttrigger = check_galaxy_setup_value\n" +
+        "\t\t\ttrigger_scope = this\n" +
+        "\t\t\tparameters = {\n" +
+        // Sorted by the repo's byte comparator ("setting" < "threshold"),
+        // regardless of which authored order supplied them above.
+        "\t\t\t\tsetting = habitable_worlds_scale\n" +
+        "\t\t\t\tthreshold = 5\n" +
+        "\t\t\t}\n" +
+        "\t\t\tmode = factor\n" +
+        "\t\t\tmult = 4\n" +
+        "\t\t\tmultiplier = 5\n" +
+        "\t\t\tdivide = 6\n" +
+        "\t\t\tmin_value = 7\n" +
+        "\t\t\tmax_value = 8\n" +
+        "\t\t\tdesc = wb_test_system_operation_order_usage_odds_0\n" +
+        "\t\t\tpotential = {\n" +
+        "\t\t\t\talways = yes\n" +
+        "\t\t\t}\n" +
+        "\t\t}"
+    );
+  });
+
+  it("throws rather than silently drop fields from a WeightBlock row satisfying both arms (bug bash #16 finding 4)", () => {
+    // The type-level fix (ExclusiveModifierRow/ExclusiveComplexTriggerModifierRow
+    // in content.ts) closes this for every authoring path that goes through
+    // the exported types, but the check is erased at runtime — a value
+    // built by hand and cast past the type system can still reach the
+    // writer with both a Modifier's `when` and a ComplexTriggerModifier's
+    // `trigger`/`mode` present. `isComplexTriggerModifier`'s presence check
+    // would otherwise pick one arm and silently drop the other's fields
+    // (the worst available outcome per the finding), so it throws instead.
+    const hybridRow = {
+      factor: 2,
+      when: always(),
+      trigger: "x",
+      mode: "factor",
+    } as unknown as Modifier<ScopeName>;
+    const tradition = defineTradition({
+      id: "wb_test_tradition_hybrid_row",
+      name: "Hybrid Row",
+      aiWeight: { modifiers: [hybridRow] },
+    });
+    expect(() =>
+      render(
+        buildMod(configFor("Weight block hybrid row test", "wb_test"), [
+          collection(undefined, [tradition]),
+        ])
+      )
+    ).toThrow(/has both a Modifier's `when` and a ComplexTriggerModifier's `trigger`\/`mode`/);
+  });
+
+  it("resolves desc keys independently when a row object is shared across two definitions (bug bash #16 finding 3)", () => {
+    // A shared "gate condition" pulled out to avoid repeating it is a
+    // realistic reason an author reuses the exact same row object in two
+    // definitions. A WeakMap keyed only by the row's identity has one slot
+    // per object: the second definition's registration would silently
+    // overwrite the first's, so the first definition's own render would
+    // reference the SECOND definition's key instead of its own (the
+    // localisation table still carries both keys with identical text, since
+    // it is the same object either way, but the first key goes unreferenced
+    // and unused — orphaned for a translator to trip over). Registration
+    // and resolution are keyed by `${ownerId}::${fieldKey}` in addition to
+    // the row object, so each definition resolves its own occurrence. The
+    // key's own *value* — `descKey` pinned, here, rather than falling back
+    // to a hash of the text (SDK-48) — is a separate, orthogonal concern:
+    // both definitions share the same pinned slug (same row, same text) but
+    // still resolve to their own owner-prefixed key.
+    const sharedRow = { mult: 2, desc: "Shared gate.", descKey: "shared_gate", when: always() };
+    const first = defineTradition({
+      id: "wb_test_tradition_shared_row_first",
+      name: "Shared Row First",
+      aiWeight: { modifiers: [sharedRow] },
+    });
+    const second = defineTradition({
+      id: "wb_test_tradition_shared_row_second",
+      name: "Shared Row Second",
+      aiWeight: { modifiers: [sharedRow] },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block shared row test", "wb_test"), [
+        collection(undefined, [first, second]),
+      ])
+    ).get("common/traditions/wb_test_traditions.txt")!;
+    expect(rendered).toContain("desc = wb_test_tradition_shared_row_first_ai_weight_shared_gate");
+    expect(rendered).toContain("desc = wb_test_tradition_shared_row_second_ai_weight_shared_gate");
+  });
+
+  it("lowers scriptedTriggerModifier's checked trigger/parameters into a complex_trigger_modifier row (bug bash #16 finding 5)", () => {
+    // scriptedTriggerModifier checks the name and parameter bag against
+    // @pdx-ts/stellaris-ids's scripted triggers when installed (see
+    // packages/stellaris-ids/tests/present.test-d.ts for the checked-world
+    // compile-time evidence, and vanilla-refs.test-d.ts for the
+    // package-absent world) — this is the runtime half: its return value
+    // spreads into an ordinary ComplexTriggerModifier row and lowers exactly
+    // like one authored by hand. has_crisis_stage is a real vanilla scripted
+    // trigger (common/scripted_triggers/00_scripted_triggers.txt) with one
+    // defaulted parameter.
+    const system = defineSolarSystemInitializer({
+      id: "wb_test_system_scripted_trigger_modifier",
+      class: "sc_g",
+      usageOdds: {
+        modifiers: [
+          { ...scriptedTriggerModifier("has_crisis_stage", { STAGE: 2 }), mode: "factor" },
+        ],
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block scripted trigger modifier test", "wb_test"), [
+        collection(undefined, [system]),
+      ])
+    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    expect(rendered).toContain(
+      "complex_trigger_modifier = {\n" +
+        "\t\t\ttrigger = has_crisis_stage\n" +
+        "\t\t\tparameters = {\n" +
+        "\t\t\t\tSTAGE = 2\n" +
+        "\t\t\t}\n" +
+        "\t\t\tmode = factor\n" +
+        "\t\t}"
+    );
+  });
+
+  it("serializes a @scripted_variable bare, not quoted, through both new WeightBlock surfaces (rebase check against SDK-33/47)", () => {
+    // SDK-33/47 widened `Modifier`'s numeric arms from `number` to
+    // `ScriptValue` and fixed a real silent-output bug in the same change: a
+    // bare `@name` string passed straight to pdxscript's `kv`/`scalar` gets
+    // quoted defensively on serialization, turning a scripted-variable
+    // reference into a literal string the game never evaluates.
+    // `scriptValueScalar` converts it into a `var` node first, which writes
+    // bare by construction. `WeightBlockOperations` (SDK-35's top-level
+    // factor/add/... siblings of `base`) and `ComplexTriggerModifier`'s
+    // mult/multiplier/divide/minValue/maxValue (SDK-36) are both this same
+    // `value_field` domain (`modifier_rule.cwt`), widened to `ScriptValue`
+    // and routed through `scriptValueScalar` to match — verified here by
+    // serializing, not by reasoning about the types.
+    const tradition = defineTradition({
+      id: "wb_test_tradition_script_value_operation",
+      name: "Script Value Operation",
+      aiWeight: { factor: "@my_value" },
+    });
+    const system = defineSolarSystemInitializer({
+      id: "wb_test_system_script_value_ctm",
+      class: "sc_g",
+      usageOdds: {
+        modifiers: [
+          {
+            trigger: "check_galaxy_setup_value",
+            parameters: { setting: "habitable_worlds_scale" },
+            mode: "factor",
+            mult: "@my_other_value",
+          },
+        ],
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block script value test", "wb_test"), [
+        collection(undefined, [tradition, system]),
+      ])
+    );
+    const traditionFile = rendered.get("common/traditions/wb_test_traditions.txt");
+    expect(traditionFile).toContain("factor = @my_value");
+    expect(traditionFile).not.toContain('"@my_value"');
+    const systemFile = rendered.get(
+      "common/solar_system_initializers/wb_test_solar_system_initializers.txt"
+    );
+    expect(systemFile).toContain("mult = @my_other_value");
+    expect(systemFile).not.toContain('"@my_other_value"');
   });
 
   it("contributes ship-of-size limits under the engine's `default` key", () => {

@@ -21,8 +21,9 @@ import { EFFECT_META, type EffectFieldMeta } from "./generated/effect-meta.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import { EVENT_KINDS } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
+import { compareUtf8 } from "./resolver/path-order.ts";
 import { toScalar } from "./scalar.ts";
-import type { ScriptedEffectCall } from "./scripted.ts";
+import type { ScriptedEffectCall, ScriptedParamValue } from "./scripted.ts";
 import { scriptValueScalar, trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";
 
 // ---------------------------------------------------------------------------
@@ -273,21 +274,43 @@ export interface Modifier<S extends ScopeName> {
 export type ModifierWithLoc<S extends ScopeName> = Modifier<S> & { readonly desc: string };
 
 /**
- * Resolved `desc` keys, by the exact `Modifier` object that carries them.
+ * Resolved `desc` keys, by the exact `Modifier` object that carries them —
+ * and, within that, by the owning field's `${ownerId}::${fieldKey}` token
+ * (`ContentAuthoring.descOwnerKey` in content.ts), not by object identity
+ * alone.
  *
  * Modifier rows are anonymous and repeated with no id of their own, so a
  * generated localisation key cannot ride the usual `<id>`/`<id>_desc`
  * pattern. `ContentAuthoring` (content.ts) generates and registers one key
  * per desc-bearing row at `define()` time — the only point with a stable
- * definition id and a once-only guarantee — and records it here, keyed by
- * object identity rather than by any path string, so `modifierEntry` below
- * needs no extra context threaded through the ordinary lowering call chain.
+ * definition id and a once-only guarantee. A bare `WeakMap<Modifier, string>`
+ * (one slot per object) is not enough on its own: an author can legally
+ * reuse the exact same row object across two definitions, or in two
+ * different `WeightBlock` fields of one definition (a shared "gate
+ * condition" pulled out to avoid repeating it), and each registration would
+ * then overwrite the last, so the FIRST occurrence's field silently starts
+ * rendering the SECOND's key at lowering time (PR #16 review finding 3 — the
+ * same class of bug SDK-48 fixed for index-derived keys, but this one is
+ * identity-based rather than position-based). The inner map's owner-key
+ * dimension keeps every occurrence's registration distinct.
  */
-const modifierDescKeys = new WeakMap<Modifier<ScopeName>, string>();
+const modifierDescKeys = new WeakMap<Modifier<ScopeName>, Map<string, string>>();
 
-/** SDK-internal: records the localisation key a modifier row's `desc` resolved to. */
-export function registerModifierDescKey(modifier: Modifier<ScopeName>, key: string): void {
-  modifierDescKeys.set(modifier, key);
+/**
+ * SDK-internal: records the localisation key a modifier row's `desc`
+ * resolved to, for one `${ownerId}::${fieldKey}` occurrence of that row.
+ */
+export function registerModifierDescKey(
+  modifier: Modifier<ScopeName>,
+  ownerKey: string,
+  key: string
+): void {
+  const existing = modifierDescKeys.get(modifier);
+  if (existing === undefined) {
+    modifierDescKeys.set(modifier, new Map([[ownerKey, key]]));
+  } else {
+    existing.set(ownerKey, key);
+  }
 }
 
 /** `Modifier.descKey`'s required shape — lowercase snake_case, matching content ids. */
@@ -359,9 +382,22 @@ export function modifierDescKey(
   };
 }
 
-/** SDK-internal shared lowering for a `modifier_rule`/`modifier_rule_with_loc` row.
- * `refs`, when given, collects the content references the gating trigger writes. */
-export function modifierEntry(modifier: Modifier<ScopeName>, refs?: ContentRefUse[]): PdxEntry {
+/**
+ * SDK-internal shared lowering for a `modifier_rule`/`modifier_rule_with_loc`
+ * row. `refs`, when given, collects the content references the gating
+ * trigger writes. `ownerKey`, when given, is this occurrence's
+ * `${ownerId}::${fieldKey}` token — the same one it was registered under —
+ * so a row shared across owners or fields resolves its OWN key rather than
+ * whichever registration happened to run last. Omitted entirely (as every
+ * non-`WeightBlock` caller below does — `RandomListArm`, `TriggeredModifier`,
+ * `StructuralEffects.random`) it correctly still finds nothing, since
+ * `desc` was never a supported field there to begin with.
+ */
+export function modifierEntry(
+  modifier: Modifier<ScopeName>,
+  refs?: ContentRefUse[],
+  ownerKey?: string
+): PdxEntry {
   const entries: PdxEntry[] = [];
   if (modifier.factor !== undefined) {
     entries.push(kv("factor", scriptValueScalar(modifier.factor)));
@@ -391,14 +427,15 @@ export function modifierEntry(modifier: Modifier<ScopeName>, refs?: ContentRefUs
     entries.push(kv("max", scriptValueScalar(modifier.maxValue)));
   }
   if (modifier.desc !== undefined) {
-    const key = modifierDescKeys.get(modifier);
+    const key = ownerKey === undefined ? undefined : modifierDescKeys.get(modifier)?.get(ownerKey);
     if (key === undefined) {
       throw new Error(
         "Modifier.desc is display text that must be registered as localization before it can " +
-          "be lowered, and this row was never registered. desc is only supported on modifiers " +
-          "inside a content definition's WeightBlock (e.g. situation_type.monthly_progress) — " +
-          "randomList/lockedRandomList/random and other runtime-recorded effect modifiers have " +
-          "no stable, once-only point to register a key against, so they cannot accept desc."
+          "be lowered, and this row was never registered for this occurrence. desc is only " +
+          "supported on modifiers inside a content definition's WeightBlock (e.g. " +
+          "situation_type.monthly_progress) — randomList/lockedRandomList/random and other " +
+          "runtime-recorded effect modifiers have no stable, once-only point to register a key " +
+          "against, so they cannot accept desc."
       );
     }
     entries.push(kv("desc", key));
@@ -406,6 +443,212 @@ export function modifierEntry(modifier: Modifier<ScopeName>, refs?: ContentRefUs
   entries.push(...modifier.when.entries);
   refs?.push(...modifier.when.refs);
   return block("modifier", entries);
+}
+
+/**
+ * The `mode` a {@link ComplexTriggerModifier} row feeds its trigger result
+ * into. Same `complex_maths_enum` source as {@link Modifier}'s operations,
+ * restricted the same way — by what the corpus actually exercises for `mode`
+ * specifically: add 474, subtract 45, mult 19, divide 8, factor 4, weight 1.
+ * The unmeasured members (`set`, `multiply`, `modulo`, `round_to`, `max`,
+ * `min`, `pow`) stay out until a real consumer needs them, matching
+ * {@link Modifier}'s own convention.
+ */
+export type ComplexTriggerModifierMode =
+  "add" | "subtract" | "mult" | "divide" | "factor" | "weight";
+
+/**
+ * A `complex_trigger_modifier = { ... }` row (`modifier_rule.cwt:32-53`): a
+ * named trigger's result feeds a weight operation directly, rather than
+ * gating a fixed adjustment the way {@link Modifier} does. 552 occurrences
+ * across 42 files in `common/`. The vanilla `usage_odds` row that scales a
+ * `solar_system_initializer`'s spawn odds by the habitable-worlds galaxy
+ * setting is one (`initializer_modifiers_habitable_world_systems.txt`):
+ *
+ *     complex_trigger_modifier = {
+ *         trigger = check_galaxy_setup_value
+ *         parameters = { setting = habitable_worlds_scale }
+ *         mode = factor
+ *     }
+ *
+ * `trigger` names a scripted trigger by its key rather than splicing a nested
+ * block, so — unlike {@link Modifier}'s `when` — this needs no scope type
+ * parameter of its own: `triggerScope` names whatever scope the trigger
+ * should run in as a raw scope path (`"owner"`, `"target.solar_system"`,
+ * ...), the same way the game writes it, not a checked reference. `S` only
+ * surfaces through the optional `potential` gate, an ordinary scoped trigger
+ * clause evaluated alongside the named trigger.
+ *
+ * `mult`/`multiplier`/`min_value`/`max_value` are this row's own fields per
+ * the CWT alias, spelled distinctly from {@link Modifier}'s `mult`/`multiply`/
+ * `min`/`max` — the two row kinds share no field names beyond `mult` itself,
+ * so the lowering keeps them separate rather than reusing `Modifier`'s
+ * mapping. Each is declared `value_field` in `modifier_rule.cwt`, the same
+ * domain as {@link Modifier}'s own numeric arms, so they are `ScriptValue`
+ * (not bare `number`) for the same reason those are: a `@scripted_variable`
+ * has to lower through `scriptValueScalar` to write bare rather than
+ * quoted, exactly like every other `value_field` here.
+ */
+export interface ComplexTriggerModifier<S extends ScopeName> {
+  /** The scripted trigger's key, evaluated with `parameters` as arguments. */
+  readonly trigger: string;
+  /** Scope path the trigger runs in (defaults to `this` when omitted). */
+  readonly triggerScope?: string;
+  /**
+   * Arguments passed to the named trigger. `ScriptedParamValue` (not a bare
+   * `string | number`) so a row built by hand accepts the same widened
+   * forms — booleans, branded references, scope values — `scriptedTrigger`
+   * and {@link scriptedTriggerModifier} already accept, and so it can hold
+   * exactly what `scriptedTriggerModifier`'s checked return value produces.
+   */
+  readonly parameters?: Readonly<Record<string, ScriptedParamValue>>;
+  /** Which operation the trigger's result feeds. */
+  readonly mode: ComplexTriggerModifierMode;
+  readonly mult?: ScriptValue;
+  readonly multiplier?: ScriptValue;
+  readonly divide?: ScriptValue;
+  readonly minValue?: ScriptValue;
+  readonly maxValue?: ScriptValue;
+  /**
+   * Display text for this row's tooltip, auto-registered as localisation the
+   * same way {@link Modifier.desc} is — see `ContentAuthoring`'s
+   * modifier-desc collection in `content.ts`. `complexTriggerModifierEntry`
+   * below throws if `desc` reaches it unresolved.
+   */
+  readonly desc?: string;
+  /** Additional gate evaluated alongside the named trigger. */
+  readonly potential?: Trigger<S>;
+}
+
+/**
+ * A {@link ComplexTriggerModifier} for `modifier_rule_with_loc` consumers.
+ * `modifier_rule.cwt:67-81` admits only `mult`/`multiplier`, not
+ * `divide`/`min_value`/`max_value` — `modifier_rule_with_loc` drops those
+ * three fields the plain alias's `complex_trigger_modifier` allows — and
+ * `desc` there has no `## cardinality = 0..1` marker (every other field in
+ * that block does), so it defaults to required, matching {@link
+ * ModifierWithLoc}'s own `desc` requirement on the sibling row kind.
+ *
+ * The three dropped fields are forbidden (`?: never`) rather than merely
+ * omitted: `WeightBlockRow`'s union of this type with `ModifierWithLoc`
+ * would otherwise let `divide`/`minValue`/`maxValue` leak back in, the same
+ * excess-property leniency `ExclusiveModifierRow`/
+ * `ExclusiveComplexTriggerModifierRow` in `content.ts` exist to close —
+ * `ModifierWithLoc` (inherited from `Modifier`) still declares all three, so
+ * a plain `Omit` here would make them "not excess" for the row as a whole
+ * even though this specific row kind cannot legally carry them.
+ */
+export type ComplexTriggerModifierWithLoc<S extends ScopeName> = Omit<
+  ComplexTriggerModifier<S>,
+  "divide" | "minValue" | "maxValue" | "desc"
+> & {
+  readonly desc: string;
+  readonly divide?: never;
+  readonly minValue?: never;
+  readonly maxValue?: never;
+};
+
+/**
+ * Resolved `desc` keys for {@link ComplexTriggerModifier} rows, by object
+ * identity and then by `${ownerId}::${fieldKey}` occurrence — the same
+ * scheme, and the same reason for it, as {@link modifierDescKeys}. Kept as a
+ * separate map because the two row kinds are separate types with no shared
+ * identity.
+ */
+const complexTriggerModifierDescKeys = new WeakMap<
+  ComplexTriggerModifier<ScopeName>,
+  Map<string, string>
+>();
+
+/**
+ * SDK-internal: records the localisation key a complex-trigger-modifier
+ * row's `desc` resolved to, for one `${ownerId}::${fieldKey}` occurrence.
+ */
+export function registerComplexTriggerModifierDescKey(
+  modifier: ComplexTriggerModifier<ScopeName>,
+  ownerKey: string,
+  key: string
+): void {
+  const existing = complexTriggerModifierDescKeys.get(modifier);
+  if (existing === undefined) {
+    complexTriggerModifierDescKeys.set(modifier, new Map([[ownerKey, key]]));
+  } else {
+    existing.set(ownerKey, key);
+  }
+}
+
+/**
+ * SDK-internal shared lowering for a `complex_trigger_modifier` row. `refs`,
+ * when given, collects the content references `potential` writes.
+ * `ownerKey`, when given, is this occurrence's `${ownerId}::${fieldKey}`
+ * token — see {@link modifierEntry}'s matching parameter for why this is
+ * needed rather than a bare per-object lookup.
+ */
+export function complexTriggerModifierEntry(
+  modifier: ComplexTriggerModifier<ScopeName>,
+  refs?: ContentRefUse[],
+  ownerKey?: string
+): PdxEntry {
+  const entries: PdxEntry[] = [kv("trigger", modifier.trigger)];
+  if (modifier.triggerScope !== undefined) {
+    entries.push(kv("trigger_scope", modifier.triggerScope));
+  }
+  if (modifier.parameters !== undefined) {
+    const params = modifier.parameters;
+    // A named set, not ordered author data — same reasoning and the same
+    // comparator as `scriptedEntry`'s parameter bag (scripted.ts), which
+    // this row's own `trigger`/`parameters` pair otherwise mirrors. Without
+    // this, `Object.entries` would leak the author's object-literal
+    // insertion order into the emitted mod, in violation of the "content,
+    // never source position" invariant every other WeightBlock member here
+    // already honors (`weightOperationEntries`, the fixed field sequence
+    // below).
+    const keys = Object.keys(params)
+      .filter((key) => params[key] !== undefined)
+      .sort(compareUtf8);
+    entries.push(
+      block(
+        "parameters",
+        keys.map((key) => kv(key, toScalar(params[key])))
+      )
+    );
+  }
+  entries.push(kv("mode", modifier.mode));
+  if (modifier.mult !== undefined) {
+    entries.push(kv("mult", scriptValueScalar(modifier.mult)));
+  }
+  if (modifier.multiplier !== undefined) {
+    entries.push(kv("multiplier", scriptValueScalar(modifier.multiplier)));
+  }
+  if (modifier.divide !== undefined) {
+    entries.push(kv("divide", scriptValueScalar(modifier.divide)));
+  }
+  if (modifier.minValue !== undefined) {
+    entries.push(kv("min_value", scriptValueScalar(modifier.minValue)));
+  }
+  if (modifier.maxValue !== undefined) {
+    entries.push(kv("max_value", scriptValueScalar(modifier.maxValue)));
+  }
+  if (modifier.desc !== undefined) {
+    const key =
+      ownerKey === undefined
+        ? undefined
+        : complexTriggerModifierDescKeys.get(modifier)?.get(ownerKey);
+    if (key === undefined) {
+      throw new Error(
+        "ComplexTriggerModifier.desc is display text that must be registered as localization " +
+          "before it can be lowered, and this row was never registered for this occurrence. " +
+          "desc is only supported on complex trigger modifiers inside a content definition's " +
+          "WeightBlock — see Modifier.desc for the same constraint on the sibling row kind."
+      );
+    }
+    entries.push(kv("desc", key));
+  }
+  if (modifier.potential !== undefined) {
+    entries.push(block("potential", [...modifier.potential.entries]));
+    refs?.push(...modifier.potential.refs);
+  }
+  return block("complex_trigger_modifier", entries);
 }
 
 // ---------------------------------------------------------------------------

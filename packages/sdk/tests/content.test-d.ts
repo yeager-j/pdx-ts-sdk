@@ -1045,6 +1045,196 @@ describe("generated content authoring types", () => {
     expectTypeOf(hasAuthority("auth_democratic")).toExtend<Trigger<"country">>();
   });
 
+  it("widens WeightBlock to top-level operations and a complex_trigger_modifier row (SDK-35, SDK-36)", () => {
+    // SDK-35: a `complex_maths_enum` operation (`factor` here) is legal
+    // directly on the block, sibling to `base`, not only inside a `modifier`
+    // row.
+    defineTradition({
+      id: "content_types_tradition_weight_operation",
+      name: "X",
+      aiWeight: { factor: 5000 },
+    });
+    // SDK-36: a complex_trigger_modifier row (no `when`) sits in the same
+    // `modifiers` array as an ordinary Modifier row (which has `when` but no
+    // `trigger`/`mode`).
+    defineSolarSystemInitializer({
+      id: "content_types_system_complex_trigger_modifier",
+      class: "sc_g",
+      usageOdds: {
+        base: 1,
+        modifiers: [
+          { factor: 0, when: always() },
+          {
+            trigger: "check_galaxy_setup_value",
+            parameters: { setting: "habitable_worlds_scale" },
+            mode: "factor",
+          },
+        ],
+      },
+    });
+    // A row must satisfy one arm or the other: `factor` alone, with neither
+    // `when` nor `trigger`/`mode`, is not a legal row of either kind.
+    defineTradition({
+      id: "content_types_tradition_weight_row_shape",
+      name: "X",
+      aiWeight: {
+        modifiers: [
+          // @ts-expect-error — neither a Modifier's `when` nor a
+          // ComplexTriggerModifier's `trigger`/`mode` is present
+          { factor: 2 },
+        ],
+      },
+    });
+    // A complex_trigger_modifier's own `potential` gate is checked exactly
+    // like a Modifier's `when` — archaeological site weight runs in planet
+    // scope, so a country-scoped potential does not compile.
+    defineArchaeologicalSiteType({
+      id: "content_types_archaeological_site_type_complex_trigger_modifier",
+      name: "X",
+      stages: 1,
+      allow: canGoMia(),
+      visible: hasAuthority("auth_democratic"),
+      onRollFailed: () => {},
+      weight: {
+        base: 1,
+        modifiers: [
+          {
+            trigger: "some_scripted_trigger",
+            mode: "factor",
+            potential: hasPlanetFlag("content_types_planet_only"),
+          },
+          {
+            trigger: "some_scripted_trigger",
+            mode: "factor",
+            // @ts-expect-error — archaeological site weight gates run in planet scope
+            potential: hasCountryFlag("country_only"),
+          },
+        ],
+      },
+    });
+  });
+
+  it("keeps a WeightBlock row from satisfying both Modifier and ComplexTriggerModifier at once (bug bash #16 finding 4)", () => {
+    // A value with both `when` (Modifier's required member) and
+    // `trigger`/`mode` (ComplexTriggerModifier's) would otherwise be
+    // structurally assignable to a `Modifier` row — TypeScript's excess
+    // property check does not fire across a union, so `trigger`/`mode`
+    // being known keys on the *other* arm was enough to let them ride along
+    // silently, and `isComplexTriggerModifier`'s presence check would then
+    // classify the value as a ComplexTriggerModifier and drop `factor`/`when`
+    // entirely. `ExclusiveModifierRow`/`ExclusiveComplexTriggerModifierRow`
+    // forbid each other's characteristic members so this is a compile error
+    // for both a fresh literal and a value stored in a variable first —
+    // the excess-property check only ever covered the first case.
+    defineTradition({
+      id: "content_types_tradition_weight_row_hybrid_literal",
+      name: "X",
+      aiWeight: {
+        modifiers: [
+          // @ts-expect-error — has both Modifier's `when` and
+          // ComplexTriggerModifier's `trigger`/`mode`
+          { factor: 2, when: always(), trigger: "x", mode: "factor" },
+        ],
+      },
+    });
+    // The same object, but assigned to a variable first — no fresh-literal
+    // excess-property check applies here at all, so this is the case a mere
+    // `Omit`-based exclusion (rather than an explicit `?: never` forbid)
+    // would have missed.
+    const hybridRow = { factor: 2, when: always(), trigger: "x", mode: "factor" as const };
+    defineTradition({
+      id: "content_types_tradition_weight_row_hybrid_variable",
+      name: "X",
+      aiWeight: {
+        // @ts-expect-error — same hybrid shape, reached through a variable
+        modifiers: [hybridRow],
+      },
+    });
+  });
+
+  it("keeps WeightBlockWithLoc as restrictive as modifier_rule_with_loc, not as wide as plain WeightBlock (bug bash #16 finding 1)", () => {
+    // modifier_rule_with_loc.cwt:56-58 admits only base/add/factor at the top
+    // level — not weight/subtract/mult/multiplier/divide/min/max, which
+    // plain modifier_rule.cwt:1-3 does allow. situation_type.monthly_progress
+    // is the one WeightBlockWithLoc consumer.
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_operation",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        add: 2,
+        factor: 3,
+        // @ts-expect-error — `weight` is not in modifier_rule_with_loc's
+        // top-level base/add/factor set, only in plain modifier_rule's.
+        weight: 4,
+      },
+    });
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_operation_2",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        // @ts-expect-error — same for `subtract`.
+        subtract: 4,
+      },
+    });
+    // A Modifier row's own members stay the full set either way —
+    // modifier_rule_with_loc.cwt:59-66 still splices the whole
+    // complex_maths_enum inside a `modifier` row, just one member at a time
+    // (a cardinality TypeScript does not model, matching plain modifier_rule
+    // rows too) — only the block's own top-level operations narrow.
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_row",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [{ mult: 1.5, desc: "d", when: always() }],
+      },
+    });
+    // modifier_rule.cwt:67-81's with-loc complex_trigger_modifier drops
+    // divide/min_value/max_value (the plain alias's :32-53 keeps them) and
+    // requires desc (no cardinality marker on that field, unlike every other
+    // optional one in the same block).
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_ctm_divide",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          // @ts-expect-error — `divide` is not in the with-loc row.
+          {
+            trigger: "some_scripted_trigger",
+            mode: "factor",
+            desc: "d",
+            divide: 2,
+          },
+        ],
+      },
+    });
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_ctm_no_desc",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          // @ts-expect-error — `desc` is required on a with-loc
+          // complex_trigger_modifier row, unlike the plain alias's.
+          { trigger: "some_scripted_trigger", mode: "factor" },
+        ],
+      },
+    });
+    // The legal with-loc complex_trigger_modifier shape: mult/multiplier and
+    // a required desc.
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_ctm_legal",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [{ trigger: "some_scripted_trigger", mode: "factor", mult: 2, desc: "d" }],
+      },
+    });
+  });
+
   it("types civic_or_origin's potential/possible as the government_trigger DSL, not a Trigger", () => {
     defineCivicOrOrigin({
       id: "content_types_civic_dsl",

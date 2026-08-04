@@ -15,10 +15,12 @@ import {
   defineTechnology,
   scriptedEffect,
   scriptedTrigger,
+  scriptedTriggerModifier,
   vanilla,
   type EventDef,
   type ScopeName,
   type ScriptedEffectCall,
+  type ScriptedParamValue,
   type SpriteRef,
   type TechnologyRef,
   type Trigger,
@@ -137,6 +139,23 @@ describe("scripted bindings without the package", () => {
     // @ts-expect-error an effect call is not a condition, however alike they
     // serialize.
     const _condition: Trigger<"country"> = call;
+  });
+});
+
+describe("scriptedTriggerModifier without the package (bug bash #16 finding 5)", () => {
+  it("accepts any name and any parameters, preserving the literal name", () => {
+    // No id set to check against, same degradation story as scriptedTrigger:
+    // any name compiles (both call forms — with and without a parameter
+    // bag — stay legal, since the real arity is unknown either way), and
+    // the literal trigger name still survives rather than widening to
+    // `string` — a ComplexTriggerModifier row needs that literal preserved.
+    const bare = scriptedTriggerModifier("no_such_trigger_anywhere");
+    expectTypeOf(bare.trigger).toEqualTypeOf<"no_such_trigger_anywhere">();
+    const withParams = scriptedTriggerModifier("check_recent_migration", { STAGE: 2 });
+    expectTypeOf(withParams.trigger).toEqualTypeOf<"check_recent_migration">();
+    expectTypeOf(withParams.parameters).toEqualTypeOf<
+      Readonly<Record<string, ScriptedParamValue>> | undefined
+    >();
   });
 });
 

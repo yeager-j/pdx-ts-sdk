@@ -18,11 +18,15 @@ import {
 
 import { underField, type ContentRefSink, type ContentRefUse } from "./content-refs.ts";
 import {
+  complexTriggerModifierEntry,
   modifierDescKey,
   modifierEntry,
   recordEffects,
+  registerComplexTriggerModifierDescKey,
   registerModifierDescKey,
   scriptCtx,
+  type ComplexTriggerModifier,
+  type ComplexTriggerModifierWithLoc,
   type Modifier,
   type ModifierWithLoc,
   type ScriptCtx,
@@ -124,25 +128,121 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
 >;
 
 /**
- * A `modifier_rule` block: optional base weight plus gated adjustments.
+ * The `complex_maths_enum` operations `modifier_rule.cwt:1-3` allows directly
+ * alongside `base`, sibling to the `modifier`/`complex_trigger_modifier` rows
+ * rather than inside one of them — the same measured member set {@link
+ * Modifier} carries at row level, minus `desc`/`when` which only make sense
+ * on a gated row. `Omit` rather than a hand-kept duplicate, so a future
+ * change to `Modifier`'s numeric arms flows through here automatically, the
+ * same reasoning as {@link EconomicResourceBlockNoProduce}.
  *
- * `M` defaults to plain {@link Modifier} (`desc` optional); `WeightBlockWithLoc`
- * below is the same shape with `M` pinned to {@link ModifierWithLoc} for
- * `modifier_rule_with_loc` consumers, not a separate runtime concept — the
- * writer lowers both through the same `weightBlock` function.
+ * Vanilla favors this top-level spelling for a block's own always-applied
+ * weight: in `common/traditions/`, 292 of 293 `weight`/`ai_weight` blocks set
+ * a top-level `factor` rather than `base`, and across all `ai_weight` blocks
+ * under `common/`, top-level `weight` (2,255) outnumbers `base` (848).
  */
-export interface WeightBlock<S extends ScopeName, M extends Modifier<S> = Modifier<S>> {
+export type WeightBlockOperations<S extends ScopeName> = Omit<Modifier<S>, "desc" | "when">;
+
+/**
+ * `M` with {@link ComplexTriggerModifier}'s characteristic members
+ * (`trigger`, `mode`) forbidden. Plain structural typing lets a value
+ * satisfy `Modifier` (which has `when` and every numeric arm optional) and
+ * *also* carry `trigger`/`mode` — TypeScript's excess-property check only
+ * fires for a fresh object literal checked against a single type, not a
+ * union, and not at all once the value has been assigned to a variable
+ * first. Forbidding the sibling arm's members here makes the two row kinds
+ * mutually exclusive structurally, not just by convention, so a hybrid value
+ * is a compile error under every authoring path rather than only the
+ * literal one. Applied only where the two row kinds are unioned below —
+ * `Modifier` itself stays unrestricted for its other consumers
+ * (`RandomListArm`, `TriggeredModifier`, `StructuralEffects.random`, ...),
+ * where this ambiguity cannot arise because there is no sibling row kind to
+ * collide with.
+ */
+type ExclusiveModifierRow<S extends ScopeName, M extends Modifier<S>> = M & {
+  readonly trigger?: never;
+  readonly mode?: never;
+};
+
+/** {@link ExclusiveModifierRow}'s mirror: `C` with `Modifier`'s `when` forbidden. */
+type ExclusiveComplexTriggerModifierRow<
+  S extends ScopeName,
+  C extends ComplexTriggerModifier<S>,
+> = C & {
+  readonly when?: never;
+};
+
+/**
+ * Every row shape a {@link WeightBlock}'s `modifiers` array can hold: a
+ * gated fixed adjustment ({@link Modifier}, or {@link ModifierWithLoc} via
+ * `M`), or a named trigger's result feeding a weight operation directly
+ * ({@link ComplexTriggerModifier}, or {@link ComplexTriggerModifierWithLoc}
+ * via `C`) — `modifier_rule.cwt`'s two splice-level row kinds (`:5-13`,
+ * `:32-53`), made mutually exclusive by {@link ExclusiveModifierRow} and
+ * {@link ExclusiveComplexTriggerModifierRow}.
+ */
+export type WeightBlockRow<
+  S extends ScopeName,
+  M extends Modifier<S> = Modifier<S>,
+  C extends ComplexTriggerModifier<S> = ComplexTriggerModifier<S>,
+> = ExclusiveModifierRow<S, M> | ExclusiveComplexTriggerModifierRow<S, C>;
+
+/**
+ * A `modifier_rule` block: optional base weight, the same weight operations
+ * directly as siblings of `base` (see {@link WeightBlockOperations}), plus
+ * gated adjustments.
+ *
+ * `M` defaults to plain {@link Modifier} (`desc` optional). `WeightBlockWithLoc`
+ * below is a *separate* interface for `modifier_rule_with_loc` consumers, not
+ * a `WeightBlock<S, ModifierWithLoc<S>>` instantiation — `modifier_rule_with_loc`
+ * is a stricter alias than `modifier_rule` at the top level too (`:55-81` vs
+ * `:1-53`), so reusing this interface's `WeightBlockOperations<S>` for it
+ * would admit members `modifier_rule_with_loc` does not allow. Both are still
+ * lowered through the same `weightBlock` function — the restriction is in the
+ * authoring types, not the writer.
+ */
+export interface WeightBlock<
+  S extends ScopeName,
+  M extends Modifier<S> = Modifier<S>,
+> extends WeightBlockOperations<S> {
   /** Starting weight before modifiers. */
   readonly base?: number;
-  /** Conditional adjustments emitted as repeated `modifier` blocks. */
-  readonly modifiers?: readonly M[];
+  /** Conditional adjustments emitted as repeated `modifier` or `complex_trigger_modifier` blocks. */
+  readonly modifiers?: readonly WeightBlockRow<S, M>[];
 }
 
 /**
- * A {@link WeightBlock} whose rows require `desc`, matching
- * `modifier_rule_with_loc` (e.g. `situation_type.monthly_progress`).
+ * The `complex_maths_enum` operations `modifier_rule_with_loc.cwt:56-58`
+ * allows directly alongside `base`: only `add`/`factor`, not the rest of
+ * {@link WeightBlockOperations} — `modifier_rule_with_loc` is "deliberately
+ * more restrictive because of what we can make good tooltips with," per the
+ * CWT source comment, and that restriction bites the top-level operations
+ * too, not only the row shapes below.
  */
-export type WeightBlockWithLoc<S extends ScopeName> = WeightBlock<S, ModifierWithLoc<S>>;
+export type WeightBlockWithLocOperations<S extends ScopeName> = Pick<
+  WeightBlockOperations<S>,
+  "add" | "factor"
+>;
+
+/**
+ * A {@link WeightBlock} for `modifier_rule_with_loc` consumers (e.g.
+ * `situation_type.monthly_progress`): `desc` is required on every row
+ * (`Modifier` rows via {@link ModifierWithLoc}, `complex_trigger_modifier`
+ * rows via {@link ComplexTriggerModifierWithLoc}), and the top-level
+ * operations are the narrower {@link WeightBlockWithLocOperations}. A
+ * `Modifier`/`ModifierWithLoc` row's own members are unrestricted either way
+ * (`modifier_rule_with_loc.cwt:59-66` still splices the full
+ * `complex_maths_enum`, one member at a time) — only the top-level block and
+ * the `complex_trigger_modifier` row narrow.
+ */
+export interface WeightBlockWithLoc<S extends ScopeName> extends WeightBlockWithLocOperations<S> {
+  readonly base?: number;
+  readonly modifiers?: readonly WeightBlockRow<
+    S,
+    ModifierWithLoc<S>,
+    ComplexTriggerModifierWithLoc<S>
+  >[];
+}
 
 /**
  * A script effect block recorded against the scope declared by the content
@@ -736,17 +836,46 @@ type ContentDef = { readonly id: string };
 type LocalisationEntry = readonly [key: string, text: string];
 type RegisterLoc = (entries: readonly LocalisationEntry[]) => void;
 
-/** Accumulates the reference sink plus the dotted path to the current level. */
+/**
+ * Accumulates the reference sink, the dotted path to the current level (for
+ * ref diagnostics), and the nearest enclosing identity (for desc-key
+ * disambiguation — see {@link descOwnerKey}).
+ *
+ * `collect` is the part that is genuinely optional — a caller not collecting
+ * dangling references simply skips it — but `ownerId` is not: `def.id` is
+ * always known at `toEntry`, so the context itself is always constructed,
+ * and desc-key resolution (unlike ref collection) is not an optional
+ * diagnostic a caller can decline. `ownerId` starts as the top-level
+ * definition's own id and rebinds to a repeated-struct entry's own id on the
+ * way down, mirroring `ContentAuthoring.collectRepeatedStructs`'s identical
+ * rebind for the same reason: a nested entry (a tradition swap, a situation
+ * stage) is itself a stable identity a `WeightBlock` inside it can key desc
+ * localisation against.
+ */
 interface LoweringContext {
-  readonly collect: ContentRefSink;
+  readonly collect?: ContentRefSink;
   readonly path: string;
+  readonly ownerId: string;
 }
 
-function childContext(
-  ctx: LoweringContext | undefined,
-  segment: string
-): LoweringContext | undefined {
-  return ctx === undefined ? ctx : { collect: ctx.collect, path: joinPath(ctx.path, segment) };
+function childContext(ctx: LoweringContext, segment: string, ownerId?: string): LoweringContext {
+  return {
+    collect: ctx.collect,
+    path: joinPath(ctx.path, segment),
+    ownerId: ownerId ?? ctx.ownerId,
+  };
+}
+
+/**
+ * The token a `WeightBlock` field's desc-bearing rows register and resolve
+ * their localisation key under: the nearest enclosing identity plus the
+ * field's own key, so a row shared across two definitions — or across two
+ * `WeightBlock` fields of one definition — resolves its own occurrence's key
+ * rather than whichever registration happened to run last (PR #16 review
+ * finding 3).
+ */
+function descOwnerKey(ctx: LoweringContext, key: string): string {
+  return `${ctx.ownerId}::${key}`;
 }
 
 function joinPath(path: string, segment: string): string {
@@ -755,12 +884,8 @@ function joinPath(path: string, segment: string): string {
 
 /** Reports references a spliced trigger or effect closure recorded, re-rooted
  * under the field that holds them so the diagnostic names the whole path. */
-function collectRefs(
-  ctx: LoweringContext | undefined,
-  refs: readonly ContentRefUse[],
-  segment: string
-): void {
-  if (ctx === undefined) {
+function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segment: string): void {
+  if (ctx.collect === undefined) {
     return;
   }
   for (const use of underField(refs, joinPath(ctx.path, segment))) {
@@ -775,7 +900,7 @@ function contentScalar(
   ctx?: LoweringContext
 ): PdxScalar {
   const converted = field.conversion === "ref" ? refId(value as TypedRef<string> | string) : value;
-  if (ctx !== undefined && field.refTypes !== undefined && typeof converted === "string") {
+  if (ctx?.collect !== undefined && field.refTypes !== undefined && typeof converted === "string") {
     ctx.collect({
       targets: field.refTypes,
       id: converted,
@@ -833,13 +958,92 @@ function modifierBlock(key: string, value: ModifierClosure): PdxEntry {
   return block(key, modifierEntries(value));
 }
 
-function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringContext): PdxEntry {
+/**
+ * Lowers {@link WeightBlockOperations}'s numeric arms in a fixed sequence —
+ * mirroring `modifierEntry`'s row-level order, since both read the same
+ * `complex_maths_enum` — so emission never depends on the order an author's
+ * object literal happened to declare its members in.
+ */
+function weightOperationEntries(value: WeightBlockOperations<ScopeName>): PdxEntry[] {
+  const entries: PdxEntry[] = [];
+  if (value.factor !== undefined) {
+    entries.push(kv("factor", scriptValueScalar(value.factor)));
+  }
+  if (value.add !== undefined) {
+    entries.push(kv("add", scriptValueScalar(value.add)));
+  }
+  if (value.weight !== undefined) {
+    entries.push(kv("weight", scriptValueScalar(value.weight)));
+  }
+  if (value.subtract !== undefined) {
+    entries.push(kv("subtract", scriptValueScalar(value.subtract)));
+  }
+  if (value.mult !== undefined) {
+    entries.push(kv("mult", scriptValueScalar(value.mult)));
+  }
+  if (value.multiplier !== undefined) {
+    entries.push(kv("multiply", scriptValueScalar(value.multiplier)));
+  }
+  if (value.divide !== undefined) {
+    entries.push(kv("divide", scriptValueScalar(value.divide)));
+  }
+  if (value.minValue !== undefined) {
+    entries.push(kv("min", scriptValueScalar(value.minValue)));
+  }
+  if (value.maxValue !== undefined) {
+    entries.push(kv("max", scriptValueScalar(value.maxValue)));
+  }
+  return entries;
+}
+
+/**
+ * Discriminates a {@link WeightBlockRow} structurally: {@link
+ * ComplexTriggerModifier} is the only row kind with a required `trigger`
+ * member, `Modifier`/`ModifierWithLoc` the only kind with a required `when` —
+ * the same shape-from-presence approach `dualArm` uses for content fields,
+ * rather than a runtime brand neither row kind otherwise needs.
+ *
+ * `WeightBlockRow`'s two arms forbid each other's characteristic members
+ * (`ExclusiveModifierRow`/`ExclusiveComplexTriggerModifierRow` below), so a
+ * row authored with both `when` and `trigger`/`mode` is a compile error for
+ * any author going through the exported types. That check is erased at
+ * runtime, though — an untyped call site, an `as any`, or a value built by
+ * hand and threaded through JavaScript can still reach here with both
+ * present. Silently classifying it as one row kind and dropping the other's
+ * fields (what a bare presence check would do) is worse than a build
+ * failure, so this throws instead of guessing.
+ */
+function isComplexTriggerModifier(
+  row: WeightBlockRow<ScopeName>
+): row is ComplexTriggerModifier<ScopeName> {
+  const hasTrigger = "trigger" in row && row.trigger !== undefined;
+  const hasWhen = "when" in row && row.when !== undefined;
+  if (hasTrigger && hasWhen) {
+    throw new Error(
+      "A WeightBlock row has both a Modifier's `when` and a ComplexTriggerModifier's " +
+        "`trigger`/`mode` — the exported types forbid this combination, so reaching it here " +
+        "means it was built outside them (an `as any`, an untyped call site, or similar). " +
+        "Author it as one row kind or the other; a row cannot be both."
+    );
+  }
+  return hasTrigger;
+}
+
+function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx: LoweringContext): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.base !== undefined) {
     entries.push(kv("base", value.base));
   }
+  entries.push(...weightOperationEntries(value));
   const refs: ContentRefUse[] = [];
-  entries.push(...(value.modifiers ?? []).map((modifier) => modifierEntry(modifier, refs)));
+  const ownerKey = descOwnerKey(ctx, key);
+  entries.push(
+    ...(value.modifiers ?? []).map((row) =>
+      isComplexTriggerModifier(row)
+        ? complexTriggerModifierEntry(row, refs, ownerKey)
+        : modifierEntry(row, refs, ownerKey)
+    )
+  );
   collectRefs(ctx, refs, key);
   return block(key, entries);
 }
@@ -857,7 +1061,7 @@ function repeatedNumbers(
 function economicOperation(
   key: string,
   value: EconomicResourceOperation<ScopeName>,
-  ctx?: LoweringContext
+  ctx: LoweringContext
 ): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.when !== undefined) {
@@ -901,14 +1105,14 @@ function economicResourceBlock(
   key: string,
   value: EconomicResourceBlock<ScopeName>,
   operations: readonly EconomicResourceOperationKey[],
-  ctx?: LoweringContext
+  ctx: LoweringContext
 ): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.category !== undefined) {
     const category = refId(value.category);
     // The one reference this shared shape holds; its registry is written into
     // the interface above rather than into any generated field table.
-    ctx?.collect({
+    ctx.collect?.({
       targets: ["economic_category"],
       id: category,
       field: joinPath(ctx.path, `${key}.category`),
@@ -927,7 +1131,7 @@ function economicResourceBlock(
 function triggeredModifierBlock(
   key: string,
   value: TriggeredModifier<ScopeName>,
-  ctx?: LoweringContext
+  ctx: LoweringContext
 ): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.when !== undefined) {
@@ -974,7 +1178,7 @@ function triggeredModifierBlock(
 function fieldEntries(
   def: Readonly<Record<string, unknown>>,
   fields: readonly ContentField[],
-  ctx?: LoweringContext
+  ctx: LoweringContext
 ) {
   const entries: PdxEntry[] = [];
   for (const field of fields) {
@@ -1153,8 +1357,12 @@ function fieldEntries(
           entries.push(
             block(
               field.key,
+              // The entry's own id becomes the nearest enclosing identity for
+              // anything nested inside it (a WeightBlock's desc keys among
+              // them) — the render-side mirror of
+              // `collectRepeatedStructs`'s identical rebind.
               Object.entries(record).map(([id, item]) =>
-                block(id, fieldEntries(item, field.fields, childContext(ctx, field.key)))
+                block(id, fieldEntries(item, field.fields, childContext(ctx, field.key, id)))
               )
             )
           );
@@ -1164,7 +1372,7 @@ function fieldEntries(
           entries.push(
             block(field.key, [
               kv(field.identityKey!, id),
-              ...fieldEntries(item, field.fields, childContext(ctx, field.key)),
+              ...fieldEntries(item, field.fields, childContext(ctx, field.key, id)),
             ])
           );
         }
@@ -1180,11 +1388,11 @@ function toEntry(
   descriptor: ContentRegistryDescriptor,
   collect?: ContentRefSink
 ): PdxEntry {
-  const fields = fieldEntries(
-    def as Readonly<Record<string, unknown>>,
-    descriptor.fields,
-    collect === undefined ? undefined : { collect, path: "" }
-  );
+  const fields = fieldEntries(def as Readonly<Record<string, unknown>>, descriptor.fields, {
+    collect,
+    path: "",
+    ownerId: def.id,
+  });
   if (descriptor.keyedBy === undefined) {
     return block(def.id, fields);
   }
@@ -1494,9 +1702,29 @@ export class ContentAuthoring {
 
   /**
    * Registers one localisation key per desc-bearing modifier row in a
-   * `WeightBlock`, via the shared derivation `modifierDescKey` — see its doc
-   * comment in `effect-core.ts` for the key shape, the `descKey`/hash-fallback
-   * split, and why the derivation lives there rather than here.
+   * `WeightBlock`. `Modifier` rows go through the shared derivation
+   * `modifierDescKey` — see its doc comment in `effect-core.ts` for the key
+   * shape, the `descKey`/hash-fallback split, and why the derivation lives
+   * there rather than here (`events.ts`'s `registerModifierDescs` is the
+   * other caller).
+   *
+   * `ComplexTriggerModifier` rows have no `descKey` field to pin against —
+   * `complex_trigger_modifier`'s own name/parameter pair is already the
+   * row's content-derived identity — so they key as
+   * `<ownerId>_<fieldPath>_<index>`, keeping every row on the field counted
+   * (both kinds together) so a `Modifier` and a `ComplexTriggerModifier`
+   * sharing one `modifiers` array never collide on the same key either.
+   *
+   * The registration itself is keyed by the row object *and* by
+   * `${ownerId}::${fieldPath}` (this method's own two parameters, joined the
+   * same way `descOwnerKey` joins them on the render side) — not by the row
+   * object alone. An author can legally reuse the exact same row object
+   * across two definitions, or across two `WeightBlock` fields of one
+   * definition, and each occurrence needs to resolve its own key at
+   * lowering, not whichever occurrence happened to register last (PR #16
+   * review finding 3) — orthogonal to what determines the key's *value*
+   * above: SDK-48 fixed what the key is derived from, this fixes what the
+   * registration is keyed by, and both apply together.
    */
   private collectModifierDescs(
     ownerId: string,
@@ -1504,20 +1732,27 @@ export class ContentAuthoring {
     weight: WeightBlock<ScopeName>,
     into: LocalisationEntry[]
   ): void {
-    for (const modifier of weight.modifiers ?? []) {
-      if (modifier.desc === undefined) {
-        continue;
+    const ownerKey = `${ownerId}::${fieldPath}`;
+    weight.modifiers?.forEach((row, index) => {
+      if (row.desc === undefined) {
+        return;
+      }
+      if (isComplexTriggerModifier(row)) {
+        const key = `${ownerId}_${fieldPath}_${index}`;
+        into.push([key, row.desc]);
+        registerComplexTriggerModifierDescKey(row, ownerKey, key);
+        return;
       }
       const { key, unstableWarning } = modifierDescKey(
         ownerId,
         fieldPath,
-        modifier as ModifierWithLoc<ScopeName>
+        row as ModifierWithLoc<ScopeName>
       );
       if (unstableWarning !== undefined) {
         this.onUnstableDescKey(unstableWarning);
       }
-      into.push([key, modifier.desc]);
-      registerModifierDescKey(modifier, key);
-    }
+      into.push([key, row.desc]);
+      registerModifierDescKey(row, ownerKey, key);
+    });
   }
 }
