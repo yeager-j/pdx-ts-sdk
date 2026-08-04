@@ -11,7 +11,7 @@ content_test_civic_meritocracy = {
 		}
 		civics = {
 			NOT = {
-				value = content_test_civic_incompatible
+				value = civic_shadow_council
 			}
 		}
 	}

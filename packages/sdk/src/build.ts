@@ -594,6 +594,17 @@ export function buildMod(
   // bare type names every registry split out of it: a field holding
   // `<component_template>` takes a utility, weapon, or strike-craft template,
   // so an id is accounted for if any of the three defined it.
+  //
+  // Only the registry → target direction was covered here (SDK-37): a registry
+  // whose own `referenceName` is qualified also registers its bare prefix, so
+  // a bare-target field resolves. The reverse never held — a registry whose
+  // `referenceName` is itself bare (`civic_or_origin`, `component_set`, never
+  // split by the manifest) registers only that bare key, while its own fields
+  // can still target a *subtype* of it (`civic_or_origin.civic`,
+  // `component_set.required_component`) when the vendored rules declare one.
+  // `resolveTargetRegistries` below tries the exact target first and only
+  // then falls back to the bare prefix, so both directions resolve through
+  // the same map without registering every subtype combination up front.
   const registriesByTarget = new Map<string, string[]>();
   for (const descriptor of CONTENT_REGISTRIES) {
     const qualifier = descriptor.referenceName.indexOf(".");
@@ -605,6 +616,25 @@ export function buildMod(
       registriesByTarget.set(target, [...(registriesByTarget.get(target) ?? []), descriptor.type]);
     }
   }
+  /**
+   * Resolves a `refTypes` target to the registries that can satisfy it: the
+   * exact target if a registry registered it, else — for a qualified target
+   * like `"civic_or_origin.civic"` — the bare registry it qualifies, if that
+   * registry exists and was never itself split into subtypes. A registry
+   * this bare fallback resolves does not distinguish which subtype an id
+   * belongs to (the guard only proves the id exists, not that it exists as
+   * the *right* subtype) — see SDK-41 for the subtype split that would close
+   * that gap; unresolvable here for either form is still "nothing here could
+   * have defined it".
+   */
+  const resolveTargetRegistries = (target: string): readonly string[] | undefined => {
+    const exact = registriesByTarget.get(target);
+    if (exact !== undefined) {
+      return exact;
+    }
+    const qualifier = target.indexOf(".");
+    return qualifier === -1 ? undefined : registriesByTarget.get(target.slice(0, qualifier));
+  };
   const builtIds = new Map<string, Set<string>>();
   for (const group of definedGroups) {
     const ids = builtIds.get(group.type) ?? new Set<string>();
@@ -612,6 +642,98 @@ export function buildMod(
       ids.add(defined.id);
     }
     builtIds.set(group.type, ids);
+  }
+  // Nested "swap" definitions that double as their owning registry's own
+  // reference target (SDK-38, widened for the P1 in SDK-37's review): the
+  // vendored rules declare a `base_type` relationship for exactly five
+  // registries the SDK exposes, mechanically enumerated by
+  // `grep -rn "base_type" vendor/cwtools-stellaris-config/config/` against
+  // the pin this codegen ran against (`251fe1189b4e`) — every hit, so a
+  // sixth showing up in a future vendor bump is a diff on this list, not a
+  // silent gap:
+  //   - common/traditions.cwt:17                type[swapped_tradition]      base_type = tradition
+  //   - common/ascension_perks.cwt:16            type[swapped_ascension_perk] base_type = ascension_perk
+  //   - common/technologies_consolidated.cwt:58  type[swapped_technology]    base_type = technology
+  //   - common/pop_jobs.cwt:33                   type[swapped_job]           base_type = job
+  //   - common/governments.cwt:97                type[swapped_civic]         base_type = civic_or_origin.civic
+  //   - common/governments.cwt:20                type[swapped_authority]     base_type = authority
+  //     (excluded: `authority` has no `defineAuthority` — CONTENT_MANIFEST
+  //     never registers it as an SDK registry, so there is no `builtIds` set
+  //     for its swap ids to join)
+  // Every one of the five folds into *its own* registry's built-id set —
+  // `base_type` never names a different registry than the one declaring the
+  // swap field — so this cannot loosen the guard for an unrelated registry.
+  //
+  // `civic_or_origin.swap_type`, `technology.technology_swap`, and
+  // `job.swap_type` are CWT "shape 3": an anonymous repeated block
+  // (`name_field = "name"`) rather than `tradition.tradition_swap`'s
+  // record-keyed "shape 2". `ContentAuthoring`'s `nestedIds` bookkeeping
+  // (`content.ts`'s `collectRepeatedStructs`) only tracks the record-keyed
+  // shape, so all five are read directly off each definition's own resolved
+  // `def` here instead — one mechanism for both shapes, rather than pairing
+  // this table with a second, codegen-side one that would need to stay in
+  // sync with it by hand. Teaching `collectRepeatedStructs` (or the
+  // generated field metadata) to recognize the shape-3 case is real codegen
+  // surgery — a new `ContentField` concept, `base_type`/`type_key_filter`
+  // cross-referencing to attribute a `type[swapped_x]` back to its owning
+  // field, and regenerating four files — with no behavioral upside over
+  // reading `def` directly, since the guard only needs the id strings.
+  interface SwapIdentity {
+    /** Registry the swap field lives on, and also the fold target — every
+     * `base_type` above names its own declaring registry. */
+    readonly registryType: string;
+    /**
+     * The resolved `def`'s member path to the swap field (camelCase),
+     * walked from the definition root. Usually one segment; `job`'s swap
+     * field sits inside the `swappable_data` wrapper CWT declares alongside
+     * it (`swappableData.swapType`), so this is a path rather than a single
+     * member.
+     */
+    readonly path: readonly string[];
+    /** Reads swap ids off the value at `path`. */
+    readonly extract: (value: unknown) => readonly string[];
+  }
+  const readPath = (value: unknown, path: readonly string[]): unknown =>
+    path.reduce<unknown>(
+      (current, segment) =>
+        current !== null && typeof current === "object"
+          ? (current as Readonly<Record<string, unknown>>)[segment]
+          : undefined,
+      value
+    );
+  const recordKeys = (value: unknown): readonly string[] =>
+    value !== null && typeof value === "object" ? Object.keys(value) : [];
+  const arrayNames = (value: unknown): readonly string[] =>
+    Array.isArray(value)
+      ? value.flatMap((item: unknown) =>
+          typeof (item as { readonly name?: unknown } | null)?.name === "string"
+            ? [(item as { readonly name: string }).name]
+            : []
+        )
+      : [];
+  const SWAP_IDENTITIES: readonly SwapIdentity[] = [
+    { registryType: "tradition", path: ["traditionSwap"], extract: recordKeys },
+    { registryType: "ascension_perk", path: ["traditionSwap"], extract: recordKeys },
+    { registryType: "civic_or_origin", path: ["swapType"], extract: arrayNames },
+    { registryType: "technology", path: ["technologySwap"], extract: arrayNames },
+    { registryType: "job", path: ["swappableData", "swapType"], extract: arrayNames },
+  ];
+  const definedByType = new Map<string, DefinedGroup["defined"][number][]>();
+  for (const group of definedGroups) {
+    definedByType.set(group.type, [...(definedByType.get(group.type) ?? []), ...group.defined]);
+  }
+  for (const { registryType, path, extract } of SWAP_IDENTITIES) {
+    const defined = definedByType.get(registryType);
+    if (defined === undefined) {
+      continue;
+    }
+    const ids = builtIds.get(registryType) ?? new Set<string>();
+    for (const definition of defined) {
+      for (const id of extract(readPath(definition.def, path))) {
+        ids.add(id);
+      }
+    }
+    builtIds.set(registryType, ids);
   }
   for (const { owner, use } of refUses) {
     // Vanilla and third-party ids are somebody else's to define, exactly as
@@ -622,12 +744,16 @@ export function buildMod(
     // A target this SDK cannot author (`<technology_tier>`) or a field that
     // also admits non-references excuses the id: nothing here could have
     // defined it, so its absence is not evidence of a mistake.
-    if (use.targets.length === 0 || !use.targets.every((type) => registriesByTarget.has(type))) {
+    const resolvedTargets = use.targets.map(resolveTargetRegistries);
+    if (
+      use.targets.length === 0 ||
+      resolvedTargets.some((registries) => registries === undefined)
+    ) {
       continue;
     }
     if (
-      use.targets.some((type) =>
-        registriesByTarget.get(type)!.some((registry) => builtIds.get(registry)?.has(use.id))
+      resolvedTargets.some((registries) =>
+        registries!.some((registry) => builtIds.get(registry)?.has(use.id))
       )
     ) {
       continue;
