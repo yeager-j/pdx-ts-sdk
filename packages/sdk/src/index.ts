@@ -238,6 +238,7 @@ export {
 export {
   createMod,
   type CapabilityEventHandle,
+  type CapabilityEventItem,
   type CapabilityEvents,
   type CapabilityFeature,
   type IdProfile,

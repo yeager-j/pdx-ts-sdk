@@ -5,6 +5,7 @@ import {
   createMod,
   currentSituationApproach,
   currentStage,
+  type CapabilityEventItem,
   type ContentItem,
   type IdProfile,
   type MintedContentId,
@@ -150,6 +151,12 @@ describe("mod capability types", () => {
         });
       },
     });
+    expectTypeOf(rootEvent).toEqualTypeOf<
+      CapabilityEventItem<"event_types", "", 1, "country", undefined>
+    >();
+    expectTypeOf(fromPlanet).toEqualTypeOf<
+      CapabilityEventItem<"event_types", "chain", 2, "country", "planet">
+    >();
     expectTypeOf(rootEvent.id).toEqualTypeOf<"event_types.1">();
     expectTypeOf(fromPlanet.id).toEqualTypeOf<"event_types_chain.2">();
   });

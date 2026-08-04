@@ -1,9 +1,9 @@
-namespace = hello_galaxy
+namespace = hello_galaxy_resonance
 
 country_event = {
-	id = hello_galaxy.1
-	title = hello_galaxy.1.name
-	desc = hello_galaxy.1.desc
+	id = hello_galaxy_resonance.1
+	title = hello_galaxy_resonance.1.name
+	desc = hello_galaxy_resonance.1.desc
 	is_triggered_only = yes
 	immediate = {
 		random_list = {
@@ -30,7 +30,7 @@ country_event = {
 					}
 					save_event_target_as = hello_galaxy_storm_world
 					planet_event = {
-						id = hello_galaxy.2
+						id = hello_galaxy_resonance.2
 						days = 30
 					}
 				}
@@ -49,14 +49,14 @@ country_event = {
 		}
 	}
 	option = {
-		name = hello_galaxy.1.a
+		name = hello_galaxy_resonance.1.a
 	}
 }
 
 planet_event = {
-	id = hello_galaxy.2
-	title = hello_galaxy.2.name
-	desc = hello_galaxy.2.desc
+	id = hello_galaxy_resonance.2
+	title = hello_galaxy_resonance.2.name
+	desc = hello_galaxy_resonance.2.desc
 	is_triggered_only = yes
 	immediate = {
 		from = {
@@ -66,6 +66,6 @@ planet_event = {
 		}
 	}
 	option = {
-		name = hello_galaxy.2.a
+		name = hello_galaxy_resonance.2.a
 	}
 }

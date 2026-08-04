@@ -34,7 +34,7 @@ export function defineCapabilityHelloGalaxy(): PureMod {
     },
     { ids: stellarisIds }
   );
-  const events = mod.namespace("");
+  const events = mod.namespace("resonance");
   const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
 
   const resonanceTheory = mod.technology("resonance_theory", {

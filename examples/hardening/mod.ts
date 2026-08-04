@@ -1,20 +1,10 @@
 import {
-  buildMod,
-  collection,
   countryFlags,
-  defineAgenda,
-  defineBuilding,
-  defineEdict,
-  defineTechnology,
-  defineTradition,
-  defineTraditionCategory,
+  createMod,
   eventTarget,
   hasAuthority,
-  namespace,
   numOwnedPlanets,
-  on,
   onActions,
-  patchTechnology,
   type VanillaView,
 } from "@pdx-ts/sdk";
 
@@ -23,16 +13,17 @@ export const hardeningTarget = eventTarget<"planet">("pdx_hardening_chain_planet
 
 const config = {
   name: "PDX SDK Hardening",
-  prefix: "pdx_hardening",
+  prefix: "pdx_hardening" as const,
   version: "1.0.0",
   supportedVersion: "v4.4.*",
 };
 
-export function defineHardening(vanilla: VanillaView) {
-  const events = namespace("pdx_hardening");
+const mod = createMod(config);
 
-  const markerTechnology = defineTechnology({
-    id: "pdx_hardening_tech_marker",
+export function defineHardening(vanilla: VanillaView) {
+  const events = mod.namespace();
+
+  const markerTechnology = mod.technology("marker", {
     name: "SDK Hardening Marker",
     desc: "A harmless marker proving generated technology content loaded.",
     area: "society",
@@ -43,8 +34,7 @@ export function defineHardening(vanilla: VanillaView) {
     weight: 0,
   });
 
-  const markerBuilding = defineBuilding({
-    id: "pdx_hardening_building_marker",
+  const markerBuilding = mod.building("marker", {
     name: "SDK Hardening Lab",
     desc: "A harmless building definition used by the hardening calibration.",
     baseBuildtime: 360,
@@ -58,16 +48,14 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const agenda = defineAgenda({
-    id: "pdx_hardening_agenda_marker",
+  const agenda = mod.agenda("marker", {
     name: "SDK Hardening",
     desc: "Keep generated definitions observable and boring.",
     agendaCost: 1_000,
     effect: (country) => country.log("PDX_HARDENING_AGENDA"),
   });
 
-  const tradition = defineTradition({
-    id: "pdx_hardening_tradition_marker",
+  const tradition = mod.tradition("marker", {
     name: "Hardening Discipline",
     effects: "The SDK seams remain observable.",
     unlocksAgenda: agenda,
@@ -77,8 +65,7 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const traditionCategory = defineTraditionCategory({
-    id: "pdx_hardening_tradition_category_marker",
+  const traditionCategory = mod.traditionCategory("marker", {
     name: "SDK Hardening",
     desc: "A one-node category for integration coverage.",
     treeTemplate: "tree_template_5",
@@ -87,8 +74,7 @@ export function defineHardening(vanilla: VanillaView) {
     traditions: [tradition],
   });
 
-  const markerEdict = defineEdict({
-    id: "pdx_hardening_edict_marker",
+  const markerEdict = mod.edict("marker", {
     name: "SDK Hardening Marker",
     description: "A harmless edict definition used by the hardening calibration.",
     length: 360,
@@ -111,8 +97,7 @@ export function defineHardening(vanilla: VanillaView) {
     effect: (country) => country.log("PDX_HARDENING_EDICT"),
   });
 
-  const cascade = events.defineCountryEvent({
-    id: 4,
+  const cascade = events.country(4, {
     hideWindow: true,
     isTriggeredOnly: true,
     immediate: (country) => {
@@ -120,8 +105,7 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const delayedA = events.defineCountryEvent({
-    id: 2,
+  const delayedA = events.country(2, {
     from: "planet",
     hideWindow: true,
     isTriggeredOnly: true,
@@ -132,15 +116,13 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const delayedB = events.defineCountryEvent({
-    id: 3,
+  const delayedB = events.country(3, {
     hideWindow: true,
     isTriggeredOnly: true,
     immediate: (country) => country.log("PDX_HARDENING_ORDER_B"),
   });
 
-  const expiredTargetProbe = events.defineCountryEvent({
-    id: 5,
+  const expiredTargetProbe = events.country(5, {
     hideWindow: true,
     isTriggeredOnly: true,
     immediate: (country) => {
@@ -151,8 +133,7 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const entryEvent = events.defineCountryEvent({
-    id: 1,
+  const entryEvent = events.country(1, {
     hideWindow: true,
     isTriggeredOnly: true,
     immediate: (country) => {
@@ -173,28 +154,28 @@ export function defineHardening(vanilla: VanillaView) {
     },
   });
 
-  const entryHook = on(onActions.onGameStartCountry, [entryEvent]);
+  const entryHook = mod.on(onActions.onGameStartCountry, [entryEvent]);
 
   const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
-  const geneTailoringPatch = patchTechnology(geneTailoring, (technology) => ({
+  const geneTailoringPatch = mod.patchTechnology(geneTailoring, (technology) => ({
     cost: technology.cost.value * 2,
     prerequisites: [...technology.prerequisites, markerTechnology],
   }));
 
-  // One collection per registry the corpus covers; each takes the registry's
-  // default file stem, so the emitted paths are the same ones the goldens pin.
   return {
-    mod: buildMod(
-      config,
+    mod: mod.compile(
       [
-        collection(undefined, [markerTechnology, geneTailoringPatch]),
-        collection(undefined, [markerBuilding]),
-        collection(undefined, [agenda]),
-        collection(undefined, [tradition]),
-        collection(undefined, [traditionCategory]),
-        collection(undefined, [markerEdict]),
-        collection("events", [cascade, delayedA, delayedB, expiredTargetProbe, entryEvent]),
-        collection(undefined, [entryHook]),
+        mod.feature(undefined, [
+          markerTechnology,
+          geneTailoringPatch,
+          markerBuilding,
+          agenda,
+          tradition,
+          traditionCategory,
+          markerEdict,
+          entryHook,
+        ]),
+        mod.feature("events", [cascade, delayedA, delayedB, expiredTargetProbe, entryEvent]),
       ],
       { vanilla }
     ),
@@ -207,3 +188,5 @@ export function defineHardening(vanilla: VanillaView) {
     vanillaCost: geneTailoring.cost.value,
   };
 }
+
+export type HardeningMod = ReturnType<typeof defineHardening>;

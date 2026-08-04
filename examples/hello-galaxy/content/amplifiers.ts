@@ -2,23 +2,22 @@
  * The amplifier ladder: a second feature, a second stem.
  *
  * It emits `common/technology/hello_galaxy_amplifiers.txt` — the same registry
- * as `resonance.ts`, a different file, because the file stem is the module's
- * basename. Two features, two files, no folder in the output that Stellaris did
- * not ask for.
+ * as `resonance.ts`, a different file, because this feature authors the
+ * `amplifiers` stem. Two features, two files, no folder in the output that
+ * Stellaris did not ask for.
  *
- * It imports the resonance feature's first technology and requires it, without
- * re-exporting it — importing a value is not registering it, so the theory tech
- * is still placed by the module that defined it. (Re-exporting it here would
- * place the same definition twice, which `buildMod` reports as a duplicate id.)
+ * It imports the resonance feature's first technology and requires it. Named
+ * exports are ordinary module API; only this module's `feature` export places
+ * content, so reusing the theory never registers it twice.
  */
 
-import { defineTechnology, type TechnologyItem } from "@pdx-ts/sdk";
+import type { TechnologyItem } from "@pdx-ts/sdk";
 
+import { mod } from "../mod.ts";
 import { resonanceTheory } from "./resonance.ts";
 
 // Build-time loop: one definition, five tiers of amplifier techs, each
-// requiring the previous — the "generate fifty variants" superpower. Discovery
-// flattens the exported array, so a loop needs no special ceremony.
+// requiring the previous — the "generate fifty variants" superpower.
 const amplifiers: TechnologyItem[] = [];
 let previous: TechnologyItem = resonanceTheory;
 for (const [index, adjective] of [
@@ -29,8 +28,7 @@ for (const [index, adjective] of [
   "Transcendent",
 ].entries()) {
   const tier = index + 1;
-  previous = defineTechnology({
-    id: `hello_galaxy_tech_amplifier_${tier}`,
+  previous = mod.technology(`amplifier_${tier}`, {
     name: `${adjective} Resonance Amplifiers`,
     cost: 1000 * 2 ** tier,
     area: "physics",
@@ -43,3 +41,5 @@ for (const [index, adjective] of [
 }
 
 export { amplifiers };
+
+export const feature = mod.feature("amplifiers", amplifiers);

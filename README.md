@@ -106,12 +106,12 @@ hello_galaxy_tech_resonance_weapons = {
 
 and `events/hello_galaxy_resonance.txt`:
 ```
-namespace = hello_galaxy
+namespace = hello_galaxy_resonance
 
 country_event = {
-	id = hello_galaxy.1
-	title = hello_galaxy.1.name
-	desc = hello_galaxy.1.desc
+	id = hello_galaxy_resonance.1
+	title = hello_galaxy_resonance.1.name
+	desc = hello_galaxy_resonance.1.desc
 	is_triggered_only = yes
 	immediate = {
 		random_list = {
@@ -129,7 +129,7 @@ country_event = {
 					}
 					save_event_target_as = hello_galaxy_storm_world
 					planet_event = {
-						id = hello_galaxy.2
+						id = hello_galaxy_resonance.2
 						days = 30
 					}
 				}
@@ -148,7 +148,7 @@ country_event = {
 		}
 	}
 	option = {
-		name = hello_galaxy.1.a
+		name = hello_galaxy_resonance.1.a
 	}
 }
 ```
@@ -215,8 +215,7 @@ and raw PDXScript makes you live inside it — one feature's technologies and
 events end up in different folders, held together by a naming convention and
 your memory. The SDK is a compiler, so source layout and output layout are
 decoupled: write a module per feature, and the build sorts its contents into
-the directories the game demands, keeping the module's name as each emitted
-file's stem.
+the directories the game demands using the feature's authored stem.
 
 ```
 examples/hello-galaxy/
@@ -228,11 +227,11 @@ examples/hello-galaxy/
     └── amplifiers.ts  → common/technology/hello_galaxy_amplifiers.txt
 ```
 
-`discoverContent(dir)` imports every module under a directory; export is
-registration. Moving a definition to another module changes which file it is
-emitted into and nothing else — ids are authored, never derived from layout,
-and emission order is a function of the content alone, so reorganizing your
-source changes zero bytes of output.
+`discoverFeatures(dir)` imports every selected module and reads its named
+`feature` export. Other named and default exports are ordinary ESM API, so
+`resonanceTheory` can be reused by `amplifiers.ts` without placing it twice.
+Each feature owns its output stem; moving or renaming a source module changes
+neither emitted identity nor bytes unless that authored stem changes.
 
 ## A real language
 
@@ -242,11 +241,15 @@ requiring the previous, costs on a curve:
 ```ts
 const amplifiers: TechnologyItem[] = [];
 let previous: TechnologyItem = resonanceTheory;
-for (const [index, adjective] of
-  ["Attuned", "Harmonic", "Coherent", "Superradiant", "Transcendent"].entries()) {
+for (const [index, adjective] of [
+  "Attuned",
+  "Harmonic",
+  "Coherent",
+  "Superradiant",
+  "Transcendent",
+].entries()) {
   const tier = index + 1;
-  previous = defineTechnology({
-    id: `hello_galaxy_tech_amplifier_${tier}`,
+  previous = mod.technology(`amplifier_${tier}`, {
     name: `${adjective} Resonance Amplifiers`,
     cost: 1000 * 2 ** tier,
     area: "physics",
@@ -258,6 +261,7 @@ for (const [index, adjective] of
   amplifiers.push(previous);
 }
 export { amplifiers };
+export const feature = mod.feature("amplifiers", amplifiers);
 ```
 
 That is ordinary TypeScript — no macros, no templates. The same move scales

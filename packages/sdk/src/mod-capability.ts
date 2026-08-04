@@ -71,6 +71,12 @@ export type CapabilityEventHandle<
 > = GeneratedCapabilityEventHandle<P, N, Id, S, From, Kind>;
 
 /**
+ * A defined capability event with its exact prefix, namespace, numeric id,
+ * scope, and FROM contract preserved for public return values and fire sites.
+ */
+export type { CapabilityEventItem } from "./generated/event-definers.ts";
+
+/**
  * Immutable, mod-bound authoring functions. The capability owns its config,
  * id profile, and feature placement while definitions remain pure values.
  */
