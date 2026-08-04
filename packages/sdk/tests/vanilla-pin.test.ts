@@ -3,17 +3,14 @@
  * the version-pin gate that refuses a mismatched package
  * (`checkVanillaPackagePin`), and the canary that reports one which is not
  * checking anything at all (`vanillaIdsCheckWarning`). A pure matrix over
- * each, the runtime resolver `installedVanillaPackageVersion`, and `buildMod`'s
+ * each, the runtime resolver `installedVanillaPackageVersion`, and a capability's
  * hooks for both. Hermetic throughout — no install is required.
  */
 
 import { describe, expect, it } from "vitest";
 
 import {
-  buildMod,
-  collection,
-  defineTechnology,
-  patchTechnology,
+  createMod,
   render,
   StaleRuleTableError,
   VanillaPackageMismatchError,
@@ -77,7 +74,7 @@ describe("checkVanillaPackagePin", () => {
 describe("vanillaIdsCheckWarning", () => {
   it("warns when the package does not resolve at all", () => {
     // The package-absent world, which no test in this workspace can reach
-    // through `buildMod` (the package is a workspace sibling and always
+    // through a mod capability (the package is a workspace sibling and always
     // resolves), but every consumer that has not installed it lives in.
     const warning = vanillaIdsCheckWarning(undefined, "4.4.6", undefined);
     expect(warning).toBeDefined();
@@ -131,7 +128,7 @@ describe("installedVanillaPackageVersion", () => {
   });
 });
 
-describe("buildMod's version-pin hook", () => {
+describe("the mod capability's version-pin hook", () => {
   const FILES = {
     "common/technology/pp_soc_tech.txt": TECH_FILE,
     "common/scripted_variables/pp_vars.txt": VARS_FILE,
@@ -146,15 +143,16 @@ describe("buildMod's version-pin hook", () => {
     };
   }
 
-  const technologies = collection(undefined, [
-    defineTechnology({
-      id: "pp_mod_tech_new",
+  function technologyFeature(config: ModConfig = makeConfig()) {
+    const mod = createMod(config);
+    const technology = mod.technology("new", {
       name: "New",
       area: "physics",
       tier: 1,
       category: "computing",
-    }),
-  ]);
+    });
+    return { mod, technologies: mod.feature(undefined, [technology]) };
+  }
 
   it("throws when the workspace package's version disagrees with the view's install", () => {
     // End to end, through the real resolved package: @pdx-ts/stellaris-ids
@@ -162,9 +160,10 @@ describe("buildMod's version-pin hook", () => {
     // involved — identifiers influence everything authored, so the gate fires
     // on `options.vanilla` alone rather than on the presence of patches.
     const vanilla = viewFromFiles(FILES, { gameVersion: "4.5.0" });
+    const { mod, technologies } = technologyFeature();
     try {
-      buildMod(makeConfig(), [technologies], { vanilla });
-      expect.unreachable("expected buildMod to throw VanillaPackageMismatchError");
+      mod.compile([technologies], { vanilla });
+      expect.unreachable("expected compile to throw VanillaPackageMismatchError");
     } catch (error) {
       expect(error).toBeInstanceOf(VanillaPackageMismatchError);
       const message = (error as Error).message;
@@ -175,20 +174,16 @@ describe("buildMod's version-pin hook", () => {
 
   it("passes when acceptGameVersion names the install version", () => {
     const vanilla = viewFromFiles(FILES, { gameVersion: "4.5.0" });
-    expect(() =>
-      render(
-        buildMod(makeConfig({ acceptGameVersion: "4.5.0" }), [technologies], {
-          vanilla,
-        })
-      )
-    ).not.toThrow();
+    const { mod, technologies } = technologyFeature(makeConfig({ acceptGameVersion: "4.5.0" }));
+    expect(() => render(mod.compile([technologies], { vanilla }))).not.toThrow();
   });
 
   it("passes when the view's install matches the package", () => {
     const vanilla = viewFromFiles(FILES, {
       gameVersion: installedVanillaPackageVersion(),
     });
-    expect(() => render(buildMod(makeConfig(), [technologies], { vanilla }))).not.toThrow();
+    const { mod, technologies } = technologyFeature();
+    expect(() => render(mod.compile([technologies], { vanilla }))).not.toThrow();
   });
 
   /**
@@ -199,7 +194,7 @@ describe("buildMod's version-pin hook", () => {
    *
    * The unresolvable world is covered by the pure matrix rather than here:
    * the workspace installs `@pdx-ts/stellaris-ids` as a sibling, so no test
-   * running in this repo can make `buildMod` fail to resolve it. What is
+   * running in this repo can make a capability fail to resolve it. What is
    * reachable end to end is the mismatch arm, since `acceptGameVersion` lets
    * a mismatched build past the gate and into exactly the state worth warning
    * about.
@@ -210,10 +205,8 @@ describe("buildMod's version-pin hook", () => {
 
     it("warns when ids are checked against a build the author accepted a mismatch on", () => {
       const vanilla = viewFromFiles(FILES, { gameVersion: "4.5.0" });
-      const mod = buildMod(makeConfig({ acceptGameVersion: "4.5.0" }), [technologies], {
-        vanilla,
-      });
-      const warnings = uncheckedWarnings(mod);
+      const { mod, technologies } = technologyFeature(makeConfig({ acceptGameVersion: "4.5.0" }));
+      const warnings = uncheckedWarnings(mod.compile([technologies], { vanilla }));
       expect(warnings).toHaveLength(1);
       expect(warnings[0]!.message).toContain("4.5.0");
       expect(warnings[0]!.message).toContain(installedVanillaPackageVersion()!);
@@ -223,47 +216,48 @@ describe("buildMod's version-pin hook", () => {
 
     it("stays quiet when the mod acknowledges authoring without checked ids", () => {
       const vanilla = viewFromFiles(FILES, { gameVersion: "4.5.0" });
-      const mod = buildMod(
-        makeConfig({ acceptGameVersion: "4.5.0", uncheckedVanillaIds: true }),
-        [technologies],
-        { vanilla }
+      const { mod, technologies } = technologyFeature(
+        makeConfig({ acceptGameVersion: "4.5.0", uncheckedVanillaIds: true })
       );
-      expect(uncheckedWarnings(mod)).toEqual([]);
+      expect(uncheckedWarnings(mod.compile([technologies], { vanilla }))).toEqual([]);
     });
 
     it("stays quiet when the installed package matches the install", () => {
       // The healthy world, through the real resolver: the canary must not be
       // a warning every ordinary build carries.
       const vanilla = viewFromFiles(FILES, { gameVersion: installedVanillaPackageVersion() });
-      expect(uncheckedWarnings(buildMod(makeConfig(), [technologies], { vanilla }))).toEqual([]);
+      const { mod, technologies } = technologyFeature();
+      expect(uncheckedWarnings(mod.compile([technologies], { vanilla }))).toEqual([]);
     });
 
     it("stays quiet on a build with no vanilla view at all", () => {
-      expect(uncheckedWarnings(buildMod(makeConfig(), [technologies]))).toEqual([]);
+      const { mod, technologies } = technologyFeature();
+      expect(uncheckedWarnings(mod.compile([technologies]))).toEqual([]);
     });
   });
 
   it("yields to StaleRuleTableError when the build is both stale-ruled and pin-mismatched", () => {
-    // The precedence `buildMod` documents where it calls this gate: rule-table
+    // The compile path calls this gate after its rule-table check: rule-table
     // staleness outranks identifier-package staleness, because patch emission
     // is the more dangerous operation. A 4.5.0 view against a table verified
     // for 4.4.6 and a package pinned to 4.4.6 is stale on both counts at once,
     // and this is the world no test constructed.
     const drifted = viewFromFiles(FILES, { gameVersion: "4.5.0" });
-    const patched = collection(undefined, [
-      patchTechnology(drifted.technology("tech_gene_forging"), () => ({ tier: 4 })),
+    const { mod, technologies } = technologyFeature();
+    const patched = mod.feature(undefined, [
+      mod.patchTechnology(drifted.technology("tech_gene_forging"), () => ({ tier: 4 })),
     ]);
 
     // Each half alone, so the combination below is provably both-stale rather
     // than a world where only one gate could ever have fired.
-    expect(() => buildMod(makeConfig(), [patched])).toThrow(StaleRuleTableError);
-    expect(() => buildMod(makeConfig(), [technologies], { vanilla: drifted })).toThrow(
+    expect(() => mod.compile([patched])).toThrow(StaleRuleTableError);
+    expect(() => mod.compile([technologies], { vanilla: drifted })).toThrow(
       VanillaPackageMismatchError
     );
 
     try {
-      buildMod(makeConfig(), [patched], { vanilla: drifted });
-      expect.unreachable("expected buildMod to throw StaleRuleTableError");
+      mod.compile([patched], { vanilla: drifted });
+      expect.unreachable("expected compile to throw StaleRuleTableError");
     } catch (error) {
       expect(error).toBeInstanceOf(StaleRuleTableError);
       expect(error).not.toBeInstanceOf(VanillaPackageMismatchError);

@@ -1,12 +1,12 @@
 import { kv } from "@pdx-ts/pdxscript";
 import {
   countryFlags,
+  createMod,
   eventTarget,
   globalFlags,
   hasCountryFlag,
   hasGlobalFlag,
   hiddenTrigger,
-  namespace,
   or,
   trigger,
 } from "@pdx-ts/sdk";
@@ -57,9 +57,12 @@ describe("production testing module", () => {
     // interpreter treats them as the wrappers they are rather than refusing
     // them as unknown semantics — the one case where transparency is the
     // whole meaning, not a guess about it.
-    const events = namespace("hidden_semantics");
-    const entry = events.defineCountryEvent({
-      id: 1,
+    const mod = createMod({
+      name: "Hidden semantics",
+      prefix: "hidden_semantics",
+      supportedVersion: "4.4.*",
+    });
+    const entry = mod.namespace().country(1, {
       isTriggeredOnly: true,
       immediate: (country) => {
         country.hiddenEffect((hidden) => hidden.setCountryFlag(flags.testing_group_left));
@@ -87,17 +90,19 @@ describe("production testing module", () => {
   });
 
   it("does not carry saved event targets into delayed delivery", () => {
-    const events = namespace("target_lifetime");
+    const mod = createMod({
+      name: "Target lifetime",
+      prefix: "target_lifetime",
+      supportedVersion: "4.4.*",
+    });
     const target = eventTarget<"planet">("target_lifetime_planet");
-    const followup = events.defineCountryEvent({
-      id: 2,
+    const followup = mod.namespace().country(2, {
       isTriggeredOnly: true,
       immediate: (country) => {
         target.effects((planet) => planet.log("should_not_run"));
       },
     });
-    const entry = events.defineCountryEvent({
-      id: 1,
+    const entry = mod.namespace().country(1, {
       isTriggeredOnly: true,
       immediate: (country) => {
         country.everyOwnedPlanet({}, (planet) => planet.saveEventTargetAs(target));

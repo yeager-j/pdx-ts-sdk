@@ -6,13 +6,12 @@ import { describe, expect, it } from "vitest";
 import { defineHardening } from "../../examples/hardening/mod.ts";
 import { defineHelloGalaxy } from "../../examples/hello-galaxy/mod.ts";
 import { buildMod } from "../../packages/sdk/src/build.ts";
-import { discoverContent } from "../../packages/sdk/src/discover.ts";
 import { render } from "../../packages/sdk/src/render.ts";
 import { load } from "../../packages/sdk/src/stellaris/load.ts";
 import { createMod, stellarisIds, type ModCapability, type ProbeIdProfile } from "./capability.ts";
 import { capabilityMethodRows, emitCapabilityMethodDeclarations } from "./codegen-shape.ts";
 import { discoveryMod } from "./discovery-mod.ts";
-import { discoverExplicitFeatures } from "./discovery.ts";
+import { discoverEveryExport, discoverExplicitFeatures } from "./discovery.ts";
 import { defineCapabilityHardening } from "./hardening.ts";
 import { defineCapabilityHelloGalaxy } from "./hello-galaxy.ts";
 
@@ -246,7 +245,7 @@ describe("feature layout", () => {
 
 describe("discovery contracts", () => {
   it("renders the same bytes through every-export and explicit-feature discovery", async () => {
-    const everyExport = await discoverContent(
+    const everyExport = await discoverEveryExport(
       new URL("./discovery/every-export/", import.meta.url)
     );
     const explicitFeature = await discoverExplicitFeatures<"discovery_probe">(

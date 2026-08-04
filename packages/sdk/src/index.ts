@@ -228,13 +228,7 @@ export type {
   UniversalModifiers,
   UnscopedModifierRecorder,
 } from "./generated/modifiers.ts";
-export {
-  buildMod,
-  type BuildOptions,
-  type EmittedFile,
-  type ModConfig,
-  type PureMod,
-} from "./build.ts";
+export type { BuildOptions, EmittedFile, ModConfig, PureMod } from "./build.ts";
 export {
   createMod,
   type CapabilityEventHandle,
@@ -253,35 +247,22 @@ export {
   type InstallOptions,
   type InstallResult,
 } from "./render.ts";
-export {
-  DEFAULT_CONTENT_PATTERN,
-  discoverContent,
-  discoverFeatures,
-  type DiscoverOptions,
-} from "./discover.ts";
-// One free definer per content registry — `defineTechnology`,
-// `defineAscensionPerk`, ... — plus `patchTechnology`, `addShipOfSizeLimits`,
-// and every registry's `XItem` union.
-export * from "./generated/content-definers.ts";
-export { namespace, type EventNamespace } from "./generated/event-definers.ts";
-export { on } from "./definers.ts";
-export {
-  assertFileStem,
-  assertNamespace,
-  collection,
-  flattenItems,
-  FILE_STEM_PATTERN,
-  type Collection,
-  type ContentItem,
-  type ContributionItem,
-  type EventItem,
-  type EventItemBase,
-  type ModItem,
-  type ModItemInput,
-  type ModWarning,
-  type OnActionBindingItem,
-  type PlacedItem,
-  type TechnologyPatchItem,
+export { DEFAULT_CONTENT_PATTERN, discoverFeatures, type DiscoverOptions } from "./discover.ts";
+// Generated item unions remain public; their raw constructors are internal
+// lowering machinery used by capability methods.
+export type * from "./generated/content-definers.ts";
+export type {
+  Collection,
+  ContentItem,
+  ContributionItem,
+  EventItem,
+  EventItemBase,
+  ModItem,
+  ModItemInput,
+  ModWarning,
+  OnActionBindingItem,
+  PlacedItem,
+  TechnologyPatchItem,
 } from "./items.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {

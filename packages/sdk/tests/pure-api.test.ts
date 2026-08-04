@@ -6,7 +6,7 @@
  * internal fold primitives to exercise malformed, forged, and assembly-time
  * invariants that capability authoring makes unrepresentable. Layer 6 can
  * remove those calls together with the legacy public surface once their
- * remaining coverage has an explicit home.
+ * remaining coverage has an explicit internal-test home.
  */
 
 import { describe, expect, it } from "vitest";
@@ -768,7 +768,7 @@ describe("content reference integrity", () => {
 
 describe("collections", () => {
   it("fans one stem out to every registry the collection's items belong to", () => {
-    // The mechanism behind feature colocation, independent of `discoverContent`:
+    // The internal mechanism behind capability feature colocation:
     // one collection holding a technology and an event is one *feature*, and
     // the stem it carries names a file in each registry directory those items
     // land in. Stellaris still gets one directory per registry; the author

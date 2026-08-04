@@ -127,9 +127,10 @@ describe("discoverFeatures", () => {
       `export const theory = mod.technology("theory", { name: "Theory", area: "physics", tier: 1, category: "particles" });\n` +
       `const events = mod.namespace();\n` +
       `export const pulse = events.country(1, { hideWindow: true, isTriggeredOnly: true });\n` +
-      `export const hook = mod.on(onActions.onGameStartCountry, [pulse]);\n` +
-      `export const feature = mod.feature("expansion", [theory, pulse, hook]);\n` +
-      `export default { theory, pulse };\n`;
+      `export const echo = events.country(2, { hideWindow: true, isTriggeredOnly: true });\n` +
+      `export const hook = mod.on(onActions.onGameStartCountry, [echo, pulse]);\n` +
+      `export const feature = mod.feature("expansion", [theory, pulse, echo, hook]);\n` +
+      `export default { theory, pulse, echo };\n`;
     const dir = moduleTree({
       "capability.ts": capabilitySource(),
       "features/expansion.ts": explicit,
@@ -145,8 +146,8 @@ describe("discoverFeatures", () => {
     expect(discovered.get("events/explicit_discovery_expansion.txt")).toContain(
       "id = explicit_discovery.1"
     );
-    expect(discovered.get("common/on_actions/explicit_discovery_on_actions.txt")).toContain(
-      "on_game_start_country"
+    expect(discovered.get("common/on_actions/explicit_discovery_on_actions.txt")).toBe(
+      "on_game_start_country = {\n\tevents = { explicit_discovery.2 explicit_discovery.1 }\n}\n"
     );
   });
 

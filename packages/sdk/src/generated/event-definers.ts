@@ -8,197 +8,174 @@ import { EVENT_KINDS, type EventKindKey } from "./events.ts";
 import type { ScopeName } from "./scopes.ts";
 
 /**
- * An event namespace handle: the free half of the event surface (SDK-23).
+ * An internal event namespace handle used by capability lowering.
  * One `defineXEvent` per scoped event kind, each returning an `EventItem`
  * that is the definition, the value fire sites reference, and the value
- * `on()` binds — but registering nothing. Which file the events land in is
- * decided by the `collection(...)` they are placed in, or by the module
- * `discoverContent` found them exported from.
+ * `on()` binds — but registering nothing. Public authors use
+ * `mod.namespace()` and place the resulting values with `mod.feature(...)`.
  */
 export interface EventNamespace {
   /**
-   * Discovery's marker. Exporting the handle instead of the events it
-   * defined is the one wrong thing an author is likely to do here, so it
-   * is recognizable enough to earn a targeted error rather than the
-   * generic unrecognized-export one.
+   * Internal lowering marker; public feature discovery observes placed
+   * capability features rather than raw namespace handles.
    */
   readonly kind: "event-namespace";
   readonly namespace: string;
   /**
-   * Defines an agreement event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for an agreement event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineAgreementEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"agreement", From>
   ): EventItem<"agreement", From, "agreement">;
 
   /**
-   * Defines an astral rift event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for an astral rift event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineAstralRiftEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"astral_rift", From>
   ): EventItem<"astral_rift", From, "astral_rift">;
 
   /**
-   * Defines a bypass event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a bypass event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineBypassEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"bypass", From>
   ): EventItem<"bypass", From, "bypass">;
 
   /**
-   * Defines a carrier event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a carrier event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineCarrierEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"carrier", From>
   ): EventItem<"carrier", From, "carrier">;
 
   /**
-   * Defines a colony event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a colony event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineColonyEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"colony", From>
   ): EventItem<"colony", From, "colony">;
 
   /**
-   * Defines a cosmic storm event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a cosmic storm event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineCosmicStormEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"storm", From>
   ): EventItem<"storm", From, "cosmic_storm">;
 
   /**
-   * Defines a cosmic storm influence field event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a cosmic storm influence field event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineCosmicStormInfluenceFieldEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"cosmic_storm_influence_field", From>
   ): EventItem<"cosmic_storm_influence_field", From, "cosmic_storm_influence_field">;
 
   /**
-   * Defines a country event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a country event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineCountryEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"country", From>
   ): EventItem<"country", From, "country">;
 
   /**
-   * Defines an espionage operation event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for an espionage operation event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineEspionageOperationEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"espionage_operation", From>
   ): EventItem<"espionage_operation", From, "espionage_operation">;
 
   /**
-   * Defines a first contact event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a first contact event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineFirstContactEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"first_contact", From>
   ): EventItem<"first_contact", From, "first_contact">;
 
   /**
-   * Defines a fleet event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a fleet event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineFleetEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"fleet", From>
   ): EventItem<"fleet", From, "fleet">;
 
   /**
-   * Defines a leader event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a leader event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineLeaderEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"leader", From>
   ): EventItem<"leader", From, "leader">;
 
   /**
-   * Defines an observer event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for an observer event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineObserverEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"country", From>
   ): EventItem<"country", From, "observer">;
 
   /**
-   * Defines a planet event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a planet event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   definePlanetEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"planet", From>
   ): EventItem<"planet", From, "planet">;
 
   /**
-   * Defines a pop faction event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a pop faction event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   definePopFactionEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"pop_faction", From>
   ): EventItem<"pop_faction", From, "pop_faction">;
 
   /**
-   * Defines a pop group event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a pop group event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   definePopGroupEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"pop_group", From>
   ): EventItem<"pop_group", From, "pop_group">;
 
   /**
-   * Defines a ship event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a ship event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineShipEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"ship", From>
   ): EventItem<"ship", From, "ship">;
 
   /**
-   * Defines a situation event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a situation event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineSituationEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"situation", From>
   ): EventItem<"situation", From, "situation">;
 
   /**
-   * Defines a starbase event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a starbase event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineStarbaseEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"starbase", From>
   ): EventItem<"starbase", From, "starbase">;
 
   /**
-   * Defines a system event in this namespace; the full id is
-   * `${namespace}.${def.id}`. Title/desc/option localization rides along, and the
-   * event's closures record eagerly, at the define site.
+   * Internal lowering primitive for a system event; the full id is
+   * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
   defineSystemEvent<From extends ScopeName | undefined = undefined>(
     def: EventDef<"system", From>
@@ -206,7 +183,7 @@ export interface EventNamespace {
 }
 
 /**
- * Opens an event namespace. The namespace is identity — saves persist
+ * Opens an internal event namespace. The namespace is identity — saves persist
  * pending fires by full id and on_actions reference it — so it is written
  * in full here and never inferred from a file name; prefix compliance is a
  * build warning, the same policy as content ids.
@@ -214,7 +191,7 @@ export interface EventNamespace {
  * closures run eagerly right there and the full id is a plain string from
  * birth. Nothing about an event is deferred. The per-handle duplicate check
  * catches a repeated numeric id at the define site, with a precise stack;
- * `buildMod` keeps a global full-id check for two handles opened on one
+ * the internal fold keeps a global full-id check for two handles opened on one
  * namespace string, and requires all of a namespace's events to land in one
  * file.
  */

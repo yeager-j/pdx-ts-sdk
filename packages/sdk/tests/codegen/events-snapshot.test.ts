@@ -33,7 +33,7 @@ describe("generated event surface", () => {
     expect(definers).not.toContain('"event", null');
   });
 
-  it("gives namespace(ns) eager closures, per-namespace ids, and nothing to register into", () => {
+  it("keeps namespace(ns) as internal lowering with eager closures and per-namespace ids", () => {
     // The namespace is known at the definition site, so nothing is deferred:
     // buildEvent runs right there and the full id is a plain string from
     // birth. What the deleted collection factory used to add — an item array
@@ -41,8 +41,8 @@ describe("generated event surface", () => {
     // where they are placed.
     expect(definers).toContain("export function namespace(ns: string): EventNamespace {");
     expect(definers).toContain("export interface EventNamespace {");
-    // Discovery's marker, so exporting the handle instead of its events can
-    // earn a targeted error rather than the generic unrecognized-export one.
+    // Internal lowering still records the handle shape, while public feature
+    // discovery observes capability-owned features rather than raw handles.
     expect(definers).toContain('  readonly kind: "event-namespace";');
     expect(definers).toContain("  readonly namespace: string;");
     expect(definers).toContain("  assertNamespace(ns);");
@@ -55,6 +55,9 @@ describe("generated event surface", () => {
     expect(definers).not.toContain("makeCollection");
     expect(definers).not.toContain("items.push");
     expect(definers).not.toContain("Collection<");
+    const publicIndex = readFileSync("packages/sdk/src/index.ts", "utf8");
+    expect(publicIndex).not.toContain('from "./generated/event-definers.ts"');
+    expect(publicIndex).not.toContain("export { namespace");
   });
 
   it("derives direct and handle capability methods from every scoped event kind", () => {
