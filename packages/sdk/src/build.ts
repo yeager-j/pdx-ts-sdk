@@ -448,6 +448,10 @@ export function buildMod(
       refUses.push({ owner: `event "${item.id}"`, use });
     }
     registerLocEntries(item.locEntries);
+    // Diagnostics an event's closures collected at its definition site (SDK-46) —
+    // today, just unstable-desc-key — drained the same way locEntries is:
+    // events have no ContentAuthoring instance to hang onUnstableDescKey off.
+    warnings.push(...item.warnings);
     if (!namespaces.includes(item.namespace)) {
       namespaces.push(item.namespace);
     }

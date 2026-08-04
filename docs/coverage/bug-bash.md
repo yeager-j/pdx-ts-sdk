@@ -508,6 +508,46 @@ including `trigger`, `mean_time_to_happen`, `location`, `abort_trigger`,
 under the existing drift gate) or accept the gap list as a backlog. Minimum to
 unblock arc sites is the five subtype window flags.
 
+**Resolution.** Kept hand-written per the ticket's explicit scope (generating
+the event surface is a separate architectural decision, not taken here).
+Added the five window flags (`archaeology`, `firstContact`,
+`espionageOperation`, `astralRift`, `diplomatic`) plus `difficulty`, and 32
+more `EventDef`/`EventOption` members — every unconditionally-declared field the
+ticket named, `location` and `meanTimeToHappen` besides, all nine omitted
+`EventOption` fields, and a second pass closing `diplomatic_title`,
+`event_window_type`, `event_picture_background`, `notification_event_icon`,
+`force_open`, `major_trigger`, and `weight_multiplier`. The four kind-gated
+window flags condition their type on `S` (`S extends "fleet" ? boolean :
+never`), so `defineCountryEvent({ archaeology: true })` is a compile error;
+`diplomatic` and `major_trigger`/`weight_multiplier` are attribute subtypes
+(driven by their own value — `diplomatic`, `major`, `isTriggeredOnly` — not
+by the event's kind) and stay unconditional, matching the precedent
+`hideWindow`/`isTriggeredOnly` already set. See `packages/sdk/src/events.ts`
+and `packages/sdk/tests/event-fields.test.ts`/`event-fields.test-d.ts`.
+
+Remaining gap list, precise by CWT site:
+
+- Event inheritance (`base = <event>`, the `*_clear` directives,
+  `events.cwt:159-171`) — a whole authoring mode, not a field.
+- Repeated/conditional `desc` blocks (`events.cwt:200-209`) — `desc` here
+  only supports the flat loc-key form; the conditional-array form is
+  unmodeled.
+- Repeated/conditional `picture` blocks (`events.cwt:213-231`) and
+  `picture_event_data` (`events.cwt:233-285`) — same gap as `desc`, plus a
+  large cosmetic nested structure of low authoring value.
+- Repeated/conditional `show_sound` blocks (`events.cwt:296-302`) —
+  `showSound` only supports the flat ref form.
+- `option.name`'s conditional dual forms (`events.cwt:325-335`) — the corpus
+  (`arcsite_events.txt`) uses the flat `name` + sibling `option.trigger` form
+  exclusively, which is what's supported.
+- `custom_gui`/`custom_gui_option` (event-level, `subtype[diplomatic]`,
+  `events.cwt:476-478`) — niche diplomatic-screen customization.
+- `pre_triggers` (`subtype[colony]`/`[carrier]`/`[country]`,
+  `events.cwt:481-499`) — `colony_pre_trigger`/`country_pre_trigger` are
+  their own restricted alias families, distinct from ordinary `Trigger<S>`;
+  no existing SDK machinery authors a restricted trigger subset, so this
+  needs new infrastructure, not just a field — correctly out of scope here.
+
 ## SDK-39 — `triggered_modifier` missing from tradition and `tradition_swap`
 
 Declared twice in `traditions.cwt:68` and `:124`; zero occurrences in
