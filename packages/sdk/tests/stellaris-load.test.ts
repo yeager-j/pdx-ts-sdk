@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { GameVersionError, InstallNotFoundError } from "../src/errors.ts";
-import { buildMod } from "../src/index.ts";
+import { createMod } from "../src/index.ts";
 import { describeInstall } from "../src/stellaris/describe.ts";
 import { load } from "../src/stellaris/load.ts";
 import { locateInstall } from "../src/stellaris/locate.ts";
@@ -233,11 +233,15 @@ describe("supportedVersionFor", () => {
     expect(supportedVersionFor(gameVersion)).toBe(expected);
   });
 
-  it("produces something buildMod accepts", () => {
+  it("produces something a capability accepts", () => {
     // The two halves of the same convention: what the SDK derives must be what
     // the SDK is willing to emit.
     expect(() =>
-      buildMod({ name: "V", prefix: "vv", supportedVersion: supportedVersionFor("4.4.6") }, [])
+      createMod({
+        name: "V",
+        prefix: "vv",
+        supportedVersion: supportedVersionFor("4.4.6"),
+      }).compile([])
     ).not.toThrow();
   });
 

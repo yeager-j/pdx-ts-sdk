@@ -3,7 +3,7 @@
  * every rule here is checkable without a filesystem or a terminal.
  *
  * The prefix rules are not this module's to invent: `FILE_STEM_PATTERN` and
- * `buildMod`'s own prefix check own them, and a property test asserts that
+ * `createMod`'s own prefix check owns them, and a property test asserts that
  * whatever `toPrefix` produces, the SDK accepts. That way a change to the SDK's
  * grammar breaks a test here rather than a stranger's scaffold.
  */

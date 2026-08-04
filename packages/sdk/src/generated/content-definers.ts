@@ -73,9 +73,9 @@ import type { WeaponComponentTemplateDef } from "./weapon-component-template.ts"
 export type TechnologyItem = ContentItem<"technology", TechnologyDef> | TechnologyPatchItem;
 
 /**
- * Defines a technology in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a technology. Public authors call
+ * `mod.technology(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineTechnology<const Id extends string>(
   def: TechnologyDef<Id>
@@ -84,9 +84,10 @@ export function defineTechnology<const Id extends string>(
 }
 
 /**
- * Patches a vanilla technology as a whole-object override. The transform
- * runs here (pure); the duplicate-key and one-view checks stay in
- * `buildMod`, which sees every patch together, and the emitted filename
+ * Internal lowering primitive for patching a vanilla technology. The transform
+ * runs here (pure); public authors call the capability method, while the duplicate-key
+ * and one-view checks stay in
+ * the internal fold, which sees every patch together, and the emitted filename
  * is always resolver-computed — a patch item never carries a file of its own.
  */
 export function patchTechnology<Source extends ParsedTechnology>(
@@ -100,9 +101,9 @@ export function patchTechnology<Source extends ParsedTechnology>(
 export type BuildingItem = ContentItem<"building", BuildingDef>;
 
 /**
- * Defines a building in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a building. Public authors call
+ * `mod.building(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineBuilding<const Id extends string>(
   def: BuildingDef<Id>
@@ -114,9 +115,9 @@ export function defineBuilding<const Id extends string>(
 export type TraditionItem = ContentItem<"tradition", TraditionDef>;
 
 /**
- * Defines a tradition in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a tradition. Public authors call
+ * `mod.tradition(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineTradition<const Id extends string>(
   def: TraditionDef<Id>
@@ -128,9 +129,9 @@ export function defineTradition<const Id extends string>(
 export type TraditionCategoryItem = ContentItem<"tradition_category", TraditionCategoryDef>;
 
 /**
- * Defines a tradition category in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a tradition category. Public authors call
+ * `mod.traditionCategory(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineTraditionCategory<const Id extends string>(
   def: TraditionCategoryDef<Id>
@@ -142,9 +143,9 @@ export function defineTraditionCategory<const Id extends string>(
 export type AscensionPerkItem = ContentItem<"ascension_perk", AscensionPerkDef>;
 
 /**
- * Defines an ascension perk in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for an ascension perk. Public authors call
+ * `mod.ascensionPerk(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineAscensionPerk<const Id extends string>(
   def: AscensionPerkDef<Id>
@@ -156,9 +157,9 @@ export function defineAscensionPerk<const Id extends string>(
 export type AgendaItem = ContentItem<"agenda", AgendaDef>;
 
 /**
- * Defines an agenda in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for an agenda. Public authors call
+ * `mod.agenda(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineAgenda<const Id extends string>(
   def: AgendaDef<Id>
@@ -170,9 +171,9 @@ export function defineAgenda<const Id extends string>(
 export type EdictItem = ContentItem<"edict", EdictDef>;
 
 /**
- * Defines an edict in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for an edict. Public authors call
+ * `mod.edict(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineEdict<const Id extends string>(
   def: EdictDef<Id>
@@ -184,9 +185,9 @@ export function defineEdict<const Id extends string>(
 export type DecisionItem = ContentItem<"decision", DecisionDef<string, never>>;
 
 /**
- * Defines a decision in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a decision. Public authors call
+ * `mod.decision(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  * `scope` names which scope this definition's clauses run in and emits
  * nothing; it defaults to `planet`.
  */
@@ -201,9 +202,9 @@ export function defineDecision<const Id extends string, S extends DecisionScope 
 export type JobItem = ContentItem<"job", JobDef>;
 
 /**
- * Defines a job in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a job. Public authors call
+ * `mod.job(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineJob<const Id extends string>(
   def: JobDef<Id>
@@ -215,9 +216,9 @@ export function defineJob<const Id extends string>(
 export type GlobalShipDesignItem = ContentItem<"global_ship_design", GlobalShipDesignDef>;
 
 /**
- * Defines a global ship design in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a global ship design. Public authors call
+ * `mod.globalShipDesign(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineGlobalShipDesign<const Id extends string>(
   def: GlobalShipDesignDef<Id>
@@ -232,9 +233,9 @@ export type UtilityComponentTemplateItem = ContentItem<
 >;
 
 /**
- * Defines an utility component template in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for an utility component template. Public authors call
+ * `mod.utilityComponentTemplate(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineUtilityComponentTemplate<const Id extends string>(
   def: UtilityComponentTemplateDef<Id>
@@ -249,9 +250,9 @@ export type WeaponComponentTemplateItem = ContentItem<
 >;
 
 /**
- * Defines a weapon component template in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a weapon component template. Public authors call
+ * `mod.weaponComponentTemplate(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineWeaponComponentTemplate<const Id extends string>(
   def: WeaponComponentTemplateDef<Id>
@@ -266,9 +267,9 @@ export type StrikeCraftComponentTemplateItem = ContentItem<
 >;
 
 /**
- * Defines a strike craft component template in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a strike craft component template. Public authors call
+ * `mod.strikeCraftComponentTemplate(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineStrikeCraftComponentTemplate<const Id extends string>(
   def: StrikeCraftComponentTemplateDef<Id>
@@ -280,9 +281,9 @@ export function defineStrikeCraftComponentTemplate<const Id extends string>(
 export type ShipSizeItem = ContentItem<"ship_size", ShipSizeDef>;
 
 /**
- * Defines a ship size in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a ship size. Public authors call
+ * `mod.shipSize(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineShipSize<const Id extends string>(
   def: ShipSizeDef<Id>
@@ -294,9 +295,9 @@ export function defineShipSize<const Id extends string>(
 export type OpinionModifierItem = ContentItem<"opinion_modifier", OpinionModifierDef>;
 
 /**
- * Defines an opinion modifier in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for an opinion modifier. Public authors call
+ * `mod.opinionModifier(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineOpinionModifier<const Id extends string>(
   def: OpinionModifierDef<Id>
@@ -308,9 +309,9 @@ export function defineOpinionModifier<const Id extends string>(
 export type StaticModifierItem = ContentItem<"static_modifier", StaticModifierDef>;
 
 /**
- * Defines a static modifier in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a static modifier. Public authors call
+ * `mod.staticModifier(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineStaticModifier<const Id extends string>(
   def: StaticModifierDef<Id>
@@ -322,9 +323,9 @@ export function defineStaticModifier<const Id extends string>(
 export type ScriptedModifierItem = ContentItem<"scripted_modifier", ScriptedModifierDef>;
 
 /**
- * Defines a scripted modifier in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a scripted modifier. Public authors call
+ * `mod.scriptedModifier(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineScriptedModifier<const Id extends string>(
   def: ScriptedModifierDef<Id>
@@ -336,9 +337,9 @@ export function defineScriptedModifier<const Id extends string>(
 export type CasusBelliItem = ContentItem<"casus_belli", CasusBelliDef>;
 
 /**
- * Defines a casus belli in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a casus belli. Public authors call
+ * `mod.casusBelli(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineCasusBelli<const Id extends string>(
   def: CasusBelliDef<Id>
@@ -350,9 +351,9 @@ export function defineCasusBelli<const Id extends string>(
 export type WarGoalItem = ContentItem<"war_goal", WarGoalDef>;
 
 /**
- * Defines a war goal in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a war goal. Public authors call
+ * `mod.warGoal(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineWarGoal<const Id extends string>(
   def: WarGoalDef<Id>
@@ -364,9 +365,9 @@ export function defineWarGoal<const Id extends string>(
 export type AgreementPresetItem = ContentItem<"agreement_preset", AgreementPresetDef>;
 
 /**
- * Defines an agreement preset in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for an agreement preset. Public authors call
+ * `mod.agreementPreset(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineAgreementPreset<const Id extends string>(
   def: AgreementPresetDef<Id>
@@ -378,9 +379,9 @@ export function defineAgreementPreset<const Id extends string>(
 export type BombardmentStanceItem = ContentItem<"bombardment_stance", BombardmentStanceDef>;
 
 /**
- * Defines a bombardment stance in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a bombardment stance. Public authors call
+ * `mod.bombardmentStance(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineBombardmentStance<const Id extends string>(
   def: BombardmentStanceDef<Id>
@@ -395,9 +396,9 @@ export type ArchaeologicalSiteTypeItem = ContentItem<
 >;
 
 /**
- * Defines an archaeological site type in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for an archaeological site type. Public authors call
+ * `mod.archaeologicalSiteType(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineArchaeologicalSiteType<const Id extends string>(
   def: ArchaeologicalSiteTypeDef<Id>
@@ -416,9 +417,9 @@ export { defineSituationType } from "../definers.ts";
 export type ScriptedLocItem = ContentItem<"scripted_loc", ScriptedLocDef>;
 
 /**
- * Defines a scripted loc in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a scripted loc. Public authors call
+ * `mod.scriptedLoc(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineScriptedLoc<const Id extends string>(
   def: ScriptedLocDef<Id>
@@ -430,9 +431,9 @@ export function defineScriptedLoc<const Id extends string>(
 export type CouncilorItem = ContentItem<"councilor", CouncilorDef>;
 
 /**
- * Defines a councilor in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a councilor. Public authors call
+ * `mod.councilor(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineCouncilor<const Id extends string>(
   def: CouncilorDef<Id>
@@ -444,9 +445,9 @@ export function defineCouncilor<const Id extends string>(
 export type EconomicCategoryItem = ContentItem<"economic_category", EconomicCategoryDef>;
 
 /**
- * Defines an economic category in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for an economic category. Public authors call
+ * `mod.economicCategory(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineEconomicCategory<const Id extends string>(
   def: EconomicCategoryDef<Id>
@@ -458,9 +459,9 @@ export function defineEconomicCategory<const Id extends string>(
 export type CivicOrOriginItem = ContentItem<"civic_or_origin", CivicOrOriginDef>;
 
 /**
- * Defines a civic or origin in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a civic or origin. Public authors call
+ * `mod.civicOrOrigin(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineCivicOrOrigin<const Id extends string>(
   def: CivicOrOriginDef<Id>
@@ -472,9 +473,9 @@ export function defineCivicOrOrigin<const Id extends string>(
 export type ComponentSetItem = ContentItem<"component_set", ComponentSetDef>;
 
 /**
- * Defines a component set in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a component set. Public authors call
+ * `mod.componentSet(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineComponentSet<const Id extends string>(
   def: ComponentSetDef<Id>
@@ -486,9 +487,9 @@ export function defineComponentSet<const Id extends string>(
 export type SectionTemplateItem = ContentItem<"section_template", SectionTemplateDef>;
 
 /**
- * Defines a section template in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a section template. Public authors call
+ * `mod.sectionTemplate(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineSectionTemplate<const Id extends string>(
   def: SectionTemplateDef<Id>
@@ -500,9 +501,9 @@ export function defineSectionTemplate<const Id extends string>(
 export type AmbientObjectItem = ContentItem<"ambient_object", AmbientObjectDef>;
 
 /**
- * Defines an ambient object in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for an ambient object. Public authors call
+ * `mod.ambientObject(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineAmbientObject<const Id extends string>(
   def: AmbientObjectDef<Id>
@@ -514,9 +515,9 @@ export function defineAmbientObject<const Id extends string>(
 export type GraphicalCultureItem = ContentItem<"graphical_culture", GraphicalCultureDef>;
 
 /**
- * Defines a graphical culture in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a graphical culture. Public authors call
+ * `mod.graphicalCulture(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineGraphicalCulture<const Id extends string>(
   def: GraphicalCultureDef<Id>
@@ -528,9 +529,9 @@ export function defineGraphicalCulture<const Id extends string>(
 export type StarbaseLevelItem = ContentItem<"starbase_level", StarbaseLevelDef>;
 
 /**
- * Defines a starbase level in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a starbase level. Public authors call
+ * `mod.starbaseLevel(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineStarbaseLevel<const Id extends string>(
   def: StarbaseLevelDef<Id>
@@ -542,9 +543,9 @@ export function defineStarbaseLevel<const Id extends string>(
 export type SpeciesClassItem = ContentItem<"species_class", SpeciesClassDef>;
 
 /**
- * Defines a species class in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a species class. Public authors call
+ * `mod.speciesClass(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineSpeciesClass<const Id extends string>(
   def: SpeciesClassDef<Id>
@@ -557,9 +558,9 @@ export type CountryShipOfSizeLimitItem =
   ContentItem<"country_ship_of_size_limit", CountryShipOfSizeLimitDef> | ContributionItem;
 
 /**
- * Defines a country ship of size limit in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a country ship of size limit. Public authors call
+ * `mod.countryShipOfSizeLimit(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineCountryShipOfSizeLimit<const Id extends string>(
   def: CountryShipOfSizeLimitDef<Id>
@@ -568,8 +569,9 @@ export function defineCountryShipOfSizeLimit<const Id extends string>(
 }
 
 /**
- * Contributes to the shared additive `default = { ship_of_size_limits = ... }`
- * sink: ids this mod names but does not own, with no author-named file.
+ * Internal lowering primitive for the shared additive `default = { ship_of_size_limits = ... }`
+ * sink. Public authors call the capability method; ids this mod names but does not own
+ * have no author-named file.
  * A ref listed twice is emitted once.
  */
 export function addShipOfSizeLimits(
@@ -590,9 +592,9 @@ export type SolarSystemInitializerItem = ContentItem<
 >;
 
 /**
- * Defines a solar system initializer in this mod. The returned item is the
- * definition as a value and a reference to it; place it in a
- * `collection(...)` — or export it from a discovered module — to emit it.
+ * Internal lowering primitive for a solar system initializer. Public authors call
+ * `mod.solarSystemInitializer(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
  */
 export function defineSolarSystemInitializer<const Id extends string>(
   def: SolarSystemInitializerDef<Id>

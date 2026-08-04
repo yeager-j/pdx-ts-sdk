@@ -1035,21 +1035,21 @@ describe("content-type codegen", () => {
 });
 
 /**
- * The free definers (SDK-23) — the whole content surface since the collection
- * factories were deleted — read from the committed output rather than
- * re-emitted: `npm run codegen:check` is what guarantees the file matches the
- * emitter, so asserting against the file also asserts against what ships.
+ * Raw content definers are package-internal lowering primitives. They read
+ * from committed output rather than re-emitted: `npm run codegen:check` is
+ * what guarantees the file matches the emitter, so asserting against the file
+ * also asserts against what ships.
  *
- * The claim is that all 34 definers are importable from this one module — 33
- * mechanical, one re-exported from the hand-written graft — and that none of
- * them registers anything, which is what makes `collection(...)` and
- * `discoverContent` the only things that decide placement.
+ * The claim is that all 34 raw definers are available from this one internal
+ * module — 33 mechanical, one re-exported from the hand-written graft — and
+ * that none registers anything. Capability methods and `feature()` own public
+ * authoring and placement.
  */
 describe("generated content definers", () => {
   const definers = readFileSync("packages/sdk/src/generated/content-definers.ts", "utf8");
   const capability = readFileSync("packages/sdk/src/generated/content-capability.ts", "utf8");
 
-  it("emits one free definer and one item union per manifest registry", () => {
+  it("emits one raw definer and one item union per manifest registry", () => {
     for (const manifest of CONTENT_MANIFEST) {
       const entry = manifest as ContentManifestEntry;
       const name = pascalCase(entry.as ?? entry.type);
@@ -1084,7 +1084,7 @@ describe("generated content definers", () => {
     expect(definers).not.toContain("Collection<");
   });
 
-  it("emits the free patchTechnology and addShipOfSizeLimits, and only those", () => {
+  it("emits the raw patchTechnology and addShipOfSizeLimits, and only those", () => {
     expect(definers.match(/^export function patch\w+</gm)).toEqual([
       "export function patchTechnology<",
     ]);
@@ -1104,7 +1104,7 @@ describe("generated content definers", () => {
     expect(definers).toContain('refRegistry: "country_ship_of_size_limit",');
   });
 
-  it("keeps capability helpers out of the free-definer export and derives them from the manifest", () => {
+  it("keeps capability helpers out of raw-definer exports and derives them from the manifest", () => {
     expect(definers).not.toContain("export interface IdProfile {");
     expect(definers).not.toContain("DEFAULT_ID_PROFILE");
     expect(definers).not.toContain("contentCapabilityMethods");
@@ -1131,6 +1131,16 @@ describe("generated content definers", () => {
     expect(capability).toContain(
       "This is an id-less additive contribution, not a capability-owned definition."
     );
+  });
+
+  it("keeps raw constructors internal while root exports XItem unions type-only", () => {
+    const publicIndex = readFileSync("packages/sdk/src/index.ts", "utf8");
+
+    expect(publicIndex).toContain('export type * from "./generated/content-definers.ts";');
+    expect(publicIndex).not.toContain('export * from "./generated/content-definers.ts";');
+    expect(publicIndex).not.toContain("export { defineTechnology");
+    expect(publicIndex).not.toContain("export { patchTechnology");
+    expect(publicIndex).not.toContain("export { addShipOfSizeLimits");
   });
 
   it("derives every nested identity table from repeated-struct metadata", () => {

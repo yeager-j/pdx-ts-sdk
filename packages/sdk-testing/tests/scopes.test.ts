@@ -12,11 +12,10 @@ import {
   and,
   checkVariable,
   countryFlags,
+  createMod,
   currentSituationApproach,
-  defineSituationType,
   hasCountryFlag,
   isVariableSet,
-  namespace,
   situationProgress,
   target,
 } from "@pdx-ts/sdk";
@@ -26,9 +25,8 @@ import { declareFrom, evaluateWeightBlock, fixture } from "../src/index.ts";
 
 describe("fleet and archaeological_site scopes", () => {
   it("models a fleet event whose FROM is an archaeological site, and the site's own state", () => {
-    const events = namespace("dig_probe");
-    const drillEvent = events.defineFleetEvent({
-      id: 1,
+    const mod = createMod({ name: "Dig probe", prefix: "dig_probe", supportedVersion: "4.4.*" });
+    const drillEvent = mod.namespace().fleet(1, {
       from: "archaeological_site",
       isTriggeredOnly: true,
       immediate: (_fleet, ctx) => {
@@ -70,9 +68,12 @@ describe("situation scope", () => {
   });
 
   it("runs `set_variable`/`change_variable`/`multiply_variable` and the situation's own effect-side target link", () => {
-    const events = namespace("sdk49_situation_effects");
-    const markLoyal = events.defineSituationEvent({
-      id: 1,
+    const mod = createMod({
+      name: "Situation effects",
+      prefix: "sdk49_situation_effects",
+      supportedVersion: "4.4.*",
+    });
+    const markLoyal = mod.namespace().situation(1, {
       isTriggeredOnly: true,
       immediate: (situation) => {
         situation.setVariable({ which: "var_support", value: 4 });
@@ -118,8 +119,12 @@ describe("situation scope", () => {
       );
       const situation = world.situation(0);
 
-      const situationType = defineSituationType({
-        id: "sdk49_test_situation",
+      const mod = createMod({
+        name: "Situation probe",
+        prefix: "sdk49",
+        supportedVersion: "4.4.*",
+      });
+      const situationType = mod.situationType("test_situation", {
         name: "Test Situation",
         targetScope: "country",
         monthlyProgress: {
@@ -247,16 +252,18 @@ describe("situation scope", () => {
   });
 
   it("throws running `change_variable`/`multiply_variable` before the variable is ever set, rather than defaulting to 0", () => {
-    const events = namespace("sdk49_situation_unset_arithmetic");
-    const changeUnset = events.defineSituationEvent({
-      id: 1,
+    const mod = createMod({
+      name: "Unset arithmetic",
+      prefix: "sdk49_situation_unset_arithmetic",
+      supportedVersion: "4.4.*",
+    });
+    const changeUnset = mod.namespace().situation(1, {
       isTriggeredOnly: true,
       immediate: (situation) => {
         situation.changeVariable({ which: "var_never_set", value: 2 });
       },
     });
-    const multiplyUnset = events.defineSituationEvent({
-      id: 2,
+    const multiplyUnset = mod.namespace().situation(2, {
       isTriggeredOnly: true,
       immediate: (situation) => {
         situation.multiplyVariable({ which: "var_never_set", value: 2 });

@@ -6,7 +6,7 @@
  * type but never says how many scopes it covers or what to do next, so an
  * unsupported scope and a misspelled one look identical.
  */
-import { namespace } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
 import { describeUnsupportedSimScope, fixture, SIM_SCOPE_NAMES } from "../src/index.ts";
@@ -29,8 +29,12 @@ describe("the unsupported-scope diagnosis", () => {
     // author would reach for, and `FixtureOptions.events` accepts it exactly
     // as authored (leader is not in SimScopeName) — the diagnosis has to
     // fire on this, the normal authoring path, or it does not really exist.
-    const events = namespace("sdk49_scope_repro");
-    const leaderEvent = events.defineLeaderEvent({ id: 1, isTriggeredOnly: true });
+    const mod = createMod({
+      name: "Scope repro",
+      prefix: "sdk49_scope_repro",
+      supportedVersion: "4.4.*",
+    });
+    const leaderEvent = mod.namespace().leader(1, { isTriggeredOnly: true });
 
     expect(() => fixture({ countries: [{ name: "player" }] }, { events: [leaderEvent] })).toThrow(
       /models 5 of Stellaris's ~41 scopes/

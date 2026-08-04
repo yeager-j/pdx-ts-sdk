@@ -3,7 +3,7 @@
 Every identifier a real, installed copy of Stellaris defines — content ids for
 39 registries, scripted trigger and effect names with their `$PARAM$` lists,
 sprite and sound names — shipped as TypeScript literal-union types,
-version-pinned to the game build. The package's npm version *is* the game
+version-pinned to the game build. The package's npm version _is_ the game
 version: `@pdx-ts/stellaris-ids@4.4.6` carries the identifiers of Stellaris
 4.4.6 and nothing else.
 
@@ -28,14 +28,14 @@ its argument against the real id set:
 ```ts
 import { vanilla } from "@pdx-ts/sdk";
 
-vanilla.technology("tech_lasers_1");  // ok
-vanilla.technology("tech_lazers_1");  // compile error
+vanilla.technology("tech_lasers_1"); // ok
+vanilla.technology("tech_lazers_1"); // compile error
 
 // Oversized registries (sprites 9.2k, sounds 5.9k, static modifiers 3.1k)
 // are also navigable, bucketed by the vanilla file each id is defined in.
 // Buckets are navigation only; the leaf spells the id verbatim:
 vanilla.sprite.eventpictures.GFX_evt_ship_in_orbit;
-vanilla.staticModifier.deficit.food_deficit;        // → "food_deficit"
+vanilla.staticModifier.deficit.food_deficit; // → "food_deficit"
 vanilla.soundEffect.toxoids.events.tox_events.event_first_contact_toxoid;
 vanilla.sprite("GFX_evt_ship_in_orbit"); // the checked call form, for copy-paste
 ```
@@ -77,8 +77,9 @@ per-registry. This package supplies only the data the checks run against.
 
 Two guards keep the pin honest:
 
-- **At build time**, `buildMod` compares this package's version against the
-  install a `stellaris.load()` view came from, and refuses a mismatched build
+- **When compiling the mod at build time**, `mod.compile(features, { vanilla })`
+  compares this package's version against the install a `stellaris.load()` view
+  came from, and refuses a mismatched build
   with `VanillaPackageMismatchError` unless `acceptGameVersion` explicitly
   accepts that install version. A regeneration-fix release (`4.4.6-r2`) still
   pins install `4.4.6` — only `major.minor.patch` is compared.

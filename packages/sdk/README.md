@@ -1,84 +1,140 @@
 # @pdx-ts/sdk
 
-A TypeScript SDK for generating Stellaris mods. You write ordinary TypeScript
-that runs at build time; the SDK records typed content definitions, triggers,
-and effects, then serializes a launcher-ready mod folder in PDXScript. There is
-no DSL and no template language — loops, functions, and `if` statements are
-plain TypeScript running at build time.
-
-The model is the AWS CDK's: definitions are values, a build folds them into a
-mod, and rendering is a pure function from that value to files.
+`@pdx-ts/sdk` generates Stellaris mods from ordinary TypeScript. Your program
+runs at build time, records typed content, triggers, and effects, and writes a
+launcher-ready PDXScript mod folder. The game receives no runtime or template
+language.
 
 ## Usage
 
-A definer returns an item and registers nothing. `collection(stem, items)`
-places items in a file; `buildMod(config, collections)` folds them into a
-`PureMod` value; `render(mod)` returns a path-to-contents map and
-`write(dir, files)` puts it on disk.
+`createMod(config)` is the only public authoring entry point. The immutable
+capability it returns mints prefixed ids, creates events in namespaces, places
+items in explicit features, and compiles those features into the value that
+`render`, `write`, and `install` consume.
 
 ```ts
-import { buildMod, collection, defineTechnology, render, write } from "@pdx-ts/sdk";
+import { createMod, onActions, render, write } from "@pdx-ts/sdk";
 
-const theory = defineTechnology({
-  id: "mymod_tech_resonance_theory",
-  name: "Crystal Resonance Theory", // localization rides along
+const mod = createMod({
+  name: "My Mod",
+  prefix: "mymod",
+  version: "0.1.0",
+  supportedVersion: "4.4.*",
+});
+
+const theory = mod.technology("resonance_theory", {
+  name: "Crystal Resonance Theory",
   cost: 2000,
   area: "physics",
   tier: 2,
   category: "particles",
 });
 
-const weapons = defineTechnology({
-  id: "mymod_tech_resonance_weapons",
+const weapons = mod.technology("resonance_weapons", {
   name: "Resonance Disruptors",
   cost: 6000,
   area: "physics",
   tier: 3,
   category: "particles",
-  prerequisites: [theory], // cross-references are objects, not strings
+  prerequisites: [theory],
 });
 
-const mod = buildMod(
-  { name: "My Mod", prefix: "mymod", supportedVersion: "4.0.*" },
-  [collection(undefined, [theory, weapons])]
-);
+const events = mod.namespace("resonance");
+const followup = events.countryHandle(2);
+const opener = events.country(1, { isTriggeredOnly: true });
+const followupDefinition = followup.define({ isTriggeredOnly: true });
 
-await write("./out", render(mod));
+const feature = mod.feature("resonance", [
+  theory,
+  weapons,
+  opener,
+  followupDefinition,
+  mod.on(onActions.onGameStartCountry, [opener]),
+]);
+
+const compiled = mod.compile([feature]);
+await write("./out", render(compiled));
 ```
 
-Most mods use filesystem discovery instead of hand-built collections:
-`discoverContent(dir)` imports every `.ts` module under a directory and turns
-each module's exports into a collection named after the file. Export is
-registration; the basename decides only the emitted file stem. One feature
-module fans out across every registry it defines into — a module holding
-technologies and events emits both `common/technology/<prefix>_<stem>.txt` and
-`events/<prefix>_<stem>.txt` — so source is organized by feature while output
-satisfies the engine's one-directory-per-registry layout.
+The capability gives the first technology the id
+`mymod_tech_resonance_theory`; the two events are `mymod_resonance.1` and
+`mymod_resonance.2`. Cross-content references remain branded objects rather
+than stringly typed ids.
+
+Use a direct event method when its definition is available immediately. Use a
+forward handle for a cyclic or delayed reference, then call `.define()` exactly
+once. The scaffold's ESLint configuration catches a second direct call on the
+same local handle; `compile()` remains the authoritative validation step, so it
+also catches aliases, helpers, cross-module construction, and every other
+semantic duplicate.
+
+### Features and discovery
+
+`mod.feature(stem, items)` makes source placement explicit. A feature may fan
+out into every registry it contains while preserving its stem, so a feature
+with technologies and events writes both a technology file and an event file.
+Feature order and source order never decide emission order: output sorts by
+registry declaration order, emitted path, and id.
+
+For a file-per-feature project, `discoverFeatures` imports selected modules and
+reads only their named `feature` export. Other exports are ordinary TypeScript
+values, not implicit registration, and a filename is never part of content
+identity.
+
+`src/mod.ts` creates the capability and performs discovery:
 
 ```ts
-import { buildMod, discoverContent, render, write } from "@pdx-ts/sdk";
+import { createMod, discoverFeatures } from "@pdx-ts/sdk";
 
-const mod = buildMod(config, await discoverContent(new URL("./content/", import.meta.url)));
-await write("./out", render(mod));
+export const mod = createMod({
+  name: "My Mod",
+  prefix: "mymod",
+  version: "0.1.0",
+  supportedVersion: "4.4.*",
+});
+
+export async function compileMod() {
+  const features = await discoverFeatures<typeof mod.config.prefix>(
+    new URL("./content/", import.meta.url)
+  );
+  return mod.compile(features);
+}
 ```
 
-Layout is not identity: ids are authored, emission order is a function of the
-content alone (registry order, then file path, then id), and moving a
-definition between modules changes which file it lands in and nothing else.
+`src/content/resonance.ts` imports the capability and explicitly exports its
+feature:
+
+```ts
+import { mod } from "../mod.ts";
+
+export const feature = mod.feature("resonance", [
+  mod.technology("resonance_theory", {
+    name: "Crystal Resonance Theory",
+    cost: 2000,
+    area: "physics",
+    tier: 2,
+    category: "particles",
+  }),
+]);
+```
+
+Event namespaces and event files are in bijection: keep one namespace's events
+in one feature. Raw definers, raw event/on-action constructors, collection
+assembly, and the old export-discovery mechanism are package internals, not
+public alternatives to the capability.
 
 ### Triggers, effects, and scope safety
 
-Triggers are declarative expression trees built from combinators and generated
-trigger builders. Effects are closures that run once at build time, recording
-into a typed scope object. Both are branded with the scopes they are valid in,
-so a planet-scoped trigger in a country-scoped field, or a wrong-scope effect,
-is a compile error. Scope transitions hand the closure a new scope object.
+Triggers are declarative expression trees. Effects are closures that run once
+at build time and record into a typed scope object. Both carry their valid
+scopes, so a planet condition in a country field or a wrong-scope effect is a
+compile error. Scope transitions hand the closure a new scope object.
 
 ```ts
-const events = namespace("mymod"); // one event namespace per module/file
+const events = mod.namespace("resonance");
+const aftershock = events.planet(2, { from: "country", isTriggeredOnly: true });
 
-export const humReturns = events.defineCountryEvent({
-  id: 1, // → mymod.1
+const humReturns = events.country(1, {
   title: "The Hum Returns",
   isTriggeredOnly: true,
   immediate: (country, ctx) => {
@@ -88,41 +144,38 @@ export const humReturns = events.defineCountryEvent({
   },
   options: [{ name: "Fascinating." }],
 });
-
-export const gameStart = on(onActions.onGameStartCountry, [humReturns]);
 ```
 
-Every effect closure gets a second argument, `ctx`, holding the ambient scopes
-the block runs in. `ctx.self` is the block's own scope — the FROM witness at
-fire sites, above. `ctx.from` is FROM, typed at whatever scope the rules say the
-game hands the block. A scope reference is both a bare word and the key of a
-block that opens it, so `.effects(...)` writes that block:
+Every effect closure gets a second argument, `ctx`, holding the ambient scopes.
+`ctx.self` is the block's own scope — the FROM witness at fire sites above.
+`ctx.from` is FROM, typed at whatever scope the rules say the game hands the
+block. A scope reference is both a bare word and the key of a block that opens
+it, so `.effects(...)` writes that block:
 
 ```ts
-defineArchaeologicalSiteType({
-  id: "mymod_derelict_outpost",
+const derelictOutpost = mod.archaeologicalSiteType("derelict_outpost", {
   name: "Derelict Outpost",
   stages: 3,
-  // on_roll_failed runs in fleet scope, with the site as FROM
+  // on_roll_failed runs in fleet scope, with the site as FROM.
   onRollFailed: (fleet, ctx) => {
     ctx.from.effects((site) => site.addExpeditionLogEntry({ title: "..." }));
   },
 });
 ```
 
-Where nothing declares a FROM — an event with no `from:`, a block the rules give
-a bare `push_scope` — `ctx.from` is an inert sentinel, so reading it is a
+Where nothing declares a FROM — an event with no `from:`, or a block the rules
+give a bare `push_scope` — `ctx.from` is an inert sentinel, so reading it is a
 compile error rather than a ref pointing at whatever the game happens to have.
 
 The same ref opens a condition block with `.trigger(...)`, which takes the
 condition as a value since a trigger is one. Triggers and weight blocks are
-values rather than closures, so a *declarative* field whose rules give it a FROM
-accepts either form — the closure being the only place an argument list exists
-to hand FROM to:
+values rather than closures, so a declarative field whose rules give it a FROM
+accepts either form — the closure is the only place an argument list exists to
+hand FROM to:
 
 ```ts
-  potential: canGoMia(), // no FROM to name, so no closure needed
-  allow: (ctx) => and(canGoMia(), ctx.from.trigger(isSiteLocked(false))),
+potential: canGoMia(), // no FROM to name, so no closure needed
+allow: (ctx) => and(canGoMia(), ctx.from.trigger(isSiteLocked(false))),
 ```
 
 Event targets work the same way, since `event_target:x = { ... }` is the same
@@ -136,223 +189,187 @@ stormWorld.effects((planet) => planet.addDeposit("d_minerals_1")); // the block
 ```
 
 The closure runs once, at definition time, and what the definition carries from
-then on is the value it returned.
-
-`hidden_trigger` and `hidden_effect` hide from generated tooltips without
-changing anything else — neither moves scope, so `this`, `from`, and `root`
-inside are what they are outside. The trigger is a combinator beside `and`/`or`,
-since a condition is a value; the effect is a block on the scope, whose closure
-takes the same scope back so its entries land inside it:
+then on is the value it returned. `hidden_trigger` and `hidden_effect` hide
+from generated tooltips without changing scope, so `this`, `from`, and `root`
+inside are what they are outside:
 
 ```ts
-  allow: and(isShipClass("shipclass_science_ship"), hiddenTrigger(exists("owner"))),
-  effect: (country) => {
-    country.hiddenEffect((hidden) => hidden.setCountryFlag("mymod_quietly"));
-  },
+allow: and(isShipClass("shipclass_science_ship"), hiddenTrigger(exists("owner"))),
+effect: (country) => {
+  country.hiddenEffect((hidden) => hidden.setCountryFlag("mymod_quietly"));
+},
 ```
 
-In-game branching inside effects is `scope.if(trigger, body).elseIf(...).else(...)`;
-a TypeScript `if` branches at build time. Using a trigger in a TS `if` is a
-compile error.
+In-game branching inside effects is
+`scope.if(trigger, body).elseIf(...).else(...)`; a TypeScript `if` branches at
+build time. Using a trigger in a TypeScript `if` is a compile error.
 
-Modifiers are typed paths over the game's complete modifier table
+Modifiers are typed paths over the complete modifier table
 (`m.country.unity.produces.mult(0.01)`), with `m.raw(name, value)` checked
-against the flat name set and `m.unchecked(name, value)` as the explicit
-escape hatch.
+against the flat name set and `m.unchecked(name, value)` as the explicit escape
+hatch.
 
-### Referencing vanilla content
+### Referencing and patching vanilla content
 
-References to the mod's own content are objects, checked at build time. For
-identifiers vanilla defines, install the version-pinned
-[@pdx-ts/stellaris-ids](../stellaris-ids/README.md) package and import it once;
-the `vanilla.*` helpers then narrow from `string` to compile-checked literals:
+Install the version-pinned [@pdx-ts/stellaris-ids](../stellaris-ids/README.md)
+package and import it once to narrow `vanilla.*` helpers to compile-checked
+literals. Raw strings remain available for intentional third-party references.
 
 ```ts
 import "@pdx-ts/stellaris-ids";
 
-prerequisites: [
-  vanilla.technology("tech_lasers_1"), // typo = compile error
-  "tech_from_another_mod",             // raw strings stay legal
-],
+const prerequisite = vanilla.technology("tech_lasers_1");
 ```
 
-Oversized id sets (sprites, sounds, static modifiers) are also navigable by
-the vanilla file that defines them: `vanilla.sprite.eventpictures.GFX_…`,
-`vanilla.staticModifier.deficit.food_deficit`. Without the package installed,
-every helper accepts any string — the degradation is exactly the unchecked
-status quo. `buildMod` refuses a build whose loaded install version disagrees
-with the package's pin unless `acceptGameVersion` accepts it.
+Oversized id sets (sprites, sounds, and static modifiers) are also navigable
+by the vanilla file that defines them: `vanilla.sprite.eventpictures.GFX_…`
+and `vanilla.staticModifier.deficit.food_deficit`. Without the package,
+every helper accepts any string — the unchecked status quo. `mod.compile()`
+refuses a loaded vanilla view whose install version disagrees with the package
+pin unless `acceptGameVersion` accepts it.
 
 ### Vanilla scripted triggers and effects
 
-`is_fallen_empire` is not a game primitive, so no amount of codegen from the
-rules produces it — it is vanilla _script_, one of ~1,600 definitions under
-`common/scripted_triggers`. The identifier package ships every one of them
-already bound:
+`is_fallen_empire` is vanilla script, not a game primitive, so code generation
+from the rules cannot produce it. The identifier package binds the roughly
+1,600 scripted definitions under `common/scripted_triggers`:
 
 ```ts
 import { isFallenEmpire, hasCrisisStage } from "@pdx-ts/stellaris-ids/triggers";
 import { giveAscensionPerkEffect } from "@pdx-ts/stellaris-ids/effects";
 
 potential: and(isFallenEmpire(), hasCrisisStage({ STAGE: 2 })),
-immediate: (s) => {
-  s.run(giveAscensionPerkEffect({ PERK: "ap_mind_over_matter" }));
+immediate: (scope) => {
+  scope.run(giveAscensionPerkEffect({ PERK: "ap_mind_over_matter" }));
 },
 ```
 
-Every binding is a function, parameterless ones included, and the `$PARAM$`
-list is typed — a wrong or misspelled parameter is a compile error. A
-parameterless trigger also takes an optional `boolean`, defaulting to `true`:
-`isMachineEmpire(false)` writes `is_machine_empire = no`, the negated form
-vanilla itself writes at roughly a quarter of all scripted-trigger call sites.
-A trigger with `$PARAM$`s does not get this — vanilla always substitutes those
-into a block, never into the call site itself.
+Every binding is a function, parameterless ones included, and its `$PARAM$`
+list is typed. A parameterless trigger also accepts an optional boolean,
+defaulting to `true`: `isMachineEmpire(false)` writes
+`is_machine_empire = no`. A trigger with `$PARAM$`s does not, because vanilla
+substitutes those into a block rather than the call site itself.
 
 **The scope is inferred, not asserted.** `isFallenEmpire()` is a
 `Trigger<"country">` because its body evaluates `is_country_type` and nothing
-else, and the rules say where that is legal. The inference only ever reads what
-the rules already state; a body it cannot read widens to every scope rather than
-guessing, so a binding is sometimes less specific than it could be and never
-wrong. 90% of scripted triggers narrow, 78% to five scopes or fewer out of 41.
-See [the verdict](../../docs/verdict/verdict-scripted-scope.md) for the evidence,
-including the 4,860 vanilla call sites the result is checked against.
+else, and the rules say where that is legal. The inference only reads what the
+rules state; a body it cannot read widens to every scope rather than guessing.
+See [the verdict](../../docs/verdict/verdict-scripted-scope.md) for the
+evidence, including its vanilla call-site calibration.
 
-Effects go through `scope.run(...)` rather than being methods on the scope
-object: the recorder's sink is closed over, and keeping it that way is what
-stops arbitrary entries reaching the output.
-
-For a definition no install-derived package can know — another mod's, or one
-newer than the pinned package — bind it by hand. There the scope _is_ your
-assertion, and only the name and parameters go unchecked with `.unchecked`:
+Effects go through `scope.run(...)` rather than becoming scope methods: the
+recorder's sink is closed over, which prevents arbitrary entries reaching the
+output. For a definition no install-derived package can know — another mod's,
+or one newer than the pin — bind it by hand. There the scope is your assertion,
+and only name and parameters go unchecked with `.unchecked`:
 
 ```ts
 const pdHabitable = scriptedTrigger("pd_habitability_check", "planet");
 const modTrigger = scriptedTrigger.unchecked("othermod_check", ["country", "sector"]);
 ```
 
-`"any"` is the deliberate opt-out, and yields a trigger that fits everywhere.
+`"any"` is the deliberate opt-out and yields a trigger that fits everywhere.
+Without the package installed, both binding forms still compile and every name
+is accepted. The mod-testing evaluator still refuses scripted triggers: the
+package carries names and scopes, never bodies to evaluate.
 
-Without the package installed, both call forms of a binding still compile and
-every name is accepted — the same degradation as the rest of the vanilla
-surface. One thing does not degrade: the mod-testing evaluator refuses a
-scripted trigger and always will, because the package carries names and scopes
-and never bodies, so there is nothing for it to evaluate.
-
-### Patching vanilla
-
-PDXScript overrides are whole-object replacement, so patching requires the real
-files. `stellaris.load()` locates the install (`STELLARIS_PATH` overrides the
-platform Steam default), parses it with content-hash caching, and surfaces
-vanilla definitions as typed objects; a patch is a transform over one:
+Patching is whole-object replacement and requires the real game files. Load a
+version-pinned install, create the patch through the capability, and compile it
+with that vanilla view:
 
 ```ts
 const vanilla = stellaris.load();
-
-const geneTailoring = patchTechnology(
+const newTechnology = mod.technology("new", {
+  name: "New Technology",
+  cost: 2000,
+  area: "physics",
+  tier: 2,
+  category: "particles",
+});
+const geneTailoring = mod.patchTechnology(
   vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
-  (t) => ({
-    cost: t.cost.value * 2,
-    prerequisites: [...t.prerequisites, myNewTech],
+  (technology) => ({
+    cost: technology.cost.value * 2,
+    prerequisites: [...technology.prerequisites, newTechnology],
   })
 );
 
-const mod = buildMod(config, [collection(undefined, [geneTailoring])], { vanilla });
+const compiled = mod.compile([mod.feature(undefined, [newTechnology, geneTailoring])], { vanilla });
 ```
 
 The patch's emitted filename is computed from the parsed load-order enumeration
-so it provably byte-sorts after every competing file; the build fails loudly
-when no winning name exists or the registry's override rule is unverified.
-Numbers parse as value-plus-provenance (`cost` may be `@tier3cost1` in the
-file); untouched references re-emit as references.
+so it provably byte-sorts after every competing file. Compilation fails when no
+winning name exists, the registry override rule is unverified, or the loaded
+install version does not match the identifier package pin. Numbers retain
+value-plus-provenance (`cost` may be `@tier3cost1`); untouched references
+re-emit as references.
 
 ## Where stuff lives
 
 ```
 src/
-├── index.ts           the public barrel — everything exported, by name
-├── build.ts           buildMod: the fold, cross-collection checks, warnings
-├── render.ts          PureMod → path-to-contents map
-├── discover.ts        discoverContent: directory → collections (the impure shell)
-├── content.ts         generic content lowering; field descriptors; modifier recorder
-├── items.ts           ContentItem and the item kinds buildMod folds
-├── definers.ts        hand-written definers and collection()
-├── trigger-core.ts    Trigger<S>, the scope brand, trigger()
-├── effect-core.ts     the scope-object recorder (makeScope), ScopeRef, event targets
-├── triggers.ts        hand-written trigger combinators (and, or, not, ...)
-├── events.ts          EventDef, event lowering, namespace()
-├── on-actions.ts      on(hook, [events])
-├── situations.ts      the situation target contract
-├── scripted.ts        scriptedTrigger/scriptedEffect bindings and their lowering
-├── scalar.ts          lowering a branded ref or scope ref to one PDXScript scalar
-├── vanilla-ids.ts     VanillaIds merge targets + VanillaId/CheckedVanillaId resolvers
-├── vanilla-trie.ts    makeIdTrie: the navigable-id runtime (one Proxy)
-├── vanilla/           install-derived surface: VanillaView, patches, the version pin
-├── stellaris/         locateInstall, stellaris.load(), the parse cache
-├── resolver/          load-order model, per-registry override rules, patch planning
+├── index.ts           public capability, discovery, materialization, and types
+├── mod-capability.ts  createMod and capability-owned authoring operations
+├── build.ts           internal fold, cross-feature checks, and warnings
+├── render.ts          compiled mod → path-to-contents map
+├── discover.ts        discoverFeatures: directory → named feature exports
+├── content.ts         generic content lowering and modifier recorder
+├── events.ts          internal event lowering and namespace mechanics
+├── on-actions.ts      on-action lowering
+├── trigger-core.ts    Trigger<S>, scope brand, and trigger()
+├── effect-core.ts     scope-object recorder, ScopeRef, and event targets
+├── vanilla/           install-derived view, patches, and version pin
 └── generated/         committed codegen output — never edit by hand
 ```
 
-`src/generated/` (51 files) carries everything derived from the game's rules:
-per-scope trigger/effect interfaces, the modifier path trie, content
-definers and field descriptors for 34 registries, refs, and the `vanilla.*`
-helper namespace.
+`src/generated/` carries the interfaces and content shapes derived from the
+game rules. Its raw constructors are internal implementation details; the
+capability is the public authoring surface.
 
-## How codegen works
+## Code generation and testing
 
-Generated code is produced by [@pdx-ts/codegen-cwt](../codegen-cwt/) from two
-vendored sources: the cwtools `.cwt` rules (field shapes, cardinality,
-references, scopes) and the game's own doc dumps (an independent second
-opinion on names and scopes). The output is committed, so a rules bump lands
-as a reviewable diff on the public API.
+[@pdx-ts/codegen-cwt](../codegen-cwt/) generates `src/generated/` from the
+vendored cwtools rules (field shapes, cardinality, references, and scopes) and
+the game's documentation dumps (an independent second opinion on names and
+scopes). The output is committed and reviewed as public API:
 
 ```bash
-npm run codegen        # regenerate packages/sdk/src/generated/
-npm run codegen:check  # regenerate and fail if committed output moved
+npm run codegen
+npm run codegen:check
+npm test
+npm run typecheck
 ```
 
 Both runs print a report; skipped rules, unrepresentable declarations, and
-collapsed fields are always listed with a named reason, never silently
-dropped. Disagreements between the two sources are compared against a
-committed drift baseline and fail codegen when either set moves. Deliberate
-departures from a mechanical reading of the rules live in one audited file,
-`packages/codegen-cwt/src/overlay.ts`.
+collapsed fields are always named rather than silently dropped. Disagreements
+between the two sources are compared against a committed drift baseline and
+fail codegen when either set moves. Deliberate departures from a mechanical
+reading of the rules live in the audited
+`packages/codegen-cwt/src/overlay.ts`. Read every report and generated diff.
 
-The identifier package is generated separately by
-[@pdx-ts/codegen-vanilla](../codegen-vanilla/) from a real install
-(`npm run codegen:vanilla`); the SDK itself never reads the install at
-codegen time.
+The separate
+[@pdx-ts/codegen-vanilla](../codegen-vanilla/) generator reads a pinned local
+install for `@pdx-ts/stellaris-ids`; the SDK does not read an install during its
+own code generation.
 
-## How testing works
+Evidence comes in four kinds, and a new registry should add all four:
 
-```bash
-npm test               # all suites (vitest), including type-level tests
-npm run typecheck      # tsc --noEmit (models the ids-package-absent world)
-npm run typecheck:ids  # the package-present world (packages/stellaris-ids + examples/)
-```
-
-Evidence comes in four kinds, and new registries are expected to add all four:
-
-- **Golden PDXScript** under `tests/__snapshots__/` — real emitted `.txt`/
-  `.yml`/`.mod` files, reviewed in PRs. `pure-api.test.ts` proves two reversed
-  authoring orders render identically. The quickstart example's own goldens —
-  which freeze its ids, event namespace, and localization bytes across
-  restructures — live in `packages/stellaris-ids/tests/`, because the example
-  imports that package and a module augmentation is global to a program.
-- **Type-level tests** (`tests/*.test-d.ts`), run by vitest's typecheck:
-  literal-id preservation, scope safety, cross-registry reference rejection.
-- **Corpus conformance** (`tests/codegen/corpus-conformance.test.ts`) parses
-  the installed game and measures every generated interface against every
-  definition the game actually ships, for presence and shape.
+- **Golden PDXScript** under `tests/__snapshots__/`: reviewed emitted
+  `.txt`/`.yml`/`.mod` files. `pure-api.test.ts` proves two reversed authoring
+  orders render identically. The quickstart's goldens freeze ids, event
+  namespace, and localization bytes across restructures.
+- **Type-level tests** (`tests/*.test-d.ts`): literal-id preservation, scope
+  safety, and cross-registry reference rejection.
+- **Corpus conformance** (`tests/codegen/corpus-conformance.test.ts`): measures
+  every generated interface against the definitions a local game installation
+  ships, for presence and shape.
 - **Install-gated suites** use `describe.skipIf(installPath === undefined)`:
-  hermetic gates run everywhere; suites needing a real Stellaris install
-  (corpus conformance, patch calibration, ids-package drift) run wherever one
-  exists and skip elsewhere.
+  hermetic gates run everywhere; corpus conformance, patch calibration, and id
+  package drift run where a Stellaris install exists.
 
-For testing *mod logic* — the SDK's user-facing feature —
-[@pdx-ts/sdk-testing](../sdk-testing/README.md) ships a whitelist interpreter
-over the recorded ASTs: `fixture()` builds a world, `world.fire`/`world.advance`
-drive events, `evaluate`/`explain` answer why a trigger fails by naming the
-failing subcondition. It is a separate package because its matchers integrate
-with a test framework, and a peer dependency on vitest does not belong in an SDK
-whose job is emitting game files. Consuming this package through its public
-interface is also what keeps that interface honest.
+For testing mod logic, [@pdx-ts/sdk-testing](../sdk-testing/README.md) ships a
+whitelist interpreter over the recorded ASTs: `fixture()` builds a world,
+`world.fire`/`world.advance` drive events, and `evaluate`/`explain` identify why
+a trigger fails. It is separate because its matchers integrate with a test
+framework; it intentionally throws for unmodeled game semantics rather than
+guessing.

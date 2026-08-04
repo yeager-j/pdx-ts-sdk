@@ -657,10 +657,9 @@ async function main(): Promise<void> {
 }
 
 /**
- * One free definer per registry: the SDK-23 authoring surface, and the whole
- * content surface. A definition is a value a module exports; nothing is
- * registered at the definition site, because `collection(file, items)` and
- * `discoverContent` are what place it.
+ * One raw definer per registry: package-internal lowering for the capability
+ * surface. A definition remains a pure value, but public authors create it
+ * through a capability method and place it with `mod.feature(...)`.
  *
  * The definers are literal-preserving (`<const Id extends string>`), so a
  * definition's id survives as its literal type all the way into the item the
@@ -671,11 +670,11 @@ async function main(): Promise<void> {
  * conditional in this emitter: `CONTENT_PATCH_REGISTRIES` adds a free `patchX`,
  * `CONTENT_CONTRIBUTION_SINKS` a free `addX` for the id-less sink, and
  * `HAND_WRITTEN_CONTENT_DEFINERS` replaces the mechanical `defineX` with a
- * re-export from `src/definers.ts`, so every definer this SDK has is importable
- * from this one module.
+ * re-export from `src/definers.ts`, so the internal lowering surface remains
+ * centralized in this module.
  *
- * The `XItem` union types are emitted here too: they describe what a collection
- * of this registry's items can hold.
+ * The `XItem` union types are emitted here too. They remain public as type-only
+ * exports even though their raw constructors are internal.
  */
 function contentDefiners(
   contents: readonly {
@@ -881,9 +880,9 @@ function contentDefiners(
             `def: rest as ${name}Def<Id, never> };\n`;
       definitions.push(
         docComment([
-          `Defines ${article} ${spoken} in this mod. The returned item is the`,
-          "definition as a value and a reference to it; place it in a",
-          "`collection(...)` — or export it from a discovered module — to emit it.",
+          `Internal lowering primitive for ${article} ${spoken}. Public authors call`,
+          `\`mod.${camelCase(registry)}(name, def)\`, then place the returned item with`,
+          "`mod.feature(...)` before compiling the same capability.",
           ...(scoped === null
             ? []
             : [
@@ -909,9 +908,10 @@ function contentDefiners(
     if (patchable !== undefined) {
       definitions.push(
         docComment([
-          `Patches ${article} vanilla ${spoken} as a whole-object override. The transform`,
-          "runs here (pure); the duplicate-key and one-view checks stay in",
-          "`buildMod`, which sees every patch together, and the emitted filename",
+          `Internal lowering primitive for patching ${article} vanilla ${spoken}. The transform`,
+          "runs here (pure); public authors call the capability method, while the duplicate-key",
+          "and one-view checks stay in",
+          "the internal fold, which sees every patch together, and the emitted filename",
           "is always resolver-computed — a patch item never carries a file of its own.",
         ]) +
           `export function patch${name}<Source extends Parsed${name}>(\n` +
@@ -925,8 +925,9 @@ function contentDefiners(
     if (contribution !== undefined) {
       definitions.push(
         docComment([
-          `Contributes to the shared additive \`default = { ${contribution.sink} = ... }\``,
-          "sink: ids this mod names but does not own, with no author-named file.",
+          `Internal lowering primitive for the shared additive \`default = { ${contribution.sink} = ... }\``,
+          "sink. Public authors call the capability method; ids this mod names but does not own",
+          "have no author-named file.",
           "A ref listed twice is emitted once.",
         ]) +
           `export function ${contribution.method}(\n` +

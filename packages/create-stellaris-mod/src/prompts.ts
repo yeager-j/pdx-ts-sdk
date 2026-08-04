@@ -20,7 +20,7 @@ export const FALLBACK_GAME_VERSION = "4.4.6";
 /**
  * Why a name may not contain a double quote: it is written verbatim into
  * `descriptor.mod` as `name="<name>"`, and PDXScript has no escape for one, so
- * the launcher silently refuses the malformed result. `buildMod` rejects it too
+ * the launcher silently refuses the malformed result. `createMod` rejects it too
  * — this is the same rule said early, where the author can still retype.
  */
 export function nameProblem(name: string): string | undefined {

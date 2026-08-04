@@ -1,5 +1,5 @@
 /**
- * The permanently hand-written half of the definer surface.
+ * The permanently hand-written half of internal lowering.
  *
  * The 33 mechanical content definers and `namespace(ns)`'s event definers are
  * generated — `src/generated/content-definers.ts` and
@@ -12,8 +12,8 @@
  * The situation definer is skip-listed in the codegen overlay
  * (`HAND_WRITTEN_CONTENT_DEFINERS`), the same arrangement `HAND_WRITTEN_TRIGGERS`
  * uses one level up, so `content-definers.ts` re-exports the definition below
- * instead of emitting a mechanical one beside it — and all 34 definers stay
- * importable from that one module.
+ * instead of emitting a mechanical one beside it. The raw constructors remain
+ * available to package internals; public authors use mod capability methods.
  */
 
 import type { ScopeName } from "./generated/scopes.ts";
@@ -53,9 +53,9 @@ type CheckedStageFields<Approach extends string, Stage extends string> = Omit<
 };
 
 /**
- * Defines a situation type in this mod.
+ * Internal situation-type lowering primitive.
  *
- * One object, doing three jobs: it is the item a `collection(...)` collects,
+ * One object, doing three jobs: it is the item the capability places,
  * the `targetScope`-carrying ref `startSituation` call sites are checked
  * against (see src/situations.ts), and — `Approach`/`Stage` inferred from this
  * same call's own `approach`/`stages` record keys — the boundary
@@ -118,7 +118,7 @@ export function defineSituationType<
 }
 
 /**
- * Binds this mod's events to a generated on-action hook.
+ * Internal on-action lowering primitive.
  *
  * The events are a non-empty tuple, and the list order is author data: the
  * game fires a hook's `events = { ... }` list as written, so `buildMod`

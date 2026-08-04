@@ -1,12 +1,10 @@
 /**
  * The pure authoring API's item vocabulary (SDK-22, SDK-23).
  *
- * `buildMod(config, collections)` takes collections — never loose items.
- * Every piece of content is created through a free definer (`defineTechnology`,
- * `namespace(ns).defineCountryEvent`, ...) that returns an item and registers
- * nothing; `collection(file, items)` is what places a list of them in a file.
- * Nested arrays flatten, so a pack is a module exporting a collection or an
- * array of them.
+ * A capability compiles capability-owned features — never loose items.
+ * Capability methods create values, and `mod.feature(file, items)` places
+ * them. The internal raw definers and `collection(file, items)` below remain
+ * the lowering vocabulary that the capability and fold share.
  *
  * The items below are the vocabulary the definers, the collections, and the
  * fold all speak, which is why they live here and not beside any one of them.
@@ -131,7 +129,7 @@ export type ModItem =
 
 /**
  * One output file's worth of items: the file stem and what lands in it. The
- * list is read when `buildMod` runs. Generic in its element type so a
+ * list is read when the internal fold runs. Generic in its element type so a
  * technology collection's `items` are technology items — the type says what
  * the collection can contain, not just that it contains "something".
  */
@@ -167,13 +165,9 @@ export function assertNamespace(namespace: string): void {
 }
 
 /**
- * A collection over items that already exist: the manual path's primitive
- * (SDK-23).
- *
- * Definers return items and register nothing, so this is what places a list of
- * them in a file. `discoverContent` calls it once per module with the module's
- * basename; hand-written packs call it directly. The stem is validated here,
- * once, for every collection the SDK has.
+ * Internal lowering primitive over items that already exist. Capability
+ * `feature()` delegates here after it has checked ownership; the stem is
+ * validated once for every collection the fold receives.
  */
 export function collection<T extends ModItem>(
   file: string | undefined,

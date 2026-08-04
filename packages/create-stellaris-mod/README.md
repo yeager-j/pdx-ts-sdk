@@ -9,7 +9,7 @@ npx create-stellaris-mod my-mod
 It finds your Stellaris install, reads the build from `launcher-settings.json`,
 and writes a project that typechecks, tests and builds on the first
 `npm install` — including a `content/` directory already wired to
-`discoverContent`, a worked example that fires in game, and colocated tests.
+`discoverFeatures`, a worked example that fires in game, and colocated tests.
 
 ```
 my-mod/
@@ -17,25 +17,34 @@ my-mod/
 ├── .prettierrc            (--no-prettier to skip)
 ├── eslint.config.js       (--no-eslint to skip)
 └── src/
-    ├── mod.ts              config + buildTheMod(): discover content/, fold it into a mod
+    ├── mod.ts              config + buildTheMod(): discover named features and compile them
     ├── index.ts            build: render the fold and write it to out/
     ├── install.ts          build + drop it where the launcher looks
     ├── vanilla.ts          the parsed install, when one was found
     ├── flags.ts            shared values — outside content/, deliberately
     └── content/
-        ├── example.ts      a technology, an event, and the hook that fires it
+        ├── example.ts      named `feature`: a technology, event, and firing hook
         └── example.test.ts colocated, and skipped by discovery
 ```
 
-Importing `mod.ts` builds nothing — `config` is a plain value — so `index.ts`
-and `install.ts` each import its `buildTheMod()` and add their own single
-disk-touching step (`write` vs `install`) on top, rather than each folding
-`content/` a second time. That is what keeps a build with a vanilla view (id
-collision checks included) from quietly running twice, once checked and once
-not. `buildTheMod()` itself is the impure discovery shell around the SDK's
-pure fold, not a pure function on its own: calling it walks `content/` and
-imports every module in it, and — with a vanilla install found — parses the
-game and may write a cache under `node_modules/.cache`.
+Importing `mod.ts` builds nothing — `mod` is an immutable capability — so
+`index.ts` and `install.ts` each import its `buildTheMod()` and add their own
+single disk-touching step (`write` vs `install`) on top, rather than each
+compiling `content/` a second time. That is what keeps a build with a vanilla
+view (id collision checks included) from quietly running twice, once checked
+and once not. `buildTheMod()` is the impure discovery shell around the SDK's
+pure compile step: calling it walks `content/`, imports each module, and reads
+only its named `feature` export. With a vanilla install found, it also parses
+the game and may write a cache under `node_modules/.cache`.
+
+The generated ESLint configuration adds two authoring guardrails. It requires
+one event namespace per feature module, and it reports a second direct
+`.define()` call on the same local `CapabilityEventHandle`. The latter rule is
+type-aware but deliberately local: aliases, helper-mediated calls, and
+cross-module calls still rely on `mod.compile()`, the semantic authority for
+duplicate event definitions; two direct calls report even when control flow
+makes them mutually exclusive. Use `--no-eslint` only when another
+configuration supplies equivalent checks.
 
 ## Options
 
@@ -56,8 +65,7 @@ vanilla ids as unchecked strings.
 
 ## `--local`, and why it exists
 
-`@pdx-ts/sdk` is not published to npm yet, so the default registry ranges will
-404. Point the CLI at a checkout instead:
+`@pdx-ts/sdk` is not published to npm yet, so the default registry ranges will 404. Point the CLI at a checkout instead:
 
 ```bash
 npx create-stellaris-mod my-mod --local ~/code/pdx-sdk
@@ -76,9 +84,9 @@ Every publishable package here builds now, for one shared reason: Node refuses
 to strip types from anything under `node_modules`, so a package shipping raw
 `.ts` dies at a consumer's first import. For this package the consequence is
 sharper still — `npx` installs a CLI into exactly that directory, so a `.ts`
-entry point would fail at *load*, before any of its own code could parse, let
+entry point would fail at _load_, before any of its own code could parse, let
 alone print something helpful. Compiling also lets `engines` say `>=20` rather
-than `>=22.18`; only the *generated project* still needs type stripping, and it
+than `>=22.18`; only the _generated project_ still needs type stripping, and it
 declares that itself.
 
 ## Development

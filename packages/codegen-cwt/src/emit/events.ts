@@ -12,9 +12,9 @@
  * Three outputs:
  *
  * - `events.ts` — the `EVENT_KINDS` data table.
- * - `event-definers.ts` — `namespace(ns)`, with one `defineXEvent` definer per
- *   scoped kind, each closing over the handle's namespace and its used-id set.
- *   The events are values the author places, not registrations. The scopeless
+ * - `event-definers.ts` — internal raw event lowering: `namespace(ns)` with one
+ *   `defineXEvent` definer per scoped kind. The public capability generates
+ *   the author-facing event methods from the same kind table. The scopeless
  *   `event` kind cannot type its closures, so it is skipped and reported.
  * - `event-fires.ts` — the witness-overload pair per fire effect, merged into
  *   the generated scope interfaces. The pair cannot be generated as ordinary
@@ -60,9 +60,8 @@ function definerSignature(kind: EmittedKind & { scope: string }): string {
   return (
     docComment(
       [
-        `Defines ${indefiniteArticle(spoken)} ${spoken} in this namespace; the full id is`,
-        "`${namespace}.${def.id}`. Title/desc/option localization rides along, and the",
-        "event's closures record eagerly, at the define site.",
+        `Internal lowering primitive for ${indefiniteArticle(spoken)} ${spoken}; the full id is`,
+        "`${namespace}.${def.id}`. Public authors call the matching capability method.",
       ],
       "  "
     ) +
@@ -207,26 +206,23 @@ export function emitEvents(emitter: Emitter): EventsEmission {
 
   const definerCode =
     docComment([
-      "An event namespace handle: the free half of the event surface (SDK-23).",
+      "An internal event namespace handle used by capability lowering.",
       "One `defineXEvent` per scoped event kind, each returning an `EventItem`",
       "that is the definition, the value fire sites reference, and the value",
-      "`on()` binds — but registering nothing. Which file the events land in is",
-      "decided by the `collection(...)` they are placed in, or by the module",
-      "`discoverContent` found them exported from.",
+      "`on()` binds — but registering nothing. Public authors use",
+      "`mod.namespace()` and place the resulting values with `mod.feature(...)`.",
     ]) +
     "export interface EventNamespace {\n" +
     "  /**\n" +
-    "   * Discovery's marker. Exporting the handle instead of the events it\n" +
-    "   * defined is the one wrong thing an author is likely to do here, so it\n" +
-    "   * is recognizable enough to earn a targeted error rather than the\n" +
-    "   * generic unrecognized-export one.\n" +
+    "   * Internal lowering marker; public feature discovery observes placed\n" +
+    "   * capability features rather than raw namespace handles.\n" +
     "   */\n" +
     '  readonly kind: "event-namespace";\n' +
     "  readonly namespace: string;\n" +
     scoped.map(definerSignature).join("\n") +
     "}\n\n" +
     docComment([
-      "Opens an event namespace. The namespace is identity — saves persist",
+      "Opens an internal event namespace. The namespace is identity — saves persist",
       "pending fires by full id and on_actions reference it — so it is written",
       "in full here and never inferred from a file name; prefix compliance is a",
       "build warning, the same policy as content ids.",
@@ -235,7 +231,7 @@ export function emitEvents(emitter: Emitter): EventsEmission {
       "closures run eagerly right there and the full id is a plain string from",
       "birth. Nothing about an event is deferred. The per-handle duplicate check",
       "catches a repeated numeric id at the define site, with a precise stack;",
-      "`buildMod` keeps a global full-id check for two handles opened on one",
+      "the internal fold keeps a global full-id check for two handles opened on one",
       "namespace string, and requires all of a namespace's events to land in one",
       "file.",
     ]) +
