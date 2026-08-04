@@ -758,7 +758,85 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "and the row was missing, so the writer silently dropped it. building's sibling triggered_* " +
         "fields (triggered_planet_pop_group_modifier_for_species/_for_all, triggered_country_modifier, " +
         "triggered_army_modifier) splice the by_pop_group/by_planet clause variants instead of plain " +
-        "triggered_modifier_clause and are a separate, not-yet-evidenced gap left for a follow-up.",
+        "triggered_modifier_clause; SDK-56 gives triggered_country_modifier, " +
+        "triggered_planet_pop_group_modifier_for_all, and triggered_army_modifier their own rows " +
+        "below, each against its own clause. triggered_planet_pop_group_modifier_for_species " +
+        "remains a real, separate gap (2 shipped buildings write it) — SDK-56 was scoped to the " +
+        "six fields its evidence sweep found and did not include it; flagged for a follow-up.",
+    },
+  ],
+  [
+    "building.country_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(buildings.cwt:212), the same shape building.planet_modifier already uses. SDK-56: 35 " +
+        "shipped buildings write this key and the row was missing, so the writer silently " +
+        "dropped it.",
+    },
+  ],
+  [
+    "building.army_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(buildings.cwt:215), the same shape building.planet_modifier/country_modifier already " +
+        "use. SDK-56: zero shipped buildings write this key, but the modifierBlock shape is " +
+        "already corpus-proven via those siblings on the same registry splicing the identical " +
+        "clause, and leaving a mechanically identical field silently unauthorable is the exact " +
+        "defect this ticket closes for its sibling fields — added for consistency rather than " +
+        "declined for lack of its own precedent.",
+    },
+  ],
+  [
+    "building.system_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(buildings.cwt:218), the same shape building.planet_modifier/country_modifier already " +
+        "use. SDK-56: 1 shipped building writes this key and the row was missing, so the writer " +
+        "silently dropped it.",
+    },
+  ],
+  [
+    "building.triggered_planet_pop_group_modifier_for_all",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_planet_clause (aliases.cwt:113) is shape-identical to plain " +
+        "triggered_modifier_clause — the same potential/modifier/description/mult/multiplier " +
+        "template, differing only in the alias's push_scope (planet, vs. no push_scope on the " +
+        "plain clause) — so the plain triggeredModifierBlock shape building.triggered_planet_modifier " +
+        "already uses applies unchanged (buildings.cwt:224). SDK-56: 5 shipped buildings write " +
+        "this key and the row was missing, so the writer silently dropped it.",
+    },
+  ],
+  [
+    "building.triggered_country_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_planet_clause (aliases.cwt:113) is shape-identical to plain " +
+        "triggered_modifier_clause, differing only in push_scope (buildings.cwt:230); the same " +
+        "shape building.triggered_planet_modifier and job.triggered_country_modifier already use. " +
+        "SDK-56: 114 shipped buildings write this key — the largest single silently-dropped field " +
+        "the sweep found — and the row was missing, so the writer silently dropped it in full.",
+    },
+  ],
+  [
+    "building.triggered_army_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_planet_clause (aliases.cwt:113) is shape-identical to plain " +
+        "triggered_modifier_clause, differing only in push_scope (buildings.cwt:233); the same " +
+        "shape building.triggered_planet_modifier/triggered_country_modifier already use. SDK-56: " +
+        "zero shipped buildings write this key, but the triggeredModifierBlock shape is already " +
+        "corpus-proven via those siblings splicing the identical by_planet clause on the same " +
+        "registry — added for consistency rather than declined for lack of its own precedent.",
     },
   ],
   [

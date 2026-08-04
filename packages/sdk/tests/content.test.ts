@@ -3077,3 +3077,83 @@ describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring 
     );
   });
 });
+
+describe("SDK-56 building modifier fields (buildingModifiers)", () => {
+  // buildings.cwt declares eight modifier fields on building; SDK-39 covered
+  // planet_modifier and triggered_planet_modifier, leaving six with no
+  // CONTENT_FIELD_OVERRIDES row — silently dropped by the writer, which only
+  // emits a registry's declared ContentField[] members. Measured against the
+  // real install: triggered_country_modifier (114 shipped buildings),
+  // country_modifier (35), triggered_planet_pop_group_modifier_for_all (5),
+  // system_modifier (1), and army_modifier/triggered_army_modifier (0, added
+  // for shape parity with their proven siblings rather than declined for
+  // lack of their own precedent).
+  const CONFIG = configFor("SDK-56 building modifiers test", "sdk56");
+
+  it("emits building's plain modifier trio: country_modifier/army_modifier/system_modifier (buildingModifiers)", () => {
+    // All three splice modifier_clause (buildings.cwt:212/215/218), the same
+    // shape building.planet_modifier already used.
+    const building = defineBuilding({
+      id: "sdk56_building_plain_modifier_trio",
+      name: "Sdk56 Plain Modifier Trio",
+      countryModifier: (m) => m.raw("country_edict_fund_add", 50),
+      armyModifier: (m) => m.raw("armies_cost_mult", -0.1),
+      systemModifier: (m) => m.system.storm.influence.add(1),
+    });
+
+    const rendered = render(buildMod(CONFIG, [collection(undefined, [building])])).get(
+      "common/buildings/sdk56_buildings.txt"
+    )!;
+
+    expect(rendered).toContain("country_modifier = {\n\t\tcountry_edict_fund_add = 50\n\t}");
+    expect(rendered).toContain("army_modifier = {\n\t\tarmies_cost_mult = -0.1\n\t}");
+    expect(rendered).toContain("system_modifier = {\n\t\tsystem_storm_influence_add = 1\n\t}");
+  });
+
+  it("emits building's triggered modifier trio: triggered_country_modifier/triggered_army_modifier/triggered_planet_pop_group_modifier_for_all (buildingModifiers)", () => {
+    // All three splice triggered_modifier_by_planet_clause (aliases.cwt:113),
+    // shape-identical to the plain triggered_modifier_clause building.
+    // triggered_planet_modifier already proved out (SDK-39) — only push_scope
+    // differs between the clauses, and push_scope is not part of the emitted
+    // shape.
+    const building = defineBuilding({
+      id: "sdk56_building_triggered_modifier_trio",
+      name: "Sdk56 Triggered Modifier Trio",
+      triggeredCountryModifier: [
+        {
+          when: hasAuthority("auth_democratic"),
+          modifiers: (m) => m.raw("country_edict_fund_add", 25),
+        },
+      ],
+      triggeredArmyModifier: [
+        {
+          when: always(),
+          modifiers: (m) => m.raw("armies_cost_mult", -0.05),
+        },
+      ],
+      triggeredPlanetPopGroupModifierForAll: [
+        {
+          when: always(),
+          modifiers: (m) => m.pop.happiness(0.1),
+        },
+      ],
+    });
+
+    const rendered = render(buildMod(CONFIG, [collection(undefined, [building])])).get(
+      "common/buildings/sdk56_buildings.txt"
+    )!;
+
+    expect(rendered).toContain(
+      "triggered_country_modifier = {\n\t\tpotential = {\n\t\t\thas_authority = auth_democratic\n\t\t}\n" +
+        "\t\tcountry_edict_fund_add = 25\n\t}"
+    );
+    expect(rendered).toContain(
+      "triggered_army_modifier = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tarmies_cost_mult = -0.05\n\t}"
+    );
+    expect(rendered).toContain(
+      "triggered_planet_pop_group_modifier_for_all = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tpop_happiness = 0.1\n\t}"
+    );
+  });
+});

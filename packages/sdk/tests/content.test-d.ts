@@ -54,6 +54,7 @@ import {
   type AscensionPerkRef,
   type BombardmentStanceRef,
   type BuildingDef,
+  type BuildingFields,
   type BuildingItem,
   type BuildingRef,
   type CasusBelliRef,
@@ -1356,6 +1357,59 @@ describe("generated content authoring types", () => {
       id: "content_types_section_template_x",
       entity: "some_entity",
       modifier: (m) => m.unchecked("ship_hull_add", 10),
+    });
+  });
+
+  it("pins building's plain and triggered modifier fields to their own replace_scopes, not the body's colony scope (buildingModifiers, SDK-56)", () => {
+    // Each field carries its own `## replace_scopes` in buildings.cwt
+    // (country_modifier:212, army_modifier:215, system_modifier:218,
+    // triggered_country_modifier:230, triggered_army_modifier:233,
+    // triggered_planet_pop_group_modifier_for_all:224) — distinct from
+    // building's own body scope (colony) and from each other. This is the
+    // trap the ticket called out: these six are not one shape copied six
+    // times, and neither is their scope.
+    expectTypeOf<BuildingFields["countryModifier"]>().toEqualTypeOf<
+      ModifierClosure<"country"> | undefined
+    >();
+    expectTypeOf<BuildingFields["armyModifier"]>().toEqualTypeOf<
+      ModifierClosure<"army"> | undefined
+    >();
+    expectTypeOf<BuildingFields["systemModifier"]>().toEqualTypeOf<
+      ModifierClosure<"system"> | undefined
+    >();
+    expectTypeOf<BuildingFields["triggeredCountryModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"country">[] | undefined
+    >();
+    expectTypeOf<BuildingFields["triggeredArmyModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"army">[] | undefined
+    >();
+    expectTypeOf<BuildingFields["triggeredPlanetPopGroupModifierForAll"]>().toEqualTypeOf<
+      TriggeredModifier<"pop_group">[] | undefined
+    >();
+
+    defineBuilding({
+      id: "content_types_building_modifier_scopes",
+      name: "X",
+      armyModifier: (m) => {
+        m.raw("armies_cost_mult", -0.1);
+        // @ts-expect-error — country_edict_fund_add is colony/country/
+        // federation scoped (aliases.cwt via modifiers.ts), not army
+        m.raw("country_edict_fund_add", 50);
+      },
+      systemModifier: (m) => {
+        m.raw("system_storm_influence_add", 1);
+        // @ts-expect-error — same country-only field, rejected in system
+        // scope too
+        m.raw("country_edict_fund_add", 50);
+      },
+      triggeredArmyModifier: [
+        {
+          // @ts-expect-error — triggered_army_modifier's potential runs in
+          // army scope; isCapital is colony/planet/carrier/ship only
+          when: isCapital(),
+          modifiers: (m) => m.raw("armies_cost_mult", -0.05),
+        },
+      ],
     });
   });
 
