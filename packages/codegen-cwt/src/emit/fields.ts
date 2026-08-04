@@ -216,23 +216,20 @@ function aliasScalarFields(emitter: Emitter, category: string): RuleField[] | nu
  * parameter of the definition (see `CONTENT_SCOPE_PARAMETERS`) it is that
  * parameter instead, so the clauses follow whatever the definition declared.
  *
- * `containerScopeLost` is true once recursion has passed through a struct
- * field that itself carries a `field.scope` (`## replace_scopes`/
- * `## push_scope` on the struct field, not on the leaf) — `lowerStruct` sets
- * it. That scope is real and known, but nothing threads it down into the
- * struct's own fields (`structShape` recurses with the same `ctx` it was
- * given), so a leaf inside genuinely has a container-declared scope this
- * lowering cannot see, not an absent one. `contravariantScopeType` reads the
- * flag to tell "the rules never said" (safe to widen to `never`) apart from
- * "the rules said something here, it just did not reach this field" (must not
- * widen — that would silently accept a real vanilla-shaped trigger from the
- * wrong scope). Threading the actual scope down instead of merely flagging
- * its loss is SDK-34, deliberately not done here.
+ * `scope` is the effective `ScopeContext` in force at this point in the
+ * recursion — the type's own top-level scope at the root, and, beneath a
+ * struct field that itself carries a `field.scope` (`## replace_scopes`/
+ * `## push_scope` on the struct field, not on the leaf), that field's scope
+ * merged onto whatever was in force above it. `containerContext` builds that
+ * merge and `structShape` recurses with the result, so a leaf with no
+ * annotation of its own (`governments.cwt`'s `modification.add`/`remove`,
+ * scoped only by the enclosing `modification` container) still resolves the
+ * container's scope through the same `field.scope?.this ?? ctx.scope?.this`
+ * fallback `scopeType`/`fromType` use for a leaf's own annotation.
  */
 export interface FieldContext {
   readonly scope: ScopeContext | null;
   readonly unpinned: string;
-  readonly containerScopeLost?: boolean;
 }
 
 interface FieldScope {
@@ -320,22 +317,42 @@ function withFrom(inner: string, scope: FieldScope): string {
 }
 
 /**
+ * The `ScopeContext` a struct field's own children run in, given the field's
+ * own annotation (if any) and whatever scope was already in force above it.
+ *
+ * `## replace_scope(s)` states the whole context, so `root`/`from` it leaves
+ * out are cleared rather than inherited — `scopeOf` already returns them as
+ * `null` in that case, which is what `replaces: true` here passes through
+ * unchanged. `## push_scope` states only `this` (`scopeOf` always reports its
+ * `root`/`from` as `null`, `replaces: false`), so those two carry over from
+ * the parent instead of clearing.
+ */
+function pushedScope(fieldScope: ScopeContext, parentScope: ScopeContext | null): ScopeContext {
+  return fieldScope.replaces
+    ? fieldScope
+    : {
+        this: fieldScope.this,
+        root: parentScope?.root ?? null,
+        from: parentScope?.from ?? null,
+        replaces: false,
+      };
+}
+
+/**
  * The `ctx` a struct field's own body recurses with.
  *
- * `structShape` types every one of a container's fields against the same
- * `ctx` the container itself was reached with — nothing here folds the
- * container's own `field.scope` in (that is SDK-34). So a container that
- * does carry one (`governments.cwt`'s `modification`, `## replace_scopes =
- * { this = country }`) has a scope this lowering knows about but cannot
- * thread to `add`/`remove` beneath it. `containerScopeLost` flags exactly
- * that gap, and stays set through further nesting once one container has
- * shown it: an unannotated leaf under an unannotated container two levels
- * down is just as lost as one directly under the annotated container.
+ * `structShape` types every one of a container's fields against the `ctx`
+ * built here: a container that itself carries a `field.scope`
+ * (`governments.cwt`'s `modification`, `## replace_scopes = { this = country
+ * root = country }`) folds that annotation into `ctx.scope` via
+ * {@link pushedScope}, so `add`/`remove` beneath it — themselves unannotated —
+ * resolve "country" through the same fallback an annotated leaf uses. A field
+ * with no `field.scope` passes `ctx` through unchanged, leaving whatever scope
+ * was already in force (including one folded in by an enclosing container)
+ * standing.
  */
 function containerContext(field: RuleField, ctx: FieldContext): FieldContext {
-  return field.scope !== null || ctx.containerScopeLost === true
-    ? { ...ctx, containerScopeLost: true }
-    : ctx;
+  return field.scope === null ? ctx : { ...ctx, scope: pushedScope(field.scope, ctx.scope) };
 }
 
 /**
@@ -351,14 +368,10 @@ function containerContext(field: RuleField, ctx: FieldContext): FieldContext {
  * an unknown reference target lowers to `| string` rather than to something
  * nothing can satisfy. Only the truly-unpinned case changes — a field a
  * `CONTENT_SCOPE_PARAMETERS` row threads through as `NoInfer<S>`, or one an
- * override or the rules themselves pin to a real scope, is untouched.
- *
- * `ctx.containerScopeLost` withholds the substitution: widening there would
- * turn "a container scoped this and it didn't reach here" into "valid
- * anywhere", which is wrong in the opposite, more dangerous direction — a
- * real vanilla-shaped trigger from the wrong scope would silently compile.
- * Left at `ScopeName`, same as before this lowering existed, until SDK-34
- * threads the real scope down instead of merely flagging its loss.
+ * override, the rules themselves, or an enclosing container (see
+ * {@link containerContext}) pin to a real scope, is untouched: any of those
+ * already leave `scope.type` at something other than `ScopeName`, so the
+ * widen below never fires for them.
  */
 function contravariantScopeType(
   emitter: Emitter,
@@ -367,9 +380,7 @@ function contravariantScopeType(
   asserted?: string
 ): FieldScope {
   const scope = scopeType(emitter, field, ctx, asserted);
-  return scope.type === "ScopeName" && ctx.containerScopeLost !== true
-    ? { ...scope, type: "never" }
-    : scope;
+  return scope.type === "ScopeName" ? { ...scope, type: "never" } : scope;
 }
 
 export function flatten(fields: readonly RuleField[], typeName: string): RuleField[] {
