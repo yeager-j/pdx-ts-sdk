@@ -24,10 +24,10 @@ free functions cannot:
 `compile` delegates directly to `buildMod`. The fold, canonical emission order,
 patch planner, validation, `PureMod`, `render`, and `write` do not move.
 
-The recommended discovery contract is **one explicit `feature` export per
-discovered module**. That is a public choice for Jackson to affirm before the
-migration ticket starts; the probe deliberately measures both alternatives
-rather than treating byte parity as authority over an authoring decision.
+**Discovery decision, affirmed by Jackson on 2026-08-04:** one explicit
+`feature` export per discovered module. The probe measured both alternatives
+before that choice rather than treating byte parity as authority over an
+authoring decision.
 
 ## Escape-criteria results
 
@@ -148,7 +148,7 @@ Hardening is 191 versus 209 lines. Line count is not the reason to migrate, but
 it falsifies the concern that binding the capability necessarily adds
 ceremony.
 
-## Discovery: the decision for Jackson
+## Discovery: explicit `feature` decided
 
 Both alternatives preserve feature colocation, canonical order, and byte
 output. They disagree about what an ES module export means.
@@ -164,20 +164,19 @@ output. They disagree about what an ES module export means.
 | Discovery check                     | At least one recognized item export               | Exactly one `feature: Collection` export          |
 | Reusable pack                       | Export items/arrays and inherit consumer filename | Return a feature or feature factory explicitly    |
 
-**Recommendation: explicit `feature`.** `createMod` makes the feature a
-first-class value already; discovery should collect that value instead of
-reconstructing it from all exports. It restores ordinary ESM meaning to named
-exports and keeps output layout stable when source is reorganized. The one
-extra wrapper is visible policy, not accidental coordination.
+**Decision: explicit `feature`.** `createMod` makes the feature a first-class
+value already; discovery collects that value instead of reconstructing it from
+all exports. It restores ordinary ESM meaning to named exports and keeps output
+layout stable when source is reorganized. The one extra wrapper is visible
+policy, not accidental coordination.
 
 The probe's `discoverExplicitFeatures` reads only the named `feature` export and
 allows the module to export `theory` and `lab` for reuse. Its output is
 byte-identical to today's `discoverContent` over equivalent exports.
 
-If Jackson prefers the zero-wrapper path, the capability itself still passes.
-Discovery is not a blocker to the authoring boundary; it is a migration choice
-that must be made once because supporting both as implicit conventions would
-make placement ambiguous.
+Do not support both conventions. Treating named exports as placement alongside
+an explicit feature would make placement ambiguous and restore the re-export
+hazard the decision removes.
 
 ## Codegen cost
 
@@ -253,7 +252,7 @@ followed by deletion:
 
 1. Add `createMod` and generated capability methods beside the free surface.
 2. Port the byte-parity and negative claims into permanent SDK tests.
-3. Affirm and implement one discovery contract.
+3. Implement discovery over one explicit `feature` export per module.
 4. Migrate examples, then runtime/type tests in bounded chunks.
 5. Delete free content/event definers and redundant public `collection`
    ceremony; keep `buildMod` as the capability's tested fold, whether or not it
@@ -267,11 +266,30 @@ strings—and erase the guarantee the migration exists to buy.
 
 ## Accepted costs and watch items
 
-1. **Event duplicate locality changes for handles.** Calling one handle's
-   `define` twice is pure and produces two values; the duplicate appears at
-   `compile`, not the second call. Adding a one-use mutable bit to restore the
-   earlier stack trace would violate the premise. Assembly locality is the
-   honest trade.
+1. **Event duplicate locality changes for handles, with an ESLint mitigation.**
+   Calling one handle's `define` twice is pure and produces two values; the
+   complete duplicate check therefore remains at `compile`. A one-use mutable
+   bit would make the same call return different results based on history and
+   violate the premise.
+
+   `create-stellaris-mod` already gives consumers ESLint 9,
+   `typescript-eslint`'s type-checked configuration, and an inline `pdx` plugin
+   containing `one-namespace-per-file`. Add a second rule there: resolve local
+   bindings whose type is `CapabilityEventHandle`, track direct
+   `.define(...)` references to the same symbol, and report the second call at
+   its source location. This needs no new consumer dependency or configuration
+   boundary, and it puts the diagnostic in the generated project where mod
+   authors actually work.
+
+   The rule is deliberately an author-facing early check, not the authority.
+   Aliases passed through helpers, cross-module flows, and mutually exclusive
+   control-flow paths prevent lint from proving the runtime property in
+   general, so `compile` still rejects every duplicate it observes. Pin the
+   rule with an executed generated-project lint test: two direct calls must go
+   red at the second call, one call must stay green, and alias/control-flow
+   cases must document whether they are supported rather than silently
+   expanding the claim.
+
 2. **A root namespace needs a zero-argument overload.** The probe's empty-string
    spelling is evidence, not the proposed API.
 3. **Default id segments need review.** They are public emitted identity. Seed
