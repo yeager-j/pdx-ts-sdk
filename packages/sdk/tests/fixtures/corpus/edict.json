@@ -46,6 +46,18 @@
       "keysByDefinition": [
         [],
         [
+          "NOR",
+          "OR"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "capital_scope",
+          "exists"
+        ],
+        [
           "custom_tooltip"
         ],
         [
@@ -57,18 +69,6 @@
         ],
         [
           "has_technology"
-        ],
-        [
-          "NOR",
-          "OR"
-        ],
-        [
-          "NOT"
-        ],
-        [
-          "NOT",
-          "capital_scope",
-          "exists"
         ]
       ]
     },
@@ -968,6 +968,63 @@
       ],
       "keysByDefinition": [
         [
+          "NOR",
+          "NOT",
+          "OR",
+          "is_death_cult_empire"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_valid_civic",
+          "is_death_cult_empire"
+        ],
+        [
+          "NOR",
+          "OR",
+          "is_death_cult_empire"
+        ],
+        [
+          "NOT",
+          "has_technology"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists",
+          "federation",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR",
+          "has_resource"
+        ],
+        [
+          "OR",
+          "is_galactic_community_member",
+          "is_nomadic"
+        ],
+        [
+          "OR",
+          "is_gestalt",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR",
+          "is_nomadic"
+        ],
+        [
+          "OR",
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR",
+          "is_wilderness_empire"
+        ],
+        [
           "always"
         ],
         [
@@ -1184,63 +1241,6 @@
           "is_spiritualist"
         ],
         [
-          "is_wilderness_empire"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "OR",
-          "is_death_cult_empire"
-        ],
-        [
-          "NOR",
-          "OR",
-          "has_valid_civic",
-          "is_death_cult_empire"
-        ],
-        [
-          "NOR",
-          "OR",
-          "is_death_cult_empire"
-        ],
-        [
-          "NOT",
-          "has_technology"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "exists",
-          "federation",
-          "is_wilderness_empire"
-        ],
-        [
-          "OR",
-          "has_resource"
-        ],
-        [
-          "OR",
-          "is_galactic_community_member",
-          "is_nomadic"
-        ],
-        [
-          "OR",
-          "is_gestalt",
-          "is_wilderness_empire"
-        ],
-        [
-          "OR",
-          "is_nomadic"
-        ],
-        [
-          "OR",
-          "is_nomadic",
-          "is_wilderness_empire"
-        ],
-        [
-          "OR",
           "is_wilderness_empire"
         ]
       ]

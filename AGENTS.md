@@ -174,7 +174,8 @@ pre-review of a list.
      report, and review and commit the fixture diff with the change. A registry recording zero
      definitions means the path or keyword is wrong. A field the game writes at the presence floor
      or above that no author can produce fails — fix the lowering, or acknowledge it with a reason
-     and issue in `packages/sdk/tests/codegen/corpus-gaps.ts`, which is measurement for review,
+     and issue (labeled "Corpus Gap" in Linear, so the gap backlog is queryable) in
+     `packages/sdk/tests/codegen/corpus-gaps.ts`, which is measurement for review,
      not acceptance. A new `form` or `scope` mismatch fails the same way: fix the lowering rather
      than acknowledging it. A field the emitter invents with zero real precedent is worth verifying
      by hand against the vendored rules. `npm run corpus:check` re-extracts and diffs against the

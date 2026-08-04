@@ -76,6 +76,13 @@
       ],
       "keysByDefinition": [
         [
+          "NOT",
+          "has_tradition"
+        ],
+        [
+          "OR"
+        ],
+        [
           "always"
         ],
         [
@@ -107,13 +114,6 @@
         [
           "has_tradition",
           "has_valid_civic"
-        ],
-        [
-          "NOT",
-          "has_tradition"
-        ],
-        [
-          "OR"
         ]
       ]
     },
@@ -186,11 +186,11 @@
           "set_country_flag"
         ],
         [
-          "else_if",
+          "else",
           "if"
         ],
         [
-          "else",
+          "else_if",
           "if"
         ],
         [
@@ -809,6 +809,103 @@
       ],
       "keysByDefinition": [
         [
+          "NAND",
+          "NOR",
+          "if"
+        ],
+        [
+          "NAND",
+          "NOR",
+          "is_gestalt"
+        ],
+        [
+          "NAND",
+          "NOR",
+          "is_hive_empire"
+        ],
+        [
+          "NAND",
+          "NOR",
+          "is_individual_machine",
+          "is_regular_empire"
+        ],
+        [
+          "NAND",
+          "NOR",
+          "is_machine_empire"
+        ],
+        [
+          "NAND",
+          "OR",
+          "has_cybernetic_ascension"
+        ],
+        [
+          "NAND",
+          "has_civic",
+          "has_synthetic_ascension"
+        ],
+        [
+          "NAND",
+          "has_country_flag",
+          "is_nomadic"
+        ],
+        [
+          "NOR",
+          "OR"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_machine_age_dlc"
+        ],
+        [
+          "NOR",
+          "has_biogenesis_dlc",
+          "is_machine_empire"
+        ],
+        [
+          "NOR",
+          "has_biogenesis_dlc",
+          "is_machine_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "NOR",
+          "has_biogenesis_dlc",
+          "is_wilderness_empire"
+        ],
+        [
+          "NOR",
+          "has_paragon_dlc"
+        ],
+        [
+          "NOR",
+          "has_shroud_dlc"
+        ],
+        [
+          "NOR",
+          "has_shroud_dlc",
+          "is_gestalt"
+        ],
+        [
+          "NOR",
+          "is_machine_empire"
+        ],
+        [
+          "NOT",
+          "has_paragon_dlc",
+          "is_regular_empire"
+        ],
+        [
+          "OR",
+          "has_paragon_dlc"
+        ],
+        [
+          "OR",
+          "has_paragon_dlc",
+          "is_gestalt"
+        ],
+        [
           "any_situation"
         ],
         [
@@ -893,103 +990,6 @@
         ],
         [
           "is_machine_empire"
-        ],
-        [
-          "NAND",
-          "has_civic",
-          "has_synthetic_ascension"
-        ],
-        [
-          "NAND",
-          "has_country_flag",
-          "is_nomadic"
-        ],
-        [
-          "NAND",
-          "NOR",
-          "if"
-        ],
-        [
-          "NAND",
-          "NOR",
-          "is_gestalt"
-        ],
-        [
-          "NAND",
-          "NOR",
-          "is_hive_empire"
-        ],
-        [
-          "NAND",
-          "NOR",
-          "is_individual_machine",
-          "is_regular_empire"
-        ],
-        [
-          "NAND",
-          "NOR",
-          "is_machine_empire"
-        ],
-        [
-          "NAND",
-          "OR",
-          "has_cybernetic_ascension"
-        ],
-        [
-          "NOR",
-          "has_biogenesis_dlc",
-          "is_machine_empire"
-        ],
-        [
-          "NOR",
-          "has_biogenesis_dlc",
-          "is_machine_empire",
-          "is_wilderness_empire"
-        ],
-        [
-          "NOR",
-          "has_biogenesis_dlc",
-          "is_wilderness_empire"
-        ],
-        [
-          "NOR",
-          "has_paragon_dlc"
-        ],
-        [
-          "NOR",
-          "has_shroud_dlc"
-        ],
-        [
-          "NOR",
-          "has_shroud_dlc",
-          "is_gestalt"
-        ],
-        [
-          "NOR",
-          "is_machine_empire"
-        ],
-        [
-          "NOR",
-          "OR"
-        ],
-        [
-          "NOR",
-          "OR",
-          "has_machine_age_dlc"
-        ],
-        [
-          "NOT",
-          "has_paragon_dlc",
-          "is_regular_empire"
-        ],
-        [
-          "OR",
-          "has_paragon_dlc"
-        ],
-        [
-          "OR",
-          "has_paragon_dlc",
-          "is_gestalt"
         ]
       ]
     }

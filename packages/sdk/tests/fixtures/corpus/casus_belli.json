@@ -70,57 +70,14 @@
       ],
       "keysByDefinition": [
         [
-          "allows_slavery",
-          "from"
-        ],
-        [
-          "always"
-        ],
-        [
-          "from"
-        ],
-        [
-          "from",
-          "has_total_war_cb"
-        ],
-        [
-          "NOR",
-          "from",
-          "has_total_war_cb"
-        ],
-        [
           "NOR",
           "OR",
           "from"
         ],
         [
-          "NOT",
-          "any_country",
-          "from"
-        ],
-        [
-          "NOT",
-          "any_owned_planet",
-          "if"
-        ],
-        [
-          "NOT",
-          "from"
-        ],
-        [
-          "NOT",
+          "NOR",
           "from",
           "has_total_war_cb"
-        ],
-        [
-          "NOT",
-          "from",
-          "relative_power"
-        ],
-        [
-          "NOT",
-          "has_secret_fealty_from_subject_of",
-          "is_subject"
         ],
         [
           "NOT",
@@ -171,7 +128,50 @@
           "if"
         ],
         [
+          "NOT",
+          "any_country",
+          "from"
+        ],
+        [
+          "NOT",
+          "any_owned_planet",
+          "if"
+        ],
+        [
+          "NOT",
+          "from"
+        ],
+        [
+          "NOT",
+          "from",
+          "has_total_war_cb"
+        ],
+        [
+          "NOT",
+          "from",
+          "relative_power"
+        ],
+        [
+          "NOT",
+          "has_secret_fealty_from_subject_of",
+          "is_subject"
+        ],
+        [
           "OR"
+        ],
+        [
+          "allows_slavery",
+          "from"
+        ],
+        [
+          "always"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "has_total_war_cb"
         ],
         [
           "overlord"
@@ -234,6 +234,105 @@
         "is_subject"
       ],
       "keysByDefinition": [
+        [
+          "NOR",
+          "exists",
+          "is_country_type"
+        ],
+        [
+          "NOR",
+          "from",
+          "is_country_type"
+        ],
+        [
+          "NOR",
+          "has_global_flag",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "OR",
+          "is_subject"
+        ],
+        [
+          "NOT",
+          "federation",
+          "has_country_flag",
+          "has_federation"
+        ],
+        [
+          "NOT",
+          "from",
+          "is_active_resolution",
+          "is_country_type",
+          "is_galactic_community_member"
+        ],
+        [
+          "NOT",
+          "from",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "from",
+          "is_country_type",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "from",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "has_global_flag",
+          "has_policy_flag",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "has_opinion_modifier",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "has_policy_flag",
+          "has_technology",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "is_country_type",
+          "is_megacorp"
+        ],
+        [
+          "NOT",
+          "is_country_type",
+          "is_nomadic"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "is_country_type"
+        ],
+        [
+          "OR",
+          "is_fallen_empire"
+        ],
+        [
+          "OR",
+          "is_homicidal"
+        ],
         [
           "always"
         ],
@@ -307,105 +406,6 @@
         [
           "is_country_type",
           "is_subject"
-        ],
-        [
-          "NOR",
-          "exists",
-          "is_country_type"
-        ],
-        [
-          "NOR",
-          "from",
-          "is_country_type"
-        ],
-        [
-          "NOR",
-          "has_global_flag",
-          "is_country_type"
-        ],
-        [
-          "NOT",
-          "federation",
-          "has_country_flag",
-          "has_federation"
-        ],
-        [
-          "NOT",
-          "from",
-          "is_active_resolution",
-          "is_country_type",
-          "is_galactic_community_member"
-        ],
-        [
-          "NOT",
-          "from",
-          "is_country_type"
-        ],
-        [
-          "NOT",
-          "from",
-          "is_country_type",
-          "is_nomadic"
-        ],
-        [
-          "NOT",
-          "from",
-          "is_nomadic"
-        ],
-        [
-          "NOT",
-          "has_global_flag",
-          "has_policy_flag",
-          "is_country_type"
-        ],
-        [
-          "NOT",
-          "has_opinion_modifier",
-          "is_country_type"
-        ],
-        [
-          "NOT",
-          "has_policy_flag",
-          "has_technology",
-          "is_country_type"
-        ],
-        [
-          "NOT",
-          "is_country_type"
-        ],
-        [
-          "NOT",
-          "is_country_type",
-          "is_megacorp"
-        ],
-        [
-          "NOT",
-          "is_country_type",
-          "is_nomadic"
-        ],
-        [
-          "NOT",
-          "OR"
-        ],
-        [
-          "NOT",
-          "OR",
-          "is_subject"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "is_country_type"
-        ],
-        [
-          "OR",
-          "is_fallen_empire"
-        ],
-        [
-          "OR",
-          "is_homicidal"
         ]
       ]
     },

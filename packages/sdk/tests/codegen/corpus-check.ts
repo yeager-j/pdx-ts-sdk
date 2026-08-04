@@ -17,6 +17,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { compareUtf8 } from "../../src/resolver/path-order.ts";
 import { locateInstall } from "../../src/stellaris/locate.ts";
 import {
   extractCorpus,
@@ -86,7 +87,7 @@ if (committedMeta === null) {
     drift.push(`game version ${committedMeta.gameVersion} -> ${fresh.meta.gameVersion}`);
   }
   const committedStems = fixtureStems();
-  const freshStems = fresh.registries.map((registry) => registry.registry).sort();
+  const freshStems = fresh.registries.map((registry) => registry.registry).sort(compareUtf8);
   for (const stem of committedStems.filter((one) => !freshStems.includes(one))) {
     drift.push(`${stem}: committed fixture but no longer manifested`);
   }

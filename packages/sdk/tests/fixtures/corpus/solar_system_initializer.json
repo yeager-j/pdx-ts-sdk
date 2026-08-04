@@ -619,11 +619,11 @@
           "random_system"
         ],
         [
-          "random_system_planet"
-        ],
-        [
           "random_system",
           "reroll_random"
+        ],
+        [
+          "random_system_planet"
         ],
         [
           "save_global_event_target_as"
@@ -3237,6 +3237,11 @@
       ],
       "keysByDefinition": [
         [
+          "IF",
+          "create_ambient_object",
+          "last_created_ambient_object"
+        ],
+        [
           "add_anomaly",
           "add_deposit",
           "clear_blockers",
@@ -4191,6 +4196,10 @@
           "while"
         ],
         [
+          "create_MSI_effect",
+          "prevent_anomaly"
+        ],
+        [
           "create_ambient_object",
           "create_cluster",
           "create_country",
@@ -4408,10 +4417,6 @@
           "set_deposit"
         ],
         [
-          "create_MSI_effect",
-          "prevent_anomaly"
-        ],
-        [
           "create_species",
           "if",
           "set_carrier_flag"
@@ -4457,11 +4462,6 @@
         ],
         [
           "if"
-        ],
-        [
-          "IF",
-          "create_ambient_object",
-          "last_created_ambient_object"
         ],
         [
           "if",

@@ -386,6 +386,31 @@
       "keysByDefinition": [
         [],
         [
+          "BIOLOGICAL_species_trait_picks_add",
+          "BIOLOGICAL_species_trait_points_add",
+          "modify_species_cost_mult"
+        ],
+        [
+          "MACHINE_species_trait_picks_add",
+          "MACHINE_species_trait_points_add",
+          "modify_species_cost_mult"
+        ],
+        [
+          "MACHINE_species_trait_picks_add",
+          "ascension_perks_add",
+          "cyborg_pop_bonus_workforce_mult"
+        ],
+        [
+          "ROBOT_species_trait_picks_add",
+          "ROBOT_species_trait_points_add"
+        ],
+        [
+          "ROBOT_species_trait_picks_add",
+          "ROBOT_species_trait_points_add",
+          "ascension_perks_add",
+          "modify_species_cost_mult"
+        ],
+        [
           "add_base_country_intel",
           "custom_tooltip"
         ],
@@ -500,11 +525,6 @@
         [
           "auto_mod_monthly_add",
           "planet_jobs_worker_produces_mult"
-        ],
-        [
-          "BIOLOGICAL_species_trait_picks_add",
-          "BIOLOGICAL_species_trait_points_add",
-          "modify_species_cost_mult"
         ],
         [
           "category_biology_research_speed_mult",
@@ -710,16 +730,6 @@
           "starbase_shipyard_space_fauna_build_speed_mult"
         ],
         [
-          "MACHINE_species_trait_picks_add",
-          "ascension_perks_add",
-          "cyborg_pop_bonus_workforce_mult"
-        ],
-        [
-          "MACHINE_species_trait_picks_add",
-          "MACHINE_species_trait_points_add",
-          "modify_species_cost_mult"
-        ],
-        [
           "max_rivalries"
         ],
         [
@@ -841,16 +851,6 @@
         ],
         [
           "psionic_specialist_pop_bonus_workforce_mult"
-        ],
-        [
-          "ROBOT_species_trait_picks_add",
-          "ROBOT_species_trait_points_add"
-        ],
-        [
-          "ROBOT_species_trait_picks_add",
-          "ROBOT_species_trait_points_add",
-          "ascension_perks_add",
-          "modify_species_cost_mult"
         ],
         [
           "robotic_pop_bonus_workforce_mult"
@@ -1008,16 +1008,16 @@
           "has_tradition"
         ],
         [
-          "else_if",
-          "if"
-        ],
-        [
           "else",
           "else_if",
           "if"
         ],
         [
           "else",
+          "if"
+        ],
+        [
+          "else_if",
           "if"
         ],
         [
@@ -1062,78 +1062,6 @@
       ],
       "keysByDefinition": [
         [
-          "custom_tooltip_with_modifiers",
-          "inherit_effects",
-          "inherit_icon",
-          "inherit_name",
-          "modifier",
-          "on_enabled",
-          "trigger",
-          "weight"
-        ],
-        [
-          "custom_tooltip_with_modifiers",
-          "inherit_effects",
-          "inherit_icon",
-          "modifier",
-          "name",
-          "trigger",
-          "weight"
-        ],
-        [
-          "custom_tooltip_with_modifiers",
-          "inherit_icon",
-          "inherit_name",
-          "modifier",
-          "name",
-          "on_enabled",
-          "trigger",
-          "weight"
-        ],
-        [
-          "custom_tooltip_with_modifiers",
-          "inherit_icon",
-          "inherit_name",
-          "modifier",
-          "name",
-          "trigger"
-        ],
-        [
-          "custom_tooltip_with_modifiers",
-          "inherit_icon",
-          "inherit_name",
-          "modifier",
-          "name",
-          "trigger",
-          "weight"
-        ],
-        [
-          "custom_tooltip_with_modifiers",
-          "inherit_icon",
-          "inherit_name",
-          "modifier",
-          "trigger",
-          "weight"
-        ],
-        [
-          "custom_tooltip_with_modifiers",
-          "inherit_icon",
-          "modifier",
-          "name",
-          "trigger"
-        ],
-        [
-          "custom_tooltip_with_modifiers",
-          "inherit_icon",
-          "name",
-          "trigger"
-        ],
-        [
-          "custom_tooltip_with_modifiers",
-          "modifier",
-          "trigger"
-        ],
-        [
           "custom_tooltip",
           "custom_tooltip_with_modifiers",
           "inherit_effects",
@@ -1322,6 +1250,78 @@
           "name",
           "trigger",
           "weight"
+        ],
+        [
+          "custom_tooltip_with_modifiers",
+          "inherit_effects",
+          "inherit_icon",
+          "inherit_name",
+          "modifier",
+          "on_enabled",
+          "trigger",
+          "weight"
+        ],
+        [
+          "custom_tooltip_with_modifiers",
+          "inherit_effects",
+          "inherit_icon",
+          "modifier",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "custom_tooltip_with_modifiers",
+          "inherit_icon",
+          "inherit_name",
+          "modifier",
+          "name",
+          "on_enabled",
+          "trigger",
+          "weight"
+        ],
+        [
+          "custom_tooltip_with_modifiers",
+          "inherit_icon",
+          "inherit_name",
+          "modifier",
+          "name",
+          "trigger"
+        ],
+        [
+          "custom_tooltip_with_modifiers",
+          "inherit_icon",
+          "inherit_name",
+          "modifier",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "custom_tooltip_with_modifiers",
+          "inherit_icon",
+          "inherit_name",
+          "modifier",
+          "trigger",
+          "weight"
+        ],
+        [
+          "custom_tooltip_with_modifiers",
+          "inherit_icon",
+          "modifier",
+          "name",
+          "trigger"
+        ],
+        [
+          "custom_tooltip_with_modifiers",
+          "inherit_icon",
+          "name",
+          "trigger"
+        ],
+        [
+          "custom_tooltip_with_modifiers",
+          "modifier",
+          "trigger"
         ],
         [
           "inherit_effects",
@@ -1670,6 +1670,21 @@
       "keysByDefinition": [
         [],
         [
+          "BIOLOGICAL_species_trait_picks_add",
+          "BIOLOGICAL_species_trait_points_add",
+          "modify_species_cost_mult"
+        ],
+        [
+          "BIOLOGICAL_species_trait_points_add",
+          "modify_species_cost_mult"
+        ],
+        [
+          "MACHINE_species_trait_picks_add",
+          "MACHINE_species_trait_points_add",
+          "ascension_perks_add",
+          "modify_species_cost_mult"
+        ],
+        [
           "all_technology_research_speed",
           "ascension_perks_add"
         ],
@@ -1730,15 +1745,6 @@
           "auto_mod_monthly_add"
         ],
         [
-          "BIOLOGICAL_species_trait_picks_add",
-          "BIOLOGICAL_species_trait_points_add",
-          "modify_species_cost_mult"
-        ],
-        [
-          "BIOLOGICAL_species_trait_points_add",
-          "modify_species_cost_mult"
-        ],
-        [
           "building_time_mult",
           "planet_pop_assembly_mult",
           "starbase_shipyard_space_fauna_build_speed_mult"
@@ -1784,12 +1790,6 @@
           "leader_lifespan_mult",
           "leaders_cost_mult",
           "leaders_upkeep_mult"
-        ],
-        [
-          "MACHINE_species_trait_picks_add",
-          "MACHINE_species_trait_points_add",
-          "ascension_perks_add",
-          "modify_species_cost_mult"
         ],
         [
           "max_rivalries"
@@ -1938,6 +1938,72 @@
           "has_valid_civic"
         ],
         [
+          "NOR",
+          "NOT",
+          "OR",
+          "has_machine_age_dlc",
+          "is_hive_empire"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "has_country_flag",
+          "has_machine_age_dlc",
+          "is_hive_empire"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_machine_age_dlc",
+          "is_homicidal",
+          "is_nomadic"
+        ],
+        [
+          "NOR",
+          "has_machine_age_dlc"
+        ],
+        [
+          "NOR",
+          "has_machine_age_dlc",
+          "is_machine_empire"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "has_country_flag",
+          "has_grand_archive_dlc"
+        ],
+        [
+          "NOT",
+          "is_gestalt"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "has_machine_age_dlc",
+          "is_machine_empire"
+        ],
+        [
+          "OR",
+          "is_hive_empire",
+          "is_machine_empire",
+          "is_regular_empire"
+        ],
+        [
+          "OR",
+          "is_machine_empire",
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR",
+          "is_wilderness_empire"
+        ],
+        [
           "federation",
           "has_federation",
           "is_worker_coop_empire"
@@ -2078,72 +2144,6 @@
         ],
         [
           "is_wilderness_empire"
-        ],
-        [
-          "NOR",
-          "has_machine_age_dlc"
-        ],
-        [
-          "NOR",
-          "has_machine_age_dlc",
-          "is_machine_empire"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "has_country_flag",
-          "has_machine_age_dlc",
-          "is_hive_empire"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "OR",
-          "has_machine_age_dlc",
-          "is_hive_empire"
-        ],
-        [
-          "NOR",
-          "OR",
-          "has_machine_age_dlc",
-          "is_homicidal",
-          "is_nomadic"
-        ],
-        [
-          "NOT"
-        ],
-        [
-          "NOT",
-          "has_country_flag",
-          "has_grand_archive_dlc"
-        ],
-        [
-          "NOT",
-          "is_gestalt"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "has_machine_age_dlc",
-          "is_machine_empire"
-        ],
-        [
-          "OR",
-          "is_hive_empire",
-          "is_machine_empire",
-          "is_regular_empire"
-        ],
-        [
-          "OR",
-          "is_machine_empire",
-          "is_nomadic",
-          "is_wilderness_empire"
-        ],
-        [
-          "OR",
-          "is_wilderness_empire"
         ]
       ]
     },
@@ -2256,7 +2256,9 @@
       ],
       "keysByDefinition": [
         [
-          "ascension_perks_add",
+          "BIOLOGICAL_species_trait_picks_add",
+          "BIOLOGICAL_species_trait_points_add",
+          "mult",
           "potential"
         ],
         [
@@ -2266,9 +2268,7 @@
           "potential"
         ],
         [
-          "BIOLOGICAL_species_trait_picks_add",
-          "BIOLOGICAL_species_trait_points_add",
-          "mult",
+          "ascension_perks_add",
           "potential"
         ],
         [

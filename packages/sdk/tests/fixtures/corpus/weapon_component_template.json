@@ -568,6 +568,18 @@
       ],
       "keysByDefinition": [
         [
+          "OR"
+        ],
+        [
+          "OR",
+          "from",
+          "is_arkship_ship"
+        ],
+        [
+          "OR",
+          "ship_uses_mauler_components"
+        ],
+        [
           "from"
         ],
         [
@@ -586,18 +598,6 @@
         ],
         [
           "is_ship_size"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "from",
-          "is_arkship_ship"
-        ],
-        [
-          "OR",
-          "ship_uses_mauler_components"
         ],
         [
           "ship_uses_colossus_components"

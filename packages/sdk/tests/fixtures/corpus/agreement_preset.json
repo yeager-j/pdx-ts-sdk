@@ -121,6 +121,29 @@
       ],
       "keysByDefinition": [
         [
+          "FROM",
+          "NOR",
+          "OR",
+          "has_overlord_dlc",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "OR",
+          "from"
+        ],
+        [
+          "NOT",
+          "from",
+          "has_been_declared_crisis",
+          "tech_unlocked_ratio"
+        ],
+        [
+          "NOT",
+          "from",
+          "tech_unlocked_ratio"
+        ],
+        [
           "always"
         ],
         [
@@ -135,31 +158,8 @@
           "from"
         ],
         [
-          "FROM",
-          "NOR",
-          "OR",
-          "has_overlord_dlc",
-          "is_nomadic"
-        ],
-        [
           "from",
           "tech_unlocked_ratio"
-        ],
-        [
-          "NOT",
-          "from",
-          "has_been_declared_crisis",
-          "tech_unlocked_ratio"
-        ],
-        [
-          "NOT",
-          "from",
-          "tech_unlocked_ratio"
-        ],
-        [
-          "NOT",
-          "OR",
-          "from"
         ]
       ]
     },

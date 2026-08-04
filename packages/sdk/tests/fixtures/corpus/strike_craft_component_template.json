@@ -433,11 +433,11 @@
       ],
       "keysByDefinition": [
         [
-          "from",
-          "is_arkship_ship"
+          "OR"
         ],
         [
-          "OR"
+          "from",
+          "is_arkship_ship"
         ]
       ]
     },

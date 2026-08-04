@@ -753,6 +753,43 @@
       ],
       "keysByDefinition": [
         [
+          "NOT",
+          "OR",
+          "from"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "from",
+          "is_arkship_ship"
+        ],
+        [
+          "OR",
+          "is_eager_explorer_ship"
+        ],
+        [
+          "OR",
+          "ship_uses_colossus_thrusters"
+        ],
+        [
+          "OR",
+          "ship_uses_ion_cannon_components"
+        ],
+        [
+          "OR",
+          "ship_uses_juggernaut_reactors"
+        ],
+        [
+          "OR",
+          "ship_uses_jump_drives"
+        ],
+        [
+          "OR",
+          "ship_uses_offspring_components"
+        ],
+        [
           "from"
         ],
         [
@@ -999,43 +1036,6 @@
         ],
         [
           "is_waystation_ship"
-        ],
-        [
-          "NOT",
-          "OR",
-          "from"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "from",
-          "is_arkship_ship"
-        ],
-        [
-          "OR",
-          "is_eager_explorer_ship"
-        ],
-        [
-          "OR",
-          "ship_uses_colossus_thrusters"
-        ],
-        [
-          "OR",
-          "ship_uses_ion_cannon_components"
-        ],
-        [
-          "OR",
-          "ship_uses_juggernaut_reactors"
-        ],
-        [
-          "OR",
-          "ship_uses_jump_drives"
-        ],
-        [
-          "OR",
-          "ship_uses_offspring_components"
         ],
         [
           "ship_is_stage_3_bioship"

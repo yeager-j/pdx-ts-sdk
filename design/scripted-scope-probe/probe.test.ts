@@ -53,6 +53,11 @@ describe.skipIf(installRoot === undefined)("measured against a real install", ()
   // for a skipped suite, which is the guarantee the gate actually needs.
   let report!: ReturnType<typeof runProbe>;
   let sites!: ReturnType<typeof checkCallSites>;
+  // Explicit timeout because the default hook timeout (10s) now applies where
+  // collection-time execution had none: the hook runs both the probe and the
+  // call-site scan over several thousand vanilla files. ~0.3s measured warm on
+  // a local SSD; 60s is two orders of magnitude of headroom for a cold or
+  // networked disk.
   beforeAll(() => {
     report = runProbe(installRoot!);
     const lowered = (registry: "trigger" | "effect") =>
@@ -61,7 +66,7 @@ describe.skipIf(installRoot === undefined)("measured against a real install", ()
       trigger: lowered("trigger"),
       effect: lowered("effect"),
     });
-  });
+  }, 60_000);
 
   it("prints the distribution", () => {
     console.log(`\n${formatReport(report.trigger)}\n\n${formatReport(report.effect)}\n`);

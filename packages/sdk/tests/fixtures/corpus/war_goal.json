@@ -226,6 +226,10 @@
       ],
       "keysByDefinition": [
         [
+          "FROM",
+          "hidden_effect"
+        ],
+        [
           "add_permanent_councillor",
           "add_to_galactic_council",
           "from"
@@ -260,10 +264,6 @@
           "hidden_effect"
         ],
         [
-          "else_if",
-          "if"
-        ],
-        [
           "else",
           "from",
           "hidden_effect",
@@ -280,6 +280,10 @@
           "inline_script"
         ],
         [
+          "else_if",
+          "if"
+        ],
+        [
           "every_country"
         ],
         [
@@ -290,10 +294,6 @@
         ],
         [
           "from",
-          "hidden_effect"
-        ],
-        [
-          "FROM",
           "hidden_effect"
         ],
         [
@@ -426,6 +426,9 @@
       "keysByDefinition": [
         [],
         [
+          "NOT"
+        ],
+        [
           "always"
         ],
         [
@@ -456,9 +459,6 @@
         ],
         [
           "if"
-        ],
-        [
-          "NOT"
         ]
       ]
     },
@@ -495,6 +495,78 @@
       ],
       "keysByDefinition": [
         [],
+        [
+          "NAND"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "OR",
+          "has_total_war_cb"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "from",
+          "has_event_chain",
+          "has_origin",
+          "has_total_war_cb",
+          "is_country_type"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "from",
+          "has_policy_flag",
+          "has_total_war_cb"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "has_total_war_cb",
+          "has_valid_civic"
+        ],
+        [
+          "NAND",
+          "NOT",
+          "has_total_war_cb",
+          "is_megacorp"
+        ],
+        [
+          "NAND",
+          "from"
+        ],
+        [
+          "NAND",
+          "from",
+          "has_total_war_cb",
+          "is_nomadic"
+        ],
+        [
+          "NAND",
+          "has_total_war_cb"
+        ],
+        [
+          "NOR",
+          "has_total_war_cb"
+        ],
+        [
+          "NOR",
+          "is_country_type"
+        ],
+        [
+          "NOT",
+          "is_country_type",
+          "is_machine_empire"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "has_total_war_cb",
+          "is_galactic_community_member"
+        ],
         [
           "always"
         ],
@@ -557,78 +629,6 @@
         ],
         [
           "has_total_war_cb"
-        ],
-        [
-          "NAND"
-        ],
-        [
-          "NAND",
-          "from"
-        ],
-        [
-          "NAND",
-          "from",
-          "has_total_war_cb",
-          "is_nomadic"
-        ],
-        [
-          "NAND",
-          "has_total_war_cb"
-        ],
-        [
-          "NAND",
-          "NOT",
-          "from",
-          "has_event_chain",
-          "has_origin",
-          "has_total_war_cb",
-          "is_country_type"
-        ],
-        [
-          "NAND",
-          "NOT",
-          "from",
-          "has_policy_flag",
-          "has_total_war_cb"
-        ],
-        [
-          "NAND",
-          "NOT",
-          "has_total_war_cb",
-          "has_valid_civic"
-        ],
-        [
-          "NAND",
-          "NOT",
-          "has_total_war_cb",
-          "is_megacorp"
-        ],
-        [
-          "NAND",
-          "NOT",
-          "OR",
-          "has_total_war_cb"
-        ],
-        [
-          "NOR",
-          "has_total_war_cb"
-        ],
-        [
-          "NOR",
-          "is_country_type"
-        ],
-        [
-          "NOT",
-          "is_country_type",
-          "is_machine_empire"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "has_total_war_cb",
-          "is_galactic_community_member"
         ]
       ]
     },

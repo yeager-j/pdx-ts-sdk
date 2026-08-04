@@ -52,6 +52,7 @@ import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { CONTENT_DECLINED_FIELDS, REPEATED_STRUCT_DEFINITIONS } from "@pdx-ts/codegen-cwt/overlay";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
+import { compareUtf8 } from "../../src/resolver/path-order.ts";
 import { locateInstall } from "../../src/stellaris/locate.ts";
 import { readGameVersion } from "../../src/stellaris/version.ts";
 
@@ -342,7 +343,14 @@ export interface ExtractedCorpus {
   readonly registries: readonly RegistryFixture[];
 }
 
-const sorted = (values: Iterable<string>): string[] => [...values].sort();
+/**
+ * Every ordering in the committed fixture uses the repo's one canonical
+ * byte-order comparator. Neither default here is safe for a file that must be
+ * byte-identical across maintainer machines: `Array.sort()`'s UTF-16 order
+ * disagrees with UTF-8 byte order beyond ASCII, and locale collation is not
+ * even stable between two ICU builds.
+ */
+const sorted = (values: Iterable<string>): string[] => [...values].sort(compareUtf8);
 
 function serializeCorpus(
   registry: string,
@@ -361,10 +369,21 @@ function serializeCorpus(
       values: sorted(observation.values),
       keys: sorted(observation.keys),
       // Inner and outer order are both meaningless to the checks, so both are
-      // sorted for a byte-stable fixture.
+      // sorted for a byte-stable fixture. The outer sort compares element-wise
+      // rather than joining: a join needs a delimiter no key can contain, and
+      // the comparison needs no delimiter at all.
       keysByDefinition: observation.keysByDefinition
         .map((keys) => sorted(keys))
-        .sort((a, b) => a.join(" ").localeCompare(b.join(" "))),
+        .sort((a, b) => {
+          const shared = Math.min(a.length, b.length);
+          for (let i = 0; i < shared; i++) {
+            const delta = compareUtf8(a[i]!, b[i]!);
+            if (delta !== 0) {
+              return delta;
+            }
+          }
+          return a.length - b.length;
+        }),
     };
   }
   return { registry, definitions: corpus.definitions, files: corpus.files, fingerprint, fields };
@@ -401,7 +420,7 @@ function fingerprintRegistryDir(dir: string): string {
   try {
     names = readdirSync(dir)
       .filter((name) => name.endsWith(".txt"))
-      .sort();
+      .sort(compareUtf8);
   } catch {
     return "missing";
   }
@@ -512,7 +531,7 @@ export function fixtureStems(dir: string = FIXTURE_DIR): string[] {
   return names
     .filter((name) => name.endsWith(".json") && name !== META_FILE)
     .map((name) => name.slice(0, -".json".length))
-    .sort();
+    .sort(compareUtf8);
 }
 
 export type CanaryVerdict =

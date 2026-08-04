@@ -57,9 +57,13 @@ describe.skipIf(installRoot === undefined)(
     // suite. Eager here, this file crashed instead of skipping on any machine
     // without an install.
     let report!: ReturnType<typeof measure>;
+    // Explicit timeout because the default hook timeout (10s) now applies
+    // where collection-time execution had none: the measurement walks several
+    // thousand vanilla files. ~0.4s measured warm on a local SSD; 60s is two
+    // orders of magnitude of headroom for a cold or networked disk.
     beforeAll(() => {
       report = measure(installRoot!);
-    });
+    }, 60_000);
 
     it("measures enough call sites to be able to fail", () => {
       // Guards the assertion below against passing because it measured nothing.

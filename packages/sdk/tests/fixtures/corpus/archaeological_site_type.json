@@ -309,13 +309,13 @@
       "keysByDefinition": [
         [],
         [
+          "NOT"
+        ],
+        [
           "controller"
         ],
         [
           "hidden_trigger"
-        ],
-        [
-          "NOT"
         ]
       ]
     },
@@ -399,6 +399,9 @@
       ],
       "keysByDefinition": [
         [
+          "OR"
+        ],
+        [
           "any_relation",
           "default_site_visible_trigger"
         ],
@@ -465,9 +468,6 @@
         [
           "default_site_visible_trigger",
           "owner"
-        ],
-        [
-          "OR"
         ]
       ]
     },

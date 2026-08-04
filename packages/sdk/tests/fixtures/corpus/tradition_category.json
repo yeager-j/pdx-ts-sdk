@@ -175,6 +175,50 @@
       ],
       "keysByDefinition": [
         [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_machine_age_dlc"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_machine_age_dlc",
+          "is_entropy_drinkers_empire"
+        ],
+        [
+          "NOR",
+          "OR",
+          "is_entropy_drinkers_empire"
+        ],
+        [
+          "NOR",
+          "has_biogenesis_dlc",
+          "is_entropy_drinkers_empire",
+          "is_machine_empire"
+        ],
+        [
+          "NOR",
+          "has_shroud_dlc"
+        ],
+        [
+          "NOR",
+          "has_shroud_dlc",
+          "is_gestalt"
+        ],
+        [
+          "NOR",
+          "is_entropy_drinkers_empire",
+          "is_machine_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR",
+          "is_nomadic"
+        ],
+        [
           "always"
         ],
         [
@@ -202,50 +246,6 @@
         ],
         [
           "is_regular_empire"
-        ],
-        [
-          "NOR"
-        ],
-        [
-          "NOR",
-          "has_biogenesis_dlc",
-          "is_entropy_drinkers_empire",
-          "is_machine_empire"
-        ],
-        [
-          "NOR",
-          "has_shroud_dlc"
-        ],
-        [
-          "NOR",
-          "has_shroud_dlc",
-          "is_gestalt"
-        ],
-        [
-          "NOR",
-          "is_entropy_drinkers_empire",
-          "is_machine_empire",
-          "is_wilderness_empire"
-        ],
-        [
-          "NOR",
-          "OR",
-          "has_machine_age_dlc"
-        ],
-        [
-          "NOR",
-          "OR",
-          "has_machine_age_dlc",
-          "is_entropy_drinkers_empire"
-        ],
-        [
-          "NOR",
-          "OR",
-          "is_entropy_drinkers_empire"
-        ],
-        [
-          "OR",
-          "is_nomadic"
         ]
       ]
     },

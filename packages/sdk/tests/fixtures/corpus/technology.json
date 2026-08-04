@@ -543,6 +543,19 @@
       ],
       "keysByDefinition": [
         [
+          "BIOLOGICAL_logistic_growth_mult",
+          "leader_organic_lifespan_mult"
+        ],
+        [
+          "BIOLOGICAL_species_trait_points_add",
+          "description",
+          "description_parameters"
+        ],
+        [
+          "MACHINE_species_trait_points_add",
+          "ROBOT_species_trait_points_add"
+        ],
+        [
           "add_base_country_intel",
           "country_edict_fund_add"
         ],
@@ -602,15 +615,6 @@
         ],
         [
           "ascension_perks_add"
-        ],
-        [
-          "BIOLOGICAL_logistic_growth_mult",
-          "leader_organic_lifespan_mult"
-        ],
-        [
-          "BIOLOGICAL_species_trait_points_add",
-          "description",
-          "description_parameters"
         ],
         [
           "command_limit_add"
@@ -900,10 +904,6 @@
           "logistic_growth_mult"
         ],
         [
-          "MACHINE_species_trait_points_add",
-          "ROBOT_species_trait_points_add"
-        ],
-        [
           "mutation_slots_add"
         ],
         [
@@ -1116,6 +1116,63 @@
       ],
       "keysByDefinition": [
         [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "OR"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "has_ascension_perk",
+          "has_machine_age_dlc"
+        ],
+        [
+          "NOT",
+          "has_country_flag"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "has_country_flag",
+          "host_has_dlc",
+          "is_pacifist"
+        ],
+        [
+          "OR",
+          "has_first_contact_dlc"
+        ],
+        [
+          "OR",
+          "has_grand_archive_dlc"
+        ],
+        [
+          "OR",
+          "has_overlord_dlc"
+        ],
+        [
+          "OR",
+          "is_natural_design_empire"
+        ],
+        [
+          "OR",
+          "is_natural_design_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR",
+          "is_wilderness_empire"
+        ],
+        [
           "allows_slavery",
           "is_regular_empire"
         ],
@@ -1316,63 +1373,6 @@
         ],
         [
           "is_world_forger_empire"
-        ],
-        [
-          "NOR"
-        ],
-        [
-          "NOR",
-          "OR"
-        ],
-        [
-          "NOT"
-        ],
-        [
-          "NOT",
-          "has_ascension_perk",
-          "has_machine_age_dlc"
-        ],
-        [
-          "NOT",
-          "has_country_flag"
-        ],
-        [
-          "NOT",
-          "OR"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "has_country_flag",
-          "host_has_dlc",
-          "is_pacifist"
-        ],
-        [
-          "OR",
-          "has_first_contact_dlc"
-        ],
-        [
-          "OR",
-          "has_grand_archive_dlc"
-        ],
-        [
-          "OR",
-          "has_overlord_dlc"
-        ],
-        [
-          "OR",
-          "is_natural_design_empire"
-        ],
-        [
-          "OR",
-          "is_natural_design_empire",
-          "is_wilderness_empire"
-        ],
-        [
-          "OR",
-          "is_wilderness_empire"
         ]
       ]
     },

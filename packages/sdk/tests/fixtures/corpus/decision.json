@@ -40,11 +40,11 @@
       ],
       "keysByDefinition": [
         [
-          "exists",
-          "ruler"
+          "NOT"
         ],
         [
-          "NOT"
+          "exists",
+          "ruler"
         ],
         [
           "owner"
@@ -104,6 +104,29 @@
       "keysByDefinition": [
         [],
         [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "custom_tooltip"
+        ],
+        [
+          "NOT",
+          "custom_tooltip",
+          "free_housing"
+        ],
+        [
+          "NOT",
+          "has_storm_resistant_production_building"
+        ],
+        [
+          "NOT",
+          "num_assigned_jobs"
+        ],
+        [
+          "OR"
+        ],
+        [
           "custom_tooltip"
         ],
         [
@@ -145,34 +168,11 @@
           "is_capital"
         ],
         [
-          "NOT"
-        ],
-        [
-          "NOT",
-          "custom_tooltip"
-        ],
-        [
-          "NOT",
-          "custom_tooltip",
-          "free_housing"
-        ],
-        [
-          "NOT",
-          "has_storm_resistant_production_building"
-        ],
-        [
-          "NOT",
-          "num_assigned_jobs"
-        ],
-        [
           "num_districts"
         ],
         [
           "num_uncleared_blockers",
           "owner"
-        ],
-        [
-          "OR"
         ],
         [
           "owner"
@@ -198,15 +198,15 @@
       ],
       "keysByDefinition": [
         [
+          "NOT",
+          "success_text"
+        ],
+        [
           "check_variable",
           "success_text"
         ],
         [
           "count_deposits",
-          "success_text"
-        ],
-        [
-          "NOT",
           "success_text"
         ],
         [
@@ -249,6 +249,13 @@
         "switch"
       ],
       "keysByDefinition": [
+        [
+          "IF"
+        ],
+        [
+          "IF",
+          "add_modifier"
+        ],
         [
           "add_building",
           "custom_tooltip",
@@ -381,12 +388,12 @@
           "destroy_colony"
         ],
         [
-          "else_if",
+          "else",
+          "hidden_effect",
           "if"
         ],
         [
-          "else",
-          "hidden_effect",
+          "else_if",
           "if"
         ],
         [
@@ -404,13 +411,6 @@
         [
           "hidden_effect",
           "remove_modifier"
-        ],
-        [
-          "IF"
-        ],
-        [
-          "IF",
-          "add_modifier"
         ],
         [
           "if",
@@ -663,6 +663,187 @@
       ],
       "keysByDefinition": [
         [
+          "NOR",
+          "NOT",
+          "exists",
+          "from",
+          "is_artificial",
+          "is_astral_scar",
+          "is_ringworld",
+          "is_star",
+          "space_owner"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR",
+          "owner"
+        ],
+        [
+          "NOR",
+          "always",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "habitable_planet_not_urban",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "is_artificial",
+          "is_capital",
+          "owner"
+        ],
+        [
+          "NOR",
+          "owner",
+          "planet_crime"
+        ],
+        [
+          "NOR",
+          "owner",
+          "uses_district_set"
+        ],
+        [
+          "NOT",
+          "OR",
+          "exists",
+          "from"
+        ],
+        [
+          "NOT",
+          "any_deposit",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_have_habitable_deposits",
+          "exists",
+          "is_capital",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_have_habitable_deposits",
+          "is_capital",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_have_habitable_deposits",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_building"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_carrier_flag",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_modifier",
+          "is_moon",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_modifier",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "is_planet_class",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "leader"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT",
+          "has_carrier_flag"
+        ],
+        [
+          "NOT",
+          "has_storm_resistant_production_building"
+        ],
+        [
+          "NOT",
+          "is_active_resolution",
+          "owner"
+        ],
+        [
+          "NOT",
+          "is_artificial",
+          "is_capital",
+          "owner"
+        ],
+        [
+          "NOT",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "OR",
+          "from"
+        ],
+        [
+          "OR",
+          "from",
+          "owner"
+        ],
+        [
+          "OR",
+          "solar_system"
+        ],
+        [
           "count_deposits",
           "exists",
           "has_shroud_dlc",
@@ -786,187 +967,6 @@
         ],
         [
           "has_seeded_modifier"
-        ],
-        [
-          "NOR",
-          "always",
-          "owner"
-        ],
-        [
-          "NOR",
-          "exists",
-          "habitable_planet_not_urban",
-          "owner"
-        ],
-        [
-          "NOR",
-          "exists",
-          "is_artificial",
-          "owner"
-        ],
-        [
-          "NOR",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOR",
-          "is_artificial",
-          "is_capital",
-          "owner"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "exists",
-          "from",
-          "is_artificial",
-          "is_astral_scar",
-          "is_ringworld",
-          "is_star",
-          "space_owner"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOR",
-          "OR",
-          "owner"
-        ],
-        [
-          "NOR",
-          "owner",
-          "planet_crime"
-        ],
-        [
-          "NOR",
-          "owner",
-          "uses_district_set"
-        ],
-        [
-          "NOT",
-          "any_deposit",
-          "owner"
-        ],
-        [
-          "NOT",
-          "can_have_habitable_deposits",
-          "exists",
-          "is_capital",
-          "owner"
-        ],
-        [
-          "NOT",
-          "can_have_habitable_deposits",
-          "is_capital",
-          "owner"
-        ],
-        [
-          "NOT",
-          "can_have_habitable_deposits",
-          "owner"
-        ],
-        [
-          "NOT",
-          "exists",
-          "has_building"
-        ],
-        [
-          "NOT",
-          "exists",
-          "has_carrier_flag",
-          "owner"
-        ],
-        [
-          "NOT",
-          "exists",
-          "has_modifier",
-          "is_moon",
-          "owner"
-        ],
-        [
-          "NOT",
-          "exists",
-          "has_modifier",
-          "owner"
-        ],
-        [
-          "NOT",
-          "exists",
-          "is_artificial",
-          "owner"
-        ],
-        [
-          "NOT",
-          "exists",
-          "is_planet_class",
-          "owner"
-        ],
-        [
-          "NOT",
-          "exists",
-          "leader"
-        ],
-        [
-          "NOT",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOT",
-          "has_carrier_flag"
-        ],
-        [
-          "NOT",
-          "has_storm_resistant_production_building"
-        ],
-        [
-          "NOT",
-          "is_active_resolution",
-          "owner"
-        ],
-        [
-          "NOT",
-          "is_artificial",
-          "is_capital",
-          "owner"
-        ],
-        [
-          "NOT",
-          "is_artificial",
-          "owner"
-        ],
-        [
-          "NOT",
-          "OR",
-          "exists",
-          "from"
-        ],
-        [
-          "NOT",
-          "owner"
-        ],
-        [
-          "OR",
-          "exists",
-          "owner"
-        ],
-        [
-          "OR",
-          "from"
-        ],
-        [
-          "OR",
-          "from",
-          "owner"
-        ],
-        [
-          "OR",
-          "solar_system"
         ],
         [
           "owner"

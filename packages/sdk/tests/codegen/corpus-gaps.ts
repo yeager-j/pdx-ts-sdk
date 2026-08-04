@@ -8,11 +8,13 @@
  * rot in either direction.
  *
  * A row is measurement, not acceptance: it names work (usually emitter
- * machinery) that a maintainer has decided to sequence, with the Linear issue
- * where one exists. Adding a row takes the same scrutiny as an overlay entry —
- * the diff is one object, so review reads the reason and the count and asks
- * whether deferring is still right. Deliberately *withholding* an authorable
- * shape is `CONTENT_DECLINED_FIELDS`' job, never this table's.
+ * machinery) that a maintainer has decided to sequence, and the Linear issue
+ * tracking that work. Every row's tracking issue carries the "Corpus Gap"
+ * label in Linear, so the open gap backlog is queryable by label. Adding a row
+ * takes the same scrutiny as an overlay entry — the diff is one object, so
+ * review reads the reason and the count and asks whether deferring is still
+ * right. Deliberately *withholding* an authorable shape is
+ * `CONTENT_DECLINED_FIELDS`' job, never this table's.
  */
 
 export interface AcknowledgedGap {
@@ -22,8 +24,12 @@ export interface AcknowledgedGap {
   /** Occurrences when the gap was accepted — context for review, not asserted. */
   readonly count: number;
   readonly reason: string;
-  /** The Linear issue tracking the fix, or null where none exists yet. */
-  readonly issue: string | null;
+  /**
+   * The Linear issue tracking the fix. Required, not optional: an acknowledged
+   * gap with no issue is a hole nobody is sequenced to close, so a row cannot
+   * be added without filing one first.
+   */
+  readonly issue: string;
 }
 
 export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
@@ -34,7 +40,7 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     reason:
       "Declared `single_alias_right[modifier_clause]`, which the emitter has no lowering for " +
       'in this position ("no declaration the emitter can lower").',
-    issue: null,
+    issue: "SDK-63",
   },
   {
     registry: "technology",
@@ -43,14 +49,14 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     reason:
       "A block keyed by `enum[prereq_for_category]` with title/desc sub-blocks; needs " +
       "enum-keyed map machinery.",
-    issue: null,
+    issue: "SDK-64",
   },
   {
     registry: "technology",
     field: "mod_weight_if_group_picked",
     count: 34,
     reason: "A map keyed by `value[tech_weight_group]`; needs value-set-keyed map machinery.",
-    issue: null,
+    issue: "SDK-66",
   },
   {
     registry: "building",
@@ -59,7 +65,7 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     reason:
       "A `category` sibling beside the `alias_name[economic_template]` splice; the " +
       "economicResources lowering other registries use does not fit this declaration.",
-    issue: null,
+    issue: "SDK-62",
   },
   {
     registry: "building",
@@ -75,7 +81,7 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     reason:
       "A map keyed by `<resource>` references with trigger and complex-maths siblings; needs " +
       "reference-keyed map machinery.",
-    issue: null,
+    issue: "SDK-65",
   },
   {
     registry: "tradition",
@@ -111,6 +117,6 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     count: 25,
     reason:
       "An open scalar-keyed map of floats (`scalar = float`); needs scalar-keyed map machinery.",
-    issue: null,
+    issue: "SDK-67",
   },
 ];

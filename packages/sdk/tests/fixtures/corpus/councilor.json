@@ -232,6 +232,9 @@
       ],
       "keysByDefinition": [
         [
+          "OR"
+        ],
+        [
           "has_leader_flag"
         ],
         [
@@ -242,9 +245,6 @@
         ],
         [
           "leader_class"
-        ],
-        [
-          "OR"
         ]
       ]
     },

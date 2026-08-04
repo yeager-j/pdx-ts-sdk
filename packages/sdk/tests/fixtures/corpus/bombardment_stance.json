@@ -221,22 +221,22 @@
           "AND"
         ],
         [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "OR"
+        ],
+        [
           "any_owned_ship"
         ],
         [
           "is_ship_size",
           "owner"
-        ],
-        [
-          "NOT",
-          "OR"
-        ],
-        [
-          "NOT",
-          "owner"
-        ],
-        [
-          "OR"
         ],
         [
           "owner"

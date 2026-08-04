@@ -112,6 +112,10 @@
       ],
       "keysByDefinition": [
         [
+          "OR",
+          "is_scope_valid"
+        ],
+        [
           "has_global_flag",
           "is_active_resolution",
           "is_part_of_galactic_council",
@@ -131,10 +135,6 @@
         ],
         [
           "is_nomadic"
-        ],
-        [
-          "OR",
-          "is_scope_valid"
         ]
       ]
     }

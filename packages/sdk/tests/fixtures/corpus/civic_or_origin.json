@@ -76,6 +76,9 @@
       ],
       "keysByDefinition": [
         [
+          "NOT"
+        ],
+        [
           "always"
         ],
         [
@@ -125,9 +128,6 @@
         ],
         [
           "host_has_dlc"
-        ],
-        [
-          "NOT"
         ]
       ]
     },
@@ -864,6 +864,27 @@
       "keysByDefinition": [
         [],
         [
+          "BIOLOGICAL_species_trait_picks_add"
+        ],
+        [
+          "BIOLOGICAL_species_trait_picks_add",
+          "BIOLOGICAL_species_trait_points_add"
+        ],
+        [
+          "BIOLOGICAL_species_trait_picks_add",
+          "BIOLOGICAL_species_trait_points_add",
+          "planet_doctors_society_research_produces_add"
+        ],
+        [
+          "ROBOT_species_trait_picks_add",
+          "ROBOT_species_trait_points_add"
+        ],
+        [
+          "ROBOT_species_trait_picks_add",
+          "ROBOT_species_trait_points_add",
+          "planet_pop_assembly_mult"
+        ],
+        [
           "add_attunement_the_composer_of_strands"
         ],
         [
@@ -1467,18 +1488,6 @@
           "starbase_shipyard_build_speed_mult"
         ],
         [
-          "BIOLOGICAL_species_trait_picks_add"
-        ],
-        [
-          "BIOLOGICAL_species_trait_picks_add",
-          "BIOLOGICAL_species_trait_points_add"
-        ],
-        [
-          "BIOLOGICAL_species_trait_picks_add",
-          "BIOLOGICAL_species_trait_points_add",
-          "planet_doctors_society_research_produces_add"
-        ],
-        [
           "bonus_automated_workforce_mult"
         ],
         [
@@ -1843,15 +1852,6 @@
           "refugee_attraction"
         ],
         [
-          "ROBOT_species_trait_picks_add",
-          "ROBOT_species_trait_points_add"
-        ],
-        [
-          "ROBOT_species_trait_picks_add",
-          "ROBOT_species_trait_points_add",
-          "planet_pop_assembly_mult"
-        ],
-        [
           "ruler_skill_add"
         ],
         [
@@ -2064,6 +2064,12 @@
       ],
       "keysByDefinition": [
         [
+          "NOT"
+        ],
+        [
+          "OR"
+        ],
+        [
           "always"
         ],
         [
@@ -2119,12 +2125,6 @@
         ],
         [
           "host_has_dlc"
-        ],
-        [
-          "NOT"
-        ],
-        [
-          "OR"
         ]
       ]
     },
@@ -2498,6 +2498,41 @@
       ],
       "keysByDefinition": [
         [
+          "OR"
+        ],
+        [
+          "OR",
+          "civics"
+        ],
+        [
+          "OR",
+          "civics",
+          "ethics"
+        ],
+        [
+          "OR",
+          "civics",
+          "ethics",
+          "species_archetype"
+        ],
+        [
+          "OR",
+          "ethics"
+        ],
+        [
+          "OR",
+          "ethics",
+          "origin"
+        ],
+        [
+          "OR",
+          "is_nomadic"
+        ],
+        [
+          "OR",
+          "species_archetype"
+        ],
+        [
           "always"
         ],
         [
@@ -2569,42 +2604,7 @@
           "ethics"
         ],
         [
-          "OR"
-        ],
-        [
-          "OR",
-          "civics"
-        ],
-        [
-          "OR",
-          "civics",
-          "ethics"
-        ],
-        [
-          "OR",
-          "civics",
-          "ethics",
-          "species_archetype"
-        ],
-        [
-          "OR",
-          "ethics"
-        ],
-        [
-          "OR",
-          "ethics",
           "origin"
-        ],
-        [
-          "origin"
-        ],
-        [
-          "OR",
-          "is_nomadic"
-        ],
-        [
-          "OR",
-          "species_archetype"
         ],
         [
           "species_archetype"

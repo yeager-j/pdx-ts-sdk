@@ -209,6 +209,33 @@
       "keysByDefinition": [
         [],
         [
+          "NOR",
+          "NOT",
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "custom_tooltip",
+          "hidden_trigger",
+          "if"
+        ],
+        [
+          "NOT",
+          "has_upgraded_capital"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists"
+        ],
+        [
           "always"
         ],
         [
@@ -299,40 +326,13 @@
           "is_cold"
         ],
         [
-          "NOR",
-          "NOT",
-          "OR",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOT"
-        ],
-        [
-          "NOT",
-          "custom_tooltip",
-          "hidden_trigger",
-          "if"
-        ],
-        [
-          "NOT",
-          "has_upgraded_capital"
-        ],
-        [
           "num_free_districts"
         ],
         [
           "num_uncleared_blockers"
         ],
         [
-          "OR"
-        ],
-        [
           "orbital_ring_and_arkship_equivalent_absent"
-        ],
-        [
-          "OR",
-          "exists"
         ],
         [
           "owner"
@@ -863,33 +863,7 @@
       ],
       "keysByDefinition": [
         [
-          "always"
-        ],
-        [
           "AND"
-        ],
-        [
-          "branch_office_owner",
-          "exists"
-        ],
-        [
-          "exists",
-          "influence_building_destruction_trigger",
-          "owner"
-        ],
-        [
-          "exists",
-          "owner"
-        ],
-        [
-          "exists",
-          "planet.owner"
-        ],
-        [
-          "has_modifier"
-        ],
-        [
-          "influence_building_destruction_trigger"
         ],
         [
           "NOT"
@@ -916,13 +890,39 @@
           "owner"
         ],
         [
+          "always"
+        ],
+        [
+          "branch_office_owner",
+          "exists"
+        ],
+        [
+          "exists",
+          "influence_building_destruction_trigger",
           "owner"
         ],
         [
-          "owner?"
+          "exists",
+          "owner"
+        ],
+        [
+          "exists",
+          "planet.owner"
+        ],
+        [
+          "has_modifier"
+        ],
+        [
+          "influence_building_destruction_trigger"
+        ],
+        [
+          "owner"
         ],
         [
           "owner.overlord"
+        ],
+        [
+          "owner?"
         ]
       ]
     },
@@ -2340,11 +2340,220 @@
       ],
       "keysByDefinition": [
         [
-          "always"
-        ],
-        [
           "AND",
           "NOR"
+        ],
+        [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "OR",
+          "exists",
+          "owner",
+          "owner?"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR"
+        ],
+        [
+          "NOR",
+          "OR",
+          "exists"
+        ],
+        [
+          "NOR",
+          "OR",
+          "exists",
+          "has_building",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR",
+          "exists",
+          "is_special_colony_type",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_building",
+          "owner?"
+        ],
+        [
+          "NOR",
+          "OR",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OWNER",
+          "exists"
+        ],
+        [
+          "NOR",
+          "branch_office_owner",
+          "has_branch_office"
+        ],
+        [
+          "NOR",
+          "branch_office_owner",
+          "has_branch_office",
+          "is_artificial"
+        ],
+        [
+          "NOR",
+          "exists"
+        ],
+        [
+          "NOR",
+          "exists",
+          "has_shroud_dlc",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "is_artificial",
+          "owner.overlord"
+        ],
+        [
+          "NOR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOR",
+          "is_artificial",
+          "owner.overlord"
+        ],
+        [
+          "NOR",
+          "owner"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "OR",
+          "exists"
+        ],
+        [
+          "NOT",
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT",
+          "OR",
+          "exists",
+          "owner",
+          "planet"
+        ],
+        [
+          "NOT",
+          "custom_tooltip"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner",
+          "planet"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner",
+          "uses_habitat_capitals"
+        ],
+        [
+          "NOT",
+          "exists",
+          "planet"
+        ],
+        [
+          "NOT",
+          "if",
+          "owner"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "NOT",
+          "owner",
+          "owner.overlord"
+        ],
+        [
+          "NOT",
+          "owner.overlord"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists",
+          "has_upgraded_capital"
+        ],
+        [
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "OR",
+          "owner"
+        ],
+        [
+          "always"
         ],
         [
           "branch_office_owner",
@@ -2504,230 +2713,21 @@
           "is_planet_class"
         ],
         [
-          "NOR"
-        ],
-        [
-          "NOR",
-          "branch_office_owner",
-          "has_branch_office"
-        ],
-        [
-          "NOR",
-          "branch_office_owner",
-          "has_branch_office",
-          "is_artificial"
-        ],
-        [
-          "NOR",
-          "exists"
-        ],
-        [
-          "NOR",
-          "exists",
-          "has_shroud_dlc",
           "owner"
         ],
         [
-          "NOR",
-          "exists",
-          "is_artificial",
-          "owner"
-        ],
-        [
-          "NOR",
-          "exists",
-          "is_artificial",
-          "owner.overlord"
-        ],
-        [
-          "NOR",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOR",
-          "is_artificial",
-          "owner"
-        ],
-        [
-          "NOR",
-          "is_artificial",
-          "owner.overlord"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "is_artificial",
-          "owner"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "OR",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "OR",
-          "exists",
           "owner",
-          "owner?"
+          "owner.overlord"
         ],
         [
-          "NOR",
-          "OR"
-        ],
-        [
-          "NOR",
-          "OR",
-          "exists"
-        ],
-        [
-          "NOR",
-          "OR",
-          "exists",
-          "has_building",
-          "owner"
-        ],
-        [
-          "NOR",
-          "OR",
-          "exists",
-          "is_special_colony_type",
-          "owner"
-        ],
-        [
-          "NOR",
-          "OR",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOR",
-          "OR",
-          "has_building",
-          "owner?"
-        ],
-        [
-          "NOR",
-          "OR",
-          "owner"
-        ],
-        [
-          "NOR",
-          "owner"
-        ],
-        [
-          "NOR",
-          "OWNER",
-          "exists"
-        ],
-        [
-          "NOT"
-        ],
-        [
-          "NOT",
-          "custom_tooltip"
-        ],
-        [
-          "NOT",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOT",
-          "exists",
           "owner",
           "planet"
         ],
         [
-          "NOT",
-          "exists",
-          "owner",
-          "uses_habitat_capitals"
-        ],
-        [
-          "NOT",
-          "exists",
-          "planet"
-        ],
-        [
-          "NOT",
-          "if",
-          "owner"
-        ],
-        [
-          "NOT",
-          "OR",
-          "exists"
-        ],
-        [
-          "NOT",
-          "OR",
-          "exists",
-          "owner"
-        ],
-        [
-          "NOT",
-          "OR",
-          "exists",
-          "owner",
-          "planet"
-        ],
-        [
-          "NOT",
-          "owner"
-        ],
-        [
-          "NOT",
           "owner.overlord"
-        ],
-        [
-          "NOT",
-          "owner",
-          "owner.overlord"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "exists",
-          "has_upgraded_capital"
-        ],
-        [
-          "OR",
-          "exists",
-          "owner"
-        ],
-        [
-          "OR",
-          "owner"
-        ],
-        [
-          "owner"
         ],
         [
           "owner?"
-        ],
-        [
-          "owner.overlord"
-        ],
-        [
-          "owner",
-          "owner.overlord"
-        ],
-        [
-          "owner",
-          "planet"
         ]
       ]
     },
@@ -2996,6 +2996,24 @@
       ],
       "keysByDefinition": [
         [
+          "NOT",
+          "is_machine_empire"
+        ],
+        [
+          "NOT",
+          "is_regular_empire"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "is_machine_empire",
+          "is_megacorp",
+          "is_spiritualist",
+          "is_wilderness_empire"
+        ],
+        [
           "always"
         ],
         [
@@ -3113,24 +3131,6 @@
           "is_wilderness_empire"
         ],
         [
-          "NOT",
-          "is_machine_empire"
-        ],
-        [
-          "NOT",
-          "is_regular_empire"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "is_machine_empire",
-          "is_megacorp",
-          "is_spiritualist",
-          "is_wilderness_empire"
-        ],
-        [
           "owner"
         ],
         [
@@ -3218,12 +3218,12 @@
       ],
       "keysByDefinition": [
         [
-          "aesthetic_wonder_specimens_produces_mult",
+          "BIOLOGICAL_species_trait_picks_add",
+          "BIOLOGICAL_species_trait_points_add",
           "potential"
         ],
         [
-          "BIOLOGICAL_species_trait_picks_add",
-          "BIOLOGICAL_species_trait_points_add",
+          "aesthetic_wonder_specimens_produces_mult",
           "potential"
         ],
         [

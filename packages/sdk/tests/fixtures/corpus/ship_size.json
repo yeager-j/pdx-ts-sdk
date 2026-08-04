@@ -1636,10 +1636,13 @@
       ],
       "keysByDefinition": [
         [
-          "always"
+          "AND"
         ],
         [
-          "AND"
+          "OR"
+        ],
+        [
+          "always"
         ],
         [
           "colossus_possible_construction"
@@ -1649,9 +1652,6 @@
         ],
         [
           "juggernaut_possible_construction"
-        ],
-        [
-          "OR"
         ],
         [
           "titan_possible_construction"
@@ -1696,10 +1696,19 @@
       ],
       "keysByDefinition": [
         [
-          "always"
+          "AND"
         ],
         [
-          "AND"
+          "NOT",
+          "is_primary_star",
+          "is_scope_type"
+        ],
+        [
+          "OR",
+          "is_scope_type"
+        ],
+        [
+          "always"
         ],
         [
           "colossus_potential_construction"
@@ -1714,15 +1723,6 @@
         ],
         [
           "juggernaut_potential_construction"
-        ],
-        [
-          "NOT",
-          "is_primary_star",
-          "is_scope_type"
-        ],
-        [
-          "OR",
-          "is_scope_type"
         ],
         [
           "titan_potential_construction"
@@ -1757,6 +1757,40 @@
       ],
       "keysByDefinition": [
         [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "OR",
+          "is_mercenary"
+        ],
+        [
+          "NOT",
+          "country_uses_bio_ships",
+          "has_technology"
+        ],
+        [
+          "OR",
+          "has_origin",
+          "is_guided_sapience_empire",
+          "is_nomadic"
+        ],
+        [
+          "OR",
+          "is_guided_sapience_empire",
+          "is_nomadic"
+        ],
+        [
+          "OR",
+          "is_guided_sapience_empire",
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR",
+          "is_nomadic"
+        ],
+        [
           "country_uses_bio_ships",
           "has_technology"
         ],
@@ -1790,40 +1824,6 @@
           "is_fallen_empire"
         ],
         [
-          "is_nomadic"
-        ],
-        [
-          "NOT"
-        ],
-        [
-          "NOT",
-          "country_uses_bio_ships",
-          "has_technology"
-        ],
-        [
-          "NOT",
-          "OR",
-          "is_mercenary"
-        ],
-        [
-          "OR",
-          "has_origin",
-          "is_guided_sapience_empire",
-          "is_nomadic"
-        ],
-        [
-          "OR",
-          "is_guided_sapience_empire",
-          "is_nomadic"
-        ],
-        [
-          "OR",
-          "is_guided_sapience_empire",
-          "is_nomadic",
-          "is_wilderness_empire"
-        ],
-        [
-          "OR",
           "is_nomadic"
         ]
       ]

@@ -376,6 +376,17 @@
       ],
       "keysByDefinition": [
         [
+          "NOR",
+          "custom_tooltip"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "has_technology"
+        ],
+        [
           "custom_tooltip"
         ],
         [
@@ -399,17 +410,6 @@
           "custom_tooltip",
           "is_pacifist",
           "is_xenophile"
-        ],
-        [
-          "NOR",
-          "custom_tooltip"
-        ],
-        [
-          "OR"
-        ],
-        [
-          "OR",
-          "has_technology"
         ]
       ]
     },
@@ -459,58 +459,7 @@
       ],
       "keysByDefinition": [
         [
-          "always"
-        ],
-        [
-          "is_void_dweller_empire",
-          "is_wilderness_empire"
-        ],
-        [
           "NOR"
-        ],
-        [
-          "NOR",
-          "has_biogenesis_dlc"
-        ],
-        [
-          "NOR",
-          "has_civic",
-          "is_chosen_empire",
-          "is_entropy_drinkers_empire"
-        ],
-        [
-          "NOR",
-          "has_infernals"
-        ],
-        [
-          "NOR",
-          "has_machine_age_dlc",
-          "is_wilderness_empire"
-        ],
-        [
-          "NOR",
-          "has_nemesis",
-          "is_wilderness_empire"
-        ],
-        [
-          "NOR",
-          "has_nomads_dlc"
-        ],
-        [
-          "NOR",
-          "is_chosen_empire",
-          "is_entropy_drinkers_empire",
-          "is_gestalt",
-          "is_individual_machine",
-          "is_natural_design_empire",
-          "owner_species"
-        ],
-        [
-          "NOR",
-          "is_chosen_empire",
-          "is_entropy_drinkers_empire",
-          "is_hive_empire",
-          "is_natural_design_empire"
         ],
         [
           "NOR",
@@ -562,7 +511,68 @@
           "is_natural_design_empire"
         ],
         [
+          "NOR",
+          "has_biogenesis_dlc"
+        ],
+        [
+          "NOR",
+          "has_civic",
+          "is_chosen_empire",
+          "is_entropy_drinkers_empire"
+        ],
+        [
+          "NOR",
+          "has_infernals"
+        ],
+        [
+          "NOR",
+          "has_machine_age_dlc",
+          "is_wilderness_empire"
+        ],
+        [
+          "NOR",
+          "has_nemesis",
+          "is_wilderness_empire"
+        ],
+        [
+          "NOR",
+          "has_nomads_dlc"
+        ],
+        [
+          "NOR",
+          "is_chosen_empire",
+          "is_entropy_drinkers_empire",
+          "is_gestalt",
+          "is_individual_machine",
+          "is_natural_design_empire",
+          "owner_species"
+        ],
+        [
+          "NOR",
+          "is_chosen_empire",
+          "is_entropy_drinkers_empire",
+          "is_hive_empire",
+          "is_natural_design_empire"
+        ],
+        [
           "NOT"
+        ],
+        [
+          "NOT",
+          "OR",
+          "has_aquatics",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "OR",
+          "host_has_dlc",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "OR",
+          "is_nomadic"
         ],
         [
           "NOT",
@@ -629,21 +639,11 @@
           "is_spiritualist"
         ],
         [
-          "NOT",
-          "OR",
-          "has_aquatics",
-          "is_nomadic"
+          "always"
         ],
         [
-          "NOT",
-          "OR",
-          "host_has_dlc",
-          "is_nomadic"
-        ],
-        [
-          "NOT",
-          "OR",
-          "is_nomadic"
+          "is_void_dweller_empire",
+          "is_wilderness_empire"
         ]
       ]
     },

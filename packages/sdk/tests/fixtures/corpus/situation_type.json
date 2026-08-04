@@ -463,6 +463,11 @@
       ],
       "keysByDefinition": [
         [
+          "NOR",
+          "NOT",
+          "owner"
+        ],
+        [
           "custom_tooltip"
         ],
         [
@@ -476,11 +481,6 @@
         [
           "if",
           "situation_shroud_forged_approach_cooldown_trigger"
-        ],
-        [
-          "NOR",
-          "NOT",
-          "owner"
         ],
         [
           "owner"
@@ -1002,10 +1002,6 @@
       ],
       "keysByDefinition": [
         [
-          "has_astral_planes_dlc",
-          "owner"
-        ],
-        [
           "NOT"
         ],
         [
@@ -1019,6 +1015,10 @@
         ],
         [
           "OR",
+          "owner"
+        ],
+        [
+          "has_astral_planes_dlc",
           "owner"
         ],
         [
@@ -2539,14 +2539,14 @@
       "keysByDefinition": [
         [],
         [
-          "else_if",
-          "if",
-          "owner"
-        ],
-        [
           "else",
           "if",
           "situation_event"
+        ],
+        [
+          "else_if",
+          "if",
+          "owner"
         ],
         [
           "inline_script"
