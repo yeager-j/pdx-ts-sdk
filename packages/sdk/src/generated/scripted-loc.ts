@@ -3,13 +3,12 @@
 // From: common/scripted_loc.cwt
 
 import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type { SpriteRef } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
 
 export interface ScriptedLocText {
-  weight?: WeightBlock<ScopeName> | number;
-  trigger?: Trigger<ScopeName>;
+  weight?: WeightBlock<never> | number;
+  trigger?: Trigger<never>;
   localizationKey: string | SpriteRef;
 }
 
@@ -40,7 +39,7 @@ export const SCRIPTED_LOC_TEXT_FIELDS: readonly ContentField[] = [
 export interface ScriptedLocFields {
   random?: boolean;
   text?: ScriptedLocText[];
-  value?: number;
+  value?: ScriptValue;
   default?: string | SpriteRef;
 }
 

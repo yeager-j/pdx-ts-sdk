@@ -215,10 +215,24 @@ function aliasScalarFields(emitter: Emitter, category: string): RuleField[] | nu
  * which admits only rules legal in every scope; for a registry whose scope is a
  * parameter of the definition (see `CONTENT_SCOPE_PARAMETERS`) it is that
  * parameter instead, so the clauses follow whatever the definition declared.
+ *
+ * `containerScopeLost` is true once recursion has passed through a struct
+ * field that itself carries a `field.scope` (`## replace_scopes`/
+ * `## push_scope` on the struct field, not on the leaf) — `lowerStruct` sets
+ * it. That scope is real and known, but nothing threads it down into the
+ * struct's own fields (`structShape` recurses with the same `ctx` it was
+ * given), so a leaf inside genuinely has a container-declared scope this
+ * lowering cannot see, not an absent one. `contravariantScopeType` reads the
+ * flag to tell "the rules never said" (safe to widen to `never`) apart from
+ * "the rules said something here, it just did not reach this field" (must not
+ * widen — that would silently accept a real vanilla-shaped trigger from the
+ * wrong scope). Threading the actual scope down instead of merely flagging
+ * its loss is SDK-34, deliberately not done here.
  */
 export interface FieldContext {
   readonly scope: ScopeContext | null;
   readonly unpinned: string;
+  readonly containerScopeLost?: boolean;
 }
 
 interface FieldScope {
@@ -303,6 +317,59 @@ function effectBlockArgs(scope: FieldScope): string {
  */
 function withFrom(inner: string, scope: FieldScope): string {
   return scope.from === null ? inner : `WithFrom<${inner}, ${scope.type}, ${scope.from}>`;
+}
+
+/**
+ * The `ctx` a struct field's own body recurses with.
+ *
+ * `structShape` types every one of a container's fields against the same
+ * `ctx` the container itself was reached with — nothing here folds the
+ * container's own `field.scope` in (that is SDK-34). So a container that
+ * does carry one (`governments.cwt`'s `modification`, `## replace_scopes =
+ * { this = country }`) has a scope this lowering knows about but cannot
+ * thread to `add`/`remove` beneath it. `containerScopeLost` flags exactly
+ * that gap, and stays set through further nesting once one container has
+ * shown it: an unannotated leaf under an unannotated container two levels
+ * down is just as lost as one directly under the annotated container.
+ */
+function containerContext(field: RuleField, ctx: FieldContext): FieldContext {
+  return field.scope !== null || ctx.containerScopeLost === true
+    ? { ...ctx, containerScopeLost: true }
+    : ctx;
+}
+
+/**
+ * As {@link scopeType}, for shapes whose scope parameter reaches a
+ * `Trigger<S>` contravariantly — a trigger field itself, and a weight block,
+ * whose rows carry `when: Trigger<S>`.
+ *
+ * `Trigger<in S>` is contravariant, so the unpinned literal `ScopeName`
+ * ("valid in every scope") types the field as accepting only conditions
+ * legal in every scope — for most fields none, which makes the field
+ * unwritable rather than unchecked. `never` is the top of that lattice:
+ * substituting it is what "the rules did not say" should mean, the same way
+ * an unknown reference target lowers to `| string` rather than to something
+ * nothing can satisfy. Only the truly-unpinned case changes — a field a
+ * `CONTENT_SCOPE_PARAMETERS` row threads through as `NoInfer<S>`, or one an
+ * override or the rules themselves pin to a real scope, is untouched.
+ *
+ * `ctx.containerScopeLost` withholds the substitution: widening there would
+ * turn "a container scoped this and it didn't reach here" into "valid
+ * anywhere", which is wrong in the opposite, more dangerous direction — a
+ * real vanilla-shaped trigger from the wrong scope would silently compile.
+ * Left at `ScopeName`, same as before this lowering existed, until SDK-34
+ * threads the real scope down instead of merely flagging its loss.
+ */
+function contravariantScopeType(
+  emitter: Emitter,
+  field: RuleField,
+  ctx: FieldContext,
+  asserted?: string
+): FieldScope {
+  const scope = scopeType(emitter, field, ctx, asserted);
+  return scope.type === "ScopeName" && ctx.containerScopeLost !== true
+    ? { ...scope, type: "never" }
+    : scope;
 }
 
 export function flatten(fields: readonly RuleField[], typeName: string): RuleField[] {
@@ -735,7 +802,7 @@ function lowerStructMap(
   if (block === null) {
     return null;
   }
-  const shape = structShape(emitter, block, name, path, ctx);
+  const shape = structShape(emitter, block, name, path, containerContext(field, ctx));
   if (shape === null) {
     return null;
   }
@@ -786,7 +853,7 @@ function lowerStruct(
     return null;
   }
   const { block, wrapped } = located;
-  const shape = structShape(emitter, block, name, path, ctx);
+  const shape = structShape(emitter, block, name, path, containerContext(field, ctx));
   if (shape === null) {
     return null;
   }
@@ -834,7 +901,7 @@ function lowerOrdinary(
     };
   }
   if (requested === "weightBlock") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlock"),
@@ -842,7 +909,7 @@ function lowerOrdinary(
     };
   }
   if (requested === "weightBlockWithLoc") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlockWithLoc"),
@@ -863,7 +930,7 @@ function lowerOrdinary(
   }
   const category = spliceCategory(field.type);
   if (requested === "trigger" || (requested === undefined && category === "trigger")) {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`Trigger<${scope.type}>`, scope),
       metadata: metadata(field, name, "trigger"),
@@ -879,7 +946,7 @@ function lowerOrdinary(
     };
   }
   if (requested === undefined && category === "modifier_rule") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlock"),
@@ -887,7 +954,7 @@ function lowerOrdinary(
     };
   }
   if (requested === undefined && category === "modifier_rule_with_loc") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlockWithLoc"),

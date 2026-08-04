@@ -12,6 +12,7 @@ import {
   not,
   or,
   owner,
+  resourceStockpilePercent,
   target,
   trigger,
   yearsPassed,
@@ -115,5 +116,23 @@ describe("trigger builders", () => {
   it("throws an explanatory error when a trigger is called like a function", () => {
     const condition = hasGlobalFlag("some_flag");
     expect(() => condition()).toThrow(/BUILD time/);
+  });
+
+  it("writes a generated trigger's ScriptValue argument bare, including a scripted-variable reference (widenedLowering, SDK-47 P1 fix)", () => {
+    // resourceStockpilePercent's `value` is triggers.cwt's
+    // `value_field[0.0...1.0]`, so it is the one ordinary (non-comparison)
+    // value_field argument a top-level trigger function takes — the same
+    // ScriptValue widening as every content field, going through the
+    // generated code's own `scriptValueScalar` wrap rather than content.ts's
+    // writer. A number keeps working unchanged; `@my_value` is the form that
+    // used to come out wrongly quoted (`value = "@my_value"`) before the fix.
+    const numeric = resourceStockpilePercent({ resource: "energy", value: 0.5 });
+    expect(serialize([...numeric.entries])).toBe(
+      "resource_stockpile_percent = {\n\tresource = energy\n\tvalue = 0.5\n}\n"
+    );
+    const variable = resourceStockpilePercent({ resource: "energy", value: "@my_value" });
+    expect(serialize([...variable.entries])).toBe(
+      "resource_stockpile_percent = {\n\tresource = energy\n\tvalue = @my_value\n}\n"
+    );
   });
 });

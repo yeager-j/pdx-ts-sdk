@@ -151,12 +151,23 @@ function emitComparison(fn: string, key: string, scope: string, docs: string[]):
   );
 }
 
+/**
+ * The expression a scalar `TsValue` pushes into `kv()`, `scriptValueScalar`-
+ * wrapped when the value is a `ScriptValue` (see `TsValue.scriptValue`) so a
+ * `@name` input becomes a `var` node rather than a defensively-quoted string.
+ */
+function pushExpr(value: TsValue, expr: string): string {
+  const scalar = value.toScalar(expr);
+  return value.scriptValue === true ? `scriptValueScalar(${scalar})` : scalar;
+}
+
 function emitValue(fn: string, key: string, scope: string, docs: string[], value: TsValue): string {
   const signature =
     docComment(docs) + `export function ${fn}(value: ${value.type}): Trigger<${scope}> {\n`;
   if (value.refTypes === undefined) {
     return (
-      signature + `  return trigger([kv(${JSON.stringify(key)}, ${value.toScalar("value")})]);\n}\n`
+      signature +
+      `  return trigger([kv(${JSON.stringify(key)}, ${pushExpr(value, "value")})]);\n}\n`
     );
   }
   // The id is bound once and both written and recorded, so the emitted entry
@@ -213,7 +224,7 @@ function pushCode(field: ArgField, access: string, owner: string, index: number)
     case "scalar": {
       const { refTypes } = field.value.value;
       if (refTypes === undefined) {
-        return `entries.push(kv(${key}, ${field.value.value.toScalar(access)}));`;
+        return `entries.push(kv(${key}, ${pushExpr(field.value.value, access)}));`;
       }
       // Indexed rather than named after the field, so the local can never
       // collide with `args`, `entries`, `refs`, or a sibling field's name.

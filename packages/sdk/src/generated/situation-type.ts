@@ -13,7 +13,7 @@ import type {
   WeightBlock,
   WeightBlockWithLoc,
 } from "../content.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type { SituationCategory } from "./enums.ts";
 import type {
   EventScopelessRef,
@@ -180,9 +180,9 @@ export interface SituationStageFields {
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
   /** Only when SituationStage subtype not `dynamic_progress` applies. */
-  end?: number | WeightBlock<"situation">;
+  end?: ScriptValue | WeightBlock<"situation">;
   /** Only when SituationStage subtype `dynamic_progress` applies. */
-  sectionWeight?: number | WeightBlock<"situation">;
+  sectionWeight?: ScriptValue | WeightBlock<"situation">;
   icon: SpriteRef | string;
   iconBackground: SpriteRef | string;
   /**
@@ -328,7 +328,7 @@ export interface SituationTypeFields {
   startValue?: number;
   /** The value the situation progress is going to have when starting. Important for bidirectional situations. if it is lower than start_value, it will be changed to start_value */
   initialProgress?: number;
-  totalProgress?: number | WeightBlock<"situation">;
+  totalProgress?: ScriptValue | WeightBlock<"situation">;
   /** monodirectional/bidirectional (defaults to monodirectional) */
   progressDirection?: "monodirectional" | "bidirectional";
   /**

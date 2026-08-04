@@ -70,6 +70,7 @@ import {
   type ModifierClosure,
   type OpinionModifierRef,
   type ScopeRef,
+  type ScriptValue,
   type SectionTemplateFields,
   type StrikeCraftComponentTemplateFields,
   type TechnologyRef,
@@ -154,8 +155,11 @@ describe("generated content authoring types", () => {
           upkeep: {
             amounts: { unity: 1 },
             when: hasAuthority("auth_democratic"),
-            // @ts-expect-error — resource amounts are numeric script assignments
-            mult: "twice",
+            // `mult` is `modifier_rule.cwt`'s `value_field` (widenedLowering),
+            // so a scripted-variable string like this one is a legitimate
+            // form, not an error — see the dedicated ScriptValue coverage
+            // below for the still-rejected shapes.
+            mult: "some_scripted_variable",
           },
         },
       ],
@@ -1040,6 +1044,35 @@ describe("generated content authoring types", () => {
     void block;
   });
 
+  it("leaves civic_or_origin's modification.add/.remove unwritable by a non-universal trigger, not wrongly widened by unpinned-scope inference (widenedLowering, SDK-33 regression)", () => {
+    // governments.cwt's `modification` block itself carries
+    // `## replace_scopes = { this = country }`, but nothing threads that
+    // container scope down into `add`/`remove` (SDK-34's job — deliberately
+    // not done here). Before the `containerScopeLost` guard, SDK-33's
+    // contravariant-scope widening could not tell that apart from a
+    // genuinely unannotated field, and would have widened `add`/`remove` to
+    // `Trigger<never>` — accepting a planet-only condition the game
+    // evaluates in country scope. The guard leaves them at the pre-existing
+    // `Trigger<ScopeName>` instead: unwritable by anything but a universal
+    // trigger, the same as before SDK-33 existed, until SDK-34 threads the
+    // real `country` scope down.
+    defineCivicOrOrigin({
+      id: "content_types_civic_modification_universal",
+      name: "X",
+      modification: { add: always() },
+    });
+    defineCivicOrOrigin({
+      id: "content_types_civic_modification_rejects_planet_only",
+      name: "X",
+      modification: {
+        // @ts-expect-error — isCapital is carrier/colony/planet/ship-scoped,
+        // not universal; modification.add stayed Trigger<ScopeName> rather
+        // than being wrongly widened to the accepts-everything Trigger<never>.
+        add: isCapital(),
+      },
+    });
+  });
+
   it("keeps civic_or_origin's playable/ai_playable pinned to no_scope", () => {
     defineCivicOrOrigin({
       id: "content_types_civic_no_scope",
@@ -1130,20 +1163,55 @@ describe("generated content authoring types", () => {
     });
   });
 
-  it("keeps species_class's playable scope-agnostic like tradition_swap's trigger", () => {
-    // No `## replace_scopes` on playable, so it stays Trigger<ScopeName> —
-    // only a universal trigger like always() type-checks.
+  it("widens species_class's unpinned playable to accept a real trigger (widenedLowering)", () => {
+    // No `## replace_scopes` on `playable`, so before the widened lowering it
+    // fell back to `Trigger<ScopeName>` — contravariant, so "valid in every
+    // scope" as a type argument admitted only rules legal in every scope,
+    // leaving only a universal trigger like always() writable. It now falls
+    // back to `Trigger<never>`, the top of that contravariant lattice, so a
+    // real single-scope trigger like hasAuthority (country-only) type-checks
+    // too — the field went from "unwritable by anything but always()" to
+    // "unchecked", matching what "the rules did not say" should mean.
     defineSpeciesClass({
       id: "content_types_species_class_playable",
       name: "X",
       playable: always(),
     });
     defineSpeciesClass({
-      id: "content_types_species_class_playable_rejects_country_only",
+      id: "content_types_species_class_playable_widened",
       name: "X",
-      // @ts-expect-error — hasAuthority only holds in country scope, not
-      // every scope playable's ScopeName type demands.
       playable: hasAuthority("auth_democratic"),
+    });
+  });
+
+  it("widens value_field fields to ScriptValue, a number still assigning unchanged (widenedLowering)", () => {
+    // country_ship_of_size_limit.base is `country_limits.cwt`'s `value_field`,
+    // not `float` — SDK-47's fix. `ScriptValue` accepts a plain number (the
+    // "no churn on existing call sites" property the ticket requires) and a
+    // scripted-variable/`value:<script_value>`/`trigger:<name>` string, which
+    // plain `number` could not express at all. A boolean satisfies neither
+    // arm and stays a compile error.
+    expectTypeOf<number>().toExtend<ScriptValue>();
+    expectTypeOf<"value:my_script_value">().toExtend<ScriptValue>();
+    defineCountryShipOfSizeLimit({
+      id: "content_types_country_ship_of_size_limit_script_value_number",
+      shipTypes: ["ship_size_titan"],
+      base: 80,
+      show: always(),
+    });
+    defineCountryShipOfSizeLimit({
+      id: "content_types_country_ship_of_size_limit_script_value_string",
+      shipTypes: ["ship_size_titan"],
+      base: "value:my_script_value",
+      show: always(),
+    });
+    defineCountryShipOfSizeLimit({
+      id: "content_types_country_ship_of_size_limit_script_value_rejects_boolean",
+      shipTypes: ["ship_size_titan"],
+      // @ts-expect-error — a boolean satisfies neither ScriptValue's number
+      // nor its (branded) string arm.
+      base: true,
+      show: always(),
     });
   });
 

@@ -11,7 +11,6 @@ import type {
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { GraphicalCultureRef, ShipCategoriesRef } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
 
 export interface GraphicalCultureShipLighting {
   camLight1Dir: number[];
@@ -130,8 +129,8 @@ export interface GraphicalCultureFields {
   fallback?: GraphicalCultureRef | string;
   shipColor?: boolean;
   shipLighting?: GraphicalCultureShipLighting;
-  randomized?: Trigger<ScopeName>;
-  selectable?: Trigger<ScopeName>;
+  randomized?: Trigger<never>;
+  selectable?: Trigger<never>;
   shipKinds?: (ShipCategoriesRef | string)[];
   /** the scope contains the species this is for. from contains the country this is for. the country's gfx culture is set to this gfx culture for easy access */
   shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", "country">;

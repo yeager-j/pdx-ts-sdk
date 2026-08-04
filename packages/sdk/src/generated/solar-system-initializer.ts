@@ -9,7 +9,7 @@ import type {
   EffectBlock,
   WeightBlock,
 } from "../content.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type { UsageType } from "./enums.ts";
 import type { PlanetInitializerFields } from "./planet-initializer.ts";
 import type {
@@ -18,7 +18,6 @@ import type {
   StarClassRandomListRef,
   StarClassRef,
 } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
 import type { CustomStarNames, StarFlag } from "./value-sets.ts";
 
 import "./planet-initializer.ts";
@@ -65,8 +64,8 @@ export const SOLAR_SYSTEM_INITIALIZER_ASTEROID_BELT_FIELDS: readonly ContentFiel
 ];
 
 export interface SolarSystemInitializerOrbitDistance {
-  min: number;
-  max: number;
+  min: ScriptValue;
+  max: ScriptValue;
 }
 
 export const SOLAR_SYSTEM_INITIALIZER_ORBIT_DISTANCE_FIELDS: readonly ContentField[] = [
@@ -128,7 +127,7 @@ export interface SolarSystemInitializerNeighborSystem {
   minOrientationAngle?: number;
   maxOrientationAngle?: number;
   spawnChance?: number;
-  trigger?: Trigger<ScopeName>;
+  trigger?: Trigger<never>;
 }
 
 export const SOLAR_SYSTEM_INITIALIZER_NEIGHBOR_SYSTEM_FIELDS: readonly ContentField[] = [
@@ -238,7 +237,7 @@ export interface SolarSystemInitializerFields {
   flags?: StarFlag[];
   asteroidBelt?: SolarSystemInitializerAsteroidBelt[];
   usage?: UsageType[];
-  usageOdds?: number | WeightBlock<ScopeName>;
+  usageOdds?: number | WeightBlock<"system">;
   /** accepts negative numbers, negative numbers = unrestricted */
   maxInstances?: number;
   spawnChance?: number;
@@ -251,7 +250,7 @@ export interface SolarSystemInitializerFields {
   /** Only when solar_system_initializer subtype not `fallen_empire_initializer` applies. */
   planet?: PlanetInitializerFields[];
   changeOrbit?: number[];
-  orbitDistance?: number | SolarSystemInitializerOrbitDistance;
+  orbitDistance?: ScriptValue | SolarSystemInitializerOrbitDistance;
   orbitalLine?: SolarSystemInitializerOrbitalLine[];
   hasIndependentOrbitalLine?: boolean;
   /**

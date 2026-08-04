@@ -421,10 +421,13 @@ describe("content-type codegen", () => {
     // modifier_rule block. Vanilla writes `end = 100` 254 times against 1
     // block, so typing away the scalar form was the wrong prescription: the
     // group lowers to the union, recurring inside a repeated-struct field too.
+    // The scalar arm is `value_field`, not `float`, so it widens to
+    // `ScriptValue` (widenedLowering) rather than plain `number` — a number
+    // still assigns unchanged.
     const situation = emissions.get("situation_type");
-    expect(situation?.code).toContain('totalProgress?: number | WeightBlock<"situation">;');
-    expect(situation?.code).toContain('end?: number | WeightBlock<"situation">;');
-    expect(situation?.code).toContain('sectionWeight?: number | WeightBlock<"situation">;');
+    expect(situation?.code).toContain('totalProgress?: ScriptValue | WeightBlock<"situation">;');
+    expect(situation?.code).toContain('end?: ScriptValue | WeightBlock<"situation">;');
+    expect(situation?.code).toContain('sectionWeight?: ScriptValue | WeightBlock<"situation">;');
   });
 
   it("merges a field declared as different literals across subtypes into the union", () => {
@@ -710,6 +713,23 @@ describe("content-type codegen", () => {
     expect(fieldNames(civicOrOrigin!.emittedFields)).toContain("leader_background_job_weight");
   });
 
+  it("widens unpinned-scope Trigger/WeightBlock fields to never, buying real scope back by overlay row (widenedLowering, SDK-33)", () => {
+    // civic_or_origin.swap_type.trigger carries no `## replace_scopes` and no
+    // overlay `scope` assertion — CWT genuinely does not say, so it stays
+    // unchecked (`Trigger<never>`, the top of Trigger's contravariant
+    // lattice) rather than the unsatisfiable `Trigger<ScopeName>`.
+    const civicOrOrigin = emissions.get("civic_or_origin");
+    expect(civicOrOrigin?.code).toContain("trigger: Trigger<never>;");
+    // solar_system_initializer.usage_odds and tradition_category.desc.trigger
+    // are the same unpinned defect, but with a `CONTENT_FIELD_OVERRIDES`
+    // `scope` row buying the checking back — see overlay.ts for the corpus
+    // evidence (shape conformance, not a reading of the rules alone).
+    const solarSystemInitializer = emissions.get("solar_system_initializer");
+    expect(solarSystemInitializer?.code).toContain('usageOdds?: number | WeightBlock<"system">;');
+    const traditionCategory = emissions.get("tradition_category");
+    expect(traditionCategory?.code).toContain('trigger?: Trigger<"country">;');
+  });
+
   it("generates component_set as a name_field registry without registry-specific code", () => {
     const componentSet = emissions.get("component_set");
     expect(componentSet?.code).toContain("export interface ComponentSetDef");
@@ -811,13 +831,15 @@ describe("content-type codegen", () => {
     expect(ambientObject?.machineryBacklog).toEqual([]);
   });
 
-  it("generates graphical_culture with scope-agnostic randomized/selectable triggers", () => {
+  it("generates graphical_culture with unpinned, widened randomized/selectable triggers", () => {
     // No `## replace_scopes` on either field, unlike ship_selection_weight
-    // (pinned to species scope) right below them.
+    // (pinned to species scope) right below them, so they lower to the
+    // widened, unchecked `Trigger<never>` (widenedLowering) rather than the
+    // unsatisfiable `Trigger<ScopeName>`.
     const graphicalCulture = emissions.get("graphical_culture");
     expect(graphicalCulture?.code).toContain("export interface GraphicalCultureDef");
-    expect(graphicalCulture?.code).toContain("randomized?: Trigger<ScopeName>;");
-    expect(graphicalCulture?.code).toContain("selectable?: Trigger<ScopeName>;");
+    expect(graphicalCulture?.code).toContain("randomized?: Trigger<never>;");
+    expect(graphicalCulture?.code).toContain("selectable?: Trigger<never>;");
     expect(graphicalCulture?.code).toContain(
       'shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", "country">;'
     );
@@ -849,8 +871,11 @@ describe("content-type codegen", () => {
     // every other registry with those fields already uses.
     expect(speciesClass?.code).toContain("resources?: EconomicResourceBlock<ScopeName>[];");
     expect(speciesClass?.code).toContain('modifier?: ModifierClosure<"pop_group">;');
-    // playable carries no `## replace_scopes`, unlike possible/possible_secondary.
-    expect(speciesClass?.code).toContain("playable?: Trigger<ScopeName>;");
+    // playable carries no `## replace_scopes`, unlike possible/possible_secondary,
+    // so it lowers to the widened, unchecked `Trigger<never>` (widenedLowering)
+    // rather than the unsatisfiable `Trigger<ScopeName>` — see content.test-d.ts's
+    // widenedLowering species_class.playable coverage for the authoring payoff.
+    expect(speciesClass?.code).toContain("playable?: Trigger<never>;");
     // The localisation table nests under `subtype[playable]`, not the type's
     // top level — 26 slots, all recovered.
     expect(speciesClass?.code).toContain('{ member: "plural", pattern: "$_plural"');
@@ -867,9 +892,12 @@ describe("content-type codegen", () => {
     const countryShipOfSizeLimit = emissions.get("country_ship_of_size_limit");
     expect(countryShipOfSizeLimit?.code).toContain("export interface CountryShipOfSizeLimitDef");
     expect(countryShipOfSizeLimit?.code).toContain("shipTypes: (ShipSizeRef | string)[];");
-    expect(countryShipOfSizeLimit?.code).toContain("base: number;");
-    expect(countryShipOfSizeLimit?.code).toContain("max?: number;");
-    expect(countryShipOfSizeLimit?.code).toContain("navalCapFraction?: number;");
+    // base/max/navalCapFraction are `country_limits.cwt`'s `value_field`, not
+    // `float`, so they lower to the widened `ScriptValue` (widenedLowering)
+    // rather than plain `number` — a number still assigns unchanged.
+    expect(countryShipOfSizeLimit?.code).toContain("base: ScriptValue;");
+    expect(countryShipOfSizeLimit?.code).toContain("max?: ScriptValue;");
+    expect(countryShipOfSizeLimit?.code).toContain("navalCapFraction?: ScriptValue;");
     // `show` is scoped by an overlay assertion rather than by the rules — see
     // the scope-assertion test above for why the mechanical reading was wrong.
     expect(countryShipOfSizeLimit?.code).toContain('show: Trigger<"country">;');

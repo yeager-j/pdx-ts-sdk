@@ -37,7 +37,6 @@ import type {
   TargetTypeRef,
   TechnologyRef,
 } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
 import type { UpgradePath } from "./value-sets.ts";
 
 export interface StrikeCraftComponentTemplateInjectedModifierModifier {
@@ -466,7 +465,7 @@ export interface StrikeCraftComponentTemplateFields {
   customTooltip?: string;
   shouldAiUse?: boolean;
   validForCountry?: Trigger<"country">;
-  aiWeight?: WeightBlock<ScopeName>;
+  aiWeight?: WeightBlock<never>;
   /**
    * Only when strike_craft_component_template subtype `weapon_component_template` applies.
    * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.

@@ -9,13 +9,15 @@
  * scripted trigger/effect bindings both do.
  */
 
+import { varRef, type PdxScalar } from "@pdx-ts/pdxscript";
+
 import type { ScopeValue } from "./effect-core.ts";
 import type { TypedRef } from "./generated/refs.ts";
 
 /** Anything that lowers to one PDXScript scalar. */
 export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValue;
 
-export function toScalar(value: unknown): string | number | boolean {
+export function toScalar(value: unknown): string | number | boolean | PdxScalar {
   if (typeof value === "object" && value !== null) {
     if ("path" in value) {
       return (value as ScopeValue).path;
@@ -24,6 +26,15 @@ export function toScalar(value: unknown): string | number | boolean {
       return (value as { id: string }).id;
     }
     throw new Error(`Cannot serialize ${JSON.stringify(value)} as an effect argument`);
+  }
+  // A `@name` scripted-variable reference (a `ScriptValue` argument, e.g.
+  // `changeVariable`'s `value`) has to become a `var` node to write bare — see
+  // `scriptValueScalar` in `trigger-core.ts`. Effect arguments funnel through
+  // this one lowering regardless of which effect they belong to, and no
+  // non-`ScriptValue` argument's real domain admits a leading `@`, so the
+  // check is safe to apply unconditionally here too.
+  if (typeof value === "string" && value.startsWith("@")) {
+    return varRef(value);
   }
   return value as string | number | boolean;
 }

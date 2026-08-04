@@ -331,6 +331,19 @@ async function main(): Promise<void> {
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       modifiers.code
   );
+  // `Trigger` and `ScriptValue` both live in `trigger-core.ts`, so one clause
+  // covers both — `Trigger<` stays a substring match (already precise; see
+  // `GovernmentTriggerBlock`, which a bare "Trigger" match would false-hit),
+  // `ScriptValue` a word-boundary one since it has no such collision.
+  const triggerCoreImports = (code: string): string => {
+    const names = [
+      ...(code.includes("Trigger<") ? ["Trigger"] : []),
+      ...(referencesIdentifier(code, "ScriptValue") ? ["ScriptValue"] : []),
+    ];
+    return names.length === 0
+      ? ""
+      : `import type { ${names.join(", ")} } from "../trigger-core.ts";\n`;
+  };
   // A module referencing another alias category's interface needs both a type
   // import and a bare side-effect import: the type import is erased at build
   // time, and only the side effect guarantees that category's
@@ -368,9 +381,7 @@ async function main(): Promise<void> {
       header(commit, [`alias[${category}:...] across the rule files`]) +
         `import { registerAliasStructFields, type ${runtimeTypes.join(", type ")} } ` +
         'from "../content.ts";\n' +
-        (emission.code.includes("Trigger<")
-          ? 'import type { Trigger } from "../trigger-core.ts";\n'
-          : "") +
+        triggerCoreImports(emission.code) +
         (emission.code.includes("ScopeName")
           ? 'import type { ScopeName } from "./scopes.ts";\n'
           : "") +
@@ -413,9 +424,7 @@ async function main(): Promise<void> {
       `${content.registry.replaceAll("_", "-")}.ts`,
       header(commit, [content.manifest.source]) +
         importList("../content.ts", runtimeTypes) +
-        (content.emission.code.includes("Trigger<")
-          ? 'import type { Trigger } from "../trigger-core.ts";\n'
-          : "") +
+        triggerCoreImports(content.emission.code) +
         (content.emission.code.includes("ScopeName")
           ? 'import type { ScopeName } from "./scopes.ts";\n'
           : "") +
@@ -459,7 +468,9 @@ async function main(): Promise<void> {
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
       'import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";\n' +
       'import type { ContentRefUse } from "../content-refs.ts";\n' +
-      'import { trigger, type Trigger } from "../trigger-core.ts";\n' +
+      `import { trigger, type Trigger${referencesIdentifier(triggers.code, "ScriptValue") ? ", type ScriptValue" : ""}` +
+      `${referencesIdentifier(triggers.code, "scriptValueScalar") ? ", scriptValueScalar" : ""} } ` +
+      'from "../trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(
         "./enums.ts",
@@ -495,7 +506,8 @@ async function main(): Promise<void> {
     ]) +
       'import type { PdxOp } from "@pdx-ts/pdxscript";\n' +
       'import type { Modifier, StructuralEffects } from "../effect-core.ts";\n' +
-      'import type { Trigger } from "../trigger-core.ts";\n' +
+      `import type { Trigger${referencesIdentifier(effects.interfaces, "ScriptValue") ? ", ScriptValue" : ""} } ` +
+      'from "../trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(
         "./enums.ts",

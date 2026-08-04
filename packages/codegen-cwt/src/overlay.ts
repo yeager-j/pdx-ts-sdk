@@ -513,16 +513,22 @@ export interface ContentFieldOverride {
    * The scope this field's closures run in, when CWT declares none and the
    * mechanical fallback is wrong.
    *
-   * An unannotated field lowers to `Trigger<ScopeName>` / `ModifierClosure<ScopeName>`
-   * — "valid in every scope" — which is right when the scope genuinely varies
-   * (a decision's own scope depends on its category) and wrong when the scope
-   * is fixed but simply unannotated. The wrong case is invisible to the corpus
-   * gate, which only checks whether a field is *present*, so it has to be
-   * caught by reading real definitions.
+   * A trigger or weight-block field CWT annotates with no scope lowers to
+   * `Trigger<never>` / `WeightBlock<never>` — unchecked, since `Trigger<in S>`
+   * is contravariant and `never` is the top of that lattice — which is right
+   * when the scope genuinely varies (a decision's own scope depends on its
+   * category, see `CONTENT_SCOPE_PARAMETERS`) and leaves real checking on the
+   * table when the scope is fixed but simply unannotated. A `scope` row here
+   * buys that checking back for one field. `ModifierClosure` fields keep the
+   * separate `ScopeName` sentinel `emit/fields.ts`'s `contravariantScopeType`
+   * does not touch, since an unpinned modifier closure already resolves to a
+   * real, writable recorder.
    *
    * This asserts game semantics the rules do not state, so a row needs the
-   * evidence in its reason, not a guess. An unknown scope name fails codegen
-   * rather than silently widening.
+   * evidence in its reason, not a guess: shape conformance's `scope` mismatch
+   * kind (`corpus.ts`) walks every real definition's keys under this field and
+   * reports any the asserted scope rejects. An unknown scope name fails
+   * codegen rather than silently widening.
    */
   readonly scope?: string;
   /**
@@ -975,6 +981,38 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "of which satisfies that type, and the field controls the country's naval-capacity " +
         "tooltip on a registry named country_ship_of_size_limit. Without this the field is " +
         "emitted but can hold nothing any real definition writes.",
+    },
+  ],
+  [
+    "solar_system_initializer.usage_odds",
+    {
+      scope: "system",
+      reason:
+        "CWT annotates no scope on this `alias_name[modifier_rule]` splice, so an unannotated " +
+        "reading leaves its `when` rows unchecked. 155 of the 360 shipped `solar_system_initializer` " +
+        "definitions write a weighted `usage_odds` with a real condition, every one of them " +
+        "system-scoped (`has_star_flag`, `is_fe_cluster`, `is_bottleneck_system`, `has_distar`, " +
+        "`is_in_cluster`, `has_leviathans`, plus system-scope iterators like `any_system` and " +
+        "`any_neighbor_system`), and the game's own " +
+        "common/solar_system_initializers/example.txt:32 comments its own `usage_odds` example " +
+        "`# this = galactic_object (star) scope`. `solar_system_initializer` itself has no " +
+        "body-level push_scope, unlike sibling registries that splice the same weight-block " +
+        "grammar with one, which is why this field alone needs the assertion.",
+    },
+  ],
+  [
+    "tradition_category.desc.trigger",
+    {
+      scope: "country",
+      reason:
+        "`desc`'s `triggered_desc_clause` splice (aliases.cwt) annotates no scope for its nested " +
+        "`trigger` field, and `tradition_category` itself has no body-level push_scope to fall " +
+        "back on — unlike `building`, which push_scopes `colony` before splicing the same clause " +
+        "for its own `desc`. All 25 shipped tradition categories that write a `desc.trigger` " +
+        "condition write a country one (`is_machine_empire`, `is_regular_empire`, " +
+        "`is_hive_empire`, `is_gestalt`, `is_nomadic`, `has_void_dweller_origin`), matching the " +
+        "sibling `potential` field's explicit `## replace_scopes = { this = country }` two fields " +
+        "down in the same type body.",
     },
   ],
   // The four rows below are all one defect, twice per alias category. CWT

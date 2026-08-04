@@ -218,7 +218,17 @@ export function mergeFields(
       const value = emitter.unionFor(
         group.filter((field) => field.comparison).map((field) => field.type)
       );
-      if (value === null || value.type !== "number") {
+      // `PdxOp`'s `>`/`<`/etc. only ever compare against a game-evaluated
+      // number, so a comparison field's *authored* signature stays plain
+      // `number` regardless of whether the rules declare `int`/`float` or
+      // `value_field` — `cmp()` (pdxscript) takes a `number`, not a
+      // `ScriptValue`. This only has to keep recognising `value_field` as
+      // numeric enough to emit, the same as before `ScriptValue` existed;
+      // widening what a comparison itself can hold is a separate change.
+      if (
+        value === null ||
+        value.type.split(" | ").some((part) => part !== "number" && part !== "ScriptValue")
+      ) {
         return `comparison field "${name}" is not numeric`;
       }
       const rest = group.filter((field) => !field.comparison).map((field) => field.type);

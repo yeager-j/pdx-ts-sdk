@@ -7,7 +7,7 @@
 import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "../content-refs.ts";
-import { trigger, type Trigger } from "../trigger-core.ts";
+import { scriptValueScalar, trigger, type ScriptValue, type Trigger } from "../trigger-core.ts";
 import type {
   AiAttitudeBehaviour,
   AnyOrBool,
@@ -15052,7 +15052,7 @@ export function resourceStockpileCompare(
 
 export interface ResourceStockpilePercentArgs {
   resource: ResourceRef | string;
-  value: number;
+  value: ScriptValue;
 }
 
 /**
@@ -15071,7 +15071,7 @@ export function resourceStockpilePercent(args: ResourceStockpilePercentArgs): Tr
   const id0 = refId(args.resource);
   entries.push(kv("resource", id0));
   refs.push({ targets: ["resource"], id: id0, field: "resource_stockpile_percent.resource" });
-  entries.push(kv("value", args.value));
+  entries.push(kv("value", scriptValueScalar(args.value)));
   return trigger([block("resource_stockpile_percent", entries)], refs);
 }
 

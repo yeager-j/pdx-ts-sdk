@@ -10,7 +10,7 @@ import type {
   ModifierClosure,
   WeightBlock,
 } from "../content.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type { StaticModifierRef } from "./refs.ts";
 
 /**
@@ -22,8 +22,8 @@ export interface AgendaFields {
   name: string;
   /** English text emitted to localization under `council_agenda_<id>_desc`. */
   desc?: string;
-  agendaCost: number;
-  agendaCooldown?: number;
+  agendaCost: ScriptValue;
+  agendaCooldown?: ScriptValue;
   potential?: Trigger<"country">;
   allow?: Trigger<"country">;
   initialEffectCustomLoc?: string;

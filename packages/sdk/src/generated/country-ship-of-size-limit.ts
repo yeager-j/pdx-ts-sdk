@@ -3,7 +3,7 @@
 // From: common/country_limits.cwt
 
 import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type { ShipSizeRef } from "./refs.ts";
 
 /**
@@ -14,11 +14,11 @@ export interface CountryShipOfSizeLimitFields {
   /** # list of keys to ship_sizes database, these ship_sizes will share the calculated capacity */
   shipTypes: (ShipSizeRef | string)[];
   /** Base (minimal) shared capacity of ships */
-  base: number;
+  base: ScriptValue;
   /** Maximal shared capacity of ships */
-  max?: number;
+  max?: ScriptValue;
   /** Fraction of current naval capacity of the country */
-  navalCapFraction?: number;
+  navalCapFraction?: ScriptValue;
   /** Trigger that defines if tooltip for naval capacity icon on the top bar should be shown */
   show: Trigger<"country">;
 }

@@ -1,9 +1,46 @@
-import type { PdxEntry } from "@pdx-ts/pdxscript";
+import { varRef, type PdxEntry, type PdxScalar } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "./content-refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 
 declare const scopeBrand: unique symbol;
+declare const scriptValueBrand: unique symbol;
+
+/**
+ * A numeric expression the game evaluates rather than a literal this build
+ * reads: a scripted variable's name, a `scope.variable` path, or
+ * `value:<script_value>` / `trigger:<name>` (1 or 0). CWT calls the field
+ * type `value_field` (or `int_value_field` for the integer-only arm) and
+ * distinguishes it from a plain `float`/`int` — a distinction the lowering
+ * used to erase, typing every one of them `number` and making the other
+ * three forms unwritable.
+ *
+ * The brand is optional, the same soft brand `ValueSetMember` uses: script
+ * value and scripted trigger names are open sets no rule file enumerates, so
+ * a raw string still assigns. `number` is the other arm of every
+ * `ScriptValue` field, so a plain float call site is unaffected — the
+ * brand only ever adds a form, never removes one.
+ */
+export type ScriptValue = number | (string & { readonly [scriptValueBrand]?: true });
+
+/**
+ * Lowers an authored `ScriptValue` to what the PDXScript AST accepts.
+ *
+ * A number, a `value:<script_value>`/`trigger:<name>` form, or a bare
+ * `scope.variable` path all already write bare as an unquoted string scalar:
+ * pdxscript's serializer only quotes a `str` node when writing it bare would
+ * re-parse as something else (a bool, a number, or — this is the case that
+ * matters here — a `var`). A `@name` scripted-variable reference *is* that
+ * "something else": passed through as a plain string it would be quoted
+ * defensively (`base = "@my_value"`), which the game reads as a literal
+ * string rather than evaluating the variable. It has to become a `var` node
+ * explicitly to write bare as `@my_value` — see `GRAMMAR.md`'s note on `str`
+ * vs `var`, and `packages/pdxscript` stays syntax-only, so this conversion
+ * belongs here on the authoring side, not in the serializer's classification.
+ */
+export function scriptValueScalar(value: ScriptValue): ScriptValue | PdxScalar {
+  return typeof value === "string" && value.startsWith("@") ? varRef(value) : value;
+}
 
 /**
  * What the poison call signature "returns". Nothing produces one and nothing

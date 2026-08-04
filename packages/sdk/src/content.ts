@@ -12,6 +12,7 @@ import {
   quoted,
   scalar,
   serialize,
+  varRef,
   type PdxEntry,
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
@@ -30,7 +31,7 @@ import type { ScopeObjOf } from "./generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "./generated/modifiers.ts";
 import { refId, type TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
-import type { Trigger } from "./trigger-core.ts";
+import { scriptValueScalar, type ScriptValue, type Trigger } from "./trigger-core.ts";
 
 /**
  * The declared escape hatch for modifier names the generated tables cannot
@@ -80,9 +81,9 @@ export interface EconomicResourceOperation<S extends ScopeName> {
   /** Optional in-game condition for applying this arm. */
   readonly when?: Trigger<S>;
   /** Repeated scripted multipliers, emitted under `multiplier`. */
-  readonly multiplier?: number | readonly number[];
+  readonly multiplier?: ScriptValue | readonly ScriptValue[];
   /** Repeated scripted multipliers, emitted under the game's shorter `mult` spelling. */
-  readonly mult?: number | readonly number[];
+  readonly mult?: ScriptValue | readonly ScriptValue[];
 }
 
 /** A reusable economic-template block used by edicts and dozens of other registries. */
@@ -203,9 +204,9 @@ export interface TriggeredModifier<S extends ScopeName> {
   /** Custom tooltip localization key. */
   readonly customTooltip?: string;
   /** Repeated scripted multipliers emitted under `mult`. */
-  readonly mult?: number | readonly number[];
+  readonly mult?: ScriptValue | readonly ScriptValue[];
   /** Repeated scripted multipliers emitted under `multiplier`. */
-  readonly multiplier?: number | readonly number[];
+  readonly multiplier?: ScriptValue | readonly ScriptValue[];
 }
 
 /** Generated description of one localization slot on a content definition. */
@@ -755,6 +756,16 @@ function contentScalar(
   if (quote) {
     return quoted(String(converted));
   }
+  // A `@name` scripted-variable reference has to become a `var` node to write
+  // bare (`base = @name`) — passed through as a plain string, pdxscript's
+  // serializer quotes it defensively, and the game reads a literal instead of
+  // evaluating the variable. Every `value_field`-typed field (a `ScriptValue`)
+  // can carry this form, and no other field's real vanilla domain admits a
+  // leading `@`, so the check is safe unconditionally rather than gated on
+  // which field this is.
+  if (typeof converted === "string" && converted.startsWith("@")) {
+    return varRef(converted);
+  }
   return scalar(converted as string | number | boolean);
 }
 
@@ -804,11 +815,14 @@ function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringC
   return block(key, entries);
 }
 
-function repeatedNumbers(key: string, value: number | readonly number[] | undefined): PdxEntry[] {
+function repeatedNumbers(
+  key: string,
+  value: ScriptValue | readonly ScriptValue[] | undefined
+): PdxEntry[] {
   if (value === undefined) {
     return [];
   }
-  return (Array.isArray(value) ? value : [value]).map((item) => kv(key, item));
+  return (Array.isArray(value) ? value : [value]).map((item) => kv(key, scriptValueScalar(item)));
 }
 
 function economicOperation(
