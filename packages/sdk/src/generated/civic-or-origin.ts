@@ -71,8 +71,8 @@ export const CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS: readonly ContentField[] = [
 
 export interface CivicOrOriginModification {
   moddableConditionsCustomTooltip?: string;
-  add?: Trigger<never>;
-  remove?: Trigger<never>;
+  add?: Trigger<ScopeName>;
+  remove?: Trigger<ScopeName>;
 }
 
 export const CIVIC_OR_ORIGIN_MODIFICATION_FIELDS: readonly ContentField[] = [

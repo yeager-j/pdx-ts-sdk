@@ -33,6 +33,22 @@ export interface TsValue {
    * values parsed out of the shipped game files.
    */
   readonly literals?: readonly string[];
+  /**
+   * True for `value_field`/`int_value_field` only: the emitted expression is
+   * a `ScriptValue`, not a plain scalar, so a `@name` scripted-variable input
+   * needs `scriptValueScalar` (`trigger-core.ts`) around it before it reaches
+   * `kv()` — passed through unchanged, pdxscript's serializer quotes it
+   * defensively (round-trip safety for a `str` node), which the game would
+   * read as a literal string rather than evaluating the variable.
+   *
+   * Kept separate from `toScalar` deliberately: `toScalar` stays the
+   * identity function for `valueField` (`(e) => e`) so `conversionFor`
+   * elsewhere, which reads `toScalar("x") === "x"` to tell an "identity"
+   * field from a "ref" one, keeps classifying it correctly. Wrapping the
+   * *emitted expression* in a codegen-time template here would corrupt that
+   * unrelated signal.
+   */
+  readonly scriptValue?: true;
 }
 
 export interface Usage {
@@ -110,7 +126,7 @@ export class Emitter {
         // folding it into one of those. `ScriptValue` already includes
         // `number` as an arm, so every existing numeric call site keeps
         // typechecking unchanged; only the non-numeric forms are new.
-        return { type: "ScriptValue", toScalar: (e) => e };
+        return { type: "ScriptValue", toScalar: (e) => e, scriptValue: true };
       case "scalar":
       case "localisation":
       case "filepath":
@@ -176,6 +192,16 @@ export class Emitter {
     if (converts.size > 1) {
       return { type: parts.join(" | "), toScalar: (e) => `refId(${e})`, refTypes, literals };
     }
-    return { type: parts.join(" | "), toScalar: values[0]!.toScalar, refTypes, literals };
+    // Propagated only on this branch: `refId(e)` above is not `scriptValueScalar`-
+    // wrappable, and a value_field arm overloaded alongside a typeRef is not a
+    // shape the real rules exercise.
+    const scriptValue = values.every((value) => value!.scriptValue === true) ? true : undefined;
+    return {
+      type: parts.join(" | "),
+      toScalar: values[0]!.toScalar,
+      refTypes,
+      literals,
+      ...(scriptValue === undefined ? {} : { scriptValue }),
+    };
   }
 }

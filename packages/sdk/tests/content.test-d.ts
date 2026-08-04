@@ -894,6 +894,35 @@ describe("generated content authoring types", () => {
     void block;
   });
 
+  it("leaves civic_or_origin's modification.add/.remove unwritable by a non-universal trigger, not wrongly widened by unpinned-scope inference (widenedLowering, SDK-33 regression)", () => {
+    // governments.cwt's `modification` block itself carries
+    // `## replace_scopes = { this = country }`, but nothing threads that
+    // container scope down into `add`/`remove` (SDK-34's job — deliberately
+    // not done here). Before the `containerScopeLost` guard, SDK-33's
+    // contravariant-scope widening could not tell that apart from a
+    // genuinely unannotated field, and would have widened `add`/`remove` to
+    // `Trigger<never>` — accepting a planet-only condition the game
+    // evaluates in country scope. The guard leaves them at the pre-existing
+    // `Trigger<ScopeName>` instead: unwritable by anything but a universal
+    // trigger, the same as before SDK-33 existed, until SDK-34 threads the
+    // real `country` scope down.
+    defineCivicOrOrigin({
+      id: "content_types_civic_modification_universal",
+      name: "X",
+      modification: { add: always() },
+    });
+    defineCivicOrOrigin({
+      id: "content_types_civic_modification_rejects_planet_only",
+      name: "X",
+      modification: {
+        // @ts-expect-error — isCapital is carrier/colony/planet/ship-scoped,
+        // not universal; modification.add stayed Trigger<ScopeName> rather
+        // than being wrongly widened to the accepts-everything Trigger<never>.
+        add: isCapital(),
+      },
+    });
+  });
+
   it("keeps civic_or_origin's playable/ai_playable pinned to no_scope", () => {
     defineCivicOrOrigin({
       id: "content_types_civic_no_scope",

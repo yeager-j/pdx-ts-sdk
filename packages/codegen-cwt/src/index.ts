@@ -468,7 +468,8 @@ async function main(): Promise<void> {
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
       'import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";\n' +
       'import type { ContentRefUse } from "../content-refs.ts";\n' +
-      `import { trigger, type Trigger${referencesIdentifier(triggers.code, "ScriptValue") ? ", type ScriptValue" : ""} } ` +
+      `import { trigger, type Trigger${referencesIdentifier(triggers.code, "ScriptValue") ? ", type ScriptValue" : ""}` +
+      `${referencesIdentifier(triggers.code, "scriptValueScalar") ? ", scriptValueScalar" : ""} } ` +
       'from "../trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(

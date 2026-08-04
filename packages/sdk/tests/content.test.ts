@@ -1729,6 +1729,57 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
     expect(rendered).toContain("base = 80");
     expect(rendered).toContain("base = some_scripted_variable");
   });
+
+  it("serializes every ScriptValue form to the exact bytes the game reads (widenedLowering, SDK-47 P1 fix)", () => {
+    // Each of value_field's four non-numeric forms, one definition per form,
+    // asserted against the *exact* emitted line — types were never the
+    // problem here, only bytes. `@my_value` is the form that was broken: a
+    // bare string passed straight to pdxscript's `kv`/`scalar` gets quoted
+    // defensively on serialization (`classifyUnquoted` reads a leading `@`
+    // as a variable token, so writing it bare would misparse on reread),
+    // which silently turned a scripted-variable reference into a literal
+    // string the game would never evaluate. `scriptValueScalar` in
+    // trigger-core.ts converts a `@`-prefixed input to a `varRef` node before
+    // it reaches pdxscript, which writes a `var` node bare by construction.
+    // The other three forms (`value:<script_value>`, `trigger:<name>`, a
+    // bare `scope.variable` path) already round-tripped as plain bare string
+    // scalars with no fix needed — asserted here so a future regression in
+    // any of the four is caught the same way.
+    const limits = collection(undefined, [
+      defineCountryShipOfSizeLimit({
+        id: "wl_test_script_value_variable",
+        shipTypes: ["ship_size_titan"],
+        base: "@my_value",
+        show: isScopeValid(),
+      }),
+      defineCountryShipOfSizeLimit({
+        id: "wl_test_script_value_named",
+        shipTypes: ["ship_size_titan"],
+        base: "value:my_script_value",
+        show: isScopeValid(),
+      }),
+      defineCountryShipOfSizeLimit({
+        id: "wl_test_script_value_trigger",
+        shipTypes: ["ship_size_titan"],
+        base: "trigger:my_trigger",
+        show: isScopeValid(),
+      }),
+      defineCountryShipOfSizeLimit({
+        id: "wl_test_script_value_scope_path",
+        shipTypes: ["ship_size_titan"],
+        base: "owner.some_variable",
+        show: isScopeValid(),
+      }),
+    ]);
+    const rendered = render(buildMod(configFor("Widened lowering test", "wl_test"), [limits])).get(
+      "common/country_limits/ship_of_size_limits/wl_test_ship_of_size_limits.txt"
+    )!;
+    expect(rendered).toContain("\tbase = @my_value\n");
+    expect(rendered).not.toContain('"@my_value"');
+    expect(rendered).toContain("\tbase = value:my_script_value\n");
+    expect(rendered).toContain("\tbase = trigger:my_trigger\n");
+    expect(rendered).toContain("\tbase = owner.some_variable\n");
+  });
 });
 
 /**

@@ -1,4 +1,4 @@
-import type { PdxEntry } from "@pdx-ts/pdxscript";
+import { varRef, type PdxEntry, type PdxScalar } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "./content-refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
@@ -22,6 +22,25 @@ declare const scriptValueBrand: unique symbol;
  * brand only ever adds a form, never removes one.
  */
 export type ScriptValue = number | (string & { readonly [scriptValueBrand]?: true });
+
+/**
+ * Lowers an authored `ScriptValue` to what the PDXScript AST accepts.
+ *
+ * A number, a `value:<script_value>`/`trigger:<name>` form, or a bare
+ * `scope.variable` path all already write bare as an unquoted string scalar:
+ * pdxscript's serializer only quotes a `str` node when writing it bare would
+ * re-parse as something else (a bool, a number, or — this is the case that
+ * matters here — a `var`). A `@name` scripted-variable reference *is* that
+ * "something else": passed through as a plain string it would be quoted
+ * defensively (`base = "@my_value"`), which the game reads as a literal
+ * string rather than evaluating the variable. It has to become a `var` node
+ * explicitly to write bare as `@my_value` — see `GRAMMAR.md`'s note on `str`
+ * vs `var`, and `packages/pdxscript` stays syntax-only, so this conversion
+ * belongs here on the authoring side, not in the serializer's classification.
+ */
+export function scriptValueScalar(value: ScriptValue): ScriptValue | PdxScalar {
+  return typeof value === "string" && value.startsWith("@") ? varRef(value) : value;
+}
 
 /**
  * What the poison call signature "returns". Nothing produces one and nothing

@@ -215,4 +215,54 @@ every_owned_planet = {
       ])
     ).toThrow(/desc is only supported on modifiers inside a content definition's WeightBlock/);
   });
+
+  it("writes an effect's ScriptValue argument bare, including a scripted-variable reference (widenedLowering, SDK-47 P1 fix)", () => {
+    // change_variable's `value` is effects.cwt:1218's `value_field`, lowered
+    // through the generic effect Proxy dispatcher (effect-meta.ts plus
+    // scalar.ts's runtime `toScalar`), not through generated per-function
+    // code the way triggers are — a separate code path from
+    // resourceStockpilePercent's (triggers.test.ts) and modifierEntry's
+    // (below), so each needs its own proof. A number keeps working
+    // unchanged; `@my_value` used to come out wrongly quoted.
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+    country.changeVariable({ which: "effects_test_var", value: 5 });
+    country.changeVariable({ which: "effects_test_var", value: "@my_value" });
+    expect(serialize(sink)).toBe(
+      "change_variable = {\n" +
+        "\twhich = effects_test_var\n" +
+        "\tvalue = 5\n" +
+        "}\n" +
+        "\n" +
+        "change_variable = {\n" +
+        "\twhich = effects_test_var\n" +
+        "\tvalue = @my_value\n" +
+        "}\n"
+    );
+  });
+
+  it("writes a Modifier row's ScriptValue operand bare, including a scripted-variable reference (widenedLowering, SDK-47 P1 fix)", () => {
+    // Modifier<S> (effect-core.ts) is hand-written, not generated — its
+    // `factor`/`add`/etc. operands are modifier_rule.cwt's `value_field`
+    // (SDK-47's primary cited evidence), and modifierEntry is the third and
+    // last runtime chokepoint that needed the scriptValueScalar fix. The
+    // arm's own `weight` stays a plain `number` (RandomListArm is
+    // hand-typed, not one of the fields SDK-47 touched) — only the row's
+    // operand is a ScriptValue here.
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+    country.randomList([
+      { weight: 40, modifiers: [{ factor: "@my_factor", when: isAtWar() }], do: () => {} },
+    ]);
+    expect(serialize(sink)).toBe(
+      "random_list = {\n" +
+        "\t40 = {\n" +
+        "\t\tmodifier = {\n" +
+        "\t\t\tfactor = @my_factor\n" +
+        "\t\t\tis_at_war = yes\n" +
+        "\t\t}\n" +
+        "\t}\n" +
+        "}\n"
+    );
+  });
 });

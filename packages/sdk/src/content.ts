@@ -11,6 +11,7 @@ import {
   quoted,
   scalar,
   serialize,
+  varRef,
   type PdxEntry,
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
@@ -29,7 +30,7 @@ import type { ScopeObjOf } from "./generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "./generated/modifiers.ts";
 import { refId, type TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
-import type { ScriptValue, Trigger } from "./trigger-core.ts";
+import { scriptValueScalar, type ScriptValue, type Trigger } from "./trigger-core.ts";
 
 /**
  * The declared escape hatch for modifier names the generated tables cannot
@@ -754,6 +755,16 @@ function contentScalar(
   if (quote) {
     return quoted(String(converted));
   }
+  // A `@name` scripted-variable reference has to become a `var` node to write
+  // bare (`base = @name`) — passed through as a plain string, pdxscript's
+  // serializer quotes it defensively, and the game reads a literal instead of
+  // evaluating the variable. Every `value_field`-typed field (a `ScriptValue`)
+  // can carry this form, and no other field's real vanilla domain admits a
+  // leading `@`, so the check is safe unconditionally rather than gated on
+  // which field this is.
+  if (typeof converted === "string" && converted.startsWith("@")) {
+    return varRef(converted);
+  }
   return scalar(converted as string | number | boolean);
 }
 
@@ -810,7 +821,7 @@ function repeatedNumbers(
   if (value === undefined) {
     return [];
   }
-  return (Array.isArray(value) ? value : [value]).map((item) => kv(key, item));
+  return (Array.isArray(value) ? value : [value]).map((item) => kv(key, scriptValueScalar(item)));
 }
 
 function economicOperation(

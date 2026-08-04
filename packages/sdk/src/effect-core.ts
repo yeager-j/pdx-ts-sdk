@@ -13,7 +13,7 @@
  * untyped position fails loudly instead of recording garbage.
  */
 
-import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
+import { block, cmp, kv, type PdxEntry, type PdxOp, type PdxScalar } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "./content-refs.ts";
 import { EFFECT_META, type EffectFieldMeta } from "./generated/effect-meta.ts";
@@ -22,7 +22,7 @@ import { EVENT_KINDS } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { toScalar } from "./scalar.ts";
 import type { ScriptedEffectCall } from "./scripted.ts";
-import { trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";
+import { scriptValueScalar, trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";
 
 // ---------------------------------------------------------------------------
 // Scope references
@@ -281,31 +281,31 @@ export function registerModifierDescKey(modifier: Modifier<ScopeName>, key: stri
 export function modifierEntry(modifier: Modifier<ScopeName>, refs?: ContentRefUse[]): PdxEntry {
   const entries: PdxEntry[] = [];
   if (modifier.factor !== undefined) {
-    entries.push(kv("factor", modifier.factor));
+    entries.push(kv("factor", scriptValueScalar(modifier.factor)));
   }
   if (modifier.add !== undefined) {
-    entries.push(kv("add", modifier.add));
+    entries.push(kv("add", scriptValueScalar(modifier.add)));
   }
   if (modifier.weight !== undefined) {
-    entries.push(kv("weight", modifier.weight));
+    entries.push(kv("weight", scriptValueScalar(modifier.weight)));
   }
   if (modifier.subtract !== undefined) {
-    entries.push(kv("subtract", modifier.subtract));
+    entries.push(kv("subtract", scriptValueScalar(modifier.subtract)));
   }
   if (modifier.mult !== undefined) {
-    entries.push(kv("mult", modifier.mult));
+    entries.push(kv("mult", scriptValueScalar(modifier.mult)));
   }
   if (modifier.multiplier !== undefined) {
-    entries.push(kv("multiply", modifier.multiplier));
+    entries.push(kv("multiply", scriptValueScalar(modifier.multiplier)));
   }
   if (modifier.divide !== undefined) {
-    entries.push(kv("divide", modifier.divide));
+    entries.push(kv("divide", scriptValueScalar(modifier.divide)));
   }
   if (modifier.minValue !== undefined) {
-    entries.push(kv("min", modifier.minValue));
+    entries.push(kv("min", scriptValueScalar(modifier.minValue)));
   }
   if (modifier.maxValue !== undefined) {
-    entries.push(kv("max", modifier.maxValue));
+    entries.push(kv("max", scriptValueScalar(modifier.maxValue)));
   }
   if (modifier.desc !== undefined) {
     const key = modifierDescKeys.get(modifier);
@@ -482,8 +482,11 @@ function recordRef(
   refs: ContentRefUse[],
   targets: readonly string[] | undefined,
   field: string,
-  value: string | number | boolean
+  value: string | number | boolean | PdxScalar
 ): void {
+  // A `var` node's `typeof` is `"object"`, so a `@name` scripted-variable
+  // reference already falls out of `typeof value === "string"` here — it is
+  // never itself a content id, so it is correctly left unrecorded.
   if (targets !== undefined && typeof value === "string") {
     refs.push({ targets, id: value, field });
   }
