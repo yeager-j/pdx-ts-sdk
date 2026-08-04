@@ -104,7 +104,14 @@ function freeCollections(): ModItemInput[] {
     targetScope: "planet",
     monthlyProgress: {
       base: 2,
-      modifiers: [{ mult: 1.5, desc: "The probe is spreading.", when: always() }],
+      modifiers: [
+        {
+          mult: 1.5,
+          desc: "The probe is spreading.",
+          descKey: "probe_is_spreading",
+          when: always(),
+        },
+      ],
     },
   });
   const titan = defineCountryShipOfSizeLimit({

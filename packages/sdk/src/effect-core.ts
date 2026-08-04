@@ -240,6 +240,19 @@ export interface Modifier<S extends ScopeName> {
    * unresolved from one of those.
    */
   readonly desc?: string;
+  /**
+   * A stable slug identifying this row's `desc` for localisation, e.g.
+   * `"flesh_is_weak"`. Modifier rows have no id of their own and, absent a
+   * `descKey`, the generated key falls back to a hash of the `desc` text —
+   * automatic and stable under reordering, but it changes (and orphans any
+   * shipped translation) whenever the English text is edited. Supplying
+   * `descKey` pins the key so translations survive text edits too; see
+   * `ContentAuthoring`'s modifier-desc collection in `content.ts` for the
+   * exact key format and the `mod.warnings` entry an unset `descKey` emits.
+   * Ignored when `desc` is not set. Lowercase snake_case, matching the same
+   * pattern as content ids.
+   */
+  readonly descKey?: string;
   /** The gating condition, spliced inline per `modifier_rule.cwt`. */
   readonly when: Trigger<S>;
 }

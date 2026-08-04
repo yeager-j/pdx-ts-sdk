@@ -27,12 +27,12 @@ content_test_situation_machine_uprising = {
 		base = 2
 		modifier = {
 			mult = 1.5
-			desc = content_test_situation_machine_uprising_monthly_progress_0
+			desc = content_test_situation_machine_uprising_monthly_progress_f2d3747d
 			always = yes
 		}
 		modifier = {
 			subtract = 1
-			desc = content_test_situation_machine_uprising_monthly_progress_1
+			desc = content_test_situation_machine_uprising_monthly_progress_ccad7243
 			has_situation_flag = content_test_situation_uprising_contained
 		}
 	}
