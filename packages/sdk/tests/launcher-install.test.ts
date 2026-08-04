@@ -16,7 +16,15 @@
  * proves the launcher agrees they are a mod.
  */
 
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -29,8 +37,12 @@ import {
   render,
   renderLauncherDescriptor,
   stellaris,
+  VanillaPathCollisionError,
+  write,
   type ModConfig,
+  type PureMod,
 } from "../src/index.ts";
+import { viewFromFiles } from "../src/vanilla/surface.ts";
 
 const config: ModConfig = {
   name: "Launcher Probe",
@@ -181,5 +193,139 @@ describe("install", () => {
     const root = join(tempDir(), "not", "yet");
     const result = await install(mod, { modDir: root });
     expect(readFileSync(result.descriptorPath, "utf8")).toContain('name="Launcher Probe"');
+  });
+
+  it("leaves nothing behind but the content directory and its descriptor", async () => {
+    // The swap stages into siblings; a completed install must not leave one.
+    const root = tempDir();
+    await install(mod, { modDir: root });
+    await install(mod, { modDir: root });
+    expect(readdirSync(root).sort()).toEqual(["lp_probe", "lp_probe.mod"]);
+  });
+});
+
+describe("install refuses a folder name that is not a folder name", () => {
+  // `install` replaces the directory it computes, so the name decides what is
+  // deleted: "" is the launcher's whole mod directory, ".." its parent, and
+  // "a/b" somewhere sideways — each a recursive delete of other people's mods.
+  it.each([
+    ["empty", ""],
+    ["this directory", "."],
+    ["the parent directory", ".."],
+    ["a nested path", "custom/nested"],
+    ["a backslash path", "custom\\nested"],
+    ["an absolute path", "/tmp/pdx-escape-probe"],
+    ["a NUL byte", "custom\0name"],
+  ])("rejects %s", async (_label, dirName) => {
+    const root = tempDir();
+    await expect(install(mod, { modDir: root, dirName })).rejects.toThrow(
+      /not a single folder name/
+    );
+    // Nothing was created, and nothing was deleted, before the refusal.
+    expect(readdirSync(root)).toEqual([]);
+  });
+
+  it("checks the prefix default through the same gate, naming it as the default", async () => {
+    // `buildMod` validates its own prefix, so this is reachable only through a
+    // hand-built `PureMod` — but `install` takes a `PureMod`, not a build, and
+    // the value that decides a recursive delete is not one to take on trust.
+    const root = tempDir();
+    const forged = { ...mod, config: { ...mod.config, prefix: ".." } } as PureMod;
+    await expect(install(forged, { modDir: root })).rejects.toThrow(
+      /The mod prefix "\.\." is the default folder name/
+    );
+    expect(readdirSync(root)).toEqual([]);
+  });
+});
+
+describe("install is atomic in the ways that matter", () => {
+  /** A mod whose `render` throws: it emits at a path the vanilla view occupies. */
+  function collidingMod(): PureMod {
+    const vanilla = viewFromFiles({
+      "common/technology/lp_probe_technology.txt": "tech_squatter = {\n\tarea = physics\n}\n",
+    });
+    return buildMod(
+      config,
+      [
+        collection(undefined, [
+          defineTechnology({
+            id: "lp_probe_tech_marker",
+            name: "Marker",
+            cost: 1000,
+            area: "physics",
+            tier: 1,
+            category: "particles",
+          }),
+        ]),
+      ],
+      { vanilla }
+    );
+  }
+
+  it("leaves an existing install untouched when render throws", async () => {
+    // The install used to delete the content directory *before* calling
+    // render, so a build that refused to render — a vanilla path collision, a
+    // malformed definition — took the user's working mod with it and left
+    // nothing in its place.
+    const root = tempDir();
+    const { contentDir } = await install(mod, { modDir: root });
+    const before = readdirSync(contentDir).sort();
+    const marker = readFileSync(
+      join(contentDir, "common/technology/lp_probe_technology.txt"),
+      "utf8"
+    );
+    const descriptorBefore = readFileSync(join(root, "lp_probe.mod"), "utf8");
+
+    await expect(install(collidingMod(), { modDir: root })).rejects.toThrow(
+      VanillaPathCollisionError
+    );
+
+    expect(readdirSync(contentDir).sort()).toEqual(before);
+    expect(
+      readFileSync(join(contentDir, "common/technology/lp_probe_technology.txt"), "utf8")
+    ).toBe(marker);
+    expect(readFileSync(join(root, "lp_probe.mod"), "utf8")).toBe(descriptorBefore);
+    // And no staging or set-aside directory survived the failure.
+    expect(readdirSync(root).sort()).toEqual(["lp_probe", "lp_probe.mod"]);
+  });
+
+  it("replaces an existing install with exactly the new render", async () => {
+    const root = tempDir();
+    const { contentDir } = await install(mod, { modDir: root });
+    const stale = join(contentDir, "common/technology/lp_probe_old_feature.txt");
+    mkdirSync(dirname(stale), { recursive: true });
+    writeFileSync(stale, "lp_probe_tech_marker = { }\n", "utf8");
+
+    await install(mod, { modDir: root });
+
+    const rendered = render(mod);
+    const written = new Map(
+      [...rendered.keys()].map((relPath) => [
+        relPath,
+        readFileSync(join(contentDir, relPath), "utf8"),
+      ])
+    );
+    expect([...written.entries()]).toEqual([...rendered.entries()]);
+    expect(existsSync(stale)).toBe(false);
+  });
+});
+
+describe("write stays inside the directory it was given", () => {
+  it.each([
+    ["a traversing relPath", "../escaped.txt"],
+    ["a deep traversal", "a/../../escaped.txt"],
+    ["an absolute relPath", "/tmp/pdx-write-escape-probe.txt"],
+  ])("rejects %s", async (_label, relPath) => {
+    const root = tempDir();
+    await expect(write(root, new Map([[relPath, "escaped"]]))).rejects.toThrow(
+      /outside the output directory/
+    );
+    expect(readdirSync(root)).toEqual([]);
+  });
+
+  it("still writes ordinary nested paths", async () => {
+    const root = tempDir();
+    await write(root, new Map([["common/technology/x.txt", "ok"]]));
+    expect(readFileSync(join(root, "common/technology/x.txt"), "utf8")).toBe("ok");
   });
 });

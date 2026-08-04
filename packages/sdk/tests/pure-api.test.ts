@@ -56,6 +56,7 @@ import {
   render,
   type Collection,
   type EventItem,
+  type ModConfig,
   type ModifierClosure,
   type ModItem,
   type ModItemInput,
@@ -893,6 +894,86 @@ describe("collections", () => {
       /cannot contain a double quote/
     );
     expect(() => buildMod({ ...CONFIG, name: "The 'Real' Mod" }, [])).not.toThrow();
+  });
+
+  it("rejects every descriptor field the format cannot express, naming the field", () => {
+    // `descriptor.mod` is `key="value"` lines with no escaping, so a quote
+    // ends the value and a newline ends the line — either one turns the rest
+    // of the author's text into further descriptor fields the launcher reads
+    // as real.
+    expect(() => buildMod({ ...CONFIG, name: 'a"\nsupported_version="v9.9.*' }, [])).toThrow(
+      /Mod name .* cannot contain/
+    );
+    expect(() => buildMod({ ...CONFIG, name: "line\nbreak" }, [])).toThrow(
+      /Mod name .* cannot contain a newline/
+    );
+    expect(() => buildMod({ ...CONFIG, name: "nul\0byte" }, [])).toThrow(
+      /Mod name .* cannot contain a NUL byte/
+    );
+    expect(() => buildMod({ ...CONFIG, version: '1.0"\nname="Other' }, [])).toThrow(
+      /Mod version .* cannot contain/
+    );
+    expect(() => buildMod({ ...CONFIG, tags: ["Fine", 'Bad"\nname="Other'] }, [])).toThrow(
+      /Mod tags\[1\] .* cannot contain/
+    );
+    expect(() => buildMod({ ...CONFIG, supportedVersion: 'v4.4.*"\nname="Other' }, [])).toThrow(
+      /Mod supportedVersion .* cannot contain/
+    );
+  });
+
+  it("renders from its own copy of the config, not the caller's object", () => {
+    // `PureMod` used to hold the caller's config by reference, so mutating it
+    // after the build changed what `render` emitted — including `prefix`,
+    // which names emitted files whose *contents* were compiled against the
+    // old one, desynchronizing paths from the ids inside them.
+    const config: ModConfig = {
+      name: "Mutable Probe",
+      prefix: "pp_mod",
+      version: "1.0.0",
+      supportedVersion: "4.4.*",
+      tags: ["Technologies"],
+    };
+    const mod = buildMod(config, [
+      collection(undefined, [
+        defineTechnology({
+          id: "pp_mod_tech_frozen",
+          name: "Frozen",
+          area: "physics",
+          tier: 1,
+          category: "computing",
+        }),
+      ]),
+    ]);
+    const before = render(mod);
+
+    config.name = "Renamed After The Build";
+    config.prefix = "other_prefix";
+    config.version = "9.9.9";
+    config.supportedVersion = "v9.9.*";
+    config.tags!.push("Gameplay");
+
+    expect([...render(mod).entries()]).toEqual([...before.entries()]);
+    expect(mod.config.name).toBe("Mutable Probe");
+    expect(mod.config.tags).toEqual(["Technologies"]);
+  });
+
+  it("rejects a line break in localization text, pointing at the escape vanilla uses", () => {
+    // The emitted yml is one ` key:0 "text"` line per entry and the game reads
+    // it line by line, so a break inside the text is read as a further entry —
+    // a definition's own description silently overriding a key it does not own.
+    expect(() =>
+      buildMod(CONFIG, [
+        collection(undefined, [
+          defineTechnology({
+            id: "pp_mod_tech_injected",
+            name: 'Fine"\n pp_mod_tech_other:0 "Forged',
+            area: "physics",
+            tier: 1,
+            category: "computing",
+          }),
+        ]),
+      ])
+    ).toThrow(/Localization text .* cannot contain a line break/);
   });
 
   it("rejects a supportedVersion the launcher could not read", () => {

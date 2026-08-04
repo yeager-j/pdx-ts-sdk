@@ -3045,6 +3045,50 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
   });
 });
 
+describe("modifier closures are recorded synchronously", () => {
+  it("refuses an async modifier closure rather than recording half of it", async () => {
+    // The modifier path recorder is the other closure entry point that does
+    // not go through `recordEffects`, and it has the same hazard: the sync
+    // prefix records, the recorder dies when the closure returns at its first
+    // await, and the rest is lost.
+    let continued = false;
+    expect(() =>
+      buildMod(configFor("Async modifier probe", "amp_test"), [
+        collection(undefined, [
+          defineTradition({
+            id: "amp_test_tradition_async",
+            name: "Async",
+            effects: "Nothing at all.",
+            modifier: async (m) => {
+              m.command.limit.add(1);
+              await Promise.resolve();
+              continued = true;
+            },
+          }),
+        ]),
+      ])
+    ).toThrow(/A modifier closure returned a promise/);
+    expect(continued).toBe(false);
+    await Promise.resolve();
+  });
+
+  it("leaves an ordinary synchronous modifier closure alone", () => {
+    const mod = buildMod(configFor("Sync modifier probe", "smp_test"), [
+      collection(undefined, [
+        defineTradition({
+          id: "smp_test_tradition_sync",
+          name: "Sync",
+          effects: "Nothing at all.",
+          modifier: (m) => m.command.limit.add(1),
+        }),
+      ]),
+    ]);
+    expect(render(mod).get("common/traditions/smp_test_traditions.txt")).toContain(
+      "command_limit_add = 1"
+    );
+  });
+});
+
 describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring build", () => {
   // Both land in `ContentAuthoring` through the same constructor
   // (`onUnstableDescKey`, `onLocKeyLooksLikeText`) and the same
