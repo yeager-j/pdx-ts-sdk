@@ -1233,20 +1233,6 @@ export class ContentAuthoring {
     return (this.definitions.get(type) ?? []).map((definition) => definition.toEntries());
   }
 
-  /**
-   * Nested-definition ids collected while defining, keyed by the same
-   * `${ownerType}.${field.key}` identity {@link collectRepeatedStructs} uses
-   * (`"tradition.tradition_swap"`, not a registry type). Exposed for
-   * `buildMod`'s dangling-reference guard, which folds a nested identity's ids
-   * into a target registry's own built-id set where the vendored rules declare
-   * a `base_type` relationship between the two (`traditions.cwt:17`) — a
-   * `tradition_swap`'s id is legal anywhere a `<tradition>` reference is,
-   * exactly like a top-level tradition's own id.
-   */
-  nestedIdsFor(identity: string): ReadonlySet<string> | undefined {
-    return this.nestedIds.get(identity);
-  }
-
   ids(type: string): readonly string[] {
     return (this.definitions.get(type) ?? []).map((definition) => definition.id);
   }

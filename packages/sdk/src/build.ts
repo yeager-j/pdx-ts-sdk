@@ -643,30 +643,95 @@ export function buildMod(
     }
     builtIds.set(group.type, ids);
   }
-  // Nested-definition ids that double as their owning registry's own
-  // reference target (SDK-38): the vendored rules declare a `base_type`
-  // relationship (`traditions.cwt:17` `base_type = tradition`,
-  // `ascension_perks.cwt:16` `base_type = ascension_perk`) that codegen does
-  // not currently carry into generated field metadata, so it is spelled out
-  // here rather than derived — `@pdx-ts/codegen-cwt` is a devDependency only
-  // and unreachable from this runtime. Both identities are
-  // `${registryType}.${fieldKey}` from `ContentAuthoring`'s own nested-id
-  // bookkeeping (`content.ts`'s `collectRepeatedStructs`), so folding them in
-  // only ever adds ids to the *same* registry's built-id set — it cannot
-  // loosen the guard for any other registry (situations' `stages`/`approach`
-  // carry no such relationship and are deliberately left out).
-  const NESTED_BASE_TYPE_IDENTITIES: ReadonlyMap<string, string> = new Map([
-    ["tradition.tradition_swap", "tradition"],
-    ["ascension_perk.tradition_swap", "ascension_perk"],
-  ]);
-  for (const [identity, registryType] of NESTED_BASE_TYPE_IDENTITIES) {
-    const nested = content.nestedIdsFor(identity);
-    if (nested === undefined) {
+  // Nested "swap" definitions that double as their owning registry's own
+  // reference target (SDK-38, widened for the P1 in SDK-37's review): the
+  // vendored rules declare a `base_type` relationship for exactly five
+  // registries the SDK exposes, mechanically enumerated by
+  // `grep -rn "base_type" vendor/cwtools-stellaris-config/config/` against
+  // the pin this codegen ran against (`251fe1189b4e`) — every hit, so a
+  // sixth showing up in a future vendor bump is a diff on this list, not a
+  // silent gap:
+  //   - common/traditions.cwt:17                type[swapped_tradition]      base_type = tradition
+  //   - common/ascension_perks.cwt:16            type[swapped_ascension_perk] base_type = ascension_perk
+  //   - common/technologies_consolidated.cwt:58  type[swapped_technology]    base_type = technology
+  //   - common/pop_jobs.cwt:33                   type[swapped_job]           base_type = job
+  //   - common/governments.cwt:97                type[swapped_civic]         base_type = civic_or_origin.civic
+  //   - common/governments.cwt:20                type[swapped_authority]     base_type = authority
+  //     (excluded: `authority` has no `defineAuthority` — CONTENT_MANIFEST
+  //     never registers it as an SDK registry, so there is no `builtIds` set
+  //     for its swap ids to join)
+  // Every one of the five folds into *its own* registry's built-id set —
+  // `base_type` never names a different registry than the one declaring the
+  // swap field — so this cannot loosen the guard for an unrelated registry.
+  //
+  // `civic_or_origin.swap_type`, `technology.technology_swap`, and
+  // `job.swap_type` are CWT "shape 3": an anonymous repeated block
+  // (`name_field = "name"`) rather than `tradition.tradition_swap`'s
+  // record-keyed "shape 2". `ContentAuthoring`'s `nestedIds` bookkeeping
+  // (`content.ts`'s `collectRepeatedStructs`) only tracks the record-keyed
+  // shape, so all five are read directly off each definition's own resolved
+  // `def` here instead — one mechanism for both shapes, rather than pairing
+  // this table with a second, codegen-side one that would need to stay in
+  // sync with it by hand. Teaching `collectRepeatedStructs` (or the
+  // generated field metadata) to recognize the shape-3 case is real codegen
+  // surgery — a new `ContentField` concept, `base_type`/`type_key_filter`
+  // cross-referencing to attribute a `type[swapped_x]` back to its owning
+  // field, and regenerating four files — with no behavioral upside over
+  // reading `def` directly, since the guard only needs the id strings.
+  interface SwapIdentity {
+    /** Registry the swap field lives on, and also the fold target — every
+     * `base_type` above names its own declaring registry. */
+    readonly registryType: string;
+    /**
+     * The resolved `def`'s member path to the swap field (camelCase),
+     * walked from the definition root. Usually one segment; `job`'s swap
+     * field sits inside the `swappable_data` wrapper CWT declares alongside
+     * it (`swappableData.swapType`), so this is a path rather than a single
+     * member.
+     */
+    readonly path: readonly string[];
+    /** Reads swap ids off the value at `path`. */
+    readonly extract: (value: unknown) => readonly string[];
+  }
+  const readPath = (value: unknown, path: readonly string[]): unknown =>
+    path.reduce<unknown>(
+      (current, segment) =>
+        current !== null && typeof current === "object"
+          ? (current as Readonly<Record<string, unknown>>)[segment]
+          : undefined,
+      value
+    );
+  const recordKeys = (value: unknown): readonly string[] =>
+    value !== null && typeof value === "object" ? Object.keys(value) : [];
+  const arrayNames = (value: unknown): readonly string[] =>
+    Array.isArray(value)
+      ? value.flatMap((item: unknown) =>
+          typeof (item as { readonly name?: unknown } | null)?.name === "string"
+            ? [(item as { readonly name: string }).name]
+            : []
+        )
+      : [];
+  const SWAP_IDENTITIES: readonly SwapIdentity[] = [
+    { registryType: "tradition", path: ["traditionSwap"], extract: recordKeys },
+    { registryType: "ascension_perk", path: ["traditionSwap"], extract: recordKeys },
+    { registryType: "civic_or_origin", path: ["swapType"], extract: arrayNames },
+    { registryType: "technology", path: ["technologySwap"], extract: arrayNames },
+    { registryType: "job", path: ["swappableData", "swapType"], extract: arrayNames },
+  ];
+  const definedByType = new Map<string, DefinedGroup["defined"][number][]>();
+  for (const group of definedGroups) {
+    definedByType.set(group.type, [...(definedByType.get(group.type) ?? []), ...group.defined]);
+  }
+  for (const { registryType, path, extract } of SWAP_IDENTITIES) {
+    const defined = definedByType.get(registryType);
+    if (defined === undefined) {
       continue;
     }
     const ids = builtIds.get(registryType) ?? new Set<string>();
-    for (const id of nested) {
-      ids.add(id);
+    for (const definition of defined) {
+      for (const id of extract(readPath(definition.def, path))) {
+        ids.add(id);
+      }
     }
     builtIds.set(registryType, ids);
   }
