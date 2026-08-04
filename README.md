@@ -331,7 +331,7 @@ const home = defineSolarSystemInitializer({
         // Advances the orbit cursor for the moon that follows — the long
         // form of `change_orbit`, see below.
         { class: "none", orbitDistance: 12 },
-        { class: "pc_barren", size: 8 },
+        { class: "pc_barren", size: 8, orbitDistance: 10 },
       ],
     },
   ],
