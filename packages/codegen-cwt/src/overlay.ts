@@ -758,7 +758,138 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "and the row was missing, so the writer silently dropped it. building's sibling triggered_* " +
         "fields (triggered_planet_pop_group_modifier_for_species/_for_all, triggered_country_modifier, " +
         "triggered_army_modifier) splice the by_pop_group/by_planet clause variants instead of plain " +
-        "triggered_modifier_clause and are a separate, not-yet-evidenced gap left for a follow-up.",
+        "triggered_modifier_clause; SDK-56 gives all four their own rows below, each against its " +
+        "own clause — SDK-56's initial evidence sweep missed for_species (it credited the row to " +
+        "job.triggered_planet_pop_group_modifier_for_species, a different registry with the same " +
+        "field name), caught in review and folded in rather than left for another follow-up.",
+    },
+  ],
+  [
+    "building.triggered_planet_pop_group_modifier_for_species",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_pop_group_clause (aliases.cwt:73) is the pop_group-scoped variant " +
+        "of triggered_modifier_clause — identical potential/modifier/description/mult/multiplier " +
+        "template, plus one field (divide_over_pop_groups) TriggeredModifier does not model — the " +
+        "same clause and the same shape job.triggered_planet_pop_group_modifier_for_species " +
+        "(SDK-39) already uses for that trade. SDK-56: 2 shipped buildings write this key " +
+        "(both in building_clone_army_clone_vat, common/buildings/01_pop_assembly_buildings.txt) " +
+        "and the row was missing, so the writer silently dropped it in full. Neither shipped use " +
+        "writes divide_over_pop_groups, so reusing triggeredModifierBlock here drops nothing real " +
+        "yet — same as the job row's own justification — but the field stays unauthorable if a " +
+        "future building ever does write it. Checked separately for the potential-vs-modifier " +
+        "scope split a bug bash caught on the sibling by_planet_clause rows below: this field's own " +
+        "`## replace_scopes = { this = pop_group root = pop_group }` (buildings.cwt:220-221) happens " +
+        "to equal by_pop_group_clause's own `potential` push_scope (pop_group, aliases.cwt:74) — so " +
+        'TriggeredModifier<"pop_group"> is correct for both halves here. That equality is not ' +
+        "structural to the clause: common/specimens.cwt:37 splices the same by_pop_group_clause " +
+        "under a field named triggered_country_modifier, which would NOT get a free pass the way " +
+        "this one does. Re-check this note if this field's own replace_scopes ever changes.",
+    },
+  ],
+  [
+    "building.country_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(buildings.cwt:212), the same shape building.planet_modifier already uses. SDK-56: 35 " +
+        "shipped buildings write this key and the row was missing, so the writer silently " +
+        "dropped it.",
+    },
+  ],
+  [
+    "building.army_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(buildings.cwt:215), the same shape building.planet_modifier/country_modifier already " +
+        "use. SDK-56: zero shipped buildings write this key, but the modifierBlock shape is " +
+        "already corpus-proven via those siblings on the same registry splicing the identical " +
+        "clause, and leaving a mechanically identical field silently unauthorable is the exact " +
+        "defect this ticket closes for its sibling fields — added for consistency rather than " +
+        "declined for lack of its own precedent.",
+    },
+  ],
+  [
+    "building.system_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(buildings.cwt:218), the same shape building.planet_modifier/country_modifier already " +
+        "use. SDK-56: 1 shipped building writes this key and the row was missing, so the writer " +
+        "silently dropped it.",
+    },
+  ],
+  [
+    "building.triggered_planet_pop_group_modifier_for_all",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_planet_clause (aliases.cwt:113) reuses building.triggered_planet_modifier's " +
+        "triggeredModifierBlock shape (buildings.cwt:224). SDK-56: 5 shipped buildings write this " +
+        "key and the row was missing, so the writer silently dropped it. KNOWN MIS-SCOPED " +
+        "POTENTIAL, caught in bug-bash review (not fixed here — see triggered_country_modifier's " +
+        "reason below for the full account): by_planet_clause's own `potential` field carries " +
+        "`## push_scope = planet` (aliases.cwt:114-115), while this field's own " +
+        "`## replace_scopes = { this = pop_group root = pop_group }` (buildings.cwt:223-224) governs " +
+        'the modifier half. TriggeredModifier<"pop_group"> gives both halves the field\'s pop_group ' +
+        "scope, which is right for `modifiers` and wrong for `when`: `when` should type as " +
+        'Trigger<"planet">, matching the planet the building sits on, not the pop_group the ' +
+        "modifier targets.",
+    },
+  ],
+  [
+    "building.triggered_country_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_planet_clause (aliases.cwt:113) reuses building.triggered_planet_modifier's " +
+        "triggeredModifierBlock shape (buildings.cwt:230). SDK-56: 114 shipped buildings write this " +
+        "key — the largest single silently-dropped field the sweep found — and the row was missing, " +
+        "so the writer silently dropped it in full.\n\n" +
+        "KNOWN MIS-SCOPED POTENTIAL, caught in bug-bash review and left unfixed pending a dedicated " +
+        "follow-up (filed separately; not built into this seven-row overlay PR). " +
+        "triggered_modifier_by_planet_clause's own `potential` field carries `## push_scope = planet` " +
+        "(aliases.cwt:114-115), independent of whatever scope the splicing field itself declares. " +
+        "This field's own `## replace_scopes = { this = country root = country }` " +
+        "(buildings.cwt:229-230) governs the *modifier* half correctly (country is right: 114 real " +
+        "buildings write country-scoped modifier names here). But TriggeredModifierBlock's single " +
+        'scope parameter also gives `when` that same "country" scope, when the rules say `when` ' +
+        'runs at "planet" (the planet the building sits on) instead. In practice: a real, ' +
+        "game-legal potential like `isCapital()` (planet/colony-scoped) is REJECTED by the current " +
+        '`TriggeredModifier<"country">` type, while a country-only condition like `hasAuthority(...)` ' +
+        "is ACCEPTED and would emit a `potential` block the game evaluates in planet scope — silently " +
+        "wrong in the accepting direction too, not just the rejecting one. The three building rows " +
+        "splicing by_planet_clause (this one, triggered_army_modifier, " +
+        "triggered_planet_pop_group_modifier_for_all) all carry this same defect, as does every " +
+        "other triggeredModifierBlock row whose splice pushes a different scope onto `potential` " +
+        "than its own field declares for the modifier (situation_type's six triggered_modifier / " +
+        "triggered_target_modifier rows, pre-existing on main, splice " +
+        "triggered_modifier_by_situation_clause the same way). Fixing it needs a second scope " +
+        "parameter on the hand-written TriggeredModifier<S> (packages/sdk/src/content.ts) plus new " +
+        "emitter capability to resolve a spliced alias's own nested-field scope rather than reusing " +
+        "the splicing field's scope wholesale — real, shared-type-touching machinery, not a per-row " +
+        "assertion, and out of scope for this PR by design.",
+    },
+  ],
+  [
+    "building.triggered_army_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_planet_clause (aliases.cwt:113) reuses building.triggered_planet_modifier's " +
+        "triggeredModifierBlock shape (buildings.cwt:233). SDK-56: zero shipped buildings write this " +
+        "key, but the shape is already corpus-proven via its siblings splicing the identical " +
+        "by_planet clause on the same registry — added for consistency rather than declined for " +
+        "lack of its own precedent. KNOWN MIS-SCOPED POTENTIAL, the same defect as " +
+        "triggered_country_modifier above (see that row's reason for the full account): `when` " +
+        'should type as Trigger<"planet"> (aliases.cwt:114-115\'s push_scope on `potential`), not ' +
+        'Trigger<"army">, which TriggeredModifier<"army">\'s single scope parameter currently ' +
+        "forces on both halves.",
     },
   ],
   [

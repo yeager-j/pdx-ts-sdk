@@ -3077,3 +3077,131 @@ describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring 
     );
   });
 });
+
+describe("SDK-56 building modifier fields (buildingModifiers)", () => {
+  // buildings.cwt declares nine modifier fields on building; SDK-39 covered
+  // planet_modifier and triggered_planet_modifier, leaving seven with no
+  // CONTENT_FIELD_OVERRIDES row — silently dropped by the writer, which only
+  // emits a registry's declared ContentField[] members. Measured against the
+  // real install: triggered_country_modifier (114 shipped buildings),
+  // country_modifier (35), triggered_planet_pop_group_modifier_for_all (5),
+  // triggered_planet_pop_group_modifier_for_species (2), system_modifier (1),
+  // and army_modifier/triggered_army_modifier (0, added for shape parity
+  // with their proven siblings rather than declined for lack of their own
+  // precedent). for_species was caught in review, not in the ticket's own
+  // sweep — it matched the field name to job's identically-named field
+  // instead of checking the registry.
+  //
+  // KNOWN GAP, also caught in bug-bash review: triggered_country_modifier,
+  // triggered_army_modifier, and triggered_planet_pop_group_modifier_for_all
+  // splice triggered_modifier_by_planet_clause, whose own `potential` field
+  // pushes to planet scope (aliases.cwt:114-115) independent of the scope
+  // each field's own replace_scopes declares for its *modifier* half. The
+  // hand-written TriggeredModifier<S> (packages/sdk/src/content.ts) has one
+  // scope parameter for both halves, so `when` is currently mis-typed for
+  // these three (and, pre-existing on main, situation_type's six
+  // triggered_modifier/triggered_target_modifier rows). This is a
+  // compile-time authoring-safety gap only — the tests below assert emitted
+  // PDXScript text, which is correct regardless, since TypeScript's `S` never
+  // reaches serialization. See each affected field's overlay.ts reason for
+  // the full account and why the type fix is tracked separately rather than
+  // built into this PR. triggered_planet_pop_group_modifier_for_species
+  // (splicing the pop_group variant) was checked for the same defect and is
+  // NOT affected — see its own overlay reason.
+  const CONFIG = configFor("SDK-56 building modifiers test", "sdk56");
+
+  it("emits building's plain modifier trio: country_modifier/army_modifier/system_modifier (buildingModifiers)", () => {
+    // All three splice modifier_clause (buildings.cwt:212/215/218), the same
+    // shape building.planet_modifier already used.
+    const building = defineBuilding({
+      id: "sdk56_building_plain_modifier_trio",
+      name: "Sdk56 Plain Modifier Trio",
+      countryModifier: (m) => m.raw("country_edict_fund_add", 50),
+      armyModifier: (m) => m.raw("armies_cost_mult", -0.1),
+      systemModifier: (m) => m.system.storm.influence.add(1),
+    });
+
+    const rendered = render(buildMod(CONFIG, [collection(undefined, [building])])).get(
+      "common/buildings/sdk56_buildings.txt"
+    )!;
+
+    expect(rendered).toContain("country_modifier = {\n\t\tcountry_edict_fund_add = 50\n\t}");
+    expect(rendered).toContain("army_modifier = {\n\t\tarmies_cost_mult = -0.1\n\t}");
+    expect(rendered).toContain("system_modifier = {\n\t\tsystem_storm_influence_add = 1\n\t}");
+  });
+
+  it("emits building's triggered modifier trio: triggered_country_modifier/triggered_army_modifier/triggered_planet_pop_group_modifier_for_all (buildingModifiers)", () => {
+    // All three splice triggered_modifier_by_planet_clause (aliases.cwt:113),
+    // shape-identical to the plain triggered_modifier_clause building.
+    // triggered_planet_modifier already proved out (SDK-39) — only push_scope
+    // differs between the clauses, and push_scope is not part of the emitted
+    // shape.
+    const building = defineBuilding({
+      id: "sdk56_building_triggered_modifier_trio",
+      name: "Sdk56 Triggered Modifier Trio",
+      triggeredCountryModifier: [
+        {
+          when: hasAuthority("auth_democratic"),
+          modifiers: (m) => m.raw("country_edict_fund_add", 25),
+        },
+      ],
+      triggeredArmyModifier: [
+        {
+          when: always(),
+          modifiers: (m) => m.raw("armies_cost_mult", -0.05),
+        },
+      ],
+      triggeredPlanetPopGroupModifierForAll: [
+        {
+          when: always(),
+          modifiers: (m) => m.pop.happiness(0.1),
+        },
+      ],
+    });
+
+    const rendered = render(buildMod(CONFIG, [collection(undefined, [building])])).get(
+      "common/buildings/sdk56_buildings.txt"
+    )!;
+
+    expect(rendered).toContain(
+      "triggered_country_modifier = {\n\t\tpotential = {\n\t\t\thas_authority = auth_democratic\n\t\t}\n" +
+        "\t\tcountry_edict_fund_add = 25\n\t}"
+    );
+    expect(rendered).toContain(
+      "triggered_army_modifier = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tarmies_cost_mult = -0.05\n\t}"
+    );
+    expect(rendered).toContain(
+      "triggered_planet_pop_group_modifier_for_all = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tpop_happiness = 0.1\n\t}"
+    );
+  });
+
+  it("emits building's triggered_planet_pop_group_modifier_for_species (buildingModifiers)", () => {
+    // The seventh field: splices triggered_modifier_by_pop_group_clause
+    // (buildings.cwt:221), not the by_planet_clause the triggered trio
+    // above use — a genuinely different clause, reusing triggeredModifierBlock
+    // the same way job.triggered_planet_pop_group_modifier_for_species
+    // (SDK-39) already does for that same clause, at the cost of not
+    // modeling that clause's one extra field (divide_over_pop_groups).
+    const building = defineBuilding({
+      id: "sdk56_building_triggered_for_species",
+      name: "Sdk56 Triggered For Species",
+      triggeredPlanetPopGroupModifierForSpecies: [
+        {
+          when: always(),
+          modifiers: (m) => m.pop.happiness(0.1),
+        },
+      ],
+    });
+
+    const rendered = render(buildMod(CONFIG, [collection(undefined, [building])])).get(
+      "common/buildings/sdk56_buildings.txt"
+    )!;
+
+    expect(rendered).toContain(
+      "triggered_planet_pop_group_modifier_for_species = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tpop_happiness = 0.1\n\t}"
+    );
+  });
+});

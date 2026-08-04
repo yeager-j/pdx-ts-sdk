@@ -122,6 +122,16 @@ describe("content-type codegen", () => {
     expect(emissions.get("edict")?.code).toContain(
       'relayNetworkModifier?: ModifierClosure<"country">;'
     );
+    // SDK-56: building's plain modifier trio, each field-level
+    // `replace_scopes` (buildings.cwt:212/215/218) carried into its own
+    // scope rather than falling back to building's body scope (colony).
+    expect(emissions.get("building")?.code).toContain(
+      'countryModifier?: ModifierClosure<"country">;'
+    );
+    expect(emissions.get("building")?.code).toContain('armyModifier?: ModifierClosure<"army">;');
+    expect(emissions.get("building")?.code).toContain(
+      'systemModifier?: ModifierClosure<"system">;'
+    );
   });
 
   it("emits reusable economic and triggered-modifier blocks", () => {
@@ -133,6 +143,28 @@ describe("content-type codegen", () => {
     expect(edict?.code).toContain("isWartimeEdict?: true;");
     expect(emissions.get("ascension_perk")?.code).toContain(
       'triggeredModifier?: TriggeredModifier<"country">[];'
+    );
+    // SDK-56: building's triggered modifier trio all splice
+    // triggered_modifier_by_planet_clause (aliases.cwt:113), which reuses
+    // the plain triggeredModifierBlock shape building.triggered_planet_modifier
+    // (SDK-39) already proved out — push_scope is not part of the emitted
+    // shape, only the field-level `replace_scopes` scope parameter is.
+    expect(emissions.get("building")?.code).toContain(
+      'triggeredCountryModifier?: TriggeredModifier<"country">[];'
+    );
+    expect(emissions.get("building")?.code).toContain(
+      'triggeredArmyModifier?: TriggeredModifier<"army">[];'
+    );
+    expect(emissions.get("building")?.code).toContain(
+      'triggeredPlanetPopGroupModifierForAll?: TriggeredModifier<"pop_group">[];'
+    );
+    // SDK-56: the seventh field, caught in review — for_species splices
+    // triggered_modifier_by_pop_group_clause, not the by_planet_clause the
+    // other three splice, but reuses the same triggeredModifierBlock shape
+    // job.triggered_planet_pop_group_modifier_for_species (SDK-39) already
+    // proved out for that clause.
+    expect(emissions.get("building")?.code).toContain(
+      'triggeredPlanetPopGroupModifierForSpecies?: TriggeredModifier<"pop_group">[];'
     );
   });
 

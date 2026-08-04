@@ -54,6 +54,7 @@ import {
   type AscensionPerkRef,
   type BombardmentStanceRef,
   type BuildingDef,
+  type BuildingFields,
   type BuildingItem,
   type BuildingRef,
   type CasusBelliRef,
@@ -1356,6 +1357,106 @@ describe("generated content authoring types", () => {
       id: "content_types_section_template_x",
       entity: "some_entity",
       modifier: (m) => m.unchecked("ship_hull_add", 10),
+    });
+  });
+
+  it("pins building's plain and triggered modifier fields to their own replace_scopes, not the body's colony scope (buildingModifiers, SDK-56)", () => {
+    // Each field carries its own `## replace_scopes` in buildings.cwt
+    // (country_modifier:212, army_modifier:215, system_modifier:218,
+    // triggered_country_modifier:230, triggered_army_modifier:233,
+    // triggered_planet_pop_group_modifier_for_all:224) — distinct from
+    // building's own body scope (colony) and from each other. This is the
+    // trap the ticket called out: these six are not one shape copied six
+    // times, and neither is their scope.
+    expectTypeOf<BuildingFields["countryModifier"]>().toEqualTypeOf<
+      ModifierClosure<"country"> | undefined
+    >();
+    expectTypeOf<BuildingFields["armyModifier"]>().toEqualTypeOf<
+      ModifierClosure<"army"> | undefined
+    >();
+    expectTypeOf<BuildingFields["systemModifier"]>().toEqualTypeOf<
+      ModifierClosure<"system"> | undefined
+    >();
+    expectTypeOf<BuildingFields["triggeredCountryModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"country">[] | undefined
+    >();
+    expectTypeOf<BuildingFields["triggeredArmyModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"army">[] | undefined
+    >();
+    expectTypeOf<BuildingFields["triggeredPlanetPopGroupModifierForAll"]>().toEqualTypeOf<
+      TriggeredModifier<"pop_group">[] | undefined
+    >();
+    // The seventh field caught in review: a different clause
+    // (triggered_modifier_by_pop_group_clause, not by_planet_clause) but the
+    // same pop_group scope and the same TriggeredModifier shape as its
+    // _for_all sibling — the clause difference is in an extra field
+    // (divide_over_pop_groups) the shape doesn't model, not in scope.
+    expectTypeOf<BuildingFields["triggeredPlanetPopGroupModifierForSpecies"]>().toEqualTypeOf<
+      TriggeredModifier<"pop_group">[] | undefined
+    >();
+
+    // KNOWN BUG (bug-bash finding, documented in overlay.ts's
+    // building.triggered_country_modifier reason, not fixed here):
+    // triggered_country_modifier splices triggered_modifier_by_planet_clause,
+    // whose own `potential` field pushes to PLANET scope (aliases.cwt:114-115)
+    // — independent of this field's own `## replace_scopes = { this = country
+    // ... }` (buildings.cwt:229-230), which governs only the *modifier* half.
+    // TriggeredModifier<"country">'s single scope parameter cannot represent
+    // that split, so hasAuthority() (country-scoped) below type-checks as a
+    // valid `when` even though the rules license only a planet-scope
+    // condition there — the accepting half of the same bug isCapital()'s
+    // rejection above demonstrates. Both directions need the same fix: a
+    // second, independent scope parameter on TriggeredModifier<S>.
+    defineBuilding({
+      id: "content_types_building_modifier_potential_scope_hole",
+      name: "X",
+      triggeredCountryModifier: [
+        {
+          when: hasAuthority("auth_democratic"),
+          modifiers: (m) => m.raw("country_edict_fund_add", 10),
+        },
+      ],
+    });
+
+    defineBuilding({
+      id: "content_types_building_modifier_scopes",
+      name: "X",
+      armyModifier: (m) => {
+        m.raw("armies_cost_mult", -0.1);
+        // @ts-expect-error — country_edict_fund_add is colony/country/
+        // federation scoped (aliases.cwt via modifiers.ts), not army
+        m.raw("country_edict_fund_add", 50);
+      },
+      systemModifier: (m) => {
+        m.raw("system_storm_influence_add", 1);
+        // @ts-expect-error — same country-only field, rejected in system
+        // scope too
+        m.raw("country_edict_fund_add", 50);
+      },
+      triggeredArmyModifier: [
+        {
+          // @ts-expect-error — KNOWN BUG, pinned rather than endorsed (see
+          // building.triggered_army_modifier's overlay.ts reason and
+          // building.triggered_country_modifier's for the full account): the
+          // rules push `potential` to planet scope here
+          // (aliases.cwt:114-115), not army — so isCapital() (a real,
+          // legal planet-scope condition) is wrongly rejected by
+          // TriggeredModifier<"army">'s single scope parameter, and an
+          // army-scoped condition the rules do NOT license for `potential`
+          // would be wrongly accepted in its place. Fixing the type to
+          // reject correctly (and accept isCapital() here) needs a second,
+          // independent scope parameter on TriggeredModifier<S> — tracked
+          // separately, not built into this PR.
+          when: isCapital(),
+          modifiers: (m) => m.raw("armies_cost_mult", -0.05),
+        },
+      ],
+      triggeredPlanetPopGroupModifierForSpecies: [
+        {
+          when: always(),
+          modifiers: (m) => m.pop.happiness(0.1),
+        },
+      ],
     });
   });
 
