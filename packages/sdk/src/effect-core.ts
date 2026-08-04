@@ -21,6 +21,7 @@ import { EFFECT_META, type EffectFieldMeta } from "./generated/effect-meta.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import { EVENT_KINDS } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
+import { compareUtf8 } from "./resolver/path-order.ts";
 import { toScalar } from "./scalar.ts";
 import type { ScriptedEffectCall } from "./scripted.ts";
 import { scriptValueScalar, trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";
@@ -527,10 +528,22 @@ export function complexTriggerModifierEntry(
     entries.push(kv("trigger_scope", modifier.triggerScope));
   }
   if (modifier.parameters !== undefined) {
+    const params = modifier.parameters;
+    // A named set, not ordered author data — same reasoning and the same
+    // comparator as `scriptedEntry`'s parameter bag (scripted.ts), which
+    // this row's own `trigger`/`parameters` pair otherwise mirrors. Without
+    // this, `Object.entries` would leak the author's object-literal
+    // insertion order into the emitted mod, in violation of the "content,
+    // never source position" invariant every other WeightBlock member here
+    // already honors (`weightOperationEntries`, the fixed field sequence
+    // below).
+    const keys = Object.keys(params)
+      .filter((key) => params[key] !== undefined)
+      .sort(compareUtf8);
     entries.push(
       block(
         "parameters",
-        Object.entries(modifier.parameters).map(([name, value]) => kv(name, value))
+        keys.map((key) => kv(key, params[key]!))
       )
     );
   }

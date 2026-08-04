@@ -1443,14 +1443,17 @@ describe("generated content registries", () => {
                 multiplier: 5,
                 mult: 4,
                 mode: "factor",
-                parameters: { setting: "habitable_worlds_scale" },
+                // Two parameter keys, authored in reverse of the forward
+                // branch below — `Object.entries` would otherwise leak this
+                // insertion order into the output (bug bash #16 finding 2).
+                parameters: { threshold: 5, setting: "habitable_worlds_scale" },
                 triggerScope: "this",
                 trigger: "check_galaxy_setup_value",
               }
             : {
                 trigger: "check_galaxy_setup_value",
                 triggerScope: "this",
-                parameters: { setting: "habitable_worlds_scale" },
+                parameters: { setting: "habitable_worlds_scale", threshold: 5 },
                 mode: "factor",
                 mult: 4,
                 multiplier: 5,
@@ -1465,7 +1468,7 @@ describe("generated content registries", () => {
     });
   }
 
-  it("renders a complex_trigger_modifier row's fields byte-identically regardless of authored key order (SDK-36)", () => {
+  it("renders a complex_trigger_modifier row's fields byte-identically regardless of authored key order (SDK-36, bug bash #16 finding 2)", () => {
     const forwardContent = render(
       buildMod(configFor("Weight block ctm operation order test", "wb_test"), [
         collection(undefined, [complexTriggerModifierOperationOrderProbe(false)]),
@@ -1483,7 +1486,10 @@ describe("generated content registries", () => {
         "\t\t\ttrigger = check_galaxy_setup_value\n" +
         "\t\t\ttrigger_scope = this\n" +
         "\t\t\tparameters = {\n" +
+        // Sorted by the repo's byte comparator ("setting" < "threshold"),
+        // regardless of which authored order supplied them above.
         "\t\t\t\tsetting = habitable_worlds_scale\n" +
+        "\t\t\t\tthreshold = 5\n" +
         "\t\t\t}\n" +
         "\t\t\tmode = factor\n" +
         "\t\t\tmult = 4\n" +
