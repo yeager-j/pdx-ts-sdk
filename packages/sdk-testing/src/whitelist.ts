@@ -406,19 +406,21 @@ export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
     },
   },
   change_variable: {
-    note: "Increments a stored variable by an amount, starting from 0 if it was unset — the game's own default.",
+    note: "Increments a previously-set variable by an amount; throws on an unset one rather than guessing 0 — see requireVariable's doc comment for the effects.cwt citation.",
     apply: (entry, scope, ex) => {
       const { which, value } = whichValueArgs(entry);
       const vars = variablesOf(ex.state, scope);
-      vars.set(which, (vars.get(which) ?? 0) + value);
+      const current = requireVariable(ex.state, scope, which, "change_variable");
+      vars.set(which, current + value);
     },
   },
   multiply_variable: {
-    note: "Multiplies a stored variable by an amount, treating an unset variable as 0 like `change_variable` — a missing variable's product stays 0, which is the honest answer rather than a guessed one.",
+    note: "Multiplies a previously-set variable by an amount; throws on an unset one rather than guessing 0 — see requireVariable's doc comment for the effects.cwt citation.",
     apply: (entry, scope, ex) => {
       const { which, value } = whichValueArgs(entry);
       const vars = variablesOf(ex.state, scope);
-      vars.set(which, (vars.get(which) ?? 0) * value);
+      const current = requireVariable(ex.state, scope, which, "multiply_variable");
+      vars.set(which, current * value);
     },
   },
 };

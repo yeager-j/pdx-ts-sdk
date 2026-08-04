@@ -211,4 +211,35 @@ describe("situation scope", () => {
       )
     ).toThrow(/check_variable "var_never_set": not previously set/);
   });
+
+  it("throws running `change_variable`/`multiply_variable` before the variable is ever set, rather than defaulting to 0", () => {
+    const events = namespace("sdk49_situation_unset_arithmetic");
+    const changeUnset = events.defineSituationEvent({
+      id: 1,
+      isTriggeredOnly: true,
+      immediate: (situation) => {
+        situation.changeVariable({ which: "var_never_set", value: 2 });
+      },
+    });
+    const multiplyUnset = events.defineSituationEvent({
+      id: 2,
+      isTriggeredOnly: true,
+      immediate: (situation) => {
+        situation.multiplyVariable({ which: "var_never_set", value: 2 });
+      },
+    });
+
+    const world = fixture(
+      { countries: [{ name: "player" }], situations: [{ name: "crisis", targetCountry: 0 }] },
+      { events: [changeUnset, multiplyUnset] }
+    );
+    const situation = world.situation(0);
+
+    expect(() => world.fire(changeUnset, situation)).toThrow(
+      /change_variable "var_never_set": not previously set/
+    );
+    expect(() => world.fire(multiplyUnset, situation)).toThrow(
+      /multiply_variable "var_never_set": not previously set/
+    );
+  });
 });
