@@ -18,11 +18,13 @@ import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import { underField, type ContentRefUse } from "./content-refs.ts";
 import {
+  modifierDescKey,
   modifierEntry,
   recordEffects,
   registerModifierDescKey,
   scriptCtx,
   type Modifier,
+  type ModifierWithLoc,
   type ScopeValue,
   type ScriptCtx,
 } from "./effect-core.ts";
@@ -38,6 +40,7 @@ import {
   type TypedRef,
 } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
+import type { ModWarning } from "./items.ts";
 import type { Trigger } from "./trigger-core.ts";
 // The typed fire signatures for every event kind are generated into the
 // scope interfaces — this side-effect import is what loads the augmentation.
@@ -321,6 +324,18 @@ export type DefinedEvent<
    * defined, exactly as it does for declarative content fields.
    */
   readonly refs: readonly ContentRefUse[];
+  /**
+   * Diagnostics collected at define time — today, just an `unstable-desc-key`
+   * entry per `aiChance`/`meanTimeToHappen`/`weightMultiplier` modifier row
+   * whose `desc` had no `descKey` (see `modifierDescKey`, `effect-core.ts`).
+   * Events have no `ContentAuthoring` instance to hang `onUnstableDescKey`
+   * off — they are built at the definer call site, before `buildMod` ever
+   * runs — so this rides along the same way `refs` and `locEntries` do:
+   * `event-definers.ts`'s generated `definerOf` spreads `built` into the
+   * returned item, `EventItemBase.warnings` carries it from there, and
+   * `buildMod` drains it into `mod.warnings` alongside `registerLocEntries`.
+   */
+  readonly warnings: readonly ModWarning[];
 };
 
 /** Where definition-side localization lands; the caller supplies its registry. */
@@ -344,28 +359,41 @@ function modifierRows<S extends ScopeName>(
 }
 
 /**
- * Registers one localisation key per desc-bearing row in a modifier list,
- * mirroring `content.ts`'s `collectModifierDescs`: `<ownerId>_<fieldPath>_<index>`
- * — deterministic, and never colliding for legitimate input since `ownerId`
- * is already unique per event (mod-prefixed and duplicate-checked) and
- * `fieldPath` is fixed per call site. Must run before `modifierRows` lowers
- * the same array: `modifierEntry` throws if a row's `desc` reaches it
- * unregistered, and an event has the stable id and `LocSink` a registration
- * needs, the same as every other definition-attached localization slot.
+ * Registers one localisation key per desc-bearing row in a modifier list, via
+ * the shared derivation `modifierDescKey` (`effect-core.ts`) — the same one
+ * `content.ts`'s `collectModifierDescs` uses, so the two never drift and a
+ * future fix to the derivation reaches events automatically. Must run before
+ * `modifierRows` lowers the same array: `modifierEntry` throws if a row's
+ * `desc` reaches it unregistered, and an event has the stable id and
+ * `LocSink` a registration needs, the same as every other
+ * definition-attached localization slot.
+ *
+ * `warnings` collects the `unstable-desc-key` entry `modifierDescKey` returns
+ * when a row falls back to a content hash — see `DefinedEvent.warnings` for
+ * why events carry this on the returned event rather than through a
+ * `ContentAuthoring`-style callback.
  */
 function registerModifierDescs<S extends ScopeName>(
+  warnings: ModWarning[],
   loc: LocSink,
   ownerId: string,
   fieldPath: string,
   modifiers: readonly Modifier<S>[] | undefined
 ): void {
-  (modifiers ?? []).forEach((modifier, index) => {
+  (modifiers ?? []).forEach((modifier) => {
     if (modifier.desc === undefined) {
       return;
     }
-    const key = `${ownerId}_${fieldPath}_${index}`;
+    const { key, unstableWarning } = modifierDescKey(
+      ownerId,
+      fieldPath,
+      modifier as ModifierWithLoc<ScopeName>
+    );
     loc.register(key, modifier.desc);
     registerModifierDescKey(modifier as Modifier<ScopeName>, key);
+    if (unstableWarning !== undefined) {
+      warnings.push({ code: "unstable-desc-key", message: unstableWarning });
+    }
   });
 }
 
@@ -397,6 +425,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   const id = `${namespace}.${def.id}`;
   const ctx = scriptCtx<S, From>();
   const flags = windowFlags(def);
+  const warnings: ModWarning[] = [];
 
   const entries: PdxEntry[] = [kv("id", id)];
   if (def.title !== undefined) {
@@ -526,7 +555,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     if (mtth.days !== undefined) {
       mtthEntries.push(kv("days", mtth.days));
     }
-    registerModifierDescs(loc, id, "mean_time_to_happen", mtth.modifiers);
+    registerModifierDescs(warnings, loc, id, "mean_time_to_happen", mtth.modifiers);
     const mtthRefs: ContentRefUse[] = [];
     mtthEntries.push(...modifierRows(mtth.modifiers, mtthRefs));
     entries.push(block("mean_time_to_happen", mtthEntries));
@@ -535,7 +564,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   if (def.weightMultiplier !== undefined) {
     const weight = def.weightMultiplier;
     const weightEntries: PdxEntry[] = [kv("factor", weight.factor)];
-    registerModifierDescs(loc, id, "weight_multiplier", weight.modifiers);
+    registerModifierDescs(warnings, loc, id, "weight_multiplier", weight.modifiers);
     const weightRefs: ContentRefUse[] = [];
     weightEntries.push(...modifierRows(weight.modifiers, weightRefs));
     entries.push(block("weight_multiplier", weightEntries));
@@ -590,7 +619,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
       if (option.aiChance.factor !== undefined) {
         aiChanceEntries.push(kv("factor", option.aiChance.factor));
       }
-      registerModifierDescs(loc, id, `option_${index}.ai_chance`, option.aiChance.modifiers);
+      registerModifierDescs(warnings, loc, id, `option_${index}.ai_chance`, option.aiChance.modifiers);
       const aiChanceRefs: ContentRefUse[] = [];
       aiChanceEntries.push(...modifierRows(option.aiChance.modifiers, aiChanceRefs));
       optionEntries.push(block("ai_chance", aiChanceEntries));
@@ -625,7 +654,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     entries.push(block("option", optionEntries));
   });
 
-  return { kind: "event-ref", scope, id, from: def.from, entry: block(kind, entries), refs };
+  return { kind: "event-ref", scope, id, from: def.from, entry: block(kind, entries), refs, warnings };
 }
 
 // ---------------------------------------------------------------------------

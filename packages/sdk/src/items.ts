@@ -76,6 +76,8 @@ export interface EventItemBase {
   /** Content references the event's closures wrote, for the build's guard. */
   readonly refs: readonly ContentRefUse[];
   readonly locEntries: ReadonlyArray<readonly [string, string]>;
+  /** Diagnostics collected at define time; `buildMod` drains these into `mod.warnings`. */
+  readonly warnings: readonly ModWarning[];
 }
 
 /**

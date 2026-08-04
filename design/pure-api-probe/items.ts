@@ -20,7 +20,7 @@ import type { OnActionRef } from "../../packages/sdk/src/on-actions.ts";
 import type { PatchedTechnology } from "../../packages/sdk/src/vanilla/patch.ts";
 
 export interface ModWarning {
-  readonly code: "missing-prefix" | "loc-quote-replaced";
+  readonly code: "missing-prefix" | "loc-quote-replaced" | "unstable-desc-key";
   readonly message: string;
 }
 
@@ -56,6 +56,9 @@ export interface EventItemBase {
    * item stays structurally a `DefinedEvent`. */
   readonly refs: readonly ContentRefUse[];
   readonly locEntries: ReadonlyArray<readonly [string, string]>;
+  /** Diagnostics collected at define time (SDK-46); carried for the same
+   * structural-`DefinedEvent` reason as `refs`/`locEntries`. */
+  readonly warnings: readonly ModWarning[];
 }
 
 export interface OnActionBindingItem {

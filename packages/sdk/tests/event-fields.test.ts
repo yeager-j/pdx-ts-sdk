@@ -323,13 +323,20 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     // The real proof: this builds at all. Before this fix, modifierEntry threw
     // "this row was never registered" for every one of these three fields —
     // a hard crash on a legal `Modifier<S>` input (modifier_rule.cwt's `desc`).
+    // Pinned with descKey so the emitted key is deterministic and readable;
+    // the hash fallback (no descKey) is covered by the mirror-case test below.
     const scheduled = events.defineCountryEvent({
       id: 1030,
       hideWindow: true,
       meanTimeToHappen: {
         days: 5,
         modifiers: [
-          { factor: 2, desc: "MTTH modifier tooltip.", when: hasGlobalFlag("event_fields_mtth") },
+          {
+            factor: 2,
+            desc: "MTTH modifier tooltip.",
+            descKey: "mtth_tooltip",
+            when: hasGlobalFlag("event_fields_mtth"),
+          },
         ],
       },
       weightMultiplier: {
@@ -338,6 +345,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
           {
             factor: 3,
             desc: "Weight modifier tooltip.",
+            descKey: "weight_tooltip",
             when: hasGlobalFlag("event_fields_weight"),
           },
         ],
@@ -351,6 +359,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
               {
                 factor: 4,
                 desc: "AI chance modifier tooltip.",
+                descKey: "ai_chance_tooltip",
                 when: hasGlobalFlag("event_fields_ai"),
               },
             ],
@@ -362,21 +371,93 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     const files = render(buildMod(CONFIG, [collection("events", [scheduled])]));
     const rendered = files.get("events/event_fields_events.txt")!;
     expect(rendered).toContain(
-      "mean_time_to_happen = {\n\t\tdays = 5\n\t\tmodifier = {\n\t\t\tfactor = 2\n\t\t\tdesc = event_fields.1030_mean_time_to_happen_0"
+      "mean_time_to_happen = {\n\t\tdays = 5\n\t\tmodifier = {\n\t\t\tfactor = 2\n\t\t\tdesc = event_fields.1030_mean_time_to_happen_mtth_tooltip"
     );
     expect(rendered).toContain(
-      "weight_multiplier = {\n\t\tfactor = 1\n\t\tmodifier = {\n\t\t\tfactor = 3\n\t\t\tdesc = event_fields.1030_weight_multiplier_0"
+      "weight_multiplier = {\n\t\tfactor = 1\n\t\tmodifier = {\n\t\t\tfactor = 3\n\t\t\tdesc = event_fields.1030_weight_multiplier_weight_tooltip"
     );
     expect(rendered).toContain(
-      "ai_chance = {\n\t\t\tfactor = 10\n\t\t\tmodifier = {\n\t\t\t\tfactor = 4\n\t\t\t\tdesc = event_fields.1030_option_0.ai_chance_0"
+      "ai_chance = {\n\t\t\tfactor = 10\n\t\t\tmodifier = {\n\t\t\t\tfactor = 4\n\t\t\t\tdesc = event_fields.1030_option_0.ai_chance_ai_chance_tooltip"
     );
 
     const loc = files.get("localisation/english/event_fields_l_english.yml")!;
-    expect(loc).toContain(' event_fields.1030_mean_time_to_happen_0:0 "MTTH modifier tooltip."');
-    expect(loc).toContain(' event_fields.1030_weight_multiplier_0:0 "Weight modifier tooltip."');
     expect(loc).toContain(
-      ' event_fields.1030_option_0.ai_chance_0:0 "AI chance modifier tooltip."'
+      ' event_fields.1030_mean_time_to_happen_mtth_tooltip:0 "MTTH modifier tooltip."'
     );
+    expect(loc).toContain(
+      ' event_fields.1030_weight_multiplier_weight_tooltip:0 "Weight modifier tooltip."'
+    );
+    expect(loc).toContain(
+      ' event_fields.1030_option_0.ai_chance_ai_chance_tooltip:0 "AI chance modifier tooltip."'
+    );
+  });
+
+  it("keeps a descKey-pinned modifier's key stable across reordering, and derives an 8-char content hash when descKey is omitted", () => {
+    const keyFor = (text: string, loc: string) => {
+      const match = new RegExp(`^ (\\S+):0 "${text}"$`, "m").exec(loc);
+      expect(match).not.toBeNull();
+      return match![1];
+    };
+
+    const before = makeEvents().defineCountryEvent({
+      id: 1041,
+      hideWindow: true,
+      meanTimeToHappen: {
+        days: 5,
+        modifiers: [
+          {
+            factor: 2,
+            desc: "Pinned tooltip.",
+            descKey: "pinned_tooltip",
+            when: hasGlobalFlag("event_fields_pinned"),
+          },
+          {
+            factor: 1,
+            desc: "Unpinned tooltip.",
+            when: hasGlobalFlag("event_fields_unpinned"),
+          },
+        ],
+      },
+    });
+    const beforeLoc = render(buildMod(CONFIG, [collection("events", [before])])).get(
+      "localisation/english/event_fields_l_english.yml"
+    )!;
+    const pinnedKeyBefore = keyFor("Pinned tooltip\\.", beforeLoc);
+    const unpinnedKeyBefore = keyFor("Unpinned tooltip\\.", beforeLoc);
+
+    // The pinned key is human-readable; the unpinned one is an 8-char hex
+    // content hash of the desc text, per modifierDescKey (effect-core.ts).
+    expect(pinnedKeyBefore).toBe("event_fields.1041_mean_time_to_happen_pinned_tooltip");
+    expect(unpinnedKeyBefore).toMatch(/^event_fields\.1041_mean_time_to_happen_[0-9a-f]{8}$/);
+
+    // Reorder: the unpinned row moves first. Both rows keep the exact same
+    // key — the point of the shared, content-derived (not position-derived)
+    // scheme.
+    const after = makeEvents().defineCountryEvent({
+      id: 1041,
+      hideWindow: true,
+      meanTimeToHappen: {
+        days: 5,
+        modifiers: [
+          {
+            factor: 1,
+            desc: "Unpinned tooltip.",
+            when: hasGlobalFlag("event_fields_unpinned"),
+          },
+          {
+            factor: 2,
+            desc: "Pinned tooltip.",
+            descKey: "pinned_tooltip",
+            when: hasGlobalFlag("event_fields_pinned"),
+          },
+        ],
+      },
+    });
+    const afterLoc = render(buildMod(CONFIG, [collection("events", [after])])).get(
+      "localisation/english/event_fields_l_english.yml"
+    )!;
+    expect(keyFor("Pinned tooltip\\.", afterLoc)).toBe(pinnedKeyBefore);
+    expect(keyFor("Unpinned tooltip\\.", afterLoc)).toBe(unpinnedKeyBefore);
   });
 
   it("lowers majorTrigger as a country-scope predicate, evaluated per recipient country rather than the event's own scope", () => {
@@ -408,5 +489,54 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain("situation = from");
+  });
+
+  // Was `it.fails` while events derived keys from array position (the
+  // duplicated scheme SDK-46's first pass copied from `main`'s pre-#14
+  // content.ts). Sharing `modifierDescKey` (effect-core.ts) with #14's real
+  // fix — content-derived, not position-derived — means events inherited it
+  // automatically; this now passes as a normal assertion, which is the
+  // signal the extraction actually worked rather than merely compiling.
+  it("keeps a modifier's desc key stable when a new row is inserted earlier in the list", () => {
+    const keyFor = (text: string, loc: string) => {
+      const match = new RegExp(`^ (\\S+):0 "${text}"$`, "m").exec(loc);
+      expect(match).not.toBeNull();
+      return match![1];
+    };
+
+    const before = makeEvents().defineCountryEvent({
+      id: 1040,
+      hideWindow: true,
+      meanTimeToHappen: {
+        days: 5,
+        modifiers: [
+          { factor: 2, desc: "Stable tooltip.", when: hasGlobalFlag("event_fields_stable") },
+        ],
+      },
+    });
+    const beforeLoc = render(buildMod(CONFIG, [collection("events", [before])])).get(
+      "localisation/english/event_fields_l_english.yml"
+    )!;
+    const stableKeyBefore = keyFor("Stable tooltip\\.", beforeLoc);
+
+    const after = makeEvents().defineCountryEvent({
+      id: 1040,
+      hideWindow: true,
+      meanTimeToHappen: {
+        days: 5,
+        modifiers: [
+          { factor: 3, desc: "New row inserted first.", when: hasGlobalFlag("event_fields_new") },
+          { factor: 2, desc: "Stable tooltip.", when: hasGlobalFlag("event_fields_stable") },
+        ],
+      },
+    });
+    const afterLoc = render(buildMod(CONFIG, [collection("events", [after])])).get(
+      "localisation/english/event_fields_l_english.yml"
+    )!;
+    const stableKeyAfter = keyFor("Stable tooltip\\.", afterLoc);
+
+    // A translator's existing string for "Stable tooltip." should still
+    // apply after an unrelated row is inserted ahead of it in the list.
+    expect(stableKeyAfter).toBe(stableKeyBefore);
   });
 });

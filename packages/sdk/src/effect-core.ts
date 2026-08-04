@@ -13,6 +13,7 @@
  * untyped position fails loudly instead of recording garbage.
  */
 
+import { createHash } from "node:crypto";
 import { block, cmp, kv, type PdxEntry, type PdxOp, type PdxScalar } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "./content-refs.ts";
@@ -287,6 +288,75 @@ const modifierDescKeys = new WeakMap<Modifier<ScopeName>, string>();
 /** SDK-internal: records the localisation key a modifier row's `desc` resolved to. */
 export function registerModifierDescKey(modifier: Modifier<ScopeName>, key: string): void {
   modifierDescKeys.set(modifier, key);
+}
+
+/** `Modifier.descKey`'s required shape — lowercase snake_case, matching content ids. */
+export const DESC_KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+/**
+ * A derived modifier desc localisation key, plus a warning to surface when
+ * the derivation fell back to a content hash rather than an author-supplied
+ * `descKey`. The warning is returned rather than emitted so this function
+ * stays free of any opinion about where a caller's diagnostics land —
+ * `content.ts` has `onUnstableDescKey` wired to `mod.warnings` already;
+ * `events.ts` threads it through `DefinedEvent.warnings` instead, since an
+ * event has no `ContentAuthoring` instance to hang a callback off.
+ */
+export interface ModifierDescKeyResult {
+  readonly key: string;
+  readonly unstableWarning?: string;
+}
+
+/**
+ * Derives the localisation key for one desc-bearing `modifier_rule` row:
+ * `<ownerId>_<fieldPath>_<descKey-or-hash>`. Modifier rows are anonymous and
+ * repeated with no id of their own, so the key cannot ride the row's own
+ * identity and is derived instead. `ownerId` and `fieldPath` are already
+ * unique per definition (mod-prefixed and duplicate-checked, or a fixed
+ * field key/struct path); what disambiguates multiple rows on the same
+ * field must be a function of the row's own content, never of its position
+ * in the array — an index-derived key repoints at whatever row now occupies
+ * that index after an insertion or reorder, silently misaligning any
+ * shipped translation with no build error and no symptom until a player
+ * reads that language (SDK-48).
+ *
+ * An author-supplied `descKey` is preferred when given: stable under
+ * reordering and under text edits, so it is the only scheme translations
+ * can safely be pinned against long-term. Without one, the key falls back
+ * to a short hash of the `desc` text itself — still a function of content
+ * rather than position, so it survives reordering and insertion, but it
+ * changes (and orphans any existing translation) whenever the English text
+ * is edited; the caller is expected to surface `unstableWarning` when that
+ * happens, the same way `content.ts`'s `onUnstableDescKey`/`mod.warnings`
+ * already does, rather than let the fallback stay silently unattended.
+ *
+ * The single derivation, shared rather than duplicated per caller
+ * (`content.ts`'s `collectModifierDescs`, `events.ts`'s
+ * `registerModifierDescs`) — every caller inherits a future change to this
+ * scheme in one place.
+ */
+export function modifierDescKey(
+  ownerId: string,
+  fieldPath: string,
+  modifier: ModifierWithLoc<ScopeName>
+): ModifierDescKeyResult {
+  if (modifier.descKey !== undefined) {
+    if (!DESC_KEY_PATTERN.test(modifier.descKey)) {
+      throw new Error(
+        `Modifier.descKey "${modifier.descKey}" on "${ownerId}" (${fieldPath}) must be ` +
+          `lowercase snake_case (e.g. "flesh_is_weak")`
+      );
+    }
+    return { key: `${ownerId}_${fieldPath}_${modifier.descKey}` };
+  }
+  const slug = createHash("sha256").update(modifier.desc).digest("hex").slice(0, 8);
+  return {
+    key: `${ownerId}_${fieldPath}_${slug}`,
+    unstableWarning:
+      `Modifier desc on "${ownerId}" (${fieldPath}) has no descKey; its localisation key ` +
+      `is a hash of the desc text and will change if that text is edited, silently ` +
+      `orphaning any existing translation. Set descKey to pin a stable key.`,
+  };
 }
 
 /** SDK-internal shared lowering for a `modifier_rule`/`modifier_rule_with_loc` row.
