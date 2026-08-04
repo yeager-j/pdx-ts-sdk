@@ -182,3 +182,54 @@ describe("patching end to end", () => {
     expect(buildMod(makeConfig(), []).patchPlan).toBeUndefined();
   });
 });
+
+describe("the vanilla path guard without any patch", () => {
+  // The guard used to be a side effect of patching: `vanillaPaths` was
+  // populated from the patches, so a mod that passed a vanilla view and
+  // patched nothing emitted straight over a vanilla file — a whole-file
+  // replacement of vanilla content — with no error at all.
+  const squattedPath = "common/technology/pp_mod_technology.txt";
+
+  function techs() {
+    return collection(undefined, [
+      defineTechnology({
+        id: "pp_mod_tech_new",
+        name: "New",
+        area: "physics",
+        tier: 1,
+        category: "computing",
+      }),
+    ]);
+  }
+
+  it("refuses to emit at a vanilla path when only a view is supplied", () => {
+    const clashing = viewFromFiles({
+      ...FILES,
+      [squattedPath]: "tech_squatter = {\n\tarea = physics\n}\n",
+    });
+    expect(() => render(buildMod(makeConfig(), [techs()], { vanilla: clashing }))).toThrow(
+      VanillaPathCollisionError
+    );
+  });
+
+  it("names the colliding path", () => {
+    const clashing = viewFromFiles({
+      ...FILES,
+      [squattedPath]: "tech_squatter = {\n\tarea = physics\n}\n",
+    });
+    expect(() => render(buildMod(makeConfig(), [techs()], { vanilla: clashing }))).toThrow(
+      new RegExp(squattedPath.replace(/[.]/g, "\\."))
+    );
+  });
+
+  it("still renders when the view occupies no path this mod emits", () => {
+    const vanilla = viewFromFiles(FILES);
+    expect(render(buildMod(makeConfig(), [techs()], { vanilla })).size).toBeGreaterThan(0);
+  });
+
+  it("does not check at all without a vanilla view", () => {
+    // Unchanged behavior: nothing was loaded, so nothing is known to collide.
+    expect(buildMod(makeConfig(), [techs()]).vanillaPaths).toBeUndefined();
+    expect(render(buildMod(makeConfig(), [techs()])).size).toBeGreaterThan(0);
+  });
+});

@@ -7,7 +7,8 @@
  * step, and it is nine lines.
  */
 
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
@@ -47,9 +48,16 @@ export function render(mod: PureMod): Map<string, string> {
 
   if (mod.patchPlan !== undefined) {
     files.set(mod.patchPlan.relPath, mod.patchPlan.content);
-    const vanillaPaths = mod.vanillaPaths ?? new Set<string>();
+  }
+  // Runs whenever the build knew about a vanilla load, not only when it
+  // patched one: emitting over a vanilla file replaces that file wholesale
+  // regardless of whether this mod happens to patch anything. `descriptor.mod`
+  // is exempt because every mod has one and it never lands in the game's own
+  // tree; the patch plan's own file is checked like any other, and is named to
+  // beat vanilla's rather than to occupy it.
+  if (mod.vanillaPaths !== undefined) {
     for (const relPath of files.keys()) {
-      if (relPath !== "descriptor.mod" && vanillaPaths.has(normalizeLogicalPath(relPath))) {
+      if (relPath !== "descriptor.mod" && mod.vanillaPaths.has(normalizeLogicalPath(relPath))) {
         throw new VanillaPathCollisionError(
           `this mod would emit ${relPath}, a path vanilla already occupies — a same-path ` +
             `collision silently replaces the entire vanilla file`
@@ -64,11 +72,101 @@ export async function write(
   outDir: string | URL,
   files: ReadonlyMap<string, string>
 ): Promise<void> {
-  const root = outDir instanceof URL ? fileURLToPath(outDir) : outDir;
+  const root = path.resolve(outDir instanceof URL ? fileURLToPath(outDir) : outDir);
   for (const [relPath, content] of files) {
-    const target = path.join(root, relPath);
+    // Every key must land *strictly under* the root. `render` only ever
+    // produces relative paths, but `write` is exported and takes any map, and
+    // `path.join` would happily resolve `../..` or an absolute key to
+    // somewhere the caller never named — writing a file outside the directory
+    // they asked to fill.
+    //
+    // Compared by `path.relative` rather than a string prefix: a prefix test
+    // has to append a separator to stop `/out` matching `/output`, and that
+    // appended separator is wrong precisely when the root already ends in one
+    // — `write("/", ...)` compares against `"//"` and rejects every legitimate
+    // child. `path.relative` is separator-correct at a filesystem root, and on
+    // Windows returns an absolute path for a different drive, which is exactly
+    // the "not contained" answer.
+    const target = path.resolve(root, relPath);
+    const relative = path.relative(root, target);
+    // An empty result means the target *is* the root: a directory, not a file
+    // in it, so it is refused with the escapes rather than allowed.
+    if (
+      relative === "" ||
+      relative === ".." ||
+      relative.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relative)
+    ) {
+      throw new Error(
+        `Refusing to write "${relPath}": it resolves to ${target}, which is not a file inside ` +
+          `the output directory ${root}. A path that escapes the output directory would ` +
+          `overwrite a file the caller never named. Pass paths relative to the output ` +
+          `directory, without ".." segments and without a leading "/".`
+      );
+    }
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, content, "utf8");
+  }
+}
+
+/**
+ * Characters a folder name may not carry, because the name reaches the
+ * launcher descriptor: `install` writes `path="<modDir>/<dirName>"`, the same
+ * unescaped `key="value"` format `buildMod` validates its config fields
+ * against. A `"` closes the value and a line break ends the line, so a folder
+ * name is a second door into the descriptor-forgery the config gate already
+ * closed. Every C0 control is refused with them — none belongs in a folder
+ * name, and each does something different and equally unwanted to a
+ * line-oriented format.
+ */
+const DIR_NAME_FORBIDDEN = /["\u0000-\u001f]/;
+
+/**
+ * A content folder name, checked before it is joined to the launcher's mod
+ * directory.
+ *
+ * Two separate hazards, one gate. `install` replaces the directory it
+ * computes, so this name decides what gets *deleted*: `""` resolves to the mod
+ * directory itself, `".."` to its parent, and `"a/b"` to somewhere sideways —
+ * each a recursive delete of a directory full of the user's other mods. And
+ * the name is then written into the launcher descriptor verbatim, so it
+ * decides what that file *says*. A single, plain path segment is the only
+ * thing that is safe on both counts, so anything else is refused rather than
+ * normalized into something plausible.
+ */
+function assertInstallDirName(dirName: string, fromPrefix: boolean): void {
+  const source = fromPrefix
+    ? `The mod prefix "${dirName}" is the default folder name`
+    : `install's dirName ${JSON.stringify(dirName)}`;
+  if (
+    dirName === "" ||
+    dirName === "." ||
+    dirName === ".." ||
+    dirName.includes("/") ||
+    dirName.includes("\\") ||
+    path.isAbsolute(dirName) ||
+    path.basename(dirName) !== dirName
+  ) {
+    throw new Error(
+      `${source}, and it is not a single folder name: it must not be empty, "." or "..", ` +
+        `contain "/" or "\\", or be absolute. It is joined to the launcher's mod directory and ` +
+        `the result is replaced wholesale, so a name that escapes that directory would delete ` +
+        `content the mod does not own. Pass a plain folder name.`
+    );
+  }
+  if (DIR_NAME_FORBIDDEN.test(dirName)) {
+    const character = /["]/.test(dirName)
+      ? "a double quote"
+      : /[\r\n]/.test(dirName)
+        ? "a line break"
+        : "a control character";
+    throw new Error(
+      `${source}, and it cannot contain ${character}: install writes it into the launcher ` +
+        `descriptor as \`path="<mod directory>/${dirName.replace(/["\u0000-\u001f]/g, "?")}"\`, ` +
+        `a format with no escaping, so the value would end early and the rest would be read as ` +
+        `further descriptor fields — the launcher answers a malformed descriptor by refusing ` +
+        `the mod without saying why. Pass a plain folder name.`
+    );
   }
 }
 
@@ -101,16 +199,77 @@ export interface InstallResult {
  * current build renders. Anything hand-edited in there is by definition not
  * part of the mod and does not survive, which is why the SDK writes it and the
  * author does not.
+ *
+ * **Replacing it is never a window where the mod is gone.** Rendering happens
+ * first, into memory, so a build that throws — a vanilla path collision, a
+ * malformed value — leaves the previous install exactly as it was. What did
+ * render is staged into a sibling directory and swapped in by rename, so the
+ * old copy is only removed once a complete new one is in place, and a failed
+ * swap puts the old one back. The descriptor is written last, for the same
+ * reason: it points at content, and pointing at content that is not there yet
+ * is what makes a launcher list a broken mod.
  */
 export async function install(mod: PureMod, options: InstallOptions = {}): Promise<InstallResult> {
   const root = options.modDir ?? modDir();
   const dirName = options.dirName ?? mod.config.prefix;
+  assertInstallDirName(dirName, options.dirName === undefined);
   const contentDir = path.join(root, dirName);
   const descriptorPath = path.join(root, `${dirName}.mod`);
 
-  await rm(contentDir, { recursive: true, force: true });
-  await write(contentDir, render(mod));
+  // Before anything on disk changes: a throw here (VanillaPathCollisionError,
+  // a malformed definition) must leave the existing install untouched, which
+  // it cannot if the delete already happened.
+  const files = render(mod);
+
   await mkdir(root, { recursive: true });
+  // Staged as a sibling, inside the same directory and so on the same
+  // filesystem, which is what makes the rename below atomic rather than a
+  // copy. The leading dot keeps a crash-orphaned staging directory out of the
+  // launcher's way: it has no `.mod` descriptor beside it, so nothing loads it.
+  //
+  // Fixed-size names that do not embed `dirName`: a filesystem bounds each
+  // *component* (255 bytes on APFS and ext4), and a name built by decorating
+  // `dirName` overflows that bound while `dirName` itself is still perfectly
+  // legal — so a long folder name would fail with ENAMETOOLONG before the
+  // install had done anything. The uuid is what keeps two installs running in
+  // one mod directory from staging over each other; `dirName` never had to be
+  // in the name for that.
+  const staging = path.join(root, `.pdx-staging-${randomUUID()}`);
+  const previous = path.join(root, `.pdx-previous-${randomUUID()}`);
+  try {
+    await write(staging, files);
+  } catch (error) {
+    await rm(staging, { recursive: true, force: true });
+    throw error;
+  }
+
+  // The swap: move any existing install aside, put the new one in its place,
+  // and only then delete the old copy. Every step is a rename within one
+  // directory, so at no point is `contentDir` a half-written mod.
+  let movedAside = false;
+  try {
+    await rename(contentDir, previous);
+    movedAside = true;
+  } catch (error) {
+    // No previous install is the ordinary first-install case, not a failure.
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      await rm(staging, { recursive: true, force: true });
+      throw error;
+    }
+  }
+  try {
+    await rename(staging, contentDir);
+  } catch (error) {
+    if (movedAside) {
+      await rename(previous, contentDir);
+    }
+    await rm(staging, { recursive: true, force: true });
+    throw error;
+  }
+  if (movedAside) {
+    await rm(previous, { recursive: true, force: true });
+  }
+
   await writeFile(descriptorPath, renderLauncherDescriptor(mod, contentDir), "utf8");
   return { contentDir, descriptorPath };
 }

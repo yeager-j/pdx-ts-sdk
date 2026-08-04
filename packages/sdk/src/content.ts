@@ -17,6 +17,7 @@ import {
 
 import { underField, type ContentRefSink, type ContentRefUse } from "./content-refs.ts";
 import {
+  assertSynchronousClosure,
   complexTriggerModifierEntry,
   modifierDescKey,
   modifierEntry,
@@ -975,14 +976,21 @@ function modifierRecorder(
 function modifierEntries(closure: ModifierClosure): PdxEntry[] {
   const entries: PdxEntry[] = [];
   const live = { value: true };
+  let result: unknown;
   try {
-    closure(modifierRecorder((name, amount) => entries.push(kv(name, amount)), live) as never);
+    result = closure(
+      modifierRecorder((name, amount) => entries.push(kv(name, amount)), live) as never
+    );
   } finally {
     // Dead as soon as the closure returns, however it returns — an author's
     // error inside one modifier closure must not leave the recorder it was
     // handed able to write into a finished definition.
     live.value = false;
   }
+  // The same hazard `recordEffects` checks for, at the other closure entry
+  // point: an `async` modifier closure records its sync prefix, ends the
+  // recording at its first await, and loses the rest.
+  assertSynchronousClosure(result, "A modifier closure");
   return entries;
 }
 

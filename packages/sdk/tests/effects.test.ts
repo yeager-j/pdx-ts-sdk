@@ -241,6 +241,110 @@ every_owned_planet = {
     );
   });
 
+  it("refuses an async effect closure rather than recording half of it", async () => {
+    // `(scope) => void` accepts an async function, and the promise used to be
+    // discarded: everything before the first await recorded, the recording
+    // ended there, and everything after it was lost. The build succeeded
+    // anyway, with a partial mod and no diagnostic.
+    //
+    // The continuation deliberately touches nothing but a local: what is being
+    // proven is that it runs *after* the recording is already closed, and
+    // reaching for the scope there is the separate, already-guarded mistake
+    // exercised below.
+    let continued = false;
+    expect(() =>
+      recordEffects<"country">([], async (country) => {
+        country.log("before the await");
+        await Promise.resolve();
+        continued = true;
+      })
+    ).toThrow(/returned a promise/);
+
+    // Synchronous: the throw beat the continuation, so it lands on the stack
+    // of the definition being authored rather than surfacing later with no
+    // author frame in it.
+    expect(continued).toBe(false);
+    await Promise.resolve();
+    expect(continued).toBe(true);
+  });
+
+  it("lets no unhandled rejection escape the closure it refused", async () => {
+    // Refusing the promise is not the same as containing it: the continuation
+    // still runs, still reaches for a recorder that is now dead, and still
+    // rejects. With nothing attached that is an `unhandledRejection`, which by
+    // default takes the process down — so a caller who caught the build error
+    // this throws would have been killed moments later by the very failure
+    // they caught.
+    const escaped: unknown[] = [];
+    const onUnhandled = (reason: unknown): void => {
+      escaped.push(reason);
+    };
+    process.on("unhandledRejection", onUnhandled);
+    try {
+      expect(() =>
+        recordEffects<"country">([], async (country) => {
+          country.log("before the await");
+          await Promise.resolve();
+          // Rejects: the recording this scope object belongs to is closed.
+          country.log("after the await");
+        })
+      ).toThrow(/returned a promise/);
+      // Two macrotask turns: long enough for the continuation to run, reject,
+      // and for Node to have decided the rejection was unhandled.
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
+    expect(escaped).toEqual([]);
+  });
+
+  it("still catches async work a synchronous closure spawns, at the scope object", async () => {
+    // The other half: a closure that stays synchronous but starts async work
+    // returns undefined, so the promise check cannot see it. Liveness is what
+    // catches this one — the scope object is dead by the time the continuation
+    // reaches for it — and awaiting the spawned promise here is what keeps
+    // that from being an unhandled rejection in this suite.
+    let spawned: Promise<void> | undefined;
+    recordEffects<"country">([], (country) => {
+      country.log("recorded");
+      spawned = (async () => {
+        await Promise.resolve();
+        country.log("too late");
+      })();
+    });
+    await expect(spawned).rejects.toThrow(/already returned/);
+  });
+
+  it("leaves a closure that merely returns a value alone", () => {
+    // Only thenables are refused. Returning a value from a void-typed closure
+    // is harmless and ordinary — `(c) => c.log("x")` returns whatever `log`
+    // returns — so punishing a non-promise return would break real authoring.
+    const sink = recordEffects<"country">([], (country) => country.log("returned"));
+    expect(serialize(sink)).toBe("log = returned\n");
+
+    const objectReturn = recordEffects<"country">([], (country) => {
+      country.log("also fine");
+      return { then: "not a function" } as unknown as void;
+    });
+    expect(serialize(objectReturn)).toBe('log = "also fine"\n');
+  });
+
+  it("leaves nested synchronous closures alone", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+        planet.destroyColony();
+      });
+    });
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	limit = {
+		has_owner = yes
+	}
+	destroy_colony = yes
+}
+`);
+  });
+
   it("writes a Modifier row's ScriptValue operand bare, including a scripted-variable reference (widenedLowering, SDK-47 P1 fix)", () => {
     // Modifier<S> (effect-core.ts) is hand-written, not generated — its
     // `factor`/`add`/etc. operands are modifier_rule.cwt's `value_field`

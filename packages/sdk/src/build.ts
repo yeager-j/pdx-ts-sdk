@@ -102,6 +102,148 @@ export interface ModConfig<P extends string = string> {
   uncheckedVanillaIds?: boolean;
 }
 
+/**
+ * The config a built mod carries: validated, copied off the caller's object,
+ * and frozen.
+ *
+ * `buildMod` used to keep the caller's `ModConfig` by reference, so the value
+ * it returned was not actually finished — mutating the config afterwards
+ * changed what `render` emitted, and could point prefix-derived file paths at
+ * a prefix the content inside those files was never compiled with. A `PureMod`
+ * is supposed to be a value; this is the part of it that was not one.
+ */
+export type ResolvedModConfig = Readonly<Omit<ModConfig, "tags">> & {
+  readonly tags?: readonly string[];
+};
+
+/**
+ * Characters no descriptor field may carry.
+ *
+ * `descriptor.mod` is `key="value"` lines with no escaping whatsoever, so a
+ * `"` ends the value early and a newline ends the *line* — either one lets a
+ * mod name forge a second descriptor field. NUL is rejected with them because
+ * it truncates the file for some readers and is never intentional. Rejected
+ * rather than escaped: the launcher's parser is not ours to guess at, and a
+ * mod's own identity is the wrong place to start silently rewriting an
+ * author's text.
+ */
+const DESCRIPTOR_FORBIDDEN = /[\r\n\0"]/;
+
+function descriptorCharName(value: string): string {
+  const match = DESCRIPTOR_FORBIDDEN.exec(value);
+  switch (match?.[0]) {
+    case '"':
+      return "a double quote";
+    case "\n":
+      return "a newline";
+    case "\r":
+      return "a carriage return";
+    default:
+      return "a NUL byte";
+  }
+}
+
+/**
+ * Rejects a descriptor value carrying a character the format cannot express.
+ * Names the field, since a config has several and the message is the only
+ * thing that says which one to fix.
+ */
+function assertDescriptorSafe(field: string, value: string): void {
+  if (!DESCRIPTOR_FORBIDDEN.test(value)) {
+    return;
+  }
+  throw new Error(
+    `Mod ${field} ${JSON.stringify(value)} cannot contain ${descriptorCharName(value)}: it is ` +
+      `written verbatim into descriptor.mod as \`${field}="..."\`, a format with no escaping, ` +
+      `so the value would end early and the rest would be read as further descriptor fields — ` +
+      `the launcher answers a malformed descriptor by refusing the mod without saying why. ` +
+      `Remove it from ${field}.`
+  );
+}
+
+/**
+ * Validates the caller's config and returns a frozen copy of it.
+ *
+ * The copy is what makes a `PureMod` immune to later mutation of the object
+ * the caller passed in; `tags` is copied too, since freezing the config alone
+ * would leave the array inside it writable.
+ */
+function resolveConfig(config: ModConfig): ResolvedModConfig {
+  if (!PREFIX_PATTERN.test(config.prefix)) {
+    throw new Error(`Mod prefix "${config.prefix}" must be lowercase snake_case ([a-z][a-z0-9_]*)`);
+  }
+  assertDescriptorSafe("name", config.name);
+  if (config.version !== undefined) {
+    assertDescriptorSafe("version", config.version);
+  }
+  assertDescriptorSafe("supportedVersion", config.supportedVersion);
+  config.tags?.forEach((tag, index) => assertDescriptorSafe(`tags[${index}]`, tag));
+  if (!SUPPORTED_VERSION_PATTERN.test(config.supportedVersion)) {
+    throw new Error(
+      `supportedVersion "${config.supportedVersion}" is not a launcher version pattern ` +
+        `(e.g. "v4.4.*", "v4.*", "v4.4.6"). It is written verbatim into descriptor.mod, and ` +
+        `the launcher answers an unreadable one by silently refusing the mod.`
+    );
+  }
+  return Object.freeze({
+    name: config.name,
+    prefix: config.prefix,
+    version: config.version,
+    supportedVersion: config.supportedVersion,
+    tags: config.tags === undefined ? undefined : Object.freeze([...config.tags]),
+    acceptGameVersion: config.acceptGameVersion,
+    uncheckedVanillaIds: config.uncheckedVanillaIds,
+  });
+}
+
+/**
+ * Characters no localisation key or text may carry.
+ *
+ * The emitted yml is one line per entry — ` key:0 "text"` — and the game's
+ * reader is line-based. A newline inside the text ends the line early and the
+ * remainder is read as *another entry*, so a definition's description can
+ * forge a localisation key it does not own, overriding text elsewhere in the
+ * mod (or vanilla) with no build error. NUL is rejected alongside it for the
+ * same reason it is in a descriptor: nothing legitimate puts one there.
+ *
+ * Measured against the shipped game (Stellaris 4.4.6,
+ * `localisation/english/`, 149,217 entries): every single value is written on
+ * one physical line, and a line break inside one is spelled as the two
+ * characters `\n` — 13,472 lines do it. So rejecting a raw line break costs an
+ * author nothing they cannot spell the way the game itself spells it, which is
+ * what the message points them at.
+ *
+ * A double quote in *text* is not on this list, and is handled differently
+ * where the text is registered below: replaced with an apostrophe, with a
+ * `loc-quote-replaced` warning. Not an injection vector either way — vanilla
+ * ships 1,477 English lines with a bare interior quote, so the game's reader
+ * evidently takes the value out to the *last* quote on the line rather than
+ * the first, and a quote therefore cannot start a second entry the way a line
+ * break can. See that site for what the corpus says the better encoding would
+ * be.
+ */
+const LOC_FORBIDDEN = /[\r\n\0]/;
+
+function assertLocLineSafe(key: string, text: string): void {
+  const where = LOC_FORBIDDEN.test(key) ? "key" : LOC_FORBIDDEN.test(text) ? "text" : undefined;
+  if (where === undefined) {
+    return;
+  }
+  const value = where === "key" ? key : text;
+  const isBreak = /[\r\n]/.test(value);
+  throw new Error(
+    `Localization ${where} for "${key.replace(LOC_FORBIDDEN, "␤")}" cannot contain ` +
+      `${isBreak ? "a line break" : "a NUL byte"}: each entry is written as one ` +
+      `\` key:0 "text"\` line, and the game reads that file line by line, so everything past ` +
+      `the break would be read as a further localisation entry — silently overriding whatever ` +
+      `key it appeared to name.` +
+      (isBreak && where === "text"
+        ? ` For a line break in displayed text, write the two-character escape \\\\n, which is ` +
+          `how the game's own localisation spells one.`
+        : ` Keep localisation ${where}s to a single line.`)
+  );
+}
+
 export interface BuildOptions {
   /**
    * The vanilla view the mod is built against. When present, a content id
@@ -132,7 +274,7 @@ interface ContentFile extends EmittedFile {
 
 /** The assembled mod: a value, not a builder. `render(mod)` consumes it. */
 export interface PureMod {
-  readonly config: ModConfig;
+  readonly config: ResolvedModConfig;
   readonly warnings: readonly ModWarning[];
   /** Content emission, grouped by registry then collection file. */
   readonly contentFiles: readonly ContentFile[];
@@ -259,31 +401,14 @@ export const SWAP_IDENTITIES: readonly SwapIdentity[] = [
 ];
 
 export function buildMod(
-  config: ModConfig,
+  callerConfig: ModConfig,
   collections: readonly ModItemInput[],
   options: BuildOptions = {}
 ): PureMod {
-  if (!PREFIX_PATTERN.test(config.prefix)) {
-    throw new Error(`Mod prefix "${config.prefix}" must be lowercase snake_case ([a-z][a-z0-9_]*)`);
-  }
-  if (config.name.includes('"')) {
-    // `descriptor.mod` writes `name="<name>"`, and PDXScript has no quote
-    // escaping to rescue it — the launcher answers the malformed result by
-    // refusing the mod without saying why. Localization already replaces quotes
-    // rather than emitting them; a mod's own name is identity, so it is refused
-    // instead of silently rewritten.
-    throw new Error(
-      `Mod name ${JSON.stringify(config.name)} cannot contain a double quote: it is written ` +
-        `verbatim into descriptor.mod, which has no way to escape one.`
-    );
-  }
-  if (!SUPPORTED_VERSION_PATTERN.test(config.supportedVersion)) {
-    throw new Error(
-      `supportedVersion "${config.supportedVersion}" is not a launcher version pattern ` +
-        `(e.g. "v4.4.*", "v4.*", "v4.4.6"). It is written verbatim into descriptor.mod, and ` +
-        `the launcher answers an unreadable one by silently refusing the mod.`
-    );
-  }
+  // Validated and copied before anything reads it, so the rest of the fold —
+  // and `render`, later — works from a value the caller can no longer change
+  // underneath it.
+  const config = resolveConfig(callerConfig);
   const flat = flattenItems(collections);
   const warnings: ModWarning[] = [];
   const loc = new Map<string, string>();
@@ -299,6 +424,7 @@ export function buildMod(
   const registerLocEntries = (entries: readonly (readonly [string, string])[]): void => {
     const pending = new Map<string, string>();
     for (const [key, source] of entries) {
+      assertLocLineSafe(key, source);
       const existing = pending.get(key) ?? locSource.get(key);
       if (existing !== undefined && existing !== source) {
         throw new Error(`Duplicate localization key "${key}"`);
@@ -314,6 +440,19 @@ export function buildMod(
       }
       let text = source;
       if (text.includes('"')) {
+        // Left as a replacement deliberately, and it is lossy: measured
+        // against Stellaris 4.4.6's own `localisation/english/`, the game
+        // ships 1,477 lines carrying a bare interior quote and 40 more
+        // spelling it `\"` — one key (`CETANA_STERILIZATIONCLUSTER`) ships
+        // both ways for the same character across languages, which is what
+        // proves the two are interchangeable to the game's reader. So `\"` is
+        // an encoding the game demonstrably accepts and would preserve the
+        // author's text exactly, where this drops it to an apostrophe.
+        // Switching is a change to emitted bytes for every mod with a quote
+        // in its prose, and it retires this warning code; it belongs to
+        // whoever makes that call deliberately, not to a hardening pass whose
+        // job was the injection vectors — and a quote is not one, since the
+        // value runs to the last quote on the line.
         warnings.push({
           code: "loc-quote-replaced",
           message: `Localization "${key}": Paradox yml has no quote escaping; replacing " with '`,
@@ -837,10 +976,24 @@ export function buildMod(
     contentFiles.filter((file) => file.types.includes("technology")),
     orderedPatches
   );
+  // The paths `render` must not emit over. A mod file at a path vanilla
+  // already occupies does not merge with it — it replaces the whole file — so
+  // this is a hard error there rather than a warning.
+  //
+  // Derived from whichever vanilla load this build knows about: the view when
+  // one was passed, otherwise the view the patches were taken from. It used to
+  // come from the patches alone, which made the guard a side effect of
+  // patching: a mod that passed a `vanilla` view and patched nothing emitted
+  // straight over a vanilla file with no complaint at all.
+  //
+  // Coverage is exactly what the view parsed, and no more — today
+  // `common/technology/` and `common/scripted_variables/` (see `VanillaView`),
+  // the slice the patch engine needs. A collision outside those directories is
+  // not detected, and cannot be until the view reads them; what is here is
+  // sound, not complete.
+  const vanillaOrigin = options.vanilla ?? orderedPatches[0]?.source.origin;
   const vanillaPaths =
-    orderedPatches.length > 0
-      ? new Set(orderedPatches[0]!.source.origin.files.map((file) => file.path))
-      : undefined;
+    vanillaOrigin === undefined ? undefined : new Set(vanillaOrigin.files.map((file) => file.path));
 
   // Identifier-package version pin (SDK-12), checked after the rule-table
   // staleness gate above: rule-table staleness outranks identifier-package
@@ -948,7 +1101,7 @@ function freezeNode(node: PdxItem): void {
  * reserved list (the patch file must not be named over it).
  */
 function planPatches(
-  config: ModConfig,
+  config: ResolvedModConfig,
   techFiles: readonly ContentFile[],
   patches: readonly PatchedTechnology[]
 ): PatchPlan | undefined {

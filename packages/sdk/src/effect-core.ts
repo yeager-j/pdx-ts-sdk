@@ -1222,8 +1222,9 @@ export function recordEffects<S extends ScopeName>(
 ): PdxEntry[] {
   const recording: Recording = { sink: into, refs, live: true };
   RECORDINGS.push(recording);
+  let result: unknown;
   try {
-    body(makeAnyScope(into, refs, recording) as ScopeObjOf<S>);
+    result = body(makeAnyScope(into, refs, recording) as ScopeObjOf<S>);
   } finally {
     // Popped even when the body throws: an author's error inside one closure
     // must not leave every later closure recording into a dead block. Marked
@@ -1232,5 +1233,54 @@ export function recordEffects<S extends ScopeName>(
     RECORDINGS.pop();
     recording.live = false;
   }
+  assertSynchronousClosure(result, "An effect closure");
   return into;
+}
+
+/**
+ * SDK-internal: refuses a recording closure that returned a promise.
+ *
+ * `(scope) => void` accepts an `async` function — TypeScript allows any return
+ * type where `void` is expected — and the return value used to be discarded,
+ * so an author who wrote `async` got a mod that built cleanly and was quietly
+ * wrong: everything before the first `await` recorded, the recording ended
+ * when the closure returned at that `await`, and everything after it either
+ * vanished or (since recorders die with their recording) threw into a floating
+ * promise as an unhandled rejection. Neither failed the build.
+ *
+ * Callers check *after* closing their recording, so a throw here cannot leave
+ * one open. Thenable rather than `instanceof Promise`, so a non-native promise
+ * is caught too; anything else a closure happens to return is ignored, since
+ * returning a value from a void-typed closure is harmless and common
+ * (`(s) => s.log("x")` returns whatever `log` returns).
+ *
+ * The abandoned promise is *observed* before the throw, because refusing it is
+ * not the same as containing it. Its continuation still runs, still reaches
+ * for a recorder that is now dead, and still rejects — with nothing attached,
+ * that is an `unhandledRejection`, which by default terminates the process.
+ * A caller who catches the build error this throws would have had their
+ * process killed anyway, moments later, by the very failure they caught. The
+ * no-op handler makes this diagnostic the whole of the failure.
+ */
+export function assertSynchronousClosure(result: unknown, subject: string): void {
+  if (
+    result === null ||
+    (typeof result !== "object" && typeof result !== "function") ||
+    typeof (result as { then?: unknown }).then !== "function"
+  ) {
+    return;
+  }
+  // `Promise.resolve` adopts the thenable rather than calling `then` here, so
+  // a thenable that misbehaves — throwing from `then`, resolving twice —
+  // rejects this wrapper instead of escaping, and the wrapper is handled.
+  void Promise.resolve(result as PromiseLike<unknown>).catch(() => {});
+  throw new Error(
+    `${subject} returned a promise, which means it was declared \`async\` or returned a ` +
+      "thenable. Authoring is recorded synchronously: the recording ended the moment the " +
+      "closure returned at its first `await`, so only what was recorded before that await was " +
+      "captured, and anything after it is silently lost or throws where nothing can catch it. " +
+      "Do the asynchronous work before authoring — await it, then pass the result into the " +
+      "definition — and keep the closure itself synchronous. A recording closure describes " +
+      "what the game should do; it never waits for anything at build time."
+  );
 }
