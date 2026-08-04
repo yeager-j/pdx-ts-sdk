@@ -16,7 +16,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadScopeFacts, type RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 import { locateInstall } from "@pdx-ts/sdk/stellaris";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { checkCallSites } from "../src/callsites.ts";
 import { inferScopes, type Registry } from "../src/infer-scopes.ts";
@@ -52,7 +52,14 @@ function measure(root: string) {
 describe.skipIf(installRoot === undefined)(
   "inferred scopes against vanilla's own call sites",
   () => {
-    const report = measure(installRoot!);
+    // A skipped describe's factory still executes at collection, so the
+    // measurement must wait for beforeAll — which never runs for a skipped
+    // suite. Eager here, this file crashed instead of skipping on any machine
+    // without an install.
+    let report!: ReturnType<typeof measure>;
+    beforeAll(() => {
+      report = measure(installRoot!);
+    });
 
     it("measures enough call sites to be able to fail", () => {
       // Guards the assertion below against passing because it measured nothing.
