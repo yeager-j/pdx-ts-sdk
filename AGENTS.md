@@ -119,11 +119,11 @@ not the package itself, and never reads an install.
 ## Adding a new content type
 
 The content system is deliberately generic. Adding a registry such as `ascension_perk` should
-generate `AscensionPerkDef`, `DefinedAscensionPerk`, the free `defineAscensionPerk` definer and its
-`AscensionPerkItem` union without a new emitter, writer class, or type-name conditional.
+generate `AscensionPerkDef`, `DefinedAscensionPerk`, the capability's `mod.ascensionPerk` method,
+and its `AscensionPerkItem` union without a new emitter, writer class, or type-name conditional.
 
 Every field the emitter can lower is emitted automatically — there is no curated field allowlist to
-maintain. A field being mechanically typeable is still not proof the SDK lowers it *correctly*, but
+maintain. A field being mechanically typeable is still not proof the SDK lowers it _correctly_, but
 that risk is caught by evidence (the corpus conformance gate below and the tests you add), not by
 pre-review of a list.
 
@@ -134,8 +134,8 @@ pre-review of a list.
    `type_key_filter` the rules declare) — you will need it in the next step.
 2. Add the type and source file to the explicit allowlist in
    `packages/codegen-cwt/src/content-manifest.ts`,
-   with a `keyword` for `name_field` registries. The definer's name follows from the type name, so
-   the entry carries no plural and no collection name: nothing about the registry has to be spelled
+   with a `keyword` for `name_field` registries. The capability method's name follows from the type
+   name, so the entry carries no plural or placement metadata: nothing about the registry has to be spelled
    twice.
 3. Run `npm run codegen` and read its report. Add overlay rows only where the emitted shape is
    actually wrong or the rules need help:
@@ -148,10 +148,10 @@ pre-review of a list.
    - nested-definition metadata only when the CWT field is genuinely a nested content definition
    - a `scope` or `arity` assertion on `CONTENT_FIELD_OVERRIDES` when CWT states game semantics
      wrongly rather than incompletely, or a `CONTENT_SCOPE_PARAMETERS` row when CWT scopes a body
-     `any` and is *right* — the scope is then a property of each definition, declared by a `scope`
+     `any` and is _right_ — the scope is then a property of each definition, declared by a `scope`
      member the definer strips. All three need evidence, and shape conformance is where that
      evidence comes from — never assert one from a reading of the rules alone.
-   - `CONTENT_DECLINED_FIELDS`, the only way to keep a field the emitter *can* lower out of the
+   - `CONTENT_DECLINED_FIELDS`, the only way to keep a field the emitter _can_ lower out of the
      authoring surface. It should stay nearly empty: a field whose lowered shape is wrong is better
      measured and fixed than withheld. Its one entry so far (`change_orbit`, SDK-30) is not that
      case — the field is positional sugar the SDK has no way to preserve the position of once
@@ -163,7 +163,7 @@ pre-review of a list.
 4. Re-run codegen and inspect its report and generated files. Fix the generic model when a shape is
    reusable. Do not add `if (type === "...")` branches to the generic writer or emitter.
 5. Export the new generated public types from `packages/sdk/src/index.ts`.
-6. Add all four kinds of evidence, all of them written through the free definer:
+6. Add all four kinds of evidence, all of them written through the capability:
    - codegen coverage in `packages/sdk/tests/codegen/content-snapshot.test.ts`
    - corpus coverage in `packages/sdk/tests/codegen/corpus-conformance.test.ts` — hermetic: it
      measures the emitted interface against the committed corpus fixture under
@@ -183,23 +183,23 @@ pre-review of a list.
      and the test's version canary warns, never fails, when a local install has patched past the
      fixture.
    - compile-time API and scope/reference safety in `packages/sdk/tests/content.test-d.ts`: the
-     definer preserves the literal id, the returned item flows into its own registry's reference
+     capability preserves the literal id, the returned item flows into its own registry's reference
      fields, and another registry's item does not.
    - runtime serialization coverage and file snapshots in `packages/sdk/tests/content.test.ts` and
      `packages/sdk/tests/__snapshots__/content/`, built with
-     `render(buildMod(config, [collection(undefined, [defineAscensionPerk({ ... }), ...])]))`
+     `render(mod.compile([mod.feature(undefined, [mod.ascensionPerk("example", { ... })])]))`
 7. Add or update a README example when the new registry introduces an authoring pattern users
    would not infer from existing content types.
 
 Use the generated naming rather than adding hand-written aliases: a snake-case type such as
-`ascension_perk` becomes `AscensionPerk`, `defineAscensionPerk`, `AscensionPerkItem`, and
+`ascension_perk` becomes `AscensionPerk`, `mod.ascensionPerk`, `AscensionPerkItem`, and
 `packages/sdk/src/generated/ascension-perk.ts`.
 
-`defineX` and `patchX` have different evidence requirements. A prefixed new definition cannot
+Capability content methods and `patchX` have different evidence requirements. A prefixed new definition cannot
 collide with vanilla ids, but a vanilla patch is a whole-object override whose load order and
 emission must be verified per registry. `patchX` is an overlay row
-(`CONTENT_PATCH_REGISTRIES`), not a consequence of `defineX` existing — do not add
-`patchAscensionPerk` merely because `defineAscensionPerk` exists.
+(`CONTENT_PATCH_REGISTRIES`), not a consequence of `mod.ascensionPerk` existing — do not add
+`mod.patchAscensionPerk` merely because `mod.ascensionPerk` exists.
 
 ## PDXScript parser
 
@@ -217,21 +217,19 @@ differential, and fast-check property gates described in that package.
   record AST entries.
 - `createMod(config)` is the explicit immutable mod-bound capability. Its top-level content and
   event methods mint ids, while nested definition ids must already belong to its prefix; all return
-  pure values without registration. `feature(stem, items)` places them and `compile(features)` folds
-  them into the `PureMod` consumed by `render`/`write`. There is no mutable builder. The legacy free
-  definers, `collection`, `buildMod`, and `discoverContent` surface is a temporary internal SDK-72
-  migration seam and is removed in a later layer. Diagnostics are throws or `mod.warnings` data —
-  never console output.
-- Source layout is not identity. `discoverContent(dir)` (`packages/sdk/src/discover.ts`) is the
-  impure shell that turns a directory of feature modules into those collections — export is
-  registration, the basename is the file stem — and it is a convenience over `collection`, never a
-  second path into the fold.
+  pure values without registration. `mod.feature(stem, items)` places them and
+  `mod.compile(features)` folds them into the `PureMod` consumed by `render`/`write`. There is no
+  mutable builder and no alternate public authoring surface. Diagnostics are throws or
+  `mod.warnings` data — never console output.
+- Source layout is not identity. `discoverFeatures(dir)` (`packages/sdk/src/discover.ts`) is the
+  impure shell that reads only a feature module's named `feature` export. The authored feature stem,
+  not the basename or the module's other exports, decides placement.
 - Emission order is a function of the content, never of source position, module layout, export
-  order, or the order collections were passed: content sorts by registry declaration order, then
+  order, or the order features were passed: content sorts by registry declaration order, then
   emitted file path, then id; event files sort by path with numeric ids inside a file; on-action
-  hook blocks, the contribution sink and the patch list sort by name or id. Arrays *inside* a
-  definition (prerequisites, event options, one `on()` call's event list) are author data and are
-  emitted as written. Reordering collections, exports, or authoring statements must not change a
+  hook blocks, the contribution sink and the patch list sort by name or id. Arrays _inside_ a
+  definition (prerequisites, event options, one `mod.on()` call's event list) are author data and are
+  emitted as written. Reordering features, exports, or authoring statements must not change a
   byte of output, and moving a definition to another module must change only which file it lands in
   — never its id, its bytes, or its position among its neighbors. The standing evidence is the
   order-purity test in `packages/sdk/tests/pure-api.test.ts` (two reversed authoring orders
@@ -241,7 +239,7 @@ differential, and fast-check property gates described in that package.
 - One feature module fans out across every registry it defines into, keeping its stem in each:
   `content/resonance.ts` holding technologies and events emits both
   `common/technology/<prefix>_resonance.txt` and `events/<prefix>_resonance.txt`. That is a
-  property of `collection(stem, items)`, not of `discoverContent`.
+  property of `mod.feature(stem, items)`, not of `discoverFeatures`.
 - An event namespace and an event file are in bijection: one namespace per file, one file per
   namespace. A namespace's events therefore live in one module.
 - Runtime effect recording is scope-agnostic; generated interfaces enforce which effects and

@@ -1,9 +1,12 @@
 # Mod-capability probe verdict: the boundary earns a migration
 
-> **Verdict accepted, 2026-08-04 (SDK-72).** The probe remains under
-> `design/mod-capability-probe/`; Layer 1 now implements its immutable
-> capability surface. The later migration layers remove the legacy free
-> authoring seam. Escape criteria were committed before implementation began.
+> **Status — current as of SDK-72, 2026-08-04.** This recommendation landed:
+> `createMod`, capability-owned content/events/on-actions, explicit
+> `feature`, named-export `discoverFeatures`, and `compile` are the public
+> authoring contract. The probe remains under `design/mod-capability-probe/` as
+> its evidence record. References below to the old free surface are historical;
+> `buildMod` references name the internal fold behind `mod.compile`, not a
+> supported public alternative.
 
 ## Judgment
 

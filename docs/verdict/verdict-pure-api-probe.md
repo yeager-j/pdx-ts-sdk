@@ -1,5 +1,12 @@
 # Pure-API probe verdict: the fold holds
 
+> **Status — historical and superseded by SDK-72, 2026-08-04.** This probe
+> records the builder-to-pure-function migration and its evidence. The current
+> public contract is capability-only: `createMod`, capability-owned authoring,
+> explicit `feature`, `discoverFeatures`, and `mod.compile`. The legacy public
+> API names below are retained only as historical evidence; `buildMod` names the
+> internal fold now reached through `mod.compile`, not a public alternative.
+
 > **Migrated 2026-08-02.** The dispatch plan below ran to completion on
 > `feature/pure-api` in its six chunks (9dd8857 promote, 78871c4 codegen,
 > 13f4c56 examples/README, 6b1853b runtime tests, 50a9d95 type tests, then the

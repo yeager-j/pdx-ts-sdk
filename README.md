@@ -7,14 +7,36 @@ TypeScript values, a build folds them into a mod, and rendering is a pure
 function from that value to files.
 
 ```ts
-// content/resonance.ts
+// src/mod.ts
+import { createMod } from "@pdx-ts/sdk";
 
-const events = namespace("hello_galaxy");
+export const mod = createMod({
+  name: "Hello Galaxy",
+  prefix: "hello_galaxy",
+  version: "0.1.0",
+  supportedVersion: "4.4.*",
+});
+```
+
+```ts
+// src/content/resonance.ts
+import {
+  and,
+  countryFlags,
+  eventTarget,
+  hasCountryFlag,
+  hasOwner,
+  isAtWar,
+  not,
+  onActions,
+} from "@pdx-ts/sdk";
+
+import { mod } from "../mod.ts";
+
+const flags = countryFlags("hello_galaxy_heard_the_hum", "hello_galaxy_pacifist_path");
 const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
-export const flags = countryFlags("hello_galaxy_heard_the_hum", "hello_galaxy_pacifist_path");
 
-export const resonanceTheory = defineTechnology({
-  id: "hello_galaxy_tech_resonance_theory",
+export const resonanceTheory = mod.technology("resonance_theory", {
   name: "Crystal Resonance Theory",
   desc: "The lattice hums at frequencies we are only beginning to hear.",
   cost: 2000,
@@ -24,8 +46,7 @@ export const resonanceTheory = defineTechnology({
   weight: 100,
 });
 
-export const resonanceWeapons = defineTechnology({
-  id: "hello_galaxy_tech_resonance_weapons",
+export const resonanceWeapons = mod.technology("resonance_weapons", {
   name: "Resonance Disruptors",
   desc: "Weaponized harmonics that shatter hulls from within.",
   cost: 6000,
@@ -36,13 +57,24 @@ export const resonanceWeapons = defineTechnology({
   isRare: true,
   weight: 70,
   potential: and(
-          hasCountryFlag(flags.hello_galaxy_heard_the_hum),
-          not(hasCountryFlag(flags.hello_galaxy_pacifist_path))
+    hasCountryFlag(flags.hello_galaxy_heard_the_hum),
+    not(hasCountryFlag(flags.hello_galaxy_pacifist_path))
   ),
 });
 
-export const humReturns = events.defineCountryEvent({
-  id: 1,
+const events = mod.namespace("resonance");
+export const aftershock = events.planet(2, {
+  from: "country",
+  title: "Aftershock",
+  desc: "The crystal hum lingers over this world.",
+  isTriggeredOnly: true,
+  immediate: (planet, ctx) => {
+    ctx.from.effects((country) => country.addResource({ resource: "influence", amount: 50 }));
+  },
+  options: [{ name: "Noted." }],
+});
+
+export const humReturns = events.country(1, {
   title: "The Hum Returns",
   desc: "Deep in the lattice, something answers back.",
   isTriggeredOnly: true,
@@ -54,27 +86,40 @@ export const humReturns = events.defineCountryEvent({
       },
       {
         weight: 40,
-        modifiers: [{factor: 2, when: isAtWar()}],
+        modifiers: [{ factor: 2, when: isAtWar() }],
         do: (c) => {
-          c.everyOwnedPlanet({limit: hasOwner()}, (planet) => {
+          c.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
             planet.saveEventTargetAs(stormWorld);
-            planet.planetEvent({id: aftershock, from: ctx.self, days: 30});
+            planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
           });
         },
       },
     ]);
     country
-      .if(hasCountryFlag(flags.hello_galaxy_heard_the_hum), (c) => {
+      .if(hasCountryFlag(flags.hello_galaxy_heard_the_hum), () => {
         stormWorld.effects((planet) => planet.addDeposit("d_minerals_1"));
       })
       .else((c) => c.log("the hum went unheard"));
   },
-  options: [{name: "Fascinating."}],
+  options: [{ name: "Fascinating." }],
 });
 
+export const feature = mod.feature("resonance", [
+  resonanceTheory,
+  resonanceWeapons,
+  aftershock,
+  humReturns,
+  mod.on(onActions.onGameStartCountry, [humReturns]),
+]);
 ```
 
-builds to `common/technology/hello_galaxy_resonance.txt`:
+`createMod` is the only authoring entry point. It mints each content id from
+the mod prefix (`hello_galaxy_tech_resonance_theory`), gives events their
+namespace and numeric ids (`hello_galaxy_resonance.1`), and compiles explicit
+features into the immutable mod value that `render`, `write`, and `install`
+consume.
+
+It builds to `common/technology/hello_galaxy_resonance.txt`:
 
 ```
 hello_galaxy_tech_resonance_theory = {
@@ -105,6 +150,7 @@ hello_galaxy_tech_resonance_weapons = {
 ```
 
 and `events/hello_galaxy_resonance.txt`:
+
 ```
 namespace = hello_galaxy_resonance
 
@@ -279,10 +325,10 @@ type-check by kind:
 ```ts
 const flags = countryFlags("hello_galaxy_heard_the_hum", "hello_galaxy_pacifist_path");
 
-hasCountryFlag(flags.hello_galaxy_heard_the_hum);    // ok
-hasCountryFlag(flags.hello_galaxy_heard_the_humm);   // typo: compile error
-hasCountryFlag(planetFlags("surveyed").surveyed);    // wrong kind: compile error
-hasCountryFlag("some_vanilla_flag");                 // raw strings still work
+hasCountryFlag(flags.hello_galaxy_heard_the_hum); // ok
+hasCountryFlag(flags.hello_galaxy_heard_the_humm); // typo: compile error
+hasCountryFlag(planetFlags("surveyed").surveyed); // wrong kind: compile error
+hasCountryFlag("some_vanilla_flag"); // raw strings still work
 ```
 
 ## Vanilla's own script is callable, and knows its scope
@@ -318,8 +364,7 @@ Some registries are trees. A solar system initializer holds planets, planets
 hold moons, and moons hold moons, to whatever depth you write:
 
 ```ts
-const home = defineSolarSystemInitializer({
-  id: "hello_galaxy_system_home",
+const home = mod.solarSystemInitializer("home", {
   class: "rl_standard_stars",
   usage: ["custom_empire"],
   planet: [
@@ -354,7 +399,7 @@ on the inner one and not the outer.
 
 **There is no `changeOrbit` field.** The rules' `change_orbit` key is sugar —
 written between two `planet` (or two `moon`) blocks, it advances an orbit
-cursor for whatever follows it, so its *position* among its siblings is the
+cursor for whatever follows it, so its _position_ among its siblings is the
 geometry. A field can't carry that: every repeated `change_orbit` collapses
 into one array-shaped member with one fixed emission slot, and 288 of 355
 shipped top-level initializer blocks interleave it between `planet` blocks —
@@ -417,15 +462,22 @@ each definition as a typed object; a patch is a plain transform over it:
 ```ts
 const vanilla = stellaris.load();
 
-const geneTailoring = patchTechnology(
+const newTechnology = mod.technology("new", {
+  name: "New Technology",
+  cost: 2000,
+  area: "physics",
+  tier: 2,
+  category: "particles",
+});
+const geneTailoring = mod.patchTechnology(
   vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
   (t) => ({
     cost: t.cost.value * 2, // cost is @tier3cost1 in the file — .value bakes it, visibly
-    prerequisites: [...t.prerequisites, myNewTech],
+    prerequisites: [...t.prerequisites, newTechnology],
   })
 );
 
-const mod = buildMod(config, [collection(undefined, [geneTailoring])], { vanilla });
+const compiled = mod.compile([mod.feature(undefined, [newTechnology, geneTailoring])], { vanilla });
 ```
 
 Fields the transform doesn't touch are carried through byte-faithfully,
@@ -438,15 +490,15 @@ and the override didn't take" becomes a build error.
 
 ## Packages
 
-| Package | What it is |
-| --- | --- |
-| [create-stellaris-mod](packages/create-stellaris-mod/README.md) | `npx create-stellaris-mod my-mod` — detects your install and scaffolds a project that builds on the first `npm install` |
-| [@pdx-ts/sdk](packages/sdk/README.md) | The SDK: definers, triggers/effects, scope safety, building, rendering, vanilla patching, mod-logic testing |
-| [@pdx-ts/sdk-testing](packages/sdk-testing/README.md) | Test mod logic without launching the game: a whitelist interpreter over the recorded triggers and effects, plus vitest matchers |
-| [@pdx-ts/pdxscript](packages/pdxscript/README.md) | Standalone PDXScript parser/serializer — order-preserving, round-trip-verified, game-semantics-free |
-| [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md) | Every identifier a real install defines, as version-pinned types, plus vanilla's scripted triggers and effects bound at their inferred scopes |
-| [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md) | Rules-derived generator: emits the SDK's typed surface from the vendored cwtools rules |
-| [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md) | Install-derived generator: emits @pdx-ts/stellaris-ids from an installed copy of the game |
+| Package                                                         | What it is                                                                                                                                    |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [create-stellaris-mod](packages/create-stellaris-mod/README.md) | `npx create-stellaris-mod my-mod` — detects your install and scaffolds a project that builds on the first `npm install`                       |
+| [@pdx-ts/sdk](packages/sdk/README.md)                           | The SDK: capability authoring, triggers/effects, scope safety, building, rendering, vanilla patching, mod-logic testing                       |
+| [@pdx-ts/sdk-testing](packages/sdk-testing/README.md)           | Test mod logic without launching the game: a whitelist interpreter over the recorded triggers and effects, plus vitest matchers               |
+| [@pdx-ts/pdxscript](packages/pdxscript/README.md)               | Standalone PDXScript parser/serializer — order-preserving, round-trip-verified, game-semantics-free                                           |
+| [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md)       | Every identifier a real install defines, as version-pinned types, plus vanilla's scripted triggers and effects bound at their inferred scopes |
+| [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md)           | Rules-derived generator: emits the SDK's typed surface from the vendored cwtools rules                                                        |
+| [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md)   | Install-derived generator: emits @pdx-ts/stellaris-ids from an installed copy of the game                                                     |
 
 At the root: `vendor/` (the committed cwtools rules and doc dumps),
 `fixtures/` (the shared fake install the hermetic tests run against),
