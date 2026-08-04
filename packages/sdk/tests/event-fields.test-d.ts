@@ -84,6 +84,22 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
       location: (ctx) => ctx.from,
     });
   });
+
+  it("requires a declared FROM before situation can read ctx.from", () => {
+    const events = namespace("event_fields_types_g");
+    events.defineFleetEvent({
+      id: 1,
+      from: "situation",
+      hideWindow: true,
+      situation: (ctx) => ctx.from,
+    });
+    events.defineFleetEvent({
+      id: 2,
+      hideWindow: true,
+      // @ts-expect-error — this event declared no `from:`; ctx.from is an inert sentinel, not a ScopeRef
+      situation: (ctx) => ctx.from,
+    });
+  });
 });
 
 describe("PR #15 review follow-ups (SDK-46)", () => {

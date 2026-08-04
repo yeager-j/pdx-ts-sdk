@@ -394,4 +394,19 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     )!;
     expect(rendered).toContain("major_trigger = {\n\t\thas_event_chain = event_fields_chain");
   });
+
+  it("lowers situation = from via the same context-closure idiom as location", () => {
+    const events = makeEvents();
+    const fromSituation = events.defineFleetEvent({
+      id: 1032,
+      from: "situation",
+      hideWindow: true,
+      isTriggeredOnly: true,
+      situation: (ctx) => ctx.from,
+    });
+    const rendered = render(buildMod(CONFIG, [collection("events", [fromSituation])])).get(
+      "events/event_fields_events.txt"
+    )!;
+    expect(rendered).toContain("situation = from");
+  });
 });

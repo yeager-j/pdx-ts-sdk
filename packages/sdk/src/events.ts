@@ -146,6 +146,18 @@ export type EventLocation<S extends ScopeName, From extends ScopeName | undefine
   ScopeValue<ScopeName> | ((ctx: ScriptCtx<S, From>) => ScopeValue<ScopeName>);
 
 /**
+ * A `situation` value (`events.cwt:399`, `scope[situation]`): the same fixed
+ * {@link ScopeValue}-or-FROM-closure dual as {@link EventLocation}. A saved
+ * `eventTarget<"situation">` covers the common case, but the CWT-legal
+ * `situation = from` form — a non-situation event fired from a situation —
+ * needs `ctx.from`, which only exists inside the closure form; without it,
+ * authoring `situation = from` meant forging the internal `ScopeValue` shape
+ * by hand.
+ */
+export type EventSituation<S extends ScopeName, From extends ScopeName | undefined> =
+  ScopeValue<"situation"> | ((ctx: ScriptCtx<S, From>) => ScopeValue<"situation">);
+
+/**
  * A `mean_time_to_happen` block (`events.cwt:456`, `subtype[!triggered]`):
  * days/months/years plus the same `modifier_rule` modifier rows
  * `Modifier`/`modifierEntry` (`effect-core.ts`) already lower elsewhere.
@@ -219,8 +231,8 @@ export interface EventDef<S extends ScopeName, From extends ScopeName | undefine
   readonly eventChain?: EventChainRef | string;
   /** A `<specimen>` reference (`events.cwt:417`), used by xenology/zoo content. */
   readonly specimen?: SpecimenRef | string;
-  /** Associates this event with a situation scope (`events.cwt:399`, `scope[situation]`). */
-  readonly situation?: ScopeValue<"situation">;
+  /** Associates this event with a situation scope (`events.cwt:399`, `scope[situation]`); `(ctx) => ctx.from` writes `situation = from`. */
+  readonly situation?: EventSituation<S, From>;
   /** Where the event's window renders relative to (`events.cwt:308`); dig-stage events set `(ctx) => ctx.from`. */
   readonly location?: EventLocation<S, From>;
   /**
@@ -428,7 +440,8 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     entries.push(kv("specimen", refId(def.specimen)));
   }
   if (def.situation !== undefined) {
-    entries.push(kv("situation", def.situation.path));
+    const situation = typeof def.situation === "function" ? def.situation(ctx) : def.situation;
+    entries.push(kv("situation", situation.path));
   }
   if (def.location !== undefined) {
     const location = typeof def.location === "function" ? def.location(ctx) : def.location;
