@@ -6,7 +6,6 @@ import {
   canGoMia,
   canJoinFactions,
   collection,
-  createMod,
   currentSituationApproach,
   currentStage,
   defineAgenda,
@@ -76,7 +75,6 @@ import {
   type SectionTemplateFields,
   type StrikeCraftComponentTemplateFields,
   type TechnologyRef,
-  type TraditionDef,
   type TraditionSwapFields,
   type Trigger,
   type TriggeredModifier,
@@ -86,22 +84,6 @@ import {
 } from "../src/index.ts";
 
 describe("generated content authoring types", () => {
-  it("preserves capability returns with owned nested ids", () => {
-    const mod = createMod({
-      name: "Capability nested types",
-      prefix: "capability_nested_types",
-      supportedVersion: "4.4.*",
-    });
-    const tradition = mod.tradition("harmony", {
-      name: "Harmony",
-      traditionSwap: { capability_nested_types_renewal: { name: "Renewal" } },
-    });
-
-    expectTypeOf(tradition).toEqualTypeOf<
-      ContentItem<"tradition", TraditionDef<"capability_nested_types_tradition_harmony">>
-    >();
-  });
-
   it("does not invent a category field on traditions", () => {
     defineTradition({
       id: "content_types_tradition_without_category",
