@@ -595,13 +595,18 @@ const MODIFIER_OPS = [
 
 /**
  * Every numeric operation `Modifier<S>` (`packages/sdk/src/effect-core.ts`)
- * declares, minus the two members that are not operations (`desc`, `when`).
+ * declares, minus the members that are not operations: `desc` and its
+ * companion `descKey` (localisation, SDK-48) and `when` (the gating trigger).
  * `applyModifierRow`'s multi-operation guard is only as complete as
  * `MODIFIER_OPS` — a member present on `Modifier` but missing here would let
  * a row that combines it with a recognized operation silently evaluate only
  * the recognized one, exactly the guessing this guard exists to refuse.
+ *
+ * Adding a non-operation member to `Modifier` therefore means excluding it
+ * here as well. The guard below is what makes that a build failure rather
+ * than a silent gap — it is doing its job when it fires.
  */
-type ModifierOpKey = Exclude<keyof Modifier<never>, "desc" | "when">;
+type ModifierOpKey = Exclude<keyof Modifier<never>, "desc" | "descKey" | "when">;
 
 /** `true` iff `A` and `B` contain exactly the same members, in either order. */
 type SameKeys<A extends string, B extends string> = [A] extends [B]
