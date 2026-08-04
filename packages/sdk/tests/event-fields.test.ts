@@ -460,6 +460,26 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     expect(keyFor("Unpinned tooltip\\.", afterLoc)).toBe(unpinnedKeyBefore);
   });
 
+  it("surfaces an unstable-desc-key warning in mod.warnings when an event modifier desc has no descKey", () => {
+    const events = makeEvents();
+    const unpinned = events.defineCountryEvent({
+      id: 1042,
+      hideWindow: true,
+      meanTimeToHappen: {
+        days: 5,
+        modifiers: [
+          { factor: 2, desc: "No descKey here.", when: hasGlobalFlag("event_fields_no_key") },
+        ],
+      },
+    });
+    const mod = buildMod(CONFIG, [collection("events", [unpinned])]);
+    const unstable = mod.warnings.filter((warning) => warning.code === "unstable-desc-key");
+    expect(unstable).toHaveLength(1);
+    expect(unstable[0]!.message).toContain("event_fields.1042");
+    expect(unstable[0]!.message).toContain("mean_time_to_happen");
+    expect(unstable[0]!.message).toContain("descKey");
+  });
+
   it("lowers majorTrigger as a country-scope predicate, evaluated per recipient country rather than the event's own scope", () => {
     const events = makeEvents();
     // A fleet event: majorTrigger must still accept a country-only predicate
