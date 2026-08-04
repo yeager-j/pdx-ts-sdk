@@ -967,31 +967,31 @@ function modifierBlock(key: string, value: ModifierClosure): PdxEntry {
 function weightOperationEntries(value: WeightBlockOperations<ScopeName>): PdxEntry[] {
   const entries: PdxEntry[] = [];
   if (value.factor !== undefined) {
-    entries.push(kv("factor", value.factor));
+    entries.push(kv("factor", scriptValueScalar(value.factor)));
   }
   if (value.add !== undefined) {
-    entries.push(kv("add", value.add));
+    entries.push(kv("add", scriptValueScalar(value.add)));
   }
   if (value.weight !== undefined) {
-    entries.push(kv("weight", value.weight));
+    entries.push(kv("weight", scriptValueScalar(value.weight)));
   }
   if (value.subtract !== undefined) {
-    entries.push(kv("subtract", value.subtract));
+    entries.push(kv("subtract", scriptValueScalar(value.subtract)));
   }
   if (value.mult !== undefined) {
-    entries.push(kv("mult", value.mult));
+    entries.push(kv("mult", scriptValueScalar(value.mult)));
   }
   if (value.multiplier !== undefined) {
-    entries.push(kv("multiply", value.multiplier));
+    entries.push(kv("multiply", scriptValueScalar(value.multiplier)));
   }
   if (value.divide !== undefined) {
-    entries.push(kv("divide", value.divide));
+    entries.push(kv("divide", scriptValueScalar(value.divide)));
   }
   if (value.minValue !== undefined) {
-    entries.push(kv("min", value.minValue));
+    entries.push(kv("min", scriptValueScalar(value.minValue)));
   }
   if (value.maxValue !== undefined) {
-    entries.push(kv("max", value.maxValue));
+    entries.push(kv("max", scriptValueScalar(value.maxValue)));
   }
   return entries;
 }

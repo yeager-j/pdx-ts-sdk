@@ -19,6 +19,7 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 import {
   defineTechnology,
   makeScope,
+  scriptedTriggerModifier,
   vanilla,
   type ScopeName,
   type ScriptedEffectCall,
@@ -277,6 +278,37 @@ describe("the generated bindings", () => {
     makeScope<"country">(sink).run(setMerchantGovernmentEffect());
     // @ts-expect-error a country-scoped effect cannot run in a planet closure.
     makeScope<"planet">(sink).run(setMerchantGovernmentEffect());
+  });
+});
+
+describe("scriptedTriggerModifier with the package (bug bash #16 finding 5)", () => {
+  it("rejects a typo in the trigger name", () => {
+    // @ts-expect-error `check_galaxy_setup_vaule` is not a vanilla scripted
+    // trigger — the exact typo shape the finding named.
+    scriptedTriggerModifier("check_galaxy_setup_vaule");
+  });
+
+  it("checks a real scripted trigger's parameters, required and optional alike", () => {
+    // has_crisis_stage's one parameter (STAGE) is defaulted, so it is
+    // optional; can_colonize_planet_trigger's SCOPE is bare, so it is
+    // required. Both edges the same distinction scriptedTrigger already
+    // pins in `present.test-d.ts` above, exercised through this row-shaped
+    // entry point instead of a direct call.
+    scriptedTriggerModifier("has_crisis_stage");
+    scriptedTriggerModifier("has_crisis_stage", { STAGE: 2 });
+    // @ts-expect-error `STAGE` is the only parameter `has_crisis_stage` takes.
+    scriptedTriggerModifier("has_crisis_stage", { STAEG: 2 });
+    scriptedTriggerModifier("can_colonize_planet_trigger", { SCOPE: "root" });
+    // @ts-expect-error can_colonize_planet_trigger's SCOPE has no default.
+    scriptedTriggerModifier("can_colonize_planet_trigger");
+  });
+
+  it("spreads into a legal ComplexTriggerModifier row", () => {
+    // The row itself is content.ts's own type; this file only proves the
+    // checked half composes with it the way the runtime evidence in
+    // packages/sdk/tests/content.test.ts assumes.
+    const row = { ...scriptedTriggerModifier("has_crisis_stage", { STAGE: 2 }), mode: "factor" };
+    expectTypeOf(row.trigger).toEqualTypeOf<"has_crisis_stage">();
   });
 });
 

@@ -62,6 +62,7 @@ import {
   isSiteLocked,
   namespace,
   render,
+  scriptedTriggerModifier,
   type Modifier,
   type PureMod,
   type ScopeName,
@@ -1545,8 +1546,12 @@ describe("generated content registries", () => {
     // it is the same object either way, but the first key goes unreferenced
     // and unused — orphaned for a translator to trip over). Registration
     // and resolution are keyed by `${ownerId}::${fieldKey}` in addition to
-    // the row object, so each definition resolves its own occurrence.
-    const sharedRow = { mult: 2, desc: "Shared gate.", when: always() };
+    // the row object, so each definition resolves its own occurrence. The
+    // key's own *value* — `descKey` pinned, here, rather than falling back
+    // to a hash of the text (SDK-48) — is a separate, orthogonal concern:
+    // both definitions share the same pinned slug (same row, same text) but
+    // still resolve to their own owner-prefixed key.
+    const sharedRow = { mult: 2, desc: "Shared gate.", descKey: "shared_gate", when: always() };
     const first = defineTradition({
       id: "wb_test_tradition_shared_row_first",
       name: "Shared Row First",
@@ -1562,8 +1567,43 @@ describe("generated content registries", () => {
         collection(undefined, [first, second]),
       ])
     ).get("common/traditions/wb_test_traditions.txt")!;
-    expect(rendered).toContain("desc = wb_test_tradition_shared_row_first_ai_weight_0");
-    expect(rendered).toContain("desc = wb_test_tradition_shared_row_second_ai_weight_0");
+    expect(rendered).toContain("desc = wb_test_tradition_shared_row_first_ai_weight_shared_gate");
+    expect(rendered).toContain("desc = wb_test_tradition_shared_row_second_ai_weight_shared_gate");
+  });
+
+  it("lowers scriptedTriggerModifier's checked trigger/parameters into a complex_trigger_modifier row (bug bash #16 finding 5)", () => {
+    // scriptedTriggerModifier checks the name and parameter bag against
+    // @pdx-ts/stellaris-ids's scripted triggers when installed (see
+    // packages/stellaris-ids/tests/present.test-d.ts for the checked-world
+    // compile-time evidence, and vanilla-refs.test-d.ts for the
+    // package-absent world) — this is the runtime half: its return value
+    // spreads into an ordinary ComplexTriggerModifier row and lowers exactly
+    // like one authored by hand. has_crisis_stage is a real vanilla scripted
+    // trigger (common/scripted_triggers/00_scripted_triggers.txt) with one
+    // defaulted parameter.
+    const system = defineSolarSystemInitializer({
+      id: "wb_test_system_scripted_trigger_modifier",
+      class: "sc_g",
+      usageOdds: {
+        modifiers: [
+          { ...scriptedTriggerModifier("has_crisis_stage", { STAGE: 2 }), mode: "factor" },
+        ],
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block scripted trigger modifier test", "wb_test"), [
+        collection(undefined, [system]),
+      ])
+    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    expect(rendered).toContain(
+      "complex_trigger_modifier = {\n" +
+        "\t\t\ttrigger = has_crisis_stage\n" +
+        "\t\t\tparameters = {\n" +
+        "\t\t\t\tSTAGE = 2\n" +
+        "\t\t\t}\n" +
+        "\t\t\tmode = factor\n" +
+        "\t\t}"
+    );
   });
 
   it("contributes ship-of-size limits under the engine's `default` key", () => {

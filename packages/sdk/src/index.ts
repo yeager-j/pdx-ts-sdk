@@ -312,6 +312,7 @@ export type {
 export {
   scriptedEffect,
   scriptedTrigger,
+  scriptedTriggerModifier,
   type AssertedScope,
   type ScopeAssertion,
   type ScopeClaim,

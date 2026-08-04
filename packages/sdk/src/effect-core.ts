@@ -23,7 +23,7 @@ import { EVENT_KINDS } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { compareUtf8 } from "./resolver/path-order.ts";
 import { toScalar } from "./scalar.ts";
-import type { ScriptedEffectCall } from "./scripted.ts";
+import type { ScriptedEffectCall, ScriptedParamValue } from "./scripted.ts";
 import { scriptValueScalar, trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";
 
 // ---------------------------------------------------------------------------
@@ -483,22 +483,32 @@ export type ComplexTriggerModifierMode =
  * the CWT alias, spelled distinctly from {@link Modifier}'s `mult`/`multiply`/
  * `min`/`max` — the two row kinds share no field names beyond `mult` itself,
  * so the lowering keeps them separate rather than reusing `Modifier`'s
- * mapping.
+ * mapping. Each is declared `value_field` in `modifier_rule.cwt`, the same
+ * domain as {@link Modifier}'s own numeric arms, so they are `ScriptValue`
+ * (not bare `number`) for the same reason those are: a `@scripted_variable`
+ * has to lower through `scriptValueScalar` to write bare rather than
+ * quoted, exactly like every other `value_field` here.
  */
 export interface ComplexTriggerModifier<S extends ScopeName> {
   /** The scripted trigger's key, evaluated with `parameters` as arguments. */
   readonly trigger: string;
   /** Scope path the trigger runs in (defaults to `this` when omitted). */
   readonly triggerScope?: string;
-  /** Arguments passed to the named trigger. */
-  readonly parameters?: Readonly<Record<string, string | number>>;
+  /**
+   * Arguments passed to the named trigger. `ScriptedParamValue` (not a bare
+   * `string | number`) so a row built by hand accepts the same widened
+   * forms — booleans, branded references, scope values — `scriptedTrigger`
+   * and {@link scriptedTriggerModifier} already accept, and so it can hold
+   * exactly what `scriptedTriggerModifier`'s checked return value produces.
+   */
+  readonly parameters?: Readonly<Record<string, ScriptedParamValue>>;
   /** Which operation the trigger's result feeds. */
   readonly mode: ComplexTriggerModifierMode;
-  readonly mult?: number;
-  readonly multiplier?: number;
-  readonly divide?: number;
-  readonly minValue?: number;
-  readonly maxValue?: number;
+  readonly mult?: ScriptValue;
+  readonly multiplier?: ScriptValue;
+  readonly divide?: ScriptValue;
+  readonly minValue?: ScriptValue;
+  readonly maxValue?: ScriptValue;
   /**
    * Display text for this row's tooltip, auto-registered as localisation the
    * same way {@link Modifier.desc} is — see `ContentAuthoring`'s
@@ -599,25 +609,25 @@ export function complexTriggerModifierEntry(
     entries.push(
       block(
         "parameters",
-        keys.map((key) => kv(key, params[key]!))
+        keys.map((key) => kv(key, toScalar(params[key])))
       )
     );
   }
   entries.push(kv("mode", modifier.mode));
   if (modifier.mult !== undefined) {
-    entries.push(kv("mult", modifier.mult));
+    entries.push(kv("mult", scriptValueScalar(modifier.mult)));
   }
   if (modifier.multiplier !== undefined) {
-    entries.push(kv("multiplier", modifier.multiplier));
+    entries.push(kv("multiplier", scriptValueScalar(modifier.multiplier)));
   }
   if (modifier.divide !== undefined) {
-    entries.push(kv("divide", modifier.divide));
+    entries.push(kv("divide", scriptValueScalar(modifier.divide)));
   }
   if (modifier.minValue !== undefined) {
-    entries.push(kv("min_value", modifier.minValue));
+    entries.push(kv("min_value", scriptValueScalar(modifier.minValue)));
   }
   if (modifier.maxValue !== undefined) {
-    entries.push(kv("max_value", modifier.maxValue));
+    entries.push(kv("max_value", scriptValueScalar(modifier.maxValue)));
   }
   if (modifier.desc !== undefined) {
     const key =
