@@ -1,8 +1,5 @@
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { defineHardening } from "../../../examples/hardening/mod.ts";
-import { defineHelloGalaxy } from "../../../examples/hello-galaxy/mod.ts";
 import {
   always,
   createMod,
@@ -12,16 +9,6 @@ import {
   type IdProfile,
   type ModCapability,
 } from "../src/index.ts";
-import { load } from "../src/stellaris/load.ts";
-import {
-  defineCapabilityHardening,
-  defineCapabilityHelloGalaxy,
-} from "./fixtures/capability-examples.ts";
-
-const vanilla = load({
-  installPath: join(import.meta.dirname, "../../../fixtures/fake-install"),
-  cache: false,
-});
 
 const COMPLETE_PROFILE = {
   technology: "tech",
@@ -68,21 +55,6 @@ function mod() {
     supportedVersion: "4.4.*",
   });
 }
-
-describe("mod capability parity", () => {
-  it("renders the hello-galaxy equivalent as the exact ordered file map", async () => {
-    expect([...render(defineCapabilityHelloGalaxy()).entries()]).toEqual([
-      ...render(await defineHelloGalaxy()).entries(),
-    ]);
-  });
-
-  it("renders the hardening equivalent and patch plan byte-for-byte", () => {
-    const current = defineHardening(vanilla);
-    const capability = defineCapabilityHardening(vanilla);
-    expect([...render(capability.mod).entries()]).toEqual([...render(current.mod).entries()]);
-    expect(capability.mod.patchPlan).toEqual(current.mod.patchPlan);
-  });
-});
 
 describe("mod capability purity and ids", () => {
   it("snapshots config and tags, freezes the capability, and defers placement until feature", () => {

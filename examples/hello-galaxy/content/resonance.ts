@@ -3,8 +3,8 @@
  *
  * This is the whole pitch in one file. Stellaris wants technologies in
  * `common/technology/` and events in `events/`; the feature wants them next to
- * each other. Both are true, because the module is the feature and the build
- * fans it out across registries: this one file emits
+ * each other. Both are true, because this module exports a feature with the
+ * authored stem `resonance`, which the build fans out across registries:
  * `common/technology/hello_galaxy_resonance.txt` and
  * `events/hello_galaxy_resonance.txt` — one stem, two registry directories.
  *
@@ -18,30 +18,20 @@
  * checked. Nothing here asserts a scope; each was derived from what the rules
  * already say about the keys those bodies evaluate.
  *
- * Event identity is authored, never inferred from layout: `namespace(...)`
- * declares it, so every event id below is `hello_galaxy.<n>` from birth. A
+ * Event identity is authored, never inferred from layout: `mod.namespace("resonance")`
+ * declares it, so every event id below is `hello_galaxy_resonance.<n>` from birth. A
  * namespace belongs to exactly one file, which is why a namespace's events are
  * written in one module — the handle itself is local and must not be exported.
  */
 
-import {
-  and,
-  defineTechnology,
-  eventTarget,
-  hasCountryFlag,
-  hasOwner,
-  isAtWar,
-  namespace,
-  not,
-  vanilla,
-} from "@pdx-ts/sdk";
+import { and, eventTarget, hasCountryFlag, hasOwner, isAtWar, not, vanilla } from "@pdx-ts/sdk";
 import { giveTechOptionOrProgressEffect } from "@pdx-ts/stellaris-ids/effects";
 import { hasActualDeficit, isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
 
 import { flags } from "../flags.ts";
+import { mod } from "../mod.ts";
 
-export const resonanceTheory = defineTechnology({
-  id: "hello_galaxy_tech_resonance_theory",
+export const resonanceTheory = mod.technology("resonance_theory", {
   name: "Crystal Resonance Theory",
   desc: "The lattice hums at frequencies we are only beginning to hear.",
   cost: 2000,
@@ -51,8 +41,7 @@ export const resonanceTheory = defineTechnology({
   weight: 100,
 });
 
-export const resonanceWeapons = defineTechnology({
-  id: "hello_galaxy_tech_resonance_weapons",
+export const resonanceWeapons = mod.technology("resonance_weapons", {
   name: "Resonance Disruptors",
   desc: "Weaponized harmonics that shatter hulls from within.",
   cost: 6000,
@@ -74,7 +63,7 @@ export const resonanceWeapons = defineTechnology({
   ),
 });
 
-const events = namespace("hello_galaxy");
+const events = mod.namespace("resonance");
 
 const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
 
@@ -84,8 +73,7 @@ const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
  * through FROM. Every scope transition is compile-checked; recording happens
  * right here, at define time.
  */
-export const aftershock = events.definePlanetEvent({
-  id: 2,
+export const aftershock = events.planet(2, {
   from: "country",
   title: "Aftershock",
   desc: "The crystal hum lingers over this world.",
@@ -98,8 +86,7 @@ export const aftershock = events.definePlanetEvent({
   options: [{ name: "Noted." }],
 });
 
-export const humReturns = events.defineCountryEvent({
-  id: 1,
+export const humReturns = events.country(1, {
   title: "The Hum Returns",
   desc: "Deep in the lattice, something answers back.",
   isTriggeredOnly: true,
@@ -142,3 +129,10 @@ export const humReturns = events.defineCountryEvent({
   },
   options: [{ name: "Fascinating." }],
 });
+
+export const feature = mod.feature("resonance", [
+  resonanceTheory,
+  resonanceWeapons,
+  aftershock,
+  humReturns,
+]);
