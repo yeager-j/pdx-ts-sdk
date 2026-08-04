@@ -1114,6 +1114,44 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("keeps a WeightBlock row from satisfying both Modifier and ComplexTriggerModifier at once (bug bash #16 finding 4)", () => {
+    // A value with both `when` (Modifier's required member) and
+    // `trigger`/`mode` (ComplexTriggerModifier's) would otherwise be
+    // structurally assignable to a `Modifier` row — TypeScript's excess
+    // property check does not fire across a union, so `trigger`/`mode`
+    // being known keys on the *other* arm was enough to let them ride along
+    // silently, and `isComplexTriggerModifier`'s presence check would then
+    // classify the value as a ComplexTriggerModifier and drop `factor`/`when`
+    // entirely. `ExclusiveModifierRow`/`ExclusiveComplexTriggerModifierRow`
+    // forbid each other's characteristic members so this is a compile error
+    // for both a fresh literal and a value stored in a variable first —
+    // the excess-property check only ever covered the first case.
+    defineTradition({
+      id: "content_types_tradition_weight_row_hybrid_literal",
+      name: "X",
+      aiWeight: {
+        modifiers: [
+          // @ts-expect-error — has both Modifier's `when` and
+          // ComplexTriggerModifier's `trigger`/`mode`
+          { factor: 2, when: always(), trigger: "x", mode: "factor" },
+        ],
+      },
+    });
+    // The same object, but assigned to a variable first — no fresh-literal
+    // excess-property check applies here at all, so this is the case a mere
+    // `Omit`-based exclusion (rather than an explicit `?: never` forbid)
+    // would have missed.
+    const hybridRow = { factor: 2, when: always(), trigger: "x", mode: "factor" as const };
+    defineTradition({
+      id: "content_types_tradition_weight_row_hybrid_variable",
+      name: "X",
+      aiWeight: {
+        // @ts-expect-error — same hybrid shape, reached through a variable
+        modifiers: [hybridRow],
+      },
+    });
+  });
+
   it("types civic_or_origin's potential/possible as the government_trigger DSL, not a Trigger", () => {
     defineCivicOrOrigin({
       id: "content_types_civic_dsl",

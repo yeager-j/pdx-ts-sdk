@@ -143,14 +143,48 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
 export type WeightBlockOperations<S extends ScopeName> = Omit<Modifier<S>, "desc" | "when">;
 
 /**
+ * `M` with {@link ComplexTriggerModifier}'s characteristic members
+ * (`trigger`, `mode`) forbidden. Plain structural typing lets a value
+ * satisfy `Modifier` (which has `when` and every numeric arm optional) and
+ * *also* carry `trigger`/`mode` — TypeScript's excess-property check only
+ * fires for a fresh object literal checked against a single type, not a
+ * union, and not at all once the value has been assigned to a variable
+ * first. Forbidding the sibling arm's members here makes the two row kinds
+ * mutually exclusive structurally, not just by convention, so a hybrid value
+ * is a compile error under every authoring path rather than only the
+ * literal one. Applied only where the two row kinds are unioned below —
+ * `Modifier` itself stays unrestricted for its other consumers
+ * (`RandomListArm`, `TriggeredModifier`, `StructuralEffects.random`, ...),
+ * where this ambiguity cannot arise because there is no sibling row kind to
+ * collide with.
+ */
+type ExclusiveModifierRow<S extends ScopeName, M extends Modifier<S>> = M & {
+  readonly trigger?: never;
+  readonly mode?: never;
+};
+
+/** {@link ExclusiveModifierRow}'s mirror: `C` with `Modifier`'s `when` forbidden. */
+type ExclusiveComplexTriggerModifierRow<
+  S extends ScopeName,
+  C extends ComplexTriggerModifier<S>,
+> = C & {
+  readonly when?: never;
+};
+
+/**
  * Every row shape a {@link WeightBlock}'s `modifiers` array can hold: a
  * gated fixed adjustment ({@link Modifier}, or {@link ModifierWithLoc} via
  * `M`), or a named trigger's result feeding a weight operation directly
- * ({@link ComplexTriggerModifier}) — `modifier_rule.cwt`'s two splice-level
- * row kinds (`:5-13`, `:32-53`).
+ * ({@link ComplexTriggerModifier}, or a restricted variant via `C`) —
+ * `modifier_rule.cwt`'s two splice-level row kinds (`:5-13`, `:32-53`), made
+ * mutually exclusive by {@link ExclusiveModifierRow} and {@link
+ * ExclusiveComplexTriggerModifierRow}.
  */
-export type WeightBlockRow<S extends ScopeName, M extends Modifier<S> = Modifier<S>> =
-  M | ComplexTriggerModifier<S>;
+export type WeightBlockRow<
+  S extends ScopeName,
+  M extends Modifier<S> = Modifier<S>,
+  C extends ComplexTriggerModifier<S> = ComplexTriggerModifier<S>,
+> = ExclusiveModifierRow<S, M> | ExclusiveComplexTriggerModifierRow<S, C>;
 
 /**
  * A `modifier_rule` block: optional base weight, the same weight operations
@@ -915,11 +949,31 @@ function weightOperationEntries(value: WeightBlockOperations<ScopeName>): PdxEnt
  * member, `Modifier`/`ModifierWithLoc` the only kind with a required `when` —
  * the same shape-from-presence approach `dualArm` uses for content fields,
  * rather than a runtime brand neither row kind otherwise needs.
+ *
+ * `WeightBlockRow`'s two arms forbid each other's characteristic members
+ * (`ExclusiveModifierRow`/`ExclusiveComplexTriggerModifierRow` above), so a
+ * row authored with both `when` and `trigger`/`mode` is a compile error for
+ * any author going through the exported types. That check is erased at
+ * runtime, though — an untyped call site, an `as any`, or a value built by
+ * hand and threaded through JavaScript can still reach here with both
+ * present. Silently classifying it as one row kind and dropping the other's
+ * fields (what a bare presence check would do) is worse than a build
+ * failure, so this throws instead of guessing.
  */
 function isComplexTriggerModifier(
   row: WeightBlockRow<ScopeName>
 ): row is ComplexTriggerModifier<ScopeName> {
-  return "trigger" in row;
+  const hasTrigger = "trigger" in row && row.trigger !== undefined;
+  const hasWhen = "when" in row && row.when !== undefined;
+  if (hasTrigger && hasWhen) {
+    throw new Error(
+      "A WeightBlock row has both a Modifier's `when` and a ComplexTriggerModifier's " +
+        "`trigger`/`mode` — the exported types forbid this combination, so reaching it here " +
+        "means it was built outside them (an `as any`, an untyped call site, or similar). " +
+        "Author it as one row kind or the other; a row cannot be both."
+    );
+  }
+  return hasTrigger;
 }
 
 function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringContext): PdxEntry {

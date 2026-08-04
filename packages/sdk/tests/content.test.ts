@@ -62,7 +62,9 @@ import {
   isSiteLocked,
   namespace,
   render,
+  type Modifier,
   type PureMod,
+  type ScopeName,
   type SpriteRef,
 } from "../src/index.ts";
 
@@ -1495,6 +1497,35 @@ describe("generated content registries", () => {
         "\t\t\t}\n" +
         "\t\t}"
     );
+  });
+
+  it("throws rather than silently drop fields from a WeightBlock row satisfying both arms (bug bash #16 finding 4)", () => {
+    // The type-level fix (ExclusiveModifierRow/ExclusiveComplexTriggerModifierRow
+    // in content.ts) closes this for every authoring path that goes through
+    // the exported types, but the check is erased at runtime — a value
+    // built by hand and cast past the type system can still reach the
+    // writer with both a Modifier's `when` and a ComplexTriggerModifier's
+    // `trigger`/`mode` present. `isComplexTriggerModifier`'s presence check
+    // would otherwise pick one arm and silently drop the other's fields
+    // (the worst available outcome per the finding), so it throws instead.
+    const hybridRow = {
+      factor: 2,
+      when: always(),
+      trigger: "x",
+      mode: "factor",
+    } as unknown as Modifier<ScopeName>;
+    const tradition = defineTradition({
+      id: "wb_test_tradition_hybrid_row",
+      name: "Hybrid Row",
+      aiWeight: { modifiers: [hybridRow] },
+    });
+    expect(() =>
+      render(
+        buildMod(configFor("Weight block hybrid row test", "wb_test"), [
+          collection(undefined, [tradition]),
+        ])
+      )
+    ).toThrow(/has both a Modifier's `when` and a ComplexTriggerModifier's `trigger`\/`mode`/);
   });
 
   it("contributes ship-of-size limits under the engine's `default` key", () => {
