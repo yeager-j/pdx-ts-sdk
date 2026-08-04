@@ -52,6 +52,7 @@ import {
   defineWarGoal,
   defineWeaponComponentTemplate,
   hasAuthority,
+  hasCountryFlag,
   hasPlanetFlag,
   hasShipFlag,
   hasSituationFlag,
@@ -2398,6 +2399,35 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
     ).get("common/solar_system_initializers/wl_test_solar_system_initializers.txt")!;
     expect(rendered).toContain("\tusage_odds = {\n\t\tbase = 10\n\t\tmodifier = {");
     expect(rendered).toContain("is_bottleneck_system = yes");
+  });
+
+  it("writes a real country-scoped trigger through civic_or_origin.modification, propagated from the container's own replace_scopes (containerScope, SDK-34)", () => {
+    // governments.cwt's `modification` block carries its own
+    // `## replace_scopes = { this = country root = country }`; `add`/`remove`
+    // beneath it carry no scope annotation of their own. Before SDK-34,
+    // `structShape` recursed into a container's own fields with the same
+    // `ctx` the container was reached with, so that scope never reached
+    // `add`/`remove` and they lowered to the unwritable `Trigger<ScopeName>`.
+    // `containerContext` now folds the container's own scope into the child
+    // `ctx`, so a real country-scoped condition both type-checks and
+    // serializes here.
+    const civicOrOrigin = collection(undefined, [
+      defineCivicOrOrigin({
+        id: "wl_test_container_scope_civic",
+        name: "Container Scope Test",
+        modification: {
+          add: hasAuthority("auth_democratic"),
+          remove: hasCountryFlag("wl_test_flag"),
+        },
+      }),
+    ]);
+    const rendered = render(
+      buildMod(configFor("Widened lowering test", "wl_test"), [civicOrOrigin])
+    ).get("common/governments/civics/wl_test_civics.txt")!;
+    expect(rendered).toContain(
+      "\tmodification = {\n\t\tadd = {\n\t\t\thas_authority = auth_democratic\n\t\t}\n" +
+        "\t\tremove = {\n\t\t\thas_country_flag = wl_test_flag\n\t\t}\n\t}"
+    );
   });
 
   it("accepts and serializes both a plain number and a script-value string for the same field (SDK-47)", () => {

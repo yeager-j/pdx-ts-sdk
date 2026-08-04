@@ -1260,31 +1260,38 @@ describe("generated content authoring types", () => {
     void block;
   });
 
-  it("leaves civic_or_origin's modification.add/.remove unwritable by a non-universal trigger, not wrongly widened by unpinned-scope inference (widenedLowering, SDK-33 regression)", () => {
+  it("threads civic_or_origin.modification's container-level replace_scopes down to add/remove (containerScope, SDK-34)", () => {
     // governments.cwt's `modification` block itself carries
-    // `## replace_scopes = { this = country }`, but nothing threads that
-    // container scope down into `add`/`remove` (SDK-34's job — deliberately
-    // not done here). Before the `containerScopeLost` guard, SDK-33's
-    // contravariant-scope widening could not tell that apart from a
-    // genuinely unannotated field, and would have widened `add`/`remove` to
-    // `Trigger<never>` — accepting a planet-only condition the game
-    // evaluates in country scope. The guard leaves them at the pre-existing
-    // `Trigger<ScopeName>` instead: unwritable by anything but a universal
-    // trigger, the same as before SDK-33 existed, until SDK-34 threads the
-    // real `country` scope down.
+    // `## replace_scopes = { this = country root = country }`; `add`/`remove`
+    // carry no scope annotation of their own. Before SDK-34, `structShape`
+    // recursed into a container's own fields with the same `ctx` the
+    // container was reached with, so that annotation never reached `add`/
+    // `remove` — SDK-33's `containerScopeLost` guard only kept the gap from
+    // being misread as "unannotated", leaving both at the unwritable
+    // `Trigger<ScopeName>`. Now the container's scope is folded into the
+    // child `ctx` (`containerContext`/`pushedScope`), so `add`/`remove` are
+    // `Trigger<"country">`: writable by a country-scoped condition, and a
+    // planet-only one is rejected exactly as the game would reject it.
     defineCivicOrOrigin({
-      id: "content_types_civic_modification_universal",
+      id: "content_types_civic_modification_container_scope_universal",
       name: "X",
       modification: { add: always() },
     });
     defineCivicOrOrigin({
-      id: "content_types_civic_modification_rejects_planet_only",
+      id: "content_types_civic_modification_container_scope_country",
+      name: "X",
+      // hasCountryFlag is Trigger<"country"> — the payoff: unwritable before
+      // SDK-34, when the field was still Trigger<ScopeName>.
+      modification: { add: hasCountryFlag("some_flag"), remove: hasCountryFlag("other_flag") },
+    });
+    defineCivicOrOrigin({
+      id: "content_types_civic_modification_container_scope_rejects_planet_only",
       name: "X",
       modification: {
-        // @ts-expect-error — isCapital is carrier/colony/planet/ship-scoped,
-        // not universal; modification.add stayed Trigger<ScopeName> rather
-        // than being wrongly widened to the accepts-everything Trigger<never>.
-        add: isCapital(),
+        // @ts-expect-error — hasPlanetFlag is Trigger<"planet">, not
+        // "country"; modification.add must reject a scope the container's
+        // own replace_scopes did not name.
+        add: hasPlanetFlag("some_flag"),
       },
     });
   });
