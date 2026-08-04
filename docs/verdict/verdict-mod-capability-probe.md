@@ -31,18 +31,18 @@ authoring decision.
 
 ## Escape-criteria results
 
-| Criterion                                           | Result | Evidence                                                                                                                    |
-| --------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
-| Immutable capability; inert definers; existing fold | Pass   | Capability/config/id profile are frozen, definitions omitted from `compile` do not appear, and `compile` calls `buildMod`   |
-| Prefix authority and literal minted types           | Pass   | `type_probe_tech_theory`, `type_probe_resonance.2`, and rejected caller-supplied `id` in `probe-negative.ts`                |
-| Mod-parameterized pack                              | Pass   | One generic pack emits correctly branded alpha and beta technology chains                                                   |
-| Reference branding and forward/cyclic events        | Pass   | Cross-registry reference rejection plus a two-event cycle declared as handles before either definition                      |
-| Hello-galaxy and hardening byte parity              | Pass   | Exact `Map` entry equality; hardening patch-plan equality included                                                          |
-| Feature fan-out and layout non-identity             | Pass   | One feature emits technology and building files; moving one item between stems changes only its path                        |
-| Honest discovery comparison                         | Pass   | Today's every-export discovery and the explicit-feature alternative render identical file maps                              |
-| Data-driven codegen                                 | Pass   | All 35 registries derive from `CONTENT_MANIFEST`; the existing graft/patch/contribution overlays remain the only exceptions |
-| Compile performance and error quality               | Pass   | 3.86% median slowdown against a 20% ceiling; errors name the forbidden `id` and building-to-technology brand mismatch       |
-| Priced migration                                    | Pass   | Measured below by AST call counts, files, generated surfaces, and public boundaries                                         |
+| Criterion                                           | Result | Evidence                                                                                                                                                      |
+| --------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Immutable capability; inert definers; existing fold | Pass   | Capability/config/id profile are frozen; feature ownership is immutable and checked at compile; omitted definitions do not appear; `compile` calls `buildMod` |
+| Prefix authority and literal minted types           | Pass   | `type_probe_tech_theory`, `type_probe_resonance.2`, rejected caller-supplied `id`, and snake-case logical-name validation in the probe                        |
+| Mod-parameterized pack                              | Pass   | One generic pack emits correctly branded alpha and beta technology chains                                                                                     |
+| Reference branding and forward/cyclic events        | Pass   | Cross-registry reference rejection plus a two-event cycle declared as handles before either definition                                                        |
+| Hello-galaxy and hardening byte parity              | Pass   | Exact `Map` entry equality; hardening patch-plan equality included                                                                                            |
+| Feature fan-out and layout non-identity             | Pass   | One feature emits technology and building files; moving one item between stems changes only its path                                                          |
+| Honest discovery comparison                         | Pass   | Today's every-export discovery and the explicit-feature alternative render identical file maps                                                                |
+| Data-driven codegen                                 | Pass   | All 35 registries derive from `CONTENT_MANIFEST`; the existing graft/patch/contribution overlays remain the only exceptions                                   |
+| Compile performance and error quality               | Pass   | 6.04% median slowdown against a 20% ceiling with all 35 real method signatures; errors name the forbidden `id` and building-to-technology brand mismatch      |
+| Priced migration                                    | Pass   | Measured below by AST call counts, files, generated surfaces, and public boundaries                                                                           |
 
 ## The probed surface
 
@@ -80,6 +80,10 @@ existing branded `ContentItem`, narrowed to a template-literal id:
 ```ts
 type Id = "hello_galaxy_tech_resonance_theory";
 ```
+
+Logical names are themselves lowercase snake_case. That is an authoring
+boundary check before id minting, not an accidental rejection later in a
+serializer: the capability can point at the logical name that needs changing.
 
 The event handle is an immutable `EventRef` plus a pure `define` function. It
 contains no entry and registers nowhere. Once every handle in a cycle exists,
@@ -216,14 +220,17 @@ examples.
 
 Measured on this checkout:
 
-| Shape                | Samples (ms)                 |  Median |
-| -------------------- | ---------------------------- | ------: |
-| Current free definer | 1508, 1464, 1473, 1489, 1488 | 1488 ms |
-| Capability           | 1615, 1545, 1537, 1570, 1526 | 1545 ms |
+| Shape                | Samples (ms)                                |     Median |
+| -------------------- | ------------------------------------------- | ---------: |
+| Current free definer | 1718.82, 1738.53, 1689.50, 1666.05, 1680.45 | 1689.50 ms |
+| Capability           | 1800.47, 1787.46, 1826.45, 1791.58, 1747.84 | 1791.58 ms |
 
-The capability median is **3.86% slower**, inside the pre-stated 20% ceiling.
-The spread between runs also shows why median and alternating order matter more
-than a single wall-clock sample.
+The capability median is **6.04% slower**, inside the pre-stated 20% ceiling.
+Unlike the initial surface-only check, the capability fixture now instantiates
+every one of the 35 method parameters and exact branded `ContentItem` returns,
+including the scope-parameterized decision method and hand-written situation
+graft. The spread between runs also shows why median and alternating order
+matter more than a single wall-clock sample.
 
 The negative fixture preserves actionable errors at the authoring boundary:
 
@@ -239,11 +246,11 @@ No giant prefix union appears in either message.
 `measure-blast-radius.ts` parses call expressions with the TypeScript compiler,
 so declarations and prose do not inflate the counts.
 
-| Slice                 | Files touched by current authoring calls | `defineX` | `namespace` | `collection` | `buildMod` | `discoverContent` |
-| --------------------- | ---------------------------------------: | --------: | ----------: | -----------: | ---------: | ----------------: |
-| Examples              |                                   7 of 8 |        19 |           2 |            9 |          3 |                 1 |
-| SDK tests             |                                 29 of 53 |       436 |          64 |          197 |        215 |                30 |
-| `stellaris-ids` tests |                                   2 of 3 |         2 |           0 |            0 |          0 |                 0 |
+| Slice                 | Files touched | `defineX` | `namespace` | `collection` | `buildMod` | `discoverContent` | `on` | `patchTechnology` | contribution adder |
+| --------------------- | ------------: | --------: | ----------: | -----------: | ---------: | ----------------: | ---: | ----------------: | -----------------: |
+| Examples              |        7 of 8 |        19 |           2 |            9 |          3 |                 1 |    1 |                 2 |                  0 |
+| SDK tests             |      31 of 53 |       436 |          64 |          197 |        215 |                30 |   26 |                18 |                 10 |
+| `stellaris-ids` tests |        2 of 3 |         2 |           0 |            0 |          0 |                 0 |    0 |                 0 |                  0 |
 
 The large test count is genuine: the public authoring boundary is the primary
 test surface. This is a breaking migration, not a compatibility-layer change.
@@ -251,7 +258,7 @@ The package is unreleased, so the right execution is a staged parity migration
 followed by deletion:
 
 1. Add `createMod` and generated capability methods beside the free surface.
-2. Port the byte-parity and negative claims into permanent SDK tests.
+2. Port the byte-parity, feature-ownership, logical-name, and negative claims into permanent SDK tests.
 3. Implement discovery over one explicit `feature` export per module.
 4. Migrate examples, then runtime/type tests in bounded chunks.
 5. Delete free content/event definers and redundant public `collection`
@@ -301,9 +308,14 @@ strings—and erase the guarantee the migration exists to buy.
    named escape hatch with a loud type/runtime distinction rather than putting
    `id` back on every method.
 5. **The compile timing is a representative fixture, not an editor benchmark.**
-   Re-run the completion-latency budget after all 35 real method signatures are
-   generated. The probe establishes that template-literal minting itself is
-   not near the rejection threshold.
+   The probe now instantiates all 35 real signatures and returns; rerun the
+   completion-latency budget after any generated surface change.
+6. **Features have a capability owner.** `feature` carries an unforgeable
+   module-local marker, typed by the capability prefix and checked by identity
+   at `compile`. This closes the direct-legacy-collection and cross-mod feature
+   escape hatches without a registration set. JavaScript and casts receive the
+   same runtime check; vanilla patches and contribution sinks remain valid
+   feature items because they are deliberately not own-prefixed definitions.
 
 ## Reproduction
 

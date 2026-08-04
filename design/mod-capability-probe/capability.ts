@@ -30,7 +30,6 @@ import {
   type ContentItem,
   type EventItem,
   type ModItem,
-  type ModItemInput,
 } from "../../packages/sdk/src/items.ts";
 
 export interface ProbeIdProfile {
@@ -95,6 +94,13 @@ export type CapabilityEventHandle<
   define(def: Omit<EventDef<S, From>, "id" | "from">): CapabilityEventItem<P, N, Id, S, From, Kind>;
 };
 
+const capabilityFeatureOwner: unique symbol = Symbol("capability feature owner");
+
+/** A feature placed by one particular mod capability. */
+export type CapabilityFeature<P extends string, T extends ModItem = ModItem> = Collection<T> & {
+  readonly [capabilityFeatureOwner]: P;
+};
+
 export interface CapabilityEvents<P extends string, N extends string> {
   readonly namespace: MintedNamespace<P, N>;
   country<const Id extends number, From extends ScopeName | undefined = undefined>(
@@ -146,8 +152,11 @@ export interface ModCapability<P extends string, I extends ProbeIdProfile> {
     def: Omit<EdictDef<MintedContentId<P, I, "edict", N>>, "id">
   ): ContentItem<"edict", EdictDef<MintedContentId<P, I, "edict", N>>>;
   namespace<const N extends string>(name: N): CapabilityEvents<P, N>;
-  feature<T extends ModItem>(file: string | undefined, items: readonly T[]): Collection<T>;
-  compile(features: readonly ModItemInput[], options?: BuildOptions): PureMod;
+  feature<T extends ModItem>(
+    file: string | undefined,
+    items: readonly T[]
+  ): CapabilityFeature<P, T>;
+  compile(features: readonly CapabilityFeature<P>[], options?: BuildOptions): PureMod;
   readonly patchTechnology: typeof patchTechnology;
   readonly on: typeof on;
 }
@@ -158,6 +167,11 @@ function mintContentId<
   K extends keyof ProbeIdProfile,
   N extends string,
 >(prefix: P, ids: I, registry: K, name: N): MintedContentId<P, I, K, N> {
+  if (!FILE_STEM_PATTERN.test(name)) {
+    throw new Error(
+      `Logical content name "${name}" must be lowercase snake_case ([a-z][a-z0-9_]*)`
+    );
+  }
   return `${prefix}_${ids[registry]}_${name}` as MintedContentId<P, I, K, N>;
 }
 
@@ -260,6 +274,54 @@ function validateAuthoringInputs<P extends string, I extends ProbeIdProfile>(
   }
 }
 
+function belongsToPrefix(value: string, prefix: string): boolean {
+  return value.startsWith(`${prefix}_`);
+}
+
+function namespaceBelongsToPrefix(namespace: string, prefix: string): boolean {
+  return namespace === prefix || belongsToPrefix(namespace, prefix);
+}
+
+function assertEventNamespace(namespace: string, prefix: string, where: string): void {
+  if (!namespaceBelongsToPrefix(namespace, prefix)) {
+    throw new Error(`${where} namespace "${namespace}" does not belong to mod prefix "${prefix}"`);
+  }
+}
+
+function assertCapabilityItem(item: ModItem, prefix: string): void {
+  switch (item.itemKind) {
+    case "content":
+      if (!belongsToPrefix(item.id, prefix)) {
+        throw new Error(`Content id "${item.id}" does not belong to mod prefix "${prefix}"`);
+      }
+      return;
+    case "event":
+      assertEventNamespace(item.namespace, prefix, "Event");
+      return;
+    case "on-action":
+      item.events.forEach((event) =>
+        assertEventNamespace(event.namespace, prefix, "On-action event")
+      );
+      return;
+    case "patch":
+    case "contribution":
+      return;
+  }
+}
+
+function assertCapabilityFeature<P extends string>(
+  feature: CapabilityFeature<P>,
+  owner: object,
+  prefix: P
+): void {
+  if (
+    (feature as { readonly [capabilityFeatureOwner]: unknown })[capabilityFeatureOwner] !== owner
+  ) {
+    throw new Error(`Feature does not belong to mod prefix "${prefix}"`);
+  }
+  feature.items.forEach((item) => assertCapabilityItem(item, prefix));
+}
+
 export function createMod<const P extends string, const I extends ProbeIdProfile>(
   configInput: ModConfig<P>,
   options: { readonly ids: I }
@@ -267,6 +329,7 @@ export function createMod<const P extends string, const I extends ProbeIdProfile
   validateAuthoringInputs(configInput, options.ids);
   const config = snapshotConfig(configInput);
   const ids = Object.freeze({ ...options.ids }) as I;
+  const owner = Object.freeze({});
 
   return Object.freeze({
     config,
@@ -320,10 +383,17 @@ export function createMod<const P extends string, const I extends ProbeIdProfile
         id: mintContentId(config.prefix, ids, "edict", name),
       } as EdictDef<MintedContentId<P, I, "edict", N>>),
     namespace: <const N extends string>(name: N) => eventsFor(config.prefix, name),
-    feature: <T extends ModItem>(file: string | undefined, items: readonly T[]) =>
-      collection(file, items),
-    compile: (features: readonly ModItemInput[], buildOptions: BuildOptions = {}) =>
-      buildMod(config, features, buildOptions),
+    feature: <T extends ModItem>(file: string | undefined, items: readonly T[]) => {
+      items.forEach((item) => assertCapabilityItem(item, config.prefix));
+      return Object.freeze({
+        ...collection(file, items),
+        [capabilityFeatureOwner]: owner,
+      }) as CapabilityFeature<P, T>;
+    },
+    compile: (features: readonly CapabilityFeature<P>[], buildOptions: BuildOptions = {}) => {
+      features.forEach((feature) => assertCapabilityFeature(feature, owner, config.prefix));
+      return buildMod(config, features, buildOptions);
+    },
     patchTechnology,
     on,
   });

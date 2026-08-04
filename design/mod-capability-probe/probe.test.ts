@@ -1,12 +1,21 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { defineHardening } from "../../examples/hardening/mod.ts";
 import { defineHelloGalaxy } from "../../examples/hello-galaxy/mod.ts";
+import { buildMod } from "../../packages/sdk/src/build.ts";
 import { discoverContent } from "../../packages/sdk/src/discover.ts";
 import { render } from "../../packages/sdk/src/render.ts";
 import { load } from "../../packages/sdk/src/stellaris/load.ts";
-import { createMod, stellarisIds, type ModCapability, type ProbeIdProfile } from "./capability.ts";
+import {
+  createMod,
+  stellarisIds,
+  type CapabilityFeature,
+  type ModCapability,
+  type ProbeIdProfile,
+} from "./capability.ts";
 import { capabilityMethodRows, emitCapabilityMethodDeclarations } from "./codegen-shape.ts";
 import { discoveryMod } from "./discovery-mod.ts";
 import { discoverExplicitFeatures } from "./discovery.ts";
@@ -79,11 +88,31 @@ describe("immutable pure capability", () => {
       'Event namespace "namespace_probe_Bad.Name" must be lowercase snake_case'
     );
   });
+
+  it("rejects an invalid logical content name before minting an id", () => {
+    const mod = createMod(
+      {
+        name: "Logical name",
+        prefix: "logical_name_probe",
+        supportedVersion: "4.4.*",
+      },
+      { ids: stellarisIds }
+    );
+
+    expect(() =>
+      mod.technology("Not a logical name", {
+        name: "Invalid",
+        area: "physics",
+        tier: 1,
+        category: "particles",
+      })
+    ).toThrow('Logical content name "Not a logical name" must be lowercase snake_case');
+  });
 });
 
 function reusablePack<P extends string, I extends ProbeIdProfile>(
   mod: Pick<ModCapability<P, I>, "technology" | "feature">
-) {
+): CapabilityFeature<P> {
   const theory = mod.technology("pack_theory", {
     name: "Pack Theory",
     area: "physics",
@@ -118,12 +147,12 @@ describe("mod-parameterized packs", () => {
       },
       { ids: stellarisIds }
     );
-    const alphaFile = render(alpha.compile([reusablePack(alpha)])).get(
-      "common/technology/alpha_mod_pack.txt"
-    );
-    const betaFile = render(beta.compile([reusablePack(beta)])).get(
-      "common/technology/beta_mod_pack.txt"
-    );
+    const alphaFile = render(
+      alpha.compile([reusablePack<"alpha_mod", typeof stellarisIds>(alpha)])
+    ).get("common/technology/alpha_mod_pack.txt");
+    const betaFile = render(
+      beta.compile([reusablePack<"beta_mod", typeof stellarisIds>(beta)])
+    ).get("common/technology/beta_mod_pack.txt");
 
     expect(alphaFile).toContain("alpha_mod_tech_pack_theory");
     expect(alphaFile).toContain('prerequisites = { "alpha_mod_tech_pack_theory" }');
@@ -228,17 +257,26 @@ describe("discovery contracts", () => {
     const everyExport = await discoverContent(
       new URL("./discovery/every-export/", import.meta.url)
     );
-    const explicitFeature = await discoverExplicitFeatures(
+    const explicitFeature = await discoverExplicitFeatures<"discovery_probe">(
       new URL("./discovery/explicit-feature/", import.meta.url)
     );
 
-    expect([...render(discoveryMod.compile(everyExport)).entries()]).toEqual([
-      ...render(discoveryMod.compile(explicitFeature)).entries(),
-    ]);
+    expect([
+      ...render(
+        buildMod(
+          {
+            name: "Discovery Probe",
+            prefix: "discovery_probe",
+            supportedVersion: "4.4.*",
+          },
+          everyExport
+        )
+      ).entries(),
+    ]).toEqual([...render(discoveryMod.compile(explicitFeature)).entries()]);
   });
 
   it("makes non-feature exports ordinary module API under the explicit contract", async () => {
-    const explicitFeature = await discoverExplicitFeatures(
+    const explicitFeature = await discoverExplicitFeatures<"discovery_probe">(
       new URL("./discovery/explicit-feature/", import.meta.url)
     );
     const module = await import("./discovery/explicit-feature/resonance.ts");
@@ -246,6 +284,88 @@ describe("discovery contracts", () => {
     expect(Object.keys(module).sort()).toEqual(["feature", "lab", "theory"]);
     expect(explicitFeature).toEqual([module.feature]);
     expect(explicitFeature[0]!.items).toEqual([module.theory, module.lab]);
+  });
+
+  it("keeps the current include contract and never imports excluded companions", async () => {
+    const root = new URL("./discovery/explicit-feature/", import.meta.url);
+
+    await expect(discoverExplicitFeatures<"discovery_probe">(root)).resolves.toHaveLength(1);
+    await expect(
+      discoverExplicitFeatures<"discovery_probe">(root, { include: /resonance\.ts$/gy })
+    ).resolves.toHaveLength(1);
+    await expect(
+      discoverExplicitFeatures<"discovery_probe">(root, { include: /no-feature\.ts$/ })
+    ).rejects.toThrow("matched none");
+  });
+
+  it("rejects an empty explicit-feature directory", async () => {
+    const root = await mkdtemp(join(tmpdir(), "pdx-sdk-explicit-feature-"));
+    try {
+      await expect(discoverExplicitFeatures<"discovery_probe">(root)).rejects.toThrow(
+        "holds no TypeScript"
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("capability feature ownership", () => {
+  it("rejects a feature from another capability and direct collection input at runtime", () => {
+    const alpha = createMod(
+      { name: "Alpha", prefix: "alpha_feature", supportedVersion: "4.4.*" },
+      { ids: stellarisIds }
+    );
+    const beta = createMod(
+      { name: "Beta", prefix: "beta_feature", supportedVersion: "4.4.*" },
+      { ids: stellarisIds }
+    );
+    const betaTechnology = beta.technology("theory", {
+      name: "Theory",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    const betaFeature = beta.feature("theory", [betaTechnology]);
+
+    expect(() => alpha.compile([betaFeature] as never)).toThrow(
+      'Feature does not belong to mod prefix "alpha_feature"'
+    );
+    expect(() =>
+      alpha.compile([{ itemKind: "collection", file: "forged", items: [] }] as never)
+    ).toThrow('Feature does not belong to mod prefix "alpha_feature"');
+  });
+
+  it("rejects foreign content and event namespaces before compiling", () => {
+    const mod = createMod(
+      { name: "Ownership", prefix: "ownership_probe", supportedVersion: "4.4.*" },
+      { ids: stellarisIds }
+    );
+    const foreignContent = {
+      itemKind: "content" as const,
+      type: "technology" as const,
+      id: "other_probe_tech_foreign",
+      def: { id: "other_probe_tech_foreign" },
+    };
+    const foreignEvent = {
+      itemKind: "event" as const,
+      namespace: "other_probe",
+      id: "other_probe.1",
+    };
+    const foreignOnAction = {
+      itemKind: "on-action" as const,
+      events: [foreignEvent],
+    };
+
+    expect(() => mod.feature("foreign", [foreignContent] as never)).toThrow(
+      'Content id "other_probe_tech_foreign" does not belong to mod prefix "ownership_probe"'
+    );
+    expect(() => mod.feature("foreign", [foreignEvent] as never)).toThrow(
+      'Event namespace "other_probe" does not belong to mod prefix "ownership_probe"'
+    );
+    expect(() => mod.feature("foreign", [foreignOnAction] as never)).toThrow(
+      'On-action event namespace "other_probe" does not belong to mod prefix "ownership_probe"'
+    );
   });
 });
 
@@ -268,10 +388,11 @@ describe("codegen shape", () => {
 
     const declaration = emitCapabilityMethodDeclarations();
     expect(declaration).toContain(
-      'technology<const Name extends string>(name: Name, def: Omit<TechnologyDef<MintId<P, I["technology"], Name>>, "id">): TechnologyItem;'
+      'technology<const Name extends string>(name: Name, def: Omit<TechnologyDef<MintId<P, I["technology"], Name>>, "id">): ContentItem<"technology", TechnologyDef<MintId<P, I["technology"], Name>>>;'
     );
     expect(declaration).toContain(
-      'ascensionPerk<const Name extends string>(name: Name, def: Omit<AscensionPerkDef<MintId<P, I["ascensionPerk"], Name>>, "id">): AscensionPerkItem;'
+      'ascensionPerk<const Name extends string>(name: Name, def: Omit<AscensionPerkDef<MintId<P, I["ascensionPerk"], Name>>, "id">): ContentItem<"ascension_perk", AscensionPerkDef<MintId<P, I["ascensionPerk"], Name>>>;'
     );
+    expect(declaration).toContain("situationType: SituationTypeCapabilityMethod<P, I>;");
   });
 });

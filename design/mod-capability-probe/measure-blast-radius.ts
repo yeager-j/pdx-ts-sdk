@@ -2,9 +2,23 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 
+import { CONTENT_CONTRIBUTION_SINKS } from "../../packages/codegen-cwt/src/overlay.ts";
+
 const root = path.join(import.meta.dirname, "../..");
 const slices = ["examples", "packages/sdk/tests", "packages/stellaris-ids/tests"] as const;
-const callKinds = ["define", "namespace", "collection", "buildMod", "discoverContent"] as const;
+const callKinds = [
+  "define",
+  "namespace",
+  "collection",
+  "buildMod",
+  "discoverContent",
+  "on",
+  "patchTechnology",
+  "contribution",
+] as const;
+const contributionMethods = new Set(
+  [...CONTENT_CONTRIBUTION_SINKS.values()].map((sink) => sink.method)
+);
 
 type CallKind = (typeof callKinds)[number];
 
@@ -31,6 +45,12 @@ function calleeName(expression: ts.LeftHandSideExpression): string | undefined {
 function classify(name: string): CallKind | undefined {
   if (/^define[A-Z]/.test(name)) {
     return "define";
+  }
+  if (name === "on" || name === "patchTechnology") {
+    return name;
+  }
+  if (contributionMethods.has(name)) {
+    return "contribution";
   }
   return callKinds.find((kind) => kind === name);
 }

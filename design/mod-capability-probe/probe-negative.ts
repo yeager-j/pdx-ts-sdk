@@ -1,3 +1,4 @@
+import { collection } from "../../packages/sdk/src/items.ts";
 import { createMod, stellarisIds, type MintedContentId } from "./capability.ts";
 
 const mod = createMod(
@@ -94,3 +95,18 @@ events.country(3, {
 mod.config.prefix = "mutated";
 // @ts-expect-error — the snapshotted tag list is read-only too
 mod.config.tags?.push("mutated");
+
+const alpha = createMod(
+  { name: "Alpha", prefix: "alpha_owner", supportedVersion: "4.4.*" },
+  { ids: stellarisIds }
+);
+const beta = createMod(
+  { name: "Beta", prefix: "beta_owner", supportedVersion: "4.4.*" },
+  { ids: stellarisIds }
+);
+const betaFeature = beta.feature("empty", []);
+
+// @ts-expect-error — a feature is owned by the capability that placed it
+alpha.compile([betaFeature]);
+// @ts-expect-error — legacy collections cannot enter the capability fold directly
+alpha.compile([collection("legacy", [])]);

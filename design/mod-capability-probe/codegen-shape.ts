@@ -45,10 +45,12 @@ export function capabilityMethodRows(): CapabilityMethodRow[] {
  */
 export function emitCapabilityMethodDeclarations(): string {
   return capabilityMethodRows()
-    .map(
-      ({ method, typeName }) =>
-        `  ${method}<const Name extends string>(name: Name, ` +
-        `def: Omit<${typeName}Def<MintId<P, I[${JSON.stringify(method)}], Name>>, "id">): ${typeName}Item;`
+    .map(({ registry, method, typeName, handWritten }) =>
+      handWritten
+        ? `  ${method}: SituationTypeCapabilityMethod<P, I>;`
+        : `  ${method}<const Name extends string>(name: Name, ` +
+          `def: Omit<${typeName}Def<MintId<P, I[${JSON.stringify(method)}], Name>>, "id">): ` +
+          `ContentItem<${JSON.stringify(registry)}, ${typeName}Def<MintId<P, I[${JSON.stringify(method)}], Name>>>;`
     )
     .join("\n");
 }
