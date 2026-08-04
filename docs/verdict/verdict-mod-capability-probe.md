@@ -124,12 +124,11 @@ duplicated authority, and minting is both simpler and stronger.
 
 ## Reusable packs and capability threading
 
-A pack takes the narrow capability it uses:
+A pack takes the full capability so `config.prefix` is a covariant literal
+inference site:
 
 ```ts
-function resonancePack<P extends string, I extends IdProfile>(
-  mod: Pick<ModCapability<P, I>, "technology" | "feature">
-) {
+function resonancePack<P extends string, I extends IdProfile>(mod: ModCapability<P, I>) {
   // ...
 }
 ```
@@ -145,6 +144,11 @@ definition:
 - an application feature module imports its mod capability from the mod root;
 - a reusable pack receives the capability explicitly;
 - every definition inside uses ordinary method calls.
+
+The pack currently uses only `technology` and `feature`, but no structural
+slice helper is introduced for that one consumer: the full capability keeps
+literal inference intact, and a narrower abstraction needs a second real use
+before it earns a contract.
 
 The full capability hello-galaxy equivalent is 151 lines versus 226 lines
 across the current two content modules plus `mod.ts` (comments included).
@@ -249,7 +253,7 @@ so declarations and prose do not inflate the counts.
 | Slice                 | Files touched | `defineX` | `namespace` | `collection` | `buildMod` | `discoverContent` | `on` | `patchTechnology` | contribution adder |
 | --------------------- | ------------: | --------: | ----------: | -----------: | ---------: | ----------------: | ---: | ----------------: | -----------------: |
 | Examples              |        7 of 8 |        19 |           2 |            9 |          3 |                 1 |    1 |                 2 |                  0 |
-| SDK tests             |      31 of 53 |       436 |          64 |          197 |        215 |                30 |   26 |                18 |                 10 |
+| SDK tests             |      30 of 53 |       434 |          64 |          197 |        215 |                30 |   25 |                18 |                 10 |
 | `stellaris-ids` tests |        2 of 3 |         2 |           0 |            0 |          0 |                 0 |    0 |                 0 |                  0 |
 
 The large test count is genuine: the public authoring boundary is the primary
@@ -311,11 +315,13 @@ strings—and erase the guarantee the migration exists to buy.
    The probe now instantiates all 35 real signatures and returns; rerun the
    completion-latency budget after any generated surface change.
 6. **Features have a capability owner.** `feature` carries an unforgeable
-   module-local marker, typed by the capability prefix and checked by identity
-   at `compile`. This closes the direct-legacy-collection and cross-mod feature
-   escape hatches without a registration set. JavaScript and casts receive the
-   same runtime check; vanilla patches and contribution sinks remain valid
-   feature items because they are deliberately not own-prefixed definitions.
+   module-local marker holding a frozen owner object with the literal prefix.
+   Its type rejects differing prefixes; `compile` compares object identity, so
+   two capabilities with the same prefix still cannot exchange features. This
+   closes the direct-legacy-collection and cross-mod feature escape hatches
+   without a registration set. JavaScript and casts receive the same runtime
+   check; vanilla patches and contribution sinks remain valid feature items
+   because they are deliberately not own-prefixed definitions.
 
 ## Reproduction
 

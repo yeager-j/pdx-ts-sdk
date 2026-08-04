@@ -9,13 +9,7 @@ import { buildMod } from "../../packages/sdk/src/build.ts";
 import { discoverContent } from "../../packages/sdk/src/discover.ts";
 import { render } from "../../packages/sdk/src/render.ts";
 import { load } from "../../packages/sdk/src/stellaris/load.ts";
-import {
-  createMod,
-  stellarisIds,
-  type CapabilityFeature,
-  type ModCapability,
-  type ProbeIdProfile,
-} from "./capability.ts";
+import { createMod, stellarisIds, type ModCapability, type ProbeIdProfile } from "./capability.ts";
 import { capabilityMethodRows, emitCapabilityMethodDeclarations } from "./codegen-shape.ts";
 import { discoveryMod } from "./discovery-mod.ts";
 import { discoverExplicitFeatures } from "./discovery.ts";
@@ -110,9 +104,7 @@ describe("immutable pure capability", () => {
   });
 });
 
-function reusablePack<P extends string, I extends ProbeIdProfile>(
-  mod: Pick<ModCapability<P, I>, "technology" | "feature">
-): CapabilityFeature<P> {
+function reusablePack<P extends string, I extends ProbeIdProfile>(mod: ModCapability<P, I>) {
   const theory = mod.technology("pack_theory", {
     name: "Pack Theory",
     area: "physics",
@@ -147,12 +139,12 @@ describe("mod-parameterized packs", () => {
       },
       { ids: stellarisIds }
     );
-    const alphaFile = render(
-      alpha.compile([reusablePack<"alpha_mod", typeof stellarisIds>(alpha)])
-    ).get("common/technology/alpha_mod_pack.txt");
-    const betaFile = render(
-      beta.compile([reusablePack<"beta_mod", typeof stellarisIds>(beta)])
-    ).get("common/technology/beta_mod_pack.txt");
+    const alphaFile = render(alpha.compile([reusablePack(alpha)])).get(
+      "common/technology/alpha_mod_pack.txt"
+    );
+    const betaFile = render(beta.compile([reusablePack(beta)])).get(
+      "common/technology/beta_mod_pack.txt"
+    );
 
     expect(alphaFile).toContain("alpha_mod_tech_pack_theory");
     expect(alphaFile).toContain('prerequisites = { "alpha_mod_tech_pack_theory" }');
@@ -334,6 +326,22 @@ describe("capability feature ownership", () => {
     expect(() =>
       alpha.compile([{ itemKind: "collection", file: "forged", items: [] }] as never)
     ).toThrow('Feature does not belong to mod prefix "alpha_feature"');
+  });
+
+  it("rejects a different capability instance even when the literal prefix matches", () => {
+    const first = createMod(
+      { name: "First", prefix: "shared_feature", supportedVersion: "4.4.*" },
+      { ids: stellarisIds }
+    );
+    const second = createMod(
+      { name: "Second", prefix: "shared_feature", supportedVersion: "4.4.*" },
+      { ids: stellarisIds }
+    );
+    const feature = first.feature("empty", []);
+
+    expect(() => second.compile([feature])).toThrow(
+      'Feature does not belong to mod prefix "shared_feature"'
+    );
   });
 
   it("rejects foreign content and event namespaces before compiling", () => {

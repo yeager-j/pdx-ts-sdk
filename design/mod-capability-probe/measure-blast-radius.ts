@@ -32,17 +32,7 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
-function calleeName(expression: ts.LeftHandSideExpression): string | undefined {
-  if (ts.isIdentifier(expression)) {
-    return expression.text;
-  }
-  if (ts.isPropertyAccessExpression(expression)) {
-    return expression.name.text;
-  }
-  return undefined;
-}
-
-function classify(name: string): CallKind | undefined {
+function classifyIdentifier(name: string): CallKind | undefined {
   if (/^define[A-Z]/.test(name)) {
     return "define";
   }
@@ -53,6 +43,16 @@ function classify(name: string): CallKind | undefined {
     return "contribution";
   }
   return callKinds.find((kind) => kind === name);
+}
+
+function classify(expression: ts.LeftHandSideExpression): CallKind | undefined {
+  if (ts.isIdentifier(expression)) {
+    return classifyIdentifier(expression.text);
+  }
+  if (ts.isPropertyAccessExpression(expression) && /^define[A-Z]/.test(expression.name.text)) {
+    return "define";
+  }
+  return undefined;
 }
 
 const report: Record<
@@ -75,8 +75,7 @@ for (const slice of slices) {
     );
     const visit = (node: ts.Node): void => {
       if (ts.isCallExpression(node)) {
-        const name = calleeName(node.expression);
-        const kind = name === undefined ? undefined : classify(name);
+        const kind = classify(node.expression);
         if (kind !== undefined) {
           calls[kind] += 1;
           touched.add(file);

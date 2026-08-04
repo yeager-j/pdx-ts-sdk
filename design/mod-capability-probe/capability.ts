@@ -96,9 +96,13 @@ export type CapabilityEventHandle<
 
 const capabilityFeatureOwner: unique symbol = Symbol("capability feature owner");
 
+interface CapabilityFeatureOwner<P extends string> {
+  readonly prefix: P;
+}
+
 /** A feature placed by one particular mod capability. */
 export type CapabilityFeature<P extends string, T extends ModItem = ModItem> = Collection<T> & {
-  readonly [capabilityFeatureOwner]: P;
+  readonly [capabilityFeatureOwner]: CapabilityFeatureOwner<P>;
 };
 
 export interface CapabilityEvents<P extends string, N extends string> {
@@ -311,12 +315,10 @@ function assertCapabilityItem(item: ModItem, prefix: string): void {
 
 function assertCapabilityFeature<P extends string>(
   feature: CapabilityFeature<P>,
-  owner: object,
+  owner: CapabilityFeatureOwner<P>,
   prefix: P
 ): void {
-  if (
-    (feature as { readonly [capabilityFeatureOwner]: unknown })[capabilityFeatureOwner] !== owner
-  ) {
+  if (feature[capabilityFeatureOwner] !== owner) {
     throw new Error(`Feature does not belong to mod prefix "${prefix}"`);
   }
   feature.items.forEach((item) => assertCapabilityItem(item, prefix));
@@ -329,7 +331,7 @@ export function createMod<const P extends string, const I extends ProbeIdProfile
   validateAuthoringInputs(configInput, options.ids);
   const config = snapshotConfig(configInput);
   const ids = Object.freeze({ ...options.ids }) as I;
-  const owner = Object.freeze({});
+  const owner: CapabilityFeatureOwner<P> = Object.freeze({ prefix: config.prefix });
 
   return Object.freeze({
     config,
