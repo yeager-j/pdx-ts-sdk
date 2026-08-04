@@ -1047,6 +1047,7 @@ describe("content-type codegen", () => {
  */
 describe("generated content definers", () => {
   const definers = readFileSync("packages/sdk/src/generated/content-definers.ts", "utf8");
+  const capability = readFileSync("packages/sdk/src/generated/content-capability.ts", "utf8");
 
   it("emits one free definer and one item union per manifest registry", () => {
     for (const manifest of CONTENT_MANIFEST) {
@@ -1103,20 +1104,32 @@ describe("generated content definers", () => {
     expect(definers).toContain('refRegistry: "country_ship_of_size_limit",');
   });
 
-  it("derives exact capability content methods and their default profile from the manifest", () => {
-    expect(definers).toContain("export interface IdProfile {");
-    expect(definers).toContain('  technology: "tech",');
-    expect(definers).toContain('  traditionCategory: "tradition_category",');
-    expect(definers).toContain(
+  it("keeps capability helpers out of the free-definer export and derives them from the manifest", () => {
+    expect(definers).not.toContain("export interface IdProfile {");
+    expect(definers).not.toContain("DEFAULT_ID_PROFILE");
+    expect(definers).not.toContain("contentCapabilityMethods");
+    expect(capability).toContain("export interface IdProfile {");
+    expect(capability).toContain('  technology: "tech",');
+    expect(capability).toContain('  traditionCategory: "tradition_category",');
+    expect(capability).toContain(
       "export function contentCapabilityMethods<P extends string, I extends IdProfile>("
     );
-    expect(definers).toContain(
+    expect(capability).toContain(
       '): ContentItem<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;'
     );
-    expect(definers).toContain(
+    expect(capability).toContain(
       'SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>, T, Approach, Stage>'
     );
-    expect(definers).toContain("readonly patchTechnology: typeof patchTechnology;");
-    expect(definers).toContain("readonly addShipOfSizeLimits: typeof addShipOfSizeLimits;");
+    expect(capability).toContain("readonly patchTechnology: typeof patchTechnology;");
+    expect(capability).toContain("readonly addShipOfSizeLimits: typeof addShipOfSizeLimits;");
+    expect(capability).toContain(
+      "The capability mints and owns the full id; the returned branded reference"
+    );
+    expect(capability).toContain(
+      "Unlike a capability definition method, it mints no id and owns no new content."
+    );
+    expect(capability).toContain(
+      "This is an id-less additive contribution, not a capability-owned definition."
+    );
   });
 });

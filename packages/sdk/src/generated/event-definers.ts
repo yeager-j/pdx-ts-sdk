@@ -322,6 +322,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"agreement", From>, "id">
   ): CapabilityEventItem<P, N, Id, "agreement", From, "agreement">;
 
+  /**
+   * Creates an immutable agreement event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   agreementHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -336,6 +340,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"astral_rift", From>, "id">
   ): CapabilityEventItem<P, N, Id, "astral_rift", From, "astral_rift">;
 
+  /**
+   * Creates an immutable astral rift event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   astralRiftHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -350,6 +358,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"bypass", From>, "id">
   ): CapabilityEventItem<P, N, Id, "bypass", From, "bypass">;
 
+  /**
+   * Creates an immutable bypass event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   bypassHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -364,6 +376,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"carrier", From>, "id">
   ): CapabilityEventItem<P, N, Id, "carrier", From, "carrier">;
 
+  /**
+   * Creates an immutable carrier event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   carrierHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -378,6 +394,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"colony", From>, "id">
   ): CapabilityEventItem<P, N, Id, "colony", From, "colony">;
 
+  /**
+   * Creates an immutable colony event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   colonyHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -392,6 +412,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"storm", From>, "id">
   ): CapabilityEventItem<P, N, Id, "storm", From, "cosmic_storm">;
 
+  /**
+   * Creates an immutable cosmic storm event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   cosmicStormHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -416,6 +440,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     "cosmic_storm_influence_field"
   >;
 
+  /**
+   * Creates an immutable cosmic storm influence field event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   cosmicStormInfluenceFieldHandle<
     const Id extends number,
     From extends ScopeName | undefined = undefined,
@@ -440,6 +468,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"country", From>, "id">
   ): CapabilityEventItem<P, N, Id, "country", From, "country">;
 
+  /**
+   * Creates an immutable country event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   countryHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -454,6 +486,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"espionage_operation", From>, "id">
   ): CapabilityEventItem<P, N, Id, "espionage_operation", From, "espionage_operation">;
 
+  /**
+   * Creates an immutable espionage operation event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   espionageOperationHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -468,6 +504,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"first_contact", From>, "id">
   ): CapabilityEventItem<P, N, Id, "first_contact", From, "first_contact">;
 
+  /**
+   * Creates an immutable first contact event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   firstContactHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -482,6 +522,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"fleet", From>, "id">
   ): CapabilityEventItem<P, N, Id, "fleet", From, "fleet">;
 
+  /**
+   * Creates an immutable fleet event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   fleetHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -496,6 +540,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"leader", From>, "id">
   ): CapabilityEventItem<P, N, Id, "leader", From, "leader">;
 
+  /**
+   * Creates an immutable leader event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   leaderHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -510,6 +558,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"country", From>, "id">
   ): CapabilityEventItem<P, N, Id, "country", From, "observer">;
 
+  /**
+   * Creates an immutable observer event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   observerHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -524,6 +576,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"planet", From>, "id">
   ): CapabilityEventItem<P, N, Id, "planet", From, "planet">;
 
+  /**
+   * Creates an immutable planet event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   planetHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -538,6 +594,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"pop_faction", From>, "id">
   ): CapabilityEventItem<P, N, Id, "pop_faction", From, "pop_faction">;
 
+  /**
+   * Creates an immutable pop faction event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   popFactionHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -552,6 +612,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"pop_group", From>, "id">
   ): CapabilityEventItem<P, N, Id, "pop_group", From, "pop_group">;
 
+  /**
+   * Creates an immutable pop group event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   popGroupHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -566,6 +630,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"ship", From>, "id">
   ): CapabilityEventItem<P, N, Id, "ship", From, "ship">;
 
+  /**
+   * Creates an immutable ship event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   shipHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -580,6 +648,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"situation", From>, "id">
   ): CapabilityEventItem<P, N, Id, "situation", From, "situation">;
 
+  /**
+   * Creates an immutable situation event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   situationHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -594,6 +666,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"starbase", From>, "id">
   ): CapabilityEventItem<P, N, Id, "starbase", From, "starbase">;
 
+  /**
+   * Creates an immutable starbase event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   starbaseHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }
@@ -608,6 +684,10 @@ export interface CapabilityEvents<P extends string, N extends string> {
     def: Omit<EventDef<"system", From>, "id">
   ): CapabilityEventItem<P, N, Id, "system", From, "system">;
 
+  /**
+   * Creates an immutable system event reference in this capability namespace.
+   * Define it later with its `define(...)` method when a cycle needs the handle first.
+   */
   systemHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
     id: Id,
     contract?: { readonly from?: From }

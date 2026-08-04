@@ -70,6 +70,12 @@ describe("generated event surface", () => {
     );
     expect(capability).toContain('builder.handle(id, "country_event", "country", "country"');
     expect(capability).toContain('CapabilityEventHandle<P, N, Id, "country", From, "observer">');
+    expect(capability).toContain(
+      "Defines a country event with an id in this capability namespace."
+    );
+    expect(capability).toContain(
+      "Creates an immutable country event reference in this capability namespace."
+    );
   });
 
   it("emits the witness-overload pair for every fire effect", () => {

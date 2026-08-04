@@ -15,7 +15,7 @@ import {
   type ContentIdMinter,
   type IdProfile as GeneratedIdProfile,
   type MintedContentId as GeneratedMintedContentId,
-} from "./generated/content-definers.ts";
+} from "./generated/content-capability.ts";
 import {
   capabilityEvents,
   type CapabilityEventBuilder,
@@ -75,17 +75,26 @@ export type CapabilityEventHandle<
  * id profile, and feature placement while definitions remain pure values.
  */
 export type ModCapability<P extends string, I extends IdProfile> = {
+  /** The resolved descriptor this capability will compile with. */
   readonly config: ResolvedModConfig<P>;
+  /** The id segments used by this capability's content methods. */
   readonly ids: Readonly<I>;
+  /**
+   * Opens a capability-owned event namespace. With no argument it selects the
+   * root namespace (exactly the mod prefix); a name adds a suffix to that prefix.
+   */
   readonly namespace: {
     (): CapabilityEvents<P, "">;
     <const N extends string>(name: N): CapabilityEvents<P, N>;
   };
+  /** Places pure items in one capability-owned feature file. */
   feature<T extends ModItem>(
     file: string | undefined,
     items: readonly T[]
   ): CapabilityFeature<P, T>;
+  /** Compiles only features placed by this capability into a pure mod value. */
   compile(features: readonly CapabilityFeature<P>[], options?: BuildOptions): PureMod;
+  /** Creates a pure on-action contribution; place its returned value in a feature. */
   readonly on: typeof on;
 } & ContentCapabilityMethods<P, I>;
 

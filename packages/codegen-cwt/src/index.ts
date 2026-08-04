@@ -452,6 +452,10 @@ async function main(): Promise<void> {
   const definers = contentDefiners(contents);
   await write("content-definers.ts", header(commit, contentSources) + definers.code);
   await write(
+    "content-capability.ts",
+    header(commit, [...contentSources, "content-manifest.ts"]) + definers.capabilityCode
+  );
+  await write(
     "vanilla-refs.ts",
     header(commit, [...contentSources, "content-manifest.ts (VANILLA_REF_EXTRAS)"]) +
       'import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../vanilla-ids.ts";\n' +
@@ -681,6 +685,7 @@ function contentDefiners(
   }[]
 ): {
   code: string;
+  capabilityCode: string;
   definers: number;
   grafted: string[];
 } {
@@ -691,6 +696,7 @@ function contentDefiners(
   const capabilityBindings: string[] = [];
   const profileMembers: string[] = [];
   const defaultProfileMembers: string[] = [];
+  const capabilityRuntimeDefiners = new Set<string>();
 
   for (const content of contents) {
     const { registry, emission } = content;
@@ -704,7 +710,15 @@ function contentDefiners(
     const method = camelCase(registry);
     const minted = `MintedContentId<P, I, ${JSON.stringify(method)}, Name>`;
 
-    profileMembers.push(`  readonly ${method}: string;`);
+    profileMembers.push(
+      docComment(
+        [
+          `The segment inserted between the mod prefix and ${article} ${spoken}'s logical name.`,
+          "Override it when this registry needs a different id convention.",
+        ],
+        "  "
+      ) + `  readonly ${method}: string;`
+    );
     defaultProfileMembers.push(
       `  ${method}: ${JSON.stringify(content.manifest.idSegment ?? registry)},`
     );
@@ -734,7 +748,15 @@ function contentDefiners(
       const def = `${name}Def<${minted}${scoped === null ? "" : ", S"}>`;
       const result = `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
       capabilityMembers.push(
-        `  ${method}${parameters}(\n` +
+        docComment(
+          [
+            `Defines ${article} ${spoken} from its logical name.`,
+            "The capability mints and owns the full id; the returned branded reference",
+            "flows into matching content-reference fields.",
+          ],
+          "  "
+        ) +
+          `  ${method}${parameters}(\n` +
           `    name: Name,\n` +
           `    def: Omit<${def}, "id">\n` +
           `  ): ContentItem<${key}, ${result}>;`
@@ -743,9 +765,18 @@ function contentDefiners(
         `    ${method}: ${parameters}(name: Name, def: Omit<${def}, "id">) =>\n` +
           `      define${name}({ ...def, id: mint(${JSON.stringify(method)}, name) } as ${def}),`
       );
+      capabilityRuntimeDefiners.add(`define${name}`);
     } else {
       capabilityMembers.push(
-        `  ${method}<\n` +
+        docComment(
+          [
+            `Defines ${article} ${spoken} from its logical name.`,
+            "The capability mints and owns the full id; the returned branded reference",
+            "flows into matching content-reference fields.",
+          ],
+          "  "
+        ) +
+          `  ${method}<\n` +
           `    const Name extends string,\n` +
           `    T extends ScopeName | undefined = undefined,\n` +
           `    const Approach extends string = never,\n` +
@@ -766,12 +797,30 @@ function contentDefiners(
       );
     }
     if (patchable !== undefined) {
-      capabilityMembers.push(`  readonly patch${name}: typeof patch${name};`);
+      capabilityMembers.push(
+        docComment(
+          [
+            `Patches a vanilla ${spoken} as a whole-object override.`,
+            "Unlike a capability definition method, it mints no id and owns no new content.",
+          ],
+          "  "
+        ) + `  readonly patch${name}: typeof patch${name};`
+      );
       capabilityBindings.push(`    patch${name},`);
+      capabilityRuntimeDefiners.add(`patch${name}`);
     }
     if (contribution !== undefined) {
-      capabilityMembers.push(`  readonly ${contribution.method}: typeof ${contribution.method};`);
+      capabilityMembers.push(
+        docComment(
+          [
+            `Adds ids to the shared ${contribution.sink} sink.`,
+            "This is an id-less additive contribution, not a capability-owned definition.",
+          ],
+          "  "
+        ) + `  readonly ${contribution.method}: typeof ${contribution.method};`
+      );
       capabilityBindings.push(`    ${contribution.method},`);
+      capabilityRuntimeDefiners.add(contribution.method);
     }
 
     const definitions: string[] = [];
@@ -896,26 +945,53 @@ function contentDefiners(
     ? 'import { defineSituationType, type SituationTypeCapabilityDef } from "../definers.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n'
     : "";
+  const capabilityImports =
+    'import type { ContentItem } from "../items.ts";\n' +
+    (capabilityRuntimeDefiners.size === 0
+      ? ""
+      : `import { ${[...capabilityRuntimeDefiners].sort().join(", ")} } from "./content-definers.ts";\n`) +
+    contents
+      .map((content) =>
+        importList(`./${content.registry.replaceAll("_", "-")}.ts`, [
+          `${content.emission.typeName}Def`,
+          ...(content.emission.scopeParameter === null
+            ? []
+            : [content.emission.scopeParameter.typeName]),
+        ])
+      )
+      .join("") +
+    graftImports;
   const capability =
+    docComment([
+      "Registry-specific id segments used when a mod capability mints content ids.",
+      "Each member may override the conventional segment for its registry.",
+    ]) +
     "export interface IdProfile {\n" +
     profileMembers.join("\n") +
     "\n}\n\n" +
+    docComment(["The conventional id segments used when no profile override is supplied."]) +
     "export const DEFAULT_ID_PROFILE = Object.freeze({\n" +
     defaultProfileMembers.join("\n") +
     "\n}) satisfies IdProfile;\n\n" +
+    docComment(["The literal id a capability mints for one logical content name."]) +
     "export type MintedContentId<\n" +
     "  P extends string,\n" +
     "  I extends IdProfile,\n" +
     "  K extends keyof I,\n" +
     "  Name extends string,\n" +
     "> = `${P}_${I[K] & string}_${Name}`;\n\n" +
+    docComment([
+      "The internal function that turns a registry key and logical name into an owned id.",
+    ]) +
     "export type ContentIdMinter<P extends string, I extends IdProfile> = <\n" +
     "  const K extends keyof I,\n" +
     "  const Name extends string,\n" +
     ">(registry: K, name: Name) => MintedContentId<P, I, K, Name>;\n\n" +
+    docComment(["Content authoring methods bound to one mod capability's prefix and id profile."]) +
     "export interface ContentCapabilityMethods<P extends string, I extends IdProfile> {\n" +
     capabilityMembers.join("\n") +
     "\n}\n\n" +
+    docComment(["Builds the internal content-method table for a mod capability."]) +
     "export function contentCapabilityMethods<P extends string, I extends IdProfile>(\n" +
     "  mint: ContentIdMinter<P, I>\n" +
     "): ContentCapabilityMethods<P, I> {\n" +
@@ -925,7 +1001,8 @@ function contentDefiners(
     "}\n";
 
   return {
-    code: imports + graftImports + "\n" + chunks.join("\n") + "\n" + capability,
+    code: imports + "\n" + chunks.join("\n"),
+    capabilityCode: capabilityImports + "\n" + capability,
     definers: contents.length,
     grafted,
   };

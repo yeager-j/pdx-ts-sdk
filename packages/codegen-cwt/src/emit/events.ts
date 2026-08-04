@@ -96,6 +96,13 @@ function capabilitySignature(kind: EmittedKind & { scope: string }): string {
     `    id: Id,\n` +
     `    def: Omit<EventDef<${scope}, From>, "id">\n` +
     `  ): CapabilityEventItem<P, N, Id, ${scope}, From, ${subtype}>;\n\n` +
+    docComment(
+      [
+        `Creates an immutable ${spoken} reference in this capability namespace.`,
+        "Define it later with its `define(...)` method when a cycle needs the handle first.",
+      ],
+      "  "
+    ) +
     `  ${method}Handle<const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
     `    id: Id,\n` +
     `    contract?: { readonly from?: From }\n` +
