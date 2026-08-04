@@ -119,6 +119,19 @@ function mintContentId<P extends string, I extends IdProfile>(
   };
 }
 
+function assertNestedDefinitionId(prefix: string): (id: string) => void {
+  return (id) => {
+    if (!FILE_STEM_PATTERN.test(id)) {
+      throw new Error(
+        `Nested definition id "${id}" must be lowercase snake_case ([a-z][a-z0-9_]*)`
+      );
+    }
+    if (!belongsToPrefix(id, prefix)) {
+      throw new Error(`Nested definition id "${id}" does not belong to mod prefix "${prefix}"`);
+    }
+  };
+}
+
 function mintNamespace<P extends string, N extends string>(
   prefix: P,
   name: N
@@ -263,7 +276,8 @@ export function createMod<const P extends string, const I extends IdProfile>(
   const ids = resolveIdProfile(options?.ids ?? DEFAULT_ID_PROFILE);
   const owner: CapabilityFeatureOwner<P> = Object.freeze({ prefix: config.prefix });
   const content = contentCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
-    mintContentId(config.prefix, ids)
+    mintContentId(config.prefix, ids),
+    assertNestedDefinitionId(config.prefix)
   );
 
   return Object.freeze({

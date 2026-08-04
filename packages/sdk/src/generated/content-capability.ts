@@ -107,6 +107,27 @@ import type { UtilityComponentTemplateDef } from "./utility-component-template.t
 import type { WarGoalDef } from "./war-goal.ts";
 import type { WeaponComponentTemplateDef } from "./weapon-component-template.ts";
 
+const TRADITION_NESTED_DEFINITION_MEMBERS = ["traditionSwap"] as const;
+
+const ASCENSION_PERK_NESTED_DEFINITION_MEMBERS = ["traditionSwap"] as const;
+
+const SITUATION_TYPE_NESTED_DEFINITION_MEMBERS = ["approach", "stages"] as const;
+type NestedDefinitionIdAsserter = (id: string) => void;
+
+function assertNestedDefinitionIds(
+  def: object,
+  assert: NestedDefinitionIdAsserter,
+  members: readonly string[]
+): void {
+  for (const member of members) {
+    const nested = (def as Readonly<Record<string, unknown>>)[member];
+    if (nested === undefined) {
+      continue;
+    }
+    Object.keys(nested as Readonly<Record<string, unknown>>).forEach(assert);
+  }
+}
+
 /**
  * Registry-specific id segments used when a mod capability mints content ids.
  * Each member may override the conventional segment for its registry.
@@ -374,6 +395,8 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * Defines a tradition from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
+   * Nested-definition record keys are full ids and must belong to this capability's
+   * prefix, because other fields may reference them directly.
    */
   tradition<const Name extends string>(
     name: Name,
@@ -395,6 +418,8 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * Defines an ascension perk from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
+   * Nested-definition record keys are full ids and must belong to this capability's
+   * prefix, because other fields may reference them directly.
    */
   ascensionPerk<const Name extends string>(
     name: Name,
@@ -599,6 +624,8 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * Defines a situation type from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
+   * Nested-definition record keys are full ids and must belong to this capability's
+   * prefix, because other fields may reference them directly.
    */
   situationType<
     const Name extends string,
@@ -753,7 +780,8 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
 
 /** Builds the internal content-method table for a mod capability. */
 export function contentCapabilityMethods<P extends string, I extends IdProfile>(
-  mint: ContentIdMinter<P, I>
+  mint: ContentIdMinter<P, I>,
+  assertNestedId: NestedDefinitionIdAsserter
 ): ContentCapabilityMethods<P, I> {
   return Object.freeze({
     technology: <const Name extends string>(
@@ -774,10 +802,12 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
     tradition: <const Name extends string>(
       name: Name,
       def: Omit<TraditionDef<MintedContentId<P, I, "tradition", Name>>, "id">
-    ) =>
-      defineTradition({ ...def, id: mint("tradition", name) } as TraditionDef<
+    ) => {
+      assertNestedDefinitionIds(def, assertNestedId, TRADITION_NESTED_DEFINITION_MEMBERS);
+      return defineTradition({ ...def, id: mint("tradition", name) } as TraditionDef<
         MintedContentId<P, I, "tradition", Name>
-      >),
+      >);
+    },
     traditionCategory: <const Name extends string>(
       name: Name,
       def: Omit<TraditionCategoryDef<MintedContentId<P, I, "traditionCategory", Name>>, "id">
@@ -789,10 +819,12 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
     ascensionPerk: <const Name extends string>(
       name: Name,
       def: Omit<AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>, "id">
-    ) =>
-      defineAscensionPerk({ ...def, id: mint("ascensionPerk", name) } as AscensionPerkDef<
+    ) => {
+      assertNestedDefinitionIds(def, assertNestedId, ASCENSION_PERK_NESTED_DEFINITION_MEMBERS);
+      return defineAscensionPerk({ ...def, id: mint("ascensionPerk", name) } as AscensionPerkDef<
         MintedContentId<P, I, "ascensionPerk", Name>
-      >),
+      >);
+    },
     agenda: <const Name extends string>(
       name: Name,
       def: Omit<AgendaDef<MintedContentId<P, I, "agenda", Name>>, "id">
@@ -947,13 +979,18 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         >,
         "id"
       >
-    ) =>
-      defineSituationType({ ...def, id: mint("situationType", name) } as SituationTypeCapabilityDef<
+    ) => {
+      assertNestedDefinitionIds(def, assertNestedId, SITUATION_TYPE_NESTED_DEFINITION_MEMBERS);
+      return defineSituationType({
+        ...def,
+        id: mint("situationType", name),
+      } as SituationTypeCapabilityDef<
         MintedContentId<P, I, "situationType", Name>,
         T,
         Approach,
         Stage
-      >),
+      >);
+    },
     scriptedLoc: <const Name extends string>(
       name: Name,
       def: Omit<ScriptedLocDef<MintedContentId<P, I, "scriptedLoc", Name>>, "id">

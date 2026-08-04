@@ -697,6 +697,7 @@ function contentDefiners(
   const profileMembers: string[] = [];
   const defaultProfileMembers: string[] = [];
   const capabilityRuntimeDefiners = new Set<string>();
+  const nestedDefinitionTables: string[] = [];
 
   for (const content of contents) {
     const { registry, emission } = content;
@@ -709,6 +710,16 @@ function contentDefiners(
     const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
     const method = camelCase(registry);
     const minted = `MintedContentId<P, I, ${JSON.stringify(method)}, Name>`;
+    const nestedDefinitionMembers = emission.emittedFields
+      .filter((field) => field.shape === "repeatedStruct")
+      .map((field) => camelCase(field.field))
+      .sort();
+    const nestedDefinitionTable = `${registry.toUpperCase()}_NESTED_DEFINITION_MEMBERS`;
+    if (nestedDefinitionMembers.length > 0) {
+      nestedDefinitionTables.push(
+        `const ${nestedDefinitionTable} = ${JSON.stringify(nestedDefinitionMembers)} as const;\n`
+      );
+    }
 
     profileMembers.push(
       docComment(
@@ -753,6 +764,12 @@ function contentDefiners(
             `Defines ${article} ${spoken} from its logical name.`,
             "The capability mints and owns the full id; the returned branded reference",
             "flows into matching content-reference fields.",
+            ...(nestedDefinitionMembers.length === 0
+              ? []
+              : [
+                  "Nested-definition record keys are full ids and must belong to this capability's",
+                  "prefix, because other fields may reference them directly.",
+                ]),
           ],
           "  "
         ) +
@@ -762,8 +779,15 @@ function contentDefiners(
           `  ): ContentItem<${key}, ${result}>;`
       );
       capabilityBindings.push(
-        `    ${method}: ${parameters}(name: Name, def: Omit<${def}, "id">) =>\n` +
-          `      define${name}({ ...def, id: mint(${JSON.stringify(method)}, name) } as ${def}),`
+        capabilityBinding(
+          method,
+          parameters,
+          `Omit<${def}, "id">`,
+          `define${name}`,
+          def,
+          nestedDefinitionMembers,
+          nestedDefinitionTable
+        )
       );
       capabilityRuntimeDefiners.add(`define${name}`);
     } else {
@@ -773,6 +797,12 @@ function contentDefiners(
             `Defines ${article} ${spoken} from its logical name.`,
             "The capability mints and owns the full id; the returned branded reference",
             "flows into matching content-reference fields.",
+            ...(nestedDefinitionMembers.length === 0
+              ? []
+              : [
+                  "Nested-definition record keys are full ids and must belong to this capability's",
+                  "prefix, because other fields may reference them directly.",
+                ]),
           ],
           "  "
         ) +
@@ -787,13 +817,20 @@ function contentDefiners(
           `  ): ContentItem<${key}, ${name}Def<${minted}>> & { readonly targetScope: T };`
       );
       capabilityBindings.push(
-        `    ${method}: <\n` +
-          `      const Name extends string,\n` +
-          `      T extends ScopeName | undefined = undefined,\n` +
-          `      const Approach extends string = never,\n` +
-          `      const Stage extends string = never,\n` +
-          `    >(name: Name, def: Omit<SituationTypeCapabilityDef<${minted}, T, Approach, Stage>, "id">) =>\n` +
-          `      define${name}({ ...def, id: mint(${JSON.stringify(method)}, name) } as SituationTypeCapabilityDef<${minted}, T, Approach, Stage>),`
+        capabilityBinding(
+          method,
+          `<\n` +
+            `      const Name extends string,\n` +
+            `      T extends ScopeName | undefined = undefined,\n` +
+            `      const Approach extends string = never,\n` +
+            `      const Stage extends string = never,\n` +
+            `    >`,
+          `Omit<SituationTypeCapabilityDef<${minted}, T, Approach, Stage>, "id">`,
+          `define${name}`,
+          `SituationTypeCapabilityDef<${minted}, T, Approach, Stage>`,
+          nestedDefinitionMembers,
+          nestedDefinitionTable
+        )
       );
     }
     if (patchable !== undefined) {
@@ -962,6 +999,23 @@ function contentDefiners(
       .join("") +
     graftImports;
   const capability =
+    nestedDefinitionTables.join("\n") +
+    "type NestedDefinitionIdAsserter = (id: string) => void;\n\n" +
+    (nestedDefinitionTables.length === 0
+      ? ""
+      : "function assertNestedDefinitionIds(\n" +
+        "  def: object,\n" +
+        "  assert: NestedDefinitionIdAsserter,\n" +
+        "  members: readonly string[]\n" +
+        "): void {\n" +
+        "  for (const member of members) {\n" +
+        "    const nested = (def as Readonly<Record<string, unknown>>)[member];\n" +
+        "    if (nested === undefined) {\n" +
+        "      continue;\n" +
+        "    }\n" +
+        "    Object.keys(nested as Readonly<Record<string, unknown>>).forEach(assert);\n" +
+        "  }\n" +
+        "}\n\n") +
     docComment([
       "Registry-specific id segments used when a mod capability mints content ids.",
       "Each member may override the conventional segment for its registry.",
@@ -993,7 +1047,8 @@ function contentDefiners(
     "\n}\n\n" +
     docComment(["Builds the internal content-method table for a mod capability."]) +
     "export function contentCapabilityMethods<P extends string, I extends IdProfile>(\n" +
-    "  mint: ContentIdMinter<P, I>\n" +
+    "  mint: ContentIdMinter<P, I>,\n" +
+    "  assertNestedId: NestedDefinitionIdAsserter\n" +
     "): ContentCapabilityMethods<P, I> {\n" +
     "  return Object.freeze({\n" +
     capabilityBindings.join("\n") +
@@ -1006,6 +1061,30 @@ function contentDefiners(
     definers: contents.length,
     grafted,
   };
+}
+
+function capabilityBinding(
+  method: string,
+  parameters: string,
+  definitionArgument: string,
+  definer: string,
+  definitionType: string,
+  nestedDefinitionMembers: readonly string[],
+  nestedDefinitionTable: string
+): string {
+  const withId = `{ ...def, id: mint(${JSON.stringify(method)}, name) }`;
+  if (nestedDefinitionMembers.length === 0) {
+    return (
+      `    ${method}: ${parameters}(name: Name, def: ${definitionArgument}) =>\n` +
+      `      ${definer}(${withId} as ${definitionType}),`
+    );
+  }
+  return (
+    `    ${method}: ${parameters}(name: Name, def: ${definitionArgument}) => {\n` +
+    `      assertNestedDefinitionIds(def, assertNestedId, ${nestedDefinitionTable});\n` +
+    `      return ${definer}(${withId} as ${definitionType});\n` +
+    "    },"
+  );
 }
 
 /**

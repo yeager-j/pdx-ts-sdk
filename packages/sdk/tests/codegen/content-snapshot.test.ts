@@ -1132,4 +1132,34 @@ describe("generated content definers", () => {
       "This is an id-less additive contribution, not a capability-owned definition."
     );
   });
+
+  it("derives every nested identity table from repeated-struct metadata", () => {
+    const nestedByRegistry = CONTENT_MANIFEST.map((manifest) => {
+      const registry = (manifest as ContentManifestEntry).as ?? manifest.type;
+      return {
+        registry,
+        members: emissions
+          .get(registry)!
+          .emittedFields.filter((field) => field.shape === "repeatedStruct")
+          .map((field) =>
+            field.field.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())
+          )
+          .sort(),
+      };
+    }).filter((entry) => entry.members.length > 0);
+
+    expect(nestedByRegistry).toEqual([
+      { registry: "tradition", members: ["traditionSwap"] },
+      { registry: "ascension_perk", members: ["traditionSwap"] },
+      { registry: "situation_type", members: ["approach", "stages"] },
+    ]);
+    for (const { registry, members } of nestedByRegistry) {
+      const table = `${registry.toUpperCase()}_NESTED_DEFINITION_MEMBERS`;
+      expect(capability).toContain(
+        `const ${table} = [${members.map((member) => JSON.stringify(member)).join(", ")}] as const;`
+      );
+      expect(capability.match(new RegExp(`\\b${table}\\b`, "g"))).toHaveLength(2);
+    }
+    expect(capability).toContain("function assertNestedDefinitionIds(");
+  });
 });
