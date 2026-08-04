@@ -239,14 +239,10 @@ export {
   type MintedContentId,
   type ModCapability,
 } from "./mod-capability.ts";
-export {
-  install,
-  render,
-  renderLauncherDescriptor,
-  write,
-  type InstallOptions,
-  type InstallResult,
-} from "./render.ts";
+export { install, type InstallOptions, type InstallResult } from "./output/install.ts";
+export { render } from "./output/render.ts";
+export { renderLauncherDescriptor } from "./output/render.ts";
+export { write } from "./output/write.ts";
 export { DEFAULT_CONTENT_PATTERN, discoverFeatures, type DiscoverOptions } from "./discover.ts";
 // Generated item unions remain public; their raw constructors are internal
 // lowering machinery used by capability methods.

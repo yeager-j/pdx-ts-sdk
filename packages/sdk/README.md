@@ -311,7 +311,10 @@ src/
 ├── index.ts           public capability, discovery, materialization, and types
 ├── mod-capability.ts  createMod and capability-owned authoring operations
 ├── build.ts           internal fold, cross-feature checks, and warnings
-├── render.ts          compiled mod → path-to-contents map
+├── output/             pure rendering and filesystem materialization
+│   ├── render.ts       compiled mod → path-to-contents map
+│   ├── write.ts        path map → files beneath an explicit root
+│   └── install.ts      atomic launcher-directory installation
 ├── discover.ts        discoverFeatures: directory → named feature exports
 ├── content.ts         generic content lowering and modifier recorder
 ├── events.ts          internal event lowering and namespace mechanics
