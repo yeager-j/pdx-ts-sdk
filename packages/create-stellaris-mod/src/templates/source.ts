@@ -13,7 +13,7 @@ function quote(value: string): string {
   return JSON.stringify(value);
 }
 
-export function indexTs(resolved: Resolved): string {
+export function modTs(resolved: Resolved): string {
   // The same predicate the dependency uses: importing a package the manifest
   // declined to add would fail the build rather than degrade.
   const idsImport = !canPinIds(resolved)
@@ -26,23 +26,31 @@ export function indexTs(resolved: Resolved): string {
     resolved.installPath === undefined ? "" : `import { loadVanilla } from "./vanilla.ts";\n`;
   const vanillaUse =
     resolved.installPath === undefined
-      ? `const mod = buildMod(config, collections);`
-      : `// With a vanilla view, an id colliding with a real one is a hard error\n` +
-        `// rather than a silent override, and \`patchTechnology\` becomes available.\n` +
-        `const vanilla = loadVanilla();\n` +
-        `const mod = buildMod(config, collections, vanilla === undefined ? {} : { vanilla });`;
+      ? `  return buildMod(config, collections);`
+      : `  // With a vanilla view, an id colliding with a real one is a hard error\n` +
+        `  // rather than a silent override, and \`patchTechnology\` becomes available.\n` +
+        `  const vanilla = loadVanilla();\n` +
+        `  return buildMod(config, collections, vanilla === undefined ? {} : { vanilla });`;
 
   return `/**
- * The build. \`npm run build\` runs this file — Node executes TypeScript
- * directly, so nothing stands between this source and the emitted mod.
+ * The mod definition: config, plus \`buildTheMod()\` — the impure discovery
+ * shell around the SDK's pure fold. Importing this file builds nothing:
+ * \`config\` is a plain value, so a test — or anything else — that only wants
+ * the mod's prefix can import it without triggering a build as a side effect.
+ * \`npm run build\` (\`src/index.ts\`) and \`npm run install-mod\`
+ * (\`src/install.ts\`) both call \`buildTheMod()\` once and add their own single
+ * disk-touching step (\`write\` vs \`install\`) on top, instead of each folding
+ * \`src/content/\` a second time.
  *
- * The pipeline is the SDK's: \`discoverContent\` imports every module under
- * \`src/content/\` and turns each one's exports into a collection named after the
- * file, \`buildMod\` folds those into a value, \`render\` serializes that value to
- * a path-to-contents map, and \`write\` is the only step that touches the disk.
+ * \`buildTheMod()\` itself is not pure: \`discoverContent\` walks \`src/content/\`
+ * and imports every module under it — real disk reads, running your code — to
+ * turn each one's exports into a collection named after the file, and (when a
+ * vanilla install was found) \`loadVanilla()\` parses the game and may write a
+ * cache under \`node_modules/.cache\`. \`buildMod\`, which folds the result into
+ * the \`PureMod\` value \`render\`/\`write\`/\`install\` consume, is the pure part.
  */
 
-import { buildMod, discoverContent, render, write, type ModConfig } from "@pdx-ts/sdk";
+import { buildMod, discoverContent, type ModConfig, type PureMod } from "@pdx-ts/sdk";
 ${idsImport}${vanillaWiring}
 export const config: ModConfig = {
   name: ${quote(resolved.name)},
@@ -54,11 +62,29 @@ export const config: ModConfig = {
   tags: ${JSON.stringify(resolved.tags)},
 };
 
+export async function buildTheMod(): Promise<PureMod> {
+  const collections = await discoverContent(new URL("./content/", import.meta.url));
+${vanillaUse}
+}
+`;
+}
+
+export function indexTs(): string {
+  return `/**
+ * The build. \`npm run build\` runs this file — Node executes TypeScript
+ * directly, so nothing stands between this source and the emitted mod.
+ *
+ * \`render\` serializes the value \`buildTheMod\` (in \`mod.ts\`) folds together, and
+ * \`write\` is the only step that touches the disk.
+ */
+
+import { render, write } from "@pdx-ts/sdk";
+
+import { buildTheMod } from "./mod.ts";
+
 export const outDir = new URL("../out/", import.meta.url);
 
-const collections = await discoverContent(new URL("./content/", import.meta.url));
-${vanillaUse}
-
+const mod = await buildTheMod();
 const files = render(mod);
 await write(outDir, files);
 
@@ -82,15 +108,27 @@ export function installTs(): string {
  * \`STELLARIS_MOD_DIR\` if your mod directory is somewhere non-standard, which
  * on Windows it can be when OneDrive has redirected Documents.
  *
+ * This shares \`buildTheMod\` with \`src/index.ts\` rather than folding content a
+ * second time, so the mod that gets installed is built with the same vanilla
+ * view (id collision checks included) as the one \`npm run build\` writes to
+ * \`out/\` — never a second, unchecked build. It also has its own warning
+ * loop, for the same reason: nothing here can lean on \`src/index.ts\` printing
+ * \`mod.warnings\` for it.
+ *
  * Enable the mod in a launcher playset afterwards; the launcher only rescans
  * this directory on startup, so restart it if the mod does not appear.
  */
 
-import { buildMod, discoverContent, install } from "@pdx-ts/sdk";
+import { install } from "@pdx-ts/sdk";
 
-import { config } from "./index.ts";
+import { buildTheMod, config } from "./mod.ts";
 
-const mod = buildMod(config, await discoverContent(new URL("./content/", import.meta.url)));
+const mod = await buildTheMod();
+
+for (const warning of mod.warnings) {
+  console.warn(\`warning (\${warning.code}): \${warning.message}\`);
+}
+
 const { contentDir, descriptorPath } = await install(mod);
 
 console.log(\`Installed \${config.name} for the launcher:\`);

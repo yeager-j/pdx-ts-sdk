@@ -20,7 +20,8 @@ export function readme(resolved: Resolved): string {
     "",
     "```",
     "src/",
-    "├── index.ts            config + the build",
+    "├── mod.ts              config + buildTheMod(): discover content/, fold it into a mod",
+    "├── index.ts            build: render the fold and write it to out/",
     "├── install.ts          build + drop it in the launcher's mod directory",
   ];
   if (resolved.installPath !== undefined) {
@@ -32,6 +33,15 @@ export function readme(resolved: Resolved): string {
     "    ├── example.ts      a technology, an event, and the hook that fires it",
     "    └── example.test.ts tests, colocated with what they test",
     "```",
+    "",
+    "Importing `mod.ts` builds nothing — `config` is a plain value, so a test",
+    "importing it to read the mod's prefix never triggers a build as a side",
+    "effect. `index.ts` and `install.ts` each import its `buildTheMod()` and add",
+    "their own single disk-touching step on top, so a build with a vanilla view",
+    "(id collision checks included) never quietly runs twice, once checked and",
+    "once not. `buildTheMod()` itself is the impure discovery shell around the",
+    "SDK's pure fold, not a pure function on its own — calling it walks",
+    "`content/` and imports every module in it.",
     "",
     "Source layout is not output layout. `discoverContent` imports every module",
     "under `content/` and names each collection after the file, so one feature",
@@ -64,7 +74,7 @@ export function readme(resolved: Resolved): string {
     lines.push(
       "This project was scaffolded without a detected Stellaris install, so vanilla",
       "ids are unchecked strings. To turn checking on, install the identifier",
-      "package matching your game build and import it once in `src/index.ts`:",
+      "package matching your game build and import it once in `src/mod.ts`:",
       "",
       "```bash",
       "npm install @pdx-ts/stellaris-ids@<your game version>",
@@ -78,7 +88,7 @@ export function readme(resolved: Resolved): string {
   } else {
     lines.push(
       `\`@pdx-ts/stellaris-ids\` is pinned to ${resolved.gameVersion} — the package's version`,
-      "*is* the game version — and imported once in `src/index.ts` for its type-level",
+      "*is* the game version — and imported once in `src/mod.ts` for its type-level",
       'side effect. That is what makes `vanilla.technology("tech_lasers_1")` compile',
       'and `vanilla.technology("tech_lazers_1")` an error. After a game update,',
       "install the matching version.",

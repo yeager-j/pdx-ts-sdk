@@ -24,6 +24,7 @@ import {
   flagsTs,
   indexTs,
   installTs,
+  modTs,
   vanillaTs,
 } from "./templates/source.ts";
 
@@ -44,7 +45,8 @@ export function planFiles(resolved: Resolved, packageName?: string): Map<string,
     files.set("eslint.config.js", eslintConfig());
   }
 
-  files.set("src/index.ts", indexTs(resolved));
+  files.set("src/mod.ts", modTs(resolved));
+  files.set("src/index.ts", indexTs());
   files.set("src/install.ts", installTs());
   files.set("src/flags.ts", flagsTs(resolved));
   files.set("src/content/example.ts", contentExampleTs(resolved));

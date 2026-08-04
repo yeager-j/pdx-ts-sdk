@@ -26,17 +26,70 @@
  * repo root, so no step needs the network.
  */
 
-import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { locateInstall, readGameVersion } from "../../sdk/src/stellaris/index.ts";
 import { main } from "../src/cli.ts";
 
 const REPO = path.resolve(import.meta.dirname, "../../..");
 const ROOT_MODULES = path.join(REPO, "node_modules");
 const WORKSPACE_PACKAGES = ["sdk", "sdk-testing", "pdxscript", "stellaris-ids"] as const;
+
+/** Absent when no real Stellaris install is on this machine. */
+let realInstallPath: string | undefined;
+try {
+  realInstallPath = locateInstall();
+} catch {
+  realInstallPath = undefined;
+}
+const realInstallGameVersion =
+  realInstallPath === undefined ? undefined : readGameVersion(realInstallPath);
+
+/**
+ * `@pdx-ts/stellaris-ids`'s npm version *is* the game version it was
+ * generated from (AGENTS.md, "Vanilla identifier package") — it is
+ * regenerated from a pinned install, not derived live, so a game update
+ * alone can leave the workspace-built tarball this suite installs pinned to
+ * a version the currently detected install no longer matches.
+ */
+function stellarisIdsPackageVersion(): string {
+  const pkg = JSON.parse(
+    readFileSync(path.join(REPO, "packages/stellaris-ids/package.json"), "utf8")
+  ) as { version: string };
+  // major.minor.patch only, matching checkVanillaPackagePin's own comparison
+  // (packages/sdk/src/vanilla/package-pin.ts): a regen-fix release like
+  // "4.4.6-r2" still pins install "4.4.6".
+  return pkg.version.split(/[-+]/, 1)[0]!;
+}
+
+/**
+ * `checkVanillaPackagePin` (packages/sdk/src/vanilla/package-pin.ts) throws
+ * `VanillaPackageMismatchError` whenever a `VanillaView` and the installed
+ * `@pdx-ts/stellaris-ids` disagree about which game build they describe.
+ * That is a real, useful guard — but a mismatch here would make the
+ * real-vanilla suite below fail for a reason SDK-54 has nothing to do with:
+ * the workspace tarball this suite installs was built once, pinned to
+ * whatever `@pdx-ts/stellaris-ids` happened to be regenerated against, and
+ * a game update since then leaves it stale. Skip that suite rather than let
+ * it fail on an unrelated, pre-existing mismatch.
+ */
+const realVanillaSuiteRunnable =
+  realInstallPath !== undefined &&
+  realInstallGameVersion !== undefined &&
+  stellarisIdsPackageVersion() === realInstallGameVersion;
 
 let projectDir: string;
 let tarballDir: string;
@@ -124,6 +177,28 @@ afterAll(() => {
 });
 
 describe("a scaffolded project", () => {
+  it("does not write to disk merely by importing config (SDK-54)", () => {
+    // config lives in src/mod.ts, which only reads: discovering and folding
+    // content touches no disk. A test — or anything else — that imports
+    // `config` to read the mod's prefix must not build the mod as a side
+    // effect. This is the ticket's headline claim, and it fails on the
+    // pre-fix layout: there, `config` lived in src/index.ts, which is also
+    // the build entrypoint with a top-level `await write(...)`, so importing
+    // it built the mod and wrote `out/` as a side effect.
+    const outDir = path.join(projectDir, "out");
+    rmSync(outDir, { recursive: true, force: true });
+
+    const importer = path.join(projectDir, "read-config-only.mjs");
+    writeFileSync(
+      importer,
+      'import { config } from "./src/mod.ts";\nprocess.stdout.write(config.name);\n'
+    );
+    const output = runIn(projectDir, process.execPath, ["read-config-only.mjs"]);
+
+    expect(output).toBe("Smoke Mod");
+    expect(existsSync(outDir)).toBe(false);
+  });
+
   it("typechecks with the toolchain it asked for", () => {
     expect(() =>
       runIn(projectDir, path.join(projectDir, "node_modules/.bin/tsc"), ["--noEmit"])
@@ -164,4 +239,152 @@ describe("a scaffolded project", () => {
     expect(output).not.toContain("example_test");
     expect(output).not.toContain("example.test");
   });
+
+  it("installs end to end without rebuilding unchecked (SDK-54)", () => {
+    // `install.ts` used to construct its own `buildMod` call with no vanilla
+    // argument at all, second and silently unchecked, after `import { config }
+    // from "./index.ts"` had already forced a first, checked build as a side
+    // effect. Now `install.ts` imports the same `buildTheMod()` as
+    // `src/index.ts`, so there is exactly one fold, and this just proves the
+    // ordinary path still works end to end.
+    const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-launcher-"));
+    try {
+      const output = execFileSync(process.execPath, ["src/install.ts"], {
+        cwd: projectDir,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, PDX_NO_VANILLA: "1", STELLARIS_MOD_DIR: modDir },
+      });
+      expect(output).toContain("Installed Smoke Mod for the launcher:");
+      expect(readdirSync(modDir).length).toBeGreaterThan(0);
+    } finally {
+      rmSync(modDir, { recursive: true, force: true });
+    }
+  });
+
+  it("surfaces build warnings on install-mod, not just on build (SDK-54)", () => {
+    // On the pre-fix template, `install.ts` had no warning loop of its own —
+    // it only appeared to report `mod.warnings` because importing `config`
+    // from `src/index.ts` forced that build's warning loop to run first, as a
+    // side effect. This mutates the scaffolded example to trigger a real,
+    // nonfatal warning (a localization value containing a quote, which
+    // Paradox's yml format cannot escape) and proves `install.ts` reports it
+    // through its own loop, independent of that accident.
+    const examplePath = path.join(projectDir, "src/content/example.ts");
+    const original = readFileSync(examplePath, "utf8");
+    const withQuotedDesc = original.replace(
+      'desc: "The first technology this mod adds.",',
+      "desc: 'A \"quoted\" description, to trigger a real build warning.',"
+    );
+    expect(withQuotedDesc).not.toBe(original);
+    writeFileSync(examplePath, withQuotedDesc);
+
+    const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-warn-"));
+    try {
+      // spawnSync, not execFileSync: the warning is nonfatal (exit 0), and
+      // console.warn writes to stderr, which execFileSync's return value
+      // does not include.
+      const result = spawnSync(process.execPath, ["src/install.ts"], {
+        cwd: projectDir,
+        encoding: "utf8",
+        env: { ...process.env, PDX_NO_VANILLA: "1", STELLARIS_MOD_DIR: modDir },
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout + result.stderr).toContain("warning (loc-quote-replaced)");
+    } finally {
+      writeFileSync(examplePath, original);
+      rmSync(modDir, { recursive: true, force: true });
+    }
+  });
 }, 120_000);
+
+/**
+ * The check that matters most: a scaffolded project built against a real
+ * vanilla view rejects a content id that collides with one vanilla already
+ * defines — rather than silently overriding it. This only means anything
+ * against the real installed game, so it is skipped where SDK-54's fix can't
+ * be exercised end to end — including when the install exists but its game
+ * build has drifted from the workspace `@pdx-ts/stellaris-ids` tarball this
+ * suite installs (see `realVanillaSuiteRunnable`), which would fail this
+ * suite for a reason unrelated to SDK-54.
+ *
+ * Before the fix, `install.ts` built its own `PureMod` with no vanilla
+ * argument, so `buildMod`'s collision guard had no vanilla ids to compare
+ * against and could not have fired here — the guard only survived on the
+ * unpatched template because importing `config` from `src/index.ts` forced an
+ * earlier, *separate*, checked build as a side effect, which happened to
+ * throw first. `installs cleanly...` below proves the checked build is now
+ * the *only* one `npm run install-mod` runs.
+ */
+describe.skipIf(!realVanillaSuiteRunnable)(
+  "npm run install-mod against a real vanilla view (SDK-54)",
+  () => {
+    let collisionProjectDir: string;
+    let launcherModDir: string;
+
+    beforeAll(async () => {
+      const root = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-collision-"));
+      collisionProjectDir = path.join(root, "collision-mod");
+      launcherModDir = path.join(root, "launcher-mod-dir");
+
+      const code = await main([
+        "--yes",
+        "--no-git",
+        "--no-install",
+        "--no-eslint",
+        "--name",
+        "Collision Mod",
+        collisionProjectDir,
+      ]);
+      expect(code).toBe(0);
+      // Reuses the outer suite's already-packed tarballs — the SDK itself is
+      // untouched by this fix, so nothing here needs a second `npm pack`.
+      installTarballs(collisionProjectDir, tarballDir);
+    }, 300_000);
+
+    afterAll(() => {
+      if (collisionProjectDir !== undefined) {
+        rmSync(path.dirname(collisionProjectDir), { recursive: true, force: true });
+      }
+    });
+
+    function runInstallMod(): string {
+      return execFileSync(process.execPath, ["src/install.ts"], {
+        cwd: collisionProjectDir,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        // No PDX_NO_VANILLA here: the whole point is exercising the real
+        // vanilla view this machine's Stellaris install provides.
+        env: { ...process.env, STELLARIS_MOD_DIR: launcherModDir },
+      });
+    }
+
+    it("installs cleanly end to end when nothing collides", () => {
+      const output = runInstallMod();
+      expect(output).toContain("Installed Collision Mod for the launcher:");
+      expect(readdirSync(launcherModDir).length).toBeGreaterThan(0);
+    });
+
+    it("rejects a content id that collides with a real vanilla one, instead of silently overriding it", () => {
+      const examplePath = path.join(collisionProjectDir, "src/content/example.ts");
+      const original = readFileSync(examplePath, "utf8");
+      // tech_lasers_1 is a real vanilla technology id; buildMod's vanilla
+      // collision guard is the only thing standing between authoring it and
+      // the launcher silently receiving an override of vanilla content.
+      const withCollision = original.replace(
+        /id: "[a-z0-9_]+_tech_first_steps"/,
+        'id: "tech_lasers_1"'
+      );
+      expect(withCollision).not.toBe(original);
+      writeFileSync(examplePath, withCollision);
+      try {
+        expect(() => runInstallMod()).toThrowError(
+          /technology id "tech_lasers_1" collides with a vanilla technology/
+        );
+      } finally {
+        writeFileSync(examplePath, original);
+      }
+    });
+  },
+  180_000
+);
