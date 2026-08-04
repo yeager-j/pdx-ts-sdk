@@ -792,6 +792,7 @@ export const UTILITY_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "should_ai_use",

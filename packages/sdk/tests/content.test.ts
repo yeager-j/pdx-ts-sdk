@@ -32,6 +32,7 @@ import {
   defineDecision,
   defineEconomicCategory,
   defineEdict,
+  defineGlobalShipDesign,
   defineGraphicalCulture,
   defineJob,
   defineOpinionModifier,
@@ -711,11 +712,19 @@ function defineContentExample(): PureMod {
       // would (rightly) fail the reference guard, same as `alternateCivicVersion`.
       civics: { not: [{ values: ["civic_shadow_council"] }] },
     },
+    // SDK-42: a same-domain disjunction ("authority is democratic or
+    // oligarchic") belongs in the *clause*-level `or` (one group, two
+    // `values`) — the block-level `orGroups` ANDs its repeated elements, so
+    // two single-value groups there would require both authorities at once.
     possible: {
-      or: [
-        { authority: { value: "auth_democratic" } },
-        { text: "content_test_meritocracy_oligarchic", authority: { value: "auth_oligarchic" } },
-      ],
+      authority: {
+        or: [
+          {
+            text: "content_test_meritocracy_oligarchic",
+            values: ["auth_democratic", "auth_oligarchic"],
+          },
+        ],
+      },
     },
     modifier: (m) => m.country.unity.produces.mult(0.05),
     cost: 1,
@@ -855,7 +864,8 @@ function defineContentExample(): PureMod {
       authority: { value: "auth_democratic" },
     },
     possibleSecondary: {
-      or: [{ ethics: { value: "ethic_xenophile" } }],
+      // SDK-42: one `orGroups` element — a single OR block, correct as-is.
+      orGroups: [{ ethics: { value: "ethic_xenophile" } }],
     },
     resources: [{ category: "species", cost: { amounts: { unity: 50 } } }],
     ethicsToPrefer: ["ethic_xenophile"],
@@ -891,9 +901,12 @@ function defineContentExample(): PureMod {
 
   // Modeled on the vanilla custom_starting_init_* entries: a star, then a
   // planet carrying its own moons, then a second planet nested one level
-  // deeper. `changeOrbit` sits between the planet and its moons on purpose —
-  // it advances the orbit cursor, so its position among the siblings is the
-  // geometry, and the emitter has to preserve declaration order to keep it.
+  // deeper. SDK-30: there is no `changeOrbit` field — `change_orbit` is
+  // positional sugar for advancing the orbit cursor, which a field cannot
+  // represent once repeated occurrences collapse into one array member, so
+  // the long form (a `class: "none"` sibling with its own `orbitDistance`)
+  // is the only spelling. It sits between the planet and its moons on
+  // purpose, the same position `change_orbit` itself would occupy.
   const homeSystem = defineSolarSystemInitializer({
     id: "content_test_system_home",
     class: "rl_standard_stars",
@@ -917,8 +930,11 @@ function defineContentExample(): PureMod {
         initEffect: (planet) => {
           planet.setCapital(true);
         },
-        changeOrbit: 12,
         moon: [
+          // The long form of `change_orbit = 12`: a "none" sibling advancing
+          // the orbit cursor, positioned exactly where the field would have
+          // sat.
+          { class: "none", orbitDistance: 12 },
           { class: "pc_barren", size: 8, orbitDistance: 10 },
           {
             class: "pc_frozen",
@@ -1025,17 +1041,14 @@ describe("generated content registries", () => {
     expect(rendered).toContain("\t\t\tmoon = {\n\t\t\t\tclass = pc_barren");
     // And a planet inside a planet, the other half of the mutual recursion.
     expect(rendered).toContain("\t\tplanet = {\n\t\t\tclass = pc_asteroid");
-    // `change_orbit` advances the orbit cursor, so it has to precede the moons
-    // it applies to. This is what the declaration-ordered splice emission buys:
-    // emitting the splice member first would put every moon ahead of it.
-    //
-    // Only the nested case. At the *top* level the same key cannot be
-    // interleaved between planets at all — members are emitted one key at a
-    // time, so every planet lands before every orbit change, and 280 of the 360
-    // shipped initializers are written the other way. SDK-30 tracks the ordered
-    // sequence shape that would fix it; the README documents the workaround.
+    // SDK-30: there is no `changeOrbit` field to emit — the orbit-cursor
+    // advance is an ordinary `class: "none"` moon sibling, so its position
+    // among the moons is just array order, the same as any other sibling.
+    // "moon = { class = none" has to precede the real moon it advances past.
     const prime = rendered.slice(rendered.indexOf("NAME_Content_Test_Prime"));
-    expect(prime.indexOf("change_orbit")).toBeLessThan(prime.indexOf("moon = {"));
+    expect(prime.indexOf("moon = {\n\t\t\tclass = none")).toBeLessThan(
+      prime.indexOf("moon = {\n\t\t\tclass = pc_barren")
+    );
     // A neighbour link is a branded ref into this same registry, so it carries
     // the other definition's prefixed id rather than whatever was typed.
     expect(rendered).toContain("initializer = content_test_system_outpost");
@@ -1690,6 +1703,247 @@ describe("generated content registries", () => {
       "possible_pre_triggers = {\n\t\thas_owner = yes\n\t\tis_enslaved = no\n\t\tis_robotic = yes\n\t}"
     );
   });
+
+  it("emits tradition.triggeredModifier and tradition_swap.triggeredModifier (sdk39TriggeredModifier)", () => {
+    // SDK-39: both were silently dropped for want of a CONTENT_FIELD_OVERRIDES
+    // row, even though the runtime TriggeredModifier writer already supported
+    // the shape (ascension_perk, edict, job, councilor, situation_type all
+    // had the row already).
+    const tradition = defineTradition({
+      id: "sdk39_tradition_triggered_modifier",
+      name: "Sdk39 Tradition",
+      triggeredModifier: [
+        {
+          when: hasAuthority("auth_democratic"),
+          modifiers: (m) => m.country.unity.produces.mult(0.1),
+        },
+      ],
+      traditionSwap: {
+        sdk39_tradition_swap_triggered_modifier: {
+          name: "Sdk39 Swap",
+          triggeredModifier: [
+            {
+              when: hasAuthority("auth_oligarchic"),
+              modifiers: (m) => m.country.unity.produces.mult(0.2),
+            },
+          ],
+        },
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("SDK-39 test", "sdk39"), [collection(undefined, [tradition])])
+    ).get("common/traditions/sdk39_traditions.txt")!;
+    expect(rendered).toContain(
+      "triggered_modifier = {\n\t\tpotential = {\n\t\t\thas_authority = auth_democratic\n\t\t}\n" +
+        "\t\tcountry_unity_produces_mult = 0.1\n\t}"
+    );
+    expect(rendered).toContain(
+      "triggered_modifier = {\n\t\t\tpotential = {\n\t\t\t\thas_authority = auth_oligarchic\n\t\t\t}\n" +
+        "\t\t\tcountry_unity_produces_mult = 0.2\n\t\t}"
+    );
+  });
+
+  it("emits building.triggeredPlanetModifier and job.triggeredPlanetPopGroupModifierForSpecies (sdk39TriggeredModifier)", () => {
+    // The sweep's other two finds: building's own plain triggered_modifier_clause
+    // field (672 shipped buildings write it) and job's pop_group-clause variant
+    // (7 shipped jobs write it, reusing the shape and dropping only
+    // divide_over_pop_groups, which zero shipped jobs set).
+    const building = defineBuilding({
+      id: "sdk39_building_triggered_planet_modifier",
+      name: "Sdk39 Building",
+      triggeredPlanetModifier: [
+        {
+          when: always(),
+          modifiers: (m) => m.planet.pop.assembly.mult(0.1),
+        },
+      ],
+    });
+    const job = defineJob({
+      id: "sdk39_job_triggered_pop_group_modifier",
+      name: "Sdk39 Job",
+      triggeredPlanetPopGroupModifierForSpecies: [
+        {
+          when: always(),
+          modifiers: (m) => m.pop.happiness(0.1),
+        },
+      ],
+    });
+    const rendered = render(
+      buildMod(configFor("SDK-39 test", "sdk39"), [collection(undefined, [building, job])])
+    );
+    expect(rendered.get("common/buildings/sdk39_buildings.txt")).toContain(
+      "triggered_planet_modifier = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n"
+    );
+    expect(rendered.get("common/pop_jobs/sdk39_pop_jobs.txt")).toContain(
+      "triggered_planet_pop_group_modifier_for_species = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n"
+    );
+  });
+
+  it("emits one orGroups element with two domain members as a single OR block (sdk42OrGroups)", () => {
+    // SDK-42's corrected form: one array element, two clause members inside
+    // it — a genuine disjunction ("corporate authority or the sovereign
+    // civic"), unlike a two-element array, which the game ANDs.
+    const civic = defineCivicOrOrigin({
+      id: "sdk42_civic_or_groups",
+      name: "Sdk42 Civic",
+      possible: {
+        orGroups: [
+          {
+            authority: { value: "auth_corporate" },
+            civics: { value: "sdk42_sovereign_civic" },
+          },
+        ],
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("SDK-42 test", "sdk42"), [collection(undefined, [civic])])
+    ).get("common/governments/civics/sdk42_civics.txt")!;
+    // One OR block, both members inside it — not two sibling OR blocks.
+    expect(rendered).toContain(
+      "possible = {\n\t\tOR = {\n\t\t\tauthority = {\n\t\t\t\tvalue = auth_corporate\n\t\t\t}\n" +
+        "\t\t\tcivics = {\n\t\t\t\tvalue = sdk42_sovereign_civic\n\t\t\t}\n\t\t}\n\t}"
+    );
+    expect(rendered.match(/OR = \{/g)).toHaveLength(1);
+  });
+});
+
+describe("SDK-44: conditionally-required localization and the global_ship_design name hole", () => {
+  it("requires tradition_swap.name unless inheritName is set (sdk44ConditionalRequired)", () => {
+    const missingName = defineTradition({
+      id: "sdk44_tradition_requires_swap_name",
+      name: "Sdk44 Tradition",
+      traditionSwap: {
+        sdk44_swap_missing_name: {},
+      },
+    });
+    expect(() =>
+      render(buildMod(configFor("SDK-44 test", "sdk44"), [collection(undefined, [missingName])]))
+    ).toThrow('Missing required localization "name" for "sdk44_swap_missing_name"');
+
+    const inheritedName = defineTradition({
+      id: "sdk44_tradition_inherits_swap_name",
+      name: "Sdk44 Tradition 2",
+      traditionSwap: {
+        sdk44_swap_inherits_name: { inheritName: true },
+      },
+    });
+    // No throw: inheritName waives the requirement.
+    expect(() =>
+      render(buildMod(configFor("SDK-44 test", "sdk44"), [collection(undefined, [inheritedName])]))
+    ).not.toThrow();
+  });
+
+  it("gives global_ship_design a real name text slot (sdk44GlobalShipDesignName)", () => {
+    // Before SDK-44, `global_ship_design` had no localisation member at all —
+    // the emitter recognized `localisation = { name = "$" }` but dropped the
+    // `localisation = { name = name }` form (a bare pointer at the type's own
+    // name_field, structurally equivalent to "$" for a name_field registry).
+    const design = defineGlobalShipDesign({
+      id: "sdk44_global_ship_design_named",
+      name: "Sdk44 Cruiser",
+    });
+    const files = render(
+      buildMod(configFor("SDK-44 test", "sdk44"), [collection(undefined, [design])])
+    );
+    const rendered = files.get("common/global_ship_designs/sdk44_global_ship_designs.txt")!;
+    // The body's `name` key still carries the id (it is the name_field), not
+    // the English text.
+    expect(rendered).toContain("ship_design = {\n\tname = sdk44_global_ship_design_named\n");
+    expect(rendered).not.toContain("Sdk44 Cruiser");
+    // The real English text goes to localisation, keyed off the id.
+    expect(files.get("localisation/english/sdk44_l_english.yml")).toContain(
+      'sdk44_global_ship_design_named:0 "Sdk44 Cruiser"'
+    );
+  });
+});
+
+describe("SDK-50: identity-conversion text fields", () => {
+  it("gives archaeological_site_type.desc a real text slot, coupled to its emitted raw-key pointer", () => {
+    // A generated key alone is unreachable: type[archaeological_site_type]
+    // reads the display text through the body's own `desc` pointer (renamed
+    // `conditionalDesc`), so setting only the synthetic `desc` member must
+    // also emit that pointer — not just populate the .yml — or the text is
+    // exactly as silently orphaned as the original bug SDK-50 fixed.
+    const site = defineArchaeologicalSiteType({
+      id: "sdk50_archaeological_site_type_desc",
+      name: "Sdk50 Site",
+      desc: "A crumbling ruin, half swallowed by the dust.",
+      allow: always(),
+      visible: always(),
+      stages: 1,
+      onRollFailed: () => {},
+    });
+    const files = render(
+      buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])])
+    );
+    const rendered = files.get(
+      "common/archaeological_site_types/sdk50_archaeological_site_types.txt"
+    )!;
+    // The raw prose never lands in the script file as a key.
+    expect(rendered).not.toContain("A crumbling ruin");
+    // The definition emits the pointer the game actually reads...
+    expect(rendered).toContain("desc = sdk50_archaeological_site_type_desc_desc");
+    // ...and the localisation entry it points at exists.
+    expect(files.get("localisation/english/sdk50_l_english.yml")).toContain(
+      'sdk50_archaeological_site_type_desc_desc:0 "A crumbling ruin, half swallowed by the dust."'
+    );
+  });
+
+  it("rejects setting both the synthetic desc and its own pointer, rather than guessing which wins", () => {
+    const site = defineArchaeologicalSiteType({
+      id: "sdk50_archaeological_site_type_desc_conflict",
+      name: "Sdk50 Site",
+      desc: "Some prose the author also pointed elsewhere.",
+      conditionalDesc: "SDK50_HAND_WRITTEN_KEY",
+      allow: always(),
+      visible: always(),
+      stages: 1,
+      onRollFailed: () => {},
+    });
+    expect(() =>
+      render(buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])]))
+    ).toThrow(
+      '"sdk50_archaeological_site_type_desc_conflict" sets both "desc" and "conditionalDesc"'
+    );
+  });
+
+  it("warns when a locKey-tagged field looks like literal text (sdk50IdentityLocalisation)", () => {
+    // conditionalDesc's scalar arm is conversion: "identity" — a raw key, by
+    // design (it duals with the triggered_desc_clause block form). Writing
+    // English into it used to fail silently; it now warns.
+    const site = defineArchaeologicalSiteType({
+      id: "sdk50_archaeological_site_type_loc_key_warning",
+      name: "Sdk50 Site",
+      conditionalDesc: "this looks like a sentence, not a key",
+      allow: always(),
+      visible: always(),
+      stages: 1,
+      onRollFailed: () => {},
+    });
+    const mod = buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])]);
+    expect(mod.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "loc-key-looks-like-text",
+          message: expect.stringContaining("this looks like a sentence, not a key"),
+        }),
+      ])
+    );
+  });
+
+  it("does not warn when a locKey-tagged field looks like a real key", () => {
+    const site = defineArchaeologicalSiteType({
+      id: "sdk50_archaeological_site_type_real_key",
+      name: "Sdk50 Site",
+      conditionalDesc: "SDK50_REAL_LOC_KEY",
+      allow: always(),
+      visible: always(),
+      stages: 1,
+      onRollFailed: () => {},
+    });
+    const mod = buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])]);
+    expect(mod.warnings).toEqual([]);
+  });
 });
 
 /**
@@ -1900,8 +2154,12 @@ describe("alias-struct serialization", () => {
     { key: "ethics", member: "ethics", shape: "struct", form: "block", fields: CLAUSE_FIELDS },
     { key: "civics", member: "civics", shape: "struct", form: "block", fields: CLAUSE_FIELDS },
     {
+      // SDK-42: the block-level combinator's member is "orGroups", not "or"
+      // — repeated `OR` keys here are ANDed by the game, unlike the
+      // clause-level `or` above (CLAUSE_FIELDS), which is a genuine
+      // disjunction. Same CWT key, deliberately different member name.
       key: "OR",
-      member: "or",
+      member: "orGroups",
       shape: "aliasStruct",
       form: "list",
       category: "government_trigger",
@@ -1989,15 +2247,19 @@ describe("alias-struct serialization", () => {
     );
   });
 
-  it("recurses through the OR combinator via the category table", () => {
-    // The self-reference the module-level table exists for: an `OR` inside
-    // `possible` holds a whole government_trigger block again, repeated once
-    // per entry rather than merged, exactly as the game reads it.
+  it("recurses through the OR combinator via the category table (SDK-42: orGroups, ANDed as written)", () => {
+    // The self-reference the module-level table exists for: an `orGroups`
+    // entry inside `possible` holds a whole government_trigger block again,
+    // repeated once per array element rather than merged — and, per SDK-42,
+    // each repeated `OR` key the game reads back is ANDed with its siblings,
+    // not ORed the way the array might suggest. `orGroups` (not `or`) is the
+    // member name precisely so this two-element array does not read as
+    // "either", which it is not.
     expect(
       renderCivic({
         id: "gt_test_civic_corporate_dominion",
         possible: {
-          or: [
+          orGroups: [
             { authority: { value: "auth_oligarchic" } },
             { text: "gt_test_tooltip", always: true, hostHasDlc: "Overlord" },
           ],
@@ -2359,5 +2621,42 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     const loc = files.get("localisation/english/desc_key_test_l_english.yml")!;
 
     await expect(loc).toMatchFileSnapshot("__snapshots__/content/desc-key-localisation.yml");
+  });
+});
+
+describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring build", () => {
+  // Both land in `ContentAuthoring` through the same constructor
+  // (`onUnstableDescKey`, `onLocKeyLooksLikeText`) and the same
+  // `buildMod` wiring. A resolution that keeps one parameter list and drops
+  // the other still typechecks — both are optional — and disables a whole
+  // diagnostic with nothing failing at the type level. Triggering both in
+  // one build is the regression test for that: if either callback were
+  // silently dropped, `mod.warnings` would be missing exactly one of these
+  // two entries rather than both, which a test asserting only one code
+  // could not distinguish from "working as intended".
+  it("emits unstable-desc-key and loc-key-looks-like-text from the same build", () => {
+    const situation = defineSituationType({
+      id: "warning_coexist_test_situation",
+      name: "Warning Coexistence Test",
+      // No descKey: triggers SDK-48's onUnstableDescKey.
+      monthlyProgress: {
+        base: 1,
+        modifiers: [{ subtract: 1, desc: "An unpinned tooltip.", when: always() }],
+      },
+      // A locKey-tagged field holding prose, not a key: triggers SDK-50's
+      // onLocKeyLooksLikeText.
+      activeTooltip: "this looks like a sentence, not a key",
+    });
+
+    const mod = buildMod(configFor("Warning coexistence test", "warning_coexist_test"), [
+      collection(undefined, [situation]),
+    ]);
+
+    expect(mod.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "unstable-desc-key" }),
+        expect.objectContaining({ code: "loc-key-looks-like-text" }),
+      ])
+    );
   });
 });

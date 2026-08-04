@@ -543,7 +543,7 @@ export interface GovernmentTriggerBlock {
   speciesClass?: GovernmentTriggerClause<SpeciesClassRef | string>;
   speciesArchetype?: GovernmentTriggerClause<SpeciesArchetypeRef | string>;
   preferredPlanetClass?: GovernmentTriggerClause<PlanetClassRef | string>;
-  or?: readonly GovernmentTriggerBlock[];
+  orGroups?: readonly GovernmentTriggerBlock[];
   and?: readonly GovernmentTriggerBlock[];
   limit?: readonly GovernmentTriggerBlock[];
   hostHasDlc?: Dlc;
@@ -619,7 +619,7 @@ export const GOVERNMENT_TRIGGER_FIELDS: readonly ContentField[] = [
   },
   {
     key: "OR",
-    member: "or",
+    member: "orGroups",
     shape: "aliasStruct",
     form: "list",
     category: "government_trigger",

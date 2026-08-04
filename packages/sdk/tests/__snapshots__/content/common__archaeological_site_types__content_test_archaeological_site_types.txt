@@ -1,6 +1,6 @@
 content_test_archaeological_site_type_derelict = {
 	picture = GFX_archaeological_site_derelict
-	desc = "The ruins of a forgotten station."
+	desc = content_test_archaeological_site_type_derelict_desc
 	situation_log_category = arch_site
 	max_instances = 3
 	notification_duration = 30

@@ -97,6 +97,7 @@ export const CASUS_BELLI_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
 ];
 

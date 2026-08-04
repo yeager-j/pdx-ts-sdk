@@ -29,7 +29,7 @@ import {
 } from "./effect-core.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "./generated/modifiers.ts";
-import { refId, type TypedRef } from "./generated/refs.ts";
+import { refId, type EconomicCategoryRef, type TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import { scriptValueScalar, type ScriptValue, type Trigger } from "./trigger-core.ts";
 
@@ -89,7 +89,7 @@ export interface EconomicResourceOperation<S extends ScopeName> {
 /** A reusable economic-template block used by edicts and dozens of other registries. */
 export interface EconomicResourceBlock<S extends ScopeName> {
   /** Economic category used to generate modifier names and tooltips. */
-  readonly category?: TypedRef<"economic_category"> | string;
+  readonly category?: EconomicCategoryRef | string;
   /** Resources paid when the owning definition activates. */
   readonly cost?: EconomicResourceOperation<S>;
   /** Resources produced by the owning definition. */
@@ -214,6 +214,26 @@ export interface ContentLocalisation {
   readonly member: string;
   readonly pattern: string;
   readonly required: boolean;
+  /**
+   * Names a sibling boolean member that waives {@link required} when it is
+   * `true` — a slot the rules require unless the definition opts out of
+   * needing its own text (`tradition_swap.name`, required unless
+   * `inherit_name = yes`). `required` itself stays the type's static
+   * optionality (`name?: string`, since the field is genuinely optional on
+   * *some* definitions); this only sharpens the runtime check.
+   */
+  readonly requiredUnless?: string;
+  /**
+   * Names the raw-key body member the game actually reads this slot's text
+   * through (SDK-50's synthetic localisation slots — see
+   * `SYNTHETIC_LOCALISATION`). A generated key with nothing in the
+   * definition body pointing at it is unreachable in game, so
+   * `ContentAuthoring.define` defaults this member to the slot's own
+   * computed key whenever the slot's text is set and the pointer member is
+   * not already set by the author — the two are produced together, never as
+   * something an author can end up with only half of.
+   */
+  readonly pointerMember?: string;
 }
 
 interface ContentFieldBase {
@@ -246,6 +266,15 @@ interface ContentRefTypes {
 interface ContentValueField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "value";
   readonly conversion: "identity" | "ref";
+  /**
+   * The rules type this field's raw value as a localisation key rather than
+   * free text (CWT's bare `= localisation`, distinct from a `"$"`-pattern
+   * slot the {@link ContentLocalisation} pipeline auto-generates a key for).
+   * `contentScalar` uses it to warn when an authored value looks like prose
+   * rather than a key (SDK-50) — the game shows an unresolved key verbatim,
+   * with no error, so this is the closest the SDK can get to catching it.
+   */
+  readonly locKey?: true;
 }
 
 interface ContentValueListField extends ContentFieldBase, ContentRefTypes {
@@ -1196,13 +1225,15 @@ export class ContentAuthoring {
   private readonly registerLoc: RegisterLoc;
   private readonly onPrefixViolation: (message: string) => void;
   private readonly onUnstableDescKey: (message: string) => void;
+  private readonly onLocKeyLooksLikeText: (message: string) => void;
 
   constructor(
     prefix: string,
     descriptors: readonly ContentRegistryDescriptor[],
     registerLoc: RegisterLoc,
     onPrefixViolation?: (message: string) => void,
-    onUnstableDescKey?: (message: string) => void
+    onUnstableDescKey?: (message: string) => void,
+    onLocKeyLooksLikeText?: (message: string) => void
   ) {
     this.prefix = prefix;
     this.descriptors = descriptors;
@@ -1214,6 +1245,11 @@ export class ContentAuthoring {
         throw new Error(message);
       });
     this.onUnstableDescKey = onUnstableDescKey ?? (() => {});
+    // A warning, not an invariant: the SDK cannot know whether the string is
+    // really prose or a real (if unconventional) key, so the no-op default
+    // does not reject anything a direct `ContentAuthoring` caller writes.
+    // `buildMod` supplies the callback that surfaces it on `mod.warnings`.
+    this.onLocKeyLooksLikeText = onLocKeyLooksLikeText ?? ((): void => {});
   }
 
   define<K extends string, D extends ContentDef>(type: K, rawDef: D): DefinedContent<K, D> {
@@ -1223,15 +1259,20 @@ export class ContentAuthoring {
     }
     // Before anything reads a field: a closure form is authoring sugar, and
     // everything below — desc keys, dual arms, the writer — works on values.
-    const def = resolveFromClosures(
+    const resolved = resolveFromClosures(
       rawDef as Readonly<Record<string, unknown>>,
       descriptor.fields
     ) as D;
-    this.assertPrefixed(type, def.id);
+    this.assertPrefixed(type, resolved.id);
     const definitions = this.definitions.get(type) ?? [];
-    if (definitions.some((existing) => existing.id === def.id)) {
-      throw new Error(`Duplicate ${type} id "${def.id}"`);
+    if (definitions.some((existing) => existing.id === resolved.id)) {
+      throw new Error(`Duplicate ${type} id "${resolved.id}"`);
     }
+    // A synthetic localisation slot's generated key is only reachable in
+    // game through the body pointer the vendored rules actually read; fill
+    // it in before either the .yml text or the body fields get collected, so
+    // the two are never produced apart.
+    const def = this.applySyntheticPointers(resolved, descriptor.localisation) as D;
     const localisation: LocalisationEntry[] = [];
     const nestedIds = new Map<string, Set<string>>();
     this.collectLocalisation(def.id, def, descriptor.localisation, localisation);
@@ -1282,6 +1323,49 @@ export class ContentAuthoring {
     }
   }
 
+  /**
+   * Defaults a synthetic localisation slot's `pointerMember` to the slot's
+   * own computed key, whenever the slot's text is present and the author has
+   * not already written the pointer themselves.
+   *
+   * A synthetic slot (`SYNTHETIC_LOCALISATION`) only adds a place to author
+   * real text; the game still finds that text by reading a body field the
+   * vendored rules point at (`archaeological_site_type`'s `desc = desc`, an
+   * ordinary raw-key field renamed to `conditionalDesc`). Setting the text
+   * member alone, with no matching pointer anywhere in the body, reproduces
+   * the exact silent failure SDK-50 exists to close, one step removed: a
+   * populated `.yml` and a clean build, with the game showing nothing. If the
+   * author *has* written the pointer — to the same key or a different one —
+   * that is a deliberate choice this leaves alone; two independently-set
+   * values pointing at different keys is an authoring conflict, not
+   * something this method can resolve, so it throws rather than guessing
+   * which one the definition should show.
+   */
+  private applySyntheticPointers(
+    def: Readonly<Record<string, unknown>>,
+    slots: readonly ContentLocalisation[]
+  ): Readonly<Record<string, unknown>> {
+    let patched: Record<string, unknown> | undefined;
+    for (const slot of slots) {
+      if (slot.pointerMember === undefined || def[slot.member] === undefined) {
+        continue;
+      }
+      if (def[slot.pointerMember] !== undefined) {
+        throw new Error(
+          `"${def["id"] as string}" sets both "${slot.member}" and "${slot.pointerMember}" — ` +
+            `${slot.member}'s text is only reachable in game through the ${slot.pointerMember} ` +
+            `pointer, so setting both is ambiguous. Set only ${slot.member} (the pointer is ` +
+            `generated) or only ${slot.pointerMember} (write the key yourself).`
+        );
+      }
+      (patched ??= { ...def })[slot.pointerMember] = localisationKey(
+        slot.pattern,
+        def["id"] as string
+      );
+    }
+    return patched ?? def;
+  }
+
   private collectLocalisation(
     id: string,
     def: Readonly<Record<string, unknown>>,
@@ -1291,7 +1375,8 @@ export class ContentAuthoring {
     for (const slot of slots) {
       const text = def[slot.member];
       if (text === undefined) {
-        if (slot.required) {
+        const waived = slot.requiredUnless !== undefined && def[slot.requiredUnless] === true;
+        if (slot.required || (slot.requiredUnless !== undefined && !waived)) {
           throw new Error(`Missing required localization "${slot.member}" for "${id}"`);
         }
         continue;
@@ -1302,15 +1387,17 @@ export class ContentAuthoring {
 
   /**
    * Walks every field level (top, plain `struct` nesting, and `repeatedStruct`
-   * nesting) for the two things that need a stable identity to resolve
-   * against: repeated-struct ids (prefix and duplicate checks, matched
-   * against localisation) and `WeightBlock`/`WeightBlockWithLoc` modifier
-   * rows carrying `desc` (registered as localisation via
-   * {@link collectModifierDescs}). `ownerId` is the nearest enclosing
-   * identity — the definition id, or a repeated-struct entry's own id once
-   * recursion crosses one — and `path` accumulates plain `struct` field keys
-   * since the last identity, so a modifier's generated key is unique even
-   * when a WeightBlock sits several `struct` levels deep.
+   * nesting) for three things that need this same recursive descent:
+   * repeated-struct ids (prefix and duplicate checks, matched against
+   * localisation), `WeightBlock`/`WeightBlockWithLoc` modifier rows carrying
+   * `desc` (registered as localisation via {@link collectModifierDescs}), and
+   * `locKey`-tagged scalar values that look like literal text rather than a
+   * localisation key (SDK-50, via {@link onLocKeyLooksLikeText}). `ownerId` is
+   * the nearest enclosing identity — the definition id, or a repeated-struct
+   * entry's own id once recursion crosses one — and `path` accumulates plain
+   * `struct` field keys since the last identity, so a modifier's generated key
+   * (and a loc-key warning's field path) stays unique even several `struct`
+   * levels deep.
    */
   private collectRepeatedStructs(
     ownerId: string,
@@ -1329,6 +1416,19 @@ export class ContentAuthoring {
         continue;
       }
       const fieldPath = path === "" ? field.key : `${path}_${field.key}`;
+      if (field.shape === "value" && field.locKey === true) {
+        const values = field.repeated ? (raw as readonly unknown[]) : [raw];
+        for (const item of values) {
+          if (typeof item === "string" && item.includes(" ")) {
+            this.onLocKeyLooksLikeText(
+              `${ownerType}.${fieldPath} for "${ownerId}" is a localisation key, not free text, ` +
+                `but contains a space: ${JSON.stringify(item)}. The game shows this string ` +
+                "verbatim if no localisation entry defines that key."
+            );
+          }
+        }
+        continue;
+      }
       if (field.shape === "weightBlock" || field.shape === "weightBlockWithLoc") {
         this.collectModifierDescs(ownerId, fieldPath, raw as WeightBlock<ScopeName>, localisation);
         continue;

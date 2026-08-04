@@ -767,6 +767,32 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("widens EconomicResourceBlock.category to the generated EconomicCategoryRef (sdk45EconomicCategoryRef)", () => {
+    // SDK-45: `category` was hand-written as `TypedRef<"economic_category">`
+    // while every generated helper (and every other cross-content reference
+    // field) produces the wider `EconomicCategoryRef`, so a checked
+    // `vanilla.economicCategory(...)` call did not type-check into it.
+    defineEdict({
+      id: "sdk45_edict_economic_category_ref",
+      name: "Sdk45 Edict",
+      length: 30,
+      icon: "GFX_x",
+      resources: [
+        { category: vanilla.economicCategory("ships"), cost: { amounts: { alloys: 1 } } },
+      ],
+    });
+    // EconomicResourceBlockNoProduce is Omit<EconomicResourceBlock, "produces">,
+    // so the fix on the base interface propagates automatically — no separate
+    // row needed for weapon/strike-craft's own resources field.
+    defineWeaponComponentTemplate({
+      id: "sdk45_weapon_economic_category_ref",
+      icon: "GFX_x",
+      resources: [
+        { category: vanilla.economicCategory("ships"), cost: { amounts: { alloys: 1 } } },
+      ],
+    });
+  });
+
   it("brands an event by its CWT subtype, which is not always its scope", () => {
     // `observer_event` is subtype `observer` in country scope, and
     // `cosmic_storm_event` is subtype `cosmic_storm` in storm scope. Branding
@@ -1026,7 +1052,7 @@ describe("generated content authoring types", () => {
       // The requirements DSL: a plain object, matched against empire setup —
       // not a script condition tree.
       potential: { authority: { value: "auth_democratic" } },
-      possible: { or: [{ civics: { value: "content_types_civic_other" } }] },
+      possible: { orGroups: [{ civics: { value: "content_types_civic_other" } }] },
     });
     defineCivicOrOrigin({
       id: "content_types_civic_dsl_rejects_trigger",
@@ -1152,7 +1178,7 @@ describe("generated content authoring types", () => {
       id: "content_types_species_class_dsl",
       name: "X",
       possible: { authority: { value: "auth_democratic" } },
-      possibleSecondary: { or: [{ ethics: { value: "ethic_xenophile" } }] },
+      possibleSecondary: { orGroups: [{ ethics: { value: "ethic_xenophile" } }] },
     });
     defineSpeciesClass({
       id: "content_types_species_class_dsl_rejects_trigger",

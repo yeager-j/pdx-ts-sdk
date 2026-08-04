@@ -76,17 +76,6 @@ const ACKNOWLEDGED = new Map<string, string>([
       "form really does repeat.",
   ],
   [
-    "solar_system_initializer.change_orbit form",
-    "Declared twice, as `int` and as `{ min max }`, and both carry `cardinality = 0..inf` — the " +
-      "situation_type.picture shape exactly, so both arms author as arrays and the writer cannot " +
-      "tell which one a value belongs to. An `arity` assertion is what fixes the same collapse " +
-      "on planet_initializer.orbit_angle/size, and here it would be false: change_orbit advances " +
-      "the orbit cursor between planets, so 144 of the 292 shipped initializers write it more " +
-      "than once. The scalar arm is the one worth keeping — 2 definitions write the block. " +
-      "Authors reach the same geometry by folding the offset into the next planet's " +
-      "orbit_distance.",
-  ],
-  [
     "global_ship_design.growth_stages form",
     "CWT declares a block of named fields, but every shipped design writes a bare list of " +
       "<global_ship_design> ids.",

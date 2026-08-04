@@ -24,7 +24,6 @@ content_test_system_home = {
 		name = NAME_Content_Test_Prime
 		class = pc_continental
 		orbit_distance = 60
-		change_orbit = 12
 		orbit_angle = {
 			min = 90
 			max = 270
@@ -34,6 +33,10 @@ content_test_system_home = {
 		home_planet = yes
 		init_effect = {
 			set_capital = yes
+		}
+		moon = {
+			class = none
+			orbit_distance = 12
 		}
 		moon = {
 			class = pc_barren

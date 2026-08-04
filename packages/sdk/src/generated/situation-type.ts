@@ -31,7 +31,14 @@ export interface SituationTypeTitle {
 
 export const SITUATION_TYPE_TITLE_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
 ];
 
 export interface SituationTypeDesc {
@@ -41,7 +48,14 @@ export interface SituationTypeDesc {
 
 export const SITUATION_TYPE_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
 ];
 
 export interface SituationTypeTriggeredBlockedDesc {
@@ -51,7 +65,14 @@ export interface SituationTypeTriggeredBlockedDesc {
 
 export const SITUATION_TYPE_TRIGGERED_BLOCKED_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
 ];
 
 export interface SituationTypeOnMonthly {
@@ -143,6 +164,7 @@ export const SITUATION_APPROACH_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "resources",
@@ -259,6 +281,7 @@ export const SITUATION_STAGE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   { key: "on_first_enter", member: "onFirstEnter", shape: "effect", form: "closure" },
   { key: "on_enter", member: "onEnter", shape: "effect", form: "closure" },
@@ -388,7 +411,14 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     member: "title",
     shape: "dual",
     arms: [
-      { key: "title", member: "title", shape: "value", form: "scalar", conversion: "identity" },
+      {
+        key: "title",
+        member: "title",
+        shape: "value",
+        form: "scalar",
+        conversion: "identity",
+        locKey: true,
+      },
       {
         key: "title",
         member: "title",
@@ -410,6 +440,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
         shape: "value",
         form: "scalar",
         conversion: "identity",
+        locKey: true,
       },
       {
         key: "desc",
@@ -427,6 +458,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "override_active_title",
@@ -434,6 +466,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "override_active_desc",
@@ -441,6 +474,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "override_finisher_title",
@@ -448,6 +482,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "override_finisher_desc",
@@ -455,6 +490,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "override_progress_current_desc",
@@ -462,6 +498,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "custom_tooltip",
@@ -469,6 +506,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "custom_tooltip_with_modifiers",
@@ -476,6 +514,7 @@ export const SITUATION_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
   { key: "on_start", member: "onStart", shape: "effect", form: "closure" },

@@ -53,8 +53,16 @@ export const AMBIENT_OBJECT_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
-  { key: "tooltip", member: "tooltip", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "tooltip",
+    member: "tooltip",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
 ];
 
 export const AMBIENT_OBJECT_LOCALISATION: readonly ContentLocalisation[] = [

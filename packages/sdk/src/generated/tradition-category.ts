@@ -13,7 +13,14 @@ export interface TraditionCategoryDesc {
 
 export const TRADITION_CATEGORY_DESC_FIELDS: readonly ContentField[] = [
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
 ];
 
 /**

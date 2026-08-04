@@ -86,6 +86,7 @@ export const COUNCILOR_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "civic",
@@ -101,6 +102,7 @@ export const COUNCILOR_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   {
@@ -116,6 +118,7 @@ export const COUNCILOR_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "custom_tooltip_with_modifiers",
@@ -123,6 +126,7 @@ export const COUNCILOR_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "icon",

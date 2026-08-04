@@ -93,7 +93,6 @@ export interface MoonInitializerFields {
   orbitDistance?: ScriptValue | MoonInitializerOrbitDistance;
   orbitalLine?: MoonInitializerOrbitalLine[];
   hasIndependentOrbitalLine?: boolean;
-  changeOrbit?: number;
   flags?: PlanetFlag[];
   orbitAngle?: "random" | number | MoonInitializerOrbitAngle;
   size?: number | MoonInitializerSize;
@@ -113,7 +112,14 @@ export interface MoonInitializerFields {
 }
 
 export const MOON_INITIALIZER_FIELDS: readonly ContentField[] = [
-  { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "name",
+    member: "name",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "count",
     member: "count",
@@ -170,13 +176,6 @@ export const MOON_INITIALIZER_FIELDS: readonly ContentField[] = [
   {
     key: "has_independent_orbital_line",
     member: "hasIndependentOrbitalLine",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "change_orbit",
-    member: "changeOrbit",
     shape: "value",
     form: "scalar",
     conversion: "identity",

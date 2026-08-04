@@ -38,6 +38,7 @@
  bombardment_content_test_bombardment_stance_scorched_earth:0 "Scorched Earth"
  bombardment_content_test_bombardment_stance_scorched_earth_desc:0 "Bombard with no restraint."
  content_test_archaeological_site_type_derelict:0 "Derelict Outpost"
+ content_test_archaeological_site_type_derelict_desc:0 "The ruins of a forgotten station."
  content_test_situation_machine_uprising:0 "Machine Uprising"
  content_test_situation_machine_uprising_desc:0 "The machines stir beneath the surface."
  content_test_situation_machine_uprising_monthly_progress_f2d3747d:0 "The uprising is spreading."

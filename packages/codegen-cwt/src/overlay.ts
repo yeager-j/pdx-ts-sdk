@@ -358,6 +358,134 @@ export const REQUIRED_LOCALISATION = new Set([
   "archaeological_site_type.name",
 ]);
 
+export interface ConditionalLocalisation {
+  /** The sibling boolean member that waives the slot when `true`. */
+  readonly unless: string;
+  readonly reason: string;
+}
+
+/**
+ * Localisation slots the rules require *unless* the definition opts out —
+ * distinct from {@link REQUIRED_LOCALISATION}'s always-on rows because a flat
+ * `required: true` would reject every definition that legitimately omits the
+ * slot.
+ *
+ * `swapped_tradition`/`swapped_ascension_perk` (traditions.cwt:14-46,
+ * ascension_perks.cwt:15-...) declare `name = "$"` inside
+ * `subtype[not_inheriting_name]`, which `cwt/rules.ts`'s `readLocalisation`
+ * flattens away — it recurses into every `subtype[...]` and drops which one a
+ * slot came from, the same way ordinary field flattening drops which subtype a
+ * field came from (see `ship_size.modifier`'s overlay row). CWT's own
+ * `## required` marker never applies here regardless, since the requirement
+ * is conditional rather than unconditional. A real-install sweep of every
+ * shipped `tradition_swap` found 131 of 195 blocks in the requiring subtype
+ * (no `inherit_name = yes`), all 131 carrying a `name`; the same sweep found
+ * 6 of 9 shipped ascension-perk swaps in the requiring subtype, all 6 naming
+ * themselves. Nothing in the corpus omits the slot while requiring it, but
+ * the SDK's own writer emits a raw key straight to the game with no warning
+ * if an author does, which is the failure this row closes off.
+ *
+ * The key names the vendored localisation type carrying the slot
+ * (`swapped_tradition`, `swapped_ascension_perk`) rather than the owning
+ * registry, because that is what `content-type.ts`'s `localisationMembers`/
+ * `localisationMetadata` are keyed on for a repeated-struct field's own
+ * `type[...]`.
+ */
+export const CONDITIONALLY_REQUIRED_LOCALISATION = new Map<string, ConditionalLocalisation>([
+  [
+    "swapped_tradition.name",
+    {
+      unless: "inheritName",
+      reason:
+        "traditions.cwt's type[swapped_tradition] requires name unless " +
+        "subtype[not_inheriting_name] does not apply, i.e. unless inherit_name = yes.",
+    },
+  ],
+  [
+    "swapped_ascension_perk.name",
+    {
+      unless: "inheritName",
+      reason:
+        "ascension_perks.cwt's type[swapped_ascension_perk] requires name unless " +
+        "subtype[not_inheriting_name] does not apply, i.e. unless inherit_name = yes — the same " +
+        "shape as swapped_tradition.name.",
+    },
+  ],
+]);
+
+export interface SyntheticLocalisation {
+  /** The `$`-bearing pattern to synthesize, e.g. `"$_desc"`. */
+  readonly pattern: string;
+  /**
+   * The renamed raw-key body member (a `CONTENT_FIELD_OVERRIDES` `member`)
+   * that the vendored rules' bare pointer (`desc = desc`) actually reads at
+   * runtime. A synthetic slot only gives an author a real text-authoring
+   * path; the game still resolves the display text through that pointer, so
+   * `ContentAuthoring.define` sets this member to the synthesized slot's
+   * computed key whenever the slot's text is present and the author has not
+   * already written the pointer themselves — otherwise the text lands in
+   * localisation with nothing in the definition body pointing at it, the
+   * same silent failure this whole table exists to close.
+   */
+  readonly pointerMember: string;
+  readonly reason: string;
+}
+
+/**
+ * A localisation slot the rules never declare at all, added because the
+ * registry needs the same real, auto-keyed authoring path a sibling registry
+ * gets for free from the rules.
+ *
+ * `archaeological_site_type` is the case this exists for (SDK-50).
+ * `type[archaeological_site_type].localisation` (archaeology.cwt:5-8) declares
+ * only `name = "$"` and `desc = desc` — a bare pointer with no `$`, meaning
+ * `planLocalisation` excludes it outright (same rule SDK-44's `name = name`
+ * fix relies on) and the registry ends up with *no* slot where an author can
+ * write real flavor text and get a generated key. The body's own `desc` field
+ * (`archaeology.cwt:44`, dual with the `triggered_desc_clause` block form,
+ * renamed to `conditionalDesc` by the `CONTENT_FIELD_OVERRIDES` row beside
+ * this one) is `conversion: "identity"` either way its dual resolves — a raw
+ * key, never auto-generated — so writing English into it is accepted and
+ * silently wrong: no warning, no error, the game shows the literal string.
+ * `situation_type`, by contrast, needs no such row: situations.cwt:17 already
+ * declares `desc = "$_desc"` *alongside* the same bare `desc = desc` pointer
+ * (:18), so the real slot already exists there and the pointer simply loses
+ * the member-name collision — evidence this is a genuine asymmetry in the
+ * vendored rules, not a design position the SDK is second-guessing.
+ *
+ * A row here does not claim the game reads a `<id>_desc` key today — it adds
+ * one, matching the convention every other `desc`-bearing registry in
+ * {@link REQUIRED_LOCALISATION}'s neighborhood already follows, and gives
+ * `conditionalDesc`'s raw-key arms (the top-level scalar and
+ * `ArchaeologicalSiteTypeDesc.text`) a genuine optional escape hatch instead
+ * of being the only route.
+ *
+ * A generated key is only half the fix: `type[archaeological_site_type]`
+ * reads that text through the body's own `desc` pointer (renamed
+ * `conditionalDesc`, per the `CONTENT_FIELD_OVERRIDES` row beside this one),
+ * so a definition that sets only the synthetic `desc` member and never
+ * touches `conditionalDesc` would populate the `.yml` with real text and
+ * emit no `desc = <id>_desc` anywhere in its own body — reachable nowhere in
+ * game, the identical silent failure this table exists to close, one step
+ * removed. `pointerMember` is what closes that: `ContentAuthoring.define`
+ * defaults it to the synthesized key whenever the text member is set and the
+ * author has not written the pointer themselves.
+ */
+export const SYNTHETIC_LOCALISATION = new Map<string, SyntheticLocalisation>([
+  [
+    "archaeological_site_type.desc",
+    {
+      pattern: "$_desc",
+      pointerMember: "conditionalDesc",
+      reason:
+        "archaeology.cwt declares no `$`-bearing pattern for desc at all (only the excluded " +
+        'bare pointer `desc = desc`), unlike situation_type\'s `desc = "$_desc"` sitting beside ' +
+        "its own identical pointer — so archaeological_site_type has no real flavor-text slot " +
+        "without this row. See SDK-50.",
+    },
+  ],
+]);
+
 /**
  * Fields the emitter can lower but that review has decided not to emit, with
  * the reason.
@@ -366,9 +494,47 @@ export const REQUIRED_LOCALISATION = new Set([
  * a field out of the authoring surface deliberately. It should stay nearly
  * empty: a field the emitter cannot lower is detected mechanically and belongs
  * in no list, and a field whose lowered type is wrong is better fixed than
- * hidden.
+ * hidden. That bar does not cover every row that could ever land here —
+ * `change_orbit` (SDK-30) is the one case it was never meant to: not a field
+ * whose *lowered shape* is wrong, but a second spelling of a capability the
+ * SDK already emits correctly (see the entry below), so declining it
+ * withholds nothing an author cannot already do. A future row needs the same
+ * property — a genuine second spelling of existing capability, not a
+ * shape the emitter merely lowers badly — to clear this bar.
  */
-export const CONTENT_DECLINED_FIELDS = new Map<string, string>([]);
+export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
+  [
+    "solar_system_initializer.change_orbit",
+    "At the top level, change_orbit is positional sugar: written between two `planet` blocks, " +
+      "it advances the orbit cursor for the planets that follow it, so its position among them " +
+      "is the geometry. `changeOrbit?: number[]` collects every value into one array field with " +
+      "one fixed emission slot, which cannot represent that position — 288 of 355 shipped " +
+      "top-level initializer blocks interleave `change_orbit` between `planet` blocks, and the " +
+      "SDK silently emitted every one of them after every planet, where none of them shift " +
+      'anything. Nothing is lost by declining it: `class: "none", orbitDistance: n` on the ' +
+      "next `planet` block (a real `PlanetInitializerFields`, `none` is in `SolarSysInitPlanetClass`) " +
+      "already types and emits the same geometry, in the position that matters, with no runtime " +
+      "shape needed for a spelling the game already documents as sugar.",
+  ],
+  [
+    "planet_initializer.change_orbit",
+    "The moon-level twin of the row above, inside one planet's own `moon` list: " +
+      "`alias[planet_initializer:planet]`'s own change_orbit (cardinality 0..1, singular — at " +
+      "most one cursor jump per planet, unlike the top level's repeatable one) advances the " +
+      "orbit cursor for the moons that follow it within that planet, so where it is *written* " +
+      "among that planet's `moon` blocks is still the geometry, same as the top level. " +
+      "`changeOrbit?: number` collapses it to one fixed-position field just the same. The long " +
+      'form (`class: "none", orbitDistance: n` on the next `moon` block) already types and ' +
+      "emits it correctly positioned.",
+  ],
+  [
+    "moon_initializer.change_orbit",
+    "The same field one level further down, inside a moon's own nested `moon` list (moons nest " +
+      "without bound per EXTRA_ALIAS_CATEGORIES). `alias[moon_initializer:moon]`'s own " +
+      "change_orbit is the identical singular, positional-sugar shape as " +
+      "`planet_initializer.change_orbit` above, declined for the same reason.",
+  ],
+]);
 
 export interface ContentScopeParameter {
   /** Every scope a definition may declare, canonical names. */
@@ -562,6 +728,17 @@ export interface ContentFieldOverride {
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   [
+    "archaeological_site_type.desc",
+    {
+      member: "conditionalDesc",
+      reason:
+        "The dual of the bare identity-conversion scalar and the desc key's repeated " +
+        "trigger+text block form (both raw-key arms, archaeology.cwt:44+48); renamed so it does " +
+        "not collide with the desc flavor-text localisation slot SYNTHETIC_LOCALISATION adds " +
+        "(SDK-50). Named like building.desc for consistency.",
+    },
+  ],
+  [
     "building.desc",
     {
       member: "conditionalDesc",
@@ -569,6 +746,30 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "The `desc` key's repeated trigger+text block form; the derived member collides with " +
         "the `desc` flavor-text localisation slot, and `triggeredDesc` is already the building's " +
         "own distinct triggered_desc key.",
+    },
+  ],
+  [
+    "building.triggered_planet_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map " +
+        "(buildings.cwt:227). Found via the SDK-39 sweep: 672 shipped buildings write this key " +
+        "and the row was missing, so the writer silently dropped it. building's sibling triggered_* " +
+        "fields (triggered_planet_pop_group_modifier_for_species/_for_all, triggered_country_modifier, " +
+        "triggered_army_modifier) splice the by_pop_group/by_planet clause variants instead of plain " +
+        "triggered_modifier_clause and are a separate, not-yet-evidenced gap left for a follow-up.",
+    },
+  ],
+  [
+    "tradition.triggered_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map " +
+        "(traditions.cwt:70), the same shape ascension_perk.triggered_modifier already uses. Found " +
+        "via SDK-39: the row was missing so the writer silently dropped the field even though 30 " +
+        "shipped traditions/swaps write it.",
     },
   ],
   [
@@ -774,6 +975,19 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "job.triggered_planet_pop_group_modifier_for_species",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_pop_group_clause (pop_jobs.cwt:205) is the pop_group-scoped " +
+        "variant of triggered_modifier_clause: identical potential/modifier/description/mult/" +
+        "multiplier template, plus one field (divide_over_pop_groups) TriggeredModifier does not " +
+        "model. Found via the SDK-39 sweep: 7 shipped jobs write this key and the row was missing, " +
+        "so it was silently dropped in full. Reusing the plain triggeredModifierBlock shape drops " +
+        "only divide_over_pop_groups, which zero shipped jobs write.",
+    },
+  ],
+  [
     "job.triggered_planet_pop_group_modifier_for_all",
     {
       shape: "triggeredModifierBlock",
@@ -930,7 +1144,23 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     "ship_size.modifier",
     {
       shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields. Lowers to " +
+        'ModifierClosure<"starbase">, the scope of the first-declared arm (ship_sizes.cwt:107-116 ' +
+        "declares this field twice, once per mutually exclusive subtype, this=starbase and " +
+        "this=ship) — first-declared-wins is a codegen artifact (flatten/mergeByName/pickOrdinary), " +
+        "not a claim that starbase is the intended scope. SDK-45 investigated pinning `scope: " +
+        '"ship"` instead (the more common case: 278 of 319 shipped ship sizes are !starbase) and ' +
+        "found the opposite fix is also wrong by corpus evidence: all 41 starbase-subtype ship " +
+        "sizes write starbase-only modifier names (starbase_building_capacity_add and siblings) " +
+        'that ModifierClosure<"ship"> cannot express, so `scope: "ship"` would newly break real ' +
+        "vanilla content. Neither fixed scope is correct — the field genuinely needs two, selected " +
+        "by which subtype the definition declares — and no `CONTENT_FIELD_OVERRIDES.scope` row can " +
+        "express that; it needs a subtype-conditional lowering (a `lowerScopeUnion` beside " +
+        "`lowerDual`/`lowerScalarUnion` in emit/fields.ts) that does not exist yet. Left unchanged " +
+        "pending that work. Also: corpus-conformance's scope-mismatch check only gates fields whose " +
+        "`field.clause` is set (trigger/effect shapes), so this mispin is invisible to that gate " +
+        "regardless of which scope is pinned here.",
     },
   ],
   [
@@ -1348,6 +1578,16 @@ export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverr
     {
       shape: "modifierBlock",
       reason: "Nested modifier_clause is the same open modifier-name map as its parent.",
+    },
+  ],
+  [
+    "tradition.tradition_swap.triggered_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "Nested triggered_modifier_clause (traditions.cwt:126) is the same shape as the top " +
+        "level's tradition.triggered_modifier — combines a potential trigger with an open " +
+        "modifier-name map. Found via the SDK-39 sweep alongside its top-level sibling.",
     },
   ],
   [

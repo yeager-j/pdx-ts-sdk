@@ -50,6 +50,7 @@ export const CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "negative_description",
@@ -57,6 +58,7 @@ export const CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
@@ -82,6 +84,7 @@ export const CIVIC_OR_ORIGIN_MODIFICATION_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   { key: "add", member: "add", shape: "trigger", form: "trigger" },
   { key: "remove", member: "remove", shape: "trigger", form: "trigger" },
@@ -125,7 +128,14 @@ export interface CivicOrOriginHasSecondarySpecies {
 }
 
 export const CIVIC_OR_ORIGIN_HAS_SECONDARY_SPECIES_FIELDS: readonly ContentField[] = [
-  { key: "title", member: "title", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "title",
+    member: "title",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "traits",
     member: "traits",
@@ -281,6 +291,7 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "negative_description",
@@ -288,6 +299,7 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   { key: "playable", member: "playable", shape: "trigger", form: "trigger" },
   { key: "ai_playable", member: "aiPlayable", shape: "trigger", form: "trigger" },
@@ -334,6 +346,7 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   {
@@ -342,6 +355,7 @@ export const CIVIC_OR_ORIGIN_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   {

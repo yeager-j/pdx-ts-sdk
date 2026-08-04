@@ -8,6 +8,7 @@ import type {
   DefinedContent,
   EffectBlock,
   ModifierClosure,
+  TriggeredModifier,
   WeightBlock,
 } from "../content.ts";
 import type { Trigger } from "../trigger-core.ts";
@@ -32,6 +33,7 @@ export interface TraditionSwapFields {
   /** this determines the chances of a tradition swap appearing for a given empire IF multiple swaps are potential. */
   weight?: WeightBlock<"country">;
   trigger?: Trigger<"country">;
+  triggeredModifier?: TriggeredModifier<"country">[];
 }
 
 export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
@@ -70,6 +72,7 @@ export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   {
@@ -78,16 +81,24 @@ export const TRADITION_SWAP_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   { key: "on_enabled", member: "onEnabled", shape: "effect", form: "closure" },
   { key: "weight", member: "weight", shape: "weightBlock", form: "block" },
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
+  {
+    key: "triggered_modifier",
+    member: "triggeredModifier",
+    shape: "triggeredModifierBlock",
+    form: "list",
+    repeated: true,
+  },
 ];
 
 export const TRADITION_SWAP_LOCALISATION: readonly ContentLocalisation[] = [
-  { member: "name", pattern: "$", required: false },
+  { member: "name", pattern: "$", required: false, requiredUnless: "inheritName" },
   { member: "flavor", pattern: "$_delayed", required: false },
   { member: "effects", pattern: "$_desc", required: false },
 ];
@@ -105,6 +116,7 @@ export interface TraditionFields {
   effects?: string;
   unlocksAgenda?: AgendaRef | string;
   modifier?: ModifierClosure<"country">;
+  triggeredModifier?: TriggeredModifier<"country">[];
   possible?: Trigger<"country">;
   onEnabled?: EffectBlock<"country">;
   customTooltip?: string[];
@@ -134,6 +146,13 @@ export const TRADITION_FIELDS: readonly ContentField[] = [
     refTypes: ["agenda"],
   },
   { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
+  {
+    key: "triggered_modifier",
+    member: "triggeredModifier",
+    shape: "triggeredModifierBlock",
+    form: "list",
+    repeated: true,
+  },
   { key: "possible", member: "possible", shape: "trigger", form: "trigger" },
   { key: "on_enabled", member: "onEnabled", shape: "effect", form: "closure" },
   {
@@ -142,6 +161,7 @@ export const TRADITION_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   {
@@ -150,6 +170,7 @@ export const TRADITION_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   {

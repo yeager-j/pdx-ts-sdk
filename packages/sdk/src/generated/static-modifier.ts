@@ -61,6 +61,7 @@ export const STATIC_MODIFIER_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "show_only_custom_tooltip",

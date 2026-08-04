@@ -98,6 +98,7 @@ export const STARBASE_LEVEL_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "show_in_outliner",

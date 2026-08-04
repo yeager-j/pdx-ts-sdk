@@ -61,6 +61,7 @@ export const ASCENSION_PERK_SWAP_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   {
@@ -69,6 +70,7 @@ export const ASCENSION_PERK_SWAP_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "list",
     conversion: "identity",
+    locKey: true,
     repeated: true,
   },
   { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
@@ -78,7 +80,7 @@ export const ASCENSION_PERK_SWAP_FIELDS: readonly ContentField[] = [
 ];
 
 export const ASCENSION_PERK_SWAP_LOCALISATION: readonly ContentLocalisation[] = [
-  { member: "name", pattern: "$", required: false },
+  { member: "name", pattern: "$", required: false, requiredUnless: "inheritName" },
   { member: "flavor", pattern: "$_delayed", required: false },
   { member: "effects", pattern: "$_desc", required: false },
 ];
@@ -131,6 +133,7 @@ export const ASCENSION_PERK_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "tradition_swap",
