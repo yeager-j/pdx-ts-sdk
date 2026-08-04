@@ -137,9 +137,43 @@ export function scopeRef<S extends ScopeName>(path: string): ScopeRef<S> {
 interface Recording {
   readonly sink: PdxEntry[];
   readonly refs: ContentRefUse[];
+  /**
+   * False once {@link recordEffects} has popped this recording — the closure
+   * returned, and its entries are finished data the caller has already put in
+   * a block. The scope object handed to that closure keeps a reference to the
+   * sink, so an author who stores it somewhere outliving the closure can still
+   * reach it; every dispatch path of the scope object checks this flag so that
+   * reaches {@link assertLive} instead of the sink.
+   */
+  live: boolean;
 }
 
 const RECORDINGS: Recording[] = [];
+
+/**
+ * Refuses a call on a scope object whose closure has already returned.
+ *
+ * Without this the call succeeds: the entry lands in an array `block()` stored
+ * by reference, so a `PureMod` that `buildMod` already froze and returned
+ * renders different bytes on the *next* `render` — a build with no error and
+ * no symptom until someone compares two renders. `undefined` is the
+ * {@link makeScope} seam, whose caller owns the sink it passed in and so has
+ * no closure to escape from.
+ */
+function assertLive(recording: Recording | undefined, member: string): void {
+  if (recording === undefined || recording.live) {
+    return;
+  }
+  throw new Error(
+    `'${member}' was called on a scope object whose effect closure has already returned, so ` +
+      "there is no longer a block for its entries to land in. The closure's entries were " +
+      "finished and handed to the caller when it returned; recording into them now would " +
+      "change what an already-built mod renders, silently and only on the next render(). " +
+      "Record every effect inside the closure that receives the scope — a definition's " +
+      "effect field, an event's immediate/after/option — rather than storing the scope " +
+      "object and using it later."
+  );
+}
 
 function activeRecording(path: string): Recording {
   const recording = RECORDINGS.at(-1);
@@ -383,6 +417,54 @@ export function modifierDescKey(
 }
 
 /**
+ * A weight-shaped row's `complex_maths_enum` arms, without the members that
+ * are the row's own rather than the operation's — the gate and its tooltip.
+ * `content.ts`'s `WeightBlockOperations` is the same set, spelled from the
+ * same place ({@link Modifier}).
+ */
+export type WeightOperations = Omit<Modifier<ScopeName>, "desc" | "descKey" | "when">;
+
+/**
+ * The operations in emission order, as (member, emitted key) pairs.
+ *
+ * Two lowerings read this: {@link modifierEntry} below, for a `modifier` row,
+ * and `content.ts`'s `weightBlock`, for the operations written directly as
+ * siblings of `base`. They are the same `complex_maths_enum` arms in the same
+ * order, and a second hand-spelled sequence is a divergence nothing would
+ * report — the emitted bytes stay well-formed either way, so a member added
+ * to one list and not the other simply stops being emitted from the other
+ * position. Order is load-bearing: it is what keeps emission a function of
+ * the content rather than of the order an author's object literal declared
+ * its members in.
+ */
+const WEIGHT_OPERATIONS: readonly (readonly [keyof WeightOperations, string])[] = [
+  ["factor", "factor"],
+  ["add", "add"],
+  ["weight", "weight"],
+  ["subtract", "subtract"],
+  ["mult", "mult"],
+  // `multiply`/`min`/`max` are the game's spellings; the members are
+  // `multiplier`/`minValue`/`maxValue` — see {@link Modifier} for why.
+  ["multiplier", "multiply"],
+  ["divide", "divide"],
+  ["minValue", "min"],
+  ["maxValue", "max"],
+];
+
+/** SDK-internal: lowers a weight-shaped row's operations, in {@link
+ * WEIGHT_OPERATIONS} order. */
+export function weightOperationEntries(value: WeightOperations): PdxEntry[] {
+  const entries: PdxEntry[] = [];
+  for (const [member, key] of WEIGHT_OPERATIONS) {
+    const operand = value[member];
+    if (operand !== undefined) {
+      entries.push(kv(key, scriptValueScalar(operand)));
+    }
+  }
+  return entries;
+}
+
+/**
  * SDK-internal shared lowering for a `modifier_rule`/`modifier_rule_with_loc`
  * row. `refs`, when given, collects the content references the gating
  * trigger writes. `ownerKey`, when given, is this occurrence's
@@ -398,34 +480,7 @@ export function modifierEntry(
   refs?: ContentRefUse[],
   ownerKey?: string
 ): PdxEntry {
-  const entries: PdxEntry[] = [];
-  if (modifier.factor !== undefined) {
-    entries.push(kv("factor", scriptValueScalar(modifier.factor)));
-  }
-  if (modifier.add !== undefined) {
-    entries.push(kv("add", scriptValueScalar(modifier.add)));
-  }
-  if (modifier.weight !== undefined) {
-    entries.push(kv("weight", scriptValueScalar(modifier.weight)));
-  }
-  if (modifier.subtract !== undefined) {
-    entries.push(kv("subtract", scriptValueScalar(modifier.subtract)));
-  }
-  if (modifier.mult !== undefined) {
-    entries.push(kv("mult", scriptValueScalar(modifier.mult)));
-  }
-  if (modifier.multiplier !== undefined) {
-    entries.push(kv("multiply", scriptValueScalar(modifier.multiplier)));
-  }
-  if (modifier.divide !== undefined) {
-    entries.push(kv("divide", scriptValueScalar(modifier.divide)));
-  }
-  if (modifier.minValue !== undefined) {
-    entries.push(kv("min", scriptValueScalar(modifier.minValue)));
-  }
-  if (modifier.maxValue !== undefined) {
-    entries.push(kv("max", scriptValueScalar(modifier.maxValue)));
-  }
+  const entries: PdxEntry[] = weightOperationEntries(modifier);
   if (modifier.desc !== undefined) {
     const key = ownerKey === undefined ? undefined : modifierDescKeys.get(modifier)?.get(ownerKey);
     if (key === undefined) {
@@ -668,15 +723,21 @@ export interface IfChain<S extends ScopeName> {
 class IfChainRecorder {
   private readonly sink: PdxEntry[];
   private readonly refs: ContentRefUse[];
+  /** The recording the chain's `if` was written into; see {@link assertLive}.
+   * The chain is handed out from the scope object and can escape the closure
+   * exactly the same way it can, so it checks the same flag. */
+  private readonly recording: Recording | undefined;
   private mark: number;
 
-  constructor(sink: PdxEntry[], refs: ContentRefUse[]) {
+  constructor(sink: PdxEntry[], refs: ContentRefUse[], recording: Recording | undefined) {
     this.sink = sink;
     this.refs = refs;
+    this.recording = recording;
     this.mark = sink.length;
   }
 
   private guard(link: string): void {
+    assertLive(this.recording, link);
     if (this.sink.length !== this.mark) {
       throw new Error(
         `Effects were recorded between an if() chain's links; the game associates ` +
@@ -881,14 +942,19 @@ function weightedList(key: string, sink: PdxEntry[], refs: ContentRefUse[]) {
   };
 }
 
+// `recording` is the third parameter only `if` reads — the chain it returns
+// outlives the call that made it, so it has to carry the liveness the scope
+// object checks. Every other entry ignores it.
 const STRUCTURAL: Record<
   string,
-  ((sink: PdxEntry[], refs: ContentRefUse[]) => unknown) | undefined
+  | ((sink: PdxEntry[], refs: ContentRefUse[], recording: Recording | undefined) => unknown)
+  | undefined
 > = {
-  if: (sink, refs) => (condition: Trigger<ScopeName>, body: (scope: unknown) => void) => {
-    sink.push(conditionalBlock("if", condition, body, refs));
-    return new IfChainRecorder(sink, refs);
-  },
+  if:
+    (sink, refs, recording) => (condition: Trigger<ScopeName>, body: (scope: unknown) => void) => {
+      sink.push(conditionalBlock("if", condition, body, refs));
+      return new IfChainRecorder(sink, refs, recording);
+    },
 
   target: (sink, refs) => (body: (scope: unknown) => void) => {
     sink.push(block("target", recordEffects(refs, body)));
@@ -1013,48 +1079,75 @@ for (const kind of Object.values(EVENT_KINDS)) {
   STRUCTURAL[methodName(kind.key)] = fireEffect(kind.key);
 }
 
-function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[]): unknown {
+/**
+ * Wraps a dispatched method so the liveness check runs at *call* time as well
+ * as at property-access time. Both matter: reading the property is what a
+ * leaked scope object usually does late, but a method plucked off a live scope
+ * object (`const log = country.log`) and called later would otherwise slip
+ * past a check made only in `get`. One wrapper in the dispatcher covers every
+ * path below — structural, fire effects, and all four meta shapes — rather
+ * than a check repeated in each.
+ */
+function guarded(recording: Recording | undefined, member: string, dispatch: unknown): unknown {
+  if (recording === undefined || typeof dispatch !== "function") {
+    return dispatch;
+  }
+  const call = dispatch as (...args: unknown[]) => unknown;
+  return (...args: unknown[]): unknown => {
+    assertLive(recording, member);
+    return call(...args);
+  };
+}
+
+function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recording): unknown {
+  const dispatch = (prop: string): unknown => {
+    const structural = STRUCTURAL[prop];
+    if (structural !== undefined) {
+      return structural(sink, refs, recording);
+    }
+    const meta = EFFECT_META[prop];
+    if (meta === undefined) {
+      throw new Error(
+        `Unknown effect "${prop}" — not in the generated effect meta table. ` +
+          `Nothing is recorded silently; if this is a real effect, codegen is missing it.`
+      );
+    }
+    const shape = meta.shape;
+    switch (shape.kind) {
+      case "bool":
+        return (value: boolean = true) => sink.push(kv(meta.key, value));
+      case "value":
+        return (value: unknown) => {
+          const scalar = toScalar(value);
+          recordRef(refs, shape.refTypes, meta.key, scalar);
+          sink.push(kv(meta.key, scalar));
+        };
+      case "fields":
+        return (args: Record<string, unknown>) =>
+          sink.push(block(meta.key, fieldEntries(shape.fields ?? [], args, meta.key, refs)));
+      case "wrapper":
+        if (shape.fields === null) {
+          return (body: (scope: unknown) => void) => {
+            sink.push(block(meta.key, recordEffects(refs, body)));
+          };
+        }
+        return (args: Record<string, unknown>, body: (scope: unknown) => void) => {
+          const child: PdxEntry[] = fieldEntries(shape.fields ?? [], args, meta.key, refs);
+          recordEffects(refs, body, child);
+          sink.push(block(meta.key, child));
+        };
+    }
+  };
+
   return new Proxy(Object.create(null) as object, {
     get(_target, prop) {
       if (typeof prop !== "string") {
         return undefined;
       }
-      const structural = STRUCTURAL[prop];
-      if (structural !== undefined) {
-        return structural(sink, refs);
-      }
-      const meta = EFFECT_META[prop];
-      if (meta === undefined) {
-        throw new Error(
-          `Unknown effect "${prop}" — not in the generated effect meta table. ` +
-            `Nothing is recorded silently; if this is a real effect, codegen is missing it.`
-        );
-      }
-      const shape = meta.shape;
-      switch (shape.kind) {
-        case "bool":
-          return (value: boolean = true) => sink.push(kv(meta.key, value));
-        case "value":
-          return (value: unknown) => {
-            const scalar = toScalar(value);
-            recordRef(refs, shape.refTypes, meta.key, scalar);
-            sink.push(kv(meta.key, scalar));
-          };
-        case "fields":
-          return (args: Record<string, unknown>) =>
-            sink.push(block(meta.key, fieldEntries(shape.fields ?? [], args, meta.key, refs)));
-        case "wrapper":
-          if (shape.fields === null) {
-            return (body: (scope: unknown) => void) => {
-              sink.push(block(meta.key, recordEffects(refs, body)));
-            };
-          }
-          return (args: Record<string, unknown>, body: (scope: unknown) => void) => {
-            const child: PdxEntry[] = fieldEntries(shape.fields ?? [], args, meta.key, refs);
-            recordEffects(refs, body, child);
-            sink.push(block(meta.key, child));
-          };
-      }
+      // Access-time as well as call-time (see `guarded`): a dead scope object
+      // fails on the property read, before the dispatcher builds anything.
+      assertLive(recording, prop);
+      return guarded(recording, prop, dispatch(prop));
     },
   });
 }
@@ -1095,6 +1188,12 @@ export function isEffectKey(key: string): boolean {
   return effectKeys.has(key);
 }
 
+/**
+ * A scope object over a sink the caller already holds — no recording, so no
+ * liveness to check: there is no closure for it to escape, and its owner can
+ * read the entries it records whenever it likes. The closure-facing path is
+ * {@link recordEffects}, whose scope objects die with their closure.
+ */
 export function makeScope<S extends ScopeName>(
   sink: PdxEntry[],
   refs: ContentRefUse[] = []
@@ -1110,19 +1209,28 @@ export function makeScope<S extends ScopeName>(
  * event's `immediate`, a content definition's effect field. Going through here
  * is what keeps {@link ScopeRef.effects} writing into the innermost block: the
  * recording is on the stack for exactly as long as the body runs.
+ *
+ * The scope object the body receives is tied to *this* recording, so nesting
+ * works out on its own: a transition's closure gets a scope object of its own
+ * recording, and the enclosing one stays live for as long as it is still on
+ * the stack — which is exactly as long as writing to it is still meaningful.
  */
 export function recordEffects<S extends ScopeName>(
   refs: ContentRefUse[],
   body: (scope: ScopeObjOf<S>) => void,
   into: PdxEntry[] = []
 ): PdxEntry[] {
-  RECORDINGS.push({ sink: into, refs });
+  const recording: Recording = { sink: into, refs, live: true };
+  RECORDINGS.push(recording);
   try {
-    body(makeAnyScope(into, refs) as ScopeObjOf<S>);
+    body(makeAnyScope(into, refs, recording) as ScopeObjOf<S>);
   } finally {
     // Popped even when the body throws: an author's error inside one closure
-    // must not leave every later closure recording into a dead block.
+    // must not leave every later closure recording into a dead block. Marked
+    // dead for the same reason it is popped — the entries are finished either
+    // way, so a scope object that outlived the closure must not reach them.
     RECORDINGS.pop();
+    recording.live = false;
   }
   return into;
 }

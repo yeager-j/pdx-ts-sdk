@@ -27,7 +27,8 @@ export interface ModWarning {
     | "missing-prefix"
     | "loc-quote-replaced"
     | "unstable-desc-key"
-    | "loc-key-looks-like-text";
+    | "loc-key-looks-like-text"
+    | "unchecked-vanilla-ids";
   readonly message: string;
 }
 

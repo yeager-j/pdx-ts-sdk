@@ -10,7 +10,6 @@ import {
   list,
   quoted,
   scalar,
-  serialize,
   varRef,
   type PdxEntry,
   type PdxScalar,
@@ -25,6 +24,7 @@ import {
   registerComplexTriggerModifierDescKey,
   registerModifierDescKey,
   scriptCtx,
+  weightOperationEntries,
   type ComplexTriggerModifier,
   type ComplexTriggerModifierWithLoc,
   type Modifier,
@@ -929,19 +929,43 @@ function contentScalar(
  * shape serves every scope — the generated recorder interfaces are the only
  * thing keeping paths honest, exactly like the effect recorder.
  */
-function modifierRecorder(record: (name: string, amount: number) => void): unknown {
+function modifierRecorder(
+  record: (name: string, amount: number) => void,
+  live: { value: boolean }
+): unknown {
+  const assertLive = (member: string): void => {
+    if (live.value) {
+      return;
+    }
+    // Same hazard, and the same fix, as `assertLive` in effect-core.ts: the
+    // recorder closes over an entry array that is finished data once the
+    // closure returns, so a recorder stored somewhere longer-lived would edit
+    // an already-built mod and change only what the *next* render emits.
+    throw new Error(
+      `'${member}' was recorded on a modifier closure that has already returned, so its ` +
+        "entry has nowhere to land: the closure's modifiers were lowered into the definition " +
+        "when it returned, and writing one now would change what an already-built mod " +
+        "renders, silently and only on the next render(). Write every modifier inside the " +
+        "closure the recorder is handed to, rather than storing the recorder and using it later."
+    );
+  };
   const node = (path: readonly string[]): unknown =>
     new Proxy(() => undefined, {
       get(_target, prop) {
         if (typeof prop !== "string") {
           return undefined;
         }
+        assertLive(prop);
         if (path.length === 0 && (prop === "raw" || prop === "unchecked")) {
-          return (name: string, amount: number) => record(name, amount);
+          return (name: string, amount: number) => {
+            assertLive(name);
+            record(name, amount);
+          };
         }
         return node([...path, prop]);
       },
       apply(_target, _thisArg, args) {
+        assertLive(path.join("_"));
         record(path.join("_"), args[0] as number);
       },
     });
@@ -950,50 +974,20 @@ function modifierRecorder(record: (name: string, amount: number) => void): unkno
 
 function modifierEntries(closure: ModifierClosure): PdxEntry[] {
   const entries: PdxEntry[] = [];
-  closure(modifierRecorder((name, amount) => entries.push(kv(name, amount))) as never);
+  const live = { value: true };
+  try {
+    closure(modifierRecorder((name, amount) => entries.push(kv(name, amount)), live) as never);
+  } finally {
+    // Dead as soon as the closure returns, however it returns — an author's
+    // error inside one modifier closure must not leave the recorder it was
+    // handed able to write into a finished definition.
+    live.value = false;
+  }
   return entries;
 }
 
 function modifierBlock(key: string, value: ModifierClosure): PdxEntry {
   return block(key, modifierEntries(value));
-}
-
-/**
- * Lowers {@link WeightBlockOperations}'s numeric arms in a fixed sequence —
- * mirroring `modifierEntry`'s row-level order, since both read the same
- * `complex_maths_enum` — so emission never depends on the order an author's
- * object literal happened to declare its members in.
- */
-function weightOperationEntries(value: WeightBlockOperations<ScopeName>): PdxEntry[] {
-  const entries: PdxEntry[] = [];
-  if (value.factor !== undefined) {
-    entries.push(kv("factor", scriptValueScalar(value.factor)));
-  }
-  if (value.add !== undefined) {
-    entries.push(kv("add", scriptValueScalar(value.add)));
-  }
-  if (value.weight !== undefined) {
-    entries.push(kv("weight", scriptValueScalar(value.weight)));
-  }
-  if (value.subtract !== undefined) {
-    entries.push(kv("subtract", scriptValueScalar(value.subtract)));
-  }
-  if (value.mult !== undefined) {
-    entries.push(kv("mult", scriptValueScalar(value.mult)));
-  }
-  if (value.multiplier !== undefined) {
-    entries.push(kv("multiply", scriptValueScalar(value.multiplier)));
-  }
-  if (value.divide !== undefined) {
-    entries.push(kv("divide", scriptValueScalar(value.divide)));
-  }
-  if (value.minValue !== undefined) {
-    entries.push(kv("min", scriptValueScalar(value.minValue)));
-  }
-  if (value.maxValue !== undefined) {
-    entries.push(kv("max", scriptValueScalar(value.maxValue)));
-  }
-  return entries;
 }
 
 /**
@@ -1423,7 +1417,6 @@ function localisationKey(pattern: string, id: string): string {
 
 export class ContentAuthoring {
   private readonly prefix: string;
-  private readonly descriptors: readonly ContentRegistryDescriptor[];
   private readonly byType: ReadonlyMap<string, ContentRegistryDescriptor>;
   private readonly definitions = new Map<string, ContentDefinition<string, ContentDef>[]>();
   private readonly nestedIds = new Map<string, Set<string>>();
@@ -1441,7 +1434,8 @@ export class ContentAuthoring {
     onLocKeyLooksLikeText?: (message: string) => void
   ) {
     this.prefix = prefix;
-    this.descriptors = descriptors;
+    // Indexed by type, not kept as a list: nothing walks every registry since
+    // the file-emitting `render` above went away — `buildMod` owns emission.
     this.byType = new Map(descriptors.map((descriptor) => [descriptor.type, descriptor]));
     this.registerLoc = registerLoc;
     this.onPrefixViolation =
@@ -1496,27 +1490,16 @@ export class ContentAuthoring {
     return content;
   }
 
+  /**
+   * The lowered entries for one registry, in define order. `buildMod` lowers
+   * through `DefinedContent.toEntries` directly — it owns emission order,
+   * same-path merging and the reference sink — so this is for callers holding
+   * a `ContentAuthoring` of their own, and deliberately not a second way to
+   * emit a file: there was one, and it disagreed with real emission on the
+   * path scheme, on merging registries that share a path, and on order.
+   */
   entries(type: string): readonly PdxEntry[] {
     return (this.definitions.get(type) ?? []).map((definition) => definition.toEntries());
-  }
-
-  ids(type: string): readonly string[] {
-    return (this.definitions.get(type) ?? []).map((definition) => definition.id);
-  }
-
-  render(): Map<string, string> {
-    const files = new Map<string, string>();
-    for (const descriptor of this.descriptors) {
-      const entries = this.entries(descriptor.type);
-      if (entries.length === 0) {
-        continue;
-      }
-      files.set(
-        `${descriptor.outputDir}/${this.prefix}_${descriptor.fileStem}.txt`,
-        serialize(entries)
-      );
-    }
-    return files;
   }
 
   private assertPrefixed(type: string, id: string): void {

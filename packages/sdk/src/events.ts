@@ -343,6 +343,21 @@ export interface LocSink {
   register(key: string, text: string): void;
 }
 
+/**
+ * The suffixes an option's generated localisation key takes, by position:
+ * `<id>.a`, `<id>.b`, ... — matching how vanilla names its own option keys.
+ *
+ * Index-derived, and therefore the translation-misalignment hazard
+ * `modifierDescKey` (`effect-core.ts`) refuses for modifier rows: inserting an
+ * option mid-list repoints every later option's key at different text, with no
+ * build error and no symptom until someone reads that language. Accepted here
+ * rather than avoided, because the key is not only ours — `.a`/`.b` is the
+ * convention Stellaris translators and existing localisation tooling expect
+ * from an event's options, and a content-derived key (the modifier rows' fix)
+ * would buy stability by emitting keys no translator recognizes. A modifier
+ * row has no such convention to honor, which is exactly why the two go
+ * different ways.
+ */
 const OPTION_KEYS = "abcdefghijklmnopqrstuvwxyz";
 
 /**
@@ -654,7 +669,9 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
         option.aiChance.modifiers
       );
       const aiChanceRefs: ContentRefUse[] = [];
-      aiChanceEntries.push(...modifierRows(option.aiChance.modifiers, aiChanceRefs, aiChanceOwnerKey));
+      aiChanceEntries.push(
+        ...modifierRows(option.aiChance.modifiers, aiChanceRefs, aiChanceOwnerKey)
+      );
       optionEntries.push(block("ai_chance", aiChanceEntries));
       refs.push(...underField(aiChanceRefs, `${where}.ai_chance`));
     }
@@ -687,7 +704,15 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     entries.push(block("option", optionEntries));
   });
 
-  return { kind: "event-ref", scope, id, from: def.from, entry: block(kind, entries), refs, warnings };
+  return {
+    kind: "event-ref",
+    scope,
+    id,
+    from: def.from,
+    entry: block(kind, entries),
+    refs,
+    warnings,
+  };
 }
 
 // ---------------------------------------------------------------------------

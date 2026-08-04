@@ -96,3 +96,60 @@ export function checkVanillaPackagePin(
       `acceptGameVersion: "${installGameVersion}" to proceed on mismatched identifier types`
   );
 }
+
+/**
+ * The canary for compile-time vanilla id checking being *inactive*, as a
+ * warning message, or `undefined` when it is doing its job.
+ *
+ * The gate above refuses a build; this only reports, because both worlds it
+ * describes are legal ones an author may have chosen. What makes it worth
+ * reporting is that neither announces itself: without the package every
+ * `VanillaId<K>` degrades to plain `string` (`vanilla-ids.ts`), by design and
+ * silently, so a typo'd vanilla reference typechecks, builds, ships, and does
+ * nothing in game. A protection that can switch itself off unnoticed is worth
+ * one line on `mod.warnings`.
+ *
+ * Two ways it is off:
+ * - the package does not resolve at runtime — not installed, so nothing is
+ *   merged into `VanillaIds` and every registry is unchecked.
+ * - it resolves but pins a different game build than the install this mod is
+ *   being built against. Reachable only with `acceptGameVersion` set, since
+ *   the gate above refuses that build otherwise; the ids then typecheck
+ *   against a build that is not the one being shipped for.
+ *
+ * `"0.0.0"` — the unstamped sentinel — reports nothing, the same reading the
+ * gate above takes: no generation has produced that package, so there is no
+ * pin to compare and no claim about ids to weigh it against.
+ */
+export function vanillaIdsCheckWarning(
+  packageVersion: string | undefined,
+  installGameVersion: string | undefined,
+  acceptGameVersion: string | undefined
+): string | undefined {
+  if (packageVersion === undefined) {
+    return (
+      "Vanilla ids are not checked: @pdx-ts/stellaris-ids is not installed, so every vanilla " +
+      "id parameter — technologies, buildings, sprites, scripted trigger and effect names — " +
+      "is an unchecked plain string, and a misspelled one builds cleanly and reaches the game " +
+      "as a reference to nothing. Install @pdx-ts/stellaris-ids matching your Stellaris " +
+      "version to check them at compile time, or set uncheckedVanillaIds: true on the mod " +
+      "config to acknowledge authoring without it."
+    );
+  }
+  if (packageVersion === "0.0.0" || installGameVersion === undefined) {
+    return undefined;
+  }
+  const pinned = corePatchVersion(packageVersion);
+  if (pinned === installGameVersion) {
+    return undefined;
+  }
+  // Past the gate above only because `acceptGameVersion` allowed it through.
+  return (
+    `Vanilla ids are checked against the wrong game build: @pdx-ts/stellaris-ids is pinned to ` +
+    `${pinned} but this build's install is Stellaris ${installGameVersion}, accepted via ` +
+    `acceptGameVersion: "${acceptGameVersion}". Ids that moved between those builds typecheck ` +
+    `here and are still wrong in game. Install @pdx-ts/stellaris-ids@${installGameVersion} to ` +
+    `match the install, or set uncheckedVanillaIds: true on the mod config to acknowledge ` +
+    `building on mismatched identifier types.`
+  );
+}
