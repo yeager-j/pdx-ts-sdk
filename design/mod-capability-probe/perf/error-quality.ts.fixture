@@ -1,0 +1,36 @@
+import { createMod, stellarisIds } from "../capability.ts";
+
+const mod = createMod(
+  {
+    name: "Error Quality",
+    prefix: "error_quality",
+    supportedVersion: "4.4.*",
+  },
+  { ids: stellarisIds }
+);
+
+const lab = mod.building("lab", {
+  name: "Lab",
+  baseBuildtime: 10,
+  category: "research",
+  icon: "building_research_lab_1",
+  buildingSets: ["research"],
+  canBuild: true,
+});
+
+mod.technology("forged", {
+  id: "other_mod_tech_forged",
+  name: "Forged",
+  area: "physics",
+  tier: 1,
+  category: "particles",
+});
+
+mod.technology("wrong_reference", {
+  name: "Wrong reference",
+  area: "physics",
+  tier: 1,
+  category: "particles",
+  prerequisites: [lab],
+});
+

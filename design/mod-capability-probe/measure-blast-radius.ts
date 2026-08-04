@@ -1,0 +1,77 @@
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+import ts from "typescript";
+
+const root = path.join(import.meta.dirname, "../..");
+const slices = ["examples", "packages/sdk/tests", "packages/stellaris-ids/tests"] as const;
+const callKinds = ["define", "namespace", "collection", "buildMod", "discoverContent"] as const;
+
+type CallKind = (typeof callKinds)[number];
+
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const absolute = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      return sourceFiles(absolute);
+    }
+    return entry.isFile() && /\.tsx?$/.test(entry.name) ? [absolute] : [];
+  });
+}
+
+function calleeName(expression: ts.LeftHandSideExpression): string | undefined {
+  if (ts.isIdentifier(expression)) {
+    return expression.text;
+  }
+  if (ts.isPropertyAccessExpression(expression)) {
+    return expression.name.text;
+  }
+  return undefined;
+}
+
+function classify(name: string): CallKind | undefined {
+  if (/^define[A-Z]/.test(name)) {
+    return "define";
+  }
+  return callKinds.find((kind) => kind === name);
+}
+
+const report: Record<
+  string,
+  { files: number; touchedFiles: number; calls: Record<CallKind, number> }
+> = {};
+
+for (const slice of slices) {
+  const files = sourceFiles(path.join(root, slice));
+  const calls = Object.fromEntries(callKinds.map((kind) => [kind, 0])) as Record<CallKind, number>;
+  const touched = new Set<string>();
+
+  for (const file of files) {
+    const source = ts.createSourceFile(
+      file,
+      readFileSync(file, "utf8"),
+      ts.ScriptTarget.Latest,
+      false,
+      ts.ScriptKind.TS
+    );
+    const visit = (node: ts.Node): void => {
+      if (ts.isCallExpression(node)) {
+        const name = calleeName(node.expression);
+        const kind = name === undefined ? undefined : classify(name);
+        if (kind !== undefined) {
+          calls[kind] += 1;
+          touched.add(file);
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+  }
+
+  report[slice] = {
+    files: files.length,
+    touchedFiles: touched.size,
+    calls,
+  };
+}
+
+console.log(JSON.stringify(report, null, 2));
