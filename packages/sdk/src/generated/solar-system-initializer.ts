@@ -249,7 +249,6 @@ export interface SolarSystemInitializerFields {
   outerRadiusOffset?: number;
   /** Only when solar_system_initializer subtype not `fallen_empire_initializer` applies. */
   planet?: PlanetInitializerFields[];
-  changeOrbit?: number[];
   orbitDistance?: ScriptValue | SolarSystemInitializerOrbitDistance;
   orbitalLine?: SolarSystemInitializerOrbitalLine[];
   hasIndependentOrbitalLine?: boolean;
@@ -388,14 +387,6 @@ export const SOLAR_SYSTEM_INITIALIZER_FIELDS: readonly ContentField[] = [
     shape: "aliasStruct",
     form: "list",
     category: "planet_initializer",
-    repeated: true,
-  },
-  {
-    key: "change_orbit",
-    member: "changeOrbit",
-    shape: "value",
-    form: "list",
-    conversion: "identity",
     repeated: true,
   },
   {
