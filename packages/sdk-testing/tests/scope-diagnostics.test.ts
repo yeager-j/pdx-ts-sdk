@@ -9,13 +9,7 @@
 import { namespace } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
-import {
-  describeUnsupportedSimScope,
-  fixture,
-  SIM_SCOPE_NAMES,
-  type SimEvent,
-  type SimScopeName,
-} from "../src/index.ts";
+import { describeUnsupportedSimScope, fixture, SIM_SCOPE_NAMES } from "../src/index.ts";
 
 describe("the unsupported-scope diagnosis", () => {
   it("names how many scopes are modeled, lists them, and says what to do next", () => {
@@ -30,21 +24,16 @@ describe("the unsupported-scope diagnosis", () => {
     expect(message).toMatch(/check the scope name/);
   });
 
-  it("fixture() throws that diagnosis for a scope built outside the typed definers, instead of a bare assignability failure", () => {
+  it("fixture() throws that diagnosis for an ordinary unsupported event, no cast required", () => {
+    // No cast anywhere in this test: `defineLeaderEvent` is the same call an
+    // author would reach for, and `FixtureOptions.events` accepts it exactly
+    // as authored (leader is not in SimScopeName) — the diagnosis has to
+    // fire on this, the normal authoring path, or it does not really exist.
     const events = namespace("sdk49_scope_repro");
     const leaderEvent = events.defineLeaderEvent({ id: 1, isTriggeredOnly: true });
 
-    expect(() =>
-      fixture(
-        { countries: [{ name: "player" }] },
-        // Every real authoring path is caught at compile time by
-        // `FixtureOptions.events`'s SimScopeName constraint — this cast
-        // simulates the one path that is not: an event assembled from data
-        // (a config, a dynamically-built registry) rather than a
-        // `defineXEvent` call, which is exactly where a genuinely wrong or
-        // misspelled scope would otherwise reach `World` unexplained.
-        { events: [leaderEvent as unknown as SimEvent<SimScopeName, undefined>] }
-      )
-    ).toThrow(/models 5 of Stellaris's ~41 scopes/);
+    expect(() => fixture({ countries: [{ name: "player" }] }, { events: [leaderEvent] })).toThrow(
+      /models 5 of Stellaris's ~41 scopes/
+    );
   });
 });
