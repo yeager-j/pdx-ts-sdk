@@ -21,15 +21,15 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { expect } from "vitest";
 
 import { explainFor, renderExplanation } from "./interpret.ts";
-import type { Country, FiredRecord, Planet } from "./state.ts";
+import type { AnySimHandle, FiredRecord } from "./state.ts";
 import { containsFired, renderFiredRecords } from "./world.ts";
 
 interface ProbeMatchers<R = unknown> {
   toContainEvent(
     event: { readonly id: string },
-    details?: { readonly day?: number; readonly from?: Country | Planet }
+    details?: { readonly day?: number; readonly from?: AnySimHandle }
   ): R;
-  toHoldFor(scope: Country | Planet): R;
+  toHoldFor(scope: AnySimHandle): R;
 }
 
 declare module "vitest" {
@@ -43,7 +43,7 @@ export function installMatchers(): void {
     toContainEvent(
       received: readonly FiredRecord[],
       event: { readonly id: string },
-      details?: { readonly day?: number; readonly from?: Country | Planet }
+      details?: { readonly day?: number; readonly from?: AnySimHandle }
     ) {
       const pass = containsFired(received, event.id, details);
       const wanted = [
@@ -61,7 +61,7 @@ export function installMatchers(): void {
       };
     },
 
-    toHoldFor(received: { readonly entries: readonly PdxEntry[] }, scope: Country | Planet) {
+    toHoldFor(received: { readonly entries: readonly PdxEntry[] }, scope: AnySimHandle) {
       const explanation = explainFor(received, scope);
       return {
         pass: explanation.result,

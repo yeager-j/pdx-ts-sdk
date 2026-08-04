@@ -22,10 +22,14 @@ import type { DefinedEvent, EventRef, ScopeName } from "@pdx-ts/sdk";
 
 import { applyEffectEntries, type ForcedArms } from "./interpret.ts";
 import {
+  ArchaeologicalSite,
+  assertSupportedSimScope,
   buildState,
   Country,
+  Fleet,
   renderEntity,
   sameEntity,
+  Situation,
   type FiredRecord,
   type FixtureSpec,
   type PendingFire,
@@ -51,7 +55,14 @@ type EventScope<E> =
 type EventFromKind<E> = E extends EventRef<ScopeName, infer F> ? F : undefined;
 
 export interface EventRegistryEntry {
-  readonly event: SimEvent;
+  /**
+   * Widened past `SimEvent` (any `ScopeName`, any declared FROM) rather than
+   * narrowed to what the fixture actually supports — see `FixtureOptions.events`'s
+   * doc comment for why. `assertSupportedSimScope` is what turns an
+   * unsupported scope caught here into a diagnosis instead of silent
+   * acceptance.
+   */
+  readonly event: DefinedEvent<ScopeName, ScopeName | undefined>;
   /** The declared FROM kind, re-checked at delivery. */
   readonly from: SimScopeName | undefined;
 }
@@ -72,15 +83,27 @@ export interface FixtureOptions {
   /**
    * Every event `advance` may deliver. Contract-less events register as bare
    * handles; events with a `from:` declaration go through `declareFrom`.
+   *
+   * The bare-handle arm accepts any `ScopeName`, not just `SimScopeName` —
+   * narrowing it to `SimEvent` here would mean an ordinary unsupported event
+   * (`defineLeaderEvent`, say) never reaches `World`'s constructor at all,
+   * so `assertSupportedSimScope`'s diagnosis would never run and every
+   * author would keep seeing TypeScript's own bare assignability failure
+   * instead (SDK-49's second half). `From` stays pinned to `undefined` here
+   * regardless: an event that declares a FROM contract still has to go
+   * through `declareFrom`, supported scope or not, so that contract is
+   * re-checked rather than silently dropped.
    */
-  readonly events: ReadonlyArray<SimEvent<SimScopeName, undefined> | EventRegistryEntry>;
+  readonly events: ReadonlyArray<DefinedEvent<ScopeName, undefined> | EventRegistryEntry>;
 }
 
 interface HarnessFireOpts extends ForcedArms {
   readonly from?: SimScope<SimScopeName>;
 }
 
-function immediateEntriesOf(event: SimEvent): readonly PdxEntry[] | undefined {
+function immediateEntriesOf(
+  event: DefinedEvent<ScopeName, ScopeName | undefined>
+): readonly PdxEntry[] | undefined {
   if (event.entry.value.kind !== "container") {
     return undefined;
   }
@@ -103,6 +126,17 @@ export class World {
     for (const registration of options.events) {
       const entry: EventRegistryEntry =
         "event" in registration ? registration : { event: registration, from: undefined };
+      // The static types already require every registered event's scope (and
+      // declared FROM) to be a SimScopeName; this is the runtime backstop for
+      // events built from data rather than through the typed definers — see
+      // `assertSupportedSimScope`'s doc comment.
+      assertSupportedSimScope(entry.event.scope, `Registering event "${entry.event.id}"`);
+      if (entry.from !== undefined) {
+        assertSupportedSimScope(
+          entry.from,
+          `Registering event "${entry.event.id}"'s declared FROM contract`
+        );
+      }
       this.registry.set(entry.event.id, entry);
     }
   }
@@ -112,6 +146,27 @@ export class World {
       throw new Error(`No country at index ${index} in this fixture`);
     }
     return new Country(this.state, index);
+  }
+
+  fleet(index: number): Fleet {
+    if (this.state.fleets[index] === undefined) {
+      throw new Error(`No fleet at index ${index} in this fixture`);
+    }
+    return new Fleet(this.state, index);
+  }
+
+  archaeologicalSite(index: number): ArchaeologicalSite {
+    if (this.state.sites[index] === undefined) {
+      throw new Error(`No archaeological site at index ${index} in this fixture`);
+    }
+    return new ArchaeologicalSite(this.state, index);
+  }
+
+  situation(index: number): Situation {
+    if (this.state.situations[index] === undefined) {
+      throw new Error(`No situation at index ${index} in this fixture`);
+    }
+    return new Situation(this.state, index);
   }
 
   get day(): number {
@@ -142,6 +197,7 @@ export class World {
       : [opts?: ForcedArms & { readonly from?: never }]
   ): void;
   fire(event: SimEvent, scope: SimScope<SimScopeName>, opts?: HarnessFireOpts): void {
+    assertSupportedSimScope(event.scope, `Firing event "${event.id}"`);
     const registered = this.registry.get(event.id);
     if (registered !== undefined && registered.from !== undefined) {
       if (opts?.from === undefined || opts.from.id.kind !== registered.from) {
@@ -210,7 +266,7 @@ export class World {
 
   private deliver(
     pending: PendingFire,
-    event: SimEvent,
+    event: DefinedEvent<ScopeName, ScopeName | undefined>,
     via: FiredRecord["via"],
     forcedArms: number[]
   ): void {
