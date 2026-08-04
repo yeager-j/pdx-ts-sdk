@@ -590,7 +590,31 @@ const MODIFIER_OPS = [
   "divide",
   "minValue",
   "maxValue",
+  "weight",
 ] as const;
+
+/**
+ * Every numeric operation `Modifier<S>` (`packages/sdk/src/effect-core.ts`)
+ * declares, minus the two members that are not operations (`desc`, `when`).
+ * `applyModifierRow`'s multi-operation guard is only as complete as
+ * `MODIFIER_OPS` — a member present on `Modifier` but missing here would let
+ * a row that combines it with a recognized operation silently evaluate only
+ * the recognized one, exactly the guessing this guard exists to refuse.
+ */
+type ModifierOpKey = Exclude<keyof Modifier<never>, "desc" | "when">;
+
+/** `true` iff `A` and `B` contain exactly the same members, in either order. */
+type SameKeys<A extends string, B extends string> = [A] extends [B]
+  ? [B] extends [A]
+    ? true
+    : false
+  : false;
+
+// Compile-time drift guard: if `Modifier<S>` gains or loses an operation
+// field (PR #16 widens `WeightBlock`'s operations further), this line stops
+// compiling until MODIFIER_OPS is updated to match — turning a silent gap in
+// the multi-operation check into a build failure instead.
+const _modifierOpsMatchModifier: SameKeys<(typeof MODIFIER_OPS)[number], ModifierOpKey> = true;
 
 /** The shape `evaluateWeightBlock` needs — `WeightBlock`/`WeightBlockWithLoc` both satisfy it. */
 export interface WeightBlockLike<S extends SimScopeName> {
@@ -602,10 +626,11 @@ export interface WeightBlockLike<S extends SimScopeName> {
  * Computes a `modifier_rule` block's value: a starting `base`, then each
  * `modifier` row whose `when` trigger holds applies its one operation in
  * order. The operation set and spellings mirror `Modifier` itself
- * (`packages/sdk/src/effect-core.ts`) — `add`/`subtract`/`mult`/`multiplier`/
- * `factor`/`divide` change the running value, `minValue`/`maxValue` clamp it
- * — because that interface's own comment is the corpus-measured account of
- * which operations `modifier_rule.cwt`'s consumers actually use.
+ * (`packages/sdk/src/effect-core.ts`, kept in sync by the `SameKeys` guard
+ * above) — `add`/`subtract`/`mult`/`multiplier`/`factor`/`divide` change the
+ * running value, `minValue`/`maxValue` clamp it, and `weight` is detected but
+ * refused (see `applyModifierRow`'s `weight` case) because nothing has
+ * verified its semantic against the game.
  *
  * A row combining more than one operation is refused rather than guessed:
  * nothing in the corpus measures a cross-operation order within one row, so
@@ -665,5 +690,20 @@ function applyModifierRow<S extends SimScopeName>(modifier: Modifier<S>, value: 
       return Math.max(value, amount);
     case "maxValue":
       return Math.min(value, amount);
+    case "weight":
+      // `weight` is a real, distinct member of `modifier_rule.cwt`'s
+      // `complex_maths_enum` (alongside `set`, which `Modifier` does not
+      // even expose) — the vendored rules give it no descriptive comment,
+      // so nothing here says whether it behaves like `set` (replace the
+      // running value) or something else. MODIFIER_OPS still has to detect
+      // it (a row that combines `weight` with a recognized operation must
+      // be refused as ambiguous, not silently read as the other operation),
+      // but evaluating it on its own would be exactly the guessed semantic
+      // this interpreter's whitelist exists to avoid.
+      throw new InterpreterError(
+        `weight ${amount}: recognized but not evaluated — the vendored rules document no ` +
+          `semantic for it distinct from "set", and nothing here has verified one against the ` +
+          `game. ${coverageSummary()}`
+      );
   }
 }

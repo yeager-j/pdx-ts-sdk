@@ -189,6 +189,40 @@ describe("situation scope", () => {
     ).toThrow(/evaluates exactly one operation per row/);
   });
 
+  it("detects `weight` as an operation too, so a row combining it with `add` is refused rather than silently reading only `add`", () => {
+    const situation = fixture(
+      { countries: [{ name: "player" }], situations: [{ name: "crisis", targetCountry: 0 }] },
+      { events: [] }
+    ).situation(0);
+
+    expect(() =>
+      evaluateWeightBlock(
+        {
+          base: 0,
+          modifiers: [{ desc: "ambiguous", weight: 10, add: 2, when: situationProgress(">=", 0) }],
+        },
+        situation
+      )
+    ).toThrow(/evaluates exactly one operation per row/);
+  });
+
+  it("refuses to guess a semantic for `weight` used on its own — the vendored rules give it no documented meaning distinct from `set`", () => {
+    const situation = fixture(
+      { countries: [{ name: "player" }], situations: [{ name: "crisis", targetCountry: 0 }] },
+      { events: [] }
+    ).situation(0);
+
+    expect(() =>
+      evaluateWeightBlock(
+        {
+          base: 0,
+          modifiers: [{ desc: "unverified", weight: 10, when: situationProgress(">=", 0) }],
+        },
+        situation
+      )
+    ).toThrow(/weight 10: recognized but not evaluated/);
+  });
+
   it("throws reading an unset variable with `check_variable` rather than answering false", () => {
     const situation = fixture(
       { countries: [{ name: "player" }], situations: [{ name: "crisis", targetCountry: 0 }] },
