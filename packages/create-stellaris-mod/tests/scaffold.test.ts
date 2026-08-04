@@ -22,8 +22,8 @@
  * `exports`, which resolve to `dist/`. Nothing here can pass by accident on the
  * `pdx-source` condition the repo uses internally.
  *
- * The toolchain (typescript, vitest, @types/node) is still symlinked from the
- * repo root, so no step needs the network.
+ * The toolchain (typescript, vitest, ESLint and its config packages, @types/node)
+ * is still symlinked from the repo root, so no step needs the network.
  */
 
 import { execFileSync, spawnSync } from "node:child_process";
@@ -131,11 +131,11 @@ function installTarballs(dir: string, tarballs: string): void {
     ]);
   }
 
-  for (const dep of ["typescript", "vitest", "@types"]) {
+  for (const dep of ["typescript", "vitest", "@types", "@eslint", "eslint", "typescript-eslint"]) {
     symlinkSync(path.join(ROOT_MODULES, dep), path.join(modules, dep), "dir");
   }
   mkdirSync(path.join(modules, ".bin"), { recursive: true });
-  for (const bin of ["tsc", "vitest"]) {
+  for (const bin of ["tsc", "vitest", "eslint"]) {
     symlinkSync(path.join(ROOT_MODULES, ".bin", bin), path.join(modules, ".bin", bin));
   }
 }
@@ -155,15 +155,7 @@ beforeAll(async () => {
   tarballDir = path.join(root, "tarballs");
   mkdirSync(tarballDir, { recursive: true });
 
-  const code = await main([
-    "--yes",
-    "--no-git",
-    "--no-install",
-    "--no-eslint",
-    "--name",
-    "Smoke Mod",
-    projectDir,
-  ]);
+  const code = await main(["--yes", "--no-git", "--no-install", "--name", "Smoke Mod", projectDir]);
   expect(code).toBe(0);
 
   packWorkspacePackages(tarballDir);
@@ -193,16 +185,79 @@ describe("a scaffolded project", () => {
       importer,
       'import { config } from "./src/mod.ts";\nprocess.stdout.write(config.name);\n'
     );
-    const output = runIn(projectDir, process.execPath, ["read-config-only.mjs"]);
+    try {
+      const output = runIn(projectDir, process.execPath, ["read-config-only.mjs"]);
 
-    expect(output).toBe("Smoke Mod");
-    expect(existsSync(outDir)).toBe(false);
+      expect(output).toBe("Smoke Mod");
+      expect(existsSync(outDir)).toBe(false);
+    } finally {
+      rmSync(importer, { force: true });
+    }
   });
 
   it("typechecks with the toolchain it asked for", () => {
     expect(() =>
       runIn(projectDir, path.join(projectDir, "node_modules/.bin/tsc"), ["--noEmit"])
     ).not.toThrow();
+  });
+
+  it("runs the generated ESLint configuration", () => {
+    const result = spawnSync("npm", ["run", "lint"], {
+      cwd: projectDir,
+      encoding: "utf8",
+      env: { ...process.env, PDX_NO_VANILLA: "1" },
+    });
+    expect(result.status, result.stdout + result.stderr).toBe(0);
+  });
+
+  it("rejects a second direct define call on one typed event handle", () => {
+    const probe = path.join(projectDir, "src/lint-probe.ts");
+    const source = [
+      'import { createMod } from "@pdx-ts/sdk";',
+      "",
+      'const mod = createMod({ name: "Lint probe", prefix: "lint_probe", supportedVersion: "4.4.*" });',
+      "const events = mod.namespace();",
+      "const handle = events.countryHandle(1);",
+      "handle.define({ isTriggeredOnly: true });",
+      "const plain = { define() {} };",
+      "plain.define();",
+    ];
+    const firstLine = source.findIndex((line) => line.startsWith("handle.define")) + 1;
+    const secondLine = source.length + 1;
+    const eslint = path.join(projectDir, "node_modules/.bin/eslint");
+
+    try {
+      writeFileSync(probe, `${source.join("\n")}\n`);
+      const accepted = spawnSync(eslint, ["src/lint-probe.ts", "--format", "json"], {
+        cwd: projectDir,
+        encoding: "utf8",
+        env: { ...process.env, PDX_NO_VANILLA: "1" },
+      });
+      expect(accepted.status, accepted.stderr).toBe(0);
+
+      writeFileSync(probe, `${source.join("\n")}\nhandle.define({ isTriggeredOnly: true });\n`);
+      const rejected = spawnSync(eslint, ["src/lint-probe.ts", "--format", "json"], {
+        cwd: projectDir,
+        encoding: "utf8",
+        env: { ...process.env, PDX_NO_VANILLA: "1" },
+      });
+      expect(rejected.status, rejected.stderr).toBe(1);
+      const messages = (
+        JSON.parse(rejected.stdout) as Array<{
+          messages: Array<{ ruleId: string | null; line: number; message: string }>;
+        }>
+      )[0]!.messages;
+      const duplicate = messages.find(
+        (message) => message.ruleId === "pdx/one-definition-per-event-handle"
+      );
+
+      expect(duplicate).toMatchObject({
+        line: secondLine,
+        message: expect.stringContaining(`already defined on line ${firstLine}`),
+      });
+    } finally {
+      rmSync(probe, { force: true });
+    }
   });
 
   it("builds a mod, fanning one feature module across two registries", () => {

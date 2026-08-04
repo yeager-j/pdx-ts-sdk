@@ -209,6 +209,15 @@ describe("the generated sources", () => {
     expect(config).toContain("callee.property.name='namespace'");
   });
 
+  it("lints duplicate direct definitions of one typed event handle", () => {
+    const config = plan().get("eslint.config.js")!;
+    expect(config).toContain("pdx/one-definition-per-event-handle");
+    expect(config).toContain("CapabilityEventHandle");
+    expect(config).toContain("esTreeNodeToTSNodeMap");
+    expect(config).toContain("Aliases, helper-mediated");
+    expect(config).toContain("mutually exclusive");
+  });
+
   it("imports the matchers nowhere, so the vitest peer dep stays optional", () => {
     // The matcher pack is the only part of the SDK that imports vitest. Keeping
     // it out of the default scaffold means SDK-28's eventual package split is a

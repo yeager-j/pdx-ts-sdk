@@ -225,6 +225,77 @@ const oneNamespacePerFile = {
   },
 };
 
+/**
+ * A capability event handle is an immutable declaration that can be defined
+ * once after its first use. The SDK's compile step remains authoritative, but
+ * this catches the local direct-call mistake while it is being written.
+ *
+ * Only direct calls on one local binding are tracked. Aliases, helper-mediated
+ * calls, and cross-module reasoning are deliberately out of scope; two direct
+ * calls are reported even when control flow makes them mutually exclusive.
+ */
+const oneDefinitionPerEventHandle = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "A CapabilityEventHandle may have one direct define call per local binding",
+    },
+    schema: [],
+    messages: {
+      duplicate:
+        "This event handle was already defined on line {{line}}. A CapabilityEventHandle may have " +
+        "one direct define() call per local binding.",
+    },
+  },
+  create(context) {
+    const services = context.sourceCode.parserServices;
+    if (services.program == null || services.esTreeNodeToTSNodeMap == null) {
+      return {};
+    }
+    const checker = services.program.getTypeChecker();
+    const firstDefinitions = new Map();
+
+    function isCapabilityEventHandle(node) {
+      const tsNode = services.esTreeNodeToTSNodeMap.get(node);
+      const type = checker.getTypeAtLocation(tsNode);
+      const symbol = type.aliasSymbol ?? type.getSymbol();
+      return symbol?.getName() === "CapabilityEventHandle";
+    }
+
+    return {
+      CallExpression(node) {
+        if (
+          node.callee.type !== "MemberExpression" ||
+          node.callee.computed ||
+          node.callee.object.type !== "Identifier" ||
+          node.callee.property.type !== "Identifier" ||
+          node.callee.property.name !== "define" ||
+          !isCapabilityEventHandle(node.callee.object)
+        ) {
+          return;
+        }
+
+        const tsNode = services.esTreeNodeToTSNodeMap.get(node.callee.object);
+        const symbol = checker.getSymbolAtLocation(tsNode);
+        if (symbol === undefined) {
+          return;
+        }
+        const first = firstDefinitions.get(symbol);
+        if (first === undefined) {
+          firstDefinitions.set(symbol, node);
+          return;
+        }
+        context.report({
+          node,
+          messageId: "duplicate",
+          data: { line: String(first.loc.start.line) },
+        });
+      },
+    };
+  },
+};
+
 export default tseslint.config(
   { ignores: ["out/", "node_modules/"] },
   js.configs.recommended,
@@ -233,8 +304,18 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
-    plugins: { pdx: { rules: { "one-namespace-per-file": oneNamespacePerFile } } },
-    rules: { "pdx/one-namespace-per-file": "error" },
+    plugins: {
+      pdx: {
+        rules: {
+          "one-definition-per-event-handle": oneDefinitionPerEventHandle,
+          "one-namespace-per-file": oneNamespacePerFile,
+        },
+      },
+    },
+    rules: {
+      "pdx/one-definition-per-event-handle": "error",
+      "pdx/one-namespace-per-file": "error",
+    },
   },
   // This file is JavaScript and deliberately outside tsconfig's \`include\`, so
   // the type-aware rules have no program for it and would fail to parse it.
@@ -248,9 +329,9 @@ export function vitestConfig(): string {
 
 export default defineConfig({
   test: {
-    // Tests live beside the content they test, inside src/content/.
-    // \`discoverContent\` skips them when it builds the mod, so colocation costs
-    // nothing — see the note at the top of src/content/example.test.ts.
+    // Tests live beside the content they test, inside src/content/. Explicit
+    // feature discovery selects modules before import, so its default skips
+    // these companion files — see src/content/example.test.ts.
     include: ["src/**/*.test.ts"],
   },
 });
