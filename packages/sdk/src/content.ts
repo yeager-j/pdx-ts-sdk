@@ -26,6 +26,7 @@ import {
   registerModifierDescKey,
   scriptCtx,
   type ComplexTriggerModifier,
+  type ComplexTriggerModifierWithLoc,
   type Modifier,
   type ModifierWithLoc,
   type ScriptCtx,
@@ -175,10 +176,10 @@ type ExclusiveComplexTriggerModifierRow<
  * Every row shape a {@link WeightBlock}'s `modifiers` array can hold: a
  * gated fixed adjustment ({@link Modifier}, or {@link ModifierWithLoc} via
  * `M`), or a named trigger's result feeding a weight operation directly
- * ({@link ComplexTriggerModifier}, or a restricted variant via `C`) —
- * `modifier_rule.cwt`'s two splice-level row kinds (`:5-13`, `:32-53`), made
- * mutually exclusive by {@link ExclusiveModifierRow} and {@link
- * ExclusiveComplexTriggerModifierRow}.
+ * ({@link ComplexTriggerModifier}, or {@link ComplexTriggerModifierWithLoc}
+ * via `C`) — `modifier_rule.cwt`'s two splice-level row kinds (`:5-13`,
+ * `:32-53`), made mutually exclusive by {@link ExclusiveModifierRow} and
+ * {@link ExclusiveComplexTriggerModifierRow}.
  */
 export type WeightBlockRow<
   S extends ScopeName,
@@ -191,10 +192,14 @@ export type WeightBlockRow<
  * directly as siblings of `base` (see {@link WeightBlockOperations}), plus
  * gated adjustments.
  *
- * `M` defaults to plain {@link Modifier} (`desc` optional); `WeightBlockWithLoc`
- * below is the same shape with `M` pinned to {@link ModifierWithLoc} for
- * `modifier_rule_with_loc` consumers, not a separate runtime concept — the
- * writer lowers both through the same `weightBlock` function.
+ * `M` defaults to plain {@link Modifier} (`desc` optional). `WeightBlockWithLoc`
+ * below is a *separate* interface for `modifier_rule_with_loc` consumers, not
+ * a `WeightBlock<S, ModifierWithLoc<S>>` instantiation — `modifier_rule_with_loc`
+ * is a stricter alias than `modifier_rule` at the top level too (`:55-81` vs
+ * `:1-53`), so reusing this interface's `WeightBlockOperations<S>` for it
+ * would admit members `modifier_rule_with_loc` does not allow. Both are still
+ * lowered through the same `weightBlock` function — the restriction is in the
+ * authoring types, not the writer.
  */
 export interface WeightBlock<
   S extends ScopeName,
@@ -207,14 +212,37 @@ export interface WeightBlock<
 }
 
 /**
- * A {@link WeightBlock} whose {@link Modifier} rows require `desc`, matching
- * `modifier_rule_with_loc` (e.g. `situation_type.monthly_progress`).
- * `ComplexTriggerModifier` rows stay optional-`desc` in both variants —
- * `modifier_rule_with_loc:complex_trigger_modifier` (`:67-81`) is a real
- * splice arm, but no current registry exercises it, so tightening it is
- * speculative until one does.
+ * The `complex_maths_enum` operations `modifier_rule_with_loc.cwt:56-58`
+ * allows directly alongside `base`: only `add`/`factor`, not the rest of
+ * {@link WeightBlockOperations} — `modifier_rule_with_loc` is "deliberately
+ * more restrictive because of what we can make good tooltips with," per the
+ * CWT source comment, and that restriction bites the top-level operations
+ * too, not only the row shapes below.
  */
-export type WeightBlockWithLoc<S extends ScopeName> = WeightBlock<S, ModifierWithLoc<S>>;
+export type WeightBlockWithLocOperations<S extends ScopeName> = Pick<
+  WeightBlockOperations<S>,
+  "add" | "factor"
+>;
+
+/**
+ * A {@link WeightBlock} for `modifier_rule_with_loc` consumers (e.g.
+ * `situation_type.monthly_progress`): `desc` is required on every row
+ * (`Modifier` rows via {@link ModifierWithLoc}, `complex_trigger_modifier`
+ * rows via {@link ComplexTriggerModifierWithLoc}), and the top-level
+ * operations are the narrower {@link WeightBlockWithLocOperations}. A
+ * `Modifier`/`ModifierWithLoc` row's own members are unrestricted either way
+ * (`modifier_rule_with_loc.cwt:59-66` still splices the full
+ * `complex_maths_enum`, one member at a time) — only the top-level block and
+ * the `complex_trigger_modifier` row narrow.
+ */
+export interface WeightBlockWithLoc<S extends ScopeName> extends WeightBlockWithLocOperations<S> {
+  readonly base?: number;
+  readonly modifiers?: readonly WeightBlockRow<
+    S,
+    ModifierWithLoc<S>,
+    ComplexTriggerModifierWithLoc<S>
+  >[];
+}
 
 /**
  * A script effect block recorded against the scope declared by the content
@@ -951,7 +979,7 @@ function weightOperationEntries(value: WeightBlockOperations<ScopeName>): PdxEnt
  * rather than a runtime brand neither row kind otherwise needs.
  *
  * `WeightBlockRow`'s two arms forbid each other's characteristic members
- * (`ExclusiveModifierRow`/`ExclusiveComplexTriggerModifierRow` above), so a
+ * (`ExclusiveModifierRow`/`ExclusiveComplexTriggerModifierRow` below), so a
  * row authored with both `when` and `trigger`/`mode` is a compile error for
  * any author going through the exported types. That check is erased at
  * runtime, though — an untyped call site, an `as any`, or a value built by

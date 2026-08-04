@@ -474,6 +474,34 @@ export interface ComplexTriggerModifier<S extends ScopeName> {
 }
 
 /**
+ * A {@link ComplexTriggerModifier} for `modifier_rule_with_loc` consumers.
+ * `modifier_rule.cwt:67-81` admits only `mult`/`multiplier`, not
+ * `divide`/`min_value`/`max_value` — `modifier_rule_with_loc` drops those
+ * three fields the plain alias's `complex_trigger_modifier` allows — and
+ * `desc` there has no `## cardinality = 0..1` marker (every other field in
+ * that block does), so it defaults to required, matching {@link
+ * ModifierWithLoc}'s own `desc` requirement on the sibling row kind.
+ *
+ * The three dropped fields are forbidden (`?: never`) rather than merely
+ * omitted: `WeightBlockRow`'s union of this type with `ModifierWithLoc`
+ * would otherwise let `divide`/`minValue`/`maxValue` leak back in, the same
+ * excess-property leniency `ExclusiveModifierRow`/
+ * `ExclusiveComplexTriggerModifierRow` in `content.ts` exist to close —
+ * `ModifierWithLoc` (inherited from `Modifier`) still declares all three, so
+ * a plain `Omit` here would make them "not excess" for the row as a whole
+ * even though this specific row kind cannot legally carry them.
+ */
+export type ComplexTriggerModifierWithLoc<S extends ScopeName> = Omit<
+  ComplexTriggerModifier<S>,
+  "divide" | "minValue" | "maxValue" | "desc"
+> & {
+  readonly desc: string;
+  readonly divide?: never;
+  readonly minValue?: never;
+  readonly maxValue?: never;
+};
+
+/**
  * Resolved `desc` keys for {@link ComplexTriggerModifier} rows, by object
  * identity — the same scheme as {@link modifierDescKeys}, kept as a separate
  * map because the two row kinds are separate types with no shared identity.

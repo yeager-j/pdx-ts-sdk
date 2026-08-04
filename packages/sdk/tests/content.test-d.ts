@@ -1152,6 +1152,89 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("keeps WeightBlockWithLoc as restrictive as modifier_rule_with_loc, not as wide as plain WeightBlock (bug bash #16 finding 1)", () => {
+    // modifier_rule_with_loc.cwt:56-58 admits only base/add/factor at the top
+    // level — not weight/subtract/mult/multiplier/divide/min/max, which
+    // plain modifier_rule.cwt:1-3 does allow. situation_type.monthly_progress
+    // is the one WeightBlockWithLoc consumer.
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_operation",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        add: 2,
+        factor: 3,
+        // @ts-expect-error — `weight` is not in modifier_rule_with_loc's
+        // top-level base/add/factor set, only in plain modifier_rule's.
+        weight: 4,
+      },
+    });
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_operation_2",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        // @ts-expect-error — same for `subtract`.
+        subtract: 4,
+      },
+    });
+    // A Modifier row's own members stay the full set either way —
+    // modifier_rule_with_loc.cwt:59-66 still splices the whole
+    // complex_maths_enum inside a `modifier` row, just one member at a time
+    // (a cardinality TypeScript does not model, matching plain modifier_rule
+    // rows too) — only the block's own top-level operations narrow.
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_row",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [{ mult: 1.5, desc: "d", when: always() }],
+      },
+    });
+    // modifier_rule.cwt:67-81's with-loc complex_trigger_modifier drops
+    // divide/min_value/max_value (the plain alias's :32-53 keeps them) and
+    // requires desc (no cardinality marker on that field, unlike every other
+    // optional one in the same block).
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_ctm_divide",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          // @ts-expect-error — `divide` is not in the with-loc row.
+          {
+            trigger: "some_scripted_trigger",
+            mode: "factor",
+            desc: "d",
+            divide: 2,
+          },
+        ],
+      },
+    });
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_ctm_no_desc",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          // @ts-expect-error — `desc` is required on a with-loc
+          // complex_trigger_modifier row, unlike the plain alias's.
+          { trigger: "some_scripted_trigger", mode: "factor" },
+        ],
+      },
+    });
+    // The legal with-loc complex_trigger_modifier shape: mult/multiplier and
+    // a required desc.
+    defineSituationType({
+      id: "content_types_situation_weight_with_loc_ctm_legal",
+      name: "X",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [{ trigger: "some_scripted_trigger", mode: "factor", mult: 2, desc: "d" }],
+      },
+    });
+  });
+
   it("types civic_or_origin's potential/possible as the government_trigger DSL, not a Trigger", () => {
     defineCivicOrOrigin({
       id: "content_types_civic_dsl",
