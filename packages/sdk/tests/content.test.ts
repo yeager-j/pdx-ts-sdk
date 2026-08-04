@@ -1534,6 +1534,38 @@ describe("generated content registries", () => {
     ).toThrow(/has both a Modifier's `when` and a ComplexTriggerModifier's `trigger`\/`mode`/);
   });
 
+  it("resolves desc keys independently when a row object is shared across two definitions (bug bash #16 finding 3)", () => {
+    // A shared "gate condition" pulled out to avoid repeating it is a
+    // realistic reason an author reuses the exact same row object in two
+    // definitions. A WeakMap keyed only by the row's identity has one slot
+    // per object: the second definition's registration would silently
+    // overwrite the first's, so the first definition's own render would
+    // reference the SECOND definition's key instead of its own (the
+    // localisation table still carries both keys with identical text, since
+    // it is the same object either way, but the first key goes unreferenced
+    // and unused — orphaned for a translator to trip over). Registration
+    // and resolution are keyed by `${ownerId}::${fieldKey}` in addition to
+    // the row object, so each definition resolves its own occurrence.
+    const sharedRow = { mult: 2, desc: "Shared gate.", when: always() };
+    const first = defineTradition({
+      id: "wb_test_tradition_shared_row_first",
+      name: "Shared Row First",
+      aiWeight: { modifiers: [sharedRow] },
+    });
+    const second = defineTradition({
+      id: "wb_test_tradition_shared_row_second",
+      name: "Shared Row Second",
+      aiWeight: { modifiers: [sharedRow] },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block shared row test", "wb_test"), [
+        collection(undefined, [first, second]),
+      ])
+    ).get("common/traditions/wb_test_traditions.txt")!;
+    expect(rendered).toContain("desc = wb_test_tradition_shared_row_first_ai_weight_0");
+    expect(rendered).toContain("desc = wb_test_tradition_shared_row_second_ai_weight_0");
+  });
+
   it("contributes ship-of-size limits under the engine's `default` key", () => {
     // The ownership limit is not a define: its key belongs to the engine and
     // the game reads it additively, so the API takes no id and the mod-prefix

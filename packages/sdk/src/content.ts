@@ -836,17 +836,46 @@ type ContentDef = { readonly id: string };
 type LocalisationEntry = readonly [key: string, text: string];
 type RegisterLoc = (entries: readonly LocalisationEntry[]) => void;
 
-/** Accumulates the reference sink plus the dotted path to the current level. */
+/**
+ * Accumulates the reference sink, the dotted path to the current level (for
+ * ref diagnostics), and the nearest enclosing identity (for desc-key
+ * disambiguation — see {@link descOwnerKey}).
+ *
+ * `collect` is the part that is genuinely optional — a caller not collecting
+ * dangling references simply skips it — but `ownerId` is not: `def.id` is
+ * always known at `toEntry`, so the context itself is always constructed,
+ * and desc-key resolution (unlike ref collection) is not an optional
+ * diagnostic a caller can decline. `ownerId` starts as the top-level
+ * definition's own id and rebinds to a repeated-struct entry's own id on the
+ * way down, mirroring `ContentAuthoring.collectRepeatedStructs`'s identical
+ * rebind for the same reason: a nested entry (a tradition swap, a situation
+ * stage) is itself a stable identity a `WeightBlock` inside it can key desc
+ * localisation against.
+ */
 interface LoweringContext {
-  readonly collect: ContentRefSink;
+  readonly collect?: ContentRefSink;
   readonly path: string;
+  readonly ownerId: string;
 }
 
-function childContext(
-  ctx: LoweringContext | undefined,
-  segment: string
-): LoweringContext | undefined {
-  return ctx === undefined ? ctx : { collect: ctx.collect, path: joinPath(ctx.path, segment) };
+function childContext(ctx: LoweringContext, segment: string, ownerId?: string): LoweringContext {
+  return {
+    collect: ctx.collect,
+    path: joinPath(ctx.path, segment),
+    ownerId: ownerId ?? ctx.ownerId,
+  };
+}
+
+/**
+ * The token a `WeightBlock` field's desc-bearing rows register and resolve
+ * their localisation key under: the nearest enclosing identity plus the
+ * field's own key, so a row shared across two definitions — or across two
+ * `WeightBlock` fields of one definition — resolves its own occurrence's key
+ * rather than whichever registration happened to run last (PR #16 review
+ * finding 3).
+ */
+function descOwnerKey(ctx: LoweringContext, key: string): string {
+  return `${ctx.ownerId}::${key}`;
 }
 
 function joinPath(path: string, segment: string): string {
@@ -855,12 +884,8 @@ function joinPath(path: string, segment: string): string {
 
 /** Reports references a spliced trigger or effect closure recorded, re-rooted
  * under the field that holds them so the diagnostic names the whole path. */
-function collectRefs(
-  ctx: LoweringContext | undefined,
-  refs: readonly ContentRefUse[],
-  segment: string
-): void {
-  if (ctx === undefined) {
+function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segment: string): void {
+  if (ctx.collect === undefined) {
     return;
   }
   for (const use of underField(refs, joinPath(ctx.path, segment))) {
@@ -875,7 +900,7 @@ function contentScalar(
   ctx?: LoweringContext
 ): PdxScalar {
   const converted = field.conversion === "ref" ? refId(value as TypedRef<string> | string) : value;
-  if (ctx !== undefined && field.refTypes !== undefined && typeof converted === "string") {
+  if (ctx?.collect !== undefined && field.refTypes !== undefined && typeof converted === "string") {
     ctx.collect({
       targets: field.refTypes,
       id: converted,
@@ -1004,18 +1029,19 @@ function isComplexTriggerModifier(
   return hasTrigger;
 }
 
-function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx?: LoweringContext): PdxEntry {
+function weightBlock(key: string, value: WeightBlock<ScopeName>, ctx: LoweringContext): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.base !== undefined) {
     entries.push(kv("base", value.base));
   }
   entries.push(...weightOperationEntries(value));
   const refs: ContentRefUse[] = [];
+  const ownerKey = descOwnerKey(ctx, key);
   entries.push(
     ...(value.modifiers ?? []).map((row) =>
       isComplexTriggerModifier(row)
-        ? complexTriggerModifierEntry(row, refs)
-        : modifierEntry(row, refs)
+        ? complexTriggerModifierEntry(row, refs, ownerKey)
+        : modifierEntry(row, refs, ownerKey)
     )
   );
   collectRefs(ctx, refs, key);
@@ -1035,7 +1061,7 @@ function repeatedNumbers(
 function economicOperation(
   key: string,
   value: EconomicResourceOperation<ScopeName>,
-  ctx?: LoweringContext
+  ctx: LoweringContext
 ): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.when !== undefined) {
@@ -1079,14 +1105,14 @@ function economicResourceBlock(
   key: string,
   value: EconomicResourceBlock<ScopeName>,
   operations: readonly EconomicResourceOperationKey[],
-  ctx?: LoweringContext
+  ctx: LoweringContext
 ): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.category !== undefined) {
     const category = refId(value.category);
     // The one reference this shared shape holds; its registry is written into
     // the interface above rather than into any generated field table.
-    ctx?.collect({
+    ctx.collect?.({
       targets: ["economic_category"],
       id: category,
       field: joinPath(ctx.path, `${key}.category`),
@@ -1105,7 +1131,7 @@ function economicResourceBlock(
 function triggeredModifierBlock(
   key: string,
   value: TriggeredModifier<ScopeName>,
-  ctx?: LoweringContext
+  ctx: LoweringContext
 ): PdxEntry {
   const entries: PdxEntry[] = [];
   if (value.when !== undefined) {
@@ -1152,7 +1178,7 @@ function triggeredModifierBlock(
 function fieldEntries(
   def: Readonly<Record<string, unknown>>,
   fields: readonly ContentField[],
-  ctx?: LoweringContext
+  ctx: LoweringContext
 ) {
   const entries: PdxEntry[] = [];
   for (const field of fields) {
@@ -1331,8 +1357,12 @@ function fieldEntries(
           entries.push(
             block(
               field.key,
+              // The entry's own id becomes the nearest enclosing identity for
+              // anything nested inside it (a WeightBlock's desc keys among
+              // them) — the render-side mirror of
+              // `collectRepeatedStructs`'s identical rebind.
               Object.entries(record).map(([id, item]) =>
-                block(id, fieldEntries(item, field.fields, childContext(ctx, field.key)))
+                block(id, fieldEntries(item, field.fields, childContext(ctx, field.key, id)))
               )
             )
           );
@@ -1342,7 +1372,7 @@ function fieldEntries(
           entries.push(
             block(field.key, [
               kv(field.identityKey!, id),
-              ...fieldEntries(item, field.fields, childContext(ctx, field.key)),
+              ...fieldEntries(item, field.fields, childContext(ctx, field.key, id)),
             ])
           );
         }
@@ -1358,11 +1388,11 @@ function toEntry(
   descriptor: ContentRegistryDescriptor,
   collect?: ContentRefSink
 ): PdxEntry {
-  const fields = fieldEntries(
-    def as Readonly<Record<string, unknown>>,
-    descriptor.fields,
-    collect === undefined ? undefined : { collect, path: "" }
-  );
+  const fields = fieldEntries(def as Readonly<Record<string, unknown>>, descriptor.fields, {
+    collect,
+    path: "",
+    ownerId: def.id,
+  });
   if (descriptor.keyedBy === undefined) {
     return block(def.id, fields);
   }
@@ -1681,10 +1711,20 @@ export class ContentAuthoring {
    * `ComplexTriggerModifier` rows have no `descKey` field to pin against —
    * `complex_trigger_modifier`'s own name/parameter pair is already the
    * row's content-derived identity — so they key as
-   * `<ownerId>_<fieldPath>_<index>` directly, keeping every row on the field
-   * counted (both kinds together) so a `Modifier` and a
-   * `ComplexTriggerModifier` sharing one `modifiers` array never collide on
-   * the same key either.
+   * `<ownerId>_<fieldPath>_<index>`, keeping every row on the field counted
+   * (both kinds together) so a `Modifier` and a `ComplexTriggerModifier`
+   * sharing one `modifiers` array never collide on the same key either.
+   *
+   * The registration itself is keyed by the row object *and* by
+   * `${ownerId}::${fieldPath}` (this method's own two parameters, joined the
+   * same way `descOwnerKey` joins them on the render side) — not by the row
+   * object alone. An author can legally reuse the exact same row object
+   * across two definitions, or across two `WeightBlock` fields of one
+   * definition, and each occurrence needs to resolve its own key at
+   * lowering, not whichever occurrence happened to register last (PR #16
+   * review finding 3) — orthogonal to what determines the key's *value*
+   * above: SDK-48 fixed what the key is derived from, this fixes what the
+   * registration is keyed by, and both apply together.
    */
   private collectModifierDescs(
     ownerId: string,
@@ -1692,6 +1732,7 @@ export class ContentAuthoring {
     weight: WeightBlock<ScopeName>,
     into: LocalisationEntry[]
   ): void {
+    const ownerKey = `${ownerId}::${fieldPath}`;
     weight.modifiers?.forEach((row, index) => {
       if (row.desc === undefined) {
         return;
@@ -1699,7 +1740,7 @@ export class ContentAuthoring {
       if (isComplexTriggerModifier(row)) {
         const key = `${ownerId}_${fieldPath}_${index}`;
         into.push([key, row.desc]);
-        registerComplexTriggerModifierDescKey(row, key);
+        registerComplexTriggerModifierDescKey(row, ownerKey, key);
         return;
       }
       const { key, unstableWarning } = modifierDescKey(
@@ -1711,7 +1752,7 @@ export class ContentAuthoring {
         this.onUnstableDescKey(unstableWarning);
       }
       into.push([key, row.desc]);
-      registerModifierDescKey(row, key);
+      registerModifierDescKey(row, ownerKey, key);
     });
   }
 }

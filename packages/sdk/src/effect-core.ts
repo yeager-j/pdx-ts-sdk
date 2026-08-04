@@ -274,21 +274,43 @@ export interface Modifier<S extends ScopeName> {
 export type ModifierWithLoc<S extends ScopeName> = Modifier<S> & { readonly desc: string };
 
 /**
- * Resolved `desc` keys, by the exact `Modifier` object that carries them.
+ * Resolved `desc` keys, by the exact `Modifier` object that carries them —
+ * and, within that, by the owning field's `${ownerId}::${fieldKey}` token
+ * (`ContentAuthoring.descOwnerKey` in content.ts), not by object identity
+ * alone.
  *
  * Modifier rows are anonymous and repeated with no id of their own, so a
  * generated localisation key cannot ride the usual `<id>`/`<id>_desc`
  * pattern. `ContentAuthoring` (content.ts) generates and registers one key
  * per desc-bearing row at `define()` time — the only point with a stable
- * definition id and a once-only guarantee — and records it here, keyed by
- * object identity rather than by any path string, so `modifierEntry` below
- * needs no extra context threaded through the ordinary lowering call chain.
+ * definition id and a once-only guarantee. A bare `WeakMap<Modifier, string>`
+ * (one slot per object) is not enough on its own: an author can legally
+ * reuse the exact same row object across two definitions, or in two
+ * different `WeightBlock` fields of one definition (a shared "gate
+ * condition" pulled out to avoid repeating it), and each registration would
+ * then overwrite the last, so the FIRST occurrence's field silently starts
+ * rendering the SECOND's key at lowering time (PR #16 review finding 3 — the
+ * same class of bug SDK-48 fixed for index-derived keys, but this one is
+ * identity-based rather than position-based). The inner map's owner-key
+ * dimension keeps every occurrence's registration distinct.
  */
-const modifierDescKeys = new WeakMap<Modifier<ScopeName>, string>();
+const modifierDescKeys = new WeakMap<Modifier<ScopeName>, Map<string, string>>();
 
-/** SDK-internal: records the localisation key a modifier row's `desc` resolved to. */
-export function registerModifierDescKey(modifier: Modifier<ScopeName>, key: string): void {
-  modifierDescKeys.set(modifier, key);
+/**
+ * SDK-internal: records the localisation key a modifier row's `desc`
+ * resolved to, for one `${ownerId}::${fieldKey}` occurrence of that row.
+ */
+export function registerModifierDescKey(
+  modifier: Modifier<ScopeName>,
+  ownerKey: string,
+  key: string
+): void {
+  const existing = modifierDescKeys.get(modifier);
+  if (existing === undefined) {
+    modifierDescKeys.set(modifier, new Map([[ownerKey, key]]));
+  } else {
+    existing.set(ownerKey, key);
+  }
 }
 
 /** `Modifier.descKey`'s required shape — lowercase snake_case, matching content ids. */
@@ -360,9 +382,22 @@ export function modifierDescKey(
   };
 }
 
-/** SDK-internal shared lowering for a `modifier_rule`/`modifier_rule_with_loc` row.
- * `refs`, when given, collects the content references the gating trigger writes. */
-export function modifierEntry(modifier: Modifier<ScopeName>, refs?: ContentRefUse[]): PdxEntry {
+/**
+ * SDK-internal shared lowering for a `modifier_rule`/`modifier_rule_with_loc`
+ * row. `refs`, when given, collects the content references the gating
+ * trigger writes. `ownerKey`, when given, is this occurrence's
+ * `${ownerId}::${fieldKey}` token — the same one it was registered under —
+ * so a row shared across owners or fields resolves its OWN key rather than
+ * whichever registration happened to run last. Omitted entirely (as every
+ * non-`WeightBlock` caller below does — `RandomListArm`, `TriggeredModifier`,
+ * `StructuralEffects.random`) it correctly still finds nothing, since
+ * `desc` was never a supported field there to begin with.
+ */
+export function modifierEntry(
+  modifier: Modifier<ScopeName>,
+  refs?: ContentRefUse[],
+  ownerKey?: string
+): PdxEntry {
   const entries: PdxEntry[] = [];
   if (modifier.factor !== undefined) {
     entries.push(kv("factor", scriptValueScalar(modifier.factor)));
@@ -392,14 +427,15 @@ export function modifierEntry(modifier: Modifier<ScopeName>, refs?: ContentRefUs
     entries.push(kv("max", scriptValueScalar(modifier.maxValue)));
   }
   if (modifier.desc !== undefined) {
-    const key = modifierDescKeys.get(modifier);
+    const key = ownerKey === undefined ? undefined : modifierDescKeys.get(modifier)?.get(ownerKey);
     if (key === undefined) {
       throw new Error(
         "Modifier.desc is display text that must be registered as localization before it can " +
-          "be lowered, and this row was never registered. desc is only supported on modifiers " +
-          "inside a content definition's WeightBlock (e.g. situation_type.monthly_progress) — " +
-          "randomList/lockedRandomList/random and other runtime-recorded effect modifiers have " +
-          "no stable, once-only point to register a key against, so they cannot accept desc."
+          "be lowered, and this row was never registered for this occurrence. desc is only " +
+          "supported on modifiers inside a content definition's WeightBlock (e.g. " +
+          "situation_type.monthly_progress) — randomList/lockedRandomList/random and other " +
+          "runtime-recorded effect modifiers have no stable, once-only point to register a key " +
+          "against, so they cannot accept desc."
       );
     }
     entries.push(kv("desc", key));
@@ -504,24 +540,44 @@ export type ComplexTriggerModifierWithLoc<S extends ScopeName> = Omit<
 
 /**
  * Resolved `desc` keys for {@link ComplexTriggerModifier} rows, by object
- * identity — the same scheme as {@link modifierDescKeys}, kept as a separate
- * map because the two row kinds are separate types with no shared identity.
+ * identity and then by `${ownerId}::${fieldKey}` occurrence — the same
+ * scheme, and the same reason for it, as {@link modifierDescKeys}. Kept as a
+ * separate map because the two row kinds are separate types with no shared
+ * identity.
  */
-const complexTriggerModifierDescKeys = new WeakMap<ComplexTriggerModifier<ScopeName>, string>();
+const complexTriggerModifierDescKeys = new WeakMap<
+  ComplexTriggerModifier<ScopeName>,
+  Map<string, string>
+>();
 
-/** SDK-internal: records the localisation key a complex-trigger-modifier row's `desc` resolved to. */
+/**
+ * SDK-internal: records the localisation key a complex-trigger-modifier
+ * row's `desc` resolved to, for one `${ownerId}::${fieldKey}` occurrence.
+ */
 export function registerComplexTriggerModifierDescKey(
   modifier: ComplexTriggerModifier<ScopeName>,
+  ownerKey: string,
   key: string
 ): void {
-  complexTriggerModifierDescKeys.set(modifier, key);
+  const existing = complexTriggerModifierDescKeys.get(modifier);
+  if (existing === undefined) {
+    complexTriggerModifierDescKeys.set(modifier, new Map([[ownerKey, key]]));
+  } else {
+    existing.set(ownerKey, key);
+  }
 }
 
-/** SDK-internal shared lowering for a `complex_trigger_modifier` row.
- * `refs`, when given, collects the content references `potential` writes. */
+/**
+ * SDK-internal shared lowering for a `complex_trigger_modifier` row. `refs`,
+ * when given, collects the content references `potential` writes.
+ * `ownerKey`, when given, is this occurrence's `${ownerId}::${fieldKey}`
+ * token — see {@link modifierEntry}'s matching parameter for why this is
+ * needed rather than a bare per-object lookup.
+ */
 export function complexTriggerModifierEntry(
   modifier: ComplexTriggerModifier<ScopeName>,
-  refs?: ContentRefUse[]
+  refs?: ContentRefUse[],
+  ownerKey?: string
 ): PdxEntry {
   const entries: PdxEntry[] = [kv("trigger", modifier.trigger)];
   if (modifier.triggerScope !== undefined) {
@@ -564,13 +620,16 @@ export function complexTriggerModifierEntry(
     entries.push(kv("max_value", modifier.maxValue));
   }
   if (modifier.desc !== undefined) {
-    const key = complexTriggerModifierDescKeys.get(modifier);
+    const key =
+      ownerKey === undefined
+        ? undefined
+        : complexTriggerModifierDescKeys.get(modifier)?.get(ownerKey);
     if (key === undefined) {
       throw new Error(
         "ComplexTriggerModifier.desc is display text that must be registered as localization " +
-          "before it can be lowered, and this row was never registered. desc is only supported " +
-          "on complex trigger modifiers inside a content definition's WeightBlock — see " +
-          "Modifier.desc for the same constraint on the sibling row kind."
+          "before it can be lowered, and this row was never registered for this occurrence. " +
+          "desc is only supported on complex trigger modifiers inside a content definition's " +
+          "WeightBlock — see Modifier.desc for the same constraint on the sibling row kind."
       );
     }
     entries.push(kv("desc", key));

@@ -349,13 +349,20 @@ const OPTION_KEYS = "abcdefghijklmnopqrstuvwxyz";
  * Lowers a `WeightBlock`-shaped modifier row list, reusing the `modifier_rule`
  * writer `effect-core.ts` already exposes rather than re-deriving it — the
  * only field-specific bits (`factor` vs. `base`, which extra scalars come
- * before the rows) stay with each call site.
+ * before the rows) stay with each call site. `ownerKey` is the same
+ * `${ownerId}::${fieldPath}` token `registerModifierDescs` below registered
+ * this same field's desc-bearing rows under — required so a shared row
+ * object resolves its own occurrence's key at lowering (PR #16 review
+ * finding 3), the same reasoning `content.ts`'s `descOwnerKey` documents.
  */
 function modifierRows<S extends ScopeName>(
   modifiers: readonly Modifier<S>[] | undefined,
-  refs: ContentRefUse[]
+  refs: ContentRefUse[],
+  ownerKey: string
 ): PdxEntry[] {
-  return (modifiers ?? []).map((modifier) => modifierEntry(modifier as Modifier<ScopeName>, refs));
+  return (modifiers ?? []).map((modifier) =>
+    modifierEntry(modifier as Modifier<ScopeName>, refs, ownerKey)
+  );
 }
 
 /**
@@ -372,6 +379,12 @@ function modifierRows<S extends ScopeName>(
  * when a row falls back to a content hash — see `DefinedEvent.warnings` for
  * why events carry this on the returned event rather than through a
  * `ContentAuthoring`-style callback.
+ *
+ * Returns the `${ownerId}::${fieldPath}` token every row on this field was
+ * registered under, for the caller to hand to the matching `modifierRows`
+ * call — the same per-owner-occurrence scheme `content.ts`'s `descOwnerKey`
+ * uses, needed so a row object reused across two fields resolves its own
+ * key rather than whichever registration ran last (PR #16 review finding 3).
  */
 function registerModifierDescs<S extends ScopeName>(
   warnings: ModWarning[],
@@ -379,7 +392,8 @@ function registerModifierDescs<S extends ScopeName>(
   ownerId: string,
   fieldPath: string,
   modifiers: readonly Modifier<S>[] | undefined
-): void {
+): string {
+  const ownerKey = `${ownerId}::${fieldPath}`;
   (modifiers ?? []).forEach((modifier) => {
     if (modifier.desc === undefined) {
       return;
@@ -390,11 +404,12 @@ function registerModifierDescs<S extends ScopeName>(
       modifier as ModifierWithLoc<ScopeName>
     );
     loc.register(key, modifier.desc);
-    registerModifierDescKey(modifier as Modifier<ScopeName>, key);
+    registerModifierDescKey(modifier as Modifier<ScopeName>, ownerKey, key);
     if (unstableWarning !== undefined) {
       warnings.push({ code: "unstable-desc-key", message: unstableWarning });
     }
   });
+  return ownerKey;
 }
 
 /**
@@ -555,18 +570,30 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     if (mtth.days !== undefined) {
       mtthEntries.push(kv("days", mtth.days));
     }
-    registerModifierDescs(warnings, loc, id, "mean_time_to_happen", mtth.modifiers);
+    const mtthOwnerKey = registerModifierDescs(
+      warnings,
+      loc,
+      id,
+      "mean_time_to_happen",
+      mtth.modifiers
+    );
     const mtthRefs: ContentRefUse[] = [];
-    mtthEntries.push(...modifierRows(mtth.modifiers, mtthRefs));
+    mtthEntries.push(...modifierRows(mtth.modifiers, mtthRefs, mtthOwnerKey));
     entries.push(block("mean_time_to_happen", mtthEntries));
     refs.push(...underField(mtthRefs, "mean_time_to_happen"));
   }
   if (def.weightMultiplier !== undefined) {
     const weight = def.weightMultiplier;
     const weightEntries: PdxEntry[] = [kv("factor", weight.factor)];
-    registerModifierDescs(warnings, loc, id, "weight_multiplier", weight.modifiers);
+    const weightOwnerKey = registerModifierDescs(
+      warnings,
+      loc,
+      id,
+      "weight_multiplier",
+      weight.modifiers
+    );
     const weightRefs: ContentRefUse[] = [];
-    weightEntries.push(...modifierRows(weight.modifiers, weightRefs));
+    weightEntries.push(...modifierRows(weight.modifiers, weightRefs, weightOwnerKey));
     entries.push(block("weight_multiplier", weightEntries));
     refs.push(...underField(weightRefs, "weight_multiplier"));
   }
@@ -619,9 +646,15 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
       if (option.aiChance.factor !== undefined) {
         aiChanceEntries.push(kv("factor", option.aiChance.factor));
       }
-      registerModifierDescs(warnings, loc, id, `option_${index}.ai_chance`, option.aiChance.modifiers);
+      const aiChanceOwnerKey = registerModifierDescs(
+        warnings,
+        loc,
+        id,
+        `option_${index}.ai_chance`,
+        option.aiChance.modifiers
+      );
       const aiChanceRefs: ContentRefUse[] = [];
-      aiChanceEntries.push(...modifierRows(option.aiChance.modifiers, aiChanceRefs));
+      aiChanceEntries.push(...modifierRows(option.aiChance.modifiers, aiChanceRefs, aiChanceOwnerKey));
       optionEntries.push(block("ai_chance", aiChanceEntries));
       refs.push(...underField(aiChanceRefs, `${where}.ai_chance`));
     }
