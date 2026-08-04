@@ -28,17 +28,19 @@ Nest vanilla-content support beneath the broader Stellaris integration:
 stellaris/
 ├── installation/
 ├── launcher/
-├── vanilla/
-└── identifiers/
+└── vanilla/
 ```
 
 This makes the distinction visible in the path:
 
 - `stellaris/installation` locates and describes an installed copy of the game;
 - `stellaris/launcher` locates the launcher-owned mod directory;
-- `stellaris/vanilla` models and patches content shipped by the game;
-- `stellaris/identifiers` integrates the optional install-derived identifier
-  package.
+- `stellaris/vanilla` models and patches content shipped by the game.
+
+The optional identifier-package contracts are a neutral SDK concern rather than
+an installed-game adapter. Script bindings consume their declaration-merge
+contracts, while compilation consumes their runtime version-pin diagnostics, so
+they live in a top-level `identifiers/` module that both may depend on.
 
 The public `stellaris` namespace remains unchanged. This is an internal
 reorganization, not a consumer migration.
@@ -107,7 +109,6 @@ packages/sdk/src/
 │   ├── blocks.ts
 │   ├── lower.ts
 │   ├── authoring.ts
-│   ├── references.ts
 │   └── situations.ts
 │
 ├── events/
@@ -122,7 +123,6 @@ packages/sdk/src/
 │   ├── localization.ts
 │   ├── references.ts
 │   ├── patches.ts
-│   ├── ordering.ts
 │   └── freeze.ts
 │
 ├── output/
@@ -146,12 +146,15 @@ packages/sdk/src/
 │   │   ├── patch.ts
 │   │   ├── override-plan.ts
 │   │   └── override-rules.ts
-│   └── identifiers/
-│       ├── contracts.ts
-│       ├── trie.ts
-│       └── package-pin.ts
+│
+├── identifiers/
+│   ├── contracts.ts
+│   ├── trie.ts
+│   └── package-pin.ts
 │
 ├── generated/
+├── ordering.ts
+├── references.ts
 └── errors.ts
 ```
 
@@ -204,7 +207,6 @@ Owns the generic content-definition machinery shared by every generated registry
   modifiers;
 - recursive lowering from a generated field schema to PDXScript;
 - `ContentAuthoring` and `DefinedContent`;
-- recorded content-reference uses;
 - situation-specific authored contracts that extend generated content shapes.
 
 The split between `types.ts` and `schema.ts` is important:
@@ -255,7 +257,6 @@ The coordinator delegates deep responsibilities:
   identities;
 - `patches.ts`: collect compatible patches, verify the rule-table version, and
   plan their winning output;
-- `ordering.ts`: logical-path normalization and canonical byte ordering;
 - `freeze.ts`: recursively freeze emitted PDXScript trees.
 
 The descriptor-driven fold is the SDK's strongest internal seam. This
@@ -282,9 +283,7 @@ by it:
 
 - `installation/`: discover and describe a game installation;
 - `launcher/`: find the launcher-owned mod directory;
-- `vanilla/`: load, parse, cache, inspect, and patch shipped game content;
-- `identifiers/`: declaration-merge contracts, tries, and version-pin checks for
-  `@pdx-ts/stellaris-ids`.
+- `vanilla/`: load, parse, cache, inspect, and patch shipped game content.
 
 `vanilla/surface.ts` should become `vanilla/view.ts`. If extracting parsed
 technology behavior produces a genuinely independent interface, move it to
@@ -293,9 +292,28 @@ technology behavior produces a genuinely independent interface, move it to
 The current `resolver/` directory should not survive as a vague cross-cutting
 name:
 
-- generic logical-path ordering moves to `compiler/ordering.ts`;
+- generic logical-path normalization and canonical byte ordering move to the
+  neutral top-level `ordering.ts` module;
 - vanilla whole-object override planning and its calibrated rules move beside
   the vanilla patch model.
+
+### Neutral shared contracts
+
+Three small modules are intentionally outside the responsibility folders:
+
+- `ordering.ts` owns pure UTF-8 comparison and logical-path normalization used
+  by authoring, script recording, compilation, rendering, and vanilla override
+  planning. It may import `errors.ts`, but no higher-level module.
+- `references.ts` owns the `ContentRefUse` data contract and path composition
+  helper. Content lowering, event/effect recording, and vanilla patches produce
+  these values; the compiler consumes them for the dangling-reference guard.
+- `identifiers/` owns the optional `@pdx-ts/stellaris-ids` seam. Script bindings
+  consume its declaration-merge contracts, while compilation consumes its
+  package-presence and version-pin checks.
+
+These are shared vocabulary, not coordinators. They must remain free of imports
+from `authoring/`, `content/`, `events/`, `compiler/`, `output/`, and
+`stellaris/`.
 
 ### `generated/`
 
@@ -321,24 +339,49 @@ authoring ───────────────→ compiler
     │                         │
     ├────────→ content ───────┤
     └────────→ events ────────┤
-                  │           │
-                  └──→ script │
-generated ───────→ content    │
-generated ───────→ script     │
+    content ──────→ script    │
+    events ───────→ script    │
+generated ←──────→ content    │
+generated ←──────→ script     │
                               ├──→ stellaris/vanilla
 output ───────────────────────→ compiler/model
 output/install ───────────────→ stellaris/launcher
 stellaris/vanilla ────────────→ script
+
+content ──────────────────────→ references
+events ───────────────────────→ references
+script ───────────────────────→ references
+stellaris/vanilla ────────────→ references
+compiler ─────────────────────→ references
+generated ────────────────────→ references
+
+authoring/events/script/compiler/
+output/stellaris ─────────────→ ordering
+
+script ───────────────────────→ identifiers/contracts
+compiler ─────────────────────→ identifiers/package-pin
+generated ────────────────────→ identifiers/trie
 ```
 
 Rules implied by that direction:
 
 - `script/` knows nothing about authoring, compilation, or output.
+- `content/` and `events/` depend on `script/` for trigger values, recorded
+  effect closures, modifier encoding, and script contexts.
 - `content/` and `events/` do not import the compiler coordinator.
 - `compiler/` may depend on content/event lowering and on a supplied vanilla
   view, but lowerers do not depend on the compiler.
+- vanilla patches may produce neutral `ContentRefUse` values, preserving the
+  compiler's guard for own-prefixed references added by patches without making
+  vanilla patching depend on content lowering.
 - `output/render.ts` depends only on the compiled model and serialization.
 - installed-game adapters do not depend on mod authoring.
+- shared ordering and reference contracts never import higher-level modules.
+- the bidirectional folder-level relationship between `generated/` and
+  `content/` or `script/` is the deliberate generator/runtime protocol:
+  generated types import narrow handwritten contracts, while handwritten
+  lowerers consume generated descriptors and metadata. Keep the individual
+  file graph acyclic where possible and do not broaden those imports.
 - `index.ts` may re-export from every public area, but internal modules do not
   import through `index.ts`.
 - folder barrels are not required. Prefer direct internal imports so cycles and
@@ -379,12 +422,13 @@ stellaris/load.ts          → stellaris/vanilla/load.ts
 stellaris/cache.ts         → stellaris/vanilla/cache.ts
 vanilla/surface.ts         → stellaris/vanilla/view.ts
 vanilla/patch.ts           → stellaris/vanilla/patch.ts
-vanilla/package-pin.ts     → stellaris/identifiers/package-pin.ts
-vanilla-ids.ts             → stellaris/identifiers/contracts.ts
-vanilla-trie.ts            → stellaris/identifiers/trie.ts
+vanilla/package-pin.ts     → identifiers/package-pin.ts
+vanilla-ids.ts             → identifiers/contracts.ts
+vanilla-trie.ts            → identifiers/trie.ts
 resolver/plan.ts           → stellaris/vanilla/override-plan.ts
 resolver/rules.ts          → stellaris/vanilla/override-rules.ts
-resolver/path-order.ts     → compiler/ordering.ts
+resolver/path-order.ts     → ordering.ts
+content-refs.ts            → references.ts
 ```
 
 Update `stellaris/index.ts` and the root barrel so the external interface does
@@ -446,10 +490,9 @@ Split `content.ts` in dependency order:
 
 1. `content/types.ts`;
 2. `content/schema.ts`;
-3. `content/references.ts`;
-4. `content/blocks.ts`;
-5. `content/lower.ts`;
-6. `content/authoring.ts`.
+3. `content/blocks.ts`;
+4. `content/lower.ts`;
+5. `content/authoring.ts`.
 
 The exact placement of a helper follows the knowledge it owns:
 
@@ -459,6 +502,10 @@ The exact placement of a helper follows the knowledge it owns:
 - recursive descriptor interpretation belongs in `lower.ts`;
 - definition identity, localization registration, warnings, and nested-id
   collection belong in `authoring.ts`.
+
+All content-reference producers import the neutral `references.ts` contract
+established in Phase 1. Patch, event, and effect references must continue to
+flow into the compiler's single dangling-reference guard.
 
 Update the code generator's emitted imports as part of this phase. Regenerate
 once after the handwritten interfaces settle, then inspect the full generated
