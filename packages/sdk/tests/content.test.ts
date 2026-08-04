@@ -1606,6 +1606,53 @@ describe("generated content registries", () => {
     );
   });
 
+  it("serializes a @scripted_variable bare, not quoted, through both new WeightBlock surfaces (rebase check against SDK-33/47)", () => {
+    // SDK-33/47 widened `Modifier`'s numeric arms from `number` to
+    // `ScriptValue` and fixed a real silent-output bug in the same change: a
+    // bare `@name` string passed straight to pdxscript's `kv`/`scalar` gets
+    // quoted defensively on serialization, turning a scripted-variable
+    // reference into a literal string the game never evaluates.
+    // `scriptValueScalar` converts it into a `var` node first, which writes
+    // bare by construction. `WeightBlockOperations` (SDK-35's top-level
+    // factor/add/... siblings of `base`) and `ComplexTriggerModifier`'s
+    // mult/multiplier/divide/minValue/maxValue (SDK-36) are both this same
+    // `value_field` domain (`modifier_rule.cwt`), widened to `ScriptValue`
+    // and routed through `scriptValueScalar` to match — verified here by
+    // serializing, not by reasoning about the types.
+    const tradition = defineTradition({
+      id: "wb_test_tradition_script_value_operation",
+      name: "Script Value Operation",
+      aiWeight: { factor: "@my_value" },
+    });
+    const system = defineSolarSystemInitializer({
+      id: "wb_test_system_script_value_ctm",
+      class: "sc_g",
+      usageOdds: {
+        modifiers: [
+          {
+            trigger: "check_galaxy_setup_value",
+            parameters: { setting: "habitable_worlds_scale" },
+            mode: "factor",
+            mult: "@my_other_value",
+          },
+        ],
+      },
+    });
+    const rendered = render(
+      buildMod(configFor("Weight block script value test", "wb_test"), [
+        collection(undefined, [tradition, system]),
+      ])
+    );
+    const traditionFile = rendered.get("common/traditions/wb_test_traditions.txt");
+    expect(traditionFile).toContain("factor = @my_value");
+    expect(traditionFile).not.toContain('"@my_value"');
+    const systemFile = rendered.get(
+      "common/solar_system_initializers/wb_test_solar_system_initializers.txt"
+    );
+    expect(systemFile).toContain("mult = @my_other_value");
+    expect(systemFile).not.toContain('"@my_other_value"');
+  });
+
   it("contributes ship-of-size limits under the engine's `default` key", () => {
     // The ownership limit is not a define: its key belongs to the engine and
     // the game reads it additively, so the API takes no id and the mod-prefix
