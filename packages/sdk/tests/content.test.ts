@@ -2623,3 +2623,40 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     await expect(loc).toMatchFileSnapshot("__snapshots__/content/desc-key-localisation.yml");
   });
 });
+
+describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring build", () => {
+  // Both land in `ContentAuthoring` through the same constructor
+  // (`onUnstableDescKey`, `onLocKeyLooksLikeText`) and the same
+  // `buildMod` wiring. A resolution that keeps one parameter list and drops
+  // the other still typechecks — both are optional — and disables a whole
+  // diagnostic with nothing failing at the type level. Triggering both in
+  // one build is the regression test for that: if either callback were
+  // silently dropped, `mod.warnings` would be missing exactly one of these
+  // two entries rather than both, which a test asserting only one code
+  // could not distinguish from "working as intended".
+  it("emits unstable-desc-key and loc-key-looks-like-text from the same build", () => {
+    const situation = defineSituationType({
+      id: "warning_coexist_test_situation",
+      name: "Warning Coexistence Test",
+      // No descKey: triggers SDK-48's onUnstableDescKey.
+      monthlyProgress: {
+        base: 1,
+        modifiers: [{ subtract: 1, desc: "An unpinned tooltip.", when: always() }],
+      },
+      // A locKey-tagged field holding prose, not a key: triggers SDK-50's
+      // onLocKeyLooksLikeText.
+      activeTooltip: "this looks like a sentence, not a key",
+    });
+
+    const mod = buildMod(configFor("Warning coexistence test", "warning_coexist_test"), [
+      collection(undefined, [situation]),
+    ]);
+
+    expect(mod.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "unstable-desc-key" }),
+        expect.objectContaining({ code: "loc-key-looks-like-text" }),
+      ])
+    );
+  });
+});
