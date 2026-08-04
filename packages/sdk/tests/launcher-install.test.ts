@@ -364,18 +364,24 @@ describe("write stays inside the directory it was given", () => {
     expect(readFileSync(join(root, "common/technology/x.txt"), "utf8")).toBe("ok");
   });
 
-  it("does not mistake a child of a filesystem root for an escape", async () => {
-    // `/` already ends in a separator, so a `root + sep` prefix test compares
-    // against `"//"` and rejects every legitimate child of it. The real
-    // function is driven here rather than a copy of its rule: the write is
-    // aimed at a path the OS refuses for its own reasons (procfs does not take
-    // new directories, and neither does `/` without privileges), so it gets
-    // past containment and fails at the filesystem, leaving nothing behind.
-    await expect(
-      write("/", new Map([["proc/pdx-containment-probe/x.txt", "unwritable"]]))
-    ).rejects.not.toThrow(/not a file inside the output directory/);
-    expect(existsSync("/proc/pdx-containment-probe")).toBe(false);
-  });
+  it.skipIf(process.platform === "win32")(
+    "does not mistake a child of a filesystem root for an escape",
+    async () => {
+      // `/` already ends in a separator, so a `root + sep` prefix test compares
+      // against `"//"` and rejects every legitimate child of it. The real
+      // function is driven here rather than a copy of its rule, and aimed at
+      // `/dev/null`: it exists everywhere POSIX, it is not a directory, so the
+      // `mkdir` behind the write fails immediately with ENOTDIR — no
+      // privileges, no waiting, and nothing created. Reaching that error at
+      // all is the assertion: containment let the path through.
+      await expect(
+        write("/", new Map([["dev/null/pdx-containment-probe.txt", "unwritable"]]))
+      ).rejects.toThrow(/ENOTDIR|EEXIST|EACCES|EPERM|EROFS/);
+      await expect(
+        write("/", new Map([["dev/null/pdx-containment-probe.txt", "unwritable"]]))
+      ).rejects.not.toThrow(/not a file inside the output directory/);
+    }
+  );
 
   it("still refuses an escape from a filesystem root", async () => {
     // The other half: `/` has no parent, so `..` normalizes back to `/` and is
