@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 
 import { eventTarget } from "../src/effect-core.ts";
 import { buildMod, collection, namespace, render } from "../src/index.ts";
-import { hasGlobalFlag } from "../src/triggers.ts";
+import { hasEventChain, hasGlobalFlag } from "../src/triggers.ts";
 
 const CONFIG = {
   name: "Event fields tests",
@@ -377,5 +377,21 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     expect(loc).toContain(
       ' event_fields.1030_option_0.ai_chance_0:0 "AI chance modifier tooltip."'
     );
+  });
+
+  it("lowers majorTrigger as a country-scope predicate, evaluated per recipient country rather than the event's own scope", () => {
+    const events = makeEvents();
+    // A fleet event: majorTrigger must still accept a country-only predicate
+    // (events.cwt:419-425 — it filters recipient countries, not fleets).
+    const flagged = events.defineFleetEvent({
+      id: 1031,
+      hideWindow: true,
+      major: true,
+      majorTrigger: hasEventChain("event_fields_chain"),
+    });
+    const rendered = render(buildMod(CONFIG, [collection("events", [flagged])])).get(
+      "events/event_fields_events.txt"
+    )!;
+    expect(rendered).toContain("major_trigger = {\n\t\thas_event_chain = event_fields_chain");
   });
 });

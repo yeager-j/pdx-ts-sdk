@@ -10,6 +10,7 @@
 import { describe, it } from "vitest";
 
 import { namespace } from "../src/index.ts";
+import { hasAutomationSetting, hasEventChain } from "../src/triggers.ts";
 
 describe("subtype-conditional EventDef fields (SDK-46)", () => {
   it("accepts archaeology only on defineFleetEvent", () => {
@@ -102,6 +103,27 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       // no other member the rules mark 1..1, so omitting it would silently serialize a
       // rule-invalid event.
       weightMultiplier: { modifiers: [] },
+    });
+  });
+
+  it("scopes majorTrigger to country independently of S (events.cwt:419-425: it filters recipient countries, not the event's own scope)", () => {
+    const events = namespace("event_fields_types_i");
+    // A country-only predicate is legal here even on a fleet event, because
+    // major_trigger runs once per candidate recipient country, not in the
+    // fleet event's own scope.
+    events.defineFleetEvent({
+      id: 1,
+      hideWindow: true,
+      major: true,
+      majorTrigger: hasEventChain("event_fields_chain"),
+    });
+    events.defineFleetEvent({
+      id: 2,
+      hideWindow: true,
+      major: true,
+      // @ts-expect-error — a fleet-only predicate is not legal here: major_trigger evaluates
+      // against each candidate recipient country, not the fleet event's own scope.
+      majorTrigger: hasAutomationSetting("passive"),
     });
   });
 });

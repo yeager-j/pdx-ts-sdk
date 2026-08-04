@@ -241,11 +241,20 @@ export interface EventDef<S extends ScopeName, From extends ScopeName | undefine
    * `subtype[major]`). `subtype[major]` is an attribute subtype driven by
    * `major`'s own value, not by the event's kind — the same class as
    * `diplomatic`/`subtype[diplomatic]` — so this stays an unconditional
-   * `Trigger<S>` rather than a second `S`-conditioned parameter; it is
-   * simply inert unless `major: true` is also set, the same way
+   * field rather than a second `S`-conditioned parameter; it is simply
+   * inert unless `major: true` is also set, the same way
    * `meanTimeToHappen` is inert alongside `isTriggeredOnly: true`.
+   *
+   * Typed `Trigger<"country">` rather than `Trigger<S>`: the CWT comment at
+   * `events.cwt:419-425` and its example (`has_ethic = ethic_materialist`)
+   * both describe this block filtering the *other countries* that should
+   * receive the event, evaluated once per candidate recipient — a fixed
+   * country scope independent of what `S` the major event itself runs in.
+   * `Trigger<S>` would reject a country-only predicate on a non-country
+   * major event and admit an `S`-scoped predicate the game never evaluates
+   * in that scope here.
    */
-  readonly majorTrigger?: Trigger<S>;
+  readonly majorTrigger?: Trigger<"country">;
   /** Whether the event is trackable from the outliner (`events.cwt:438`). */
   readonly trackable?: boolean;
   /** Marks the event as coming from an advisor (`events.cwt:441`). */
