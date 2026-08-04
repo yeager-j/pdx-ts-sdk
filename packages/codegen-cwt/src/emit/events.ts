@@ -72,6 +72,53 @@ function definerSignature(kind: EmittedKind & { scope: string }): string {
   );
 }
 
+function capabilityMethod(kind: EmittedKind & { scope: string }): string {
+  if (!kind.key.endsWith("_event")) {
+    throw new Error(`event kind ${kind.key} does not end in _event`);
+  }
+  return camelCase(kind.key.slice(0, -"_event".length));
+}
+
+function capabilitySignature(kind: EmittedKind & { scope: string }): string {
+  const method = capabilityMethod(kind);
+  const scope = JSON.stringify(kind.scope);
+  const subtype = JSON.stringify(kind.subtype);
+  const spoken = kind.key.replaceAll("_", " ");
+  return (
+    docComment(
+      [
+        `Defines ${indefiniteArticle(spoken)} ${spoken} with an id in this capability namespace.`,
+        "The capability owns the namespace and full id; callers supply only the numeric id.",
+      ],
+      "  "
+    ) +
+    `  ${method}<const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
+    `    id: Id,\n` +
+    `    def: Omit<EventDef<${scope}, From>, "id">\n` +
+    `  ): CapabilityEventItem<P, N, Id, ${scope}, From, ${subtype}>;\n\n` +
+    `  ${method}Handle<const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
+    `    id: Id,\n` +
+    `    contract?: { readonly from?: From }\n` +
+    `  ): CapabilityEventHandle<P, N, Id, ${scope}, From, ${subtype}>;\n`
+  );
+}
+
+function capabilityBinding(kind: EmittedKind & { scope: string }): string {
+  const method = capabilityMethod(kind);
+  const scope = JSON.stringify(kind.scope);
+  const subtype = JSON.stringify(kind.subtype);
+  return (
+    `    ${method}Handle: <const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
+    "      id: Id,\n" +
+    "      contract: { readonly from?: From } = {}\n" +
+    `    ) => builder.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, contract.from as From),\n` +
+    `    ${method}: <const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
+    "      id: Id,\n" +
+    `      def: Omit<EventDef<${scope}, From>, "id">\n` +
+    `    ) => builder.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, def.from as From).define(def),\n`
+  );
+}
+
 function fireOverloads(kind: EmittedKind & { scope: string }): string {
   const method = camelCase(kind.key);
   const scope = JSON.stringify(kind.scope);
@@ -140,6 +187,16 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     skipped.push({ name: kind.key, reason: "scopeless event kind — closures cannot be typed" });
     return false;
   });
+  const capabilityNames = new Set<string>();
+  for (const kind of scoped) {
+    const method = capabilityMethod(kind);
+    for (const name of [method, `${method}Handle`]) {
+      if (name === "namespace" || capabilityNames.has(name)) {
+        throw new Error(`event capability method collision at ${name}`);
+      }
+      capabilityNames.add(name);
+    }
+  }
 
   const definerCode =
     docComment([
@@ -203,6 +260,55 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     "    namespace: ns,\n" +
     scoped.map(definerBinding).join("") +
     "  };\n" +
+    "}\n\n" +
+    'export type MintedNamespace<P extends string, N extends string> = N extends "" ? P : `${P}_${N}`;\n\n' +
+    "export type MintedEventId<P extends string, N extends string, Id extends number> =\n" +
+    "  `${MintedNamespace<P, N>}.${Id}`;\n\n" +
+    "export type CapabilityEventItem<\n" +
+    "  P extends string,\n" +
+    "  N extends string,\n" +
+    "  Id extends number,\n" +
+    "  S extends ScopeName,\n" +
+    "  From extends ScopeName | undefined,\n" +
+    "  Kind extends string = S,\n" +
+    "> = EventItem<S, From, Kind> & { readonly id: MintedEventId<P, N, Id> };\n\n" +
+    "export type CapabilityEventHandle<\n" +
+    "  P extends string,\n" +
+    "  N extends string,\n" +
+    "  Id extends number,\n" +
+    "  S extends ScopeName,\n" +
+    "  From extends ScopeName | undefined,\n" +
+    "  Kind extends string = S,\n" +
+    "> = EventRef<S, From, Kind> & {\n" +
+    "  readonly id: MintedEventId<P, N, Id>;\n" +
+    '  define(def: Omit<EventDef<S, From>, "id" | "from">): CapabilityEventItem<P, N, Id, S, From, Kind>;\n' +
+    "};\n\n" +
+    "export interface CapabilityEventBuilder<P extends string, N extends string> {\n" +
+    "  readonly namespace: MintedNamespace<P, N>;\n" +
+    "  handle<\n" +
+    "    const Id extends number,\n" +
+    "    S extends ScopeName,\n" +
+    "    From extends ScopeName | undefined,\n" +
+    "    Kind extends string,\n" +
+    "  >(\n" +
+    "    id: Id,\n" +
+    "    kind: EventKindKey,\n" +
+    "    scope: S,\n" +
+    "    subtype: Kind,\n" +
+    "    from: From\n" +
+    "  ): CapabilityEventHandle<P, N, Id, S, From, Kind>;\n" +
+    "}\n\n" +
+    "export interface CapabilityEvents<P extends string, N extends string> {\n" +
+    "  readonly namespace: MintedNamespace<P, N>;\n" +
+    scoped.map(capabilitySignature).join("\n") +
+    "}\n\n" +
+    "export function capabilityEvents<P extends string, N extends string>(\n" +
+    "  builder: CapabilityEventBuilder<P, N>\n" +
+    "): CapabilityEvents<P, N> {\n" +
+    "  return Object.freeze({\n" +
+    "    namespace: builder.namespace,\n" +
+    scoped.map(capabilityBinding).join("") +
+    "  }) as CapabilityEvents<P, N>;\n" +
     "}\n";
 
   // The receiving scopes come from the fire effect's own `## scopes`; a kind

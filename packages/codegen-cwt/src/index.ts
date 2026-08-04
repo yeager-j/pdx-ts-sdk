@@ -538,7 +538,7 @@ async function main(): Promise<void> {
   await write(
     "event-definers.ts",
     header(commit, ["events/events.cwt"]) +
-      'import { buildEvent, type EventDef } from "../events.ts";\n' +
+      'import { buildEvent, type EventDef, type EventRef } from "../events.ts";\n' +
       'import { assertNamespace } from "../items.ts";\n' +
       'import type { EventItem } from "../items.ts";\n' +
       'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +
@@ -673,7 +673,13 @@ async function main(): Promise<void> {
  * The `XItem` union types are emitted here too: they describe what a collection
  * of this registry's items can hold.
  */
-function contentDefiners(contents: readonly { registry: string; emission: ContentEmission }[]): {
+function contentDefiners(
+  contents: readonly {
+    manifest: ContentManifestEntry;
+    registry: string;
+    emission: ContentEmission;
+  }[]
+): {
   code: string;
   definers: number;
   grafted: string[];
@@ -681,6 +687,10 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
   const grafted: string[] = [];
   const runtimeItemTypes = new Set<string>(["ContentItem"]);
   const chunks: string[] = [];
+  const capabilityMembers: string[] = [];
+  const capabilityBindings: string[] = [];
+  const profileMembers: string[] = [];
+  const defaultProfileMembers: string[] = [];
 
   for (const content of contents) {
     const { registry, emission } = content;
@@ -691,6 +701,13 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
     const graft = HAND_WRITTEN_CONTENT_DEFINERS.get(registry);
     const patchable = CONTENT_PATCH_REGISTRIES.get(registry);
     const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
+    const method = camelCase(registry);
+    const minted = `MintedContentId<P, I, ${JSON.stringify(method)}, Name>`;
+
+    profileMembers.push(`  readonly ${method}: string;`);
+    defaultProfileMembers.push(
+      `  ${method}: ${JSON.stringify(content.manifest.idSegment ?? registry)},`
+    );
 
     // A scope-parameterised registry erases S to `never`, not to its default:
     // `Trigger<S>` is contravariant, so `Def<Id, never>` is the supertype every
@@ -705,6 +722,56 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
     if (contribution !== undefined) {
       itemArms.push("ContributionItem");
       runtimeItemTypes.add("ContributionItem");
+    }
+
+    if (graft === undefined) {
+      const scoped = emission.scopeParameter;
+      const parameters =
+        scoped === null
+          ? "<const Name extends string>"
+          : `<\n    const Name extends string,\n    S extends ${scoped.typeName} = ` +
+            `${JSON.stringify(scoped.fallback)},\n  >`;
+      const def = `${name}Def<${minted}${scoped === null ? "" : ", S"}>`;
+      const result = `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
+      capabilityMembers.push(
+        `  ${method}${parameters}(\n` +
+          `    name: Name,\n` +
+          `    def: Omit<${def}, "id">\n` +
+          `  ): ContentItem<${key}, ${result}>;`
+      );
+      capabilityBindings.push(
+        `    ${method}: ${parameters}(name: Name, def: Omit<${def}, "id">) =>\n` +
+          `      define${name}({ ...def, id: mint(${JSON.stringify(method)}, name) } as ${def}),`
+      );
+    } else {
+      capabilityMembers.push(
+        `  ${method}<\n` +
+          `    const Name extends string,\n` +
+          `    T extends ScopeName | undefined = undefined,\n` +
+          `    const Approach extends string = never,\n` +
+          `    const Stage extends string = never,\n` +
+          `  >(\n` +
+          `    name: Name,\n` +
+          `    def: Omit<SituationTypeCapabilityDef<${minted}, T, Approach, Stage>, "id">\n` +
+          `  ): ContentItem<${key}, ${name}Def<${minted}>> & { readonly targetScope: T };`
+      );
+      capabilityBindings.push(
+        `    ${method}: <\n` +
+          `      const Name extends string,\n` +
+          `      T extends ScopeName | undefined = undefined,\n` +
+          `      const Approach extends string = never,\n` +
+          `      const Stage extends string = never,\n` +
+          `    >(name: Name, def: Omit<SituationTypeCapabilityDef<${minted}, T, Approach, Stage>, "id">) =>\n` +
+          `      define${name}({ ...def, id: mint(${JSON.stringify(method)}, name) } as SituationTypeCapabilityDef<${minted}, T, Approach, Stage>),`
+      );
+    }
+    if (patchable !== undefined) {
+      capabilityMembers.push(`  readonly patch${name}: typeof patch${name};`);
+      capabilityBindings.push(`    patch${name},`);
+    }
+    if (contribution !== undefined) {
+      capabilityMembers.push(`  readonly ${contribution.method}: typeof ${contribution.method};`);
+      capabilityBindings.push(`    ${contribution.method},`);
     }
 
     const definitions: string[] = [];
@@ -823,8 +890,45 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
         ])
       )
       .join("");
+  const graftImports = contents.some((content) =>
+    HAND_WRITTEN_CONTENT_DEFINERS.has(content.registry)
+  )
+    ? 'import { defineSituationType, type SituationTypeCapabilityDef } from "../definers.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n'
+    : "";
+  const capability =
+    "export interface IdProfile {\n" +
+    profileMembers.join("\n") +
+    "\n}\n\n" +
+    "export const DEFAULT_ID_PROFILE = Object.freeze({\n" +
+    defaultProfileMembers.join("\n") +
+    "\n}) satisfies IdProfile;\n\n" +
+    "export type MintedContentId<\n" +
+    "  P extends string,\n" +
+    "  I extends IdProfile,\n" +
+    "  K extends keyof I,\n" +
+    "  Name extends string,\n" +
+    "> = `${P}_${I[K] & string}_${Name}`;\n\n" +
+    "export type ContentIdMinter<P extends string, I extends IdProfile> = <\n" +
+    "  const K extends keyof I,\n" +
+    "  const Name extends string,\n" +
+    ">(registry: K, name: Name) => MintedContentId<P, I, K, Name>;\n\n" +
+    "export interface ContentCapabilityMethods<P extends string, I extends IdProfile> {\n" +
+    capabilityMembers.join("\n") +
+    "\n}\n\n" +
+    "export function contentCapabilityMethods<P extends string, I extends IdProfile>(\n" +
+    "  mint: ContentIdMinter<P, I>\n" +
+    "): ContentCapabilityMethods<P, I> {\n" +
+    "  return Object.freeze({\n" +
+    capabilityBindings.join("\n") +
+    "\n  }) as ContentCapabilityMethods<P, I>;\n" +
+    "}\n";
 
-  return { code: imports + "\n" + chunks.join("\n"), definers: contents.length, grafted };
+  return {
+    code: imports + graftImports + "\n" + chunks.join("\n") + "\n" + capability,
+    definers: contents.length,
+    grafted,
+  };
 }
 
 /**

@@ -236,6 +236,15 @@ export {
   type PureMod,
 } from "./build.ts";
 export {
+  createMod,
+  type CapabilityEventHandle,
+  type CapabilityEvents,
+  type CapabilityFeature,
+  type IdProfile,
+  type MintedContentId,
+  type ModCapability,
+} from "./mod-capability.ts";
+export {
   install,
   render,
   renderLauncherDescriptor,

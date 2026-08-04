@@ -1102,4 +1102,21 @@ describe("generated content definers", () => {
     expect(definers).toContain('registry: "ship_of_size_limits",');
     expect(definers).toContain('refRegistry: "country_ship_of_size_limit",');
   });
+
+  it("derives exact capability content methods and their default profile from the manifest", () => {
+    expect(definers).toContain("export interface IdProfile {");
+    expect(definers).toContain('  technology: "tech",');
+    expect(definers).toContain('  traditionCategory: "tradition_category",');
+    expect(definers).toContain(
+      "export function contentCapabilityMethods<P extends string, I extends IdProfile>("
+    );
+    expect(definers).toContain(
+      '): ContentItem<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;'
+    );
+    expect(definers).toContain(
+      'SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>, T, Approach, Stage>'
+    );
+    expect(definers).toContain("readonly patchTechnology: typeof patchTechnology;");
+    expect(definers).toContain("readonly addShipOfSizeLimits: typeof addShipOfSizeLimits;");
+  });
 });

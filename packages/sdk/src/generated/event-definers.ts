@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: events/events.cwt
 
-import { buildEvent, type EventDef } from "../events.ts";
+import { buildEvent, type EventDef, type EventRef } from "../events.ts";
 import { assertNamespace, type EventItem } from "../items.ts";
 import { EVENT_KINDS, type EventKindKey } from "./events.ts";
 import type { ScopeName } from "./scopes.ts";
@@ -264,4 +264,585 @@ export function namespace(ns: string): EventNamespace {
     defineStarbaseEvent: definerOf("starbase_event", "starbase"),
     defineSystemEvent: definerOf("system_event", "system"),
   };
+}
+
+export type MintedNamespace<P extends string, N extends string> = N extends "" ? P : `${P}_${N}`;
+
+export type MintedEventId<
+  P extends string,
+  N extends string,
+  Id extends number,
+> = `${MintedNamespace<P, N>}.${Id}`;
+
+export type CapabilityEventItem<
+  P extends string,
+  N extends string,
+  Id extends number,
+  S extends ScopeName,
+  From extends ScopeName | undefined,
+  Kind extends string = S,
+> = EventItem<S, From, Kind> & { readonly id: MintedEventId<P, N, Id> };
+
+export type CapabilityEventHandle<
+  P extends string,
+  N extends string,
+  Id extends number,
+  S extends ScopeName,
+  From extends ScopeName | undefined,
+  Kind extends string = S,
+> = EventRef<S, From, Kind> & {
+  readonly id: MintedEventId<P, N, Id>;
+  define(def: Omit<EventDef<S, From>, "id" | "from">): CapabilityEventItem<P, N, Id, S, From, Kind>;
+};
+
+export interface CapabilityEventBuilder<P extends string, N extends string> {
+  readonly namespace: MintedNamespace<P, N>;
+  handle<
+    const Id extends number,
+    S extends ScopeName,
+    From extends ScopeName | undefined,
+    Kind extends string,
+  >(
+    id: Id,
+    kind: EventKindKey,
+    scope: S,
+    subtype: Kind,
+    from: From
+  ): CapabilityEventHandle<P, N, Id, S, From, Kind>;
+}
+
+export interface CapabilityEvents<P extends string, N extends string> {
+  readonly namespace: MintedNamespace<P, N>;
+  /**
+   * Defines an agreement event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  agreement<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"agreement", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "agreement", From, "agreement">;
+
+  agreementHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "agreement", From, "agreement">;
+
+  /**
+   * Defines an astral rift event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  astralRift<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"astral_rift", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "astral_rift", From, "astral_rift">;
+
+  astralRiftHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "astral_rift", From, "astral_rift">;
+
+  /**
+   * Defines a bypass event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  bypass<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"bypass", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "bypass", From, "bypass">;
+
+  bypassHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "bypass", From, "bypass">;
+
+  /**
+   * Defines a carrier event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  carrier<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"carrier", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "carrier", From, "carrier">;
+
+  carrierHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "carrier", From, "carrier">;
+
+  /**
+   * Defines a colony event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  colony<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"colony", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "colony", From, "colony">;
+
+  colonyHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "colony", From, "colony">;
+
+  /**
+   * Defines a cosmic storm event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  cosmicStorm<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"storm", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "storm", From, "cosmic_storm">;
+
+  cosmicStormHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "storm", From, "cosmic_storm">;
+
+  /**
+   * Defines a cosmic storm influence field event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  cosmicStormInfluenceField<
+    const Id extends number,
+    From extends ScopeName | undefined = undefined,
+  >(
+    id: Id,
+    def: Omit<EventDef<"cosmic_storm_influence_field", From>, "id">
+  ): CapabilityEventItem<
+    P,
+    N,
+    Id,
+    "cosmic_storm_influence_field",
+    From,
+    "cosmic_storm_influence_field"
+  >;
+
+  cosmicStormInfluenceFieldHandle<
+    const Id extends number,
+    From extends ScopeName | undefined = undefined,
+  >(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<
+    P,
+    N,
+    Id,
+    "cosmic_storm_influence_field",
+    From,
+    "cosmic_storm_influence_field"
+  >;
+
+  /**
+   * Defines a country event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  country<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"country", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "country", From, "country">;
+
+  countryHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "country", From, "country">;
+
+  /**
+   * Defines an espionage operation event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  espionageOperation<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"espionage_operation", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "espionage_operation", From, "espionage_operation">;
+
+  espionageOperationHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "espionage_operation", From, "espionage_operation">;
+
+  /**
+   * Defines a first contact event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  firstContact<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"first_contact", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "first_contact", From, "first_contact">;
+
+  firstContactHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "first_contact", From, "first_contact">;
+
+  /**
+   * Defines a fleet event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  fleet<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"fleet", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "fleet", From, "fleet">;
+
+  fleetHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "fleet", From, "fleet">;
+
+  /**
+   * Defines a leader event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  leader<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"leader", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "leader", From, "leader">;
+
+  leaderHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "leader", From, "leader">;
+
+  /**
+   * Defines an observer event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  observer<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"country", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "country", From, "observer">;
+
+  observerHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "country", From, "observer">;
+
+  /**
+   * Defines a planet event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  planet<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"planet", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "planet", From, "planet">;
+
+  planetHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "planet", From, "planet">;
+
+  /**
+   * Defines a pop faction event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  popFaction<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"pop_faction", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "pop_faction", From, "pop_faction">;
+
+  popFactionHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "pop_faction", From, "pop_faction">;
+
+  /**
+   * Defines a pop group event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  popGroup<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"pop_group", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "pop_group", From, "pop_group">;
+
+  popGroupHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "pop_group", From, "pop_group">;
+
+  /**
+   * Defines a ship event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  ship<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"ship", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "ship", From, "ship">;
+
+  shipHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "ship", From, "ship">;
+
+  /**
+   * Defines a situation event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  situation<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"situation", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "situation", From, "situation">;
+
+  situationHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "situation", From, "situation">;
+
+  /**
+   * Defines a starbase event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  starbase<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"starbase", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "starbase", From, "starbase">;
+
+  starbaseHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "starbase", From, "starbase">;
+
+  /**
+   * Defines a system event with an id in this capability namespace.
+   * The capability owns the namespace and full id; callers supply only the numeric id.
+   */
+  system<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    def: Omit<EventDef<"system", From>, "id">
+  ): CapabilityEventItem<P, N, Id, "system", From, "system">;
+
+  systemHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+    id: Id,
+    contract?: { readonly from?: From }
+  ): CapabilityEventHandle<P, N, Id, "system", From, "system">;
+}
+
+export function capabilityEvents<P extends string, N extends string>(
+  builder: CapabilityEventBuilder<P, N>
+): CapabilityEvents<P, N> {
+  return Object.freeze({
+    namespace: builder.namespace,
+    agreementHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "agreement_event", "agreement", "agreement", contract.from as From),
+    agreement: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"agreement", From>, "id">
+    ) =>
+      builder.handle(id, "agreement_event", "agreement", "agreement", def.from as From).define(def),
+    astralRiftHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) =>
+      builder.handle(id, "astral_rift_event", "astral_rift", "astral_rift", contract.from as From),
+    astralRift: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"astral_rift", From>, "id">
+    ) =>
+      builder
+        .handle(id, "astral_rift_event", "astral_rift", "astral_rift", def.from as From)
+        .define(def),
+    bypassHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "bypass_event", "bypass", "bypass", contract.from as From),
+    bypass: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"bypass", From>, "id">
+    ) => builder.handle(id, "bypass_event", "bypass", "bypass", def.from as From).define(def),
+    carrierHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "carrier_event", "carrier", "carrier", contract.from as From),
+    carrier: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"carrier", From>, "id">
+    ) => builder.handle(id, "carrier_event", "carrier", "carrier", def.from as From).define(def),
+    colonyHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "colony_event", "colony", "colony", contract.from as From),
+    colony: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"colony", From>, "id">
+    ) => builder.handle(id, "colony_event", "colony", "colony", def.from as From).define(def),
+    cosmicStormHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "cosmic_storm_event", "storm", "cosmic_storm", contract.from as From),
+    cosmicStorm: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"storm", From>, "id">
+    ) =>
+      builder
+        .handle(id, "cosmic_storm_event", "storm", "cosmic_storm", def.from as From)
+        .define(def),
+    cosmicStormInfluenceFieldHandle: <
+      const Id extends number,
+      From extends ScopeName | undefined = undefined,
+    >(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) =>
+      builder.handle(
+        id,
+        "cosmic_storm_influence_field_event",
+        "cosmic_storm_influence_field",
+        "cosmic_storm_influence_field",
+        contract.from as From
+      ),
+    cosmicStormInfluenceField: <
+      const Id extends number,
+      From extends ScopeName | undefined = undefined,
+    >(
+      id: Id,
+      def: Omit<EventDef<"cosmic_storm_influence_field", From>, "id">
+    ) =>
+      builder
+        .handle(
+          id,
+          "cosmic_storm_influence_field_event",
+          "cosmic_storm_influence_field",
+          "cosmic_storm_influence_field",
+          def.from as From
+        )
+        .define(def),
+    countryHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "country_event", "country", "country", contract.from as From),
+    country: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"country", From>, "id">
+    ) => builder.handle(id, "country_event", "country", "country", def.from as From).define(def),
+    espionageOperationHandle: <
+      const Id extends number,
+      From extends ScopeName | undefined = undefined,
+    >(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) =>
+      builder.handle(
+        id,
+        "espionage_operation_event",
+        "espionage_operation",
+        "espionage_operation",
+        contract.from as From
+      ),
+    espionageOperation: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"espionage_operation", From>, "id">
+    ) =>
+      builder
+        .handle(
+          id,
+          "espionage_operation_event",
+          "espionage_operation",
+          "espionage_operation",
+          def.from as From
+        )
+        .define(def),
+    firstContactHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) =>
+      builder.handle(
+        id,
+        "first_contact_event",
+        "first_contact",
+        "first_contact",
+        contract.from as From
+      ),
+    firstContact: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"first_contact", From>, "id">
+    ) =>
+      builder
+        .handle(id, "first_contact_event", "first_contact", "first_contact", def.from as From)
+        .define(def),
+    fleetHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "fleet_event", "fleet", "fleet", contract.from as From),
+    fleet: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"fleet", From>, "id">
+    ) => builder.handle(id, "fleet_event", "fleet", "fleet", def.from as From).define(def),
+    leaderHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "leader_event", "leader", "leader", contract.from as From),
+    leader: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"leader", From>, "id">
+    ) => builder.handle(id, "leader_event", "leader", "leader", def.from as From).define(def),
+    observerHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "observer_event", "country", "observer", contract.from as From),
+    observer: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"country", From>, "id">
+    ) => builder.handle(id, "observer_event", "country", "observer", def.from as From).define(def),
+    planetHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "planet_event", "planet", "planet", contract.from as From),
+    planet: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"planet", From>, "id">
+    ) => builder.handle(id, "planet_event", "planet", "planet", def.from as From).define(def),
+    popFactionHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) =>
+      builder.handle(id, "pop_faction_event", "pop_faction", "pop_faction", contract.from as From),
+    popFaction: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"pop_faction", From>, "id">
+    ) =>
+      builder
+        .handle(id, "pop_faction_event", "pop_faction", "pop_faction", def.from as From)
+        .define(def),
+    popGroupHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "pop_group_event", "pop_group", "pop_group", contract.from as From),
+    popGroup: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"pop_group", From>, "id">
+    ) =>
+      builder.handle(id, "pop_group_event", "pop_group", "pop_group", def.from as From).define(def),
+    shipHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "ship_event", "ship", "ship", contract.from as From),
+    ship: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"ship", From>, "id">
+    ) => builder.handle(id, "ship_event", "ship", "ship", def.from as From).define(def),
+    situationHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "situation_event", "situation", "situation", contract.from as From),
+    situation: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"situation", From>, "id">
+    ) =>
+      builder.handle(id, "situation_event", "situation", "situation", def.from as From).define(def),
+    starbaseHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "starbase_event", "starbase", "starbase", contract.from as From),
+    starbase: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"starbase", From>, "id">
+    ) => builder.handle(id, "starbase_event", "starbase", "starbase", def.from as From).define(def),
+    systemHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      contract: { readonly from?: From } = {}
+    ) => builder.handle(id, "system_event", "system", "system", contract.from as From),
+    system: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      id: Id,
+      def: Omit<EventDef<"system", From>, "id">
+    ) => builder.handle(id, "system_event", "system", "system", def.from as From).define(def),
+  }) as CapabilityEvents<P, N>;
 }

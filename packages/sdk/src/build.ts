@@ -112,7 +112,7 @@ export interface ModConfig<P extends string = string> {
  * a prefix the content inside those files was never compiled with. A `PureMod`
  * is supposed to be a value; this is the part of it that was not one.
  */
-export type ResolvedModConfig = Readonly<Omit<ModConfig, "tags">> & {
+export type ResolvedModConfig<P extends string = string> = Readonly<Omit<ModConfig<P>, "tags">> & {
   readonly tags?: readonly string[];
 };
 
@@ -168,7 +168,9 @@ function assertDescriptorSafe(field: string, value: string): void {
  * the caller passed in; `tags` is copied too, since freezing the config alone
  * would leave the array inside it writable.
  */
-function resolveConfig(config: ModConfig): ResolvedModConfig {
+export function resolveConfig<P extends string>(
+  config: Omit<ModConfig<P>, "tags"> & { readonly tags?: readonly string[] }
+): ResolvedModConfig<P> {
   if (!PREFIX_PATTERN.test(config.prefix)) {
     throw new Error(`Mod prefix "${config.prefix}" must be lowercase snake_case ([a-z][a-z0-9_]*)`);
   }
@@ -401,7 +403,7 @@ export const SWAP_IDENTITIES: readonly SwapIdentity[] = [
 ];
 
 export function buildMod(
-  callerConfig: ModConfig,
+  callerConfig: ModConfig | ResolvedModConfig,
   collections: readonly ModItemInput[],
   options: BuildOptions = {}
 ): PureMod {
