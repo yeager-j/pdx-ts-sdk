@@ -85,6 +85,15 @@ describe("vanillaIdsCheckWarning", () => {
     expect(warning).toContain("uncheckedVanillaIds: true");
   });
 
+  it("tells the reader installing is not the whole remedy", () => {
+    // The state this canary provably cannot detect — installed but never
+    // imported, so the declaration merge never joins the consumer's program —
+    // is at least named in the remedy of both messages, rather than left to
+    // read "installed" as "checked".
+    expect(vanillaIdsCheckWarning(undefined, "4.4.6", undefined)).toContain("import it");
+    expect(vanillaIdsCheckWarning("4.4.6", "4.5.0", "4.5.0")).toContain("import it");
+  });
+
   it("warns when the package resolves but pins a different build than the install", () => {
     const warning = vanillaIdsCheckWarning("4.4.6", "4.5.0", "4.5.0");
     expect(warning).toContain("4.4.6");

@@ -1,12 +1,23 @@
 /**
  * The sync gate for `build.ts`'s `SWAP_IDENTITIES` table.
  *
- * The table hand-copies a fact about the vendored rules: which registries
- * declare a nested "swap" type via `base_type`, whose ids the reference guard
- * must count as built. Its comment used to claim a vendor bump "is a diff on
- * this list" — true of the fact, false as a mechanism, since nothing checked
- * it. This is that mechanism: the vendored config is in-repo, so the claim can
- * be re-derived on every test run rather than trusted.
+ * The table hand-copies three facts about the vendored rules per row: which
+ * registries declare a nested "swap" type via `base_type`, which member of the
+ * definition holds that swap block, and where inside it the ids are spelled.
+ * Its comment used to claim a vendor bump "is a diff on this list" — true of
+ * the facts, false as a mechanism, since nothing checked them. This is that
+ * mechanism: the vendored config is in-repo, so all three can be re-derived on
+ * every test run rather than trusted.
+ *
+ * All three matter, and only the first is safe from a rename. A vendor bump
+ * that moves `technology_swap`, or turns a record-keyed swap block into a
+ * repeated one, leaves `base_type = technology` untouched — so a registry-only
+ * comparison stays green while `readSwapPath` quietly returns nothing and the
+ * dangling-reference guard starts rejecting references to perfectly valid swap
+ * definitions. The path and keying are therefore derived too: from CWT for
+ * where the rules put the block (`## type_key_filter` names the keyword,
+ * `skip_root_key` names what encloses it), and from the generated field
+ * metadata for how codegen lowered it.
  *
  * Hermetic — no game install, no network. Two stages, because neither alone
  * is both complete and honest: a raw token scan over every vendored `.cwt`
@@ -24,7 +35,8 @@ import path from "node:path";
 import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { describe, expect, it } from "vitest";
 
-import { SWAP_IDENTITIES } from "../src/build.ts";
+import { SWAP_IDENTITIES, type SwapIdentity } from "../src/build.ts";
+import type { ContentField } from "../src/content.ts";
 import { CONTENT_REGISTRIES } from "../src/generated/content-registry.ts";
 
 // Repo-root-relative: vitest runs from the workspace root, the same way
@@ -48,6 +60,16 @@ interface BaseTypeDeclaration {
   readonly typeName: string;
   /** The declared value, e.g. `tradition` or `civic_or_origin.civic`. */
   readonly baseType: string;
+  /**
+   * The CWT key path from the base definition's root down to the swap block,
+   * e.g. `["tradition_swap"]` or `["swappable_data", "swap_type"]`.
+   *
+   * Derived, not read off one line: `## type_key_filter` names the keyword the
+   * swap block is written under, and `skip_root_key` names what encloses it —
+   * `any` is the base definition's own id, and any further segment is a
+   * wrapper the rules put between the two (`job`'s `swappable_data`).
+   */
+  readonly keyPath: readonly string[];
   readonly file: string;
   readonly line: number;
 }
@@ -98,15 +120,44 @@ function baseTypeDeclarations(file: string): BaseTypeDeclaration[] {
       if (typeName === null) {
         continue;
       }
+      let baseType: string | undefined;
+      let baseTypeLine = node.line;
+      // `skip_root_key = any` or `skip_root_key = { any swappable_data }`.
+      let enclosing: string[] = [];
       for (const field of node.value.nodes) {
-        if (
-          field.kind === "assignment" &&
-          field.key.text === "base_type" &&
-          field.value.kind === "scalar"
-        ) {
-          found.push({ typeName, baseType: field.value.text, file, line: field.line });
+        if (field.kind !== "assignment") {
+          continue;
+        }
+        if (field.key.text === "base_type" && field.value.kind === "scalar") {
+          baseType = field.value.text;
+          baseTypeLine = field.line;
+        }
+        if (field.key.text === "skip_root_key") {
+          enclosing =
+            field.value.kind === "scalar"
+              ? [field.value.text]
+              : field.value.nodes.flatMap((item) =>
+                  item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
+                );
         }
       }
+      if (baseType === undefined) {
+        continue;
+      }
+      const keyFilter = node.options.find((option) => option.name === "type_key_filter");
+      const keyword = keyFilter?.value?.kind === "scalar" ? keyFilter.value.text : undefined;
+      found.push({
+        typeName,
+        baseType,
+        // `any` stands for the base definition's own id, which is the walk's
+        // starting point rather than a member of it.
+        keyPath: [
+          ...enclosing.filter((segment) => segment !== "any"),
+          ...(keyword === undefined ? [] : [keyword]),
+        ],
+        file,
+        line: baseTypeLine,
+      });
     }
   };
   const { nodes } = parseCwt(readFileSync(file, "utf8"), file);
@@ -127,6 +178,105 @@ function baseTypeDeclarations(file: string): BaseTypeDeclaration[] {
 function registryOf(baseType: string): string {
   const qualifier = baseType.indexOf(".");
   return qualifier === -1 ? baseType : baseType.slice(0, qualifier);
+}
+
+/** What the generated field metadata says a row's member path actually lowers. */
+interface ResolvedField {
+  /** The CWT keys the walked members carry, in order. */
+  readonly keyPath: readonly string[];
+  /** Where ids are spelled in the authored value, from the lowered shape. */
+  readonly keying: SwapIdentity["keying"] | undefined;
+}
+
+/**
+ * Walks a row's member path through the *generated* field metadata — the
+ * codegen output regenerated from these same rules — and reports what it finds
+ * there. This is the second half of the correspondence: CWT says where the
+ * swap block lives and under which keyword, codegen says which member the SDK
+ * authored for it and what shape that member takes, and the row hand-copies
+ * both. Reading the shape here rather than re-deriving codegen's lowering
+ * rules keeps this a comparison rather than a second implementation.
+ */
+function resolveField(
+  registryType: string,
+  memberPath: readonly string[]
+): ResolvedField | { readonly missing: string } {
+  const descriptor = CONTENT_REGISTRIES.find((entry) => entry.type === registryType);
+  if (descriptor === undefined) {
+    return { missing: `no registry "${registryType}" exists` };
+  }
+  let fields: readonly ContentField[] = descriptor.fields;
+  const keyPath: string[] = [];
+  let field: ContentField | undefined;
+  for (const member of memberPath) {
+    field = fields.find((candidate) => candidate.member === member);
+    if (field === undefined) {
+      return {
+        missing: `"${registryType}" declares no field with member "${member}"${
+          keyPath.length > 0 ? ` under ${keyPath.join(".")}` : ""
+        }`,
+      };
+    }
+    if (!("key" in field)) {
+      // `inlineModifiers` splices its members into the parent block and owns
+      // no key of its own; nothing a swap path can legally walk through.
+      return {
+        missing: `"${registryType}" field "${member}" is a top-level splice with no key of its own`,
+      };
+    }
+    keyPath.push(field.key);
+    fields = "fields" in field ? field.fields : [];
+  }
+  if (field === undefined) {
+    return { missing: `the member path is empty` };
+  }
+  // A record of `key` blocks each carrying its own `name` (CWT shape 2) versus
+  // a repeated anonymous struct lowered to an array (shape 3). Anything else
+  // is neither, and says so rather than guessing one.
+  const keying =
+    field.shape === "repeatedStruct" && field.keying === "siblings"
+      ? ("record-keys" as const)
+      : field.shape === "struct" && field.repeated === true
+        ? ("array-names" as const)
+        : undefined;
+  return { keyPath, keying };
+}
+
+/**
+ * Everything wrong with one row, as messages naming it. A function over a row
+ * rather than assertions inline, so the negative control below can feed it
+ * perturbed rows and check it actually reports them.
+ */
+function rowProblems(row: SwapIdentity, declaredKeyPath: readonly string[]): string[] {
+  const resolved = resolveField(row.registryType, row.path);
+  const member = `${row.registryType}.${row.path.join(".")}`;
+  if ("missing" in resolved) {
+    return [
+      `${member}: ${resolved.missing} — the swap field was renamed or moved, and this row now ` +
+        `reads nothing, so no swap id of this registry counts as built`,
+    ];
+  }
+  const problems: string[] = [];
+  if (resolved.keyPath.join(".") !== declaredKeyPath.join(".")) {
+    problems.push(
+      `${member}: lowers the CWT field "${resolved.keyPath.join(".")}", but the rules declare ` +
+        `this registry's swap block at "${declaredKeyPath.join(".")}" — the row points at the ` +
+        `wrong field, so its ids are somebody else's`
+    );
+  }
+  if (resolved.keying === undefined) {
+    problems.push(
+      `${member}: the generated field is neither a sibling-keyed repeatedStruct nor a repeated ` +
+        `struct, so neither keying can read ids out of it`
+    );
+  } else if (resolved.keying !== row.keying) {
+    problems.push(
+      `${member}: the row says keying "${row.keying}" but the generated field spells its ids as ` +
+        `"${resolved.keying}" — the extraction returns nothing, and every reference to one of ` +
+        `this registry's swap definitions is rejected as dangling`
+    );
+  }
+  return problems;
 }
 
 describe("SWAP_IDENTITIES against the vendored rules", () => {
@@ -183,6 +333,50 @@ describe("SWAP_IDENTITIES against the vendored rules", () => {
       "SWAP_IDENTITIES folds swap ids into a registry the vendored rules no longer declare a " +
         "base_type for — the row is either stale or misspelled"
     ).toEqual([]);
+  });
+
+  it("backs every row's field path and keying with the rules and the generated metadata", () => {
+    // `registryType` alone was the whole comparison, and it is the one part of
+    // a row a vendor rename cannot break: `technology_swap` moving, or turning
+    // from a record-keyed block into a repeated one, keeps `base_type =
+    // technology` exactly as it was while `readSwapPath` starts returning
+    // nothing — a silently empty built-id set, and the reference guard
+    // rejecting every reference to a valid swap definition.
+    const problems = SWAP_IDENTITIES.flatMap((row) => {
+      const declared = declarations.filter(
+        (declaration) => registryOf(declaration.baseType) === row.registryType
+      );
+      if (declared.length !== 1) {
+        return [
+          `${row.registryType}: expected exactly one base_type declaration, found ` +
+            `${declared.length}`,
+        ];
+      }
+      return rowProblems(row, declared[0]!.keyPath);
+    });
+    expect(problems, problems.join("\n")).toEqual([]);
+  });
+
+  it("reports a moved path or a flipped keying", () => {
+    // The negative control for the assertion above: it passes today, and this
+    // is what says it would not pass on the drift it claims to catch. Rows are
+    // perturbed in memory — the real table and the vendored rules are
+    // untouched — one perturbation per failure mode the reviewer named.
+    const tradition = SWAP_IDENTITIES.find((row) => row.registryType === "tradition")!;
+    const declared = declarations.find(
+      (declaration) => registryOf(declaration.baseType) === "tradition"
+    )!.keyPath;
+
+    const renamed = rowProblems({ ...tradition, path: ["traditionSwaps"] }, declared);
+    expect(renamed.join("\n")).toContain('declares no field with member "traditionSwaps"');
+
+    // A member that exists but is a different field: the "moved" case, which
+    // a mere existence check would pass.
+    const moved = rowProblems({ ...tradition, path: ["aiWeight"] }, declared);
+    expect(moved.join("\n")).toContain("tradition_swap");
+
+    const flipped = rowProblems({ ...tradition, keying: "array-names" }, declared);
+    expect(flipped.join("\n")).toContain('spells its ids as "record-keys"');
   });
 
   it("keeps each documented exclusion true", () => {

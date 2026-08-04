@@ -93,6 +93,11 @@ export interface ModConfig<P extends string = string> {
    * would say so (`vanillaIdsCheckWarning`, `vanilla/package-pin.ts`). Set
    * this when the mod authors vanilla ids by hand on purpose, and the warning
    * is a standing false alarm rather than news.
+   *
+   * No warning is not proof of checking: the package must also be *imported*
+   * somewhere in the project for its declaration merge to reach the compiler,
+   * and no runtime check can see whether it was — see
+   * `vanillaIdsCheckWarning` for why, and for what would close it.
    */
   uncheckedVanillaIds?: boolean;
 }
@@ -170,8 +175,18 @@ export interface SwapIdentity {
    * (`swappableData.swapType`), so this is a path rather than a single member.
    */
   readonly path: readonly string[];
-  /** Reads swap ids off the value at `path`. */
-  readonly extract: (value: unknown) => readonly string[];
+  /**
+   * Where the swap ids are spelled in the value at `path`: the keys of a
+   * record (`repeatedStruct` with `keying: "siblings"`, CWT "shape 2"), or
+   * the `name` member of each element of an array (a repeated `struct`, CWT
+   * "shape 3").
+   *
+   * Data rather than the extraction function it selects, so the sync gate can
+   * compare it against the generated field metadata — a row whose shape is
+   * wrong extracts nothing and fails no type, it just silently stops
+   * accounting for a registry's swap ids.
+   */
+  readonly keying: "record-keys" | "array-names";
 }
 
 const readSwapPath = (value: unknown, path: readonly string[]): unknown =>
@@ -182,16 +197,20 @@ const readSwapPath = (value: unknown, path: readonly string[]): unknown =>
         : undefined,
     value
   );
-const recordKeys = (value: unknown): readonly string[] =>
-  value !== null && typeof value === "object" ? Object.keys(value) : [];
-const arrayNames = (value: unknown): readonly string[] =>
-  Array.isArray(value)
+const swapIds = (value: unknown, keying: SwapIdentity["keying"]): readonly string[] => {
+  if (keying === "record-keys") {
+    return value !== null && typeof value === "object" && !Array.isArray(value)
+      ? Object.keys(value)
+      : [];
+  }
+  return Array.isArray(value)
     ? value.flatMap((item: unknown) =>
         typeof (item as { readonly name?: unknown } | null)?.name === "string"
           ? [(item as { readonly name: string }).name]
           : []
       )
     : [];
+};
 
 /**
  * The registries whose swap ids join their own registry's built-id set.
@@ -201,12 +220,16 @@ const arrayNames = (value: unknown): readonly string[] =>
  * at all (`CONTENT_MANIFEST` never registers it, so there is no
  * `defineAuthority` and no `builtIds` set for its swap ids to join).
  *
- * That correspondence is *checked*, not merely asserted here:
+ * Every hand-copied part of a row is *checked*, not merely asserted here:
  * `tests/reference-guard-swap-identities.test.ts` scans every vendored `.cwt`
  * file for `base_type` declarations and fails naming any registry that is
  * neither a row below nor an exclusion it documents — so a sixth appearing in
- * a vendor bump is a failing test rather than a silent gap. It also proves
- * the `authority` exclusion still holds, by asserting no such registry exists.
+ * a vendor bump is a failing test rather than a silent gap. It also derives
+ * each row's `path` and `keying` (from the rules' `type_key_filter` and
+ * `skip_root_key`, and from the generated field metadata) rather than trusting
+ * them, since a renamed or reshaped swap field breaks a row while leaving its
+ * `base_type` intact, and proves the `authority` exclusion still holds by
+ * asserting no such registry exists.
  *
  * Every row folds into *its own* registry's built-id set — `base_type` never
  * names a different registry than the one declaring the swap field — so this
@@ -228,11 +251,11 @@ const arrayNames = (value: unknown): readonly string[] =>
  * the guard only needs the id strings.
  */
 export const SWAP_IDENTITIES: readonly SwapIdentity[] = [
-  { registryType: "tradition", path: ["traditionSwap"], extract: recordKeys },
-  { registryType: "ascension_perk", path: ["traditionSwap"], extract: recordKeys },
-  { registryType: "civic_or_origin", path: ["swapType"], extract: arrayNames },
-  { registryType: "technology", path: ["technologySwap"], extract: arrayNames },
-  { registryType: "job", path: ["swappableData", "swapType"], extract: arrayNames },
+  { registryType: "tradition", path: ["traditionSwap"], keying: "record-keys" },
+  { registryType: "ascension_perk", path: ["traditionSwap"], keying: "record-keys" },
+  { registryType: "civic_or_origin", path: ["swapType"], keying: "array-names" },
+  { registryType: "technology", path: ["technologySwap"], keying: "array-names" },
+  { registryType: "job", path: ["swappableData", "swapType"], keying: "array-names" },
 ];
 
 export function buildMod(
@@ -762,14 +785,14 @@ export function buildMod(
   for (const group of definedGroups) {
     definedByType.set(group.type, [...(definedByType.get(group.type) ?? []), ...group.defined]);
   }
-  for (const { registryType, path, extract } of SWAP_IDENTITIES) {
+  for (const { registryType, path, keying } of SWAP_IDENTITIES) {
     const defined = definedByType.get(registryType);
     if (defined === undefined) {
       continue;
     }
     const ids = builtIds.get(registryType) ?? new Set<string>();
     for (const definition of defined) {
-      for (const id of extract(readSwapPath(definition.def, path))) {
+      for (const id of swapIds(readSwapPath(definition.def, path), keying)) {
         ids.add(id);
       }
     }
@@ -843,7 +866,10 @@ export function buildMod(
   // it deliberately this is news exactly once. Resolution is dynamic
   // (`installedVanillaPackageVersion` requires a path, never imports the
   // package), which is what keeps the package-absent world a first-class
-  // program for this file too.
+  // program for this file too. Silence here means "installed and pinned
+  // right", not "checking is on": whether the package was ever imported into
+  // the consumer's program is a compile-time fact no build-time check can
+  // reach, which `vanillaIdsCheckWarning` documents and both messages say.
   if (config.uncheckedVanillaIds !== true) {
     const idsWarning = vanillaIdsCheckWarning(
       installedVanillaPackageVersion(),
