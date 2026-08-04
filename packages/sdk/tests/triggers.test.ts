@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   and,
   anyCountry,
+  currentSituationApproach,
+  currentStage,
   hasCountryFlag,
   hasGlobalFlag,
   hasTechnology,
@@ -34,14 +36,15 @@ describe("trigger builders", () => {
     `);
   });
 
-  it("emits a scope link as one navigation block", () => {
+  it("emits a scope link as one navigation block, and() spliced flat inside it", () => {
+    // `owner = { ... }` is already an implicit AND, the same as vanilla's own
+    // spelling — the nested `AND` wrapper `and()` used to add here said
+    // nothing the block did not already say.
     const condition = owner(and(isAi(), hasCountryFlag("ascended")));
     expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
       "owner = {
-      	AND = {
-      		is_ai = yes
-      		has_country_flag = ascended
-      	}
+      	is_ai = yes
+      	has_country_flag = ascended
       }
       "
     `);
@@ -57,33 +60,94 @@ describe("trigger builders", () => {
     `);
   });
 
-  it("flattens and() operands into one AND block", () => {
+  it("and() operands splice flat, with no AND wrapper, matching vanilla's implicit AND", () => {
     const condition = and(hasCountryFlag("ascended"), yearsPassed(">=", 50));
     expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
-      "AND = {
-      	has_country_flag = ascended
-      	years_passed >= 50
+      "has_country_flag = ascended
+
+      years_passed >= 50
+      "
+    `);
+  });
+
+  it("a.and(b) is and(a, b): same tree, fluent spelling", () => {
+    // SDK-53: `Trigger` had no methods, so `someTrigger.and(other)` used to
+    // fail with "Property 'and' does not exist on type 'Trigger<...>'" — a
+    // compile error, not a runtime one (see scope-safety.test-d.ts).
+    const fluent = hasCountryFlag("ascended").and(yearsPassed(">=", 50));
+    const free = and(hasCountryFlag("ascended"), yearsPassed(">=", 50));
+    expect(serialize([...fluent.entries])).toBe(serialize([...free.entries]));
+    expect(serialize([...fluent.entries])).toMatchInlineSnapshot(`
+      "has_country_flag = ascended
+
+      years_passed >= 50
+      "
+    `);
+  });
+
+  it("re-groups a flattened and() under NOT, so NOT(AND) stays a NAND and does not become a NOR", () => {
+    // NOT's immediate children get NOR semantics ("neither"), not NAND ("not
+    // both") — an unwrapped `and()` spliced flat under NOT would silently
+    // swap one for the other, so `not()` re-wraps a multi-entry operand.
+    const condition = not(and(hasCountryFlag("ascended"), yearsPassed(">=", 50)));
+    expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
+      "NOT = {
+      	AND = {
+      		has_country_flag = ascended
+      		years_passed >= 50
+      	}
       }
       "
     `);
   });
 
+  it("composes SDK-52's branded SituationTrigger through and()/not()/.and() like any other trigger", () => {
+    // SituationTrigger (currentSituationApproach/currentStage) is a plain
+    // Trigger<"situation"> with an optional phantom brand, not a distinct
+    // combinator surface — the flattening (and()) and re-grouping (not())
+    // in this file apply to it unchanged.
+    const flat = and(currentSituationApproach("approach_a"), currentStage("stage_1"));
+    expect(serialize([...flat.entries])).toMatchInlineSnapshot(`
+      "current_situation_approach = approach_a
+
+      current_stage = stage_1
+      "
+    `);
+
+    const fluentBranded = currentSituationApproach("approach_a").and(currentStage("stage_1"));
+    expect(serialize([...fluentBranded.entries])).toBe(serialize([...flat.entries]));
+
+    // A single branded condition negates directly, no AND wrapper.
+    expect(serialize([...not(currentSituationApproach("approach_a")).entries])).toBe(
+      "NOT = {\n\tcurrent_situation_approach = approach_a\n}\n"
+    );
+    // A multi-entry branded conjunction keeps its AND wrapper under NOT (NAND, not NOR).
+    expect(serialize([...not(flat).entries])).toBe(
+      "NOT = {\n" +
+        "\tAND = {\n" +
+        "\t\tcurrent_situation_approach = approach_a\n" +
+        "\t\tcurrent_stage = stage_1\n" +
+        "\t}\n" +
+        "}\n"
+    );
+  });
+
   it("splices hidden_trigger operands flat, changing no scope", () => {
     // Tooltip visibility, not logic: the conditions still have to hold, and
     // the block changes no scope — so it takes conditions rather than a
-    // closure, and its own scope is theirs.
+    // closure, and its own scope is theirs. and()'s own flattening applies
+    // here too, so the outer AND wrapper is gone as well.
     const condition = and(
       isAi(),
       hiddenTrigger(hasCountryFlag("ascended"), owner(hasCountryFlag("patron")))
     );
     expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
-      "AND = {
-      	is_ai = yes
-      	hidden_trigger = {
-      		has_country_flag = ascended
-      		owner = {
-      			has_country_flag = patron
-      		}
+      "is_ai = yes
+
+      hidden_trigger = {
+      	has_country_flag = ascended
+      	owner = {
+      		has_country_flag = patron
       	}
       }
       "

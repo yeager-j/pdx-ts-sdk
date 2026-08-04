@@ -21,6 +21,7 @@ import {
 function countrySlot(_t: Trigger<"country">): void {}
 function planetSlot(_t: Trigger<"planet">): void {}
 function situationSlot(_t: Trigger<"situation">): void {}
+function neverSlot(_t: Trigger<never>): void {}
 
 describe("scope safety", () => {
   it("rejects a planet-scoped trigger where a country trigger is required", () => {
@@ -51,6 +52,55 @@ describe("scope safety", () => {
   it("infers the scope intersection for and()", () => {
     const combined = and(hasCountryFlag("x"), hasGlobalFlag("y"));
     expectTypeOf(combined).toExtend<Trigger<"country">>();
+  });
+
+  it("ergonomics: a.and(b) is a method now, not a compile error", () => {
+    // SDK-53: `Trigger` had no methods, so `someTrigger.and(other)` used to
+    // fail with "Property 'and' does not exist on type 'Trigger<...>'" —
+    // the friction was a type error, not a runtime one.
+    const combined = hasCountryFlag("x").and(hasGlobalFlag("y"));
+    expectTypeOf(combined).toExtend<Trigger<"country">>();
+    countrySlot(hasCountryFlag("x").and(hasGlobalFlag("y")));
+    // @ts-expect-error — has_planet_flag is not valid in country scope; the fluent form is checked the same as and()
+    countrySlot(hasCountryFlag("x").and(hasPlanetFlag("y")));
+  });
+
+  it("ergonomics: .and() infers the combined scope from every operand, not just the receiver", () => {
+    // A first version bound `.and()`'s type parameter to `Trigger`'s own S,
+    // fixed by whatever the receiver happened to be instantiated at — so
+    // `hasGlobalFlag("x").and(hasCountryFlag("y"))` (a universal receiver,
+    // a country-scoped operand) rejected a conjunction the free and() built
+    // fine, purely because of argument order. `.and()` now declares its own
+    // method type parameter, inferred from `this` and every operand
+    // together, the same simultaneous inference and() itself uses.
+    const wideFirst = hasGlobalFlag("x").and(hasCountryFlag("y"));
+    const narrowFirst = hasCountryFlag("y").and(hasGlobalFlag("x"));
+    const free = and(hasGlobalFlag("x"), hasCountryFlag("y"));
+    expectTypeOf(wideFirst).toEqualTypeOf(free);
+    expectTypeOf(narrowFirst).toEqualTypeOf(free);
+    countrySlot(wideFirst);
+    countrySlot(narrowFirst);
+  });
+
+  it("ergonomics: .and() still rejects a genuinely incompatible conjunction", () => {
+    // Two triggers from disjoint scopes cannot legally co-occur — inferring
+    // the combined scope from every operand must not loosen this into
+    // compiling. `and()`'s existing behavior is the baseline: both forms
+    // reject the same conjunction, with the same kind of error.
+    // @ts-expect-error — "planet" and "country" have no common scope
+    hasPlanetFlag("z").and(hasCountryFlag("y"));
+    // @ts-expect-error — and() rejects the identical conjunction the same way
+    and(hasPlanetFlag("z"), hasCountryFlag("y"));
+  });
+
+  it("re-confirms Trigger's contravariant brand after .and()'s signature change", () => {
+    // PR #18 depends on this variance behavior, so it is worth pinning
+    // directly rather than only exercising it indirectly through and().
+    neverSlot(hasCountryFlag("x")); // Trigger<never> accepts any trigger...
+    neverSlot(hasPlanetFlag("y"));
+    neverSlot(yearsPassed(">=", 5));
+    // @ts-expect-error — ...but a concrete scope slot still rejects the wrong one
+    countrySlot(hasPlanetFlag("y"));
   });
 
   it("keeps hidden_trigger and hidden_effect at the scope that encloses them", () => {

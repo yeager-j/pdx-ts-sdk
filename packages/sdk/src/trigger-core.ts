@@ -66,7 +66,7 @@ declare const triggerNotCalled: unique symbol;
  * The call signature exists purely to poison truthiness — `if (someTrigger)`
  * is a compile error, and calling the trigger throws.
  */
-export interface Trigger<in S extends ScopeName = ScopeName> {
+export interface Trigger<S extends ScopeName = ScopeName> {
   (): TriggerNotCalled;
   readonly kind: "trigger";
   readonly entries: readonly PdxEntry[];
@@ -77,6 +77,23 @@ export interface Trigger<in S extends ScopeName = ScopeName> {
    * rather than expecting each splice site to rediscover them.
    */
   readonly refs: readonly ContentRefUse[];
+  /**
+   * Fluent conjunction: `a.and(b, c)` builds the same tree `and(a, b, c)`
+   * does (`./triggers.ts`) — declarative, not mutating. `a`, `b`, and `c` are
+   * unchanged; the method returns a new `Trigger` and records nothing on its
+   * own, the same as every other combinator.
+   *
+   * `T` is the method's own type parameter, not `S` — inferred fresh at each
+   * call from `this` and every operand together, the same simultaneous,
+   * contravariant unification `and()` itself relies on for "infers the scope
+   * intersection" (`scope-safety.test-d.ts`). Binding to the interface's own
+   * `S` instead would fix the combined scope to whatever the *receiver*
+   * happened to be instantiated at, checking every later operand against
+   * that alone — order-dependent, and rejecting valid conjunctions like
+   * `hasGlobalFlag("x").and(hasCountryFlag("y"))` where the receiver is
+   * wider than a later operand.
+   */
+  and<T extends ScopeName>(this: Trigger<T>, ...others: readonly Trigger<T>[]): Trigger<T>;
   readonly [scopeBrand]: (scope: S) => void;
 }
 
@@ -87,6 +104,20 @@ const POISON_MESSAGE =
   "an effect's 'limit'), or for in-game branching inside an effect closure use " +
   "scope.if(trigger, (s) => ...).elseIf(...).else(...).";
 
+/**
+ * The flat-conjunction tree every `and`-shaped combinator builds: operands'
+ * entries and refs concatenate in argument order with no wrapper block,
+ * matching the implicit AND every PDXScript block already is. `./triggers.ts`
+ * exports this same shape as the free `and()` function; `trigger()` wires it
+ * to every value's `.and()` method so the two spellings never drift apart.
+ */
+export function conjoin<S extends ScopeName>(operands: readonly Trigger<S>[]): Trigger<S> {
+  return trigger(
+    operands.flatMap((operand) => [...operand.entries]),
+    operands.flatMap((operand) => [...operand.refs])
+  );
+}
+
 export function trigger<S extends ScopeName>(
   entries: PdxEntry[],
   refs: readonly ContentRefUse[] = []
@@ -95,6 +126,13 @@ export function trigger<S extends ScopeName>(
     () => {
       throw new Error(POISON_MESSAGE);
     },
-    { kind: "trigger", entries, refs } as const
+    {
+      kind: "trigger",
+      entries,
+      refs,
+      and<T extends ScopeName>(this: Trigger<T>, ...others: readonly Trigger<T>[]): Trigger<T> {
+        return conjoin([this, ...others]);
+      },
+    } as const
   ) as unknown as Trigger<S>;
 }

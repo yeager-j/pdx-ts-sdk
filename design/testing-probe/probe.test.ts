@@ -110,7 +110,17 @@ country_event = {
 
 // The pass/fail tree for resonancePotential against a country holding BOTH
 // flags: exactly one subcondition — the NOT — fails, and the tree names it.
-const GOLDEN_EXPLAIN = `✗ AND
+//
+// The root label was "AND" until SDK-53 dropped and()'s redundant `AND`
+// wrapper to match vanilla's own implicit-AND spelling: resonancePotential's
+// `.entries` is now the flattened two-condition array `and()` used to wrap in
+// a single named block, so `explainEntries` (packages/sdk-testing/src/interpret.ts)
+// takes its other, already-handled branch — an unlabeled top-level "all" of
+// several entries — and names it "(top)" instead of "AND". The tree shape and
+// every leaf are unchanged; only the (immaterial) root label moved. Recorded
+// here rather than silently fixed, per this file's own goldens-are-evidence
+// policy above.
+const GOLDEN_EXPLAIN = `✗ (top)
   ✓ has_global_flag = tp_lattice_awake — set globally
   ✓ has_country_flag = tp_heard_the_hum — set on country "player"
   ✗ NOT

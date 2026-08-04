@@ -62,4 +62,44 @@ describe("the declared situation target contract", () => {
       },
     });
   });
+
+  it("ergonomics: an effect body's .target(...) needs no restated <T>", () => {
+    // Before SDK-53 this body's scope was a plain `SituationScope`, whose
+    // `.target<S2>(...)` cannot infer S2 from a bare closure — so opening the
+    // target required restating what `targetScope: "planet"` above already
+    // said: `situation.target<"planet">(...)`. Omitting the type argument
+    // used to be a type error (S2 fell back to its `ScopeName` constraint,
+    // so the callback parameter typed as a union with no planet-only
+    // members); it is what this test now pins as passing.
+    const events = namespace("st_test_ergo");
+    const planetSit = defineSituationType({
+      id: "st_test_sit_ergo",
+      name: "S",
+      monthlyProgress: { base: 1 },
+      targetScope: "planet",
+    });
+    const world = eventTarget<"planet">("st_test_ergo_world");
+    events.defineCountryEvent({
+      id: 3,
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.startSituation({
+          type: planetSit,
+          target: world,
+          effect: (situation) => {
+            situation.target((planet) => {
+              // Compiles with no cast: `planet` is narrowed to `PlanetScope`
+              // straight from `targetScope`, not asserted at this call site.
+              planet.destroyColony();
+              // @ts-expect-error — narrowed to PlanetScope; a country-only effect does not belong here
+              planet.setCountryFlag("nope");
+            });
+            // @ts-expect-error — the scope is already the declared "planet"; a second, explicit <T> is the restatement this closes
+            situation.target<"planet">(() => {});
+          },
+        });
+      },
+    });
+  });
 });
