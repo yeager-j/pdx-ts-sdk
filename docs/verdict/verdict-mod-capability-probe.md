@@ -1,8 +1,9 @@
 # Mod-capability probe verdict: the boundary earns a migration
 
-> **Spike only, 2026-08-04 (SDK-72).** The probe lives under
-> `design/mod-capability-probe/`; no shipping SDK source changed. Escape
-> criteria were committed there before the implementation was built.
+> **Verdict accepted, 2026-08-04 (SDK-72).** The probe remains under
+> `design/mod-capability-probe/`; Layer 1 now implements its immutable
+> capability surface. The later migration layers remove the legacy free
+> authoring seam. Escape criteria were committed before implementation began.
 
 ## Judgment
 

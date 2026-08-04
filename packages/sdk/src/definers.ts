@@ -87,18 +87,25 @@ type CheckedStageFields<Approach extends string, Stage extends string> = Omit<
  * and what the emitter lowers is the rest — riding on the item itself, where
  * nothing reads it but the type system.
  */
+export type SituationTypeCapabilityDef<
+  Id extends string,
+  T extends ScopeName | undefined = undefined,
+  Approach extends string = never,
+  Stage extends string = never,
+> = Omit<SituationTypeDef<Id>, "approach" | "stages" | "abortTrigger"> & {
+  readonly targetScope?: T;
+  readonly approach?: Readonly<Record<Approach, CheckedApproachFields<Approach, Stage>>>;
+  readonly stages?: Readonly<Record<Stage, CheckedStageFields<Approach, Stage>>>;
+  readonly abortTrigger?: SituationTrigger<NoInfer<Approach>, NoInfer<Stage>>;
+};
+
 export function defineSituationType<
   const Id extends string,
   T extends ScopeName | undefined = undefined,
   const Approach extends string = never,
   const Stage extends string = never,
 >(
-  def: Omit<SituationTypeDef<Id>, "approach" | "stages" | "abortTrigger"> & {
-    readonly targetScope?: T;
-    readonly approach?: Readonly<Record<Approach, CheckedApproachFields<Approach, Stage>>>;
-    readonly stages?: Readonly<Record<Stage, CheckedStageFields<Approach, Stage>>>;
-    readonly abortTrigger?: SituationTrigger<NoInfer<Approach>, NoInfer<Stage>>;
-  }
+  def: SituationTypeCapabilityDef<Id, T, Approach, Stage>
 ): ContentItem<"situation_type", SituationTypeDef<Id>> & { readonly targetScope: T } {
   const { targetScope, ...rest } = def;
   return {

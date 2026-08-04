@@ -215,11 +215,13 @@ differential, and fast-check property gates described in that package.
 
 - Triggers are declarative expression trees. Effects are closures executed once at build time to
   record AST entries.
-- Authoring is pure and free-standing: a definer (`defineTechnology`, `namespace(ns).defineXEvent`,
-  `on`, `patchTechnology`, `addShipOfSizeLimits`) returns an item and registers nothing;
-  `collection(stem, items)` places items in a file; `buildMod(config, collections, { vanilla? })`
-  folds them into a `PureMod` value that `render`/`write` consume. There is no builder object and
-  no registry-typed factory. Diagnostics are throws or `mod.warnings` data — never console output.
+- `createMod(config)` is the explicit immutable mod-bound capability. Its top-level content and
+  event methods mint ids, while nested definition ids must already belong to its prefix; all return
+  pure values without registration. `feature(stem, items)` places them and `compile(features)` folds
+  them into the `PureMod` consumed by `render`/`write`. There is no mutable builder. The legacy free
+  definers, `collection`, `buildMod`, and `discoverContent` surface is a temporary internal SDK-72
+  migration seam and is removed in a later layer. Diagnostics are throws or `mod.warnings` data —
+  never console output.
 - Source layout is not identity. `discoverContent(dir)` (`packages/sdk/src/discover.ts`) is the
   impure shell that turns a directory of feature modules into those collections — export is
   registration, the basename is the file stem — and it is a convenience over `collection`, never a

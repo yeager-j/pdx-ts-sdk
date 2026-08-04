@@ -452,6 +452,10 @@ async function main(): Promise<void> {
   const definers = contentDefiners(contents);
   await write("content-definers.ts", header(commit, contentSources) + definers.code);
   await write(
+    "content-capability.ts",
+    header(commit, [...contentSources, "content-manifest.ts"]) + definers.capabilityCode
+  );
+  await write(
     "vanilla-refs.ts",
     header(commit, [...contentSources, "content-manifest.ts (VANILLA_REF_EXTRAS)"]) +
       'import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../vanilla-ids.ts";\n' +
@@ -538,7 +542,7 @@ async function main(): Promise<void> {
   await write(
     "event-definers.ts",
     header(commit, ["events/events.cwt"]) +
-      'import { buildEvent, type EventDef } from "../events.ts";\n' +
+      'import { buildEvent, type EventDef, type EventRef } from "../events.ts";\n' +
       'import { assertNamespace } from "../items.ts";\n' +
       'import type { EventItem } from "../items.ts";\n' +
       'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +
@@ -673,14 +677,27 @@ async function main(): Promise<void> {
  * The `XItem` union types are emitted here too: they describe what a collection
  * of this registry's items can hold.
  */
-function contentDefiners(contents: readonly { registry: string; emission: ContentEmission }[]): {
+function contentDefiners(
+  contents: readonly {
+    manifest: ContentManifestEntry;
+    registry: string;
+    emission: ContentEmission;
+  }[]
+): {
   code: string;
+  capabilityCode: string;
   definers: number;
   grafted: string[];
 } {
   const grafted: string[] = [];
   const runtimeItemTypes = new Set<string>(["ContentItem"]);
   const chunks: string[] = [];
+  const capabilityMembers: string[] = [];
+  const capabilityBindings: string[] = [];
+  const profileMembers: string[] = [];
+  const defaultProfileMembers: string[] = [];
+  const capabilityRuntimeDefiners = new Set<string>();
+  const nestedDefinitionTables: string[] = [];
 
   for (const content of contents) {
     const { registry, emission } = content;
@@ -691,6 +708,31 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
     const graft = HAND_WRITTEN_CONTENT_DEFINERS.get(registry);
     const patchable = CONTENT_PATCH_REGISTRIES.get(registry);
     const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
+    const method = camelCase(registry);
+    const minted = `MintedContentId<P, I, ${JSON.stringify(method)}, Name>`;
+    const nestedDefinitionMembers = emission.emittedFields
+      .filter((field) => field.shape === "repeatedStruct")
+      .map((field) => camelCase(field.field))
+      .sort();
+    const nestedDefinitionTable = `${registry.toUpperCase()}_NESTED_DEFINITION_MEMBERS`;
+    if (nestedDefinitionMembers.length > 0) {
+      nestedDefinitionTables.push(
+        `const ${nestedDefinitionTable} = ${JSON.stringify(nestedDefinitionMembers)} as const;\n`
+      );
+    }
+
+    profileMembers.push(
+      docComment(
+        [
+          `The segment inserted between the mod prefix and ${article} ${spoken}'s logical name.`,
+          "Override it when this registry needs a different id convention.",
+        ],
+        "  "
+      ) + `  readonly ${method}: string;`
+    );
+    defaultProfileMembers.push(
+      `  ${method}: ${JSON.stringify(content.manifest.idSegment ?? registry)},`
+    );
 
     // A scope-parameterised registry erases S to `never`, not to its default:
     // `Trigger<S>` is contravariant, so `Def<Id, never>` is the supertype every
@@ -705,6 +747,117 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
     if (contribution !== undefined) {
       itemArms.push("ContributionItem");
       runtimeItemTypes.add("ContributionItem");
+    }
+
+    if (graft === undefined) {
+      const scoped = emission.scopeParameter;
+      const parameters =
+        scoped === null
+          ? "<const Name extends string>"
+          : `<\n    const Name extends string,\n    S extends ${scoped.typeName} = ` +
+            `${JSON.stringify(scoped.fallback)},\n  >`;
+      const def = `${name}Def<${minted}${scoped === null ? "" : ", S"}>`;
+      const result = `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
+      capabilityMembers.push(
+        docComment(
+          [
+            `Defines ${article} ${spoken} from its logical name.`,
+            "The capability mints and owns the full id; the returned branded reference",
+            "flows into matching content-reference fields.",
+            ...(nestedDefinitionMembers.length === 0
+              ? []
+              : [
+                  "Nested-definition record keys are full ids and must belong to this capability's",
+                  "prefix, because other fields may reference them directly.",
+                ]),
+          ],
+          "  "
+        ) +
+          `  ${method}${parameters}(\n` +
+          `    name: Name,\n` +
+          `    def: Omit<${def}, "id">\n` +
+          `  ): ContentItem<${key}, ${result}>;`
+      );
+      capabilityBindings.push(
+        capabilityBinding(
+          method,
+          parameters,
+          `Omit<${def}, "id">`,
+          `define${name}`,
+          def,
+          nestedDefinitionMembers,
+          nestedDefinitionTable
+        )
+      );
+      capabilityRuntimeDefiners.add(`define${name}`);
+    } else {
+      capabilityMembers.push(
+        docComment(
+          [
+            `Defines ${article} ${spoken} from its logical name.`,
+            "The capability mints and owns the full id; the returned branded reference",
+            "flows into matching content-reference fields.",
+            ...(nestedDefinitionMembers.length === 0
+              ? []
+              : [
+                  "Nested-definition record keys are full ids and must belong to this capability's",
+                  "prefix, because other fields may reference them directly.",
+                ]),
+          ],
+          "  "
+        ) +
+          `  ${method}<\n` +
+          `    const Name extends string,\n` +
+          `    T extends ScopeName | undefined = undefined,\n` +
+          `    const Approach extends string = never,\n` +
+          `    const Stage extends string = never,\n` +
+          `  >(\n` +
+          `    name: Name,\n` +
+          `    def: Omit<SituationTypeCapabilityDef<${minted}, T, Approach, Stage>, "id">\n` +
+          `  ): ContentItem<${key}, ${name}Def<${minted}>> & { readonly targetScope: T };`
+      );
+      capabilityBindings.push(
+        capabilityBinding(
+          method,
+          `<\n` +
+            `      const Name extends string,\n` +
+            `      T extends ScopeName | undefined = undefined,\n` +
+            `      const Approach extends string = never,\n` +
+            `      const Stage extends string = never,\n` +
+            `    >`,
+          `Omit<SituationTypeCapabilityDef<${minted}, T, Approach, Stage>, "id">`,
+          `define${name}`,
+          `SituationTypeCapabilityDef<${minted}, T, Approach, Stage>`,
+          nestedDefinitionMembers,
+          nestedDefinitionTable
+        )
+      );
+    }
+    if (patchable !== undefined) {
+      capabilityMembers.push(
+        docComment(
+          [
+            `Patches a vanilla ${spoken} as a whole-object override.`,
+            "Unlike a capability definition method, it mints no id and owns no new content.",
+          ],
+          "  "
+        ) + `  readonly patch${name}: typeof patch${name};`
+      );
+      capabilityBindings.push(`    patch${name},`);
+      capabilityRuntimeDefiners.add(`patch${name}`);
+    }
+    if (contribution !== undefined) {
+      capabilityMembers.push(
+        docComment(
+          [
+            `Adds ids to the shared ${contribution.sink} sink.`,
+            "This is an id-less additive contribution, not a capability-owned definition.",
+          ],
+          "  "
+        ) + `  readonly ${contribution.method}: typeof ${contribution.method};`
+      );
+      capabilityBindings.push(`    ${contribution.method},`);
+      capabilityRuntimeDefiners.add(contribution.method);
     }
 
     const definitions: string[] = [];
@@ -823,8 +976,115 @@ function contentDefiners(contents: readonly { registry: string; emission: Conten
         ])
       )
       .join("");
+  const graftImports = contents.some((content) =>
+    HAND_WRITTEN_CONTENT_DEFINERS.has(content.registry)
+  )
+    ? 'import { defineSituationType, type SituationTypeCapabilityDef } from "../definers.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n'
+    : "";
+  const capabilityImports =
+    'import type { ContentItem } from "../items.ts";\n' +
+    (capabilityRuntimeDefiners.size === 0
+      ? ""
+      : `import { ${[...capabilityRuntimeDefiners].sort().join(", ")} } from "./content-definers.ts";\n`) +
+    contents
+      .map((content) =>
+        importList(`./${content.registry.replaceAll("_", "-")}.ts`, [
+          `${content.emission.typeName}Def`,
+          ...(content.emission.scopeParameter === null
+            ? []
+            : [content.emission.scopeParameter.typeName]),
+        ])
+      )
+      .join("") +
+    graftImports;
+  const capability =
+    nestedDefinitionTables.join("\n") +
+    "type NestedDefinitionIdAsserter = (id: string) => void;\n\n" +
+    (nestedDefinitionTables.length === 0
+      ? ""
+      : "function assertNestedDefinitionIds(\n" +
+        "  def: object,\n" +
+        "  assert: NestedDefinitionIdAsserter,\n" +
+        "  members: readonly string[]\n" +
+        "): void {\n" +
+        "  for (const member of members) {\n" +
+        "    const nested = (def as Readonly<Record<string, unknown>>)[member];\n" +
+        "    if (nested === undefined) {\n" +
+        "      continue;\n" +
+        "    }\n" +
+        "    Object.keys(nested as Readonly<Record<string, unknown>>).forEach(assert);\n" +
+        "  }\n" +
+        "}\n\n") +
+    docComment([
+      "Registry-specific id segments used when a mod capability mints content ids.",
+      "Each member may override the conventional segment for its registry.",
+    ]) +
+    "export interface IdProfile {\n" +
+    profileMembers.join("\n") +
+    "\n}\n\n" +
+    docComment(["The conventional id segments used when no profile override is supplied."]) +
+    "export const DEFAULT_ID_PROFILE = Object.freeze({\n" +
+    defaultProfileMembers.join("\n") +
+    "\n}) satisfies IdProfile;\n\n" +
+    docComment(["The literal id a capability mints for one logical content name."]) +
+    "export type MintedContentId<\n" +
+    "  P extends string,\n" +
+    "  I extends IdProfile,\n" +
+    "  K extends keyof I,\n" +
+    "  Name extends string,\n" +
+    "> = `${P}_${I[K] & string}_${Name}`;\n\n" +
+    docComment([
+      "The internal function that turns a registry key and logical name into an owned id.",
+    ]) +
+    "export type ContentIdMinter<P extends string, I extends IdProfile> = <\n" +
+    "  const K extends keyof I,\n" +
+    "  const Name extends string,\n" +
+    ">(registry: K, name: Name) => MintedContentId<P, I, K, Name>;\n\n" +
+    docComment(["Content authoring methods bound to one mod capability's prefix and id profile."]) +
+    "export interface ContentCapabilityMethods<P extends string, I extends IdProfile> {\n" +
+    capabilityMembers.join("\n") +
+    "\n}\n\n" +
+    docComment(["Builds the internal content-method table for a mod capability."]) +
+    "export function contentCapabilityMethods<P extends string, I extends IdProfile>(\n" +
+    "  mint: ContentIdMinter<P, I>,\n" +
+    "  assertNestedId: NestedDefinitionIdAsserter\n" +
+    "): ContentCapabilityMethods<P, I> {\n" +
+    "  return Object.freeze({\n" +
+    capabilityBindings.join("\n") +
+    "\n  }) as ContentCapabilityMethods<P, I>;\n" +
+    "}\n";
 
-  return { code: imports + "\n" + chunks.join("\n"), definers: contents.length, grafted };
+  return {
+    code: imports + "\n" + chunks.join("\n"),
+    capabilityCode: capabilityImports + "\n" + capability,
+    definers: contents.length,
+    grafted,
+  };
+}
+
+function capabilityBinding(
+  method: string,
+  parameters: string,
+  definitionArgument: string,
+  definer: string,
+  definitionType: string,
+  nestedDefinitionMembers: readonly string[],
+  nestedDefinitionTable: string
+): string {
+  const withId = `{ ...def, id: mint(${JSON.stringify(method)}, name) }`;
+  if (nestedDefinitionMembers.length === 0) {
+    return (
+      `    ${method}: ${parameters}(name: Name, def: ${definitionArgument}) =>\n` +
+      `      ${definer}(${withId} as ${definitionType}),`
+    );
+  }
+  return (
+    `    ${method}: ${parameters}(name: Name, def: ${definitionArgument}) => {\n` +
+    `      assertNestedDefinitionIds(def, assertNestedId, ${nestedDefinitionTable});\n` +
+    `      return ${definer}(${withId} as ${definitionType});\n` +
+    "    },"
+  );
 }
 
 /**

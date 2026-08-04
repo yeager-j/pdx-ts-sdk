@@ -57,6 +57,27 @@ describe("generated event surface", () => {
     expect(definers).not.toContain("Collection<");
   });
 
+  it("derives direct and handle capability methods from every scoped event kind", () => {
+    const capability = definers.slice(definers.indexOf("export interface CapabilityEvents"));
+    const methods = [...capability.matchAll(/^  (\w+)Handle(?:<|\n)/gm)].map((match) => match[1]);
+
+    expect(methods).toHaveLength(
+      Object.values(EVENT_KINDS).filter((kind) => kind.scope !== null).length
+    );
+    expect(new Set(methods).size).toBe(methods.length);
+    expect(capability).toContain(
+      "export function capabilityEvents<P extends string, N extends string>("
+    );
+    expect(capability).toContain('builder.handle(id, "country_event", "country", "country"');
+    expect(capability).toContain('CapabilityEventHandle<P, N, Id, "country", From, "observer">');
+    expect(capability).toContain(
+      "Defines a country event with an id in this capability namespace."
+    );
+    expect(capability).toContain(
+      "Creates an immutable country event reference in this capability namespace."
+    );
+  });
+
   it("emits the witness-overload pair for every fire effect", () => {
     expect(fires).toContain('declare module "./effects.ts"');
     expect(fires).toContain("interface SituationScope {");

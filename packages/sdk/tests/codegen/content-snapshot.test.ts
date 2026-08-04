@@ -1047,6 +1047,7 @@ describe("content-type codegen", () => {
  */
 describe("generated content definers", () => {
   const definers = readFileSync("packages/sdk/src/generated/content-definers.ts", "utf8");
+  const capability = readFileSync("packages/sdk/src/generated/content-capability.ts", "utf8");
 
   it("emits one free definer and one item union per manifest registry", () => {
     for (const manifest of CONTENT_MANIFEST) {
@@ -1101,5 +1102,64 @@ describe("generated content definers", () => {
     expect(definers).toContain("): ContributionItem {");
     expect(definers).toContain('registry: "ship_of_size_limits",');
     expect(definers).toContain('refRegistry: "country_ship_of_size_limit",');
+  });
+
+  it("keeps capability helpers out of the free-definer export and derives them from the manifest", () => {
+    expect(definers).not.toContain("export interface IdProfile {");
+    expect(definers).not.toContain("DEFAULT_ID_PROFILE");
+    expect(definers).not.toContain("contentCapabilityMethods");
+    expect(capability).toContain("export interface IdProfile {");
+    expect(capability).toContain('  technology: "tech",');
+    expect(capability).toContain('  traditionCategory: "tradition_category",');
+    expect(capability).toContain(
+      "export function contentCapabilityMethods<P extends string, I extends IdProfile>("
+    );
+    expect(capability).toContain(
+      '): ContentItem<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;'
+    );
+    expect(capability).toContain(
+      'SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>, T, Approach, Stage>'
+    );
+    expect(capability).toContain("readonly patchTechnology: typeof patchTechnology;");
+    expect(capability).toContain("readonly addShipOfSizeLimits: typeof addShipOfSizeLimits;");
+    expect(capability).toContain(
+      "The capability mints and owns the full id; the returned branded reference"
+    );
+    expect(capability).toContain(
+      "Unlike a capability definition method, it mints no id and owns no new content."
+    );
+    expect(capability).toContain(
+      "This is an id-less additive contribution, not a capability-owned definition."
+    );
+  });
+
+  it("derives every nested identity table from repeated-struct metadata", () => {
+    const nestedByRegistry = CONTENT_MANIFEST.map((manifest) => {
+      const registry = (manifest as ContentManifestEntry).as ?? manifest.type;
+      return {
+        registry,
+        members: emissions
+          .get(registry)!
+          .emittedFields.filter((field) => field.shape === "repeatedStruct")
+          .map((field) =>
+            field.field.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())
+          )
+          .sort(),
+      };
+    }).filter((entry) => entry.members.length > 0);
+
+    expect(nestedByRegistry).toEqual([
+      { registry: "tradition", members: ["traditionSwap"] },
+      { registry: "ascension_perk", members: ["traditionSwap"] },
+      { registry: "situation_type", members: ["approach", "stages"] },
+    ]);
+    for (const { registry, members } of nestedByRegistry) {
+      const table = `${registry.toUpperCase()}_NESTED_DEFINITION_MEMBERS`;
+      expect(capability).toContain(
+        `const ${table} = [${members.map((member) => JSON.stringify(member)).join(", ")}] as const;`
+      );
+      expect(capability.match(new RegExp(`\\b${table}\\b`, "g"))).toHaveLength(2);
+    }
+    expect(capability).toContain("function assertNestedDefinitionIds(");
   });
 });

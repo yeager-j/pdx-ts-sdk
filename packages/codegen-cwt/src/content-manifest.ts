@@ -9,6 +9,12 @@ export interface ContentManifestEntry {
   readonly type: string;
   readonly source: string;
   /**
+   * Conventional id segment the mod capability mints between its prefix and
+   * a logical definition name. Omit it when the registry name is already the
+   * established spelling.
+   */
+  readonly idSegment?: string;
+  /**
    * The literal top-level key, for registries CWT marks with `name_field` —
    * where the key is a repeated keyword and the id lives in a body field.
    *
@@ -50,7 +56,7 @@ export interface ContentManifestEntry {
 }
 
 export const CONTENT_MANIFEST = [
-  { type: "technology", source: "common/technologies_consolidated.cwt" },
+  { type: "technology", source: "common/technologies_consolidated.cwt", idSegment: "tech" },
   { type: "building", source: "common/buildings.cwt" },
   { type: "tradition", source: "common/traditions.cwt" },
   { type: "tradition_category", source: "common/traditions.cwt" },
