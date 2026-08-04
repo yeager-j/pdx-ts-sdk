@@ -758,11 +758,27 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "and the row was missing, so the writer silently dropped it. building's sibling triggered_* " +
         "fields (triggered_planet_pop_group_modifier_for_species/_for_all, triggered_country_modifier, " +
         "triggered_army_modifier) splice the by_pop_group/by_planet clause variants instead of plain " +
-        "triggered_modifier_clause; SDK-56 gives triggered_country_modifier, " +
-        "triggered_planet_pop_group_modifier_for_all, and triggered_army_modifier their own rows " +
-        "below, each against its own clause. triggered_planet_pop_group_modifier_for_species " +
-        "remains a real, separate gap (2 shipped buildings write it) — SDK-56 was scoped to the " +
-        "six fields its evidence sweep found and did not include it; flagged for a follow-up.",
+        "triggered_modifier_clause; SDK-56 gives all four their own rows below, each against its " +
+        "own clause — SDK-56's initial evidence sweep missed for_species (it credited the row to " +
+        "job.triggered_planet_pop_group_modifier_for_species, a different registry with the same " +
+        "field name), caught in review and folded in rather than left for another follow-up.",
+    },
+  ],
+  [
+    "building.triggered_planet_pop_group_modifier_for_species",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_by_pop_group_clause (aliases.cwt:73) is the pop_group-scoped variant " +
+        "of triggered_modifier_clause — identical potential/modifier/description/mult/multiplier " +
+        "template, plus one field (divide_over_pop_groups) TriggeredModifier does not model — the " +
+        "same clause and the same shape job.triggered_planet_pop_group_modifier_for_species " +
+        "(SDK-39) already uses for that trade. SDK-56: 2 shipped buildings write this key " +
+        "(both in building_clone_army_clone_vat, common/buildings/01_pop_assembly_buildings.txt) " +
+        "and the row was missing, so the writer silently dropped it in full. Neither shipped use " +
+        "writes divide_over_pop_groups, so reusing triggeredModifierBlock here drops nothing real " +
+        "yet — same as the job row's own justification — but the field stays unauthorable if a " +
+        "future building ever does write it.",
     },
   ],
   [

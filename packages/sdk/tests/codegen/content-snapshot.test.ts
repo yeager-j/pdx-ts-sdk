@@ -158,6 +158,14 @@ describe("content-type codegen", () => {
     expect(emissions.get("building")?.code).toContain(
       'triggeredPlanetPopGroupModifierForAll?: TriggeredModifier<"pop_group">[];'
     );
+    // SDK-56: the seventh field, caught in review — for_species splices
+    // triggered_modifier_by_pop_group_clause, not the by_planet_clause the
+    // other three splice, but reuses the same triggeredModifierBlock shape
+    // job.triggered_planet_pop_group_modifier_for_species (SDK-39) already
+    // proved out for that clause.
+    expect(emissions.get("building")?.code).toContain(
+      'triggeredPlanetPopGroupModifierForSpecies?: TriggeredModifier<"pop_group">[];'
+    );
   });
 
   it("generates ascension perks and their swaps without registry-specific code", () => {

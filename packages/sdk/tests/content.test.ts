@@ -3079,15 +3079,18 @@ describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring 
 });
 
 describe("SDK-56 building modifier fields (buildingModifiers)", () => {
-  // buildings.cwt declares eight modifier fields on building; SDK-39 covered
-  // planet_modifier and triggered_planet_modifier, leaving six with no
+  // buildings.cwt declares nine modifier fields on building; SDK-39 covered
+  // planet_modifier and triggered_planet_modifier, leaving seven with no
   // CONTENT_FIELD_OVERRIDES row — silently dropped by the writer, which only
   // emits a registry's declared ContentField[] members. Measured against the
   // real install: triggered_country_modifier (114 shipped buildings),
   // country_modifier (35), triggered_planet_pop_group_modifier_for_all (5),
-  // system_modifier (1), and army_modifier/triggered_army_modifier (0, added
-  // for shape parity with their proven siblings rather than declined for
-  // lack of their own precedent).
+  // triggered_planet_pop_group_modifier_for_species (2), system_modifier (1),
+  // and army_modifier/triggered_army_modifier (0, added for shape parity
+  // with their proven siblings rather than declined for lack of their own
+  // precedent). for_species was caught in review, not in the ticket's own
+  // sweep — it matched the field name to job's identically-named field
+  // instead of checking the registry.
   const CONFIG = configFor("SDK-56 building modifiers test", "sdk56");
 
   it("emits building's plain modifier trio: country_modifier/army_modifier/system_modifier (buildingModifiers)", () => {
@@ -3153,6 +3156,34 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
     );
     expect(rendered).toContain(
       "triggered_planet_pop_group_modifier_for_all = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tpop_happiness = 0.1\n\t}"
+    );
+  });
+
+  it("emits building's triggered_planet_pop_group_modifier_for_species (buildingModifiers)", () => {
+    // The seventh field: splices triggered_modifier_by_pop_group_clause
+    // (buildings.cwt:221), not the by_planet_clause the triggered trio
+    // above use — a genuinely different clause, reusing triggeredModifierBlock
+    // the same way job.triggered_planet_pop_group_modifier_for_species
+    // (SDK-39) already does for that same clause, at the cost of not
+    // modeling that clause's one extra field (divide_over_pop_groups).
+    const building = defineBuilding({
+      id: "sdk56_building_triggered_for_species",
+      name: "Sdk56 Triggered For Species",
+      triggeredPlanetPopGroupModifierForSpecies: [
+        {
+          when: always(),
+          modifiers: (m) => m.pop.happiness(0.1),
+        },
+      ],
+    });
+
+    const rendered = render(buildMod(CONFIG, [collection(undefined, [building])])).get(
+      "common/buildings/sdk56_buildings.txt"
+    )!;
+
+    expect(rendered).toContain(
+      "triggered_planet_pop_group_modifier_for_species = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
         "\t\tpop_happiness = 0.1\n\t}"
     );
   });

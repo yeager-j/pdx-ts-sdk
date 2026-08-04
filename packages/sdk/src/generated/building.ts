@@ -121,6 +121,7 @@ export interface BuildingFields {
   countryModifier?: ModifierClosure<"country">;
   armyModifier?: ModifierClosure<"army">;
   systemModifier?: ModifierClosure<"system">;
+  triggeredPlanetPopGroupModifierForSpecies?: TriggeredModifier<"pop_group">[];
   triggeredPlanetPopGroupModifierForAll?: TriggeredModifier<"pop_group">[];
   triggeredPlanetModifier?: TriggeredModifier<"colony">[];
   triggeredCountryModifier?: TriggeredModifier<"country">[];
@@ -346,6 +347,13 @@ export const BUILDING_FIELDS: readonly ContentField[] = [
   { key: "country_modifier", member: "countryModifier", shape: "modifierBlock", form: "closure" },
   { key: "army_modifier", member: "armyModifier", shape: "modifierBlock", form: "closure" },
   { key: "system_modifier", member: "systemModifier", shape: "modifierBlock", form: "closure" },
+  {
+    key: "triggered_planet_pop_group_modifier_for_species",
+    member: "triggeredPlanetPopGroupModifierForSpecies",
+    shape: "triggeredModifierBlock",
+    form: "list",
+    repeated: true,
+  },
   {
     key: "triggered_planet_pop_group_modifier_for_all",
     member: "triggeredPlanetPopGroupModifierForAll",

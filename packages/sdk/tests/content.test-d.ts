@@ -1386,6 +1386,14 @@ describe("generated content authoring types", () => {
     expectTypeOf<BuildingFields["triggeredPlanetPopGroupModifierForAll"]>().toEqualTypeOf<
       TriggeredModifier<"pop_group">[] | undefined
     >();
+    // The seventh field caught in review: a different clause
+    // (triggered_modifier_by_pop_group_clause, not by_planet_clause) but the
+    // same pop_group scope and the same TriggeredModifier shape as its
+    // _for_all sibling — the clause difference is in an extra field
+    // (divide_over_pop_groups) the shape doesn't model, not in scope.
+    expectTypeOf<BuildingFields["triggeredPlanetPopGroupModifierForSpecies"]>().toEqualTypeOf<
+      TriggeredModifier<"pop_group">[] | undefined
+    >();
 
     defineBuilding({
       id: "content_types_building_modifier_scopes",
@@ -1408,6 +1416,12 @@ describe("generated content authoring types", () => {
           // army scope; isCapital is colony/planet/carrier/ship only
           when: isCapital(),
           modifiers: (m) => m.raw("armies_cost_mult", -0.05),
+        },
+      ],
+      triggeredPlanetPopGroupModifierForSpecies: [
+        {
+          when: always(),
+          modifiers: (m) => m.pop.happiness(0.1),
         },
       ],
     });
