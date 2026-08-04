@@ -1,0 +1,2933 @@
+{
+  "registry": "situation_type",
+  "definitions": 90,
+  "files": 20,
+  "fingerprint": "918939fb521bcf1b31326e6778e6d65388f20d47d2ee0f9fd0c2c3c61f70ceac",
+  "fields": {
+    "abort_trigger": {
+      "definitions": 64,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 64,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
+    "approach": {
+      "definitions": 89,
+      "repeated": 76,
+      "scalars": 0,
+      "blocks": 89,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "ai_weight",
+        "allow",
+        "custom_tooltip_with_modifiers",
+        "default",
+        "icon",
+        "icon_background",
+        "modifier",
+        "name",
+        "on_select",
+        "potential",
+        "resources",
+        "target_modifier",
+        "triggered_modifier",
+        "triggered_target_modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "ai_weight",
+          "allow",
+          "custom_tooltip_with_modifiers",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select"
+        ],
+        [
+          "ai_weight",
+          "allow",
+          "custom_tooltip_with_modifiers",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select"
+        ],
+        [
+          "ai_weight",
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select"
+        ],
+        [
+          "ai_weight",
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select",
+          "potential"
+        ],
+        [
+          "ai_weight",
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select",
+          "potential",
+          "resources"
+        ],
+        [
+          "ai_weight",
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select"
+        ],
+        [
+          "ai_weight",
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "resources",
+          "target_modifier"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select",
+          "potential"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select",
+          "potential",
+          "resources"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select",
+          "triggered_modifier"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "potential"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "resources"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "potential"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "potential",
+          "triggered_modifier"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "resources",
+          "target_modifier",
+          "triggered_target_modifier"
+        ],
+        [
+          "ai_weight",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "resources",
+          "triggered_target_modifier"
+        ],
+        [
+          "allow",
+          "custom_tooltip_with_modifiers",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "resources"
+        ],
+        [
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select"
+        ],
+        [
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select",
+          "resources"
+        ],
+        [
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select"
+        ],
+        [
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "potential",
+          "resources",
+          "target_modifier",
+          "triggered_target_modifier"
+        ],
+        [
+          "allow",
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "resources",
+          "triggered_modifier"
+        ],
+        [
+          "allow",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select"
+        ],
+        [
+          "allow",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "potential"
+        ],
+        [
+          "allow",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "potential",
+          "resources"
+        ],
+        [
+          "allow",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "resources"
+        ],
+        [
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select"
+        ],
+        [
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select",
+          "resources"
+        ],
+        [
+          "default",
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "on_select",
+          "triggered_modifier"
+        ],
+        [
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select"
+        ],
+        [
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "potential"
+        ],
+        [
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "potential",
+          "resources",
+          "target_modifier"
+        ],
+        [
+          "default",
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "resources"
+        ],
+        [
+          "icon",
+          "icon_background",
+          "modifier",
+          "name",
+          "potential",
+          "resources",
+          "triggered_modifier"
+        ],
+        [
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "potential",
+          "resources"
+        ],
+        [
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "resources"
+        ],
+        [
+          "icon",
+          "icon_background",
+          "name",
+          "on_select",
+          "triggered_modifier"
+        ]
+      ]
+    },
+    "approach.ai_weight": {
+      "definitions": 36,
+      "repeated": 33,
+      "scalars": 0,
+      "blocks": 36,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "approach.allow": {
+      "definitions": 26,
+      "repeated": 21,
+      "scalars": 0,
+      "blocks": 26,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "custom_tooltip",
+        "hidden_trigger",
+        "if",
+        "owner",
+        "situation_breach_shroud_endbringers_approach_cooldown_trigger",
+        "situation_shroud_forged_approach_cooldown_trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "NOR",
+          "NOT",
+          "owner"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_trigger"
+        ],
+        [
+          "custom_tooltip",
+          "owner"
+        ],
+        [
+          "if",
+          "situation_shroud_forged_approach_cooldown_trigger"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "situation_breach_shroud_endbringers_approach_cooldown_trigger"
+        ]
+      ]
+    },
+    "approach.custom_tooltip_with_modifiers": {
+      "definitions": 3,
+      "repeated": 3,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "approach_situation_the_seal_pump_exotic_gases_tt",
+        "approach_situation_the_seal_weave_astral_fabric_tt",
+        "approach_voidworm_plague_purge_infected_pops_tt",
+        "approach_voidworm_plague_support_fleets_tt",
+        "situation_passenger_satisfaction_crew_approach_tt",
+        "situation_passenger_satisfaction_passenger_approach_tt"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "approach.default": {
+      "definitions": 77,
+      "repeated": 0,
+      "scalars": 77,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "approach.icon": {
+      "definitions": 89,
+      "repeated": 76,
+      "scalars": 89,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_situation_approach_alloys",
+        "GFX_situation_approach_amenities",
+        "GFX_situation_approach_astral",
+        "GFX_situation_approach_balance_sheet",
+        "GFX_situation_approach_blind",
+        "GFX_situation_approach_dark_matter",
+        "GFX_situation_approach_digestion",
+        "GFX_situation_approach_discurage_conversation",
+        "GFX_situation_approach_disrupt",
+        "GFX_situation_approach_encurage_conversation",
+        "GFX_situation_approach_energy_credits",
+        "GFX_situation_approach_engineering",
+        "GFX_situation_approach_exotic",
+        "GFX_situation_approach_fight",
+        "GFX_situation_approach_fist",
+        "GFX_situation_approach_fleet",
+        "GFX_situation_approach_flight",
+        "GFX_situation_approach_genetics",
+        "GFX_situation_approach_gift",
+        "GFX_situation_approach_handshake",
+        "GFX_situation_approach_hungry",
+        "GFX_situation_approach_incorporate",
+        "GFX_situation_approach_influence",
+        "GFX_situation_approach_minerals",
+        "GFX_situation_approach_nomad_emergency",
+        "GFX_situation_approach_nomad_good",
+        "GFX_situation_approach_nomad_neutral",
+        "GFX_situation_approach_nomad_very_good",
+        "GFX_situation_approach_open_conversation",
+        "GFX_situation_approach_physics",
+        "GFX_situation_approach_pop",
+        "GFX_situation_approach_radioactive",
+        "GFX_situation_approach_rare_crystals",
+        "GFX_situation_approach_research",
+        "GFX_situation_approach_scales",
+        "GFX_situation_approach_shrug",
+        "GFX_situation_approach_society",
+        "GFX_situation_approach_spiral",
+        "GFX_situation_approach_suspicious",
+        "GFX_situation_approach_synthesize",
+        "GFX_situation_approach_this_is_fine",
+        "GFX_situation_approach_threads",
+        "GFX_situation_approach_unity",
+        "GFX_situation_approach_volatile_motes",
+        "GFX_situation_approach_whip",
+        "GFX_situation_approach_zro",
+        "GFX_situation_icon_cloning",
+        "GFX_situation_icon_mutation",
+        "GFX_situation_icon_purity"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "approach.icon_background": {
+      "definitions": 89,
+      "repeated": 76,
+      "scalars": 89,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_situation_approach_bg_green",
+        "GFX_situation_approach_bg_red",
+        "GFX_situation_approach_bg_yellow"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "approach.modifier": {
+      "definitions": 42,
+      "repeated": 36,
+      "scalars": 0,
+      "blocks": 42,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "all_technology_research_speed",
+        "approach_shroud_forged_support_modifier",
+        "approach_shroud_forged_suppress_modifier",
+        "bureaucrat_jobs_bonus_workforce_mult",
+        "country_alloys_produces_mult",
+        "country_base_energy_produces_add",
+        "country_base_influence_produces_add",
+        "country_base_minerals_produces_add",
+        "country_base_sr_zro_produces_add",
+        "country_consumer_goods_produces_mult",
+        "country_energy_produces_mult",
+        "country_engineering_research_produces_mult",
+        "country_engineering_tech_research_speed",
+        "country_minerals_produces_mult",
+        "country_physics_research_produces_mult",
+        "country_society_research_produces_mult",
+        "country_unity_produces_mult",
+        "damage_vs_country_type_voidworms_crisis_mult",
+        "diplo_weight_economy_mult",
+        "logistic_growth_mult",
+        "modify_species_cost_mult",
+        "planet_artisans_unity_produces_add",
+        "planet_biologists_energy_upkeep_add",
+        "planet_building_build_speed_mult",
+        "planet_building_refund_mult",
+        "planet_buildings_energy_upkeep_mult",
+        "planet_buildings_hab_capital_upkeep_mult",
+        "planet_chemists_upkeep_mult",
+        "planet_chemists_volatile_motes_produces_mult",
+        "planet_farmers_exotic_gases_produces_mult",
+        "planet_farmers_food_produces_add",
+        "planet_farmers_trade_upkeep_add",
+        "planet_jobs_alloys_produces_mult",
+        "planet_jobs_consumer_goods_upkeep_mult",
+        "planet_jobs_produces_mult",
+        "planet_jobs_upkeep_mult",
+        "planet_metallurgists_alloys_produces_add",
+        "planet_metallurgists_produces_mult",
+        "planet_metallurgists_upkeep_mult",
+        "planet_miners_rare_crystals_produces_mult",
+        "planet_pops_consumer_goods_upkeep_mult",
+        "planet_refiners_exotic_gases_produces_mult",
+        "planet_refiners_upkeep_mult",
+        "planet_researchers_produces_mult",
+        "planet_researchers_upkeep_mult",
+        "planet_stability_add",
+        "planet_structures_cost_mult",
+        "planet_structures_exotic_gases_upkeep_mult",
+        "planet_structures_rare_crystals_upkeep_mult",
+        "planet_structures_volatile_motes_upkeep_mult",
+        "planet_technician_volatile_motes_produces_mult",
+        "planet_translucers_rare_crystals_produces_mult",
+        "planet_translucers_upkeep_mult",
+        "pop_artisan_drone_bonus_workforce_mult",
+        "pop_bonus_workforce_mult",
+        "pop_happiness",
+        "psionic_aura_effectiveness_mult",
+        "psionic_aura_intensity_mult",
+        "researcher_jobs_bonus_workforce_mult",
+        "science_ship_survey_speed",
+        "ship_accuracy_mult",
+        "ship_armor_hardening_add",
+        "ship_base_speed_mult",
+        "ship_evasion_add",
+        "ship_evasion_mult",
+        "ship_fire_rate_mult",
+        "ship_hull_regen_add_perc",
+        "ship_speed_mult",
+        "ship_speed_reduction",
+        "ship_tracking_mult",
+        "specialist_and_complex_drone_cat_bonus_workforce_mult",
+        "species_leader_exp_gain",
+        "starbase_shipyard_build_speed_mult",
+        "station_gatherers_produces_mult",
+        "voidworms_planet_orbital_bombardment_damage"
+      ],
+      "keysByDefinition": [
+        [
+          "all_technology_research_speed"
+        ],
+        [
+          "all_technology_research_speed",
+          "country_unity_produces_mult",
+          "starbase_shipyard_build_speed_mult"
+        ],
+        [
+          "approach_shroud_forged_support_modifier",
+          "approach_shroud_forged_suppress_modifier"
+        ],
+        [
+          "bureaucrat_jobs_bonus_workforce_mult",
+          "diplo_weight_economy_mult",
+          "logistic_growth_mult",
+          "planet_building_build_speed_mult",
+          "planet_jobs_produces_mult",
+          "planet_jobs_upkeep_mult",
+          "pop_bonus_workforce_mult",
+          "researcher_jobs_bonus_workforce_mult",
+          "specialist_and_complex_drone_cat_bonus_workforce_mult"
+        ],
+        [
+          "country_alloys_produces_mult",
+          "country_energy_produces_mult",
+          "country_engineering_research_produces_mult",
+          "country_minerals_produces_mult",
+          "country_unity_produces_mult",
+          "pop_happiness"
+        ],
+        [
+          "country_alloys_produces_mult",
+          "country_engineering_tech_research_speed"
+        ],
+        [
+          "country_base_energy_produces_add",
+          "country_base_minerals_produces_add",
+          "country_society_research_produces_mult"
+        ],
+        [
+          "country_base_influence_produces_add",
+          "planet_building_build_speed_mult",
+          "planet_metallurgists_alloys_produces_add",
+          "planet_researchers_produces_mult",
+          "planet_researchers_upkeep_mult",
+          "planet_stability_add",
+          "science_ship_survey_speed",
+          "starbase_shipyard_build_speed_mult",
+          "station_gatherers_produces_mult"
+        ],
+        [
+          "country_base_sr_zro_produces_add",
+          "country_unity_produces_mult"
+        ],
+        [
+          "country_consumer_goods_produces_mult",
+          "country_society_research_produces_mult",
+          "country_unity_produces_mult",
+          "damage_vs_country_type_voidworms_crisis_mult",
+          "planet_jobs_alloys_produces_mult",
+          "pop_happiness",
+          "voidworms_planet_orbital_bombardment_damage"
+        ],
+        [
+          "country_energy_produces_mult"
+        ],
+        [
+          "country_energy_produces_mult",
+          "country_engineering_tech_research_speed",
+          "country_unity_produces_mult"
+        ],
+        [
+          "country_energy_produces_mult",
+          "country_engineering_tech_research_speed",
+          "country_unity_produces_mult",
+          "planet_jobs_produces_mult"
+        ],
+        [
+          "country_energy_produces_mult",
+          "country_unity_produces_mult",
+          "planet_jobs_alloys_produces_mult"
+        ],
+        [
+          "country_energy_produces_mult",
+          "planet_researchers_produces_mult"
+        ],
+        [
+          "country_engineering_research_produces_mult"
+        ],
+        [
+          "country_engineering_research_produces_mult",
+          "starbase_shipyard_build_speed_mult"
+        ],
+        [
+          "country_engineering_tech_research_speed"
+        ],
+        [
+          "country_physics_research_produces_mult"
+        ],
+        [
+          "country_physics_research_produces_mult",
+          "country_unity_produces_mult"
+        ],
+        [
+          "country_society_research_produces_mult"
+        ],
+        [
+          "country_society_research_produces_mult",
+          "modify_species_cost_mult"
+        ],
+        [
+          "country_society_research_produces_mult",
+          "planet_biologists_energy_upkeep_add"
+        ],
+        [
+          "country_unity_produces_mult"
+        ],
+        [
+          "country_unity_produces_mult",
+          "planet_jobs_consumer_goods_upkeep_mult",
+          "planet_pops_consumer_goods_upkeep_mult"
+        ],
+        [
+          "planet_artisans_unity_produces_add",
+          "pop_artisan_drone_bonus_workforce_mult"
+        ],
+        [
+          "planet_building_refund_mult",
+          "planet_chemists_upkeep_mult",
+          "planet_chemists_volatile_motes_produces_mult",
+          "planet_structures_cost_mult",
+          "planet_structures_volatile_motes_upkeep_mult",
+          "planet_technician_volatile_motes_produces_mult"
+        ],
+        [
+          "planet_building_refund_mult",
+          "planet_farmers_exotic_gases_produces_mult",
+          "planet_refiners_exotic_gases_produces_mult",
+          "planet_refiners_upkeep_mult",
+          "planet_structures_cost_mult",
+          "planet_structures_exotic_gases_upkeep_mult"
+        ],
+        [
+          "planet_building_refund_mult",
+          "planet_miners_rare_crystals_produces_mult",
+          "planet_structures_cost_mult",
+          "planet_structures_rare_crystals_upkeep_mult",
+          "planet_translucers_rare_crystals_produces_mult",
+          "planet_translucers_upkeep_mult"
+        ],
+        [
+          "planet_buildings_energy_upkeep_mult",
+          "planet_researchers_produces_mult"
+        ],
+        [
+          "planet_buildings_hab_capital_upkeep_mult",
+          "planet_metallurgists_produces_mult",
+          "planet_metallurgists_upkeep_mult"
+        ],
+        [
+          "planet_farmers_food_produces_add",
+          "planet_farmers_trade_upkeep_add"
+        ],
+        [
+          "planet_jobs_produces_mult",
+          "planet_stability_add"
+        ],
+        [
+          "psionic_aura_effectiveness_mult",
+          "psionic_aura_intensity_mult"
+        ],
+        [
+          "ship_accuracy_mult",
+          "ship_base_speed_mult",
+          "ship_evasion_mult",
+          "ship_fire_rate_mult",
+          "ship_tracking_mult",
+          "species_leader_exp_gain"
+        ],
+        [
+          "ship_armor_hardening_add",
+          "ship_evasion_add",
+          "ship_fire_rate_mult",
+          "ship_hull_regen_add_perc",
+          "ship_speed_mult",
+          "ship_speed_reduction"
+        ]
+      ]
+    },
+    "approach.on_select": {
+      "definitions": 86,
+      "repeated": 64,
+      "scalars": 0,
+      "blocks": 86,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "abort_situation",
+        "custom_tooltip",
+        "else",
+        "hidden_effect",
+        "if",
+        "owner",
+        "remove_situation_flag",
+        "set_situation_flag",
+        "set_situation_locked",
+        "situation_breach_shroud_endbringers_approach_cooldown_effect",
+        "situation_shroud_forged_approach_cooldown_effect",
+        "switch",
+        "target"
+      ],
+      "keysByDefinition": [
+        [
+          "abort_situation",
+          "custom_tooltip"
+        ],
+        [
+          "abort_situation",
+          "custom_tooltip",
+          "owner"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "else",
+          "if",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "else",
+          "if",
+          "set_situation_flag"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "remove_situation_flag",
+          "set_situation_flag"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "situation_breach_shroud_endbringers_approach_cooldown_effect"
+        ],
+        [
+          "custom_tooltip",
+          "if",
+          "set_situation_flag"
+        ],
+        [
+          "custom_tooltip",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "owner",
+          "set_situation_locked",
+          "target"
+        ],
+        [
+          "custom_tooltip",
+          "remove_situation_flag",
+          "set_situation_flag"
+        ],
+        [
+          "custom_tooltip",
+          "set_situation_flag"
+        ],
+        [
+          "custom_tooltip",
+          "situation_shroud_forged_approach_cooldown_effect"
+        ],
+        [
+          "else",
+          "if",
+          "set_situation_flag",
+          "switch"
+        ],
+        [
+          "set_situation_flag",
+          "switch"
+        ]
+      ]
+    },
+    "approach.potential": {
+      "definitions": 19,
+      "repeated": 11,
+      "scalars": 0,
+      "blocks": 19,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "current_stage",
+        "has_astral_planes_dlc",
+        "has_situation_flag",
+        "owner",
+        "owner?",
+        "target"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "current_stage",
+          "has_situation_flag"
+        ],
+        [
+          "NOT",
+          "has_situation_flag"
+        ],
+        [
+          "OR",
+          "owner"
+        ],
+        [
+          "has_astral_planes_dlc",
+          "owner"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner?"
+        ],
+        [
+          "target"
+        ]
+      ]
+    },
+    "approach.resources": {
+      "definitions": 29,
+      "repeated": 23,
+      "scalars": 0,
+      "blocks": 29,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost",
+        "produces",
+        "upkeep"
+      ],
+      "keysByDefinition": [
+        [
+          "category",
+          "cost"
+        ],
+        [
+          "category",
+          "cost",
+          "upkeep"
+        ],
+        [
+          "category",
+          "produces"
+        ],
+        [
+          "category",
+          "produces",
+          "upkeep"
+        ],
+        [
+          "category",
+          "upkeep"
+        ],
+        [
+          "cost"
+        ]
+      ]
+    },
+    "approach.target_modifier": {
+      "definitions": 4,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 4,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "job_soldier_stability_add",
+        "planet_army_build_speed_mult",
+        "planet_building_stronghold_build_speed_mult",
+        "planet_buildings_upkeep_mult",
+        "planet_jobs_complex_drone_produces_mult",
+        "planet_jobs_simple_drone_produces_mult",
+        "planet_pops_upkeep_mult",
+        "planet_soldiers_trade_upkeep_add",
+        "planet_stability_add"
+      ],
+      "keysByDefinition": [
+        [
+          "job_soldier_stability_add",
+          "planet_army_build_speed_mult",
+          "planet_building_stronghold_build_speed_mult",
+          "planet_soldiers_trade_upkeep_add"
+        ],
+        [
+          "planet_buildings_upkeep_mult",
+          "planet_pops_upkeep_mult"
+        ],
+        [
+          "planet_jobs_complex_drone_produces_mult",
+          "planet_jobs_simple_drone_produces_mult"
+        ],
+        [
+          "planet_stability_add"
+        ]
+      ]
+    },
+    "approach.triggered_modifier": {
+      "definitions": 7,
+      "repeated": 5,
+      "scalars": 0,
+      "blocks": 7,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_alloys_produces_mult",
+        "country_engineering_research_produces_mult",
+        "country_physics_research_produces_mult",
+        "country_society_research_produces_mult",
+        "modifier",
+        "potential"
+      ],
+      "keysByDefinition": [
+        [
+          "country_alloys_produces_mult",
+          "country_physics_research_produces_mult",
+          "potential"
+        ],
+        [
+          "country_engineering_research_produces_mult",
+          "country_physics_research_produces_mult",
+          "country_society_research_produces_mult"
+        ],
+        [
+          "country_engineering_research_produces_mult",
+          "country_physics_research_produces_mult",
+          "country_society_research_produces_mult",
+          "potential"
+        ],
+        [
+          "modifier",
+          "potential"
+        ]
+      ]
+    },
+    "approach.triggered_target_modifier": {
+      "definitions": 3,
+      "repeated": 2,
+      "scalars": 0,
+      "blocks": 3,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "planet_jobs_complex_drone_produces_mult",
+        "planet_jobs_simple_drone_produces_mult",
+        "planet_jobs_specialist_produces_mult",
+        "planet_jobs_worker_produces_mult",
+        "potential"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "potential"
+        ],
+        [
+          "planet_jobs_complex_drone_produces_mult",
+          "planet_jobs_simple_drone_produces_mult",
+          "planet_jobs_specialist_produces_mult",
+          "planet_jobs_worker_produces_mult",
+          "potential"
+        ]
+      ]
+    },
+    "category": {
+      "definitions": 65,
+      "repeated": 0,
+      "scalars": 65,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "negative",
+        "neutral",
+        "positive"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "complete_category": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "negative"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "complete_icon": {
+      "definitions": 85,
+      "repeated": 0,
+      "scalars": 85,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_situation_exploding_planet",
+        "GFX_situation_outcome_ascension",
+        "GFX_situation_outcome_bankrupcy",
+        "GFX_situation_outcome_challenge",
+        "GFX_situation_outcome_eat",
+        "GFX_situation_outcome_eotc",
+        "GFX_situation_outcome_meh",
+        "GFX_situation_outcome_negative",
+        "GFX_situation_outcome_positive",
+        "GFX_situation_outcome_revolt",
+        "GFX_situation_outcome_unknown",
+        "GFX_toxify_world_outcome"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "complete_icon_frame": {
+      "definitions": 83,
+      "repeated": 0,
+      "scalars": 83,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_situation_outcome_frame_blue",
+        "GFX_situation_outcome_frame_green",
+        "GFX_situation_outcome_frame_red"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "desc": {
+      "definitions": 9,
+      "repeated": 4,
+      "scalars": 4,
+      "blocks": 5,
+      "bareBlocks": 0,
+      "values": [
+        "situation_breach_shroud_desc",
+        "situation_end_of_the_cycle_desc",
+        "situation_end_of_the_cycle_endbringers_desc"
+      ],
+      "keys": [
+        "text",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "text",
+          "trigger"
+        ],
+        [
+          "trigger"
+        ]
+      ]
+    },
+    "fail_category": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "positive"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "fail_icon": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 23,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_situation_outcome_meh",
+        "GFX_situation_outcome_negative",
+        "GFX_situation_outcome_planet_negative",
+        "GFX_situation_outcome_positive",
+        "GFX_situation_outcome_unknown"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "fail_icon_frame": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 23,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_situation_outcome_frame_blue",
+        "GFX_situation_outcome_frame_green",
+        "GFX_situation_outcome_frame_red"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "initial_progress": {
+      "definitions": 65,
+      "repeated": 0,
+      "scalars": 65,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "10",
+        "10000",
+        "119",
+        "15",
+        "1500",
+        "20",
+        "25",
+        "300",
+        "5",
+        "50",
+        "500",
+        "75"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "situations/consume_world_planet_pictures"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "modifier": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "logistic_growth_mult",
+        "planet_jobs_produces_mult",
+        "planet_pop_assembly_mult",
+        "planet_resettlement_unemployed_destination_mult",
+        "pop_happiness",
+        "starbase_constructions_produces_mult",
+        "stations_produces_mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "logistic_growth_mult",
+          "planet_jobs_produces_mult",
+          "planet_pop_assembly_mult",
+          "pop_happiness",
+          "starbase_constructions_produces_mult",
+          "stations_produces_mult"
+        ],
+        [
+          "planet_resettlement_unemployed_destination_mult"
+        ]
+      ]
+    },
+    "monthly_progress": {
+      "definitions": 90,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 90,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "add",
+        "base",
+        "complex_trigger_modifier",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "add",
+          "modifier"
+        ],
+        [
+          "base"
+        ],
+        [
+          "base",
+          "complex_trigger_modifier",
+          "modifier"
+        ],
+        [
+          "base",
+          "modifier"
+        ],
+        [
+          "modifier"
+        ]
+      ]
+    },
+    "on_abort": {
+      "definitions": 34,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 34,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "cleanup_separatism_situation",
+        "clear_global_event_target",
+        "hidden_effect",
+        "owner",
+        "set_situation_locked",
+        "situation_event",
+        "target"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "cleanup_separatism_situation"
+        ],
+        [
+          "clear_global_event_target"
+        ],
+        [
+          "hidden_effect"
+        ],
+        [
+          "hidden_effect",
+          "owner"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner",
+          "target"
+        ],
+        [
+          "set_situation_locked",
+          "situation_event",
+          "target"
+        ],
+        [
+          "situation_event"
+        ],
+        [
+          "situation_event",
+          "target"
+        ],
+        [
+          "target"
+        ]
+      ]
+    },
+    "on_fail": {
+      "definitions": 29,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 29,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "destroy_situation",
+        "hidden_effect",
+        "log_error",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "log_error",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "owner"
+        ],
+        [
+          "destroy_situation",
+          "log_error"
+        ]
+      ]
+    },
+    "on_monthly": {
+      "definitions": 59,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 59,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "events",
+        "random_events"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "events"
+        ],
+        [
+          "events",
+          "random_events"
+        ],
+        [
+          "random_events"
+        ]
+      ]
+    },
+    "on_progress_complete": {
+      "definitions": 88,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 88,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_defaulted_in_situation_tooltip",
+        "custom_tooltip",
+        "destroy_situation",
+        "else",
+        "hidden_effect",
+        "if",
+        "owner",
+        "random_country",
+        "random_list",
+        "set_situation_locked",
+        "situation_event",
+        "target"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "country_defaulted_in_situation_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "destroy_situation",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "set_situation_locked"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "set_situation_locked",
+          "situation_event"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect",
+          "target"
+        ],
+        [
+          "custom_tooltip",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "random_list"
+        ],
+        [
+          "custom_tooltip",
+          "situation_event"
+        ],
+        [
+          "else",
+          "hidden_effect",
+          "if",
+          "owner",
+          "random_country"
+        ],
+        [
+          "hidden_effect",
+          "set_situation_locked"
+        ]
+      ]
+    },
+    "on_start": {
+      "definitions": 37,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 37,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "create_black_needle_country",
+        "else_if",
+        "event_target:aberrant_country",
+        "if",
+        "owner",
+        "random_playable_country",
+        "save_event_target_as",
+        "save_global_event_target_as",
+        "set_saved_date",
+        "set_situation_approach",
+        "set_situation_flag",
+        "set_situation_locked",
+        "set_timed_situation_flag",
+        "set_variable",
+        "situation_event",
+        "target",
+        "unplugged_origin_queue_identity_situation_event_effect"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "create_black_needle_country",
+          "owner"
+        ],
+        [
+          "else_if",
+          "if",
+          "situation_event"
+        ],
+        [
+          "event_target:aberrant_country",
+          "save_global_event_target_as",
+          "set_saved_date",
+          "set_variable"
+        ],
+        [
+          "if"
+        ],
+        [
+          "if",
+          "owner",
+          "set_timed_situation_flag",
+          "set_variable"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner",
+          "random_playable_country",
+          "set_situation_flag"
+        ],
+        [
+          "owner",
+          "set_situation_flag"
+        ],
+        [
+          "owner",
+          "set_situation_locked"
+        ],
+        [
+          "owner",
+          "set_timed_situation_flag"
+        ],
+        [
+          "save_event_target_as",
+          "set_timed_situation_flag",
+          "target"
+        ],
+        [
+          "set_situation_approach"
+        ],
+        [
+          "set_situation_flag"
+        ],
+        [
+          "set_situation_locked"
+        ],
+        [
+          "set_situation_locked",
+          "target"
+        ],
+        [
+          "set_variable"
+        ],
+        [
+          "situation_event"
+        ],
+        [
+          "situation_event",
+          "target"
+        ],
+        [
+          "unplugged_origin_queue_identity_situation_event_effect"
+        ]
+      ]
+    },
+    "override_finisher_desc": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "nomad_max_reserves_breakdown"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "override_finisher_title": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "situation_nomad_economy_capacity_title"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "override_progress_current_desc": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "situation_nomad_economy_reserves_current"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "permanent": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "picture": {
+      "definitions": 86,
+      "repeated": 4,
+      "scalars": 82,
+      "blocks": 4,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_evt_a_rift_in_space",
+        "GFX_evt_acquire_asset",
+        "GFX_evt_alien_propaganda",
+        "GFX_evt_arctic",
+        "GFX_evt_arkship_crisis",
+        "GFX_evt_astral_rift_library",
+        "GFX_evt_atmospheric_entry",
+        "GFX_evt_black_hole",
+        "GFX_evt_clocks",
+        "GFX_evt_conclave",
+        "GFX_evt_cosmic_storms_solar_storm",
+        "GFX_evt_crisis_declared",
+        "GFX_evt_crystal_sphere",
+        "GFX_evt_cyber_creed_2",
+        "GFX_evt_cyberization_1",
+        "GFX_evt_deficit",
+        "GFX_evt_disease_outbreak",
+        "GFX_evt_evolutionary_predators",
+        "GFX_evt_experimental_testing",
+        "GFX_evt_fallen_empire",
+        "GFX_evt_forever_cruise",
+        "GFX_evt_frenzied_voidworms",
+        "GFX_evt_friendly_enlightenment",
+        "GFX_evt_genetic_modification",
+        "GFX_evt_georadiation_bell",
+        "GFX_evt_glitchy_matrix",
+        "GFX_evt_hangar_bay",
+        "GFX_evt_hive_cyberization",
+        "GFX_evt_kaleidoscopic_lights",
+        "GFX_evt_knights",
+        "GFX_evt_machine_sapience",
+        "GFX_evt_mechromancy",
+        "GFX_evt_megastructure_construction",
+        "GFX_evt_mercenary_fleet",
+        "GFX_evt_microscopic_life",
+        "GFX_evt_molten",
+        "GFX_evt_open_revolt",
+        "GFX_evt_origin_stormchasers_specialproject",
+        "GFX_evt_physics_research",
+        "GFX_evt_rare_tech_cache",
+        "GFX_evt_relic_world_building",
+        "GFX_evt_robot_assembly_plant",
+        "GFX_evt_salute",
+        "GFX_evt_sapient_AI",
+        "GFX_evt_shroud_end_of_the_cycle",
+        "GFX_evt_shroud_forged_zrobot",
+        "GFX_evt_shroudwalker_enclave",
+        "GFX_evt_situation_the_seal",
+        "GFX_evt_situation_voidworm_plague",
+        "GFX_evt_space_station",
+        "GFX_evt_spymaster",
+        "GFX_evt_star_yellow",
+        "GFX_evt_supernova",
+        "GFX_evt_synth_fertility",
+        "GFX_evt_synth_queen",
+        "GFX_evt_synth_situation",
+        "GFX_evt_treasure_trove_pirate_fleet",
+        "GFX_evt_unplugged",
+        "GFX_evt_voidspawn",
+        "GFX_evt_waystation",
+        "GFX_evt_wormhole"
+      ],
+      "keys": [
+        "picture",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "picture",
+          "trigger"
+        ]
+      ]
+    },
+    "potential": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "is_nomadic"
+      ],
+      "keysByDefinition": [
+        [
+          "is_nomadic"
+        ]
+      ]
+    },
+    "progress_direction": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "bidirectional",
+        "monodirectional"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_in_outliner": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "situation_log_category": {
+      "definitions": 83,
+      "repeated": 0,
+      "scalars": 83,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ambitions",
+        "astral_rifts",
+        "crises",
+        "developments",
+        "empire_concerns",
+        "urgent_matters"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stages": {
+      "definitions": 90,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 90,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "deficit_first",
+        "deficit_fourth",
+        "deficit_second",
+        "deficit_third",
+        "gravity_well_high",
+        "gravity_well_low",
+        "gravity_well_mid",
+        "gravity_well_no_return",
+        "high_level",
+        "insights",
+        "kaleidoscope_progress",
+        "radiation_damage_high",
+        "radiation_damage_low",
+        "radiation_damage_mid",
+        "revolt_severity_1",
+        "revolt_severity_2",
+        "revolt_severity_3",
+        "revolt_severity_4",
+        "situation_experimental_testing_stage_1",
+        "situation_nomad_economy_stage_1_struggle",
+        "situation_nomad_economy_stage_2_stable",
+        "situation_nomad_economy_stage_3_thriving",
+        "situation_nomad_economy_stage_critical",
+        "situation_nwo_stage_four",
+        "situation_nwo_stage_one",
+        "situation_nwo_stage_three",
+        "situation_nwo_stage_two",
+        "situation_paperclip_stage_1",
+        "situation_passenger_satisfaction_stage_bored",
+        "situation_passenger_satisfaction_stage_incensed",
+        "situation_passenger_satisfaction_stage_mutiny",
+        "situation_passenger_satisfaction_stage_overworked",
+        "situation_passenger_satisfaction_stage_planetfall",
+        "situation_passenger_satisfaction_stage_steady",
+        "situation_passenger_satisfaction_stage_stressed",
+        "situation_plague_stage_one",
+        "situation_plague_stage_three",
+        "situation_plague_stage_two",
+        "situation_singularity_stage_one",
+        "stage_1",
+        "stage_2",
+        "stage_2_alt",
+        "stage_3",
+        "stage_3_alt",
+        "stage_4",
+        "stage_5",
+        "stage_6",
+        "stage_7",
+        "stage_8",
+        "stage_cataclysm_1",
+        "stage_cataclysm_2",
+        "stage_cleanup",
+        "stage_refurbishment_city",
+        "stage_refurbishment_farming",
+        "stage_refurbishment_generator",
+        "stage_refurbishment_military",
+        "stage_shroud_forged_balanced",
+        "stage_shroud_forged_control",
+        "stage_shroud_forged_free",
+        "stage_shroud_forged_oppressed",
+        "stage_shroud_forged_unrestricted",
+        "unplugged_identity_stage_1",
+        "unplugged_identity_stage_2",
+        "unplugged_identity_stage_3"
+      ],
+      "keysByDefinition": [
+        [
+          "deficit_first",
+          "deficit_fourth",
+          "deficit_second",
+          "deficit_third"
+        ],
+        [
+          "gravity_well_high",
+          "gravity_well_low",
+          "gravity_well_mid",
+          "gravity_well_no_return"
+        ],
+        [
+          "high_level"
+        ],
+        [
+          "insights"
+        ],
+        [
+          "kaleidoscope_progress"
+        ],
+        [
+          "radiation_damage_high",
+          "radiation_damage_low",
+          "radiation_damage_mid"
+        ],
+        [
+          "revolt_severity_1",
+          "revolt_severity_2",
+          "revolt_severity_3",
+          "revolt_severity_4"
+        ],
+        [
+          "situation_experimental_testing_stage_1"
+        ],
+        [
+          "situation_nomad_economy_stage_1_struggle",
+          "situation_nomad_economy_stage_2_stable",
+          "situation_nomad_economy_stage_3_thriving",
+          "situation_nomad_economy_stage_critical"
+        ],
+        [
+          "situation_nwo_stage_four",
+          "situation_nwo_stage_one",
+          "situation_nwo_stage_three",
+          "situation_nwo_stage_two"
+        ],
+        [
+          "situation_paperclip_stage_1"
+        ],
+        [
+          "situation_passenger_satisfaction_stage_bored",
+          "situation_passenger_satisfaction_stage_incensed",
+          "situation_passenger_satisfaction_stage_mutiny",
+          "situation_passenger_satisfaction_stage_overworked",
+          "situation_passenger_satisfaction_stage_planetfall",
+          "situation_passenger_satisfaction_stage_steady",
+          "situation_passenger_satisfaction_stage_stressed"
+        ],
+        [
+          "situation_plague_stage_one",
+          "situation_plague_stage_three",
+          "situation_plague_stage_two"
+        ],
+        [
+          "situation_singularity_stage_one"
+        ],
+        [
+          "stage_1"
+        ],
+        [
+          "stage_1",
+          "stage_2"
+        ],
+        [
+          "stage_1",
+          "stage_2",
+          "stage_2_alt",
+          "stage_3",
+          "stage_3_alt"
+        ],
+        [
+          "stage_1",
+          "stage_2",
+          "stage_3"
+        ],
+        [
+          "stage_1",
+          "stage_2",
+          "stage_3",
+          "stage_4"
+        ],
+        [
+          "stage_1",
+          "stage_2",
+          "stage_3",
+          "stage_4",
+          "stage_5"
+        ],
+        [
+          "stage_1",
+          "stage_2",
+          "stage_3",
+          "stage_4",
+          "stage_5",
+          "stage_6"
+        ],
+        [
+          "stage_1",
+          "stage_2",
+          "stage_3",
+          "stage_4",
+          "stage_5",
+          "stage_6",
+          "stage_7",
+          "stage_8"
+        ],
+        [
+          "stage_cataclysm_1",
+          "stage_cataclysm_2",
+          "stage_cleanup"
+        ],
+        [
+          "stage_refurbishment_city",
+          "stage_refurbishment_farming",
+          "stage_refurbishment_generator",
+          "stage_refurbishment_military"
+        ],
+        [
+          "stage_shroud_forged_balanced",
+          "stage_shroud_forged_control",
+          "stage_shroud_forged_free",
+          "stage_shroud_forged_oppressed",
+          "stage_shroud_forged_unrestricted"
+        ],
+        [
+          "unplugged_identity_stage_1",
+          "unplugged_identity_stage_2",
+          "unplugged_identity_stage_3"
+        ]
+      ]
+    },
+    "stages.color": {
+      "definitions": 1,
+      "repeated": 1,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "light_green",
+        "light_orange",
+        "warning_red",
+        "white"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stages.custom_tooltip": {
+      "definitions": 56,
+      "repeated": 37,
+      "scalars": 56,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "approach_outcome_caeli",
+        "approach_outcome_steris",
+        "eotc_opinion_modifier_2_tooltip",
+        "eotc_opinion_modifier_3_tooltip",
+        "eotc_opinion_modifier_tooltip",
+        "genetic_stage_1_effects",
+        "genetic_stage_2_effects",
+        "genetic_stage_3_effects",
+        "sit_cd_stage1_tt",
+        "sit_cd_stage2_tt",
+        "sit_cd_stage3_tt",
+        "sit_cd_stage4_tt",
+        "sit_cd_stage5_tt",
+        "situation_breach_shroud_effects",
+        "situation_end_of_the_cycle_effects_1",
+        "situation_end_of_the_cycle_effects_2",
+        "situation_end_of_the_cycle_effects_3",
+        "situation_end_of_the_cycle_effects_4",
+        "situation_experimental_testing_stage_1_effect_tt",
+        "situation_insight_stages",
+        "situation_red_giant_expansion_stage_1",
+        "situation_red_giant_expansion_stage_2",
+        "situation_red_giant_expansion_stage_3",
+        "situation_red_giant_expansion_stage_4",
+        "situation_red_giant_expansion_stage_5",
+        "situation_reformists_struggle_1",
+        "situation_reformists_struggle_2",
+        "situation_reformists_struggle_3",
+        "situation_unplugged_stage_cyberize",
+        "situation_unplugged_stage_decyberize",
+        "situation_unplugged_stage_remain",
+        "stage_1_synthetic_fertility_synthesization_effects",
+        "stage_2_synthetic_fertility_synthesization_effects",
+        "stage_behemoth_finale_effects",
+        "stage_behemoth_finale_effects_regular",
+        "stage_cyberization_effects",
+        "stage_cyberization_hive_effects",
+        "stage_cybernetic_creed_cyberization_effects",
+        "stage_cybernetic_creed_the_conclave_effects",
+        "stage_digitization_effects",
+        "stage_edge_of_solar_system",
+        "stage_entered_solar_system",
+        "stage_feed_feed_feed",
+        "stage_insight_gathering",
+        "stage_knights_effects",
+        "stage_leviathan_2_tooltip",
+        "stage_leviathan_3_tooltip",
+        "stage_shroud_forged_balanced_tooltip",
+        "stage_shroud_forged_control_tooltip",
+        "stage_shroud_forged_free_tooltip",
+        "stage_shroud_forged_oppressed_tooltip",
+        "stage_shroud_forged_unrestricted_tooltip",
+        "stage_slushify",
+        "stage_stormfall_effects",
+        "stage_synthetic_fertility_problem_effects",
+        "stage_the_drive_effects",
+        "stage_transformation_effects",
+        "stage_unknown_effects",
+        "toxify_world_stage_effects"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stages.end": {
+      "definitions": 89,
+      "repeated": 60,
+      "scalars": 88,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "100",
+        "1000",
+        "120",
+        "1200",
+        "125",
+        "135",
+        "140",
+        "1400",
+        "150",
+        "1500",
+        "180",
+        "1800",
+        "1920",
+        "20",
+        "200",
+        "2000",
+        "240",
+        "2400",
+        "25",
+        "250",
+        "30",
+        "300",
+        "3000",
+        "33",
+        "35",
+        "350",
+        "360",
+        "375",
+        "40",
+        "400",
+        "440",
+        "45",
+        "480",
+        "50",
+        "500",
+        "6",
+        "60",
+        "600",
+        "6000",
+        "625",
+        "65",
+        "66",
+        "67",
+        "70",
+        "700",
+        "74",
+        "75",
+        "750",
+        "780",
+        "80",
+        "800",
+        "875",
+        "90",
+        "900",
+        "95",
+        "980",
+        "99",
+        "999"
+      ],
+      "keys": [
+        "base",
+        "mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base",
+          "mult"
+        ]
+      ]
+    },
+    "stages.icon": {
+      "definitions": 90,
+      "repeated": 61,
+      "scalars": 90,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_situation_stage_1",
+        "GFX_situation_stage_2",
+        "GFX_situation_stage_3",
+        "GFX_situation_stage_4",
+        "GFX_situation_stage_5",
+        "GFX_situation_stage_6",
+        "GFX_situation_stage_7",
+        "GFX_situation_stage_8",
+        "GFX_situation_stage_balanced",
+        "GFX_situation_stage_crew",
+        "GFX_situation_stage_eat",
+        "GFX_situation_stage_passenger",
+        "GFX_situation_stage_pre_ftl",
+        "GFX_situation_unplugged_stage_cyberize",
+        "GFX_situation_unplugged_stage_decyberize",
+        "GFX_situation_unplugged_stage_remain"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stages.icon_background": {
+      "definitions": 90,
+      "repeated": 61,
+      "scalars": 90,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_situation_stage_frame_blue",
+        "GFX_situation_stage_frame_gray",
+        "GFX_situation_stage_frame_green",
+        "GFX_situation_stage_frame_magenta",
+        "GFX_situation_stage_frame_orange",
+        "GFX_situation_stage_frame_red",
+        "GFX_situation_stage_frame_yellow"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stages.modifier": {
+      "definitions": 13,
+      "repeated": 12,
+      "scalars": 0,
+      "blocks": 13,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "all_technology_research_speed",
+        "country_alloys_produces_mult",
+        "country_engineering_research_produces_mult",
+        "country_physics_research_produces_mult",
+        "country_situations_physics_research_produces_add",
+        "country_situations_sr_dark_matter_produces_add",
+        "country_society_research_produces_mult",
+        "country_unity_produces_mult",
+        "deposit_blockers_cost_mult",
+        "diplo_weight_economy_mult",
+        "habitat_stability_add",
+        "planet_clear_blocker_speed_mult",
+        "planet_jobs_produces_mult",
+        "planet_pop_assemblers_upkeep_mult",
+        "planet_pop_assembly_mult",
+        "planet_pop_assembly_reduction",
+        "planet_stability_add",
+        "pop_bonus_workforce_mult",
+        "pop_cat_cruise_passenger_happiness",
+        "pop_cat_cruise_passenger_unemployment_happiness",
+        "pop_ethic_egalitarian_attraction_mult",
+        "pop_happiness",
+        "ship_armor_mult",
+        "ship_disengage_chance_mult",
+        "ship_fire_rate_mult",
+        "ship_sensor_range_add",
+        "ship_shield_mult",
+        "ship_speed_mult",
+        "ship_weapon_damage",
+        "ships_energy_upkeep_mult",
+        "stage_shroud_forged_control_modifier",
+        "stage_shroud_forged_free_modifier",
+        "stage_shroud_forged_oppressed_modifier",
+        "stage_shroud_forged_unrestricted_modifier",
+        "starbases_energy_upkeep_mult",
+        "terraform_speed_mult",
+        "weapon_type_energy_weapon_damage_mult",
+        "weapon_type_kinetic_weapon_damage_mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "all_technology_research_speed",
+          "country_alloys_produces_mult",
+          "country_engineering_research_produces_mult",
+          "country_physics_research_produces_mult",
+          "country_society_research_produces_mult",
+          "country_unity_produces_mult",
+          "planet_stability_add",
+          "ship_armor_mult",
+          "ship_fire_rate_mult",
+          "ship_shield_mult"
+        ],
+        [
+          "country_situations_physics_research_produces_add",
+          "country_situations_sr_dark_matter_produces_add"
+        ],
+        [
+          "country_unity_produces_mult",
+          "pop_happiness"
+        ],
+        [
+          "deposit_blockers_cost_mult",
+          "planet_clear_blocker_speed_mult",
+          "planet_jobs_produces_mult",
+          "weapon_type_kinetic_weapon_damage_mult"
+        ],
+        [
+          "diplo_weight_economy_mult",
+          "planet_jobs_produces_mult",
+          "planet_pop_assembly_reduction",
+          "ship_disengage_chance_mult",
+          "ship_speed_mult",
+          "ship_weapon_damage"
+        ],
+        [
+          "habitat_stability_add",
+          "planet_pop_assemblers_upkeep_mult",
+          "planet_pop_assembly_mult",
+          "pop_bonus_workforce_mult",
+          "ship_armor_mult",
+          "ship_fire_rate_mult",
+          "ships_energy_upkeep_mult",
+          "starbases_energy_upkeep_mult"
+        ],
+        [
+          "planet_jobs_produces_mult",
+          "ship_sensor_range_add",
+          "weapon_type_energy_weapon_damage_mult"
+        ],
+        [
+          "planet_jobs_produces_mult",
+          "ship_speed_mult",
+          "terraform_speed_mult"
+        ],
+        [
+          "planet_stability_add",
+          "pop_ethic_egalitarian_attraction_mult"
+        ],
+        [
+          "pop_bonus_workforce_mult"
+        ],
+        [
+          "pop_cat_cruise_passenger_happiness",
+          "pop_cat_cruise_passenger_unemployment_happiness"
+        ],
+        [
+          "stage_shroud_forged_control_modifier",
+          "stage_shroud_forged_free_modifier",
+          "stage_shroud_forged_oppressed_modifier",
+          "stage_shroud_forged_unrestricted_modifier"
+        ]
+      ]
+    },
+    "stages.on_enter": {
+      "definitions": 1,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "target.solar_system"
+      ],
+      "keysByDefinition": [
+        [
+          "target.solar_system"
+        ]
+      ]
+    },
+    "stages.on_first_enter": {
+      "definitions": 60,
+      "repeated": 39,
+      "scalars": 0,
+      "blocks": 60,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "else",
+        "else_if",
+        "if",
+        "inline_script",
+        "owner",
+        "random_list",
+        "remove_global_flag",
+        "remove_situation_flag",
+        "set_global_flag",
+        "set_situation_approach",
+        "set_situation_flag",
+        "set_situation_locked",
+        "set_variable",
+        "situation_event",
+        "switch",
+        "target"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "else",
+          "if",
+          "situation_event"
+        ],
+        [
+          "else_if",
+          "if",
+          "owner"
+        ],
+        [
+          "inline_script"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner",
+          "remove_global_flag",
+          "set_global_flag",
+          "situation_event"
+        ],
+        [
+          "owner",
+          "set_situation_flag"
+        ],
+        [
+          "owner",
+          "situation_event"
+        ],
+        [
+          "random_list",
+          "set_situation_flag"
+        ],
+        [
+          "remove_situation_flag",
+          "set_situation_flag",
+          "situation_event"
+        ],
+        [
+          "set_situation_approach",
+          "set_situation_locked",
+          "set_variable",
+          "situation_event"
+        ],
+        [
+          "set_situation_flag",
+          "situation_event"
+        ],
+        [
+          "situation_event"
+        ],
+        [
+          "situation_event",
+          "target"
+        ],
+        [
+          "switch"
+        ]
+      ]
+    },
+    "stages.section_weight": {
+      "definitions": 1,
+      "repeated": 1,
+      "scalars": 1,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [
+        "20",
+        "25",
+        "5"
+      ],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "stages.target_modifier": {
+      "definitions": 6,
+      "repeated": 5,
+      "scalars": 0,
+      "blocks": 6,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_unity_produces_mult",
+        "habitability_ceil_add",
+        "planet_district_ark_basic_build_speed_mult",
+        "planet_district_ark_city_build_speed_mult",
+        "planet_district_ark_generator_build_speed_mult",
+        "planet_district_ark_military_build_speed_mult",
+        "planet_farmers_produces_mult",
+        "planet_housing_mult",
+        "planet_jobs_complex_drone_produces_mult",
+        "planet_jobs_energy_produces_mult",
+        "planet_jobs_physics_research_produces_mult",
+        "planet_jobs_simple_drone_produces_mult",
+        "planet_jobs_upkeep_mult",
+        "planet_stability_add",
+        "planet_technician_produces_mult",
+        "pop_happiness",
+        "ship_armor_mult",
+        "ship_weapon_damage",
+        "worker_and_simple_drone_cat_bonus_workforce_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "country_unity_produces_mult",
+          "planet_jobs_complex_drone_produces_mult",
+          "planet_jobs_simple_drone_produces_mult",
+          "planet_stability_add"
+        ],
+        [
+          "habitability_ceil_add",
+          "planet_jobs_energy_produces_mult",
+          "planet_jobs_physics_research_produces_mult",
+          "planet_jobs_upkeep_mult"
+        ],
+        [
+          "planet_district_ark_basic_build_speed_mult",
+          "planet_district_ark_city_build_speed_mult",
+          "planet_district_ark_generator_build_speed_mult",
+          "planet_district_ark_military_build_speed_mult",
+          "planet_farmers_produces_mult",
+          "planet_housing_mult",
+          "planet_technician_produces_mult",
+          "ship_armor_mult",
+          "ship_weapon_damage",
+          "worker_and_simple_drone_cat_bonus_workforce_mult"
+        ],
+        [
+          "planet_stability_add"
+        ],
+        [
+          "planet_stability_add",
+          "pop_happiness"
+        ]
+      ]
+    },
+    "stages.triggered_modifier": {
+      "definitions": 7,
+      "repeated": 6,
+      "scalars": 0,
+      "blocks": 7,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_situations_physics_research_produces_add",
+        "country_situations_sr_dark_matter_produces_add",
+        "modifier",
+        "planet_stability_add",
+        "pop_calculator_biologist_bonus_workforce_mult",
+        "pop_calculator_engineer_bonus_workforce_mult",
+        "pop_calculator_physicist_bonus_workforce_mult",
+        "pop_cat_cruise_passenger_happiness",
+        "pop_cat_cruise_passenger_political_power",
+        "pop_cat_cruise_passenger_unemployment_happiness",
+        "pop_cat_cruise_passenger_unemployment_political_power",
+        "pop_citizen_happiness",
+        "pop_neural_chip_bonus_workforce_mult",
+        "pop_purge_speed",
+        "potential",
+        "specialist_and_complex_drone_cat_bonus_workforce_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "country_situations_physics_research_produces_add",
+          "country_situations_sr_dark_matter_produces_add",
+          "potential"
+        ],
+        [
+          "modifier",
+          "potential"
+        ],
+        [
+          "planet_stability_add",
+          "pop_cat_cruise_passenger_happiness",
+          "pop_cat_cruise_passenger_political_power",
+          "pop_cat_cruise_passenger_unemployment_happiness",
+          "pop_cat_cruise_passenger_unemployment_political_power",
+          "pop_citizen_happiness",
+          "potential",
+          "specialist_and_complex_drone_cat_bonus_workforce_mult"
+        ],
+        [
+          "pop_calculator_biologist_bonus_workforce_mult",
+          "pop_calculator_engineer_bonus_workforce_mult",
+          "pop_calculator_physicist_bonus_workforce_mult",
+          "pop_neural_chip_bonus_workforce_mult",
+          "pop_purge_speed",
+          "potential"
+        ]
+      ]
+    },
+    "stages.triggered_target_modifier": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "planet_stability_add",
+        "potential"
+      ],
+      "keysByDefinition": [
+        [
+          "planet_stability_add",
+          "potential"
+        ]
+      ]
+    },
+    "start_value": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "target_modifier": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "biological_logistic_growth_mult",
+        "biological_pop_happiness",
+        "planet_stability_add",
+        "pop_happiness"
+      ],
+      "keysByDefinition": [
+        [
+          "biological_logistic_growth_mult",
+          "biological_pop_happiness"
+        ],
+        [
+          "planet_stability_add"
+        ],
+        [
+          "planet_stability_add",
+          "pop_happiness"
+        ]
+      ]
+    },
+    "title": {
+      "definitions": 6,
+      "repeated": 1,
+      "scalars": 5,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [
+        "situation_breach_shroud",
+        "situation_end_of_the_cycle",
+        "situation_initiate_storm"
+      ],
+      "keys": [
+        "text",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "text",
+          "trigger"
+        ]
+      ]
+    },
+    "total_progress": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "add",
+        "base"
+      ],
+      "keysByDefinition": [
+        [
+          "add",
+          "base"
+        ]
+      ]
+    },
+    "triggered_blocked_desc": {
+      "definitions": 15,
+      "repeated": 10,
+      "scalars": 0,
+      "blocks": 15,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "text",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "text",
+          "trigger"
+        ]
+      ]
+    },
+    "triggered_modifier": {
+      "definitions": 9,
+      "repeated": 6,
+      "scalars": 0,
+      "blocks": 9,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "arkship_action_speed",
+        "category_biology_research_speed_mult",
+        "country_alloys_produces_mult",
+        "country_energy_produces_mult",
+        "country_minerals_produces_mult",
+        "country_produces_mult",
+        "country_society_tech_research_speed",
+        "country_unity_produces_mult",
+        "experimental_testing_test_subjects_death",
+        "leaders_upkeep_mult",
+        "modifier",
+        "planet_cruise_passengers_unity_produces_mult",
+        "planet_jobs_consumer_goods_produces_mult",
+        "planet_jobs_unity_produces_mult",
+        "planet_jobs_upkeep_mult",
+        "planet_structures_upkeep_mult",
+        "pop_category_cruise_passenger_consumer_goods_upkeep_add",
+        "pop_happiness",
+        "potential",
+        "specialist_and_complex_drone_cat_bonus_workforce_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "arkship_action_speed",
+          "leaders_upkeep_mult",
+          "planet_cruise_passengers_unity_produces_mult",
+          "planet_structures_upkeep_mult",
+          "pop_category_cruise_passenger_consumer_goods_upkeep_add",
+          "potential",
+          "specialist_and_complex_drone_cat_bonus_workforce_mult"
+        ],
+        [
+          "category_biology_research_speed_mult",
+          "country_society_tech_research_speed",
+          "potential"
+        ],
+        [
+          "country_alloys_produces_mult",
+          "country_energy_produces_mult",
+          "country_minerals_produces_mult",
+          "country_unity_produces_mult",
+          "pop_happiness",
+          "potential"
+        ],
+        [
+          "country_produces_mult",
+          "country_unity_produces_mult",
+          "potential"
+        ],
+        [
+          "experimental_testing_test_subjects_death",
+          "potential"
+        ],
+        [
+          "modifier",
+          "potential"
+        ],
+        [
+          "planet_jobs_consumer_goods_produces_mult",
+          "planet_jobs_unity_produces_mult",
+          "planet_jobs_upkeep_mult",
+          "potential"
+        ]
+      ]
+    }
+  }
+}

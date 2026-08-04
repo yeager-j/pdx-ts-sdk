@@ -1,0 +1,247 @@
+{
+  "registry": "bombardment_stance",
+  "definitions": 13,
+  "files": 1,
+  "fingerprint": "ee78edef2d0c95270cffa87ee674a2270d0a0eddddcc29949f53d4ebba4a962b",
+  "fields": {
+    "abduct_pops": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "accept_surrender": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_weight": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 13,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "army_damage": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.25",
+        "0.5",
+        "1",
+        "1.25",
+        "1.5",
+        "2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "default": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 13,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "kill_pop_amount": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 11,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "max",
+        "min"
+      ],
+      "keysByDefinition": [
+        [
+          "max",
+          "min"
+        ]
+      ]
+    },
+    "kill_pop_chance": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 12,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "min_pops_to_kill_pop": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1000",
+        "1100",
+        "200",
+        "2100"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "planet_damage": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [
+        "0.2",
+        "0.5",
+        "1",
+        "1.25",
+        "1.5",
+        "3"
+      ],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "stop_when_armies_dead": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stop_when_ground_combat": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "trigger": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 13,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "AND",
+        "NOT",
+        "OR",
+        "any_owned_ship",
+        "is_ship_size",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "AND"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "any_owned_ship"
+        ],
+        [
+          "is_ship_size",
+          "owner"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    }
+  }
+}

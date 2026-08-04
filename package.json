@@ -13,6 +13,8 @@
     "codegen:check": "node --conditions=pdx-source packages/codegen-cwt/src/index.ts && git diff --exit-code packages/sdk/src/generated",
     "codegen:vanilla": "node --conditions=pdx-source packages/codegen-vanilla/src/index.ts",
     "codegen:vanilla:check": "node --conditions=pdx-source packages/codegen-vanilla/src/index.ts && git diff --exit-code packages/stellaris-ids/src packages/stellaris-ids/package.json",
+    "corpus:extract": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-extract.ts",
+    "corpus:check": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-check.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:ids": "tsc -p packages/stellaris-ids",
     "test": "vitest run",

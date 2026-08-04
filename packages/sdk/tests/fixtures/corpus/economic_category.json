@@ -1,0 +1,302 @@
+{
+  "registry": "economic_category",
+  "definitions": 269,
+  "files": 8,
+  "fingerprint": "c323f754b269aabd84e1520b99cc788226c7ec03f1f7058a783f9f4b9e4e04a6",
+  "fields": {
+    "add_unscaled_value_to_tooltip": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_use_parent_for_resources_upkeep": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 10,
+      "bareBlocks": 10,
+      "values": [
+        "consumer_goods",
+        "energy",
+        "food",
+        "trade"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "generate_add_modifiers": {
+      "definitions": 78,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 78,
+      "bareBlocks": 74,
+      "values": [
+        "produces",
+        "upkeep"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "generate_mult_modifiers": {
+      "definitions": 100,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 100,
+      "bareBlocks": 92,
+      "values": [
+        "cost",
+        "logistics",
+        "produces",
+        "upkeep"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hidden": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "job_artisan",
+        "job_bath_attendant",
+        "job_bureaucrat",
+        "job_farmer",
+        "job_foundry",
+        "job_miner",
+        "job_neural_chip",
+        "job_polytechnic_mentor",
+        "job_ranger",
+        "job_researcher",
+        "job_technician",
+        "low_tech_laborer"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "modifier_category": {
+      "definitions": 140,
+      "repeated": 3,
+      "scalars": 140,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "army",
+        "colony",
+        "country",
+        "deposit",
+        "espionage",
+        "leader",
+        "megastructure",
+        "planet",
+        "pop_group",
+        "ship",
+        "starbase"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "parent": {
+      "definitions": 253,
+      "repeated": 0,
+      "scalars": 253,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "country",
+        "country_container",
+        "deposit_blockers",
+        "diplomacy",
+        "edicts",
+        "holdings_jobs",
+        "leader_commanders",
+        "leader_officials",
+        "leaders",
+        "megastructures",
+        "orbital_mining_deposits",
+        "planet_buildings",
+        "planet_bureaucrats",
+        "planet_culture_workers",
+        "planet_deposits",
+        "planet_districts",
+        "planet_districts_hab",
+        "planet_enforcers",
+        "planet_farmers",
+        "planet_jobs",
+        "planet_jobs_productive",
+        "planet_jobs_ruler",
+        "planet_jobs_specialist",
+        "planet_jobs_worker",
+        "planet_miners",
+        "planet_politicians",
+        "planet_pop_assemblers",
+        "planet_pops",
+        "planet_researchers",
+        "planet_structures",
+        "planets",
+        "pop_category_drones",
+        "rare_edicts",
+        "ships",
+        "starbase_constructions",
+        "starbase_modules",
+        "starbases",
+        "station_gatherers",
+        "station_observers",
+        "station_researchers",
+        "stations",
+        "terraforming",
+        "trade",
+        "unemployment_resources"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "scaled_value_key": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ECONOMICS_SCALED_RESOURCES_EMPIRE_SIZE_STRING"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_cost_modifier": {
+      "definitions": 4,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 4,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "key",
+        "modifier_types",
+        "trigger",
+        "use_parent_icon"
+      ],
+      "keysByDefinition": [
+        [
+          "key",
+          "modifier_types",
+          "trigger"
+        ],
+        [
+          "key",
+          "modifier_types",
+          "trigger",
+          "use_parent_icon"
+        ]
+      ]
+    },
+    "triggered_produces_modifier": {
+      "definitions": 13,
+      "repeated": 2,
+      "scalars": 0,
+      "blocks": 13,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "key",
+        "modifier_types",
+        "trigger",
+        "use_parent_icon"
+      ],
+      "keysByDefinition": [
+        [
+          "key",
+          "modifier_types",
+          "trigger"
+        ],
+        [
+          "key",
+          "modifier_types",
+          "trigger",
+          "use_parent_icon"
+        ]
+      ]
+    },
+    "triggered_upkeep_modifier": {
+      "definitions": 10,
+      "repeated": 2,
+      "scalars": 0,
+      "blocks": 10,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "key",
+        "modifier_types",
+        "trigger",
+        "use_parent_icon"
+      ],
+      "keysByDefinition": [
+        [
+          "key",
+          "modifier_types",
+          "trigger"
+        ],
+        [
+          "key",
+          "modifier_types",
+          "trigger",
+          "use_parent_icon"
+        ]
+      ]
+    },
+    "use_for_ai_budget": {
+      "definitions": 32,
+      "repeated": 0,
+      "scalars": 32,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

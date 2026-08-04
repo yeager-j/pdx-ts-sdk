@@ -1,0 +1,30 @@
+# Hermetic on purpose: every step runs from committed inputs — vendored CWT
+# rules, the committed corpus fixture, generated output in-tree. The
+# install-gated gates (corpus:check, codegen:vanilla:check) are maintainer-local
+# and are deliberately absent: a runner has no Stellaris install, and AGENTS.md
+# is explicit that neither may be made to pass vacuously without one. The
+# install-gated test suites skip themselves, and the corpus version canary is
+# silent when no install exists.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      # The CI-style codegen drift gate: regenerates from vendored inputs and
+      # fails on any diff against the committed packages/sdk/src/generated.
+      - run: npm run codegen:check

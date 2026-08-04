@@ -367,7 +367,13 @@ export function readRegistryCorpus(
   const dir = path.join(root, registryPath);
   let names: string[];
   try {
-    names = readdirSync(dir).filter((name) => name.endsWith(".txt"));
+    // Sorted because `readdirSync` order is filesystem-dependent and the
+    // observations are committed as a fixture: the capped value sample keeps
+    // whichever scalars arrive first, so an unstable read order would diff on
+    // every re-extraction of an unchanged install.
+    names = readdirSync(dir)
+      .filter((name) => name.endsWith(".txt"))
+      .sort();
   } catch {
     return { definitions: 0, files: 0, occurrences: new Map() };
   }

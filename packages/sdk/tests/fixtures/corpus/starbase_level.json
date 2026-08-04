@@ -1,0 +1,356 @@
+{
+  "registry": "starbase_level",
+  "definitions": 41,
+  "files": 8,
+  "fingerprint": "c322d1a07be3316b83e82f2a1b2b285b73e460fc57445a1e3388250cf8b4f922",
+  "fields": {
+    "ai_weight": {
+      "definitions": 36,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 36,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "weight"
+        ]
+      ]
+    },
+    "building_slots": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 20,
+      "bareBlocks": 20,
+      "values": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "lower_1",
+        "lower_2",
+        "lower_3",
+        "lower_4"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_always_dismantle": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "display_empire_shield": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "display_map_icon": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "display_shipyard_button": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "downgrade_potential": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 10,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "always"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ]
+      ]
+    },
+    "level_tooltip": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "civilian_arkship_tier_2_level_tooltip",
+        "civilian_arkship_tier_3_level_tooltip",
+        "military_arkship_tier_1_level_tooltip",
+        "military_arkship_tier_2_level_tooltip",
+        "military_arkship_tier_3_level_tooltip",
+        "science_arkship_tier_2_level_tooltip",
+        "science_arkship_tier_3_level_tooltip"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "level_weight": {
+      "definitions": 26,
+      "repeated": 0,
+      "scalars": 26,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "module_slots": {
+      "definitions": 21,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 21,
+      "bareBlocks": 21,
+      "values": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "spinal_mount_1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "next_level": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 18,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "starbase_level_citadel",
+        "starbase_level_civilian_arkship_2",
+        "starbase_level_civilian_arkship_3",
+        "starbase_level_deep_space_citadel_2",
+        "starbase_level_deep_space_citadel_3",
+        "starbase_level_exd",
+        "starbase_level_military_arkship_2",
+        "starbase_level_military_arkship_3",
+        "starbase_level_orbital_ring_tier_2",
+        "starbase_level_orbital_ring_tier_3",
+        "starbase_level_science_arkship_2",
+        "starbase_level_science_arkship_3",
+        "starbase_level_starfortress",
+        "starbase_level_starhold",
+        "starbase_level_starport",
+        "starbase_level_waystation_2",
+        "starbase_level_waystation_3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "picture": {
+      "definitions": 27,
+      "repeated": 0,
+      "scalars": 18,
+      "blocks": 9,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_arkship_blueprint_civilian_tier_1",
+        "GFX_arkship_blueprint_civilian_tier_2",
+        "GFX_arkship_blueprint_civilian_tier_3",
+        "GFX_arkship_blueprint_military_tier_1",
+        "GFX_arkship_blueprint_military_tier_2",
+        "GFX_arkship_blueprint_military_tier_3",
+        "GFX_arkship_blueprint_science_tier_1",
+        "GFX_arkship_blueprint_science_tier_2",
+        "GFX_arkship_blueprint_science_tier_3",
+        "GFX_deep_space_citadel_background",
+        "GFX_orbital_ring_background",
+        "GFX_waystation_background"
+      ],
+      "keys": [
+        "picture",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "picture",
+          "trigger"
+        ]
+      ]
+    },
+    "potential_home_base": {
+      "definitions": 25,
+      "repeated": 0,
+      "scalars": 25,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_size": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 41,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "big_starbase_synth_queen",
+        "civilian_arkship_tier_1",
+        "civilian_arkship_tier_2",
+        "civilian_arkship_tier_3",
+        "enclave_mercenary_station",
+        "enclave_mindwarden_station",
+        "enclave_salvager_station",
+        "enclave_shroudwalker_station",
+        "juggernaut",
+        "military_arkship_champions_forge",
+        "military_arkship_tier_1",
+        "military_arkship_tier_2",
+        "military_arkship_tier_3",
+        "orbital_ring_tier_1",
+        "orbital_ring_tier_2",
+        "orbital_ring_tier_3",
+        "science_arkship_tier_1",
+        "science_arkship_tier_2",
+        "science_arkship_tier_3",
+        "starbase_ai",
+        "starbase_caravaneer",
+        "starbase_citadel",
+        "starbase_deep_space_citadel_1",
+        "starbase_deep_space_citadel_2",
+        "starbase_deep_space_citadel_3",
+        "starbase_exd",
+        "starbase_exd_0",
+        "starbase_fe_outpost",
+        "starbase_gatebuilders",
+        "starbase_hatchery",
+        "starbase_marauder",
+        "starbase_outpost",
+        "starbase_starfortress",
+        "starbase_starhold",
+        "starbase_starport",
+        "starbase_swarm",
+        "starbase_synth_queen",
+        "starbase_waystation_1",
+        "starbase_waystation_2",
+        "starbase_waystation_3",
+        "voidworm_nest"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_in_outliner": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 18,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "starbase_capacity_used": {
+      "definitions": 17,
+      "repeated": 0,
+      "scalars": 17,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "upgrade_possible": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "planet"
+      ],
+      "keysByDefinition": [
+        [
+          "planet"
+        ]
+      ]
+    }
+  }
+}

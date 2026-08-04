@@ -1,0 +1,1775 @@
+{
+  "registry": "utility_component_template",
+  "definitions": 848,
+  "files": 55,
+  "fingerprint": "e74f0bec626860dfae2c4aa1a6398cfa7a7b9ed30d5cb25df8e93b8684006c48",
+  "fields": {
+    "ai_tag_weight": {
+      "definitions": 113,
+      "repeated": 0,
+      "scalars": 113,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_tags": {
+      "definitions": 155,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 155,
+      "bareBlocks": 155,
+      "values": [
+        "artillery",
+        "artillery_stealth",
+        "brawler",
+        "brawler_stealth",
+        "buffer_role",
+        "buffer_role_stealth",
+        "carrier",
+        "carrier_stealth",
+        "debuffer_role",
+        "debuffer_role_stealth",
+        "energy_torpedoes",
+        "energy_torpedoes_stealth",
+        "explosive",
+        "explosive_stealth",
+        "gunship",
+        "gunship_stealth",
+        "screen",
+        "screen_stealth"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_weight": {
+      "definitions": 666,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 666,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "factor",
+        "inline_script",
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "base"
+        ],
+        [
+          "factor"
+        ],
+        [
+          "inline_script",
+          "modifier",
+          "weight"
+        ],
+        [
+          "inline_script",
+          "weight"
+        ],
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "blocked_by": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 14,
+      "bareBlocks": 14,
+      "values": [
+        "BATTLESHIP_CLOAKING_DARK_MATTER",
+        "BATTLESHIP_CLOAKING_PSI",
+        "CORVETTE_CLOAKING_1",
+        "CORVETTE_CLOAKING_2",
+        "CORVETTE_CLOAKING_3",
+        "CORVETTE_CLOAKING_DARK_MATTER",
+        "CORVETTE_CLOAKING_PSI",
+        "CRUISER_CLOAKING_3",
+        "CRUISER_CLOAKING_DARK_MATTER",
+        "CRUISER_CLOAKING_PSI",
+        "DESTROYER_CLOAKING_2",
+        "DESTROYER_CLOAKING_3",
+        "DESTROYER_CLOAKING_DARK_MATTER",
+        "DESTROYER_CLOAKING_PSI"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "component_set": {
+      "definitions": 749,
+      "repeated": 0,
+      "scalars": 749,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "AFTERBURNER_1",
+        "AFTERBURNER_2",
+        "ARCHAEO_ARMOR",
+        "ARMOR_1",
+        "ARMOR_2",
+        "ARMOR_3",
+        "ARMOR_4",
+        "ARMOR_5",
+        "AUTO_REPAIR",
+        "BEHEMOTH_ARMOR",
+        "BIO_ARCHAEO_ARMOR",
+        "BIO_ARCHAEO_SHIELD",
+        "BIO_ARMOR_1",
+        "BIO_ARMOR_2",
+        "BIO_ARMOR_3",
+        "BIO_ARMOR_4",
+        "BIO_ARMOR_5",
+        "BIO_LM_ARMOR_1",
+        "BIO_LM_ARMOR_2",
+        "BIO_LM_ARMOR_3",
+        "BIO_LM_ARMOR_4",
+        "BIO_LM_ARMOR_5",
+        "BIO_SHIELD_1",
+        "BIO_SHIELD_2",
+        "BIO_SHIELD_3",
+        "BIO_SHIELD_4",
+        "BIO_SHIELD_5",
+        "BULWARK_3_BATTLEWRIGHT",
+        "CRYSTAL_ARMOR_1",
+        "CRYSTAL_ARMOR_1_BIO",
+        "CRYSTAL_ARMOR_2",
+        "CRYSTAL_ARMOR_2_BIO",
+        "DARK_MATTER_BIO_DEFLECTOR",
+        "DRAGON_ARMOR",
+        "DRAGON_BIO_ARMOR",
+        "ENIGMATIC_DECODER",
+        "ENIGMATIC_DISRUPTION_FIELD",
+        "ENIGMATIC_ENCODER",
+        "FIRE_CONTROL_1",
+        "LM_ARMOR_1",
+        "LM_ARMOR_2",
+        "LM_ARMOR_3",
+        "LM_ARMOR_4",
+        "LM_ARMOR_5",
+        "PSI_BIO_BARRIER",
+        "PSI_BIO_SHIELD",
+        "REACTOR_BOOSTER_1",
+        "REACTOR_BOOSTER_2",
+        "REACTOR_BOOSTER_3",
+        "SHIELD_BOOSTER",
+        "SHIELD_HARDENER_1",
+        "TIYANKI_ARMOR",
+        "bio_ship_unique_components",
+        "combat_computers",
+        "dsc_aura_components",
+        "ftl_components",
+        "ftl_inhibitor",
+        "paladin_crest",
+        "power_core",
+        "ship_aura_components",
+        "station_large_aura_components",
+        "station_medium_aura_components",
+        "station_small_aura_components",
+        "thruster_components_bio"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "custom_tooltip": {
+      "definitions": 46,
+      "repeated": 0,
+      "scalars": 46,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "BOARDING_CABLES_TOOLTIP",
+        "CLOAKING_1_TOOLTIP",
+        "CLOAKING_2_TOOLTIP",
+        "CLOAKING_3_TOOLTIP",
+        "CLOAKING_DARK_MATTER_TOOLTIP",
+        "CLOAKING_PSI_TOOLTIP",
+        "GRAVITY_SNARE_STANDARD_TOOLTIP",
+        "SHIP_BEHEMOTH_GROWTH_TT",
+        "SHIP_PALADIN_CREST_TT",
+        "tt_LARGE_ARCHAEO_ARMOR_AP",
+        "tt_LARGE_ARCHAEO_SHIELD_AP",
+        "tt_LARGE_BIO_ARCHAEO",
+        "tt_LARGE_BIO_ARCHAEO_AP",
+        "tt_MEDIUM_ARCHAEO_ARMOR_AP",
+        "tt_MEDIUM_ARCHAEO_SHIELD_AP",
+        "tt_MEDIUM_BIO_ARCHAEO_AP",
+        "tt_SMALL_ARCHAEO_ARMOR_AP",
+        "tt_SMALL_ARCHAEO_SHIELD_AP",
+        "tt_SMALL_BIO_ARCHAEO_AP"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "friendly_aura": {
+      "definitions": 30,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 30,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "apply_on",
+        "limit",
+        "modifier",
+        "name",
+        "radius",
+        "stack_info",
+        "system_wide"
+      ],
+      "keysByDefinition": [
+        [
+          "apply_on",
+          "modifier",
+          "name",
+          "radius",
+          "stack_info"
+        ],
+        [
+          "apply_on",
+          "modifier",
+          "name",
+          "stack_info",
+          "system_wide"
+        ],
+        [
+          "limit",
+          "modifier",
+          "name",
+          "stack_info",
+          "system_wide"
+        ],
+        [
+          "modifier",
+          "name",
+          "stack_info",
+          "system_wide"
+        ]
+      ]
+    },
+    "ftl": {
+      "definitions": 17,
+      "repeated": 0,
+      "scalars": 17,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ftl_inhibitor": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hidden": {
+      "definitions": 29,
+      "repeated": 0,
+      "scalars": 29,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hostile_aura": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 22,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "apply_on",
+        "limit",
+        "modifier",
+        "name",
+        "radius",
+        "stack_info",
+        "system_wide"
+      ],
+      "keysByDefinition": [
+        [
+          "apply_on",
+          "limit",
+          "modifier",
+          "name",
+          "stack_info",
+          "system_wide"
+        ],
+        [
+          "apply_on",
+          "modifier",
+          "name",
+          "radius",
+          "stack_info"
+        ],
+        [
+          "modifier",
+          "name",
+          "stack_info",
+          "system_wide"
+        ]
+      ]
+    },
+    "hyperlane_range": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "11",
+        "4",
+        "8"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 772,
+      "repeated": 0,
+      "scalars": 772,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_mutation_berserker_glands",
+        "GFX_mutation_combat_synapses",
+        "GFX_ship_part_behemoth_armor",
+        "GFX_ship_part_bio_archaeo_armor",
+        "GFX_ship_part_bio_archaeo_shield",
+        "GFX_ship_part_bio_armor_1",
+        "GFX_ship_part_bio_armor_2",
+        "GFX_ship_part_bio_armor_3",
+        "GFX_ship_part_bio_armor_4",
+        "GFX_ship_part_bio_armor_5",
+        "GFX_ship_part_bio_dark_matter_power_core",
+        "GFX_ship_part_bio_dark_matter_shield",
+        "GFX_ship_part_bio_dragon_armor",
+        "GFX_ship_part_bio_psi_shield",
+        "GFX_ship_part_bio_reactor_1",
+        "GFX_ship_part_bio_reactor_2",
+        "GFX_ship_part_bio_reactor_3",
+        "GFX_ship_part_bio_reactor_4",
+        "GFX_ship_part_bio_reactor_5",
+        "GFX_ship_part_bio_shield_1",
+        "GFX_ship_part_bio_shield_2",
+        "GFX_ship_part_bio_shield_3",
+        "GFX_ship_part_bio_shield_4",
+        "GFX_ship_part_bio_shield_5",
+        "GFX_ship_part_bio_thruster_1",
+        "GFX_ship_part_bio_thruster_2",
+        "GFX_ship_part_bio_thruster_3",
+        "GFX_ship_part_bio_thruster_4",
+        "GFX_ship_part_bioship_computer_default",
+        "GFX_ship_part_bioship_computer_line_advanced",
+        "GFX_ship_part_bioship_computer_line_basic",
+        "GFX_ship_part_bioship_computer_picket_advanced",
+        "GFX_ship_part_bioship_computer_picket_basic",
+        "GFX_ship_part_bioship_computer_picket_precog",
+        "GFX_ship_part_bioship_computer_picket_sapient",
+        "GFX_ship_part_bioship_computer_swarm_advanced",
+        "GFX_ship_part_bioship_computer_swarm_basic",
+        "GFX_ship_part_bioship_computer_swarm_precog",
+        "GFX_ship_part_bioship_computer_swarm_sapient",
+        "GFX_ship_part_bioship_hyper_drive_1",
+        "GFX_ship_part_bioship_hyper_drive_2",
+        "GFX_ship_part_bioship_hyper_drive_3",
+        "GFX_ship_part_bioship_jump_drive_1",
+        "GFX_ship_part_bioship_psi_jump_drive_1",
+        "GFX_ship_part_empty_ftl_drive",
+        "GFX_ship_part_growth_component_1",
+        "GFX_ship_part_growth_component_2",
+        "GFX_ship_part_harbinger_chitin_component_1",
+        "GFX_ship_part_harbinger_chitin_component_2",
+        "GFX_ship_part_harbinger_incubator_component_1",
+        "GFX_ship_part_harbinger_incubator_component_2",
+        "GFX_ship_part_mauler_biter_component_1",
+        "GFX_ship_part_mauler_biter_component_2",
+        "GFX_ship_part_mauler_pursuit_component_1",
+        "GFX_ship_part_mauler_pursuit_component_2",
+        "GFX_ship_part_stinger_fire_rate_component_1",
+        "GFX_ship_part_stinger_fire_rate_component_2",
+        "GFX_ship_part_stinger_range_component_1",
+        "GFX_ship_part_stinger_range_component_2",
+        "GFX_ship_part_weaver_booster_component_1",
+        "GFX_ship_part_weaver_booster_component_2",
+        "GFX_ship_part_weaver_growth_aura_component_1",
+        "GFX_ship_part_weaver_growth_aura_component_2",
+        "GFX_spaceport_module_growth_chamber"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon_frame": {
+      "definitions": 771,
+      "repeated": 0,
+      "scalars": 771,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 121,
+      "repeated": 2,
+      "scalars": 12,
+      "blocks": 109,
+      "bareBlocks": 0,
+      "values": [
+        "ship_components/behemoth_stage_1_mutations",
+        "ship_components/behemoth_stage_2_mutations",
+        "ship_components/behemoth_stage_3_mutations",
+        "ship_components/behemoth_stage_4_mutations",
+        "ship_components/behemoth_stage_5_mutations",
+        "ship_components/behemoth_stage_6_mutations",
+        "ship_components/behemoth_stage_7_mutations",
+        "ship_components/behemoth_stage_8_mutations",
+        "ship_components/behemoth_superweapon",
+        "ship_components/cloaking_ship_shield_reduction",
+        "ship_components/dark_matter_cloaking_ship_shield_reduction",
+        "ship_components/psi_cloaking_ship_shield_reduction"
+      ],
+      "keys": [
+        "COMPONENT_SET",
+        "CORRESPONDING_SIZE",
+        "COST",
+        "DARK_MATTER",
+        "DYNAMIC_COST",
+        "EVASION",
+        "EXOTIC_GASES",
+        "ICON",
+        "KEY",
+        "LEVEL",
+        "POTENTIAL",
+        "POTENTIAL_TRIGGER",
+        "PREREQUISITE",
+        "RARE_CRYSTALS",
+        "SHIELD_NULLIFICATION",
+        "SIZE",
+        "SIZE_CAP",
+        "SIZE_CAPITAL",
+        "SPEED",
+        "STRENGTH",
+        "TIER",
+        "WEIGHT",
+        "ZRO",
+        "script"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "COMPONENT_SET",
+          "DARK_MATTER",
+          "DYNAMIC_COST",
+          "EXOTIC_GASES",
+          "ICON",
+          "POTENTIAL_TRIGGER",
+          "PREREQUISITE",
+          "RARE_CRYSTALS",
+          "SHIELD_NULLIFICATION",
+          "SIZE",
+          "SIZE_CAPITAL",
+          "STRENGTH",
+          "WEIGHT",
+          "ZRO",
+          "script"
+        ],
+        [
+          "CORRESPONDING_SIZE",
+          "COST",
+          "DARK_MATTER",
+          "EVASION",
+          "LEVEL",
+          "POTENTIAL",
+          "PREREQUISITE",
+          "SPEED",
+          "script"
+        ],
+        [
+          "KEY",
+          "SIZE",
+          "script"
+        ],
+        [
+          "SIZE",
+          "SIZE_CAP",
+          "script"
+        ],
+        [
+          "SIZE",
+          "TIER",
+          "script"
+        ]
+      ]
+    },
+    "is_default_component": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "jumpdrive": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "modifier": {
+      "definitions": 347,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 347,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "ship_armor_add",
+        "ship_armor_mult",
+        "ship_armor_regen_add_perc",
+        "ship_base_speed_mult",
+        "ship_capture_chance_add",
+        "ship_cloaking_strength_add",
+        "ship_evasion_add",
+        "ship_evasion_mult",
+        "ship_hull_add",
+        "ship_hull_mult",
+        "ship_hull_regen_add_perc",
+        "ship_reactor_power_mult",
+        "ship_shield_add",
+        "ship_shield_mult",
+        "ship_shield_regen_add_static",
+        "ship_speed_mult",
+        "space_fauna_experience_gain_mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "ship_armor_add"
+        ],
+        [
+          "ship_armor_add",
+          "ship_armor_regen_add_perc",
+          "ship_hull_regen_add_perc"
+        ],
+        [
+          "ship_armor_add",
+          "ship_hull_add",
+          "ship_shield_add",
+          "ship_shield_regen_add_static"
+        ],
+        [
+          "ship_armor_add",
+          "ship_shield_add",
+          "ship_shield_regen_add_static"
+        ],
+        [
+          "ship_armor_mult"
+        ],
+        [
+          "ship_armor_mult",
+          "ship_hull_mult"
+        ],
+        [
+          "ship_armor_mult",
+          "ship_hull_mult",
+          "ship_shield_mult"
+        ],
+        [
+          "ship_armor_regen_add_perc",
+          "ship_hull_regen_add_perc"
+        ],
+        [
+          "ship_base_speed_mult"
+        ],
+        [
+          "ship_base_speed_mult",
+          "ship_evasion_add"
+        ],
+        [
+          "ship_capture_chance_add",
+          "ship_cloaking_strength_add"
+        ],
+        [
+          "ship_cloaking_strength_add"
+        ],
+        [
+          "ship_evasion_mult"
+        ],
+        [
+          "ship_evasion_mult",
+          "ship_speed_mult"
+        ],
+        [
+          "ship_hull_add"
+        ],
+        [
+          "ship_reactor_power_mult"
+        ],
+        [
+          "ship_shield_add",
+          "ship_shield_regen_add_static"
+        ],
+        [
+          "ship_shield_mult"
+        ],
+        [
+          "ship_speed_mult"
+        ],
+        [
+          "space_fauna_experience_gain_mult"
+        ]
+      ]
+    },
+    "potential": {
+      "definitions": 554,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 554,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "from",
+        "is_arkship_ship",
+        "is_eager_explorer_ship",
+        "is_ship_class",
+        "is_ship_size",
+        "is_waystation_ship",
+        "ship_is_stage_3_bioship",
+        "ship_uses_artillery_role",
+        "ship_uses_battleship_cloaks",
+        "ship_uses_battleship_reactors",
+        "ship_uses_battleship_thrusters",
+        "ship_uses_buffer_role",
+        "ship_uses_carrier_role",
+        "ship_uses_civilian_cloaks",
+        "ship_uses_colossus_components",
+        "ship_uses_colossus_computers",
+        "ship_uses_colossus_thrusters",
+        "ship_uses_corvette_cloaks",
+        "ship_uses_corvette_components",
+        "ship_uses_corvette_reactors",
+        "ship_uses_cruiser_cloaks",
+        "ship_uses_cruiser_components",
+        "ship_uses_cruiser_reactors",
+        "ship_uses_debuffer_role",
+        "ship_uses_destroyer_cloaks",
+        "ship_uses_destroyer_components",
+        "ship_uses_destroyer_reactors",
+        "ship_uses_dsc_components",
+        "ship_uses_gravity_snare_cloaks",
+        "ship_uses_harbinger_components",
+        "ship_uses_ion_cannon_components",
+        "ship_uses_juggernaut_components",
+        "ship_uses_juggernaut_reactors",
+        "ship_uses_jump_drives",
+        "ship_uses_line_role",
+        "ship_uses_mauler_components",
+        "ship_uses_offspring_components",
+        "ship_uses_picket_role",
+        "ship_uses_platform_computers",
+        "ship_uses_platform_reactors",
+        "ship_uses_space_fauna_battleship_thrusters",
+        "ship_uses_space_fauna_computers",
+        "ship_uses_space_fauna_corvette_thrusters",
+        "ship_uses_space_fauna_cruiser_thrusters",
+        "ship_uses_space_fauna_destroyer_thrusters",
+        "ship_uses_space_fauna_titan_thrusters",
+        "ship_uses_starbase_components",
+        "ship_uses_stinger_components",
+        "ship_uses_swarm_role",
+        "ship_uses_titan_components",
+        "ship_uses_titan_reactors",
+        "ship_uses_titan_thrusters",
+        "ship_uses_torpedo_role",
+        "ship_uses_weaver_components"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "OR",
+          "from"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "from",
+          "is_arkship_ship"
+        ],
+        [
+          "OR",
+          "is_eager_explorer_ship"
+        ],
+        [
+          "OR",
+          "ship_uses_colossus_thrusters"
+        ],
+        [
+          "OR",
+          "ship_uses_ion_cannon_components"
+        ],
+        [
+          "OR",
+          "ship_uses_juggernaut_reactors"
+        ],
+        [
+          "OR",
+          "ship_uses_jump_drives"
+        ],
+        [
+          "OR",
+          "ship_uses_offspring_components"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "is_arkship_ship"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "is_eager_explorer_ship"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_artillery_role"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_battleship_reactors"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_battleship_thrusters"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_buffer_role"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_carrier_role"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_colossus_components"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_colossus_computers"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_colossus_thrusters"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_corvette_components"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_corvette_reactors"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_cruiser_components"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_cruiser_reactors"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_debuffer_role"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_destroyer_components"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_destroyer_reactors"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_ion_cannon_components"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_juggernaut_reactors"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_jump_drives"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_line_role"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_offspring_components"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_picket_role"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_platform_computers"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_platform_reactors"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_starbase_components"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_swarm_role"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_titan_reactors"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_titan_thrusters"
+        ],
+        [
+          "from",
+          "is_arkship_ship",
+          "ship_uses_torpedo_role"
+        ],
+        [
+          "from",
+          "ship_uses_artillery_role"
+        ],
+        [
+          "from",
+          "ship_uses_battleship_reactors"
+        ],
+        [
+          "from",
+          "ship_uses_battleship_thrusters"
+        ],
+        [
+          "from",
+          "ship_uses_carrier_role"
+        ],
+        [
+          "from",
+          "ship_uses_colossus_components"
+        ],
+        [
+          "from",
+          "ship_uses_corvette_components"
+        ],
+        [
+          "from",
+          "ship_uses_corvette_reactors"
+        ],
+        [
+          "from",
+          "ship_uses_cruiser_components"
+        ],
+        [
+          "from",
+          "ship_uses_cruiser_reactors"
+        ],
+        [
+          "from",
+          "ship_uses_destroyer_components"
+        ],
+        [
+          "from",
+          "ship_uses_destroyer_reactors"
+        ],
+        [
+          "from",
+          "ship_uses_dsc_components"
+        ],
+        [
+          "from",
+          "ship_uses_line_role"
+        ],
+        [
+          "from",
+          "ship_uses_picket_role"
+        ],
+        [
+          "from",
+          "ship_uses_platform_computers"
+        ],
+        [
+          "from",
+          "ship_uses_platform_reactors"
+        ],
+        [
+          "from",
+          "ship_uses_starbase_components"
+        ],
+        [
+          "from",
+          "ship_uses_swarm_role"
+        ],
+        [
+          "from",
+          "ship_uses_titan_reactors"
+        ],
+        [
+          "from",
+          "ship_uses_titan_thrusters"
+        ],
+        [
+          "from",
+          "ship_uses_torpedo_role"
+        ],
+        [
+          "is_arkship_ship"
+        ],
+        [
+          "is_ship_class"
+        ],
+        [
+          "is_ship_size"
+        ],
+        [
+          "is_waystation_ship"
+        ],
+        [
+          "ship_is_stage_3_bioship"
+        ],
+        [
+          "ship_uses_battleship_cloaks"
+        ],
+        [
+          "ship_uses_civilian_cloaks"
+        ],
+        [
+          "ship_uses_colossus_computers"
+        ],
+        [
+          "ship_uses_corvette_cloaks"
+        ],
+        [
+          "ship_uses_cruiser_cloaks"
+        ],
+        [
+          "ship_uses_destroyer_cloaks"
+        ],
+        [
+          "ship_uses_dsc_components"
+        ],
+        [
+          "ship_uses_gravity_snare_cloaks"
+        ],
+        [
+          "ship_uses_harbinger_components"
+        ],
+        [
+          "ship_uses_juggernaut_components"
+        ],
+        [
+          "ship_uses_mauler_components"
+        ],
+        [
+          "ship_uses_space_fauna_battleship_thrusters",
+          "ship_uses_space_fauna_corvette_thrusters",
+          "ship_uses_space_fauna_cruiser_thrusters",
+          "ship_uses_space_fauna_destroyer_thrusters",
+          "ship_uses_space_fauna_titan_thrusters"
+        ],
+        [
+          "ship_uses_space_fauna_computers"
+        ],
+        [
+          "ship_uses_stinger_components"
+        ],
+        [
+          "ship_uses_titan_components"
+        ],
+        [
+          "ship_uses_weaver_components"
+        ]
+      ]
+    },
+    "power": {
+      "definitions": 600,
+      "repeated": 0,
+      "scalars": 600,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-10",
+        "-15",
+        "-20",
+        "-25",
+        "-5",
+        "0"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prerequisites": {
+      "definitions": 661,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 661,
+      "bareBlocks": 650,
+      "values": [
+        "tech_afterburners_1",
+        "tech_afterburners_2",
+        "tech_antimatter_power",
+        "tech_archaeo_detection_scrambler",
+        "tech_archaeoarmor",
+        "tech_archaeoshield",
+        "tech_armor_hardeners_1",
+        "tech_armor_hardeners_2",
+        "tech_auxiliary_fire_control",
+        "tech_cold_fusion_power",
+        "tech_combat_computers_1",
+        "tech_combat_computers_2",
+        "tech_combat_computers_3",
+        "tech_combat_computers_autonomous",
+        "tech_command_matrix",
+        "tech_covenant_composer",
+        "tech_covenant_cradle",
+        "tech_covenant_eater",
+        "tech_covenant_instrument",
+        "tech_covenant_whisperers",
+        "tech_crystal_armor_1",
+        "tech_crystal_armor_2",
+        "tech_dark_matter_deflector",
+        "tech_dark_matter_power_core",
+        "tech_dragon_armor",
+        "tech_enigmatic_decoder",
+        "tech_enigmatic_encoder",
+        "tech_fission_power",
+        "tech_ftl_inhibitor",
+        "tech_fusion_power",
+        "tech_harbinger_growth_1",
+        "tech_harbinger_growth_2",
+        "tech_hyper_drive_1",
+        "tech_hyper_drive_2",
+        "tech_hyper_drive_3",
+        "tech_jump_drive_1",
+        "tech_mauler_growth_1",
+        "tech_mauler_growth_2",
+        "tech_precognition_interface",
+        "tech_psi_jump_drive_1",
+        "tech_psionic_barrier",
+        "tech_psionic_shield",
+        "tech_reactor_boosters_1",
+        "tech_reactor_boosters_2",
+        "tech_reactor_boosters_3",
+        "tech_regenerative_hull_tissue",
+        "tech_shield_hardeners_1",
+        "tech_shield_hardeners_2",
+        "tech_shield_rechargers_1",
+        "tech_shields_1",
+        "tech_shields_2",
+        "tech_shields_3",
+        "tech_shields_4",
+        "tech_shields_5",
+        "tech_ship_armor_1",
+        "tech_ship_armor_2",
+        "tech_ship_armor_3",
+        "tech_ship_armor_4",
+        "tech_ship_armor_5",
+        "tech_stinger_growth_1",
+        "tech_stinger_growth_2",
+        "tech_weaver_growth_1",
+        "tech_weaver_growth_2",
+        "tech_zero_point_power"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "resources": {
+      "definitions": 630,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 630,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost",
+        "inline_script",
+        "upkeep"
+      ],
+      "keysByDefinition": [
+        [
+          "category"
+        ],
+        [
+          "category",
+          "cost"
+        ],
+        [
+          "category",
+          "cost",
+          "inline_script"
+        ],
+        [
+          "category",
+          "cost",
+          "upkeep"
+        ],
+        [
+          "category",
+          "inline_script"
+        ],
+        [
+          "category",
+          "inline_script",
+          "upkeep"
+        ],
+        [
+          "category",
+          "upkeep"
+        ]
+      ]
+    },
+    "scripted_action": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 6,
+      "bareBlocks": 6,
+      "values": [
+        "arkship_build_megastructure",
+        "arkship_deep_scan",
+        "arkship_drop_off_prisoners",
+        "arkship_empty_spine",
+        "arkship_exodus_jump",
+        "arkship_explore",
+        "arkship_harvest_resources",
+        "arkship_lithoid_consume_world",
+        "arkship_nanotech_consume_world",
+        "arkship_reprocess_planet",
+        "arkship_settle",
+        "arkship_stellar_ignition",
+        "arkship_strip_mine",
+        "arkship_subspace_image",
+        "arkship_survey",
+        "arkship_voidlure_crystalline_entity",
+        "arkship_voidlure_cutholoid",
+        "arkship_voidlure_space_amoeba",
+        "arkship_voidlure_tiyanki",
+        "arkship_voidlure_voidworm",
+        "azaryn_terraform",
+        "behemoth_rage",
+        "beholder_planetfall",
+        "collect_waystation_stockpile",
+        "horizon_needle_action",
+        "paladin_air_superiority",
+        "paladin_field_repairs",
+        "paladin_field_testing",
+        "paladin_for_the_order",
+        "paladin_hold_the_line",
+        "paladin_leadership",
+        "paladin_plan_b",
+        "paladin_recall",
+        "paladin_sudden_strike",
+        "paladin_super_shield",
+        "paladin_taunt",
+        "paladin_teamwork",
+        "paladin_thunderclap"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "sensor_range": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "2",
+        "4",
+        "9"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_behavior": {
+      "definitions": 137,
+      "repeated": 0,
+      "scalars": 137,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "arkship",
+        "artillery",
+        "carrier",
+        "colossus",
+        "default",
+        "line",
+        "picket",
+        "platform",
+        "stellarite_default",
+        "swarm",
+        "torpedo"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_limit": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 16,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_modifier": {
+      "definitions": 335,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 335,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "bioship_growth_progress_add",
+        "buffer_role_weapon_fire_rate_mult",
+        "debuffer_role_weapon_fire_rate_mult",
+        "diplo_weight_ship_mult",
+        "fleet_capture_defeated_leader_chance",
+        "ship_accuracy_add",
+        "ship_armor_damage_mult",
+        "ship_armor_hardening_add",
+        "ship_armor_regen_add_static",
+        "ship_cloaking_detection_add",
+        "ship_damage_against_starbases_mult",
+        "ship_damage_reduction_add",
+        "ship_disengage_opportunities_add",
+        "ship_engagement_range_mult",
+        "ship_fire_rate_mult",
+        "ship_ftl_jumpdrive_range_mult",
+        "ship_jumpdrive_cooldown_mult",
+        "ship_orbital_bombardment_mult",
+        "ship_shield_hardening_add",
+        "ship_shield_mult",
+        "ship_steal_defeated_ship_chance",
+        "ship_target_weight_mult",
+        "ship_tracking_add",
+        "ship_weapon_range_mult",
+        "ship_windup_mult",
+        "strike_craft_armor_add",
+        "strike_craft_cooldown_mult",
+        "weapon_type_energy_weapon_fire_rate_mult",
+        "weapon_type_explosive_weapon_damage_mult",
+        "weapon_type_mandible_weapon_damage_mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "bioship_growth_progress_add"
+        ],
+        [
+          "buffer_role_weapon_fire_rate_mult"
+        ],
+        [
+          "buffer_role_weapon_fire_rate_mult",
+          "debuffer_role_weapon_fire_rate_mult",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "debuffer_role_weapon_fire_rate_mult",
+          "ship_accuracy_add"
+        ],
+        [
+          "debuffer_role_weapon_fire_rate_mult",
+          "ship_accuracy_add",
+          "ship_tracking_add"
+        ],
+        [
+          "diplo_weight_ship_mult"
+        ],
+        [
+          "diplo_weight_ship_mult",
+          "ship_shield_mult"
+        ],
+        [
+          "fleet_capture_defeated_leader_chance",
+          "ship_steal_defeated_ship_chance"
+        ],
+        [
+          "ship_accuracy_add"
+        ],
+        [
+          "ship_accuracy_add",
+          "ship_fire_rate_mult"
+        ],
+        [
+          "ship_accuracy_add",
+          "ship_fire_rate_mult",
+          "ship_tracking_add"
+        ],
+        [
+          "ship_accuracy_add",
+          "ship_orbital_bombardment_mult"
+        ],
+        [
+          "ship_accuracy_add",
+          "ship_tracking_add"
+        ],
+        [
+          "ship_armor_damage_mult",
+          "weapon_type_mandible_weapon_damage_mult"
+        ],
+        [
+          "ship_armor_hardening_add"
+        ],
+        [
+          "ship_armor_hardening_add",
+          "weapon_type_energy_weapon_fire_rate_mult"
+        ],
+        [
+          "ship_armor_regen_add_static"
+        ],
+        [
+          "ship_cloaking_detection_add"
+        ],
+        [
+          "ship_damage_against_starbases_mult",
+          "ship_orbital_bombardment_mult",
+          "ship_tracking_add",
+          "weapon_type_explosive_weapon_damage_mult"
+        ],
+        [
+          "ship_damage_against_starbases_mult",
+          "ship_orbital_bombardment_mult",
+          "ship_tracking_add",
+          "weapon_type_mandible_weapon_damage_mult"
+        ],
+        [
+          "ship_damage_against_starbases_mult",
+          "ship_orbital_bombardment_mult",
+          "weapon_type_explosive_weapon_damage_mult"
+        ],
+        [
+          "ship_damage_against_starbases_mult",
+          "ship_orbital_bombardment_mult",
+          "weapon_type_mandible_weapon_damage_mult"
+        ],
+        [
+          "ship_damage_reduction_add"
+        ],
+        [
+          "ship_disengage_opportunities_add"
+        ],
+        [
+          "ship_disengage_opportunities_add",
+          "ship_ftl_jumpdrive_range_mult",
+          "ship_windup_mult"
+        ],
+        [
+          "ship_disengage_opportunities_add",
+          "ship_windup_mult"
+        ],
+        [
+          "ship_engagement_range_mult"
+        ],
+        [
+          "ship_engagement_range_mult",
+          "ship_tracking_add"
+        ],
+        [
+          "ship_engagement_range_mult",
+          "strike_craft_armor_add"
+        ],
+        [
+          "ship_engagement_range_mult",
+          "strike_craft_cooldown_mult"
+        ],
+        [
+          "ship_fire_rate_mult"
+        ],
+        [
+          "ship_fire_rate_mult",
+          "ship_tracking_add"
+        ],
+        [
+          "ship_fire_rate_mult",
+          "ship_tracking_add",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_fire_rate_mult",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_ftl_jumpdrive_range_mult"
+        ],
+        [
+          "ship_ftl_jumpdrive_range_mult",
+          "ship_jumpdrive_cooldown_mult"
+        ],
+        [
+          "ship_orbital_bombardment_mult"
+        ],
+        [
+          "ship_shield_hardening_add"
+        ],
+        [
+          "ship_target_weight_mult"
+        ],
+        [
+          "ship_tracking_add"
+        ],
+        [
+          "ship_tracking_add",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_windup_mult"
+        ],
+        [
+          "weapon_type_energy_weapon_fire_rate_mult"
+        ]
+      ]
+    },
+    "should_ai_use": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_tech_unlock_if": {
+      "definitions": 346,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 346,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_uses_bio_ships",
+        "is_galvanic_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "country_uses_bio_ships"
+        ],
+        [
+          "country_uses_bio_ships",
+          "is_galvanic_empire"
+        ]
+      ]
+    },
+    "size": {
+      "definitions": 772,
+      "repeated": 0,
+      "scalars": 772,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "aux",
+        "extra_large",
+        "large",
+        "medium",
+        "small"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "target_type": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "target_allies"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_ship_design_modifier": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 20,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "potential",
+        "ship_shield_add",
+        "ship_shield_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "potential",
+          "ship_shield_add"
+        ],
+        [
+          "potential",
+          "ship_shield_mult"
+        ]
+      ]
+    },
+    "triggered_ship_modifier": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 22,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "potential",
+        "ship_armor_regen_add_static",
+        "ship_shield_reduction"
+      ],
+      "keysByDefinition": [
+        [
+          "potential",
+          "ship_armor_regen_add_static"
+        ],
+        [
+          "potential",
+          "ship_shield_reduction"
+        ]
+      ]
+    },
+    "upgrade_path": {
+      "definitions": 152,
+      "repeated": 0,
+      "scalars": 152,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "artillery",
+        "buffer",
+        "carrier",
+        "debuffer",
+        "default",
+        "empty",
+        "growth",
+        "harbinger_chitin",
+        "harbinger_incubator",
+        "line",
+        "mauler_biter",
+        "mauler_pursuit",
+        "picket",
+        "stinger_fire_rate",
+        "stinger_range",
+        "swarm",
+        "torpedo",
+        "weaver_booster",
+        "weaver_growth_aura"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "upgrades_to": {
+      "definitions": 366,
+      "repeated": 0,
+      "scalars": 366,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "BATTLESHIP_BIO_FUSION_REACTOR",
+        "BEHEMOTH_PROPULSION_2",
+        "BEHEMOTH_PROPULSION_3",
+        "BEHEMOTH_PROPULSION_4",
+        "CORVETTE_BIO_FUSION_REACTOR",
+        "CRUISER_BIO_FUSION_REACTOR",
+        "DESTROYER_BIO_FUSION_REACTOR",
+        "HARBINGER_CHITIN_2",
+        "HARBINGER_INCUBATOR_2",
+        "HARBINGER_STAGE_1_GROWTH_1",
+        "HARBINGER_STAGE_1_GROWTH_2",
+        "HARBINGER_STAGE_2_GROWTH_1",
+        "JUGGERNAUT_BIO_FUSION_REACTOR",
+        "LARGE_BIO_ARMOR_2",
+        "LARGE_BIO_ARMOR_3",
+        "LARGE_BIO_ARMOR_4",
+        "LARGE_BIO_ARMOR_5",
+        "LARGE_BIO_SHIELD_2",
+        "LARGE_BIO_SHIELD_3",
+        "LARGE_BIO_SHIELD_4",
+        "LARGE_BIO_SHIELD_5",
+        "LARGE_DARK_MATTER_BIO_DEFLECTOR",
+        "LARGE_DRAGON_BIO_ARMOR",
+        "LARGE_PSI_BIO_SHIELD",
+        "MAULER_BITER_2",
+        "MAULER_PURSUIT_2",
+        "MAULER_STAGE_1_GROWTH_1",
+        "MAULER_STAGE_1_GROWTH_2",
+        "MAULER_STAGE_2_GROWTH_1",
+        "MEDIUM_BIO_ARMOR_2",
+        "MEDIUM_BIO_ARMOR_3",
+        "MEDIUM_BIO_ARMOR_4",
+        "MEDIUM_BIO_ARMOR_5",
+        "MEDIUM_BIO_SHIELD_2",
+        "MEDIUM_BIO_SHIELD_3",
+        "MEDIUM_BIO_SHIELD_4",
+        "MEDIUM_BIO_SHIELD_5",
+        "MEDIUM_DARK_MATTER_BIO_DEFLECTOR",
+        "MEDIUM_DRAGON_BIO_ARMOR",
+        "MEDIUM_PSI_BIO_SHIELD",
+        "PLATFORM_BIO_FUSION_REACTOR",
+        "SMALL_BIO_ARMOR_2",
+        "SMALL_BIO_ARMOR_3",
+        "SMALL_BIO_ARMOR_4",
+        "SMALL_BIO_ARMOR_5",
+        "SMALL_BIO_SHIELD_2",
+        "SMALL_BIO_SHIELD_3",
+        "SMALL_BIO_SHIELD_4",
+        "SMALL_BIO_SHIELD_5",
+        "SMALL_DARK_MATTER_BIO_DEFLECTOR",
+        "SMALL_DRAGON_BIO_ARMOR",
+        "SMALL_PSI_BIO_SHIELD",
+        "STARBASE_BIO_FUSION_REACTOR",
+        "STINGER_FIRE_RATE_2",
+        "STINGER_RANGE_2",
+        "STINGER_STAGE_1_GROWTH_1",
+        "STINGER_STAGE_1_GROWTH_2",
+        "STINGER_STAGE_2_GROWTH_1",
+        "TITAN_BIO_FUSION_REACTOR",
+        "WEAVER_BOOSTER_2",
+        "WEAVER_GROWTH_AURA_2",
+        "WEAVER_STAGE_1_GROWTH_1",
+        "WEAVER_STAGE_1_GROWTH_2",
+        "WEAVER_STAGE_2_GROWTH_1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

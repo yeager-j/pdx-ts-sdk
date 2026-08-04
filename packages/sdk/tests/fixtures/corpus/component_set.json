@@ -1,0 +1,169 @@
+{
+  "registry": "component_set",
+  "definitions": 439,
+  "files": 23,
+  "fingerprint": "a966c6a7de7d678093b44feb3763b1d7a2ed9e020005823b12458783de58120d",
+  "fields": {
+    "affects_target_type": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 439,
+      "repeated": 0,
+      "scalars": 439,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_ship_part_afterburner_1",
+        "GFX_ship_part_afterburner_2",
+        "GFX_ship_part_amoeba_strike_craft_1",
+        "GFX_ship_part_archaeo_armor",
+        "GFX_ship_part_archaeo_strike_craft",
+        "GFX_ship_part_armor_1",
+        "GFX_ship_part_armor_2",
+        "GFX_ship_part_armor_3",
+        "GFX_ship_part_armor_4",
+        "GFX_ship_part_armor_5",
+        "GFX_ship_part_armor_hardener_1",
+        "GFX_ship_part_armor_hardener_2",
+        "GFX_ship_part_asteroidal_carapace",
+        "GFX_ship_part_auto_repair",
+        "GFX_ship_part_bio_hyperdrive",
+        "GFX_ship_part_bio_sensor",
+        "GFX_ship_part_bio_thruster_1",
+        "GFX_ship_part_boarding_cables",
+        "GFX_ship_part_cloak_1",
+        "GFX_ship_part_cloak_2",
+        "GFX_ship_part_cloak_3",
+        "GFX_ship_part_cloak_dark_matter",
+        "GFX_ship_part_cloak_psi",
+        "GFX_ship_part_composer_covenant_aux",
+        "GFX_ship_part_computer",
+        "GFX_ship_part_computer_default",
+        "GFX_ship_part_cradle_covenant_aux",
+        "GFX_ship_part_crystal_armor_1",
+        "GFX_ship_part_crystal_armor_2",
+        "GFX_ship_part_dark_matter_power_core",
+        "GFX_ship_part_dark_matter_shield",
+        "GFX_ship_part_dragon_armor",
+        "GFX_ship_part_eater_covenant_aux",
+        "GFX_ship_part_enigmatic_decoder",
+        "GFX_ship_part_enigmatic_disruption_field",
+        "GFX_ship_part_enigmatic_encoder",
+        "GFX_ship_part_hyperdrive",
+        "GFX_ship_part_instrument_covenant_aux",
+        "GFX_ship_part_lm_armor_1",
+        "GFX_ship_part_lm_armor_2",
+        "GFX_ship_part_lm_armor_3",
+        "GFX_ship_part_lm_armor_4",
+        "GFX_ship_part_lm_armor_5",
+        "GFX_ship_part_nanite_repair_system_synth_queen",
+        "GFX_ship_part_orbital_trash_dispersal",
+        "GFX_ship_part_reactor_1",
+        "GFX_ship_part_reactor_2",
+        "GFX_ship_part_reactor_booster_1",
+        "GFX_ship_part_reactor_booster_2",
+        "GFX_ship_part_reactor_booster_3",
+        "GFX_ship_part_sensor",
+        "GFX_ship_part_sensor_1",
+        "GFX_ship_part_sensor_2",
+        "GFX_ship_part_sensor_3",
+        "GFX_ship_part_sensor_4",
+        "GFX_ship_part_ship_part_nanite_repair_system",
+        "GFX_ship_part_strike_craft_bomber_1",
+        "GFX_ship_part_strike_craft_bomber_2",
+        "GFX_ship_part_strike_craft_bomber_3",
+        "GFX_ship_part_strike_craft_scout_1",
+        "GFX_ship_part_strike_craft_skrand",
+        "GFX_ship_part_swarm_strike_craft_1",
+        "GFX_ship_part_thruster_1",
+        "GFX_ship_part_whisperers_covenant_aux"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon_frame": {
+      "definitions": 311,
+      "repeated": 0,
+      "scalars": 311,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_core_component_set": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 13,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_default_space_fauna_component_set": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_space_fauna_component_set": {
+      "definitions": 138,
+      "repeated": 0,
+      "scalars": 138,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "required_component_set": {
+      "definitions": 24,
+      "repeated": 0,
+      "scalars": 24,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

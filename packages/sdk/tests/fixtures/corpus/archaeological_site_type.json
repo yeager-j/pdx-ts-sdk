@@ -1,0 +1,499 @@
+{
+  "registry": "archaeological_site_type",
+  "definitions": 124,
+  "files": 21,
+  "fingerprint": "af1e175c0dad8faad08b7d30c3c241b4c1f2cedaf69c7c197a878b6d31775593",
+  "fields": {
+    "allow": {
+      "definitions": 123,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 123,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "exists",
+        "hidden_trigger",
+        "is_ship_class",
+        "leader",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip"
+        ],
+        [
+          "exists",
+          "hidden_trigger",
+          "is_ship_class"
+        ],
+        [
+          "exists",
+          "hidden_trigger",
+          "leader"
+        ],
+        [
+          "exists",
+          "is_ship_class"
+        ],
+        [
+          "exists",
+          "is_ship_class",
+          "owner"
+        ],
+        [
+          "exists",
+          "leader"
+        ]
+      ]
+    },
+    "desc": {
+      "definitions": 123,
+      "repeated": 2,
+      "scalars": 121,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [
+        "ancient_battle_site_desc",
+        "asteroid_vault_1_desc",
+        "baol_digsite_1_desc",
+        "baol_digsite_2_desc",
+        "baol_digsite_3_desc",
+        "cool_relic_world_site_desc",
+        "endless_expanse_digsite_2_desc",
+        "endless_expanse_digsite_desc",
+        "grunur_digsite_1_desc",
+        "it_was_aliens_site_desc",
+        "lithoids_digsite_desc",
+        "mutation_vats_desc",
+        "oracle_digsite_desc",
+        "planetary_mechanocalibrator_desc",
+        "polaris_seed_vault_desc",
+        "relicrails_digsite_desc",
+        "rubricator_digsite_desc",
+        "sentinels_digsite_desc",
+        "site_ancient_robot_world_desc",
+        "site_command_center_intro",
+        "site_cut_to_fit_intro",
+        "site_debris_belt_desc",
+        "site_deja_vu_dig_intro",
+        "site_ebb_and_flow_intro",
+        "site_echoes_inside_intro",
+        "site_engineered_species_desc",
+        "site_fossilized_jellyfish_intro",
+        "site_freighter_crash_intro",
+        "site_fumongus_intro",
+        "site_grand_herald_intro",
+        "site_hidden_lab_intro",
+        "site_hive_coral_intro",
+        "site_hunting_ground_intro",
+        "site_ice_trauma_desc",
+        "site_krazura_desc",
+        "site_lesser_messenger_intro",
+        "site_lost_moments_intro",
+        "site_minigalaxy_1_intro",
+        "site_minigalaxy_2_intro",
+        "site_moon_bump_intro",
+        "site_orbital_rain_intro",
+        "site_percussive_maintenance_intro",
+        "site_phoenix_collective_intro",
+        "site_popular_rock_intro",
+        "site_robot_debris_intro",
+        "site_ruined_starsystem_intro",
+        "site_shot_into_the_ground_intro",
+        "site_sky_glow_hymn_intro",
+        "site_star_petal_intro",
+        "site_strange_flows_intro",
+        "site_target_from_orbit_intro",
+        "site_the_library_intro",
+        "site_tiyanki_graveyard_intro",
+        "site_transformation_intro",
+        "site_trench_world_intro",
+        "site_warmer_climates_intro",
+        "site_zarqlan_intro",
+        "the_host_desc",
+        "zroni_digsite_1_desc",
+        "zroni_digsite_2_desc",
+        "zroni_digsite_3_desc",
+        "zroni_digsite_4_desc",
+        "zroni_digsite_5_desc",
+        "zroni_digsite_6_desc"
+      ],
+      "keys": [
+        "text",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "text",
+          "trigger"
+        ]
+      ]
+    },
+    "max_instances": {
+      "definitions": 61,
+      "repeated": 0,
+      "scalars": 61,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "200",
+        "999"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "notification_duration": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_create": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "create_ambient_object",
+        "planet"
+      ],
+      "keysByDefinition": [
+        [
+          "create_ambient_object"
+        ],
+        [
+          "planet"
+        ]
+      ]
+    },
+    "on_roll_failed": {
+      "definitions": 124,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 124,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "from"
+      ],
+      "keysByDefinition": [
+        [
+          "from"
+        ]
+      ]
+    },
+    "on_visible": {
+      "definitions": 53,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 53,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_event",
+        "set_global_flag"
+      ],
+      "keysByDefinition": [
+        [
+          "country_event"
+        ],
+        [
+          "set_global_flag"
+        ]
+      ]
+    },
+    "picture": {
+      "definitions": 123,
+      "repeated": 0,
+      "scalars": 123,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_evt_ai_planet",
+        "GFX_evt_alien_planet",
+        "GFX_evt_alien_ruins",
+        "GFX_evt_alien_wildlife",
+        "GFX_evt_ancient_alien_temple",
+        "GFX_evt_ancient_databank",
+        "GFX_evt_archaeological_dig",
+        "GFX_evt_archaeology_camp",
+        "GFX_evt_arid",
+        "GFX_evt_asteroid_field",
+        "GFX_evt_atmospheric_entry",
+        "GFX_evt_baol_datacrystals",
+        "GFX_evt_baol_grunur",
+        "GFX_evt_baol_ruins",
+        "GFX_evt_barren_dig_site",
+        "GFX_evt_big_landing_ship",
+        "GFX_evt_broken_shackles",
+        "GFX_evt_chronicles_of_dendrus",
+        "GFX_evt_city_ruins",
+        "GFX_evt_clocks",
+        "GFX_evt_cold_barren",
+        "GFX_evt_cosmic_storms_fleets_of_the_thrice_damned",
+        "GFX_evt_cosmic_storms_windswept_fates",
+        "GFX_evt_crashed_station",
+        "GFX_evt_dead_city",
+        "GFX_evt_errant_cube",
+        "GFX_evt_excavation_team",
+        "GFX_evt_frozen",
+        "GFX_evt_gas_giant_station",
+        "GFX_evt_generator_powerup",
+        "GFX_evt_glitchy_matrix",
+        "GFX_evt_gray_goo",
+        "GFX_evt_habitat",
+        "GFX_evt_hidden_door",
+        "GFX_evt_huge_monument",
+        "GFX_evt_ice_asteroids",
+        "GFX_evt_landing_ship",
+        "GFX_evt_landing_ship_2",
+        "GFX_evt_medieval_alien_civilization",
+        "GFX_evt_molten",
+        "GFX_evt_mysterious_signal",
+        "GFX_evt_ocean",
+        "GFX_evt_outpost",
+        "GFX_evt_overgrown_city",
+        "GFX_evt_payback",
+        "GFX_evt_relic_world",
+        "GFX_evt_relic_world_street",
+        "GFX_evt_riftworld_archsite_crater",
+        "GFX_evt_ruined_system",
+        "GFX_evt_scanning_remains",
+        "GFX_evt_ship_in_orbit",
+        "GFX_evt_ship_in_orbit_2",
+        "GFX_evt_shrouded_planet",
+        "GFX_evt_slingshot_stars",
+        "GFX_evt_space_debris",
+        "GFX_evt_tomb_world",
+        "GFX_evt_toxic_matrix",
+        "GFX_evt_tropical",
+        "GFX_evt_tundra",
+        "GFX_evt_underground_civilization",
+        "GFX_evt_voidworms",
+        "GFX_evt_warm_barren",
+        "GFX_evt_weather_manipulators"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "potential": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 16,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "controller",
+        "hidden_trigger"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "NOT"
+        ],
+        [
+          "controller"
+        ],
+        [
+          "hidden_trigger"
+        ]
+      ]
+    },
+    "situation_log_category": {
+      "definitions": 44,
+      "repeated": 1,
+      "scalars": 44,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "crises",
+        "empire_concerns",
+        "precursors"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stage": {
+      "definitions": 123,
+      "repeated": 123,
+      "scalars": 0,
+      "blocks": 123,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "difficulty",
+        "event",
+        "icon"
+      ],
+      "keysByDefinition": [
+        [
+          "difficulty",
+          "event",
+          "icon"
+        ]
+      ]
+    },
+    "stages": {
+      "definitions": 123,
+      "repeated": 0,
+      "scalars": 123,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "visible": {
+      "definitions": 124,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 124,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "any_relation",
+        "default_site_visible_trigger",
+        "has_country_flag",
+        "has_event_chain",
+        "has_global_flag",
+        "has_origin",
+        "is_ai",
+        "is_gestalt",
+        "is_homicidal",
+        "is_lithoid_devouring_swarm",
+        "is_regular_empire",
+        "is_wilderness_empire",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ],
+        [
+          "any_relation",
+          "default_site_visible_trigger"
+        ],
+        [
+          "default_site_visible_trigger"
+        ],
+        [
+          "default_site_visible_trigger",
+          "has_country_flag"
+        ],
+        [
+          "default_site_visible_trigger",
+          "has_country_flag",
+          "has_global_flag"
+        ],
+        [
+          "default_site_visible_trigger",
+          "has_country_flag",
+          "has_origin"
+        ],
+        [
+          "default_site_visible_trigger",
+          "has_country_flag",
+          "is_ai"
+        ],
+        [
+          "default_site_visible_trigger",
+          "has_country_flag",
+          "is_lithoid_devouring_swarm"
+        ],
+        [
+          "default_site_visible_trigger",
+          "has_event_chain"
+        ],
+        [
+          "default_site_visible_trigger",
+          "has_global_flag"
+        ],
+        [
+          "default_site_visible_trigger",
+          "has_origin"
+        ],
+        [
+          "default_site_visible_trigger",
+          "is_ai"
+        ],
+        [
+          "default_site_visible_trigger",
+          "is_gestalt"
+        ],
+        [
+          "default_site_visible_trigger",
+          "is_homicidal"
+        ],
+        [
+          "default_site_visible_trigger",
+          "is_homicidal",
+          "is_regular_empire"
+        ],
+        [
+          "default_site_visible_trigger",
+          "is_wilderness_empire"
+        ],
+        [
+          "default_site_visible_trigger",
+          "owner"
+        ]
+      ]
+    },
+    "weight": {
+      "definitions": 116,
+      "repeated": 0,
+      "scalars": 58,
+      "blocks": 58,
+      "bareBlocks": 0,
+      "values": [
+        "0"
+      ],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    }
+  }
+}

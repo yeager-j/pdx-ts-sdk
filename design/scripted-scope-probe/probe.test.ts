@@ -14,7 +14,7 @@
  * every negative case.
  */
 
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { locateInstall } from "../../packages/sdk/src/stellaris/locate.ts";
 import { checkCallSites } from "./callsites.ts";
@@ -47,7 +47,26 @@ describe("the analysis never narrows on an unreadable body", () => {
 });
 
 describe.skipIf(installRoot === undefined)("measured against a real install", () => {
-  const report = runProbe(installRoot!);
+  // A skipped describe's factory still executes at collection, so the probe
+  // must not run eagerly: on a machine without an install (CI) it would crash
+  // the whole file instead of letting the suite skip. `beforeAll` never runs
+  // for a skipped suite, which is the guarantee the gate actually needs.
+  let report!: ReturnType<typeof runProbe>;
+  let sites!: ReturnType<typeof checkCallSites>;
+  // Explicit timeout because the default hook timeout (10s) now applies where
+  // collection-time execution had none: the hook runs both the probe and the
+  // call-site scan over several thousand vanilla files. ~0.3s measured warm on
+  // a local SSD; 60s is two orders of magnitude of headroom for a cold or
+  // networked disk.
+  beforeAll(() => {
+    report = runProbe(installRoot!);
+    const lowered = (registry: "trigger" | "effect") =>
+      new Map(report[registry].inferred.map((one) => [one.name.toLowerCase(), one.scopes]));
+    sites = checkCallSites(installRoot!, {
+      trigger: lowered("trigger"),
+      effect: lowered("effect"),
+    });
+  }, 60_000);
 
   it("prints the distribution", () => {
     console.log(`\n${formatReport(report.trigger)}\n\n${formatReport(report.effect)}\n`);
@@ -63,28 +82,21 @@ describe.skipIf(installRoot === undefined)("measured against a real install", ()
     new Map(report[registry].inferred.map((one) => [one.name, one.scopes]));
 
   describe("agrees with the hand-derived golden", () => {
-    const triggers = scopesOf("trigger");
+    // Looked up inside each test rather than hoisted: the maps read `report`,
+    // which does not exist until the suite's beforeAll has run.
     for (const entry of GOLDEN_TRIGGERS) {
       it(entry.name, () => {
-        expect(triggers.get(entry.name), entry.derivation).toEqual(entry.scopes);
+        expect(scopesOf("trigger").get(entry.name), entry.derivation).toEqual(entry.scopes);
       });
     }
-    const effects = scopesOf("effect");
     for (const entry of GOLDEN_EFFECTS) {
       it(entry.name, () => {
-        expect(effects.get(entry.name), entry.derivation).toEqual(entry.scopes);
+        expect(scopesOf("effect").get(entry.name), entry.derivation).toEqual(entry.scopes);
       });
     }
   });
 
   describe("contradicts no call site vanilla ships", () => {
-    const lowered = (registry: "trigger" | "effect") =>
-      new Map(report[registry].inferred.map((one) => [one.name.toLowerCase(), one.scopes]));
-    const sites = checkCallSites(installRoot!, {
-      trigger: lowered("trigger"),
-      effect: lowered("effect"),
-    });
-
     it("checks a meaningful number of them", () => {
       // Guards the assertion below against passing because it measured nothing.
       // The `pushed scope constrains the caller` mutation — the likeliest error

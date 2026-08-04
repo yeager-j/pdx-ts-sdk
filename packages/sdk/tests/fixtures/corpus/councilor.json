@@ -1,0 +1,951 @@
+{
+  "registry": "councilor",
+  "definitions": 179,
+  "files": 11,
+  "fingerprint": "db5a31d127e7751153ec7f9d28212cf168302f2565b8b83a0035b5b2cad2159e",
+  "fields": {
+    "ai_hiring_weight": {
+      "definitions": 169,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 169,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "inline_script"
+      ],
+      "keysByDefinition": [
+        [
+          "inline_script"
+        ]
+      ]
+    },
+    "ai_priority": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "civic": {
+      "definitions": 151,
+      "repeated": 0,
+      "scalars": 151,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "civic_agrarian_idyll",
+        "civic_anglers",
+        "civic_aristocratic_elite",
+        "civic_ascensionists",
+        "civic_barbaric_despoilers",
+        "civic_beacon_of_liberty",
+        "civic_brand_loyalty",
+        "civic_byzantine_bureaucracy",
+        "civic_catalytic_processing",
+        "civic_citizen_service",
+        "civic_corporate_anglers",
+        "civic_corporate_dominion",
+        "civic_corporate_machine_anglers",
+        "civic_corporate_toxic_baths_individual_machine",
+        "civic_corvee_system",
+        "civic_crafters",
+        "civic_crusader_spirit",
+        "civic_crusader_spirit_corporate",
+        "civic_cutthroat_politics",
+        "civic_death_cult",
+        "civic_diplomatic_corps",
+        "civic_distinguished_admiralty",
+        "civic_dystopian_society",
+        "civic_eager_explorers",
+        "civic_efficient_bureaucracy",
+        "civic_environmentalist",
+        "civic_exalted_priesthood",
+        "civic_fanatic_purifiers",
+        "civic_feudal_realm",
+        "civic_flight_schools",
+        "civic_free_haven",
+        "civic_functional_architecture",
+        "civic_guided_sapience",
+        "civic_heroic_tales",
+        "civic_idealistic_foundation",
+        "civic_idyllic_bloom",
+        "civic_imperial_cult",
+        "civic_inwards_perfection",
+        "civic_machine_anglers",
+        "civic_memorialist",
+        "civic_memory_vault",
+        "civic_memory_vault_corporate",
+        "civic_merchant_guilds",
+        "civic_meritocracy",
+        "civic_mining_guilds",
+        "civic_nationalistic_zeal",
+        "civic_parliamentary_system",
+        "civic_philosopher_king",
+        "civic_pleasure_seekers",
+        "civic_police_state",
+        "civic_pompous_purists",
+        "civic_private_healthcare_corporate",
+        "civic_reanimated_armies",
+        "civic_relentless_industrialists",
+        "civic_scavengers",
+        "civic_selective_kinship",
+        "civic_shadow_council",
+        "civic_shared_burden",
+        "civic_slaver_guilds",
+        "civic_task_delegation_corporate",
+        "civic_technocracy",
+        "civic_toxic_baths",
+        "civic_toxic_baths_individual_machine",
+        "civic_warrior_culture"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "conditional_tooltip": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "councilor_curator_archivist_conditional_tooltip",
+        "councilor_enclave_trader_conditional_tooltip",
+        "councilor_master_salvager_conditional_tooltip",
+        "councilor_mindwarden_conditional_tooltip",
+        "councilor_psionic_sovereign_conditional_tooltip",
+        "councilor_shroudwalker_teacher_conditional_tooltip"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "custom_tooltip": {
+      "definitions": 21,
+      "repeated": 0,
+      "scalars": 21,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "councilor_chief_medium_effect_tooltip",
+        "councilor_criminal_heritage_custom_modifier_desc",
+        "councilor_curator_archivist_tt",
+        "councilor_death_cult_custom_modifier_desc",
+        "councilor_executive_astrologist_effect_tooltip",
+        "councilor_flight_director_custom_modifier_desc",
+        "councilor_gospel_of_the_masses_custom_modifier_desc",
+        "councilor_hyperspace_specialty_custom_modifier_desc",
+        "councilor_idyllic_bloom_custom_modifier_desc",
+        "councilor_indentured_assets_custom_modifier_desc",
+        "councilor_mining_guild_custom_modifier_desc",
+        "councilor_private_military_companies_custom_modifier_desc",
+        "councilor_psionic_sovereign_custom_modifier_desc",
+        "councilor_technocracy_tt",
+        "councilor_toxic_baths_individualist_machine_tt",
+        "councilor_toxic_baths_tt",
+        "councilor_trading_posts_custom_modifier_desc"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "custom_tooltip_with_modifiers": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "councilor_storm_callers_modifier_tooltip"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "custom_unlock_title": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "councilor_curator_archivist_unlock_title",
+        "councilor_enclave_trader_unlock_title",
+        "councilor_master_salvager_unlock_title",
+        "councilor_mindwarden_unlock_title",
+        "councilor_shroudwalker_teacher_unlock_title"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 28,
+      "repeated": 0,
+      "scalars": 28,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_icon_councilor_corporate_head_treasure_hunter",
+        "GFX_icon_councilor_defense",
+        "GFX_icon_councilor_head_treasure_hunter",
+        "GFX_icon_councilor_mindwarden",
+        "GFX_icon_councilor_research",
+        "GFX_icon_councilor_ruler",
+        "GFX_icon_councilor_state",
+        "GFX_icon_curator_archivist",
+        "GFX_icon_enclave_trader",
+        "GFX_icon_master_salvager",
+        "GFX_icon_shroudwalker_teacher"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_leader_possible": {
+      "definitions": 169,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 169,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "has_leader_flag",
+        "has_psionic_leader_trait",
+        "has_trait",
+        "leader_class"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ],
+        [
+          "has_leader_flag"
+        ],
+        [
+          "has_psionic_leader_trait"
+        ],
+        [
+          "has_trait"
+        ],
+        [
+          "leader_class"
+        ]
+      ]
+    },
+    "leader_class": {
+      "definitions": 179,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 179,
+      "bareBlocks": 179,
+      "values": [
+        "commander",
+        "official",
+        "scientist"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "modifier": {
+      "definitions": 162,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 162,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "add_base_country_intel",
+        "all_technology_research_speed",
+        "armies_upkeep_mult",
+        "army_damage_mult",
+        "army_defense_damage_mult",
+        "army_starting_experience_add",
+        "bonus_automated_workforce_mult",
+        "bonus_pop_growth_mult",
+        "branch_office_value_mult",
+        "category_biology_research_speed_mult",
+        "category_industry_research_speed_mult",
+        "category_psionics_draw_chance_mult",
+        "citizen_pop_political_power",
+        "commercial_pact_mult",
+        "council_agenda_progress_speed",
+        "councilor_exp_gain",
+        "country_alloys_produces_mult",
+        "country_astral_threads_produces_mult",
+        "country_base_energy_produces_add",
+        "country_base_influence_produces_add",
+        "country_claim_influence_cost_mult",
+        "country_edict_fund_add",
+        "country_naval_cap_mult",
+        "country_power_projection_influence_produces_add",
+        "country_starbase_influence_cost_mult",
+        "country_trade_fee",
+        "country_trade_produces_mult",
+        "country_trust_cap_add",
+        "country_unity_produces_mult",
+        "country_war_exhaustion_mult",
+        "cycle_negative_effects_bonus_mult",
+        "cycle_positive_effects_bonus_mult",
+        "deposit_blockers_cost_mult",
+        "diplo_weight_mult",
+        "empire_size_branch_office_mult",
+        "empire_size_districts_mult",
+        "empire_size_pops_mult",
+        "enforcer_jobs_bonus_workforce_mult",
+        "envoy_harm_relations_mult",
+        "envoy_improve_relations_mult",
+        "espionage_operation_speed_mult",
+        "experimental_testing_test_subjects_death",
+        "first_contact_speed_mult",
+        "leader_lifespan_add",
+        "leaders_cost_mult",
+        "leaders_upkeep_mult",
+        "logistic_growth_mult",
+        "planet_amenities_no_happiness_add",
+        "planet_artisans_consumer_goods_produces_mult",
+        "planet_artisans_trade_produces_mult",
+        "planet_biologists_consumer_goods_upkeep_add",
+        "planet_biologists_physics_research_produces_add",
+        "planet_building_build_speed_mult",
+        "planet_buildings_storm_tech_upkeep_mult",
+        "planet_bureaucrats_produces_mult",
+        "planet_bureaucrats_trade_produces_mult",
+        "planet_bureaucrats_upkeep_mult",
+        "planet_crime_add",
+        "planet_crime_no_happiness_add",
+        "planet_districts_upkeep_mult",
+        "planet_engineers_consumer_goods_upkeep_add",
+        "planet_engineers_society_research_produces_add",
+        "planet_farmers_food_produces_mult",
+        "planet_farmers_produces_mult",
+        "planet_farmers_trade_produces_mult",
+        "planet_jobs_engineering_research_produces_mult",
+        "planet_jobs_food_upkeep_mult",
+        "planet_jobs_physics_research_produces_mult",
+        "planet_jobs_ruler_produces_mult",
+        "planet_jobs_upkeep_mult",
+        "planet_jobs_worker_produces_mult",
+        "planet_mentors_upkeep_mult",
+        "planet_metallurgists_produces_mult",
+        "planet_miners_minerals_produces_mult",
+        "planet_physicists_consumer_goods_upkeep_add",
+        "planet_physicists_engineering_research_produces_add",
+        "planet_physicists_produces_mult",
+        "planet_politicians_trade_produces_mult",
+        "planet_pop_assemblers_upkeep_mult",
+        "planet_pop_assembly_mult",
+        "planet_pops_upkeep_mult",
+        "planet_researchers_upkeep_mult",
+        "planet_soldiers_produces_mult",
+        "planet_test_subjects_produces_mult",
+        "planet_traders_produces_mult",
+        "planet_treasure_gatherers_produces_mult",
+        "pop_amenities_usage_mult",
+        "pop_cat_ruler_happiness",
+        "pop_cat_specialist_happiness",
+        "pop_cat_specialist_political_power",
+        "pop_category_rulers_upkeep_mult",
+        "pop_citizen_happiness",
+        "pop_dystopian_enforcer_bonus_workforce_mult",
+        "pop_entertainer_bonus_workforce_mult",
+        "pop_environment_tolerance",
+        "pop_ethic_egalitarian_attraction_mult",
+        "pop_ethics_shift_speed_mult",
+        "pop_factions_produces_mult",
+        "pop_government_ethic_attraction",
+        "pop_slave_happiness",
+        "psionic_aura_effectiveness_mult",
+        "psionic_aura_resistance_mult",
+        "researcher_jobs_bonus_workforce_mult",
+        "salvage_chance_add",
+        "scavenge_debris_mult",
+        "science_ship_survey_speed",
+        "ship_anomaly_research_speed_mult",
+        "ship_archaeological_site_excavation_speed_mult",
+        "ship_armor_mult",
+        "ship_fire_rate_mult",
+        "ship_friendly_territory_accuracy_mult",
+        "ship_friendly_territory_armor_mult",
+        "ship_friendly_territory_fire_rate_mult",
+        "ship_friendly_territory_shield_mult",
+        "ship_ftl_jumpdrive_range_mult",
+        "ship_military_upkeep_mult",
+        "ship_orbital_bombardment_army_damage_mult",
+        "ship_orbital_bombardment_mult",
+        "ship_speed_mult",
+        "ship_starting_experience_add",
+        "ship_weapon_damage",
+        "ship_windup_mult",
+        "shipclass_military_station_damage_mult",
+        "shipclass_military_station_hull_mult",
+        "shipclass_starbase_armor_mult",
+        "shipclass_starbase_damage_mult",
+        "shipclass_starbase_hull_mult",
+        "ships_upkeep_mult",
+        "shipsize_nomads_constructor_stockpile_capacity_mult",
+        "shipsize_starbase_deep_space_citadel_1_hull_mult",
+        "shipsize_starbase_deep_space_citadel_2_hull_mult",
+        "shipsize_starbase_deep_space_citadel_3_hull_mult",
+        "space_fauna_culling_reward_mult",
+        "space_fauna_growth_rate_mult",
+        "space_fauna_ship_damage_mult",
+        "space_fauna_ship_speed_mult",
+        "species_leader_exp_gain",
+        "spy_network_daily_value_mult",
+        "starbase_buildings_cost_mult",
+        "starbase_collected_system_resources_mult",
+        "starbase_modules_cost_mult",
+        "starbase_outpost_cost_mult",
+        "starbase_shipyard_build_speed_mult",
+        "starbases_upkeep_mult",
+        "station_researchers_sr_dark_matter_produces_mult",
+        "stations_cost_mult",
+        "strike_craft_regeneration_mult",
+        "subjects_unity_produces_add",
+        "treasure_trove_reward_mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "add_base_country_intel",
+          "diplo_weight_mult",
+          "espionage_operation_speed_mult"
+        ],
+        [
+          "add_base_country_intel",
+          "spy_network_daily_value_mult"
+        ],
+        [
+          "all_technology_research_speed"
+        ],
+        [
+          "armies_upkeep_mult"
+        ],
+        [
+          "armies_upkeep_mult",
+          "army_starting_experience_add"
+        ],
+        [
+          "armies_upkeep_mult",
+          "ship_speed_mult",
+          "ships_upkeep_mult"
+        ],
+        [
+          "armies_upkeep_mult",
+          "ships_upkeep_mult",
+          "starbases_upkeep_mult"
+        ],
+        [
+          "army_damage_mult",
+          "ship_fire_rate_mult"
+        ],
+        [
+          "army_defense_damage_mult",
+          "ship_friendly_territory_accuracy_mult",
+          "ship_friendly_territory_fire_rate_mult",
+          "ship_friendly_territory_shield_mult",
+          "shipclass_starbase_armor_mult",
+          "shipclass_starbase_hull_mult"
+        ],
+        [
+          "army_starting_experience_add",
+          "ship_starting_experience_add"
+        ],
+        [
+          "bonus_automated_workforce_mult"
+        ],
+        [
+          "bonus_pop_growth_mult"
+        ],
+        [
+          "bonus_pop_growth_mult",
+          "planet_pop_assembly_mult"
+        ],
+        [
+          "branch_office_value_mult"
+        ],
+        [
+          "branch_office_value_mult",
+          "country_edict_fund_add"
+        ],
+        [
+          "category_biology_research_speed_mult"
+        ],
+        [
+          "category_biology_research_speed_mult",
+          "planet_bureaucrats_upkeep_mult"
+        ],
+        [
+          "category_industry_research_speed_mult",
+          "planet_mentors_upkeep_mult"
+        ],
+        [
+          "category_psionics_draw_chance_mult",
+          "country_unity_produces_mult"
+        ],
+        [
+          "citizen_pop_political_power"
+        ],
+        [
+          "commercial_pact_mult"
+        ],
+        [
+          "council_agenda_progress_speed"
+        ],
+        [
+          "council_agenda_progress_speed",
+          "cycle_negative_effects_bonus_mult",
+          "planet_bureaucrats_upkeep_mult"
+        ],
+        [
+          "council_agenda_progress_speed",
+          "cycle_positive_effects_bonus_mult",
+          "planet_bureaucrats_upkeep_mult"
+        ],
+        [
+          "councilor_exp_gain"
+        ],
+        [
+          "councilor_exp_gain",
+          "country_edict_fund_add"
+        ],
+        [
+          "country_alloys_produces_mult"
+        ],
+        [
+          "country_astral_threads_produces_mult"
+        ],
+        [
+          "country_base_energy_produces_add",
+          "planet_treasure_gatherers_produces_mult",
+          "treasure_trove_reward_mult"
+        ],
+        [
+          "country_base_influence_produces_add"
+        ],
+        [
+          "country_claim_influence_cost_mult",
+          "country_war_exhaustion_mult"
+        ],
+        [
+          "country_edict_fund_add",
+          "country_power_projection_influence_produces_add"
+        ],
+        [
+          "country_edict_fund_add",
+          "country_unity_produces_mult"
+        ],
+        [
+          "country_edict_fund_add",
+          "empire_size_pops_mult",
+          "planet_amenities_no_happiness_add"
+        ],
+        [
+          "country_edict_fund_add",
+          "planet_jobs_ruler_produces_mult"
+        ],
+        [
+          "country_edict_fund_add",
+          "pop_amenities_usage_mult"
+        ],
+        [
+          "country_edict_fund_add",
+          "pop_factions_produces_mult"
+        ],
+        [
+          "country_naval_cap_mult"
+        ],
+        [
+          "country_naval_cap_mult",
+          "ship_starting_experience_add"
+        ],
+        [
+          "country_starbase_influence_cost_mult",
+          "starbase_outpost_cost_mult"
+        ],
+        [
+          "country_trade_fee",
+          "country_trade_produces_mult"
+        ],
+        [
+          "country_trust_cap_add"
+        ],
+        [
+          "country_unity_produces_mult"
+        ],
+        [
+          "country_unity_produces_mult",
+          "planet_crime_add",
+          "psionic_aura_resistance_mult"
+        ],
+        [
+          "country_war_exhaustion_mult"
+        ],
+        [
+          "deposit_blockers_cost_mult",
+          "planet_jobs_worker_produces_mult"
+        ],
+        [
+          "diplo_weight_mult"
+        ],
+        [
+          "empire_size_branch_office_mult"
+        ],
+        [
+          "empire_size_districts_mult",
+          "planet_districts_upkeep_mult"
+        ],
+        [
+          "enforcer_jobs_bonus_workforce_mult",
+          "pop_government_ethic_attraction"
+        ],
+        [
+          "envoy_harm_relations_mult",
+          "envoy_improve_relations_mult",
+          "first_contact_speed_mult",
+          "spy_network_daily_value_mult"
+        ],
+        [
+          "envoy_improve_relations_mult"
+        ],
+        [
+          "experimental_testing_test_subjects_death",
+          "planet_test_subjects_produces_mult"
+        ],
+        [
+          "leader_lifespan_add"
+        ],
+        [
+          "leaders_cost_mult",
+          "leaders_upkeep_mult"
+        ],
+        [
+          "logistic_growth_mult",
+          "pop_environment_tolerance"
+        ],
+        [
+          "planet_artisans_consumer_goods_produces_mult",
+          "planet_farmers_food_produces_mult"
+        ],
+        [
+          "planet_artisans_trade_produces_mult",
+          "planet_farmers_trade_produces_mult"
+        ],
+        [
+          "planet_biologists_consumer_goods_upkeep_add",
+          "planet_biologists_physics_research_produces_add",
+          "planet_engineers_consumer_goods_upkeep_add",
+          "planet_engineers_society_research_produces_add",
+          "planet_physicists_consumer_goods_upkeep_add",
+          "planet_physicists_engineering_research_produces_add"
+        ],
+        [
+          "planet_building_build_speed_mult"
+        ],
+        [
+          "planet_buildings_storm_tech_upkeep_mult"
+        ],
+        [
+          "planet_bureaucrats_produces_mult"
+        ],
+        [
+          "planet_bureaucrats_trade_produces_mult"
+        ],
+        [
+          "planet_bureaucrats_upkeep_mult"
+        ],
+        [
+          "planet_crime_no_happiness_add"
+        ],
+        [
+          "planet_farmers_produces_mult"
+        ],
+        [
+          "planet_jobs_engineering_research_produces_mult",
+          "planet_jobs_physics_research_produces_mult"
+        ],
+        [
+          "planet_jobs_food_upkeep_mult"
+        ],
+        [
+          "planet_jobs_ruler_produces_mult"
+        ],
+        [
+          "planet_jobs_upkeep_mult"
+        ],
+        [
+          "planet_jobs_worker_produces_mult"
+        ],
+        [
+          "planet_metallurgists_produces_mult"
+        ],
+        [
+          "planet_miners_minerals_produces_mult"
+        ],
+        [
+          "planet_physicists_produces_mult"
+        ],
+        [
+          "planet_politicians_trade_produces_mult"
+        ],
+        [
+          "planet_pop_assemblers_upkeep_mult"
+        ],
+        [
+          "planet_pops_upkeep_mult"
+        ],
+        [
+          "planet_researchers_upkeep_mult"
+        ],
+        [
+          "planet_soldiers_produces_mult"
+        ],
+        [
+          "planet_traders_produces_mult"
+        ],
+        [
+          "pop_amenities_usage_mult"
+        ],
+        [
+          "pop_cat_ruler_happiness"
+        ],
+        [
+          "pop_cat_ruler_happiness",
+          "pop_dystopian_enforcer_bonus_workforce_mult"
+        ],
+        [
+          "pop_cat_specialist_happiness",
+          "pop_cat_specialist_political_power"
+        ],
+        [
+          "pop_category_rulers_upkeep_mult"
+        ],
+        [
+          "pop_citizen_happiness"
+        ],
+        [
+          "pop_entertainer_bonus_workforce_mult"
+        ],
+        [
+          "pop_ethic_egalitarian_attraction_mult"
+        ],
+        [
+          "pop_ethics_shift_speed_mult",
+          "pop_government_ethic_attraction"
+        ],
+        [
+          "pop_factions_produces_mult"
+        ],
+        [
+          "pop_factions_produces_mult",
+          "pop_government_ethic_attraction"
+        ],
+        [
+          "pop_government_ethic_attraction",
+          "species_leader_exp_gain"
+        ],
+        [
+          "pop_slave_happiness"
+        ],
+        [
+          "psionic_aura_effectiveness_mult"
+        ],
+        [
+          "researcher_jobs_bonus_workforce_mult"
+        ],
+        [
+          "salvage_chance_add"
+        ],
+        [
+          "scavenge_debris_mult",
+          "ship_friendly_territory_armor_mult"
+        ],
+        [
+          "science_ship_survey_speed",
+          "ship_speed_mult"
+        ],
+        [
+          "ship_anomaly_research_speed_mult",
+          "ship_archaeological_site_excavation_speed_mult",
+          "ship_ftl_jumpdrive_range_mult"
+        ],
+        [
+          "ship_armor_mult"
+        ],
+        [
+          "ship_fire_rate_mult"
+        ],
+        [
+          "ship_friendly_territory_armor_mult",
+          "shipsize_starbase_deep_space_citadel_1_hull_mult",
+          "shipsize_starbase_deep_space_citadel_2_hull_mult",
+          "shipsize_starbase_deep_space_citadel_3_hull_mult",
+          "starbases_upkeep_mult"
+        ],
+        [
+          "ship_military_upkeep_mult"
+        ],
+        [
+          "ship_military_upkeep_mult",
+          "ship_orbital_bombardment_army_damage_mult"
+        ],
+        [
+          "ship_orbital_bombardment_mult"
+        ],
+        [
+          "ship_weapon_damage"
+        ],
+        [
+          "ship_windup_mult",
+          "strike_craft_regeneration_mult"
+        ],
+        [
+          "shipclass_military_station_damage_mult",
+          "shipclass_military_station_hull_mult"
+        ],
+        [
+          "shipclass_starbase_damage_mult",
+          "shipclass_starbase_hull_mult"
+        ],
+        [
+          "shipsize_nomads_constructor_stockpile_capacity_mult",
+          "starbase_collected_system_resources_mult"
+        ],
+        [
+          "space_fauna_culling_reward_mult",
+          "space_fauna_growth_rate_mult"
+        ],
+        [
+          "space_fauna_ship_damage_mult",
+          "space_fauna_ship_speed_mult"
+        ],
+        [
+          "species_leader_exp_gain"
+        ],
+        [
+          "starbase_buildings_cost_mult",
+          "starbase_modules_cost_mult",
+          "stations_cost_mult"
+        ],
+        [
+          "starbase_shipyard_build_speed_mult"
+        ],
+        [
+          "station_researchers_sr_dark_matter_produces_mult"
+        ],
+        [
+          "subjects_unity_produces_add"
+        ]
+      ]
+    },
+    "optional": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 10,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "has_paragon_dlc"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "has_paragon_dlc"
+        ]
+      ]
+    },
+    "possible": {
+      "definitions": 28,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 28,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "any_owned_leader",
+        "blocks_minister_of_state",
+        "has_country_flag",
+        "is_gestalt",
+        "is_megacorp",
+        "is_nomadic"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "any_owned_leader"
+        ],
+        [
+          "blocks_minister_of_state",
+          "is_gestalt",
+          "is_nomadic"
+        ],
+        [
+          "has_country_flag"
+        ],
+        [
+          "has_country_flag",
+          "is_megacorp"
+        ],
+        [
+          "is_gestalt"
+        ],
+        [
+          "is_gestalt",
+          "is_nomadic"
+        ]
+      ]
+    },
+    "triggered_country_modifier": {
+      "definitions": 11,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 11,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "commercial_pacts_upkeep_mult",
+        "potential",
+        "shroud_delve_cooldown",
+        "shroud_delve_cost",
+        "waystation_pacts_upkeep_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "commercial_pacts_upkeep_mult",
+          "potential",
+          "waystation_pacts_upkeep_mult"
+        ],
+        [
+          "potential",
+          "shroud_delve_cooldown",
+          "shroud_delve_cost"
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,4595 @@
+{
+  "registry": "building",
+  "definitions": 498,
+  "files": 28,
+  "fingerprint": "4fa18fbf7b619c4f52e05ffa68c29de118f011e280684fd3bc78f0ca40b1f299",
+  "fields": {
+    "additional_ai_weight": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 23,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "100",
+        "200"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_estimate_without_unemployment": {
+      "definitions": 55,
+      "repeated": 0,
+      "scalars": 55,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_resource_production": {
+      "definitions": 39,
+      "repeated": 12,
+      "scalars": 0,
+      "blocks": 39,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "alloys",
+        "consumer_goods",
+        "energy",
+        "engineering_research",
+        "exotic_gases",
+        "food",
+        "minerals",
+        "mult",
+        "physics_research",
+        "rare_crystals",
+        "society_research",
+        "trade",
+        "trigger",
+        "unity",
+        "volatile_motes"
+      ],
+      "keysByDefinition": [
+        [
+          "alloys",
+          "consumer_goods",
+          "physics_research",
+          "trigger",
+          "unity"
+        ],
+        [
+          "alloys",
+          "trigger"
+        ],
+        [
+          "consumer_goods",
+          "energy",
+          "minerals",
+          "trigger"
+        ],
+        [
+          "consumer_goods",
+          "trigger"
+        ],
+        [
+          "energy"
+        ],
+        [
+          "energy",
+          "minerals",
+          "trigger"
+        ],
+        [
+          "energy",
+          "trigger"
+        ],
+        [
+          "engineering_research",
+          "physics_research",
+          "society_research",
+          "trigger"
+        ],
+        [
+          "exotic_gases",
+          "rare_crystals",
+          "trigger",
+          "volatile_motes"
+        ],
+        [
+          "food",
+          "minerals",
+          "trigger"
+        ],
+        [
+          "food",
+          "trigger"
+        ],
+        [
+          "mult",
+          "trigger",
+          "unity"
+        ],
+        [
+          "trade"
+        ],
+        [
+          "trade",
+          "unity"
+        ],
+        [
+          "unity"
+        ]
+      ]
+    },
+    "ai_weight": {
+      "definitions": 33,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 33,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "factor",
+        "modifier",
+        "mult",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "factor"
+        ],
+        [
+          "factor",
+          "mult"
+        ],
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "ai_weight_coefficient": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 41,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1.2",
+        "1.25",
+        "1.5",
+        "2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "allow": {
+      "definitions": 255,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 255,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "always",
+        "custom_tooltip",
+        "exists",
+        "has_fully_upgraded_capital",
+        "has_major_upgraded_capital",
+        "has_upgraded_capital",
+        "hidden_trigger",
+        "if",
+        "is_cold",
+        "num_free_districts",
+        "num_uncleared_blockers",
+        "orbital_ring_and_arkship_equivalent_absent",
+        "owner",
+        "planet",
+        "pop_amount",
+        "sapient_pop_amount",
+        "solar_system",
+        "solar_system?"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "NOR",
+          "NOT",
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "custom_tooltip",
+          "hidden_trigger",
+          "if"
+        ],
+        [
+          "NOT",
+          "has_upgraded_capital"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists"
+        ],
+        [
+          "always"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "exists",
+          "has_upgraded_capital",
+          "hidden_trigger"
+        ],
+        [
+          "custom_tooltip",
+          "has_major_upgraded_capital",
+          "hidden_trigger"
+        ],
+        [
+          "custom_tooltip",
+          "has_upgraded_capital",
+          "hidden_trigger"
+        ],
+        [
+          "custom_tooltip",
+          "planet"
+        ],
+        [
+          "exists",
+          "has_major_upgraded_capital",
+          "owner",
+          "solar_system?"
+        ],
+        [
+          "exists",
+          "has_upgraded_capital"
+        ],
+        [
+          "exists",
+          "has_upgraded_capital",
+          "owner",
+          "solar_system?"
+        ],
+        [
+          "exists",
+          "has_upgraded_capital",
+          "planet"
+        ],
+        [
+          "exists",
+          "hidden_trigger"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "exists",
+          "planet"
+        ],
+        [
+          "exists",
+          "solar_system"
+        ],
+        [
+          "has_fully_upgraded_capital"
+        ],
+        [
+          "has_major_upgraded_capital"
+        ],
+        [
+          "has_major_upgraded_capital",
+          "orbital_ring_and_arkship_equivalent_absent"
+        ],
+        [
+          "has_upgraded_capital"
+        ],
+        [
+          "has_upgraded_capital",
+          "hidden_trigger"
+        ],
+        [
+          "has_upgraded_capital",
+          "orbital_ring_and_arkship_equivalent_absent"
+        ],
+        [
+          "hidden_trigger"
+        ],
+        [
+          "is_cold"
+        ],
+        [
+          "num_free_districts"
+        ],
+        [
+          "num_uncleared_blockers"
+        ],
+        [
+          "orbital_ring_and_arkship_equivalent_absent"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "pop_amount"
+        ],
+        [
+          "sapient_pop_amount"
+        ],
+        [
+          "solar_system?"
+        ]
+      ]
+    },
+    "auto_generate_description": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "base_buildtime": {
+      "definitions": 462,
+      "repeated": 0,
+      "scalars": 462,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1080",
+        "180",
+        "240",
+        "420",
+        "800",
+        "90",
+        "900"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "base_cap_amount": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "building_sets": {
+      "definitions": 433,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 433,
+      "bareBlocks": 433,
+      "values": [
+        "ark_forever_cruise_crew",
+        "ark_forever_cruise_passengers",
+        "automation",
+        "betharian",
+        "bio_trophy",
+        "cosmogenesis_world",
+        "engineering",
+        "entertainment",
+        "factory",
+        "fallen_empire",
+        "fallen_empire_farming",
+        "fallen_empire_generator",
+        "fallen_empire_mining",
+        "farming",
+        "farming_automation",
+        "fortress",
+        "foundry",
+        "generator",
+        "generator_automation",
+        "government",
+        "harvest",
+        "hunting_zone",
+        "hydroponics",
+        "industrial",
+        "knights",
+        "medical",
+        "mining",
+        "mining_automation",
+        "origin",
+        "physics",
+        "pre_ftl",
+        "research",
+        "resort",
+        "society",
+        "trade",
+        "unity",
+        "urban",
+        "zoo"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_be_disabled": {
+      "definitions": 44,
+      "repeated": 0,
+      "scalars": 44,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_be_ruined": {
+      "definitions": 78,
+      "repeated": 0,
+      "scalars": 78,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_build": {
+      "definitions": 261,
+      "repeated": 0,
+      "scalars": 261,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_demolish": {
+      "definitions": 158,
+      "repeated": 0,
+      "scalars": 158,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "capital": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 41,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "capital_tier": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 41,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "category": {
+      "definitions": 498,
+      "repeated": 1,
+      "scalars": 498,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "amenities",
+        "amenity",
+        "army",
+        "government",
+        "manufacturing",
+        "planet_buildings",
+        "pop_assembly",
+        "research",
+        "resource",
+        "trade",
+        "unity"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "convert_to": {
+      "definitions": 159,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 159,
+      "bareBlocks": 159,
+      "values": [
+        "building_ancient_control_center",
+        "building_ancient_palace",
+        "building_avatar_chamber_1",
+        "building_capital",
+        "building_capital_wilderness",
+        "building_center_of_guidance",
+        "building_colony_shelter",
+        "building_colony_shelter_wilderness",
+        "building_commercial_zone",
+        "building_communal_housing",
+        "building_communal_housing_large",
+        "building_corporate_monument",
+        "building_corporate_site",
+        "building_deployment_post",
+        "building_drone_megastorage",
+        "building_drone_storage",
+        "building_expanded_warren",
+        "building_galactic_memorial_1",
+        "building_galactic_memorial_2",
+        "building_hab_fe_capital",
+        "building_hab_major_capital",
+        "building_hab_system_capital",
+        "building_hall_judgment",
+        "building_hive_capital",
+        "building_hive_major_capital",
+        "building_hive_warren",
+        "building_institute",
+        "building_lifecrypt_1",
+        "building_lifecrypt_2",
+        "building_lifecrypt_corporate_1",
+        "building_lifecrypt_hive_mind_1",
+        "building_lifecrypt_machine_1",
+        "building_lifecrypt_machine_2",
+        "building_luxury_residence",
+        "building_machine_assembly_complex",
+        "building_machine_assembly_plant",
+        "building_machine_capital",
+        "building_machine_major_capital",
+        "building_machine_system_capital",
+        "building_maintenance_depot",
+        "building_major_capital",
+        "building_major_capital_wilderness",
+        "building_offspring_nest",
+        "building_organic_paradise",
+        "building_paradise_dome",
+        "building_precinct_house",
+        "building_resort_capital",
+        "building_resort_major_capital",
+        "building_robot_assembly_complex",
+        "building_robot_assembly_plant",
+        "building_sensorium_1",
+        "building_sensorium_2",
+        "building_simulation_1",
+        "building_simulation_2",
+        "building_slave_capital",
+        "building_slave_major_capital",
+        "building_spawning_pool",
+        "building_state_academy",
+        "building_supercomputer",
+        "building_system_capital",
+        "building_system_capital_wilderness",
+        "building_toxic_bath",
+        "building_toxic_bath_hive",
+        "building_toxic_bath_machine"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "country_modifier": {
+      "definitions": 35,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 35,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "aesthetic_wonder_specimens_produces_mult",
+        "all_technology_research_speed",
+        "category_archaeostudies_research_speed_mult",
+        "category_biology_research_speed_mult",
+        "country_edict_fund_add",
+        "country_influence_produces_mult",
+        "country_naval_cap_add",
+        "country_resource_max_add",
+        "country_resource_max_astral_threads_add",
+        "country_resource_max_minor_artifacts_add",
+        "country_trade_fee",
+        "country_trade_produces_mult",
+        "damage_vs_psionic_empires_mult",
+        "diplo_weight_economy_mult",
+        "envoy_improve_relations_mult",
+        "envoys_add",
+        "historical_item_specimens_produces_mult",
+        "knight_quest_progress_add",
+        "leader_lifespan_add",
+        "num_tech_alternatives_add",
+        "planet_amenities_mult",
+        "planet_jobs_trade_produces_mult",
+        "planet_researchers_upkeep_mult",
+        "planet_resettlement_unemployed_destination_mult",
+        "pop_environment_tolerance",
+        "ship_shield_damage_mult",
+        "ship_weapon_range_mult",
+        "ships_upkeep_mult",
+        "spy_network_daily_value_mult",
+        "spy_network_levels_add",
+        "xeno_geology_specimens_produces_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "aesthetic_wonder_specimens_produces_mult"
+        ],
+        [
+          "all_technology_research_speed",
+          "planet_researchers_upkeep_mult"
+        ],
+        [
+          "category_archaeostudies_research_speed_mult",
+          "country_resource_max_minor_artifacts_add"
+        ],
+        [
+          "category_biology_research_speed_mult"
+        ],
+        [
+          "country_edict_fund_add"
+        ],
+        [
+          "country_influence_produces_mult",
+          "envoy_improve_relations_mult"
+        ],
+        [
+          "country_naval_cap_add",
+          "knight_quest_progress_add"
+        ],
+        [
+          "country_resource_max_add"
+        ],
+        [
+          "country_resource_max_add",
+          "country_resource_max_minor_artifacts_add"
+        ],
+        [
+          "country_resource_max_astral_threads_add"
+        ],
+        [
+          "country_trade_fee"
+        ],
+        [
+          "country_trade_produces_mult"
+        ],
+        [
+          "damage_vs_psionic_empires_mult"
+        ],
+        [
+          "diplo_weight_economy_mult"
+        ],
+        [
+          "envoys_add"
+        ],
+        [
+          "envoys_add",
+          "spy_network_daily_value_mult"
+        ],
+        [
+          "historical_item_specimens_produces_mult"
+        ],
+        [
+          "leader_lifespan_add"
+        ],
+        [
+          "num_tech_alternatives_add"
+        ],
+        [
+          "planet_amenities_mult"
+        ],
+        [
+          "planet_jobs_trade_produces_mult"
+        ],
+        [
+          "planet_resettlement_unemployed_destination_mult"
+        ],
+        [
+          "pop_environment_tolerance"
+        ],
+        [
+          "ship_shield_damage_mult"
+        ],
+        [
+          "ship_weapon_range_mult",
+          "ships_upkeep_mult"
+        ],
+        [
+          "spy_network_levels_add"
+        ],
+        [
+          "xeno_geology_specimens_produces_mult"
+        ]
+      ]
+    },
+    "custom_storm_ai_weight": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 11,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "weight"
+        ]
+      ]
+    },
+    "custom_tooltip": {
+      "definitions": 37,
+      "repeated": 3,
+      "scalars": 37,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "branch_office_building_trade_bonus",
+        "building_advanced_storm_resistant_production_tt",
+        "building_cosmic_storm_advanced_attraction_center_tt",
+        "building_cosmic_storm_advanced_repellent_center_tt",
+        "building_cosmic_storm_attraction_center_tt",
+        "building_cosmic_storm_repellent_center_tt",
+        "building_cosmic_storm_storm_grand_theater_tt",
+        "building_cosmic_storm_storm_holo_theater_tt",
+        "building_cosmic_storm_storm_summoning_theater_tt",
+        "building_psionic_offices_tt",
+        "building_storm_resistant_production_tt",
+        "building_wilderness_storm_relief_tt",
+        "trade_value_from_specialists",
+        "trade_value_from_workers",
+        "trade_value_from_workers_double"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "desc": {
+      "definitions": 9,
+      "repeated": 7,
+      "scalars": 0,
+      "blocks": 9,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "text",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "text"
+        ],
+        [
+          "text",
+          "trigger"
+        ]
+      ]
+    },
+    "destroy_trigger": {
+      "definitions": 362,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 362,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "AND",
+        "NOT",
+        "OR",
+        "always",
+        "branch_office_owner",
+        "exists",
+        "has_modifier",
+        "has_shroud_dlc",
+        "influence_building_destruction_trigger",
+        "owner",
+        "owner.overlord",
+        "owner?",
+        "planet.owner"
+      ],
+      "keysByDefinition": [
+        [
+          "AND"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "exists"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_shroud_dlc"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists"
+        ],
+        [
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "always"
+        ],
+        [
+          "branch_office_owner",
+          "exists"
+        ],
+        [
+          "exists",
+          "influence_building_destruction_trigger",
+          "owner"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "exists",
+          "planet.owner"
+        ],
+        [
+          "has_modifier"
+        ],
+        [
+          "influence_building_destruction_trigger"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner.overlord"
+        ],
+        [
+          "owner?"
+        ]
+      ]
+    },
+    "district_limit": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "empire_limit": {
+      "definitions": 34,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 23,
+      "bareBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "exempt_from_ai_planet_specialization": {
+      "definitions": 24,
+      "repeated": 0,
+      "scalars": 24,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 165,
+      "repeated": 0,
+      "scalars": 165,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "building_affluence_center",
+        "building_affluence_emporium",
+        "building_ancient_relics",
+        "building_autochthon_monument",
+        "building_autocurating_vault",
+        "building_automation_1",
+        "building_automation_2",
+        "building_capital",
+        "building_chamber_of_elevation_1",
+        "building_chamber_of_elevation_2",
+        "building_corporate_augmentation_bazaars",
+        "building_corporate_clinic",
+        "building_crude_huts",
+        "building_dimensional_fabricator",
+        "building_dimensional_replicator",
+        "building_dread_encampment",
+        "building_gaiaseeders_4",
+        "building_gas_extractors",
+        "building_heritage_site",
+        "building_hive_major_capital",
+        "building_hive_node",
+        "building_hypercomms_forum",
+        "building_institute",
+        "building_machine_assembly_complex",
+        "building_maintenance_depot",
+        "building_major_capital",
+        "building_medical_1",
+        "building_mote_harvesting_traps",
+        "building_offspring_nest",
+        "building_order_holding",
+        "building_palace",
+        "building_paradise_dome",
+        "building_primitive_capital",
+        "building_primitive_dwellings",
+        "building_primitive_factory",
+        "building_primitive_farm",
+        "building_primitive_mine",
+        "building_primitive_power_plant",
+        "building_production_center",
+        "building_psi_corps",
+        "building_residence",
+        "building_robot_assembly_plant",
+        "building_stone_palace",
+        "building_system_capital",
+        "building_toxic_bath",
+        "building_toxic_bath_hive",
+        "building_toxic_bath_machine",
+        "building_waste_reprocessing_center",
+        "holding_aid_agency",
+        "holding_distributed_processing",
+        "holding_emporium",
+        "holding_energy_requisitorium",
+        "holding_material_requisitorium",
+        "holding_offworld_foundry",
+        "holding_orbital_assembly_complex",
+        "holding_overlord_garrison",
+        "holding_overlord_vigil_command",
+        "holding_parasitic_algorithms",
+        "holding_park_ranger_lodge",
+        "holding_produce_requisitorium",
+        "holding_propaganda_office",
+        "holding_satellite_campus",
+        "holding_splinter_hive",
+        "holding_tree_of_life_sapling"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 285,
+      "repeated": 109,
+      "scalars": 12,
+      "blocks": 273,
+      "bareBlocks": 0,
+      "values": [
+        "shroud/buildings/lifecrypt_1_conditions",
+        "shroud/buildings/lifecrypt_1_modifiers",
+        "shroud/buildings/lifecrypt_1_modifiers_gestalt",
+        "shroud/buildings/lifecrypt_1_resources",
+        "shroud/buildings/lifecrypt_2_conditions",
+        "shroud/buildings/lifecrypt_2_modifiers",
+        "shroud/buildings/lifecrypt_2_modifiers_gestalt",
+        "shroud/buildings/lifecrypt_2_resources",
+        "shroud/buildings/lifecrypt_3_conditions",
+        "shroud/buildings/lifecrypt_3_modifiers",
+        "shroud/buildings/lifecrypt_3_modifiers_gestalt",
+        "shroud/buildings/lifecrypt_3_resources"
+      ],
+      "keys": [
+        "AMOUNT",
+        "CIVIC",
+        "EXPERIMENTER_JOBS",
+        "GROWTH",
+        "JOB",
+        "LOWER_LIMIT",
+        "PENAL_JOBS",
+        "RESOURCE",
+        "TEST_SUBJECT_JOBS",
+        "UPPER_LIMIT",
+        "script"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "AMOUNT",
+          "CIVIC",
+          "script"
+        ],
+        [
+          "AMOUNT",
+          "JOB",
+          "RESOURCE",
+          "script"
+        ],
+        [
+          "AMOUNT",
+          "script"
+        ],
+        [
+          "EXPERIMENTER_JOBS",
+          "PENAL_JOBS",
+          "TEST_SUBJECT_JOBS",
+          "script"
+        ],
+        [
+          "GROWTH",
+          "LOWER_LIMIT",
+          "UPPER_LIMIT",
+          "script"
+        ],
+        [
+          "script"
+        ]
+      ]
+    },
+    "is_essential": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_built": {
+      "definitions": 33,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 33,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "add_eotc_aura_grand_ward",
+        "add_eotc_aura_psionic_suppressor",
+        "branch_office_owner",
+        "create_influence_field_if_needed",
+        "if",
+        "materiality_engine_on_built_effect",
+        "owner",
+        "owner.overlord",
+        "planet",
+        "planet.owner",
+        "solar_system?",
+        "start_patriotic_institute_spawn_storm_repeated"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "add_eotc_aura_grand_ward",
+          "if"
+        ],
+        [
+          "add_eotc_aura_psionic_suppressor"
+        ],
+        [
+          "branch_office_owner",
+          "planet.owner"
+        ],
+        [
+          "create_influence_field_if_needed"
+        ],
+        [
+          "if"
+        ],
+        [
+          "materiality_engine_on_built_effect"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner.overlord",
+          "planet"
+        ],
+        [
+          "planet"
+        ],
+        [
+          "planet.owner"
+        ],
+        [
+          "solar_system?"
+        ],
+        [
+          "start_patriotic_institute_spawn_storm_repeated"
+        ]
+      ]
+    },
+    "on_destroy": {
+      "definitions": 31,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 31,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "branch_office_owner",
+        "carrier_event",
+        "else",
+        "if",
+        "owner",
+        "owner.overlord.capital_scope",
+        "planet",
+        "planet.owner",
+        "remove_carrier_flag",
+        "remove_eotc_aura_grand_ward",
+        "remove_eotc_aura_psionic_suppressor",
+        "solar_system?"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "branch_office_owner",
+          "else",
+          "if",
+          "planet",
+          "planet.owner"
+        ],
+        [
+          "carrier_event"
+        ],
+        [
+          "if"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner.overlord.capital_scope"
+        ],
+        [
+          "planet"
+        ],
+        [
+          "remove_carrier_flag"
+        ],
+        [
+          "remove_eotc_aura_grand_ward"
+        ],
+        [
+          "remove_eotc_aura_psionic_suppressor"
+        ],
+        [
+          "solar_system?"
+        ]
+      ]
+    },
+    "on_enabled": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "create_influence_field_if_needed"
+      ],
+      "keysByDefinition": [
+        [
+          "create_influence_field_if_needed"
+        ]
+      ]
+    },
+    "on_queued": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 38,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "else_if",
+        "if",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "else_if",
+          "if",
+          "owner"
+        ]
+      ]
+    },
+    "on_repaired": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 9,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "add_eotc_aura_grand_ward",
+        "add_eotc_aura_psionic_suppressor",
+        "if",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "add_eotc_aura_grand_ward"
+        ],
+        [
+          "add_eotc_aura_psionic_suppressor"
+        ],
+        [
+          "if"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
+    "on_unqueued": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 38,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "owner",
+        "unqueue_biomass_effect"
+      ],
+      "keysByDefinition": [
+        [
+          "owner",
+          "unqueue_biomass_effect"
+        ]
+      ]
+    },
+    "owner_type": {
+      "definitions": 65,
+      "repeated": 0,
+      "scalars": 65,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "corporate",
+        "subject_holding"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "planet_limit": {
+      "definitions": 249,
+      "repeated": 0,
+      "scalars": 248,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "2",
+        "3",
+        "6"
+      ],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "planet_modifier": {
+      "definitions": 290,
+      "repeated": 3,
+      "scalars": 0,
+      "blocks": 290,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "artisan_jobs_bonus_workforce_mult",
+        "biologist_jobs_bonus_workforce_mult",
+        "clone_soldiers_sustained",
+        "deposit_blockers_natural_unity_produces_add",
+        "district_automated_workforce",
+        "district_farming_max_add",
+        "district_generator_max_add",
+        "district_mining_max_add",
+        "engineer_jobs_bonus_workforce_mult",
+        "foundry_jobs_bonus_workforce_mult",
+        "habitability_ceil_add",
+        "habitability_floor_add",
+        "industrial_jobs_exotic_gases_produces_add",
+        "industrial_jobs_rare_crystals_produces_add",
+        "industrial_jobs_volatile_motes_produces_add",
+        "influential_jobs_bonus_workforce_mult",
+        "job_agri_drone_automated_workforce_mult",
+        "job_augmentor_add",
+        "job_bio_trophy_add",
+        "job_biologist_add",
+        "job_bureaucrat_add",
+        "job_chemist_drone_add",
+        "job_coordinator_add",
+        "job_cyberdome_spectator_add",
+        "job_farmer_automated_workforce_mult",
+        "job_fe_guardian_bot_add",
+        "job_fe_maintenance_bot_add",
+        "job_fe_xeno_keeper_add",
+        "job_gas_refiner_drone_add",
+        "job_healthcare_add",
+        "job_healthcare_organics_upkeep_mult",
+        "job_identity_designer_add",
+        "job_knight_add",
+        "job_logistics_drone_add",
+        "job_low_tech_farmer_add",
+        "job_low_tech_laborer_add",
+        "job_low_tech_miner_add",
+        "job_low_tech_researcher_add",
+        "job_low_tech_technician_add",
+        "job_low_tech_warrior_add",
+        "job_miner_automated_workforce_mult",
+        "job_mining_drone_automated_workforce_mult",
+        "job_necro_apprentice_add",
+        "job_overlord_manager_add",
+        "job_patrol_drone_add",
+        "job_primitive_farmer_add",
+        "job_primitive_hive_cerebellum_drone_add",
+        "job_primitive_hive_factory_drone_add",
+        "job_primitive_hive_farmer_add",
+        "job_primitive_hive_miner_add",
+        "job_primitive_hive_spawning_drone_add",
+        "job_primitive_hive_synapse_drone_add",
+        "job_primitive_hive_technician_add",
+        "job_primitive_hive_warrior_add",
+        "job_primitive_miner_add",
+        "job_primitive_noble_add",
+        "job_primitive_priest_add",
+        "job_primitive_researcher_add",
+        "job_primitive_technician_add",
+        "job_primitive_warrior_add",
+        "job_ratling_scavenger_add",
+        "job_reassigner_add",
+        "job_replicator_add",
+        "job_resort_worker_add",
+        "job_shroud_trader_add",
+        "job_slave_orderly_add",
+        "job_slave_overseer_add",
+        "job_solarpunk_anarchist_add",
+        "job_technician_automated_workforce_mult",
+        "job_technician_drone_add",
+        "job_technician_drone_automated_workforce_mult",
+        "job_translucer_drone_add",
+        "logistic_growth_mult",
+        "monthly_loyalty",
+        "physicist_jobs_bonus_workforce_mult",
+        "planet_amenities_add",
+        "planet_amenities_no_happiness_add",
+        "planet_artisans_consumer_goods_produces_add",
+        "planet_artisans_produces_mult",
+        "planet_artisans_rare_crystals_produces_add",
+        "planet_artisans_upkeep_mult",
+        "planet_biologists_exotic_gases_upkeep_add",
+        "planet_biologists_physics_research_produces_add",
+        "planet_biologists_society_research_produces_add",
+        "planet_biologists_sr_zro_upkeep_add",
+        "planet_building_build_speed_mult",
+        "planet_buildings_upkeep_mult",
+        "planet_bureaucrats_engineering_research_produces_add",
+        "planet_bureaucrats_physics_research_produces_add",
+        "planet_bureaucrats_produces_mult",
+        "planet_bureaucrats_society_research_produces_add",
+        "planet_bureaucrats_trade_produces_add",
+        "planet_bureaucrats_unity_produces_add",
+        "planet_bureaucrats_upkeep_mult",
+        "planet_civilians_consumer_goods_upkeep_add",
+        "planet_civilians_engineering_research_produces_add",
+        "planet_civilians_physics_research_produces_add",
+        "planet_civilians_society_research_produces_add",
+        "planet_civilians_unity_produces_add",
+        "planet_crime_add",
+        "planet_crime_no_happiness_add",
+        "planet_cruise_passengers_consumer_goods_upkeep_add",
+        "planet_cruise_passengers_consumer_goods_upkeep_mult",
+        "planet_cruise_passengers_engineering_research_produces_add",
+        "planet_cruise_passengers_physics_research_produces_add",
+        "planet_cruise_passengers_society_research_produces_add",
+        "planet_cruise_passengers_unity_produces_add",
+        "planet_defense_armies_add",
+        "planet_districts_energy_upkeep_mult",
+        "planet_doctors_upkeep_mult",
+        "planet_engineers_engineering_research_produces_add",
+        "planet_engineers_nanites_upkeep_add",
+        "planet_engineers_rare_crystals_upkeep_add",
+        "planet_entertainers_alloys_upkeep_add",
+        "planet_entertainers_consumer_goods_upkeep_add",
+        "planet_entertainers_physics_research_produces_add",
+        "planet_entertainers_unity_produces_add",
+        "planet_entertainers_upkeep_mult",
+        "planet_farmers_alloys_produces_add",
+        "planet_farmers_energy_produces_add",
+        "planet_farmers_exotic_gases_produces_add",
+        "planet_farmers_food_produces_add",
+        "planet_housing_add",
+        "planet_jobs_exotic_gases_produces_mult",
+        "planet_jobs_produces_mult",
+        "planet_jobs_productive_upkeep_mult",
+        "planet_jobs_rare_crystals_produces_mult",
+        "planet_jobs_unity_produces_mult",
+        "planet_jobs_upkeep_mult",
+        "planet_jobs_volatile_motes_produces_mult",
+        "planet_jobs_worker_produces_mult",
+        "planet_maintenance_drones_minerals_upkeep_add",
+        "planet_maintenance_drones_trade_produces_add",
+        "planet_maintenance_drones_unity_produces_add",
+        "planet_max_branch_office_buildings_add",
+        "planet_max_districts_add",
+        "planet_metallurgists_alloys_produces_add",
+        "planet_metallurgists_minerals_upkeep_add",
+        "planet_metallurgists_produces_mult",
+        "planet_metallurgists_rare_crystals_produces_add",
+        "planet_metallurgists_upkeep_mult",
+        "planet_miners_energy_produces_add",
+        "planet_miners_minerals_produces_add",
+        "planet_miners_rare_crystals_produces_add",
+        "planet_orbital_bombardment_damage",
+        "planet_physicists_astral_threads_produces_add",
+        "planet_physicists_physics_research_produces_add",
+        "planet_physicists_volatile_motes_upkeep_add",
+        "planet_pops_organics_upkeep_mult",
+        "planet_pops_trade_produces_mult",
+        "planet_pops_upkeep_mult",
+        "planet_researchers_upkeep_mult",
+        "planet_resettlement_unemployed_destination_mult",
+        "planet_resettlement_unemployed_mult",
+        "planet_soldiers_consumer_goods_upkeep_add",
+        "planet_soldiers_engineering_research_produces_add",
+        "planet_soldiers_society_research_produces_add",
+        "planet_stability_add",
+        "planet_structures_upkeep_mult",
+        "planet_technician_energy_produces_add",
+        "planet_technician_volatile_motes_produces_add",
+        "planet_traders_trade_produces_add",
+        "planet_traders_upkeep_mult",
+        "pop_agri_drone_bonus_workforce_mult",
+        "pop_amenities_usage_organic_mult",
+        "pop_bureaucrat_bonus_workforce_mult",
+        "pop_calculator_biologist_bonus_workforce_mult",
+        "pop_calculator_engineer_bonus_workforce_mult",
+        "pop_calculator_physicist_bonus_workforce_mult",
+        "pop_cat_cruise_passenger_happiness",
+        "pop_coordinator_bonus_workforce_mult",
+        "pop_environment_tolerance",
+        "pop_ethic_spiritualist_attraction_mult",
+        "pop_foundry_bonus_workforce_mult",
+        "pop_housing_usage_mult",
+        "pop_mining_drone_bonus_workforce_mult",
+        "pop_mortal_initiate_bonus_workforce_mult",
+        "pop_purge_speed",
+        "pop_slave_bonus_workforce_mult",
+        "pop_slave_political_power",
+        "pop_technician_drone_bonus_workforce_mult",
+        "pop_trader_bonus_workforce_mult",
+        "researcher_jobs_bonus_workforce_mult",
+        "storm_attraction_field_modifier",
+        "storm_repelling_field_modifier",
+        "worker_and_simple_drone_cat_bonus_workforce_mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "artisan_jobs_bonus_workforce_mult"
+        ],
+        [
+          "artisan_jobs_bonus_workforce_mult",
+          "foundry_jobs_bonus_workforce_mult"
+        ],
+        [
+          "biologist_jobs_bonus_workforce_mult",
+          "planet_biologists_exotic_gases_upkeep_add",
+          "planet_biologists_society_research_produces_add"
+        ],
+        [
+          "clone_soldiers_sustained"
+        ],
+        [
+          "deposit_blockers_natural_unity_produces_add",
+          "job_biologist_add"
+        ],
+        [
+          "district_automated_workforce"
+        ],
+        [
+          "district_farming_max_add"
+        ],
+        [
+          "district_generator_max_add"
+        ],
+        [
+          "district_mining_max_add"
+        ],
+        [
+          "engineer_jobs_bonus_workforce_mult",
+          "planet_engineers_engineering_research_produces_add",
+          "planet_engineers_rare_crystals_upkeep_add"
+        ],
+        [
+          "foundry_jobs_bonus_workforce_mult"
+        ],
+        [
+          "habitability_ceil_add",
+          "habitability_floor_add",
+          "pop_environment_tolerance"
+        ],
+        [
+          "industrial_jobs_exotic_gases_produces_add"
+        ],
+        [
+          "industrial_jobs_exotic_gases_produces_add",
+          "industrial_jobs_rare_crystals_produces_add",
+          "industrial_jobs_volatile_motes_produces_add",
+          "planet_jobs_exotic_gases_produces_mult",
+          "planet_jobs_rare_crystals_produces_mult",
+          "planet_jobs_volatile_motes_produces_mult"
+        ],
+        [
+          "industrial_jobs_rare_crystals_produces_add"
+        ],
+        [
+          "industrial_jobs_volatile_motes_produces_add"
+        ],
+        [
+          "influential_jobs_bonus_workforce_mult"
+        ],
+        [
+          "job_agri_drone_automated_workforce_mult",
+          "job_farmer_automated_workforce_mult"
+        ],
+        [
+          "job_augmentor_add"
+        ],
+        [
+          "job_bio_trophy_add"
+        ],
+        [
+          "job_bureaucrat_add"
+        ],
+        [
+          "job_chemist_drone_add"
+        ],
+        [
+          "job_coordinator_add",
+          "job_logistics_drone_add",
+          "job_patrol_drone_add",
+          "job_replicator_add",
+          "planet_amenities_add",
+          "planet_defense_armies_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_coordinator_add",
+          "job_logistics_drone_add",
+          "job_patrol_drone_add",
+          "job_replicator_add",
+          "planet_amenities_add",
+          "planet_defense_armies_add",
+          "planet_housing_add",
+          "planet_max_branch_office_buildings_add"
+        ],
+        [
+          "job_coordinator_add",
+          "job_logistics_drone_add",
+          "job_patrol_drone_add",
+          "planet_amenities_add",
+          "planet_defense_armies_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_cyberdome_spectator_add",
+          "planet_entertainers_alloys_upkeep_add",
+          "planet_entertainers_unity_produces_add"
+        ],
+        [
+          "job_fe_guardian_bot_add",
+          "job_fe_maintenance_bot_add",
+          "planet_amenities_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_fe_xeno_keeper_add",
+          "planet_amenities_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_gas_refiner_drone_add"
+        ],
+        [
+          "job_healthcare_add"
+        ],
+        [
+          "job_healthcare_organics_upkeep_mult",
+          "planet_doctors_upkeep_mult",
+          "pop_amenities_usage_organic_mult",
+          "pop_environment_tolerance"
+        ],
+        [
+          "job_identity_designer_add"
+        ],
+        [
+          "job_knight_add",
+          "planet_resettlement_unemployed_destination_mult"
+        ],
+        [
+          "job_logistics_drone_add"
+        ],
+        [
+          "job_logistics_drone_add",
+          "job_patrol_drone_add",
+          "job_replicator_add",
+          "planet_amenities_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_logistics_drone_add",
+          "job_patrol_drone_add",
+          "planet_amenities_add",
+          "planet_defense_armies_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_logistics_drone_add",
+          "job_patrol_drone_add",
+          "planet_amenities_add",
+          "planet_defense_armies_add",
+          "planet_housing_add",
+          "planet_max_branch_office_buildings_add"
+        ],
+        [
+          "job_logistics_drone_add",
+          "job_patrol_drone_add",
+          "planet_amenities_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_logistics_drone_add",
+          "planet_pops_trade_produces_mult"
+        ],
+        [
+          "job_low_tech_farmer_add"
+        ],
+        [
+          "job_low_tech_laborer_add",
+          "job_low_tech_miner_add"
+        ],
+        [
+          "job_low_tech_researcher_add"
+        ],
+        [
+          "job_low_tech_technician_add"
+        ],
+        [
+          "job_low_tech_warrior_add",
+          "planet_amenities_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_miner_automated_workforce_mult",
+          "job_mining_drone_automated_workforce_mult"
+        ],
+        [
+          "job_necro_apprentice_add"
+        ],
+        [
+          "job_overlord_manager_add",
+          "monthly_loyalty",
+          "planet_traders_trade_produces_add"
+        ],
+        [
+          "job_patrol_drone_add"
+        ],
+        [
+          "job_primitive_farmer_add"
+        ],
+        [
+          "job_primitive_hive_cerebellum_drone_add",
+          "job_primitive_hive_spawning_drone_add",
+          "job_primitive_hive_synapse_drone_add",
+          "job_primitive_hive_warrior_add",
+          "planet_amenities_no_happiness_add",
+          "planet_crime_no_happiness_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_primitive_hive_factory_drone_add"
+        ],
+        [
+          "job_primitive_hive_farmer_add"
+        ],
+        [
+          "job_primitive_hive_miner_add"
+        ],
+        [
+          "job_primitive_hive_technician_add"
+        ],
+        [
+          "job_primitive_miner_add"
+        ],
+        [
+          "job_primitive_noble_add",
+          "job_primitive_priest_add",
+          "job_primitive_researcher_add",
+          "job_primitive_warrior_add",
+          "planet_amenities_add",
+          "planet_crime_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_primitive_technician_add"
+        ],
+        [
+          "job_ratling_scavenger_add",
+          "planet_amenities_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_reassigner_add"
+        ],
+        [
+          "job_resort_worker_add",
+          "planet_amenities_add",
+          "planet_housing_add",
+          "planet_max_branch_office_buildings_add"
+        ],
+        [
+          "job_shroud_trader_add"
+        ],
+        [
+          "job_slave_orderly_add"
+        ],
+        [
+          "job_slave_overseer_add",
+          "planet_amenities_add",
+          "planet_housing_add",
+          "planet_max_branch_office_buildings_add",
+          "planet_stability_add"
+        ],
+        [
+          "job_slave_overseer_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_solarpunk_anarchist_add"
+        ],
+        [
+          "job_solarpunk_anarchist_add",
+          "planet_farmers_food_produces_add"
+        ],
+        [
+          "job_solarpunk_anarchist_add",
+          "planet_housing_add"
+        ],
+        [
+          "job_technician_automated_workforce_mult",
+          "job_technician_drone_automated_workforce_mult"
+        ],
+        [
+          "job_technician_drone_add",
+          "planet_amenities_add"
+        ],
+        [
+          "job_translucer_drone_add"
+        ],
+        [
+          "logistic_growth_mult"
+        ],
+        [
+          "logistic_growth_mult",
+          "pop_environment_tolerance"
+        ],
+        [
+          "monthly_loyalty"
+        ],
+        [
+          "monthly_loyalty",
+          "planet_crime_add"
+        ],
+        [
+          "monthly_loyalty",
+          "planet_farmers_food_produces_add",
+          "pop_environment_tolerance"
+        ],
+        [
+          "monthly_loyalty",
+          "planet_jobs_productive_upkeep_mult"
+        ],
+        [
+          "physicist_jobs_bonus_workforce_mult",
+          "planet_physicists_physics_research_produces_add",
+          "planet_physicists_volatile_motes_upkeep_add"
+        ],
+        [
+          "planet_amenities_add"
+        ],
+        [
+          "planet_amenities_add",
+          "planet_crime_add",
+          "planet_housing_add"
+        ],
+        [
+          "planet_amenities_add",
+          "planet_defense_armies_add",
+          "planet_housing_add",
+          "planet_max_branch_office_buildings_add"
+        ],
+        [
+          "planet_amenities_add",
+          "planet_defense_armies_add",
+          "planet_housing_add",
+          "planet_max_branch_office_buildings_add",
+          "pop_environment_tolerance"
+        ],
+        [
+          "planet_amenities_add",
+          "planet_housing_add"
+        ],
+        [
+          "planet_amenities_add",
+          "planet_housing_add",
+          "planet_max_districts_add",
+          "planet_stability_add"
+        ],
+        [
+          "planet_amenities_add",
+          "planet_housing_add",
+          "planet_pops_upkeep_mult"
+        ],
+        [
+          "planet_amenities_add",
+          "planet_housing_add",
+          "planet_stability_add"
+        ],
+        [
+          "planet_amenities_add",
+          "planet_jobs_produces_mult"
+        ],
+        [
+          "planet_amenities_no_happiness_add",
+          "planet_bureaucrats_produces_mult",
+          "planet_housing_add"
+        ],
+        [
+          "planet_amenities_no_happiness_add",
+          "planet_crime_no_happiness_add",
+          "planet_housing_add"
+        ],
+        [
+          "planet_amenities_no_happiness_add",
+          "planet_housing_add"
+        ],
+        [
+          "planet_artisans_consumer_goods_produces_add",
+          "planet_metallurgists_alloys_produces_add"
+        ],
+        [
+          "planet_artisans_produces_mult",
+          "planet_metallurgists_produces_mult"
+        ],
+        [
+          "planet_artisans_rare_crystals_produces_add",
+          "planet_metallurgists_rare_crystals_produces_add"
+        ],
+        [
+          "planet_artisans_upkeep_mult"
+        ],
+        [
+          "planet_artisans_upkeep_mult",
+          "planet_cruise_passengers_consumer_goods_upkeep_mult"
+        ],
+        [
+          "planet_biologists_exotic_gases_upkeep_add",
+          "planet_biologists_society_research_produces_add"
+        ],
+        [
+          "planet_biologists_physics_research_produces_add",
+          "planet_biologists_society_research_produces_add",
+          "planet_biologists_sr_zro_upkeep_add"
+        ],
+        [
+          "planet_biologists_society_research_produces_add"
+        ],
+        [
+          "planet_biologists_society_research_produces_add",
+          "planet_engineers_engineering_research_produces_add",
+          "planet_physicists_physics_research_produces_add"
+        ],
+        [
+          "planet_biologists_society_research_produces_add",
+          "planet_engineers_engineering_research_produces_add",
+          "planet_physicists_physics_research_produces_add",
+          "pop_calculator_biologist_bonus_workforce_mult",
+          "pop_calculator_engineer_bonus_workforce_mult",
+          "pop_calculator_physicist_bonus_workforce_mult"
+        ],
+        [
+          "planet_building_build_speed_mult"
+        ],
+        [
+          "planet_buildings_upkeep_mult",
+          "planet_districts_energy_upkeep_mult",
+          "planet_jobs_upkeep_mult"
+        ],
+        [
+          "planet_bureaucrats_engineering_research_produces_add",
+          "planet_bureaucrats_physics_research_produces_add",
+          "planet_bureaucrats_society_research_produces_add",
+          "planet_bureaucrats_unity_produces_add"
+        ],
+        [
+          "planet_bureaucrats_produces_mult",
+          "pop_ethic_spiritualist_attraction_mult"
+        ],
+        [
+          "planet_bureaucrats_trade_produces_add",
+          "planet_bureaucrats_unity_produces_add"
+        ],
+        [
+          "planet_bureaucrats_unity_produces_add"
+        ],
+        [
+          "planet_bureaucrats_unity_produces_add",
+          "pop_bureaucrat_bonus_workforce_mult"
+        ],
+        [
+          "planet_bureaucrats_upkeep_mult"
+        ],
+        [
+          "planet_bureaucrats_upkeep_mult",
+          "planet_jobs_unity_produces_mult"
+        ],
+        [
+          "planet_bureaucrats_upkeep_mult",
+          "pop_ethic_spiritualist_attraction_mult"
+        ],
+        [
+          "planet_civilians_consumer_goods_upkeep_add",
+          "planet_civilians_engineering_research_produces_add",
+          "planet_civilians_physics_research_produces_add",
+          "planet_civilians_society_research_produces_add"
+        ],
+        [
+          "planet_civilians_consumer_goods_upkeep_add",
+          "planet_civilians_unity_produces_add",
+          "planet_jobs_unity_produces_mult"
+        ],
+        [
+          "planet_cruise_passengers_consumer_goods_upkeep_add",
+          "planet_cruise_passengers_engineering_research_produces_add",
+          "planet_cruise_passengers_physics_research_produces_add",
+          "planet_cruise_passengers_society_research_produces_add"
+        ],
+        [
+          "planet_cruise_passengers_consumer_goods_upkeep_add",
+          "planet_cruise_passengers_unity_produces_add",
+          "pop_cat_cruise_passenger_happiness"
+        ],
+        [
+          "planet_doctors_upkeep_mult",
+          "pop_amenities_usage_organic_mult"
+        ],
+        [
+          "planet_engineers_engineering_research_produces_add"
+        ],
+        [
+          "planet_engineers_engineering_research_produces_add",
+          "planet_engineers_nanites_upkeep_add"
+        ],
+        [
+          "planet_engineers_engineering_research_produces_add",
+          "planet_engineers_rare_crystals_upkeep_add"
+        ],
+        [
+          "planet_entertainers_consumer_goods_upkeep_add",
+          "planet_entertainers_physics_research_produces_add",
+          "storm_attraction_field_modifier"
+        ],
+        [
+          "planet_entertainers_upkeep_mult"
+        ],
+        [
+          "planet_farmers_alloys_produces_add",
+          "planet_farmers_food_produces_add"
+        ],
+        [
+          "planet_farmers_energy_produces_add",
+          "planet_farmers_exotic_gases_produces_add",
+          "planet_farmers_food_produces_add"
+        ],
+        [
+          "planet_farmers_energy_produces_add",
+          "planet_farmers_food_produces_add"
+        ],
+        [
+          "planet_farmers_exotic_gases_produces_add"
+        ],
+        [
+          "planet_farmers_food_produces_add"
+        ],
+        [
+          "planet_farmers_food_produces_add",
+          "planet_miners_minerals_produces_add",
+          "planet_technician_energy_produces_add"
+        ],
+        [
+          "planet_farmers_food_produces_add",
+          "pop_agri_drone_bonus_workforce_mult"
+        ],
+        [
+          "planet_housing_add"
+        ],
+        [
+          "planet_housing_add",
+          "planet_pops_organics_upkeep_mult",
+          "pop_environment_tolerance"
+        ],
+        [
+          "planet_jobs_unity_produces_mult"
+        ],
+        [
+          "planet_jobs_unity_produces_mult",
+          "planet_maintenance_drones_minerals_upkeep_add",
+          "planet_maintenance_drones_trade_produces_add",
+          "planet_maintenance_drones_unity_produces_add"
+        ],
+        [
+          "planet_jobs_worker_produces_mult"
+        ],
+        [
+          "planet_metallurgists_alloys_produces_add",
+          "planet_metallurgists_minerals_upkeep_add"
+        ],
+        [
+          "planet_metallurgists_alloys_produces_add",
+          "planet_metallurgists_minerals_upkeep_add",
+          "pop_foundry_bonus_workforce_mult"
+        ],
+        [
+          "planet_metallurgists_upkeep_mult"
+        ],
+        [
+          "planet_miners_energy_produces_add"
+        ],
+        [
+          "planet_miners_minerals_produces_add"
+        ],
+        [
+          "planet_miners_minerals_produces_add",
+          "pop_mining_drone_bonus_workforce_mult"
+        ],
+        [
+          "planet_miners_rare_crystals_produces_add"
+        ],
+        [
+          "planet_orbital_bombardment_damage"
+        ],
+        [
+          "planet_physicists_astral_threads_produces_add",
+          "planet_physicists_physics_research_produces_add"
+        ],
+        [
+          "planet_physicists_physics_research_produces_add"
+        ],
+        [
+          "planet_physicists_physics_research_produces_add",
+          "planet_physicists_volatile_motes_upkeep_add"
+        ],
+        [
+          "planet_researchers_upkeep_mult"
+        ],
+        [
+          "planet_resettlement_unemployed_mult",
+          "pop_slave_bonus_workforce_mult",
+          "pop_slave_political_power"
+        ],
+        [
+          "planet_soldiers_consumer_goods_upkeep_add",
+          "planet_soldiers_engineering_research_produces_add",
+          "planet_soldiers_society_research_produces_add"
+        ],
+        [
+          "planet_stability_add"
+        ],
+        [
+          "planet_structures_upkeep_mult"
+        ],
+        [
+          "planet_technician_energy_produces_add"
+        ],
+        [
+          "planet_technician_energy_produces_add",
+          "pop_technician_drone_bonus_workforce_mult"
+        ],
+        [
+          "planet_technician_volatile_motes_produces_add"
+        ],
+        [
+          "planet_traders_trade_produces_add"
+        ],
+        [
+          "planet_traders_upkeep_mult"
+        ],
+        [
+          "pop_bureaucrat_bonus_workforce_mult"
+        ],
+        [
+          "pop_bureaucrat_bonus_workforce_mult",
+          "pop_ethic_spiritualist_attraction_mult"
+        ],
+        [
+          "pop_coordinator_bonus_workforce_mult"
+        ],
+        [
+          "pop_environment_tolerance"
+        ],
+        [
+          "pop_ethic_spiritualist_attraction_mult"
+        ],
+        [
+          "pop_ethic_spiritualist_attraction_mult",
+          "pop_mortal_initiate_bonus_workforce_mult"
+        ],
+        [
+          "pop_housing_usage_mult"
+        ],
+        [
+          "pop_purge_speed"
+        ],
+        [
+          "pop_trader_bonus_workforce_mult"
+        ],
+        [
+          "researcher_jobs_bonus_workforce_mult"
+        ],
+        [
+          "storm_attraction_field_modifier"
+        ],
+        [
+          "storm_repelling_field_modifier"
+        ],
+        [
+          "worker_and_simple_drone_cat_bonus_workforce_mult"
+        ]
+      ]
+    },
+    "planetary_ftl_inhibitor": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "position_priority": {
+      "definitions": 66,
+      "repeated": 0,
+      "scalars": 66,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "100"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "potential": {
+      "definitions": 454,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 454,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "AND",
+        "NOR",
+        "NOT",
+        "OR",
+        "OWNER",
+        "always",
+        "branch_office_owner",
+        "colony",
+        "custom_tooltip",
+        "exists",
+        "has_any_capped_planet_farming_district",
+        "has_any_capped_planet_generator_district",
+        "has_any_capped_planet_mining_district",
+        "has_branch_office",
+        "has_building",
+        "has_carrier_flag",
+        "has_deposit",
+        "has_exotic_gases_deposit",
+        "has_modifier",
+        "has_overlord_dlc",
+        "has_rare_crystals_deposit",
+        "has_shroud_dlc",
+        "has_upgraded_capital",
+        "has_volatile_motes_deposit",
+        "hidden_trigger",
+        "if",
+        "is_artificial",
+        "is_capital",
+        "is_planet_class",
+        "is_special_colony_type",
+        "owner",
+        "owner.overlord",
+        "owner?",
+        "planet",
+        "planet.owner",
+        "solar_system?",
+        "uses_district_set",
+        "uses_habitat_capitals"
+      ],
+      "keysByDefinition": [
+        [
+          "AND",
+          "NOR"
+        ],
+        [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "OR",
+          "exists",
+          "owner",
+          "owner?"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR"
+        ],
+        [
+          "NOR",
+          "OR",
+          "exists"
+        ],
+        [
+          "NOR",
+          "OR",
+          "exists",
+          "has_building",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR",
+          "exists",
+          "is_special_colony_type",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_building",
+          "owner?"
+        ],
+        [
+          "NOR",
+          "OR",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OWNER",
+          "exists"
+        ],
+        [
+          "NOR",
+          "branch_office_owner",
+          "has_branch_office"
+        ],
+        [
+          "NOR",
+          "branch_office_owner",
+          "has_branch_office",
+          "is_artificial"
+        ],
+        [
+          "NOR",
+          "exists"
+        ],
+        [
+          "NOR",
+          "exists",
+          "has_shroud_dlc",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOR",
+          "exists",
+          "is_artificial",
+          "owner.overlord"
+        ],
+        [
+          "NOR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR",
+          "is_artificial",
+          "owner"
+        ],
+        [
+          "NOR",
+          "is_artificial",
+          "owner.overlord"
+        ],
+        [
+          "NOR",
+          "owner"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "OR",
+          "exists"
+        ],
+        [
+          "NOT",
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT",
+          "OR",
+          "exists",
+          "owner",
+          "planet"
+        ],
+        [
+          "NOT",
+          "custom_tooltip"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner",
+          "planet"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner",
+          "uses_habitat_capitals"
+        ],
+        [
+          "NOT",
+          "exists",
+          "planet"
+        ],
+        [
+          "NOT",
+          "if",
+          "owner"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "NOT",
+          "owner",
+          "owner.overlord"
+        ],
+        [
+          "NOT",
+          "owner.overlord"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists",
+          "has_upgraded_capital"
+        ],
+        [
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "OR",
+          "owner"
+        ],
+        [
+          "always"
+        ],
+        [
+          "branch_office_owner",
+          "has_branch_office"
+        ],
+        [
+          "colony",
+          "exists",
+          "owner"
+        ],
+        [
+          "custom_tooltip",
+          "exists"
+        ],
+        [
+          "exists"
+        ],
+        [
+          "exists",
+          "has_any_capped_planet_farming_district",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_any_capped_planet_generator_district",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_any_capped_planet_mining_district",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_building",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_carrier_flag",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_deposit",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_overlord_dlc",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_overlord_dlc",
+          "planet.owner"
+        ],
+        [
+          "exists",
+          "has_shroud_dlc",
+          "owner"
+        ],
+        [
+          "exists",
+          "if",
+          "owner"
+        ],
+        [
+          "exists",
+          "is_planet_class",
+          "owner"
+        ],
+        [
+          "exists",
+          "is_special_colony_type",
+          "owner"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "exists",
+          "owner",
+          "planet"
+        ],
+        [
+          "exists",
+          "owner",
+          "solar_system?"
+        ],
+        [
+          "exists",
+          "owner",
+          "uses_district_set"
+        ],
+        [
+          "exists",
+          "owner",
+          "uses_habitat_capitals"
+        ],
+        [
+          "exists",
+          "uses_district_set"
+        ],
+        [
+          "has_branch_office"
+        ],
+        [
+          "has_building"
+        ],
+        [
+          "has_carrier_flag",
+          "owner"
+        ],
+        [
+          "has_exotic_gases_deposit",
+          "owner"
+        ],
+        [
+          "has_modifier"
+        ],
+        [
+          "has_overlord_dlc"
+        ],
+        [
+          "has_overlord_dlc",
+          "is_artificial"
+        ],
+        [
+          "has_overlord_dlc",
+          "owner"
+        ],
+        [
+          "has_rare_crystals_deposit",
+          "owner"
+        ],
+        [
+          "has_shroud_dlc"
+        ],
+        [
+          "has_shroud_dlc",
+          "owner"
+        ],
+        [
+          "has_volatile_motes_deposit",
+          "owner"
+        ],
+        [
+          "hidden_trigger"
+        ],
+        [
+          "is_capital",
+          "owner"
+        ],
+        [
+          "is_planet_class"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner",
+          "owner.overlord"
+        ],
+        [
+          "owner",
+          "planet"
+        ],
+        [
+          "owner.overlord"
+        ],
+        [
+          "owner?"
+        ]
+      ]
+    },
+    "prerequisites": {
+      "definitions": 242,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 242,
+      "bareBlocks": 226,
+      "values": [
+        "tech_alloys_1",
+        "tech_alloys_2",
+        "tech_archaeo_refinery",
+        "tech_archaeostudies",
+        "tech_assembly_pattern",
+        "tech_basic_industry",
+        "tech_basic_science_lab_1",
+        "tech_basic_science_lab_2",
+        "tech_basic_science_lab_3",
+        "tech_bio_reactor",
+        "tech_bio_reactor_2",
+        "tech_cloning",
+        "tech_colonial_centralization",
+        "tech_construction_templates",
+        "tech_eco_simulation",
+        "tech_exotic_gases",
+        "tech_food_processing_1",
+        "tech_food_processing_2",
+        "tech_galactic_administration",
+        "tech_gene_crops",
+        "tech_glandular_acclimation",
+        "tech_global_production_strategy",
+        "tech_global_research_initiative",
+        "tech_habitat_1",
+        "tech_habitat_2",
+        "tech_habitat_3",
+        "tech_hydroponics",
+        "tech_industrial_farming",
+        "tech_luxuries_1",
+        "tech_luxuries_2",
+        "tech_mechanized_mining",
+        "tech_mega_assembly",
+        "tech_mine_zro",
+        "tech_mineral_purification_1",
+        "tech_mineral_purification_2",
+        "tech_mining_1",
+        "tech_mining_2",
+        "tech_mining_3",
+        "tech_nanite_transmutation",
+        "tech_nano_vitality_crops",
+        "tech_neural_implants",
+        "tech_physics_1",
+        "tech_physics_2",
+        "tech_physics_3",
+        "tech_planetary_government",
+        "tech_power_hub_1",
+        "tech_power_hub_2",
+        "tech_power_plant_1",
+        "tech_power_plant_2",
+        "tech_power_plant_3",
+        "tech_power_plant_4",
+        "tech_psionic_theory",
+        "tech_rare_crystals",
+        "tech_robot_assembly_complex",
+        "tech_robotic_workers",
+        "tech_secrets_baol",
+        "tech_secrets_vultaum",
+        "tech_society_1",
+        "tech_society_2",
+        "tech_society_3",
+        "tech_volatile_motes",
+        "tech_volcanic_forge",
+        "tech_xeno_diplomacy",
+        "tech_xeno_relations"
+      ],
+      "keys": [
+        "OR"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "OR"
+        ]
+      ]
+    },
+    "resources": {
+      "definitions": 458,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 458,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost",
+        "inline_script",
+        "produces",
+        "upkeep"
+      ],
+      "keysByDefinition": [
+        [
+          "category"
+        ],
+        [
+          "category",
+          "cost"
+        ],
+        [
+          "category",
+          "cost",
+          "inline_script",
+          "produces"
+        ],
+        [
+          "category",
+          "cost",
+          "inline_script",
+          "produces",
+          "upkeep"
+        ],
+        [
+          "category",
+          "cost",
+          "inline_script",
+          "upkeep"
+        ],
+        [
+          "category",
+          "cost",
+          "produces",
+          "upkeep"
+        ],
+        [
+          "category",
+          "cost",
+          "upkeep"
+        ],
+        [
+          "category",
+          "inline_script"
+        ],
+        [
+          "category",
+          "inline_script",
+          "produces"
+        ],
+        [
+          "category",
+          "inline_script",
+          "produces",
+          "upkeep"
+        ],
+        [
+          "category",
+          "inline_script",
+          "upkeep"
+        ],
+        [
+          "category",
+          "produces"
+        ],
+        [
+          "category",
+          "produces",
+          "upkeep"
+        ],
+        [
+          "category",
+          "upkeep"
+        ]
+      ]
+    },
+    "ruined_icon": {
+      "definitions": 44,
+      "repeated": 0,
+      "scalars": 44,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "wilderness_building_ruined"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_in_tech": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 38,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "tech_fe_administration_1",
+        "tech_fe_administration_2",
+        "tech_fe_affluence_1",
+        "tech_fe_affluence_2",
+        "tech_fe_assembly_1",
+        "tech_fe_assembly_2",
+        "tech_fe_clinic_1",
+        "tech_fe_clinic_2",
+        "tech_fe_dome_1",
+        "tech_fe_dome_2",
+        "tech_fe_entertainment_1",
+        "tech_fe_entertainment_2",
+        "tech_fe_fabricator_1",
+        "tech_fe_fabricator_2",
+        "tech_fe_forge_1",
+        "tech_fe_forge_2",
+        "tech_fe_fortress_1",
+        "tech_fe_fortress_2",
+        "tech_fe_lab_1",
+        "tech_fe_lab_2",
+        "tech_fe_market_1",
+        "tech_fe_market_2",
+        "tech_fe_mine_1",
+        "tech_fe_mine_2",
+        "tech_fe_nourishment_1",
+        "tech_fe_nourishment_2",
+        "tech_fe_security_1",
+        "tech_fe_security_2",
+        "tech_fe_silo_1",
+        "tech_fe_silo_2",
+        "tech_fe_singularity_1",
+        "tech_fe_singularity_2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_tech_unlock_if": {
+      "definitions": 188,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 188,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "always",
+        "exists",
+        "has_civic",
+        "has_make_spiritualist_perk",
+        "has_origin",
+        "has_trait",
+        "has_valid_civic",
+        "is_criminal_syndicate",
+        "is_death_cult_empire",
+        "is_entropy_drinkers_empire",
+        "is_gestalt",
+        "is_hive_empire",
+        "is_machine_empire",
+        "is_megacorp",
+        "is_memorialist_empire",
+        "is_nomadic",
+        "is_regular_empire",
+        "is_relentless_industrialist_empire",
+        "is_spiritualist",
+        "is_tankbound_empire",
+        "is_twisted_experimenters_empire",
+        "is_wilderness_empire",
+        "owner",
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "is_machine_empire"
+        ],
+        [
+          "NOT",
+          "is_regular_empire"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "is_machine_empire",
+          "is_megacorp",
+          "is_spiritualist",
+          "is_wilderness_empire"
+        ],
+        [
+          "always"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "has_civic"
+        ],
+        [
+          "has_make_spiritualist_perk",
+          "is_hive_empire",
+          "is_machine_empire",
+          "is_spiritualist"
+        ],
+        [
+          "has_make_spiritualist_perk",
+          "is_megacorp",
+          "is_spiritualist"
+        ],
+        [
+          "has_make_spiritualist_perk",
+          "is_regular_empire",
+          "is_spiritualist"
+        ],
+        [
+          "has_origin"
+        ],
+        [
+          "has_origin",
+          "has_trait"
+        ],
+        [
+          "has_valid_civic"
+        ],
+        [
+          "has_valid_civic",
+          "is_regular_empire"
+        ],
+        [
+          "is_criminal_syndicate",
+          "is_megacorp"
+        ],
+        [
+          "is_death_cult_empire"
+        ],
+        [
+          "is_entropy_drinkers_empire",
+          "is_gestalt",
+          "is_megacorp",
+          "is_memorialist_empire"
+        ],
+        [
+          "is_entropy_drinkers_empire",
+          "is_hive_empire",
+          "is_memorialist_empire"
+        ],
+        [
+          "is_entropy_drinkers_empire",
+          "is_hive_empire",
+          "is_memorialist_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_entropy_drinkers_empire",
+          "is_machine_empire",
+          "is_memorialist_empire"
+        ],
+        [
+          "is_entropy_drinkers_empire",
+          "is_megacorp",
+          "is_memorialist_empire"
+        ],
+        [
+          "is_gestalt"
+        ],
+        [
+          "is_gestalt",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_hive_empire"
+        ],
+        [
+          "is_hive_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_machine_empire"
+        ],
+        [
+          "is_memorialist_empire"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_regular_empire"
+        ],
+        [
+          "is_relentless_industrialist_empire"
+        ],
+        [
+          "is_tankbound_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_twisted_experimenters_empire"
+        ],
+        [
+          "is_wilderness_empire"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner?"
+        ]
+      ]
+    },
+    "skip_automation_upgrading": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "system_modifier": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "mindwarden_aura_immunity"
+      ],
+      "keysByDefinition": [
+        [
+          "mindwarden_aura_immunity"
+        ]
+      ]
+    },
+    "triggered_country_modifier": {
+      "definitions": 49,
+      "repeated": 35,
+      "scalars": 0,
+      "blocks": 49,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "BIOLOGICAL_species_trait_picks_add",
+        "BIOLOGICAL_species_trait_points_add",
+        "aesthetic_wonder_specimens_produces_mult",
+        "branch_office_value_mult",
+        "category_archaeostudies_research_speed_mult",
+        "category_computing_research_speed_mult",
+        "country_edict_fund_add",
+        "country_naval_cap_add",
+        "country_naval_cap_mult",
+        "country_resource_max_add",
+        "country_resource_max_consumer_goods_add",
+        "country_resource_max_minor_artifacts_add",
+        "country_unity_produces_mult",
+        "historical_item_specimens_produces_mult",
+        "job_capital_trader_add",
+        "leader_lifespan_add",
+        "mult",
+        "planet_amenities_mult",
+        "planet_jobs_produces_mult",
+        "pop_happiness",
+        "pop_knight_bonus_workforce_mult",
+        "pop_knight_commander_bonus_workforce_mult",
+        "pop_soldier_bonus_workforce_mult",
+        "pop_warrior_drone_bonus_workforce_mult",
+        "potential",
+        "psionic_aura_effectiveness_mult",
+        "psionic_aura_intensity_mult",
+        "ship_armor_penetration_add",
+        "ship_evasion_mult",
+        "ship_experience_gain_mult",
+        "ship_shield_hardening_add",
+        "ship_shield_penetration_add",
+        "ship_tracking_mult",
+        "shroud_delve_cooldown",
+        "shroud_delve_cost",
+        "situation_nomad_economy_max_progress_add",
+        "species_leader_exp_gain",
+        "starbase_defense_platform_capacity_add",
+        "xeno_geology_specimens_produces_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "BIOLOGICAL_species_trait_picks_add",
+          "BIOLOGICAL_species_trait_points_add",
+          "potential"
+        ],
+        [
+          "aesthetic_wonder_specimens_produces_mult",
+          "potential"
+        ],
+        [
+          "branch_office_value_mult",
+          "potential"
+        ],
+        [
+          "category_archaeostudies_research_speed_mult",
+          "country_resource_max_minor_artifacts_add",
+          "potential"
+        ],
+        [
+          "category_computing_research_speed_mult",
+          "mult",
+          "potential"
+        ],
+        [
+          "country_edict_fund_add",
+          "potential"
+        ],
+        [
+          "country_naval_cap_add"
+        ],
+        [
+          "country_naval_cap_add",
+          "job_capital_trader_add",
+          "mult",
+          "potential"
+        ],
+        [
+          "country_naval_cap_mult",
+          "mult",
+          "potential",
+          "ship_experience_gain_mult"
+        ],
+        [
+          "country_resource_max_add",
+          "country_resource_max_consumer_goods_add",
+          "potential",
+          "situation_nomad_economy_max_progress_add"
+        ],
+        [
+          "country_resource_max_add",
+          "potential"
+        ],
+        [
+          "country_unity_produces_mult",
+          "mult",
+          "potential",
+          "species_leader_exp_gain"
+        ],
+        [
+          "historical_item_specimens_produces_mult",
+          "potential"
+        ],
+        [
+          "job_capital_trader_add",
+          "potential"
+        ],
+        [
+          "job_capital_trader_add",
+          "potential",
+          "psionic_aura_effectiveness_mult"
+        ],
+        [
+          "leader_lifespan_add",
+          "planet_jobs_produces_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "pop_knight_bonus_workforce_mult",
+          "pop_knight_commander_bonus_workforce_mult",
+          "pop_soldier_bonus_workforce_mult",
+          "pop_warrior_drone_bonus_workforce_mult",
+          "potential",
+          "ship_armor_penetration_add",
+          "ship_evasion_mult",
+          "ship_shield_hardening_add",
+          "ship_shield_penetration_add",
+          "ship_tracking_mult"
+        ],
+        [
+          "planet_amenities_mult",
+          "pop_happiness",
+          "potential"
+        ],
+        [
+          "pop_happiness",
+          "potential"
+        ],
+        [
+          "potential",
+          "psionic_aura_intensity_mult"
+        ],
+        [
+          "potential",
+          "shroud_delve_cooldown",
+          "shroud_delve_cost"
+        ],
+        [
+          "potential",
+          "situation_nomad_economy_max_progress_add"
+        ],
+        [
+          "potential",
+          "starbase_defense_platform_capacity_add"
+        ],
+        [
+          "potential",
+          "xeno_geology_specimens_produces_mult"
+        ]
+      ]
+    },
+    "triggered_desc": {
+      "definitions": 108,
+      "repeated": 38,
+      "scalars": 0,
+      "blocks": 108,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "text",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "text"
+        ],
+        [
+          "text",
+          "trigger"
+        ],
+        [
+          "trigger"
+        ]
+      ]
+    },
+    "triggered_planet_modifier": {
+      "definitions": 208,
+      "repeated": 168,
+      "scalars": 0,
+      "blocks": 208,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "army_starting_experience_add",
+        "auto_mod_monthly_add",
+        "clone_soldiers_sustained",
+        "deposit_blockers_natural_unity_produces_add",
+        "fake_pop_growth_mod",
+        "job_agri_drone_automated_workforce_mult",
+        "job_aid_worker_add",
+        "job_aid_worker_drone_add",
+        "job_ark_harvester_add",
+        "job_ark_harvester_gestalt_add",
+        "job_artisan_automated_workforce_mult",
+        "job_artisan_drone_automated_workforce_mult",
+        "job_augmentor_add",
+        "job_bio_trophy_add",
+        "job_biologist_add",
+        "job_biologist_automated_workforce_mult",
+        "job_bureaucrat_add",
+        "job_bureaucrat_automated_workforce_mult",
+        "job_calculator_biologist_add",
+        "job_calculator_biologist_automated_workforce_mult",
+        "job_calculator_engineer_add",
+        "job_calculator_engineer_automated_workforce_mult",
+        "job_calculator_physicist_add",
+        "job_calculator_physicist_automated_workforce_mult",
+        "job_colonist_add",
+        "job_coordinator_add",
+        "job_coordinator_automated_workforce_mult",
+        "job_criminal_add",
+        "job_cruise_passenger_add",
+        "job_cyberdome_duelist_add",
+        "job_cyberdome_spectator_add",
+        "job_dystopian_enforcer_add",
+        "job_enforcer_add",
+        "job_engineer_automated_workforce_mult",
+        "job_entertainer_add",
+        "job_entertainer_automated_workforce_mult",
+        "job_evaluator_add",
+        "job_fabricator_add",
+        "job_fabricator_automated_workforce_mult",
+        "job_farmer_add",
+        "job_farmer_automated_workforce_mult",
+        "job_fe_acolyte_farm_automated_workforce_mult",
+        "job_fe_acolyte_generator_automated_workforce_mult",
+        "job_fe_archivist_add",
+        "job_fe_archivist_automated_workforce_mult",
+        "job_fe_augur_add",
+        "job_fe_augur_automated_workforce_mult",
+        "job_fe_guardian_bot_add",
+        "job_fe_maintenance_bot_add",
+        "job_foundry_automated_workforce_mult",
+        "job_healthcare_add",
+        "job_healthcare_amenities_add",
+        "job_healthcare_automated_workforce_mult",
+        "job_knight_add",
+        "job_logistics_drone_automated_workforce_mult",
+        "job_low_tech_miner_add",
+        "job_mind_thrall_add",
+        "job_mind_thrall_drone_add",
+        "job_miner_add",
+        "job_miner_automated_workforce_mult",
+        "job_mining_drone_add",
+        "job_mining_drone_automated_workforce_mult",
+        "job_necro_apprentice_add",
+        "job_offworld_prospector_add",
+        "job_offworld_prospector_drone_add",
+        "job_overlord_academic_add",
+        "job_overlord_academic_drone_add",
+        "job_overlord_arborist_add",
+        "job_overlord_arborist_drone_add",
+        "job_overlord_beholder_add",
+        "job_overlord_beholder_drone_add",
+        "job_overlord_bio_trophy_add",
+        "job_overlord_bio_trophy_drone_add",
+        "job_overlord_breeder_add",
+        "job_overlord_breeder_drone_add",
+        "job_overlord_catalytic_drone_add",
+        "job_overlord_catalytic_technician_add",
+        "job_overlord_fabricator_add",
+        "job_overlord_foundry_drone_add",
+        "job_overlord_healthcare_add",
+        "job_overlord_knight_add",
+        "job_overlord_knight_drone_add",
+        "job_overlord_metallurgist_add",
+        "job_overlord_mortal_initiate_add",
+        "job_overlord_mortal_initiate_drone_add",
+        "job_overlord_necromancer_add",
+        "job_overlord_necromancer_drone_add",
+        "job_overlord_offspring_drone_feeder_add",
+        "job_overlord_offspring_drone_feeder_drone_add",
+        "job_overlord_propagandist_add",
+        "job_overlord_propagandist_drone_add",
+        "job_overlord_ranger_add",
+        "job_overlord_ranger_drone_add",
+        "job_overlord_reassigner_add",
+        "job_overlord_reassigner_drone_add",
+        "job_overlord_recruiter_add",
+        "job_overlord_recruiter_drone_add",
+        "job_overlord_replicator_add",
+        "job_overlord_spawning_drone_add",
+        "job_overlord_trader_add",
+        "job_overlord_trader_drone_add",
+        "job_patrol_drone_add",
+        "job_physicist_automated_workforce_mult",
+        "job_politician_add",
+        "job_polytechnic_drone_add",
+        "job_polytechnic_mentor_add",
+        "job_primitive_administrator_add",
+        "job_primitive_bureaucrat_add",
+        "job_primitive_entertainer_add",
+        "job_primitive_hive_brain_drone_add",
+        "job_primitive_hive_miner_add",
+        "job_primitive_hive_spawning_drone_add",
+        "job_primitive_hive_synapse_drone_2_add",
+        "job_primitive_hive_warrior_2_add",
+        "job_primitive_laborer_add",
+        "job_primitive_miner_add",
+        "job_primitive_priest_2_add",
+        "job_primitive_researcher_2_add",
+        "job_primitive_warrior_2_add",
+        "job_replicator_add",
+        "job_replicator_automated_workforce_mult",
+        "job_roboticist_add",
+        "job_roboticist_automated_workforce_mult",
+        "job_roboticist_branch_office_value_mult",
+        "job_skywatcher_add",
+        "job_skywatcher_drone_add",
+        "job_soldier_automated_workforce_mult",
+        "job_spawning_drone_automated_workforce_mult",
+        "job_spe_colonist_add",
+        "job_technician_automated_workforce_mult",
+        "job_technician_drone_automated_workforce_mult",
+        "job_trader_add",
+        "job_trader_automated_workforce_mult",
+        "job_warrior_drone_automated_workforce_mult",
+        "logistic_growth_mult",
+        "modifier",
+        "monthly_loyalty",
+        "mult",
+        "organic_pop_bonus_workforce_mult",
+        "planet_amenities_add",
+        "planet_amenities_no_happiness_add",
+        "planet_artisans_food_upkeep_add",
+        "planet_artisans_minerals_upkeep_add",
+        "planet_artisans_trade_produces_add",
+        "planet_augmentors_trade_produces_add",
+        "planet_bio_trophies_consumer_goods_upkeep_add",
+        "planet_bio_trophies_unity_produces_add",
+        "planet_biologists_consumer_goods_upkeep_add",
+        "planet_biologists_energy_upkeep_add",
+        "planet_biologists_minerals_upkeep_add",
+        "planet_biologists_minor_artifacts_produces_add",
+        "planet_biologists_trade_produces_add",
+        "planet_building_build_speed_mult",
+        "planet_bureaucrats_alloys_upkeep_add",
+        "planet_bureaucrats_consumer_goods_upkeep_add",
+        "planet_bureaucrats_energy_upkeep_add",
+        "planet_bureaucrats_food_upkeep_add",
+        "planet_bureaucrats_minerals_upkeep_add",
+        "planet_bureaucrats_produces_mult",
+        "planet_bureaucrats_trade_produces_add",
+        "planet_bureaucrats_unity_produces_add",
+        "planet_civilians_consumer_goods_upkeep_add",
+        "planet_civilians_unity_produces_add",
+        "planet_crime_add",
+        "planet_crime_floor_add",
+        "planet_crime_no_happiness_add",
+        "planet_criminals_trade_produces_add",
+        "planet_cruise_passengers_consumer_goods_upkeep_add",
+        "planet_cruise_passengers_unity_produces_add",
+        "planet_decision_enact_speed_mult",
+        "planet_doctors_trade_produces_add",
+        "planet_doctors_unity_produces_add",
+        "planet_enforcers_trade_produces_add",
+        "planet_engineers_trade_produces_add",
+        "planet_entertainers_consumer_goods_upkeep_add",
+        "planet_entertainers_engineering_research_produces_add",
+        "planet_entertainers_physics_research_produces_add",
+        "planet_entertainers_society_research_produces_add",
+        "planet_entertainers_trade_produces_add",
+        "planet_entertainers_unity_produces_add",
+        "planet_evaluators_engineering_research_produces_add",
+        "planet_evaluators_minerals_upkeep_add",
+        "planet_evaluators_physics_research_produces_add",
+        "planet_evaluators_society_research_produces_add",
+        "planet_evaluators_unity_produces_add",
+        "planet_farmers_consumer_goods_produces_add",
+        "planet_farmers_energy_produces_add",
+        "planet_farmers_trade_produces_add",
+        "planet_housing_add",
+        "planet_jobs_energy_produces_mult",
+        "planet_jobs_exotic_gases_produces_mult",
+        "planet_jobs_food_produces_mult",
+        "planet_jobs_minerals_produces_mult",
+        "planet_jobs_produces_mult",
+        "planet_jobs_rare_crystals_produces_mult",
+        "planet_jobs_trade_produces_mult",
+        "planet_jobs_upkeep_mult",
+        "planet_jobs_volatile_motes_produces_mult",
+        "planet_knights_trade_produces_add",
+        "planet_maintenance_drones_minerals_upkeep_add",
+        "planet_maintenance_drones_trade_produces_add",
+        "planet_maintenance_drones_unity_produces_add",
+        "planet_max_branch_office_buildings_add",
+        "planet_metallurgists_food_upkeep_add",
+        "planet_metallurgists_minerals_upkeep_add",
+        "planet_metallurgists_trade_produces_add",
+        "planet_miners_minerals_produces_add",
+        "planet_miners_trade_produces_add",
+        "planet_physicists_advanced_logic_produces_add",
+        "planet_physicists_consumer_goods_upkeep_add",
+        "planet_physicists_energy_upkeep_add",
+        "planet_physicists_minerals_upkeep_add",
+        "planet_physicists_physics_research_produces_add",
+        "planet_physicists_sr_zro_upkeep_add",
+        "planet_physicists_trade_produces_add",
+        "planet_politicians_trade_produces_add",
+        "planet_pop_assemblers_unity_produces_add",
+        "planet_pops_upkeep_mult",
+        "planet_researchers_consumer_goods_upkeep_add",
+        "planet_researchers_energy_upkeep_add",
+        "planet_researchers_minerals_upkeep_add",
+        "planet_resettlement_unemployed_destination_mult",
+        "planet_soldiers_trade_produces_add",
+        "planet_stability_add",
+        "planet_storm_devastation_mult",
+        "planet_traders_trade_produces_add",
+        "pop_cat_bio_trophy_happiness",
+        "pop_cat_cruise_passenger_happiness",
+        "pop_environment_tolerance",
+        "pop_ethic_authoritarian_attraction_mult",
+        "pop_ethic_egalitarian_attraction_mult",
+        "pop_ethic_materialist_attraction_mult",
+        "pop_ethic_spiritualist_attraction_mult",
+        "pop_ethic_xenophile_attraction_mult",
+        "pop_ethic_xenophobe_attraction_mult",
+        "pop_ethics_shift_speed_mult",
+        "pop_government_ethic_attraction",
+        "pop_happiness",
+        "potential",
+        "psionic_pop_bonus_workforce_mult",
+        "robotic_pop_bonus_workforce_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "army_starting_experience_add",
+          "job_criminal_add",
+          "mult",
+          "planet_crime_add",
+          "planet_knights_trade_produces_add",
+          "planet_soldiers_trade_produces_add",
+          "potential"
+        ],
+        [
+          "army_starting_experience_add",
+          "planet_crime_floor_add",
+          "planet_knights_trade_produces_add",
+          "planet_soldiers_trade_produces_add",
+          "potential"
+        ],
+        [
+          "auto_mod_monthly_add",
+          "clone_soldiers_sustained",
+          "fake_pop_growth_mod",
+          "job_healthcare_add",
+          "logistic_growth_mult",
+          "organic_pop_bonus_workforce_mult",
+          "planet_amenities_add",
+          "planet_amenities_no_happiness_add",
+          "pop_environment_tolerance",
+          "potential"
+        ],
+        [
+          "auto_mod_monthly_add",
+          "modifier",
+          "potential"
+        ],
+        [
+          "clone_soldiers_sustained",
+          "fake_pop_growth_mod",
+          "modifier",
+          "planet_amenities_add",
+          "planet_jobs_trade_produces_mult",
+          "potential"
+        ],
+        [
+          "clone_soldiers_sustained",
+          "job_healthcare_automated_workforce_mult",
+          "job_spawning_drone_automated_workforce_mult",
+          "modifier",
+          "mult",
+          "organic_pop_bonus_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "clone_soldiers_sustained",
+          "job_healthcare_automated_workforce_mult",
+          "job_spawning_drone_automated_workforce_mult",
+          "modifier",
+          "organic_pop_bonus_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "clone_soldiers_sustained",
+          "modifier",
+          "mult",
+          "organic_pop_bonus_workforce_mult",
+          "potential"
+        ],
+        [
+          "clone_soldiers_sustained",
+          "organic_pop_bonus_workforce_mult",
+          "potential"
+        ],
+        [
+          "deposit_blockers_natural_unity_produces_add",
+          "job_biologist_add",
+          "mult",
+          "potential"
+        ],
+        [
+          "fake_pop_growth_mod",
+          "mult",
+          "planet_amenities_add",
+          "planet_jobs_trade_produces_mult",
+          "potential"
+        ],
+        [
+          "job_agri_drone_automated_workforce_mult",
+          "job_farmer_automated_workforce_mult",
+          "job_fe_acolyte_farm_automated_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_aid_worker_add",
+          "job_aid_worker_drone_add",
+          "potential"
+        ],
+        [
+          "job_ark_harvester_add",
+          "job_ark_harvester_gestalt_add",
+          "modifier",
+          "potential"
+        ],
+        [
+          "job_ark_harvester_add",
+          "job_ark_harvester_gestalt_add",
+          "planet_miners_minerals_produces_add",
+          "potential"
+        ],
+        [
+          "job_artisan_automated_workforce_mult",
+          "job_artisan_drone_automated_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_augmentor_add",
+          "job_criminal_add",
+          "modifier",
+          "mult",
+          "planet_augmentors_trade_produces_add",
+          "planet_crime_add",
+          "planet_crime_floor_add",
+          "planet_jobs_trade_produces_mult",
+          "potential"
+        ],
+        [
+          "job_bio_trophy_add",
+          "job_cruise_passenger_add",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_biologist_add",
+          "job_calculator_biologist_add",
+          "job_entertainer_add",
+          "potential"
+        ],
+        [
+          "job_biologist_automated_workforce_mult",
+          "job_calculator_biologist_automated_workforce_mult",
+          "job_calculator_engineer_automated_workforce_mult",
+          "job_calculator_physicist_automated_workforce_mult",
+          "job_engineer_automated_workforce_mult",
+          "job_fe_archivist_add",
+          "job_fe_archivist_automated_workforce_mult",
+          "job_physicist_automated_workforce_mult",
+          "potential"
+        ],
+        [
+          "job_biologist_automated_workforce_mult",
+          "job_calculator_biologist_automated_workforce_mult",
+          "job_calculator_engineer_automated_workforce_mult",
+          "job_calculator_physicist_automated_workforce_mult",
+          "job_engineer_automated_workforce_mult",
+          "job_physicist_automated_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_bureaucrat_add",
+          "mult",
+          "planet_crime_add",
+          "pop_ethic_spiritualist_attraction_mult",
+          "pop_ethics_shift_speed_mult",
+          "potential"
+        ],
+        [
+          "job_bureaucrat_add",
+          "mult",
+          "pop_ethic_spiritualist_attraction_mult",
+          "pop_ethics_shift_speed_mult",
+          "potential"
+        ],
+        [
+          "job_bureaucrat_automated_workforce_mult",
+          "job_coordinator_automated_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_calculator_biologist_add",
+          "job_calculator_engineer_add",
+          "job_calculator_physicist_add",
+          "job_primitive_researcher_2_add",
+          "potential"
+        ],
+        [
+          "job_colonist_add",
+          "job_dystopian_enforcer_add",
+          "job_roboticist_add",
+          "job_spe_colonist_add",
+          "potential"
+        ],
+        [
+          "job_coordinator_add",
+          "job_healthcare_add",
+          "job_patrol_drone_add",
+          "job_replicator_add",
+          "job_roboticist_add",
+          "modifier",
+          "mult",
+          "planet_amenities_add",
+          "potential"
+        ],
+        [
+          "job_coordinator_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "job_dystopian_enforcer_add",
+          "job_enforcer_add",
+          "planet_crime_add",
+          "planet_crime_floor_add",
+          "planet_criminals_trade_produces_add",
+          "planet_enforcers_trade_produces_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "job_entertainer_add",
+          "mult",
+          "planet_crime_add",
+          "planet_entertainers_trade_produces_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "job_farmer_add",
+          "mult",
+          "planet_crime_add",
+          "planet_farmers_trade_produces_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "job_healthcare_add",
+          "job_healthcare_amenities_add",
+          "mult",
+          "planet_crime_add",
+          "planet_crime_floor_add",
+          "planet_doctors_trade_produces_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "job_miner_add",
+          "mult",
+          "planet_crime_add",
+          "planet_miners_trade_produces_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "job_trader_add",
+          "mult",
+          "planet_crime_add",
+          "planet_traders_trade_produces_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "mult",
+          "planet_artisans_trade_produces_add",
+          "planet_crime_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "mult",
+          "planet_biologists_trade_produces_add",
+          "planet_crime_add",
+          "planet_engineers_trade_produces_add",
+          "planet_physicists_trade_produces_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "mult",
+          "planet_bureaucrats_trade_produces_add",
+          "planet_crime_add",
+          "potential"
+        ],
+        [
+          "job_criminal_add",
+          "mult",
+          "planet_crime_add",
+          "planet_metallurgists_trade_produces_add",
+          "potential"
+        ],
+        [
+          "job_cruise_passenger_add",
+          "potential"
+        ],
+        [
+          "job_cyberdome_duelist_add",
+          "job_cyberdome_spectator_add",
+          "planet_housing_add",
+          "planet_pops_upkeep_mult",
+          "planet_resettlement_unemployed_destination_mult",
+          "potential"
+        ],
+        [
+          "job_entertainer_add",
+          "job_evaluator_add",
+          "planet_entertainers_consumer_goods_upkeep_add",
+          "planet_entertainers_engineering_research_produces_add",
+          "planet_entertainers_unity_produces_add",
+          "planet_evaluators_engineering_research_produces_add",
+          "planet_evaluators_minerals_upkeep_add",
+          "planet_evaluators_unity_produces_add",
+          "potential"
+        ],
+        [
+          "job_entertainer_add",
+          "job_evaluator_add",
+          "planet_entertainers_consumer_goods_upkeep_add",
+          "planet_entertainers_physics_research_produces_add",
+          "planet_entertainers_unity_produces_add",
+          "planet_evaluators_minerals_upkeep_add",
+          "planet_evaluators_physics_research_produces_add",
+          "planet_evaluators_unity_produces_add",
+          "potential"
+        ],
+        [
+          "job_entertainer_add",
+          "job_evaluator_add",
+          "planet_entertainers_consumer_goods_upkeep_add",
+          "planet_entertainers_society_research_produces_add",
+          "planet_entertainers_unity_produces_add",
+          "planet_evaluators_minerals_upkeep_add",
+          "planet_evaluators_society_research_produces_add",
+          "planet_evaluators_unity_produces_add",
+          "potential"
+        ],
+        [
+          "job_entertainer_automated_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_fabricator_add",
+          "job_primitive_laborer_add",
+          "potential"
+        ],
+        [
+          "job_fabricator_automated_workforce_mult",
+          "job_foundry_automated_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_fe_acolyte_generator_automated_workforce_mult",
+          "job_technician_automated_workforce_mult",
+          "job_technician_drone_automated_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_fe_augur_add",
+          "job_fe_augur_automated_workforce_mult",
+          "planet_bureaucrats_produces_mult",
+          "potential"
+        ],
+        [
+          "job_fe_guardian_bot_add",
+          "job_fe_maintenance_bot_add",
+          "modifier",
+          "potential"
+        ],
+        [
+          "job_healthcare_add",
+          "job_roboticist_add",
+          "potential"
+        ],
+        [
+          "job_knight_add",
+          "modifier",
+          "planet_stability_add",
+          "potential"
+        ],
+        [
+          "job_logistics_drone_automated_workforce_mult",
+          "job_trader_automated_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_low_tech_miner_add",
+          "potential"
+        ],
+        [
+          "job_mind_thrall_add",
+          "job_mind_thrall_drone_add",
+          "potential"
+        ],
+        [
+          "job_miner_add",
+          "job_mining_drone_add",
+          "potential"
+        ],
+        [
+          "job_miner_automated_workforce_mult",
+          "job_mining_drone_automated_workforce_mult",
+          "modifier",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_necro_apprentice_add",
+          "potential"
+        ],
+        [
+          "job_offworld_prospector_add",
+          "job_offworld_prospector_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_academic_add",
+          "job_overlord_academic_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_arborist_add",
+          "job_overlord_arborist_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_beholder_add",
+          "job_overlord_beholder_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_bio_trophy_add",
+          "job_overlord_bio_trophy_drone_add",
+          "monthly_loyalty",
+          "potential"
+        ],
+        [
+          "job_overlord_breeder_add",
+          "job_overlord_breeder_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_catalytic_drone_add",
+          "job_overlord_catalytic_technician_add",
+          "job_overlord_fabricator_add",
+          "job_overlord_foundry_drone_add",
+          "job_overlord_metallurgist_add",
+          "potential"
+        ],
+        [
+          "job_overlord_healthcare_add",
+          "job_overlord_replicator_add",
+          "job_overlord_spawning_drone_add",
+          "monthly_loyalty",
+          "planet_jobs_produces_mult",
+          "potential"
+        ],
+        [
+          "job_overlord_knight_add",
+          "job_overlord_knight_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_mortal_initiate_add",
+          "job_overlord_mortal_initiate_drone_add",
+          "monthly_loyalty",
+          "potential"
+        ],
+        [
+          "job_overlord_necromancer_add",
+          "job_overlord_necromancer_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_offspring_drone_feeder_add",
+          "job_overlord_offspring_drone_feeder_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_propagandist_add",
+          "job_overlord_propagandist_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_ranger_add",
+          "job_overlord_ranger_drone_add",
+          "potential"
+        ],
+        [
+          "job_overlord_reassigner_add",
+          "job_overlord_reassigner_drone_add",
+          "monthly_loyalty",
+          "potential"
+        ],
+        [
+          "job_overlord_recruiter_add",
+          "job_overlord_recruiter_drone_add",
+          "monthly_loyalty",
+          "potential"
+        ],
+        [
+          "job_overlord_trader_add",
+          "job_overlord_trader_drone_add",
+          "potential"
+        ],
+        [
+          "job_politician_add",
+          "potential"
+        ],
+        [
+          "job_polytechnic_drone_add",
+          "job_polytechnic_mentor_add",
+          "potential"
+        ],
+        [
+          "job_primitive_administrator_add",
+          "potential"
+        ],
+        [
+          "job_primitive_bureaucrat_add",
+          "job_primitive_entertainer_add",
+          "job_primitive_priest_2_add",
+          "job_primitive_researcher_2_add",
+          "job_primitive_warrior_2_add",
+          "planet_amenities_add",
+          "planet_crime_add",
+          "planet_housing_add",
+          "planet_max_branch_office_buildings_add",
+          "potential"
+        ],
+        [
+          "job_primitive_hive_brain_drone_add",
+          "job_primitive_hive_spawning_drone_add",
+          "job_primitive_hive_synapse_drone_2_add",
+          "job_primitive_hive_warrior_2_add",
+          "planet_amenities_no_happiness_add",
+          "planet_crime_no_happiness_add",
+          "planet_housing_add",
+          "potential"
+        ],
+        [
+          "job_primitive_hive_brain_drone_add",
+          "job_primitive_researcher_2_add",
+          "potential"
+        ],
+        [
+          "job_primitive_hive_miner_add",
+          "potential"
+        ],
+        [
+          "job_primitive_miner_add",
+          "potential"
+        ],
+        [
+          "job_replicator_automated_workforce_mult",
+          "job_roboticist_automated_workforce_mult",
+          "modifier",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_roboticist_add",
+          "job_roboticist_branch_office_value_mult",
+          "mult",
+          "planet_crime_add",
+          "planet_crime_floor_add",
+          "potential"
+        ],
+        [
+          "job_skywatcher_add",
+          "job_skywatcher_drone_add",
+          "mult",
+          "potential"
+        ],
+        [
+          "job_soldier_automated_workforce_mult",
+          "job_warrior_drone_automated_workforce_mult",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "job_trader_add",
+          "mult",
+          "planet_crime_add",
+          "planet_crime_floor_add",
+          "planet_jobs_trade_produces_mult",
+          "pop_happiness",
+          "potential"
+        ],
+        [
+          "logistic_growth_mult",
+          "modifier",
+          "mult",
+          "planet_doctors_unity_produces_add",
+          "planet_jobs_produces_mult",
+          "potential"
+        ],
+        [
+          "logistic_growth_mult",
+          "mult",
+          "planet_jobs_produces_mult",
+          "planet_pop_assemblers_unity_produces_add",
+          "potential"
+        ],
+        [
+          "modifier",
+          "mult",
+          "planet_amenities_no_happiness_add",
+          "potential"
+        ],
+        [
+          "modifier",
+          "mult",
+          "potential"
+        ],
+        [
+          "modifier",
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "modifier",
+          "potential"
+        ],
+        [
+          "monthly_loyalty",
+          "planet_building_build_speed_mult",
+          "planet_housing_add",
+          "pop_ethic_egalitarian_attraction_mult",
+          "potential"
+        ],
+        [
+          "monthly_loyalty",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_crime_add",
+          "planet_crime_floor_add",
+          "planet_traders_trade_produces_add",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_crime_add",
+          "planet_politicians_trade_produces_add",
+          "pop_government_ethic_attraction",
+          "potential"
+        ],
+        [
+          "mult",
+          "planet_jobs_produces_mult",
+          "planet_jobs_upkeep_mult",
+          "potential"
+        ],
+        [
+          "mult",
+          "potential",
+          "psionic_pop_bonus_workforce_mult"
+        ],
+        [
+          "mult",
+          "robotic_pop_bonus_workforce_mult"
+        ],
+        [
+          "planet_amenities_add",
+          "planet_amenities_no_happiness_add",
+          "potential"
+        ],
+        [
+          "planet_amenities_no_happiness_add",
+          "potential"
+        ],
+        [
+          "planet_artisans_food_upkeep_add",
+          "planet_artisans_minerals_upkeep_add",
+          "planet_jobs_exotic_gases_produces_mult",
+          "planet_jobs_rare_crystals_produces_mult",
+          "planet_jobs_volatile_motes_produces_mult",
+          "planet_metallurgists_food_upkeep_add",
+          "planet_metallurgists_minerals_upkeep_add",
+          "potential"
+        ],
+        [
+          "planet_artisans_food_upkeep_add",
+          "planet_artisans_minerals_upkeep_add",
+          "planet_metallurgists_food_upkeep_add",
+          "planet_metallurgists_minerals_upkeep_add",
+          "potential"
+        ],
+        [
+          "planet_artisans_trade_produces_add",
+          "planet_crime_floor_add",
+          "planet_metallurgists_trade_produces_add",
+          "potential"
+        ],
+        [
+          "planet_artisans_trade_produces_add",
+          "planet_crime_floor_add",
+          "potential"
+        ],
+        [
+          "planet_bio_trophies_consumer_goods_upkeep_add",
+          "planet_bio_trophies_unity_produces_add",
+          "planet_cruise_passengers_consumer_goods_upkeep_add",
+          "planet_cruise_passengers_unity_produces_add",
+          "pop_cat_bio_trophy_happiness",
+          "pop_cat_cruise_passenger_happiness",
+          "potential"
+        ],
+        [
+          "planet_biologists_consumer_goods_upkeep_add",
+          "planet_biologists_energy_upkeep_add",
+          "planet_biologists_minerals_upkeep_add",
+          "planet_biologists_minor_artifacts_produces_add",
+          "potential"
+        ],
+        [
+          "planet_biologists_trade_produces_add",
+          "planet_crime_floor_add",
+          "planet_engineers_trade_produces_add",
+          "planet_physicists_trade_produces_add",
+          "potential"
+        ],
+        [
+          "planet_building_build_speed_mult",
+          "planet_decision_enact_speed_mult",
+          "potential"
+        ],
+        [
+          "planet_bureaucrats_alloys_upkeep_add",
+          "planet_bureaucrats_consumer_goods_upkeep_add",
+          "planet_bureaucrats_energy_upkeep_add",
+          "planet_bureaucrats_food_upkeep_add",
+          "planet_bureaucrats_minerals_upkeep_add",
+          "planet_bureaucrats_unity_produces_add",
+          "potential"
+        ],
+        [
+          "planet_bureaucrats_trade_produces_add",
+          "planet_crime_floor_add",
+          "potential"
+        ],
+        [
+          "planet_civilians_consumer_goods_upkeep_add",
+          "planet_civilians_unity_produces_add",
+          "planet_crime_no_happiness_add",
+          "planet_maintenance_drones_minerals_upkeep_add",
+          "planet_maintenance_drones_trade_produces_add",
+          "planet_maintenance_drones_unity_produces_add",
+          "pop_government_ethic_attraction",
+          "potential"
+        ],
+        [
+          "planet_civilians_consumer_goods_upkeep_add",
+          "planet_civilians_unity_produces_add",
+          "potential"
+        ],
+        [
+          "planet_crime_floor_add",
+          "planet_entertainers_trade_produces_add",
+          "potential"
+        ],
+        [
+          "planet_crime_floor_add",
+          "planet_farmers_trade_produces_add",
+          "potential"
+        ],
+        [
+          "planet_crime_floor_add",
+          "planet_metallurgists_trade_produces_add",
+          "potential"
+        ],
+        [
+          "planet_crime_floor_add",
+          "planet_miners_trade_produces_add",
+          "potential"
+        ],
+        [
+          "planet_crime_floor_add",
+          "planet_politicians_trade_produces_add",
+          "potential"
+        ],
+        [
+          "planet_crime_floor_add",
+          "planet_traders_trade_produces_add",
+          "potential"
+        ],
+        [
+          "planet_farmers_consumer_goods_produces_add",
+          "planet_farmers_energy_produces_add",
+          "potential"
+        ],
+        [
+          "planet_jobs_energy_produces_mult",
+          "planet_jobs_food_produces_mult",
+          "planet_jobs_minerals_produces_mult",
+          "potential"
+        ],
+        [
+          "planet_physicists_advanced_logic_produces_add",
+          "planet_physicists_physics_research_produces_add",
+          "potential"
+        ],
+        [
+          "planet_physicists_consumer_goods_upkeep_add",
+          "planet_physicists_energy_upkeep_add",
+          "planet_physicists_minerals_upkeep_add",
+          "potential"
+        ],
+        [
+          "planet_physicists_physics_research_produces_add",
+          "planet_physicists_sr_zro_upkeep_add",
+          "potential"
+        ],
+        [
+          "planet_researchers_consumer_goods_upkeep_add",
+          "planet_researchers_energy_upkeep_add",
+          "planet_researchers_minerals_upkeep_add",
+          "potential"
+        ],
+        [
+          "planet_stability_add"
+        ],
+        [
+          "planet_storm_devastation_mult",
+          "potential"
+        ],
+        [
+          "pop_ethic_authoritarian_attraction_mult",
+          "pop_ethic_egalitarian_attraction_mult",
+          "pop_ethic_materialist_attraction_mult",
+          "pop_ethic_spiritualist_attraction_mult",
+          "pop_ethic_xenophile_attraction_mult",
+          "pop_ethic_xenophobe_attraction_mult",
+          "potential"
+        ],
+        [
+          "pop_ethic_materialist_attraction_mult",
+          "potential"
+        ],
+        [
+          "potential",
+          "psionic_pop_bonus_workforce_mult"
+        ]
+      ]
+    },
+    "triggered_planet_pop_group_modifier_for_all": {
+      "definitions": 2,
+      "repeated": 2,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "bonus_pop_growth",
+        "potential"
+      ],
+      "keysByDefinition": [
+        [
+          "bonus_pop_growth",
+          "potential"
+        ]
+      ]
+    },
+    "triggered_planet_pop_group_modifier_for_species": {
+      "definitions": 1,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "bonus_pop_growth",
+        "potential"
+      ],
+      "keysByDefinition": [
+        [
+          "bonus_pop_growth",
+          "potential"
+        ]
+      ]
+    },
+    "upgrades": {
+      "definitions": 189,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 189,
+      "bareBlocks": 162,
+      "values": [
+        "building_automation_2",
+        "building_automation_farmer_2",
+        "building_automation_miner_2",
+        "building_automation_technician_2",
+        "building_bio_reactor_2",
+        "building_biolab_2",
+        "building_biolab_3",
+        "building_capital",
+        "building_center_of_guidance",
+        "building_communal_housing_large",
+        "building_coordinated_fulfillment_center_2",
+        "building_crystal_plant_2",
+        "building_drone_megastorage",
+        "building_energy_nexus",
+        "building_engineering_facility_2",
+        "building_engineering_facility_3",
+        "building_expanded_warren",
+        "building_factory_2",
+        "building_factory_3",
+        "building_farming_districts_2",
+        "building_farming_districts_3",
+        "building_farming_districts_4",
+        "building_food_processing_center",
+        "building_foundry_2",
+        "building_foundry_3",
+        "building_gaiaseeders_2",
+        "building_gaiaseeders_3",
+        "building_gaiaseeders_4",
+        "building_generator_districts_2",
+        "building_generator_districts_3",
+        "building_generator_districts_4",
+        "building_grand_embassy",
+        "building_hab_major_capital",
+        "building_hab_system_capital",
+        "building_hall_judgment",
+        "building_hive_major_capital",
+        "building_hyper_entertainment_forum",
+        "building_imperial_capital",
+        "building_imperial_hive_capital",
+        "building_imperial_machine_capital",
+        "building_machine_assembly_complex",
+        "building_machine_capital",
+        "building_machine_major_capital",
+        "building_machine_system_capital",
+        "building_major_capital",
+        "building_medical_2",
+        "building_medical_3",
+        "building_mineral_purification_hub",
+        "building_mining_districts_2",
+        "building_mining_districts_3",
+        "building_mining_districts_4",
+        "building_necrophage_house_of_apotheosis",
+        "building_paradise_dome",
+        "building_physics_lab_2",
+        "building_physics_lab_3",
+        "building_research_lab_2",
+        "building_research_lab_3",
+        "building_resort_major_capital",
+        "building_robot_assembly_complex",
+        "building_shroud_observatory_2",
+        "building_shroud_observatory_3",
+        "building_slave_major_capital",
+        "building_system_capital",
+        "building_volcanic_forge_2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

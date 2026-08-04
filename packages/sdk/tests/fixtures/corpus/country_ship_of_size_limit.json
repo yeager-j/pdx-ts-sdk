@@ -1,0 +1,142 @@
+{
+  "registry": "country_ship_of_size_limit",
+  "definitions": 7,
+  "files": 1,
+  "fingerprint": "0761b5989c53aa6e467018154b9c3862921eb5d4023379b285787ee736242a7c",
+  "fields": {
+    "base": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 7,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "100",
+        "80",
+        "800",
+        "modifier:nomadic_constructor_limit_add"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "max": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1000",
+        "1600"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "naval_cap_fraction": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.1",
+        "0.25"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_types": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 7,
+      "bareBlocks": 7,
+      "values": [
+        "bio_titan",
+        "colossus",
+        "cosmo_crisis_stinger",
+        "cosmo_crisis_titan",
+        "juggernaut",
+        "nomads_constructor",
+        "nomads_engineer_vessel",
+        "offspring_battleship",
+        "offspring_corvette",
+        "offspring_cruiser",
+        "offspring_destroyer",
+        "offspring_harbinger_stage_1",
+        "offspring_harbinger_stage_2",
+        "offspring_harbinger_stage_3",
+        "offspring_mauler_stage_1",
+        "offspring_mauler_stage_2",
+        "offspring_mauler_stage_3",
+        "offspring_stinger_stage_1",
+        "offspring_stinger_stage_2",
+        "offspring_stinger_stage_3",
+        "offspring_weaver_stage_1",
+        "offspring_weaver_stage_2",
+        "offspring_weaver_stage_3",
+        "paladin_ship",
+        "space_dragon_origin_baby",
+        "titan"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 7,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "has_global_flag",
+        "has_origin",
+        "has_technology",
+        "is_active_resolution",
+        "is_dragon_breeder_country",
+        "is_nomadic",
+        "is_part_of_galactic_council",
+        "is_scope_valid"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "is_scope_valid"
+        ],
+        [
+          "has_global_flag",
+          "is_active_resolution",
+          "is_part_of_galactic_council",
+          "is_scope_valid"
+        ],
+        [
+          "has_origin",
+          "is_scope_valid"
+        ],
+        [
+          "has_technology",
+          "is_scope_valid"
+        ],
+        [
+          "is_dragon_breeder_country",
+          "is_scope_valid"
+        ],
+        [
+          "is_nomadic"
+        ]
+      ]
+    }
+  }
+}
