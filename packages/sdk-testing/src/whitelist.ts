@@ -148,6 +148,31 @@ function variablesOf(state: WorldState, scope: EntityId): Map<string, number> {
   return situationState(state, scope).variables;
 }
 
+/**
+ * Reads a variable that the game requires to already exist, throwing rather
+ * than guessing 0 or false when it does not. `effects.cwt`'s own comment
+ * above `change_variable`/`add_variable`/etc. — "presumably need to check
+ * the variable exists first for these, somehow" — and `set_variable`'s
+ * "Sets or creates" wording (the one variable effect that does NOT require
+ * prior existence) both say the same thing: an unset read is not a
+ * documented zero/false default, it is undefined behavior the vendored
+ * rules flag as needing a guard. `is_variable_set` is that guard; a fixture
+ * that silently answered 0/false here would let a test pass on a branch the
+ * real game never reaches.
+ */
+function requireVariable(state: WorldState, scope: EntityId, which: string, key: string): number {
+  const current = variablesOf(state, scope).get(which);
+  if (current === undefined) {
+    throw new InterpreterError(
+      `${key} "${which}": not previously set. The vendored rules document this as requiring an ` +
+        `existing variable (effects.cwt's "presumably need to check the variable exists first for ` +
+        `these" comment on the variable-arithmetic effects) — guard with is_variable_set first, or ` +
+        `set_variable to establish a starting value. ${coverageSummary()}`
+    );
+  }
+  return current;
+}
+
 /** `which`/`value` field pair shared by `set_variable`/`change_variable`/`multiply_variable`. */
 function whichValueArgs(entry: PdxEntry): { readonly which: string; readonly value: number } {
   const fields = blockEntries(entry);
@@ -233,7 +258,7 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
     },
   },
   check_variable: {
-    note: "Compares a stored variable's value; an unset variable fails every comparison, the same reason `is_variable_set` exists to guard against reading one.",
+    note: "Compares a stored variable's value; reading an unset one throws rather than guessing a result, since `is_variable_set` is the game's own documented guard against exactly that (`is_variable_set`'s generated doc comment: \"Use to avoid unset variables errors\") — a fixture that quietly answered false would let a test take a branch the real game never reaches.",
     eval: (entry, scope, ex) => {
       const fields = blockEntries(entry);
       const whichField = fields.find((field) => field.key === "which");
@@ -244,10 +269,7 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
         );
       }
       const which = stringArg(whichField);
-      const current = variablesOf(ex.state, scope).get(which);
-      if (current === undefined) {
-        return { result: false, detail: `"${which}" is not set` };
-      }
+      const current = requireVariable(ex.state, scope, which, "check_variable");
       const result = compare(current, valueField.op, numberArg(valueField));
       return { result, detail: `${which} = ${current}` };
     },

@@ -188,4 +188,27 @@ describe("situation scope", () => {
       )
     ).toThrow(/evaluates exactly one operation per row/);
   });
+
+  it("throws reading an unset variable with `check_variable` rather than answering false", () => {
+    const situation = fixture(
+      { countries: [{ name: "player" }], situations: [{ name: "crisis", targetCountry: 0 }] },
+      { events: [] }
+    ).situation(0);
+
+    expect(() =>
+      evaluateWeightBlock(
+        {
+          base: 0,
+          modifiers: [
+            {
+              desc: "unset read",
+              add: 1,
+              when: checkVariable({ which: "var_never_set", value: 0 }),
+            },
+          ],
+        },
+        situation
+      )
+    ).toThrow(/check_variable "var_never_set": not previously set/);
+  });
 });
