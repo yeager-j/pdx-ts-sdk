@@ -252,7 +252,12 @@ export {
   type InstallOptions,
   type InstallResult,
 } from "./render.ts";
-export { DEFAULT_CONTENT_PATTERN, discoverContent, type DiscoverOptions } from "./discover.ts";
+export {
+  DEFAULT_CONTENT_PATTERN,
+  discoverContent,
+  discoverFeatures,
+  type DiscoverOptions,
+} from "./discover.ts";
 // One free definer per content registry — `defineTechnology`,
 // `defineAscensionPerk`, ... — plus `patchTechnology`, `addShipOfSizeLimits`,
 // and every registry's `XItem` union.

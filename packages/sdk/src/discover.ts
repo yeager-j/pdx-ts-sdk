@@ -48,6 +48,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { collection, FILE_STEM_PATTERN, type Collection, type ModItem } from "./items.ts";
+import type { CapabilityFeature } from "./mod-capability.ts";
 import { compareLogicalPaths, normalizeLogicalPath } from "./resolver/path-order.ts";
 
 const ITEM_KINDS = new Set<string>(["content", "event", "on-action", "patch", "contribution"]);
@@ -73,6 +74,18 @@ export interface DiscoverOptions {
   readonly include?: RegExp;
 }
 
+interface DiscoveredModule {
+  readonly absolute: string;
+  readonly relative: string;
+}
+
+interface DiscoveredModules {
+  readonly root: string;
+  readonly include: RegExp;
+  readonly candidates: readonly DiscoveredModule[];
+  readonly modules: readonly DiscoveredModule[];
+}
+
 /**
  * `RegExp.test` advances `lastIndex` on a `/g` or `/y` pattern, so the same
  * regex would answer differently for the same path depending on how many files
@@ -96,10 +109,10 @@ function fileStemOf(absolute: string): string {
   return dot === -1 ? basename : basename.slice(0, dot);
 }
 
-export async function discoverContent(
+async function discoverModules(
   dir: string | URL,
-  options: DiscoverOptions = {}
-): Promise<Collection[]> {
+  options: DiscoverOptions
+): Promise<DiscoveredModules> {
   const include = stateless(options.include ?? DEFAULT_CONTENT_PATTERN);
   const root = dir instanceof URL ? fileURLToPath(dir) : dir;
   const entries = await readdir(root, { recursive: true, withFileTypes: true });
@@ -107,16 +120,20 @@ export async function discoverContent(
     .filter((entry) => entry.isFile())
     .map((entry) => {
       const absolute = path.join(entry.parentPath, entry.name);
-      // `normalizeLogicalPath` speaks the game's `/`-separated dialect, so the
-      // platform separator is translated before it is ever shown one.
       const relative = path.relative(root, absolute).split(path.sep).join("/");
       return { absolute, relative: normalizeLogicalPath(relative) };
     });
-  // Filtering happens before the import, so a module the pattern excludes never
-  // runs — which is the whole point for a colocated test file.
   const modules = candidates
     .filter((module) => include.test(module.relative))
     .sort((a, b) => compareLogicalPaths(a.relative, b.relative));
+  return { root, include, candidates, modules };
+}
+
+export async function discoverContent(
+  dir: string | URL,
+  options: DiscoverOptions = {}
+): Promise<Collection[]> {
+  const { root, include, candidates, modules } = await discoverModules(dir, options);
 
   if (modules.length === 0) {
     throw new Error(emptyWalkMessage(root, include, candidates));
@@ -135,6 +152,41 @@ export async function discoverContent(
     collections.push(collectModule(module.relative, module.stem, exports));
   }
   return collections;
+}
+
+/**
+ * Discovers capability-owned features from `dir`.
+ *
+ * Each selected module must export its already-placed feature as the named
+ * `feature` export. Its siblings, including a default export, are ordinary
+ * module API and are ignored. A feature authors its own file stem through
+ * `mod.feature(...)`, so moving or renaming its source module does not change
+ * output identity. `include` has the same relative-path, pre-import semantics
+ * as {@link discoverContent}; the default skips colocated companion files.
+ * Compile the returned features with the capability that created them, which
+ * enforces their ownership.
+ */
+export async function discoverFeatures<P extends string>(
+  dir: string | URL,
+  options: DiscoverOptions = {}
+): Promise<CapabilityFeature<P>[]> {
+  const { root, include, candidates, modules } = await discoverModules(dir, options);
+  if (modules.length === 0) {
+    throw new Error(emptyFeatureWalkMessage(root, include, candidates));
+  }
+
+  const features: CapabilityFeature<P>[] = [];
+  for (const module of modules) {
+    const exports = (await import(pathToFileURL(module.absolute).href)) as Record<string, unknown>;
+    if (!isCollection(exports.feature)) {
+      throw new Error(`${module.relative} must export one capability feature as "feature"`);
+    }
+    if (exports.feature.file === undefined) {
+      throw new Error(`${module.relative} exports "feature" without an authored file stem`);
+    }
+    features.push(exports.feature as CapabilityFeature<P>);
+  }
+  return features;
 }
 
 /**
@@ -191,6 +243,26 @@ function emptyWalkMessage(
   );
 }
 
+function emptyFeatureWalkMessage(
+  root: string,
+  include: RegExp,
+  candidates: readonly { readonly relative: string }[]
+): string {
+  const excluded = candidates
+    .filter((entry) => entry.relative.endsWith(".ts"))
+    .map((entry) => entry.relative)
+    .sort();
+  if (excluded.length === 0) {
+    return `No explicit feature modules under ${root}: it holds no TypeScript at all.`;
+  }
+  return (
+    `No explicit feature modules under ${root}: ${include} matched none of the ${excluded.length} ` +
+    `TypeScript files there. Excluded:\n` +
+    excluded.map((relPath) => `  - ${relPath}`).join("\n") +
+    `\nThe default (${DEFAULT_CONTENT_PATTERN}) takes .ts and leaves out colocated tests.`
+  );
+}
+
 /**
  * One module's exports as a collection. Arrays flatten (a loop that builds
  * fifty variants exports one array), and the same item exported twice — as
@@ -223,6 +295,15 @@ function collectModule(
         `stem: ${error instanceof Error ? error.message : String(error)}`
     );
   }
+}
+
+function isCollection(value: unknown): value is Collection {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "itemKind" in value &&
+    value.itemKind === "collection"
+  );
 }
 
 function collect(relPath: string, name: string, value: unknown, items: Set<ModItem>): void {
