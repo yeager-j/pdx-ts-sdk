@@ -74,18 +74,34 @@ export async function write(
 ): Promise<void> {
   const root = path.resolve(outDir instanceof URL ? fileURLToPath(outDir) : outDir);
   for (const [relPath, content] of files) {
-    // Every key must land *under* the root. `render` only ever produces
-    // relative paths, but `write` is exported and takes any map, and
+    // Every key must land *strictly under* the root. `render` only ever
+    // produces relative paths, but `write` is exported and takes any map, and
     // `path.join` would happily resolve `../..` or an absolute key to
     // somewhere the caller never named — writing a file outside the directory
-    // they asked to fill. Resolve first, then prove containment.
+    // they asked to fill.
+    //
+    // Compared by `path.relative` rather than a string prefix: a prefix test
+    // has to append a separator to stop `/out` matching `/output`, and that
+    // appended separator is wrong precisely when the root already ends in one
+    // — `write("/", ...)` compares against `"//"` and rejects every legitimate
+    // child. `path.relative` is separator-correct at a filesystem root, and on
+    // Windows returns an absolute path for a different drive, which is exactly
+    // the "not contained" answer.
     const target = path.resolve(root, relPath);
-    if (target !== root && !target.startsWith(root + path.sep)) {
+    const relative = path.relative(root, target);
+    // An empty result means the target *is* the root: a directory, not a file
+    // in it, so it is refused with the escapes rather than allowed.
+    if (
+      relative === "" ||
+      relative === ".." ||
+      relative.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relative)
+    ) {
       throw new Error(
-        `Refusing to write "${relPath}": it resolves to ${target}, outside the output ` +
-          `directory ${root}. A path that escapes the output directory would overwrite a file ` +
-          `the caller never named. Pass paths relative to the output directory, without ".." ` +
-          `segments and without a leading "/".`
+        `Refusing to write "${relPath}": it resolves to ${target}, which is not a file inside ` +
+          `the output directory ${root}. A path that escapes the output directory would ` +
+          `overwrite a file the caller never named. Pass paths relative to the output ` +
+          `directory, without ".." segments and without a leading "/".`
       );
     }
     await mkdir(path.dirname(target), { recursive: true });
@@ -94,15 +110,29 @@ export async function write(
 }
 
 /**
+ * Characters a folder name may not carry, because the name reaches the
+ * launcher descriptor: `install` writes `path="<modDir>/<dirName>"`, the same
+ * unescaped `key="value"` format `buildMod` validates its config fields
+ * against. A `"` closes the value and a line break ends the line, so a folder
+ * name is a second door into the descriptor-forgery the config gate already
+ * closed. Every C0 control is refused with them — none belongs in a folder
+ * name, and each does something different and equally unwanted to a
+ * line-oriented format.
+ */
+const DIR_NAME_FORBIDDEN = /["\u0000-\u001f]/;
+
+/**
  * A content folder name, checked before it is joined to the launcher's mod
  * directory.
  *
- * `install` replaces the directory it computes, so this name decides what gets
- * deleted. `""` resolves to the mod directory itself, `".."` to its parent,
- * and `"a/b"` to somewhere sideways — each of which would take a recursive
- * delete of a directory full of the user's other mods. A single path segment
- * is the only thing that can name a mod folder, so anything else is refused
- * rather than normalized into something plausible.
+ * Two separate hazards, one gate. `install` replaces the directory it
+ * computes, so this name decides what gets *deleted*: `""` resolves to the mod
+ * directory itself, `".."` to its parent, and `"a/b"` to somewhere sideways —
+ * each a recursive delete of a directory full of the user's other mods. And
+ * the name is then written into the launcher descriptor verbatim, so it
+ * decides what that file *says*. A single, plain path segment is the only
+ * thing that is safe on both counts, so anything else is refused rather than
+ * normalized into something plausible.
  */
 function assertInstallDirName(dirName: string, fromPrefix: boolean): void {
   const source = fromPrefix
@@ -114,7 +144,6 @@ function assertInstallDirName(dirName: string, fromPrefix: boolean): void {
     dirName === ".." ||
     dirName.includes("/") ||
     dirName.includes("\\") ||
-    dirName.includes("\0") ||
     path.isAbsolute(dirName) ||
     path.basename(dirName) !== dirName
   ) {
@@ -123,6 +152,20 @@ function assertInstallDirName(dirName: string, fromPrefix: boolean): void {
         `contain "/" or "\\", or be absolute. It is joined to the launcher's mod directory and ` +
         `the result is replaced wholesale, so a name that escapes that directory would delete ` +
         `content the mod does not own. Pass a plain folder name.`
+    );
+  }
+  if (DIR_NAME_FORBIDDEN.test(dirName)) {
+    const character = /["]/.test(dirName)
+      ? "a double quote"
+      : /[\r\n]/.test(dirName)
+        ? "a line break"
+        : "a control character";
+    throw new Error(
+      `${source}, and it cannot contain ${character}: install writes it into the launcher ` +
+        `descriptor as \`path="<mod directory>/${dirName.replace(/["\u0000-\u001f]/g, "?")}"\`, ` +
+        `a format with no escaping, so the value would end early and the rest would be read as ` +
+        `further descriptor fields — the launcher answers a malformed descriptor by refusing ` +
+        `the mod without saying why. Pass a plain folder name.`
     );
   }
 }
@@ -183,8 +226,16 @@ export async function install(mod: PureMod, options: InstallOptions = {}): Promi
   // filesystem, which is what makes the rename below atomic rather than a
   // copy. The leading dot keeps a crash-orphaned staging directory out of the
   // launcher's way: it has no `.mod` descriptor beside it, so nothing loads it.
-  const staging = path.join(root, `.${dirName}.staging-${randomUUID().slice(0, 8)}`);
-  const previous = path.join(root, `.${dirName}.previous-${randomUUID().slice(0, 8)}`);
+  //
+  // Fixed-size names that do not embed `dirName`: a filesystem bounds each
+  // *component* (255 bytes on APFS and ext4), and a name built by decorating
+  // `dirName` overflows that bound while `dirName` itself is still perfectly
+  // legal — so a long folder name would fail with ENAMETOOLONG before the
+  // install had done anything. The uuid is what keeps two installs running in
+  // one mod directory from staging over each other; `dirName` never had to be
+  // in the name for that.
+  const staging = path.join(root, `.pdx-staging-${randomUUID()}`);
+  const previous = path.join(root, `.pdx-previous-${randomUUID()}`);
   try {
     await write(staging, files);
   } catch (error) {

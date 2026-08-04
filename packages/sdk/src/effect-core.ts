@@ -1253,6 +1253,14 @@ export function recordEffects<S extends ScopeName>(
  * is caught too; anything else a closure happens to return is ignored, since
  * returning a value from a void-typed closure is harmless and common
  * (`(s) => s.log("x")` returns whatever `log` returns).
+ *
+ * The abandoned promise is *observed* before the throw, because refusing it is
+ * not the same as containing it. Its continuation still runs, still reaches
+ * for a recorder that is now dead, and still rejects — with nothing attached,
+ * that is an `unhandledRejection`, which by default terminates the process.
+ * A caller who catches the build error this throws would have had their
+ * process killed anyway, moments later, by the very failure they caught. The
+ * no-op handler makes this diagnostic the whole of the failure.
  */
 export function assertSynchronousClosure(result: unknown, subject: string): void {
   if (
@@ -1262,6 +1270,10 @@ export function assertSynchronousClosure(result: unknown, subject: string): void
   ) {
     return;
   }
+  // `Promise.resolve` adopts the thenable rather than calling `then` here, so
+  // a thenable that misbehaves — throwing from `then`, resolving twice —
+  // rejects this wrapper instead of escaping, and the wrapper is handled.
+  void Promise.resolve(result as PromiseLike<unknown>).catch(() => {});
   throw new Error(
     `${subject} returned a promise, which means it was declared \`async\` or returned a ` +
       "thenable. Authoring is recorded synchronously: the recording ended the moment the " +

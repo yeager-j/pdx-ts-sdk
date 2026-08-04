@@ -268,6 +268,37 @@ every_owned_planet = {
     expect(continued).toBe(true);
   });
 
+  it("lets no unhandled rejection escape the closure it refused", async () => {
+    // Refusing the promise is not the same as containing it: the continuation
+    // still runs, still reaches for a recorder that is now dead, and still
+    // rejects. With nothing attached that is an `unhandledRejection`, which by
+    // default takes the process down — so a caller who caught the build error
+    // this throws would have been killed moments later by the very failure
+    // they caught.
+    const escaped: unknown[] = [];
+    const onUnhandled = (reason: unknown): void => {
+      escaped.push(reason);
+    };
+    process.on("unhandledRejection", onUnhandled);
+    try {
+      expect(() =>
+        recordEffects<"country">([], async (country) => {
+          country.log("before the await");
+          await Promise.resolve();
+          // Rejects: the recording this scope object belongs to is closed.
+          country.log("after the await");
+        })
+      ).toThrow(/returned a promise/);
+      // Two macrotask turns: long enough for the continuation to run, reject,
+      // and for Node to have decided the rejection was unhandled.
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
+    expect(escaped).toEqual([]);
+  });
+
   it("still catches async work a synchronous closure spawns, at the scope object", async () => {
     // The other half: a closure that stays synchronous but starts async work
     // returns undefined, so the promise check cannot see it. Liveness is what

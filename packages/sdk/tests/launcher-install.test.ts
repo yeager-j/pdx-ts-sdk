@@ -205,24 +205,39 @@ describe("install", () => {
 });
 
 describe("install refuses a folder name that is not a folder name", () => {
-  // `install` replaces the directory it computes, so the name decides what is
-  // deleted: "" is the launcher's whole mod directory, ".." its parent, and
-  // "a/b" somewhere sideways — each a recursive delete of other people's mods.
+  // Two hazards behind one gate. A name that escapes the directory decides
+  // what gets *deleted*: "" is the launcher's whole mod directory, ".." its
+  // parent, "a/b" somewhere sideways. A name carrying a quote or a line break
+  // decides what the launcher descriptor *says*, since `install` writes it
+  // into `path="..."` — the same unescaped format the config gate gaurds, one
+  // door over.
   it.each([
-    ["empty", ""],
-    ["this directory", "."],
-    ["the parent directory", ".."],
-    ["a nested path", "custom/nested"],
-    ["a backslash path", "custom\\nested"],
-    ["an absolute path", "/tmp/pdx-escape-probe"],
-    ["a NUL byte", "custom\0name"],
-  ])("rejects %s", async (_label, dirName) => {
+    ["empty", "", /not a single folder name/],
+    ["this directory", ".", /not a single folder name/],
+    ["the parent directory", "..", /not a single folder name/],
+    ["a nested path", "custom/nested", /not a single folder name/],
+    ["a backslash path", "custom\\nested", /not a single folder name/],
+    ["an absolute path", "/tmp/pdx-escape-probe", /not a single folder name/],
+    ["a NUL byte", "custom\0name", /cannot contain a control character/],
+    ["a double quote", 'quoted"name', /cannot contain a double quote/],
+    ["a forged descriptor field", 'safe"\narchive="x', /cannot contain a double quote/],
+    ["a line break", "line\nbreak", /cannot contain a line break/],
+    ["a carriage return", "carriage\rreturn", /cannot contain a line break/],
+  ])("rejects %s", async (_label, dirName, expected) => {
     const root = tempDir();
-    await expect(install(mod, { modDir: root, dirName })).rejects.toThrow(
-      /not a single folder name/
-    );
+    await expect(install(mod, { modDir: root, dirName })).rejects.toThrow(expected);
     // Nothing was created, and nothing was deleted, before the refusal.
     expect(readdirSync(root)).toEqual([]);
+  });
+
+  it("keeps the refusal message itself free of the characters it is reporting", () => {
+    // The message quotes the name back; printing a raw line break inside it
+    // would let the reported name forge lines in a build log the same way it
+    // would in the descriptor.
+    expect.assertions(1);
+    return install(mod, { modDir: tempDir(), dirName: 'a"\nb' }).catch((error: Error) => {
+      expect(error.message).not.toMatch(/[\r\n]\s*archive|path="[^"]*"[^"]*"/);
+    });
   });
 
   it("checks the prefix default through the same gate, naming it as the default", async () => {
@@ -289,6 +304,24 @@ describe("install is atomic in the ways that matter", () => {
     expect(readdirSync(root).sort()).toEqual(["lp_probe", "lp_probe.mod"]);
   });
 
+  it("installs under a long but legal folder name", async () => {
+    // The staging and set-aside directories used to be named by decorating
+    // `dirName`, which overflows the filesystem's 255-byte component limit
+    // while `dirName` itself is still perfectly legal — so a long folder name
+    // failed with ENAMETOOLONG before the install had done anything. 240
+    // characters leaves room for the ".mod" descriptor beside it.
+    const root = tempDir();
+    const dirName = "l".repeat(240);
+    const result = await install(mod, { modDir: root, dirName });
+    expect(result.contentDir).toBe(join(root, dirName));
+    expect(readFileSync(join(result.contentDir, "descriptor.mod"), "utf8")).toContain(
+      'name="Launcher Probe"'
+    );
+    // Re-installing exercises the set-aside rename as well as the staging one.
+    await install(mod, { modDir: root, dirName });
+    expect(readdirSync(root).sort()).toEqual([dirName, `${dirName}.mod`]);
+  });
+
   it("replaces an existing install with exactly the new render", async () => {
     const root = tempDir();
     const { contentDir } = await install(mod, { modDir: root });
@@ -315,10 +348,12 @@ describe("write stays inside the directory it was given", () => {
     ["a traversing relPath", "../escaped.txt"],
     ["a deep traversal", "a/../../escaped.txt"],
     ["an absolute relPath", "/tmp/pdx-write-escape-probe.txt"],
+    ["the output directory itself", "."],
+    ["the output directory, spelled empty", ""],
   ])("rejects %s", async (_label, relPath) => {
     const root = tempDir();
     await expect(write(root, new Map([[relPath, "escaped"]]))).rejects.toThrow(
-      /outside the output directory/
+      /not a file inside the output directory/
     );
     expect(readdirSync(root)).toEqual([]);
   });
@@ -327,5 +362,27 @@ describe("write stays inside the directory it was given", () => {
     const root = tempDir();
     await write(root, new Map([["common/technology/x.txt", "ok"]]));
     expect(readFileSync(join(root, "common/technology/x.txt"), "utf8")).toBe("ok");
+  });
+
+  it("does not mistake a child of a filesystem root for an escape", async () => {
+    // `/` already ends in a separator, so a `root + sep` prefix test compares
+    // against `"//"` and rejects every legitimate child of it. The real
+    // function is driven here rather than a copy of its rule: the write is
+    // aimed at a path the OS refuses for its own reasons (procfs does not take
+    // new directories, and neither does `/` without privileges), so it gets
+    // past containment and fails at the filesystem, leaving nothing behind.
+    await expect(
+      write("/", new Map([["proc/pdx-containment-probe/x.txt", "unwritable"]]))
+    ).rejects.not.toThrow(/not a file inside the output directory/);
+    expect(existsSync("/proc/pdx-containment-probe")).toBe(false);
+  });
+
+  it("still refuses an escape from a filesystem root", async () => {
+    // The other half: `/` has no parent, so `..` normalizes back to `/` and is
+    // the root itself rather than an escape — while an absolute key pointing
+    // somewhere else entirely is still refused.
+    await expect(write("/", new Map([["..", "x"]]))).rejects.toThrow(
+      /not a file inside the output directory/
+    );
   });
 });
