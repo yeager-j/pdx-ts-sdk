@@ -1,42 +1,13 @@
 import { describe, expectTypeOf, it } from "vitest";
 
+import { defineBuilding } from "../src/generated/content-definers.ts";
 import {
-  addShipOfSizeLimits,
   always,
   canGoMia,
   canJoinFactions,
-  collection,
+  createMod,
   currentSituationApproach,
   currentStage,
-  defineAgenda,
-  defineAmbientObject,
-  defineArchaeologicalSiteType,
-  defineAscensionPerk,
-  defineBombardmentStance,
-  defineBuilding,
-  defineCasusBelli,
-  defineCivicOrOrigin,
-  defineCouncilor,
-  defineCountryShipOfSizeLimit,
-  defineDecision,
-  defineEconomicCategory,
-  defineEdict,
-  defineGlobalShipDesign,
-  defineJob,
-  defineOpinionModifier,
-  defineScriptedModifier,
-  defineSectionTemplate,
-  defineShipSize,
-  defineSituationType,
-  defineSolarSystemInitializer,
-  defineSpeciesClass,
-  defineStarbaseLevel,
-  defineStaticModifier,
-  defineStrikeCraftComponentTemplate,
-  defineTradition,
-  defineUtilityComponentTemplate,
-  defineWarGoal,
-  defineWeaponComponentTemplate,
   hasAuthority,
   hasCountryFlag,
   hasPlanetFlag,
@@ -45,7 +16,6 @@ import {
   isCapital,
   isSiteLocked,
   makeScope,
-  namespace,
   or,
   vanilla,
   type AgendaRef,
@@ -83,10 +53,40 @@ import {
   type WeaponComponentTemplateFields,
 } from "../src/index.ts";
 
+const CONTENT_TYPES_CONFIG = {
+  name: "Content types",
+  prefix: "content_types",
+  supportedVersion: "4.4.*",
+} as const;
+const defaultContentMod = createMod(CONTENT_TYPES_CONFIG);
+const contentMod = createMod(CONTENT_TYPES_CONFIG, {
+  ids: {
+    ...defaultContentMod.ids,
+    situationType: "situation",
+    civicOrOrigin: "civic",
+    solarSystemInitializer: "system",
+    starbaseLevel: "starbase",
+    utilityComponentTemplate: "util",
+    weaponComponentTemplate: "weapon",
+    strikeCraftComponentTemplate: "strike_craft",
+    globalShipDesign: "ship_design",
+  },
+});
+const legacyCountryLimitMod = createMod(CONTENT_TYPES_CONFIG, {
+  ids: { ...defaultContentMod.ids, countryShipOfSizeLimit: "ship_of_size_limit" },
+});
+const originMod = createMod(CONTENT_TYPES_CONFIG, {
+  ids: { ...defaultContentMod.ids, civicOrOrigin: "origin" },
+});
+const SDK45_CONFIG = { name: "SDK-45 types", prefix: "sdk45", supportedVersion: "4.4.*" } as const;
+const defaultSdk45Mod = createMod(SDK45_CONFIG);
+const sdk45Mod = createMod(SDK45_CONFIG, {
+  ids: { ...defaultSdk45Mod.ids, weaponComponentTemplate: "weapon" },
+});
+
 describe("generated content authoring types", () => {
   it("does not invent a category field on traditions", () => {
-    defineTradition({
-      id: "content_types_tradition_without_category",
+    contentMod.tradition("without_category", {
       name: "No synthetic membership",
       // @ts-expect-error — membership belongs to TraditionCategoryDef.traditions
       category: "content_types_tradition_category_x",
@@ -94,22 +94,19 @@ describe("generated content authoring types", () => {
   });
 
   it("carries inherited and explicit trigger scopes", () => {
-    defineBuilding({
-      id: "content_types_building_x",
+    contentMod.building("x", {
       name: "X",
       allow: isCapital(),
       // @ts-expect-error — a country-only condition is not valid in colony scope
       potential: hasCountryFlag("country_only"),
     });
-    defineTradition({
-      id: "content_types_tradition_scoped",
+    contentMod.tradition("scoped", {
       name: "X",
       possible: hasAuthority("auth_democratic"),
       // @ts-expect-error — tradition weights and conditions run in country scope
       aiWeight: { modifiers: [{ factor: 2, when: hasPlanetFlag("planet_only") }] },
     });
-    defineAgenda({
-      id: "content_types_agenda_scoped",
+    contentMod.agenda("scoped", {
       name: "X",
       agendaCost: 100,
       effect: (country) => {
@@ -118,8 +115,7 @@ describe("generated content authoring types", () => {
         country.setPlanetFlag("planet_only");
       },
     });
-    defineAscensionPerk({
-      id: "content_types_ascension_perk_scoped",
+    contentMod.ascensionPerk("scoped", {
       name: "X",
       potential: hasAuthority("auth_democratic"),
       // @ts-expect-error — ascension perk conditions run in country scope
@@ -146,8 +142,7 @@ describe("generated content authoring types", () => {
         },
       },
     });
-    defineEdict({
-      id: "content_types_edict_scoped",
+    contentMod.edict("scoped", {
       name: "X",
       length: 360,
       icon: "GFX_edict_x",
@@ -176,8 +171,7 @@ describe("generated content authoring types", () => {
         country.setPlanetFlag("planet_only");
       },
     });
-    defineDecision({
-      id: "content_types_decision_scoped",
+    contentMod.decision("scoped", {
       name: "X",
       effect: () => {},
       showTechUnlockIf: hasAuthority("auth_democratic"),
@@ -185,21 +179,18 @@ describe("generated content authoring types", () => {
     // A decision's own clauses take the scope the *definition* declares, since
     // CWT scopes the body `this = any` and means it. Unstated, that is `planet`
     // — the scope every one of the 111 shipped decisions is written against.
-    defineDecision({
-      id: "content_types_decision_default_scope",
+    contentMod.decision("default_scope", {
       name: "X",
       potential: isCapital(),
       effect: (planet) => planet.setPlanetFlag("content_types_planet_only"),
     });
-    defineDecision({
-      id: "content_types_decision_ship_scope",
+    contentMod.decision("ship_scope", {
       name: "X",
       scope: "ship",
       potential: hasShipFlag("content_types_ship_only"),
       effect: (ship) => ship.setShipFlag("content_types_ship_only"),
     });
-    defineDecision({
-      id: "content_types_decision_wrong_scope",
+    contentMod.decision("wrong_scope", {
       name: "X",
       scope: "ship",
       // @ts-expect-error — this decision declared ship scope, so a planet
@@ -207,16 +198,14 @@ describe("generated content authoring types", () => {
       potential: hasPlanetFlag("content_types_planet_only"),
       effect: () => {},
     });
-    defineDecision({
-      id: "content_types_decision_unknown_scope",
+    contentMod.decision("unknown_scope", {
       name: "X",
       // @ts-expect-error — the parameter is the registry's declared set, not
       // every scope the game has
       scope: "country",
       effect: () => {},
     });
-    defineJob({
-      id: "content_types_job_scoped",
+    contentMod.job("scoped", {
       name: "X",
       possible: canJoinFactions(),
       countryModifier: (m) => {
@@ -234,8 +223,7 @@ describe("generated content authoring types", () => {
         },
       ],
     });
-    defineOpinionModifier({
-      id: "content_types_opinion_modifier_scoped",
+    contentMod.opinionModifier("scoped", {
       name: "X",
       opinion: {
         base: 10,
@@ -245,30 +233,26 @@ describe("generated content authoring types", () => {
       // @ts-expect-error — the opinion modifier's own trigger runs in country scope
       trigger: hasPlanetFlag("planet_only"),
     });
-    defineCasusBelli({
-      id: "content_types_casus_belli_scoped",
+    contentMod.casusBelli("scoped", {
       name: "X",
       showNotification: true,
       // @ts-expect-error — casus belli triggers run in country scope
       potential: hasPlanetFlag("planet_only"),
     });
-    defineWarGoal({
-      id: "content_types_war_goal_scoped",
+    contentMod.warGoal("scoped", {
       name: "X",
       casusBelli: "some_casus_belli",
       // @ts-expect-error — war goal ai_weight gates run in country scope
       aiWeight: { modifiers: [{ factor: 2, when: hasPlanetFlag("planet_only") }] },
     });
-    defineBombardmentStance({
-      id: "content_types_bombardment_stance_scoped",
+    contentMod.bombardmentStance("scoped", {
       name: "X",
       // @ts-expect-error — bombardment stance triggers run in fleet scope
       trigger: hasCountryFlag("country_only"),
       default: false,
       aiWeight: { base: 1 },
     });
-    defineArchaeologicalSiteType({
-      id: "content_types_archaeological_site_type_scoped",
+    contentMod.archaeologicalSiteType("scoped", {
       name: "X",
       stages: 1,
       allow: canGoMia(),
@@ -286,8 +270,7 @@ describe("generated content authoring types", () => {
     // `on_roll_failed` runs with this=fleet and from=archaeological site, and
     // the common vanilla shape for it is a `from = { ... }` block. Without a
     // typed ctx the author has no way to name FROM at all.
-    defineArchaeologicalSiteType({
-      id: "content_types_archaeological_site_type_from",
+    contentMod.archaeologicalSiteType("from", {
       name: "X",
       stages: 1,
       allow: canGoMia(),
@@ -312,8 +295,7 @@ describe("generated content authoring types", () => {
     // A trigger is a value, so a FROM-bearing trigger field takes either the
     // value or a closure that produces it — the closure being the only place
     // an argument list exists to hand FROM to.
-    defineArchaeologicalSiteType({
-      id: "content_types_archaeological_site_type_trigger_from",
+    contentMod.archaeologicalSiteType("trigger_from", {
       name: "X",
       stages: 1,
       allow: (ctx) => ctx.from.trigger(isSiteLocked()),
@@ -322,8 +304,7 @@ describe("generated content authoring types", () => {
       visible: hasAuthority("auth_democratic"),
       onRollFailed: () => {},
     });
-    defineArchaeologicalSiteType({
-      id: "content_types_archaeological_site_type_trigger_scope",
+    contentMod.archaeologicalSiteType("trigger_scope", {
       name: "X",
       stages: 1,
       // @ts-expect-error — FROM is the archaeological site here, not a country
@@ -331,8 +312,7 @@ describe("generated content authoring types", () => {
       visible: hasAuthority("auth_democratic"),
       onRollFailed: () => {},
     });
-    defineArchaeologicalSiteType({
-      id: "content_types_archaeological_site_type_trigger_plain_scope",
+    contentMod.archaeologicalSiteType("trigger_plain_scope", {
       name: "X",
       stages: 1,
       // @ts-expect-error — and the closure form does not weaken the plain one:
@@ -341,8 +321,7 @@ describe("generated content authoring types", () => {
       visible: hasAuthority("auth_democratic"),
       onRollFailed: () => {},
     });
-    defineWarGoal({
-      id: "content_types_war_goal_weight_from",
+    contentMod.warGoal("weight_from", {
       name: "X",
       casusBelli: "cb_humiliation",
       // A weight block's rows are conditions too, so the same form covers them.
@@ -357,8 +336,7 @@ describe("generated content authoring types", () => {
     // A war goal's FROM is the targeted country, so the ref lands in country
     // scope — the type follows each registry's own rules rather than a shared
     // guess about what FROM tends to be.
-    defineWarGoal({
-      id: "content_types_war_goal_from",
+    contentMod.warGoal("from", {
       name: "X",
       casusBelli: "cb_humiliation",
       onAccept: (country, ctx) => {
@@ -372,13 +350,11 @@ describe("generated content authoring types", () => {
   });
 
   it("keeps subtype fields optional rather than introducing a union", () => {
-    defineBuilding({
-      id: "content_types_building_capital_tier",
+    contentMod.building("capital_tier", {
       name: "X",
       capitalTier: 2,
     });
-    defineEdict({
-      id: "content_types_edict_wartime",
+    contentMod.edict("wartime", {
       name: "X",
       length: 360,
       icon: "GFX_edict_x",
@@ -391,19 +367,16 @@ describe("generated content authoring types", () => {
     // `onEnabled` used to be rejected because no one had added it to a curated
     // list. It lowers cleanly and is now part of the surface. What stays out is
     // what the emitter genuinely cannot lower.
-    defineTradition({
-      id: "content_types_tradition_effect",
+    contentMod.tradition("effect", {
       name: "X",
       onEnabled: () => {},
     });
-    defineJob({
-      id: "content_types_job_unlowerable",
+    contentMod.job("unlowerable", {
       name: "X",
       // @ts-expect-error — swappable_data's own `default` sub-struct is required
       swappableData: {},
     });
-    defineJob({
-      id: "content_types_job_swappable_data",
+    contentMod.job("swappable_data", {
       name: "X",
       // The struct field shape now expresses swappable_data's two-level nesting:
       // a required `default` struct plus a repeated `swap_type` struct list.
@@ -412,8 +385,7 @@ describe("generated content authoring types", () => {
         swapType: [{ trigger: isCapital(), weight: 1 }],
       },
     });
-    defineAgenda({
-      id: "content_types_agenda_localisation_alias",
+    contentMod.agenda("localisation_alias", {
       name: "X",
       agendaCost: 100,
       // @ts-expect-error — duplicate CWT localization aliases collapse to the canonical name slot
@@ -424,19 +396,16 @@ describe("generated content authoring types", () => {
   it("types an all-scalar alias splice as named booleans", () => {
     // possible_pre_triggers admits exactly the seven pop_pre_trigger members,
     // each a bool — not a Trigger, and not an open record.
-    defineJob({
-      id: "content_types_job_pre_triggers",
+    contentMod.job("pre_triggers", {
       name: "X",
       possiblePreTriggers: { hasOwner: true, isSapient: false, isRobotic: true },
     });
-    defineJob({
-      id: "content_types_job_pre_triggers_bad_value",
+    contentMod.job("pre_triggers_bad_value", {
       name: "X",
       // @ts-expect-error — every pop_pre_trigger member is a bool
       possiblePreTriggers: { hasOwner: "yes" },
     });
-    defineJob({
-      id: "content_types_job_pre_triggers_unknown",
+    contentMod.job("pre_triggers_unknown", {
       name: "X",
       // @ts-expect-error — the category is closed; `is_ai` belongs to colony_pre_trigger
       possiblePreTriggers: { isAi: true },
@@ -444,14 +413,12 @@ describe("generated content authoring types", () => {
   });
 
   it("restricts scripted modifier category to the generated enum", () => {
-    defineScriptedModifier({
-      id: "content_types_scripted_modifier_category",
+    contentMod.scriptedModifier("category", {
       category: "planet",
       // @ts-expect-error — category is drawn from enum[scripted_modifier_category], not a free string
       icon: 5,
     });
-    defineScriptedModifier({
-      id: "content_types_scripted_modifier_bad",
+    contentMod.scriptedModifier("bad", {
       // @ts-expect-error — an unknown category value is not a member of ScriptedModifierCategory
       category: "nonsense",
     });
@@ -463,8 +430,7 @@ describe("generated content authoring types", () => {
     // distributed reading would be a union of every per-scope recorder with no
     // member in common — not even `raw`, whose name parameter would intersect
     // to `never`.
-    defineStaticModifier({
-      id: "content_types_static_modifier_any_scope",
+    contentMod.staticModifier("any_scope", {
       name: "X",
       modifiers: (m) => {
         m.country.unity.produces.mult(0.1);
@@ -473,22 +439,19 @@ describe("generated content authoring types", () => {
         m.unchecked("othermod_invented_mult", 0.1);
       },
     });
-    defineStaticModifier({
-      id: "content_types_static_modifier_bad_path",
+    contentMod.staticModifier("bad_path", {
       name: "X",
       // @ts-expect-error — a typo in any path segment is still a compile error
       modifiers: (m) => m.country.unity.produses.mult(0.1),
     });
-    defineStaticModifier({
-      id: "content_types_static_modifier_bad_raw",
+    contentMod.staticModifier("bad_raw", {
       name: "X",
       // @ts-expect-error — raw() is checked against every known modifier name
       modifiers: (m) => m.raw("not_a_real_modifier_name", 0.1),
     });
     // A scoped modifier field keeps its own narrower recorder: widening the
     // unconstrained case must not widen the constrained ones with it.
-    defineTradition({
-      id: "content_types_tradition_scoped_modifier",
+    contentMod.tradition("scoped_modifier", {
       name: "X",
       // @ts-expect-error — cohesion applies in federation scope, not country
       modifier: (m) => m.cohesion.ethics.penalty.mult(0.1),
@@ -500,38 +463,32 @@ describe("generated content authoring types", () => {
     // and a third does not. Type-level evidence matters more here than for most
     // shapes: the writer dispatches on the value's runtime form, so a value the
     // types let through but no arm accepts would throw at render time.
-    defineShipSize({
-      id: "content_types_ship_size_dual_list",
+    contentMod.shipSize("dual_list", {
       name: "X",
       class: "shipclass_military",
       constructionType: ["starbase_shipyard", "starbase_beastport"],
     });
-    defineShipSize({
-      id: "content_types_ship_size_dual_scalar",
+    contentMod.shipSize("dual_scalar", {
       name: "X",
       class: "shipclass_military",
       constructionType: "starbase_shipyard",
     });
-    defineShipSize({
-      id: "content_types_ship_size_dual_bad",
+    contentMod.shipSize("dual_bad", {
       name: "X",
       class: "shipclass_military",
       // @ts-expect-error — neither arm is a block: the key takes a value_set
       // member or a list of them.
       constructionType: { base: 1 },
     });
-    defineStarbaseLevel({
-      id: "content_types_starbase_dual_scalar",
+    contentMod.starbaseLevel("dual_scalar", {
       shipSize: "ship_size_starbase_i",
       picture: "GFX_starbase_background_outpost",
     });
-    defineStarbaseLevel({
-      id: "content_types_starbase_dual_block",
+    contentMod.starbaseLevel("dual_block", {
       shipSize: "ship_size_starbase_i",
       picture: { trigger: always(), picture: "GFX_starbase_background_outpost" },
     });
-    defineStarbaseLevel({
-      id: "content_types_starbase_dual_bad",
+    contentMod.starbaseLevel("dual_bad", {
       shipSize: "ship_size_starbase_i",
       // @ts-expect-error — the block arm's own fields are still typed
       picture: { picture: 5 },
@@ -542,8 +499,7 @@ describe("generated content authoring types", () => {
     // A structMap key is a plain engine name and its values still get their
     // full struct type. A repeated-struct record key is an id the mod owns,
     // but it is typed `string` all the same — see the sibling case below.
-    defineShipSize({
-      id: "content_types_ship_size_x",
+    contentMod.shipSize("x", {
       name: "X",
       class: "shipclass_military",
       sectionSlots: {
@@ -552,15 +508,13 @@ describe("generated content authoring types", () => {
       },
       minUpgradeCost: { alloys: 20 },
     });
-    defineShipSize({
-      id: "content_types_ship_size_bad_slot",
+    contentMod.shipSize("bad_slot", {
       name: "X",
       class: "shipclass_military",
       // @ts-expect-error — the slot's own fields are still typed
       sectionSlots: { mid: { locator: 5 } },
     });
-    defineShipSize({
-      id: "content_types_ship_size_bad_cost",
+    contentMod.shipSize("bad_cost", {
       name: "X",
       class: "shipclass_military",
       // @ts-expect-error — a scalarMap's values are numbers, not blocks
@@ -573,13 +527,12 @@ describe("generated content authoring types", () => {
     // the literal id the factory definers preserve, it demanded every swap key
     // equal the tradition's id. The prefix rule on these keys is enforced at
     // define time instead — tests/content.test.ts pins the throw.
-    defineTradition({
-      id: "content_types_tradition_nested_key",
+    contentMod.tradition("nested_key", {
       name: "X",
       traditionSwap: { othermod_swap: { name: "Accepted by the type, rejected at define" } },
     });
     expectTypeOf<
-      NonNullable<Parameters<typeof defineTradition>[0]["traditionSwap"]>
+      NonNullable<Parameters<typeof contentMod.tradition>[1]["traditionSwap"]>
     >().toEqualTypeOf<Readonly<Record<string, TraditionSwapFields>>>();
   });
 
@@ -595,9 +548,9 @@ describe("generated content authoring types", () => {
     // event was structurally a reference for *every* registry. A country event
     // satisfied an archaeology stage's `<event.fleet>`, and a `<technology>`
     // field just as readily. The game would have refused both.
-    const events = namespace("content_types_event_brand");
-    const fleetEvent = events.defineFleetEvent({ id: 1, isTriggeredOnly: true });
-    const countryEvent = events.defineCountryEvent({ id: 2, isTriggeredOnly: true });
+    const events = contentMod.namespace("event_brand");
+    const fleetEvent = events.fleet(1, { isTriggeredOnly: true });
+    const countryEvent = events.country(2, { isTriggeredOnly: true });
 
     const fleetRef: EventFleetRef = fleetEvent;
     void fleetRef;
@@ -608,8 +561,7 @@ describe("generated content authoring types", () => {
     const wrongRegistry: TechnologyRef = countryEvent;
     void wrongRegistry;
 
-    defineArchaeologicalSiteType({
-      id: "content_types_archaeological_site_type_stage_event",
+    contentMod.archaeologicalSiteType("stage_event", {
       name: "X",
       stages: 1,
       allow: canGoMia(),
@@ -629,13 +581,11 @@ describe("generated content authoring types", () => {
     // `<component_template.utility_component_template>`. Branding a definition
     // with the SDK's own registry name — a name no rule uses — left it unable
     // to reach any field that references one, in either form.
-    const util = defineUtilityComponentTemplate({
-      id: "content_types_util_component",
+    const util = contentMod.utilityComponentTemplate("component", {
       icon: "GFX_x",
       power: -10,
     });
-    const weapon = defineWeaponComponentTemplate({
-      id: "content_types_weapon_component",
+    const weapon = contentMod.weaponComponentTemplate("component", {
       icon: "GFX_x",
     });
 
@@ -655,8 +605,7 @@ describe("generated content authoring types", () => {
       vanilla.utilityComponentTemplate("SHIELD_1");
     void fromVanilla;
 
-    defineGlobalShipDesign({
-      id: "content_types_ship_design_components",
+    contentMod.globalShipDesign("components", {
       shipSize: "ship_size_corvette",
       growthStages: [{ shipSize: "ship_size_corvette", requiredComponent: [util] }],
     });
@@ -705,8 +654,7 @@ describe("generated content authoring types", () => {
     // so an author never got a compile error) and were silently dropped by
     // the writer, which only iterates the declared ContentField[]. Now they
     // are real, declared members.
-    defineUtilityComponentTemplate({
-      id: "content_types_small_shield",
+    contentMod.utilityComponentTemplate("small_shield", {
       icon: "GFX_shield",
       power: 5,
       size: "small",
@@ -716,14 +664,12 @@ describe("generated content authoring types", () => {
 
     // Utility splices plain economic_template, so `produces` is genuinely
     // legal there and stays authorable.
-    defineUtilityComponentTemplate({
-      id: "content_types_utility_produces",
+    contentMod.utilityComponentTemplate("utility_produces", {
       icon: "GFX_x",
       resources: [{ category: "ship_components", produces: { amounts: { energy: 1 } } }],
     });
 
-    defineWeaponComponentTemplate({
-      id: "content_types_weapon_resources",
+    contentMod.weaponComponentTemplate("resources", {
       icon: "GFX_x",
       resources: [{ category: "ship_weapon_components", cost: { amounts: { alloys: 10 } } }],
       shipModifier: (m) => m.unchecked("ship_weapon_damage_mult", 0.1),
@@ -734,8 +680,7 @@ describe("generated content authoring types", () => {
     // EconomicResourceBlockNoProduce follow-up): weapon/strike-craft splice
     // economic_template_no_produce in CWT, so `produces` is not game-legal on
     // either, and it no longer type-checks on either registry's resources.
-    defineWeaponComponentTemplate({
-      id: "content_types_weapon_produces_illegal",
+    contentMod.weaponComponentTemplate("produces_illegal", {
       icon: "GFX_x",
       resources: [
         {
@@ -746,8 +691,7 @@ describe("generated content authoring types", () => {
       ],
     });
 
-    defineStrikeCraftComponentTemplate({
-      id: "content_types_strike_craft_resources",
+    contentMod.strikeCraftComponentTemplate("resources", {
       icon: "GFX_x",
       resources: [{ category: "ship_components", cost: { amounts: { alloys: 15 } } }],
       shipModifier: (m) => m.unchecked("ship_hull_add", 10),
@@ -755,8 +699,7 @@ describe("generated content authoring types", () => {
       modifier: (m) => m.unchecked("ship_hull_add", 10),
     });
 
-    defineStrikeCraftComponentTemplate({
-      id: "content_types_strike_craft_produces_illegal",
+    contentMod.strikeCraftComponentTemplate("produces_illegal", {
       icon: "GFX_x",
       resources: [
         {
@@ -773,8 +716,7 @@ describe("generated content authoring types", () => {
     // while every generated helper (and every other cross-content reference
     // field) produces the wider `EconomicCategoryRef`, so a checked
     // `vanilla.economicCategory(...)` call did not type-check into it.
-    defineEdict({
-      id: "sdk45_edict_economic_category_ref",
+    sdk45Mod.edict("economic_category_ref", {
       name: "Sdk45 Edict",
       length: 30,
       icon: "GFX_x",
@@ -785,8 +727,7 @@ describe("generated content authoring types", () => {
     // EconomicResourceBlockNoProduce is Omit<EconomicResourceBlock, "produces">,
     // so the fix on the base interface propagates automatically — no separate
     // row needed for weapon/strike-craft's own resources field.
-    defineWeaponComponentTemplate({
-      id: "sdk45_weapon_economic_category_ref",
+    sdk45Mod.weaponComponentTemplate("economic_category_ref", {
       icon: "GFX_x",
       resources: [
         { category: vanilla.economicCategory("ships"), cost: { amounts: { alloys: 1 } } },
@@ -800,9 +741,9 @@ describe("generated content authoring types", () => {
     // by the scope would call an observer event an `<event.country>` — a
     // reference the rules never write for it — and let an ordinary country
     // event be fired as one, which is a different event type to the game.
-    const events = namespace("content_types_event_kind");
-    const observer = events.defineObserverEvent({ id: 1, isTriggeredOnly: true });
-    const country = events.defineCountryEvent({ id: 2, isTriggeredOnly: true });
+    const events = contentMod.namespace("event_kind");
+    const observer = events.observer(1, { isTriggeredOnly: true });
+    const country = events.country(2, { isTriggeredOnly: true });
     const scope = makeScope<"country">([]);
 
     scope.observerEvent({ id: observer });
@@ -818,9 +759,9 @@ describe("generated content authoring types", () => {
     // included — so an event of any scope satisfies it. The relation runs only
     // that way: an `<event.fleet>` field still refuses a bare `<event>`, which
     // proves nothing about which subtype it is (covered by the case above).
-    const events = namespace("content_types_event_any");
-    const astralRiftEvent = events.defineAstralRiftEvent({ id: 1, isTriggeredOnly: true });
-    const fleetEvent = events.defineFleetEvent({ id: 2, isTriggeredOnly: true });
+    const events = contentMod.namespace("event_any");
+    const astralRiftEvent = events.astralRift(1, { isTriggeredOnly: true });
+    const fleetEvent = events.fleet(2, { isTriggeredOnly: true });
     const rift = makeScope<"astral_rift">([]);
 
     rift.setNextAstralRiftEvent({ id: astralRiftEvent, onRollFailed: fleetEvent });
@@ -834,14 +775,13 @@ describe("generated content authoring types", () => {
     // phantom brand as well as the runtime `type` field. Without the brand an
     // item was structurally assignable to *every* `TypedRef`, because the brand
     // is optional; carrying it is what makes the mismatch a conflict.
-    const building = defineBuilding({
-      id: "content_types_building_brand_item",
+    const building = contentMod.building("brand_item", {
       name: "X",
     });
     expectTypeOf(building).toEqualTypeOf<
       ContentItem<"building", BuildingDef<"content_types_building_brand_item">>
     >();
-    expectTypeOf(collection<BuildingItem>(undefined, [building]).items).toEqualTypeOf<
+    expectTypeOf(contentMod.feature<BuildingItem>(undefined, [building]).items).toEqualTypeOf<
       readonly BuildingItem[]
     >();
     // Its own registry's reference fields still take it directly.
@@ -859,8 +799,7 @@ describe("generated content authoring types", () => {
     // approach ("siblings" keying) — so a country-scoped trigger fits the top
     // level but not either nested field. Both keyings need their own check,
     // not just the top level.
-    defineSituationType({
-      id: "content_types_situation_scoped",
+    contentMod.situationType("scoped", {
       name: "X",
       monthlyProgress: { base: 1 },
       // Valid here — potential replace_scopes to country.
@@ -891,8 +830,7 @@ describe("generated content authoring types", () => {
     // lines away in the same object literal that uses it — checked here
     // because both fields below assign the value straight to `allow`/
     // `potential`, the boundary `defineSituationType` can actually reach.
-    defineSituationType({
-      id: "content_types_situation_approach_checked",
+    contentMod.situationType("approach_checked", {
       name: "X",
       monthlyProgress: { base: 1 },
       stages: {
@@ -931,8 +869,7 @@ describe("generated content authoring types", () => {
   });
 
   it("does not let one situation's approach id satisfy an unrelated situation's check (SDK-52)", () => {
-    defineSituationType({
-      id: "content_types_situation_approach_other",
+    contentMod.situationType("approach_other", {
       name: "X",
       monthlyProgress: { base: 1 },
       approach: {
@@ -943,8 +880,7 @@ describe("generated content authoring types", () => {
         },
       },
     });
-    defineSituationType({
-      id: "content_types_situation_approach_self",
+    contentMod.situationType("approach_self", {
       name: "X",
       monthlyProgress: { base: 1 },
       approach: {
@@ -968,8 +904,7 @@ describe("generated content authoring types", () => {
     // whose situation identity genuinely is not known elsewhere in the SDK —
     // rather than failing in a way that would make this previously-writable
     // field unwritable (SDK-33).
-    defineSituationType({
-      id: "content_types_situation_approach_boundary",
+    contentMod.situationType("approach_boundary", {
       name: "X",
       monthlyProgress: { base: 1 },
       approach: {
@@ -990,8 +925,7 @@ describe("generated content authoring types", () => {
     // rejected, the mirror image of the typo case above. Plain and
     // combinator-produced (unbranded) triggers still flow regardless, since
     // both phantom brands stay optional — confirmed at the end of this test.
-    defineSituationType({
-      id: "content_types_situation_approach_only",
+    contentMod.situationType("approach_only", {
       name: "X",
       monthlyProgress: { base: 1 },
       approach: {
@@ -1005,8 +939,7 @@ describe("generated content authoring types", () => {
       },
     });
 
-    defineSituationType({
-      id: "content_types_situation_stage_only",
+    contentMod.situationType("stage_only", {
       name: "X",
       monthlyProgress: { base: 1 },
       stages: {
@@ -1025,8 +958,7 @@ describe("generated content authoring types", () => {
     // Plain/combinator triggers still type-check with neither side declared —
     // the `never` default narrows only the direct-literal path, not the
     // graceful-degradation boundary itself.
-    defineSituationType({
-      id: "content_types_situation_neither_declared",
+    contentMod.situationType("neither_declared", {
       name: "X",
       monthlyProgress: { base: 1 },
       abortTrigger: or(always(), always()),
@@ -1034,8 +966,7 @@ describe("generated content authoring types", () => {
   });
 
   it("keeps modifier recorders numeric and weight conditions scoped", () => {
-    defineTradition({
-      id: "content_types_tradition_modifier",
+    contentMod.tradition("modifier", {
       name: "X",
       modifier: (m) => {
         m.planet.pop.assembly.mult(0.1);
@@ -1050,16 +981,14 @@ describe("generated content authoring types", () => {
     // SDK-35: a `complex_maths_enum` operation (`factor` here) is legal
     // directly on the block, sibling to `base`, not only inside a `modifier`
     // row.
-    defineTradition({
-      id: "content_types_tradition_weight_operation",
+    contentMod.tradition("weight_operation", {
       name: "X",
       aiWeight: { factor: 5000 },
     });
     // SDK-36: a complex_trigger_modifier row (no `when`) sits in the same
     // `modifiers` array as an ordinary Modifier row (which has `when` but no
     // `trigger`/`mode`).
-    defineSolarSystemInitializer({
-      id: "content_types_system_complex_trigger_modifier",
+    contentMod.solarSystemInitializer("complex_trigger_modifier", {
       class: "sc_g",
       usageOdds: {
         base: 1,
@@ -1075,8 +1004,7 @@ describe("generated content authoring types", () => {
     });
     // A row must satisfy one arm or the other: `factor` alone, with neither
     // `when` nor `trigger`/`mode`, is not a legal row of either kind.
-    defineTradition({
-      id: "content_types_tradition_weight_row_shape",
+    contentMod.tradition("weight_row_shape", {
       name: "X",
       aiWeight: {
         modifiers: [
@@ -1089,8 +1017,7 @@ describe("generated content authoring types", () => {
     // A complex_trigger_modifier's own `potential` gate is checked exactly
     // like a Modifier's `when` — archaeological site weight runs in planet
     // scope, so a country-scoped potential does not compile.
-    defineArchaeologicalSiteType({
-      id: "content_types_archaeological_site_type_complex_trigger_modifier",
+    contentMod.archaeologicalSiteType("complex_trigger_modifier", {
       name: "X",
       stages: 1,
       allow: canGoMia(),
@@ -1127,8 +1054,7 @@ describe("generated content authoring types", () => {
     // forbid each other's characteristic members so this is a compile error
     // for both a fresh literal and a value stored in a variable first —
     // the excess-property check only ever covered the first case.
-    defineTradition({
-      id: "content_types_tradition_weight_row_hybrid_literal",
+    contentMod.tradition("weight_row_hybrid_literal", {
       name: "X",
       aiWeight: {
         modifiers: [
@@ -1143,8 +1069,7 @@ describe("generated content authoring types", () => {
     // `Omit`-based exclusion (rather than an explicit `?: never` forbid)
     // would have missed.
     const hybridRow = { factor: 2, when: always(), trigger: "x", mode: "factor" as const };
-    defineTradition({
-      id: "content_types_tradition_weight_row_hybrid_variable",
+    contentMod.tradition("weight_row_hybrid_variable", {
       name: "X",
       aiWeight: {
         // @ts-expect-error — same hybrid shape, reached through a variable
@@ -1158,8 +1083,7 @@ describe("generated content authoring types", () => {
     // level — not weight/subtract/mult/multiplier/divide/min/max, which
     // plain modifier_rule.cwt:1-3 does allow. situation_type.monthly_progress
     // is the one WeightBlockWithLoc consumer.
-    defineSituationType({
-      id: "content_types_situation_weight_with_loc_operation",
+    contentMod.situationType("weight_with_loc_operation", {
       name: "X",
       monthlyProgress: {
         base: 1,
@@ -1170,8 +1094,7 @@ describe("generated content authoring types", () => {
         weight: 4,
       },
     });
-    defineSituationType({
-      id: "content_types_situation_weight_with_loc_operation_2",
+    contentMod.situationType("weight_with_loc_operation_2", {
       name: "X",
       monthlyProgress: {
         base: 1,
@@ -1184,8 +1107,7 @@ describe("generated content authoring types", () => {
     // complex_maths_enum inside a `modifier` row, just one member at a time
     // (a cardinality TypeScript does not model, matching plain modifier_rule
     // rows too) — only the block's own top-level operations narrow.
-    defineSituationType({
-      id: "content_types_situation_weight_with_loc_row",
+    contentMod.situationType("weight_with_loc_row", {
       name: "X",
       monthlyProgress: {
         base: 1,
@@ -1196,8 +1118,7 @@ describe("generated content authoring types", () => {
     // divide/min_value/max_value (the plain alias's :32-53 keeps them) and
     // requires desc (no cardinality marker on that field, unlike every other
     // optional one in the same block).
-    defineSituationType({
-      id: "content_types_situation_weight_with_loc_ctm_divide",
+    contentMod.situationType("weight_with_loc_ctm_divide", {
       name: "X",
       monthlyProgress: {
         base: 1,
@@ -1212,8 +1133,7 @@ describe("generated content authoring types", () => {
         ],
       },
     });
-    defineSituationType({
-      id: "content_types_situation_weight_with_loc_ctm_no_desc",
+    contentMod.situationType("weight_with_loc_ctm_no_desc", {
       name: "X",
       monthlyProgress: {
         base: 1,
@@ -1226,8 +1146,7 @@ describe("generated content authoring types", () => {
     });
     // The legal with-loc complex_trigger_modifier shape: mult/multiplier and
     // a required desc.
-    defineSituationType({
-      id: "content_types_situation_weight_with_loc_ctm_legal",
+    contentMod.situationType("weight_with_loc_ctm_legal", {
       name: "X",
       monthlyProgress: {
         base: 1,
@@ -1237,16 +1156,14 @@ describe("generated content authoring types", () => {
   });
 
   it("types civic_or_origin's potential/possible as the government_trigger DSL, not a Trigger", () => {
-    defineCivicOrOrigin({
-      id: "content_types_civic_dsl",
+    contentMod.civicOrOrigin("dsl", {
       name: "X",
       // The requirements DSL: a plain object, matched against empire setup —
       // not a script condition tree.
       potential: { authority: { value: "auth_democratic" } },
       possible: { orGroups: [{ civics: { value: "content_types_civic_other" } }] },
     });
-    defineCivicOrOrigin({
-      id: "content_types_civic_dsl_rejects_trigger",
+    contentMod.civicOrOrigin("dsl_rejects_trigger", {
       name: "X",
       // @ts-expect-error — a Trigger is not a GovernmentTriggerBlock; the game
       // does not read potential/possible as script conditions.
@@ -1273,20 +1190,17 @@ describe("generated content authoring types", () => {
     // child `ctx` (`containerContext`/`pushedScope`), so `add`/`remove` are
     // `Trigger<"country">`: writable by a country-scoped condition, and a
     // planet-only one is rejected exactly as the game would reject it.
-    defineCivicOrOrigin({
-      id: "content_types_civic_modification_container_scope_universal",
+    contentMod.civicOrOrigin("modification_container_scope_universal", {
       name: "X",
       modification: { add: always() },
     });
-    defineCivicOrOrigin({
-      id: "content_types_civic_modification_container_scope_country",
+    contentMod.civicOrOrigin("modification_container_scope_country", {
       name: "X",
       // hasCountryFlag is Trigger<"country"> — the payoff: unwritable before
       // SDK-34, when the field was still Trigger<ScopeName>.
       modification: { add: hasCountryFlag("some_flag"), remove: hasCountryFlag("other_flag") },
     });
-    defineCivicOrOrigin({
-      id: "content_types_civic_modification_container_scope_rejects_planet_only",
+    contentMod.civicOrOrigin("modification_container_scope_rejects_planet_only", {
       name: "X",
       modification: {
         // @ts-expect-error — hasPlanetFlag is Trigger<"planet">, not
@@ -1298,8 +1212,7 @@ describe("generated content authoring types", () => {
   });
 
   it("keeps civic_or_origin's playable/ai_playable pinned to no_scope", () => {
-    defineCivicOrOrigin({
-      id: "content_types_civic_no_scope",
+    contentMod.civicOrOrigin("no_scope", {
       name: "X",
       playable: always(),
       // @ts-expect-error — playable replace_scopes to no_scope; a country-only
@@ -1309,8 +1222,7 @@ describe("generated content authoring types", () => {
   });
 
   it("keeps councilor's country and leader scope triggers distinct", () => {
-    defineCouncilor({
-      id: "content_types_councilor_scoped",
+    contentMod.councilor("scoped", {
       name: "X",
       leaderClass: ["leader_class_official"],
       possible: hasAuthority("auth_democratic"),
@@ -1320,26 +1232,21 @@ describe("generated content authoring types", () => {
   });
 
   it("restricts economic_category's modifier_category to the generated enum", () => {
-    defineEconomicCategory({
-      id: "content_types_economic_category_x",
+    contentMod.economicCategory("x", {
       modifierCategory: "economic_unit",
     });
-    defineEconomicCategory({
-      id: "content_types_economic_category_bad",
+    contentMod.economicCategory("bad", {
       // @ts-expect-error — modifier_category is drawn from enum[scripted_modifier_category]
       modifierCategory: "nonsense",
     });
   });
 
   it("requires an entity on ambient_object but leaves name/description optional", () => {
-    defineAmbientObject({
-      id: "content_types_ambient_object_x",
+    contentMod.ambientObject("x", {
       entity: "some_entity",
     });
     // @ts-expect-error — entity has no default and must be supplied
-    defineAmbientObject({
-      id: "content_types_ambient_object_missing_entity",
-    });
+    contentMod.ambientObject("missing_entity", {});
   });
 
   it("pins section_template's modifier/ship_modifier to ship scope", () => {
@@ -1353,8 +1260,7 @@ describe("generated content authoring types", () => {
     expectTypeOf<SectionTemplateFields["shipModifier"]>().toEqualTypeOf<
       ModifierClosure<"ship"> | undefined
     >();
-    defineSectionTemplate({
-      id: "content_types_section_template_x",
+    contentMod.sectionTemplate("x", {
       entity: "some_entity",
       modifier: (m) => m.unchecked("ship_hull_add", 10),
     });
@@ -1407,8 +1313,7 @@ describe("generated content authoring types", () => {
     // condition there — the accepting half of the same bug isCapital()'s
     // rejection above demonstrates. Both directions need the same fix: a
     // second, independent scope parameter on TriggeredModifier<S>.
-    defineBuilding({
-      id: "content_types_building_modifier_potential_scope_hole",
+    contentMod.building("modifier_potential_scope_hole", {
       name: "X",
       triggeredCountryModifier: [
         {
@@ -1418,8 +1323,7 @@ describe("generated content authoring types", () => {
       ],
     });
 
-    defineBuilding({
-      id: "content_types_building_modifier_scopes",
+    contentMod.building("modifier_scopes", {
       name: "X",
       armyModifier: (m) => {
         m.raw("armies_cost_mult", -0.1);
@@ -1461,8 +1365,7 @@ describe("generated content authoring types", () => {
   });
 
   it("pins starbase_level's upgrade/downgrade triggers to starbase scope", () => {
-    defineStarbaseLevel({
-      id: "content_types_starbase_level_x",
+    contentMod.starbaseLevel("x", {
       shipSize: "ship_size_starbase_i",
       upgradePossible: always(),
       // @ts-expect-error — upgrade_possible replace_scopes to starbase; a
@@ -1472,14 +1375,12 @@ describe("generated content authoring types", () => {
   });
 
   it("types species_class's possible/possible_secondary as the government_trigger DSL, not a Trigger", () => {
-    defineSpeciesClass({
-      id: "content_types_species_class_dsl",
+    contentMod.speciesClass("dsl", {
       name: "X",
       possible: { authority: { value: "auth_democratic" } },
       possibleSecondary: { orGroups: [{ ethics: { value: "ethic_xenophile" } }] },
     });
-    defineSpeciesClass({
-      id: "content_types_species_class_dsl_rejects_trigger",
+    contentMod.speciesClass("dsl_rejects_trigger", {
       name: "X",
       // @ts-expect-error — a Trigger is not a GovernmentTriggerBlock; the game
       // does not read possible/possible_secondary as script conditions.
@@ -1496,13 +1397,11 @@ describe("generated content authoring types", () => {
     // real single-scope trigger like hasAuthority (country-only) type-checks
     // too — the field went from "unwritable by anything but always()" to
     // "unchecked", matching what "the rules did not say" should mean.
-    defineSpeciesClass({
-      id: "content_types_species_class_playable",
+    contentMod.speciesClass("playable", {
       name: "X",
       playable: always(),
     });
-    defineSpeciesClass({
-      id: "content_types_species_class_playable_widened",
+    contentMod.speciesClass("playable_widened", {
       name: "X",
       playable: hasAuthority("auth_democratic"),
     });
@@ -1517,20 +1416,17 @@ describe("generated content authoring types", () => {
     // arm and stays a compile error.
     expectTypeOf<number>().toExtend<ScriptValue>();
     expectTypeOf<"value:my_script_value">().toExtend<ScriptValue>();
-    defineCountryShipOfSizeLimit({
-      id: "content_types_country_ship_of_size_limit_script_value_number",
+    contentMod.countryShipOfSizeLimit("script_value_number", {
       shipTypes: ["ship_size_titan"],
       base: 80,
       show: always(),
     });
-    defineCountryShipOfSizeLimit({
-      id: "content_types_country_ship_of_size_limit_script_value_string",
+    contentMod.countryShipOfSizeLimit("script_value_string", {
       shipTypes: ["ship_size_titan"],
       base: "value:my_script_value",
       show: always(),
     });
-    defineCountryShipOfSizeLimit({
-      id: "content_types_country_ship_of_size_limit_script_value_rejects_boolean",
+    contentMod.countryShipOfSizeLimit("script_value_rejects_boolean", {
       shipTypes: ["ship_size_titan"],
       // @ts-expect-error — a boolean satisfies neither ScriptValue's number
       // nor its (branded) string arm.
@@ -1542,20 +1438,17 @@ describe("generated content authoring types", () => {
   it("brands country_ship_of_size_limit.ship_types on the ship_size registry, not just any content ref", () => {
     // `<ship_size>` in the CWT body — a defined ship_size or a raw vanilla
     // string both work, same widening every other branded-ref list gets.
-    const shipSize = defineShipSize({
-      id: "content_types_ship_size_for_limit",
+    const shipSize = contentMod.shipSize("for_limit", {
       name: "X",
       class: "shipclass_military",
     });
-    defineCountryShipOfSizeLimit({
-      id: "content_types_ship_of_size_limit_x",
+    legacyCountryLimitMod.countryShipOfSizeLimit("x", {
       shipTypes: [shipSize, "ship_size_titan"],
       base: 80,
       show: always(),
     });
     const wrongBrand: TechnologyRef = { id: "tech_lasers_1" } as TechnologyRef;
-    defineCountryShipOfSizeLimit({
-      id: "content_types_ship_of_size_limit_bad_ref",
+    legacyCountryLimitMod.countryShipOfSizeLimit("bad_ref", {
       // @ts-expect-error — a TechnologyRef is not a ShipSizeRef; the two
       // brands must not be interchangeable even though both widen with string.
       shipTypes: [wrongBrand],
@@ -1568,14 +1461,12 @@ describe("generated content authoring types", () => {
     // The overlay asserts the scope CWT omits. Without it `show` is
     // Trigger<ScopeName> — required, and unable to hold the country condition
     // every shipped entry writes.
-    const limit = defineCountryShipOfSizeLimit({
-      id: "content_types_ship_of_size_limit_scoped",
+    const limit = legacyCountryLimitMod.countryShipOfSizeLimit("scoped", {
       shipTypes: ["ship_size_titan"],
       base: 80,
       show: hasAuthority("auth_democratic"),
     });
-    defineCountryShipOfSizeLimit({
-      id: "content_types_ship_of_size_limit_wrong_scope",
+    legacyCountryLimitMod.countryShipOfSizeLimit("wrong_scope", {
       shipTypes: ["ship_size_titan"],
       base: 80,
       // @ts-expect-error — the clause runs in country scope, not planet
@@ -1583,25 +1474,23 @@ describe("generated content authoring types", () => {
     });
     // The ownership limit takes definitions or raw ids, and never an id of
     // its own — the engine owns that key.
-    addShipOfSizeLimits([limit, "some_other_mods_limit"]);
+    contentMod.addShipOfSizeLimits([limit, "some_other_mods_limit"]);
     const wrongRegistry = defineBuilding({
       id: "content_types_ship_of_size_limit_wrong_registry",
       name: "X",
     });
     // @ts-expect-error — a definition from another registry is rejected: items
     // carry their registry's brand, so this needs no hand-branded stand-in.
-    addShipOfSizeLimits([wrongRegistry]);
+    contentMod.addShipOfSizeLimits([wrongRegistry]);
   });
 
   it("types a solar system initializer's planet tree recursively", () => {
-    const outpost = defineSolarSystemInitializer({
-      id: "content_types_system_outpost",
+    const outpost = contentMod.solarSystemInitializer("outpost", {
       class: "sc_g",
     });
     // The literal id survives the definer, the same as every other registry.
     expectTypeOf(outpost.id).toEqualTypeOf<"content_types_system_outpost">();
-    defineSolarSystemInitializer({
-      id: "content_types_system_deep",
+    contentMod.solarSystemInitializer("deep", {
       class: "sc_g",
       // Four levels, alternating both arms of the mutual recursion: the
       // interfaces refer to each other by name, so depth is unbounded.
@@ -1613,12 +1502,10 @@ describe("generated content authoring types", () => {
   });
 
   it("keeps the planet and moon bodies distinct, and the registry's refs branded", () => {
-    const outpost = defineSolarSystemInitializer({
-      id: "content_types_system_for_refs",
+    const outpost = contentMod.solarSystemInitializer("for_refs", {
       class: "sc_g",
     });
-    defineSolarSystemInitializer({
-      id: "content_types_system_bad_moon",
+    contentMod.solarSystemInitializer("bad_moon", {
       class: "sc_g",
       // @ts-expect-error — CWT declares no nested `planet` inside `moon`, so a
       // moon cannot carry planets even though a planet can carry moons.
@@ -1628,8 +1515,7 @@ describe("generated content authoring types", () => {
       id: "content_types_system_wrong_registry",
       name: "X",
     });
-    defineSolarSystemInitializer({
-      id: "content_types_system_wrong_ref",
+    contentMod.solarSystemInitializer("wrong_ref", {
       class: "sc_g",
       // @ts-expect-error — a BuildingRef is not a SolarSystemInitializerRef.
       neighborSystem: [{ initializer: wrongRegistry }],
@@ -1637,16 +1523,14 @@ describe("generated content authoring types", () => {
     // A system flows into another registry's field that names this one:
     // governments.cwt types civic/origin `initializers` as
     // `<solar_system_initializer>`.
-    defineCivicOrOrigin({
-      id: "content_types_origin_with_system",
+    originMod.civicOrOrigin("with_system", {
       name: "X",
       initializers: [outpost],
     });
   });
 
   it("scopes a solar system initializer's effect clauses by depth", () => {
-    defineSolarSystemInitializer({
-      id: "content_types_system_scopes",
+    contentMod.solarSystemInitializer("scopes", {
       class: "sc_g",
       // The top-level clause runs in the system (galactic_object) scope...
       initEffect: (system) => {

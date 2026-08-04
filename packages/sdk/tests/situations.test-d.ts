@@ -6,20 +6,19 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
-import { defineSituationType, eventTarget, namespace } from "../src/index.ts";
+import { createMod, eventTarget } from "../src/index.ts";
 
 describe("the declared situation target contract", () => {
   it("carries the declared scope on the defined object", () => {
-    const sit = defineSituationType({
-      id: "st_test_sit",
+    const mod = createMod({ name: "Situations", prefix: "st_test", supportedVersion: "4.4.*" });
+    const sit = mod.situationType("sit", {
       name: "S",
       monthlyProgress: { base: 1 },
       targetScope: "planet",
     });
     expectTypeOf(sit.targetScope).toEqualTypeOf<"planet">();
 
-    const undeclared = defineSituationType({
-      id: "st_test_sit_undeclared",
+    const undeclared = mod.situationType("sit_undeclared", {
       name: "S2",
       monthlyProgress: { base: 1 },
     });
@@ -27,16 +26,15 @@ describe("the declared situation target contract", () => {
   });
 
   it("requires a matching target ref at start sites", () => {
-    const events = namespace("st_test");
-    const planetSit = defineSituationType({
-      id: "st_test_sit_planet",
+    const mod = createMod({ name: "Situations", prefix: "st_test", supportedVersion: "4.4.*" });
+    const events = mod.namespace();
+    const planetSit = mod.situationType("sit_planet", {
       name: "S",
       monthlyProgress: { base: 1 },
       targetScope: "planet",
     });
     const world = eventTarget<"planet">("st_test_world");
-    events.defineCountryEvent({
-      id: 1,
+    events.country(1, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
@@ -51,9 +49,13 @@ describe("the declared situation target contract", () => {
   });
 
   it("keeps the string-typed path for undeclared and vanilla situations", () => {
-    const events = namespace("st_test_vanilla");
-    events.defineCountryEvent({
-      id: 2,
+    const mod = createMod({
+      name: "Vanilla",
+      prefix: "st_test_vanilla",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    events.country(2, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (country) => {
@@ -71,16 +73,19 @@ describe("the declared situation target contract", () => {
     // used to be a type error (S2 fell back to its `ScopeName` constraint,
     // so the callback parameter typed as a union with no planet-only
     // members); it is what this test now pins as passing.
-    const events = namespace("st_test_ergo");
-    const planetSit = defineSituationType({
-      id: "st_test_sit_ergo",
+    const mod = createMod({
+      name: "Ergonomics",
+      prefix: "st_test_ergo",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const planetSit = mod.situationType("sit_ergo", {
       name: "S",
       monthlyProgress: { base: 1 },
       targetScope: "planet",
     });
     const world = eventTarget<"planet">("st_test_ergo_world");
-    events.defineCountryEvent({
-      id: 3,
+    events.country(3, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (country) => {

@@ -26,44 +26,49 @@ export function modTs(resolved: Resolved): string {
     resolved.installPath === undefined ? "" : `import { loadVanilla } from "./vanilla.ts";\n`;
   const vanillaUse =
     resolved.installPath === undefined
-      ? `  return buildMod(config, collections);`
-      : `  // With a vanilla view, an id colliding with a real one is a hard error\n` +
-        `  // rather than a silent override, and \`patchTechnology\` becomes available.\n` +
+      ? `  return mod.compile(features);`
+      : `  // A vanilla view enables checked vanilla references and patching.\n` +
+        `  // Own content ids are minted from this mod's prefix.\n` +
         `  const vanilla = loadVanilla();\n` +
-        `  return buildMod(config, collections, vanilla === undefined ? {} : { vanilla });`;
+        `  return mod.compile(features, vanilla === undefined ? {} : { vanilla });`;
 
   return `/**
- * The mod definition: config, plus \`buildTheMod()\` — the impure discovery
- * shell around the SDK's pure fold. Importing this file builds nothing:
- * \`config\` is a plain value, so a test — or anything else — that only wants
- * the mod's prefix can import it without triggering a build as a side effect.
+ * The mod definition: config, its capability, plus \`buildTheMod()\` — the
+ * impure discovery shell around the SDK's pure fold. Importing this file builds
+ * nothing: \`config\` and \`mod\` are plain values, so a test — or anything
+ * else — that only wants the mod's prefix can import it without triggering a
+ * build as a side effect.
  * \`npm run build\` (\`src/index.ts\`) and \`npm run install-mod\`
  * (\`src/install.ts\`) both call \`buildTheMod()\` once and add their own single
  * disk-touching step (\`write\` vs \`install\`) on top, instead of each folding
  * \`src/content/\` a second time.
  *
- * \`buildTheMod()\` itself is not pure: \`discoverContent\` walks \`src/content/\`
- * and imports every module under it — real disk reads, running your code — to
- * turn each one's exports into a collection named after the file, and (when a
- * vanilla install was found) \`loadVanilla()\` parses the game and may write a
- * cache under \`node_modules/.cache\`. \`buildMod\`, which folds the result into
- * the \`PureMod\` value \`render\`/\`write\`/\`install\` consume, is the pure part.
+ * \`buildTheMod()\` itself is not pure: \`discoverFeatures\` walks \`src/content/\`
+ * and imports each selected module — real disk reads, running your code — to
+ * read its named \`feature\` export, and (when a vanilla install was found)
+ * \`loadVanilla()\` parses the game and may write a cache under
+ * \`node_modules/.cache\`. \`mod.compile\`, which folds capability-owned features
+ * into the \`PureMod\` value \`render\`/\`write\`/\`install\` consume, is the pure part.
  */
 
-import { buildMod, discoverContent, type ModConfig, type PureMod } from "@pdx-ts/sdk";
+import { createMod, discoverFeatures, type PureMod } from "@pdx-ts/sdk";
 ${idsImport}${vanillaWiring}
-export const config: ModConfig = {
+export const config = {
   name: ${quote(resolved.name)},
   // Every id and every emitted filename starts with this. It is what makes the
   // mod structurally incapable of overwriting someone else's content.
-  prefix: ${quote(resolved.prefix)},
+  prefix: ${quote(resolved.prefix)} as const,
   version: "0.1.0",
   supportedVersion: ${quote(resolved.supportedVersion)},
   tags: ${JSON.stringify(resolved.tags)},
 };
 
+export const mod = createMod(config);
+
 export async function buildTheMod(): Promise<PureMod> {
-  const collections = await discoverContent(new URL("./content/", import.meta.url));
+  const features = await discoverFeatures<typeof mod.config.prefix>(
+    new URL("./content/", import.meta.url)
+  );
 ${vanillaUse}
 }
 `;
@@ -141,9 +146,9 @@ export function vanillaTs(resolved: Resolved): string {
   return `/**
  * The vanilla view: the installed game, parsed.
  *
- * Passing it to \`buildMod\` turns a content id that collides with a real vanilla
- * id into a hard error instead of a silent override, and it is what
- * \`patchTechnology\` needs in order to re-emit a vanilla definition faithfully.
+ * Passing it to \`mod.compile\` enables checked vanilla references and gives
+ * \`mod.patchTechnology\` the parsed definition it needs to re-emit a vanilla
+ * definition faithfully. Own content ids are already minted from the mod prefix.
  *
  * Optional on purpose. A checkout on a machine without the game still builds —
  * it just builds unchecked — so a teammate or a CI runner is never blocked by
@@ -174,11 +179,10 @@ export function flagsTs(resolved: Resolved): string {
   return `/**
  * Flags this mod sets and reads.
  *
- * This module sits *outside* \`src/content/\` deliberately, and that is the one
- * rule worth learning early: in a discovered module, export is registration, so
- * everything \`src/content/\` exports has to be something a definer returned.
- * Shared values that are not definitions live out here. Importing a value is
- * not exporting it, so content modules can use these freely.
+ * This module sits *outside* \`src/content/\` so content modules can import
+ * shared values without giving them feature-placement responsibilities. Only a
+ * module's named \`feature\` export is discovered; every other export is ordinary
+ * ESM API.
  *
  * Declaring flag names by kind is what makes them checkable: \`hasCountryFlag\`
  * against a planet flag is a compile error rather than a condition that is
@@ -208,12 +212,12 @@ export function contentExampleTs(resolved: Resolved): string {
  * the output tree.
  */
 
-import { defineTechnology, hasCountryFlag, namespace, not, on, onActions } from "@pdx-ts/sdk";
+import { hasCountryFlag, not, onActions } from "@pdx-ts/sdk";
 
 import { flags } from "../flags.ts";
+import { mod } from "../mod.ts";
 
-export const firstSteps = defineTechnology({
-  id: "${p}_tech_first_steps",
+export const firstSteps = mod.technology("first_steps", {
   name: "First Steps",
   desc: "The first technology this mod adds.",
   cost: 2000,
@@ -223,12 +227,11 @@ export const firstSteps = defineTechnology({
   weight: 100,
 });
 
-// A namespace belongs to exactly one file, so the handle stays local and is
-// never exported: what lands in the mod is the events its definers returned.
-const events = namespace("${p}");
+// A namespace belongs to exactly one feature file, so the handle stays local.
+// This root namespace preserves the scaffold's stable <prefix>.<number> ids.
+const events = mod.namespace();
 
-export const welcome = events.defineCountryEvent({
-  id: 1,
+export const welcome = events.country(1, {
   title: "A New Signal",
   desc: "Something in the data does not belong.",
   isTriggeredOnly: true,
@@ -243,9 +246,10 @@ export const welcome = events.defineCountryEvent({
   options: [{ name: "Interesting." }],
 });
 
-// Without a hook nothing fires this. Exporting the binding registers it, the
-// same way exporting a definition does.
-export const gameStart = on(onActions.onGameStartCountry, [welcome]);
+// Without a hook nothing fires this. It belongs in the feature with its event.
+export const gameStart = mod.on(onActions.onGameStartCountry, [welcome]);
+
+export const feature = mod.feature("example", [firstSteps, welcome, gameStart]);
 `;
 }
 
@@ -254,10 +258,10 @@ export function contentExampleTestTs(resolved: Resolved): string {
   return `/**
  * Tests, colocated with the feature they test.
  *
- * \`discoverContent\` imports every module under \`src/content/\` to build the mod,
- * and skips \`*.test.ts\` while doing it — so this file can live here without
- * becoming part of the mod. That is the whole reason colocation works; see
- * \`DEFAULT_CONTENT_PATTERN\` in the SDK if you want to change what counts.
+ * \`discoverFeatures\` imports selected modules under \`src/content/\` and reads
+ * their named \`feature\` exports. It skips \`*.test.ts\`, so this file can live
+ * beside the feature it tests; see \`DEFAULT_CONTENT_PATTERN\` in the SDK if you
+ * want to change what counts.
  *
  * \`fixture\` is not the game. It interprets the triggers and effects you
  * recorded, so it runs in milliseconds and needs no launcher — but it models

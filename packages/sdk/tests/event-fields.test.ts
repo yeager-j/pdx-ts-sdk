@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest";
 
 import { eventTarget } from "../src/effect-core.ts";
-import { buildMod, collection, namespace, render } from "../src/index.ts";
+import { createMod, render } from "../src/index.ts";
 import { hasEventChain, hasGlobalFlag } from "../src/triggers.ts";
 
 const CONFIG = {
@@ -22,16 +22,16 @@ const CONFIG = {
   prefix: "event_fields",
   supportedVersion: "4.0.*",
 };
+const mod = createMod(CONFIG);
 
 function makeEvents() {
-  return namespace("event_fields");
+  return mod.namespace();
 }
 
 describe("the archaeology blocking case (SDK-46)", () => {
   it("ports arcsite.1000 (events/arcsite_events.txt): archaeology + location + a dig option, no AST escape hatch", () => {
     const events = makeEvents();
-    const dig = events.defineFleetEvent({
-      id: 1000,
+    const dig = events.fleet(1000, {
       from: "archaeological_site",
       title: "Icelocked Settlement",
       desc: "A settlement locked in ice.",
@@ -73,7 +73,7 @@ describe("the archaeology blocking case (SDK-46)", () => {
       },
     });
 
-    const rendered = render(buildMod(CONFIG, [collection("events", [dig])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [dig])])).get(
       "events/event_fields_events.txt"
     )!;
 
@@ -99,14 +99,13 @@ describe("the archaeology blocking case (SDK-46)", () => {
 
   it("keeps the window flags off events of the wrong kind (no first_contact/espionage_operation/astral_rift leakage)", () => {
     const events = makeEvents();
-    const rift = events.defineAstralRiftEvent({
-      id: 1001,
+    const rift = events.astralRift(1001, {
       hideWindow: true,
       isTriggeredOnly: true,
       astralRift: true,
       difficulty: 3,
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [rift])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [rift])])).get(
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain("astral_rift = yes");
@@ -118,13 +117,12 @@ describe("the archaeology blocking case (SDK-46)", () => {
 
   it("lowers the diplomatic window flag on any event kind (an attribute subtype, not a kind-gated one)", () => {
     const events = makeEvents();
-    const summit = events.defineCountryEvent({
-      id: 1002,
+    const summit = events.country(1002, {
       hideWindow: true,
       isTriggeredOnly: true,
       diplomatic: true,
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [summit])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [summit])])).get(
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain("diplomatic = yes");
@@ -134,15 +132,14 @@ describe("the archaeology blocking case (SDK-46)", () => {
 describe("previously-omitted EventDef fields", () => {
   it("lowers trigger, abort_trigger, and abort_effect", () => {
     const events = makeEvents();
-    const gated = events.defineCountryEvent({
-      id: 1010,
+    const gated = events.country(1010, {
       hideWindow: true,
       isTriggeredOnly: true,
       trigger: hasGlobalFlag("event_fields_eligible"),
       abortTrigger: hasGlobalFlag("event_fields_abort"),
       abortEffect: (country) => country.setCountryFlag("event_fields_aborted"),
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [gated])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [gated])])).get(
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain("trigger = {\n\t\thas_global_flag = event_fields_eligible");
@@ -152,8 +149,7 @@ describe("previously-omitted EventDef fields", () => {
 
   it("lowers mean_time_to_happen with its days/months/years and modifier rows", () => {
     const events = makeEvents();
-    const scheduled = events.defineCountryEvent({
-      id: 1011,
+    const scheduled = events.country(1011, {
       hideWindow: true,
       meanTimeToHappen: {
         days: 10,
@@ -161,7 +157,7 @@ describe("previously-omitted EventDef fields", () => {
         modifiers: [{ factor: 2, when: hasGlobalFlag("event_fields_boosted") }],
       },
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [scheduled])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [scheduled])])).get(
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain(
@@ -171,8 +167,7 @@ describe("previously-omitted EventDef fields", () => {
 
   it("lowers weight_multiplier with its factor and modifier rows", () => {
     const events = makeEvents();
-    const scheduled = events.defineCountryEvent({
-      id: 1014,
+    const scheduled = events.country(1014, {
       hideWindow: true,
       isTriggeredOnly: true,
       weightMultiplier: {
@@ -180,7 +175,7 @@ describe("previously-omitted EventDef fields", () => {
         modifiers: [{ factor: 3, when: hasGlobalFlag("event_fields_weighted") }],
       },
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [scheduled])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [scheduled])])).get(
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain(
@@ -190,14 +185,13 @@ describe("previously-omitted EventDef fields", () => {
 
   it("lowers major_trigger, an attribute-subtype trigger gated on major's own value", () => {
     const events = makeEvents();
-    const flagged = events.defineCountryEvent({
-      id: 1015,
+    const flagged = events.country(1015, {
       hideWindow: true,
       isTriggeredOnly: true,
       major: true,
       majorTrigger: hasGlobalFlag("event_fields_materialist"),
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [flagged])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [flagged])])).get(
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain("major = yes");
@@ -206,8 +200,7 @@ describe("previously-omitted EventDef fields", () => {
 
   it("lowers the plain unconditional booleans, refs, and text fields", () => {
     const events = makeEvents();
-    const flagged = events.defineCountryEvent({
-      id: 1012,
+    const flagged = events.country(1012, {
       hideWindow: true,
       isTriggeredOnly: true,
       diplomaticTitle: "A diplomatic screen title.",
@@ -226,7 +219,7 @@ describe("previously-omitted EventDef fields", () => {
       isTestEvent: true,
       forceOpen: true,
     });
-    const files = render(buildMod(CONFIG, [collection("events", [flagged])]));
+    const files = render(mod.compile([mod.feature("events", [flagged])]));
     const rendered = files.get("events/event_fields_events.txt")!;
     expect(rendered).toContain("event_message_type = event");
     expect(rendered).toContain("event_chain = event_fields_chain");
@@ -251,13 +244,12 @@ describe("previously-omitted EventDef fields", () => {
   it("lowers a situation reference", () => {
     const events = makeEvents();
     const target = eventTarget<"situation">("event_fields_situation");
-    const observed = events.defineCountryEvent({
-      id: 1013,
+    const observed = events.country(1013, {
       hideWindow: true,
       isTriggeredOnly: true,
       situation: target,
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [observed])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [observed])])).get(
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain("situation = event_target:event_fields_situation");
@@ -267,8 +259,7 @@ describe("previously-omitted EventDef fields", () => {
 describe("previously-omitted EventOption fields", () => {
   it("lowers icon, sound, exclusive_trigger, ai_chance, response_text, and the remaining flags", () => {
     const events = makeEvents();
-    const withOptions = events.defineCountryEvent({
-      id: 1020,
+    const withOptions = events.country(1020, {
       hideWindow: true,
       isTriggeredOnly: true,
       options: [
@@ -293,7 +284,7 @@ describe("previously-omitted EventOption fields", () => {
         },
       ],
     });
-    const files = render(buildMod(CONFIG, [collection("events", [withOptions])]));
+    const files = render(mod.compile([mod.feature("events", [withOptions])]));
     const rendered = files.get("events/event_fields_events.txt")!;
     expect(rendered).toContain(
       "icon = {\n\t\t\ticon = GFX_option_icon\n\t\t\ticon_background = GFX_option_bg\n\t\t\ttext = event_fields.1020.a.icon"
@@ -325,8 +316,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     // a hard crash on a legal `Modifier<S>` input (modifier_rule.cwt's `desc`).
     // Pinned with descKey so the emitted key is deterministic and readable;
     // the hash fallback (no descKey) is covered by the mirror-case test below.
-    const scheduled = events.defineCountryEvent({
-      id: 1030,
+    const scheduled = events.country(1030, {
       hideWindow: true,
       meanTimeToHappen: {
         days: 5,
@@ -368,7 +358,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       ],
     });
 
-    const files = render(buildMod(CONFIG, [collection("events", [scheduled])]));
+    const files = render(mod.compile([mod.feature("events", [scheduled])]));
     const rendered = files.get("events/event_fields_events.txt")!;
     expect(rendered).toContain(
       "mean_time_to_happen = {\n\t\tdays = 5\n\t\tmodifier = {\n\t\t\tfactor = 2\n\t\t\tdesc = event_fields.1030_mean_time_to_happen_mtth_tooltip"
@@ -399,8 +389,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       return match![1];
     };
 
-    const before = makeEvents().defineCountryEvent({
-      id: 1041,
+    const before = makeEvents().country(1041, {
       hideWindow: true,
       meanTimeToHappen: {
         days: 5,
@@ -419,7 +408,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
         ],
       },
     });
-    const beforeLoc = render(buildMod(CONFIG, [collection("events", [before])])).get(
+    const beforeLoc = render(mod.compile([mod.feature("events", [before])])).get(
       "localisation/english/event_fields_l_english.yml"
     )!;
     const pinnedKeyBefore = keyFor("Pinned tooltip\\.", beforeLoc);
@@ -433,8 +422,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     // Reorder: the unpinned row moves first. Both rows keep the exact same
     // key — the point of the shared, content-derived (not position-derived)
     // scheme.
-    const after = makeEvents().defineCountryEvent({
-      id: 1041,
+    const after = makeEvents().country(1041, {
       hideWindow: true,
       meanTimeToHappen: {
         days: 5,
@@ -453,7 +441,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
         ],
       },
     });
-    const afterLoc = render(buildMod(CONFIG, [collection("events", [after])])).get(
+    const afterLoc = render(mod.compile([mod.feature("events", [after])])).get(
       "localisation/english/event_fields_l_english.yml"
     )!;
     expect(keyFor("Pinned tooltip\\.", afterLoc)).toBe(pinnedKeyBefore);
@@ -462,8 +450,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
 
   it("surfaces an unstable-desc-key warning in mod.warnings when an event modifier desc has no descKey", () => {
     const events = makeEvents();
-    const unpinned = events.defineCountryEvent({
-      id: 1042,
+    const unpinned = events.country(1042, {
       hideWindow: true,
       meanTimeToHappen: {
         days: 5,
@@ -472,8 +459,8 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
         ],
       },
     });
-    const mod = buildMod(CONFIG, [collection("events", [unpinned])]);
-    const unstable = mod.warnings.filter((warning) => warning.code === "unstable-desc-key");
+    const compiled = mod.compile([mod.feature("events", [unpinned])]);
+    const unstable = compiled.warnings.filter((warning) => warning.code === "unstable-desc-key");
     expect(unstable).toHaveLength(1);
     expect(unstable[0]!.message).toContain("event_fields.1042");
     expect(unstable[0]!.message).toContain("mean_time_to_happen");
@@ -484,13 +471,12 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     const events = makeEvents();
     // A fleet event: majorTrigger must still accept a country-only predicate
     // (events.cwt:419-425 — it filters recipient countries, not fleets).
-    const flagged = events.defineFleetEvent({
-      id: 1031,
+    const flagged = events.fleet(1031, {
       hideWindow: true,
       major: true,
       majorTrigger: hasEventChain("event_fields_chain"),
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [flagged])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [flagged])])).get(
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain("major_trigger = {\n\t\thas_event_chain = event_fields_chain");
@@ -498,14 +484,13 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
 
   it("lowers situation = from via the same context-closure idiom as location", () => {
     const events = makeEvents();
-    const fromSituation = events.defineFleetEvent({
-      id: 1032,
+    const fromSituation = events.fleet(1032, {
       from: "situation",
       hideWindow: true,
       isTriggeredOnly: true,
       situation: (ctx) => ctx.from,
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [fromSituation])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [fromSituation])])).get(
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain("situation = from");
@@ -524,8 +509,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       return match![1];
     };
 
-    const before = makeEvents().defineCountryEvent({
-      id: 1040,
+    const before = makeEvents().country(1040, {
       hideWindow: true,
       meanTimeToHappen: {
         days: 5,
@@ -534,13 +518,12 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
         ],
       },
     });
-    const beforeLoc = render(buildMod(CONFIG, [collection("events", [before])])).get(
+    const beforeLoc = render(mod.compile([mod.feature("events", [before])])).get(
       "localisation/english/event_fields_l_english.yml"
     )!;
     const stableKeyBefore = keyFor("Stable tooltip\\.", beforeLoc);
 
-    const after = makeEvents().defineCountryEvent({
-      id: 1040,
+    const after = makeEvents().country(1040, {
       hideWindow: true,
       meanTimeToHappen: {
         days: 5,
@@ -550,7 +533,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
         ],
       },
     });
-    const afterLoc = render(buildMod(CONFIG, [collection("events", [after])])).get(
+    const afterLoc = render(mod.compile([mod.feature("events", [after])])).get(
       "localisation/english/event_fields_l_english.yml"
     )!;
     const stableKeyAfter = keyFor("Stable tooltip\\.", afterLoc);

@@ -214,6 +214,10 @@ describe("a scaffolded project", () => {
     expect(output).toContain("events/smoke_mod_example.txt");
     expect(output).toContain("descriptor.mod");
     expect(output).toContain("localisation/english/smoke_mod_l_english.yml");
+
+    const events = runIn(projectDir, "cat", ["out/events/smoke_mod_example.txt"]);
+    expect(events).toContain("namespace = smoke_mod");
+    expect(events).toContain("id = smoke_mod.1");
   });
 
   it("emits a descriptor the launcher can read", () => {
@@ -241,12 +245,9 @@ describe("a scaffolded project", () => {
   });
 
   it("installs end to end without rebuilding unchecked (SDK-54)", () => {
-    // `install.ts` used to construct its own `buildMod` call with no vanilla
-    // argument at all, second and silently unchecked, after `import { config }
-    // from "./index.ts"` had already forced a first, checked build as a side
-    // effect. Now `install.ts` imports the same `buildTheMod()` as
-    // `src/index.ts`, so there is exactly one fold, and this just proves the
-    // ordinary path still works end to end.
+    // install.ts imports the same buildTheMod() as src/index.ts, so there is
+    // exactly one capability compile and this proves the ordinary path still
+    // works end to end.
     const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-launcher-"));
     try {
       const output = execFileSync(process.execPath, ["src/install.ts"], {
@@ -299,32 +300,20 @@ describe("a scaffolded project", () => {
 }, 120_000);
 
 /**
- * The check that matters most: a scaffolded project built against a real
- * vanilla view rejects a content id that collides with one vanilla already
- * defines — rather than silently overriding it. This only means anything
- * against the real installed game, so it is skipped where SDK-54's fix can't
- * be exercised end to end — including when the install exists but its game
- * build has drifted from the workspace `@pdx-ts/stellaris-ids` tarball this
- * suite installs (see `realVanillaSuiteRunnable`), which would fail this
- * suite for a reason unrelated to SDK-54.
- *
- * Before the fix, `install.ts` built its own `PureMod` with no vanilla
- * argument, so `buildMod`'s collision guard had no vanilla ids to compare
- * against and could not have fired here — the guard only survived on the
- * unpatched template because importing `config` from `src/index.ts` forced an
- * earlier, *separate*, checked build as a side effect, which happened to
- * throw first. `installs cleanly...` below proves the checked build is now
- * the *only* one `npm run install-mod` runs.
+ * The real-vanilla check: a scaffolded project loads the version-matched
+ * vanilla view and installs cleanly. Capability-authored own ids are minted
+ * from the scaffold's prefix, so the old mutation to a full vanilla id is no
+ * longer a representable authoring operation.
  */
 describe.skipIf(!realVanillaSuiteRunnable)(
-  "npm run install-mod against a real vanilla view (SDK-54)",
+  "npm run install-mod against a real vanilla view",
   () => {
-    let collisionProjectDir: string;
+    let checkedProjectDir: string;
     let launcherModDir: string;
 
     beforeAll(async () => {
       const root = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-collision-"));
-      collisionProjectDir = path.join(root, "collision-mod");
+      checkedProjectDir = path.join(root, "checked-mod");
       launcherModDir = path.join(root, "launcher-mod-dir");
 
       const code = await main([
@@ -333,24 +322,24 @@ describe.skipIf(!realVanillaSuiteRunnable)(
         "--no-install",
         "--no-eslint",
         "--name",
-        "Collision Mod",
-        collisionProjectDir,
+        "Checked Mod",
+        checkedProjectDir,
       ]);
       expect(code).toBe(0);
       // Reuses the outer suite's already-packed tarballs — the SDK itself is
       // untouched by this fix, so nothing here needs a second `npm pack`.
-      installTarballs(collisionProjectDir, tarballDir);
+      installTarballs(checkedProjectDir, tarballDir);
     }, 300_000);
 
     afterAll(() => {
-      if (collisionProjectDir !== undefined) {
-        rmSync(path.dirname(collisionProjectDir), { recursive: true, force: true });
+      if (checkedProjectDir !== undefined) {
+        rmSync(path.dirname(checkedProjectDir), { recursive: true, force: true });
       }
     });
 
     function runInstallMod(): string {
       return execFileSync(process.execPath, ["src/install.ts"], {
-        cwd: collisionProjectDir,
+        cwd: checkedProjectDir,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
         // No PDX_NO_VANILLA here: the whole point is exercising the real
@@ -361,29 +350,8 @@ describe.skipIf(!realVanillaSuiteRunnable)(
 
     it("installs cleanly end to end when nothing collides", () => {
       const output = runInstallMod();
-      expect(output).toContain("Installed Collision Mod for the launcher:");
+      expect(output).toContain("Installed Checked Mod for the launcher:");
       expect(readdirSync(launcherModDir).length).toBeGreaterThan(0);
-    });
-
-    it("rejects a content id that collides with a real vanilla one, instead of silently overriding it", () => {
-      const examplePath = path.join(collisionProjectDir, "src/content/example.ts");
-      const original = readFileSync(examplePath, "utf8");
-      // tech_lasers_1 is a real vanilla technology id; buildMod's vanilla
-      // collision guard is the only thing standing between authoring it and
-      // the launcher silently receiving an override of vanilla content.
-      const withCollision = original.replace(
-        /id: "[a-z0-9_]+_tech_first_steps"/,
-        'id: "tech_lasers_1"'
-      );
-      expect(withCollision).not.toBe(original);
-      writeFileSync(examplePath, withCollision);
-      try {
-        expect(() => runInstallMod()).toThrowError(
-          /technology id "tech_lasers_1" collides with a vanilla technology/
-        );
-      } finally {
-        writeFileSync(examplePath, original);
-      }
     });
   },
   180_000

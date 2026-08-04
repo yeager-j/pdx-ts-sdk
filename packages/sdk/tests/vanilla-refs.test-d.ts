@@ -12,7 +12,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import {
-  defineTechnology,
+  createMod,
   scriptedEffect,
   scriptedTrigger,
   scriptedTriggerModifier,
@@ -35,8 +35,8 @@ describe("checked registry helpers without the package", () => {
   });
 
   it("flows into a ref field", () => {
-    defineTechnology({
-      id: "absent_probe_tech",
+    const mod = createMod({ name: "Absent", prefix: "absent_probe", supportedVersion: "4.4.*" });
+    mod.technology("probe", {
       name: "Probe",
       area: "physics",
       tier: 1,
@@ -46,8 +46,8 @@ describe("checked registry helpers without the package", () => {
   });
 
   it("still brands per registry, so a building is not a technology prerequisite", () => {
-    defineTechnology({
-      id: "absent_probe_tech_2",
+    const mod = createMod({ name: "Absent", prefix: "absent_probe", supportedVersion: "4.4.*" });
+    mod.technology("probe_2", {
       name: "Probe",
       area: "physics",
       tier: 1,

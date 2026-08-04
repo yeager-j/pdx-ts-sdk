@@ -30,9 +30,7 @@ import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
-  buildMod,
-  collection,
-  defineTechnology,
+  createMod,
   install,
   render,
   renderLauncherDescriptor,
@@ -52,10 +50,10 @@ const config: ModConfig = {
   tags: ["Technologies"],
 };
 
-const mod = buildMod(config, [
-  collection(undefined, [
-    defineTechnology({
-      id: "lp_probe_tech_marker",
+const capability = createMod(config);
+const mod = capability.compile([
+  capability.feature(undefined, [
+    capability.technology("marker", {
       name: "Marker",
       cost: 1000,
       area: "physics",
@@ -241,7 +239,7 @@ describe("install refuses a folder name that is not a folder name", () => {
   });
 
   it("checks the prefix default through the same gate, naming it as the default", async () => {
-    // `buildMod` validates its own prefix, so this is reachable only through a
+    // The compile validates its own prefix, so this is reachable only through a
     // hand-built `PureMod` — but `install` takes a `PureMod`, not a build, and
     // the value that decides a recursive delete is not one to take on trust.
     const root = tempDir();
@@ -259,12 +257,11 @@ describe("install is atomic in the ways that matter", () => {
     const vanilla = viewFromFiles({
       "common/technology/lp_probe_technology.txt": "tech_squatter = {\n\tarea = physics\n}\n",
     });
-    return buildMod(
-      config,
+    const capability = createMod(config);
+    return capability.compile(
       [
-        collection(undefined, [
-          defineTechnology({
-            id: "lp_probe_tech_marker",
+        capability.feature(undefined, [
+          capability.technology("marker", {
             name: "Marker",
             cost: 1000,
             area: "physics",

@@ -2,56 +2,28 @@ import { createHash } from "node:crypto";
 import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import { buildMod as buildInternal } from "../src/build.ts";
 import {
   ContentAuthoring,
   registerAliasStructFields,
   type ContentField,
   type ContentRegistryDescriptor,
 } from "../src/content.ts";
+import { defineSituationType } from "../src/definers.ts";
 import {
-  addShipOfSizeLimits,
+  defineShipSize,
+  defineTradition,
+  defineUtilityComponentTemplate,
+  defineWeaponComponentTemplate,
+} from "../src/generated/content-definers.ts";
+import {
   always,
   and,
-  buildMod,
   canGoMia,
   canJoinFactions,
-  collection,
+  createMod,
   currentSituationApproach,
   currentStage,
-  defineAgenda,
-  defineAgreementPreset,
-  defineAmbientObject,
-  defineArchaeologicalSiteType,
-  defineAscensionPerk,
-  defineBombardmentStance,
-  defineBuilding,
-  defineCasusBelli,
-  defineCivicOrOrigin,
-  defineComponentSet,
-  defineCouncilor,
-  defineCountryShipOfSizeLimit,
-  defineDecision,
-  defineEconomicCategory,
-  defineEdict,
-  defineGlobalShipDesign,
-  defineGraphicalCulture,
-  defineJob,
-  defineOpinionModifier,
-  defineScriptedLoc,
-  defineScriptedModifier,
-  defineSectionTemplate,
-  defineShipSize,
-  defineSituationType,
-  defineSolarSystemInitializer,
-  defineSpeciesClass,
-  defineStarbaseLevel,
-  defineStaticModifier,
-  defineStrikeCraftComponentTemplate,
-  defineTradition,
-  defineTraditionCategory,
-  defineUtilityComponentTemplate,
-  defineWarGoal,
-  defineWeaponComponentTemplate,
   hasAuthority,
   hasCountryFlag,
   hasPlanetFlag,
@@ -62,7 +34,6 @@ import {
   isCapital,
   isScopeValid,
   isSiteLocked,
-  namespace,
   render,
   scriptedTriggerModifier,
   type Modifier,
@@ -70,20 +41,47 @@ import {
   type ScopeName,
   type SpriteRef,
 } from "../src/index.ts";
+import { collection as collectionInternal, type ModItem } from "../src/items.ts";
 
 function configFor(name: string, prefix: string) {
   return { name, prefix, supportedVersion: "4.4.*" };
 }
 
+function capabilityFor(config: ReturnType<typeof configFor>) {
+  const defaults = createMod(config);
+  return createMod(config, {
+    ids: {
+      ...defaults.ids,
+      situationType: "situation",
+      civicOrOrigin: "civic",
+      solarSystemInitializer: "system",
+      starbaseLevel: "starbase",
+      utilityComponentTemplate: "util",
+      weaponComponentTemplate: "weapon",
+      strikeCraftComponentTemplate: "strike_craft",
+      globalShipDesign: "ship_design",
+    },
+  });
+}
+
 const CONFIG = configFor("Content test", "content_test");
 
 function defineContentExample(): PureMod {
+  const defaultMod = createMod(CONFIG);
+  const mod = createMod(CONFIG, {
+    ids: {
+      ...defaultMod.ids,
+      situationType: "situation",
+      civicOrOrigin: "civic",
+      countryShipOfSizeLimit: "ship_of_size_limit",
+      solarSystemInitializer: "system",
+    },
+  });
   // Event identity is authored: the namespace is declared here, and the
-  // `collection(...)` at the fold names the file the events land in.
-  const events = namespace("content_test");
+  // `feature(...)` names the file the events land in at compile time.
+  const events = mod.namespace();
 
-  const agenda = defineAgenda({
-    id: "content_test_agenda_machine_futures",
+  const agenda = mod.agenda("machine_futures", {
     name: "Machine Futures",
     desc: "Direct the council toward synthetic ascension.",
     agendaCost: 1_000,
@@ -101,8 +99,7 @@ function defineContentExample(): PureMod {
     },
   });
 
-  const machineMobilization = defineEdict({
-    id: "content_test_edict_machine_mobilization",
+  const machineMobilization = mod.edict("machine_mobilization", {
     name: "Machine Mobilization",
     description: "Redirect the economy toward immediate expansion.",
     length: 3_600,
@@ -149,8 +146,7 @@ function defineContentExample(): PureMod {
     onDisabled: (country) => country.removeCountryFlag("content_test_machine_mobilization_active"),
   });
 
-  const experimentalLab = defineBuilding({
-    id: "content_test_building_lab_1",
+  const experimentalLab = mod.building("lab_1", {
     name: "Experimental Lab",
     desc: "A proving ground for impossible ideas.",
     baseBuildtime: 360,
@@ -170,8 +166,7 @@ function defineContentExample(): PureMod {
     convertTo: ["building_ruined_lab"],
   });
 
-  const tradition = defineTradition({
-    id: "content_test_tradition_ascension",
+  const tradition = mod.tradition("ascension", {
     name: "Synthetic Ascension",
     flavor: "The flesh is a temporary constraint.",
     effects: "Our people approach mechanical perfection.",
@@ -202,8 +197,7 @@ function defineContentExample(): PureMod {
     },
   });
 
-  const traditionCategory = defineTraditionCategory({
-    id: "content_test_tradition_category_machines",
+  const traditionCategory = mod.traditionCategory("machines", {
     name: "Machine Futures",
     desc: "Choose the shape of tomorrow.",
     treeTemplate: "tree_template_5",
@@ -214,8 +208,7 @@ function defineContentExample(): PureMod {
     aiWeight: { base: 50 },
   });
 
-  const ascensionPerk = defineAscensionPerk({
-    id: "content_test_ascension_perk_machine_futures",
+  const ascensionPerk = mod.ascensionPerk("machine_futures", {
     name: "Machine Futures",
     desc: "Our future belongs to forms we choose.",
     potential: hasAuthority("auth_machine_intelligence"),
@@ -252,8 +245,7 @@ function defineContentExample(): PureMod {
     },
   });
 
-  const decision = defineDecision({
-    id: "content_test_decision_machine_ascendancy",
+  const decision = mod.decision("machine_ascendancy", {
     name: "Pursue Machine Ascendancy",
     desc: "Redirect national effort toward synthetic transcendence.",
     ownedPlanetsOnly: true,
@@ -282,8 +274,7 @@ function defineContentExample(): PureMod {
     prerequisites: ["tech_global_production_strategy"],
   });
 
-  const job = defineJob({
-    id: "content_test_job_synthetic_technician",
+  const job = mod.job("synthetic_technician", {
     name: "Synthetic Technician",
     plural: "Synthetic Technicians",
     desc: "Maintains the machine collective's growing infrastructure.",
@@ -352,8 +343,7 @@ function defineContentExample(): PureMod {
     autoTraitPrio: ["trait_thrifty"],
   });
 
-  const opinionModifier = defineOpinionModifier({
-    id: "content_test_opinion_modifier_diplomatic_thaw",
+  const opinionModifier = mod.opinionModifier("diplomatic_thaw", {
     name: "Diplomatic Thaw",
     opinion: {
       base: 20,
@@ -371,8 +361,7 @@ function defineContentExample(): PureMod {
 
   // The modifier rows land at the block root, next to the metadata keys —
   // static_modifier splices `alias_name[modifier]` unkeyed at its top level.
-  const staticModifier = defineStaticModifier({
-    id: "content_test_static_modifier_synthetic_surge",
+  const staticModifier = mod.staticModifier("synthetic_surge", {
     name: "Synthetic Surge",
     desc: "Machine empires push their production past its rated limits.",
     modifiers: (m) => {
@@ -387,8 +376,7 @@ function defineContentExample(): PureMod {
     hideFromCountryList: true,
   });
 
-  const shipSize = defineShipSize({
-    id: "content_test_ship_size_synth_cruiser",
+  const shipSize = mod.shipSize("synth_cruiser", {
     name: "Synthetic Cruiser",
     class: "shipclass_military",
     // Engine-keyed, not mod-prefixed: section templates mount to these names.
@@ -401,8 +389,7 @@ function defineContentExample(): PureMod {
     shipModifier: (m) => m.ship.weapon.damage(0.05),
   });
 
-  const scriptedModifier = defineScriptedModifier({
-    id: "content_test_scripted_modifier_synthetic_output",
+  const scriptedModifier = mod.scriptedModifier("synthetic_output", {
     name: "Synthetic Output",
     icon: "GFX_scripted_modifier_synthetic_output",
     percentage: true,
@@ -417,8 +404,7 @@ function defineContentExample(): PureMod {
     category: "country",
   });
 
-  const casusBelli = defineCasusBelli({
-    id: "content_test_casus_belli_manufactured_grievance",
+  const casusBelli = mod.casusBelli("manufactured_grievance", {
     name: "Manufactured Grievance",
     hint: "Fabricate a pretext for war.",
     potential: hasAuthority("auth_machine_intelligence"),
@@ -430,8 +416,7 @@ function defineContentExample(): PureMod {
     aggregatedMessageKey: "content_test_casus_belli_aggregated",
   });
 
-  const warGoal = defineWarGoal({
-    id: "content_test_war_goal_liberation",
+  const warGoal = mod.warGoal("liberation", {
     name: "Liberation",
     desc: "Free the occupied systems.",
     casusBelli,
@@ -465,8 +450,7 @@ function defineContentExample(): PureMod {
     },
   });
 
-  const agreementPreset = defineAgreementPreset({
-    id: "content_test_agreement_preset_tribute",
+  const agreementPreset = mod.agreementPreset("tribute", {
     name: "Tribute",
     desc: "A modest tribute agreement.",
     flavor: "Coin for peace.",
@@ -488,8 +472,7 @@ function defineContentExample(): PureMod {
     canPresetBeChanged: true,
   });
 
-  const bombardmentStance = defineBombardmentStance({
-    id: "content_test_bombardment_stance_scorched_earth",
+  const bombardmentStance = mod.bombardmentStance("scorched_earth", {
     name: "Scorched Earth",
     desc: "Bombard with no restraint.",
     trigger: canGoMia(),
@@ -513,11 +496,10 @@ function defineContentExample(): PureMod {
   // They were country events until the ref brand started checking, which is
   // the whole point of the brand — the game would have refused these.
   const digEvents = [1, 2, 3].map((id) =>
-    events.defineFleetEvent({ id, hideWindow: true, isTriggeredOnly: true })
+    events.fleet(id, { hideWindow: true, isTriggeredOnly: true })
   );
 
-  const archaeologicalSiteType = defineArchaeologicalSiteType({
-    id: "content_test_archaeological_site_type_derelict",
+  const archaeologicalSiteType = mod.archaeologicalSiteType("derelict", {
     name: "Derelict Outpost",
     desc: "The ruins of a forgotten station.",
     picture: "GFX_archaeological_site_derelict",
@@ -549,8 +531,7 @@ function defineContentExample(): PureMod {
     onVisible: (country) => country.setCountryFlag("content_test_site_visible"),
   });
 
-  const situationType = defineSituationType({
-    id: "content_test_situation_machine_uprising",
+  const situationType = mod.situationType("machine_uprising", {
     name: "Machine Uprising",
     desc: "The machines stir beneath the surface.",
     category: "negative",
@@ -639,8 +620,7 @@ function defineContentExample(): PureMod {
     },
   });
 
-  const scriptedLoc = defineScriptedLoc({
-    id: "content_test_scripted_loc_flavor_text",
+  const scriptedLoc = mod.scriptedLoc("flavor_text", {
     random: false,
     // scripted_loc carries no fixed scope in the rules, so only a scope-agnostic
     // trigger like always() type-checks here — the same reasoning as decision.potential.
@@ -656,8 +636,7 @@ function defineContentExample(): PureMod {
     default: "content_test_scripted_loc_flavor_text_default",
   });
 
-  const councilor = defineCouncilor({
-    id: "content_test_councilor_chancellor",
+  const councilor = mod.councilor("chancellor", {
     name: "Chancellor",
     desc: "Presides over the ruling council.",
     leaderClass: ["leader_class_official"],
@@ -682,8 +661,7 @@ function defineContentExample(): PureMod {
     },
   });
 
-  const economicCategory = defineEconomicCategory({
-    id: "content_test_economic_category_research",
+  const economicCategory = mod.economicCategory("research", {
     useForAiBudget: true,
     modifierCategory: "economic_unit",
     addUnscaledValueToTooltip: false,
@@ -700,8 +678,7 @@ function defineContentExample(): PureMod {
     ],
   });
 
-  const civicOrOrigin = defineCivicOrOrigin({
-    id: "content_test_civic_meritocracy",
+  const civicOrOrigin = mod.civicOrOrigin("meritocracy", {
     name: "Meritocracy",
     desc: "Leadership is earned, not inherited.",
     // no_scope AND triggers — real Triggers, not government_trigger, per the
@@ -749,8 +726,7 @@ function defineContentExample(): PureMod {
     ],
   });
 
-  const componentSet = defineComponentSet({
-    id: "content_test_component_set_reactor",
+  const componentSet = mod.componentSet("reactor", {
     name: "Reactor Boosters",
     desc: "Auxiliary reactor components.",
     shipDesc: "Ship-mounted reactor boosters.",
@@ -764,8 +740,7 @@ function defineContentExample(): PureMod {
   // name_field registry keyed by the repeated `ship_section_template` keyword,
   // with `resources`/`modifier`/`ship_modifier` exercising the overlay's
   // economicResources/modifierBlock shapes.
-  const sectionTemplate = defineSectionTemplate({
-    id: "content_test_section_template_core",
+  const sectionTemplate = mod.sectionTemplate("core", {
     name: "Core Section",
     shipSize: ["ship_size_corvette"],
     fitsOnSlot: ["core"],
@@ -787,8 +762,7 @@ function defineContentExample(): PureMod {
     shipModifier: (m) => m.unchecked("ship_hull_mult", 0.05),
   });
 
-  const ambientObject = defineAmbientObject({
-    id: "content_test_ambient_object_wreck",
+  const ambientObject = mod.ambientObject("wreck", {
     name: "Adrift Hulk",
     entity: "content_test_ambient_wreck_entity",
     selectable: true,
@@ -800,8 +774,7 @@ function defineContentExample(): PureMod {
     tooltip: "content_test_ambient_object_wreck_tooltip",
   });
 
-  const graphicalCulture = defineGraphicalCulture({
-    id: "content_test_graphical_culture_synthetic",
+  const graphicalCulture = mod.graphicalCulture("synthetic", {
     hasCityGraphics: false,
     fallback: "graphical_culture_01",
     shipColor: true,
@@ -826,8 +799,7 @@ function defineContentExample(): PureMod {
     },
   });
 
-  const starbaseLevel = defineStarbaseLevel({
-    id: "content_test_starbase_level_outpost",
+  const starbaseLevel = mod.starbaseLevel("outpost", {
     shipSize: "ship_size_starbase_i",
     // Vanilla's starport, for the same reason `upgrades` above names a vanilla
     // building: this fixture defines exactly one starbase level.
@@ -848,8 +820,7 @@ function defineContentExample(): PureMod {
     buildingSlots: [1, "lower_1"],
   });
 
-  const speciesClass = defineSpeciesClass({
-    id: "content_test_species_class_precursor",
+  const speciesClass = mod.speciesClass("precursor", {
     name: "Precursor",
     desc: "An ancient and enigmatic lineage.",
     plural: "Precursors",
@@ -883,8 +854,7 @@ function defineContentExample(): PureMod {
   // shipTypes, and a `show` written the way all 7 shipped entries write it —
   // is_scope_valid plus a country condition. The overlay asserts the country
   // scope the rules omit; without it this clause would not type-check.
-  const titanLimit = defineCountryShipOfSizeLimit({
-    id: "content_test_ship_of_size_limit_titan",
+  const titanLimit = mod.countryShipOfSizeLimit("titan", {
     shipTypes: [shipSize, "ship_size_titan"],
     base: 80,
     max: 1600,
@@ -893,12 +863,11 @@ function defineContentExample(): PureMod {
   });
 
   // Not a define: the ownership limit has no id this mod owns.
-  const ownershipLimits = addShipOfSizeLimits([titanLimit]);
+  const ownershipLimits = mod.addShipOfSizeLimits([titanLimit]);
 
   // The neighbor a system links to, defined first so the link below is a
   // branded ref into this same registry rather than a raw string.
-  const neighborSystem = defineSolarSystemInitializer({
-    id: "content_test_system_outpost",
+  const neighborSystem = mod.solarSystemInitializer("outpost", {
     class: "sc_g",
     usage: ["misc_system_init"],
     planet: [{ class: "star", size: 20, orbitDistance: 0, orbitAngle: 0 }],
@@ -912,8 +881,7 @@ function defineContentExample(): PureMod {
   // the long form (a `class: "none"` sibling with its own `orbitDistance`)
   // is the only spelling. It sits between the planet and its moons on
   // purpose, the same position `change_orbit` itself would occupy.
-  const homeSystem = defineSolarSystemInitializer({
-    id: "content_test_system_home",
+  const homeSystem = mod.solarSystemInitializer("home", {
     class: "rl_standard_stars",
     flags: ["content_test_home_system"],
     usage: ["custom_empire"],
@@ -961,8 +929,8 @@ function defineContentExample(): PureMod {
     ],
   });
 
-  return buildMod(CONFIG, [
-    collection(undefined, [
+  return mod.compile([
+    mod.feature(undefined, [
       agenda,
       machineMobilization,
       experimentalLab,
@@ -996,7 +964,7 @@ function defineContentExample(): PureMod {
       neighborSystem,
       homeSystem,
     ]),
-    collection("events", digEvents),
+    mod.feature("events", digEvents),
   ]);
 }
 
@@ -1063,9 +1031,9 @@ describe("generated content registries", () => {
   });
 
   it("lowers recorder paths, raw names, and unchecked names identically", () => {
-    const traditions = collection(undefined, [
-      defineTradition({
-        id: "rec_test_tradition",
+    const mod = capabilityFor(configFor("Recorder test", "rec_test"));
+    const traditions = mod.feature(undefined, [
+      mod.tradition("record", {
         name: "X",
         modifier: (m) => {
           m.country.unity.produces.mult(0.01);
@@ -1075,7 +1043,7 @@ describe("generated content registries", () => {
         },
       }),
     ]);
-    const rendered = render(buildMod(configFor("Recorder test", "rec_test"), [traditions])).get(
+    const rendered = render(mod.compile([traditions])).get(
       "common/traditions/rec_test_traditions.txt"
     );
     expect(rendered).toContain("country_unity_produces_mult = 0.01");
@@ -1120,9 +1088,9 @@ describe("generated content registries", () => {
     // versus a modifier_rule block, gated to the dynamic_progress subtype) are
     // each declared twice; the union type keeps the block form's gated
     // adjustments authorable.
-    const situationTypes = collection(undefined, [
-      defineSituationType({
-        id: "sw_test_situation_dynamic",
+    const mod = capabilityFor(configFor("Section weights test", "sw_test"));
+    const situationTypes = mod.feature(undefined, [
+      mod.situationType("dynamic", {
         name: "Dynamic Progress Situation",
         monthlyProgress: { base: 1 },
         totalProgress: { base: 60_000, modifiers: [{ factor: 2, when: always() }] },
@@ -1136,9 +1104,9 @@ describe("generated content registries", () => {
         },
       }),
     ]);
-    const rendered = render(
-      buildMod(configFor("Section weights test", "sw_test"), [situationTypes])
-    ).get("common/situations/sw_test_situations.txt");
+    const rendered = render(mod.compile([situationTypes])).get(
+      "common/situations/sw_test_situations.txt"
+    );
     expect(rendered).toContain(
       "total_progress = {\n\t\tbase = 60000\n\t\tmodifier = {\n\t\t\tfactor = 2\n\t\t\talways = yes\n\t\t}\n\t}"
     );
@@ -1149,9 +1117,9 @@ describe("generated content registries", () => {
     // Vanilla writes `end = 100` 254 times against 1 block, so the scalar form
     // is the common case; it must serialize as a plain assignment, not as an
     // empty weight block.
-    const situationTypes = collection(undefined, [
-      defineSituationType({
-        id: "se_test_situation_plain",
+    const mod = capabilityFor(configFor("Scalar end test", "se_test"));
+    const situationTypes = mod.feature(undefined, [
+      mod.situationType("plain", {
         name: "Plain Situation",
         monthlyProgress: { base: 1 },
         progressDirection: "bidirectional",
@@ -1165,24 +1133,24 @@ describe("generated content registries", () => {
         },
       }),
     ]);
-    const rendered = render(
-      buildMod(configFor("Scalar end test", "se_test"), [situationTypes])
-    ).get("common/situations/se_test_situations.txt");
+    const rendered = render(mod.compile([situationTypes])).get(
+      "common/situations/se_test_situations.txt"
+    );
     expect(rendered).toContain("end = 100");
     expect(rendered).not.toContain("end = {");
     expect(rendered).toContain("progress_direction = bidirectional");
   });
 
   it("emits current_situation_approach/current_stage identically once checked (SDK-52)", () => {
+    const cap = capabilityFor(configFor("Situation approach test", "sa_test"));
     // currentSituationApproach/currentStage are now hand-written overrides of
     // the generated leaves (see src/triggers.ts), checked against this same
     // call's own `approach`/`stages` keys — a compile-time-only change. This
     // pins that the emitted bytes are exactly what the plain generated
     // `kv("current_situation_approach"/"current_stage", value)` always wrote:
     // one scalar assignment, no extra wrapping, no recorded content ref.
-    const situationTypes = collection(undefined, [
-      defineSituationType({
-        id: "sa_test_situation",
+    const situationTypes = cap.feature(undefined, [
+      cap.situationType("approach", {
         name: "Situation",
         monthlyProgress: { base: 1 },
         abortTrigger: and(
@@ -1207,9 +1175,9 @@ describe("generated content registries", () => {
         },
       }),
     ]);
-    const rendered = render(
-      buildMod(configFor("Situation approach test", "sa_test"), [situationTypes])
-    ).get("common/situations/sa_test_situations.txt");
+    const rendered = render(cap.compile([situationTypes])).get(
+      "common/situations/sa_test_situations.txt"
+    );
     // and()'s two operands splice flat with no AND wrapper (SDK-53) — each
     // leaf's own emission is still the plain, unwrapped scalar this test
     // pins; only the (already implicit-AND) abort_trigger block around them
@@ -1224,11 +1192,11 @@ describe("generated content registries", () => {
   });
 
   it("emits conditionalDesc under the game's desc key", () => {
+    const cap = capabilityFor(configFor("Conditional desc test", "cd_test"));
     // The authoring member is renamed to dodge the desc flavor-text slot, but
     // the serialized key is still `desc`, one block per entry.
-    const situationTypes = collection(undefined, [
-      defineSituationType({
-        id: "cd_test_situation",
+    const situationTypes = cap.feature(undefined, [
+      cap.situationType("conditional", {
         name: "Situation",
         monthlyProgress: { base: 1 },
         conditionalDesc: [
@@ -1237,9 +1205,9 @@ describe("generated content registries", () => {
         ],
       }),
     ]);
-    const rendered = render(
-      buildMod(configFor("Conditional desc test", "cd_test"), [situationTypes])
-    ).get("common/situations/cd_test_situations.txt");
+    const rendered = render(cap.compile([situationTypes])).get(
+      "common/situations/cd_test_situations.txt"
+    );
     expect(rendered).toContain(
       "desc = {\n\t\ttrigger = {\n\t\t\talways = yes\n\t\t}\n\t\ttext = cd_test_situation_desc_alt\n\t}"
     );
@@ -1247,15 +1215,15 @@ describe("generated content registries", () => {
   });
 
   it("emits random_events as weight = event rows with 0 for the empty arm", () => {
+    const cap = capabilityFor(configFor("Random events test", "re_test"));
     // The fired event has to exist in the build: buildMod scans emitted
     // scalars for ids shaped like this mod's own and demands a definition.
-    const eventNamespace = namespace("re_test_event");
-    const events = collection("events", [
-      eventNamespace.defineCountryEvent({ id: 1, hideWindow: true, isTriggeredOnly: true }),
+    const eventNamespace = cap.namespace("event");
+    const events = cap.feature("events", [
+      eventNamespace.country(1, { hideWindow: true, isTriggeredOnly: true }),
     ]);
-    const situationTypes = collection(undefined, [
-      defineSituationType({
-        id: "re_test_situation",
+    const situationTypes = cap.feature(undefined, [
+      cap.situationType("monthly", {
         name: "Situation",
         monthlyProgress: { base: 1 },
         onMonthly: {
@@ -1263,23 +1231,23 @@ describe("generated content registries", () => {
         },
       }),
     ]);
-    const rendered = render(
-      buildMod(configFor("Random events test", "re_test"), [situationTypes, events])
-    ).get("common/situations/re_test_situations.txt");
+    const rendered = render(cap.compile([situationTypes, events])).get(
+      "common/situations/re_test_situations.txt"
+    );
     expect(rendered).toContain(
       "on_monthly = {\n\t\trandom_events = {\n\t\t\t100 = re_test_event.1\n\t\t\t20 = 0\n\t\t}\n\t}"
     );
   });
 
   it("lowers a WeightBlock top-level operation beside base (SDK-35)", () => {
+    const cap = capabilityFor(configFor("Weight block operation test", "wb_test"));
     // Real vanilla, verbatim: common/traditions/01_cloning.txt's
     // tr_cloning_evolutionary_extrapolation sets `ai_weight = { factor = 5000 }`
     // with no `base` at all — a bare top-level `complex_maths_enum` member,
     // which WeightBlock could only express before this fix by lying and
     // calling it `base`. 292 of 293 weight/ai_weight blocks in this same
     // directory use a top-level operation rather than `base`.
-    const tradition = defineTradition({
-      id: "wb_test_tradition_extrapolation",
+    const tradition = cap.tradition("extrapolation", {
       name: "Evolutionary Extrapolation",
       customTooltipWithModifiers: ["wb_test_tradition_extrapolation_tt"],
       modifier: (m) => {
@@ -1288,16 +1256,15 @@ describe("generated content registries", () => {
       },
       aiWeight: { factor: 5000 },
     });
-    const rendered = render(
-      buildMod(configFor("Weight block operation test", "wb_test"), [
-        collection(undefined, [tradition]),
-      ])
-    ).get("common/traditions/wb_test_traditions.txt");
+    const rendered = render(cap.compile([cap.feature(undefined, [tradition])])).get(
+      "common/traditions/wb_test_traditions.txt"
+    );
     expect(rendered).toContain("ai_weight = {\n\t\tfactor = 5000\n\t}");
     expect(rendered).not.toContain("ai_weight = {\n\t\tbase = 5000");
   });
 
   it("lowers a complex_trigger_modifier row alongside a Modifier row (SDK-36)", () => {
+    const cap = capabilityFor(configFor("Weight block complex trigger modifier test", "wb_test"));
     // Real vanilla, verbatim: common/inline_scripts/solar_system_initializers/
     // initializer_modifiers_habitable_world_systems.txt, spliced into every
     // unique_system_initializer's usage_odds (e.g. unique_system_initializer_02,
@@ -1318,8 +1285,7 @@ describe("generated content registries", () => {
     // scope — `is_fe_cluster`/`is_marauder_cluster`/`has_star_flag` do not,
     // and neither does anything short of `always()`. The
     // complex_trigger_modifier row carries the actual evidence and is exact.
-    const system = defineSolarSystemInitializer({
-      id: "wb_test_system_unique",
+    const system = cap.solarSystemInitializer("unique", {
       class: "sc_neutron_star",
       usage: ["misc_system_init"],
       usageOdds: {
@@ -1334,11 +1300,9 @@ describe("generated content registries", () => {
         ],
       },
     });
-    const rendered = render(
-      buildMod(configFor("Weight block complex trigger modifier test", "wb_test"), [
-        collection(undefined, [system]),
-      ])
-    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    const rendered = render(cap.compile([cap.feature(undefined, [system])])).get(
+      "common/solar_system_initializers/wb_test_solar_system_initializers.txt"
+    );
     expect(rendered).toContain(
       "usage_odds = {\n" +
         "\t\tbase = 1\n" +
@@ -1369,9 +1333,11 @@ describe("generated content registries", () => {
   // same block twice, with every reversible key in reverse order the second
   // time, and pin both that the two authored orders render byte-identically
   // and what the one true emitted order actually is.
-  function weightBlockOperationOrderProbe(reversed: boolean) {
-    return defineTradition({
-      id: "wb_test_tradition_operation_order",
+  function weightBlockOperationOrderProbe(
+    mod: ReturnType<typeof capabilityFor>,
+    reversed: boolean
+  ) {
+    return mod.tradition("operation_order", {
       name: "Operation Order",
       aiWeight: reversed
         ? {
@@ -1400,15 +1366,12 @@ describe("generated content registries", () => {
   }
 
   it("renders WeightBlock's top-level operations byte-identically regardless of authored key order (SDK-35)", () => {
+    const cap = capabilityFor(configFor("Weight block operation order test", "wb_test"));
     const forwardContent = render(
-      buildMod(configFor("Weight block operation order test", "wb_test"), [
-        collection(undefined, [weightBlockOperationOrderProbe(false)]),
-      ])
+      cap.compile([cap.feature(undefined, [weightBlockOperationOrderProbe(cap, false)])])
     ).get("common/traditions/wb_test_traditions.txt");
     const backwardContent = render(
-      buildMod(configFor("Weight block operation order test", "wb_test"), [
-        collection(undefined, [weightBlockOperationOrderProbe(true)]),
-      ])
+      cap.compile([cap.feature(undefined, [weightBlockOperationOrderProbe(cap, true)])])
     ).get("common/traditions/wb_test_traditions.txt");
     expect(forwardContent).toBeDefined();
     expect(backwardContent).toEqual(forwardContent);
@@ -1430,9 +1393,11 @@ describe("generated content registries", () => {
     );
   });
 
-  function complexTriggerModifierOperationOrderProbe(reversed: boolean) {
-    return defineSolarSystemInitializer({
-      id: "wb_test_system_operation_order",
+  function complexTriggerModifierOperationOrderProbe(
+    mod: ReturnType<typeof capabilityFor>,
+    reversed: boolean
+  ) {
+    return mod.solarSystemInitializer("operation_order", {
       class: "sc_g",
       usageOdds: {
         modifiers: [
@@ -1472,15 +1437,12 @@ describe("generated content registries", () => {
   }
 
   it("renders a complex_trigger_modifier row's fields byte-identically regardless of authored key order (SDK-36, bug bash #16 finding 2)", () => {
+    const cap = capabilityFor(configFor("Weight block ctm operation order test", "wb_test"));
     const forwardContent = render(
-      buildMod(configFor("Weight block ctm operation order test", "wb_test"), [
-        collection(undefined, [complexTriggerModifierOperationOrderProbe(false)]),
-      ])
+      cap.compile([cap.feature(undefined, [complexTriggerModifierOperationOrderProbe(cap, false)])])
     ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
     const backwardContent = render(
-      buildMod(configFor("Weight block ctm operation order test", "wb_test"), [
-        collection(undefined, [complexTriggerModifierOperationOrderProbe(true)]),
-      ])
+      cap.compile([cap.feature(undefined, [complexTriggerModifierOperationOrderProbe(cap, true)])])
     ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
     expect(forwardContent).toBeDefined();
     expect(backwardContent).toEqual(forwardContent);
@@ -1509,6 +1471,7 @@ describe("generated content registries", () => {
   });
 
   it("throws rather than silently drop fields from a WeightBlock row satisfying both arms (bug bash #16 finding 4)", () => {
+    const cap = capabilityFor(configFor("Weight block hybrid row test", "wb_test"));
     // The type-level fix (ExclusiveModifierRow/ExclusiveComplexTriggerModifierRow
     // in content.ts) closes this for every authoring path that goes through
     // the exported types, but the check is erased at runtime — a value
@@ -1523,21 +1486,17 @@ describe("generated content registries", () => {
       trigger: "x",
       mode: "factor",
     } as unknown as Modifier<ScopeName>;
-    const tradition = defineTradition({
-      id: "wb_test_tradition_hybrid_row",
+    const tradition = cap.tradition("hybrid_row", {
       name: "Hybrid Row",
       aiWeight: { modifiers: [hybridRow] },
     });
-    expect(() =>
-      render(
-        buildMod(configFor("Weight block hybrid row test", "wb_test"), [
-          collection(undefined, [tradition]),
-        ])
-      )
-    ).toThrow(/has both a Modifier's `when` and a ComplexTriggerModifier's `trigger`\/`mode`/);
+    expect(() => render(cap.compile([cap.feature(undefined, [tradition])]))).toThrow(
+      /has both a Modifier's `when` and a ComplexTriggerModifier's `trigger`\/`mode`/
+    );
   });
 
   it("resolves desc keys independently when a row object is shared across two definitions (bug bash #16 finding 3)", () => {
+    const cap = capabilityFor(configFor("Weight block shared row test", "wb_test"));
     // A shared "gate condition" pulled out to avoid repeating it is a
     // realistic reason an author reuses the exact same row object in two
     // definitions. A WeakMap keyed only by the row's identity has one slot
@@ -1554,26 +1513,23 @@ describe("generated content registries", () => {
     // both definitions share the same pinned slug (same row, same text) but
     // still resolve to their own owner-prefixed key.
     const sharedRow = { mult: 2, desc: "Shared gate.", descKey: "shared_gate", when: always() };
-    const first = defineTradition({
-      id: "wb_test_tradition_shared_row_first",
+    const first = cap.tradition("shared_row_first", {
       name: "Shared Row First",
       aiWeight: { modifiers: [sharedRow] },
     });
-    const second = defineTradition({
-      id: "wb_test_tradition_shared_row_second",
+    const second = cap.tradition("shared_row_second", {
       name: "Shared Row Second",
       aiWeight: { modifiers: [sharedRow] },
     });
-    const rendered = render(
-      buildMod(configFor("Weight block shared row test", "wb_test"), [
-        collection(undefined, [first, second]),
-      ])
-    ).get("common/traditions/wb_test_traditions.txt")!;
+    const rendered = render(cap.compile([cap.feature(undefined, [first, second])])).get(
+      "common/traditions/wb_test_traditions.txt"
+    )!;
     expect(rendered).toContain("desc = wb_test_tradition_shared_row_first_ai_weight_shared_gate");
     expect(rendered).toContain("desc = wb_test_tradition_shared_row_second_ai_weight_shared_gate");
   });
 
   it("lowers scriptedTriggerModifier's checked trigger/parameters into a complex_trigger_modifier row (bug bash #16 finding 5)", () => {
+    const cap = capabilityFor(configFor("Weight block scripted trigger modifier test", "wb_test"));
     // scriptedTriggerModifier checks the name and parameter bag against
     // @pdx-ts/stellaris-ids's scripted triggers when installed (see
     // packages/stellaris-ids/tests/present.test-d.ts for the checked-world
@@ -1583,8 +1539,7 @@ describe("generated content registries", () => {
     // like one authored by hand. has_crisis_stage is a real vanilla scripted
     // trigger (common/scripted_triggers/00_scripted_triggers.txt) with one
     // defaulted parameter.
-    const system = defineSolarSystemInitializer({
-      id: "wb_test_system_scripted_trigger_modifier",
+    const system = cap.solarSystemInitializer("scripted_trigger_modifier", {
       class: "sc_g",
       usageOdds: {
         modifiers: [
@@ -1592,11 +1547,9 @@ describe("generated content registries", () => {
         ],
       },
     });
-    const rendered = render(
-      buildMod(configFor("Weight block scripted trigger modifier test", "wb_test"), [
-        collection(undefined, [system]),
-      ])
-    ).get("common/solar_system_initializers/wb_test_solar_system_initializers.txt");
+    const rendered = render(cap.compile([cap.feature(undefined, [system])])).get(
+      "common/solar_system_initializers/wb_test_solar_system_initializers.txt"
+    );
     expect(rendered).toContain(
       "complex_trigger_modifier = {\n" +
         "\t\t\ttrigger = has_crisis_stage\n" +
@@ -1609,6 +1562,7 @@ describe("generated content registries", () => {
   });
 
   it("serializes a @scripted_variable bare, not quoted, through both new WeightBlock surfaces (rebase check against SDK-33/47)", () => {
+    const cap = capabilityFor(configFor("Weight block script value test", "wb_test"));
     // SDK-33/47 widened `Modifier`'s numeric arms from `number` to
     // `ScriptValue` and fixed a real silent-output bug in the same change: a
     // bare `@name` string passed straight to pdxscript's `kv`/`scalar` gets
@@ -1621,13 +1575,11 @@ describe("generated content registries", () => {
     // `value_field` domain (`modifier_rule.cwt`), widened to `ScriptValue`
     // and routed through `scriptValueScalar` to match — verified here by
     // serializing, not by reasoning about the types.
-    const tradition = defineTradition({
-      id: "wb_test_tradition_script_value_operation",
+    const tradition = cap.tradition("script_value_operation", {
       name: "Script Value Operation",
       aiWeight: { factor: "@my_value" },
     });
-    const system = defineSolarSystemInitializer({
-      id: "wb_test_system_script_value_ctm",
+    const system = cap.solarSystemInitializer("script_value_ctm", {
       class: "sc_g",
       usageOdds: {
         modifiers: [
@@ -1640,11 +1592,7 @@ describe("generated content registries", () => {
         ],
       },
     });
-    const rendered = render(
-      buildMod(configFor("Weight block script value test", "wb_test"), [
-        collection(undefined, [tradition, system]),
-      ])
-    );
+    const rendered = render(cap.compile([cap.feature(undefined, [tradition, system])]));
     const traditionFile = rendered.get("common/traditions/wb_test_traditions.txt");
     expect(traditionFile).toContain("factor = @my_value");
     expect(traditionFile).not.toContain('"@my_value"');
@@ -1659,37 +1607,39 @@ describe("generated content registries", () => {
     // The ownership limit is not a define: its key belongs to the engine and
     // the game reads it additively, so the API takes no id and the mod-prefix
     // rule never applies to it. Repeated calls accumulate; duplicates collapse.
-    const titan = defineCountryShipOfSizeLimit({
-      id: "cl_test_titan_limit",
+    const config = configFor("Limit test", "cl_test");
+    const mod = createMod(config);
+    const titan = mod.countryShipOfSizeLimit("titan_limit", {
       shipTypes: ["ship_size_titan"],
       base: 80,
       show: isScopeValid(),
     });
-    const limits = collection(undefined, [
+    const limits = mod.feature(undefined, [
       titan,
-      addShipOfSizeLimits([titan]),
+      mod.addShipOfSizeLimits([titan]),
       // The raw string is another mod's id: it carries no prefix of this mod's,
       // so the reference guard leaves it alone.
-      addShipOfSizeLimits([titan, "third_party_limit"]),
+      mod.addShipOfSizeLimits([titan, "third_party_limit"]),
     ]);
-    const rendered = render(buildMod(configFor("Limit test", "cl_test"), [limits])).get(
+    const rendered = render(mod.compile([limits])).get(
       "common/country_limits/ownership_limits/cl_test_ownership_limits.txt"
     );
     expect(rendered).toBe(
-      "default = {\n\tship_of_size_limits = { cl_test_titan_limit third_party_limit }\n}\n"
+      "default = {\n\tship_of_size_limits = { cl_test_country_ship_of_size_limit_titan_limit third_party_limit }\n}\n"
     );
   });
 
   it("emits no ownership-limit file when no limits are applied", () => {
-    const limits = collection(undefined, [
-      defineCountryShipOfSizeLimit({
-        id: "cl_test_unused_limit",
+    const config = configFor("Limit test", "cl_test");
+    const mod = createMod(config);
+    const limits = mod.feature(undefined, [
+      mod.countryShipOfSizeLimit("unused_limit", {
         shipTypes: ["ship_size_titan"],
         base: 80,
         show: isScopeValid(),
       }),
     ]);
-    const files = render(buildMod(configFor("Limit test", "cl_test"), [limits]));
+    const files = render(mod.compile([limits]));
     expect(
       files.has("common/country_limits/ship_of_size_limits/cl_test_ship_of_size_limits.txt")
     ).toBe(true);
@@ -1699,13 +1649,13 @@ describe("generated content registries", () => {
   });
 
   it("writes engine-keyed maps verbatim, taking no mod prefix", () => {
+    const cap = capabilityFor(configFor("Ship size test", "ss_test"));
     // The whole reason structMap exists rather than reusing repeatedStruct:
     // these keys are the engine's, so `assertPrefixed` must not run on them and
     // no localisation key is derived. Vanilla really does use bare integers
     // (`1`..`6`) alongside names like `mid`, so both spellings are covered.
-    const shipSizes = collection(undefined, [
-      defineShipSize({
-        id: "ss_test_cruiser",
+    const shipSizes = cap.feature(undefined, [
+      cap.shipSize("cruiser", {
         name: "Cruiser",
         class: "shipclass_military",
         sectionSlots: {
@@ -1715,7 +1665,7 @@ describe("generated content registries", () => {
         minUpgradeCost: { alloys: 20, energy: 5 },
       }),
     ]);
-    const files = render(buildMod(configFor("Ship size test", "ss_test"), [shipSizes]));
+    const files = render(cap.compile([shipSizes]));
     const rendered = files.get("common/ship_sizes/ss_test_ship_sizes.txt")!;
     expect(rendered).toContain("mid = {\n\t\t\tlocator = part1\n\t\t}");
     expect(rendered).toContain("1 = {\n\t\t\tlocator = part2\n\t\t}");
@@ -1726,28 +1676,27 @@ describe("generated content registries", () => {
   });
 
   it("takes the definition's scope for the clauses CWT leaves to it", () => {
+    const cap = capabilityFor(configFor("Decision scope test", "sc_test"));
     // CWT annotates the decision body `this = any` and means it: the same
     // registry is planet-scoped on a planet and ship-scoped on a nomadic colony
     // ship. `Trigger<S>` is contravariant, so the mechanical `Trigger<ScopeName>`
     // reading admitted only universal conditions — every planet condition the
     // 111 shipped decisions write was unauthorable. The definition declares its
     // own scope instead, and `scope` itself emits nothing.
-    const decisions = collection(undefined, [
-      defineDecision({
-        id: "sc_test_terraform",
+    const decisions = cap.feature(undefined, [
+      cap.decision("terraform", {
         name: "Terraform Deeply",
         potential: isCapital(),
         effect: (planet) => planet.setPlanetFlag("sc_test_terraformed"),
       }),
-      defineDecision({
-        id: "sc_test_jettison",
+      cap.decision("jettison", {
         name: "Jettison Cargo",
         scope: "ship",
         potential: hasShipFlag("sc_test_laden"),
         effect: (ship) => ship.removeShipFlag("sc_test_laden"),
       }),
     ]);
-    const rendered = render(buildMod(configFor("Decision scope test", "sc_test"), [decisions])).get(
+    const rendered = render(cap.compile([decisions])).get(
       "common/decisions/sc_test_decisions.txt"
     )!;
     expect(rendered).toContain("potential = {\n\t\tis_capital = yes\n\t}");
@@ -1759,6 +1708,7 @@ describe("generated content registries", () => {
   });
 
   it("serializes a ported SMALL_SHIELD_1's resources and modifier (componentTemplateResources)", () => {
+    const cap = capabilityFor(configFor("Component template resources test", "ctr_test"));
     // SDK-31: utility_component_template/weapon_component_template/
     // strike_craft_component_template had no CONTENT_FIELD_OVERRIDES rows for
     // resources/modifier/ship_modifier/ship_design_modifier/
@@ -1772,16 +1722,14 @@ describe("generated content registries", () => {
     // sit in one collection: SDK-32 made `render` merge content files that
     // share an emitted relPath instead of the later one clobbering the
     // earlier ones.
-    const shield = defineUtilityComponentTemplate({
-      id: "ctr_test_small_shield_1",
+    const shield = cap.utilityComponentTemplate("small_shield", {
       icon: "GFX_shield_1",
       power: 6,
       size: "small",
       resources: [{ category: "ship_components", cost: { amounts: { alloys: 20 } } }],
       modifier: (m) => m.unchecked("ship_shield_hit_points_add", 200),
     });
-    const weapon = defineWeaponComponentTemplate({
-      id: "ctr_test_weapon_1",
+    const weapon = cap.weaponComponentTemplate("one", {
       icon: "GFX_weapon_1",
       resources: [{ category: "ship_weapon_components", cost: { amounts: { alloys: 10 } } }],
       shipModifier: (m) => m.unchecked("ship_weapon_damage_mult", 0.1),
@@ -1789,16 +1737,13 @@ describe("generated content registries", () => {
     });
     // strike_craft_component_template declares only resources and
     // ship_modifier (components.cwt:332-343), not modifier.
-    const strikeCraft = defineStrikeCraftComponentTemplate({
-      id: "ctr_test_strike_craft_1",
+    const strikeCraft = cap.strikeCraftComponentTemplate("one", {
       icon: "GFX_strike_craft_1",
       resources: [{ category: "ship_components", cost: { amounts: { alloys: 15 } } }],
       shipModifier: (m) => m.unchecked("ship_hull_add", 10),
     });
     const rendered = render(
-      buildMod(configFor("Component template resources test", "ctr_test"), [
-        collection(undefined, [shield, weapon, strikeCraft]),
-      ])
+      cap.compile([cap.feature(undefined, [shield, weapon, strikeCraft])])
     ).get("common/component_templates/ctr_test_component_templates.txt")!;
 
     expect(rendered).toContain(
@@ -1819,6 +1764,7 @@ describe("generated content registries", () => {
   });
 
   it("never emits produces on weapon/strike-craft resources, even forced past a cast (componentTemplateResources)", () => {
+    const cap = capabilityFor(configFor("Component template no-produce test", "npr_test"));
     // weapon_component_template and strike_craft_component_template splice
     // economic_template_no_produce (components.cwt:189, :338), so `produces`
     // is not game-legal there. EconomicResourceBlockNoProduce already keeps
@@ -1827,8 +1773,7 @@ describe("generated content registries", () => {
     // produces-free operation list for this shape, so a value that carries a
     // `produces` property past a type-level escape hatch still does not
     // reach the emitted file.
-    const weapon = defineWeaponComponentTemplate({
-      id: "ctr_test_weapon_no_produce",
+    const weapon = cap.weaponComponentTemplate("no_produce", {
       icon: "GFX_weapon_no_produce",
       resources: [
         {
@@ -1838,8 +1783,7 @@ describe("generated content registries", () => {
         } as any,
       ],
     });
-    const strikeCraft = defineStrikeCraftComponentTemplate({
-      id: "ctr_test_strike_craft_no_produce",
+    const strikeCraft = cap.strikeCraftComponentTemplate("no_produce", {
       icon: "GFX_strike_craft_no_produce",
       resources: [
         {
@@ -1849,11 +1793,9 @@ describe("generated content registries", () => {
         } as any,
       ],
     });
-    const rendered = render(
-      buildMod(configFor("Component template no-produce test", "npr_test"), [
-        collection(undefined, [weapon, strikeCraft]),
-      ])
-    ).get("common/component_templates/npr_test_component_templates.txt")!;
+    const rendered = render(cap.compile([cap.feature(undefined, [weapon, strikeCraft])])).get(
+      "common/component_templates/npr_test_component_templates.txt"
+    )!;
 
     expect(rendered).not.toContain("produces");
     expect(rendered).not.toContain("energy = 3");
@@ -1867,38 +1809,35 @@ describe("generated content registries", () => {
   });
 
   it("lowers every arm of a dual declaration by what the author passed", () => {
+    const cap = capabilityFor(configFor("Dual arm test", "du_test"));
     // The arms below were all unreachable before duals generalized past
     // scalar-or-weight-block: first-wins picking kept one declaration per field
     // and the other form could not be authored at all, though the shipped game
     // writes both. One case per arm kind the writer has to tell apart — a bare
     // list, a scalar beside a struct, and a trigger — since the dispatch is by
     // the value's runtime form and nothing else.
-    const shipSizes = collection(undefined, [
-      defineShipSize({
-        id: "du_test_cruiser",
+    const shipSizes = cap.feature(undefined, [
+      cap.shipSize("cruiser", {
         name: "Cruiser",
         class: "shipclass_military",
         // `construction_type` is declared as one value_set member and as a
         // block of them; vanilla writes both.
         constructionType: ["starbase_shipyard", "starbase_beastport"],
       }),
-      defineShipSize({
-        id: "du_test_corvette",
+      cap.shipSize("corvette", {
         name: "Corvette",
         class: "shipclass_military",
         constructionType: "starbase_shipyard",
       }),
     ]);
-    const starbaseLevels = collection(undefined, [
-      defineStarbaseLevel({
-        id: "du_test_outpost",
+    const starbaseLevels = cap.feature(undefined, [
+      cap.starbaseLevel("outpost", {
         shipSize: "ship_size_starbase_i",
         // The bare <sprite> arm — 18 of the 27 shipped starbase levels write
         // this form, against 9 writing the trigger-gated block.
         picture: "GFX_starbase_background_outpost",
       }),
-      defineStarbaseLevel({
-        id: "du_test_ring",
+      cap.starbaseLevel("ring", {
         shipSize: "ship_size_starbase_i",
         // The same arm reached by a branded reference rather than a raw id.
         // A `TypedRef` is `{ id }` — an object at runtime and a scalar in the
@@ -1907,9 +1846,8 @@ describe("generated content registries", () => {
         picture: { id: "GFX_orbital_ring_background" } as SpriteRef,
       }),
     ]);
-    const speciesClasses = collection(undefined, [
-      defineSpeciesClass({
-        id: "du_test_precursor",
+    const speciesClasses = cap.feature(undefined, [
+      cap.speciesClass("precursor", {
         name: "Precursor",
         plural: "Precursors",
         archetype: "ARCHETYPE_HUMANOID",
@@ -1917,9 +1855,7 @@ describe("generated content registries", () => {
         randomized: always(),
       }),
     ]);
-    const files = render(
-      buildMod(configFor("Dual arm test", "du_test"), [shipSizes, starbaseLevels, speciesClasses])
-    );
+    const files = render(cap.compile([shipSizes, starbaseLevels, speciesClasses]));
     const sizes = files.get("common/ship_sizes/du_test_ship_sizes.txt")!;
     expect(sizes).toContain("construction_type = { starbase_shipyard starbase_beastport }");
     expect(sizes).toContain("construction_type = starbase_shipyard\n");
@@ -1936,7 +1872,7 @@ describe("generated content registries", () => {
     // structMap keys inside it are exempt. The pure API demotes the rule to a
     // warning datum on the built value; exactly one warning means the engine
     // keys inside the definition stayed exempt.
-    const shipSizes = collection(undefined, [
+    const shipSizes = collectionInternal(undefined, [
       defineShipSize({
         id: "othermod_cruiser",
         name: "X",
@@ -1944,7 +1880,7 @@ describe("generated content registries", () => {
         sectionSlots: { mid: { locator: ["part1"] } },
       }),
     ]);
-    expect(buildMod(configFor("Ship size test", "ss_test"), [shipSizes]).warnings).toEqual([
+    expect(buildInternal(configFor("Ship size test", "ss_test"), [shipSizes]).warnings).toEqual([
       {
         code: "missing-prefix",
         message:
@@ -1955,13 +1891,13 @@ describe("generated content registries", () => {
   });
 
   it("splices a static modifier's rows at the block root, with no enclosing key", () => {
+    const cap = capabilityFor(configFor("Static modifier test", "sm_test"));
     // static_modifier declares alias_name[modifier] at the top level of its
     // rule, so the modifier names sit next to the metadata keys — writing them
     // under a `modifier = { ... }` block would produce a file the game reads as
     // a static modifier with no effect at all.
-    const staticModifiers = collection(undefined, [
-      defineStaticModifier({
-        id: "sm_test_surge",
+    const staticModifiers = cap.feature(undefined, [
+      cap.staticModifier("surge", {
         name: "Surge",
         modifiers: (m) => {
           m.country.unity.produces.mult(0.15);
@@ -1970,11 +1906,11 @@ describe("generated content registries", () => {
         icon: "gfx/interface/icons/modifiers/mod_surge.dds",
       }),
     ]);
-    const rendered = render(
-      buildMod(configFor("Static modifier test", "sm_test"), [staticModifiers])
-    ).get("common/static_modifiers/sm_test_static_modifiers.txt")!;
+    const rendered = render(cap.compile([staticModifiers])).get(
+      "common/static_modifiers/sm_test_static_modifiers.txt"
+    )!;
     expect(rendered).toContain(
-      "sm_test_surge = {\n\tcountry_unity_produces_mult = 0.15\n" +
+      "sm_test_static_modifier_surge = {\n\tcountry_unity_produces_mult = 0.15\n" +
         "\tplanet_jobs_alloys_produces_mult = 0.1\n" +
         "\ticon = gfx/interface/icons/modifiers/mod_surge.dds\n}"
     );
@@ -1983,65 +1919,68 @@ describe("generated content registries", () => {
   });
 
   it("emits a static modifier with no modifiers as an empty body", () => {
+    const cap = capabilityFor(configFor("Static modifier test", "sm_test"));
     // Vanilla ships plenty of these (`player_empire`, `empire_size`): the
     // registry's other fields must not depend on the splice being present.
-    const staticModifiers = collection(undefined, [
-      defineStaticModifier({ id: "sm_test_marker", name: "Marker" }),
+    const staticModifiers = cap.feature(undefined, [
+      cap.staticModifier("marker", {
+        name: "Marker",
+      }),
     ]);
     expect(
-      render(buildMod(configFor("Static modifier test", "sm_test"), [staticModifiers])).get(
+      render(cap.compile([staticModifiers])).get(
         "common/static_modifiers/sm_test_static_modifiers.txt"
       )
-    ).toBe("sm_test_marker = {}\n");
+    ).toBe("sm_test_static_modifier_marker = {}\n");
   });
 
   it("warns on an unprefixed nested definition", () => {
-    const wrong = collection(undefined, [
+    const cap = capabilityFor(CONFIG);
+    const wrong = cap.feature(undefined, [
       defineTradition({
         id: "content_test_tradition_x",
         name: "X",
         traditionSwap: { othermod_swap: { name: "Wrong namespace" } },
       }),
     ]);
-    const warnings = buildMod(CONFIG, [wrong]).warnings;
+    const warnings = cap.compile([wrong]).warnings;
     expect(warnings).toHaveLength(1);
     expect(warnings[0]!.message).toMatch(/must start with the mod prefix "content_test_"/);
 
-    const right = collection(undefined, [
-      defineTradition({
-        id: "content_test_tradition_x",
+    const right = cap.feature(undefined, [
+      cap.tradition("x", {
         name: "X",
         traditionSwap: { content_test_swap_x: { name: "Correct namespace" } },
       }),
     ]);
-    expect(buildMod(CONFIG, [right]).warnings).toEqual([]);
+    expect(cap.compile([right]).warnings).toEqual([]);
   });
 
   it("rejects duplicate nested ids across traditions", () => {
-    const traditions = collection(undefined, [
-      defineTradition({
-        id: "content_test_tradition_x",
+    const cap = capabilityFor(CONFIG);
+    const traditions = cap.feature(undefined, [
+      cap.tradition("x", {
         name: "X",
         traditionSwap: { content_test_swap_shared: { name: "First" } },
       }),
-      defineTradition({
-        id: "content_test_tradition_y",
+      cap.tradition("y", {
         name: "Y",
         traditionSwap: { content_test_swap_shared: { name: "Second" } },
       }),
     ]);
-    expect(() => buildMod(CONFIG, [traditions])).toThrow(
+    expect(() => cap.compile([traditions])).toThrow(
       'Duplicate tradition.tradition_swap id "content_test_swap_shared"'
     );
   });
 
   it('applies the same mod-prefix and duplicate-id rules to "container" keying', () => {
+    const cap = capabilityFor(CONFIG);
     // stages is repeated-struct's first "container" consumer — its record key
     // IS the block's own key rather than a body field, a different code path
     // through the writer than "siblings" (tradition_swap, approach) already
     // exercises, so it needs its own direct check rather than relying on
     // approach's coverage to stand in for it.
-    const unprefixed = collection(undefined, [
+    const unprefixed = cap.feature(undefined, [
       defineSituationType({
         id: "content_test_situation_x",
         name: "X",
@@ -2051,13 +1990,12 @@ describe("generated content registries", () => {
         },
       }),
     ]);
-    const warnings = buildMod(CONFIG, [unprefixed]).warnings;
+    const warnings = cap.compile([unprefixed]).warnings;
     expect(warnings).toHaveLength(1);
     expect(warnings[0]!.message).toMatch(/must start with the mod prefix "content_test_"/);
 
-    const duplicated = collection(undefined, [
-      defineSituationType({
-        id: "content_test_situation_y",
+    const duplicated = cap.feature(undefined, [
+      cap.situationType("y", {
         name: "Y",
         monthlyProgress: { base: 1 },
         stages: {
@@ -2068,8 +2006,7 @@ describe("generated content registries", () => {
           },
         },
       }),
-      defineSituationType({
-        id: "content_test_situation_z",
+      cap.situationType("z", {
         name: "Z",
         monthlyProgress: { base: 1 },
         stages: {
@@ -2081,7 +2018,7 @@ describe("generated content registries", () => {
         },
       }),
     ]);
-    expect(() => buildMod(CONFIG, [duplicated])).toThrow(
+    expect(() => cap.compile([duplicated])).toThrow(
       'Duplicate situation_type.stages id "content_test_situation_stage_shared"'
     );
   });
@@ -2094,12 +2031,12 @@ describe("generated content registries", () => {
   });
 
   it("emits tradition.triggeredModifier and tradition_swap.triggeredModifier (sdk39TriggeredModifier)", () => {
+    const cap = capabilityFor(configFor("SDK-39 test", "sdk39"));
     // SDK-39: both were silently dropped for want of a CONTENT_FIELD_OVERRIDES
     // row, even though the runtime TriggeredModifier writer already supported
     // the shape (ascension_perk, edict, job, councilor, situation_type all
     // had the row already).
-    const tradition = defineTradition({
-      id: "sdk39_tradition_triggered_modifier",
+    const tradition = cap.tradition("triggered_modifier", {
       name: "Sdk39 Tradition",
       triggeredModifier: [
         {
@@ -2119,9 +2056,9 @@ describe("generated content registries", () => {
         },
       },
     });
-    const rendered = render(
-      buildMod(configFor("SDK-39 test", "sdk39"), [collection(undefined, [tradition])])
-    ).get("common/traditions/sdk39_traditions.txt")!;
+    const rendered = render(cap.compile([cap.feature(undefined, [tradition])])).get(
+      "common/traditions/sdk39_traditions.txt"
+    )!;
     expect(rendered).toContain(
       "triggered_modifier = {\n\t\tpotential = {\n\t\t\thas_authority = auth_democratic\n\t\t}\n" +
         "\t\tcountry_unity_produces_mult = 0.1\n\t}"
@@ -2133,12 +2070,12 @@ describe("generated content registries", () => {
   });
 
   it("emits building.triggeredPlanetModifier and job.triggeredPlanetPopGroupModifierForSpecies (sdk39TriggeredModifier)", () => {
+    const cap = capabilityFor(configFor("SDK-39 test", "sdk39"));
     // The sweep's other two finds: building's own plain triggered_modifier_clause
     // field (672 shipped buildings write it) and job's pop_group-clause variant
     // (7 shipped jobs write it, reusing the shape and dropping only
     // divide_over_pop_groups, which zero shipped jobs set).
-    const building = defineBuilding({
-      id: "sdk39_building_triggered_planet_modifier",
+    const building = cap.building("triggered_planet_modifier", {
       name: "Sdk39 Building",
       triggeredPlanetModifier: [
         {
@@ -2147,8 +2084,7 @@ describe("generated content registries", () => {
         },
       ],
     });
-    const job = defineJob({
-      id: "sdk39_job_triggered_pop_group_modifier",
+    const job = cap.job("triggered_pop_group_modifier", {
       name: "Sdk39 Job",
       triggeredPlanetPopGroupModifierForSpecies: [
         {
@@ -2157,9 +2093,7 @@ describe("generated content registries", () => {
         },
       ],
     });
-    const rendered = render(
-      buildMod(configFor("SDK-39 test", "sdk39"), [collection(undefined, [building, job])])
-    );
+    const rendered = render(cap.compile([cap.feature(undefined, [building, job])]));
     expect(rendered.get("common/buildings/sdk39_buildings.txt")).toContain(
       "triggered_planet_modifier = {\n\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n"
     );
@@ -2169,11 +2103,11 @@ describe("generated content registries", () => {
   });
 
   it("emits one orGroups element with two domain members as a single OR block (sdk42OrGroups)", () => {
+    const cap = capabilityFor(configFor("SDK-42 test", "sdk42"));
     // SDK-42's corrected form: one array element, two clause members inside
     // it — a genuine disjunction ("corporate authority or the sovereign
     // civic"), unlike a two-element array, which the game ANDs.
-    const civic = defineCivicOrOrigin({
-      id: "sdk42_civic_or_groups",
+    const civic = cap.civicOrOrigin("or_groups", {
       name: "Sdk42 Civic",
       possible: {
         orGroups: [
@@ -2184,9 +2118,9 @@ describe("generated content registries", () => {
         ],
       },
     });
-    const rendered = render(
-      buildMod(configFor("SDK-42 test", "sdk42"), [collection(undefined, [civic])])
-    ).get("common/governments/civics/sdk42_civics.txt")!;
+    const rendered = render(cap.compile([cap.feature(undefined, [civic])])).get(
+      "common/governments/civics/sdk42_civics.txt"
+    )!;
     // One OR block, both members inside it — not two sibling OR blocks.
     expect(rendered).toContain(
       "possible = {\n\t\tOR = {\n\t\t\tauthority = {\n\t\t\t\tvalue = auth_corporate\n\t\t\t}\n" +
@@ -2198,63 +2132,58 @@ describe("generated content registries", () => {
 
 describe("SDK-44: conditionally-required localization and the global_ship_design name hole", () => {
   it("requires tradition_swap.name unless inheritName is set (sdk44ConditionalRequired)", () => {
-    const missingName = defineTradition({
-      id: "sdk44_tradition_requires_swap_name",
+    const cap = capabilityFor(configFor("SDK-44 test", "sdk44"));
+    const missingName = cap.tradition("requires_swap_name", {
       name: "Sdk44 Tradition",
       traditionSwap: {
         sdk44_swap_missing_name: {},
       },
     });
-    expect(() =>
-      render(buildMod(configFor("SDK-44 test", "sdk44"), [collection(undefined, [missingName])]))
-    ).toThrow('Missing required localization "name" for "sdk44_swap_missing_name"');
+    expect(() => render(cap.compile([cap.feature(undefined, [missingName])]))).toThrow(
+      'Missing required localization "name" for "sdk44_swap_missing_name"'
+    );
 
-    const inheritedName = defineTradition({
-      id: "sdk44_tradition_inherits_swap_name",
+    const inheritedName = cap.tradition("inherits_swap_name", {
       name: "Sdk44 Tradition 2",
       traditionSwap: {
         sdk44_swap_inherits_name: { inheritName: true },
       },
     });
     // No throw: inheritName waives the requirement.
-    expect(() =>
-      render(buildMod(configFor("SDK-44 test", "sdk44"), [collection(undefined, [inheritedName])]))
-    ).not.toThrow();
+    expect(() => render(cap.compile([cap.feature(undefined, [inheritedName])]))).not.toThrow();
   });
 
   it("gives global_ship_design a real name text slot (sdk44GlobalShipDesignName)", () => {
+    const cap = capabilityFor(configFor("SDK-44 test", "sdk44"));
     // Before SDK-44, `global_ship_design` had no localisation member at all —
     // the emitter recognized `localisation = { name = "$" }` but dropped the
     // `localisation = { name = name }` form (a bare pointer at the type's own
     // name_field, structurally equivalent to "$" for a name_field registry).
-    const design = defineGlobalShipDesign({
-      id: "sdk44_global_ship_design_named",
+    const design = cap.globalShipDesign("named", {
       name: "Sdk44 Cruiser",
     });
-    const files = render(
-      buildMod(configFor("SDK-44 test", "sdk44"), [collection(undefined, [design])])
-    );
+    const files = render(cap.compile([cap.feature(undefined, [design])]));
     const rendered = files.get("common/global_ship_designs/sdk44_global_ship_designs.txt")!;
     // The body's `name` key still carries the id (it is the name_field), not
     // the English text.
-    expect(rendered).toContain("ship_design = {\n\tname = sdk44_global_ship_design_named\n");
+    expect(rendered).toContain("ship_design = {\n\tname = sdk44_ship_design_named\n");
     expect(rendered).not.toContain("Sdk44 Cruiser");
     // The real English text goes to localisation, keyed off the id.
     expect(files.get("localisation/english/sdk44_l_english.yml")).toContain(
-      'sdk44_global_ship_design_named:0 "Sdk44 Cruiser"'
+      'sdk44_ship_design_named:0 "Sdk44 Cruiser"'
     );
   });
 });
 
 describe("SDK-50: identity-conversion text fields", () => {
   it("gives archaeological_site_type.desc a real text slot, coupled to its emitted raw-key pointer", () => {
+    const cap = capabilityFor(configFor("SDK-50 test", "sdk50"));
     // A generated key alone is unreachable: type[archaeological_site_type]
     // reads the display text through the body's own `desc` pointer (renamed
     // `conditionalDesc`), so setting only the synthetic `desc` member must
     // also emit that pointer — not just populate the .yml — or the text is
     // exactly as silently orphaned as the original bug SDK-50 fixed.
-    const site = defineArchaeologicalSiteType({
-      id: "sdk50_archaeological_site_type_desc",
+    const site = cap.archaeologicalSiteType("desc", {
       name: "Sdk50 Site",
       desc: "A crumbling ruin, half swallowed by the dust.",
       allow: always(),
@@ -2262,9 +2191,7 @@ describe("SDK-50: identity-conversion text fields", () => {
       stages: 1,
       onRollFailed: () => {},
     });
-    const files = render(
-      buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])])
-    );
+    const files = render(cap.compile([cap.feature(undefined, [site])]));
     const rendered = files.get(
       "common/archaeological_site_types/sdk50_archaeological_site_types.txt"
     )!;
@@ -2279,8 +2206,8 @@ describe("SDK-50: identity-conversion text fields", () => {
   });
 
   it("rejects setting both the synthetic desc and its own pointer, rather than guessing which wins", () => {
-    const site = defineArchaeologicalSiteType({
-      id: "sdk50_archaeological_site_type_desc_conflict",
+    const cap = capabilityFor(configFor("SDK-50 test", "sdk50"));
+    const site = cap.archaeologicalSiteType("desc_conflict", {
       name: "Sdk50 Site",
       desc: "Some prose the author also pointed elsewhere.",
       conditionalDesc: "SDK50_HAND_WRITTEN_KEY",
@@ -2289,19 +2216,17 @@ describe("SDK-50: identity-conversion text fields", () => {
       stages: 1,
       onRollFailed: () => {},
     });
-    expect(() =>
-      render(buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])]))
-    ).toThrow(
+    expect(() => render(cap.compile([cap.feature(undefined, [site])]))).toThrow(
       '"sdk50_archaeological_site_type_desc_conflict" sets both "desc" and "conditionalDesc"'
     );
   });
 
   it("warns when a locKey-tagged field looks like literal text (sdk50IdentityLocalisation)", () => {
+    const cap = capabilityFor(configFor("SDK-50 test", "sdk50"));
     // conditionalDesc's scalar arm is conversion: "identity" — a raw key, by
     // design (it duals with the triggered_desc_clause block form). Writing
     // English into it used to fail silently; it now warns.
-    const site = defineArchaeologicalSiteType({
-      id: "sdk50_archaeological_site_type_loc_key_warning",
+    const site = cap.archaeologicalSiteType("loc_key_warning", {
       name: "Sdk50 Site",
       conditionalDesc: "this looks like a sentence, not a key",
       allow: always(),
@@ -2309,7 +2234,7 @@ describe("SDK-50: identity-conversion text fields", () => {
       stages: 1,
       onRollFailed: () => {},
     });
-    const mod = buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])]);
+    const mod = cap.compile([cap.feature(undefined, [site])]);
     expect(mod.warnings).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -2321,8 +2246,8 @@ describe("SDK-50: identity-conversion text fields", () => {
   });
 
   it("does not warn when a locKey-tagged field looks like a real key", () => {
-    const site = defineArchaeologicalSiteType({
-      id: "sdk50_archaeological_site_type_real_key",
+    const cap = capabilityFor(configFor("SDK-50 test", "sdk50"));
+    const site = cap.archaeologicalSiteType("real_key", {
       name: "Sdk50 Site",
       conditionalDesc: "SDK50_REAL_LOC_KEY",
       allow: always(),
@@ -2330,7 +2255,7 @@ describe("SDK-50: identity-conversion text fields", () => {
       stages: 1,
       onRollFailed: () => {},
     });
-    const mod = buildMod(configFor("SDK-50 test", "sdk50"), [collection(undefined, [site])]);
+    const mod = cap.compile([cap.feature(undefined, [site])]);
     expect(mod.warnings).toEqual([]);
   });
 });
@@ -2348,6 +2273,7 @@ describe("SDK-50: identity-conversion text fields", () => {
  */
 describe("widenedLowering: unpinned scope and value_field widening", () => {
   it("writes a real single-scope trigger through an unpinned-scope field (SDK-33)", () => {
+    const cap = capabilityFor(configFor("Widened lowering test", "wl_test"));
     // tradition_category.conditionalDesc.trigger (the `desc` key's repeated
     // trigger+text block form) carries no `## replace_scopes` anywhere in its
     // chain, so before the fix it lowered to `Trigger<ScopeName>` —
@@ -2355,9 +2281,8 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
     // The overlay's `country` scope assertion (backed by all 25 shipped
     // desc.trigger conditions) buys back real checking; this proves a real
     // country-scoped trigger both type-checks and serializes.
-    const traditionCategory = collection(undefined, [
-      defineTraditionCategory({
-        id: "wl_test_widened_tradition_category",
+    const traditionCategory = cap.feature(undefined, [
+      cap.traditionCategory("widened", {
         name: "Widened Futures",
         treeTemplate: "tree_template_5",
         adoptionBonus: "tr_placeholder",
@@ -2371,9 +2296,9 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
         ],
       }),
     ]);
-    const rendered = render(
-      buildMod(configFor("Widened lowering test", "wl_test"), [traditionCategory])
-    ).get("common/tradition_categories/wl_test_tradition_categories.txt")!;
+    const rendered = render(cap.compile([traditionCategory])).get(
+      "common/tradition_categories/wl_test_tradition_categories.txt"
+    )!;
     expect(rendered).toContain(
       "\tdesc = {\n\t\ttrigger = {\n\t\t\thas_authority = auth_machine_intelligence\n\t\t}\n" +
         '\t\ttext = "Only machine empires walk this path."\n\t}'
@@ -2381,13 +2306,13 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
   });
 
   it("writes a real system-scoped weight block through an unpinned-scope field (SDK-33)", () => {
+    const cap = capabilityFor(configFor("Widened lowering test", "wl_test"));
     // solar_system_initializer.usage_odds carries no `## replace_scopes` and
     // the registry has no body-level push_scope either, so before the fix it
     // lowered to `WeightBlock<ScopeName>`. The overlay's `system` scope
     // assertion buys back real checking.
-    const initializer = collection(undefined, [
-      defineSolarSystemInitializer({
-        id: "wl_test_widened_solar_system",
+    const initializer = cap.feature(undefined, [
+      cap.solarSystemInitializer("widened", {
         class: "star1",
         usageOdds: {
           base: 10,
@@ -2395,14 +2320,15 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
         },
       }),
     ]);
-    const rendered = render(
-      buildMod(configFor("Widened lowering test", "wl_test"), [initializer])
-    ).get("common/solar_system_initializers/wl_test_solar_system_initializers.txt")!;
+    const rendered = render(cap.compile([initializer])).get(
+      "common/solar_system_initializers/wl_test_solar_system_initializers.txt"
+    )!;
     expect(rendered).toContain("\tusage_odds = {\n\t\tbase = 10\n\t\tmodifier = {");
     expect(rendered).toContain("is_bottleneck_system = yes");
   });
 
   it("writes a real country-scoped trigger through civic_or_origin.modification, propagated from the container's own replace_scopes (containerScope, SDK-34)", () => {
+    const cap = capabilityFor(configFor("Widened lowering test", "wl_test"));
     // governments.cwt's `modification` block carries its own
     // `## replace_scopes = { this = country root = country }`; `add`/`remove`
     // beneath it carry no scope annotation of their own. Before SDK-34,
@@ -2412,9 +2338,8 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
     // `containerContext` now folds the container's own scope into the child
     // `ctx`, so a real country-scoped condition both type-checks and
     // serializes here.
-    const civicOrOrigin = collection(undefined, [
-      defineCivicOrOrigin({
-        id: "wl_test_container_scope_civic",
+    const civicOrOrigin = cap.feature(undefined, [
+      cap.civicOrOrigin("container_scope", {
         name: "Container Scope Test",
         modification: {
           add: hasAuthority("auth_democratic"),
@@ -2422,9 +2347,9 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
         },
       }),
     ]);
-    const rendered = render(
-      buildMod(configFor("Widened lowering test", "wl_test"), [civicOrOrigin])
-    ).get("common/governments/civics/wl_test_civics.txt")!;
+    const rendered = render(cap.compile([civicOrOrigin])).get(
+      "common/governments/civics/wl_test_civics.txt"
+    )!;
     expect(rendered).toContain(
       "\tmodification = {\n\t\tadd = {\n\t\t\thas_authority = auth_democratic\n\t\t}\n" +
         "\t\tremove = {\n\t\t\thas_country_flag = wl_test_flag\n\t\t}\n\t}"
@@ -2432,25 +2357,24 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
   });
 
   it("accepts and serializes both a plain number and a script-value string for the same field (SDK-47)", () => {
+    const cap = capabilityFor(configFor("Widened lowering test", "wl_test"));
     // country_ship_of_size_limit.base is `country_limits.cwt`'s `value_field`,
     // not `float`. A plain number keeps working unchanged (the widening's
     // whole point); a scripted-variable string is a form the old `number`
     // type could not express at all.
-    const limits = collection(undefined, [
-      defineCountryShipOfSizeLimit({
-        id: "wl_test_numeric_limit",
+    const limits = cap.feature(undefined, [
+      cap.countryShipOfSizeLimit("numeric", {
         shipTypes: ["ship_size_titan"],
         base: 80,
         show: isScopeValid(),
       }),
-      defineCountryShipOfSizeLimit({
-        id: "wl_test_script_value_limit",
+      cap.countryShipOfSizeLimit("script_value_limit", {
         shipTypes: ["ship_size_titan"],
         base: "some_scripted_variable",
         show: isScopeValid(),
       }),
     ]);
-    const rendered = render(buildMod(configFor("Widened lowering test", "wl_test"), [limits])).get(
+    const rendered = render(cap.compile([limits])).get(
       "common/country_limits/ship_of_size_limits/wl_test_ship_of_size_limits.txt"
     )!;
     expect(rendered).toContain("base = 80");
@@ -2458,6 +2382,7 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
   });
 
   it("serializes every ScriptValue form to the exact bytes the game reads (widenedLowering, SDK-47 P1 fix)", () => {
+    const cap = capabilityFor(configFor("Widened lowering test", "wl_test"));
     // Each of value_field's four non-numeric forms, one definition per form,
     // asserted against the *exact* emitted line — types were never the
     // problem here, only bytes. `@my_value` is the form that was broken: a
@@ -2472,33 +2397,29 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
     // bare `scope.variable` path) already round-tripped as plain bare string
     // scalars with no fix needed — asserted here so a future regression in
     // any of the four is caught the same way.
-    const limits = collection(undefined, [
-      defineCountryShipOfSizeLimit({
-        id: "wl_test_script_value_variable",
+    const limits = cap.feature(undefined, [
+      cap.countryShipOfSizeLimit("script_value_variable", {
         shipTypes: ["ship_size_titan"],
         base: "@my_value",
         show: isScopeValid(),
       }),
-      defineCountryShipOfSizeLimit({
-        id: "wl_test_script_value_named",
+      cap.countryShipOfSizeLimit("script_value_named", {
         shipTypes: ["ship_size_titan"],
         base: "value:my_script_value",
         show: isScopeValid(),
       }),
-      defineCountryShipOfSizeLimit({
-        id: "wl_test_script_value_trigger",
+      cap.countryShipOfSizeLimit("script_value_trigger", {
         shipTypes: ["ship_size_titan"],
         base: "trigger:my_trigger",
         show: isScopeValid(),
       }),
-      defineCountryShipOfSizeLimit({
-        id: "wl_test_script_value_scope_path",
+      cap.countryShipOfSizeLimit("script_value_scope_path", {
         shipTypes: ["ship_size_titan"],
         base: "owner.some_variable",
         show: isScopeValid(),
       }),
     ]);
-    const rendered = render(buildMod(configFor("Widened lowering test", "wl_test"), [limits])).get(
+    const rendered = render(cap.compile([limits])).get(
       "common/country_limits/ship_of_size_limits/wl_test_ship_of_size_limits.txt"
     )!;
     expect(rendered).toContain("\tbase = @my_value\n");
@@ -2741,14 +2662,12 @@ describe("registries that share an outputDir (SDK-32)", () => {
     "common/component_templates/shared_output_dir_test_component_templates.txt";
   const SHARED_OUTPUT_DIR_LOC_RELPATH = "localisation/english/shared_output_dir_test_l_english.yml";
 
-  function sharedOutputDirTemplates() {
-    const weapon = defineWeaponComponentTemplate({
-      id: "shared_output_dir_test_weapon_mass_driver",
+  function sharedOutputDirTemplates(mod: ReturnType<typeof capabilityFor>) {
+    const weapon = mod.weaponComponentTemplate("mass_driver", {
       name: "Mass Driver",
       icon: "GFX_ship_part_mass_driver",
     });
-    const utility = defineUtilityComponentTemplate({
-      id: "shared_output_dir_test_utility_armor_plating",
+    const utility = mod.utilityComponentTemplate("armor_plating", {
       name: "Armor Plating",
       icon: "GFX_ship_part_armor",
     });
@@ -2756,28 +2675,28 @@ describe("registries that share an outputDir (SDK-32)", () => {
   }
 
   it("merges a weapon and a utility template into one file instead of the second overwriting the first", () => {
-    const { weapon, utility } = sharedOutputDirTemplates();
-    const mod = buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [weapon, utility])]);
+    const cap = capabilityFor(SHARED_OUTPUT_DIR_CONFIG);
+    const { weapon, utility } = sharedOutputDirTemplates(cap);
+    const mod = cap.compile([cap.feature(undefined, [weapon, utility])]);
     const files = render(mod);
 
     expect([...files.keys()]).toContain(SHARED_OUTPUT_DIR_RELPATH);
     const content = files.get(SHARED_OUTPUT_DIR_RELPATH)!;
     expect(content).toContain("shared_output_dir_test_weapon_mass_driver");
-    expect(content).toContain("shared_output_dir_test_utility_armor_plating");
+    expect(content).toContain("shared_output_dir_test_util_armor_plating");
     expect(mod.warnings).toEqual([]);
   });
 
   it("renders the merged file identically regardless of authoring order", () => {
-    const forward = sharedOutputDirTemplates();
+    const cap = capabilityFor(SHARED_OUTPUT_DIR_CONFIG);
+    const forward = sharedOutputDirTemplates(cap);
     const forwardContent = render(
-      buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [forward.weapon, forward.utility])])
+      cap.compile([cap.feature(undefined, [forward.weapon, forward.utility])])
     ).get(SHARED_OUTPUT_DIR_RELPATH);
 
-    const backward = sharedOutputDirTemplates();
+    const backward = sharedOutputDirTemplates(cap);
     const backwardContent = render(
-      buildMod(SHARED_OUTPUT_DIR_CONFIG, [
-        collection(undefined, [backward.utility, backward.weapon]),
-      ])
+      cap.compile([cap.feature(undefined, [backward.utility, backward.weapon])])
     ).get(SHARED_OUTPUT_DIR_RELPATH);
 
     expect(forwardContent).toBeDefined();
@@ -2785,10 +2704,11 @@ describe("registries that share an outputDir (SDK-32)", () => {
   });
 
   it("matches the merged component-templates golden", async () => {
-    const { weapon, utility } = sharedOutputDirTemplates();
-    const content = render(
-      buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [weapon, utility])])
-    ).get(SHARED_OUTPUT_DIR_RELPATH);
+    const cap = capabilityFor(SHARED_OUTPUT_DIR_CONFIG);
+    const { weapon, utility } = sharedOutputDirTemplates(cap);
+    const content = render(cap.compile([cap.feature(undefined, [weapon, utility])])).get(
+      SHARED_OUTPUT_DIR_RELPATH
+    );
 
     await expect(content).toMatchFileSnapshot(
       "__snapshots__/content/shared-output-dir-component-templates.txt"
@@ -2796,16 +2716,15 @@ describe("registries that share an outputDir (SDK-32)", () => {
   });
 
   it("keeps localization consistent with the merged file — no id advertised that has no definition", () => {
-    const { weapon, utility } = sharedOutputDirTemplates();
-    const files = render(
-      buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [weapon, utility])])
-    );
+    const cap = capabilityFor(SHARED_OUTPUT_DIR_CONFIG);
+    const { weapon, utility } = sharedOutputDirTemplates(cap);
+    const files = render(cap.compile([cap.feature(undefined, [weapon, utility])]));
 
     const loc = files.get(SHARED_OUTPUT_DIR_LOC_RELPATH)!;
     const content = files.get(SHARED_OUTPUT_DIR_RELPATH)!;
     for (const id of [
       "shared_output_dir_test_weapon_mass_driver",
-      "shared_output_dir_test_utility_armor_plating",
+      "shared_output_dir_test_util_armor_plating",
     ]) {
       expect(loc).toContain(`${id}:0`);
       expect(content).toContain(id);
@@ -2813,6 +2732,7 @@ describe("registries that share an outputDir (SDK-32)", () => {
   });
 
   it("rejects two component-template subtypes sharing an id, even when the loc guard misses it", () => {
+    const cap = capabilityFor(SHARED_OUTPUT_DIR_CONFIG);
     // The loc-duplicate guard only fires when both definitions register a
     // loc key for the shared id — omitting the optional `name` on one of
     // them (as here) means no loc key collides, so it never runs. The
@@ -2833,9 +2753,7 @@ describe("registries that share an outputDir (SDK-32)", () => {
       icon: "GFX_ship_part_armor",
     });
 
-    expect(() =>
-      buildMod(SHARED_OUTPUT_DIR_CONFIG, [collection(undefined, [weapon, utility])])
-    ).toThrow(
+    expect(() => cap.compile([cap.feature(undefined, [weapon, utility])])).toThrow(
       'utility_component_template id "shared_output_dir_test_shared_id" collides with a ' +
         "weapon_component_template of the same id — both are emitted under " +
         '"common/component_templates", where the game merges every file it loads by id, so only ' +
@@ -2847,9 +2765,8 @@ describe("registries that share an outputDir (SDK-32)", () => {
 describe("modifier desc keys are content-derived, not positional (SDK-48)", () => {
   const DESC_KEY_CONFIG = configFor("Desc key test", "desc_key_test");
 
-  function situationWithRows(descs: readonly string[]) {
-    return defineSituationType({
-      id: "desc_key_test_situation_reorder",
+  function situationWithRows(mod: ReturnType<typeof capabilityFor>, descs: readonly string[]) {
+    return mod.situationType("reorder", {
       name: "Reorder Test",
       monthlyProgress: {
         base: 1,
@@ -2868,6 +2785,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
   }
 
   it("keeps every pre-existing row's key stable when a new row is inserted mid-list", () => {
+    const cap = capabilityFor(DESC_KEY_CONFIG);
     // The reproduction from the ticket: 11 rows, one inserted at index 2. On
     // main, collectModifierDescs derives the key from the row's index in
     // `weight.modifiers`, so every row from index 2 down shifts to the next
@@ -2876,15 +2794,13 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     // read in that language. This must fail on main and pass once the key is
     // a function of the row's own content instead.
     const descs = Array.from({ length: 11 }, (_, i) => `Row ${i} of the uprising.`);
-    const before = buildMod(DESC_KEY_CONFIG, [collection(undefined, [situationWithRows(descs)])]);
+    const before = cap.compile([cap.feature(undefined, [situationWithRows(cap, descs)])]);
     const withInsertion = [
       ...descs.slice(0, 2),
       "A newly inserted row at index 2.",
       ...descs.slice(2),
     ];
-    const after = buildMod(DESC_KEY_CONFIG, [
-      collection(undefined, [situationWithRows(withInsertion)]),
-    ]);
+    const after = cap.compile([cap.feature(undefined, [situationWithRows(cap, withInsertion)])]);
 
     for (const desc of descs) {
       expect(keyForText(after.loc, desc)).toBe(keyForText(before.loc, desc));
@@ -2893,8 +2809,8 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
   });
 
   it("derives the key from an author-supplied descKey and emits no warning", () => {
-    const situation = defineSituationType({
-      id: "desc_key_test_situation_pinned",
+    const cap = capabilityFor(DESC_KEY_CONFIG);
+    const situation = cap.situationType("pinned", {
       name: "Pinned Key Test",
       monthlyProgress: {
         base: 1,
@@ -2909,7 +2825,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       },
     });
 
-    const mod = buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])]);
+    const mod = cap.compile([cap.feature(undefined, [situation])]);
 
     expect(mod.loc.get("desc_key_test_situation_pinned_monthly_progress_flesh_is_weak")).toBe(
       "The Flesh is Weak."
@@ -2918,10 +2834,10 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
   });
 
   it("falls back to a hash of the desc text and warns when no descKey is given", () => {
+    const cap = capabilityFor(DESC_KEY_CONFIG);
     const desc = "Machine intelligence keeps the uprising contained.";
     const expectedSlug = createHash("sha256").update(desc).digest("hex").slice(0, 8);
-    const situation = defineSituationType({
-      id: "desc_key_test_situation_unkeyed",
+    const situation = cap.situationType("unkeyed", {
       name: "Unkeyed Test",
       monthlyProgress: {
         base: 1,
@@ -2929,7 +2845,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       },
     });
 
-    const mod = buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])]);
+    const mod = cap.compile([cap.feature(undefined, [situation])]);
 
     const expectedKey = `desc_key_test_situation_unkeyed_monthly_progress_${expectedSlug}`;
     expect(mod.loc.get(expectedKey)).toBe(desc);
@@ -2946,8 +2862,8 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
   });
 
   it("rejects a descKey that is not lowercase snake_case", () => {
-    const situation = defineSituationType({
-      id: "desc_key_test_situation_bad_key",
+    const cap = capabilityFor(DESC_KEY_CONFIG);
+    const situation = cap.situationType("bad_key", {
       name: "Bad Key Test",
       monthlyProgress: {
         base: 1,
@@ -2955,13 +2871,14 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       },
     });
 
-    expect(() => buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])])).toThrow(
+    expect(() => cap.compile([cap.feature(undefined, [situation])])).toThrow(
       'Modifier.descKey "Flesh-Is-Weak" on "desc_key_test_situation_bad_key" ' +
         '(monthly_progress) must be lowercase snake_case (e.g. "flesh_is_weak")'
     );
   });
 
   it("builds when two rows share identical unpinned desc text under different conditions", () => {
+    const cap = capabilityFor(DESC_KEY_CONFIG);
     // Two rows can legitimately want the exact same tooltip gated on
     // different conditions — "insufficient resources" under one flag, the
     // same line under another. Hashing only the desc text (no descKey given)
@@ -2972,8 +2889,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     // fail on the branch tip before this fix, where the guard rejected any
     // repeated key regardless of whether the text matched.
     const desc = "Insufficient resources.";
-    const situation = defineSituationType({
-      id: "desc_key_test_situation_shared_text",
+    const situation = cap.situationType("shared_text", {
       name: "Shared Text Test",
       monthlyProgress: {
         base: 1,
@@ -2984,7 +2900,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       },
     });
 
-    const mod = buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])]);
+    const mod = cap.compile([cap.feature(undefined, [situation])]);
     const expectedSlug = createHash("sha256").update(desc).digest("hex").slice(0, 8);
     const expectedKey = `desc_key_test_situation_shared_text_monthly_progress_${expectedSlug}`;
 
@@ -2999,12 +2915,12 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
   });
 
   it("still rejects a genuine collision — same key, different text", () => {
+    const cap = capabilityFor(DESC_KEY_CONFIG);
     // Two rows deliberately sharing a descKey but carrying different desc
     // text compute the same localisation key for different English strings.
     // That is exactly what the duplicate-key guard exists to catch, and the
     // benign same-text exemption above must not weaken it.
-    const situation = defineSituationType({
-      id: "desc_key_test_situation_collision",
+    const situation = cap.situationType("collision", {
       name: "Collision Test",
       monthlyProgress: {
         base: 1,
@@ -3015,14 +2931,14 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       },
     });
 
-    expect(() => buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])])).toThrow(
+    expect(() => cap.compile([cap.feature(undefined, [situation])])).toThrow(
       'Duplicate localization key "desc_key_test_situation_collision_monthly_progress_shared_key"'
     );
   });
 
   it("matches the golden localisation and content for a mix of pinned and unpinned desc keys", async () => {
-    const situation = defineSituationType({
-      id: "desc_key_test_situation_golden",
+    const cap = capabilityFor(DESC_KEY_CONFIG);
+    const situation = cap.situationType("golden", {
       name: "Golden Test",
       monthlyProgress: {
         base: 1,
@@ -3038,7 +2954,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       },
     });
 
-    const files = render(buildMod(DESC_KEY_CONFIG, [collection(undefined, [situation])]));
+    const files = render(cap.compile([cap.feature(undefined, [situation])]));
     const loc = files.get("localisation/english/desc_key_test_l_english.yml")!;
 
     await expect(loc).toMatchFileSnapshot("__snapshots__/content/desc-key-localisation.yml");
@@ -3047,16 +2963,16 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
 
 describe("modifier closures are recorded synchronously", () => {
   it("refuses an async modifier closure rather than recording half of it", async () => {
+    const cap = capabilityFor(configFor("Async modifier probe", "amp_test"));
     // The modifier path recorder is the other closure entry point that does
     // not go through `recordEffects`, and it has the same hazard: the sync
     // prefix records, the recorder dies when the closure returns at its first
     // await, and the rest is lost.
     let continued = false;
     expect(() =>
-      buildMod(configFor("Async modifier probe", "amp_test"), [
-        collection(undefined, [
-          defineTradition({
-            id: "amp_test_tradition_async",
+      cap.compile([
+        cap.feature(undefined, [
+          cap.tradition("async", {
             name: "Async",
             effects: "Nothing at all.",
             modifier: async (m) => {
@@ -3073,10 +2989,10 @@ describe("modifier closures are recorded synchronously", () => {
   });
 
   it("leaves an ordinary synchronous modifier closure alone", () => {
-    const mod = buildMod(configFor("Sync modifier probe", "smp_test"), [
-      collection(undefined, [
-        defineTradition({
-          id: "smp_test_tradition_sync",
+    const cap = capabilityFor(configFor("Sync modifier probe", "smp_test"));
+    const mod = cap.compile([
+      cap.feature(undefined, [
+        cap.tradition("sync", {
           name: "Sync",
           effects: "Nothing at all.",
           modifier: (m) => m.command.limit.add(1),
@@ -3100,8 +3016,8 @@ describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring 
   // two entries rather than both, which a test asserting only one code
   // could not distinguish from "working as intended".
   it("emits unstable-desc-key and loc-key-looks-like-text from the same build", () => {
-    const situation = defineSituationType({
-      id: "warning_coexist_test_situation",
+    const cap = capabilityFor(configFor("Warning coexistence test", "warning_coexist_test"));
+    const situation = cap.situationType("coexist", {
       name: "Warning Coexistence Test",
       // No descKey: triggers SDK-48's onUnstableDescKey.
       monthlyProgress: {
@@ -3113,9 +3029,7 @@ describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring 
       activeTooltip: "this looks like a sentence, not a key",
     });
 
-    const mod = buildMod(configFor("Warning coexistence test", "warning_coexist_test"), [
-      collection(undefined, [situation]),
-    ]);
+    const mod = cap.compile([cap.feature(undefined, [situation])]);
 
     expect(mod.warnings).toEqual(
       expect.arrayContaining([
@@ -3159,17 +3073,17 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
   const CONFIG = configFor("SDK-56 building modifiers test", "sdk56");
 
   it("emits building's plain modifier trio: country_modifier/army_modifier/system_modifier (buildingModifiers)", () => {
+    const cap = capabilityFor(CONFIG);
     // All three splice modifier_clause (buildings.cwt:212/215/218), the same
     // shape building.planet_modifier already used.
-    const building = defineBuilding({
-      id: "sdk56_building_plain_modifier_trio",
+    const building = cap.building("plain_modifier_trio", {
       name: "Sdk56 Plain Modifier Trio",
       countryModifier: (m) => m.raw("country_edict_fund_add", 50),
       armyModifier: (m) => m.raw("armies_cost_mult", -0.1),
       systemModifier: (m) => m.system.storm.influence.add(1),
     });
 
-    const rendered = render(buildMod(CONFIG, [collection(undefined, [building])])).get(
+    const rendered = render(cap.compile([cap.feature(undefined, [building])])).get(
       "common/buildings/sdk56_buildings.txt"
     )!;
 
@@ -3179,13 +3093,13 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
   });
 
   it("emits building's triggered modifier trio: triggered_country_modifier/triggered_army_modifier/triggered_planet_pop_group_modifier_for_all (buildingModifiers)", () => {
+    const cap = capabilityFor(CONFIG);
     // All three splice triggered_modifier_by_planet_clause (aliases.cwt:113),
     // shape-identical to the plain triggered_modifier_clause building.
     // triggered_planet_modifier already proved out (SDK-39) — only push_scope
     // differs between the clauses, and push_scope is not part of the emitted
     // shape.
-    const building = defineBuilding({
-      id: "sdk56_building_triggered_modifier_trio",
+    const building = cap.building("triggered_modifier_trio", {
       name: "Sdk56 Triggered Modifier Trio",
       triggeredCountryModifier: [
         {
@@ -3207,7 +3121,7 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
       ],
     });
 
-    const rendered = render(buildMod(CONFIG, [collection(undefined, [building])])).get(
+    const rendered = render(cap.compile([cap.feature(undefined, [building])])).get(
       "common/buildings/sdk56_buildings.txt"
     )!;
 
@@ -3226,14 +3140,14 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
   });
 
   it("emits building's triggered_planet_pop_group_modifier_for_species (buildingModifiers)", () => {
+    const cap = capabilityFor(CONFIG);
     // The seventh field: splices triggered_modifier_by_pop_group_clause
     // (buildings.cwt:221), not the by_planet_clause the triggered trio
     // above use — a genuinely different clause, reusing triggeredModifierBlock
     // the same way job.triggered_planet_pop_group_modifier_for_species
     // (SDK-39) already does for that same clause, at the cost of not
     // modeling that clause's one extra field (divide_over_pop_groups).
-    const building = defineBuilding({
-      id: "sdk56_building_triggered_for_species",
+    const building = cap.building("triggered_for_species", {
       name: "Sdk56 Triggered For Species",
       triggeredPlanetPopGroupModifierForSpecies: [
         {
@@ -3243,7 +3157,7 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
       ],
     });
 
-    const rendered = render(buildMod(CONFIG, [collection(undefined, [building])])).get(
+    const rendered = render(cap.compile([cap.feature(undefined, [building])])).get(
       "common/buildings/sdk56_buildings.txt"
     )!;
 

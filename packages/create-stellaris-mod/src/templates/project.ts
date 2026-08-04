@@ -191,11 +191,9 @@ import tseslint from "typescript-eslint";
  * so once you run it — this says the same thing while you are still typing, and
  * says it where the mistake is.
  *
- * Two namespaces in one module means the file cannot be the unit of event
- * identity any more: \`discoverContent\` names one collection per file, so both
- * namespaces would claim the same emitted events file. The fix is always to
- * split the module, which is no loss — a namespace is a feature's event chain,
- * and two of them are two features.
+ * Two namespaces in one module mean one feature would claim two event
+ * identities. The fix is always to split the module, which is no loss — a
+ * namespace is a feature's event chain, and two of them are two features.
  */
 const oneNamespacePerFile = {
   meta: {
@@ -204,7 +202,7 @@ const oneNamespacePerFile = {
     schema: [],
     messages: {
       duplicate:
-        "A second namespace() in one module (the first is on line {{line}}). An event " +
+        "A second mod.namespace() in one module (the first is on line {{line}}). An event " +
         "namespace and an event file are in bijection, so move this namespace and its " +
         "events into their own module.",
     },
@@ -212,7 +210,7 @@ const oneNamespacePerFile = {
   create(context) {
     let first = null;
     return {
-      "CallExpression[callee.name='namespace']"(node) {
+      "CallExpression[callee.type='MemberExpression'][callee.property.name='namespace']"(node) {
         if (first === null) {
           first = node;
           return;

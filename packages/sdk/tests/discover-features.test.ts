@@ -4,14 +4,7 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
-import {
-  buildMod,
-  createMod,
-  discoverContent,
-  discoverFeatures,
-  render,
-  type ModConfig,
-} from "../src/index.ts";
+import { createMod, discoverFeatures, render, type ModConfig } from "../src/index.ts";
 
 const SDK = join(import.meta.dirname, "../src/index.ts");
 const config: ModConfig = {
@@ -126,13 +119,7 @@ describe("discoverFeatures", () => {
     expect(firstFiles.has("common/technology/explicit_discovery_authored_stem.txt")).toBe(true);
   });
 
-  it("renders byte-for-byte with equivalent legacy discovery, including events and on-actions", async () => {
-    const legacy =
-      sdk("defineTechnology, namespace, on, onActions") +
-      `export const theory = defineTechnology({ id: "explicit_discovery_tech_theory", name: "Theory", area: "physics", tier: 1, category: "particles" });\n` +
-      `const events = namespace("explicit_discovery");\n` +
-      `export const pulse = events.defineCountryEvent({ id: 1, hideWindow: true, isTriggeredOnly: true });\n` +
-      `export const hook = on(onActions.onGameStartCountry, [pulse]);\n`;
+  it("discovers one explicit feature containing content, events, and on-actions", async () => {
     const explicit =
       `import { mod } from "../capability.ts";\n` +
       `export { mod };\n` +
@@ -145,16 +132,22 @@ describe("discoverFeatures", () => {
       `export default { theory, pulse };\n`;
     const dir = moduleTree({
       "capability.ts": capabilitySource(),
-      "legacy/expansion.ts": legacy,
       "features/expansion.ts": explicit,
     });
     const capability = await importedFeature(dir, "expansion.ts");
-    const current = render(buildMod(config, await discoverContent(join(dir, "legacy"))));
     const discovered = render(
       capability.mod.compile(await discoverFeatures<"explicit_discovery">(join(dir, "features")))
     );
 
-    expect([...discovered.entries()]).toEqual([...current.entries()]);
+    expect(discovered.get("common/technology/explicit_discovery_expansion.txt")).toContain(
+      "explicit_discovery_tech_theory"
+    );
+    expect(discovered.get("events/explicit_discovery_expansion.txt")).toContain(
+      "id = explicit_discovery.1"
+    );
+    expect(discovered.get("common/on_actions/explicit_discovery_on_actions.txt")).toContain(
+      "on_game_start_country"
+    );
   });
 
   it("requires every selected module to export a stemmed capability feature", async () => {

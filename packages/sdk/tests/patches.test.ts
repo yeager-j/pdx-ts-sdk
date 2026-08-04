@@ -9,15 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import { StaleRuleTableError, VanillaPathCollisionError } from "../src/errors.ts";
-import {
-  buildMod,
-  collection,
-  defineTechnology,
-  patchTechnology,
-  render,
-  type ModConfig,
-  type TechnologyItem,
-} from "../src/index.ts";
+import { createMod, render, type ModConfig, type TechnologyItem } from "../src/index.ts";
 import { viewFromFiles } from "../src/vanilla/surface.ts";
 import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
@@ -38,9 +30,8 @@ function makeConfig(config: Partial<ModConfig> = {}): ModConfig {
 describe("patching end to end", () => {
   const vanilla = viewFromFiles(FILES, { gameVersion: "4.4.6" });
 
-  function patchedTechnologies(): TechnologyItem[] {
-    const myNewTech = defineTechnology({
-      id: "pp_mod_tech_chimeric_grafts",
+  function patchedTechnologies(mod: ReturnType<typeof createMod>): TechnologyItem[] {
+    const myNewTech = mod.technology("chimeric_grafts", {
       name: "Chimeric Grafts",
       area: "society",
       tier: 3,
@@ -48,7 +39,7 @@ describe("patching end to end", () => {
     });
     return [
       myNewTech,
-      patchTechnology(
+      mod.patchTechnology(
         vanilla.technology("tech_gene_forging").require("cost", "prerequisites"),
         (t) => ({
           cost: t.cost.value * 2,
@@ -59,7 +50,8 @@ describe("patching end to end", () => {
   }
 
   function patchedMod() {
-    return buildMod(makeConfig(), [collection(undefined, patchedTechnologies())]);
+    const mod = createMod(makeConfig());
+    return mod.compile([mod.feature(undefined, patchedTechnologies(mod))]);
   }
 
   it("emits the patch into a file computed to sort after the definer", async () => {
@@ -108,78 +100,81 @@ describe("patching end to end", () => {
   });
 
   it("rejects a second patch for the same key", () => {
-    const technologies = collection(undefined, [
-      ...patchedTechnologies(),
-      patchTechnology(vanilla.technology("tech_gene_forging"), () => ({ tier: 4 })),
+    const mod = createMod(makeConfig());
+    const technologies = mod.feature(undefined, [
+      ...patchedTechnologies(mod),
+      mod.patchTechnology(vanilla.technology("tech_gene_forging"), () => ({ tier: 4 })),
     ]);
-    expect(() => buildMod(makeConfig(), [technologies])).toThrow(
+    expect(() => mod.compile([technologies])).toThrow(
       /Duplicate patch for technology "tech_gene_forging"/
     );
   });
 
   it("rejects patches from two different vanilla loads", () => {
+    const mod = createMod(makeConfig());
     const other = viewFromFiles({
       ...FILES,
       "common/technology/pp_soc_tech.txt":
         TECH_FILE + "\ntech_pp_drifted = {\n\tcost = 10\n\tarea = society\n}\n",
     });
-    const technologies = collection(undefined, [
-      ...patchedTechnologies(),
-      patchTechnology(other.technology("tech_pp_drifted"), () => ({ tier: 4 })),
+    const technologies = mod.feature(undefined, [
+      ...patchedTechnologies(mod),
+      mod.patchTechnology(other.technology("tech_pp_drifted"), () => ({ tier: 4 })),
     ]);
-    expect(() => buildMod(makeConfig(), [technologies])).toThrow(/different vanilla load/);
+    expect(() => mod.compile([technologies])).toThrow(/different vanilla load/);
   });
 
   it("refuses to build against a game build the table is not verified for", () => {
+    const mod = createMod(makeConfig());
     const drifted = viewFromFiles(FILES, { gameVersion: "4.5.0" });
-    const technologies = collection(undefined, [
-      patchTechnology(drifted.technology("tech_gene_forging"), () => ({ tier: 4 })),
+    const technologies = mod.feature(undefined, [
+      mod.patchTechnology(drifted.technology("tech_gene_forging"), () => ({ tier: 4 })),
     ]);
-    expect(() => buildMod(makeConfig(), [technologies])).toThrow(StaleRuleTableError);
-    expect(() => buildMod(makeConfig(), [technologies])).toThrow(/acceptGameVersion: "4\.5\.0"/);
+    expect(() => mod.compile([technologies])).toThrow(StaleRuleTableError);
+    expect(() => mod.compile([technologies])).toThrow(/acceptGameVersion: "4\.5\.0"/);
   });
 
   it("renders on a stale build only with the exact acceptGameVersion", () => {
+    const mod = createMod(makeConfig({ acceptGameVersion: "4.5.0" }));
     const drifted = viewFromFiles(FILES, { gameVersion: "4.5.0" });
-    const technologies = collection(undefined, [
-      patchTechnology(drifted.technology("tech_gene_forging"), () => ({ tier: 4 })),
+    const technologies = mod.feature(undefined, [
+      mod.patchTechnology(drifted.technology("tech_gene_forging"), () => ({ tier: 4 })),
     ]);
-    expect(
-      render(buildMod(makeConfig({ acceptGameVersion: "4.5.0" }), [technologies])).size
-    ).toBeGreaterThan(0);
+    expect(render(mod.compile([technologies])).size).toBeGreaterThan(0);
   });
 
   it("a view without a game version renders without the staleness gate", () => {
+    const mod = createMod(makeConfig());
     // Hermetic views (viewFromFiles without metadata) carry no version; the
     // gate exists for real installs, which always have launcher-settings.json.
     const versionless = viewFromFiles(FILES);
-    const technologies = collection(undefined, [
-      patchTechnology(versionless.technology("tech_gene_forging"), () => ({ tier: 4 })),
+    const technologies = mod.feature(undefined, [
+      mod.patchTechnology(versionless.technology("tech_gene_forging"), () => ({ tier: 4 })),
     ]);
-    expect(render(buildMod(makeConfig(), [technologies])).size).toBeGreaterThan(0);
+    expect(render(mod.compile([technologies])).size).toBeGreaterThan(0);
   });
 
   it("refuses to emit at a path vanilla occupies", () => {
+    const mod = createMod(makeConfig());
     const clashing = viewFromFiles({
       ...FILES,
       // Vanilla (or another source) already owns the mod's own filename.
       "common/technology/pp_mod_technology.txt": "tech_squatter = {\n\tarea = physics\n}\n",
     });
-    const technologies = collection(undefined, [
-      defineTechnology({
-        id: "pp_mod_tech_new",
+    const technologies = mod.feature(undefined, [
+      mod.technology("new", {
         name: "New",
         area: "physics",
         tier: 1,
         category: "computing",
       }),
-      patchTechnology(clashing.technology("tech_gene_forging"), () => ({ tier: 4 })),
+      mod.patchTechnology(clashing.technology("tech_gene_forging"), () => ({ tier: 4 })),
     ]);
-    expect(() => render(buildMod(makeConfig(), [technologies]))).toThrow(VanillaPathCollisionError);
+    expect(() => render(mod.compile([technologies]))).toThrow(VanillaPathCollisionError);
   });
 
   it("the patch plan is undefined when nothing is patched", () => {
-    expect(buildMod(makeConfig(), []).patchPlan).toBeUndefined();
+    expect(createMod(makeConfig()).compile([]).patchPlan).toBeUndefined();
   });
 });
 
@@ -190,10 +185,9 @@ describe("the vanilla path guard without any patch", () => {
   // replacement of vanilla content — with no error at all.
   const squattedPath = "common/technology/pp_mod_technology.txt";
 
-  function techs() {
-    return collection(undefined, [
-      defineTechnology({
-        id: "pp_mod_tech_new",
+  function techs(mod: ReturnType<typeof createMod>) {
+    return mod.feature(undefined, [
+      mod.technology("new", {
         name: "New",
         area: "physics",
         tier: 1,
@@ -203,33 +197,37 @@ describe("the vanilla path guard without any patch", () => {
   }
 
   it("refuses to emit at a vanilla path when only a view is supplied", () => {
+    const mod = createMod(makeConfig());
     const clashing = viewFromFiles({
       ...FILES,
       [squattedPath]: "tech_squatter = {\n\tarea = physics\n}\n",
     });
-    expect(() => render(buildMod(makeConfig(), [techs()], { vanilla: clashing }))).toThrow(
+    expect(() => render(mod.compile([techs(mod)], { vanilla: clashing }))).toThrow(
       VanillaPathCollisionError
     );
   });
 
   it("names the colliding path", () => {
+    const mod = createMod(makeConfig());
     const clashing = viewFromFiles({
       ...FILES,
       [squattedPath]: "tech_squatter = {\n\tarea = physics\n}\n",
     });
-    expect(() => render(buildMod(makeConfig(), [techs()], { vanilla: clashing }))).toThrow(
+    expect(() => render(mod.compile([techs(mod)], { vanilla: clashing }))).toThrow(
       new RegExp(squattedPath.replace(/[.]/g, "\\."))
     );
   });
 
   it("still renders when the view occupies no path this mod emits", () => {
+    const mod = createMod(makeConfig());
     const vanilla = viewFromFiles(FILES);
-    expect(render(buildMod(makeConfig(), [techs()], { vanilla })).size).toBeGreaterThan(0);
+    expect(render(mod.compile([techs(mod)], { vanilla })).size).toBeGreaterThan(0);
   });
 
   it("does not check at all without a vanilla view", () => {
+    const mod = createMod(makeConfig());
     // Unchanged behavior: nothing was loaded, so nothing is known to collide.
-    expect(buildMod(makeConfig(), [techs()]).vanillaPaths).toBeUndefined();
-    expect(render(buildMod(makeConfig(), [techs()])).size).toBeGreaterThan(0);
+    expect(mod.compile([techs(mod)]).vanillaPaths).toBeUndefined();
+    expect(render(mod.compile([techs(mod)])).size).toBeGreaterThan(0);
   });
 });

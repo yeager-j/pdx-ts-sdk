@@ -1,35 +1,36 @@
 /**
- * The type-level half of the pure authoring API's evidence: one
- * `@ts-expect-error` per safety claim, plus the positive claims the definers
- * must keep. If any annotation stops firing, the typecheck gate fails — the
- * claims are pinned, not assumed.
- *
- * The collection factories these claims were originally written against are
- * gone (SDK-23). Every claim they pinned is pinned here on the free definers,
- * or in the suite that owns the contract outright: the event FROM witness in
- * events.test-d.ts, the situation target contract in situations.test-d.ts.
+ * Capability authoring claims are primary: each `@ts-expect-error` pins a
+ * public contract. The final two describes intentionally pin internal fold
+ * input/output contracts until Layer 6 removes that low-level surface.
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
+import { buildMod as buildInternal } from "../src/build.ts";
 import {
-  buildMod,
-  collection,
-  defineSituationType,
-  defineTechnology,
-  defineTradition,
-  namespace,
-  on,
+  defineSituationType as defineSituationTypeInternal,
+  on as onInternal,
+} from "../src/definers.ts";
+import {
+  defineTechnology as defineTechnologyInternal,
+  defineTradition as defineTraditionInternal,
+} from "../src/generated/content-definers.ts";
+import { namespace as namespaceInternal } from "../src/generated/event-definers.ts";
+import {
+  createMod,
   onActions,
-  type Collection,
-  type ContentItem,
-  type EventItemBase,
   type TechnologyDef,
   type TechnologyItem,
   type TechnologyRef,
   type TraditionItem,
 } from "../src/index.ts";
+import {
+  collection as collectionInternal,
+  type Collection,
+  type ContentItem,
+  type EventItemBase,
+} from "../src/items.ts";
 
 /**
  * The definers, and what a definition is once no collection is in the way:
@@ -37,19 +38,16 @@ import {
  * one object returned, and the registry brand is on the item rather than on
  * whatever collected it.
  */
-describe("free definers", () => {
-  it("preserves the literal id with no collection in the way", () => {
-    const tech = defineTechnology({
-      id: "probe_neg_free_tech",
+describe("capability authoring", () => {
+  it("mints the literal id with no feature in the way", () => {
+    const mod = createMod({ name: "Probe", prefix: "probe_neg", supportedVersion: "4.4.*" });
+    const tech = mod.technology("free", {
       name: "T",
       area: "physics",
       tier: 1,
       category: "particles",
     });
-    expectTypeOf(tech.id).toEqualTypeOf<"probe_neg_free_tech">();
-    expectTypeOf(tech).toEqualTypeOf<
-      ContentItem<"technology", TechnologyDef<"probe_neg_free_tech">>
-    >();
+    expectTypeOf(tech.id).toEqualTypeOf<"probe_neg_tech_free">();
     // @ts-expect-error — the id is the literal, not just string
     const other: "some_other_id" = tech.id;
     void other;
@@ -58,16 +56,15 @@ describe("free definers", () => {
   it("carries targetScope on the one object it returns", () => {
     // The graft used to push one object and return a second, wider one. Free,
     // there is only the one — it has to be both the item and the contract.
-    const situation = defineSituationType({
-      id: "probe_neg_free_sit",
+    const mod = createMod({ name: "Probe", prefix: "probe_neg", supportedVersion: "4.4.*" });
+    const situation = mod.situationType("free_sit", {
       name: "S",
       monthlyProgress: { base: 1 },
       targetScope: "planet",
     });
     expectTypeOf(situation.targetScope).toEqualTypeOf<"planet">();
     expectTypeOf(situation.itemKind).toEqualTypeOf<"content">();
-    const ownRegistry: TechnologyRef = defineTechnology({
-      id: "probe_neg_free_brand",
+    const ownRegistry: TechnologyRef = mod.technology("free_brand", {
       name: "T",
       area: "physics",
       tier: 1,
@@ -79,10 +76,10 @@ describe("free definers", () => {
     void crossRegistry;
   });
 
-  it("types collection() by the items it is given", () => {
-    const techs = collection("free_techs", [
-      defineTechnology({
-        id: "probe_neg_collected",
+  it("types feature() by the items it is given", () => {
+    const mod = createMod({ name: "Probe", prefix: "probe_neg", supportedVersion: "4.4.*" });
+    const techs = mod.feature("free_techs", [
+      mod.technology("collected", {
         name: "T",
         area: "physics",
         tier: 1,
@@ -90,9 +87,7 @@ describe("free definers", () => {
       }),
     ]);
     expectTypeOf(techs.items[0]!.type).toEqualTypeOf<"technology">();
-    expectTypeOf(techs.items).toEqualTypeOf<
-      readonly ContentItem<"technology", TechnologyDef<"probe_neg_collected">>[]
-    >();
+    expectTypeOf(techs.items[0]!.id).toEqualTypeOf<"probe_neg_tech_collected">();
     const asRegistryCollection: Collection<TechnologyItem> = techs;
     void asRegistryCollection;
     // @ts-expect-error — a technology collection is not a tradition collection
@@ -103,10 +98,9 @@ describe("free definers", () => {
     void wrongKind;
     // Mixed registries are legal and land in one file — the element type is
     // the union, which is what stops it being read as either one alone.
-    const mixed = collection("free_mixed", [
-      defineTradition({ id: "probe_neg_mixed_trad", name: "T", effects: "None." }),
-      defineTechnology({
-        id: "probe_neg_mixed_tech",
+    const mixed = mod.feature("free_mixed", [
+      mod.tradition("mixed_trad", { name: "T", effects: "None." }),
+      mod.technology("mixed_tech", {
         name: "T",
         area: "physics",
         tier: 1,
@@ -119,49 +113,53 @@ describe("free definers", () => {
   });
 });
 
-describe("the free on() contract", () => {
+describe("the capability on() contract", () => {
   it("checks scope and FROM against the hook, over the whole list", () => {
-    const events = namespace("probe_neg_free_hooks");
-    const countryEvent = events.defineCountryEvent({ id: 50, isTriggeredOnly: true });
-    const alsoCountry = events.defineCountryEvent({ id: 53, isTriggeredOnly: true });
-    const planetEvent = events.definePlanetEvent({ id: 51, isTriggeredOnly: true });
-    const witnessed = events.defineCountryEvent({ id: 52, from: "country", isTriggeredOnly: true });
-    on(onActions.onGameStartCountry, [countryEvent]);
-    on(onActions.onGameStartCountry, [countryEvent, alsoCountry]);
+    const mod = createMod({ name: "Probe", prefix: "probe_neg", supportedVersion: "4.4.*" });
+    const events = mod.namespace("free_hooks");
+    const countryEvent = events.country(50, { isTriggeredOnly: true });
+    const alsoCountry = events.country(53, { isTriggeredOnly: true });
+    const planetEvent = events.planet(51, { isTriggeredOnly: true });
+    const witnessed = events.country(52, { from: "country", isTriggeredOnly: true });
+    mod.on(onActions.onGameStartCountry, [countryEvent]);
+    mod.on(onActions.onGameStartCountry, [countryEvent, alsoCountry]);
     // @ts-expect-error — the hook supplies country scope; a planet event does not satisfy it
-    on(onActions.onGameStartCountry, [planetEvent]);
+    mod.on(onActions.onGameStartCountry, [planetEvent]);
     // @ts-expect-error — every element is checked, not just the first
-    on(onActions.onGameStartCountry, [countryEvent, planetEvent]);
+    mod.on(onActions.onGameStartCountry, [countryEvent, planetEvent]);
     // @ts-expect-error — the hook supplies no FROM; an event declaring FROM country is rejected
-    on(onActions.onGameStartCountry, [witnessed]);
+    mod.on(onActions.onGameStartCountry, [witnessed]);
     // @ts-expect-error — a hook bound to nothing is a mistake, not an empty list
-    on(onActions.onGameStartCountry, []);
+    mod.on(onActions.onGameStartCountry, []);
   });
 });
 
 describe("buildMod's input", () => {
   it("takes collections, never loose items", () => {
-    const tech = defineTechnology({
+    const tech = defineTechnologyInternal({
       id: "probe_neg_loose",
       name: "L",
       area: "physics",
       tier: 1,
       category: "particles",
     });
-    const techs = collection(undefined, [tech]);
+    const techs = collectionInternal(undefined, [tech]);
     const config = { name: "N", prefix: "probe_neg", supportedVersion: "4.4.*" };
-    buildMod(config, [techs]);
+    buildInternal(config, [techs]);
     // @ts-expect-error — a bare content item is not a collection
-    buildMod(config, [tech]);
+    buildInternal(config, [tech]);
   });
 });
 
 describe("buildMod's output", () => {
   it("carries the on-action emission as data, not the accumulator", () => {
-    const event = namespace("probe_neg").defineCountryEvent({ id: 1, isTriggeredOnly: true });
-    const mod = buildMod({ name: "N", prefix: "probe_neg", supportedVersion: "4.4.*" }, [
-      collection("events", [event]),
-      collection(undefined, [on(onActions.onGameStartCountry, [event])]),
+    const event = namespaceInternal("probe_neg").defineCountryEvent({
+      id: 1,
+      isTriggeredOnly: true,
+    });
+    const mod = buildInternal({ name: "N", prefix: "probe_neg", supportedVersion: "4.4.*" }, [
+      collectionInternal("events", [event]),
+      collectionInternal(undefined, [onInternal(onActions.onGameStartCountry, [event])]),
     ]);
     expectTypeOf(mod.onActions).toEqualTypeOf<readonly PdxEntry[]>();
     // @ts-expect-error — the accumulator stays inside the fold: registering

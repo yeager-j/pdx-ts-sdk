@@ -13,9 +13,7 @@ import { describe, expect, it } from "vitest";
 import { EFFECT_META } from "../src/generated/effect-meta.ts";
 import {
   and,
-  buildMod,
-  collection,
-  defineTechnology,
+  createMod,
   eventTarget,
   makeScope,
   render,
@@ -31,6 +29,7 @@ const CONFIG: ModConfig = {
   version: "1.0.0",
   supportedVersion: "4.4.*",
 };
+const mod = createMod(CONFIG);
 
 function recorded(body: (scope: ReturnType<typeof makeScope<"country">>) => void): string {
   const sink: PdxEntry[] = [];
@@ -188,9 +187,8 @@ describe("the testing interpreter", () => {
 describe("in a built mod", () => {
   it("reaches the rendered files from a content field and an event", () => {
     const isFallenEmpire = scriptedTrigger("is_fallen_empire", "country");
-    const technologies = collection("scripted", [
-      defineTechnology({
-        id: "sc_tech_probe",
+    const technologies = mod.feature("scripted", [
+      mod.technology("probe", {
         name: "Probe",
         area: "physics",
         tier: 1,
@@ -198,7 +196,7 @@ describe("in a built mod", () => {
         potential: and(isFallenEmpire(), scriptedTrigger("is_regular_empire", "country")()),
       }),
     ]);
-    expect(render(buildMod(CONFIG, [technologies])).get("common/technology/sc_scripted.txt")).toBe(
+    expect(render(mod.compile([technologies])).get("common/technology/sc_scripted.txt")).toBe(
       "sc_tech_probe = {\n" +
         "\tarea = physics\n" +
         "\ttier = 1\n" +

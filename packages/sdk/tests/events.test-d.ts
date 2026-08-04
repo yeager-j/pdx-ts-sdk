@@ -6,19 +6,18 @@
 
 import { describe, it } from "vitest";
 
-import { eventTarget, namespace } from "../src/index.ts";
+import { createMod, eventTarget } from "../src/index.ts";
 
 describe("the FROM contract on the real event API", () => {
   it("requires a witness when the fired event declared from:", () => {
-    const events = namespace("from_contract_a");
-    const needsCountryFrom = events.definePlanetEvent({
-      id: 1,
+    const mod = createMod({ name: "A", prefix: "from_contract_a", supportedVersion: "4.4.*" });
+    const events = mod.namespace();
+    const needsCountryFrom = events.planet(1, {
       from: "country",
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    events.definePlanetEvent({
-      id: 2,
+    events.planet(2, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (planet) => {
@@ -29,15 +28,14 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("rejects a witness of the wrong scope", () => {
-    const events = namespace("from_contract_b");
-    const needsCountryFrom = events.definePlanetEvent({
-      id: 3,
+    const mod = createMod({ name: "B", prefix: "from_contract_b", supportedVersion: "4.4.*" });
+    const events = mod.namespace();
+    const needsCountryFrom = events.planet(3, {
       from: "country",
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    events.definePlanetEvent({
-      id: 4,
+    events.planet(4, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (planet, ctx) => {
@@ -48,15 +46,14 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("accepts a matching witness", () => {
-    const events = namespace("from_contract_c");
-    const needsCountryFrom = events.definePlanetEvent({
-      id: 5,
+    const mod = createMod({ name: "C", prefix: "from_contract_c", supportedVersion: "4.4.*" });
+    const events = mod.namespace();
+    const needsCountryFrom = events.planet(5, {
       from: "country",
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    events.defineCountryEvent({
-      id: 6,
+    events.country(6, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
@@ -68,15 +65,14 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("holds the FROM contract on a generated kind beyond the original two", () => {
-    const events = namespace("from_contract_d");
-    const needsCountryFrom = events.defineSituationEvent({
-      id: 20,
+    const mod = createMod({ name: "D", prefix: "from_contract_d", supportedVersion: "4.4.*" });
+    const events = mod.namespace();
+    const needsCountryFrom = events.situation(20, {
       from: "country",
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    events.defineSituationEvent({
-      id: 21,
+    events.situation(21, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (situation, ctx) => {
@@ -84,20 +80,19 @@ describe("the FROM contract on the real event API", () => {
         situation.situationEvent({ id: needsCountryFrom, from: ctx.self });
       },
     });
-    // @ts-expect-error — a situation-scoped def does not fit defineCountryEvent
-    events.defineCountryEvent({ id: 22, immediate: (s) => s.setSituationFlag("x") });
+    // @ts-expect-error — a situation-scoped definition does not fit country()
+    events.country(22, { immediate: (s) => s.setSituationFlag("x") });
   });
 
   it("lets FROM open a block but not self, whose path is relative", () => {
-    const events = namespace("self_is_a_value");
-    const aftershockFrom = events.definePlanetEvent({
-      id: 9,
+    const mod = createMod({ name: "Self", prefix: "self_is_a_value", supportedVersion: "4.4.*" });
+    const events = mod.namespace();
+    const aftershockFrom = events.planet(9, {
       from: "country",
       isTriggeredOnly: true,
     });
     const target = eventTarget<"planet">("self_is_a_value_planet");
-    events.defineCountryEvent({
-      id: 1,
+    events.country(1, {
       from: "planet",
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
@@ -117,9 +112,9 @@ describe("the FROM contract on the real event API", () => {
   });
 
   it("makes an undeclared FROM unusable rather than any-typed", () => {
-    const events = namespace("from_contract_e");
-    events.defineCountryEvent({
-      id: 7,
+    const mod = createMod({ name: "E", prefix: "from_contract_e", supportedVersion: "4.4.*" });
+    const events = mod.namespace();
+    events.country(7, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
