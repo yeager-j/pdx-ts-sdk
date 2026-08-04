@@ -37,6 +37,11 @@ import type { DefinedEvent } from "./events.ts";
 import { CONTENT_REGISTRIES, type ContentTypeName } from "./generated/content-registry.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import {
+  checkVanillaPackagePin,
+  installedVanillaPackageVersion,
+  vanillaIdsCheckWarning,
+} from "./identifiers/package-pin.ts";
+import {
   flattenItems,
   type ContentItem,
   type EventItemBase,
@@ -45,16 +50,15 @@ import {
   type OnActionBindingItem,
 } from "./items.ts";
 import { OnActionAuthoring } from "./on-actions.ts";
-import { compareUtf8, normalizeLogicalPath } from "./resolver/path-order.ts";
-import { collectVarRefs, planPatchEmission, type PatchPlan } from "./resolver/plan.ts";
-import { SUPPORTED_STELLARIS_BUILD } from "./resolver/rules.ts";
+import { compareUtf8, normalizeLogicalPath } from "./ordering.ts";
 import {
-  checkVanillaPackagePin,
-  installedVanillaPackageVersion,
-  vanillaIdsCheckWarning,
-} from "./vanilla/package-pin.ts";
-import type { PatchedTechnology } from "./vanilla/patch.ts";
-import { sha256Hex, type VanillaFile, type VanillaView } from "./vanilla/surface.ts";
+  collectVarRefs,
+  planPatchEmission,
+  type PatchPlan,
+} from "./stellaris/vanilla/override-plan.ts";
+import { SUPPORTED_STELLARIS_BUILD } from "./stellaris/vanilla/override-rules.ts";
+import type { PatchedTechnology } from "./stellaris/vanilla/patch.ts";
+import { sha256Hex, type VanillaFile, type VanillaView } from "./stellaris/vanilla/view.ts";
 
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 
@@ -90,7 +94,7 @@ export interface ModConfig<P extends string = string> {
    * `buildMod` warns when `@pdx-ts/stellaris-ids` is not doing its job —
    * absent, or pinned to a different game build than the install — because
    * that protection degrades silently to plain `string` and nothing else
-   * would say so (`vanillaIdsCheckWarning`, `vanilla/package-pin.ts`). Set
+   * would say so (`vanillaIdsCheckWarning`, `identifiers/package-pin.ts`). Set
    * this when the mod authors vanilla ids by hand on purpose, and the warning
    * is a standing false alarm rather than news.
    *

@@ -21,11 +21,11 @@ import {
   type PdxValue,
 } from "@pdx-ts/pdxscript";
 
-import type { ContentRefUse } from "../content.ts";
-import type { ResearchArea } from "../generated/enums.ts";
-import { refId, type TechnologyCategoryRef, type TechnologyRef } from "../generated/refs.ts";
-import type { Trigger } from "../trigger-core.ts";
-import type { AnyOf, ParsedNumber, ParsedTechnology } from "./surface.ts";
+import type { ResearchArea } from "../../generated/enums.ts";
+import { refId, type TechnologyCategoryRef, type TechnologyRef } from "../../generated/refs.ts";
+import type { ContentRefUse } from "../../references.ts";
+import type { Trigger } from "../../trigger-core.ts";
+import type { AnyOf, ParsedNumber, ParsedTechnology } from "./view.ts";
 
 /**
  * What a patch may change: the fields the surface types, nothing else. `id`

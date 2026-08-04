@@ -18,10 +18,10 @@
 
 import { kv, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
-import { NoWinningFilenameError, PdxSdkError, VanillaPathCollisionError } from "../errors.ts";
-import type { VanillaFile } from "../vanilla/surface.ts";
-import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "./path-order.ts";
-import { registryRule, unverifiedCellError, type RepeatRule } from "./rules.ts";
+import { NoWinningFilenameError, PdxSdkError, VanillaPathCollisionError } from "../../errors.ts";
+import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../../ordering.ts";
+import { registryRule, unverifiedCellError, type RepeatRule } from "./override-rules.ts";
+import type { VanillaFile } from "./view.ts";
 
 export interface PatchInput {
   readonly key: string;

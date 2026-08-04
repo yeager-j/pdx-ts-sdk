@@ -48,7 +48,7 @@ import {
   type ModItem,
   type ModItemInput,
 } from "../src/items.ts";
-import { viewFromFiles } from "../src/vanilla/surface.ts";
+import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 import { resonancePack } from "./fixtures/resonance-pack.ts";
 import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 

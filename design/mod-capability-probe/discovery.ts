@@ -9,10 +9,7 @@ import {
   type Collection,
   type ModItem,
 } from "../../packages/sdk/src/items.ts";
-import {
-  compareLogicalPaths,
-  normalizeLogicalPath,
-} from "../../packages/sdk/src/resolver/path-order.ts";
+import { compareLogicalPaths, normalizeLogicalPath } from "../../packages/sdk/src/ordering.ts";
 import type { CapabilityFeature } from "./capability.ts";
 
 const ITEM_KINDS = new Set<string>(["content", "event", "on-action", "patch", "contribution"]);

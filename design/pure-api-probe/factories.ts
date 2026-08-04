@@ -23,8 +23,8 @@ import type { OnActionRef } from "../../packages/sdk/src/on-actions.ts";
 import {
   patchTechnology as transformTechnology,
   type TechnologyPatch,
-} from "../../packages/sdk/src/vanilla/patch.ts";
-import type { ParsedTechnology } from "../../packages/sdk/src/vanilla/surface.ts";
+} from "../../packages/sdk/src/stellaris/vanilla/patch.ts";
+import type { ParsedTechnology } from "../../packages/sdk/src/stellaris/vanilla/view.ts";
 import {
   assertFileStem,
   assertNamespace,

@@ -12,7 +12,7 @@ import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-import { InstallNotFoundError } from "../errors.ts";
+import { InstallNotFoundError } from "../../errors.ts";
 
 const SENTINEL = join("common", "technology");
 

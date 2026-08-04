@@ -10,11 +10,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import { LogicalPathError } from "../../src/errors.ts";
-import {
-  compareLogicalPaths,
-  enumerationOrder,
-  normalizeLogicalPath,
-} from "../../src/resolver/path-order.ts";
+import { compareLogicalPaths, enumerationOrder, normalizeLogicalPath } from "../../src/ordering.ts";
 
 const path = normalizeLogicalPath;
 

@@ -6,7 +6,7 @@
 
 import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
 
-import type { ContentRefUse } from "../content-refs.ts";
+import type { ContentRefUse } from "../references.ts";
 import { scriptValueScalar, trigger, type ScriptValue, type Trigger } from "../trigger-core.ts";
 import type {
   AiAttitudeBehaviour,

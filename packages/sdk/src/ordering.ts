@@ -17,7 +17,7 @@
  * order, which JavaScript's UTF-16 `<` does not.
  */
 
-import { LogicalPathError } from "../errors.ts";
+import { LogicalPathError } from "./errors.ts";
 
 declare const logicalPathBrand: unique symbol;
 

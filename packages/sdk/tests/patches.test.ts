@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import { StaleRuleTableError, VanillaPathCollisionError } from "../src/errors.ts";
 import { createMod, render, type ModConfig, type TechnologyItem } from "../src/index.ts";
-import { viewFromFiles } from "../src/vanilla/surface.ts";
+import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
 const FILES = {

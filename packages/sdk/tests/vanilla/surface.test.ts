@@ -10,8 +10,8 @@ import { parse, serialize, withoutLines } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { SwapPatchError } from "../../src/errors.ts";
-import { patchTechnology } from "../../src/vanilla/patch.ts";
-import { anyOf, sha256Hex, viewFromFiles } from "../../src/vanilla/surface.ts";
+import { patchTechnology } from "../../src/stellaris/vanilla/patch.ts";
+import { anyOf, sha256Hex, viewFromFiles } from "../../src/stellaris/vanilla/view.ts";
 import { OR_TECH_FILE, TECH_FILE, VARS_FILE } from "../fixtures/vanilla-fixture.ts";
 
 const FILES = {

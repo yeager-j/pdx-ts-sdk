@@ -18,7 +18,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { GameVersionError } from "../errors.ts";
+import { GameVersionError } from "../../errors.ts";
 
 const SETTINGS = "launcher-settings.json";
 

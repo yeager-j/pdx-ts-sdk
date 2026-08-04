@@ -16,7 +16,7 @@
 
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { locateInstall } from "../../packages/sdk/src/stellaris/locate.ts";
+import { locateInstall } from "../../packages/sdk/src/stellaris/installation/locate.ts";
 import { checkCallSites } from "./callsites.ts";
 import { GOLDEN_EFFECTS, GOLDEN_TRIGGERS } from "./golden.ts";
 import { inferScopes } from "./infer.ts";

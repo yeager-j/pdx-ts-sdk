@@ -7,7 +7,7 @@ import { defineHardening } from "../../examples/hardening/mod.ts";
 import { defineHelloGalaxy } from "../../examples/hello-galaxy/mod.ts";
 import { buildMod } from "../../packages/sdk/src/build.ts";
 import { render } from "../../packages/sdk/src/render.ts";
-import { load } from "../../packages/sdk/src/stellaris/load.ts";
+import { load } from "../../packages/sdk/src/stellaris/vanilla/load.ts";
 import { createMod, stellarisIds, type ModCapability, type ProbeIdProfile } from "./capability.ts";
 import { capabilityMethodRows, emitCapabilityMethodDeclarations } from "./codegen-shape.ts";
 import { discoveryMod } from "./discovery-mod.ts";

@@ -15,8 +15,8 @@ import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 
 import type { PureMod } from "./build.ts";
 import { VanillaPathCollisionError } from "./errors.ts";
-import { normalizeLogicalPath } from "./resolver/path-order.ts";
-import { modDir } from "./stellaris/mod-dir.ts";
+import { normalizeLogicalPath } from "./ordering.ts";
+import { modDir } from "./stellaris/launcher/mod-directory.ts";
 
 export function render(mod: PureMod): Map<string, string> {
   const { prefix } = mod.config;

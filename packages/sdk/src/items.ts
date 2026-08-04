@@ -12,13 +12,13 @@
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { ContentRefUse } from "./content-refs.ts";
 import type { DefinedEvent } from "./events.ts";
 import type { ContentReferenceName, ContentTypeName } from "./generated/content-registry.ts";
 import type { TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import type { OnActionRef } from "./on-actions.ts";
-import type { PatchedTechnology } from "./vanilla/patch.ts";
+import type { ContentRefUse } from "./references.ts";
+import type { PatchedTechnology } from "./stellaris/vanilla/patch.ts";
 
 export interface ModWarning {
   readonly code:

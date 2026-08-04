@@ -61,13 +61,13 @@ Acceptance results:
 
 ## Decisions taken (and where they can be revisited)
 
-- **Comparator vendored in TS** ([src/resolver/path-order.ts](../src/resolver/path-order.ts)),
+- **Comparator vendored in TS** ([src/ordering.ts](../src/ordering.ts)),
   spec cited from stellaris-docs `technical-design.md` ("Installation
   identity"). The Rust resolver is inside a Tauri binary; there is no sharing
   mechanism, so the shared artifact is the spec plus the same property pin
   (byte order ≡ code-point order). Extraction into a shared package remains
   deliberate future work.
-- **Rule table** ([src/resolver/rules.ts](../src/resolver/rules.ts)): three
+- **Rule table** ([src/stellaris/vanilla/override-rules.ts](../src/stellaris/vanilla/override-rules.ts)): three
   states — `verified` (cites oracle runs), `assumed` (named judgment with a
   paper trail; megastructures' whole-object cell carries Jackson's
   2026-07-31 call and every win through it is flagged `assumed`), `refused`
@@ -78,7 +78,7 @@ Acceptance results:
   when the install's version differs from the 4.4.6 pin;
   `acceptGameVersion: "<exact version>"` proceeds, per-version.
 - **`stellaris.load()` is synchronous**, matching the handoff snippet; the
-  cache ([src/stellaris/cache.ts](../src/stellaris/cache.ts)) is
+  cache ([src/stellaris/vanilla/cache.ts](../src/stellaris/vanilla/cache.ts)) is
   content-addressed JSON under `../../node_modules/.cache/pdx-ts-sdk`. Honesty
   note: at technology-only scope it saves ~15 ms; it exists so the load
   layer keeps its shape when the full `common/` tree lands, and the manifest

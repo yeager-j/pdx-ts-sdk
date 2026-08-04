@@ -277,13 +277,13 @@ export {
   VanillaPackageMismatchError,
   VanillaPathCollisionError,
 } from "./errors.ts";
+export { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "./ordering.ts";
 export {
-  compareLogicalPaths,
-  normalizeLogicalPath,
-  type LogicalPath,
-} from "./resolver/path-order.ts";
-export { REGISTRY_RULES, SUPPORTED_STELLARIS_BUILD, type RegistryRow } from "./resolver/rules.ts";
-export type { PatchPlan, WinAssertion } from "./resolver/plan.ts";
+  REGISTRY_RULES,
+  SUPPORTED_STELLARIS_BUILD,
+  type RegistryRow,
+} from "./stellaris/vanilla/override-rules.ts";
+export type { PatchPlan, WinAssertion } from "./stellaris/vanilla/override-plan.ts";
 export {
   anyOf,
   ParsedTechnology,
@@ -293,8 +293,8 @@ export {
   type ParsedNumber,
   type Prerequisite,
   type VanillaFile,
-} from "./vanilla/surface.ts";
-export type { PatchedTechnology, TechnologyPatch } from "./vanilla/patch.ts";
+} from "./stellaris/vanilla/view.ts";
+export type { PatchedTechnology, TechnologyPatch } from "./stellaris/vanilla/patch.ts";
 export type {
   CheckedVanillaId,
   InvalidVanillaId,
@@ -304,7 +304,7 @@ export type {
   VanillaScriptedTriggers,
   VanillaTrie,
   VanillaTries,
-} from "./vanilla-ids.ts";
+} from "./identifiers/contracts.ts";
 export {
   scriptedEffect,
   scriptedTrigger,

@@ -21,7 +21,7 @@
  * cell needs a run id.
  */
 
-import { UnverifiedRegistryError } from "../errors.ts";
+import { UnverifiedRegistryError } from "../../errors.ts";
 
 /** The build every verdict below was captured against (Pegasus). */
 export const SUPPORTED_STELLARIS_BUILD = "4.4.6";

@@ -25,7 +25,7 @@ import {
   isScopeValid,
   onActions,
 } from "../../packages/sdk/src/index.ts";
-import { viewFromFiles } from "../../packages/sdk/src/vanilla/surface.ts";
+import { viewFromFiles } from "../../packages/sdk/src/stellaris/vanilla/view.ts";
 import { TECH_FILE, VARS_FILE } from "../../packages/sdk/tests/fixtures/vanilla-fixture.ts";
 import { buildMod } from "./build.ts";
 import {

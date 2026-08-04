@@ -87,10 +87,10 @@ up across every registry landed so far.
 
 Better than it looks. The pieces exist:
 
-- `src/stellaris/locate.ts` finds the install
+- `src/stellaris/installation/locate.ts` finds the install
 - `tools/codegen/corpus.ts` already reads a registry directory into definitions
-- `src/resolver/path-order.ts` already models load order across files
-- `src/vanilla/surface.ts` already parses vanilla technology and
+- `src/ordering.ts` already models load order across files
+- `src/stellaris/vanilla/view.ts` already parses vanilla technology and
   `common/scripted_variables/`, resolving `@variable` provenance
 - the CWT rule tables already describe every registry's shape
 
