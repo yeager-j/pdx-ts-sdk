@@ -19,14 +19,10 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import {
   and,
-  buildMod,
   checkVariable,
-  collection,
-  defineBuilding,
-  defineTechnology,
+  createMod,
   hasAscensionPerk,
   owner,
-  patchTechnology,
   planet,
   render,
   scriptedTrigger,
@@ -92,24 +88,25 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
         ? { acceptGameVersion: vanilla.gameVersion }
         : {}),
     };
-    const myNewTech = defineTechnology({
-      id: "pp_real_tech_marker",
+    const mod = createMod(config);
+    const myNewTech = mod.technology("marker", {
       name: "Probe Marker",
       area: "society",
       tier: 1,
       category: "biology",
     });
-    const geneTailoringPatch = patchTechnology(
+    const geneTailoringPatch = mod.patchTechnology(
       vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
       (t) => ({
         cost: t.cost.value * 2,
         prerequisites: [...t.prerequisites, myNewTech],
       })
     );
-    const technologies = collection(undefined, [myNewTech, geneTailoringPatch]);
-    const mod = buildMod(config, [technologies], { vanilla });
+    const compiled = mod.compile([mod.feature(undefined, [myNewTech, geneTailoringPatch])], {
+      vanilla,
+    });
 
-    const plan = mod.patchPlan!;
+    const plan = compiled.patchPlan!;
     const assertion = plan.assertions[0]!;
     expect(assertion.key).toBe("tech_gene_tailoring");
     expect(assertion.beats).toContain("common/technology/00_soc_tech.txt");
@@ -121,7 +118,7 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
     const definers = vanilla.files.filter((file) => file.keys.includes("tech_gene_tailoring"));
     expect(definers.map((file) => file.path)).toEqual(assertion.beats);
 
-    const files = render(mod);
+    const files = render(compiled);
     expect(files.get(plan.relPath)).toBe(plan.content);
     console.info(`computed winning path: ${plan.relPath}`);
     console.info(`beats: ${assertion.beats.join(", ")}`);
@@ -206,8 +203,12 @@ describe.skipIf(installPath === undefined)(
 
       // Same field, same values, ported into a mod-prefixed id (a defineX
       // id can never collide with a vanilla one).
-      const ported = defineBuilding({
-        id: "sdk56_building_league_offices_port",
+      const mod = createMod({
+        name: "SDK-56 vanilla port",
+        prefix: "sdk56",
+        supportedVersion: "4.4.*",
+      });
+      const ported = mod.building("league_offices_port", {
         name: "Sdk56 League Offices Port",
         countryModifier: (m) => m.raw("country_edict_fund_add", 50),
         triggeredCountryModifier: [
@@ -217,11 +218,9 @@ describe.skipIf(installPath === undefined)(
           },
         ],
       });
-      const renderedFile = render(
-        buildMod({ name: "SDK-56 vanilla port", prefix: "sdk56", supportedVersion: "4.4.*" }, [
-          collection(undefined, [ported]),
-        ])
-      ).get("common/buildings/sdk56_buildings.txt")!;
+      const renderedFile = render(mod.compile([mod.feature(undefined, [ported])])).get(
+        "common/buildings/sdk56_buildings.txt"
+      )!;
       const renderedDoc = parse(renderedFile, "sdk56_buildings.txt");
       const renderedBuilding = findEntries(
         renderedDoc.items,
@@ -323,8 +322,12 @@ describe.skipIf(installPath === undefined)(
         "has_infertile_clone_soldier_trait",
         "pop_group"
       );
-      const ported = defineBuilding({
-        id: "sdk56_building_clone_army_clone_vat_port",
+      const mod = createMod({
+        name: "SDK-56 vanilla port",
+        prefix: "sdk56",
+        supportedVersion: "4.4.*",
+      });
+      const ported = mod.building("clone_army_clone_vat_port", {
         name: "Sdk56 Clone Army Clone Vat Port",
         triggeredPlanetPopGroupModifierForSpecies: [
           {
@@ -336,11 +339,9 @@ describe.skipIf(installPath === undefined)(
           },
         ],
       });
-      const renderedFile = render(
-        buildMod({ name: "SDK-56 vanilla port", prefix: "sdk56", supportedVersion: "4.4.*" }, [
-          collection(undefined, [ported]),
-        ])
-      ).get("common/buildings/sdk56_buildings.txt")!;
+      const renderedFile = render(mod.compile([mod.feature(undefined, [ported])])).get(
+        "common/buildings/sdk56_buildings.txt"
+      )!;
       const renderedDoc = parse(renderedFile, "sdk56_buildings.txt");
       const renderedBuilding = findEntries(
         renderedDoc.items,

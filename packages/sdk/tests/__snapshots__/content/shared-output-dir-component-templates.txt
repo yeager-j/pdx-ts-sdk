@@ -1,5 +1,5 @@
 utility_component_template = {
-	key = shared_output_dir_test_utility_armor_plating
+	key = shared_output_dir_test_util_armor_plating
 	icon = GFX_ship_part_armor
 }
 

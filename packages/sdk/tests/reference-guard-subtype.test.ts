@@ -22,7 +22,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { buildMod, collection, defineCivicOrOrigin, defineTechnology } from "../src/index.ts";
+import { createMod } from "../src/index.ts";
 
 function configFor(prefix: string) {
   return { name: "Reference guard test", prefix, supportedVersion: "4.4.*" };
@@ -30,10 +30,10 @@ function configFor(prefix: string) {
 
 describe("SDK-37: subtype-qualified reference targets", () => {
   const CONFIG = configFor("referenceguard");
+  const mod = createMod(CONFIG);
 
   it("control: a dangling technology prerequisite still throws", () => {
-    const dangling = defineTechnology({
-      id: "referenceguard_tech_dangling",
+    const dangling = mod.technology("dangling", {
       name: "Dangling",
       area: "physics",
       category: ["computing"],
@@ -42,7 +42,7 @@ describe("SDK-37: subtype-qualified reference targets", () => {
       prerequisites: ["referenceguard_tech_does_not_exist"],
     });
 
-    expect(() => buildMod(CONFIG, [collection("dangling_tech", [dangling])])).toThrow(
+    expect(() => mod.compile([mod.feature("dangling_tech", [dangling])])).toThrow(
       /no such technology/
     );
   });
@@ -54,12 +54,11 @@ describe("SDK-37: subtype-qualified reference targets", () => {
     // "civic_or_origin" (generated/content-registry.ts), so before the fix
     // `registriesByTarget` held no key matching the qualified target and
     // this reference went unchecked no matter what it named.
-    const dangling = defineCivicOrOrigin({
-      id: "referenceguard_civic_dangling",
+    const dangling = mod.civicOrOrigin("dangling", {
       alternateCivicVersion: "referenceguard_civic_does_not_exist",
     });
 
-    expect(() => buildMod(CONFIG, [collection("dangling_civic_alt", [dangling])])).toThrow(
+    expect(() => mod.compile([mod.feature("dangling_civic_alt", [dangling])])).toThrow(
       /civic_or_origin/
     );
   });
@@ -70,12 +69,11 @@ describe("SDK-37: subtype-qualified reference targets", () => {
     // domain clause, with no `refTypes` recorded for any of them — nothing
     // was ever recorded for this field, so nothing could be checked
     // regardless of how `registriesByTarget` resolved.
-    const dangling = defineCivicOrOrigin({
-      id: "referenceguard_civic_clause_dangling",
+    const dangling = mod.civicOrOrigin("clause_dangling", {
       possible: { civics: { nor: [{ values: ["referenceguard_civic_does_not_exist"] }] } },
     });
 
-    expect(() => buildMod(CONFIG, [collection("dangling_civic_clause", [dangling])])).toThrow(
+    expect(() => mod.compile([mod.feature("dangling_civic_clause", [dangling])])).toThrow(
       /civic_or_origin/
     );
   });

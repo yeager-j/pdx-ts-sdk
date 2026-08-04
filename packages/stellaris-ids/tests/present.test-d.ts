@@ -17,7 +17,7 @@ import "../src/index.ts";
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import {
-  defineTechnology,
+  createMod,
   makeScope,
   scriptedTriggerModifier,
   vanilla,
@@ -66,8 +66,8 @@ describe("checked registry helpers", () => {
   it("still accepts a plain string in a ref field, for other mods' content", () => {
     // The escape hatch SDK-12 deliberately keeps: `XRef | string` everywhere,
     // so a reference to content this install has never heard of stays legal.
-    defineTechnology({
-      id: "probe_tech",
+    const mod = createMod({ name: "Probe", prefix: "probe", supportedVersion: "4.4.*" });
+    mod.technology("probe", {
       name: "Probe",
       area: "physics",
       tier: 1,

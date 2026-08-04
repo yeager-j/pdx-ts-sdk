@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { eventTarget } from "../src/effect-core.ts";
 import { countryFlags } from "../src/generated/value-sets.ts";
-import { buildMod, collection, defineSituationType, namespace, render } from "../src/index.ts";
+import { createMod, render } from "../src/index.ts";
 
 const flags = countryFlags("event_test_flag");
 
@@ -11,30 +11,31 @@ const CONFIG = {
   prefix: "event_test",
   supportedVersion: "4.0.*",
 };
+const mod = createMod(CONFIG);
 
 function makeEvents() {
-  return namespace("event_test");
+  return mod.namespace();
 }
 
 describe("event definitions in a namespace", () => {
   it("rejects duplicate event ids within the namespace", () => {
     const events = makeEvents();
-    events.defineCountryEvent({ id: 1, hideWindow: true, isTriggeredOnly: true });
-    expect(() =>
-      events.definePlanetEvent({ id: 1, hideWindow: true, isTriggeredOnly: true })
-    ).toThrow(/Duplicate event id "event_test.1"/);
+    const country = events.country(1, { hideWindow: true, isTriggeredOnly: true });
+    const planet = events.planet(1, { hideWindow: true, isTriggeredOnly: true });
+    expect(() => mod.compile([mod.feature("events", [country, planet])])).toThrow(
+      /Duplicate event id "event_test.1"/
+    );
   });
 
   it("registers title, desc, and option localization under the event id", () => {
     const events = makeEvents();
-    const titled = events.defineCountryEvent({
-      id: 2,
+    const titled = events.country(2, {
       title: "A Title",
       desc: "A description.",
       isTriggeredOnly: true,
       options: [{ name: "First." }, { name: "Second." }],
     });
-    const loc = render(buildMod(CONFIG, [collection("events", [titled])])).get(
+    const loc = render(mod.compile([mod.feature("events", [titled])])).get(
       "localisation/english/event_test_l_english.yml"
     )!;
     expect(loc).toContain(' event_test.2.name:0 "A Title"');
@@ -45,13 +46,12 @@ describe("event definitions in a namespace", () => {
 
   it("writes the namespace declaration first in the events file", () => {
     const events = makeEvents();
-    const once = events.defineCountryEvent({
-      id: 3,
+    const once = events.country(3, {
       hideWindow: true,
       isTriggeredOnly: true,
       fireOnlyOnce: true,
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [once])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [once])])).get(
       "events/event_test_events.txt"
     )!;
     expect(rendered).toMatch(/^namespace = event_test\n/);
@@ -61,20 +61,18 @@ describe("event definitions in a namespace", () => {
 
   it("defines and fires a situation event through the generated kind methods", () => {
     const events = makeEvents();
-    const chained = events.defineSituationEvent({
-      id: 10,
+    const chained = events.situation(10, {
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    const firing = events.defineSituationEvent({
-      id: 11,
+    const firing = events.situation(11, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (situation) => {
         situation.situationEvent({ id: chained, days: 30 });
       },
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [chained, firing])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [chained, firing])])).get(
       "events/event_test_events.txt"
     )!;
     expect(rendered).toContain("situation_event = {\n\tid = event_test.10");
@@ -85,20 +83,18 @@ describe("event definitions in a namespace", () => {
     // The observer_event fire effect declares `## scopes = any`, so its typed
     // signature rides UniversalEffects rather than one scope interface.
     const events = makeEvents();
-    const observed = events.defineObserverEvent({
-      id: 12,
+    const observed = events.observer(12, {
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    const observer = events.definePlanetEvent({
-      id: 13,
+    const observer = events.planet(13, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (planet) => {
         planet.observerEvent({ id: observed });
       },
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [observed, observer])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [observed, observer])])).get(
       "events/event_test_events.txt"
     )!;
     expect(rendered).toContain("observer_event = {\n\t\t\tid = event_test.12");
@@ -106,15 +102,13 @@ describe("event definitions in a namespace", () => {
 
   it("threads the declared target contract through start_situation", () => {
     const events = makeEvents();
-    const sit = defineSituationType({
-      id: "event_test_sit",
+    const sit = mod.situationType("sit", {
       name: "S",
       monthlyProgress: { base: 1 },
       targetScope: "planet",
     });
     const world = eventTarget<"planet">("event_test_world");
-    const starter = events.defineCountryEvent({
-      id: 20,
+    const starter = events.country(20, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (country) => {
@@ -122,7 +116,7 @@ describe("event definitions in a namespace", () => {
       },
     });
     const files = render(
-      buildMod(CONFIG, [collection(undefined, [sit]), collection("events", [starter])])
+      mod.compile([mod.feature(undefined, [sit]), mod.feature("events", [starter])])
     );
     const rendered = files.get("events/event_test_events.txt")!;
     expect(rendered).toContain("type = event_test_sit");
@@ -138,15 +132,13 @@ describe("event definitions in a namespace", () => {
     // free-standing `target<S>(...)` trigger, which still has to (no
     // definition object is in scope there).
     const events = makeEvents();
-    const sit = defineSituationType({
-      id: "event_test_sit_ergo",
+    const sit = mod.situationType("sit_ergo", {
       name: "S",
       monthlyProgress: { base: 1 },
       targetScope: "country",
     });
     const world = eventTarget<"country">("event_test_ergo_target");
-    const starter = events.defineCountryEvent({
-      id: 21,
+    const starter = events.country(21, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (country) => {
@@ -162,7 +154,7 @@ describe("event definitions in a namespace", () => {
       },
     });
     const rendered = render(
-      buildMod(CONFIG, [collection(undefined, [sit]), collection("events", [starter])])
+      mod.compile([mod.feature(undefined, [sit]), mod.feature("events", [starter])])
     ).get("events/event_test_events.txt")!;
     expect(rendered).toContain(
       "effect = {\n\t\t\t\ttarget = {\n\t\t\t\t\tset_country_flag = event_test_flag"

@@ -34,12 +34,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   always,
-  buildMod,
-  collection,
-  defineCivicOrOrigin,
-  defineJob,
-  defineTechnology,
-  defineTradition,
+  createMod,
   hasJobType,
   hasTradition,
   trigger,
@@ -63,10 +58,10 @@ function configFor(prefix: string) {
 
 describe("SDK-38: nested definition ids never entered builtIds", () => {
   const CONFIG = configFor("referenceguard");
+  const mod = createMod(CONFIG);
 
   it("control: a dangling top-level tradition reference still throws", () => {
-    const dangling = defineTechnology({
-      id: "referenceguard_tech_tradition_check",
+    const dangling = mod.technology("tradition_check", {
       name: "Tradition check",
       area: "physics",
       category: ["computing"],
@@ -75,21 +70,19 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
       potential: hasTradition("referenceguard_tr_does_not_exist"),
     });
 
-    expect(() => buildMod(CONFIG, [collection("dangling_tradition", [dangling])])).toThrow(
+    expect(() => mod.compile([mod.feature("dangling_tradition", [dangling])])).toThrow(
       /no such tradition/
     );
   });
 
   it("does not throw referencing its own tradition_swap id, defined in the same collection", () => {
-    const tradition = defineTradition({
-      id: "referenceguard_tr_adopt",
+    const tradition = mod.tradition("adopt", {
       name: "Adopt",
       traditionSwap: {
         referenceguard_tr_adopt_swap_nomad: { name: "Nomad Swap" },
       },
     });
-    const checksSwap = defineTechnology({
-      id: "referenceguard_tech_swap_check",
+    const checksSwap = mod.technology("swap_check", {
       name: "Swap check",
       area: "physics",
       category: ["computing"],
@@ -99,17 +92,16 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
     });
 
     expect(() =>
-      buildMod(CONFIG, [collection("swap_reference", [tradition, checksSwap])])
+      mod.compile([mod.feature("swap_reference", [tradition, checksSwap])])
     ).not.toThrow();
   });
 
   it("control: a dangling civic_or_origin.civic reference still throws", () => {
-    const dangling = defineCivicOrOrigin({
-      id: "referenceguard_civic_control",
+    const dangling = mod.civicOrOrigin("control", {
       alternateCivicVersion: "referenceguard_civic_does_not_exist",
     });
 
-    expect(() => buildMod(CONFIG, [collection("dangling_civic_control", [dangling])])).toThrow(
+    expect(() => mod.compile([mod.feature("dangling_civic_control", [dangling])])).toThrow(
       /civic_or_origin/
     );
   });
@@ -120,24 +112,21 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
     // governments.cwt:95-100): an anonymous repeated block whose `name` is
     // the swap's own definition id, not a record key like
     // `tradition.tradition_swap`.
-    const withSwap = defineCivicOrOrigin({
-      id: "referenceguard_civic_meritocracy",
+    const withSwap = mod.civicOrOrigin("meritocracy", {
       name: "Meritocracy",
       swapType: [{ name: "referenceguard_civic_meritocracy_swap", trigger: always() }],
     });
-    const referencesSwap = defineCivicOrOrigin({
-      id: "referenceguard_civic_references_swap",
+    const referencesSwap = mod.civicOrOrigin("references_swap", {
       alternateCivicVersion: "referenceguard_civic_meritocracy_swap",
     });
 
     expect(() =>
-      buildMod(CONFIG, [collection("civic_swap_reference", [withSwap, referencesSwap])])
+      mod.compile([mod.feature("civic_swap_reference", [withSwap, referencesSwap])])
     ).not.toThrow();
   });
 
   it("does not throw referencing its own technology_swap id, defined in the same collection", () => {
-    const withSwap = defineTechnology({
-      id: "referenceguard_tech_with_swap",
+    const withSwap = mod.technology("with_swap", {
       name: "With Swap",
       area: "physics",
       category: ["computing"],
@@ -145,8 +134,7 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
       cost: 100,
       technologySwap: [{ name: "referenceguard_tech_with_swap_advanced" }],
     });
-    const checksSwap = defineTechnology({
-      id: "referenceguard_tech_checks_swap",
+    const checksSwap = mod.technology("checks_swap", {
       name: "Checks Swap",
       area: "physics",
       category: ["computing"],
@@ -156,13 +144,12 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
     });
 
     expect(() =>
-      buildMod(CONFIG, [collection("technology_swap_reference", [withSwap, checksSwap])])
+      mod.compile([mod.feature("technology_swap_reference", [withSwap, checksSwap])])
     ).not.toThrow();
   });
 
   it("does not throw referencing its own job swap_type id, defined in the same collection", () => {
-    const withSwap = defineJob({
-      id: "referenceguard_job_with_swap",
+    const withSwap = mod.job("with_swap", {
       name: "With Swap",
       // `job.swap_type` sits inside the `swappable_data` wrapper CWT
       // declares alongside it, not at the job's own top level.
@@ -171,14 +158,13 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
         swapType: [{ name: "referenceguard_job_with_swap_advanced", trigger: always(), weight: 1 }],
       },
     });
-    const checksSwap = defineJob({
-      id: "referenceguard_job_checks_swap",
+    const checksSwap = mod.job("checks_swap", {
       name: "Checks Swap",
       possible: asPopGroupTrigger(hasJobType("referenceguard_job_with_swap_advanced")),
     });
 
     expect(() =>
-      buildMod(CONFIG, [collection("job_swap_reference", [withSwap, checksSwap])])
+      mod.compile([mod.feature("job_swap_reference", [withSwap, checksSwap])])
     ).not.toThrow();
   });
 
@@ -188,8 +174,7 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
     // keyed in the same `Map`, so a technology swap id must remain
     // unresolvable through a `<job>`-typed field even though both registries
     // are covered by the fold.
-    const withSwap = defineTechnology({
-      id: "referenceguard_tech_cross_swap_owner",
+    const withSwap = mod.technology("cross_swap_owner", {
       name: "Cross Swap Owner",
       area: "physics",
       category: ["computing"],
@@ -197,14 +182,13 @@ describe("SDK-38: nested definition ids never entered builtIds", () => {
       cost: 100,
       technologySwap: [{ name: "referenceguard_tech_cross_swap_advanced" }],
     });
-    const wrongRegistry = defineJob({
-      id: "referenceguard_job_cross_swap_check",
+    const wrongRegistry = mod.job("cross_swap_check", {
       name: "Cross Swap Check",
       possible: asPopGroupTrigger(hasJobType("referenceguard_tech_cross_swap_advanced")),
     });
 
     expect(() =>
-      buildMod(CONFIG, [collection("cross_swap_reference", [withSwap, wrongRegistry])])
+      mod.compile([mod.feature("cross_swap_reference", [withSwap, wrongRegistry])])
     ).toThrow(/no such job/);
   });
 });

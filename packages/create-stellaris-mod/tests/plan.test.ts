@@ -111,8 +111,9 @@ describe("the scaffolded tree", () => {
     const files = plan({ prefix: "aurora", name: "Aurora" });
     expect(files.get("src/mod.ts")).toContain('prefix: "aurora"');
     expect(files.get("src/flags.ts")).toContain('countryFlags("aurora_welcomed")');
-    expect(files.get("src/content/example.ts")).toContain('id: "aurora_tech_first_steps"');
-    expect(files.get("src/content/example.ts")).toContain('namespace("aurora")');
+    expect(files.get("src/content/example.ts")).toContain('mod.technology("first_steps"');
+    expect(files.get("src/content/example.ts")).toContain("mod.namespace()");
+    expect(files.get("src/content/example.ts")).toContain('mod.feature("example"');
     expect(files.get("src/content/example.test.ts")).toContain("aurora_welcomed");
   });
 
@@ -205,7 +206,7 @@ describe("the generated sources", () => {
   it("lints the one-namespace-per-file bijection", () => {
     const config = plan().get("eslint.config.js")!;
     expect(config).toContain("pdx/one-namespace-per-file");
-    expect(config).toContain("CallExpression[callee.name='namespace']");
+    expect(config).toContain("callee.property.name='namespace'");
   });
 
   it("imports the matchers nowhere, so the vitest peer dep stays optional", () => {
@@ -237,18 +238,15 @@ describe("SDK-54: config has no build side effect", () => {
   });
 
   it("gives src/index.ts and src/install.ts exactly one fold to share, instead of one each", () => {
-    // Before the fix, src/install.ts constructed its own PureMod via a second
-    // buildMod(config, discoverContent(...)) call that never received the
-    // vanilla view — the id-collision guard had no vanilla ids to compare
-    // against and could not fire. Both entrypoints now import the same
-    // buildTheMod() from src/mod.ts, so there is exactly one fold, built once,
-    // with whatever vanilla view src/mod.ts resolved.
+    // Both entrypoints import the same buildTheMod() from src/mod.ts, so there
+    // is exactly one capability compile, built once with whatever vanilla view
+    // src/mod.ts resolved.
     const files = plan();
     for (const relPath of ["src/index.ts", "src/install.ts"]) {
       const contents = files.get(relPath)!;
       expect(contents, relPath).toContain("buildTheMod");
-      expect(contents, relPath).not.toContain("discoverContent");
-      expect(contents, relPath).not.toMatch(/\bbuildMod\(/);
+      expect(contents, relPath).not.toContain("discoverFeatures");
+      expect(contents, relPath).not.toMatch(/\.compile\(/);
     }
   });
 });

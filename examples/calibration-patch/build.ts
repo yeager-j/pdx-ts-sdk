@@ -6,23 +6,20 @@
  * game, and record the result in the verdict doc.
  */
 
-import {
-  buildMod,
-  collection,
-  defineTechnology,
-  install,
-  patchTechnology,
-  render,
-  stellaris,
-} from "@pdx-ts/sdk";
+import { createMod, install, render, stellaris } from "@pdx-ts/sdk";
 
 const vanilla = stellaris.load();
+const mod = createMod({
+  name: "PDX Calibration Patch",
+  prefix: "pdx_calib",
+  version: "1.0",
+  supportedVersion: "v4.4.*",
+});
 
 // Auto-researched at game start (tier 0 start tech), so appending it as a
 // prerequisite never gates the patched tech — it only has to *show up* in
 // the prerequisite list, a second observable on top of the cost.
-const marker = defineTechnology({
-  id: "pdx_calib_tech_marker",
+const marker = mod.technology("marker", {
   name: "Calibration Marker",
   desc: "If you can read this in the technology tooltip, the SDK's patch file won the override.",
   area: "society",
@@ -34,33 +31,22 @@ const marker = defineTechnology({
 const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
 const vanillaCost = geneTailoring.cost.value;
 
-const geneTailoringPatch = patchTechnology(geneTailoring, (t) => ({
+const geneTailoringPatch = mod.patchTechnology(geneTailoring, (t) => ({
   cost: t.cost.value * 2,
   prerequisites: [...t.prerequisites, marker],
 }));
 
-const technologies = collection(undefined, [marker, geneTailoringPatch]);
-
-// The patch guards — one vanilla view per mod, no duplicate patch, no id
-// colliding with a real vanilla technology — are checked here, at the fold.
-const mod = buildMod(
-  {
-    name: "PDX Calibration Patch",
-    prefix: "pdx_calib",
-    version: "1.0",
-    supportedVersion: "v4.4.*",
-  },
-  [technologies],
-  { vanilla }
-);
+// The patch guards — one vanilla view per mod and no duplicate patch — are
+// checked when capability-owned features reach the fold.
+const compiled = mod.compile([mod.feature(undefined, [marker, geneTailoringPatch])], { vanilla });
 
 // `install` puts the content under the launcher's mod directory and writes the
 // sibling `pdx_calib.mod` beside it — the same descriptor plus a `path=` line.
-const { contentDir } = await install(mod);
+const { contentDir } = await install(compiled);
 
-const plan = mod.patchPlan!;
+const plan = compiled.patchPlan!;
 console.log(`Installed to ${contentDir}`);
-for (const relPath of render(mod).keys()) {
+for (const relPath of render(compiled).keys()) {
   console.log(`  wrote ${relPath}`);
 }
 console.log(

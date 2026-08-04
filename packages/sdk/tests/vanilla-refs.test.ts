@@ -11,26 +11,19 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import {
-  buildMod,
-  collection,
-  defineTechnology,
-  namespace,
-  render,
-  vanilla,
-} from "../src/index.ts";
+import { createMod, render, vanilla } from "../src/index.ts";
 
 const CONFIG = {
   name: "Vanilla ref tests",
   prefix: "vr",
   supportedVersion: "4.4.*",
 };
+const mod = createMod(CONFIG);
 
 describe("checked helpers in ref fields", () => {
   it("serializes a vanilla technology reference as its bare id", () => {
-    const technologies = collection(undefined, [
-      defineTechnology({
-        id: "vr_tech_probe",
+    const technologies = mod.feature(undefined, [
+      mod.technology("probe", {
         name: "Probe",
         area: "physics",
         tier: 2,
@@ -38,9 +31,7 @@ describe("checked helpers in ref fields", () => {
         prerequisites: [vanilla.technology("tech_lasers_1")],
       }),
     ]);
-    expect(
-      render(buildMod(CONFIG, [technologies])).get("common/technology/vr_technology.txt")
-    ).toBe(
+    expect(render(mod.compile([technologies])).get("common/technology/vr_technology.txt")).toBe(
       "vr_tech_probe = {\n" +
         "\tarea = physics\n" +
         "\ttier = 2\n" +
@@ -93,15 +84,14 @@ describe("the oversized trie's two entry points", () => {
 
 describe("event media fields", () => {
   it("serializes picture and show_sound from vanilla references", () => {
-    const events = namespace("vr");
-    const shown = events.defineCountryEvent({
-      id: 1,
+    const events = mod.namespace();
+    const shown = events.country(1, {
       title: "A Sighting",
       isTriggeredOnly: true,
       picture: vanilla.sprite("GFX_evt_ship_in_orbit"),
       showSound: vanilla.soundEffect("event_alien_signal"),
     });
-    const rendered = render(buildMod(CONFIG, [collection("events", [shown])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [shown])])).get(
       "events/vr_events.txt"
     )!;
     expect(rendered).toContain("picture = GFX_evt_ship_in_orbit");

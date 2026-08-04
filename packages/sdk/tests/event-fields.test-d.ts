@@ -9,15 +9,18 @@
 
 import { describe, it } from "vitest";
 
-import { namespace } from "../src/index.ts";
+import { createMod } from "../src/index.ts";
 import { hasAutomationSetting, hasEventChain } from "../src/triggers.ts";
+
+function events(prefix: string) {
+  return createMod({ name: "Event fields", prefix, supportedVersion: "4.4.*" }).namespace();
+}
 
 describe("subtype-conditional EventDef fields (SDK-46)", () => {
   it("accepts archaeology only on defineFleetEvent", () => {
-    const events = namespace("event_fields_types_a");
-    events.defineFleetEvent({ id: 1, hideWindow: true, archaeology: true });
-    events.defineCountryEvent({
-      id: 2,
+    const eventNamespace = events("event_fields_types_a");
+    eventNamespace.fleet(1, { hideWindow: true, archaeology: true });
+    eventNamespace.country(2, {
       hideWindow: true,
       // @ts-expect-error — archaeology is only legal on a fleet_event (subtype[fleet], events.cwt:501)
       archaeology: true,
@@ -25,10 +28,9 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
   });
 
   it("accepts firstContact only on defineFirstContactEvent", () => {
-    const events = namespace("event_fields_types_b");
-    events.defineFirstContactEvent({ id: 1, hideWindow: true, firstContact: true });
-    events.defineFleetEvent({
-      id: 2,
+    const eventNamespace = events("event_fields_types_b");
+    eventNamespace.firstContact(1, { hideWindow: true, firstContact: true });
+    eventNamespace.fleet(2, {
       hideWindow: true,
       // @ts-expect-error — firstContact is only legal on a first_contact_event (subtype[first_contact])
       firstContact: true,
@@ -36,10 +38,9 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
   });
 
   it("accepts espionageOperation only on defineEspionageOperationEvent", () => {
-    const events = namespace("event_fields_types_c");
-    events.defineEspionageOperationEvent({ id: 1, hideWindow: true, espionageOperation: true });
-    events.defineCountryEvent({
-      id: 2,
+    const eventNamespace = events("event_fields_types_c");
+    eventNamespace.espionageOperation(1, { hideWindow: true, espionageOperation: true });
+    eventNamespace.country(2, {
       hideWindow: true,
       // @ts-expect-error — espionageOperation is only legal on an espionage_operation_event
       espionageOperation: true,
@@ -47,16 +48,14 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
   });
 
   it("accepts astralRift and difficulty only on defineAstralRiftEvent", () => {
-    const events = namespace("event_fields_types_d");
-    events.defineAstralRiftEvent({ id: 1, hideWindow: true, astralRift: true, difficulty: 2 });
-    events.defineShipEvent({
-      id: 2,
+    const eventNamespace = events("event_fields_types_d");
+    eventNamespace.astralRift(1, { hideWindow: true, astralRift: true, difficulty: 2 });
+    eventNamespace.ship(2, {
       hideWindow: true,
       // @ts-expect-error — astralRift is only legal on an astral_rift_event (subtype[astral_rift])
       astralRift: true,
     });
-    events.defineShipEvent({
-      id: 3,
+    eventNamespace.ship(3, {
       hideWindow: true,
       // @ts-expect-error — difficulty is only legal on an astral_rift_event (subtype[astral_rift])
       difficulty: 2,
@@ -64,21 +63,19 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
   });
 
   it("lets diplomatic (an attribute subtype, not a kind-gated one) apply to any event kind", () => {
-    const events = namespace("event_fields_types_e");
-    events.defineCountryEvent({ id: 1, hideWindow: true, diplomatic: true });
-    events.defineFleetEvent({ id: 2, hideWindow: true, diplomatic: true });
+    const eventNamespace = events("event_fields_types_e");
+    eventNamespace.country(1, { hideWindow: true, diplomatic: true });
+    eventNamespace.fleet(2, { hideWindow: true, diplomatic: true });
   });
 
   it("requires a declared FROM before location can read ctx.from", () => {
-    const events = namespace("event_fields_types_f");
-    events.defineFleetEvent({
-      id: 1,
+    const eventNamespace = events("event_fields_types_f");
+    eventNamespace.fleet(1, {
       from: "archaeological_site",
       hideWindow: true,
       location: (ctx) => ctx.from,
     });
-    events.defineFleetEvent({
-      id: 2,
+    eventNamespace.fleet(2, {
       hideWindow: true,
       // @ts-expect-error — this event declared no `from:`; ctx.from is an inert sentinel, not a ScopeRef
       location: (ctx) => ctx.from,
@@ -86,15 +83,13 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
   });
 
   it("requires a declared FROM before situation can read ctx.from", () => {
-    const events = namespace("event_fields_types_g");
-    events.defineFleetEvent({
-      id: 1,
+    const eventNamespace = events("event_fields_types_g");
+    eventNamespace.fleet(1, {
       from: "situation",
       hideWindow: true,
       situation: (ctx) => ctx.from,
     });
-    events.defineFleetEvent({
-      id: 2,
+    eventNamespace.fleet(2, {
       hideWindow: true,
       // @ts-expect-error — this event declared no `from:`; ctx.from is an inert sentinel, not a ScopeRef
       situation: (ctx) => ctx.from,
@@ -104,15 +99,13 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
 
 describe("PR #15 review follow-ups (SDK-46)", () => {
   it("requires weightMultiplier.factor (events.cwt:448, unannotated cardinality is 1..1)", () => {
-    const events = namespace("event_fields_types_h");
-    events.defineCountryEvent({
-      id: 1,
+    const eventNamespace = events("event_fields_types_h");
+    eventNamespace.country(1, {
       hideWindow: true,
       isTriggeredOnly: true,
       weightMultiplier: { factor: 5 },
     });
-    events.defineCountryEvent({
-      id: 2,
+    eventNamespace.country(2, {
       hideWindow: true,
       isTriggeredOnly: true,
       // @ts-expect-error — factor is required on weight_multiplier (events.cwt:448); the block has
@@ -123,18 +116,16 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
   });
 
   it("scopes majorTrigger to country independently of S (events.cwt:419-425: it filters recipient countries, not the event's own scope)", () => {
-    const events = namespace("event_fields_types_i");
+    const eventNamespace = events("event_fields_types_i");
     // A country-only predicate is legal here even on a fleet event, because
     // major_trigger runs once per candidate recipient country, not in the
     // fleet event's own scope.
-    events.defineFleetEvent({
-      id: 1,
+    eventNamespace.fleet(1, {
       hideWindow: true,
       major: true,
       majorTrigger: hasEventChain("event_fields_chain"),
     });
-    events.defineFleetEvent({
-      id: 2,
+    eventNamespace.fleet(2, {
       hideWindow: true,
       major: true,
       // @ts-expect-error — a fleet-only predicate is not legal here: major_trigger evaluates
