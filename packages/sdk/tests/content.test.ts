@@ -14,6 +14,8 @@ import {
   canGoMia,
   canJoinFactions,
   collection,
+  currentSituationApproach,
+  currentStage,
   defineAgenda,
   defineAgreementPreset,
   defineAmbientObject,
@@ -1149,6 +1151,52 @@ describe("generated content registries", () => {
     expect(rendered).toContain("end = 100");
     expect(rendered).not.toContain("end = {");
     expect(rendered).toContain("progress_direction = bidirectional");
+  });
+
+  it("emits current_situation_approach/current_stage identically once checked (SDK-52)", () => {
+    // currentSituationApproach/currentStage are now hand-written overrides of
+    // the generated leaves (see src/triggers.ts), checked against this same
+    // call's own `approach`/`stages` keys — a compile-time-only change. This
+    // pins that the emitted bytes are exactly what the plain generated
+    // `kv("current_situation_approach"/"current_stage", value)` always wrote:
+    // one scalar assignment, no extra wrapping, no recorded content ref.
+    const situationTypes = collection(undefined, [
+      defineSituationType({
+        id: "sa_test_situation",
+        name: "Situation",
+        monthlyProgress: { base: 1 },
+        abortTrigger: and(
+          currentSituationApproach("sa_test_situation_approach_calm"),
+          currentStage("sa_test_situation_stage_1")
+        ),
+        stages: {
+          sa_test_situation_stage_1: {
+            name: "Stage One",
+            icon: "GFX_situation_stage_only",
+            iconBackground: "GFX_situation_stage_only_bg",
+            potential: currentSituationApproach("sa_test_situation_approach_calm"),
+          },
+        },
+        approach: {
+          sa_test_situation_approach_calm: {
+            name: "Calm",
+            icon: "GFX_situation_approach_calm",
+            iconBackground: "GFX_situation_approach_calm_bg",
+            allow: currentStage("sa_test_situation_stage_1"),
+          },
+        },
+      }),
+    ]);
+    const rendered = render(
+      buildMod(configFor("Situation approach test", "sa_test"), [situationTypes])
+    ).get("common/situations/sa_test_situations.txt");
+    expect(rendered).toContain(
+      "abort_trigger = {\n\t\tAND = {\n\t\t\tcurrent_situation_approach = sa_test_situation_approach_calm\n\t\t\tcurrent_stage = sa_test_situation_stage_1\n\t\t}\n\t}"
+    );
+    expect(rendered).toContain(
+      "potential = {\n\t\t\t\tcurrent_situation_approach = sa_test_situation_approach_calm\n\t\t\t}"
+    );
+    expect(rendered).toContain("allow = {\n\t\t\tcurrent_stage = sa_test_situation_stage_1\n\t\t}");
   });
 
   it("emits conditionalDesc under the game's desc key", () => {

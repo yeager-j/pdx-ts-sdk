@@ -6,6 +6,8 @@ import {
   canGoMia,
   canJoinFactions,
   collection,
+  currentSituationApproach,
+  currentStage,
   defineAgenda,
   defineAmbientObject,
   defineArchaeologicalSiteType,
@@ -44,6 +46,7 @@ import {
   isSiteLocked,
   makeScope,
   namespace,
+  or,
   vanilla,
   type AgendaRef,
   type AgreementPresetRef,
@@ -849,6 +852,153 @@ describe("generated content authoring types", () => {
           allow: hasAuthority("auth_democratic"),
         },
       },
+    });
+  });
+
+  it("checks situationApproach/situationStage ids against this same definition's own declared keys (SDK-52)", () => {
+    // The id `currentSituationApproach`/`currentStage` names is declared a few
+    // lines away in the same object literal that uses it — checked here
+    // because both fields below assign the value straight to `allow`/
+    // `potential`, the boundary `defineSituationType` can actually reach.
+    defineSituationType({
+      id: "content_types_situation_approach_checked",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      stages: {
+        content_types_situation_approach_stage_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // Valid — this approach id is declared below, in this same call's `approach`.
+          potential: currentSituationApproach("content_types_situation_approach_calm"),
+        },
+        content_types_situation_approach_stage_typo: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — misspelled: not one of this situation's own approach ids
+          potential: currentSituationApproach("content_types_situation_approach_calmm"),
+        },
+      },
+      approach: {
+        content_types_situation_approach_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // Valid — this stage id is declared above, in this same call's `stages`.
+          allow: currentStage("content_types_situation_approach_stage_calm"),
+        },
+        content_types_situation_approach_aggressive: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — misspelled: not one of this situation's own stage ids
+          allow: currentStage("content_types_situation_approach_stage_typoo"),
+        },
+      },
+    });
+  });
+
+  it("does not let one situation's approach id satisfy an unrelated situation's check (SDK-52)", () => {
+    defineSituationType({
+      id: "content_types_situation_approach_other",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      approach: {
+        content_types_situation_approach_other_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+        },
+      },
+    });
+    defineSituationType({
+      id: "content_types_situation_approach_self",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      approach: {
+        content_types_situation_approach_self_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+        },
+      },
+      // @ts-expect-error — this approach id belongs to a different situation's own approach set
+      abortTrigger: currentSituationApproach("content_types_situation_approach_other_calm"),
+    });
+  });
+
+  it("degrades to unchecked once an approach id is composed inside a combinator (SDK-52)", () => {
+    // The checking boundary: real vanilla `current_situation_approach` usage
+    // is near-universally wrapped in a combinator (`and`/`or`/`not`) or
+    // written inside an effect closure's `scope.if(...)`, neither of which
+    // can thread a phantom brand through arbitrary composition. A misspelled
+    // id there still type-checks — degrading to unchecked, the same as an id
+    // whose situation identity genuinely is not known elsewhere in the SDK —
+    // rather than failing in a way that would make this previously-writable
+    // field unwritable (SDK-33).
+    defineSituationType({
+      id: "content_types_situation_approach_boundary",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      approach: {
+        content_types_situation_approach_boundary_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          allow: or(currentSituationApproach("this_id_names_nothing_declared_anywhere")),
+        },
+      },
+    });
+  });
+
+  it("rejects a literal reference into a side of the definition that declares nothing at all (SDK-52)", () => {
+    // Approach/Stage default to `never`, not `string`: omitting `approach` or
+    // `stages` entirely declares an empty set, and nothing is a member of
+    // `never` — so a direct literal reference into the missing side is
+    // rejected, the mirror image of the typo case above. Plain and
+    // combinator-produced (unbranded) triggers still flow regardless, since
+    // both phantom brands stay optional — confirmed at the end of this test.
+    defineSituationType({
+      id: "content_types_situation_approach_only",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      approach: {
+        content_types_situation_approach_only_calm: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — no `stages` declared anywhere in this definition
+          allow: currentStage("no_stage_could_ever_satisfy_this"),
+        },
+      },
+    });
+
+    defineSituationType({
+      id: "content_types_situation_stage_only",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      stages: {
+        content_types_situation_stage_only_stage: {
+          name: "X",
+          icon: "GFX_x",
+          iconBackground: "GFX_x_bg",
+          // @ts-expect-error — no `approach` declared anywhere in this definition
+          potential: currentSituationApproach("no_approach_could_ever_satisfy_this"),
+        },
+      },
+      // @ts-expect-error — same, at the top-level abortTrigger position
+      abortTrigger: currentSituationApproach("still_no_approach_declared"),
+    });
+
+    // Plain/combinator triggers still type-check with neither side declared —
+    // the `never` default narrows only the direct-literal path, not the
+    // graceful-degradation boundary itself.
+    defineSituationType({
+      id: "content_types_situation_neither_declared",
+      name: "X",
+      monthlyProgress: { base: 1 },
+      abortTrigger: or(always(), always()),
     });
   });
 
