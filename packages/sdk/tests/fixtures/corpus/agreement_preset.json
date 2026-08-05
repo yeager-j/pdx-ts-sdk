@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -26,6 +27,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -41,6 +43,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_diplomacy_status_is_dominion",
         "GFX_diplomacy_status_is_herald",
@@ -68,6 +71,7 @@
       "blocks": 44,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "base",
@@ -83,6 +87,69 @@
         ]
       ]
     },
+    "overlord_weight.modifier": {
+      "definitions": 18,
+      "repeated": 18,
+      "scalars": 0,
+      "blocks": 18,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "FROM",
+        "NOT",
+        "has_specialist_subject_type",
+        "is_materialist",
+        "is_militarist",
+        "is_pacifist",
+        "is_spiritualist",
+        "num_rivals"
+      ],
+      "keysByDefinition": [
+        [
+          "FROM",
+          "NOT",
+          "has_specialist_subject_type",
+          "is_materialist"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "has_specialist_subject_type",
+          "is_materialist",
+          "is_spiritualist"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "has_specialist_subject_type",
+          "is_militarist",
+          "is_pacifist"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "has_specialist_subject_type",
+          "is_militarist",
+          "is_pacifist",
+          "num_rivals"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "has_specialist_subject_type",
+          "is_militarist",
+          "num_rivals"
+        ],
+        [
+          "FROM",
+          "NOT",
+          "has_specialist_subject_type",
+          "is_pacifist"
+        ]
+      ]
+    },
     "parent": {
       "definitions": 36,
       "repeated": 0,
@@ -90,6 +157,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "preset_bulwark",
         "preset_prospectorium",
@@ -109,6 +177,7 @@
       "blocks": 44,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "FROM",
@@ -176,6 +245,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -191,6 +261,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "specialist_bulwark",
         "specialist_prospectorium",
@@ -208,6 +279,7 @@
       "blocks": 45,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "base",
@@ -223,6 +295,32 @@
         ]
       ]
     },
+    "subject_weight.modifier": {
+      "definitions": 18,
+      "repeated": 18,
+      "scalars": 0,
+      "blocks": 18,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "is_materialist",
+        "is_militarist",
+        "is_pacifist",
+        "is_spiritualist"
+      ],
+      "keysByDefinition": [
+        [
+          "is_materialist",
+          "is_spiritualist"
+        ],
+        [
+          "is_militarist",
+          "is_pacifist"
+        ]
+      ]
+    },
     "term_data": {
       "definitions": 56,
       "repeated": 0,
@@ -230,6 +328,7 @@
       "blocks": 56,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "discrete_terms",
@@ -269,6 +368,7 @@
       "blocks": 55,
       "bareValues": 0,
       "bareBlocks": 55,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -282,6 +382,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "formless_conditions",
         "has_access",
@@ -309,6 +410,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "joins_overlord_wars_all",
         "joins_overlord_wars_defensive",
@@ -355,6 +457,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-100",
         "-50",
@@ -373,6 +476,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -388,6 +492,7 @@
       "blocks": 36,
       "bareValues": 0,
       "bareBlocks": 36,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -401,6 +506,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "resource_subsidies_advanced",
         "resource_subsidies_basic",
@@ -419,6 +525,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-0.3",
         "0.15",

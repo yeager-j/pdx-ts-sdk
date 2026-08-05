@@ -11,6 +11,7 @@
       "blocks": 123,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "custom_tooltip",
@@ -56,6 +57,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ancient_battle_site_desc",
         "asteroid_vault_1_desc",
@@ -141,6 +143,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "city_of_bones_desc",
         "city_of_bones_desc_uncol",
@@ -159,6 +162,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "owner",
@@ -180,6 +184,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "200",
@@ -197,6 +202,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-1"
       ],
@@ -212,6 +218,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "create_ambient_object",
@@ -233,6 +240,7 @@
       "blocks": 124,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "from"
@@ -250,6 +258,7 @@
       "blocks": 53,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "country_event",
@@ -271,6 +280,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_evt_ai_planet",
         "GFX_evt_alien_planet",
@@ -348,6 +358,7 @@
       "blocks": 16,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 5,
       "values": [],
       "keys": [
         "NOT",
@@ -374,6 +385,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "crises",
         "empire_concerns",
@@ -391,6 +403,7 @@
       "blocks": 123,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "difficulty",
@@ -412,6 +425,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-1",
         "-2",
@@ -444,6 +458,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "3",
         "4",
@@ -461,6 +476,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "2",
@@ -478,6 +494,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ancrel.10",
         "ancrel.11",
@@ -556,6 +573,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_archaeology_runes_A1",
         "GFX_archaeology_runes_A2",
@@ -606,6 +624,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "2",
         "3",
@@ -626,6 +645,7 @@
       "blocks": 124,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",
@@ -724,6 +744,7 @@
       "blocks": 58,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0"
       ],
@@ -739,6 +760,117 @@
         [
           "base",
           "modifier"
+        ]
+      ]
+    },
+    "weight.modifier": {
+      "definitions": 49,
+      "repeated": 5,
+      "scalars": 0,
+      "blocks": 49,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "exists",
+        "habitable_planet",
+        "has_ancrel",
+        "has_cosmic_storms_dlc",
+        "has_infernals",
+        "has_leviathans",
+        "has_moon",
+        "has_shroud_dlc",
+        "is_cold",
+        "is_planet_class",
+        "is_terraforming_candidate",
+        "owner",
+        "solar_system",
+        "uninhabitable_regular_planet"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "OR",
+          "has_ancrel"
+        ],
+        [
+          "NOT",
+          "OR",
+          "has_ancrel",
+          "has_leviathans"
+        ],
+        [
+          "NOT",
+          "OR",
+          "has_shroud_dlc"
+        ],
+        [
+          "NOT",
+          "has_ancrel",
+          "is_planet_class"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "has_ancrel"
+        ],
+        [
+          "OR",
+          "has_shroud_dlc",
+          "solar_system"
+        ],
+        [
+          "exists",
+          "habitable_planet",
+          "has_cosmic_storms_dlc",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_infernals",
+          "is_planet_class",
+          "owner"
+        ],
+        [
+          "habitable_planet"
+        ],
+        [
+          "habitable_planet",
+          "has_ancrel"
+        ],
+        [
+          "has_ancrel",
+          "is_planet_class"
+        ],
+        [
+          "has_ancrel",
+          "uninhabitable_regular_planet"
+        ],
+        [
+          "has_infernals",
+          "is_planet_class"
+        ],
+        [
+          "has_moon",
+          "is_planet_class"
+        ],
+        [
+          "has_shroud_dlc",
+          "is_planet_class"
+        ],
+        [
+          "has_shroud_dlc",
+          "is_planet_class",
+          "is_terraforming_candidate"
+        ],
+        [
+          "is_cold",
+          "is_planet_class"
         ]
       ]
     }

@@ -11,6 +11,7 @@
       "blocks": 3,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "create_message",
@@ -33,6 +34,7 @@
       "blocks": 6,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -60,6 +62,7 @@
       "blocks": 103,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "modifier",
@@ -75,6 +78,135 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 36,
+      "repeated": 9,
+      "scalars": 0,
+      "blocks": 36,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "branch_office_owner",
+        "exists",
+        "free_amenities",
+        "free_building_slots",
+        "free_district_slots",
+        "free_housing",
+        "from",
+        "habitable_planet",
+        "has_branch_office",
+        "has_designation",
+        "has_resource",
+        "has_sr_deposit",
+        "is_capital",
+        "is_lithoid_devouring_swarm_consumption_world",
+        "is_planet_class",
+        "owner",
+        "planet_crime",
+        "planet_resource_compare",
+        "pop_amount",
+        "solar_system",
+        "space_owner"
+      ],
+      "keysByDefinition": [
+        [
+          "NOR"
+        ],
+        [
+          "NOT",
+          "habitable_planet"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists"
+        ],
+        [
+          "OR",
+          "is_capital",
+          "is_planet_class",
+          "pop_amount",
+          "space_owner"
+        ],
+        [
+          "OR",
+          "owner"
+        ],
+        [
+          "branch_office_owner",
+          "has_branch_office",
+          "planet_crime"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "free_amenities",
+          "owner",
+          "pop_amount"
+        ],
+        [
+          "free_building_slots",
+          "free_district_slots"
+        ],
+        [
+          "free_district_slots",
+          "pop_amount"
+        ],
+        [
+          "free_housing"
+        ],
+        [
+          "from",
+          "planet_resource_compare",
+          "pop_amount"
+        ],
+        [
+          "from",
+          "pop_amount"
+        ],
+        [
+          "has_designation",
+          "has_sr_deposit"
+        ],
+        [
+          "has_resource"
+        ],
+        [
+          "is_capital",
+          "owner",
+          "pop_amount",
+          "solar_system"
+        ],
+        [
+          "is_capital",
+          "pop_amount"
+        ],
+        [
+          "is_lithoid_devouring_swarm_consumption_world"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "planet_crime"
+        ],
+        [
+          "pop_amount"
+        ],
+        [
+          "solar_system"
+        ]
+      ]
+    },
     "allow": {
       "definitions": 58,
       "repeated": 0,
@@ -82,6 +214,7 @@
       "blocks": 58,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 6,
       "values": [],
       "keys": [
         "NOT",
@@ -193,6 +326,7 @@
       "blocks": 4,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -227,6 +361,7 @@
       "blocks": 111,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "IF",
@@ -438,6 +573,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "15",
@@ -465,6 +601,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "decision_add_aura_blocker",
         "decision_animal_wildlife",
@@ -528,6 +665,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -543,6 +681,7 @@
       "blocks": 13,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "change_variable",
@@ -587,6 +726,7 @@
       "blocks": 12,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "close_shroud_rift_effect",
@@ -616,6 +756,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -632,6 +773,7 @@
       "blocks": 111,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOR",
@@ -996,6 +1138,7 @@
       "blocks": 4,
       "bareValues": 4,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tech_penal_colonies",
         "tech_resort_colonies",
@@ -1014,6 +1157,7 @@
       "blocks": 102,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "category",
@@ -1037,6 +1181,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "event_activating_unknown_technology",
         "event_administrative_work",

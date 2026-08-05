@@ -11,6 +11,7 @@
       "blocks": 142,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "modifier",
@@ -26,6 +27,98 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 50,
+      "repeated": 11,
+      "scalars": 0,
+      "blocks": 50,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "AND",
+        "NOT",
+        "OR",
+        "any_planet_within_border",
+        "count_owned_megastructure",
+        "country_uses_food",
+        "has_edict",
+        "has_ethic",
+        "has_monthly_income",
+        "has_resource",
+        "has_technology",
+        "is_at_war",
+        "is_egalitarian",
+        "resource_income_compare",
+        "resource_stockpile_compare",
+        "should_ai_focus_on_trade",
+        "species",
+        "years_passed"
+      ],
+      "keysByDefinition": [
+        [
+          "AND"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "any_planet_within_border"
+        ],
+        [
+          "count_owned_megastructure"
+        ],
+        [
+          "country_uses_food"
+        ],
+        [
+          "has_edict"
+        ],
+        [
+          "has_ethic"
+        ],
+        [
+          "has_ethic",
+          "is_egalitarian"
+        ],
+        [
+          "has_monthly_income"
+        ],
+        [
+          "has_resource"
+        ],
+        [
+          "has_resource",
+          "is_at_war"
+        ],
+        [
+          "has_technology"
+        ],
+        [
+          "is_at_war"
+        ],
+        [
+          "resource_income_compare"
+        ],
+        [
+          "resource_income_compare",
+          "resource_stockpile_compare"
+        ],
+        [
+          "should_ai_focus_on_trade"
+        ],
+        [
+          "species"
+        ],
+        [
+          "years_passed"
+        ]
+      ]
+    },
     "allow": {
       "definitions": 62,
       "repeated": 0,
@@ -33,6 +126,7 @@
       "blocks": 62,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 40,
       "values": [],
       "keys": [
         "NOR",
@@ -81,6 +175,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "12",
         "180",
@@ -98,6 +193,7 @@
       "blocks": 6,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "country_event",
@@ -124,6 +220,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_edict_type_policy",
         "GFX_edict_type_time"
@@ -140,6 +237,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -155,6 +253,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -168,6 +267,7 @@
       "blocks": 167,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "add_base_country_intel",
@@ -904,6 +1004,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "every_planet_within_border"
@@ -921,6 +1022,7 @@
       "blocks": 167,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOR",
@@ -1262,6 +1364,7 @@
       "blocks": 46,
       "bareValues": 36,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tech_advanced_industrial_storm_protection",
         "tech_artificial_moral_codes",
@@ -1301,6 +1404,7 @@
       "blocks": 4,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "relay_network_amenities_edict_modifier",
@@ -1330,6 +1434,7 @@
       "blocks": 171,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "category",
@@ -1366,6 +1471,7 @@
       "blocks": 55,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "always",
@@ -1452,6 +1558,7 @@
       "blocks": 6,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "logistic_growth_mult",

@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -27,6 +28,7 @@
       "blocks": 10,
       "bareValues": 10,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "consumer_goods",
         "energy",
@@ -45,6 +47,7 @@
       "blocks": 78,
       "bareValues": 74,
       "bareBlocks": 0,
+      "emptyBlocks": 4,
       "values": [
         "produces",
         "upkeep"
@@ -61,6 +64,7 @@
       "blocks": 100,
       "bareValues": 92,
       "bareBlocks": 0,
+      "emptyBlocks": 8,
       "values": [
         "cost",
         "logistics",
@@ -79,6 +83,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -94,6 +99,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "job_artisan",
         "job_bath_attendant",
@@ -120,6 +126,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "army",
         "colony",
@@ -145,6 +152,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "country",
         "country_container",
@@ -203,6 +211,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ECONOMICS_SCALED_RESOURCES_EMPIRE_SIZE_STRING"
       ],
@@ -218,6 +227,7 @@
       "blocks": 4,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "key",
@@ -246,6 +256,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "gdf_ship",
         "ship_battleship",
@@ -277,6 +288,7 @@
       "blocks": 4,
       "bareValues": 4,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "add",
         "mult"
@@ -293,6 +305,7 @@
       "blocks": 4,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",
@@ -331,6 +344,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -346,6 +360,7 @@
       "blocks": 13,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "key",
@@ -374,6 +389,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "aesthetic_wonder_specimens",
         "historical_item_specimens",
@@ -406,6 +422,7 @@
       "blocks": 13,
       "bareValues": 13,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "add",
         "mult"
@@ -422,6 +439,7 @@
       "blocks": 13,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "always",
@@ -464,6 +482,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -479,6 +498,7 @@
       "blocks": 10,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "key",
@@ -507,6 +527,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "planet_enforcers",
         "planet_pops_cyborgs",
@@ -536,6 +557,7 @@
       "blocks": 10,
       "bareValues": 10,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "add",
         "mult"
@@ -552,6 +574,7 @@
       "blocks": 10,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",
@@ -597,6 +620,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -612,6 +636,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"

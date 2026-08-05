@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.5",
         "1",
@@ -28,6 +29,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.7",
         "1"
@@ -44,6 +46,7 @@
       "blocks": 51,
       "bareValues": 51,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "carrier",
         "weapon_role_anti_shield",
@@ -61,6 +64,7 @@
       "blocks": 12,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "modifier",
@@ -73,6 +77,28 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 12,
+      "repeated": 2,
+      "scalars": 0,
+      "blocks": 12,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "no_resource_for_component",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "no_resource_for_component"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
     "armor": {
       "definitions": 61,
       "repeated": 0,
@@ -80,6 +106,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "10",
@@ -102,6 +129,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1.5"
       ],
@@ -117,6 +145,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.66",
         "1"
@@ -133,6 +162,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "120"
       ],
@@ -148,6 +178,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "AI_STRIKE_CRAFT_1",
         "AMOEBA_STRIKE_CRAFT_1",
@@ -193,6 +224,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "2",
         "2.3",
@@ -211,6 +243,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "10",
@@ -232,6 +265,7 @@
       "blocks": 61,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "max",
@@ -251,6 +285,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "10",
         "12",
@@ -280,6 +315,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "10",
         "2",
@@ -304,6 +340,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "100",
         "120",
@@ -321,6 +358,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ai_01_fighter_entity",
         "ancient_corvette_hull_entity",
@@ -342,6 +380,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.4",
         "0.5",
@@ -363,6 +402,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "10",
         "100",
@@ -391,6 +431,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -406,6 +447,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1.25"
       ],
@@ -421,6 +463,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_mutation_ancient_driller_beasts",
         "GFX_mutation_flagella_marsupium_0",
@@ -454,6 +497,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1"
       ],
@@ -469,6 +513,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.2",
         "1",
@@ -486,6 +531,7 @@
       "blocks": 44,
       "bareValues": 44,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "strike_craft"
       ],
@@ -501,6 +547,7 @@
       "blocks": 16,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",
@@ -524,6 +571,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-30",
         "-50",
@@ -543,6 +591,7 @@
       "blocks": 48,
       "bareValues": 48,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tech_amoeba_strike_craft_1",
         "tech_archaeo_strike_crafts",
@@ -566,6 +615,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "gamma_laser_s",
         "psionic_strike_craft_laser",
@@ -590,6 +640,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "10",
         "20",
@@ -607,6 +658,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.5",
         "1"
@@ -623,6 +675,7 @@
       "blocks": 60,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "category",
@@ -658,6 +711,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.2",
         "0.3",
@@ -677,6 +731,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "10",
@@ -699,6 +754,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.5",
         "1"
@@ -715,6 +771,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1"
       ],
@@ -730,6 +787,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "bombers_behavior",
         "fighters_behavior"
@@ -746,6 +804,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "component_lifesteal_add"
@@ -763,6 +822,7 @@
       "blocks": 14,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "country_uses_bio_ships"
@@ -780,6 +840,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "LARGE",
         "extra_large",
@@ -799,6 +860,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.1"
       ],
@@ -814,6 +876,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "300",
         "400",
@@ -833,6 +896,7 @@
       "blocks": 61,
       "bareValues": 61,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "weapon_archaeotech",
         "weapon_swarm",
@@ -852,6 +916,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.3",
         "0.35",
@@ -873,6 +938,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "BIO_STRIKE_CRAFT_HANGAR_1",
         "BIO_STRIKE_CRAFT_HANGAR_2",
@@ -895,6 +961,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "instant",
         "point_defence"

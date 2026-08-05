@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "avian_01",
         "biogenesis_01",
@@ -31,6 +32,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -46,6 +48,7 @@
       "blocks": 45,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "always",
@@ -107,6 +110,7 @@
       "blocks": 45,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "always",
@@ -168,6 +172,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -184,6 +189,7 @@
       "blocks": 27,
       "bareValues": 27,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "bio_ship",
         "crystalline_entity",
@@ -205,6 +211,7 @@
       "blocks": 48,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "ambient_far",
@@ -246,6 +253,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -267,6 +275,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "0.1",
@@ -285,6 +294,7 @@
       "blocks": 48,
       "bareValues": 48,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-0.2",
         "-0.3",
@@ -309,6 +319,7 @@
       "blocks": 48,
       "bareValues": 48,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-0.3",
         "-0.4",
@@ -329,6 +340,7 @@
       "blocks": 48,
       "bareValues": 48,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-0.1",
         "-1",
@@ -350,6 +362,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "4000"
       ],
@@ -365,6 +378,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.5",
         "1",
@@ -385,6 +399,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.1",
         "0.7",
@@ -402,6 +417,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "100",
         "300",
@@ -419,6 +435,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.3"
       ],
@@ -434,6 +451,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.2",
         "0.5"
@@ -450,6 +468,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.99"
       ],
@@ -465,6 +484,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.99"
       ],
@@ -480,6 +500,7 @@
       "blocks": 51,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "base",
@@ -492,6 +513,28 @@
         [
           "base",
           "modifier"
+        ]
+      ]
+    },
+    "ship_selection_weight.modifier": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 20,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "from",
+        "graphical_culture"
+      ],
+      "keysByDefinition": [
+        [
+          "from"
+        ],
+        [
+          "graphical_culture"
         ]
       ]
     }

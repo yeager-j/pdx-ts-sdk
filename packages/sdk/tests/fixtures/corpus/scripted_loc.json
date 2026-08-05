@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ALLOW_PSI_CORPS",
         "FRIEND_DEFAULT",
@@ -89,6 +90,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -105,6 +107,7 @@
       "blocks": 1095,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "localization_key",
@@ -137,6 +140,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "PLANET_CRIME_NO_HAPPINESS_TITLE",
         "PLANET_CRIME_TITLE",
@@ -215,6 +219,7 @@
       "blocks": 1072,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "AND",
@@ -1346,6 +1351,7 @@
       "blocks": 5,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1"
       ],
@@ -1366,6 +1372,47 @@
         ]
       ]
     },
+    "text.weight.modifier": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_ethic",
+        "has_trait",
+        "has_trait_tier1or2",
+        "is_fanatic_authoritarian",
+        "is_fanatic_egalitarian",
+        "is_fanatic_materialist",
+        "is_fanatic_pacifist",
+        "is_fanatic_spiritualist",
+        "is_fanatic_xenophile",
+        "or"
+      ],
+      "keysByDefinition": [
+        [
+          "has_ethic",
+          "is_fanatic_authoritarian",
+          "is_fanatic_egalitarian",
+          "is_fanatic_materialist",
+          "is_fanatic_pacifist",
+          "is_fanatic_spiritualist",
+          "is_fanatic_xenophile"
+        ],
+        [
+          "has_trait",
+          "has_trait_tier1or2",
+          "or"
+        ],
+        [
+          "has_trait_tier1or2"
+        ]
+      ]
+    },
     "value": {
       "definitions": 56,
       "repeated": 0,
@@ -1373,6 +1420,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "owner.value:pop_to_cyberize_per_month_creed_x100",
         "owner.value:pop_to_cyberize_per_month_x100",

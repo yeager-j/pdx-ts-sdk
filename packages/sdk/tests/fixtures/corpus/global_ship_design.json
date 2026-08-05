@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "is_fallen_empire_hive",
         "is_fallen_empire_machine",
@@ -31,6 +32,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ai_empire",
         "extradimensional",
@@ -51,6 +53,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -66,6 +69,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "5"
       ],
@@ -81,6 +85,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 2,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -94,6 +99,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "BIOSHIP_SENSOR_1",
         "BIO_COMBAT_COMPUTER_BUFFER_BASIC",
@@ -117,6 +123,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "component",
@@ -138,6 +145,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "slot",
@@ -157,6 +165,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "MEDIUM_GUN_01",
         "MEDIUM_GUN_02",
@@ -191,6 +200,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ANTI_EVASION_GUN_1",
         "HEALING_GUN_1",
@@ -212,6 +222,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "mid"
       ],
@@ -227,6 +238,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "MAULER_STAGE_1_swarm",
         "MAULER_STAGE_2_swarm",
@@ -247,6 +259,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "mauler_stage_1",
         "mauler_stage_2",
@@ -267,6 +280,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -282,6 +296,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -297,6 +312,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -312,6 +328,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "NAME_Cutholoids_Hatchling",
         "NAME_Small_Crystal_Entity_Blue",
@@ -337,6 +354,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -352,6 +370,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "AI_CORE_DETECTOR",
         "BATTLESHIP_BIO_DARK_MATTER_REACTOR",
@@ -430,6 +449,7 @@
       "blocks": 431,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "component",
@@ -455,6 +475,7 @@
       "blocks": 410,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "slot",
@@ -474,6 +495,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "AUX_UTILITY_1",
         "EXTRA_LARGE_01",
@@ -552,6 +574,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "AI_STRIKE_CRAFT",
         "ANTI_EVASION_GUN_6",
@@ -630,6 +653,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "bot_1",
         "bot_2",
@@ -654,6 +678,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "CITADEL_STARBASE_SECTION",
         "DEEP_SPACE_CITADEL_STAGE_1",
@@ -732,6 +757,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "behemoth_01",
         "behemoth_02",
@@ -810,6 +836,7 @@
       "blocks": 1,
       "bareValues": 1,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "NAME_Cutholoids",
         "NAME_Cutholoids_Juvenile",
@@ -853,6 +880,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"

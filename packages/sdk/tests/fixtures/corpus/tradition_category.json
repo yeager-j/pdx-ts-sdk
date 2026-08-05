@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tr_adaptability_adopt",
         "tr_aptitude_adopt",
@@ -58,6 +59,7 @@
       "blocks": 33,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "base",
@@ -83,6 +85,145 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 20,
+      "repeated": 20,
+      "scalars": 0,
+      "blocks": 20,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "any_neighbor_country",
+        "count_exhibit",
+        "count_used_naval_cap",
+        "has_ai_personality",
+        "has_ap_pending",
+        "has_ascension_perk",
+        "has_ethic",
+        "has_federation",
+        "has_federator_personality",
+        "has_origin",
+        "has_valid_civic",
+        "has_void_dweller_origin",
+        "is_beastmasters_empire",
+        "is_fanatic",
+        "is_galactic_community_member",
+        "is_galactic_curators_empire",
+        "is_gestalt",
+        "is_hive_empire",
+        "is_homicidal",
+        "is_megacorp",
+        "is_part_of_galactic_council",
+        "is_specialist_subject_type",
+        "num_rivals",
+        "num_vivarium_slots",
+        "should_ai_focus_on_trade",
+        "years_passed"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "OR",
+          "has_ai_personality",
+          "has_ap_pending",
+          "has_ethic",
+          "is_fanatic",
+          "num_rivals"
+        ],
+        [
+          "OR",
+          "has_ap_pending",
+          "has_ethic",
+          "has_federation",
+          "has_federator_personality",
+          "is_gestalt"
+        ],
+        [
+          "OR",
+          "has_ap_pending",
+          "has_ethic",
+          "is_galactic_community_member",
+          "is_part_of_galactic_council"
+        ],
+        [
+          "any_neighbor_country",
+          "has_ap_pending",
+          "has_ethic",
+          "has_origin",
+          "has_valid_civic",
+          "is_specialist_subject_type"
+        ],
+        [
+          "count_exhibit",
+          "has_ap_pending",
+          "is_galactic_curators_empire"
+        ],
+        [
+          "count_used_naval_cap",
+          "has_ap_pending",
+          "is_beastmasters_empire",
+          "num_vivarium_slots"
+        ],
+        [
+          "has_ap_pending",
+          "has_ascension_perk",
+          "has_ethic",
+          "is_homicidal"
+        ],
+        [
+          "has_ap_pending",
+          "has_ethic"
+        ],
+        [
+          "has_ap_pending",
+          "has_ethic",
+          "has_origin"
+        ],
+        [
+          "has_ap_pending",
+          "has_ethic",
+          "has_valid_civic"
+        ],
+        [
+          "has_ap_pending",
+          "has_ethic",
+          "has_void_dweller_origin",
+          "is_hive_empire",
+          "is_homicidal"
+        ],
+        [
+          "has_ap_pending",
+          "has_ethic",
+          "years_passed"
+        ],
+        [
+          "has_ap_pending",
+          "has_origin"
+        ],
+        [
+          "has_ap_pending",
+          "has_valid_civic"
+        ],
+        [
+          "has_ap_pending",
+          "has_void_dweller_origin",
+          "years_passed"
+        ],
+        [
+          "has_ap_pending",
+          "is_gestalt"
+        ],
+        [
+          "has_ap_pending",
+          "is_megacorp",
+          "should_ai_focus_on_trade"
+        ]
+      ]
+    },
     "desc": {
       "definitions": 8,
       "repeated": 8,
@@ -90,6 +231,7 @@
       "blocks": 8,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "text",
@@ -109,6 +251,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tradition_aptitude_desc",
         "tradition_aptitude_hive_desc",
@@ -148,6 +291,7 @@
       "blocks": 8,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "has_void_dweller_origin",
@@ -183,6 +327,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tr_adaptability_finish",
         "tr_aptitude_finish",
@@ -230,6 +375,7 @@
       "blocks": 28,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOR",
@@ -335,6 +481,7 @@
       "blocks": 33,
       "bareValues": 33,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tr_adaptability_adaptive_ecology",
         "tr_adaptability_appropriation",
@@ -413,6 +560,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tree_111_11",
         "tree_11_111",

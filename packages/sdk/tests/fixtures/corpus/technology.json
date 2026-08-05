@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "all",
         "military"
@@ -27,6 +28,7 @@
       "blocks": 492,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 162,
       "values": [],
       "keys": [
         "base",
@@ -62,6 +64,256 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 221,
+      "repeated": 109,
+      "scalars": 0,
+      "blocks": 221,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 3,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "any_country",
+        "any_system_within_border",
+        "country_uses_food",
+        "has_ascension_perk",
+        "has_civic",
+        "has_country_flag",
+        "has_ethic",
+        "has_finished_psionic_tradition",
+        "has_origin",
+        "has_technology",
+        "has_trait",
+        "has_trait_in_council",
+        "has_valid_ai_personality",
+        "has_valid_civic",
+        "is_ai",
+        "is_authoritarian",
+        "is_beastmasters_empire",
+        "is_catalytic_empire",
+        "is_egalitarian",
+        "is_fanatic_egalitarian",
+        "is_fanatic_pacifist",
+        "is_hive_empire",
+        "is_infernal_empire",
+        "is_materialist",
+        "is_militarist",
+        "is_nomadic",
+        "is_preferred_weapons",
+        "is_psionic",
+        "is_spiritualist",
+        "is_unfriendly",
+        "mid_game_years_passed",
+        "num_buildings",
+        "num_cosmic_storms_encountered",
+        "num_owned_planets",
+        "num_rivals",
+        "pop_amount",
+        "values_others"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "NOR",
+          "has_ascension_perk",
+          "has_origin",
+          "is_materialist"
+        ],
+        [
+          "NOR",
+          "has_origin",
+          "is_materialist"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "has_ascension_perk",
+          "has_origin",
+          "is_materialist"
+        ],
+        [
+          "NOT",
+          "has_ethic"
+        ],
+        [
+          "NOT",
+          "has_ethic",
+          "is_preferred_weapons"
+        ],
+        [
+          "NOT",
+          "is_ai"
+        ],
+        [
+          "NOT",
+          "is_materialist"
+        ],
+        [
+          "NOT",
+          "is_preferred_weapons"
+        ],
+        [
+          "NOT",
+          "num_owned_planets"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "any_system_within_border",
+          "has_origin"
+        ],
+        [
+          "OR",
+          "any_system_within_border",
+          "has_origin",
+          "has_trait",
+          "is_ai"
+        ],
+        [
+          "OR",
+          "country_uses_food",
+          "is_catalytic_empire"
+        ],
+        [
+          "OR",
+          "has_origin"
+        ],
+        [
+          "OR",
+          "has_origin",
+          "is_ai"
+        ],
+        [
+          "OR",
+          "has_technology"
+        ],
+        [
+          "OR",
+          "has_valid_ai_personality"
+        ],
+        [
+          "OR",
+          "is_ai",
+          "is_infernal_empire"
+        ],
+        [
+          "OR",
+          "is_beastmasters_empire"
+        ],
+        [
+          "any_country",
+          "has_ascension_perk",
+          "is_ai",
+          "is_spiritualist"
+        ],
+        [
+          "country_uses_food"
+        ],
+        [
+          "has_ascension_perk",
+          "has_origin",
+          "has_trait"
+        ],
+        [
+          "has_civic",
+          "has_ethic"
+        ],
+        [
+          "has_country_flag"
+        ],
+        [
+          "has_country_flag",
+          "mid_game_years_passed"
+        ],
+        [
+          "has_ethic"
+        ],
+        [
+          "has_ethic",
+          "has_valid_civic"
+        ],
+        [
+          "has_ethic",
+          "is_fanatic_pacifist"
+        ],
+        [
+          "has_finished_psionic_tradition",
+          "has_trait_in_council"
+        ],
+        [
+          "has_origin"
+        ],
+        [
+          "has_origin",
+          "has_trait"
+        ],
+        [
+          "has_technology"
+        ],
+        [
+          "has_technology",
+          "num_cosmic_storms_encountered"
+        ],
+        [
+          "is_ai"
+        ],
+        [
+          "is_authoritarian"
+        ],
+        [
+          "is_egalitarian"
+        ],
+        [
+          "is_fanatic_egalitarian"
+        ],
+        [
+          "is_hive_empire",
+          "is_spiritualist"
+        ],
+        [
+          "is_infernal_empire"
+        ],
+        [
+          "is_militarist"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "is_psionic"
+        ],
+        [
+          "is_spiritualist"
+        ],
+        [
+          "is_unfriendly"
+        ],
+        [
+          "num_buildings"
+        ],
+        [
+          "num_cosmic_storms_encountered"
+        ],
+        [
+          "num_rivals"
+        ],
+        [
+          "pop_amount"
+        ],
+        [
+          "values_others"
+        ]
+      ]
+    },
     "area": {
       "definitions": 679,
       "repeated": 0,
@@ -69,6 +321,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "engineering",
         "physics",
@@ -86,6 +339,7 @@
       "blocks": 679,
       "bareValues": 679,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "archaeostudies",
         "biology",
@@ -113,6 +367,7 @@
       "blocks": 10,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "10000",
@@ -144,6 +399,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -157,6 +413,7 @@
       "blocks": 37,
       "bareValues": 37,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "active_reconnaissance_unlocked",
         "alien_cloning_unlocked",
@@ -207,6 +464,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "bio_ships",
         "biological",
@@ -243,6 +501,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tech_archeology_lab",
         "tech_covenant_composer",
@@ -269,6 +528,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -284,6 +544,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -299,6 +560,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -315,6 +577,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -331,6 +594,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-1",
         "5"
@@ -347,6 +611,7 @@
       "blocks": 34,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "deposit_blockers",
@@ -369,6 +634,7 @@
       "blocks": 243,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "BIOLOGICAL_logistic_growth_mult",
@@ -1084,6 +1350,7 @@
       "blocks": 376,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOR",
@@ -1400,6 +1667,7 @@
       "blocks": 125,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "component",
@@ -1445,6 +1713,7 @@
       "blocks": 504,
       "bareValues": 491,
       "bareBlocks": 0,
+      "emptyBlocks": 4,
       "values": [
         "tech_archaeostudies",
         "tech_battleship_hull_1",
@@ -1528,6 +1797,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -1544,6 +1814,7 @@
       "blocks": 19,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "country_uses_bio_ships",
@@ -1582,6 +1853,7 @@
       "blocks": 180,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "area",
@@ -1708,6 +1980,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "society"
       ],
@@ -1723,6 +1996,7 @@
       "blocks": 11,
       "bareValues": 11,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "biology",
         "psionics"
@@ -1739,6 +2013,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -1755,6 +2030,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -1771,6 +2047,7 @@
       "blocks": 55,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "all_technology_research_speed",
@@ -1961,6 +2238,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tech_archaeo_bio_lasers",
         "tech_archaeostudies_wilderness",
@@ -2039,6 +2317,7 @@
       "blocks": 28,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "custom"
@@ -2056,6 +2335,7 @@
       "blocks": 180,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -2164,6 +2444,7 @@
       "blocks": 91,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "factor"
@@ -2181,6 +2462,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -2201,6 +2483,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -2219,6 +2502,7 @@
       "blocks": 34,
       "bareValues": 33,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [
         "deposit_blockers",
         "repeatable"
@@ -2235,6 +2519,7 @@
       "blocks": 562,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 68,
       "values": [],
       "keys": [
         "factor",
@@ -2264,6 +2549,813 @@
         ],
         [
           "modifier"
+        ]
+      ]
+    },
+    "weight_modifier.modifier": {
+      "definitions": 417,
+      "repeated": 283,
+      "scalars": 0,
+      "blocks": 417,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 12,
+      "values": [],
+      "keys": [
+        "AND",
+        "NOR",
+        "NOT",
+        "OR",
+        "always",
+        "any_country",
+        "any_neighbor_country",
+        "any_owned_leader",
+        "any_owned_nonprimary_starbase",
+        "any_owned_planet",
+        "any_owned_pop_group",
+        "any_owned_species",
+        "any_system_within_border",
+        "calc_true_if",
+        "count_archaeological_site",
+        "count_owned_pop_amount",
+        "count_starbase_sizes",
+        "country_uses_bio_ships",
+        "country_uses_consumer_goods",
+        "country_uses_food",
+        "federation",
+        "has_ancrel",
+        "has_any_hyper_relay",
+        "has_ascension_perk",
+        "has_civic",
+        "has_cloaking_civic_or_origin",
+        "has_country_flag",
+        "has_ethic",
+        "has_federation",
+        "has_galactic_wonders",
+        "has_modifier",
+        "has_origin",
+        "has_paragon_dlc",
+        "has_policy_flag",
+        "has_psionic_ascension",
+        "has_relic",
+        "has_seen_any_bypass",
+        "has_shroud_dlc",
+        "has_technology",
+        "has_tradition",
+        "has_trait",
+        "has_trait_in_council",
+        "has_valid_civic",
+        "is_ai",
+        "is_authoritarian",
+        "is_catalytic_empire",
+        "is_cloning_authority",
+        "is_eager_explorer_empire",
+        "is_egalitarian",
+        "is_entropy_drinkers_empire",
+        "is_fanatic_pacifist",
+        "is_galactic_community_member",
+        "is_gestalt",
+        "is_guided_sapience_empire",
+        "is_hive_empire",
+        "is_individual_machine",
+        "is_lithoid_devouring_swarm",
+        "is_machine_empire",
+        "is_materialist",
+        "is_memorialist_empire",
+        "is_militarist",
+        "is_nomadic",
+        "is_pacifist",
+        "is_specialist_subject_type",
+        "is_spiritualist",
+        "is_void_dweller_empire",
+        "is_xenophile",
+        "is_xenophobe",
+        "mid_game_years_passed",
+        "num_ascension_perk_slots",
+        "num_buildings",
+        "num_communications",
+        "num_cosmic_storms_encountered",
+        "num_owned_planets",
+        "owns_any_bypass",
+        "years_passed"
+      ],
+      "keysByDefinition": [
+        [
+          "AND"
+        ],
+        [
+          "AND",
+          "NOR",
+          "NOT",
+          "OR",
+          "has_ethic",
+          "is_hive_empire",
+          "is_individual_machine"
+        ],
+        [
+          "AND",
+          "NOR",
+          "has_ethic",
+          "has_origin",
+          "has_relic",
+          "is_guided_sapience_empire",
+          "is_individual_machine"
+        ],
+        [
+          "AND",
+          "NOR",
+          "is_hive_empire",
+          "is_individual_machine"
+        ],
+        [
+          "AND",
+          "NOT",
+          "OR",
+          "any_country",
+          "any_owned_leader",
+          "any_owned_pop_group",
+          "has_ascension_perk",
+          "has_ethic",
+          "has_origin",
+          "has_paragon_dlc",
+          "has_shroud_dlc",
+          "is_spiritualist"
+        ],
+        [
+          "AND",
+          "has_origin",
+          "has_relic",
+          "has_tradition",
+          "is_hive_empire",
+          "is_individual_machine"
+        ],
+        [
+          "AND",
+          "has_origin",
+          "has_relic",
+          "has_trait",
+          "is_hive_empire",
+          "is_individual_machine"
+        ],
+        [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "any_owned_leader",
+          "any_owned_pop_group",
+          "has_paragon_dlc",
+          "has_trait_in_council"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "any_owned_planet",
+          "calc_true_if",
+          "country_uses_bio_ships",
+          "has_ascension_perk"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "any_owned_planet",
+          "calc_true_if",
+          "has_ascension_perk"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "any_owned_planet",
+          "calc_true_if",
+          "has_ascension_perk",
+          "has_policy_flag",
+          "is_hive_empire"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "any_owned_planet",
+          "calc_true_if",
+          "has_ascension_perk",
+          "is_gestalt"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "any_owned_planet",
+          "calc_true_if",
+          "has_ascension_perk",
+          "is_machine_empire"
+        ],
+        [
+          "NOR",
+          "OR"
+        ],
+        [
+          "NOR",
+          "OR",
+          "any_owned_planet",
+          "country_uses_bio_ships",
+          "has_ethic",
+          "has_relic"
+        ],
+        [
+          "NOR",
+          "OR",
+          "any_owned_planet",
+          "country_uses_food",
+          "has_relic",
+          "has_tradition",
+          "is_catalytic_empire"
+        ],
+        [
+          "NOR",
+          "OR",
+          "country_uses_bio_ships",
+          "has_ethic",
+          "has_relic"
+        ],
+        [
+          "NOR",
+          "OR",
+          "country_uses_bio_ships",
+          "has_relic"
+        ],
+        [
+          "NOR",
+          "OR",
+          "federation",
+          "has_federation"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_ascension_perk",
+          "has_origin",
+          "has_policy_flag",
+          "is_materialist"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_ascension_perk",
+          "has_tradition",
+          "is_eager_explorer_empire"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_ethic",
+          "is_hive_empire",
+          "is_machine_empire"
+        ],
+        [
+          "NOR",
+          "OR",
+          "has_relic",
+          "is_guided_sapience_empire"
+        ],
+        [
+          "NOR",
+          "OR",
+          "num_owned_planets"
+        ],
+        [
+          "NOR",
+          "any_owned_leader"
+        ],
+        [
+          "NOR",
+          "any_owned_nonprimary_starbase",
+          "any_system_within_border",
+          "is_nomadic"
+        ],
+        [
+          "NOR",
+          "any_owned_planet"
+        ],
+        [
+          "NOR",
+          "any_owned_species",
+          "has_ethic",
+          "has_relic",
+          "is_authoritarian",
+          "is_egalitarian",
+          "is_individual_machine"
+        ],
+        [
+          "NOR",
+          "any_owned_species",
+          "has_relic",
+          "is_authoritarian",
+          "is_egalitarian",
+          "is_individual_machine"
+        ],
+        [
+          "NOR",
+          "has_any_hyper_relay",
+          "has_ascension_perk",
+          "has_seen_any_bypass",
+          "has_technology",
+          "has_tradition",
+          "is_eager_explorer_empire"
+        ],
+        [
+          "NOR",
+          "has_ascension_perk",
+          "has_country_flag",
+          "has_tradition",
+          "is_eager_explorer_empire",
+          "mid_game_years_passed",
+          "owns_any_bypass"
+        ],
+        [
+          "NOR",
+          "has_ascension_perk",
+          "has_country_flag",
+          "is_eager_explorer_empire"
+        ],
+        [
+          "NOR",
+          "has_ascension_perk",
+          "has_origin",
+          "has_policy_flag"
+        ],
+        [
+          "NOR",
+          "has_ascension_perk",
+          "has_tradition",
+          "is_eager_explorer_empire"
+        ],
+        [
+          "NOR",
+          "has_ascension_perk",
+          "has_tradition",
+          "is_eager_explorer_empire",
+          "owns_any_bypass"
+        ],
+        [
+          "NOR",
+          "has_cloaking_civic_or_origin",
+          "has_tradition"
+        ],
+        [
+          "NOR",
+          "has_cloaking_civic_or_origin",
+          "has_tradition",
+          "has_trait_in_council"
+        ],
+        [
+          "NOR",
+          "has_ethic"
+        ],
+        [
+          "NOR",
+          "has_modifier",
+          "has_trait_in_council"
+        ],
+        [
+          "NOR",
+          "has_policy_flag"
+        ],
+        [
+          "NOR",
+          "has_relic",
+          "has_tradition"
+        ],
+        [
+          "NOR",
+          "has_relic",
+          "is_hive_empire"
+        ],
+        [
+          "NOR",
+          "has_relic",
+          "is_specialist_subject_type",
+          "years_passed"
+        ],
+        [
+          "NOR",
+          "has_tradition"
+        ],
+        [
+          "NOR",
+          "has_tradition",
+          "is_specialist_subject_type"
+        ],
+        [
+          "NOR",
+          "is_authoritarian",
+          "is_materialist"
+        ],
+        [
+          "NOR",
+          "is_authoritarian",
+          "num_owned_planets"
+        ],
+        [
+          "NOR",
+          "is_materialist"
+        ],
+        [
+          "NOR",
+          "is_militarist"
+        ],
+        [
+          "NOR",
+          "is_militarist",
+          "is_specialist_subject_type"
+        ],
+        [
+          "NOR",
+          "is_pacifist"
+        ],
+        [
+          "NOR",
+          "is_specialist_subject_type"
+        ],
+        [
+          "NOR",
+          "is_specialist_subject_type",
+          "years_passed"
+        ],
+        [
+          "NOR",
+          "num_ascension_perk_slots"
+        ],
+        [
+          "NOR",
+          "num_communications"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "OR",
+          "any_owned_leader",
+          "has_ethic",
+          "has_paragon_dlc"
+        ],
+        [
+          "NOT",
+          "OR",
+          "any_owned_leader",
+          "has_ethic",
+          "has_paragon_dlc",
+          "has_psionic_ascension"
+        ],
+        [
+          "NOT",
+          "OR",
+          "any_owned_leader",
+          "has_ethic",
+          "has_paragon_dlc",
+          "has_psionic_ascension",
+          "has_shroud_dlc",
+          "has_valid_civic",
+          "is_gestalt",
+          "is_spiritualist"
+        ],
+        [
+          "NOT",
+          "any_neighbor_country",
+          "count_starbase_sizes",
+          "has_modifier",
+          "has_tradition",
+          "years_passed"
+        ],
+        [
+          "NOT",
+          "any_neighbor_country",
+          "count_starbase_sizes",
+          "has_tradition",
+          "years_passed"
+        ],
+        [
+          "NOT",
+          "any_neighbor_country",
+          "has_tradition",
+          "years_passed"
+        ],
+        [
+          "NOT",
+          "any_owned_planet"
+        ],
+        [
+          "NOT",
+          "count_starbase_sizes",
+          "has_tradition",
+          "years_passed"
+        ],
+        [
+          "NOT",
+          "country_uses_bio_ships",
+          "country_uses_food"
+        ],
+        [
+          "NOT",
+          "country_uses_consumer_goods"
+        ],
+        [
+          "NOT",
+          "has_ancrel",
+          "num_buildings"
+        ],
+        [
+          "NOT",
+          "has_ascension_perk",
+          "has_origin",
+          "has_relic",
+          "has_trait",
+          "is_hive_empire",
+          "is_individual_machine",
+          "is_xenophile"
+        ],
+        [
+          "NOT",
+          "has_ascension_perk",
+          "has_tradition",
+          "num_owned_planets"
+        ],
+        [
+          "NOT",
+          "has_country_flag",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "has_ethic"
+        ],
+        [
+          "NOT",
+          "has_policy_flag"
+        ],
+        [
+          "NOT",
+          "has_technology"
+        ],
+        [
+          "NOT",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "is_void_dweller_empire"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "any_neighbor_country"
+        ],
+        [
+          "OR",
+          "any_neighbor_country",
+          "any_owned_nonprimary_starbase",
+          "any_owned_planet",
+          "count_starbase_sizes",
+          "is_nomadic"
+        ],
+        [
+          "OR",
+          "count_archaeological_site",
+          "has_ancrel"
+        ],
+        [
+          "OR",
+          "has_ascension_perk",
+          "has_galactic_wonders"
+        ],
+        [
+          "OR",
+          "has_ascension_perk",
+          "has_galactic_wonders",
+          "is_eager_explorer_empire",
+          "is_militarist",
+          "is_pacifist"
+        ],
+        [
+          "OR",
+          "has_ascension_perk",
+          "has_galactic_wonders",
+          "is_militarist",
+          "is_pacifist"
+        ],
+        [
+          "OR",
+          "has_ascension_perk",
+          "has_galactic_wonders",
+          "is_xenophile",
+          "is_xenophobe"
+        ],
+        [
+          "OR",
+          "has_ethic",
+          "is_fanatic_pacifist",
+          "num_communications"
+        ],
+        [
+          "OR",
+          "has_modifier",
+          "has_trait_in_council"
+        ],
+        [
+          "OR",
+          "has_origin",
+          "has_policy_flag",
+          "is_materialist"
+        ],
+        [
+          "OR",
+          "has_policy_flag",
+          "is_materialist"
+        ],
+        [
+          "OR",
+          "has_technology"
+        ],
+        [
+          "OR",
+          "has_tradition",
+          "is_specialist_subject_type"
+        ],
+        [
+          "OR",
+          "num_communications"
+        ],
+        [
+          "OR",
+          "num_cosmic_storms_encountered"
+        ],
+        [
+          "always"
+        ],
+        [
+          "always",
+          "any_system_within_border",
+          "has_tradition"
+        ],
+        [
+          "any_owned_leader"
+        ],
+        [
+          "any_owned_leader",
+          "is_cloning_authority"
+        ],
+        [
+          "any_owned_nonprimary_starbase",
+          "any_system_within_border",
+          "has_tradition",
+          "is_nomadic"
+        ],
+        [
+          "count_owned_pop_amount"
+        ],
+        [
+          "federation",
+          "has_federation"
+        ],
+        [
+          "has_ascension_perk",
+          "has_country_flag",
+          "has_tradition",
+          "is_eager_explorer_empire",
+          "mid_game_years_passed"
+        ],
+        [
+          "has_ascension_perk",
+          "has_tradition",
+          "is_eager_explorer_empire"
+        ],
+        [
+          "has_ascension_perk",
+          "is_eager_explorer_empire"
+        ],
+        [
+          "has_civic",
+          "has_ethic",
+          "is_galactic_community_member"
+        ],
+        [
+          "has_cloaking_civic_or_origin",
+          "has_tradition",
+          "has_trait_in_council"
+        ],
+        [
+          "has_country_flag"
+        ],
+        [
+          "has_country_flag",
+          "has_relic",
+          "has_tradition"
+        ],
+        [
+          "has_ethic"
+        ],
+        [
+          "has_ethic",
+          "is_galactic_community_member"
+        ],
+        [
+          "has_origin"
+        ],
+        [
+          "has_origin",
+          "has_policy_flag"
+        ],
+        [
+          "has_origin",
+          "has_policy_flag",
+          "has_trait"
+        ],
+        [
+          "has_origin",
+          "has_tradition",
+          "has_trait",
+          "is_lithoid_devouring_swarm"
+        ],
+        [
+          "has_origin",
+          "is_specialist_subject_type"
+        ],
+        [
+          "has_policy_flag"
+        ],
+        [
+          "has_relic",
+          "is_ai",
+          "is_specialist_subject_type",
+          "years_passed"
+        ],
+        [
+          "has_relic",
+          "is_egalitarian"
+        ],
+        [
+          "has_technology"
+        ],
+        [
+          "has_technology",
+          "has_tradition"
+        ],
+        [
+          "has_tradition"
+        ],
+        [
+          "has_tradition",
+          "has_trait_in_council"
+        ],
+        [
+          "has_tradition",
+          "is_ai",
+          "num_owned_planets",
+          "years_passed"
+        ],
+        [
+          "has_trait_in_council"
+        ],
+        [
+          "has_valid_civic"
+        ],
+        [
+          "is_ai",
+          "is_specialist_subject_type",
+          "years_passed"
+        ],
+        [
+          "is_authoritarian",
+          "num_owned_planets"
+        ],
+        [
+          "is_entropy_drinkers_empire",
+          "is_memorialist_empire",
+          "num_owned_planets"
+        ],
+        [
+          "is_militarist"
+        ],
+        [
+          "is_militarist",
+          "is_specialist_subject_type"
+        ],
+        [
+          "is_specialist_subject_type"
+        ],
+        [
+          "is_specialist_subject_type",
+          "years_passed"
+        ],
+        [
+          "num_communications"
+        ],
+        [
+          "num_cosmic_storms_encountered"
+        ],
+        [
+          "num_owned_planets"
         ]
       ]
     }

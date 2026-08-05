@@ -11,6 +11,7 @@
       "blocks": 162,
       "bareValues": 162,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "artillery",
         "artillery_stealth",
@@ -44,6 +45,7 @@
       "blocks": 97,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "factor",
@@ -66,6 +68,54 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 64,
+      "repeated": 56,
+      "scalars": 0,
+      "blocks": 64,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "has_technology",
+        "is_ai",
+        "is_preferred_weapons"
+      ],
+      "keysByDefinition": [
+        [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "OR"
+        ],
+        [
+          "NOT",
+          "has_technology",
+          "is_ai",
+          "is_preferred_weapons"
+        ],
+        [
+          "NOT",
+          "has_technology",
+          "is_preferred_weapons"
+        ],
+        [
+          "NOT",
+          "is_preferred_weapons"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "is_preferred_weapons"
+        ]
+      ]
+    },
     "aux_utility_slots": {
       "definitions": 319,
       "repeated": 0,
@@ -73,6 +123,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -95,6 +146,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -110,6 +162,7 @@
       "blocks": 421,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "is_side_slot",
@@ -189,6 +242,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -205,6 +259,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "core",
         "gun_01",
@@ -283,6 +338,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "EXTRA_LARGE_01",
         "EXTRA_LARGE_02",
@@ -361,6 +417,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "x",
@@ -380,6 +437,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-5",
         "-7.358",
@@ -399,6 +457,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-10.7",
         "-17.262",
@@ -418,6 +477,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-90",
         "0",
@@ -439,6 +499,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1"
@@ -455,6 +516,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "citadel_extra_large_turret",
         "citadel_large_turret",
@@ -498,6 +560,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ancient_corvette_hull_entity",
         "ancient_destroyer_hull_entity",
@@ -576,6 +639,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "2",
@@ -611,6 +675,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_ship_part_core_bow",
         "GFX_ship_part_core_mid",
@@ -628,6 +693,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1"
       ],
@@ -643,6 +709,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -678,6 +745,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -700,6 +768,7 @@
       "blocks": 20,
       "bareValues": 9,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tech_torpedoes_1"
       ],
@@ -720,6 +789,7 @@
       "blocks": 133,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "category",
@@ -742,6 +812,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ancient_corvette",
         "ancient_destroyer",
@@ -820,6 +891,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -836,6 +908,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",

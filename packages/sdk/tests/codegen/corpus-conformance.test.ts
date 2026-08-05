@@ -64,6 +64,9 @@ import { ACKNOWLEDGED_GAPS } from "./corpus-gaps.ts";
  * - **Two declarations whose arms are indistinguishable.** A dual dispatches on
  *   what the author passed, so two arms that both author as arrays cannot be
  *   told apart. See `lowerDual`.
+ * - **A scope the rules pin and the corpus contradicts, on evidence too thin
+ *   to overrule them.** Asserting over a stated scope is a stronger claim than
+ *   filling in an omitted one, and needs more than a couple of definitions.
  * - **A field CWT scopes `any` whose legal set is not settled.** The fix is a
  *   scope the definition supplies (`CONTENT_SCOPE_PARAMETERS`, which `decision`
  *   now uses), and a row there needs the same evidence any assertion does. Once
@@ -84,6 +87,18 @@ const ACKNOWLEDGED = new Map<string, string>([
       "which one a value belongs to. `title` and `desc` dual cleanly because their scalar arm is " +
       "`0..1`. An `arity` assertion cannot help: it would narrow the block arm too, and the block " +
       "form really does repeat.",
+  ],
+  [
+    "bombardment_stance.planet_damage.modifier scope",
+    "The one row here where the rules do state a scope and the corpus disagrees. " +
+      "bombardment_stances.cwt:50 pins the block `## replace_scopes = { root = fleet " +
+      "this = fleet from = planet }`, and 2 of the 13 shipped stances gate a weight row on " +
+      "`planet_devastation`, which cwtools scopes to the planet family (carrier/colony/planet/" +
+      "ship). Two readings fit: cwtools' trigger list is missing fleet, or the rows really do " +
+      "evaluate planet-side and the game resolves it through the declared FROM. Two definitions " +
+      "cannot settle which, and an overlay assertion overruling a scope the rules state — as " +
+      "opposed to filling in one they omit, which is what the three ai_weight rows do — needs " +
+      "more than that.",
   ],
   [
     "economic_category.triggered_cost_modifier.trigger scope",
@@ -115,6 +130,15 @@ const ACKNOWLEDGED = new Map<string, string>([
       "none. The corpus is the same shape: 1072 definitions across 206 distinct condition sets, " +
       "spanning country, species, planet and variable scopes. Nothing to declare; SDK-24's " +
       "narrowing inside the clause is the only remedy.",
+  ],
+  [
+    "scripted_loc.text.weight.modifier scope",
+    "The weight sibling of the row above, and the same finding one field over: a scripted " +
+      "localization is rendered wherever its key is referenced, so the conditions gating its " +
+      "weight rows run in whatever scope did the referencing. The 5 definitions that gate a " +
+      "weight row are the same shape as the 1072 that gate the text — country and species " +
+      "conditions (`has_ethic`, `has_trait`) in separate definitions, no single scope to " +
+      "declare. SDK-24's narrowing inside the clause is the remedy for both.",
   ],
   [
     "ship_size.potential_construction scope",

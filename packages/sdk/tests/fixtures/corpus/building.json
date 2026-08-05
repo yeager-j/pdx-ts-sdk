@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "100",
         "200"
@@ -27,6 +28,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -42,6 +44,7 @@
       "blocks": 39,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "alloys",
@@ -139,6 +142,7 @@
       "blocks": 33,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "factor",
@@ -163,6 +167,24 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 7,
+      "repeated": 3,
+      "scalars": 0,
+      "blocks": 7,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "branch_office_owner"
+      ],
+      "keysByDefinition": [
+        [
+          "branch_office_owner"
+        ]
+      ]
+    },
     "ai_weight_coefficient": {
       "definitions": 41,
       "repeated": 0,
@@ -170,6 +192,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1.2",
         "1.25",
@@ -188,6 +211,7 @@
       "blocks": 255,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 31,
       "values": [],
       "keys": [
         "NOR",
@@ -361,6 +385,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -376,6 +401,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1080",
         "180",
@@ -397,6 +423,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1"
       ],
@@ -412,6 +439,7 @@
       "blocks": 433,
       "bareValues": 433,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ark_forever_cruise_crew",
         "ark_forever_cruise_passengers",
@@ -464,6 +492,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -480,6 +509,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -496,6 +526,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -512,6 +543,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -528,6 +560,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -543,6 +576,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -563,6 +597,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "amenities",
         "amenity",
@@ -588,6 +623,7 @@
       "blocks": 159,
       "bareValues": 159,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "building_ancient_control_center",
         "building_ancient_palace",
@@ -666,6 +702,7 @@
       "blocks": 35,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "aesthetic_wonder_specimens_produces_mult",
@@ -798,6 +835,7 @@
       "blocks": 11,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "modifier",
@@ -810,6 +848,38 @@
         ]
       ]
     },
+    "custom_storm_ai_weight.modifier": {
+      "definitions": 11,
+      "repeated": 4,
+      "scalars": 0,
+      "blocks": 11,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "AND",
+        "exists",
+        "has_designation",
+        "solar_system?"
+      ],
+      "keysByDefinition": [
+        [
+          "AND"
+        ],
+        [
+          "AND",
+          "has_designation"
+        ],
+        [
+          "AND",
+          "solar_system?"
+        ],
+        [
+          "exists"
+        ]
+      ]
+    },
     "custom_tooltip": {
       "definitions": 37,
       "repeated": 3,
@@ -817,6 +887,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "branch_office_building_trade_bonus",
         "building_advanced_storm_resistant_production_tt",
@@ -846,6 +917,7 @@
       "blocks": 9,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "text",
@@ -868,6 +940,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "building_artist_patron_desc",
         "building_artist_patron_gestalt_desc",
@@ -903,6 +976,7 @@
       "blocks": 7,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -934,6 +1008,7 @@
       "blocks": 362,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "AND",
@@ -1022,6 +1097,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1"
       ],
@@ -1037,6 +1113,7 @@
       "blocks": 23,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1"
       ],
@@ -1055,6 +1132,28 @@
         ]
       ]
     },
+    "empire_limit.modifier": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "check_variable",
+        "has_country_flag"
+      ],
+      "keysByDefinition": [
+        [
+          "check_variable"
+        ],
+        [
+          "has_country_flag"
+        ]
+      ]
+    },
     "exempt_from_ai_planet_specialization": {
       "definitions": 24,
       "repeated": 0,
@@ -1062,6 +1161,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -1077,6 +1177,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "building_affluence_center",
         "building_affluence_emporium",
@@ -1155,6 +1256,7 @@
       "blocks": 273,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "shroud/buildings/lifecrypt_1_conditions",
         "shroud/buildings/lifecrypt_1_modifiers",
@@ -1223,6 +1325,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -1238,6 +1341,7 @@
       "blocks": 33,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "add_eotc_aura_grand_ward",
@@ -1303,6 +1407,7 @@
       "blocks": 31,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 6,
       "values": [],
       "keys": [
         "branch_office_owner",
@@ -1363,6 +1468,7 @@
       "blocks": 5,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "create_influence_field_if_needed"
@@ -1380,6 +1486,7 @@
       "blocks": 38,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "else_if",
@@ -1401,6 +1508,7 @@
       "blocks": 9,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 5,
       "values": [],
       "keys": [
         "add_eotc_aura_grand_ward",
@@ -1431,6 +1539,7 @@
       "blocks": 38,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "owner",
@@ -1450,6 +1559,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "corporate",
         "subject_holding"
@@ -1466,6 +1576,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "2",
@@ -1484,6 +1595,32 @@
         ]
       ]
     },
+    "planet_limit.modifier": {
+      "definitions": 1,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "exists",
+        "has_fully_upgraded_capital",
+        "has_major_upgraded_capital",
+        "has_upgraded_capital",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "exists",
+          "has_fully_upgraded_capital",
+          "has_major_upgraded_capital",
+          "has_upgraded_capital",
+          "owner"
+        ]
+      ]
+    },
     "planet_modifier": {
       "definitions": 290,
       "repeated": 3,
@@ -1491,6 +1628,7 @@
       "blocks": 290,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 3,
       "values": [],
       "keys": [
         "artisan_jobs_bonus_workforce_mult",
@@ -2372,6 +2510,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -2387,6 +2526,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -2404,6 +2544,7 @@
       "blocks": 454,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "AND",
@@ -2845,6 +2986,7 @@
       "blocks": 242,
       "bareValues": 226,
       "bareBlocks": 0,
+      "emptyBlocks": 15,
       "values": [
         "tech_alloys_1",
         "tech_alloys_2",
@@ -2928,6 +3070,7 @@
       "blocks": 458,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "category",
@@ -3016,6 +3159,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "wilderness_building_ruined"
       ],
@@ -3031,6 +3175,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tech_fe_administration_1",
         "tech_fe_administration_2",
@@ -3077,6 +3222,7 @@
       "blocks": 188,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -3257,6 +3403,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -3272,6 +3419,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "mindwarden_aura_immunity"
@@ -3289,6 +3437,7 @@
       "blocks": 49,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "BIOLOGICAL_species_trait_picks_add",
@@ -3460,6 +3609,7 @@
       "blocks": 108,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "text",
@@ -3485,6 +3635,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "NEW_LINE",
         "automation_2_tooltip",
@@ -3563,6 +3714,7 @@
       "blocks": 46,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NAND",
@@ -3643,6 +3795,7 @@
       "blocks": 208,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "army_starting_experience_add",
@@ -4760,6 +4913,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "bonus_pop_growth",
@@ -4779,6 +4933,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "bonus_pop_growth",
@@ -4798,6 +4953,7 @@
       "blocks": 189,
       "bareValues": 162,
       "bareBlocks": 0,
+      "emptyBlocks": 27,
       "values": [
         "building_automation_2",
         "building_automation_farmer_2",
