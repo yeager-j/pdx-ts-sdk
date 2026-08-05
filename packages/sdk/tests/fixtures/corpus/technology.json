@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 264,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "all",
@@ -24,6 +25,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 492,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -65,6 +67,7 @@
       "repeated": 0,
       "scalars": 679,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "engineering",
@@ -81,7 +84,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 679,
-      "bareBlocks": 679,
+      "bareValues": 679,
+      "bareBlocks": 0,
       "values": [
         "archaeostudies",
         "biology",
@@ -107,6 +111,7 @@
       "repeated": 0,
       "scalars": 664,
       "blocks": 10,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -137,6 +142,7 @@
       "repeated": 0,
       "scalars": 26,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -149,7 +155,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 37,
-      "bareBlocks": 37,
+      "bareValues": 37,
+      "bareBlocks": 0,
       "values": [
         "active_reconnaissance_unlocked",
         "alien_cloning_unlocked",
@@ -198,6 +205,7 @@
       "repeated": 0,
       "scalars": 52,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "bio_ships",
@@ -233,6 +241,7 @@
       "repeated": 0,
       "scalars": 12,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tech_archeology_lab",
@@ -258,6 +267,7 @@
       "repeated": 1,
       "scalars": 52,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -272,6 +282,7 @@
       "repeated": 0,
       "scalars": 13,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -286,6 +297,7 @@
       "repeated": 0,
       "scalars": 237,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -301,6 +313,7 @@
       "repeated": 0,
       "scalars": 43,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -316,6 +329,7 @@
       "repeated": 0,
       "scalars": 26,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-1",
@@ -331,6 +345,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 34,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -352,6 +367,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 243,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1066,6 +1082,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 376,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1381,6 +1398,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 125,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1425,7 +1443,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 504,
-      "bareBlocks": 491,
+      "bareValues": 491,
+      "bareBlocks": 0,
       "values": [
         "tech_archaeostudies",
         "tech_battleship_hull_1",
@@ -1507,6 +1526,7 @@
       "repeated": 3,
       "scalars": 47,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1522,6 +1542,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 19,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1559,6 +1580,7 @@
       "repeated": 16,
       "scalars": 0,
       "blocks": 180,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1679,11 +1701,485 @@
         ]
       ]
     },
+    "technology_swap.area": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "society"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "technology_swap.category": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 11,
+      "bareValues": 11,
+      "bareBlocks": 0,
+      "values": [
+        "biology",
+        "psionics"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "technology_swap.inherit_effects": {
+      "definitions": 162,
+      "repeated": 0,
+      "scalars": 162,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "technology_swap.inherit_icon": {
+      "definitions": 174,
+      "repeated": 0,
+      "scalars": 174,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "technology_swap.modifier": {
+      "definitions": 55,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 55,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "all_technology_research_speed",
+        "arkship_harvest_resources_exotic_gases_produces_mult",
+        "arkship_harvest_resources_produces_mult",
+        "arkship_harvest_resources_rare_crystals_produces_mult",
+        "arkship_harvest_resources_sr_living_metal_produces_mult",
+        "arkship_harvest_resources_volatile_motes_produces_mult",
+        "army_defense_damage_mult",
+        "bonus_automated_workforce_mult",
+        "country_starbase_capacity_add",
+        "custom_tooltip",
+        "damage_vs_country_type_frenzied_voidworms_mult",
+        "damage_vs_country_type_voidworms_crisis_mult",
+        "damage_vs_country_type_voidworms_mult",
+        "damage_vs_country_type_voidworms_treasure_hunters_mult",
+        "description",
+        "envoys_add",
+        "extra_large_space_fauna_build_speed_mult",
+        "extra_large_space_fauna_ship_cost_mult",
+        "extra_large_space_fauna_ship_hull_mult",
+        "large_space_fauna_build_speed_mult",
+        "large_space_fauna_ship_cost_mult",
+        "large_space_fauna_ship_hull_mult",
+        "medium_space_fauna_build_speed_mult",
+        "medium_space_fauna_ship_cost_mult",
+        "medium_space_fauna_ship_hull_mult",
+        "mutation_slots_add",
+        "nomadic_constructor_limit_add",
+        "num_tech_alternatives_add",
+        "pc_ark_max_districts_add",
+        "planet_artificial_max_districts_add",
+        "planet_biologists_minor_artifacts_produces_add",
+        "planet_building_build_speed_mult",
+        "planet_researchers_upkeep_mult",
+        "planet_structures_cost_mult",
+        "planet_technician_energy_produces_mult",
+        "reanimated_ship_damage_mult",
+        "reanimated_ship_fire_rate_mult",
+        "ship_starbase_stockpile_collection_rate_add",
+        "shipsize_nomads_constructor_stockpile_capacity_mult",
+        "shipsize_nomads_engineer_vessel_stockpile_capacity_mult",
+        "show_only_custom_tooltip",
+        "small_space_fauna_build_speed_mult",
+        "small_space_fauna_ship_cost_mult",
+        "small_space_fauna_ship_hull_mult",
+        "space_fauna_ship_upkeep_mult",
+        "starbase_collected_system_energy_mult",
+        "starbase_shipyard_space_fauna_build_speed_mult",
+        "starbase_waystations_upkeep_mult",
+        "tech_space_mining_nomads_mult",
+        "tech_space_science_nomads_mult",
+        "terraform_speed_mult",
+        "titanic_space_fauna_ship_hull_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "all_technology_research_speed",
+          "custom_tooltip",
+          "planet_researchers_upkeep_mult",
+          "show_only_custom_tooltip"
+        ],
+        [
+          "arkship_harvest_resources_exotic_gases_produces_mult"
+        ],
+        [
+          "arkship_harvest_resources_produces_mult"
+        ],
+        [
+          "arkship_harvest_resources_rare_crystals_produces_mult"
+        ],
+        [
+          "arkship_harvest_resources_sr_living_metal_produces_mult"
+        ],
+        [
+          "arkship_harvest_resources_volatile_motes_produces_mult"
+        ],
+        [
+          "army_defense_damage_mult"
+        ],
+        [
+          "bonus_automated_workforce_mult",
+          "planet_building_build_speed_mult"
+        ],
+        [
+          "country_starbase_capacity_add",
+          "nomadic_constructor_limit_add",
+          "shipsize_nomads_constructor_stockpile_capacity_mult",
+          "shipsize_nomads_engineer_vessel_stockpile_capacity_mult"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "num_tech_alternatives_add",
+          "show_only_custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "tech_space_mining_nomads_mult"
+        ],
+        [
+          "custom_tooltip",
+          "tech_space_science_nomads_mult"
+        ],
+        [
+          "damage_vs_country_type_frenzied_voidworms_mult",
+          "damage_vs_country_type_voidworms_crisis_mult",
+          "damage_vs_country_type_voidworms_mult",
+          "damage_vs_country_type_voidworms_treasure_hunters_mult",
+          "description"
+        ],
+        [
+          "envoys_add",
+          "planet_artificial_max_districts_add"
+        ],
+        [
+          "envoys_add",
+          "ship_starbase_stockpile_collection_rate_add",
+          "starbase_waystations_upkeep_mult"
+        ],
+        [
+          "extra_large_space_fauna_build_speed_mult",
+          "extra_large_space_fauna_ship_cost_mult"
+        ],
+        [
+          "extra_large_space_fauna_ship_hull_mult"
+        ],
+        [
+          "large_space_fauna_build_speed_mult",
+          "large_space_fauna_ship_cost_mult"
+        ],
+        [
+          "large_space_fauna_ship_hull_mult"
+        ],
+        [
+          "medium_space_fauna_build_speed_mult",
+          "medium_space_fauna_ship_cost_mult"
+        ],
+        [
+          "medium_space_fauna_ship_hull_mult"
+        ],
+        [
+          "mutation_slots_add",
+          "reanimated_ship_damage_mult",
+          "reanimated_ship_fire_rate_mult"
+        ],
+        [
+          "nomadic_constructor_limit_add"
+        ],
+        [
+          "pc_ark_max_districts_add",
+          "planet_building_build_speed_mult",
+          "planet_structures_cost_mult",
+          "terraform_speed_mult"
+        ],
+        [
+          "planet_biologists_minor_artifacts_produces_add"
+        ],
+        [
+          "planet_technician_energy_produces_mult",
+          "starbase_collected_system_energy_mult"
+        ],
+        [
+          "small_space_fauna_build_speed_mult",
+          "small_space_fauna_ship_cost_mult"
+        ],
+        [
+          "small_space_fauna_ship_hull_mult"
+        ],
+        [
+          "space_fauna_ship_upkeep_mult",
+          "starbase_shipyard_space_fauna_build_speed_mult"
+        ],
+        [
+          "terraform_speed_mult"
+        ],
+        [
+          "titanic_space_fauna_ship_hull_mult"
+        ]
+      ]
+    },
+    "technology_swap.name": {
+      "definitions": 180,
+      "repeated": 0,
+      "scalars": 180,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "tech_archaeo_bio_lasers",
+        "tech_archaeostudies_wilderness",
+        "tech_assembly_pattern_tankbound",
+        "tech_bio_archaeo_mass_accelerator",
+        "tech_bio_archaeo_mass_drivers",
+        "tech_bio_archaeo_point_defence",
+        "tech_bio_archaeo_strike_crafts",
+        "tech_bio_archaeoarmor",
+        "tech_bio_archaeoshield",
+        "tech_bio_mass_drivers_1",
+        "tech_bio_mass_drivers_2",
+        "tech_bio_nanite_autocannon",
+        "tech_bio_nanite_flak_batteries",
+        "tech_bio_ship_armor_1",
+        "tech_bio_ship_armor_2",
+        "tech_bio_ship_armor_3",
+        "tech_bio_ship_armor_4",
+        "tech_bio_ship_armor_5",
+        "tech_bio_strike_craft_1",
+        "tech_bio_strike_craft_2",
+        "tech_bio_strike_craft_3",
+        "tech_bio_strike_craft_skrand",
+        "tech_biogenesis_colossus",
+        "tech_biogenesis_juggernaut",
+        "tech_biogenesis_titans",
+        "tech_bioship_thrusters_1",
+        "tech_bioship_thrusters_2",
+        "tech_bioship_thrusters_3",
+        "tech_bioship_thrusters_4",
+        "tech_construction_templates_tankbound",
+        "tech_extra_large_space_fauna_build_speed",
+        "tech_extra_large_space_fauna_hull_1",
+        "tech_extra_large_space_fauna_hull_2",
+        "tech_large_space_fauna_build_speed",
+        "tech_large_space_fauna_hull_1",
+        "tech_large_space_fauna_hull_2",
+        "tech_medium_space_fauna_build_speed",
+        "tech_medium_space_fauna_hull_1",
+        "tech_medium_space_fauna_hull_2",
+        "tech_mining_1",
+        "tech_mining_1_wilderness",
+        "tech_mining_2",
+        "tech_mining_3",
+        "tech_nomads_growth_chamber_2",
+        "tech_nomads_juggernaut",
+        "tech_nomads_space_construction",
+        "tech_nomads_titans",
+        "tech_powered_exoskeletons_wilderness",
+        "tech_small_space_fauna_build_speed",
+        "tech_small_space_fauna_hull_1",
+        "tech_small_space_fauna_hull_2",
+        "tech_space_mining_1",
+        "tech_space_mining_2",
+        "tech_space_mining_3",
+        "tech_space_mining_4",
+        "tech_space_mining_5",
+        "tech_storm_relief_center",
+        "tech_titanic_space_fauna_hull_1",
+        "tech_titanic_space_fauna_hull_2",
+        "tech_wilderness_alloys_1",
+        "tech_wilderness_alloys_2",
+        "tech_wilderness_industry",
+        "tech_wilderness_mineral_purification_1",
+        "tech_wilderness_mineral_purification_2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "technology_swap.prereqfor_desc": {
+      "definitions": 28,
+      "repeated": 2,
+      "scalars": 0,
+      "blocks": 28,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom"
+      ],
+      "keysByDefinition": [
+        [
+          "custom"
+        ]
+      ]
+    },
+    "technology_swap.trigger": {
+      "definitions": 180,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 180,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "any_situation",
+        "country_uses_bio_ships",
+        "has_ascension_perk",
+        "has_origin",
+        "is_beastmasters_empire",
+        "is_cloning_authority",
+        "is_eager_explorer_empire",
+        "is_gestalt",
+        "is_hive_empire",
+        "is_machine_empire",
+        "is_nomadic",
+        "is_reanimator",
+        "is_robot_empire",
+        "is_tankbound_empire",
+        "is_wilderness_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "country_uses_bio_ships",
+          "has_origin",
+          "is_gestalt"
+        ],
+        [
+          "NOT",
+          "has_ascension_perk",
+          "is_nomadic"
+        ],
+        [
+          "NOT",
+          "has_ascension_perk",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "any_situation"
+        ],
+        [
+          "country_uses_bio_ships"
+        ],
+        [
+          "country_uses_bio_ships",
+          "has_ascension_perk"
+        ],
+        [
+          "country_uses_bio_ships",
+          "is_nomadic"
+        ],
+        [
+          "has_ascension_perk"
+        ],
+        [
+          "has_origin"
+        ],
+        [
+          "is_beastmasters_empire"
+        ],
+        [
+          "is_cloning_authority"
+        ],
+        [
+          "is_eager_explorer_empire"
+        ],
+        [
+          "is_gestalt"
+        ],
+        [
+          "is_gestalt",
+          "is_hive_empire",
+          "is_robot_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_hive_empire",
+          "is_machine_empire",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_reanimator"
+        ],
+        [
+          "is_tankbound_empire"
+        ],
+        [
+          "is_wilderness_empire"
+        ]
+      ]
+    },
+    "technology_swap.weight": {
+      "definitions": 91,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 91,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "factor"
+      ],
+      "keysByDefinition": [
+        [
+          "factor"
+        ]
+      ]
+    },
     "tier": {
       "definitions": 679,
       "repeated": 0,
       "scalars": 679,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -1703,6 +2199,7 @@
       "repeated": 3,
       "scalars": 641,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -1720,7 +2217,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 34,
-      "bareBlocks": 33,
+      "bareValues": 33,
+      "bareBlocks": 0,
       "values": [
         "deposit_blockers",
         "repeatable"
@@ -1735,6 +2233,7 @@
       "repeated": 3,
       "scalars": 0,
       "blocks": 562,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

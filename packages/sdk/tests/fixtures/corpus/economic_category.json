@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -24,7 +25,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 10,
-      "bareBlocks": 10,
+      "bareValues": 10,
+      "bareBlocks": 0,
       "values": [
         "consumer_goods",
         "energy",
@@ -41,7 +43,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 78,
-      "bareBlocks": 74,
+      "bareValues": 74,
+      "bareBlocks": 0,
       "values": [
         "produces",
         "upkeep"
@@ -56,7 +59,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 100,
-      "bareBlocks": 92,
+      "bareValues": 92,
+      "bareBlocks": 0,
       "values": [
         "cost",
         "logistics",
@@ -73,6 +77,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -87,6 +92,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "job_artisan",
@@ -112,6 +118,7 @@
       "repeated": 3,
       "scalars": 140,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "army",
@@ -136,6 +143,7 @@
       "repeated": 0,
       "scalars": 253,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "country",
@@ -193,6 +201,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ECONOMICS_SCALED_RESOURCES_EMPIRE_SIZE_STRING"
@@ -207,6 +216,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -227,6 +237,106 @@
           "trigger",
           "use_parent_icon"
         ]
+      ]
+    },
+    "triggered_cost_modifier.key": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "gdf_ship",
+        "ship_battleship",
+        "ship_colonizer",
+        "ship_corvette",
+        "ship_cruiser",
+        "ship_destroyer",
+        "ship_harbinger",
+        "ship_mauler",
+        "ship_military",
+        "ship_military_station_small",
+        "ship_nanite_swarmer",
+        "ship_stinger",
+        "ship_weaver",
+        "starbase_outpost",
+        "starbase_shipyard_artificial_build",
+        "starbase_shipyard_build",
+        "starbase_shipyard_space_fauna_build"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_cost_modifier.modifier_types": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareValues": 4,
+      "bareBlocks": 0,
+      "values": [
+        "add",
+        "mult"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_cost_modifier.trigger": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "has_ship_owner_type",
+        "is_scope_valid",
+        "is_ship_class",
+        "is_ship_size",
+        "is_space_fauna"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "has_ship_owner_type",
+          "is_scope_valid",
+          "is_ship_class",
+          "is_ship_size",
+          "is_space_fauna"
+        ],
+        [
+          "OR",
+          "is_scope_valid"
+        ],
+        [
+          "is_scope_valid"
+        ],
+        [
+          "is_scope_valid",
+          "is_ship_class"
+        ]
+      ]
+    },
+    "triggered_cost_modifier.use_parent_icon": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
       ]
     },
     "triggered_produces_modifier": {
@@ -234,6 +344,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 13,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -254,6 +365,111 @@
           "trigger",
           "use_parent_icon"
         ]
+      ]
+    },
+    "triggered_produces_modifier.key": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 13,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "aesthetic_wonder_specimens",
+        "historical_item_specimens",
+        "planet_bureaucrats",
+        "planet_enforcers",
+        "planet_jobs_complex_drone",
+        "planet_jobs_simple_drone",
+        "planet_pops_psionic",
+        "planet_sacred_path_civilians",
+        "planet_sacred_path_elites",
+        "planet_sacred_path_specialists",
+        "planet_soldiers",
+        "planet_technician",
+        "ship_amoeba",
+        "ship_crystalline_entity",
+        "ship_cutholoid",
+        "ship_tiyanki",
+        "ship_voidworm",
+        "xeno_geology_specimens"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_produces_modifier.modifier_types": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 13,
+      "bareValues": 13,
+      "bareBlocks": 0,
+      "values": [
+        "add",
+        "mult"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_produces_modifier.trigger": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 13,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "exists",
+        "has_psionic_species_trait",
+        "is_scope_valid",
+        "is_ship_category",
+        "is_specimen_category",
+        "owner",
+        "planet"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "exists",
+          "planet"
+        ],
+        [
+          "has_psionic_species_trait"
+        ],
+        [
+          "is_scope_valid",
+          "is_ship_category"
+        ],
+        [
+          "is_specimen_category"
+        ]
+      ]
+    },
+    "triggered_produces_modifier.use_parent_icon": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
       ]
     },
     "triggered_upkeep_modifier": {
@@ -261,6 +477,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 10,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -283,11 +500,117 @@
         ]
       ]
     },
+    "triggered_upkeep_modifier.key": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "planet_enforcers",
+        "planet_pops_cyborgs",
+        "planet_pops_enslaved",
+        "planet_pops_organics",
+        "planet_pops_robotics",
+        "planet_pops_unemployed",
+        "planet_researchers",
+        "planet_sacred_path_civilians",
+        "planet_sacred_path_elites",
+        "planet_sacred_path_specialists",
+        "planet_soldiers",
+        "ship_military",
+        "ship_military_artificial",
+        "ship_military_station_small",
+        "ship_science"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_upkeep_modifier.modifier_types": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 10,
+      "bareValues": 10,
+      "bareBlocks": 0,
+      "values": [
+        "add",
+        "mult"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_upkeep_modifier.trigger": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 10,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "always",
+        "exists",
+        "has_trait",
+        "is_enslaved",
+        "is_robot_pop_group",
+        "is_scope_valid",
+        "is_ship_class",
+        "is_ship_size",
+        "is_space_fauna",
+        "is_unemployed",
+        "planet"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "is_scope_valid",
+          "is_ship_class",
+          "is_ship_size",
+          "is_space_fauna"
+        ],
+        [
+          "always"
+        ],
+        [
+          "exists",
+          "planet"
+        ],
+        [
+          "has_trait",
+          "is_enslaved",
+          "is_robot_pop_group",
+          "is_unemployed"
+        ]
+      ]
+    },
+    "triggered_upkeep_modifier.use_parent_icon": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "use_for_ai_budget": {
       "definitions": 32,
       "repeated": 0,
       "scalars": 32,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",

@@ -9,6 +9,7 @@
       "repeated": 1,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -23,6 +24,7 @@
       "repeated": 0,
       "scalars": 11,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -37,6 +39,7 @@
       "repeated": 0,
       "scalars": 48,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -51,6 +54,7 @@
       "repeated": 0,
       "scalars": 345,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "assimilation",
@@ -87,6 +91,7 @@
       "repeated": 0,
       "scalars": 20,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -101,6 +106,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -115,6 +121,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 14,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -160,6 +167,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -174,6 +182,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -189,6 +198,7 @@
       "repeated": 0,
       "scalars": 12,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -203,6 +213,7 @@
       "repeated": 34,
       "scalars": 144,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "jobs/academia_recruiter_naval_cap_add",
@@ -249,6 +260,7 @@
       "repeated": 0,
       "scalars": 158,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -264,6 +276,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 62,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -282,6 +295,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 52,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -400,6 +414,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 317,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -713,6 +728,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 290,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -800,11 +816,121 @@
         ]
       ]
     },
+    "possible_pre_triggers.has_owner": {
+      "definitions": 257,
+      "repeated": 0,
+      "scalars": 257,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible_pre_triggers.has_planet": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible_pre_triggers.is_being_assimilated": {
+      "definitions": 212,
+      "repeated": 0,
+      "scalars": 212,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible_pre_triggers.is_being_purged": {
+      "definitions": 223,
+      "repeated": 0,
+      "scalars": 223,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible_pre_triggers.is_enslaved": {
+      "definitions": 116,
+      "repeated": 0,
+      "scalars": 116,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible_pre_triggers.is_robotic": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible_pre_triggers.is_sapient": {
+      "definitions": 273,
+      "repeated": 0,
+      "scalars": 273,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "possible_precalc": {
       "definitions": 215,
       "repeated": 0,
       "scalars": 215,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "can_fill_drone_job",
@@ -823,6 +949,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "purge_clips",
@@ -839,6 +966,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 265,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -887,6 +1015,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 342,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -903,11 +1032,948 @@
         ]
       ]
     },
+    "swappable_data.default": {
+      "definitions": 342,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 342,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "building_icon",
+        "condition_string",
+        "desc",
+        "icon"
+      ],
+      "keysByDefinition": [
+        [
+          "building_icon"
+        ],
+        [
+          "building_icon",
+          "condition_string"
+        ],
+        [
+          "building_icon",
+          "condition_string",
+          "desc",
+          "icon"
+        ],
+        [
+          "building_icon",
+          "condition_string",
+          "icon"
+        ],
+        [
+          "building_icon",
+          "icon"
+        ],
+        [
+          "condition_string",
+          "icon"
+        ],
+        [
+          "icon"
+        ]
+      ]
+    },
+    "swappable_data.default.building_icon": {
+      "definitions": 315,
+      "repeated": 0,
+      "scalars": 315,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "building_amusement_megaplex",
+        "building_archaeostudies_faculty",
+        "building_autochthon_monument",
+        "building_bureaucratic_1",
+        "building_capital",
+        "building_chamber_of_elevation_1",
+        "building_chemical_plant",
+        "building_citadel_of_faith",
+        "building_crude_huts",
+        "building_crystal_mines",
+        "building_crystal_plant",
+        "building_dread_encampment",
+        "building_energy_grid",
+        "building_factory_1",
+        "building_food_processing_facility",
+        "building_fortress",
+        "building_foundry_1",
+        "building_galactic_memorial_1",
+        "building_galactic_stock_exchange",
+        "building_gas_extractors",
+        "building_hive_capital",
+        "building_holo_theatres",
+        "building_institute",
+        "building_junkheap",
+        "building_luxury_residence",
+        "building_machine_capital",
+        "building_maintenance_depot",
+        "building_medical_2",
+        "building_mineral_purification_plant",
+        "building_mote_harvesting_traps",
+        "building_nuumismatic_shrine",
+        "building_offspring_nest",
+        "building_offworld_expedition_hub",
+        "building_order_keep",
+        "building_organic_sanctuary",
+        "building_palace",
+        "building_paradise_dome",
+        "building_posthumous_employment_center",
+        "building_precinct_house",
+        "building_primitive_capital",
+        "building_primitive_dwellings",
+        "building_primitive_factory",
+        "building_primitive_farm",
+        "building_primitive_labs",
+        "building_primitive_mine",
+        "building_primitive_offices",
+        "building_primitive_power_plant",
+        "building_psi_corps",
+        "building_refinery",
+        "building_research_lab_1",
+        "building_residence",
+        "building_robot_assembly_plant",
+        "building_sacrificial_temple_1",
+        "building_simulation_1",
+        "building_spawning_pool",
+        "building_state_academy",
+        "building_stronghold",
+        "building_temple",
+        "building_temple_of_prosperity",
+        "building_toxic_bath",
+        "building_toxic_bath_hive",
+        "building_xeno_zoo",
+        "holding_park_ranger_lodge",
+        "holding_wilderness_glade"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swappable_data.default.condition_string": {
+      "definitions": 200,
+      "repeated": 0,
+      "scalars": 200,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "BATTLE_THRALL_JOB_TRIGGER",
+        "DRONE_JOB_TRIGGER",
+        "NECRO_APPRENTICE_JOB_TRIGGER",
+        "RULER_JOB_TRIGGER",
+        "SOLDIER_JOB_TRIGGER",
+        "SPECIALIST_JOB_TRIGGER",
+        "WORKER_JOB_TRIGGER"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swappable_data.default.desc": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "job_augmentor_drone_research_desc",
+        "job_augmentor_growth_desc",
+        "job_identity_designer_desc"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swappable_data.default.icon": {
+      "definitions": 171,
+      "repeated": 0,
+      "scalars": 171,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "aid_worker",
+        "alloy_drone",
+        "artificer",
+        "artisan",
+        "bio_trophy",
+        "biologist",
+        "catalytic_drone",
+        "catalytic_technician",
+        "clerk",
+        "colonist",
+        "criminal",
+        "culture_worker",
+        "enforcer",
+        "engineer",
+        "entertainer",
+        "fabricator",
+        "farmer",
+        "fe_archivist",
+        "foundry",
+        "gas_extractor",
+        "gas_refiner_drone",
+        "healthcare",
+        "high_priest",
+        "hunter_gatherer",
+        "knight",
+        "livestock",
+        "low_tech_bureaucrat",
+        "low_tech_laborer",
+        "maintenance_drone",
+        "manager",
+        "mind_thrall",
+        "miner",
+        "mining_drone",
+        "mortal_initiate",
+        "necromancer",
+        "numistic_priest",
+        "overlord_academic",
+        "overlord_beholder",
+        "overlord_breeder",
+        "overlord_propagandist",
+        "overlord_trader",
+        "patrol_drone",
+        "peasant",
+        "physicist",
+        "politician",
+        "pre_sapient",
+        "priest",
+        "primitive_farmer",
+        "primitive_laborer",
+        "primitive_warrior",
+        "purge",
+        "purge_processing",
+        "ranger",
+        "researcher",
+        "servant",
+        "soldier",
+        "spawning_drone",
+        "synapse_drone",
+        "technician",
+        "technician_drone",
+        "telepath",
+        "unemployment",
+        "warrior_drone",
+        "xeno_zoo_keeper"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swappable_data.swap_type": {
+      "definitions": 49,
+      "repeated": 23,
+      "scalars": 0,
+      "blocks": 49,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "building_icon",
+        "condition_string",
+        "desc",
+        "icon",
+        "name",
+        "trigger",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "building_icon",
+          "condition_string",
+          "desc",
+          "icon",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "building_icon",
+          "condition_string",
+          "desc",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "building_icon",
+          "desc",
+          "icon",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "building_icon",
+          "name",
+          "trigger"
+        ],
+        [
+          "desc",
+          "icon",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "desc",
+          "name",
+          "trigger",
+          "weight"
+        ],
+        [
+          "desc",
+          "trigger",
+          "weight"
+        ]
+      ]
+    },
+    "swappable_data.swap_type.building_icon": {
+      "definitions": 42,
+      "repeated": 0,
+      "scalars": 42,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "aesthetic_wonders_holomuseum",
+        "bio_electric_stimulator_3",
+        "brain_node_3",
+        "building_amusement_megaplex",
+        "building_archaeostudies_faculty",
+        "building_artist_patron",
+        "building_astral_siphon_1",
+        "building_astrometeorology_observation_center",
+        "building_bureaucratic_1",
+        "building_capital",
+        "building_commensal_clearing_3",
+        "building_crystal_mines",
+        "building_dread_encampment",
+        "building_food_processing_facility",
+        "building_foundry_1",
+        "building_galactic_memorial_1",
+        "building_gas_extractors",
+        "building_genomic_facility",
+        "building_hive_capital",
+        "building_holo_theatres",
+        "building_low_tech_admin_hub",
+        "building_materiality_engine",
+        "building_mineral_purification_plant",
+        "building_mote_harvesting_traps",
+        "building_nanolab_1",
+        "building_nuumismatic_shrine",
+        "building_offspring_nest",
+        "building_organic_sanctuary",
+        "building_psi_corps",
+        "building_research_lab_1",
+        "building_robot_assembly_plant",
+        "building_sacrificial_temple_1",
+        "building_shroud_observatory_1",
+        "building_state_academy",
+        "building_storm_summoning_theater",
+        "building_temple",
+        "building_the_sanctum_of_augmentation",
+        "building_toxic_bath",
+        "building_xeno_zoo",
+        "capital_wilderness_3",
+        "churning_stomach",
+        "churning_tunnels_3",
+        "crystal_growth",
+        "holding_park_ranger_lodge",
+        "hunting_grounds",
+        "massive_growth_3",
+        "mote_aggravator",
+        "natural_furnace_3",
+        "planetary_carapace_1",
+        "primal_arena",
+        "seed_cradle_2",
+        "tendril_cradle_building_3",
+        "wildlife_sanctuary"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swappable_data.swap_type.condition_string": {
+      "definitions": 28,
+      "repeated": 0,
+      "scalars": 28,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "BATTLE_THRALL_JOB_TRIGGER",
+        "DRONE_JOB_TRIGGER",
+        "RULER_JOB_TRIGGER",
+        "SPECIALIST_JOB_TRIGGER"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swappable_data.swap_type.desc": {
+      "definitions": 47,
+      "repeated": 0,
+      "scalars": 47,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "archaeoengineers",
+        "astral_meteorologist",
+        "astral_researcher",
+        "astrometeorologist",
+        "corpse_broker",
+        "corpse_reader",
+        "cremator",
+        "culture_worker",
+        "curator",
+        "death_manager",
+        "death_priest",
+        "dimensional_portal_researcher",
+        "duelist",
+        "educator",
+        "educator_telepath",
+        "fe_hedonist",
+        "fire_dancer",
+        "fire_seer",
+        "haruspex",
+        "job_ashbroker_desc",
+        "job_augmentation_merchant_desc",
+        "job_blazewright_desc",
+        "job_blazing_harbinger_desc",
+        "job_executive_desc",
+        "job_fire_oracle_desc",
+        "job_head_researcher_desc",
+        "job_high_priest_desc",
+        "job_merchant_desc",
+        "job_noble_desc",
+        "job_noble_merchant_desc",
+        "job_noble_researcher_desc",
+        "job_pyrocrat_desc",
+        "job_radiant_priest_desc",
+        "job_sacred_noble_desc",
+        "job_sacred_path_civilian_desc",
+        "job_sacred_path_elite_desc",
+        "job_sacred_path_specialist_desc",
+        "job_technophant_desc",
+        "job_warden_desc",
+        "low_tech_bureaucrat",
+        "low_tech_manager",
+        "low_tech_priest",
+        "manager",
+        "manufactorium_scraper",
+        "memorialist",
+        "munitions_decommissioner",
+        "nanotech_researcher",
+        "numistic_priest",
+        "preacher",
+        "priest",
+        "pyromancer",
+        "ranger",
+        "space_time_anomaly_researcher",
+        "steward",
+        "storm_dancer",
+        "stratovent_researcher",
+        "superstitious_beliefs_high_priest",
+        "superstitious_beliefs_high_priest_corporate",
+        "superstitious_beliefs_priest",
+        "superstitious_beliefs_priest_corporate",
+        "tourist_desc",
+        "unifier",
+        "visionary",
+        "xeno_zoo_keeper"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swappable_data.swap_type.icon": {
+      "definitions": 32,
+      "repeated": 0,
+      "scalars": 32,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "angler",
+        "archaeoengineers",
+        "artificer",
+        "ashbroker",
+        "astral_researcher",
+        "astrometeorologist",
+        "astrometeorologist_hive",
+        "astrometeorologist_machine",
+        "augmentor",
+        "bath_attendant_individual_machine",
+        "blazewright",
+        "brain_drone_physicist",
+        "broken_shackles_scavenger",
+        "choirsymbiont",
+        "chronicle_drone",
+        "cremator",
+        "crystal_miner",
+        "culture_worker",
+        "death_chronicler",
+        "death_priest",
+        "duelist",
+        "educator",
+        "enforcer",
+        "executive",
+        "extradimensional_research_unit",
+        "fe_hedonist",
+        "fire_dancer",
+        "fire_oracle",
+        "fire_seer",
+        "gas_extractor",
+        "genomic_drone",
+        "genomic_researcher",
+        "haruspex",
+        "high_priest",
+        "historical_curator",
+        "hunter_gatherer",
+        "low_tech_bureaucrat",
+        "low_tech_priest",
+        "manager",
+        "merchant",
+        "miner",
+        "mote_harvester",
+        "munitions_decommissioner",
+        "necromancer",
+        "noble",
+        "numistic_priest",
+        "overlord_propagandist",
+        "pearl_diver",
+        "priest",
+        "puddle_technician",
+        "pyrocrat",
+        "radiant_priest",
+        "ranger",
+        "researcher",
+        "sacred_path_civilian",
+        "sacred_path_elite",
+        "sacred_path_specialist",
+        "storm_dancer",
+        "superstitious_beliefs_priest",
+        "synapse_drone",
+        "technophant",
+        "telepath",
+        "trader",
+        "xeno_zoo_keeper"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swappable_data.swap_type.name": {
+      "definitions": 46,
+      "repeated": 0,
+      "scalars": 46,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "archaeoengineers",
+        "ashbroker",
+        "astral_meteorologist",
+        "astral_researcher",
+        "astrometeorologist",
+        "augmentation_merchant",
+        "blazewright",
+        "blazing_harbinger",
+        "corpse_broker",
+        "corpse_reader",
+        "cremator",
+        "culture_worker",
+        "curator",
+        "death_manager",
+        "death_priest",
+        "dimensional_portal_researcher",
+        "duelist",
+        "educator",
+        "educator_telepath",
+        "executive",
+        "fe_hedonist",
+        "fire_dancer",
+        "fire_oracle",
+        "fire_seer",
+        "haruspex",
+        "head_researcher",
+        "high_priest",
+        "low_tech_bureaucrat",
+        "low_tech_manager",
+        "low_tech_priest",
+        "manager",
+        "manufactorium_scraper",
+        "memorialist",
+        "merchant",
+        "munitions_decommissioner",
+        "nanotech_researcher",
+        "noble",
+        "noble_merchant",
+        "noble_researcher",
+        "numistic_priest",
+        "preacher",
+        "priest",
+        "pyrocrat",
+        "pyromancer",
+        "radiant_priest",
+        "ranger",
+        "sacred_noble",
+        "sacred_path_civilian",
+        "sacred_path_elite",
+        "sacred_path_specialist",
+        "space_time_anomaly_researcher",
+        "steward",
+        "storm_dancer",
+        "stratovent_researcher",
+        "superstitious_beliefs_high_priest",
+        "superstitious_beliefs_high_priest_corporate",
+        "superstitious_beliefs_priest",
+        "superstitious_beliefs_priest_corporate",
+        "technophant",
+        "tourist",
+        "unifier",
+        "visionary",
+        "warden",
+        "xeno_zoo_keeper"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swappable_data.swap_type.trigger": {
+      "definitions": 49,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 49,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "artisan_is_artificer_trigger",
+        "artisan_is_pearl_diver_trigger",
+        "biologist_is_archaeo_engineer_trigger",
+        "biologist_is_observator_trigger",
+        "biologist_is_ranger_trigger",
+        "biologist_is_vent_researcher_trigger",
+        "biologist_is_zookeeper_trigger",
+        "bureaucrat_is_corpse_broker",
+        "bureaucrat_is_corpse_reader",
+        "bureaucrat_is_cremator",
+        "bureaucrat_is_culture_worker",
+        "bureaucrat_is_death_priest",
+        "bureaucrat_is_fire_dancer",
+        "bureaucrat_is_fire_seer",
+        "bureaucrat_is_haruspex",
+        "bureaucrat_is_low_tech",
+        "bureaucrat_is_low_tech_manager",
+        "bureaucrat_is_low_tech_priest",
+        "bureaucrat_is_manager",
+        "bureaucrat_is_memorialist",
+        "bureaucrat_is_numistic_priest",
+        "bureaucrat_is_preacher",
+        "bureaucrat_is_priest",
+        "bureaucrat_is_pyromancer",
+        "bureaucrat_is_sacred_path_specialist",
+        "bureaucrat_is_steward",
+        "bureaucrat_is_superstitious_beliefs_priest",
+        "bureaucrat_is_superstitious_beliefs_priest_corporate",
+        "bureaucrat_is_unifier",
+        "civilian_is_sacred_path_civilian",
+        "enforcer_is_educator_trigger",
+        "engineer_is_manufactorium_scraper_trigger",
+        "engineer_is_munitions_decommissioner_trigger",
+        "engineer_is_nanotech_researcher_trigger",
+        "entertainer_is_curator_trigger",
+        "entertainer_is_duelist_trigger",
+        "entertainer_is_storm_dancer_trigger",
+        "exists",
+        "farmer_is_angler_trigger",
+        "farmer_is_gas_extractor_trigger",
+        "farmer_is_puddle_technician_trigger",
+        "farmer_is_titan_hunter_trigger",
+        "has_building",
+        "has_modifier",
+        "healthcare_is_genomic_researcher_trigger",
+        "industrial_jobs_are_catalytic_trigger",
+        "is_cyborg_empire",
+        "miner_is_cave_cleaner_trigger",
+        "miner_is_crystal_miner_trigger",
+        "miner_is_scrap_miner_trigger",
+        "miner_is_thermoforger_trigger",
+        "miner_is_turtle_miner_trigger",
+        "owner",
+        "owner?",
+        "physicist_is_astral_researcher_trigger",
+        "physicist_is_astrometeorologist_trigger",
+        "physicist_is_dimensional_portal_researcher_trigger",
+        "physicist_is_extradimensional_research_unit_trigger",
+        "physicist_is_space_time_researcher_trigger",
+        "politician_is_ashbroker",
+        "politician_is_augmentation_merchant",
+        "politician_is_blazewright",
+        "politician_is_blazing_harbinger",
+        "politician_is_executive",
+        "politician_is_fire_oracle",
+        "politician_is_high_priest",
+        "politician_is_merchant",
+        "politician_is_noble",
+        "politician_is_planetary_warden",
+        "politician_is_pyrocrat",
+        "politician_is_radiant_priest",
+        "politician_is_sacred_path_elite",
+        "politician_is_science_director",
+        "politician_is_superstitious_beliefs_high_priest",
+        "politician_is_superstitious_beliefs_high_priest_corporate",
+        "politician_is_technophant",
+        "politician_is_visionary",
+        "soldier_is_necromancer",
+        "spawning_drone_is_offspring_drone_trigger",
+        "technician_is_mote_harvester_trigger",
+        "trader_is_subterranean",
+        "wrangler_is_animal_handler_trigger",
+        "wrangler_is_beastfighter_trigger",
+        "wrangler_is_hunter_drone_trigger",
+        "wrangler_is_rancher_trigger",
+        "wrangler_is_symbiosis_integrator_trigger",
+        "wrangler_is_trophy_hunter_trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "miner_is_crystal_miner_trigger",
+          "miner_is_thermoforger_trigger",
+          "owner?"
+        ],
+        [
+          "artisan_is_artificer_trigger",
+          "artisan_is_pearl_diver_trigger"
+        ],
+        [
+          "biologist_is_archaeo_engineer_trigger",
+          "biologist_is_ranger_trigger",
+          "biologist_is_vent_researcher_trigger",
+          "biologist_is_zookeeper_trigger"
+        ],
+        [
+          "biologist_is_observator_trigger",
+          "exists",
+          "has_building",
+          "owner",
+          "owner?"
+        ],
+        [
+          "bureaucrat_is_corpse_broker",
+          "bureaucrat_is_corpse_reader",
+          "bureaucrat_is_cremator",
+          "bureaucrat_is_culture_worker",
+          "bureaucrat_is_death_priest",
+          "bureaucrat_is_fire_dancer",
+          "bureaucrat_is_fire_seer",
+          "bureaucrat_is_haruspex",
+          "bureaucrat_is_low_tech",
+          "bureaucrat_is_low_tech_manager",
+          "bureaucrat_is_low_tech_priest",
+          "bureaucrat_is_manager",
+          "bureaucrat_is_memorialist",
+          "bureaucrat_is_numistic_priest",
+          "bureaucrat_is_preacher",
+          "bureaucrat_is_priest",
+          "bureaucrat_is_pyromancer",
+          "bureaucrat_is_sacred_path_specialist",
+          "bureaucrat_is_steward",
+          "bureaucrat_is_superstitious_beliefs_priest",
+          "bureaucrat_is_superstitious_beliefs_priest_corporate",
+          "bureaucrat_is_unifier"
+        ],
+        [
+          "civilian_is_sacred_path_civilian",
+          "exists",
+          "has_modifier",
+          "owner?"
+        ],
+        [
+          "enforcer_is_educator_trigger"
+        ],
+        [
+          "engineer_is_manufactorium_scraper_trigger",
+          "engineer_is_munitions_decommissioner_trigger",
+          "engineer_is_nanotech_researcher_trigger"
+        ],
+        [
+          "engineer_is_nanotech_researcher_trigger",
+          "owner?"
+        ],
+        [
+          "entertainer_is_curator_trigger"
+        ],
+        [
+          "entertainer_is_curator_trigger",
+          "entertainer_is_duelist_trigger",
+          "entertainer_is_storm_dancer_trigger"
+        ],
+        [
+          "farmer_is_angler_trigger",
+          "farmer_is_gas_extractor_trigger",
+          "farmer_is_puddle_technician_trigger",
+          "farmer_is_titan_hunter_trigger"
+        ],
+        [
+          "farmer_is_gas_extractor_trigger",
+          "farmer_is_puddle_technician_trigger",
+          "owner?"
+        ],
+        [
+          "healthcare_is_genomic_researcher_trigger"
+        ],
+        [
+          "healthcare_is_genomic_researcher_trigger",
+          "owner?",
+          "spawning_drone_is_offspring_drone_trigger"
+        ],
+        [
+          "industrial_jobs_are_catalytic_trigger"
+        ],
+        [
+          "is_cyborg_empire"
+        ],
+        [
+          "miner_is_cave_cleaner_trigger",
+          "miner_is_crystal_miner_trigger",
+          "miner_is_scrap_miner_trigger",
+          "miner_is_thermoforger_trigger",
+          "miner_is_turtle_miner_trigger"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner?"
+        ],
+        [
+          "owner?",
+          "physicist_is_astrometeorologist_trigger",
+          "physicist_is_dimensional_portal_researcher_trigger",
+          "physicist_is_extradimensional_research_unit_trigger"
+        ],
+        [
+          "owner?",
+          "technician_is_mote_harvester_trigger"
+        ],
+        [
+          "owner?",
+          "trader_is_subterranean"
+        ],
+        [
+          "physicist_is_astral_researcher_trigger",
+          "physicist_is_astrometeorologist_trigger",
+          "physicist_is_dimensional_portal_researcher_trigger",
+          "physicist_is_space_time_researcher_trigger"
+        ],
+        [
+          "politician_is_ashbroker",
+          "politician_is_augmentation_merchant",
+          "politician_is_blazewright",
+          "politician_is_blazing_harbinger",
+          "politician_is_executive",
+          "politician_is_fire_oracle",
+          "politician_is_high_priest",
+          "politician_is_merchant",
+          "politician_is_noble",
+          "politician_is_planetary_warden",
+          "politician_is_pyrocrat",
+          "politician_is_radiant_priest",
+          "politician_is_sacred_path_elite",
+          "politician_is_science_director",
+          "politician_is_superstitious_beliefs_high_priest",
+          "politician_is_superstitious_beliefs_high_priest_corporate",
+          "politician_is_technophant",
+          "politician_is_visionary"
+        ],
+        [
+          "soldier_is_necromancer"
+        ],
+        [
+          "technician_is_mote_harvester_trigger"
+        ],
+        [
+          "trader_is_subterranean"
+        ],
+        [
+          "wrangler_is_animal_handler_trigger",
+          "wrangler_is_beastfighter_trigger",
+          "wrangler_is_rancher_trigger",
+          "wrangler_is_trophy_hunter_trigger"
+        ],
+        [
+          "wrangler_is_hunter_drone_trigger",
+          "wrangler_is_symbiosis_integrator_trigger"
+        ]
+      ]
+    },
+    "swappable_data.swap_type.weight": {
+      "definitions": 47,
+      "repeated": 0,
+      "scalars": 47,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "100",
+        "15",
+        "2",
+        "20",
+        "200",
+        "25",
+        "26",
+        "27",
+        "3",
+        "30",
+        "300",
+        "35",
+        "40",
+        "400",
+        "45",
+        "450",
+        "5",
+        "50",
+        "500",
+        "55",
+        "6",
+        "60"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "system_modifier": {
       "definitions": 2,
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -926,7 +1992,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 255,
-      "bareBlocks": 198,
+      "bareValues": 198,
+      "bareBlocks": 0,
       "values": [
         "alloys",
         "amenities",
@@ -969,6 +2036,7 @@
       "repeated": 3,
       "scalars": 0,
       "blocks": 11,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1036,6 +2104,7 @@
       "repeated": 41,
       "scalars": 0,
       "blocks": 120,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1280,6 +2349,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1298,6 +2368,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 6,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1316,6 +2387,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1329,11 +2401,44 @@
         ]
       ]
     },
+    "triggered_tags.tags": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 2,
+      "bareBlocks": 0,
+      "values": [
+        "psionic_aura"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_tags.trigger": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ]
+      ]
+    },
     "weight": {
       "definitions": 286,
       "repeated": 0,
       "scalars": 0,
       "blocks": 286,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

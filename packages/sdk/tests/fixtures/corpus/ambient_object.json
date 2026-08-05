@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 43,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "abandoned_observation_outpost_desc",
@@ -64,6 +65,7 @@
       "repeated": 0,
       "scalars": 197,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "abandoned_ship_destroyed_entity",
@@ -141,6 +143,7 @@
       "repeated": 0,
       "scalars": 195,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -156,6 +159,7 @@
       "repeated": 0,
       "scalars": 195,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -171,6 +175,7 @@
       "repeated": 0,
       "scalars": 43,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "HOARD_LOOTED_BY_PIRATES",

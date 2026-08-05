@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 51,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "avian_01",
@@ -28,6 +29,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -42,6 +44,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 45,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -102,6 +105,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 45,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -162,6 +166,7 @@
       "repeated": 0,
       "scalars": 48,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -177,7 +182,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 27,
-      "bareBlocks": 27,
+      "bareValues": 27,
+      "bareBlocks": 0,
       "values": [
         "bio_ship",
         "crystalline_entity",
@@ -197,6 +203,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 48,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -232,11 +239,246 @@
         ]
       ]
     },
+    "ship_lighting.ambient_far": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "100.1",
+        "20",
+        "30",
+        "5",
+        "50"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.ambient_near": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0",
+        "0.1",
+        "0.5",
+        "1.2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.cam_light_1_dir": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 48,
+      "bareValues": 48,
+      "bareBlocks": 0,
+      "values": [
+        "-0.2",
+        "-0.3",
+        "0",
+        "0.1",
+        "0.4",
+        "0.5",
+        "0.6",
+        "1",
+        "1.2",
+        "1.4"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.cam_light_2_dir": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 48,
+      "bareValues": 48,
+      "bareBlocks": 0,
+      "values": [
+        "-0.3",
+        "-0.4",
+        "-0.5",
+        "-0.6",
+        "0",
+        "0.2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.cam_light_3_dir": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 48,
+      "bareValues": 48,
+      "bareBlocks": 0,
+      "values": [
+        "-0.1",
+        "-1",
+        "0",
+        "0.4",
+        "0.5",
+        "0.8",
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.far_value": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "4000"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.intensity_far": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.5",
+        "1",
+        "10",
+        "2",
+        "20",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.intensity_near": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.1",
+        "0.7",
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.near_value": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "100",
+        "300",
+        "700"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.rim_start_far": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.rim_start_near": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.2",
+        "0.5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.rim_stop_far": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.99"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_lighting.rim_stop_near": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 48,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.99"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "ship_selection_weight": {
       "definitions": 51,
       "repeated": 0,
       "scalars": 0,
       "blocks": 51,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

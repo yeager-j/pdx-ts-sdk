@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 123,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -53,6 +54,7 @@
       "repeated": 2,
       "scalars": 121,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ancient_battle_site_desc",
@@ -132,11 +134,51 @@
         ]
       ]
     },
+    "desc.text": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "city_of_bones_desc",
+        "city_of_bones_desc_uncol",
+        "space_shanty_intro",
+        "space_shanty_intro_bio"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "desc.trigger": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "owner",
+        "planet"
+      ],
+      "keysByDefinition": [
+        [
+          "owner"
+        ],
+        [
+          "planet"
+        ]
+      ]
+    },
     "max_instances": {
       "definitions": 61,
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -153,6 +195,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-1"
@@ -167,6 +210,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -187,6 +231,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 124,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -203,6 +248,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 53,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -223,6 +269,7 @@
       "repeated": 0,
       "scalars": 123,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_evt_ai_planet",
@@ -299,6 +346,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 16,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -324,6 +372,7 @@
       "repeated": 1,
       "scalars": 44,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "crises",
@@ -340,6 +389,7 @@
       "repeated": 123,
       "scalars": 0,
       "blocks": 123,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -355,11 +405,206 @@
         ]
       ]
     },
+    "stage.difficulty": {
+      "definitions": 123,
+      "repeated": 0,
+      "scalars": 123,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-1",
+        "-2",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "keys": [
+        "max",
+        "min"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "max",
+          "min"
+        ]
+      ]
+    },
+    "stage.difficulty.max": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "3",
+        "4",
+        "7"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stage.difficulty.min": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "2",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stage.event": {
+      "definitions": 123,
+      "repeated": 0,
+      "scalars": 123,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ancrel.10",
+        "ancrel.11",
+        "ancrel.12",
+        "ancrel.12070",
+        "ancrel.12075",
+        "ancrel.12080",
+        "ancrel.12085",
+        "ancrel.12090",
+        "ancrel.13",
+        "ancrel.13100",
+        "ancrel.13105",
+        "ancrel.13110",
+        "ancrel.13115",
+        "ancrel.13120",
+        "ancrel.14100",
+        "ancrel.14200",
+        "ancrel.14300",
+        "ancrel.14400",
+        "ancrel.14500",
+        "ancrel.15",
+        "ancrel.15000",
+        "ancrel.15001",
+        "ancrel.15002",
+        "ancrel.15003",
+        "ancrel.15021",
+        "ancrel.15022",
+        "ancrel.15023",
+        "ancrel.15024",
+        "ancrel.15025",
+        "ancrel.16",
+        "ancrel.17",
+        "ancrel.18",
+        "ancrel.19",
+        "ancrel.2",
+        "ancrel.3",
+        "ancrel.4",
+        "ancrel.5",
+        "ancrel.6",
+        "ancrel.7",
+        "ancrel.8",
+        "ancrel.9",
+        "arcsite.1000",
+        "arcsite.1005",
+        "arcsite.1010",
+        "arcsite.1015",
+        "arcsite.1020",
+        "arcsite.2000",
+        "arcsite.2010",
+        "arcsite.2020",
+        "arcsite.2030",
+        "arcsite.2040",
+        "arcsite.2500",
+        "arcsite.2505",
+        "arcsite.2515",
+        "arcsite.2520",
+        "arcsite.3025",
+        "arcsite.3030",
+        "arcsite.3035",
+        "arcsite.3040",
+        "arcsite.3045",
+        "federations2.2",
+        "federations2.3",
+        "federations2.4",
+        "federations2.5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "stage.icon": {
+      "definitions": 123,
+      "repeated": 0,
+      "scalars": 123,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_archaeology_runes_A1",
+        "GFX_archaeology_runes_A2",
+        "GFX_archaeology_runes_A3",
+        "GFX_archaeology_runes_A4",
+        "GFX_archaeology_runes_A5",
+        "GFX_archaeology_runes_A6",
+        "GFX_archaeology_runes_B1",
+        "GFX_archaeology_runes_B2",
+        "GFX_archaeology_runes_B3",
+        "GFX_archaeology_runes_B4",
+        "GFX_archaeology_runes_B5",
+        "GFX_archaeology_runes_B6",
+        "GFX_archaeology_runes_C1",
+        "GFX_archaeology_runes_C2",
+        "GFX_archaeology_runes_C3",
+        "GFX_archaeology_runes_C4",
+        "GFX_archaeology_runes_C5",
+        "GFX_archaeology_runes_C6",
+        "GFX_archaeology_runes_D1",
+        "GFX_archaeology_runes_D2",
+        "GFX_archaeology_runes_D3",
+        "GFX_archaeology_runes_D4",
+        "GFX_archaeology_runes_D5",
+        "GFX_archaeology_runes_D6",
+        "GFX_archaeology_runes_E1",
+        "GFX_archaeology_runes_E2",
+        "GFX_archaeology_runes_E3",
+        "GFX_archaeology_runes_E4",
+        "GFX_archaeology_runes_E5",
+        "GFX_archaeology_runes_E6",
+        "GFX_archaeology_runes_F1",
+        "GFX_archaeology_runes_F2",
+        "GFX_archaeology_runes_F3",
+        "GFX_archaeology_runes_F4",
+        "GFX_archaeology_runes_F5",
+        "GFX_archaeology_runes_F6"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "stages": {
       "definitions": 123,
       "repeated": 0,
       "scalars": 123,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "2",
@@ -379,6 +624,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 124,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -476,6 +722,7 @@
       "repeated": 0,
       "scalars": 58,
       "blocks": 58,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0"

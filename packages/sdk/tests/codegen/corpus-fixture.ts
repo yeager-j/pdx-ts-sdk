@@ -34,9 +34,9 @@ import { CONTENT_MANIFEST } from "@pdx-ts/codegen-cwt/content-manifest";
 import {
   readRegistryCorpus,
   spliceMembersOf,
+  type DescentNode,
   type FieldObservation,
   type RegistryCorpus,
-  type RepeatedStructField,
   type RuleScopes,
   type SpliceMember,
 } from "@pdx-ts/codegen-cwt/corpus";
@@ -49,7 +49,7 @@ import { canonicalScopeSet, declaredScopes } from "@pdx-ts/codegen-cwt/emit/shap
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { CONTENT_DECLINED_FIELDS, REPEATED_STRUCT_DEFINITIONS } from "@pdx-ts/codegen-cwt/overlay";
+import { CONTENT_DECLINED_FIELDS } from "@pdx-ts/codegen-cwt/overlay";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
 import { compareUtf8 } from "../../src/ordering.ts";
@@ -146,17 +146,6 @@ export function ruleScopesOf(clause: "trigger" | "effect", key: string): RuleSco
   return RULE_SCOPES[clause].get(key.toLowerCase()) ?? null;
 }
 
-/** This registry's repeated-struct fields, straight from the same overlay the emitter reads. */
-function repeatedStructFieldsOf(registry: string): readonly RepeatedStructField[] {
-  return [...REPEATED_STRUCT_DEFINITIONS]
-    .filter(([path]) => path.startsWith(`${registry}.`))
-    .map(([path, config]) => ({
-      field: path.slice(registry.length + 1),
-      keying: config.keying ?? "siblings",
-      identityKey: config.identityKey,
-    }));
-}
-
 /**
  * One emission per structural alias category, memoized.
  *
@@ -248,7 +237,8 @@ export interface RegistryMeasurement {
   readonly keyword: string | null;
   readonly nameField: string | null;
   readonly excludedKey: string | null;
-  readonly repeatedStructFields: readonly RepeatedStructField[];
+  /** Which block-valued fields the corpus reader must descend into, from the emission. */
+  readonly descents: readonly DescentNode[];
   /** Which spliced blocks the corpus reader must descend into. */
   readonly spliceMembers: readonly SpliceMember[];
   /** Every lowered field: own, spliced, and nested with the registry prefix stripped. */
@@ -289,7 +279,7 @@ export const MEASUREMENTS: readonly RegistryMeasurement[] = CONTENT_MANIFEST.map
     keyword: entry.keyword ?? null,
     nameField: type?.nameField ?? null,
     excludedKey: type?.keyFilter?.negated === true ? type.keyFilter.key : null,
-    repeatedStructFields: repeatedStructFieldsOf(registry),
+    descents: emission?.corpusDescents ?? [],
     // Which blocks the reader must descend into is the emitter's answer: a
     // registry splicing `planet_initializer` writes `planet = { ... }` trees
     // whose contents are otherwise invisible behind one top-level key.
@@ -310,6 +300,7 @@ export interface SerializedObservation {
   readonly repeated: number;
   readonly scalars: number;
   readonly blocks: number;
+  readonly bareValues: number;
   readonly bareBlocks: number;
   readonly values: readonly string[];
   readonly keys: readonly string[];
@@ -365,6 +356,7 @@ function serializeCorpus(
       repeated: observation.repeated,
       scalars: observation.scalars,
       blocks: observation.blocks,
+      bareValues: observation.bareValues,
       bareBlocks: observation.bareBlocks,
       values: sorted(observation.values),
       keys: sorted(observation.keys),
@@ -398,6 +390,7 @@ export function corpusOfFixture(fixture: RegistryFixture): RegistryCorpus {
       repeated: observation.repeated,
       scalars: observation.scalars,
       blocks: observation.blocks,
+      bareValues: observation.bareValues,
       bareBlocks: observation.bareBlocks,
       values: new Set(observation.values),
       keys: new Set(observation.keys),
@@ -456,7 +449,7 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
         measurement.registryPath,
         measurement.keyword,
         measurement.nameField,
-        measurement.repeatedStructFields,
+        measurement.descents,
         measurement.spliceMembers,
         measurement.excludedKey
       ),

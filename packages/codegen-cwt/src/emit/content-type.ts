@@ -6,6 +6,7 @@
  * lowering itself lives in `fields.ts`, shared with the alias emitters.
  */
 
+import type { DescentNode } from "../corpus.ts";
 import { isOptional, type RuleField } from "../cwt/model.ts";
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
 import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
@@ -43,12 +44,19 @@ export interface ContentEmission {
   readonly localisationConstant: string;
   readonly emittedFields: readonly EmittedField[];
   /**
-   * Fields lowered inside a repeated-struct field, e.g.
-   * `tradition_swap.on_enabled` — invisible to `emittedFields`, which only
+   * Fields lowered inside a block-valued field, e.g. `tradition_swap.on_enabled`
+   * or `term_data.discrete_terms.key` — invisible to `emittedFields`, which only
    * names the owning field itself (`tradition_swap`). Their paths carry the
    * registry prefix; `emittedFields` names are bare.
    */
   readonly nestedEmittedFields: readonly EmittedField[];
+  /**
+   * How the corpus reader reaches those interiors, from the same lowerings.
+   * The reader's configuration is emission-derived rather than a second table
+   * to keep in step: a walk the emitter did not lower would report interiors
+   * nothing ever claimed to author.
+   */
+  readonly corpusDescents: readonly DescentNode[];
   /** Refused outright by CONTENT_DECLINED_FIELDS, each with its reason. */
   readonly declinedFields: readonly string[];
   /**
@@ -456,8 +464,16 @@ export function emitContentType(
     // contravariant, and land somewhere unrelated to what the author declared.
     unpinned: parameter === null ? "ScopeName" : "NoInfer<S>",
   };
+  // {@link underParameter} over a field that carries its own path. A nested
+  // field's scope is the definition's parameter exactly as a top-level one's
+  // is, so the two must not be re-described differently one level down.
+  const parameterised = (emitted: EmittedField): EmittedField => {
+    const { field, ...admits } = emitted;
+    return { field, ...underParameter(admits, parameter) };
+  };
   const emittedFields: EmittedField[] = [];
   const nestedEmittedFields: EmittedField[] = [];
+  const corpusDescents: DescentNode[] = [];
   const declinedFields: string[] = [];
   const inlineSplices: string[] = [];
   const unsupported: string[] = [];
@@ -564,7 +580,7 @@ export function emitContentType(
         config === undefined
           ? null
           : repeatedStructEmission(emitter, group[0]!, path, config, fieldContext);
-      if (nested === null) {
+      if (config === undefined || nested === null) {
         unsupported.push(`${name} (repeated-struct overlay is incomplete)`);
         continue;
       }
@@ -577,13 +593,22 @@ export function emitContentType(
       fieldMetadata.push(nested.metadata);
       declinedFields.push(...nested.declinedFields);
       unsupported.push(...nested.unsupported);
-      nestedEmittedFields.push(...nested.emittedFields);
+      nestedEmittedFields.push(...nested.emittedFields.map(parameterised));
       localisationAliases.push(...nested.localisationAliases);
       emittedMembers.add(camelCase(name));
       emittedFields.push({
         field: name,
         shape: "repeatedStruct",
         repeated: repeatsSiblings(group[0]!, "repeatedStruct"),
+      });
+      // The same overlay row the emission read, so the reader's keying and the
+      // authoring shape's cannot disagree about where the record key lives.
+      corpusDescents.push({
+        field: name,
+        mode: "repeatedStruct",
+        keying: config.keying ?? "siblings",
+        ...(config.identityKey === undefined ? {} : { identityKey: config.identityKey }),
+        children: [],
       });
       continue;
     }
@@ -624,6 +649,8 @@ export function emitContentType(
     }
     emittedMembers.add(member);
     emittedFields.push({ field: name, ...underParameter(lowered.admits, parameter) });
+    nestedEmittedFields.push(...(lowered.nested ?? []).map(parameterised));
+    corpusDescents.push(...(lowered.descents ?? []));
   }
 
   const typeName = pascalCase(type.name);
@@ -694,6 +721,7 @@ export function emitContentType(
     localisationConstant,
     emittedFields,
     nestedEmittedFields,
+    corpusDescents,
     declinedFields: declinedFields.sort(),
     inlineSplices,
     machineryBacklog: [...unsupported].sort(),

@@ -755,20 +755,24 @@ describe("content-type codegen", () => {
   });
 
   it("widens unpinned-scope Trigger/WeightBlock fields to never, buying real scope back by overlay row (widenedLowering, SDK-33)", () => {
-    // civic_or_origin.swap_type.trigger carries no `## replace_scopes` and no
+    // ship_size.potential_construction carries no `## replace_scopes` and no
     // overlay `scope` assertion — CWT genuinely does not say, so it stays
     // unchecked (`Trigger<never>`, the top of Trigger's contravariant
     // lattice) rather than the unsatisfiable `Trigger<ScopeName>`.
-    const civicOrOrigin = emissions.get("civic_or_origin");
-    expect(civicOrOrigin?.code).toContain("trigger: Trigger<never>;");
-    // solar_system_initializer.usage_odds and tradition_category.desc.trigger
-    // are the same unpinned defect, but with a `CONTENT_FIELD_OVERRIDES`
-    // `scope` row buying the checking back — see overlay.ts for the corpus
-    // evidence (shape conformance, not a reading of the rules alone).
+    const shipSize = emissions.get("ship_size");
+    expect(shipSize?.code).toContain("potentialConstruction?: Trigger<never>;");
+    // solar_system_initializer.usage_odds, tradition_category.desc.trigger and
+    // civic_or_origin.swap_type.trigger are the same unpinned defect, but with
+    // a `CONTENT_FIELD_OVERRIDES` `scope` row buying the checking back — see
+    // overlay.ts for the corpus evidence (shape conformance, not a reading of
+    // the rules alone). The last is a nested one: a struct's interior takes a
+    // row at its dotted path exactly as a top-level field does.
     const solarSystemInitializer = emissions.get("solar_system_initializer");
     expect(solarSystemInitializer?.code).toContain('usageOdds?: number | WeightBlock<"system">;');
     const traditionCategory = emissions.get("tradition_category");
     expect(traditionCategory?.code).toContain('trigger?: Trigger<"country">;');
+    const civicOrOrigin = emissions.get("civic_or_origin");
+    expect(civicOrOrigin?.code).toContain('trigger: Trigger<"country">;');
   });
 
   it("generates component_set as a name_field registry without registry-specific code", () => {

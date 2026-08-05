@@ -1241,6 +1241,21 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "civic_or_origin.swap_type.trigger",
+    {
+      scope: "country",
+      reason:
+        "CWT annotates no scope, so the clause lowered to `Trigger<ScopeName>` — legal in every " +
+        "scope, therefore writable in none. The rules state the scope in prose instead: " +
+        'governments.cwt:403-404 says "In empire creation / galaxy setup, this has no scope. ' +
+        'During the game ... it is set to country scope." The corpus agrees — every key the ' +
+        "unscoped type rejected (has_civic, has_country_flag, has_origin, has_trait, " +
+        "has_valid_civic, is_nomadic) is country-scope. The setup phase's empty scope is not a " +
+        "second scope to express: `is_scope_valid` guards it from inside the clause, as " +
+        "civic_devouring_swarm does.",
+    },
+  ],
+  [
     "civic_or_origin.potential",
     {
       shape: "aliasStruct",
@@ -1608,6 +1623,27 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "modifier_clause is an open modifier-name map with optional ancillary fields " +
         "(components.cwt:420-422).",
+    },
+  ],
+  [
+    "utility_component_template.friendly_aura.modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(components.cwt:490-491), the same declaration as utility_component_template.modifier " +
+        "one level up. 30 shipped definitions write it; without the row the aura struct lowers " +
+        "with the field reported unsupported.",
+    },
+  ],
+  [
+    "utility_component_template.hostile_aura.modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "The hostile twin of the friendly_aura row above, declared identically " +
+        "(components.cwt:527-528). 22 shipped definitions write it — below the presence floor, " +
+        "but the same fix and the same declaration.",
     },
   ],
   [

@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 23,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "100",
@@ -24,6 +25,7 @@
       "repeated": 0,
       "scalars": 55,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -38,6 +40,7 @@
       "repeated": 12,
       "scalars": 0,
       "blocks": 39,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -134,6 +137,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -164,6 +168,7 @@
       "repeated": 0,
       "scalars": 41,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1.2",
@@ -181,6 +186,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 255,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -353,6 +359,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -367,6 +374,7 @@
       "repeated": 0,
       "scalars": 462,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1080",
@@ -387,6 +395,7 @@
       "repeated": 0,
       "scalars": 14,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -401,7 +410,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 433,
-      "bareBlocks": 433,
+      "bareValues": 433,
+      "bareBlocks": 0,
       "values": [
         "ark_forever_cruise_crew",
         "ark_forever_cruise_passengers",
@@ -452,6 +462,7 @@
       "repeated": 0,
       "scalars": 44,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -467,6 +478,7 @@
       "repeated": 0,
       "scalars": 78,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -482,6 +494,7 @@
       "repeated": 0,
       "scalars": 261,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -497,6 +510,7 @@
       "repeated": 0,
       "scalars": 158,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -512,6 +526,7 @@
       "repeated": 0,
       "scalars": 41,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -526,6 +541,7 @@
       "repeated": 0,
       "scalars": 41,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -545,6 +561,7 @@
       "repeated": 1,
       "scalars": 498,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "amenities",
@@ -569,7 +586,8 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 159,
-      "bareBlocks": 159,
+      "bareValues": 159,
+      "bareBlocks": 0,
       "values": [
         "building_ancient_control_center",
         "building_ancient_palace",
@@ -646,6 +664,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 35,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -777,6 +796,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 11,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -795,6 +815,7 @@
       "repeated": 3,
       "scalars": 37,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "branch_office_building_trade_bonus",
@@ -823,6 +844,7 @@
       "repeated": 7,
       "scalars": 0,
       "blocks": 9,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -839,11 +861,78 @@
         ]
       ]
     },
+    "desc.text": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "building_artist_patron_desc",
+        "building_artist_patron_gestalt_desc",
+        "building_augmentation_center_corporate_desc",
+        "building_augmentation_center_creed_desc",
+        "building_augmentation_center_desc",
+        "building_augmentation_center_government_desc",
+        "building_augmentation_center_hive_desc",
+        "building_augmentation_center_independent_desc",
+        "building_cyberdome_desc",
+        "building_identity_complex_desc",
+        "building_mineral_purification_hub_desc",
+        "building_mineral_purification_plant_desc",
+        "building_necrophage_elevation_chamber_desc",
+        "building_necrophage_elevation_chamber_desc_hive",
+        "building_necrophage_house_of_apotheosis_desc",
+        "building_necrophage_house_of_apotheosis_desc_hive",
+        "building_paragon_memory_vaults_desc",
+        "building_paragon_memory_vaults_hive_desc",
+        "building_paragon_memory_vaults_machine_desc",
+        "building_scrap_processing_hub_desc",
+        "building_scrap_processing_plant_desc"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "desc.trigger": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 7,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "exists",
+        "is_planet_class",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "is_planet_class"
+        ],
+        [
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "exists",
+          "owner"
+        ]
+      ]
+    },
     "destroy_trigger": {
       "definitions": 362,
       "repeated": 0,
       "scalars": 0,
       "blocks": 362,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -931,6 +1020,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -945,6 +1035,7 @@
       "repeated": 0,
       "scalars": 11,
       "blocks": 23,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -969,6 +1060,7 @@
       "repeated": 0,
       "scalars": 24,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -983,6 +1075,7 @@
       "repeated": 0,
       "scalars": 165,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "building_affluence_center",
@@ -1060,6 +1153,7 @@
       "repeated": 109,
       "scalars": 12,
       "blocks": 273,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "shroud/buildings/lifecrypt_1_conditions",
@@ -1127,6 +1221,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1141,6 +1236,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1205,6 +1301,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 31,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1264,6 +1361,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 5,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1280,6 +1378,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 38,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1300,6 +1399,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 9,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1329,6 +1429,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 38,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1347,6 +1448,7 @@
       "repeated": 0,
       "scalars": 65,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "corporate",
@@ -1362,6 +1464,7 @@
       "repeated": 0,
       "scalars": 248,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -1386,6 +1489,7 @@
       "repeated": 3,
       "scalars": 0,
       "blocks": 290,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2266,6 +2370,7 @@
       "repeated": 0,
       "scalars": 5,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -2280,6 +2385,7 @@
       "repeated": 0,
       "scalars": 66,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -2296,6 +2402,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 454,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2736,7 +2843,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 242,
-      "bareBlocks": 226,
+      "bareValues": 226,
+      "bareBlocks": 0,
       "values": [
         "tech_alloys_1",
         "tech_alloys_2",
@@ -2818,6 +2926,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 458,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2905,6 +3014,7 @@
       "repeated": 0,
       "scalars": 44,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "wilderness_building_ruined"
@@ -2919,6 +3029,7 @@
       "repeated": 0,
       "scalars": 38,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tech_fe_administration_1",
@@ -2964,6 +3075,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 188,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3143,6 +3255,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -3157,6 +3270,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3173,6 +3287,7 @@
       "repeated": 35,
       "scalars": 0,
       "blocks": 49,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3343,6 +3458,7 @@
       "repeated": 38,
       "scalars": 0,
       "blocks": 108,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3362,11 +3478,170 @@
         ]
       ]
     },
+    "triggered_desc.text": {
+      "definitions": 107,
+      "repeated": 0,
+      "scalars": 107,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "NEW_LINE",
+        "automation_2_tooltip",
+        "automation_farming_tankbound_tooltip",
+        "automation_rw_tankbound_tooltip",
+        "automation_tooltip",
+        "awareness_gain_desc",
+        "biologist_is_archaeo_engineer_tt",
+        "biologist_is_ranger_tt",
+        "biologist_is_xeno_zoo_keeper_tt",
+        "biology_drone_is_archaeo_engineer_tt",
+        "biology_unit_is_archaeo_engineer_tt",
+        "biology_unit_is_observator_tt",
+        "building_archaeostudies_faculty_relic_effect",
+        "building_autochthon_monument_effect",
+        "building_clone_army_clone_vat_effect_desc",
+        "building_coordinated_fulfillment_center_tooltip",
+        "building_corporate_clinics_effect",
+        "building_dread_encampment_tt",
+        "building_gaiaseeders_4_effect_desc",
+        "building_hab_capital_tooltip",
+        "building_hab_major_capital_tooltip",
+        "building_hab_system_capital_tooltip",
+        "building_heritage_site_effect",
+        "building_hypercomms_forum_effect",
+        "building_league_offices_effect",
+        "building_necrophage_elevation_chamber_scaling_tooltip",
+        "building_order_keep_effect",
+        "building_slave_processing_slave_army_effect_desc",
+        "building_toxic_bath_tt",
+        "building_volcanic_forge_1_effect",
+        "building_volcanic_forge_2_effect",
+        "bureaucrat_is_culture_worker_tt",
+        "bureaucrat_is_numistic_priest_tt",
+        "clear_thought_clinic_tt",
+        "covenant_detection_first_contact_effect",
+        "disables_necrophage_growth",
+        "gaia_seeder_bloom_timer_tooltip",
+        "gaia_seeder_bloomed_pops_effect",
+        "holding_experimental_crater_effect",
+        "holding_garrison_armies_desc",
+        "holding_idyllic_bloom_effect",
+        "holding_idyllic_bloom_effect_timer",
+        "holding_noble_vacation_homes_effect",
+        "holding_orbital_assembly_complex_effect",
+        "holding_parasitic_algorithms_effect_desc",
+        "holding_reemployment_center_effect",
+        "job_alloy_requisitioned_effect_desc",
+        "job_civilian_ethics_effect",
+        "job_consumer_goods_requisitioned_effect_desc",
+        "job_energy_requisitioned_effect_desc",
+        "job_enforcer_desc",
+        "job_food_requisitioned_effect_desc",
+        "job_minerals_requisitioned_effect_desc",
+        "job_polytechnic_drone_effect",
+        "job_polytechnic_mentor_effect",
+        "job_xeno_zoo_animal_effect_desc",
+        "job_xeno_zoo_beast_effect_desc",
+        "knightly_theme_park_quest_effect_desc",
+        "necrophage_elevation_timer_tooltip",
+        "offspring_nest_tooltip",
+        "pre_sapient_job_xeno_zoo_animal_tt",
+        "pre_sapient_job_xeno_zoo_beast_tt",
+        "psionic_bonus_workforce_from_telepaths_tt",
+        "spawning_pool_tooltip"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_desc.trigger": {
+      "definitions": 46,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 46,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NAND",
+        "NOR",
+        "NOT",
+        "exists",
+        "has_carrier_flag",
+        "has_first_contact_dlc",
+        "if",
+        "is_scope_valid",
+        "owner",
+        "owner.overlord",
+        "planet",
+        "uses_district_set"
+      ],
+      "keysByDefinition": [
+        [
+          "NAND",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOR"
+        ],
+        [
+          "NOT",
+          "exists",
+          "has_carrier_flag"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner",
+          "uses_district_set"
+        ],
+        [
+          "exists"
+        ],
+        [
+          "exists",
+          "has_carrier_flag",
+          "planet"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "exists",
+          "owner.overlord"
+        ],
+        [
+          "has_carrier_flag"
+        ],
+        [
+          "has_first_contact_dlc"
+        ],
+        [
+          "if"
+        ],
+        [
+          "is_scope_valid"
+        ],
+        [
+          "planet"
+        ]
+      ]
+    },
     "triggered_planet_modifier": {
       "definitions": 208,
       "repeated": 168,
       "scalars": 0,
       "blocks": 208,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -4483,6 +4758,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -4501,6 +4777,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -4519,7 +4796,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 189,
-      "bareBlocks": 162,
+      "bareValues": 162,
+      "bareBlocks": 0,
       "values": [
         "building_automation_2",
         "building_automation_farmer_2",

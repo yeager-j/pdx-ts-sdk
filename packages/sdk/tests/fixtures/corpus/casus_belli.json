@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "MESSAGE_NEW_CASUS_BELLI_TRIAL_OF_ADVANCEMENT_TARGET"
@@ -23,6 +24,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -46,6 +48,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 42,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -183,6 +186,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 41,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -199,6 +203,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 45,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -414,6 +419,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 41,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -432,6 +438,7 @@
       "repeated": 0,
       "scalars": 41,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -447,6 +454,7 @@
       "repeated": 0,
       "scalars": 45,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",

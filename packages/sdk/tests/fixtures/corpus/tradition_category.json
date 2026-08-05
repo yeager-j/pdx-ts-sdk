@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 33,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tr_adaptability_adopt",
@@ -55,6 +56,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -86,6 +88,7 @@
       "repeated": 8,
       "scalars": 0,
       "blocks": 8,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -99,11 +102,86 @@
         ]
       ]
     },
+    "desc.text": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "tradition_aptitude_desc",
+        "tradition_aptitude_hive_desc",
+        "tradition_aptitude_machine_desc",
+        "tradition_discovery_desc",
+        "tradition_discovery_hive_desc",
+        "tradition_discovery_machine_desc",
+        "tradition_domination_desc",
+        "tradition_domination_hive_desc",
+        "tradition_domination_machine_desc",
+        "tradition_enmity_desc",
+        "tradition_enmity_desc_machine",
+        "tradition_expansion_desc",
+        "tradition_expansion_hive_desc",
+        "tradition_expansion_machine_desc",
+        "tradition_expansion_nomad_desc",
+        "tradition_expansion_void_desc",
+        "tradition_prosperity_desc",
+        "tradition_prosperity_hive_mind_desc",
+        "tradition_prosperity_machine_desc",
+        "tradition_statecraft_desc",
+        "tradition_statecraft_hive_desc",
+        "tradition_statecraft_machine_desc",
+        "tradition_supremacy_desc",
+        "tradition_supremacy_hive_desc",
+        "tradition_supremacy_machine_desc"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "desc.trigger": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 8,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_void_dweller_origin",
+        "is_gestalt",
+        "is_hive_empire",
+        "is_machine_empire",
+        "is_nomadic",
+        "is_regular_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "has_void_dweller_origin",
+          "is_gestalt",
+          "is_hive_empire",
+          "is_machine_empire",
+          "is_nomadic",
+          "is_regular_empire"
+        ],
+        [
+          "is_hive_empire",
+          "is_machine_empire",
+          "is_regular_empire"
+        ],
+        [
+          "is_machine_empire"
+        ]
+      ]
+    },
     "finish_bonus": {
       "definitions": 33,
       "repeated": 0,
       "scalars": 33,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tr_adaptability_finish",
@@ -150,6 +228,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 28,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -254,7 +333,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
-      "bareBlocks": 33,
+      "bareValues": 33,
+      "bareBlocks": 0,
       "values": [
         "tr_adaptability_adaptive_ecology",
         "tr_adaptability_appropriation",
@@ -331,6 +411,7 @@
       "repeated": 0,
       "scalars": 33,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tree_111_11",

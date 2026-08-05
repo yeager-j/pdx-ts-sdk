@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -28,6 +29,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1000",
@@ -43,6 +45,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.1",
@@ -58,7 +61,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 7,
-      "bareBlocks": 7,
+      "bareValues": 7,
+      "bareBlocks": 0,
       "values": [
         "bio_titan",
         "colossus",
@@ -97,6 +101,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 7,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

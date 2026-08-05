@@ -9,7 +9,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
-      "bareBlocks": 1,
+      "bareValues": 1,
+      "bareBlocks": 0,
       "values": [
         "TYPE_HEADER_04"
       ],
@@ -23,7 +24,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
-      "bareBlocks": 1,
+      "bareValues": 1,
+      "bareBlocks": 0,
       "values": [
         "pc_volcanic"
       ],
@@ -37,6 +39,7 @@
       "repeated": 0,
       "scalars": 36,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BIOLOGICAL",
@@ -56,7 +59,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
-      "bareBlocks": 1,
+      "bareValues": 1,
+      "bareBlocks": 0,
       "values": [
         "ethic_gestalt_consciousness"
       ],
@@ -70,6 +74,7 @@
       "repeated": 0,
       "scalars": 17,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -85,6 +90,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -99,6 +105,7 @@
       "repeated": 0,
       "scalars": 42,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ai_01",
@@ -137,6 +144,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10"
@@ -151,6 +159,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -166,6 +175,7 @@
       "repeated": 0,
       "scalars": 36,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "arthopoid_pops_move",
@@ -186,6 +196,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -238,6 +249,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -252,6 +264,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 16,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -272,6 +285,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -292,6 +306,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -308,6 +323,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -324,6 +340,7 @@
       "repeated": 0,
       "scalars": 20,
       "blocks": 13,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -367,7 +384,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
-      "bareBlocks": 1,
+      "bareValues": 1,
+      "bareBlocks": 0,
       "values": [
         "TYPE_HEADER_03"
       ],
@@ -381,7 +399,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
-      "bareBlocks": 1,
+      "bareValues": 1,
+      "bareBlocks": 0,
       "values": [
         "pc_alpine",
         "pc_arctic",
@@ -397,6 +416,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 16,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -409,6 +429,7 @@
       "repeated": 0,
       "scalars": 29,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "trait_exd",
@@ -427,6 +448,7 @@
       "repeated": 0,
       "scalars": 11,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "AQUATIC",
@@ -451,6 +473,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"

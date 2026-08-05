@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 169,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -25,6 +26,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -39,6 +41,7 @@
       "repeated": 0,
       "scalars": 151,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "civic_agrarian_idyll",
@@ -116,6 +119,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "councilor_curator_archivist_conditional_tooltip",
@@ -135,6 +139,7 @@
       "repeated": 0,
       "scalars": 21,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "councilor_chief_medium_effect_tooltip",
@@ -165,6 +170,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "councilor_storm_callers_modifier_tooltip"
@@ -179,6 +185,7 @@
       "repeated": 0,
       "scalars": 5,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "councilor_curator_archivist_unlock_title",
@@ -197,6 +204,7 @@
       "repeated": 0,
       "scalars": 28,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_icon_councilor_corporate_head_treasure_hunter",
@@ -221,6 +229,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 169,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -253,7 +262,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 179,
-      "bareBlocks": 179,
+      "bareValues": 179,
+      "bareBlocks": 0,
       "values": [
         "commander",
         "official",
@@ -269,6 +279,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 162,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -861,6 +872,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 10,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -881,6 +893,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 28,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -925,6 +938,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 11,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

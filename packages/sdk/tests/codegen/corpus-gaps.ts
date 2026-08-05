@@ -44,11 +44,30 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
   },
   {
     registry: "technology",
+    field: "technology_swap.modifier",
+    count: 55,
+    reason:
+      "The same modifier_clause gap as technology.modifier above, one level down inside the " +
+      "technology_swap struct (technologies_consolidated.cwt:162-163) — invisible until the " +
+      "corpus gate started descending into plain structs, and closed by the same fix.",
+    issue: "SDK-63",
+  },
+  {
+    registry: "technology",
     field: "prereqfor_desc",
     count: 125,
     reason:
       "A block keyed by `enum[prereq_for_category]` with title/desc sub-blocks; needs " +
       "enum-keyed map machinery.",
+    issue: "SDK-64",
+  },
+  {
+    registry: "technology",
+    field: "technology_swap.prereqfor_desc",
+    count: 28,
+    reason:
+      "The same enum-keyed map as technology.prereqfor_desc above, declared again inside " +
+      "technology_swap (technologies_consolidated.cwt:164-172) and closed by the same machinery.",
     issue: "SDK-64",
   },
   {

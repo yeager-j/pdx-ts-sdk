@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 131,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "colony",
@@ -28,6 +29,7 @@
       "repeated": 0,
       "scalars": 131,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -43,6 +45,7 @@
       "repeated": 0,
       "scalars": 131,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "mod_add_attunement_the_composer_of_strands",
@@ -120,6 +123,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -134,6 +138,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0"
@@ -148,6 +153,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -162,6 +168,7 @@
       "repeated": 0,
       "scalars": 103,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",

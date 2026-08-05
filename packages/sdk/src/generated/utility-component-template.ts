@@ -199,6 +199,7 @@ export interface UtilityComponentTemplateFriendlyAura {
   radius?: number;
   applyOn?: AuraType;
   stackInfo: UtilityComponentTemplateFriendlyAuraStackInfo;
+  modifier?: ModifierClosure<"ship">;
   graphics?: UtilityComponentTemplateFriendlyAuraGraphics;
 }
 
@@ -221,6 +222,7 @@ export const UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly ContentFi
     form: "block",
     fields: UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_STACK_INFO_FIELDS,
   },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   {
     key: "graphics",
     member: "graphics",
@@ -395,6 +397,7 @@ export interface UtilityComponentTemplateHostileAura {
   radius?: number;
   applyOn?: AuraType;
   stackInfo: UtilityComponentTemplateHostileAuraStackInfo;
+  modifier?: ModifierClosure<"ship">;
   graphics?: UtilityComponentTemplateHostileAuraGraphics;
   damagePerDay?: UtilityComponentTemplateHostileAuraDamagePerDay;
 }
@@ -418,6 +421,7 @@ export const UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_FIELDS: readonly ContentFie
     form: "block",
     fields: UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_STACK_INFO_FIELDS,
   },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   {
     key: "graphics",
     member: "graphics",

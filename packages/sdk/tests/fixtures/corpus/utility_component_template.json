@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 113,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0"
@@ -23,7 +24,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 155,
-      "bareBlocks": 155,
+      "bareValues": 155,
+      "bareBlocks": 0,
       "values": [
         "artillery",
         "artillery_stealth",
@@ -54,6 +56,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 666,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -93,7 +96,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 14,
-      "bareBlocks": 14,
+      "bareValues": 14,
+      "bareBlocks": 0,
       "values": [
         "BATTLESHIP_CLOAKING_DARK_MATTER",
         "BATTLESHIP_CLOAKING_PSI",
@@ -120,6 +124,7 @@
       "repeated": 0,
       "scalars": 749,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "AFTERBURNER_1",
@@ -197,6 +202,7 @@
       "repeated": 0,
       "scalars": 46,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BOARDING_CABLES_TOOLTIP",
@@ -229,6 +235,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 30,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -270,11 +277,282 @@
         ]
       ]
     },
+    "friendly_aura.apply_on": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ships"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "friendly_aura.limit": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "exists",
+        "owner",
+        "solar_system?"
+      ],
+      "keysByDefinition": [
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "solar_system?"
+        ]
+      ]
+    },
+    "friendly_aura.modifier": {
+      "definitions": 30,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 30,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "bioship_growth_progress_add",
+        "ship_accuracy_mult",
+        "ship_armor_regen_add_perc",
+        "ship_disengage_chance_mult",
+        "ship_evasion_add",
+        "ship_evasion_mult",
+        "ship_fire_rate_mult",
+        "ship_hull_regen_add_perc",
+        "ship_jumpdrive_cooldown_mult",
+        "ship_military_speed_mult",
+        "ship_orbital_bombardment_mult",
+        "ship_shield_hardening_add",
+        "ship_shield_mult",
+        "ship_shield_reduction",
+        "ship_tracking_add",
+        "ship_weapon_range_mult",
+        "ship_winddown_mult",
+        "ship_windup_mult",
+        "ships_logistics_mult",
+        "ships_upkeep_mult",
+        "weapon_type_strike_craft_speed_mult",
+        "weapon_type_strike_craft_weapon_damage_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "bioship_growth_progress_add"
+        ],
+        [
+          "ship_accuracy_mult",
+          "ship_evasion_mult",
+          "ship_fire_rate_mult",
+          "ship_military_speed_mult"
+        ],
+        [
+          "ship_armor_regen_add_perc",
+          "ship_hull_regen_add_perc"
+        ],
+        [
+          "ship_disengage_chance_mult",
+          "ship_winddown_mult",
+          "ship_windup_mult"
+        ],
+        [
+          "ship_evasion_add"
+        ],
+        [
+          "ship_fire_rate_mult"
+        ],
+        [
+          "ship_fire_rate_mult",
+          "ships_upkeep_mult"
+        ],
+        [
+          "ship_hull_regen_add_perc"
+        ],
+        [
+          "ship_jumpdrive_cooldown_mult",
+          "ship_winddown_mult",
+          "ship_windup_mult"
+        ],
+        [
+          "ship_orbital_bombardment_mult"
+        ],
+        [
+          "ship_shield_hardening_add"
+        ],
+        [
+          "ship_shield_mult"
+        ],
+        [
+          "ship_shield_reduction"
+        ],
+        [
+          "ship_tracking_add"
+        ],
+        [
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ships_logistics_mult"
+        ],
+        [
+          "weapon_type_strike_craft_speed_mult",
+          "weapon_type_strike_craft_weapon_damage_mult"
+        ]
+      ]
+    },
+    "friendly_aura.name": {
+      "definitions": 30,
+      "repeated": 0,
+      "scalars": 30,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GROWTH_AURA",
+        "OFFSPRING_AURA",
+        "PALADIN_LOGISTICIAN_AURA",
+        "PALADIN_STRATEGIST_AURA",
+        "aura_battlefield_repairs",
+        "aura_bombardment",
+        "aura_detection_scrambler",
+        "aura_hyperlane",
+        "aura_inspiring_presence",
+        "aura_nanobot_cloud",
+        "aura_range",
+        "aura_shield_dampener",
+        "aura_stabilizing_aura",
+        "aura_starbase_bulwark_shield_magnifier",
+        "aura_starbase_command_center",
+        "aura_starbase_mercenary_garrison",
+        "aura_starbase_warp_fluctuator",
+        "aura_strike_craft",
+        "aura_targeting_grid",
+        "juggernaut_logistics"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "friendly_aura.radius": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "friendly_aura.stack_info": {
+      "definitions": 30,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 30,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "id",
+        "priority"
+      ],
+      "keysByDefinition": [
+        [
+          "id",
+          "priority"
+        ]
+      ]
+    },
+    "friendly_aura.stack_info.id": {
+      "definitions": 30,
+      "repeated": 0,
+      "scalars": 30,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "friendly_battlefield_repairs",
+        "friendly_bombardment",
+        "friendly_bulwark_shield_magnifier_aura",
+        "friendly_command_center_aura",
+        "friendly_detection_scrambler",
+        "friendly_hyperlane",
+        "friendly_inhibitor_aura",
+        "friendly_inspiring_presence",
+        "friendly_mercenary_garrison_aura",
+        "friendly_nanobot_cloud",
+        "friendly_range",
+        "friendly_shield_hardening",
+        "friendly_strike_craft",
+        "friendly_targeting_grid",
+        "friendly_warp_fluctuator_aura",
+        "growth_aura",
+        "juggernaut_logistics",
+        "offspring_aura",
+        "paladin_logistician_aura",
+        "paladin_strategist_aura"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "friendly_aura.stack_info.priority": {
+      "definitions": 30,
+      "repeated": 0,
+      "scalars": 30,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "100",
+        "2",
+        "20",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "friendly_aura.system_wide": {
+      "definitions": 26,
+      "repeated": 0,
+      "scalars": 26,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "ftl": {
       "definitions": 17,
       "repeated": 0,
       "scalars": 17,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -290,6 +568,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -304,6 +583,7 @@
       "repeated": 0,
       "scalars": 29,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -318,6 +598,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 22,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -353,11 +634,265 @@
         ]
       ]
     },
+    "hostile_aura.apply_on": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "fleets",
+        "ships"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hostile_aura.limit": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ]
+      ]
+    },
+    "hostile_aura.modifier": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 22,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "ship_accuracy_mult",
+        "ship_armor_regen_add_perc",
+        "ship_disengage_chance_mult",
+        "ship_emergency_ftl_min_days_mult",
+        "ship_fire_rate_mult",
+        "ship_hull_regen_add_perc",
+        "ship_shield_mult",
+        "ship_shield_reduction",
+        "ship_shield_regen_add_perc",
+        "ship_speed_mult",
+        "ship_speed_reduction",
+        "ship_tracking_add",
+        "ship_weapon_range_mult",
+        "weapon_type_energy_weapon_damage_mult",
+        "weapon_type_explosive_weapon_damage_mult",
+        "weapon_type_kinetic_weapon_damage_mult",
+        "weapon_type_point_defense_weapon_damage_mult",
+        "weapon_type_point_defense_weapon_fire_rate_mult",
+        "weapon_type_strike_craft_weapon_damage_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "ship_accuracy_mult",
+          "ship_fire_rate_mult",
+          "ship_speed_reduction"
+        ],
+        [
+          "ship_armor_regen_add_perc",
+          "ship_hull_regen_add_perc",
+          "ship_tracking_add",
+          "ship_weapon_range_mult"
+        ],
+        [
+          "ship_disengage_chance_mult",
+          "ship_emergency_ftl_min_days_mult"
+        ],
+        [
+          "ship_disengage_chance_mult",
+          "ship_speed_mult"
+        ],
+        [
+          "ship_emergency_ftl_min_days_mult"
+        ],
+        [
+          "ship_fire_rate_mult"
+        ],
+        [
+          "ship_fire_rate_mult",
+          "ship_shield_regen_add_perc"
+        ],
+        [
+          "ship_hull_regen_add_perc"
+        ],
+        [
+          "ship_shield_mult"
+        ],
+        [
+          "ship_shield_mult",
+          "ship_shield_regen_add_perc"
+        ],
+        [
+          "ship_shield_reduction"
+        ],
+        [
+          "weapon_type_energy_weapon_damage_mult"
+        ],
+        [
+          "weapon_type_explosive_weapon_damage_mult"
+        ],
+        [
+          "weapon_type_kinetic_weapon_damage_mult"
+        ],
+        [
+          "weapon_type_point_defense_weapon_damage_mult",
+          "weapon_type_point_defense_weapon_fire_rate_mult"
+        ],
+        [
+          "weapon_type_strike_craft_weapon_damage_mult"
+        ]
+      ]
+    },
+    "hostile_aura.name": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "aura_electromagnetic_disruptor",
+        "aura_guardian_hull_degenerator",
+        "aura_kinetic_penetration",
+        "aura_laser_penetration",
+        "aura_missile_penetration",
+        "aura_pd_penetration",
+        "aura_quantum_destabilizer",
+        "aura_shield_dampener",
+        "aura_ship_subspace_snare",
+        "aura_starbase_bulwark_hull_degenerator",
+        "aura_starbase_bulwark_mega_hull_degenerator",
+        "aura_starbase_cetana_storm",
+        "aura_starbase_communications_jammer",
+        "aura_starbase_distruption_field",
+        "aura_starbase_ftl_inhibitor",
+        "aura_starbase_zroni_storm",
+        "aura_strike_craft_penetration"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hostile_aura.radius": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "120"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hostile_aura.stack_info": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 22,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "id",
+        "priority"
+      ],
+      "keysByDefinition": [
+        [
+          "id",
+          "priority"
+        ]
+      ]
+    },
+    "hostile_aura.stack_info.id": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "hostile_bulwark_hull_degenerator_aura",
+        "hostile_bulwark_mega_hull_degenerator_aura",
+        "hostile_cetana_storm_aura",
+        "hostile_communications_jammer_aura",
+        "hostile_disruption_field_aura",
+        "hostile_dsc_energy_damage",
+        "hostile_dsc_kinetic_damage",
+        "hostile_dsc_missile_damage",
+        "hostile_dsc_strikecraft_damage",
+        "hostile_electromagnetic_disruptor",
+        "hostile_flt_inhibitor_aura",
+        "hostile_guardian_hull_degenerator_aura",
+        "hostile_inhibitor_aura",
+        "hostile_pd_penetration",
+        "hostile_quantum_destabilizer",
+        "hostile_shield_dampener",
+        "hostile_snare_aura",
+        "hostile_zroni_storm_aura"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hostile_aura.stack_info.priority": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "100",
+        "20"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hostile_aura.system_wide": {
+      "definitions": 17,
+      "repeated": 0,
+      "scalars": 17,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "hyperlane_range": {
       "definitions": 15,
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "11",
@@ -374,6 +909,7 @@
       "repeated": 0,
       "scalars": 772,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_mutation_berserker_glands",
@@ -451,6 +987,7 @@
       "repeated": 0,
       "scalars": 771,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -465,6 +1002,7 @@
       "repeated": 2,
       "scalars": 12,
       "blocks": 109,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ship_components/behemoth_stage_1_mutations",
@@ -558,6 +1096,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -572,6 +1111,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -586,6 +1126,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 347,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -691,6 +1232,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 554,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1099,6 +1641,7 @@
       "repeated": 0,
       "scalars": 600,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-10",
@@ -1118,7 +1661,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 661,
-      "bareBlocks": 650,
+      "bareValues": 650,
+      "bareBlocks": 0,
       "values": [
         "tech_afterburners_1",
         "tech_afterburners_2",
@@ -1195,6 +1739,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 630,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1241,7 +1786,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 6,
-      "bareBlocks": 6,
+      "bareValues": 6,
+      "bareBlocks": 0,
       "values": [
         "arkship_build_megastructure",
         "arkship_deep_scan",
@@ -1292,6 +1838,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "2",
@@ -1308,6 +1855,7 @@
       "repeated": 0,
       "scalars": 137,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "arkship",
@@ -1332,6 +1880,7 @@
       "repeated": 0,
       "scalars": 16,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -1346,6 +1895,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 335,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1554,6 +2104,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -1568,6 +2119,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 346,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1589,6 +2141,7 @@
       "repeated": 0,
       "scalars": 772,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "aux",
@@ -1607,6 +2160,7 @@
       "repeated": 0,
       "scalars": 5,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "target_allies"
@@ -1621,6 +2175,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 20,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1644,6 +2199,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 22,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1667,6 +2223,7 @@
       "repeated": 0,
       "scalars": 152,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "artillery",
@@ -1699,6 +2256,7 @@
       "repeated": 0,
       "scalars": 366,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BATTLESHIP_BIO_FUSION_REACTOR",

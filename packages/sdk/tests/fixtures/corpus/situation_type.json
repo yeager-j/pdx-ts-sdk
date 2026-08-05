@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 64,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -41,6 +42,7 @@
       "repeated": 76,
       "scalars": 0,
       "blocks": 89,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -425,9 +427,10 @@
     },
     "approach.ai_weight": {
       "definitions": 36,
-      "repeated": 33,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 36,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -446,9 +449,10 @@
     },
     "approach.allow": {
       "definitions": 26,
-      "repeated": 21,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 26,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -492,9 +496,10 @@
     },
     "approach.custom_tooltip_with_modifiers": {
       "definitions": 3,
-      "repeated": 3,
+      "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "approach_situation_the_seal_pump_exotic_gases_tt",
@@ -514,6 +519,7 @@
       "repeated": 0,
       "scalars": 77,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -525,9 +531,10 @@
     },
     "approach.icon": {
       "definitions": 89,
-      "repeated": 76,
+      "repeated": 0,
       "scalars": 89,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_approach_alloys",
@@ -587,9 +594,10 @@
     },
     "approach.icon_background": {
       "definitions": 89,
-      "repeated": 76,
+      "repeated": 0,
       "scalars": 89,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_approach_bg_green",
@@ -603,9 +611,10 @@
     },
     "approach.modifier": {
       "definitions": 42,
-      "repeated": 36,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 42,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -878,9 +887,10 @@
     },
     "approach.on_select": {
       "definitions": 86,
-      "repeated": 64,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 86,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -985,9 +995,10 @@
     },
     "approach.potential": {
       "definitions": 19,
-      "repeated": 11,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 19,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1034,9 +1045,10 @@
     },
     "approach.resources": {
       "definitions": 29,
-      "repeated": 23,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 29,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1075,9 +1087,10 @@
     },
     "approach.target_modifier": {
       "definitions": 4,
-      "repeated": 1,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1113,9 +1126,10 @@
     },
     "approach.triggered_modifier": {
       "definitions": 7,
-      "repeated": 5,
+      "repeated": 3,
       "scalars": 0,
       "blocks": 7,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1154,6 +1168,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 3,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1183,6 +1198,7 @@
       "repeated": 0,
       "scalars": 65,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "negative",
@@ -1199,6 +1215,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "negative"
@@ -1213,6 +1230,7 @@
       "repeated": 0,
       "scalars": 85,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_exploding_planet",
@@ -1238,6 +1256,7 @@
       "repeated": 0,
       "scalars": 83,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_outcome_frame_blue",
@@ -1254,6 +1273,7 @@
       "repeated": 4,
       "scalars": 4,
       "blocks": 5,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_breach_shroud_desc",
@@ -1275,11 +1295,81 @@
         ]
       ]
     },
+    "desc.text": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "situation_a_rift_in_space_desc",
+        "situation_a_rift_in_space_desc_riftworld_origin",
+        "situation_hyperthermia_desc",
+        "situation_hyperthermia_desc_perp",
+        "situation_initiate_storm_desc_agitate",
+        "situation_initiate_storm_desc_destabilize",
+        "situation_initiate_storm_desc_irradiate",
+        "situation_initiate_storm_desc_magnetize",
+        "situation_initiate_storm_desc_overfeed",
+        "situation_initiate_storm_desc_scramble",
+        "situation_initiate_storm_desc_sever",
+        "situation_initiate_storm_desc_supercharge",
+        "situation_planetary_revolt_desc_gestalt_breakaway_gestalt",
+        "situation_planetary_revolt_desc_gestalt_breakaway_wilderness",
+        "situation_planetary_revolt_desc_gestalt_standard",
+        "situation_planetary_revolt_desc_slave",
+        "situation_planetary_revolt_desc_standard"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "desc.trigger": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "current_situation_approach",
+        "has_situation_flag",
+        "owner",
+        "success_text",
+        "target"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "has_situation_flag",
+          "owner",
+          "target"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "current_situation_approach"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "success_text"
+        ]
+      ]
+    },
     "fail_category": {
       "definitions": 1,
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "positive"
@@ -1294,6 +1384,7 @@
       "repeated": 0,
       "scalars": 23,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_outcome_meh",
@@ -1312,6 +1403,7 @@
       "repeated": 0,
       "scalars": 23,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_outcome_frame_blue",
@@ -1328,6 +1420,7 @@
       "repeated": 0,
       "scalars": 65,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -1355,6 +1448,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situations/consume_world_planet_pictures"
@@ -1369,6 +1463,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1400,6 +1495,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 90,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1435,6 +1531,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 34,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1490,6 +1587,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 29,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1531,6 +1629,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 59,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1551,11 +1650,196 @@
         ]
       ]
     },
+    "on_monthly.events": {
+      "definitions": 44,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 44,
+      "bareValues": 44,
+      "bareBlocks": 0,
+      "values": [
+        "astral_situation.10",
+        "astral_situation.25",
+        "awareness.200",
+        "colony.190",
+        "crisis.10095",
+        "crisis.11000",
+        "crisis.8245",
+        "crisis.8350",
+        "cstorms.3110",
+        "cstorms.3130",
+        "cstorms.3160",
+        "cyber.105",
+        "cyber.2005",
+        "cyber.205",
+        "cyber.2205",
+        "cyber.3",
+        "cyber.305",
+        "cyber.4",
+        "cyber.410",
+        "cyber.420",
+        "cyber.430",
+        "cyber.5",
+        "cyber.5016",
+        "cyber.6",
+        "cyber.9",
+        "enclave.5555",
+        "enclave.5556",
+        "machine_age.2000",
+        "machine_age.3325",
+        "machine_age.4110",
+        "machine_age.4130",
+        "machine_age.4140",
+        "machine_age.4150",
+        "machine_age.4210",
+        "machine_age.4230",
+        "machine_age.4240",
+        "machine_age.4250",
+        "machine_age.4310",
+        "machine_age.4330",
+        "machine_age.4340",
+        "origin.6180",
+        "paragon.5006",
+        "paragon.5945",
+        "paragon.5946",
+        "preftl.20",
+        "preftl.2102",
+        "preftl.2103",
+        "preftl.2104",
+        "preftl.2105",
+        "preftl.2106",
+        "preftl.5",
+        "shroud_forged.100",
+        "shroud_forged.150",
+        "situation.2001",
+        "situation.204",
+        "synth.105",
+        "synth.205",
+        "synth.3",
+        "synth.305",
+        "synth.310",
+        "synth.405",
+        "synth.5",
+        "toxoids.8010",
+        "unrest.163"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_monthly.random_events": {
+      "definitions": 25,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 25,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "1",
+        "10",
+        "100",
+        "120",
+        "1200",
+        "15",
+        "2",
+        "20",
+        "250",
+        "3",
+        "30",
+        "5",
+        "50",
+        "80",
+        "800",
+        "85",
+        "90",
+        "95"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "1",
+          "10"
+        ],
+        [
+          "1",
+          "100",
+          "2"
+        ],
+        [
+          "1",
+          "2",
+          "3"
+        ],
+        [
+          "1",
+          "2",
+          "800"
+        ],
+        [
+          "1",
+          "30"
+        ],
+        [
+          "10",
+          "120",
+          "15",
+          "20"
+        ],
+        [
+          "10",
+          "120",
+          "5"
+        ],
+        [
+          "10",
+          "1200"
+        ],
+        [
+          "10",
+          "250",
+          "5"
+        ],
+        [
+          "10",
+          "50"
+        ],
+        [
+          "10",
+          "90"
+        ],
+        [
+          "100",
+          "3"
+        ],
+        [
+          "15",
+          "50"
+        ],
+        [
+          "15",
+          "85"
+        ],
+        [
+          "20",
+          "80"
+        ],
+        [
+          "5"
+        ],
+        [
+          "5",
+          "95"
+        ]
+      ]
+    },
     "on_progress_complete": {
       "definitions": 88,
       "repeated": 0,
       "scalars": 0,
       "blocks": 88,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1638,6 +1922,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 37,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1743,6 +2028,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "nomad_max_reserves_breakdown"
@@ -1757,6 +2043,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_nomad_economy_capacity_title"
@@ -1771,6 +2058,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_nomad_economy_reserves_current"
@@ -1785,6 +2073,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1799,6 +2088,7 @@
       "repeated": 4,
       "scalars": 82,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_evt_a_rift_in_space",
@@ -1880,6 +2170,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1896,6 +2187,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "bidirectional",
@@ -1911,6 +2203,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -1925,6 +2218,7 @@
       "repeated": 0,
       "scalars": 83,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ambitions",
@@ -1944,6 +2238,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 90,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2157,9 +2452,10 @@
     },
     "stages.color": {
       "definitions": 1,
-      "repeated": 1,
+      "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "light_green",
@@ -2174,9 +2470,10 @@
     },
     "stages.custom_tooltip": {
       "definitions": 56,
-      "repeated": 37,
+      "repeated": 1,
       "scalars": 56,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "approach_outcome_caeli",
@@ -2246,9 +2543,10 @@
     },
     "stages.end": {
       "definitions": 89,
-      "repeated": 60,
+      "repeated": 0,
       "scalars": 88,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -2326,9 +2624,10 @@
     },
     "stages.icon": {
       "definitions": 90,
-      "repeated": 61,
+      "repeated": 0,
       "scalars": 90,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_stage_1",
@@ -2355,9 +2654,10 @@
     },
     "stages.icon_background": {
       "definitions": 90,
-      "repeated": 61,
+      "repeated": 0,
       "scalars": 90,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_stage_frame_blue",
@@ -2375,9 +2675,10 @@
     },
     "stages.modifier": {
       "definitions": 13,
-      "repeated": 12,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 13,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2497,9 +2798,10 @@
     },
     "stages.on_enter": {
       "definitions": 1,
-      "repeated": 1,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2513,9 +2815,10 @@
     },
     "stages.on_first_enter": {
       "definitions": 60,
-      "repeated": 39,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 60,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2601,9 +2904,10 @@
     },
     "stages.section_weight": {
       "definitions": 1,
-      "repeated": 1,
+      "repeated": 0,
       "scalars": 1,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "20",
@@ -2623,9 +2927,10 @@
     },
     "stages.target_modifier": {
       "definitions": 6,
-      "repeated": 5,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 6,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2688,6 +2993,7 @@
       "repeated": 6,
       "scalars": 0,
       "blocks": 7,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2743,6 +3049,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2761,6 +3068,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0"
@@ -2775,6 +3083,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 3,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2802,6 +3111,7 @@
       "repeated": 1,
       "scalars": 5,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_breach_shroud",
@@ -2820,11 +3130,47 @@
         ]
       ]
     },
+    "title.text": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "situation_a_rift_in_space",
+        "situation_a_rift_in_space_riftworld"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "title.trigger": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "owner"
+        ]
+      ]
+    },
     "total_progress": {
       "definitions": 1,
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2843,6 +3189,7 @@
       "repeated": 10,
       "scalars": 0,
       "blocks": 15,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2856,11 +3203,96 @@
         ]
       ]
     },
+    "triggered_blocked_desc.text": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [
+        "situation_arkship_consuming_world_absent_desc",
+        "situation_augmentation_center_needed_desc",
+        "situation_augmentation_center_or_bazaar_needed_desc",
+        "situation_breach_shroud_endbringers_chamber_of_silence_needed_desc",
+        "situation_breach_shroud_endbringers_cult_of_the_voice_needed_desc",
+        "situation_breach_shroud_great_awakening_needed_desc",
+        "situation_breach_shroud_psi_corps_needed_desc",
+        "situation_cd_mod_bribe",
+        "situation_cd_mod_storm",
+        "situation_gene_tailoring_needed_desc",
+        "situation_genomic_facility_needed_desc",
+        "situation_identity_complex_needed_desc",
+        "situation_no_robot_research",
+        "situation_no_synthetics_adopt",
+        "situation_nomad_economy_critical_reserves_desc",
+        "situation_passenger_satisfaction_blocked_mutiny",
+        "situation_passenger_satisfaction_blocked_planetfall",
+        "situation_synth_queen_player_facing_declare_war"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_blocked_desc.trigger": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 15,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "current_stage",
+        "owner",
+        "situation_progress",
+        "target"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "OR",
+          "owner"
+        ],
+        [
+          "NOT",
+          "OR",
+          "owner",
+          "situation_progress"
+        ],
+        [
+          "NOT",
+          "owner"
+        ],
+        [
+          "NOT",
+          "owner",
+          "situation_progress"
+        ],
+        [
+          "current_stage"
+        ],
+        [
+          "current_stage",
+          "owner"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "target"
+        ]
+      ]
+    },
     "triggered_modifier": {
       "definitions": 9,
       "repeated": 6,
       "scalars": 0,
       "blocks": 9,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

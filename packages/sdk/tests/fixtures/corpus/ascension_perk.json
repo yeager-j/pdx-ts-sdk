@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 46,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -37,6 +38,7 @@
       "repeated": 1,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ap_defender_of_the_galaxy_modifier_desc",
@@ -53,6 +55,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ap_technological_ascendancy_tt"
@@ -67,6 +70,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 34,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -300,6 +304,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 38,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -361,6 +366,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -418,6 +424,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 49,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -652,6 +659,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 8,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -728,6 +736,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ap_galactic_contender_voidworms_tt",
@@ -740,9 +749,10 @@
     },
     "tradition_swap.inherit_effects": {
       "definitions": 8,
-      "repeated": 1,
+      "repeated": 0,
       "scalars": 8,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -755,9 +765,10 @@
     },
     "tradition_swap.inherit_icon": {
       "definitions": 8,
-      "repeated": 1,
+      "repeated": 0,
       "scalars": 8,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -773,6 +784,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -788,6 +800,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 5,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -854,6 +867,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -871,9 +885,10 @@
     },
     "tradition_swap.trigger": {
       "definitions": 8,
-      "repeated": 1,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 8,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -916,6 +931,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -932,6 +948,7 @@
       "repeated": 4,
       "scalars": 0,
       "blocks": 6,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

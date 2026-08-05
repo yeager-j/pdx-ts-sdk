@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 142,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -30,6 +31,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 62,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -77,6 +79,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "12",
@@ -93,6 +96,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 6,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -118,6 +122,7 @@
       "repeated": 0,
       "scalars": 171,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_edict_type_policy",
@@ -133,6 +138,7 @@
       "repeated": 0,
       "scalars": 5,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -147,6 +153,7 @@
       "repeated": 0,
       "scalars": 171,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -159,6 +166,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 167,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -894,6 +902,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -910,6 +919,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 167,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1250,7 +1260,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 46,
-      "bareBlocks": 36,
+      "bareValues": 36,
+      "bareBlocks": 0,
       "values": [
         "tech_advanced_industrial_storm_protection",
         "tech_artificial_moral_codes",
@@ -1288,6 +1299,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1316,6 +1328,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 171,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1351,6 +1364,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 55,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1436,6 +1450,7 @@
       "repeated": 6,
       "scalars": 0,
       "blocks": 6,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

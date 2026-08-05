@@ -85,18 +85,35 @@ const ACKNOWLEDGED = new Map<string, string>([
       "form really does repeat.",
   ],
   [
-    "global_ship_design.growth_stages form",
-    "CWT declares a block of named fields, but every shipped design writes a bare list of " +
-      "<global_ship_design> ids.",
+    "economic_category.triggered_cost_modifier.trigger scope",
+    "CWT annotates no scope, so the clause lowers to `Trigger<never>` — writable but unchecked. " +
+      "The category's modifiers are evaluated against whatever is paying, and the corpus shows " +
+      "the game itself branching on that: `is_scope_valid` appears in all four definitions " +
+      "writing this clause, guarding ship conditions (is_ship_class, is_ship_size, " +
+      "is_space_fauna, has_ship_owner_type) against a scope that may not be one. That is the " +
+      "SDK-24 narrowing case, not a declaration — the same finding as " +
+      "ship_size.potential_construction below.",
   ],
   [
-    "ship_size.triggered_ship_roles form",
-    "CWT declares a block of named fields, but every shipped ship size writes a bare list.",
+    "economic_category.triggered_produces_modifier.trigger scope",
+    "Same declaration and same finding as triggered_cost_modifier above " +
+      "(single_alias[economic_category_triggered_modifier], economic_categories.cwt:76-87). " +
+      "Its 13 definitions spread wider still — ship category, specimen category, planet, and " +
+      "species traits — which is what an unannotated clause evaluated per consumer looks like.",
   ],
   [
-    "species_class.resources form",
-    "CWT declares the economic_template splice, but the 16 shipped species classes write bare " +
-      "values there.",
+    "economic_category.triggered_upkeep_modifier.trigger scope",
+    "Same declaration and same finding as its two siblings above. Its 10 definitions divide by " +
+      "consumer rather than mixing: one writes only ship conditions, another only pop " +
+      "(has_trait, is_robot_pop_group, is_unemployed), a third only `exists = planet`.",
+  ],
+  [
+    "scripted_loc.text.trigger scope",
+    "A scripted localization is rendered wherever its key is referenced, so its condition runs " +
+      "in whatever scope did the referencing — genuinely any, and CWT is right to annotate " +
+      "none. The corpus is the same shape: 1072 definitions across 206 distinct condition sets, " +
+      "spanning country, species, planet and variable scopes. Nothing to declare; SDK-24's " +
+      "narrowing inside the clause is the only remedy.",
   ],
   [
     "ship_size.potential_construction scope",
@@ -106,6 +123,15 @@ const ACKNOWLEDGED = new Map<string, string>([
       "(zero shipped decisions do, which is why a scope parameter fit there and not here). " +
       "SDK-24 tracks the `inScope` combinator; it waits on SDK-13, since most bodies here " +
       "delegate to vanilla scripted triggers the SDK cannot name yet.",
+  ],
+  [
+    "ship_size.triggered_ship_roles.trigger scope",
+    "The wrapped struct one level inside the field above, and the same registry's finding: a " +
+      "scope parameter does not fit ship_size. Its 43 definitions do write one coherent " +
+      "country-scope set (OR, has_technology, has_battleship_cloaking_tech), so a `scope` " +
+      "assertion is not ruled out the way the sibling clauses' are — but which country the " +
+      "role is evaluated for is exactly what the rules decline to state, and an assertion here " +
+      "would be read off the corpus alone. SDK-24.",
   ],
 ]);
 
@@ -458,6 +484,7 @@ describe("shape conformance, per-definition scope", () => {
             repeated: 0,
             scalars: 0,
             blocks: definitions.length,
+            bareValues: 0,
             bareBlocks: 0,
             values: new Set<string>(),
             keys: new Set(definitions.flat()),
@@ -490,5 +517,125 @@ describe("shape conformance, per-definition scope", () => {
     );
     expect(mismatches.map((mismatch) => mismatch.kind)).toEqual(["scope"]);
     expect(mismatches[0]?.detail).toContain("no single scope of planet/ship");
+  });
+});
+
+/**
+ * The interior form check's three shapes, each of which is what the other two
+ * being wrong looks like.
+ *
+ * A wrapped struct writes bare sub-blocks (`discrete_terms = { { key = … } }`),
+ * a value list writes bare scalars (`{ foo bar }`), every other block shape
+ * writes named keys. Reading "no named keys" as a defect is what made four
+ * real, authorable fields report as unfillable, two of them acknowledged for
+ * months with a reason the fixture contradicts — and then reading bare scalars
+ * and bare sub-blocks as one "is it bare" flag hid the opposite defect just as
+ * quietly. Every pairing is asserted here because a check that only ever passes
+ * is what let both through.
+ *
+ * The fourth case has no lowering of its own: a block with no interior at all.
+ * `resources = { }` is compatible with all three, so it is absence of evidence
+ * rather than evidence of a defect, and must produce no verdict for any of them.
+ */
+describe("shape conformance, unkeyed block interiors", () => {
+  // `repeated` describes the outer *key*, which a wrapper is what stops from
+  // repeating: the repetition moved inside it. `discrete_terms` is `0..1`.
+  const wrapped = { field: "field", shape: "struct", repeated: false, wrapped: true };
+  const plain = { field: "field", shape: "struct", repeated: false };
+  const list = { field: "field", shape: "valueList", repeated: false };
+  const noScopes = (): null => null;
+
+  function corpusOf(observed: {
+    bareValues?: number;
+    bareBlocks?: number;
+    keys?: readonly string[];
+  }) {
+    const keys = observed.keys ?? [];
+    return {
+      definitions: 1,
+      files: 1,
+      occurrences: new Map([
+        [
+          "field",
+          {
+            definitions: 1,
+            repeated: 0,
+            scalars: 0,
+            blocks: 1,
+            bareValues: observed.bareValues ?? 0,
+            bareBlocks: observed.bareBlocks ?? 0,
+            values: new Set(observed.bareValues === undefined ? [] : ["foo"]),
+            keys: new Set(keys),
+            keysByDefinition: [new Set(keys)],
+          },
+        ],
+      ]),
+    };
+  }
+
+  const kinds = (corpus: ReturnType<typeof corpusOf>, field: typeof wrapped | typeof plain) =>
+    shapeConformance(corpus, [field], noScopes).map((one) => one.kind);
+
+  const bareBlocks = corpusOf({ bareBlocks: 1 });
+  const bareValues = corpusOf({ bareValues: 1 });
+  const keyed = corpusOf({ keys: ["key"] });
+
+  it("accepts each lowering against the interior it writes", () => {
+    expect(kinds(bareBlocks, wrapped)).toEqual([]);
+    expect(kinds(bareValues, list)).toEqual([]);
+    expect(kinds(keyed, plain)).toEqual([]);
+  });
+
+  it("reports a wrapped struct against bare scalars", () => {
+    // The defect one conflated "is it bare" flag hid: `{ foo bar }` satisfied
+    // the wrapped check, so a field misread as a wrapper reported nothing.
+    const mismatches = shapeConformance(bareValues, [wrapped], noScopes);
+    expect(mismatches.map((one) => one.kind)).toEqual(["form"]);
+    expect(mismatches[0]?.detail).toContain("lowered as a wrapped struct");
+    expect(mismatches[0]?.detail).toContain("bare scalars (foo)");
+  });
+
+  it("reports a value list against bare sub-blocks", () => {
+    // The same conflation in the other direction: anonymous blocks are not the
+    // scalars a value list would lower each element of.
+    const mismatches = shapeConformance(bareBlocks, [list], noScopes);
+    expect(mismatches.map((one) => one.kind)).toEqual(["form"]);
+    expect(mismatches[0]?.detail).toContain("lowered as a value list");
+    expect(mismatches[0]?.detail).toContain("bare blocks");
+  });
+
+  it("reports either unkeyed lowering against a keyed interior", () => {
+    // The wrapper or the list was misread: the game writes named entries where
+    // the lowering expects anonymous ones.
+    expect(kinds(keyed, wrapped)).toEqual(["form"]);
+    expect(kinds(keyed, list)).toEqual(["form"]);
+  });
+
+  it("still reports an ordinary struct against either bare interior", () => {
+    // The check the exemptions must not become blanket.
+    expect(kinds(bareBlocks, plain)).toEqual(["form"]);
+    expect(kinds(bareValues, plain)).toEqual(["form"]);
+  });
+
+  it("gives no verdict when every block is empty", () => {
+    // `species_class.resources` is `resources = { }` in all 16 shipped species
+    // classes. That is compatible with every block lowering, so a verdict there
+    // reported the corpus having nothing to say as a defect — the same
+    // false-positive species as the two above, and it stood acknowledged with a
+    // reason ("write bare values there") the observation contradicts.
+    const empty = corpusOf({});
+    expect(kinds(empty, wrapped)).toEqual([]);
+    expect(kinds(empty, list)).toEqual([]);
+    expect(kinds(empty, plain)).toEqual([]);
+    expect(kinds(empty, { field: "field", shape: "economicResources", repeated: false })).toEqual(
+      []
+    );
+  });
+
+  it("still judges a block lowering the moment one block has content", () => {
+    // Absence of interior evidence is what buys silence, not the shape being a
+    // block: one keyed block among empty ones is evidence again.
+    expect(kinds(corpusOf({ keys: ["key"] }), list)).toEqual(["form"]);
+    expect(kinds(corpusOf({ bareValues: 1 }), plain)).toEqual(["form"]);
   });
 });
