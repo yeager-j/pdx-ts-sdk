@@ -327,6 +327,30 @@ export const FIELD_WIDENINGS = new Map<string, FieldWidening>([
 ]);
 
 /**
+ * Ergonomic widenings on a patch member, over what the definition's own member
+ * already admits.
+ *
+ * Same shape and same review posture as {@link FIELD_WIDENINGS}, one surface
+ * over: a row is a claim that the patch transform emits this extra form
+ * correctly, which is evidence to produce, not a reading of the rules. The
+ * extra form joins the member's admitted inputs — at the *element* level for a
+ * list-shaped member, since that is the position the form occurs in.
+ */
+export const PATCH_WIDENINGS = new Map<string, FieldWidening>([
+  [
+    "technology.prerequisites",
+    {
+      extraType: "AnyOf<TechnologyRef>",
+      reason:
+        "Vanilla writes `OR = { ... }` alternation groups in five technology files, and the " +
+        "parsed surface hands them back as `AnyOf` values, so `[...t.prerequisites, mine]` has " +
+        "to be a legal patch input. A definition of the mod's own has no such need: nothing " +
+        "reads an authored OR group back out.",
+    },
+  ],
+]);
+
+/**
  * Localisation slots the SDK always writes, and therefore requires.
  *
  * Slot *names* come straight from the rules — `name` and `desc` — which also

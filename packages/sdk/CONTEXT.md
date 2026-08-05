@@ -113,6 +113,22 @@ A whole-object override of one vanilla definition. Not the game's other sense
 The computed emission filename that provably byte-sorts after every file
 defining the patched key, together with the assertions backing that claim.
 
+**Parsed definition**:
+A shipped definition as read from the install — its body and provenance,
+tagged with the registry it belongs to. The value a patch transforms.
+_Avoid_: view object, source object
+
+**Passthrough**:
+A parsed value placed directly in a patch input and emitted verbatim rather
+than re-lowered. How vanilla's own blocks survive a patched member unchanged.
+_Avoid_: raw copy, echo
+
+**Patch widening**:
+An intentional extra input form a patch member admits beyond what the rules
+can state, recorded as an audited departure — the patch-surface counterpart
+of a field widening.
+_Avoid_: special case, escape hatch
+
 **Defining file**:
 A surviving vanilla or mod file that defines a given key. The patch plan beats
 every one of them.

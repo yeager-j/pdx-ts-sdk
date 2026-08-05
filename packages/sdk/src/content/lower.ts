@@ -3,11 +3,11 @@ import {
   block,
   container,
   kv,
-  list,
   quoted,
   scalar,
   varRef,
   type PdxEntry,
+  type PdxItem,
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
@@ -228,6 +228,33 @@ function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segme
   }
 }
 
+/**
+ * Whether a value is already a PDXScript node, and so is spliced rather than
+ * lowered.
+ *
+ * The one authored value carrying a `kind` is a `Trigger`, and no node kind is
+ * `"trigger"`, so the discriminant alone settles it. This is what lets a patch
+ * carry a parsed occurrence of a repeated field back out unchanged beside
+ * freshly authored ones.
+ */
+function isPassthrough(value: unknown): value is PdxItem {
+  const kind = (value as { readonly kind?: unknown } | null)?.kind;
+  return (
+    kind === "entry" ||
+    kind === "container" ||
+    kind === "param" ||
+    kind === "str" ||
+    kind === "num" ||
+    kind === "bool" ||
+    kind === "var" ||
+    kind === "math"
+  );
+}
+
+function passthroughEntry(value: unknown): PdxEntry | undefined {
+  return isPassthrough(value) && value.kind === "entry" ? value : undefined;
+}
+
 function contentScalar(
   value: unknown,
   field: ContentFieldBase & ContentRefTypes & { readonly conversion: "identity" | "ref" },
@@ -235,7 +262,14 @@ function contentScalar(
   ctx?: LoweringContext
 ): PdxScalar {
   const converted = field.conversion === "ref" ? refId(value as TypedRef<string> | string) : value;
-  if (ctx?.collect !== undefined && field.refTypes !== undefined && typeof converted === "string") {
+  if (
+    ctx?.collect !== undefined &&
+    field.refTypes !== undefined &&
+    typeof converted === "string" &&
+    // A `@name` scripted-variable reference is not an id, so it names no
+    // content and must not be held to the dangling-reference guard.
+    !converted.startsWith("@")
+  ) {
     ctx.collect({
       targets: field.refTypes,
       id: converted,
@@ -276,6 +310,26 @@ export function fieldEntries(
     if (value === undefined) {
       continue;
     }
+    // A repeated member whose array mixes parsed occurrences with fresh inputs
+    // is emitted one element at a time, in the author's order: the parsed ones
+    // splice in as they stand, and each fresh one lowers through this same
+    // field. A list-shaped field is not this case — its elements are items
+    // inside one container, handled where that container is built.
+    if (
+      Array.isArray(value) &&
+      field.shape !== "valueList" &&
+      value.some((item) => passthroughEntry(item) !== undefined)
+    ) {
+      for (const item of value as readonly unknown[]) {
+        const parsed = passthroughEntry(item);
+        entries.push(
+          ...(parsed !== undefined
+            ? [parsed]
+            : fieldEntries({ [field.member]: [item] }, [field], ctx))
+        );
+      }
+      continue;
+    }
     switch (field.shape) {
       case "value": {
         const values = field.repeated ? (value as readonly unknown[]) : [value];
@@ -287,12 +341,14 @@ export function fieldEntries(
       case "valueList": {
         const values = Array.isArray(value) ? value : [value];
         if (values.length > 0) {
-          entries.push(
-            list(
-              field.key,
-              values.map((item) => contentScalar(item, field, field.quoted ?? false, ctx))
-            )
+          // `list` is `kv(key, container(items))` over scalars; a passthrough
+          // item may be a whole entry (vanilla's `OR = { ... }` alternation
+          // inside a reference list), which the same container holds
+          // unchanged — a mixed container is ordinary PDXScript, not an error.
+          const items: PdxItem[] = values.map((item) =>
+            isPassthrough(item) ? item : contentScalar(item, field, field.quoted ?? false, ctx)
           );
+          entries.push(kv(field.key, container(items)));
         }
         break;
       }

@@ -8,6 +8,7 @@ import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import {
   CONTENT_DECLINED_FIELDS,
+  CONTENT_PATCH_REGISTRIES,
   HAND_WRITTEN_CONTENT_DEFINERS,
 } from "@pdx-ts/codegen-cwt/overlay";
 import { describe, expect, it } from "vitest";
@@ -15,6 +16,16 @@ import { describe, expect, it } from "vitest";
 /** Just the names: the emitter now describes each field's lowered shape too. */
 function fieldNames(fields: readonly EmittedField[]): string[] {
   return fields.map((field) => field.field);
+}
+
+/** The member names one emitted interface declares, in declaration order. */
+function interfaceMembers(code: string, name: string): string[] {
+  const start = code.indexOf(`export interface ${name} {`);
+  if (start === -1) {
+    return [];
+  }
+  const body = code.slice(start, code.indexOf("\n}", start));
+  return [...body.matchAll(/^ {2}(?:readonly )?(\w+)\??:/gm)].map((match) => match[1]!);
 }
 
 const rules = loadRules("vendor/cwtools-stellaris-config/config");
@@ -1008,6 +1019,48 @@ describe("content-type codegen", () => {
     expect(planet?.unsupported).toEqual([]);
     expect(moon?.unsupported).toEqual([]);
   });
+
+  /**
+   * The patch surface is generated, not hand-listed: a `CONTENT_PATCH_REGISTRIES`
+   * row produces one optional member per field the transform can splice, in the
+   * same forms the definition's own members take. A member missing here would be
+   * a member of the API no patch author can reach.
+   */
+  it("derives the patch type's membership from the emitted fields", () => {
+    for (const registry of CONTENT_PATCH_REGISTRIES.keys()) {
+      const emission = emissions.get(registry);
+      const name = pascalCase(registry);
+      const slots = [...(emission?.code.matchAll(/\{ member: "(\w+)", pattern:/g) ?? [])].map(
+        (match) => match[1]!
+      );
+      expect(interfaceMembers(emission?.code ?? "", `${name}Patch`), registry).toEqual(
+        interfaceMembers(emission?.code ?? "", `${name}Fields`).filter(
+          (member) => !slots.includes(member)
+        )
+      );
+      // Every absence is reported with its reason, and the only ones here are
+      // the localisation slots.
+      expect(emission?.patchExclusions, registry).toEqual(
+        slots.map(
+          (slot) =>
+            `${registry}.${slot} — a localisation slot; its key is minted by a pre-pass the ` +
+            "patch path does not run"
+        )
+      );
+    }
+  });
+
+  it("emits no patch surface for a registry the overlay does not permit", () => {
+    for (const [registry, emission] of emissions) {
+      if (CONTENT_PATCH_REGISTRIES.has(registry)) {
+        continue;
+      }
+      expect(emission.code, registry).not.toContain(
+        `export interface ${pascalCase(registry)}Patch`
+      );
+      expect(emission.patchExclusions, registry).toEqual([]);
+    }
+  });
 });
 
 /**
@@ -1061,13 +1114,25 @@ describe("generated content definers", () => {
   });
 
   it("emits the raw patchTechnology and addShipOfSizeLimits, and only those", () => {
-    expect(definers.match(/^export function patch\w+</gm)).toEqual([
-      "export function patchTechnology<",
-    ]);
+    // Derived from the overlay rather than hand-listed: the emitted patchX set
+    // is exactly the registries CONTENT_PATCH_REGISTRIES permits — a row is the
+    // whole permission, and a registry without one gets no patch surface.
+    expect(definers.match(/^export function patch\w+</gm)).toEqual(
+      [...CONTENT_PATCH_REGISTRIES.keys()].map(
+        (registry) => `export function patch${pascalCase(registry)}<`
+      )
+    );
+    // The transform is generic and descriptor-driven: the definer hands it the
+    // registry's own field table, and imports no per-registry hand symbol.
     expect(definers).toContain(
       "): TechnologyPatchItem {\n" +
-        '  return { itemKind: "patch", patched: transformTechnology(technology, patch) };'
+        "  return {\n" +
+        '    itemKind: "patch",\n' +
+        "    patched: patchContent(technology, patch, TECHNOLOGY_FIELDS),\n" +
+        "  };"
     );
+    expect(definers).toContain('import { patchContent } from "../stellaris/vanilla/patch.ts";');
+    expect(definers).not.toContain("transformTechnology");
     expect(definers.match(/^export function add\w+\(/gm)).toEqual([
       "export function addShipOfSizeLimits(",
     ]);

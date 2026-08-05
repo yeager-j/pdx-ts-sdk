@@ -1,53 +1,74 @@
 /**
- * Transform-style patching over a parsed technology. The patch type is closed
- * (typos and `id`
- * are compile errors) and a patched field keeps its slot: emission walks the
- * original entry list, substituting patched values in place and appending
- * only genuinely new fields — which is what keeps "always emit complete
- * objects" true for everything the surface does not model.
+ * Transform-style patching over a parsed definition, driven entirely by the
+ * registry's generated field descriptors.
  *
- * Promotion fix the probe recorded: a `ParsedNumber` passed through whole
- * re-emits as `varRef(ref)`, not a bare string — the package serializer's
- * symmetric quoting rule would quote-promote `"@t3cost"` into a string the
- * game cannot resolve.
+ * A patch member is lowered by the same `fieldEntries` machinery a `defineX`
+ * uses — closures, dual-arm dispatch, reference collection and quoting all
+ * come from there — so the only original job left here is the splice: a
+ * patched field keeps its slot, because emission walks the parsed body and
+ * substitutes in place, appending only genuinely new keys. That is what keeps
+ * "always emit complete objects" true for everything the surface does not
+ * model.
+ *
+ * Nothing in this module knows a registry. Which members exist, what they
+ * accept, and which key each writes are all read off the descriptor the
+ * generated `patchX` hands in.
+ *
+ * Two input forms exist here that no `defineX` has, both of them ways to carry
+ * a shipped definition's own data back out unchanged:
+ *
+ * - a {@link ParsedNumber} passed through whole re-emits as `@name`, not as a
+ *   bare string — the package serializer's symmetric quoting rule would
+ *   quote-promote `"@t3cost"` into a string the game cannot resolve;
+ * - a passthrough (a parsed occurrence taken from the source body, or an
+ *   {@link AnyOf} group) is emitted verbatim rather than re-lowered.
  */
 
-import {
-  quoted,
-  scalar,
-  varRef,
-  type PdxEntry,
-  type PdxItem,
-  type PdxValue,
-} from "@pdx-ts/pdxscript";
+import { container, quoted, scalar, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
-import type { ResearchArea } from "../../generated/enums.ts";
-import { refId, type TechnologyCategoryRef, type TechnologyRef } from "../../generated/refs.ts";
+import { fieldEntries } from "../../content/lower.ts";
+import type { ContentField } from "../../content/schema.ts";
+import { refId } from "../../generated/refs.ts";
 import type { ContentRefUse } from "../../references.ts";
-import type { Trigger } from "../../script/trigger-core.ts";
-import type { AnyOf, ParsedNumber, ParsedTechnology } from "./view.ts";
+import type { AnyOf, ParsedNumber } from "./view.ts";
 
 /**
- * What a patch may change: the fields the surface types, nothing else. `id`
- * is deliberately absent — a patched technology keeps vanilla's identity,
- * because the override must target the vanilla key to win.
+ * What the transform needs from a parsed definition: its key and the body it
+ * re-emits around the patched members. The registry-specific parsed class
+ * (`ParsedTechnology`) satisfies it and carries the rest.
  */
-export interface TechnologyPatch {
-  readonly cost?: number | ParsedNumber;
-  readonly tier?: number | ParsedNumber;
-  readonly weight?: number | ParsedNumber;
-  readonly area?: ResearchArea;
-  readonly category?: readonly (TechnologyCategoryRef | string)[];
-  readonly prerequisites?: readonly (TechnologyRef | string | AnyOf<TechnologyRef>)[];
-  readonly startTech?: boolean;
-  readonly isRare?: boolean;
-  readonly potential?: Trigger<"country">;
+export interface ParsedDefinition {
+  readonly id: string;
+  /** The full parsed body, in file order — the source of truth for emission. */
+  readonly body: readonly PdxEntry[];
 }
 
-export interface PatchedTechnology {
+/**
+ * A parsed occurrence carried into a patched member unchanged.
+ *
+ * It is already a PDXScript node, so it is spliced rather than lowered: the
+ * shipped definition's own blocks survive a patched member that keeps some of
+ * them and replaces others.
+ */
+export type Passthrough = PdxItem;
+
+/**
+ * One patch member's admitted inputs, derived from the same type the
+ * definition's own member has.
+ *
+ * A list-shaped member additionally admits passthrough elements and, where
+ * {@link PATCH_WIDENINGS} declares one, an `Extra` element form. A member that
+ * admits a number additionally admits the parsed form of one, so `t.cost`
+ * flows back in with its `@variable` provenance intact.
+ */
+export type PatchInput<T, Extra = never> =
+  | (T extends readonly (infer Element)[] ? readonly (Element | Extra | Passthrough)[] : T)
+  | (number extends T ? ParsedNumber : never);
+
+export interface PatchedContent<Source extends ParsedDefinition = ParsedDefinition> {
   readonly id: string;
-  /** The vanilla technology this patch transforms — provenance for the win engine. */
-  readonly source: ParsedTechnology;
+  /** The vanilla definition this patch transforms — provenance for the win engine. */
+  readonly source: Source;
   /**
    * The content references the patched fields write, for `buildMod`'s
    * dangling-reference guard. A patch is the other way a definition of this
@@ -59,111 +80,197 @@ export interface PatchedTechnology {
   toEntries(): PdxEntry;
 }
 
-/** A vanilla technology patch placed into a capability feature. */
-export interface TechnologyPatchItem {
+/** A vanilla patch placed into a capability feature. */
+export interface ContentPatchItem<Source extends ParsedDefinition = ParsedDefinition> {
   readonly itemKind: "patch";
-  readonly patched: PatchedTechnology;
+  readonly patched: PatchedContent<Source>;
 }
 
-function numberValue(value: number | ParsedNumber): PdxValue {
-  if (typeof value === "number") {
-    return scalar(value);
-  }
-  return value.ref !== undefined ? varRef(value.ref) : scalar(value.value);
+function isParsedNumber(value: unknown): value is ParsedNumber {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !("kind" in value) &&
+    !("id" in value) &&
+    typeof (value as { readonly value?: unknown }).value === "number"
+  );
 }
 
-function prerequisiteItem(item: TechnologyRef | string | AnyOf<TechnologyRef>): PdxItem {
-  if (typeof item !== "string" && "kind" in item) {
-    const options = item.options.map((option) => quoted(refId<string>(option)));
-    return { kind: "entry", key: "OR", op: "=", value: { kind: "container", items: options } };
-  }
-  return quoted(refId<string>(item));
+function isAnyOf(value: unknown): value is AnyOf<unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { readonly kind?: unknown }).kind === "any-of"
+  );
 }
 
-/** The patched fields as serializer values, keyed by their PDXScript keys. */
-function patchValues(patch: TechnologyPatch): Map<string, PdxValue> {
-  const values = new Map<string, PdxValue>();
-  if (patch.cost !== undefined) {
-    values.set("cost", numberValue(patch.cost));
-  }
-  if (patch.tier !== undefined) {
-    values.set("tier", numberValue(patch.tier));
-  }
-  if (patch.weight !== undefined) {
-    values.set("weight", numberValue(patch.weight));
-  }
-  if (patch.area !== undefined) {
-    values.set("area", scalar(patch.area));
-  }
-  if (patch.category !== undefined) {
-    values.set("category", {
-      kind: "container",
-      items: patch.category.map((c) => scalar(refId(c))),
-    });
-  }
-  if (patch.prerequisites !== undefined) {
-    values.set("prerequisites", {
-      kind: "container",
-      items: patch.prerequisites.map(prerequisiteItem),
-    });
-  }
-  if (patch.startTech !== undefined) {
-    values.set("start_tech", scalar(patch.startTech));
-  }
-  if (patch.isRare !== undefined) {
-    values.set("is_rare", scalar(patch.isRare));
-  }
-  if (patch.potential !== undefined) {
-    values.set("potential", { kind: "container", items: [...patch.potential.entries] });
-  }
-  return values;
+/**
+ * A `ParsedNumber` as an ordinary authored scalar: its `@variable` name when it
+ * came from one, and the resolved number otherwise. `contentScalar` turns the
+ * `@`-prefixed string back into a bare variable reference, so the provenance
+ * survives without this module knowing how a scalar is written.
+ */
+function parsedScalar(value: ParsedNumber): string | number {
+  return value.ref ?? value.value;
 }
 
-/** The ids the patched reference fields name, with the registry each names. */
-function patchRefs(patch: TechnologyPatch): ContentRefUse[] {
-  const refs: ContentRefUse[] = [];
-  for (const item of patch.prerequisites ?? []) {
-    const options = typeof item !== "string" && "kind" in item ? item.options : [item];
-    for (const option of options) {
-      refs.push({ targets: ["technology"], id: refId<string>(option), field: "prerequisites" });
+/** Whether a list-shaped field quotes its items, looking through a dual. */
+function quotesItems(field: ContentField): boolean {
+  if (field.shape === "valueList") {
+    return field.quoted ?? false;
+  }
+  if (field.shape === "dual") {
+    return field.arms.some(quotesItems);
+  }
+  return false;
+}
+
+/**
+ * An alternation group as the game writes it: `OR = { a b }` inside the list.
+ *
+ * It is a whole entry rather than a scalar, which no authoring member's
+ * element type can be, so it enters the lowering as a passthrough.
+ */
+function anyOfEntry(group: AnyOf<unknown>, quote: boolean): PdxEntry {
+  const options = group.options.map((option) => {
+    const id = String(refId(option as string));
+    return quote ? quoted(id) : scalar(id);
+  });
+  return { kind: "entry", key: "OR", op: "=", value: container(options) };
+}
+
+/**
+ * The patch-only input forms, rewritten into what `fieldEntries` already
+ * understands. Everything else is handed to the define path untouched.
+ */
+function lowerable(value: unknown, field: ContentField): unknown {
+  if (isParsedNumber(value)) {
+    return parsedScalar(value);
+  }
+  if (!Array.isArray(value)) {
+    return value;
+  }
+  const quote = quotesItems(field);
+  return (value as readonly unknown[]).map((item) => {
+    if (isParsedNumber(item)) {
+      return parsedScalar(item);
     }
-  }
-  for (const item of patch.category ?? []) {
-    refs.push({ targets: ["technology_category"], id: refId<string>(item), field: "category" });
-  }
-  return refs;
+    return isAnyOf(item) ? anyOfEntry(item, quote) : item;
+  });
 }
 
-export function patchTechnology<T extends ParsedTechnology>(
-  tech: T,
-  patch: (tech: T) => TechnologyPatch
-): PatchedTechnology {
-  const patched = patch(tech);
-  const values = patchValues(patched);
+/**
+ * Refuses a patched member carrying display text the patch path cannot mint a
+ * localisation key for.
+ *
+ * `defineX` registers a desc-bearing modifier row's key in a `ContentAuthoring`
+ * pre-pass that sees the whole definition; a patch runs no such pass, and the
+ * prefix-derived minting rule for patched definitions is not in yet. Dropping
+ * the text or inventing an unstable key would both be worse than saying so.
+ */
+function assertNoLocalisation(value: unknown, field: ContentField, member: string): void {
+  switch (field.shape) {
+    case "weightBlock":
+    case "weightBlockWithLoc": {
+      const rows =
+        (value as { readonly modifiers?: readonly { desc?: unknown }[] }).modifiers ?? [];
+      if (rows.some((row) => row.desc !== undefined)) {
+        throw new Error(
+          `The patched "${member}" has a modifier row with a desc, which needs a localisation ` +
+            "key minted for it, and a patch has nowhere yet to register one: desc'd modifier " +
+            "rows in patches arrive with the patch-localization change. Patch the field without " +
+            "desc, or define your own content instead of patching."
+        );
+      }
+      return;
+    }
+    case "repeatedStruct":
+      if (field.localisation.length > 0) {
+        throw new Error(
+          `The patched "${member}" is a nested definition whose ids carry localisation, and a ` +
+            "patch has nowhere yet to register one: patched localization arrives with the " +
+            "patch-localization change."
+        );
+      }
+      return;
+    case "dual":
+      for (const arm of field.arms) {
+        assertNoLocalisation(value, arm, member);
+      }
+      return;
+    default:
+      return;
+  }
+}
+
+/**
+ * The PDXScript key a field writes, or undefined when the field has none — an
+ * unkeyed splice (`inlineModifiers`) has no slot in the body to substitute, so
+ * it is not patchable. The generated patch type leaves those members out; this
+ * is the runtime half of the same fact.
+ */
+function keyOf(field: ContentField): string | undefined {
+  return "key" in field ? field.key : undefined;
+}
+
+/**
+ * Lowers the patched members and splices them into the parsed body.
+ *
+ * Every occurrence of a patched key is replaced by that member's new entries,
+ * at the position of the first occurrence; a key the body does not have is
+ * appended. Unpatched entries ride through untouched.
+ */
+export function patchContent<Source extends ParsedDefinition, Patch extends object>(
+  source: Source,
+  patch: (source: Source) => Patch,
+  fields: readonly ContentField[]
+): PatchedContent<Source> {
+  const patched = patch(source) as Readonly<Record<string, unknown>>;
+  const refs: ContentRefUse[] = [];
+  const ctx = {
+    collect: (use: ContentRefUse) => refs.push(use),
+    path: "",
+    ownerId: source.id,
+  };
+  const replacements = new Map<string, PdxEntry[]>();
+  for (const field of fields) {
+    const value = patched[field.member];
+    if (value === undefined) {
+      continue;
+    }
+    const key = keyOf(field);
+    if (key === undefined) {
+      continue;
+    }
+    assertNoLocalisation(value, field, field.member);
+    const entries = fieldEntries({ [field.member]: lowerable(value, field) }, [field], ctx);
+    replacements.set(key, [...(replacements.get(key) ?? []), ...entries]);
+  }
+
   return {
-    id: tech.id,
-    source: tech,
-    refs: patchRefs(patched),
+    id: source.id,
+    source,
+    refs,
     toEntries(): PdxEntry {
       const body: PdxEntry[] = [];
       const substituted = new Set<string>();
-      for (const entry of tech.body) {
-        const value = values.get(entry.key);
-        if (value !== undefined) {
+      for (const entry of source.body) {
+        const entries = replacements.get(entry.key);
+        if (entries !== undefined) {
           if (!substituted.has(entry.key)) {
             substituted.add(entry.key);
-            body.push({ kind: "entry", key: entry.key, op: "=", value });
+            body.push(...entries);
           }
           continue;
         }
         body.push(entry);
       }
-      for (const [key, value] of values) {
+      for (const [key, entries] of replacements) {
         if (!substituted.has(key)) {
-          body.push({ kind: "entry", key, op: "=", value });
+          body.push(...entries);
         }
       }
-      return { kind: "entry", key: tech.id, op: "=", value: { kind: "container", items: body } };
+      return { kind: "entry", key: source.id, op: "=", value: container(body) };
     },
   };
 }

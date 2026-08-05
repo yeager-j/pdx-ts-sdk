@@ -443,12 +443,22 @@ async function main(): Promise<void> {
       (name) => !schemaTypes.includes(name) && !authoringTypes.includes(name)
     );
     const aliasStructImports = aliasCategoryImports(content.emission.code);
+    // The patch surface a `CONTENT_PATCH_REGISTRIES` row generates: the generic
+    // transform's types, and the parsed definition it transforms.
+    const patchTypes = ["ContentPatchItem", "PatchInput", "PatchedContent"].filter((name) =>
+      referencesIdentifier(content.emission.code, name)
+    );
+    const parsedTypes = ["AnyOf", `Parsed${content.emission.typeName}`].filter((name) =>
+      referencesIdentifier(content.emission.code, name)
+    );
     await write(
       `${content.registry.replaceAll("_", "-")}.ts`,
       header(commit, [content.manifest.source]) +
         importList("../content/schema.ts", schemaTypes) +
         importList("../content/authoring.ts", authoringTypes) +
         importList("../content/types.ts", typeTypes) +
+        importList("../stellaris/vanilla/patch.ts", patchTypes) +
+        importList("../stellaris/vanilla/view.ts", parsedTypes) +
         triggerCoreImports(content.emission.code) +
         (content.emission.code.includes("ScopeName")
           ? 'import type { ScopeName } from "./scopes.ts";\n'
@@ -677,6 +687,11 @@ async function main(): Promise<void> {
       `${content.registry} localization aliases collapsed`,
       content.emission.localisationAliases
     );
+    reportSection(
+      `${content.registry} fields a patch cannot carry`,
+      content.emission.patchExclusions
+    );
+    reportSection(`${content.registry} patch members widened`, content.emission.patchWidenings);
   }
 }
 
@@ -942,7 +957,10 @@ function contentDefiners(
           `  ${camelCase(registry)}: Source,\n` +
           `  patch: (${camelCase(registry)}: Source) => ${name}Patch\n` +
           `): ${name}PatchItem {\n` +
-          `  return { itemKind: "patch", patched: transform${name}(${camelCase(registry)}, patch) };\n` +
+          `  return {\n` +
+          `    itemKind: "patch",\n` +
+          `    patched: patchContent(${camelCase(registry)}, patch, ${emission.fieldsConstant}),\n` +
+          "  };\n" +
           "}\n"
       );
     }
@@ -974,33 +992,53 @@ function contentDefiners(
     );
   }
 
-  const patchNames = contents
-    .filter((content) => CONTENT_PATCH_REGISTRIES.has(content.registry))
-    .map((content) => content.emission.typeName);
+  const patchContents = contents.filter((content) =>
+    CONTENT_PATCH_REGISTRIES.has(content.registry)
+  );
   const refImports = contents.some((content) => CONTENT_CONTRIBUTION_SINKS.has(content.registry));
   const contentItemTypes = [...runtimeItemTypes].filter((name) => !name.endsWith("PatchItem"));
   const imports =
     importList("../content/types.ts", contentItemTypes) +
     (refImports ? 'import { refId, type TypedRef } from "./refs.ts";\n' : "") +
-    patchNames
+    // One generic transform, called with the registry's own field descriptors:
+    // the patch surface is descriptor-derived the whole way down, so nothing
+    // per-registry is imported from a hand-written module.
+    (patchContents.length === 0
+      ? ""
+      : 'import { patchContent } from "../stellaris/vanilla/patch.ts";\n') +
+    patchContents
       .map(
-        (name) =>
-          `import { patch${name} as transform${name}, type ${name}Patch, type ${name}PatchItem } ` +
-          'from "../stellaris/vanilla/patch.ts";\n' +
-          `import type { Parsed${name} } from "../stellaris/vanilla/view.ts";\n`
+        (content) =>
+          `import type { Parsed${content.emission.typeName} } ` +
+          'from "../stellaris/vanilla/view.ts";\n'
       )
       .join("") +
     contents
-      .map((content) =>
-        importList(`./${content.registry.replaceAll("_", "-")}.ts`, [
+      .map((content) => {
+        const from = `./${content.registry.replaceAll("_", "-")}.ts`;
+        const types = [
           `${content.emission.typeName}Def`,
           // A scope-parameterised definer constrains S by the registry's own
           // scope union, so that type has to travel with the Def.
           ...(content.emission.scopeParameter === null
             ? []
             : [content.emission.scopeParameter.typeName]),
-        ])
-      )
+        ];
+        if (!CONTENT_PATCH_REGISTRIES.has(content.registry)) {
+          return importList(from, types);
+        }
+        const names = [
+          content.emission.fieldsConstant,
+          ...[
+            ...types,
+            `${content.emission.typeName}Patch`,
+            `${content.emission.typeName}PatchItem`,
+          ]
+            .sort()
+            .map((name) => `type ${name}`),
+        ];
+        return `import { ${names.join(", ")} } from ${JSON.stringify(from)};\n`;
+      })
       .join("");
   const graftImports = contents.some((content) =>
     HAND_WRITTEN_CONTENT_DEFINERS.has(content.registry)

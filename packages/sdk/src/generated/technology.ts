@@ -6,6 +6,8 @@ import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
+import type { ContentPatchItem, PatchedContent, PatchInput } from "../stellaris/vanilla/patch.ts";
+import type { AnyOf, ParsedTechnology } from "../stellaris/vanilla/view.ts";
 import type { ResearchArea, TechAiType } from "./enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./refs.ts";
 import type { FeatureFlag, TechWeightGroup } from "./value-sets.ts";
@@ -135,6 +137,73 @@ export type DefinedTechnology<Id extends string = string> = DefinedContent<
   "technology",
   TechnologyDef<Id>
 >;
+
+/**
+ * What a patch of a vanilla technology may change.
+ * Closed, so a typo is a compile error, and `id`-less: a patched definition
+ * keeps vanilla's identity, because the override has to target the vanilla
+ * key to win.
+ */
+export interface TechnologyPatch {
+  readonly area?: PatchInput<ResearchArea>;
+  readonly tier?: PatchInput<TechnologyTierRef | string | number>;
+  readonly category?: PatchInput<
+    (TechnologyCategoryRef | string)[] | TechnologyCategoryRef | string
+  >;
+  readonly icon?: PatchInput<string>;
+  /**
+   * Only when technology subtype `start` applies.
+   * Only when technology subtype not `start` applies.
+   */
+  readonly cost?: PatchInput<number | WeightBlock<never>>;
+  /**
+   * Only when technology subtype `start` applies.
+   * Only when technology subtype not `start` applies.
+   */
+  readonly weight?: PatchInput<number>;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Only when technology subtype not `start` applies.
+   */
+  readonly isCustomTech1?: PatchInput<boolean>;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Only when technology subtype not `start` applies.
+   */
+  readonly isCustomTech2?: PatchInput<boolean>;
+  /**
+   * NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use
+   * Only when technology subtype not `start` applies.
+   */
+  readonly isCustomTech3?: PatchInput<boolean>;
+  /** Only when technology subtype not `start` applies. */
+  readonly levels?: PatchInput<number>;
+  readonly prerequisites?: PatchInput<(TechnologyRef | string)[], AnyOf<TechnologyRef>>;
+  readonly technologySwap?: PatchInput<TechnologyTechnologySwap[]>;
+  readonly potential?: PatchInput<Trigger<"country">>;
+  readonly gateway?: PatchInput<string>;
+  /** Only when technology subtype `repeatable` applies. */
+  readonly costPerLevel?: PatchInput<number>;
+  /** a weight group increases the chances of a technology appearing - if another tech of a similar group is picked. */
+  readonly weightGroups?: PatchInput<TechWeightGroup[]>;
+  readonly startTech?: PatchInput<boolean>;
+  readonly isReverseEngineerable?: PatchInput<boolean>;
+  readonly aiUpdateType?: PatchInput<TechAiType>;
+  readonly isRare?: PatchInput<boolean>;
+  readonly isDangerous?: PatchInput<boolean>;
+  readonly isInsight?: PatchInput<boolean>;
+  readonly featureFlags?: PatchInput<FeatureFlag[]>;
+  readonly weightModifier?: PatchInput<WeightBlock<"country">>;
+  readonly aiWeight?: PatchInput<WeightBlock<"country">>;
+  /** Only when technology subtype `start` applies. */
+  readonly startingPotential?: PatchInput<Trigger<"country">>;
+}
+
+/** A patched vanilla technology, ready for the win engine. */
+export type PatchedTechnology = PatchedContent<ParsedTechnology>;
+
+/** A patched vanilla technology placed into a capability feature. */
+export type TechnologyPatchItem = ContentPatchItem<ParsedTechnology>;
 
 export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
   { key: "area", member: "area", shape: "value", form: "scalar", conversion: "identity" },
