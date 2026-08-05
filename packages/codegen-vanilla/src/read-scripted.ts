@@ -139,7 +139,7 @@ function merge(left: ScriptedDefinition, right: ScriptedDefinition): ScriptedDef
       .sort((one, other) => compareIdentifiers(one.name, other.name)),
     // Parameters union because a caller who satisfies the union satisfies
     // either body; the body itself is last-wins, because exactly one of them is
-    // what the game loads (`packages/sdk/src/resolver/rules.ts`).
+    // what the game loads (`packages/sdk/src/stellaris/vanilla/override-rules.ts`).
     body: right.body,
   };
 }

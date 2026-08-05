@@ -10,9 +10,9 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import { NoWinningFilenameError, PdxSdkError, UnverifiedRegistryError } from "../../src/errors.ts";
-import { compareLogicalPaths, normalizeLogicalPath } from "../../src/resolver/path-order.ts";
-import { planPatchEmission, type PatchInput } from "../../src/resolver/plan.ts";
-import type { VanillaFile } from "../../src/vanilla/surface.ts";
+import { compareLogicalPaths, normalizeLogicalPath } from "../../src/ordering.ts";
+import { planPatchEmission, type PatchInput } from "../../src/stellaris/vanilla/override-plan.ts";
+import type { VanillaFile } from "../../src/stellaris/vanilla/view.ts";
 
 function file(path: string, ...keys: string[]): VanillaFile {
   return { path: normalizeLogicalPath(path), sha256: "ab".repeat(32), keys };

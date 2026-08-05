@@ -52,9 +52,9 @@ import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { CONTENT_DECLINED_FIELDS, REPEATED_STRUCT_DEFINITIONS } from "@pdx-ts/codegen-cwt/overlay";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
-import { compareUtf8 } from "../../src/resolver/path-order.ts";
-import { locateInstall } from "../../src/stellaris/locate.ts";
-import { readGameVersion } from "../../src/stellaris/version.ts";
+import { compareUtf8 } from "../../src/ordering.ts";
+import { locateInstall } from "../../src/stellaris/installation/locate.ts";
+import { readGameVersion } from "../../src/stellaris/installation/version.ts";
 
 /**
  * Anchored to the module rather than the process, the same way

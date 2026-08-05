@@ -70,13 +70,13 @@ function stellarisIdsPackageVersion(): string {
     readFileSync(path.join(REPO, "packages/stellaris-ids/package.json"), "utf8")
   ) as { version: string };
   // major.minor.patch only, matching checkVanillaPackagePin's own comparison
-  // (packages/sdk/src/vanilla/package-pin.ts): a regen-fix release like
+  // (packages/sdk/src/identifiers/package-pin.ts): a regen-fix release like
   // "4.4.6-r2" still pins install "4.4.6".
   return pkg.version.split(/[-+]/, 1)[0]!;
 }
 
 /**
- * `checkVanillaPackagePin` (packages/sdk/src/vanilla/package-pin.ts) throws
+ * `checkVanillaPackagePin` (packages/sdk/src/identifiers/package-pin.ts) throws
  * `VanillaPackageMismatchError` whenever a `VanillaView` and the installed
  * `@pdx-ts/stellaris-ids` disagree about which game build they describe.
  * That is a real, useful guard — but a mismatch here would make the

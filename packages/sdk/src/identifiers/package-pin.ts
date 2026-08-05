@@ -19,7 +19,7 @@ import { VanillaPackageMismatchError } from "../errors.ts";
  * package is present. Any failure (not installed, no such export in the
  * resolver, malformed `package.json`, missing or non-string `version`)
  * silently returns `undefined`: an absent package is a legal, fully
- * supported configuration (see `vanilla-ids.ts`'s per-registry degradation).
+ * supported configuration (see `contracts.ts`'s per-registry degradation).
  *
  * `specifier` exists for tests: point it at a fixture `package.json` path to
  * exercise this without touching the workspace-installed package.
@@ -104,7 +104,7 @@ export function checkVanillaPackagePin(
  * The gate above refuses a build; this only reports, because both worlds it
  * describes are legal ones an author may have chosen. What makes it worth
  * reporting is that neither announces itself: without the package every
- * `VanillaId<K>` degrades to plain `string` (`vanilla-ids.ts`), by design and
+ * `VanillaId<K>` degrades to plain `string` (`contracts.ts`), by design and
  * silently, so a typo'd vanilla reference typechecks, builds, ships, and does
  * nothing in game. A protection that can switch itself off unnoticed is worth
  * one line on `mod.warnings`.

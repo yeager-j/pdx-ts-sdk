@@ -15,7 +15,6 @@ import {
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
-import { underField, type ContentRefSink, type ContentRefUse } from "./content-refs.ts";
 import {
   assertSynchronousClosure,
   complexTriggerModifierEntry,
@@ -36,6 +35,7 @@ import type { ScopeObjOf } from "./generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "./generated/modifiers.ts";
 import { refId, type EconomicCategoryRef, type TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
+import { underField, type ContentRefSink, type ContentRefUse } from "./references.ts";
 import { scriptValueScalar, type ScriptValue, type Trigger } from "./trigger-core.ts";
 
 /**
@@ -817,10 +817,10 @@ export interface ContentRegistryDescriptor {
   readonly keyedBy?: { readonly keyword: string; readonly nameField: string };
 }
 
-/** The reference vocabulary lives in `content-refs.ts` because the trigger and
+/** The reference vocabulary lives in `references.ts` because the trigger and
  * effect encoders record them too; it is re-exported here where content
  * lowering — the first and densest producer — is defined. */
-export type { ContentRefSink, ContentRefUse } from "./content-refs.ts";
+export type { ContentRefSink, ContentRefUse } from "./references.ts";
 
 /** A definition registered with a mod and usable as a typed cross-reference. */
 export interface DefinedContent<

@@ -30,8 +30,8 @@
 // From: common/solar_system_initializers.cwt
 // From: content-manifest.ts (VANILLA_REF_EXTRAS)
 
-import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../vanilla-ids.ts";
-import { makeIdTrie } from "../vanilla-trie.ts";
+import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../identifiers/contracts.ts";
+import { makeIdTrie } from "../identifiers/trie.ts";
 import type {
   AgendaRef,
   AgreementPresetRef,

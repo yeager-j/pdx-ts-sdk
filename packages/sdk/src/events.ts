@@ -16,7 +16,6 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import { underField, type ContentRefUse } from "./content-refs.ts";
 import {
   modifierDescKey,
   modifierEntry,
@@ -41,6 +40,7 @@ import {
 } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
 import type { ModWarning } from "./items.ts";
+import { underField, type ContentRefUse } from "./references.ts";
 import type { Trigger } from "./trigger-core.ts";
 // The typed fire signatures for every event kind are generated into the
 // scope interfaces — this side-effect import is what loads the augmentation.

@@ -10,18 +10,18 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  checkVanillaPackagePin,
+  installedVanillaPackageVersion,
+  vanillaIdsCheckWarning,
+} from "../src/identifiers/package-pin.ts";
+import {
   createMod,
   render,
   StaleRuleTableError,
   VanillaPackageMismatchError,
   type ModConfig,
 } from "../src/index.ts";
-import {
-  checkVanillaPackagePin,
-  installedVanillaPackageVersion,
-  vanillaIdsCheckWarning,
-} from "../src/vanilla/package-pin.ts";
-import { viewFromFiles } from "../src/vanilla/surface.ts";
+import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
 describe("checkVanillaPackagePin", () => {

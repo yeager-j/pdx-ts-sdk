@@ -12,14 +12,14 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { GameVersionError, InstallNotFoundError } from "../src/errors.ts";
 import { createMod } from "../src/index.ts";
-import { describeInstall } from "../src/stellaris/describe.ts";
-import { load } from "../src/stellaris/load.ts";
-import { locateInstall } from "../src/stellaris/locate.ts";
+import { describeInstall } from "../src/stellaris/installation/describe.ts";
+import { locateInstall } from "../src/stellaris/installation/locate.ts";
 import {
   readGameVersion,
   requireGameVersion,
   supportedVersionFor,
-} from "../src/stellaris/version.ts";
+} from "../src/stellaris/installation/version.ts";
+import { load } from "../src/stellaris/vanilla/load.ts";
 
 const FIXTURE = join(import.meta.dirname, "../../../fixtures/fake-install");
 

@@ -318,7 +318,13 @@ src/
 ├── on-actions.ts      on-action lowering
 ├── trigger-core.ts    Trigger<S>, scope brand, and trigger()
 ├── effect-core.ts     scope-object recorder, ScopeRef, and event targets
-├── vanilla/           install-derived view, patches, and version pin
+├── ordering.ts        canonical logical-path and UTF-8 ordering
+├── references.ts      recorded content-reference vocabulary
+├── identifiers/       optional vanilla identifier contracts and package pin
+├── stellaris/         installed-game integration and vanilla content
+│   ├── installation/  install discovery and game-version metadata
+│   ├── launcher/      launcher-owned mod directory discovery
+│   └── vanilla/       parsed view, patches, and override rules
 └── generated/         committed codegen output — never edit by hand
 ```
 

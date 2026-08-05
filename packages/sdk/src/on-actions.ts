@@ -2,7 +2,7 @@ import { block, list, scalar, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { DefinedEvent } from "./events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
-import { compareUtf8 } from "./resolver/path-order.ts";
+import { compareUtf8 } from "./ordering.ts";
 
 export interface OnActionRef<
   S extends ScopeName | null = ScopeName | null,

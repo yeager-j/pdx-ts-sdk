@@ -16,12 +16,12 @@
 import { createHash } from "node:crypto";
 import { block, cmp, kv, type PdxEntry, type PdxOp, type PdxScalar } from "@pdx-ts/pdxscript";
 
-import type { ContentRefUse } from "./content-refs.ts";
 import { EFFECT_META, type EffectFieldMeta } from "./generated/effect-meta.ts";
 import type { ScopeObjOf } from "./generated/effects.ts";
 import { EVENT_KINDS } from "./generated/events.ts";
 import type { ScopeName } from "./generated/scopes.ts";
-import { compareUtf8 } from "./resolver/path-order.ts";
+import { compareUtf8 } from "./ordering.ts";
+import type { ContentRefUse } from "./references.ts";
 import { toScalar } from "./scalar.ts";
 import type { ScriptedEffectCall, ScriptedParamValue } from "./scripted.ts";
 import { scriptValueScalar, trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";

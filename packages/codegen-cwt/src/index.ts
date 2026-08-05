@@ -458,8 +458,8 @@ async function main(): Promise<void> {
   await write(
     "vanilla-refs.ts",
     header(commit, [...contentSources, "content-manifest.ts (VANILLA_REF_EXTRAS)"]) +
-      'import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../vanilla-ids.ts";\n' +
-      'import { makeIdTrie } from "../vanilla-trie.ts";\n' +
+      'import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../identifiers/contracts.ts";\n' +
+      'import { makeIdTrie } from "../identifiers/trie.ts";\n' +
       importList(
         "./refs.ts",
         vanillaRefs.refs.map((name) => emitter.refTypeName(name))
@@ -471,7 +471,7 @@ async function main(): Promise<void> {
     "triggers.ts",
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
       'import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";\n' +
-      'import type { ContentRefUse } from "../content-refs.ts";\n' +
+      'import type { ContentRefUse } from "../references.ts";\n' +
       `import { trigger, type Trigger${referencesIdentifier(triggers.code, "ScriptValue") ? ", type ScriptValue" : ""}` +
       `${referencesIdentifier(triggers.code, "scriptValueScalar") ? ", scriptValueScalar" : ""} } ` +
       'from "../trigger-core.ts";\n' +
@@ -961,8 +961,8 @@ function contentDefiners(
       .map(
         (name) =>
           `import { patch${name} as transform${name}, type ${name}Patch } ` +
-          'from "../vanilla/patch.ts";\n' +
-          `import type { Parsed${name} } from "../vanilla/surface.ts";\n`
+          'from "../stellaris/vanilla/patch.ts";\n' +
+          `import type { Parsed${name} } from "../stellaris/vanilla/view.ts";\n`
       )
       .join("") +
     contents

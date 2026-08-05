@@ -17,8 +17,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { compareUtf8 } from "../../src/resolver/path-order.ts";
-import { locateInstall } from "../../src/stellaris/locate.ts";
+import { compareUtf8 } from "../../src/ordering.ts";
+import { locateInstall } from "../../src/stellaris/installation/locate.ts";
 import {
   extractCorpus,
   FIXTURE_PATH,

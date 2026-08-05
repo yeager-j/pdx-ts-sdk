@@ -297,7 +297,7 @@ into `common/scripted_effects/`, `common/scripted_triggers/`, and
 alternative for logic that's meant to be part of the mod's public surface.
 
 DoA hand-writes 30 such definitions plus 77 scripted variables, which is the
-scale to design against. Note `src/vanilla/patch.ts` already re-declares
+scale to design against. Note `src/stellaris/vanilla/patch.ts` already re-declares
 file-local `@variables` in patch output, so scripted variables have partial
 machinery. Distinct from the vanilla-binding task above, which is about
 _consuming_ vanilla's scripted triggers.

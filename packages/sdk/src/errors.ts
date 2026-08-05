@@ -12,7 +12,7 @@ export class PdxSdkError extends Error {
   }
 }
 
-/** A raw path that cannot become a logical path (see resolver/path-order.ts). */
+/** A raw path that cannot become a logical path (see ordering.ts). */
 export class LogicalPathError extends PdxSdkError {}
 
 /** No Stellaris install at any searched location. */

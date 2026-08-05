@@ -15,10 +15,10 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-import { parseStrict, sha256Hex, VanillaView, type ParsedSource } from "../vanilla/surface.ts";
+import { locateInstall } from "../installation/locate.ts";
+import { readGameVersion } from "../installation/version.ts";
 import { cacheKey, readCache, writeCache } from "./cache.ts";
-import { locateInstall } from "./locate.ts";
-import { readGameVersion } from "./version.ts";
+import { parseStrict, sha256Hex, VanillaView, type ParsedSource } from "./view.ts";
 
 export interface LoadOptions {
   /** Game root; wins over STELLARIS_PATH and the platform defaults. */

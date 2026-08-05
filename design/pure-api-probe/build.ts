@@ -32,19 +32,19 @@ import {
 } from "../../packages/sdk/src/generated/content-registry.ts";
 import type { ScopeName } from "../../packages/sdk/src/generated/scopes.ts";
 import { OnActionAuthoring } from "../../packages/sdk/src/on-actions.ts";
-import { normalizeLogicalPath } from "../../packages/sdk/src/resolver/path-order.ts";
+import { normalizeLogicalPath } from "../../packages/sdk/src/ordering.ts";
 import {
   collectVarRefs,
   planPatchEmission,
   type PatchPlan,
-} from "../../packages/sdk/src/resolver/plan.ts";
-import { SUPPORTED_STELLARIS_BUILD } from "../../packages/sdk/src/resolver/rules.ts";
-import type { PatchedTechnology } from "../../packages/sdk/src/vanilla/patch.ts";
+} from "../../packages/sdk/src/stellaris/vanilla/override-plan.ts";
+import { SUPPORTED_STELLARIS_BUILD } from "../../packages/sdk/src/stellaris/vanilla/override-rules.ts";
+import type { PatchedTechnology } from "../../packages/sdk/src/stellaris/vanilla/patch.ts";
 import {
   sha256Hex,
   type VanillaFile,
   type VanillaView,
-} from "../../packages/sdk/src/vanilla/surface.ts";
+} from "../../packages/sdk/src/stellaris/vanilla/view.ts";
 import { flattenItems, type EventItemBase, type ModItemInput, type ModWarning } from "./items.ts";
 
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;

@@ -8,7 +8,7 @@
  * the verdict is to ship, what crosses the licensing boundary is a scope name,
  * never the tree this module returns.
  *
- * Override is last-wins, matching `packages/sdk/src/resolver/rules.ts` for both
+ * Override is last-wins, matching `packages/sdk/src/stellaris/vanilla/override-rules.ts` for both
  * directories: a later-loading file redefining a name replaces it whole.
  */
 

@@ -30,8 +30,11 @@
 // From: common/solar_system_initializers.cwt
 
 import type { ContentItem, ContributionItem, TechnologyPatchItem } from "../items.ts";
-import { patchTechnology as transformTechnology, type TechnologyPatch } from "../vanilla/patch.ts";
-import type { ParsedTechnology } from "../vanilla/surface.ts";
+import {
+  patchTechnology as transformTechnology,
+  type TechnologyPatch,
+} from "../stellaris/vanilla/patch.ts";
+import type { ParsedTechnology } from "../stellaris/vanilla/view.ts";
 import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";

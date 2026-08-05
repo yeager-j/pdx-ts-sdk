@@ -22,15 +22,11 @@
 import { createHash } from "node:crypto";
 import { parse, type PdxContainer, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
-import { SwapPatchError } from "../errors.ts";
-import type { ResearchArea } from "../generated/enums.ts";
-import type { TechnologyCategoryRef, TechnologyRef } from "../generated/refs.ts";
-import {
-  compareLogicalPaths,
-  normalizeLogicalPath,
-  type LogicalPath,
-} from "../resolver/path-order.ts";
-import { trigger, type Trigger } from "../trigger-core.ts";
+import { SwapPatchError } from "../../errors.ts";
+import type { ResearchArea } from "../../generated/enums.ts";
+import type { TechnologyCategoryRef, TechnologyRef } from "../../generated/refs.ts";
+import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../../ordering.ts";
+import { trigger, type Trigger } from "../../trigger-core.ts";
 
 /**
  * A number as a vanilla file states it: the resolved value, plus the

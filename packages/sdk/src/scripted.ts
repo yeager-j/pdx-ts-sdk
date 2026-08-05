@@ -38,10 +38,10 @@ import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 import type { ScopeValue } from "./effect-core.ts";
 import type { TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
-import { compareUtf8 } from "./resolver/path-order.ts";
+import type { VanillaScriptedEffects, VanillaScriptedTriggers } from "./identifiers/contracts.ts";
+import { compareUtf8 } from "./ordering.ts";
 import { toScalar, type ScalarArg } from "./scalar.ts";
 import { trigger, type Trigger } from "./trigger-core.ts";
-import type { VanillaScriptedEffects, VanillaScriptedTriggers } from "./vanilla-ids.ts";
 
 // ---------------------------------------------------------------------------
 // Scope
