@@ -1193,6 +1193,22 @@ describe("generated content definers", () => {
     expect(publicIndex).not.toContain("export { addShipOfSizeLimits");
   });
 
+  it("exports every patchable registry's whole patch vocabulary, symmetrically", () => {
+    // The three names `patchTypes` generates per overlay row. A registry whose
+    // patch item is unnameable from the root cannot be typed by a consumer at
+    // all — the package publishes no generated-module subpath — and the
+    // asymmetry is invisible until someone tries. Derived from the overlay, so
+    // a third row is held to the same bar without editing this test.
+    const publicIndex = readFileSync("packages/sdk/src/index.ts", "utf8");
+    const missing = [...CONTENT_PATCH_REGISTRIES.keys()].flatMap((registry) => {
+      const name = pascalCase(registry);
+      return [`${name}Patch`, `Patched${name}`, `${name}PatchItem`].filter(
+        (symbol) => !new RegExp(`\\b${symbol}\\b`).test(publicIndex)
+      );
+    });
+    expect(missing).toEqual([]);
+  });
+
   it("derives every nested identity table from repeated-struct metadata", () => {
     const nestedByRegistry = CONTENT_MANIFEST.map((manifest) => {
       const registry = (manifest as ContentManifestEntry).as ?? manifest.type;

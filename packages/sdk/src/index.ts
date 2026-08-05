@@ -254,6 +254,7 @@ export type { ContentItem, ContributionItem } from "./content/types.ts";
 export type { ModWarning } from "./diagnostics.ts";
 export type { OnActionHookItem } from "./events/on-actions.ts";
 export type { EventItem, EventItemBase } from "./events/types.ts";
+export type { BuildingPatchItem } from "./generated/building.ts";
 export type { TechnologyPatchItem } from "./generated/technology.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {

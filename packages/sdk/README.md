@@ -287,15 +287,26 @@ const newTechnology = mod.technology("new", {
   category: "particles",
 });
 const geneTailoring = mod.patchTechnology(
-  vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
+  vanilla.definition("technology", "tech_gene_tailoring").require("cost", "prerequisites"),
   (technology) => ({
     cost: technology.cost.value * 2,
     prerequisites: [...technology.prerequisites, newTechnology],
   })
 );
+const capital = mod.patchBuilding(vanilla.definition("building", "building_capital_1"), () => ({
+  planetLimit: 2,
+  prerequisites: [newTechnology],
+}));
 
-const compiled = mod.compile([mod.feature(undefined, [newTechnology, geneTailoring])], { vanilla });
+const compiled = mod.compile([mod.feature(undefined, [newTechnology, geneTailoring, capital])], {
+  vanilla,
+});
 ```
+
+`vanilla.definition(registry, id)` is tagged with the registry it came from, so
+a parsed building cannot be handed to `patchTechnology`. Each patched registry
+gets its own emission, resolved independently — `technology` and `building` are
+the registries whose override rules are verified today.
 
 The patch's emitted filename is computed from the parsed load-order enumeration
 so it provably byte-sorts after every competing file. Compilation fails when no
