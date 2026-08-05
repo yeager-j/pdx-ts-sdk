@@ -502,9 +502,11 @@ and the override didn't take" becomes a build error.
 
 At the root: `vendor/` (the committed cwtools rules and doc dumps),
 `fixtures/` (the shared fake install the hermetic tests run against),
-`examples/` (the quickstart and the hardening corpus), and `docs/` and
-`design/` (dated design records and gated probes — check status headers
-before treating one as current).
+`examples/` (the quickstart and the hardening corpus), and `docs/`
+(the ADRs, plus proposals not yet implemented).
+
+[CONTEXT-MAP.md](CONTEXT-MAP.md) indexes the five bounded contexts and their
+glossaries.
 
 ## Development
 

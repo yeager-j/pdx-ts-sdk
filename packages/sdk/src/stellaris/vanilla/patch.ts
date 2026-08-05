@@ -1,6 +1,6 @@
 /**
- * Transform-style patching over a parsed technology, promoted from
- * `design/parser-probe/patch.ts`. The patch type is closed (typos and `id`
+ * Transform-style patching over a parsed technology. The patch type is closed
+ * (typos and `id`
  * are compile errors) and a patched field keeps its slot: emission walks the
  * original entry list, substituting patched values in place and appending
  * only genuinely new fields — which is what keeps "always emit complete

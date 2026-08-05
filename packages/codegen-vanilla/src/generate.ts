@@ -230,7 +230,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
   // Bodies in, scopes out. The inference reads the CWT rules' own scope
   // declarations and intersects them over each body; the bodies never leave
   // this function, and what reaches an emitter is a scope name from
-  // `scopes.cwt`. See `docs/verdict/verdict-scripted-scope.md`.
+  // `scopes.cwt`.
   const reads = new Map(
     scriptedRows.map((row) => [
       row.registry,

@@ -16,5 +16,7 @@ modules, without changing a byte.
 The cost, accepted: authoring is slightly more verbose, because items must be
 explicitly placed rather than implicitly collected.
 
-Evidence: [verdict-pure-api-probe.md](../verdict/verdict-pure-api-probe.md),
-[verdict-mod-capability-probe.md](../verdict/verdict-mod-capability-probe.md).
+Evidence: `packages/sdk/tests/pure-api.test.ts` for the fold and its order
+purity; `packages/sdk/tests/mod-capability.test.ts` for capability ownership;
+`packages/sdk/tests/public-surface.test-d.ts`, which pins the absent builder by
+asserting `buildMod`, `createFeature`, and `flattenItems` are not exported.

@@ -3,8 +3,7 @@
  * intersecting the scopes the CWT rules already declare for the primitives its
  * body evaluates.
  *
- * This is not the body inference `docs/handoff/handoff-vanilla-surface.md` originally
- * rejected. That was heuristics over what a body *means*; this reads only what
+ * This is not the body inference originally rejected for this package. That was heuristics over what a body *means*; this reads only what
  * the rules already say about where each key is *legal*, and every key the
  * rules do not cover contributes nothing rather than a guess. The analysis can
  * therefore be too wide — which is exactly the `Trigger<ScopeName>` the SDK
@@ -29,8 +28,8 @@
  *
  * Measured against a real 4.4.6 install this narrows 90% of scripted triggers
  * and 63% of scripted effects and contradicts none of the 4,860 call sites
- * vanilla ships. The evidence and the mutation testing behind those numbers are
- * in `docs/verdict/verdict-scripted-scope.md`; the probe is `design/scripted-scope-probe/`.
+ * vanilla ships. `packages/codegen-vanilla/tests/callsites.test.ts` re-measures
+ * both numbers on every run and fails on any contradiction.
  */
 
 import type { RuleFact, RuleScopes, ScopeFacts } from "@pdx-ts/codegen-cwt/scope-facts";

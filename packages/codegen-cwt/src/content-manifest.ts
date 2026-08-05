@@ -159,8 +159,7 @@ export const CONTENT_MANIFEST = [
  * ids, but not content types the SDK writes a `defineX` for — the SDK only
  * ever refers to a sprite or a sound, never authors one.
  *
- * `oversized` marks the two-tier editor-perf split
- * (`docs/handoff/handoff-vanilla-surface.md`): a navigable trie plus a checked-call
+ * `oversized` marks the two-tier editor-perf split: a navigable trie plus a checked-call
  * form instead of a flat literal-union parameter, because these registries'
  * real id counts (~9.2k sprites, ~5.9k sound names) blow out a completion menu
  * the way `resource`'s handful do not.

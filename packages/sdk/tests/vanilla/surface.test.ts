@@ -1,8 +1,7 @@
 /**
- * The promoted typed surface, tested against the probe's hand-written
- * goldens (they were written before any parser existed and are immutable —
- * a mismatch is a finding, not an edit-until-green) plus the promotion's
- * three new claims: OR-prerequisites are typed data, `@ref` re-emission
+ * The typed vanilla surface, tested against hand-written goldens (written
+ * before any parser existed and immutable — a mismatch is a finding, not an
+ * edit-until-green) plus three further claims: OR-prerequisites are typed data, `@ref` re-emission
  * survives the package serializer's quoting rule, and swap names refuse.
  */
 
@@ -24,9 +23,8 @@ const geneForging = vanilla
   .technology("tech_gene_forging")
   .require("cost", "prerequisites", "weight");
 
-// The unpatched fixture tech re-emitted in repo formatting — copied verbatim
-// from design/parser-probe/probe.test.ts, where it was hand-written before
-// the parser existed.
+// The unpatched fixture tech re-emitted in repo formatting, hand-written
+// before the parser existed.
 const GOLDEN_ROUNDTRIP = `tech_gene_forging = {
 	cost = @t3cost
 	area = society
@@ -113,7 +111,7 @@ const GOLDEN_PATCHED = GOLDEN_ROUNDTRIP.replace("\tcost = @t3cost\n", "\tcost = 
   '\tprerequisites = { "tech_helix_mapping" "pp_tech_chimeric_grafts" }\n'
 );
 
-describe("promoted surface", () => {
+describe("typed vanilla surface", () => {
   it("round-trips the fixture tech to the hand-written golden", () => {
     expect(serialize([geneForging.toEntries()])).toBe(GOLDEN_ROUNDTRIP);
   });
@@ -195,7 +193,12 @@ describe("promoted surface", () => {
     expect(() => vanilla.technology("tech_gene_forging_overtuned")).toThrow(
       /technology_swap inside tech_gene_forging/
     );
-    expect(() => vanilla.technology("tech_gene_forging_overtuned")).toThrow(/open question 3/);
+    // Pins the actionable half of the message, not a doc reference: the reason
+    // it is refused and what to do instead.
+    expect(() => vanilla.technology("tech_gene_forging_overtuned")).toThrow(/no oracle evidence/);
+    expect(() => vanilla.technology("tech_gene_forging_overtuned")).toThrow(
+      /Patch tech_gene_forging instead/
+    );
   });
 
   it("require() names the missing field loudly", () => {

@@ -1,7 +1,6 @@
 /**
- * Test vanilla input for the promoted surface. `TECH_FILE`/`VARS_FILE` are
- * copied from `design/parser-probe/fixture.ts` (the design record stays
- * frozen): a hand-written structural clone of `tech_gene_tailoring`, the
+ * Test vanilla input for the typed surface. `TECH_FILE`/`VARS_FILE` are a
+ * hand-written structural clone of `tech_gene_tailoring`, the
  * nastiest realistic technology in the install. `OR_TECH_FILE` adds the
  * construct the probe's parser had to refuse — `prerequisites = { ref OR =
  * { ... } }`, the mixed container five vanilla files use — which the

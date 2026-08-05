@@ -10,7 +10,8 @@
  *
  * The one consumer today is `@pdx-ts/codegen-vanilla`, which intersects these
  * facts over vanilla's scripted trigger and effect bodies to infer each
- * definition's scope (SDK-13, see `docs/verdict/verdict-scripted-scope.md`).
+ * definition's scope (SDK-13); `packages/codegen-vanilla/tests/callsites.test.ts`
+ * is the standing gate on that inference.
  *
  * Deliberately NOT emitted into `packages/sdk/src/generated/`. It is build-time
  * data with no runtime consumer, and the SDK is the package that ships.

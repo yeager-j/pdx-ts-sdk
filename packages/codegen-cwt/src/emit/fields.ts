@@ -33,8 +33,7 @@ import { Emitter, type TsValue } from "./types.ts";
  *
  * The corpus gate used to see field *names* only, which is what limited it to
  * presence checking — `stages.end` could be block-typed against 254 scalar
- * writes and still report full coverage. See `docs/roadmap.md`'s "Shape
- * conformance".
+ * writes and still report full coverage.
  */
 export interface EmittedField {
   /** The game's own key, or a dotted path for one lowered inside a struct. */
@@ -1202,8 +1201,7 @@ function lowerOrdinary(
  * needs the block's gated adjustments; `starbase_level.picture` is a bare
  * `<sprite>` in 18 definitions and a trigger-gated block in 9. Whichever arm
  * first-wins picking dropped became a form no author could produce, and a
- * presence-only corpus check could not see it — see `docs/roadmap.md`'s
- * "Shape conformance".
+ * presence-only corpus check could not see it.
  *
  * Both arms lower through the ordinary pipeline, so the pairing is not limited
  * to any particular combination: a scalar beside a weight block, a struct, a
