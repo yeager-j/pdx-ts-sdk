@@ -14,6 +14,11 @@ underneath it; `packages/codegen-cwt` and `packages/codegen-vanilla` are the two
 `packages/stellaris-ids` is the install-derived identifier package. Every gate below runs from
 the repository root.
 
+[CONTEXT-MAP.md](CONTEXT-MAP.md) is the vocabulary authority: it names this repo's five
+bounded contexts and links each one's glossary. When a word here is load-bearing, that is
+where it is defined — this file states process, not meaning. Decisions that would otherwise
+look arbitrary are recorded in `docs/adr/`.
+
 Read `README.md` before making architectural changes. Files under `docs/` and `design/` preserve
 handoffs, probes, and design evidence; check their status headers and the current implementation
 before treating an older proposal as current behavior.
@@ -214,45 +219,32 @@ differential, and fast-check property gates described in that package.
 
 ## Important design boundaries
 
-- Triggers are declarative expression trees. Effects are closures executed once at build time to
-  record AST entries.
-- `createMod(config)` is the explicit immutable mod-bound capability. Its top-level content and
-  event methods mint ids, while nested definition ids must already belong to its prefix; all return
-  pure values without registration. `mod.feature(stem, items)` places them and
-  `mod.compile(features)` folds them into the `PureMod` consumed by `render`/`write`. There is no
-  mutable builder and no alternate public authoring surface. Diagnostics are throws or
-  `mod.warnings` data — never console output.
-- Source layout is not identity. `discoverFeatures(dir)` (`packages/sdk/src/authoring/discover.ts`) is the
-  impure shell that reads only a feature module's named `feature` export. The authored feature stem,
-  not the basename or the module's other exports, decides placement.
-- Emission order is a function of the content, never of source position, module layout, export
-  order, or the order features were passed: content sorts by registry declaration order, then
-  emitted file path, then id; event files sort by path with numeric ids inside a file; on-action
-  hook blocks, the contribution sink and the patch list sort by name or id. Arrays _inside_ a
-  definition (prerequisites, event options, one `mod.on()` call's event list) are author data and are
-  emitted as written. Reordering features, exports, or authoring statements must not change a
-  byte of output, and moving a definition to another module must change only which file it lands in
-  — never its id, its bytes, or its position among its neighbors. The standing evidence is the
-  order-purity test in `packages/sdk/tests/pure-api.test.ts` (two reversed authoring orders
-  rendering identically) and the identity-preservation test in
-  `packages/sdk/tests/example-mod.test.ts` (hello-galaxy's ids, event namespace, and localization
-  frozen across its restructure into feature modules).
-- One feature module fans out across every registry it defines into, keeping its stem in each:
-  `content/resonance.ts` holding technologies and events emits both
-  `common/technology/<prefix>_resonance.txt` and `events/<prefix>_resonance.txt`. That is a
-  property of `mod.feature(stem, items)`, not of `discoverFeatures`.
-- An event namespace and an event file are in bijection: one namespace per file, one file per
-  namespace. A namespace's events therefore live in one module.
-- Runtime effect recording is scope-agnostic; generated interfaces enforce which effects and
-  scope transitions are legal.
+The decisions a reader would otherwise wonder about are recorded as ADRs, and the words
+are defined in the glossaries. Both are short:
+
+- [ADR-0001](docs/adr/0001-triggers-are-trees-effects-are-closures.md) — triggers are
+  declarative trees, effects are build-time closures, and runtime effect recording is
+  scope-agnostic (the generated interfaces enforce legality, not the recorder).
+- [ADR-0002](docs/adr/0002-pdxscript-is-syntax-only.md) — the parser knows no game semantics.
+- [ADR-0003](docs/adr/0003-install-derived-split-from-rules-derived.md) — install-derived
+  identifiers are a separate package and generator from the rules-derived surface.
+- [ADR-0004](docs/adr/0004-no-mutable-builder.md) — there is no mutable builder and no
+  alternate public authoring surface.
+- [ADR-0005](docs/adr/0005-emission-order-is-content-not-position.md) — emission order is a
+  function of content, never of source position.
+
+What remains here are working rules rather than definitions:
+
+- Diagnostics are throws or `mod.warnings` data — never console output.
+- `discoverFeatures(dir)` (`packages/sdk/src/authoring/discover.ts`) is the impure shell, and
+  it reads only a feature module's named `feature` export. Source layout is not identity.
 - Cross-content references should remain branded objects where the generated rules know the
   registry. Use raw strings only for intentional vanilla or third-party references supported by
   the API.
 - Generated content ids and nested definition ids must use the mod prefix.
-- Localization rides with definitions. Preserve duplicate-key checks and the BOM-prefixed
-  Stellaris localization output.
-- Testing helpers are whitelist-based. Unsupported game semantics should fail loudly rather than
-  be guessed.
+- Preserve the localization duplicate-key checks and the BOM-prefixed Stellaris localization
+  output.
+- Unsupported game semantics should fail loudly rather than be guessed.
 
 ## Verification
 

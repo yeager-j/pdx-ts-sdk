@@ -5,7 +5,7 @@ Test Stellaris mod logic without launching the game.
 Because [@pdx-ts/sdk](../sdk/README.md) records triggers and effects as data
 rather than emitting text directly, that data can be interpreted outside the
 game: event chains get unit tests that run in milliseconds, and a failing
-trigger can say *which* subcondition failed.
+trigger can say _which_ subcondition failed.
 
 ```ts
 import { fixture } from "@pdx-ts/sdk-testing";
@@ -69,3 +69,9 @@ found exactly one place where they had been reaching past it: the interpreter
 imported the generated `EFFECT_META` table to answer a yes/no question about a
 key. That is now `isEffectKey` on the SDK's public API, and the generated
 table's shape stayed private where it belongs.
+
+## Vocabulary
+
+This package is the [Simulation](./CONTEXT.md) context. Its glossary is the authority
+for what these words mean; the [context map](../../CONTEXT-MAP.md) shows how they change
+at the boundaries with the other contexts.

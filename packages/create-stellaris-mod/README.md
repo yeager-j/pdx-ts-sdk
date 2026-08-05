@@ -107,3 +107,8 @@ against a `Map` rather than a directory. `tests/scaffold.test.ts` is the gate
 that matters: it scaffolds into a temp directory, symlinks the dependency tree,
 and then typechecks, builds and tests the result with the real toolchain,
 because templates are strings and nothing else checks the code they produce.
+
+## Vocabulary
+
+This package introduces no vocabulary of its own; it borrows the [Authoring](../sdk/CONTEXT.md)
+context's. The [context map](../../CONTEXT-MAP.md) lists every context in the repo.
