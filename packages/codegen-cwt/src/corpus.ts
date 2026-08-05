@@ -669,12 +669,17 @@ export function shapeConformance(
     // A dual is exempt: admitting two interiors is the whole point of it, and
     // the arms were each checked against the rules that produced them.
     if (observation.blocks > 0 && form === "block") {
-      const bare = field.shape === "valueList";
+      // A value list and a wrapped struct both write an unkeyed interior — one
+      // holds bare scalars, the other bare blocks — so bare content is what
+      // they must find and named keys are the defect. Every other block shape
+      // is the reverse. Both directions are checked either way: a wrapped
+      // struct against a keyed interior means the wrapper was misread.
+      const bare = field.shape === "valueList" || field.wrapped === true;
       if (bare && observation.bareBlocks === 0) {
         report(
           "form",
-          `lowered as a value list, but all ${observation.blocks} blocks are keyed ` +
-            `(${[...observation.keys].slice(0, 4).join(" ")})`
+          `lowered as ${field.wrapped === true ? "a wrapped struct" : "a value list"}, but all ` +
+            `${observation.blocks} blocks are keyed (${[...observation.keys].slice(0, 4).join(" ")})`
         );
       }
       if (!bare && observation.keys.size === 0) {

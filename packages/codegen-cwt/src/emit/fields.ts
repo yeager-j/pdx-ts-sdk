@@ -43,6 +43,13 @@ export interface EmittedField {
   readonly shape: string;
   /** True when the authoring member lets the key repeat at the sibling level. */
   readonly repeated: boolean;
+  /**
+   * A `struct` whose repetition is nested inside the key, so its block holds
+   * bare anonymous blocks rather than named entries. The interior form check
+   * needs it for the same reason `valueList` is exempt there: "no named keys"
+   * is what this shape writes, not evidence that the lowering is wrong.
+   */
+  readonly wrapped?: boolean;
   /** Every scalar the member admits, when the lowering closed the set. */
   readonly literals?: readonly string[];
   /**
@@ -72,9 +79,9 @@ export interface LoweredField {
    */
   readonly admits: Omit<EmittedField, "field">;
   /**
-   * A `struct` whose repetition is nested inside one key. Irrelevant to the
-   * corpus gate, which asks whether the *key* repeats, but it decides whether
-   * the authoring member is an array — which is what tells two dual arms apart.
+   * A `struct` whose repetition is nested inside one key. Decides whether the
+   * authoring member is an array — which is what tells two dual arms apart —
+   * and rides into `admits` so the gate knows the block holds bare blocks.
    */
   readonly wrapped?: boolean;
   /** Extra top-level declarations a nested struct level needed, prepended by the caller. */
@@ -923,7 +930,7 @@ function lowerStruct(
   return {
     memberType: repeated ? arrayType(typeName) : typeName,
     metadata: `{ ${metadataMembers.join(", ")} }`,
-    admits: { shape: "struct", repeated: structRepeated },
+    admits: { shape: "struct", repeated: structRepeated, ...(wrapped ? { wrapped } : {}) },
     wrapped,
     code,
     unsupported,

@@ -85,15 +85,6 @@ const ACKNOWLEDGED = new Map<string, string>([
       "form really does repeat.",
   ],
   [
-    "global_ship_design.growth_stages form",
-    "CWT declares a block of named fields, but every shipped design writes a bare list of " +
-      "<global_ship_design> ids.",
-  ],
-  [
-    "ship_size.triggered_ship_roles form",
-    "CWT declares a block of named fields, but every shipped ship size writes a bare list.",
-  ],
-  [
     "species_class.resources form",
     "CWT declares the economic_template splice, but the 16 shipped species classes write bare " +
       "values there.",
@@ -490,5 +481,68 @@ describe("shape conformance, per-definition scope", () => {
     );
     expect(mismatches.map((mismatch) => mismatch.kind)).toEqual(["scope"]);
     expect(mismatches[0]?.detail).toContain("no single scope of planet/ship");
+  });
+});
+
+/**
+ * The interior form check's two unkeyed shapes, whose evidence is the reverse
+ * of every other block's.
+ *
+ * A wrapped struct writes bare blocks (`discrete_terms = { { key = … } }`), so
+ * "no named keys" is what it looks like when correct — reading that as a defect
+ * is what made four real, authorable fields report as unfillable, two of them
+ * acknowledged for months with a reason the fixture contradicts. Both
+ * directions are asserted: the exemption must not become a blanket one, or a
+ * misread wrapper would go unreported.
+ */
+describe("shape conformance, wrapped struct interiors", () => {
+  // `repeated` describes the outer *key*, which a wrapper is what stops from
+  // repeating: the repetition moved inside it. `discrete_terms` is `0..1`.
+  const wrapped = { field: "discrete_terms", shape: "struct", repeated: false, wrapped: true };
+  const plain = { field: "discrete_terms", shape: "struct", repeated: false };
+  const noScopes = (): null => null;
+
+  function corpusOf(observed: { bareBlocks: number; keys: readonly string[] }) {
+    return {
+      definitions: 1,
+      files: 1,
+      occurrences: new Map([
+        [
+          "discrete_terms",
+          {
+            definitions: 1,
+            repeated: 0,
+            scalars: 0,
+            blocks: 1,
+            bareBlocks: observed.bareBlocks,
+            values: new Set<string>(),
+            keys: new Set(observed.keys),
+            keysByDefinition: [new Set(observed.keys)],
+          },
+        ],
+      ]),
+    };
+  }
+
+  it("accepts the bare blocks a wrapped struct writes", () => {
+    const bareBlocks = corpusOf({ bareBlocks: 1, keys: [] });
+    expect(shapeConformance(bareBlocks, [wrapped], noScopes)).toEqual([]);
+    // The same observation against a struct that is not wrapped is the real
+    // defect the check exists for, and must still be reported.
+    expect(shapeConformance(bareBlocks, [plain], noScopes).map((one) => one.kind)).toEqual([
+      "form",
+    ]);
+  });
+
+  it("reports a wrapped struct whose blocks are keyed after all", () => {
+    // The wrapper was misread: the game writes named entries where the lowering
+    // expects anonymous ones, so the emitted array cannot hold them.
+    const mismatches = shapeConformance(
+      corpusOf({ bareBlocks: 0, keys: ["key"] }),
+      [wrapped],
+      noScopes
+    );
+    expect(mismatches.map((one) => one.kind)).toEqual(["form"]);
+    expect(mismatches[0]?.detail).toContain("lowered as a wrapped struct");
   });
 });
