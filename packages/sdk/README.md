@@ -409,3 +409,9 @@ whitelist interpreter over the recorded ASTs: `fixture()` builds a world,
 a trigger fails. It is separate because its matchers integrate with a test
 framework; it intentionally throws for unmodeled game semantics rather than
 guessing.
+
+## Vocabulary
+
+This package is the [Authoring](./CONTEXT.md) context. Its glossary is the authority
+for what these words mean; the [context map](../../CONTEXT-MAP.md) shows how they change
+at the boundaries with the other contexts.

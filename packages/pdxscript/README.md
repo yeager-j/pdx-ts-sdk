@@ -43,7 +43,7 @@ named deferrals.
   and serialization is canonical — one rendering style, tabs.
 - **No game semantics.** Variable resolution, math evaluation, and override
   rules are consumer concerns; this package is syntax only. Keep it that way:
-  anything that knows what a technology *is* belongs in a consumer.
+  anything that knows what a technology _is_ belongs in a consumer.
 
 ## Where stuff lives
 
@@ -83,3 +83,9 @@ differential are the gates that catch what hand-written cases miss.
 0.x, unpublished — the API may still move while the SDK consumes it. Built as
 the foundation of [@pdx-ts/sdk](../sdk/README.md); the parser is deliberately
 standalone and game-semantics-free.
+
+## Vocabulary
+
+This package is the [PDXScript Syntax](./CONTEXT.md) context. Its glossary is the authority
+for what these words mean; the [context map](../../CONTEXT-MAP.md) shows how they change
+at the boundaries with the other contexts.

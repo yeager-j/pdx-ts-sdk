@@ -4,11 +4,11 @@ The install-derived code generator. It reads a real Stellaris installation and
 emits [@pdx-ts/stellaris-ids](../stellaris-ids/README.md) — per-registry
 literal-union types of every identifier vanilla defines, scripted trigger and
 effect signatures, and navigable id tries — as committed, types-only
-TypeScript. Private workspace package; never published (its *output* package
+TypeScript. Private workspace package; never published (its _output_ package
 is).
 
 Its sibling [@pdx-ts/codegen-cwt](../codegen-cwt/README.md) is rules-derived:
-it knows what *fields* exist. This package knows what *ids* exist. This one
+it knows what _fields_ exist. This package knows what _ids_ exist. This one
 regenerates on the game's release cadence, the other when the vendored rules
 are bumped.
 
@@ -93,3 +93,9 @@ derivation, dir-nesting, `$PARAM$` extraction cases, verbatim dotted leaf
 keys, emitted-file-set pinning, and byte-determinism across runs. The
 install-gated committed-output conformance test lives with the artifact it
 gates, in `packages/stellaris-ids/tests/`.
+
+## Vocabulary
+
+This package is the [Vanilla Extraction](./CONTEXT.md) context. Its glossary is the authority
+for what these words mean; the [context map](../../CONTEXT-MAP.md) shows how they change
+at the boundaries with the other contexts.

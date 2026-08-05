@@ -125,3 +125,9 @@ package-absent world is covered from the SDK's own test program, which
 excludes this package on purpose. `tests/committed-output.test.ts` regenerates
 in memory wherever an install exists and fails on any divergence from the
 committed files — the drift gate for the artifact itself.
+
+## Vocabulary
+
+This package is the [Vanilla Extraction](../codegen-vanilla/CONTEXT.md) context. Its glossary is the authority
+for what these words mean; the [context map](../../CONTEXT-MAP.md) shows how they change
+at the boundaries with the other contexts.

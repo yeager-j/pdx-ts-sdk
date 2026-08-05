@@ -75,7 +75,7 @@ emitter.
 
 Unit tests here (`tests/`) re-run pipeline pieces in-process against the
 vendored rules: the cwt parser, the two-source reconciliation, and individual
-emitters. The committed *output* is gated elsewhere, with the artifact it
+emitters. The committed _output_ is gated elsewhere, with the artifact it
 belongs to: `packages/sdk/tests/codegen/` holds the generated-text snapshot
 tests and the corpus-conformance suite that measures every emitted interface
 against every definition a real installed game ships. `npm run codegen:check`
@@ -84,3 +84,9 @@ is the CI-style drift gate for the whole pipeline.
 Adding a content registry has a documented procedure — manifest row, report
 review, overlay evidence, four kinds of tests — in the repository's
 [AGENTS.md](../../AGENTS.md).
+
+## Vocabulary
+
+This package is the [CWT Codegen](./CONTEXT.md) context. Its glossary is the authority
+for what these words mean; the [context map](../../CONTEXT-MAP.md) shows how they change
+at the boundaries with the other contexts.
