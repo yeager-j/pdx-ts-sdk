@@ -23,7 +23,7 @@ import type {
   SituationStageFields,
   SituationTypeDef,
 } from "../generated/situation-type.ts";
-import type { SituationTrigger } from "../triggers.ts";
+import type { SituationTrigger } from "../script/triggers.ts";
 
 /**
  * `approach`'s and `stages`' own trigger fields, narrowed from

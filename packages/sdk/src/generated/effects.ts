@@ -8,8 +8,8 @@
 
 import type { PdxOp } from "@pdx-ts/pdxscript";
 
-import type { Modifier, StructuralEffects } from "../effect-core.ts";
-import type { ScriptValue, Trigger } from "../trigger-core.ts";
+import type { Modifier, StructuralEffects } from "../script/effects/types.ts";
+import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 import type {
   AddDepositType,
   AggroRangeMeasureFrom,

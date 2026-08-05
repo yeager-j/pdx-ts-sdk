@@ -18,10 +18,10 @@
  * closing the one restatement this contract *can* close.
  */
 
-import type { ScopeValue } from "./effect-core.ts";
 import type { ScopeObjOf, SituationScope } from "./generated/effects.ts";
 import type { TypedRef } from "./generated/refs.ts";
 import type { ScopeName } from "./generated/scopes.ts";
+import type { ScopeValue } from "./script/effects/types.ts";
 
 /** A defined situation type carrying its author-declared target scope. */
 export interface SituationTargetContract<

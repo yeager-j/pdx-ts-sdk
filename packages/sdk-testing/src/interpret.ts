@@ -357,7 +357,7 @@ function applyFire(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
     dueDay: ex.state.day + delay,
     scope,
     // The natural FROM is the firing execution's root scope — `from:
-    // ctx.self` records nothing (src/effect-core.ts), which is exactly this.
+    // ctx.self` records nothing (the effect recorder), which is exactly this.
     from: from ?? ex.root,
     seq: ex.state.seq++,
   });
@@ -596,7 +596,7 @@ const MODIFIER_OPS = [
 ] as const;
 
 /**
- * Every numeric operation `Modifier<S>` (`packages/sdk/src/effect-core.ts`)
+ * Every numeric operation `Modifier<S>` (`packages/sdk/src/script/effects/types.ts`)
  * declares, minus the members that are not operations: `desc` and its
  * companion `descKey` (localisation, SDK-48) and `when` (the gating trigger).
  * `applyModifierRow`'s multi-operation guard is only as complete as
@@ -651,7 +651,7 @@ function isComplexTriggerModifierRow<S extends SimScopeName>(
  * Computes a `modifier_rule` block's value: a starting `base`, then each
  * `modifier` row whose `when` trigger holds applies its one operation in
  * order. The operation set and spellings mirror `Modifier` itself
- * (`packages/sdk/src/effect-core.ts`, kept in sync by the `SameKeys` guard
+ * (`packages/sdk/src/script/effects/types.ts`, kept in sync by the `SameKeys` guard
  * above) — `add`/`subtract`/`mult`/`multiplier`/`factor`/`divide` change the
  * running value, `minValue`/`maxValue` clamp it, and `weight` is detected but
  * refused (see `applyModifierRow`'s `weight` case) because nothing has

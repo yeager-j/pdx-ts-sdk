@@ -2,7 +2,7 @@ import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { createMod, render } from "../src/index.ts";
-import { and, hasCountryFlag, hasTechnology, not } from "../src/triggers.ts";
+import { and, hasCountryFlag, hasTechnology, not } from "../src/script/triggers.ts";
 
 const CONFIG = {
   name: "Technology test",

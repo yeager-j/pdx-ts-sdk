@@ -35,11 +35,11 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { ScopeValue } from "./effect-core.ts";
-import type { TypedRef } from "./generated/refs.ts";
-import type { ScopeName } from "./generated/scopes.ts";
-import type { VanillaScriptedEffects, VanillaScriptedTriggers } from "./identifiers/contracts.ts";
-import { compareUtf8 } from "./ordering.ts";
+import type { TypedRef } from "../generated/refs.ts";
+import type { ScopeName } from "../generated/scopes.ts";
+import type { VanillaScriptedEffects, VanillaScriptedTriggers } from "../identifiers/contracts.ts";
+import { compareUtf8 } from "../ordering.ts";
+import type { ScopeValue } from "./effects/types.ts";
 import { toScalar, type ScalarArg } from "./scalar.ts";
 import { trigger, type Trigger } from "./trigger-core.ts";
 
@@ -233,7 +233,7 @@ function scriptedEntry(name: string, args: ScriptedParams | undefined): PdxEntry
 
 /**
  * Builds a checked `{ trigger, parameters }` pair for a
- * `ComplexTriggerModifier` row (`content.ts`, `effect-core.ts`): the name and
+ * `ComplexTriggerModifier` row (`content.ts`, `script/effects/modifiers.ts`): the name and
  * its parameter bag are checked against `@pdx-ts/stellaris-ids`'s scripted
  * triggers when it is installed — the same conditional machinery {@link
  * scriptedTrigger} uses — and degrade to unchecked `string`/{@link

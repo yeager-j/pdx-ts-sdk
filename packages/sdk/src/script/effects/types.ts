@@ -1,0 +1,367 @@
+/** Public effect-surface types shared by the recorder and generated scope interfaces. */
+
+import type { ScopeObjOf } from "../../generated/effects.ts";
+import type { ScopeName } from "../../generated/scopes.ts";
+import type { ScriptedEffectCall, ScriptedParamValue } from "../scripted.ts";
+import type { ScriptValue, Trigger } from "../trigger-core.ts";
+
+declare const refScopeBrand: unique symbol;
+
+/**
+ * A reference to a scope reachable by name from inside script: an event
+ * target, `from`, `this`, or (later) `prev`.
+ *
+ * Two things at once, as the game writes it. A bare word wherever the rules
+ * expect a `scope[X]` value (`save_event_target_as`, a scripted effect's
+ * parameter), and the key of a block that opens it — `from = { ... }`,
+ * `event_target:storm_world = { ... }`. The block is what `effects` and
+ * `trigger` write; which one you reach for is which side of the API you are
+ * on, so the ref never has to guess.
+ *
+ * Deliberately a plain object with methods rather than a callable, even though
+ * the script's `from = { }` reads like a call: `toScalar` and the content
+ * writer's dual-arm dispatcher both tell an authored value from an authored
+ * closure by `typeof`, and a callable ref would land on the wrong side of every
+ * one of those tests.
+ *
+ * The brand is covariant: a ref of unknown scope does not assign where a
+ * specific scope is required.
+ */
+export interface ScopeValue<S extends ScopeName = ScopeName> {
+  readonly kind: "scope-ref";
+  /** The script path this serializes to: `this`, `from`, `event_target:x`. */
+  readonly path: string;
+  readonly [refScopeBrand]?: S;
+}
+
+/**
+ * A {@link ScopeValue} whose path means the same thing wherever it is written,
+ * so it can also be *opened* as a block.
+ *
+ * That is the whole distinction. `from` and `event_target:x` name their scope
+ * absolutely: nesting inside `every_owned_planet = { ... }` does not change
+ * what either resolves to. `this` does not — inside that block it is the
+ * planet — so `ctx.self` is a plain {@link ScopeValue}, and the one thing you
+ * cannot do with it is open a block whose contents would run in a scope its
+ * type does not describe. As a value it stays exactly as useful: the FROM
+ * witness at a fire site, a situation's target, a scripted effect's argument.
+ */
+export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S> {
+  /**
+   * Opens the ref as an effect block: `from = { <effects> }`.
+   *
+   * Records into the block being recorded around the call, so a call inside a
+   * loop body lands inside that loop — which is where the game would run it.
+   * Calling it outside any effect closure throws rather than guessing a home
+   * for the entries.
+   */
+  effects(body: (scope: ScopeObjOf<S>) => void): void;
+  /**
+   * Opens the ref as a condition block: `from = { <condition> }`.
+   *
+   * Takes the condition as a value, like the `target(...)` combinator it sits
+   * beside — a trigger is a value, so there is nothing to record and nothing
+   * to run it against.
+   */
+  trigger(condition: Trigger<S>): Trigger<ScopeName>;
+}
+
+/**
+ * A saved event target. Declaring one names its scope once, explicitly; every
+ * save site then enforces it (`saveEventTargetAs` in planet scope only
+ * accepts an `EventTarget<"planet">`), so reads through the target are
+ * scope-safe.
+ */
+export interface EventTarget<S extends ScopeName = ScopeName> extends ScopeRef<S> {
+  readonly name: string;
+}
+
+export interface UndeclaredFrom {
+  readonly kind: "undeclared-from";
+  readonly hint: "Nothing declares what FROM holds here; read it only where the rules name a FROM scope.";
+}
+
+/**
+ * The ambient scopes a script block runs in, handed to every closure that
+ * records effects: an event's `immediate`/`after`/option effects, and a
+ * content definition's effect fields.
+ *
+ * `self` doubles as the FROM witness at fire sites: passing `from: ctx.self`
+ * proves the fired event's declared FROM matches the scope this block runs in.
+ * `from` is the block's own FROM, which the game supplies and the rules name —
+ * `on_roll_failed` runs in fleet scope with the archaeological site as FROM, so
+ * `ctx.from.effects((site) => ...)` opens the site.
+ */
+export interface ScriptCtx<Self extends ScopeName, From extends ScopeName | undefined> {
+  /**
+   * The scope this block runs in, as a value — the FROM witness at a fire
+   * site. Not openable: `this` is relative to the block it is written in, so
+   * inside a scope transition it would name that scope rather than this one.
+   */
+  readonly self: ScopeValue<Self>;
+  /**
+   * FROM, where something declares what it holds — an event's `from:` field, a
+   * content field's `replace_scopes` in the rules. Everywhere else this is an
+   * inert sentinel, so touching an undeclared FROM is a compile error.
+   */
+  readonly from: [From] extends [ScopeName] ? ScopeRef<From> : UndeclaredFrom;
+}
+
+/**
+ * One `modifier = { ... }` rule: a numeric change gated by a trigger.
+ *
+ * The operations mirror `complex_maths_enum` in `modifier_rule.cwt`
+ * (`set weight add subtract factor mult multiply divide modulo round_to max
+ * min pow`) restricted to the members the corpus actually exercises across
+ * every weight-block consumer, not just `situation_type.monthly_progress` —
+ * measured there alone: add 255, mult 176, subtract 37, factor 34, min 2,
+ * max 2, divide 2. `multiply` is spelled `multiplier` here to stay distinct
+ * from `mult`, and `min`/`max` are spelled `minValue`/`maxValue` since bare
+ * `min`/`max` read as comparisons rather than assignments. `set`, `modulo`,
+ * `round_to`, and `pow` are declared but unmeasured anywhere in the corpus
+ * and stay out until a real consumer needs them.
+ *
+ * Every operation here is `modifier_rule.cwt`'s `value_field`, not `float`:
+ * a literal, a scripted variable, a `scope.variable` path, or
+ * `value:<script_value>`. Across every modifier operand in vanilla's
+ * `common/`, 12% are one of those non-literal forms, so `ScriptValue` (which
+ * a plain number already widens into) rather than `number` alone.
+ */
+export interface Modifier<S extends ScopeName> {
+  readonly factor?: ScriptValue;
+  readonly add?: ScriptValue;
+  readonly weight?: ScriptValue;
+  readonly subtract?: ScriptValue;
+  readonly mult?: ScriptValue;
+  readonly multiplier?: ScriptValue;
+  readonly divide?: ScriptValue;
+  readonly minValue?: ScriptValue;
+  readonly maxValue?: ScriptValue;
+  /**
+   * Display text for this modifier row's tooltip (`desc = localisation` in
+   * `modifier_rule.cwt`). Like every other definition-attached localization
+   * slot in the SDK, the author writes text and a key is generated and
+   * registered automatically — see `ContentAuthoring`'s modifier-desc
+   * collection in `content.ts`, which is the only pathway that can safely
+   * auto-register (it runs once, at `define()` time, against a stable
+   * definition id). `randomList`/`lockedRandomList`/`random` and other
+   * runtime-recorded effect modifiers have no such stable, once-only
+   * registration point — `modifierEntry` below throws if `desc` reaches it
+   * unresolved from one of those.
+   */
+  readonly desc?: string;
+  /**
+   * A stable slug identifying this row's `desc` for localisation, e.g.
+   * `"flesh_is_weak"`. Modifier rows have no id of their own and, absent a
+   * `descKey`, the generated key falls back to a hash of the `desc` text —
+   * automatic and stable under reordering, but it changes (and orphans any
+   * shipped translation) whenever the English text is edited. Supplying
+   * `descKey` pins the key so translations survive text edits too; see
+   * `ContentAuthoring`'s modifier-desc collection in `content.ts` for the
+   * exact key format and the `mod.warnings` entry an unset `descKey` emits.
+   * Ignored when `desc` is not set. Lowercase snake_case, matching the same
+   * pattern as content ids.
+   */
+  readonly descKey?: string;
+  /** The gating condition, spliced inline per `modifier_rule.cwt`. */
+  readonly when: Trigger<S>;
+}
+
+/**
+ * A {@link Modifier} whose `desc` is required, matching
+ * `modifier_rule_with_loc` — "deliberately more restrictive because of what
+ * we can make good tooltips with", per the CWT source comment. Same concept
+ * as `Modifier`, one stricter requiredness level, not a duplicate shape.
+ */
+export type ModifierWithLoc<S extends ScopeName> = Modifier<S> & { readonly desc: string };
+
+/**
+ * The `mode` a {@link ComplexTriggerModifier} row feeds its trigger result
+ * into. Same `complex_maths_enum` source as {@link Modifier}'s operations,
+ * restricted the same way — by what the corpus actually exercises for `mode`
+ * specifically: add 474, subtract 45, mult 19, divide 8, factor 4, weight 1.
+ * The unmeasured members (`set`, `multiply`, `modulo`, `round_to`, `max`,
+ * `min`, `pow`) stay out until a real consumer needs them, matching
+ * {@link Modifier}'s own convention.
+ */
+export type ComplexTriggerModifierMode =
+  "add" | "subtract" | "mult" | "divide" | "factor" | "weight";
+
+/**
+ * A `complex_trigger_modifier = { ... }` row (`modifier_rule.cwt:32-53`): a
+ * named trigger's result feeds a weight operation directly, rather than
+ * gating a fixed adjustment the way {@link Modifier} does. 552 occurrences
+ * across 42 files in `common/`. The vanilla `usage_odds` row that scales a
+ * `solar_system_initializer`'s spawn odds by the habitable-worlds galaxy
+ * setting is one (`initializer_modifiers_habitable_world_systems.txt`):
+ *
+ *     complex_trigger_modifier = {
+ *         trigger = check_galaxy_setup_value
+ *         parameters = { setting = habitable_worlds_scale }
+ *         mode = factor
+ *     }
+ *
+ * `trigger` names a scripted trigger by its key rather than splicing a nested
+ * block, so — unlike {@link Modifier}'s `when` — this needs no scope type
+ * parameter of its own: `triggerScope` names whatever scope the trigger
+ * should run in as a raw scope path (`"owner"`, `"target.solar_system"`,
+ * ...), the same way the game writes it, not a checked reference. `S` only
+ * surfaces through the optional `potential` gate, an ordinary scoped trigger
+ * clause evaluated alongside the named trigger.
+ *
+ * `mult`/`multiplier`/`min_value`/`max_value` are this row's own fields per
+ * the CWT alias, spelled distinctly from {@link Modifier}'s `mult`/`multiply`/
+ * `min`/`max` — the two row kinds share no field names beyond `mult` itself,
+ * so the lowering keeps them separate rather than reusing `Modifier`'s
+ * mapping. Each is declared `value_field` in `modifier_rule.cwt`, the same
+ * domain as {@link Modifier}'s own numeric arms, so they are `ScriptValue`
+ * (not bare `number`) for the same reason those are: a `@scripted_variable`
+ * has to lower through `scriptValueScalar` to write bare rather than
+ * quoted, exactly like every other `value_field` here.
+ */
+export interface ComplexTriggerModifier<S extends ScopeName> {
+  /** The scripted trigger's key, evaluated with `parameters` as arguments. */
+  readonly trigger: string;
+  /** Scope path the trigger runs in (defaults to `this` when omitted). */
+  readonly triggerScope?: string;
+  /**
+   * Arguments passed to the named trigger. `ScriptedParamValue` (not a bare
+   * `string | number`) so a row built by hand accepts the same widened
+   * forms — booleans, branded references, scope values — `scriptedTrigger`
+   * and {@link scriptedTriggerModifier} already accept, and so it can hold
+   * exactly what `scriptedTriggerModifier`'s checked return value produces.
+   */
+  readonly parameters?: Readonly<Record<string, ScriptedParamValue>>;
+  /** Which operation the trigger's result feeds. */
+  readonly mode: ComplexTriggerModifierMode;
+  readonly mult?: ScriptValue;
+  readonly multiplier?: ScriptValue;
+  readonly divide?: ScriptValue;
+  readonly minValue?: ScriptValue;
+  readonly maxValue?: ScriptValue;
+  /**
+   * Display text for this row's tooltip, auto-registered as localisation the
+   * same way {@link Modifier.desc} is — see `ContentAuthoring`'s
+   * modifier-desc collection in `content.ts`. `complexTriggerModifierEntry`
+   * below throws if `desc` reaches it unresolved.
+   */
+  readonly desc?: string;
+  /** Additional gate evaluated alongside the named trigger. */
+  readonly potential?: Trigger<S>;
+}
+
+/**
+ * A {@link ComplexTriggerModifier} for `modifier_rule_with_loc` consumers.
+ * `modifier_rule.cwt:67-81` admits only `mult`/`multiplier`, not
+ * `divide`/`min_value`/`max_value` — `modifier_rule_with_loc` drops those
+ * three fields the plain alias's `complex_trigger_modifier` allows — and
+ * `desc` there has no `## cardinality = 0..1` marker (every other field in
+ * that block does), so it defaults to required, matching {@link
+ * ModifierWithLoc}'s own `desc` requirement on the sibling row kind.
+ *
+ * The three dropped fields are forbidden (`?: never`) rather than merely
+ * omitted: `WeightBlockRow`'s union of this type with `ModifierWithLoc`
+ * would otherwise let `divide`/`minValue`/`maxValue` leak back in, the same
+ * excess-property leniency `ExclusiveModifierRow`/
+ * `ExclusiveComplexTriggerModifierRow` in `content.ts` exist to close —
+ * `ModifierWithLoc` (inherited from `Modifier`) still declares all three, so
+ * a plain `Omit` here would make them "not excess" for the row as a whole
+ * even though this specific row kind cannot legally carry them.
+ */
+export type ComplexTriggerModifierWithLoc<S extends ScopeName> = Omit<
+  ComplexTriggerModifier<S>,
+  "divide" | "minValue" | "maxValue" | "desc"
+> & {
+  readonly desc: string;
+  readonly divide?: never;
+  readonly minValue?: never;
+  readonly maxValue?: never;
+};
+
+/**
+ * The chain returned by `if`. PDXScript associates `else_if`/`else` with the
+ * preceding `if` purely by position, so the chain guards against effects
+ * being recorded between its links — that would silently detach the `else`.
+ */
+export interface IfChain<S extends ScopeName> {
+  elseIf(condition: Trigger<S>, body: (scope: ScopeObjOf<S>) => void): IfChain<S>;
+  else(body: (scope: ScopeObjOf<S>) => void): void;
+}
+
+/** One arm of a `random_list`: trigger-ish parts as data, effects as a closure. */
+export interface RandomListArm<S extends ScopeName> {
+  readonly weight: number;
+  readonly modifiers?: readonly Modifier<S>[];
+  readonly do: (scope: ScopeObjOf<S>) => void;
+}
+
+/**
+ * Control flow and the few effects whose types the rules cannot express —
+ * the audited `HAND_WRITTEN_EFFECTS` list in the codegen overlay. Every
+ * generated scope interface extends this.
+ */
+export interface StructuralEffects<S extends ScopeName> {
+  /**
+   * In-game branching: `if = { limit = { ... } ... }`. This is the in-game
+   * counterpart of a TypeScript `if`, which branches at build time. Chain
+   * `.elseIf(...)` and `.else(...)` before recording any further effects.
+   */
+  if(condition: Trigger<S>, body: (scope: ScopeObjOf<S>) => void): IfChain<S>;
+
+  /**
+   * Keeps the enclosed effects out of generated tooltips:
+   * `hidden_effect = { ... }`. They still run; the player is just not shown
+   * them. The block changes no scope, so the closure gets the same scope back
+   * — it takes one at all because the entries have to land inside the hidden
+   * block rather than beside it.
+   */
+  hiddenEffect(body: (scope: ScopeObjOf<S>) => void): void;
+
+  /** Picks one arm at random, weighted; modifiers adjust weights in-game. */
+  randomList(arms: ReadonlyArray<RandomListArm<S>>): void;
+
+  /** `random_list` that shows only the chosen arm in tooltips. */
+  lockedRandomList(arms: ReadonlyArray<RandomListArm<S>>): void;
+
+  /** Runs the body with the given percent chance, in-game. */
+  random(
+    args: { chance: number; modifiers?: readonly Modifier<S>[] },
+    body: (scope: ScopeObjOf<S>) => void
+  ): void;
+
+  /** `while = { count/limit ... }` — in-game iteration. */
+  whileLoop(
+    args: { count?: number; limit?: Trigger<S> },
+    body: (scope: ScopeObjOf<S>) => void
+  ): void;
+
+  /**
+   * Saves the current scope under the target's name. The target's declared
+   * scope must match the scope being saved — reads stay safe because saves
+   * are checked.
+   */
+  saveEventTargetAs(target: EventTarget<S>): void;
+
+  /** Like `saveEventTargetAs`, but the target survives the event chain. */
+  saveGlobalEventTargetAs(target: EventTarget<S>): void;
+
+  /**
+   * Runs a scripted effect bound by `scriptedEffect` or imported from
+   * `@pdx-ts/stellaris-ids/effects`:
+   * `give_ascension_perk_effect = { PERK = ap_mind_over_matter }`.
+   *
+   * ```ts
+   * scope.run(giveAscensionPerkEffect({ PERK: "ap_mind_over_matter" }));
+   * ```
+   *
+   * The call carries the scope its binding claims, so a country-scoped effect
+   * inside a planet closure is a compile error. It goes through a method rather
+   * than recording itself because the recorder's sink is closed over and
+   * nothing outside the scope object can reach it — which is the property that
+   * keeps arbitrary entries out of the output.
+   */
+  run(effect: ScriptedEffectCall<S>): void;
+
+  /** Adds resources to the scope's stockpile: `add_resource = { energy = 50 }`. */
+  addResource(args: { resource: string; amount: number; mult?: number }): void;
+}

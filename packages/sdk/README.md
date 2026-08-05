@@ -329,8 +329,16 @@ src/
 │   ├── types.ts       event definitions and fire-site types
 │   ├── lower.ts       event-to-PDXScript lowering
 │   └── on-actions.ts  on-action lowering and binding construction
-├── trigger-core.ts    Trigger<S>, scope brand, and trigger()
-├── effect-core.ts     scope-object recorder, ScopeRef, and event targets
+├── script/             triggers, scalar lowering, scripted bindings, and effects
+│   ├── trigger-core.ts Trigger<S>, scope brand, and trigger()
+│   ├── triggers.ts     trigger combinators and generated trigger exports
+│   ├── scalar.ts       authored scalar argument lowering
+│   ├── scripted.ts     scripted trigger/effect bindings
+│   └── effects/        scope-object recorder and effect lowering
+│       ├── types.ts    effect contracts and scope references
+│       ├── modifiers.ts modifier and modifier-localization lowering
+│       ├── structural.ts in-game control-flow lowering
+│       └── recorder.ts recordEffects and the scope proxy
 ├── ordering.ts        canonical logical-path and UTF-8 ordering
 ├── references.ts      recorded content-reference vocabulary
 ├── identifiers/       optional vanilla identifier contracts and package pin

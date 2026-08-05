@@ -1042,7 +1042,7 @@ export function buildMod(
   }
 
   // Belt and braces over the recorders' own liveness checks (`assertLive` in
-  // effect-core.ts and content.ts): `Object.freeze` below makes the *value*
+  // the effect recorder and content lowerer): `Object.freeze` below makes the *value*
   // immutable, but every entry tree on it is an array a recorder closure once
   // held by reference, so a leaked recorder could still edit what a built mod
   // renders. Both recorders now refuse that at the source; freezing the trees

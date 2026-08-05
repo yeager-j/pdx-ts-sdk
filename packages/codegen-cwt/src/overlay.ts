@@ -57,7 +57,7 @@ export const SPECIAL_SCOPE_PATHS = new Set([
  * `hidden_trigger` is here for a plainer reason — it is declared in
  * `scope_links.cwt`, which this generator does not load *because* that file
  * also declares the combinators above. It shares their shape (a flat splice
- * that changes no scope), so `src/triggers.ts` writes it beside them, and
+ * that changes no scope), so `src/script/triggers.ts` writes it beside them, and
  * `hidden_effect` sits in HAND_WRITTEN_EFFECTS for the same reason. Both
  * appear in the drift baseline as documented-but-unruled, which is exactly
  * what they are.
@@ -68,10 +68,10 @@ export const SPECIAL_SCOPE_PATHS = new Set([
  * mechanical `(value: SituationApproach | SituationStage): Trigger<"situation">`
  * would be a faithful reading — but the SDK's own `SituationTrigger` return
  * type (a `Trigger<"situation">` carrying the literal id as an optional
- * phantom brand, `src/triggers.ts`) is checked against `defineSituationType`'s
+ * phantom brand, `src/script/triggers.ts`) is checked against `defineSituationType`'s
  * own declared `approach`/`stages` keys, a contract the rules have no way to
  * express. Skip-listing here keeps generation and the hand-written override in
- * `src/triggers.ts` from disagreeing about which one is the real export: only
+ * `src/script/triggers.ts` from disagreeing about which one is the real export: only
  * the hand-written module ever supplies these three names now.
  */
 export const HAND_WRITTEN_TRIGGERS = new Set([
@@ -96,7 +96,7 @@ export const HAND_WRITTEN_TRIGGERS = new Set([
  * `save_event_target_as` takes a scope-branded `EventTarget<S>` rather than the
  * bare value-set string the rules describe — the brand is the entire point.
  * `add_resource` keys its block by `<resource>`, a computed key the emitter
- * cannot type yet. All live in `src/effect-core.ts` as `StructuralEffects`.
+ * cannot type yet. All live in `src/script/effects/types.ts` as `StructuralEffects`.
  */
 export const HAND_WRITTEN_EFFECTS = new Set([
   "if",
@@ -115,7 +115,7 @@ export const HAND_WRITTEN_EFFECTS = new Set([
 ]);
 
 /**
- * The method names `src/effect-core.ts` hand-writes onto the scope
+ * The method names `src/script/effects/recorder.ts` hand-writes onto the scope
  * interfaces — `StructuralEffects` plus per-scope augmentations such as the
  * author-asserted `target` link. The scope-link pass must not emit a method by
  * any of these names: the generated interface member would merge with (or

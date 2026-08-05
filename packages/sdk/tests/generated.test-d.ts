@@ -13,7 +13,7 @@ import {
   numMoons,
   relativePower,
   type Trigger,
-} from "../src/triggers.ts";
+} from "../src/script/triggers.ts";
 
 const base = {
   id: "mymod_tech_x",

@@ -6,26 +6,23 @@ export * from "./generated/enums.ts";
 export { refId, type TypedRef } from "./generated/refs.ts";
 export * from "./generated/refs.ts";
 export * from "./generated/value-sets.ts";
-export * from "./triggers.ts";
-export {
-  eventTarget,
-  isEffectKey,
-  makeScope,
-  recordEffects,
-  type ComplexTriggerModifier,
-  type ComplexTriggerModifierMode,
-  type ComplexTriggerModifierWithLoc,
-  type EventTarget,
-  type IfChain,
-  type Modifier,
-  type ModifierWithLoc,
-  type RandomListArm,
-  type ScopeRef,
-  type ScopeValue,
-  type ScriptCtx,
-  type StructuralEffects,
-  type UndeclaredFrom,
-} from "./effect-core.ts";
+export * from "./script/triggers.ts";
+export { eventTarget, isEffectKey, makeScope, recordEffects } from "./script/effects/recorder.ts";
+export type {
+  ComplexTriggerModifier,
+  ComplexTriggerModifierMode,
+  ComplexTriggerModifierWithLoc,
+  IfChain,
+  Modifier,
+  ModifierWithLoc,
+  RandomListArm,
+  EventTarget,
+  ScopeRef,
+  ScopeValue,
+  ScriptCtx,
+  StructuralEffects,
+  UndeclaredFrom,
+} from "./script/effects/types.ts";
 export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
 export type { SituationTargetContract } from "./situations.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
@@ -321,5 +318,5 @@ export {
   type ScriptedTriggerArgs,
   type ScriptedTriggerBinding,
   type ScriptedTriggerName,
-} from "./scripted.ts";
+} from "./script/scripted.ts";
 export * as vanilla from "./generated/vanilla-refs.ts";

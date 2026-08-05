@@ -149,7 +149,7 @@ async function main(): Promise<void> {
 
   const dumpLinks = new Map(links.map((link) => [link.name, link]));
   const classifiedLinks = classifyLinks(emitter, dumpLinks, index);
-  // The hand exports of src/triggers.ts share the links file's export
+  // The hand exports of src/script/triggers.ts share the links file's export
   // namespace through its `export *`, so they count as taken names too.
   const triggerLinks = emitTriggerLinks(
     classifiedLinks,
@@ -342,7 +342,7 @@ async function main(): Promise<void> {
     ];
     return names.length === 0
       ? ""
-      : `import type { ${names.join(", ")} } from "../trigger-core.ts";\n`;
+      : `import type { ${names.join(", ")} } from "../script/trigger-core.ts";\n`;
   };
   // A module referencing another alias category's interface needs both a type
   // import and a bare side-effect import: the type import is erased at build
@@ -486,7 +486,7 @@ async function main(): Promise<void> {
       'import type { ContentRefUse } from "../references.ts";\n' +
       `import { trigger, type Trigger${referencesIdentifier(triggers.code, "ScriptValue") ? ", type ScriptValue" : ""}` +
       `${referencesIdentifier(triggers.code, "scriptValueScalar") ? ", scriptValueScalar" : ""} } ` +
-      'from "../trigger-core.ts";\n' +
+      'from "../script/trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(
         "./enums.ts",
@@ -507,7 +507,7 @@ async function main(): Promise<void> {
     "links.ts",
     header(commit, ["links.cwt", "script-docs/v4.4.1/scopes.log"]) +
       'import { block } from "@pdx-ts/pdxscript";\n' +
-      'import { trigger, type Trigger } from "../trigger-core.ts";\n' +
+      'import { trigger, type Trigger } from "../script/trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       triggerLinks.code
   );
@@ -521,9 +521,9 @@ async function main(): Promise<void> {
       "script-docs/v4.4.1/scopes.log",
     ]) +
       'import type { PdxOp } from "@pdx-ts/pdxscript";\n' +
-      'import type { Modifier, StructuralEffects } from "../effect-core.ts";\n' +
+      'import type { Modifier, StructuralEffects } from "../script/effects/types.ts";\n' +
       `import type { Trigger${referencesIdentifier(effects.interfaces, "ScriptValue") ? ", ScriptValue" : ""} } ` +
-      'from "../trigger-core.ts";\n' +
+      'from "../script/trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(
         "./enums.ts",

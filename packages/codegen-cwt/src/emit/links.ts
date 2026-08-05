@@ -96,7 +96,7 @@ export interface TriggerLinkEmission {
  * the reverse pairing from a `push_scope` iterator like `any_owned_planet`.
  *
  * A link whose name collides with an existing trigger export is a hard error,
- * not a skip: the file is star-re-exported through `src/triggers.ts`, and two
+ * not a skip: the file is star-re-exported through `src/script/triggers.ts`, and two
  * `export *` sources sharing a name silently drop the symbol for consumers.
  */
 export function emitTriggerLinks(
@@ -108,7 +108,7 @@ export function emitTriggerLinks(
   for (const link of classified.links) {
     if (takenNames.has(link.method)) {
       throw new Error(
-        `scope link "${link.key}" would emit "${link.method}", which src/triggers.ts ` +
+        `scope link "${link.key}" would emit "${link.method}", which src/script/triggers.ts ` +
           "already exports — rename via the overlay before generating"
       );
     }

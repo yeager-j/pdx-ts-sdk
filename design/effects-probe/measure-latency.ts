@@ -12,7 +12,7 @@ import ts from "typescript";
 
 const simPath = fileURLToPath(new URL("./latency-sim.ts", import.meta.url));
 const triggerCorePath = fileURLToPath(
-  new URL("../../packages/sdk/src/trigger-core.ts", import.meta.url)
+  new URL("../../packages/sdk/src/script/trigger-core.ts", import.meta.url)
 );
 const astPath = fileURLToPath(new URL("../../packages/sdk/src/ast.ts", import.meta.url));
 const scopesPath = fileURLToPath(

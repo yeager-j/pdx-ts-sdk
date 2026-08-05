@@ -18,7 +18,7 @@ import {
   target,
   trigger,
   yearsPassed,
-} from "../src/triggers.ts";
+} from "../src/script/triggers.ts";
 
 describe("trigger builders", () => {
   it("emits nested combinator blocks", () => {

@@ -4,7 +4,7 @@
 
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
-import type { ScriptValue, Trigger } from "../trigger-core.ts";
+import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 import type { ShipSizeRef } from "./refs.ts";
 
 /**

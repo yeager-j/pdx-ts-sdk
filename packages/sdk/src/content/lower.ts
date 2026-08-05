@@ -11,11 +11,12 @@ import {
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
-import { recordEffects, scriptCtx, type ScriptCtx } from "../effect-core.ts";
 import { refId, type TypedRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { underField, type ContentRefSink, type ContentRefUse } from "../references.ts";
-import { scriptValueScalar, type ScriptValue, type Trigger } from "../trigger-core.ts";
+import { recordEffects, scriptCtx } from "../script/effects/recorder.ts";
+import type { ScriptCtx } from "../script/effects/types.ts";
+import { scriptValueScalar, type ScriptValue, type Trigger } from "../script/trigger-core.ts";
 import {
   ECONOMIC_RESOURCE_OPERATIONS,
   ECONOMIC_RESOURCE_OPERATIONS_NO_PRODUCE,

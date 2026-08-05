@@ -13,9 +13,9 @@
 
 import { describe, expect, it } from "vitest";
 
-import { eventTarget } from "../src/effect-core.ts";
 import { createMod, render } from "../src/index.ts";
-import { hasEventChain, hasGlobalFlag } from "../src/triggers.ts";
+import { eventTarget } from "../src/script/effects/recorder.ts";
+import { hasEventChain, hasGlobalFlag } from "../src/script/triggers.ts";
 
 const CONFIG = {
   name: "Event fields tests",
@@ -415,7 +415,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     const unpinnedKeyBefore = keyFor("Unpinned tooltip\\.", beforeLoc);
 
     // The pinned key is human-readable; the unpinned one is an 8-char hex
-    // content hash of the desc text, per modifierDescKey (effect-core.ts).
+    // content hash of the desc text, per modifierDescKey (script/effects/modifiers.ts).
     expect(pinnedKeyBefore).toBe("event_fields.1041_mean_time_to_happen_pinned_tooltip");
     expect(unpinnedKeyBefore).toMatch(/^event_fields\.1041_mean_time_to_happen_[0-9a-f]{8}$/);
 
@@ -498,7 +498,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
 
   // Was `it.fails` while events derived keys from array position (the
   // duplicated scheme SDK-46's first pass copied from `main`'s pre-#14
-  // content.ts). Sharing `modifierDescKey` (effect-core.ts) with #14's real
+  // content.ts). Sharing `modifierDescKey` (script/effects/modifiers.ts) with #14's real
   // fix — content-derived, not position-derived — means events inherited it
   // automatically; this now passes as a normal assertion, which is the
   // signal the extraction actually worked rather than merely compiling.

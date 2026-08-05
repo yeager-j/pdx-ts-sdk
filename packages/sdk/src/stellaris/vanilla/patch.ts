@@ -24,7 +24,7 @@ import {
 import type { ResearchArea } from "../../generated/enums.ts";
 import { refId, type TechnologyCategoryRef, type TechnologyRef } from "../../generated/refs.ts";
 import type { ContentRefUse } from "../../references.ts";
-import type { Trigger } from "../../trigger-core.ts";
+import type { Trigger } from "../../script/trigger-core.ts";
 import type { AnyOf, ParsedNumber, ParsedTechnology } from "./view.ts";
 
 /**

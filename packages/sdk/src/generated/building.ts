@@ -10,7 +10,7 @@ import type {
   TriggeredModifier,
   WeightBlock,
 } from "../content/types.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { Trigger } from "../script/trigger-core.ts";
 import type { BuildingCategory } from "./enums.ts";
 import type { BuildingRef, SpriteRef, TechnologyRef } from "./refs.ts";
 import type { BuildingSet } from "./value-sets.ts";

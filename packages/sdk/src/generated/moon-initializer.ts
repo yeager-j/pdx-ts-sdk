@@ -4,7 +4,7 @@
 
 import { registerAliasStructFields, type ContentField } from "../content/schema.ts";
 import type { EffectBlock } from "../content/types.ts";
-import type { ScriptValue } from "../trigger-core.ts";
+import type { ScriptValue } from "../script/trigger-core.ts";
 import type { SolarSysInitPlanetClass } from "./enums.ts";
 import type {
   AnomalyCategoryRef,

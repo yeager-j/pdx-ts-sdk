@@ -14,7 +14,7 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ScopeName } from "../../packages/sdk/src/generated/scopes.ts";
-import type { Trigger } from "../../packages/sdk/src/trigger-core.ts";
+import type { Trigger } from "../../packages/sdk/src/script/trigger-core.ts";
 import type { KnownScope, ScopeObjOf } from "./scopes-sample.ts";
 
 // ---------------------------------------------------------------------------

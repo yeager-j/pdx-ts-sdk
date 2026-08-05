@@ -10,13 +10,13 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { ScopeName } from "./generated/scopes.ts";
+import type { ScopeName } from "../generated/scopes.ts";
 import { conjoin, trigger, type Trigger } from "./trigger-core.ts";
 
-export type { ScopeName } from "./generated/scopes.ts";
+export type { ScopeName } from "../generated/scopes.ts";
 export { trigger, type ScriptValue, type Trigger } from "./trigger-core.ts";
-export * from "./generated/triggers.ts";
-export * from "./generated/links.ts";
+export * from "../generated/triggers.ts";
+export * from "../generated/links.ts";
 
 declare const situationApproachBrand: unique symbol;
 declare const situationStageBrand: unique symbol;

@@ -11,7 +11,7 @@ import type {
   WeightBlock,
   WithFrom,
 } from "../content/types.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { Trigger } from "../script/trigger-core.ts";
 import type {
   AuraType,
   ComponentTag,
