@@ -159,6 +159,50 @@
         ]
       ]
     },
+    "forbidden_peace_offers.demand_surrender": {
+      "definitions": 35,
+      "repeated": 0,
+      "scalars": 35,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "",
+        "wg_raid_contract_no_surrender"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "forbidden_peace_offers.status_quo": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        ""
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "forbidden_peace_offers.surrender": {
+      "definitions": 35,
+      "repeated": 0,
+      "scalars": 35,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "",
+        "wg_raid_contract_no_surrender"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "galactic_empire_joins_defender": {
       "definitions": 31,
       "repeated": 0,

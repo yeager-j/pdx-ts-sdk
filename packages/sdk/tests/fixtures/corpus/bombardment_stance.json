@@ -106,6 +106,34 @@
         ]
       ]
     },
+    "kill_pop_amount.max": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "200"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "kill_pop_amount.min": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "kill_pop_chance": {
       "definitions": 12,
       "repeated": 0,

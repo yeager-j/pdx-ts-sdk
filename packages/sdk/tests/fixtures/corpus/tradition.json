@@ -1414,7 +1414,7 @@
     },
     "tradition_swap.custom_tooltip": {
       "definitions": 45,
-      "repeated": 17,
+      "repeated": 0,
       "scalars": 45,
       "blocks": 0,
       "bareBlocks": 0,
@@ -1491,7 +1491,7 @@
     },
     "tradition_swap.custom_tooltip_with_modifiers": {
       "definitions": 14,
-      "repeated": 3,
+      "repeated": 0,
       "scalars": 14,
       "blocks": 0,
       "bareBlocks": 0,
@@ -1520,7 +1520,7 @@
     },
     "tradition_swap.inherit_effects": {
       "definitions": 44,
-      "repeated": 23,
+      "repeated": 0,
       "scalars": 44,
       "blocks": 0,
       "bareBlocks": 0,
@@ -1535,7 +1535,7 @@
     },
     "tradition_swap.inherit_icon": {
       "definitions": 94,
-      "repeated": 47,
+      "repeated": 0,
       "scalars": 94,
       "blocks": 0,
       "bareBlocks": 0,
@@ -1550,7 +1550,7 @@
     },
     "tradition_swap.inherit_name": {
       "definitions": 52,
-      "repeated": 17,
+      "repeated": 0,
       "scalars": 52,
       "blocks": 0,
       "bareBlocks": 0,
@@ -1565,7 +1565,7 @@
     },
     "tradition_swap.inline_script": {
       "definitions": 1,
-      "repeated": 1,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 1,
       "bareBlocks": 0,
@@ -1581,7 +1581,7 @@
     },
     "tradition_swap.modifier": {
       "definitions": 51,
-      "repeated": 16,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 51,
       "bareBlocks": 0,
@@ -1865,7 +1865,7 @@
     },
     "tradition_swap.on_enabled": {
       "definitions": 11,
-      "repeated": 2,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 11,
       "bareBlocks": 0,
@@ -1892,7 +1892,7 @@
     },
     "tradition_swap.trigger": {
       "definitions": 97,
-      "repeated": 52,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 97,
       "bareBlocks": 0,
@@ -2149,7 +2149,7 @@
     },
     "tradition_swap.triggered_modifier": {
       "definitions": 2,
-      "repeated": 1,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 2,
       "bareBlocks": 0,
@@ -2193,7 +2193,7 @@
     },
     "tradition_swap.weight": {
       "definitions": 80,
-      "repeated": 41,
+      "repeated": 0,
       "scalars": 0,
       "blocks": 80,
       "bareBlocks": 0,

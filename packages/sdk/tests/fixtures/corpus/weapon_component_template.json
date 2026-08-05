@@ -400,6 +400,104 @@
         ]
       ]
     },
+    "injected_modifier.modifier": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 20,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "days",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "days",
+          "modifier"
+        ]
+      ]
+    },
+    "injected_modifier.modifier.days": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 20,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "10"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "injected_modifier.modifier.modifier": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 20,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "disruptor_regen_debuff_1",
+        "disruptor_regen_debuff_2",
+        "disruptor_regen_debuff_3",
+        "psionic_disruptor_anti_fire_rate"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "injected_modifier.stack_info": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 20,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "id",
+        "priority"
+      ],
+      "keysByDefinition": [
+        [
+          "id",
+          "priority"
+        ]
+      ]
+    },
+    "injected_modifier.stack_info.id": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 20,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "anti_fire_rate",
+        "disruptor_regen"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "injected_modifier.stack_info.priority": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 20,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "2",
+        "3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "inline_script": {
       "definitions": 36,
       "repeated": 0,

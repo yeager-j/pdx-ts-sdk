@@ -87,6 +87,105 @@
         ]
       ]
     },
+    "ai_ship_data.fraction": {
+      "definitions": 79,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 68,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "20",
+        "30",
+        "33"
+      ],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "ai_ship_data.max": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "15",
+        "2",
+        "3",
+        "modifier:nomadic_constructor_limit_add",
+        "value:desired_constructors_max",
+        "value:max_science_ships"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_ship_data.min": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 20,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "5",
+        "value:desired_colonizers",
+        "value:desired_colonizers_base",
+        "value:desired_constructors_min",
+        "value:desired_science_ships"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_ship_data.planet_mult": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.1",
+        "0.5",
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_ship_data.system_mult": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "0.15",
+        "value:desired_science_ships_system_mult"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "arkship_picture": {
       "definitions": 9,
       "repeated": 0,
@@ -801,6 +900,71 @@
         ]
       ]
     },
+    "hero_ship.capabilities": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareBlocks": 1,
+      "values": [
+        "can_repair",
+        "can_upgrade"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hero_ship.custom_class_text_color": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "B",
+        "H",
+        "R"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hero_ship.custom_state_loc_prefix": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "HANGER_STATE"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hero_ship.hero_ship_fleet_background": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_arkship_fleetview_civilian",
+        "GFX_arkship_fleetview_military",
+        "GFX_arkship_fleetview_science",
+        "GFX_fleet_view_behemoth_stage_2",
+        "GFX_fleet_view_behemoth_stage_3",
+        "GFX_fleet_view_behemoth_stage_4",
+        "GFX_fleet_view_paladin_ship"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "hull_scale": {
       "definitions": 35,
       "repeated": 0,
@@ -1144,6 +1308,68 @@
           "mixed",
           "normal"
         ]
+      ]
+    },
+    "map_icon_override.cloaked": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 16,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_fleet_presence_kaiju_icons_cloaked",
+        "GFX_fleet_presence_paladin_icons_cloaked",
+        "GFX_ship_icons_type_arkship_cloaked"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "map_icon_override.encamped": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_ship_icons_type_arkship_encamped"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "map_icon_override.mixed": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 16,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_fleet_presence_kaiju_icons_mixed",
+        "GFX_fleet_presence_paladin_icons_mixed",
+        "GFX_ship_icons_type_arkship_mixed"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "map_icon_override.normal": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 16,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_fleet_presence_kaiju_icons",
+        "GFX_fleet_presence_paladin_icons",
+        "GFX_ship_icons_type_arkship"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
       ]
     },
     "max_hitpoints": {
@@ -2213,6 +2439,44 @@
         ]
       ]
     },
+    "section_slots.locator": {
+      "definitions": 315,
+      "repeated": 1,
+      "scalars": 315,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "bot_1",
+        "bot_2",
+        "bot_3",
+        "frame_ship",
+        "gun_01",
+        "light_pos",
+        "main_body",
+        "module_01",
+        "module_02",
+        "module_03",
+        "module_04",
+        "module_05",
+        "module_06",
+        "part1",
+        "part2",
+        "part3",
+        "part4",
+        "part5",
+        "part6",
+        "part7",
+        "part8",
+        "root",
+        "spinal_mount",
+        "spine",
+        "station"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "selectable": {
       "definitions": 37,
       "repeated": 0,
@@ -2561,6 +2825,207 @@
         ]
       ]
     },
+    "space_fauna_values.age_threshold": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 38,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "max",
+        "min"
+      ],
+      "keysByDefinition": [
+        [
+          "max"
+        ],
+        [
+          "max",
+          "min"
+        ],
+        [
+          "min"
+        ]
+      ]
+    },
+    "space_fauna_values.age_threshold.max": {
+      "definitions": 26,
+      "repeated": 0,
+      "scalars": 26,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "15",
+        "30",
+        "40",
+        "60",
+        "65",
+        "80"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "space_fauna_values.age_threshold.min": {
+      "definitions": 26,
+      "repeated": 0,
+      "scalars": 26,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "15",
+        "30",
+        "40",
+        "60",
+        "65",
+        "80"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "space_fauna_values.breeding_cooldown_months": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "12",
+        "16",
+        "3",
+        "6"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "space_fauna_values.can_breed_alone": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "space_fauna_values.culling_value": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 38,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "produces"
+      ],
+      "keysByDefinition": [
+        [
+          "category",
+          "produces"
+        ]
+      ]
+    },
+    "space_fauna_values.icon_frame": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 38,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "space_fauna_values.merge_with_individuals_amount_to_upgrade": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "space_fauna_values.monthly_increased_breeding_chance": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "space_fauna_values.monthly_initial_breeding_chance": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "3",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "space_fauna_values.reanimated_ship_design": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "NAME_Reanimated_Cutholoids",
+        "NAME_Reanimated_Cutholoids_Hatchling",
+        "NAME_Reanimated_Cutholoids_Juvenile",
+        "NAME_Reanimated_Great_Space_Organism",
+        "NAME_Reanimated_Small_Space_Organism",
+        "NAME_Reanimated_Tiyanki_Bull",
+        "NAME_Reanimated_Tiyanki_Calf",
+        "NAME_Reanimated_Tiyanki_Cow",
+        "NAME_Reanimated_Tiyanki_Hatchling",
+        "NAME_Reanimated_Voidworms_Juvenile",
+        "NAME_Reanimated_Voidworms_Mature",
+        "NAME_Reanimated_Voidworms_Nymph",
+        "NAME_Reanimated_Voidworms_Troika"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "stay_disabled": {
       "definitions": 12,
       "repeated": 0,
@@ -2599,6 +3064,56 @@
       "keys": [],
       "keysByDefinition": [
         []
+      ]
+    },
+    "triggered_ship_roles.name": {
+      "definitions": 43,
+      "repeated": 0,
+      "scalars": 43,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "artillery",
+        "artillery_stealth",
+        "brawler_stealth",
+        "buffer_role_stealth",
+        "carrier_stealth",
+        "debuffer_role_stealth",
+        "energy_torpedoes",
+        "energy_torpedoes_stealth",
+        "explosive",
+        "explosive_stealth",
+        "gunship_stealth",
+        "screen_stealth"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_ship_roles.trigger": {
+      "definitions": 43,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 43,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "has_battleship_cloaking_tech",
+        "has_technology"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "has_technology"
+        ],
+        [
+          "has_battleship_cloaking_tech"
+        ],
+        [
+          "has_technology"
+        ]
       ]
     },
     "upgrades_to": {

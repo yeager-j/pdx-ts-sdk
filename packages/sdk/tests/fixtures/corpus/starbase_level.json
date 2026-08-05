@@ -239,6 +239,36 @@
         ]
       ]
     },
+    "picture.picture": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "GFX_bioship_starbase_background"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "picture.trigger": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 9,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "owner"
+        ]
+      ]
+    },
     "potential_home_base": {
       "definitions": 25,
       "repeated": 0,

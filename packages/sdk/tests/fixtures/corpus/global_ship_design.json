@@ -82,6 +82,171 @@
         []
       ]
     },
+    "growth_stages.required_component": {
+      "definitions": 2,
+      "repeated": 2,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "BIOSHIP_SENSOR_1",
+        "BIO_COMBAT_COMPUTER_BUFFER_BASIC",
+        "BIO_COMBAT_COMPUTER_SWARM_BASIC",
+        "BIO_HYPER_DRIVE_1",
+        "BIO_SHIP_THRUSTER_1",
+        "CORVETTE_BIO_FISSION_REACTOR",
+        "DESTROYER_BIO_FISSION_REACTOR",
+        "MAULER_PURSUIT_1",
+        "WEAVER_BOOSTER_1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "growth_stages.section": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "component",
+        "slot",
+        "template"
+      ],
+      "keysByDefinition": [
+        [
+          "component",
+          "slot",
+          "template"
+        ]
+      ]
+    },
+    "growth_stages.section.component": {
+      "definitions": 2,
+      "repeated": 2,
+      "scalars": 0,
+      "blocks": 2,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "slot",
+        "template"
+      ],
+      "keysByDefinition": [
+        [
+          "slot",
+          "template"
+        ]
+      ]
+    },
+    "growth_stages.section.component.slot": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "MEDIUM_GUN_01",
+        "MEDIUM_GUN_02",
+        "MEDIUM_GUN_03",
+        "MEDIUM_GUN_04",
+        "MEDIUM_UTILITY_1",
+        "MEDIUM_UTILITY_2",
+        "MEDIUM_UTILITY_3",
+        "MEDIUM_UTILITY_4",
+        "SMALL_GUN_01",
+        "SMALL_GUN_02",
+        "SMALL_GUN_03",
+        "SMALL_GUN_04",
+        "SMALL_UTILITY_1",
+        "SMALL_UTILITY_2",
+        "SMALL_UTILITY_3",
+        "SMALL_UTILITY_4",
+        "SMALL_UTILITY_5",
+        "SMALL_UTILITY_6",
+        "TORPEDO_01",
+        "TORPEDO_02"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "growth_stages.section.component.template": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "ANTI_EVASION_GUN_1",
+        "HEALING_GUN_1",
+        "MANDIBLE_1",
+        "MEDIUM_BIO_ARMOR_1",
+        "MEDIUM_BIO_PLASMA_1",
+        "SMALL_BIO_ARMOR_1",
+        "SMALL_BIO_AUTOCANNON_1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "growth_stages.section.slot": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "mid"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "growth_stages.section.template": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "MAULER_STAGE_1_swarm",
+        "MAULER_STAGE_2_swarm",
+        "MAULER_STAGE_3_swarm",
+        "WEAVER_STAGE_1_buffer",
+        "WEAVER_STAGE_2_buffer",
+        "WEAVER_STAGE_3_buffer"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "growth_stages.ship_size": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "mauler_stage_1",
+        "mauler_stage_2",
+        "mauler_stage_3",
+        "weaver_stage_1",
+        "weaver_stage_2",
+        "weaver_stage_3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "hide_size": {
       "definitions": 89,
       "repeated": 0,
@@ -261,6 +426,278 @@
           "slot",
           "template"
         ]
+      ]
+    },
+    "section.component": {
+      "definitions": 410,
+      "repeated": 401,
+      "scalars": 0,
+      "blocks": 410,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "slot",
+        "template"
+      ],
+      "keysByDefinition": [
+        [
+          "slot",
+          "template"
+        ]
+      ]
+    },
+    "section.component.slot": {
+      "definitions": 410,
+      "repeated": 0,
+      "scalars": 410,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "AUX_UTILITY_1",
+        "EXTRA_LARGE_01",
+        "EXTRA_LARGE_02",
+        "EXTRA_LARGE_03",
+        "EXTRA_LARGE_04",
+        "LARGE_GUN_01",
+        "LARGE_GUN_02",
+        "LARGE_GUN_03",
+        "LARGE_GUN_04",
+        "LARGE_GUN_05",
+        "LARGE_GUN_06",
+        "LARGE_UTILITY_1",
+        "LARGE_UTILITY_10",
+        "LARGE_UTILITY_11",
+        "LARGE_UTILITY_12",
+        "LARGE_UTILITY_13",
+        "LARGE_UTILITY_14",
+        "LARGE_UTILITY_15",
+        "LARGE_UTILITY_16",
+        "LARGE_UTILITY_17",
+        "LARGE_UTILITY_18",
+        "LARGE_UTILITY_19",
+        "LARGE_UTILITY_2",
+        "LARGE_UTILITY_20",
+        "LARGE_UTILITY_3",
+        "LARGE_UTILITY_4",
+        "LARGE_UTILITY_5",
+        "LARGE_UTILITY_6",
+        "LARGE_UTILITY_7",
+        "LARGE_UTILITY_8",
+        "LARGE_UTILITY_9",
+        "MEDIUM_GUN_01",
+        "MEDIUM_GUN_02",
+        "MEDIUM_GUN_03",
+        "MEDIUM_GUN_04",
+        "MEDIUM_GUN_05",
+        "MEDIUM_GUN_06",
+        "MEDIUM_GUN_07",
+        "MEDIUM_GUN_08",
+        "MEDIUM_UTILITY_1",
+        "MEDIUM_UTILITY_2",
+        "MEDIUM_UTILITY_3",
+        "MEDIUM_UTILITY_4",
+        "MEDIUM_UTILITY_5",
+        "MEDIUM_UTILITY_6",
+        "MEDIUM_UTILITY_7",
+        "MEDIUM_UTILITY_8",
+        "PD_01",
+        "PD_02",
+        "SMALL_GUN_01",
+        "SMALL_GUN_02",
+        "STRIKE_CRAFT_01",
+        "STRIKE_CRAFT_02",
+        "STRIKE_CRAFT_03",
+        "STRIKE_CRAFT_04",
+        "STRIKE_CRAFT_05",
+        "STRIKE_CRAFT_06",
+        "STRIKE_CRAFT_07",
+        "STRIKE_CRAFT_08",
+        "STRIKE_CRAFT_09",
+        "STRIKE_CRAFT_10",
+        "STRIKE_CRAFT_11",
+        "TORPEDO_01",
+        "XL_01"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "section.component.template": {
+      "definitions": 410,
+      "repeated": 0,
+      "scalars": 410,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "AI_STRIKE_CRAFT",
+        "ANTI_EVASION_GUN_6",
+        "ANTI_FIRE_RATE_GUN_6",
+        "ARMOR_HARDENER_1",
+        "AUTO_REPAIR",
+        "BEHEMOTH_LIGHTNING_WEAPON",
+        "BEHEMOTH_TITAN_WEAPON",
+        "BIO_ENERGY_LANCE_2",
+        "BIO_ENERGY_TORPEDO_2",
+        "BIO_FLAK_BATTERY_1",
+        "BIO_FLAK_BATTERY_3",
+        "BIO_POINT_DEFENCE_3",
+        "BIO_STRIKE_CRAFT_HANGAR_3",
+        "CONFUSER_GUN_6",
+        "ED_POINT_DEFENCE",
+        "ENERGY_LANCE_1",
+        "ENERGY_LANCE_2",
+        "ENERGY_TORPEDO_2",
+        "EVASION_GUN_6",
+        "FIRE_CONTROL_1",
+        "FIRE_RATE_GUN_6",
+        "HEALING_GUN_6",
+        "LARGE_ARMOR_5",
+        "LARGE_BEHEMOTH_ARMOR",
+        "LARGE_BIO_ARMOR_5",
+        "LARGE_BIO_AUTOCANNON_4",
+        "LARGE_BIO_PLASMA_3",
+        "LARGE_CRYSTAL_SHIP_RED_ELITE_LIGHTNING",
+        "LARGE_DARK_MATTER_BIO_DEFLECTOR",
+        "LARGE_ED_WEAPON",
+        "LARGE_GAMMA_BIO_LASER",
+        "LARGE_GAMMA_LASER",
+        "LARGE_PLASMA_3",
+        "LARGE_PSI_SHIELD",
+        "LARGE_SHIELD_5",
+        "LARGE_UV_BIO_LASER",
+        "MANDIBLE_3",
+        "MEDIUM_ARMOR_5",
+        "MEDIUM_BIO_ARMOR_5",
+        "MEDIUM_BIO_AUTOCANNON_3",
+        "MEDIUM_BIO_AUTOCANNON_4",
+        "MEDIUM_BIO_DISRUPTOR_3",
+        "MEDIUM_BIO_PLASMA_3",
+        "MEDIUM_BIO_SWARMER_MISSILE_2",
+        "MEDIUM_CRYSTAL_SHIP_RED_ELITE_LIGHTNING",
+        "MEDIUM_ED_WEAPON",
+        "MEDIUM_GAMMA_LASER",
+        "MEDIUM_PLASMA_3",
+        "MEDIUM_PSI_SHIELD",
+        "MEDIUM_SHIELD_5",
+        "PLANET_KILLER_CRACKER",
+        "POINT_DEFENCE_2",
+        "POINT_DEFENCE_3",
+        "SMALL_BIO_ARMOR_5",
+        "SMALL_BIO_AUTOCANNON_3",
+        "SMALL_BIO_PLASMA_3",
+        "SMALL_CRYSTAL_ARMOR_1_BIO",
+        "SMALL_CRYSTAL_SHIP_RED_ELITE_LIGHTNING",
+        "SMALL_DARK_MATTER_BIO_DEFLECTOR",
+        "SMALL_ED_WEAPON",
+        "SMALL_PLASMA_3",
+        "SMALL_PSI_SHIELD",
+        "TITAN_LASER",
+        "TORPEDO_BIO_SWARMER_MISSILE_2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "section.slot": {
+      "definitions": 431,
+      "repeated": 0,
+      "scalars": 431,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "bot_1",
+        "bot_2",
+        "bot_3",
+        "bow",
+        "core",
+        "mid",
+        "mutations",
+        "ship",
+        "stern",
+        "west"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "section.template": {
+      "definitions": 431,
+      "repeated": 0,
+      "scalars": 431,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "CITADEL_STARBASE_SECTION",
+        "DEEP_SPACE_CITADEL_STAGE_1",
+        "DEEP_SPACE_CITADEL_STAGE_2",
+        "DEEP_SPACE_CITADEL_STAGE_3",
+        "DEFAULT_COLONIZATION_SECTION",
+        "DEFAULT_CONSTRUCTION_SECTION",
+        "EMBER_BATTLESHIP_BOW_XL",
+        "EMBER_BATTLESHIP_MID_S4LHB",
+        "EMBER_BATTLESHIP_STERN_L1",
+        "EMBER_CRUISER_BOW_L1",
+        "EMBER_CRUISER_MID_L1M1",
+        "EMBER_CRUISER_STERN_M1",
+        "SHIP_COLOSSUS_SECTION",
+        "SHIP_CRISIS_STAR_EATER_SECTION",
+        "ai_blue_large_warship_key",
+        "ai_blue_warship_small_key",
+        "ai_colonizer_section",
+        "ai_constructor_section",
+        "ai_core_key",
+        "ai_final_core_key",
+        "ai_large_warship_key",
+        "ai_starbase_key",
+        "ai_station_large_key",
+        "ai_station_small_key",
+        "ai_transport_section",
+        "ai_warship_small_key",
+        "behemoth_01_section",
+        "behemoth_02_section",
+        "behemoth_03_section",
+        "behemoth_04_section",
+        "crystal_ship_large_blue_elite_section",
+        "crystal_ship_large_blue_section",
+        "crystal_ship_large_green_section",
+        "crystal_ship_large_red_section",
+        "crystal_ship_large_yellow_section",
+        "crystal_ship_medium_blue_elite_section",
+        "crystal_ship_medium_blue_section",
+        "crystal_ship_medium_green_elite_section",
+        "crystal_ship_medium_green_section",
+        "crystal_ship_medium_red_section",
+        "crystal_ship_medium_yellow_section",
+        "crystal_ship_small_blue_elite_section",
+        "crystal_ship_small_blue_section",
+        "crystal_ship_small_green_elite_section",
+        "crystal_ship_small_green_section",
+        "crystal_ship_small_red_section",
+        "crystal_ship_small_yellow_section",
+        "ed_dimensional_anchor_key_blue",
+        "ed_large_orange_warship_key",
+        "ed_medium_orange_warship_key",
+        "ed_medium_warship_key",
+        "ed_warship_small_green_key",
+        "entropy_conduit_key",
+        "fallen_empire_station_small_key",
+        "formless_medium_warship_key",
+        "grave_guardian_ship",
+        "large_fallen_harbinger_section",
+        "large_fallen_mauler",
+        "large_fallen_stinger_section",
+        "large_fallen_weaver_section",
+        "monadic_qerr_section",
+        "small_fallen_weaver_section",
+        "station_generic_01_key",
+        "voidspawn_boss_key"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
       ]
     },
     "ship_size": {

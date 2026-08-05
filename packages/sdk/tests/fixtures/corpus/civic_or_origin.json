@@ -395,6 +395,57 @@
         ]
       ]
     },
+    "has_secondary_species.title": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "civic_hive_bodysnatcher_secondary_species",
+        "civic_machine_assimilator_secondary_species",
+        "civic_machine_servitor_secondary_species",
+        "civic_necrophage_secondary_species",
+        "civic_syncretic_evolution_secondary_species",
+        "origin_forever_cruise_secondary_species"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "has_secondary_species.traits": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "trait"
+      ],
+      "keysByDefinition": [
+        [
+          "trait"
+        ]
+      ]
+    },
+    "has_secondary_species.traits.trait": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "trait_cybernetic",
+        "trait_hive_mind",
+        "trait_syncretic_proles"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "hide_modifiers": {
       "definitions": 26,
       "repeated": 0,
@@ -591,6 +642,79 @@
         [
           "add",
           "remove"
+        ]
+      ]
+    },
+    "modification.add": {
+      "definitions": 33,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 33,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "custom_tooltip",
+        "has_technology",
+        "hidden_trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ],
+        [
+          "custom_tooltip",
+          "has_technology"
+        ],
+        [
+          "has_technology"
+        ],
+        [
+          "hidden_trigger"
+        ]
+      ]
+    },
+    "modification.moddable_conditions_custom_tooltip": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "CIVIC_NOT_MODDABLE_ONLY_REMOVE"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "modification.remove": {
+      "definitions": 33,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 33,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "always",
+        "custom_tooltip",
+        "fail_text",
+        "has_technology"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "fail_text"
+        ],
+        [
+          "always"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "has_technology"
         ]
       ]
     },
@@ -2706,6 +2830,21 @@
         ]
       ]
     },
+    "soft_traits.trait": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "trait_cyborg_ritualistic_implants",
+        "trait_latent_psionic"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "starting_colony": {
       "definitions": 13,
       "repeated": 0,
@@ -2794,6 +2933,320 @@
         ]
       ]
     },
+    "swap_type.description": {
+      "definitions": 36,
+      "repeated": 0,
+      "scalars": 36,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "civic_beastmasters_effects",
+        "civic_cordyceptic_beastmasters_effects",
+        "civic_corporate_flight_schools_effect_nomadic_tooltip",
+        "civic_corporate_hired_guns_effect_tooltip",
+        "civic_eager_explorers_effects",
+        "civic_flight_schools_effect_nomadic_tooltip",
+        "civic_hive_familiar_face_effects",
+        "civic_hive_shared_genetics_effects",
+        "civic_hive_tooltip_natural_design_effects",
+        "civic_machine_spybots_effects",
+        "civic_machine_tactical_algorithms_effects",
+        "civic_machine_toxic_baths_servitor_effects",
+        "civic_tooltip_agrarian_anglers_effects",
+        "civic_tooltip_ascensionists_effects",
+        "civic_tooltip_barbaric_despoilers_effects",
+        "civic_tooltip_cordyceptic_drones",
+        "civic_tooltip_criminal_heritage_effects",
+        "civic_tooltip_crusader_spirit_corporate_effects",
+        "civic_tooltip_devouring_swarm_lithoid_effects",
+        "civic_tooltip_devouring_swarm_lithoid_nomadic_effects",
+        "civic_tooltip_devouring_swarm_wilderness_effects",
+        "civic_tooltip_exalted_priesthood_techpriest_effects",
+        "civic_tooltip_fanatic_purifiers_effects",
+        "civic_tooltip_franchising_effects",
+        "civic_tooltip_hive_subspace_ephapse_fircon_effects",
+        "civic_tooltip_hive_upkeep_twister_effects",
+        "civic_tooltip_idyllic_bloom_effects",
+        "civic_tooltip_machine_astromining_drones_effects",
+        "civic_tooltip_machine_servitor_forever_cruise_effects",
+        "civic_tooltip_memorialist_gestalt_effects",
+        "civic_tooltip_memory_vault_hive_effects",
+        "civic_tooltip_naval_contractors_effects",
+        "civic_tooltip_private_military_companies_effects",
+        "civic_tooltip_ruthless_competition_effects",
+        "civic_tooltip_void_reavers_effects",
+        "civic_tooltip_warrior_culture_effects",
+        "origin_tooltip_arc_builders_nomadic_effects",
+        "origin_tooltip_default_effects_lithoid",
+        "origin_tooltip_life_seeded_effects"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swap_type.modifier": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 20,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "BIOLOGICAL_species_trait_picks_add",
+        "BIOLOGICAL_species_trait_points_add",
+        "add_attunement_the_composer_of_strands",
+        "councilor_gestalt_growth_exp_gain",
+        "country_astral_rift_speed_mult",
+        "country_enclave_capacity_add",
+        "country_government_civic_points_add",
+        "country_starbase_capacity_mult",
+        "leader_trait_selection_options_add",
+        "megastructure_waystation_megastructure_build_speed_mult",
+        "operation_smuggle_pops_difficulty_add",
+        "planet_farmers_society_research_produces_add",
+        "planet_jobs_simple_drone_produces_mult",
+        "planet_maintenance_drones_engineering_research_produces_add",
+        "planet_maintenance_drones_minerals_upkeep_add",
+        "planet_maintenance_drones_physics_research_produces_add",
+        "planet_maintenance_drones_society_research_produces_add",
+        "planet_maintenance_drones_unity_produces_add",
+        "planet_max_subject_holding_buildings_add",
+        "planet_miners_engineering_research_produces_add",
+        "planet_miners_minerals_produces_add",
+        "planet_pop_assemblers_society_research_produces_add",
+        "planet_technician_energy_produces_add",
+        "planet_technician_physics_research_produces_add",
+        "pop_happiness",
+        "ship_cloaking_strength_add",
+        "specialist_subject_conversion_time_mult",
+        "starbase_collected_system_resources_mult",
+        "station_gatherers_produces_mult",
+        "stations_cost_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "BIOLOGICAL_species_trait_picks_add",
+          "BIOLOGICAL_species_trait_points_add",
+          "councilor_gestalt_growth_exp_gain",
+          "planet_pop_assemblers_society_research_produces_add"
+        ],
+        [
+          "add_attunement_the_composer_of_strands",
+          "councilor_gestalt_growth_exp_gain",
+          "country_starbase_capacity_mult",
+          "megastructure_waystation_megastructure_build_speed_mult",
+          "planet_jobs_simple_drone_produces_mult",
+          "planet_miners_minerals_produces_add",
+          "planet_technician_energy_produces_add",
+          "starbase_collected_system_resources_mult",
+          "station_gatherers_produces_mult",
+          "stations_cost_mult"
+        ],
+        [
+          "country_astral_rift_speed_mult"
+        ],
+        [
+          "country_enclave_capacity_add"
+        ],
+        [
+          "country_government_civic_points_add"
+        ],
+        [
+          "leader_trait_selection_options_add"
+        ],
+        [
+          "operation_smuggle_pops_difficulty_add"
+        ],
+        [
+          "planet_farmers_society_research_produces_add",
+          "planet_maintenance_drones_engineering_research_produces_add",
+          "planet_maintenance_drones_minerals_upkeep_add",
+          "planet_maintenance_drones_physics_research_produces_add",
+          "planet_maintenance_drones_society_research_produces_add",
+          "planet_maintenance_drones_unity_produces_add",
+          "planet_miners_engineering_research_produces_add",
+          "planet_technician_physics_research_produces_add"
+        ],
+        [
+          "planet_max_subject_holding_buildings_add",
+          "specialist_subject_conversion_time_mult"
+        ],
+        [
+          "pop_happiness"
+        ],
+        [
+          "ship_cloaking_strength_add"
+        ]
+      ]
+    },
+    "swap_type.name": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "civic_hive_devouring_swarm_lithoid",
+        "civic_hive_devouring_swarm_lithoid_nomadic",
+        "civic_hive_devouring_swarm_wilderness",
+        "civic_hive_natural_design",
+        "civic_hive_natural_neural_network",
+        "civic_hive_subspace_ephapse_fircon",
+        "civic_hive_wilderness_natural_design",
+        "civic_machine_astromining_drones",
+        "civic_machine_servitor_forever_cruise",
+        "civic_memory_vault_wilderness",
+        "civic_psionic_sovereign_machine_gestalt",
+        "civic_psionic_sovereign_machine_non_gestalt",
+        "civic_psionic_sovereign_organic_gestalt",
+        "civic_toxic_baths",
+        "civic_wilderness_ascensionists",
+        "civic_wilderness_ascetic",
+        "civic_wilderness_beastmasters",
+        "civic_wilderness_cordyceptic_drones",
+        "civic_wilderness_divided_attention",
+        "civic_wilderness_familiar_face",
+        "civic_wilderness_idyllic_bloom",
+        "civic_wilderness_memorialist",
+        "civic_wilderness_natural_neural_network",
+        "civic_wilderness_one_mind",
+        "civic_wilderness_pooled_knowledge",
+        "civic_wilderness_shared_genetics",
+        "civic_wilderness_subspace_ephapse",
+        "civic_wilderness_upkeep_twister",
+        "origin_arc_welders_nomadic"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swap_type.negative_description": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "civic_eager_explorers_negative_effects",
+        "origin_tooltip_arc_builders_nomadic_negative_effects",
+        "origin_tooltip_life_seeded_machine_negative_effects"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "swap_type.trigger": {
+      "definitions": 45,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 45,
+      "bareBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "exists",
+        "has_astral_planes_dlc",
+        "has_biogenesis_dlc",
+        "has_civic",
+        "has_country_flag",
+        "has_first_contact_dlc",
+        "has_origin",
+        "has_paragon_dlc",
+        "has_trait",
+        "has_valid_civic",
+        "host_has_dlc",
+        "is_gestalt",
+        "is_hospitality_servitor_empire",
+        "is_nomadic",
+        "is_scope_valid",
+        "is_species_class",
+        "is_wilderness_empire",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "exists",
+          "has_civic",
+          "is_wilderness_empire"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "exists",
+          "has_origin"
+        ],
+        [
+          "exists",
+          "has_trait"
+        ],
+        [
+          "exists",
+          "is_nomadic"
+        ],
+        [
+          "exists",
+          "is_wilderness_empire"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "has_astral_planes_dlc"
+        ],
+        [
+          "has_biogenesis_dlc"
+        ],
+        [
+          "has_civic",
+          "is_scope_valid"
+        ],
+        [
+          "has_country_flag",
+          "is_scope_valid"
+        ],
+        [
+          "has_first_contact_dlc"
+        ],
+        [
+          "has_first_contact_dlc",
+          "is_wilderness_empire"
+        ],
+        [
+          "has_paragon_dlc"
+        ],
+        [
+          "has_valid_civic"
+        ],
+        [
+          "host_has_dlc"
+        ],
+        [
+          "is_gestalt",
+          "is_species_class"
+        ],
+        [
+          "is_hospitality_servitor_empire"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "is_nomadic",
+          "is_species_class",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_wilderness_empire"
+        ]
+      ]
+    },
     "traits": {
       "definitions": 41,
       "repeated": 0,
@@ -2809,6 +3262,38 @@
         [
           "trait"
         ]
+      ]
+    },
+    "traits.trait": {
+      "definitions": 27,
+      "repeated": 1,
+      "scalars": 27,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "trait_aquatic",
+        "trait_cave_dweller",
+        "trait_clone_soldier_infertile",
+        "trait_malleable_genes",
+        "trait_necrophage",
+        "trait_pathogenic_genes",
+        "trait_perfected_genes",
+        "trait_robot_aquatic",
+        "trait_robot_cave_dweller",
+        "trait_robot_survivor",
+        "trait_stargazer",
+        "trait_storm_touched",
+        "trait_survivor",
+        "trait_tankbound",
+        "trait_unplugged_cybernetic_negatives_3",
+        "trait_unplugged_cybernetic_positives_3",
+        "trait_void_dweller_1",
+        "trait_void_dweller_2",
+        "trait_wilderness"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
       ]
     }
   }

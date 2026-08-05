@@ -251,6 +251,168 @@
           "has_cooldown_on_first_renegotiation"
         ]
       ]
+    },
+    "term_data.discrete_terms": {
+      "definitions": 55,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 55,
+      "bareBlocks": 55,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "term_data.discrete_terms.key": {
+      "definitions": 55,
+      "repeated": 0,
+      "scalars": 55,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "formless_conditions",
+        "has_access",
+        "joins_overlord_wars",
+        "joins_subject_wars",
+        "naval_capacity",
+        "protectorate",
+        "specialist_type",
+        "subject_diplomacy",
+        "subject_expand",
+        "subject_holdings_limit",
+        "subject_integration",
+        "subject_loyalty",
+        "subject_sensors"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "term_data.discrete_terms.value": {
+      "definitions": 55,
+      "repeated": 0,
+      "scalars": 55,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "joins_overlord_wars_all",
+        "joins_overlord_wars_defensive",
+        "joins_overlord_wars_none",
+        "joins_subject_wars_all",
+        "joins_subject_wars_defensive",
+        "joins_subject_wars_none",
+        "modifiers_eternal_throne",
+        "naval_cap_relic_satrapy",
+        "naval_cap_satrapy",
+        "no_access",
+        "specialist_bulwark",
+        "specialist_none",
+        "specialist_prospectorium",
+        "specialist_scholarium",
+        "subject_can_be_integrated",
+        "subject_can_do_diplomacy",
+        "subject_can_do_diplomacy_but_not_vote",
+        "subject_can_expand",
+        "subject_can_expand_with_tithe",
+        "subject_can_not_be_integrated",
+        "subject_can_not_do_diplomacy",
+        "subject_cannot_expand",
+        "subject_does_not_get_sensors",
+        "subject_gets_sensors",
+        "subject_holdings_limit_0",
+        "subject_holdings_limit_1",
+        "subject_holdings_limit_2",
+        "subject_holdings_limit_3",
+        "subject_holdings_limit_4",
+        "subject_is_not_protectorate",
+        "subject_is_protectorate",
+        "subject_loyalty_effects"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "term_data.forced_initial_loyalty": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-100",
+        "-50",
+        "0",
+        "50"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "term_data.has_cooldown_on_first_renegotiation": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "term_data.resource_terms": {
+      "definitions": 36,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 36,
+      "bareBlocks": 36,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "term_data.resource_terms.key": {
+      "definitions": 36,
+      "repeated": 0,
+      "scalars": 36,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "resource_subsidies_advanced",
+        "resource_subsidies_basic",
+        "resource_subsidies_research",
+        "resource_subsidies_strategic"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "term_data.resource_terms.value": {
+      "definitions": 36,
+      "repeated": 0,
+      "scalars": 36,
+      "blocks": 0,
+      "bareBlocks": 0,
+      "values": [
+        "-0.3",
+        "0.15",
+        "0.3",
+        "0.45",
+        "0.6",
+        "0.75"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
     }
   }
 }

@@ -90,6 +90,37 @@ const ACKNOWLEDGED = new Map<string, string>([
       "values there.",
   ],
   [
+    "economic_category.triggered_cost_modifier.trigger scope",
+    "CWT annotates no scope, so the clause lowers to `Trigger<never>` — writable but unchecked. " +
+      "The category's modifiers are evaluated against whatever is paying, and the corpus shows " +
+      "the game itself branching on that: `is_scope_valid` appears in all four definitions " +
+      "writing this clause, guarding ship conditions (is_ship_class, is_ship_size, " +
+      "is_space_fauna, has_ship_owner_type) against a scope that may not be one. That is the " +
+      "SDK-24 narrowing case, not a declaration — the same finding as " +
+      "ship_size.potential_construction below.",
+  ],
+  [
+    "economic_category.triggered_produces_modifier.trigger scope",
+    "Same declaration and same finding as triggered_cost_modifier above " +
+      "(single_alias[economic_category_triggered_modifier], economic_categories.cwt:76-87). " +
+      "Its 13 definitions spread wider still — ship category, specimen category, planet, and " +
+      "species traits — which is what an unannotated clause evaluated per consumer looks like.",
+  ],
+  [
+    "economic_category.triggered_upkeep_modifier.trigger scope",
+    "Same declaration and same finding as its two siblings above. Its 10 definitions divide by " +
+      "consumer rather than mixing: one writes only ship conditions, another only pop " +
+      "(has_trait, is_robot_pop_group, is_unemployed), a third only `exists = planet`.",
+  ],
+  [
+    "scripted_loc.text.trigger scope",
+    "A scripted localization is rendered wherever its key is referenced, so its condition runs " +
+      "in whatever scope did the referencing — genuinely any, and CWT is right to annotate " +
+      "none. The corpus is the same shape: 1072 definitions across 206 distinct condition sets, " +
+      "spanning country, species, planet and variable scopes. Nothing to declare; SDK-24's " +
+      "narrowing inside the clause is the only remedy.",
+  ],
+  [
     "ship_size.potential_construction scope",
     "`Trigger<ScopeName>` is the right type and the clause needs narrowing inside it, not a " +
       "declaration: one ship size's construction clause is evaluated against several scope types " +
@@ -97,6 +128,15 @@ const ACKNOWLEDGED = new Map<string, string>([
       "(zero shipped decisions do, which is why a scope parameter fit there and not here). " +
       "SDK-24 tracks the `inScope` combinator; it waits on SDK-13, since most bodies here " +
       "delegate to vanilla scripted triggers the SDK cannot name yet.",
+  ],
+  [
+    "ship_size.triggered_ship_roles.trigger scope",
+    "The wrapped struct one level inside the field above, and the same registry's finding: a " +
+      "scope parameter does not fit ship_size. Its 43 definitions do write one coherent " +
+      "country-scope set (OR, has_technology, has_battleship_cloaking_tech), so a `scope` " +
+      "assertion is not ruled out the way the sibling clauses' are — but which country the " +
+      "role is evaluated for is exactly what the rules decline to state, and an assertion here " +
+      "would be read off the corpus alone. SDK-24.",
   ],
 ]);
 
