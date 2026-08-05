@@ -959,7 +959,7 @@ function contentDefiners(
           `): ${name}PatchItem {\n` +
           `  return {\n` +
           `    itemKind: "patch",\n` +
-          `    patched: patchContent(${camelCase(registry)}, patch, ${emission.fieldsConstant}),\n` +
+          `    patched: patchContent(${camelCase(registry)}, patch, ${key}, ${emission.fieldsConstant}),\n` +
           "  };\n" +
           "}\n"
       );

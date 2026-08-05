@@ -214,6 +214,44 @@ function keyOf(field: ContentField): string | undefined {
 }
 
 /**
+ * Refuses a patch object carrying a member the transform would not emit.
+ *
+ * The lowering iterates descriptors, not the patch object, so an unknown key
+ * would otherwise be dropped in silence — and the compiler does not catch it:
+ * TypeScript performs no excess-property check on an object literal returned
+ * from an inferred-return arrow, which is the shape every patch callback has.
+ * A member the SDK cannot lower has to fail loudly rather than emit nothing.
+ */
+function assertPatchable(
+  patched: Readonly<Record<string, unknown>>,
+  source: ParsedDefinition,
+  registry: string,
+  patchable: ReadonlyMap<string, ContentField>
+): void {
+  for (const member of Object.keys(patched)) {
+    if (member === "id") {
+      throw new Error(
+        `A patch of ${registry} "${source.id}" may not set "id": a patched definition keeps ` +
+          "vanilla's identity, because the override has to target the vanilla key to win, and " +
+          "the transform already emits under it. Remove the member; to add content of your " +
+          "own, define it instead of patching."
+      );
+    }
+    if (patchable.has(member)) {
+      continue;
+    }
+    const near = [...patchable.keys()]
+      .filter((name) => name.toLowerCase().includes(member.toLowerCase().slice(0, 4)))
+      .slice(0, 5);
+    const hint = near.length > 0 ? ` (did you mean: ${near.join(", ")}?)` : "";
+    throw new Error(
+      `A patch of ${registry} "${source.id}" sets "${member}", which is not a patchable ` +
+        `${registry} member, so it would emit nothing${hint}`
+    );
+  }
+}
+
+/**
  * Lowers the patched members and splices them into the parsed body.
  *
  * Every occurrence of a patched key is replaced by that member's new entries,
@@ -223,9 +261,14 @@ function keyOf(field: ContentField): string | undefined {
 export function patchContent<Source extends ParsedDefinition, Patch extends object>(
   source: Source,
   patch: (source: Source) => Patch,
+  registry: string,
   fields: readonly ContentField[]
 ): PatchedContent<Source> {
   const patched = patch(source) as Readonly<Record<string, unknown>>;
+  const patchable = new Map(
+    fields.flatMap((field) => (keyOf(field) === undefined ? [] : [[field.member, field] as const]))
+  );
+  assertPatchable(patched, source, registry, patchable);
   const refs: ContentRefUse[] = [];
   const ctx = {
     collect: (use: ContentRefUse) => refs.push(use),

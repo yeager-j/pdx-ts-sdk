@@ -387,3 +387,84 @@ describe("descriptor-derived patching", () => {
     ).toThrow(/desc'd modifier rows in patches arrive with the patch-localization change/);
   });
 });
+
+/**
+ * A patch member the transform would not emit has to fail loudly. The lowering
+ * iterates descriptors rather than the patch object, so an unknown key is
+ * dropped in silence otherwise — and the compiler catches neither case:
+ * TypeScript performs no excess-property check on an object literal returned
+ * from an inferred-return arrow, which is the shape every patch callback has.
+ */
+describe("patch members the transform cannot emit", () => {
+  it("refuses `id`, which vanilla's identity already settles", () => {
+    expect(() =>
+      // @ts-expect-error — pinned as an error where the compiler does see it.
+      patchTechnology(geneForging, (): TechnologyPatch => ({ cost: 1, id: "pp_tech_elsewhere" }))
+    ).toThrow(/may not set "id"/);
+    // The real idiom, which the compiler does NOT reject: an inferred-return
+    // arrow gets no excess-property check, so this is caught here or nowhere.
+    expect(() => patchTechnology(geneForging, () => ({ cost: 1, id: "pp_x" }))).toThrow(
+      /keeps vanilla's identity/
+    );
+  });
+
+  it("refuses a member the registry does not have, with a nearest-match hint", () => {
+    expect(() => patchTechnology(geneForging, () => ({ cost: 1, costt: 2 }))).toThrow(
+      /"costt", which is not a patchable technology member/
+    );
+    expect(() => patchTechnology(geneForging, () => ({ cost: 1, costt: 2 }))).toThrow(
+      /did you mean: cost, costPerLevel\?/
+    );
+    // A localisation slot is a real member of the definition and deliberately
+    // not of the patch, so it fails here rather than emitting nothing.
+    expect(() => patchTechnology(geneForging, () => ({ cost: 1, name: "Renamed" }))).toThrow(
+      /"name", which is not a patchable technology member/
+    );
+  });
+});
+
+/**
+ * `technology_swap` is an ordinary repeated struct in patch position. Replacing
+ * the swap blocks of a technology this mod is already overriding whole is not
+ * the refused case — that is patching *into* a swap as an override target,
+ * which `VanillaView.technology` still refuses (see `SwapPatchError` above).
+ */
+describe("patched technology swaps", () => {
+  const view = viewFromFiles({
+    "common/technology/pp_swaps.txt":
+      "tech_pp_swaps = {\n\tarea = society\n" +
+      "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_a\n\t\tinherit_icon = yes\n\t}\n" +
+      "\tgateway = biological\n" +
+      "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_b\n\t\tinherit_effects = no\n\t}\n}\n",
+  });
+  const swapped = view.technology("tech_pp_swaps");
+
+  it("replaces every swap block at the first one's position", () => {
+    const emitted = serialize([
+      patchTechnology(swapped, () => ({
+        technologySwap: [{ name: "tech_pp_swaps_c", inheritName: true }],
+      })).toEntries(),
+    ]);
+    expect(emitted).toBe(
+      "tech_pp_swaps = {\n\tarea = society\n" +
+        "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_c\n\t\tinherit_name = yes\n\t}\n" +
+        "\tgateway = biological\n}\n"
+    );
+  });
+
+  it("keeps the parsed swaps byte-faithful when one fresh swap joins them", () => {
+    const parsed = swapped.body.filter((entry) => entry.key === "technology_swap");
+    const emitted = serialize([
+      patchTechnology(swapped, () => ({
+        technologySwap: [...parsed, { name: "tech_pp_swaps_c" }],
+      })).toEntries(),
+    ]);
+    expect(emitted).toBe(
+      "tech_pp_swaps = {\n\tarea = society\n" +
+        "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_a\n\t\tinherit_icon = yes\n\t}\n" +
+        "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_b\n\t\tinherit_effects = no\n\t}\n" +
+        "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_c\n\t}\n" +
+        "\tgateway = biological\n}\n"
+    );
+  });
+});

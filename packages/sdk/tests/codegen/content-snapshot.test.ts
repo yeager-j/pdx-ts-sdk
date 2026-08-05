@@ -1128,7 +1128,7 @@ describe("generated content definers", () => {
       "): TechnologyPatchItem {\n" +
         "  return {\n" +
         '    itemKind: "patch",\n' +
-        "    patched: patchContent(technology, patch, TECHNOLOGY_FIELDS),\n" +
+        '    patched: patchContent(technology, patch, "technology", TECHNOLOGY_FIELDS),\n' +
         "  };"
     );
     expect(definers).toContain('import { patchContent } from "../stellaris/vanilla/patch.ts";');

@@ -1574,8 +1574,20 @@ describe("generated patch authoring types", () => {
     // Nor are the localisation slots patchable yet: their keys are minted by a
     // pre-pass the patch path does not run.
     expectTypeOf<TechnologyPatch>().not.toHaveProperty("name");
-    // @ts-expect-error — a typo names nothing the patch type has.
+    // @ts-expect-error — a member naming nothing the patch type has, in the one
+    // position the compiler does check it: an object with no member in common.
     contentMod.patchTechnology(forging, () => ({ csot: 8000 }));
+  });
+
+  it("leaves an unknown member beside a known one to the runtime guard", () => {
+    // Pinning what the compiler does NOT do, because it decides where the
+    // check has to live. TypeScript performs no excess-property check on an
+    // object literal returned from an inferred-return arrow, so neither of
+    // these is a type error — `patchContent` refuses them at build time
+    // instead (`tests/vanilla/surface.test.ts`), rather than silently
+    // emitting nothing for the member.
+    expectTypeOf(() => ({ cost: 8000, id: "x" })).toExtend<() => TechnologyPatch>();
+    expectTypeOf(() => ({ cost: 8000, costt: 2 })).toExtend<() => TechnologyPatch>();
   });
 
   it("admits the definition's own forms, plus the ways parsed values come back", () => {

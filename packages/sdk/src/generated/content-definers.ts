@@ -101,7 +101,7 @@ export function patchTechnology<Source extends ParsedTechnology>(
 ): TechnologyPatchItem {
   return {
     itemKind: "patch",
-    patched: patchContent(technology, patch, TECHNOLOGY_FIELDS),
+    patched: patchContent(technology, patch, "technology", TECHNOLOGY_FIELDS),
   };
 }
 
