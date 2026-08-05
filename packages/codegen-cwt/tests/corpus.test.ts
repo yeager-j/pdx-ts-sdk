@@ -359,6 +359,79 @@ describe("repeated-struct descent", () => {
   });
 });
 
+describe("descent below a repeated struct's entry", () => {
+  // No shipped repeated-struct member lowers to a walkable block today, so
+  // every case here is written rather than observed. That is the point: the
+  // emitter now hands the reader whatever its members lower to, and a walk
+  // that only ever ran against an empty child list would prove nothing about
+  // what happens when one arrives.
+  const chance = (children: DescentNode[] = []): DescentNode => ({
+    field: "chance",
+    mode: "struct",
+    children,
+  });
+  const STAGES: DescentNode = {
+    field: "stages",
+    mode: "repeatedStruct",
+    keying: "container",
+    children: [chance([{ field: "modifier", mode: "struct", children: [] }])],
+  };
+  const APPROACH: DescentNode = {
+    field: "approach",
+    mode: "repeatedStruct",
+    keying: "siblings",
+    identityKey: "name",
+    children: [chance([{ field: "modifier", mode: "struct", children: [] }])],
+  };
+
+  it("walks two levels below an id-keyed entry", () => {
+    const corpus = corpusOf(
+      `
+      one = { stages = { stage_1 = { chance = { base = 2 modifier = { factor = 3 } } } } }
+    `,
+      [STAGES]
+    );
+    expect(corpus.occurrences.get("stages.chance.base")?.definitions).toBe(1);
+    expect(corpus.occurrences.get("stages.chance.modifier.factor")?.definitions).toBe(1);
+  });
+
+  it("walks two levels below a siblings-keyed entry", () => {
+    const corpus = corpusOf(
+      `
+      one = { approach = { name = approach_a chance = { base = 2 modifier = { factor = 3 } } } }
+    `,
+      [APPROACH]
+    );
+    expect(corpus.occurrences.get("approach.chance.base")?.definitions).toBe(1);
+    expect(corpus.occurrences.get("approach.chance.modifier.factor")?.definitions).toBe(1);
+  });
+
+  it("skips the identity key only at the entry's own level", () => {
+    // `name` is identity for an `approach`, and an ordinary field for anything
+    // written inside one. Skipping it everywhere would hide a real interior.
+    const corpus = corpusOf(
+      `
+      one = { approach = { name = approach_a chance = { name = inner base = 2 } } }
+    `,
+      [APPROACH]
+    );
+    expect(corpus.occurrences.has("approach.name")).toBe(false);
+    expect(corpus.occurrences.get("approach.chance.name")?.definitions).toBe(1);
+  });
+
+  it("treats each inner block as its own arity boundary", () => {
+    const corpus = corpusOf(
+      `
+      one = { stages = { stage_1 = { chance = { base = 2 } } stage_2 = { chance = { base = 3 } } } }
+      two = { stages = { stage_1 = { chance = { base = 2 base = 3 } } } }
+    `,
+      [STAGES]
+    );
+    expect(corpus.occurrences.get("stages.chance.base")?.definitions).toBe(2);
+    expect(corpus.occurrences.get("stages.chance.base")?.repeated).toBe(1);
+  });
+});
+
 /** Every path a descent tree records under, rooted at `prefix`. */
 function descentPaths(nodes: readonly DescentNode[], prefix: string): string[] {
   return nodes.flatMap((node) => {
@@ -371,14 +444,18 @@ describe("the emitter's descent channel", () => {
   const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
   const rules = loadRules(path.join(ROOT, "vendor/cwtools-stellaris-config/config"));
   const emitter = new Emitter(rules);
-  emitter.beginFile();
-  const emission = emitContentType(
-    emitter,
-    rules.contentTypes.get("war_goal")!,
-    rules.bodies.get("war_goal")!,
-    "war_goal"
-  );
-  emitter.endFile();
+  const emitRegistry = (registry: string) => {
+    emitter.beginFile();
+    const emitted = emitContentType(
+      emitter,
+      rules.contentTypes.get(registry)!,
+      rules.bodies.get(registry)!,
+      registry
+    );
+    emitter.endFile();
+    return emitted;
+  };
+  const emission = emitRegistry("war_goal");
 
   it("reports a plain struct's interior as nested emitted fields", () => {
     // `forbidden_peace_offers = { demand_surrender status_quo surrender }` is
@@ -401,6 +478,19 @@ describe("the emitter's descent channel", () => {
     // no walk can report an interior nothing promised to author.
     const emitted = new Set(emission.emittedFields.map((field) => field.field));
     expect(emission.corpusDescents.filter((node) => !emitted.has(node.field))).toEqual([]);
+  });
+
+  it("claims a field at every level of a repeated struct's descent tree", () => {
+    // `situation_type` is the registry with both repeated-struct keyings. Its
+    // entries' members all lower to leaf shapes today, so the tree below them
+    // is empty — the assertion is on the wiring, which is what would have to
+    // hold the moment a member lowers to a block worth walking.
+    const emitted = emitRegistry("situation_type");
+    const claimed = new Set([
+      ...emitted.emittedFields.map((field) => field.field),
+      ...emitted.nestedEmittedFields.map((field) => field.field.slice("situation_type.".length)),
+    ]);
+    expect(descentPaths(emitted.corpusDescents, "").filter((p) => !claimed.has(p))).toEqual([]);
   });
 });
 

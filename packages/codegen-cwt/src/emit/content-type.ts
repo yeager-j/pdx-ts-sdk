@@ -244,8 +244,13 @@ function repeatedStructEmission(
   readonly declinedFields: readonly string[];
   /** Present in the struct's rules but not expressible, or a member-name collision. */
   readonly unsupported: readonly string[];
-  /** Fields successfully lowered, under dotted paths like `situation.stages.icon`. */
+  /**
+   * Fields successfully lowered, under dotted paths like `situation.stages.icon`
+   * — including those lowered inside one of those (`…stages.chance.modifier`).
+   */
   readonly emittedFields: readonly EmittedField[];
+  /** How the corpus reader reaches the interiors of the entry's own block fields. */
+  readonly children: readonly DescentNode[];
   readonly localisationAliases: readonly string[];
 } | null {
   if (ownerField.type.kind !== "block") {
@@ -300,6 +305,7 @@ function repeatedStructEmission(
   const declinedFields: string[] = [];
   const unsupported: string[] = [];
   const emittedFields: EmittedField[] = [];
+  const children: DescentNode[] = [];
   const extraCode: string[] = [];
 
   // Everything the struct's rules declare is emitted, in the rules'
@@ -342,7 +348,11 @@ function repeatedStructEmission(
     if (lowering.unsupported !== undefined) {
       unsupported.push(...lowering.unsupported);
     }
-    emittedFields.push({ field: fieldPath, ...lowering.admits });
+    // `nested` arrives already rooted at `fieldPath`, so the registry prefix
+    // `ownerPath` carries appears exactly once — the same single prefix the
+    // top-level loop's nested fields carry, which the reader strips once.
+    emittedFields.push({ field: fieldPath, ...lowering.admits }, ...(lowering.nested ?? []));
+    children.push(...(lowering.descents ?? []));
   }
 
   if (localisationType === undefined) {
@@ -389,6 +399,7 @@ function repeatedStructEmission(
     declinedFields,
     unsupported,
     emittedFields,
+    children,
     localisationAliases,
   };
 }
@@ -608,7 +619,7 @@ export function emitContentType(
         mode: "repeatedStruct",
         keying: config.keying ?? "siblings",
         ...(config.identityKey === undefined ? {} : { identityKey: config.identityKey }),
-        children: [],
+        children: nested.children,
       });
       continue;
     }
