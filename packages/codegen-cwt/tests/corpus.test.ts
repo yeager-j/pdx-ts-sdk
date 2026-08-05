@@ -23,23 +23,33 @@ import {
   type SpliceMember,
 } from "@pdx-ts/codegen-cwt/corpus";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { describe, expect, it } from "vitest";
 
 /** `planet` holds `planet` and `moon`; `moon` holds `moon`. The real shape. */
-const MOON: SpliceMember = { key: "moon", members: () => [MOON] };
-const PLANET: SpliceMember = { key: "planet", members: () => [PLANET, MOON] };
+const MOON: SpliceMember = { key: "moon", members: () => [MOON], descents: [] };
+const PLANET: SpliceMember = { key: "planet", members: () => [PLANET, MOON], descents: [] };
 
 function corpusOf(
   contents: string,
   descents: readonly DescentNode[] = [],
-  excludedKey: string | null = null
+  excludedKey: string | null = null,
+  spliceMembers: readonly SpliceMember[] = [PLANET]
 ) {
   const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
   mkdirSync(path.join(root, "common/systems"), { recursive: true });
   writeFileSync(path.join(root, "common/systems/test.txt"), contents, "utf8");
-  return readRegistryCorpus(root, "common/systems", null, null, descents, [PLANET], excludedKey);
+  return readRegistryCorpus(
+    root,
+    "common/systems",
+    null,
+    null,
+    descents,
+    spliceMembers,
+    excludedKey
+  );
 }
 
 describe("splice arity", () => {
@@ -77,6 +87,55 @@ describe("splice arity", () => {
     `);
     // Two moons, one of which repeats `size` — the deep block is what counts.
     expect(corpus.occurrences.get("moon.size")?.repeated).toBe(1);
+  });
+});
+
+describe("descent below a spliced block", () => {
+  // `planet.count = { min = int max = int }` — the one shape the splice walk
+  // could not see, since it recorded a leaf's key and stopped there.
+  const COUNT: DescentNode = { field: "count", mode: "struct", children: [] };
+  const DEEP_MOON: SpliceMember = { key: "moon", members: () => [DEEP_MOON], descents: [COUNT] };
+  const DEEP_PLANET: SpliceMember = {
+    key: "planet",
+    members: () => [DEEP_PLANET, DEEP_MOON],
+    descents: [COUNT],
+  };
+  const spliced = (contents: string) => corpusOf(contents, [], null, [DEEP_PLANET]);
+
+  it("records the block's entries under the member key", () => {
+    const corpus = spliced(`
+      one = { planet = { count = { min = 1 max = 3 } } }
+    `);
+    // The owning key keeps its own occurrence, as at every other descent.
+    expect(corpus.occurrences.get("planet.count")?.definitions).toBe(1);
+    expect([...(corpus.occurrences.get("planet.count.min")?.values ?? [])]).toEqual(["1"]);
+    expect([...(corpus.occurrences.get("planet.count.max")?.values ?? [])]).toEqual(["3"]);
+  });
+
+  it("aggregates the interior across depths, as the one field table does", () => {
+    const corpus = spliced(`
+      one = {
+        planet = {
+          count = { min = 1 }
+          planet = { count = { max = 3 } }
+          moon = { count = { min = 2 } }
+        }
+      }
+    `);
+    expect(corpus.occurrences.get("planet.count.min")?.definitions).toBe(1);
+    expect(corpus.occurrences.get("planet.count.max")?.definitions).toBe(1);
+    // A moon is its own category with its own table, so its interior is its own
+    // path — the aggregation is per member key, not across the whole tree.
+    expect(corpus.occurrences.get("moon.count.min")?.definitions).toBe(1);
+  });
+
+  it("treats each interior block as its own arity boundary", () => {
+    const corpus = spliced(`
+      one = { planet = { count = { min = 1 } } planet = { count = { min = 2 } } }
+      two = { planet = { count = { min = 1 min = 2 } } }
+    `);
+    expect(corpus.occurrences.get("planet.count.min")?.definitions).toBe(2);
+    expect(corpus.occurrences.get("planet.count.min")?.repeated).toBe(1);
   });
 });
 
@@ -300,18 +359,103 @@ describe("repeated-struct descent", () => {
   });
 });
 
+describe("descent below a repeated struct's entry", () => {
+  // No shipped repeated-struct member lowers to a walkable block today, so
+  // every case here is written rather than observed. That is the point: the
+  // emitter now hands the reader whatever its members lower to, and a walk
+  // that only ever ran against an empty child list would prove nothing about
+  // what happens when one arrives.
+  const chance = (children: DescentNode[] = []): DescentNode => ({
+    field: "chance",
+    mode: "struct",
+    children,
+  });
+  const STAGES: DescentNode = {
+    field: "stages",
+    mode: "repeatedStruct",
+    keying: "container",
+    children: [chance([{ field: "modifier", mode: "struct", children: [] }])],
+  };
+  const APPROACH: DescentNode = {
+    field: "approach",
+    mode: "repeatedStruct",
+    keying: "siblings",
+    identityKey: "name",
+    children: [chance([{ field: "modifier", mode: "struct", children: [] }])],
+  };
+
+  it("walks two levels below an id-keyed entry", () => {
+    const corpus = corpusOf(
+      `
+      one = { stages = { stage_1 = { chance = { base = 2 modifier = { factor = 3 } } } } }
+    `,
+      [STAGES]
+    );
+    expect(corpus.occurrences.get("stages.chance.base")?.definitions).toBe(1);
+    expect(corpus.occurrences.get("stages.chance.modifier.factor")?.definitions).toBe(1);
+  });
+
+  it("walks two levels below a siblings-keyed entry", () => {
+    const corpus = corpusOf(
+      `
+      one = { approach = { name = approach_a chance = { base = 2 modifier = { factor = 3 } } } }
+    `,
+      [APPROACH]
+    );
+    expect(corpus.occurrences.get("approach.chance.base")?.definitions).toBe(1);
+    expect(corpus.occurrences.get("approach.chance.modifier.factor")?.definitions).toBe(1);
+  });
+
+  it("skips the identity key only at the entry's own level", () => {
+    // `name` is identity for an `approach`, and an ordinary field for anything
+    // written inside one. Skipping it everywhere would hide a real interior.
+    const corpus = corpusOf(
+      `
+      one = { approach = { name = approach_a chance = { name = inner base = 2 } } }
+    `,
+      [APPROACH]
+    );
+    expect(corpus.occurrences.has("approach.name")).toBe(false);
+    expect(corpus.occurrences.get("approach.chance.name")?.definitions).toBe(1);
+  });
+
+  it("treats each inner block as its own arity boundary", () => {
+    const corpus = corpusOf(
+      `
+      one = { stages = { stage_1 = { chance = { base = 2 } } stage_2 = { chance = { base = 3 } } } }
+      two = { stages = { stage_1 = { chance = { base = 2 base = 3 } } } }
+    `,
+      [STAGES]
+    );
+    expect(corpus.occurrences.get("stages.chance.base")?.definitions).toBe(2);
+    expect(corpus.occurrences.get("stages.chance.base")?.repeated).toBe(1);
+  });
+});
+
+/** Every path a descent tree records under, rooted at `prefix`. */
+function descentPaths(nodes: readonly DescentNode[], prefix: string): string[] {
+  return nodes.flatMap((node) => {
+    const path = prefix === "" ? node.field : `${prefix}.${node.field}`;
+    return [path, ...descentPaths(node.children, path)];
+  });
+}
+
 describe("the emitter's descent channel", () => {
   const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
   const rules = loadRules(path.join(ROOT, "vendor/cwtools-stellaris-config/config"));
   const emitter = new Emitter(rules);
-  emitter.beginFile();
-  const emission = emitContentType(
-    emitter,
-    rules.contentTypes.get("war_goal")!,
-    rules.bodies.get("war_goal")!,
-    "war_goal"
-  );
-  emitter.endFile();
+  const emitRegistry = (registry: string) => {
+    emitter.beginFile();
+    const emitted = emitContentType(
+      emitter,
+      rules.contentTypes.get(registry)!,
+      rules.bodies.get(registry)!,
+      registry
+    );
+    emitter.endFile();
+    return emitted;
+  };
+  const emission = emitRegistry("war_goal");
 
   it("reports a plain struct's interior as nested emitted fields", () => {
     // `forbidden_peace_offers = { demand_surrender status_quo surrender }` is
@@ -334,5 +478,51 @@ describe("the emitter's descent channel", () => {
     // no walk can report an interior nothing promised to author.
     const emitted = new Set(emission.emittedFields.map((field) => field.field));
     expect(emission.corpusDescents.filter((node) => !emitted.has(node.field))).toEqual([]);
+  });
+
+  it("claims a field at every level of a repeated struct's descent tree", () => {
+    // `situation_type` is the registry with both repeated-struct keyings. Its
+    // entries' members all lower to leaf shapes today, so the tree below them
+    // is empty — the assertion is on the wiring, which is what would have to
+    // hold the moment a member lowers to a block worth walking.
+    const emitted = emitRegistry("situation_type");
+    const claimed = new Set([
+      ...emitted.emittedFields.map((field) => field.field),
+      ...emitted.nestedEmittedFields.map((field) => field.field.slice("situation_type.".length)),
+    ]);
+    expect(descentPaths(emitted.corpusDescents, "").filter((p) => !claimed.has(p))).toEqual([]);
+  });
+});
+
+describe("the splice emitter's descent channel", () => {
+  const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+  const rules = loadRules(path.join(ROOT, "vendor/cwtools-stellaris-config/config"));
+  const emitter = new Emitter(rules);
+  emitter.beginFile();
+  const emission = emitAliasSplice(emitter, "planet_initializer")!;
+  emitter.endFile();
+
+  it("reports a member's block interior, rooted at the member key", () => {
+    // `count = { min = int max = int }` beside the scalar `count = int`: the
+    // block arm of a dual, whose interior 289 solar system initializers write
+    // and no side of the gate could see.
+    const emitted = emission.emittedFields.map((field) => field.field);
+    expect(emitted).toContain("planet.count");
+    expect(emitted).toContain("planet.count.min");
+    expect(emitted).toContain("planet.count.max");
+    // Rooted at the member key, not the category: one prefix, and the one the
+    // corpus reader walks under.
+    expect(emitted.filter((field) => field.startsWith("planet_initializer"))).toEqual([]);
+  });
+
+  it("configures the reader for the same fields it lowered", () => {
+    expect(emission.corpusDescents).toContainEqual({
+      field: "count",
+      mode: "struct",
+      children: [],
+    });
+    const claimed = new Set(emission.emittedFields.map((field) => field.field));
+    const paths = descentPaths(emission.corpusDescents, emission.memberKey);
+    expect(paths.filter((path) => !claimed.has(path))).toEqual([]);
   });
 });
