@@ -1,6 +1,6 @@
 [
   {
-    "registry": "technologies",
+    "registry": "technology",
     "key": "tech_gene_forging",
     "rule": "last-wins",
     "confidence": "verified",

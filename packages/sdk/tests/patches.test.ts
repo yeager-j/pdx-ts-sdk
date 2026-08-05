@@ -83,7 +83,7 @@ describe("patching end to end", () => {
     const plan = patchedMod().patchPlan;
     expect(plan?.assertions).toEqual([
       {
-        registry: "technologies",
+        registry: "technology",
         key: "tech_gene_forging",
         rule: "last-wins",
         confidence: "verified",

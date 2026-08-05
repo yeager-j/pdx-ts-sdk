@@ -78,7 +78,7 @@ export function planPatches(
   ];
 
   return planPatchEmission({
-    registry: "technologies",
+    registry: "technology",
     patches: patches.map((patched) => {
       const entry = patched.toEntries();
       const fileLocals = origin.localVariables(patched.source.sourceFile);
