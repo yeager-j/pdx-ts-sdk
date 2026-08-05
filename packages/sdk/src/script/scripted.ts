@@ -15,8 +15,8 @@
  * What is left here is the factory those bindings are built on, and the escape
  * hatch for definitions no install-derived package can know: another mod's
  * scripted trigger, or a vanilla one newer than the pinned package. There the
- * scope is the author's assertion — the same deal `docs/handoff/handoff-vanilla-surface.md`
- * settled on, now the fallback rather than the whole story.
+ * scope is the author's assertion — the deal the vanilla surface settled on,
+ * now the fallback rather than the whole story.
  *
  * ```ts
  * const pdHabitable = scriptedTrigger("pd_habitability_check", "planet");

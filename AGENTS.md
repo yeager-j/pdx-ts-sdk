@@ -7,7 +7,7 @@ TypeScript at build time; the SDK records typed triggers, effects, content defin
 layout, then serializes a launcher-ready mod in PDXScript.
 
 The repository root is a private npm-workspaces root: it owns the shared inputs (`vendor/`,
-`fixtures/`, `examples/`, `design/`, the tsconfigs and the vitest config) and no source of its own.
+`fixtures/`, `examples/`, the tsconfigs and the vitest config) and no source of its own.
 Every package, generators included, is a workspace member: `packages/sdk` is the Stellaris-facing
 SDK (`@pdx-ts/sdk`); `packages/pdxscript` is the standalone PDXScript parser/serializer used
 underneath it; `packages/codegen-cwt` and `packages/codegen-vanilla` are the two private generators;
@@ -19,9 +19,9 @@ bounded contexts and links each one's glossary. When a word here is load-bearing
 where it is defined — this file states process, not meaning. Decisions that would otherwise
 look arbitrary are recorded in `docs/adr/`.
 
-Read `README.md` before making architectural changes. Files under `docs/` and `design/` preserve
-handoffs, probes, and design evidence; check their status headers and the current implementation
-before treating an older proposal as current behavior.
+Read `README.md` before making architectural changes. `docs/` holds only the ADRs and
+proposals that are not yet implemented — once something ships, the code and its gates are
+the record, so a doc describing shipped behavior is deleted rather than updated.
 
 ## Repository conventions
 

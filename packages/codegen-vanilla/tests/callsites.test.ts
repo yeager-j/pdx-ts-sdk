@@ -69,8 +69,7 @@ describe.skipIf(installRoot === undefined)(
       // Guards the assertion below against passing because it measured nothing.
       // The `a link's body constrains its caller` mutation — the likeliest error
       // in the analysis — produces 328 contradictions here, so this check has
-      // demonstrated power and not merely coverage
-      // (`docs/verdict/verdict-scripted-scope.md`).
+      // demonstrated power and not merely coverage.
       expect(report.events).toBeGreaterThan(5000);
       expect(report.checked).toBeGreaterThan(3000);
       expect(report.covered).toBeGreaterThan(500);

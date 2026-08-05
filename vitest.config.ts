@@ -36,7 +36,7 @@ export default defineConfig({
           // `packages/stellaris-ids/tests/**`, so that one has to be
           // excluded here — it gets its own project below, run against its
           // own tsconfig, so the package's augmentation never joins this one.
-          include: ["design/**/*.test.ts", "packages/*/tests/**/*.test.ts"],
+          include: ["packages/*/tests/**/*.test.ts"],
           exclude: ["packages/stellaris-ids/tests/**"],
           typecheck: {
             enabled: true,

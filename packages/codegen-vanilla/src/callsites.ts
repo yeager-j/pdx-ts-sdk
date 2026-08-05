@@ -18,8 +18,8 @@
  * manufacture failures, which is the same error in the opposite direction.
  *
  * Mutation-tested: making a link's body constrain its caller — the likeliest
- * error in the analysis — produces 328 contradictions here. See
- * `docs/verdict/verdict-scripted-scope.md`.
+ * error in the analysis — produces 328 contradictions here, so this gate has
+ * demonstrated power and not merely coverage.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";

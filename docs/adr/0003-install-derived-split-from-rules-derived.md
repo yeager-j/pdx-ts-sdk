@@ -16,5 +16,7 @@ by a chokepoint in the generator rather than by convention, because "we only
 emit identifiers" is a claim that has to survive contributors who did not read
 this file.
 
-Evidence: [handoff-vanilla-surface.md](../handoff/handoff-vanilla-surface.md),
-`packages/stellaris-ids/PROVENANCE.md`.
+Evidence: `packages/stellaris-ids/PROVENANCE.md` for the licensing boundary;
+`packages/codegen-vanilla/tests/callsites.test.ts` for the scope inference the
+install-derived half rests on; `packages/sdk/tests/vanilla-refs.test-d.ts` for
+the unchecked degradation when the package is absent.

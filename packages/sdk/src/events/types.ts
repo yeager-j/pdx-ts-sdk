@@ -5,9 +5,9 @@
  * phantom type; every fire site is then checked against it by passing a
  * witness value — usually `ctx.self`, proving the firing event's own scope is
  * the FROM the target expects. A witness that is any other ref emits the
- * game's own `scopes = { from = ... }` override block. Validated by the
- * probe: see `docs/verdict/verdict-effects-probe.md` (including why the witness needs
- * `NoInfer` and why an undeclared FROM is a sentinel rather than `never`).
+ * game's own `scopes = { from = ... }` override block. The witness needs
+ * `NoInfer` so it cannot widen the inferred FROM, and an undeclared FROM is a
+ * sentinel rather than `never` so the overload stays selectable.
  *
  * Event closures run eagerly, inside define: errors carry the author's
  * stack, and cross-references require definition order the same way

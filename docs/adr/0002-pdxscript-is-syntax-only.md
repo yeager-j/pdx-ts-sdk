@@ -17,5 +17,7 @@ The cost, accepted: callers that need meaning must supply it themselves, and
 some things that would be convenient to fix in the parser get fixed in the SDK
 instead.
 
-Evidence: [verdict-parser-probe.md](../verdict/verdict-parser-probe.md),
-`packages/pdxscript/GRAMMAR.md`.
+Evidence: `packages/pdxscript/GRAMMAR.md` for the stated grammar, and the
+standing gates that would catch a game-semantics shortcut —
+`packages/pdxscript/tests/corpus.test.ts` (full-vanilla fixpoint),
+`differential.test.ts` (jomini), and `properties.test.ts`.

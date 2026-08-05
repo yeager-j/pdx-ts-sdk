@@ -14,4 +14,6 @@ works inside them, and effect recording is scope-agnostic at runtime — it is
 the generated interfaces, not the recorder, that decide which effects and scope
 transitions are legal.
 
-Evidence: [verdict-effects-probe.md](../verdict/verdict-effects-probe.md).
+Evidence: `packages/sdk/tests/effects.test.ts` and `effects.test-d.ts` for the
+recording and its scope typing; `packages/sdk/tests/events.test-d.ts` for the
+witness contract at a fire site.

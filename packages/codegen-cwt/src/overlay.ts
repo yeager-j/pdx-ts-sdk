@@ -141,8 +141,8 @@ export const STRUCTURAL_EFFECT_METHODS = new Set([
  *
  * Their `id` argument is an `EventRef` carrying the fired event's FROM
  * contract, and each needs the hand-written witness-overload pair the probe
- * validated (`from: ctx.self`, with `NoInfer` on the witness) — see
- * `docs/verdict/verdict-effects-probe.md`. Generating them as plain `id: string`
+ * validated (`from: ctx.self`, with `NoInfer` on the witness). Generating them as
+ * plain `id: string`
  * methods would silently bypass the contract, so they are skipped until the
  * event system lands.
  */
@@ -555,7 +555,7 @@ export interface ContentScopeParameter {
  * planet-scoped, and the rules say so in a comment. The trouble is that
  * `Trigger<S>` is contravariant, so "valid in every scope" as a field type
  * admits only rules legal in every scope — leaving the field emitted, required,
- * and unfillable. See `docs/roadmap.md`'s "Per-definition field scopes".
+ * and unfillable.
  *
  * A row turns every field the registry left unpinned into `Trigger<NoInfer<S>>`
  * and adds one authoring member, `scope`, that names S and emits nothing. It
@@ -624,7 +624,7 @@ export type ContentFieldShape =
   /**
    * A named, ordered collection whose name is both identity and localisation
    * key — the same distinction `name_field` draws for top-level registries,
-   * one level down. See docs/roadmap.md's "Repeated-struct field shape".
+   * one level down.
    */
   | "repeatedStruct"
   /**

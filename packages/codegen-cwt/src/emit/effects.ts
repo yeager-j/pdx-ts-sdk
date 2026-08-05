@@ -1,8 +1,7 @@
 /**
  * Emits the effect scope interfaces and the recorder's metadata table.
  *
- * Two outputs, one design (validated by `design/effects-probe/`, see
- * `docs/verdict/verdict-effects-probe.md`):
+ * Two outputs, one design:
  *
  * - `effects.ts` — TYPES only. Effects cluster by the exact set of scopes
  *   they are valid in; each distinct set becomes one interface carrying its

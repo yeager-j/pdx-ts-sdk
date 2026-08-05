@@ -254,8 +254,8 @@ substitutes those into a block rather than the call site itself.
 `Trigger<"country">` because its body evaluates `is_country_type` and nothing
 else, and the rules say where that is legal. The inference only reads what the
 rules state; a body it cannot read widens to every scope rather than guessing.
-See [the verdict](../../docs/verdict/verdict-scripted-scope.md) for the
-evidence, including its vanilla call-site calibration.
+`packages/codegen-vanilla/tests/callsites.test.ts` measures the inference
+against every vanilla call site and fails on any contradiction.
 
 Effects go through `scope.run(...)` rather than becoming scope methods: the
 recorder's sink is closed over, which prevents arbitrary entries reaching the

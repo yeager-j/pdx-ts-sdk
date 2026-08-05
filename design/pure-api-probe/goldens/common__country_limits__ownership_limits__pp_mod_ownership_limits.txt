@@ -1,3 +1,0 @@
-default = {
-	ship_of_size_limits = { pp_mod_limit_titan third_party_limit }
-}

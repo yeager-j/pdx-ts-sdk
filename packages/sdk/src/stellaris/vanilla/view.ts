@@ -1,6 +1,6 @@
 /**
- * The typed surface over parsed vanilla files, promoted from
- * `design/parser-probe/surface.ts` onto the `@pdx-ts/pdxscript` AST.
+ * The typed surface over parsed vanilla files, built on the `@pdx-ts/pdxscript`
+ * AST.
  *
  * `ParsedTechnology` is a readonly view over the parsed entry list. Fields
  * the surface models are typed, widened where vanilla demands it: numeric
@@ -327,7 +327,7 @@ export class VanillaView {
       throw new SwapPatchError(
         `"${id}" is a technology_swap inside ${swap.parent} (${swap.file}): patching into a ` +
           `swap is refused — swap override semantics have no oracle evidence ` +
-          `(docs/handoff/handoff-patches.md, open question 3). Patch ${swap.parent} instead; its swaps ` +
+          `Patch ${swap.parent} instead; its swaps ` +
           `ride through unchanged.`
       );
     }
