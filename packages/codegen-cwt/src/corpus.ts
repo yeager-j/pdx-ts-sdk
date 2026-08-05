@@ -648,11 +648,16 @@ export type RuleScopes = readonly string[] | "universal";
 /**
  * The four ways a lowered type can disagree with the values behind it.
  *
- * `form` and `scope` are hard: the corpus writes something no value of the
- * emitted type can express, so the field is unfillable however legal it is.
- * `arity` and `literal` are softer — a list where the game happens never to
- * repeat is legal, and a value outside a closed union may be an upstream
- * spelling quirk.
+ * `form` is hard: the corpus writes something no value of the emitted type can
+ * express, so the field is unfillable however legal it is. `scope` is hard in
+ * one of its two cases only — a pinned scope rejects the rule, and the field is
+ * unfillable the same way, but an unpinned trigger clause is widened to
+ * `Trigger<never>` (see `contravariantScopeType`), which accepts the rule with
+ * nothing checked. What the corpus proves there is that the emitted type
+ * carries no claim, not that an author is stuck; both are reported, and the
+ * detail says which. `arity` and `literal` are softer — a list where the game
+ * happens never to repeat is legal, and a value outside a closed union may be
+ * an upstream spelling quirk.
  */
 export type ShapeMismatchKind = "form" | "arity" | "literal" | "scope";
 
@@ -694,11 +699,11 @@ const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
  * Whether a rule legal in `rule` can be written into a field typed for `field`.
  *
  * `Trigger<S>` is contravariant in its scope, so the field admits exactly the
- * rules legal in *every* scope it names. The `"any"` case is the one worth
- * spelling out: an unpinned `Trigger<ScopeName>` names every scope there is, so
- * only a universal rule satisfies it — "valid anywhere" as a field type means
- * "accepts almost nothing", which is why an unannotated field can be emitted,
- * required, and unfillable all at once.
+ * rules legal in *every* scope it names, and `"any"` — nothing pinned it —
+ * names every scope there is, so only a universal rule satisfies it. That is a
+ * question about the declared scopes rather than about the emitted type: what a
+ * failure costs depends on how the field lowered, which is
+ * {@link scopeVerdict}'s job to say.
  */
 function fieldAdmits(field: readonly string[] | "any", rule: RuleScopes): boolean {
   if (rule === "universal") {
@@ -708,6 +713,25 @@ function fieldAdmits(field: readonly string[] | "any", rule: RuleScopes): boolea
     return false;
   }
   return field.every((scope) => rule.includes(scope));
+}
+
+/**
+ * How a rejected key reads against the type the field really lowered to.
+ *
+ * A pinned scope rejects the rule, so the field is unfillable. An unpinned one
+ * need not: a trigger clause nothing pinned is widened to `Trigger<never>` (see
+ * `contravariantScopeType`), which accepts every condition and checks none, so
+ * the defect there is a lost check rather than a value no author can write. An
+ * unpinned effect keeps `EffectBlock<ScopeName>` — no such widening — and does
+ * reject, which is why the two clauses do not read alike.
+ */
+function scopeVerdict(scope: readonly string[] | "any", clause: "trigger" | "effect"): string {
+  if (scope !== "any") {
+    return `typed for scope ${scope.join("/")}, which rejects`;
+  }
+  return clause === "trigger"
+    ? "unchecked (Trigger<never>): no declared scope admits"
+    : "typed for EffectBlock<ScopeName>, which rejects";
 }
 
 /**
@@ -856,7 +880,7 @@ export function shapeConformance(
         if (rejected.length > 0) {
           report(
             "scope",
-            `typed for scope ${scope === "any" ? "ScopeName" : scope.join("/")}, which rejects ` +
+            `${scopeVerdict(scope, clause)} ` +
               rejected.slice(0, 6).join(" ") +
               (rejected.length > 6 ? ` +${rejected.length - 6}` : "")
           );

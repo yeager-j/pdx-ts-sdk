@@ -56,8 +56,10 @@ export interface EmittedField {
    * What scope this field's closures run in:
    *
    * - a list of canonical scopes — the rules or an overlay row pinned it
-   * - `"any"` — nothing pinned it, so the field admits only rules legal in
-   *   *every* scope, which is almost none
+   * - `"any"` — nothing pinned it. A contravariant lowering widens that to
+   *   `Trigger<never>`, which admits every rule and checks none; any other
+   *   lowering keeps `ScopeName`, which admits only rules legal in *every*
+   *   scope, which is almost none
    * - `{ parameter }` — the definition declares which of these it is, so a rule
    *   legal in any one of them is writable by some definition
    */
