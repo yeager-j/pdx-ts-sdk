@@ -58,18 +58,6 @@ describe("content-type codegen", () => {
     ).toEqual([]);
   });
 
-  it("reports what it cannot lower rather than dropping it", () => {
-    // Under emit-everything, an unlowerable field is the machinery backlog, not
-    // an error — but it must stay visible in the report either way.
-    for (const manifest of CONTENT_MANIFEST) {
-      const registry = (manifest as { as?: string }).as ?? manifest.type;
-      const emission = emissions.get(registry)!;
-      for (const line of emission.unsupported) {
-        expect(emission.machineryBacklog.join("\n"), registry).toContain(line.split(" (")[0]!);
-      }
-    }
-  });
-
   it("carries a registry's body scope into trigger fields", () => {
     expect(emissions.get("building")?.code).toContain('allow?: Trigger<"colony">;');
     expect(emissions.get("building")?.code).toContain('potential?: Trigger<"colony">;');
@@ -235,13 +223,15 @@ describe("content-type codegen", () => {
     // an explicit refusal. There is no third "not reviewed yet" state.
     for (const registry of ["building", "technology", "job"] as const) {
       const emission = emissions.get(registry)!;
-      const accounted = new Set([
-        ...fieldNames(emission.emittedFields).map((field) => `${registry}.${field}`),
+      const emitted = new Set(fieldNames(emission.emittedFields));
+      const absent = [
         ...emission.declinedFields.map((line) => line.split(" — ")[0]!),
-        ...emission.machineryBacklog,
-      ]);
-      for (const field of emission.machineryBacklog) {
-        expect(accounted.has(field), field).toBe(true);
+        ...emission.unsupported.map((line) => line.split(" (")[0]!),
+      ].map((field) => field.replace(`${registry}.`, ""));
+      // A field is in exactly one bucket: an absent field the emitter also
+      // emitted would make either number a lie.
+      for (const field of absent) {
+        expect(emitted.has(field), field).toBe(false);
       }
       expect(emission.emittedFields.length, registry).toBeGreaterThan(0);
     }
@@ -297,7 +287,7 @@ describe("content-type codegen", () => {
     // stuck on the machinery backlog.
     expect(warGoal?.code).toContain("forbiddenPeaceOffers?: WarGoalForbiddenPeaceOffers;");
     expect(warGoal?.code).toContain('shape: "struct"');
-    expect(warGoal?.machineryBacklog.join("\n")).not.toContain("forbidden_peace_offers");
+    expect(warGoal?.unsupported.join("\n")).not.toContain("forbidden_peace_offers");
   });
 
   it("accepts both forms of a dual bare/modifier_rule declaration", () => {
@@ -369,7 +359,7 @@ describe("content-type codegen", () => {
     expect(scriptedLoc?.code).toContain("export interface ScriptedLocText");
     expect(scriptedLoc?.code).toContain("text?: ScriptedLocText[];");
     expect(scriptedLoc?.code).toContain('{ key: "text", member: "text", shape: "struct"');
-    expect(scriptedLoc?.machineryBacklog.join("\n")).not.toContain("text");
+    expect(scriptedLoc?.unsupported.join("\n")).not.toContain("text");
 
     // archaeological_site_type.stage: the same shape, order-dependent siblings.
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
@@ -400,7 +390,7 @@ describe("content-type codegen", () => {
       "discreteTerms?: AgreementPresetTermDataDiscreteTerms[];"
     );
     expect(agreementPreset?.code).toContain("wrapped: true");
-    expect(agreementPreset?.machineryBacklog.join("\n")).not.toContain("term_data");
+    expect(agreementPreset?.unsupported.join("\n")).not.toContain("term_data");
   });
 
   it("generates situations' stages (container keying) and approach (siblings keying)", () => {
@@ -531,7 +521,6 @@ describe("content-type codegen", () => {
     );
     expect(fieldNames(job!.emittedFields)).toContain("possible_pre_triggers");
     expect(job?.unsupported.join("\n")).not.toContain("possible_pre_triggers");
-    expect(job?.machineryBacklog.join("\n")).not.toContain("possible_pre_triggers");
   });
 
   it("lowers a top-level unkeyed modifier splice into one authoring member", () => {
@@ -626,8 +615,8 @@ describe("content-type codegen", () => {
     const civic = emissions.get("civic_or_origin");
     expect(civic?.code).toContain("leaderBackgroundJobWeight?: Readonly<Record<string, number>>;");
     // Both registries now lower everything the rules declare.
-    expect(shipSize?.machineryBacklog).toEqual([]);
-    expect(civic?.machineryBacklog).toEqual([]);
+    expect(shipSize?.unsupported).toEqual([]);
+    expect(civic?.unsupported).toEqual([]);
   });
 
   it("carries ship_size's per-field modifier scopes", () => {
@@ -704,7 +693,7 @@ describe("content-type codegen", () => {
     expect(councilor?.code).toContain('isLeaderPossible?: Trigger<"leader">;');
     expect(councilor?.code).toContain('modifier?: ModifierClosure<"country">;');
     expect(councilor?.code).toContain('triggeredCountryModifier?: TriggeredModifier<"country">[];');
-    expect(councilor?.machineryBacklog).toEqual([]);
+    expect(councilor?.unsupported).toEqual([]);
   });
 
   it("generates economic_category without registry-specific code", () => {
@@ -714,7 +703,7 @@ describe("content-type codegen", () => {
     expect(economicCategory?.code).toContain(
       "triggeredCostModifier?: EconomicCategoryTriggeredCostModifier[];"
     );
-    expect(economicCategory?.machineryBacklog).toEqual([]);
+    expect(economicCategory?.unsupported).toEqual([]);
   });
 
   it("lowers civic_or_origin's potential/possible onto the shared government_trigger block", () => {
@@ -744,13 +733,11 @@ describe("content-type codegen", () => {
     expect(civicOrOrigin?.code).toContain("modifier?: ModifierClosure<ScopeName>;");
     expect(fieldNames(civicOrOrigin!.emittedFields)).toContain("potential");
     expect(fieldNames(civicOrOrigin!.emittedFields)).toContain("possible");
-    expect(civicOrOrigin?.unsupported.join("\n")).not.toContain("potential");
-    expect(civicOrOrigin?.unsupported.join("\n")).not.toContain("possible");
     // leader_background_job_weight (`{ <job> = int }`) was the one field left
     // on this registry's machinery backlog when it landed. `scalarMap` — built
     // once ship_size.min_upgrade_cost turned up needing the same shape —
     // retired it, so the backlog is now empty.
-    expect(civicOrOrigin?.machineryBacklog).toEqual([]);
+    expect(civicOrOrigin?.unsupported).toEqual([]);
     expect(fieldNames(civicOrOrigin!.emittedFields)).toContain("leader_background_job_weight");
   });
 
@@ -780,7 +767,7 @@ describe("content-type codegen", () => {
     expect(componentSet?.code).toContain("export interface ComponentSetDef");
     expect(componentSet?.code).toContain("requiredComponentSet?: boolean;");
     expect(componentSet?.code).toContain("affectsTargetFocus?: boolean;");
-    expect(componentSet?.machineryBacklog).toEqual([]);
+    expect(componentSet?.unsupported).toEqual([]);
   });
 
   it("lowers section_template's resources/modifier/ship_modifier via overlay shapes", () => {
@@ -796,7 +783,7 @@ describe("content-type codegen", () => {
     expect(fieldNames(sectionTemplate!.emittedFields)).toContain("resources");
     expect(fieldNames(sectionTemplate!.emittedFields)).toContain("modifier");
     expect(fieldNames(sectionTemplate!.emittedFields)).toContain("ship_modifier");
-    expect(sectionTemplate?.machineryBacklog).toEqual([]);
+    expect(sectionTemplate?.unsupported).toEqual([]);
   });
 
   it("lowers component templates' resources/modifier fields via overlay shapes (componentTemplateResources)", () => {
@@ -873,7 +860,7 @@ describe("content-type codegen", () => {
     expect(ambientObject?.code).toContain("export interface AmbientObjectDef");
     expect(ambientObject?.code).toContain("entity: ModelEntityRef | string;");
     expect(ambientObject?.code).toContain("showName?: boolean;");
-    expect(ambientObject?.machineryBacklog).toEqual([]);
+    expect(ambientObject?.unsupported).toEqual([]);
   });
 
   it("generates graphical_culture with unpinned, widened randomized/selectable triggers", () => {
@@ -888,7 +875,7 @@ describe("content-type codegen", () => {
     expect(graphicalCulture?.code).toContain(
       'shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", "country">;'
     );
-    expect(graphicalCulture?.machineryBacklog).toEqual([]);
+    expect(graphicalCulture?.unsupported).toEqual([]);
   });
 
   it("pins starbase_level's upgrade/downgrade triggers to starbase scope", () => {
@@ -898,7 +885,7 @@ describe("content-type codegen", () => {
     expect(starbaseLevel?.code).toContain('downgradePotential?: Trigger<"starbase">;');
     expect(starbaseLevel?.code).toContain("collectsTrade?: boolean;");
     expect(starbaseLevel?.code).toContain("specialConstruction?: boolean;");
-    expect(starbaseLevel?.machineryBacklog).toEqual([]);
+    expect(starbaseLevel?.unsupported).toEqual([]);
   });
 
   it("lowers species_class's possible/possible_secondary onto the shared government_trigger block", () => {
@@ -926,8 +913,7 @@ describe("content-type codegen", () => {
     expect(speciesClass?.code).toContain('{ member: "plural", pattern: "$_plural"');
     expect(fieldNames(speciesClass!.emittedFields)).toContain("possible");
     expect(fieldNames(speciesClass!.emittedFields)).toContain("possible_secondary");
-    expect(speciesClass?.unsupported.join("\n")).not.toContain("possible");
-    expect(speciesClass?.machineryBacklog).toEqual([]);
+    expect(speciesClass?.unsupported).toEqual([]);
   });
 
   it("lowers country_ship_of_size_limit.ship_types onto the branded ship_size ref", () => {
@@ -952,7 +938,7 @@ describe("content-type codegen", () => {
     expect(countryShipOfSizeLimit?.code).toContain(
       "COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION: readonly ContentLocalisation[] = [\n];"
     );
-    expect(countryShipOfSizeLimit?.machineryBacklog).toEqual([]);
+    expect(countryShipOfSizeLimit?.unsupported).toEqual([]);
   });
 
   it("lowers the solar system initializer's planet splice onto a category interface", () => {
@@ -968,7 +954,7 @@ describe("content-type codegen", () => {
     // emitter records one splice rather than reporting the second as a
     // member-name collision.
     expect(solarSystem?.inlineSplices).toEqual(["planet_initializer"]);
-    expect(solarSystem?.machineryBacklog).toEqual([]);
+    expect(solarSystem?.unsupported).toEqual([]);
     // Members follow the rules' declaration order, splices included. Here that
     // puts `planet` ahead of `orbitDistance`, which is what the CWT body says;
     // the case where the order carries meaning is one level down, inside

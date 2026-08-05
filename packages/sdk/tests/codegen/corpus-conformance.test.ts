@@ -55,9 +55,11 @@ import { ACKNOWLEDGED_GAPS } from "./corpus-gaps.ts";
  * Shape mismatches that are real, understood, and not this gate's to fix, each
  * with the reason. Anything else fails.
  *
- * Every entry here is a field the SDK emits that an author cannot fill with
- * what vanilla writes. Three families remain, none of them a misreading the
- * emitter could fix on its own:
+ * Every entry here is a field the SDK emits whose type and the shipped values
+ * disagree: an author cannot write what vanilla writes, or — where an unpinned
+ * trigger clause widened to `Trigger<never>` — can write it with nothing
+ * checking it. Four families remain, none of them a misreading the emitter
+ * could fix on its own:
  *
  * - **The corpus writes a form CWT does not declare.** Inventing an arm the
  *   rules deny would be guessing at game semantics from one shipped file.
@@ -142,9 +144,10 @@ const ACKNOWLEDGED = new Map<string, string>([
   ],
   [
     "ship_size.potential_construction scope",
-    "`Trigger<ScopeName>` is the right type and the clause needs narrowing inside it, not a " +
-      "declaration: one ship size's construction clause is evaluated against several scope types " +
-      "and vanilla branches on which, testing `is_scope_type` 13 times across these clauses " +
+    "The widened `Trigger<never>` is the right type and the clause needs narrowing inside it, " +
+      "not a declaration: one ship size's construction clause is evaluated against several scope " +
+      "types and vanilla branches on which, testing `is_scope_type` 13 times across these " +
+      "clauses " +
       "(zero shipped decisions do, which is why a scope parameter fit there and not here). " +
       "SDK-24 tracks the `inScope` combinator; it waits on SDK-13, since most bodies here " +
       "delegate to vanilla scripted triggers the SDK cannot name yet.",
@@ -361,8 +364,9 @@ describe("corpus conformance", () => {
 
   it("emits no field the corpus proves unfillable", () => {
     // A `form` or `scope` mismatch is not a legality question the way `invented`
-    // is: the game writes it, so it is legal, and the emitted type cannot hold
-    // it. Acknowledging one takes a reason; adding a new one takes a fix.
+    // is: the game writes it, so it is legal, and the emitted type either cannot
+    // hold it or holds it unchecked (see {@link ACKNOWLEDGED} for the split).
+    // Acknowledging one takes a reason; adding a new one takes a fix.
     const unacknowledged = mismatchesOfKind(["form", "scope"])
       .filter((mismatch) => !ACKNOWLEDGED.has(mismatch.key))
       .map((mismatch) => `${mismatch.key}: ${mismatch.detail}`)
@@ -758,6 +762,18 @@ describe("shape conformance, weight-block modifier rows", () => {
     );
     expect(mismatches.map((one) => one.kind)).toEqual(["scope"]);
     expect(mismatches[0]?.detail).toContain("typed for scope country");
+    expect(mismatches[0]?.detail).toContain("is_capital");
+  });
+
+  it("reads an unpinned holder as a lost check rather than an unwritable field", () => {
+    // The unpinned branch: `contravariantScopeType` widens the holder to
+    // `WeightBlock<never>`, whose rows are `Trigger<never>` — writable, and
+    // checking nothing. The finding is the same size; what it costs is the
+    // check, and the wording has to say so or the row reads as a defect the
+    // author would hit.
+    const mismatches = shapeConformance(corpusOf(["is_capital"]), [row("any")], scopesOf);
+    expect(mismatches.map((one) => one.kind)).toEqual(["scope"]);
+    expect(mismatches[0]?.detail).toContain("unchecked (Trigger<never>)");
     expect(mismatches[0]?.detail).toContain("is_capital");
   });
 

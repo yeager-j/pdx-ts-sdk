@@ -90,6 +90,19 @@ async function write(file: string, contents: string): Promise<void> {
   writeFileSync(target, await format(contents, { ...options, filepath: target }), "utf8");
 }
 
+/**
+ * A registry's field count: its own keys, plus the fields lowered inside their
+ * blocks where it has any. The two are counted apart because they are reached
+ * differently — a nested field is authorable only through the member that owns
+ * it, and only a `corpusDescents` walk measures it.
+ */
+function fieldCount(emission: ContentEmission): string {
+  const nested = emission.nestedEmittedFields.length;
+  return (
+    `${emission.emittedFields.length} fields emitted` + (nested === 0 ? "" : ` (+${nested} nested)`)
+  );
+}
+
 function reportSection(title: string, lines: readonly string[]): void {
   if (lines.length === 0) {
     return;
@@ -598,7 +611,7 @@ async function main(): Promise<void> {
       `; clusters ${effects.clusterCount})`
   );
   for (const content of contents) {
-    console.log(`${content.registry}: ${content.emission.emittedFields.length} fields emitted`);
+    console.log(`${content.registry}: ${fieldCount(content.emission)}`);
   }
   console.log(
     `content definers: ${definers.definers} emitted` +
@@ -650,13 +663,12 @@ async function main(): Promise<void> {
   reportSection("Content definers taken from the hand-written grafts", definers.grafted);
   for (const content of contents) {
     const type = content.registry;
-    console.log(`\n${type}: ${content.emission.emittedFields.length} fields emitted`);
+    console.log(`\n${type}: ${fieldCount(content.emission)}`);
     reportSection(`${type} fields declined`, content.emission.declinedFields);
     reportSection(
       `${type} alias categories spliced unkeyed at the top level`,
       content.emission.inlineSplices
     );
-    reportSection(`${type} fields blocked on emitter machinery`, content.emission.machineryBacklog);
     reportSection(
       `${content.registry} fields the emitter could not lower`,
       content.emission.unsupported
