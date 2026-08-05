@@ -690,42 +690,43 @@ export function shapeConformance(
     // list type against `{ trigger = { … } }`, or a struct against `{ a b c }`.
     // A dual is exempt: admitting two interiors is the whole point of it, and
     // the arms were each checked against the rules that produced them.
-    if (observation.blocks > 0 && form === "block") {
-      // Three interiors, one per lowering, and each is what the other two being
-      // wrong looks like: a value list holds bare scalars, a wrapped struct
-      // holds bare sub-blocks, every other block shape holds named keys. The
-      // three counts must therefore be asked separately — a single "is it bare"
-      // flag passed a wrapped struct against a corpus of bare scalars.
-      const found = (): string => {
-        const parts = [
-          ...(observation.keys.size > 0
-            ? [`named keys (${[...observation.keys].slice(0, 4).join(" ")})`]
-            : []),
-          ...(observation.bareValues > 0
-            ? [`bare scalars (${[...observation.values].slice(0, 4).join(" ")})`]
-            : []),
-          ...(observation.bareBlocks > 0 ? ["bare blocks"] : []),
-        ];
-        return parts.length === 0 ? "nothing" : parts.join(" and ");
-      };
+    //
+    // Three interiors, one per lowering, and each is what the other two being
+    // wrong looks like: a value list holds bare scalars, a wrapped struct holds
+    // bare sub-blocks, every other block shape holds named keys. The three are
+    // asked separately — one "is it bare" flag passed a wrapped struct against
+    // a corpus of bare scalars — and none is asked when every block is empty,
+    // since `resources = { }` written 16 times is compatible with all three and
+    // is absence of interior evidence rather than evidence of a defect.
+    const interior = [
+      ...(observation.keys.size > 0
+        ? [`named keys (${[...observation.keys].slice(0, 4).join(" ")})`]
+        : []),
+      ...(observation.bareValues > 0
+        ? [`bare scalars (${[...observation.values].slice(0, 4).join(" ")})`]
+        : []),
+      ...(observation.bareBlocks > 0 ? ["bare blocks"] : []),
+    ];
+    if (observation.blocks > 0 && form === "block" && interior.length > 0) {
+      const found = interior.join(" and ");
       if (field.shape === "valueList") {
         if (observation.bareValues === 0) {
           report(
             "form",
-            `lowered as a value list, but its ${observation.blocks} blocks hold ${found()}`
+            `lowered as a value list, but its ${observation.blocks} blocks hold ${found}`
           );
         }
       } else if (field.wrapped === true) {
         if (observation.bareBlocks === 0) {
           report(
             "form",
-            `lowered as a wrapped struct, but its ${observation.blocks} blocks hold ${found()}`
+            `lowered as a wrapped struct, but its ${observation.blocks} blocks hold ${found}`
           );
         }
       } else if (observation.keys.size === 0) {
         report(
           "form",
-          `lowered as ${field.shape}, but its ${observation.blocks} blocks hold ${found()}`
+          `lowered as ${field.shape}, but its ${observation.blocks} blocks hold ${found}`
         );
       }
     }

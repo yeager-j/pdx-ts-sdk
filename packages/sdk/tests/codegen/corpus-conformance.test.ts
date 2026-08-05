@@ -85,11 +85,6 @@ const ACKNOWLEDGED = new Map<string, string>([
       "form really does repeat.",
   ],
   [
-    "species_class.resources form",
-    "CWT declares the economic_template splice, but the 16 shipped species classes write bare " +
-      "values there.",
-  ],
-  [
     "economic_category.triggered_cost_modifier.trigger scope",
     "CWT annotates no scope, so the clause lowers to `Trigger<never>` — writable but unchecked. " +
       "The category's modifiers are evaluated against whatever is paying, and the corpus shows " +
@@ -537,6 +532,10 @@ describe("shape conformance, per-definition scope", () => {
  * and bare sub-blocks as one "is it bare" flag hid the opposite defect just as
  * quietly. Every pairing is asserted here because a check that only ever passes
  * is what let both through.
+ *
+ * The fourth case has no lowering of its own: a block with no interior at all.
+ * `resources = { }` is compatible with all three, so it is absence of evidence
+ * rather than evidence of a defect, and must produce no verdict for any of them.
  */
 describe("shape conformance, unkeyed block interiors", () => {
   // `repeated` describes the outer *key*, which a wrapper is what stops from
@@ -616,5 +615,27 @@ describe("shape conformance, unkeyed block interiors", () => {
     // The check the exemptions must not become blanket.
     expect(kinds(bareBlocks, plain)).toEqual(["form"]);
     expect(kinds(bareValues, plain)).toEqual(["form"]);
+  });
+
+  it("gives no verdict when every block is empty", () => {
+    // `species_class.resources` is `resources = { }` in all 16 shipped species
+    // classes. That is compatible with every block lowering, so a verdict there
+    // reported the corpus having nothing to say as a defect — the same
+    // false-positive species as the two above, and it stood acknowledged with a
+    // reason ("write bare values there") the observation contradicts.
+    const empty = corpusOf({});
+    expect(kinds(empty, wrapped)).toEqual([]);
+    expect(kinds(empty, list)).toEqual([]);
+    expect(kinds(empty, plain)).toEqual([]);
+    expect(kinds(empty, { field: "field", shape: "economicResources", repeated: false })).toEqual(
+      []
+    );
+  });
+
+  it("still judges a block lowering the moment one block has content", () => {
+    // Absence of interior evidence is what buys silence, not the shape being a
+    // block: one keyed block among empty ones is evidence again.
+    expect(kinds(corpusOf({ keys: ["key"] }), list)).toEqual(["form"]);
+    expect(kinds(corpusOf({ bareValues: 1 }), plain)).toEqual(["form"]);
   });
 });
