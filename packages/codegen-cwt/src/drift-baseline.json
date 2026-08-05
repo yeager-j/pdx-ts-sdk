@@ -32,28 +32,14 @@
   },
   "modifiers": {
     "rulesOnly": [
-      "biological_logistic_growth_mult",
-      "lithoid_logistic_growth_mult",
       "situation_nomad_economy_max_progress_add",
       "situation_nomad_economy_max_progress_mult",
       "starbase_collected_colony_resources_add"
     ]
   },
-  "unknownModifierCategories": [
-    "Country"
-  ],
+  "unknownModifierCategories": [],
   "unscopedModifierNames": [],
-  "malformedOptions": [
-    "aliases.cwt:120 ## default: no",
-    "aliases.cwt:157 ## default: no",
-    "aliases.cwt:194 ## default: no",
-    "aliases.cwt:231 ## default: no",
-    "aliases.cwt:43 ## default: no",
-    "common/economic_categories.cwt:21 ## default: no",
-    "common/governments.cwt:479 ## default: no",
-    "common/governments.cwt:482 ## default: no",
-    "triggers.cwt:3508 ## default: yes"
-  ],
+  "malformedOptions": [],
   "unknownScopes": [
     "galactic_community",
     "pop"

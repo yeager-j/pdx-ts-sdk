@@ -1,8 +1,6 @@
 import { readFileSync } from "node:fs";
 import { CONTENT_MANIFEST, type ContentManifestEntry } from "@pdx-ts/codegen-cwt/content-manifest";
-import type { CwtDiagnostic } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
-import driftBaseline from "@pdx-ts/codegen-cwt/drift-baseline.json" with { type: "json" };
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
@@ -13,10 +11,6 @@ import {
   HAND_WRITTEN_CONTENT_DEFINERS,
 } from "@pdx-ts/codegen-cwt/overlay";
 import { describe, expect, it } from "vitest";
-
-function describeDiagnostic(diagnostic: CwtDiagnostic): string {
-  return `${diagnostic.file}:${diagnostic.line} ${diagnostic.text}`;
-}
 
 /** Just the names: the emitter now describes each field's lowered shape too. */
 function fieldNames(fields: readonly EmittedField[]): string[] {
@@ -45,17 +39,9 @@ const emissions = new Map(
 describe("content-type codegen", () => {
   it("parses every manifest source without recovery", () => {
     const manifestSources = new Set<string>(CONTENT_MANIFEST.map((entry) => entry.source));
-    // common/governments.cwt and common/economic_categories.cwt each carry an
-    // upstream `## default: no` malformed-option typo (SDK-2). Those three are
-    // deliberately recorded in the drift baseline rather than fixed upstream,
-    // so they are the only diagnostics this check lets through — anything else
-    // in a manifest source is still a hard failure.
-    const knownMalformedOptions = new Set(driftBaseline.malformedOptions);
-    expect(
-      rules.diagnostics
-        .filter((diagnostic) => manifestSources.has(diagnostic.file))
-        .filter((diagnostic) => !knownMalformedOptions.has(describeDiagnostic(diagnostic)))
-    ).toEqual([]);
+    expect(rules.diagnostics.filter((diagnostic) => manifestSources.has(diagnostic.file))).toEqual(
+      []
+    );
   });
 
   it("carries a registry's body scope into trigger fields", () => {

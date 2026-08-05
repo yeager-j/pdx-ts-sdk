@@ -199,10 +199,7 @@ const RULE_FILES = [
   // registry's own source pulls this file in.
   "modifier_rule.cwt",
   // Loaded ahead of their registries (councilor, economic_category,
-  // civic_or_origin): both carry an upstream `## default: no` typo the parser
-  // reports as a malformed option, and those three diagnostics are recorded
-  // in the drift baseline deliberately — the gate still fails on any NEW
-  // malformed option. Loading governments.cwt here also feeds the
+  // civic_or_origin). Loading governments.cwt here also feeds the
   // government_trigger alias category through loadRules proper.
   "common/governments.cwt",
   "common/economic_categories.cwt",
