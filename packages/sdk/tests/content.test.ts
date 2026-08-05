@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest";
 
 import { collection as collectionInternal, type ModItem } from "../src/authoring/feature.ts";
 import { buildMod as buildInternal } from "../src/build.ts";
+import { ContentAuthoring } from "../src/content/authoring.ts";
 import {
-  ContentAuthoring,
   registerAliasStructFields,
   type ContentField,
   type ContentRegistryDescriptor,
-} from "../src/content.ts";
+} from "../src/content/schema.ts";
 import { defineSituationType } from "../src/content/situations.ts";
 import {
   defineShipSize,

@@ -2,14 +2,9 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/ship_sizes.cwt
 
-import type {
-  ContentField,
-  ContentLocalisation,
-  DefinedContent,
-  EconomicResourceBlock,
-  ModifierClosure,
-  WeightBlock,
-} from "../content.ts";
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
+import type { EconomicResourceBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
 import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type { ComponentTag, MutationComponentsSize, ShipClass } from "./enums.ts";
 import type {

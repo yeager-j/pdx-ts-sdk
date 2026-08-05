@@ -2,12 +2,9 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/modifiers.cwt
 
-import type {
-  ContentField,
-  ContentLocalisation,
-  DefinedContent,
-  ModifierClosure,
-} from "../content.ts";
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
+import type { ModifierClosure } from "../content/types.ts";
 import type { StaticModifierRef } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 

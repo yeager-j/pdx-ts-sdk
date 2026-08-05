@@ -318,8 +318,12 @@ src/
 │   ├── render.ts       compiled mod → path-to-contents map
 │   ├── write.ts        path map → files beneath an explicit root
 │   └── install.ts      atomic launcher-directory installation
-├── content.ts         generic content lowering and modifier recorder
-├── content/           situation-specific content authoring contracts
+├── content/           generic content-definition machinery
+│   ├── types.ts       public authored block contracts
+│   ├── schema.ts      generated field metadata and registry descriptors
+│   ├── blocks.ts      reusable PDXScript block encoders
+│   ├── lower.ts       recursive descriptor interpretation
+│   ├── authoring.ts   definition identity, localization, and registration
 │   └── situations.ts  situation type lowering and target-scope contracts
 ├── events/            event contracts, lowering, and on-action authoring
 │   ├── types.ts       event definitions and fire-site types

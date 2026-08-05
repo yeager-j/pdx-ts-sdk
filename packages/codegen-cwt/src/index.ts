@@ -327,7 +327,7 @@ async function main(): Promise<void> {
   await write(
     "modifiers.ts",
     header(commit, ["script-docs/v4.4.1/modifiers.log", "modifier_categories.cwt"]) +
-      'import type { CustomModifiers } from "../content.ts";\n' +
+      'import type { CustomModifiers } from "../content/types.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       modifiers.code
   );
@@ -369,18 +369,21 @@ async function main(): Promise<void> {
     // the rest only when the category's own members reach for them. Matched on
     // `EffectBlock<`/`Trigger<` rather than the bare name, since `Trigger`
     // is a substring of `GovernmentTriggerBlock`.
-    const runtimeTypes = ["ContentField", "EffectBlock<", "ModifierClosure"]
+    const runtimeTypes: string[] = ["ContentField", "EffectBlock<", "ModifierClosure"]
       .filter((name) =>
         name.endsWith("<")
           ? emission.code.includes(name)
           : referencesIdentifier(emission.code, name)
       )
       .map((name) => name.replace("<", ""));
+    const schemaTypes = runtimeTypes.filter((name) => name === "ContentField");
+    const typeTypes = runtimeTypes.filter((name) => name !== "ContentField");
     await write(
       `${category.replaceAll("_", "-")}.ts`,
       header(commit, [`alias[${category}:...] across the rule files`]) +
-        `import { registerAliasStructFields, type ${runtimeTypes.join(", type ")} } ` +
-        'from "../content.ts";\n' +
+        'import { registerAliasStructFields } from "../content/schema.ts";\n' +
+        importList("../content/schema.ts", schemaTypes) +
+        importList("../content/types.ts", typeTypes) +
         triggerCoreImports(emission.code) +
         (emission.code.includes("ScopeName")
           ? 'import type { ScopeName } from "./scopes.ts";\n'
@@ -405,7 +408,7 @@ async function main(): Promise<void> {
     );
   }
   for (const content of contents) {
-    const runtimeTypes = [
+    const runtimeTypes: string[] = [
       "ContentField",
       "ContentLocalisation",
       "DefinedContent",
@@ -419,11 +422,20 @@ async function main(): Promise<void> {
       "WeightBlockWithLoc",
       "WithFrom",
     ].filter((name) => referencesIdentifier(content.emission.code, name));
+    const schemaTypes: string[] = runtimeTypes.filter(
+      (name) => name === "ContentField" || name === "ContentLocalisation"
+    );
+    const authoringTypes: string[] = runtimeTypes.filter((name) => name === "DefinedContent");
+    const typeTypes: string[] = runtimeTypes.filter(
+      (name) => !schemaTypes.includes(name) && !authoringTypes.includes(name)
+    );
     const aliasStructImports = aliasCategoryImports(content.emission.code);
     await write(
       `${content.registry.replaceAll("_", "-")}.ts`,
       header(commit, [content.manifest.source]) +
-        importList("../content.ts", runtimeTypes) +
+        importList("../content/schema.ts", schemaTypes) +
+        importList("../content/authoring.ts", authoringTypes) +
+        importList("../content/types.ts", typeTypes) +
         triggerCoreImports(content.emission.code) +
         (content.emission.code.includes("ScopeName")
           ? 'import type { ScopeName } from "./scopes.ts";\n'
@@ -1161,7 +1173,7 @@ function contentRegistry(
     })
     .join("");
   return (
-    'import type { ContentRegistryDescriptor } from "../content.ts";\n' +
+    'import type { ContentRegistryDescriptor } from "../content/schema.ts";\n' +
     imports +
     "\n" +
     "export const CONTENT_REGISTRIES = [\n" +
