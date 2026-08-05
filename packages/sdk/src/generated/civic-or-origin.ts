@@ -31,7 +31,7 @@ export interface CivicOrOriginSwapType {
    */
   description?: string;
   negativeDescription?: string;
-  trigger: Trigger<never>;
+  trigger: Trigger<"country">;
   /** modifier that is applied to the country when triggers are evaluated as true */
   modifier?: ModifierClosure<ScopeName>;
   /** default: no */
