@@ -1,6 +1,6 @@
 # SDK source organization
 
-> **Accepted proposal, 2026-08-04 — not yet implemented.** This document records the
+> **Accepted proposal, 2026-08-04 — Phases 1 and 2 implemented.** This document records the
 > agreed target structure for the handwritten source under `packages/sdk/src/` and
 > the migration plan for reaching it. The migration is organizational: it must not
 > change the public package interface, authored behavior, generated PDXScript, or
@@ -69,7 +69,7 @@ large files combine interfaces with multiple independent implementation concerns
   dispatch, and event firing.
 - [`events.ts`](../../packages/sdk/src/events.ts) contains both the public event
   model and its lowering implementation.
-- [`render.ts`](../../packages/sdk/src/render.ts) contains pure rendering,
+- [`output/render.ts`](../../packages/sdk/src/output/render.ts) contains pure rendering,
   generic filesystem writing, and atomic launcher installation.
 
 The existing `stellaris/` and `vanilla/` directories are peers even though they
