@@ -1,0 +1,289 @@
+/**
+ * Consumer-facing contracts shared by generated content registries and the generic lowerer.
+ */
+import type {
+  ComplexTriggerModifier,
+  ComplexTriggerModifierWithLoc,
+  Modifier,
+  ModifierWithLoc,
+  ScriptCtx,
+} from "../effect-core.ts";
+import type { ScopeObjOf } from "../generated/effects.ts";
+import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/modifiers.ts";
+import type { EconomicCategoryRef, TypedRef } from "../generated/refs.ts";
+import type { ScopeName } from "../generated/scopes.ts";
+import type { ScriptValue, Trigger } from "../trigger-core.ts";
+
+/**
+ * The declared escape hatch for modifier names the generated tables cannot
+ * know: scripted modifiers this or another mod defines. Declaration-merge the
+ * names in and `raw()` accepts them — including template patterns, which admit
+ * a whole generated family at once:
+ *
+ *     declare module "@pdx-ts/sdk" {
+ *       interface CustomModifiers {
+ *         readonly my_scripted_modifier?: number;
+ *         readonly [k: `mymod_${string}`]: number | undefined;
+ *       }
+ *     }
+ */
+export interface CustomModifiers {}
+
+/**
+ * The known modifier names for scope `S`, as one flat interface.
+ *
+ * This types `raw()`'s name parameter, never an authoring position: a flat
+ * 45k-property type makes the editor build one enormous completion menu, which
+ * is exactly what {@link ModifierClosure}'s path recorder exists to avoid.
+ */
+export type ModifierBlock<S extends ScopeName = ScopeName> = ScopedModifierBlock<S>;
+
+/**
+ * Records the modifiers a definition applies, scope-checked segment by segment.
+ *
+ * The traversed path spells the game's flat modifier name — the closure below
+ * emits `country_unity_produces_mult = 0.01`:
+ *
+ *     modifier: (m) => m.country.unity.produces.mult(0.01)
+ *
+ * Each `.` completes from a small menu instead of one 45k-entry list, and a
+ * typo in any segment is a compile error. Escape hatches: `m.raw(name, value)`
+ * checks a flat name against every known name plus {@link CustomModifiers};
+ * `m.unchecked(name, value)` accepts any string.
+ */
+export type ModifierClosure<S extends ScopeName = ScopeName> = (
+  m: ScopedModifierRecorder<S>
+) => void;
+
+/** One cost/production/upkeep/logistics arm inside an economic `resources` block. */
+export interface EconomicResourceOperation<S extends ScopeName> {
+  /** Open resource ids and their numeric amounts. */
+  readonly amounts: Readonly<Record<string, number>>;
+  /** Optional in-game condition for applying this arm. */
+  readonly when?: Trigger<S>;
+  /** Repeated scripted multipliers, emitted under `multiplier`. */
+  readonly multiplier?: ScriptValue | readonly ScriptValue[];
+  /** Repeated scripted multipliers, emitted under the game's shorter `mult` spelling. */
+  readonly mult?: ScriptValue | readonly ScriptValue[];
+}
+
+/** A reusable economic-template block used by edicts and dozens of other registries. */
+export interface EconomicResourceBlock<S extends ScopeName> {
+  /** Economic category used to generate modifier names and tooltips. */
+  readonly category?: EconomicCategoryRef | string;
+  /** Resources paid when the owning definition activates. */
+  readonly cost?: EconomicResourceOperation<S>;
+  /** Resources produced by the owning definition. */
+  readonly produces?: EconomicResourceOperation<S>;
+  /** Recurring resource upkeep. */
+  readonly upkeep?: EconomicResourceOperation<S>;
+  /** Logistics contribution used by the game's economic system. */
+  readonly logistics?: EconomicResourceOperation<S>;
+}
+
+/**
+ * {@link EconomicResourceBlock} without `produces`, for CWT's
+ * `economic_template_no_produce` splice — the same open resource-name map,
+ * minus the one arm that splice does not admit.
+ *
+ * Derived with `Omit` rather than duplicating the other three members so a
+ * future change to {@link EconomicResourceBlock} (a new arm, a widened
+ * `category`) flows through here automatically instead of risking drift
+ * between two hand-kept copies.
+ *
+ * `economic_template_no_produce` is spliced at three sites in the vendored
+ * rules today: `weapon_component_template` and
+ * `strike_craft_component_template`'s own `resources`
+ * (`components.cwt:189`, `:338`), and `espionage_operation.resources`
+ * (`espionage.cwt:113`), not yet an exposed registry. This type exists so the
+ * next registry that splices it gets correct typing for free rather than
+ * needing its own overlay investigation.
+ */
+export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
+  EconomicResourceBlock<S>,
+  "produces"
+>;
+
+/**
+ * The `complex_maths_enum` operations `modifier_rule.cwt:1-3` allows directly
+ * alongside `base`, sibling to the `modifier`/`complex_trigger_modifier` rows
+ * rather than inside one of them — the same measured member set {@link
+ * Modifier} carries at row level, minus `desc`/`when` which only make sense
+ * on a gated row. `Omit` rather than a hand-kept duplicate, so a future
+ * change to `Modifier`'s numeric arms flows through here automatically, the
+ * same reasoning as {@link EconomicResourceBlockNoProduce}.
+ *
+ * Vanilla favors this top-level spelling for a block's own always-applied
+ * weight: in `common/traditions/`, 292 of 293 `weight`/`ai_weight` blocks set
+ * a top-level `factor` rather than `base`, and across all `ai_weight` blocks
+ * under `common/`, top-level `weight` (2,255) outnumbers `base` (848).
+ */
+export type WeightBlockOperations<S extends ScopeName> = Omit<Modifier<S>, "desc" | "when">;
+
+/**
+ * `M` with {@link ComplexTriggerModifier}'s characteristic members
+ * (`trigger`, `mode`) forbidden. Plain structural typing lets a value
+ * satisfy `Modifier` (which has `when` and every numeric arm optional) and
+ * *also* carry `trigger`/`mode` — TypeScript's excess-property check only
+ * fires for a fresh object literal checked against a single type, not a
+ * union, and not at all once the value has been assigned to a variable
+ * first. Forbidding the sibling arm's members here makes the two row kinds
+ * mutually exclusive structurally, not just by convention, so a hybrid value
+ * is a compile error under every authoring path rather than only the
+ * literal one. Applied only where the two row kinds are unioned below —
+ * `Modifier` itself stays unrestricted for its other consumers
+ * (`RandomListArm`, `TriggeredModifier`, `StructuralEffects.random`, ...),
+ * where this ambiguity cannot arise because there is no sibling row kind to
+ * collide with.
+ */
+type ExclusiveModifierRow<S extends ScopeName, M extends Modifier<S>> = M & {
+  readonly trigger?: never;
+  readonly mode?: never;
+};
+
+/** {@link ExclusiveModifierRow}'s mirror: `C` with `Modifier`'s `when` forbidden. */
+type ExclusiveComplexTriggerModifierRow<
+  S extends ScopeName,
+  C extends ComplexTriggerModifier<S>,
+> = C & {
+  readonly when?: never;
+};
+
+/**
+ * Every row shape a {@link WeightBlock}'s `modifiers` array can hold: a
+ * gated fixed adjustment ({@link Modifier}, or {@link ModifierWithLoc} via
+ * `M`), or a named trigger's result feeding a weight operation directly
+ * ({@link ComplexTriggerModifier}, or {@link ComplexTriggerModifierWithLoc}
+ * via `C`) — `modifier_rule.cwt`'s two splice-level row kinds (`:5-13`,
+ * `:32-53`), made mutually exclusive by {@link ExclusiveModifierRow} and
+ * {@link ExclusiveComplexTriggerModifierRow}.
+ */
+export type WeightBlockRow<
+  S extends ScopeName,
+  M extends Modifier<S> = Modifier<S>,
+  C extends ComplexTriggerModifier<S> = ComplexTriggerModifier<S>,
+> = ExclusiveModifierRow<S, M> | ExclusiveComplexTriggerModifierRow<S, C>;
+
+/**
+ * A `modifier_rule` block: optional base weight, the same weight operations
+ * directly as siblings of `base` (see {@link WeightBlockOperations}), plus
+ * gated adjustments.
+ *
+ * `M` defaults to plain {@link Modifier} (`desc` optional). `WeightBlockWithLoc`
+ * below is a *separate* interface for `modifier_rule_with_loc` consumers, not
+ * a `WeightBlock<S, ModifierWithLoc<S>>` instantiation — `modifier_rule_with_loc`
+ * is a stricter alias than `modifier_rule` at the top level too (`:55-81` vs
+ * `:1-53`), so reusing this interface's `WeightBlockOperations<S>` for it
+ * would admit members `modifier_rule_with_loc` does not allow. Both are still
+ * lowered through the same `weightBlock` function — the restriction is in the
+ * authoring types, not the writer.
+ */
+export interface WeightBlock<
+  S extends ScopeName,
+  M extends Modifier<S> = Modifier<S>,
+> extends WeightBlockOperations<S> {
+  /** Starting weight before modifiers. */
+  readonly base?: number;
+  /** Conditional adjustments emitted as repeated `modifier` or `complex_trigger_modifier` blocks. */
+  readonly modifiers?: readonly WeightBlockRow<S, M>[];
+}
+
+/**
+ * The `complex_maths_enum` operations `modifier_rule_with_loc.cwt:56-58`
+ * allows directly alongside `base`: only `add`/`factor`, not the rest of
+ * {@link WeightBlockOperations} — `modifier_rule_with_loc` is "deliberately
+ * more restrictive because of what we can make good tooltips with," per the
+ * CWT source comment, and that restriction bites the top-level operations
+ * too, not only the row shapes below.
+ */
+export type WeightBlockWithLocOperations<S extends ScopeName> = Pick<
+  WeightBlockOperations<S>,
+  "add" | "factor"
+>;
+
+/**
+ * A {@link WeightBlock} for `modifier_rule_with_loc` consumers (e.g.
+ * `situation_type.monthly_progress`): `desc` is required on every row
+ * (`Modifier` rows via {@link ModifierWithLoc}, `complex_trigger_modifier`
+ * rows via {@link ComplexTriggerModifierWithLoc}), and the top-level
+ * operations are the narrower {@link WeightBlockWithLocOperations}. A
+ * `Modifier`/`ModifierWithLoc` row's own members are unrestricted either way
+ * (`modifier_rule_with_loc.cwt:59-66` still splices the full
+ * `complex_maths_enum`, one member at a time) — only the top-level block and
+ * the `complex_trigger_modifier` row narrow.
+ */
+export interface WeightBlockWithLoc<S extends ScopeName> extends WeightBlockWithLocOperations<S> {
+  readonly base?: number;
+  readonly modifiers?: readonly WeightBlockRow<
+    S,
+    ModifierWithLoc<S>,
+    ComplexTriggerModifierWithLoc<S>
+  >[];
+}
+
+/**
+ * A script effect block recorded against the scope declared by the content
+ * rules, with the ambient scopes that block runs in as a second argument.
+ *
+ * `From` is the scope the game hands the block as FROM, where the rules name
+ * one (`## replace_scopes = { this = fleet from = archaeological_site }`):
+ *
+ *     onRollFailed: (fleet, ctx) => {
+ *       ctx.from.effects((site) => { ... });
+ *     }
+ *
+ * It defaults to undeclared, and `ctx.from` is then an inert sentinel rather
+ * than a ref — a block whose FROM nothing describes must not be navigated.
+ */
+export type EffectBlock<S extends ScopeName, From extends ScopeName | undefined = undefined> = (
+  scope: ScopeObjOf<S>,
+  ctx: ScriptCtx<S, From>
+) => void;
+
+/**
+ * A declarative field whose rules give the block a FROM: the value itself, or
+ * a closure handed the block's scopes that returns it.
+ *
+ *     allow: (ctx) => ctx.from.trigger(hasSiteFlag("x"))
+ *
+ * A trigger and a weight block are values, not closures, so there is no
+ * argument list to put FROM in — this adds one. The plain form stays: a
+ * condition that never names FROM has no reason to grow a closure around it.
+ *
+ * Emitted only where the rules name a FROM, so the type's presence on a field
+ * *is* the statement that FROM means something there. The closure runs once,
+ * at definition time (see `ContentAuthoring.define`), so what the definition
+ * carries from then on is the ordinary value.
+ */
+export type WithFrom<T, S extends ScopeName, From extends ScopeName | undefined = undefined> =
+  T | ((ctx: ScriptCtx<S, From>) => T);
+
+/** The common potential-plus-modifiers form behind `triggered_modifier_clause`. */
+export interface TriggeredModifier<S extends ScopeName> {
+  /** In-game condition emitted under the clause's `potential` block. */
+  readonly when?: Trigger<S>;
+  /** Optional localization key identifying the clause. */
+  readonly key?: string;
+  /** Whether the modifier remains visible when its potential fails. */
+  readonly showIfNotPotential?: boolean;
+  /** Replacement text shown when the potential fails. */
+  readonly notPotentialOverrideTextKey?: string;
+  /** Modifiers nested under an explicit `modifier` block. */
+  readonly modifier?: ModifierClosure<S>;
+  /** Modifiers spliced directly into the triggered-modifier block. */
+  readonly modifiers?: ModifierClosure<S>;
+  /** Optional localization key describing the modifier. */
+  readonly description?: string;
+  /** Values substituted into the description localization. */
+  readonly descriptionParameters?: Readonly<Record<string, string>>;
+  /** Hides generated modifier text in favor of `customTooltip`. */
+  readonly showOnlyCustomTooltip?: boolean;
+  /** Custom tooltip localization key. */
+  readonly customTooltip?: string;
+  /** Repeated scripted multipliers emitted under `mult`. */
+  readonly mult?: ScriptValue | readonly ScriptValue[];
+  /** Repeated scripted multipliers emitted under `multiplier`. */
+  readonly multiplier?: ScriptValue | readonly ScriptValue[];
+}
+
+/** Generated description of one localization slot on a content definition. */

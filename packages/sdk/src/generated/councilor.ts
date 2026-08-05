@@ -2,14 +2,9 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/governments.cwt
 
-import type {
-  ContentField,
-  ContentLocalisation,
-  DefinedContent,
-  ModifierClosure,
-  TriggeredModifier,
-  WeightBlock,
-} from "../content.ts";
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
+import type { ModifierClosure, TriggeredModifier, WeightBlock } from "../content/types.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { CivicOrOriginCivicRef, LeaderClassRef, PlanetClassRef, SpriteRef } from "./refs.ts";
 import type { ClimateLabel } from "./value-sets.ts";

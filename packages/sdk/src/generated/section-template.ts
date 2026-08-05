@@ -2,14 +2,9 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/section_templates.cwt
 
-import type {
-  ContentField,
-  ContentLocalisation,
-  DefinedContent,
-  EconomicResourceBlock,
-  ModifierClosure,
-  WeightBlock,
-} from "../content.ts";
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
+import type { EconomicResourceBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
 import type { ComponentTag, SectionSlot } from "./enums.ts";
 import type {
   ComponentSlotTemplateRef,

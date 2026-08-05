@@ -36,7 +36,7 @@ import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { describe, expect, it } from "vitest";
 
 import { SWAP_IDENTITIES, type SwapIdentity } from "../src/build.ts";
-import type { ContentField } from "../src/content.ts";
+import type { ContentField } from "../src/content/schema.ts";
 import { CONTENT_REGISTRIES } from "../src/generated/content-registry.ts";
 
 // Repo-root-relative: vitest runs from the workspace root, the same way

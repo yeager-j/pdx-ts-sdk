@@ -1,6 +1,6 @@
 # SDK source organization
 
-> **Accepted proposal, 2026-08-04 — Phases 1, 2, and 3 implemented.** This document records the
+> **Accepted proposal, 2026-08-04 — Phases 1, 2, 3, and 4 implemented.** This document records the
 > agreed target structure for the handwritten source under `packages/sdk/src/` and
 > the migration plan for reaching it. The migration is organizational: it must not
 > change the public package interface, authored behavior, generated PDXScript, or
@@ -488,6 +488,8 @@ Preserve capability ownership, forward event handles, define-site effect
 recording, feature layout, and canonical event/on-action ordering.
 
 ### Phase 4: split generic content machinery
+
+Implemented on `feature/project-structure-reorganization-phase-4`.
 
 Split `content.ts` in dependency order:
 

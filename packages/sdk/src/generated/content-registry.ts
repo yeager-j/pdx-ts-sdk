@@ -29,7 +29,7 @@
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
 
-import type { ContentRegistryDescriptor } from "../content.ts";
+import type { ContentRegistryDescriptor } from "../content/schema.ts";
 import { AGENDA_FIELDS, AGENDA_LOCALISATION } from "./agenda.ts";
 import { AGREEMENT_PRESET_FIELDS, AGREEMENT_PRESET_LOCALISATION } from "./agreement-preset.ts";
 import { AMBIENT_OBJECT_FIELDS, AMBIENT_OBJECT_LOCALISATION } from "./ambient-object.ts";

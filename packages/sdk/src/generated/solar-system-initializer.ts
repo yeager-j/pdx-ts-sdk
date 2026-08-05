@@ -2,13 +2,9 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/solar_system_initializers.cwt
 
-import type {
-  ContentField,
-  ContentLocalisation,
-  DefinedContent,
-  EffectBlock,
-  WeightBlock,
-} from "../content.ts";
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
+import type { EffectBlock, WeightBlock } from "../content/types.ts";
 import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type { UsageType } from "./enums.ts";
 import type { PlanetInitializerFields } from "./planet-initializer.ts";

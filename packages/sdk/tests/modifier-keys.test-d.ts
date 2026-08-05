@@ -1,9 +1,9 @@
 import { describe, it } from "vitest";
 
-import type { ModifierClosure, TriggeredModifier } from "../src/content.ts";
+import type { ModifierClosure, TriggeredModifier } from "../src/content/types.ts";
 import type { BuildingDef } from "../src/generated/building.ts";
 
-declare module "../src/content.ts" {
+declare module "../src/content/types.ts" {
   interface CustomModifiers {
     readonly mymod_custom_scripted?: number;
     readonly [k: `mymod_gen_${string}`]: number | undefined;

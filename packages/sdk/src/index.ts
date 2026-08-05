@@ -204,7 +204,6 @@ export type {
 } from "./events/types.ts";
 export type {
   CustomModifiers,
-  DefinedContent,
   EconomicResourceBlock,
   EconomicResourceBlockNoProduce,
   EconomicResourceOperation,
@@ -218,7 +217,8 @@ export type {
   WeightBlockWithLoc,
   WeightBlockWithLocOperations,
   WithFrom,
-} from "./content.ts";
+} from "./content/types.ts";
+export type { DefinedContent } from "./content/authoring.ts";
 export type {
   ModifierBlockByScope,
   ModifierRecorderByScope,

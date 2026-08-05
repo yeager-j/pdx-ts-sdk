@@ -2,7 +2,8 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/country_limits.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ScriptValue, Trigger } from "../trigger-core.ts";
 import type { ShipSizeRef } from "./refs.ts";
 

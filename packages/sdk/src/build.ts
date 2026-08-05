@@ -39,7 +39,7 @@ import {
   type ModWarning,
   type OnActionBindingItem,
 } from "./authoring/feature.ts";
-import { ContentAuthoring, type ContentRefUse, type DefinedContent } from "./content.ts";
+import { ContentAuthoring, type DefinedContent } from "./content/authoring.ts";
 import { StaleRuleTableError } from "./errors.ts";
 import { OnActionAuthoring } from "./events/on-actions.ts";
 import type { DefinedEvent } from "./events/types.ts";
@@ -51,6 +51,7 @@ import {
   vanillaIdsCheckWarning,
 } from "./identifiers/package-pin.ts";
 import { compareUtf8, normalizeLogicalPath } from "./ordering.ts";
+import type { ContentRefUse } from "./references.ts";
 import {
   collectVarRefs,
   planPatchEmission,

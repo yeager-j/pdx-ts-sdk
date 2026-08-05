@@ -23,7 +23,7 @@
 import { kv, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
 import type { ModConfig } from "../../packages/sdk/src/build.ts";
-import { ContentAuthoring, type DefinedContent } from "../../packages/sdk/src/content.ts";
+import { ContentAuthoring, type DefinedContent } from "../../packages/sdk/src/content/authoring.ts";
 import { StaleRuleTableError } from "../../packages/sdk/src/errors.ts";
 import { OnActionAuthoring } from "../../packages/sdk/src/events/on-actions.ts";
 import type { DefinedEvent } from "../../packages/sdk/src/events/types.ts";

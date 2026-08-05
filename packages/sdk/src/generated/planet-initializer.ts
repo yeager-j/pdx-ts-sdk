@@ -2,7 +2,8 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: alias[planet_initializer:...] across the rule files
 
-import { registerAliasStructFields, type ContentField, type EffectBlock } from "../content.ts";
+import { registerAliasStructFields, type ContentField } from "../content/schema.ts";
+import type { EffectBlock } from "../content/types.ts";
 import type { ScriptValue } from "../trigger-core.ts";
 import type { SatelliteNamingPolicy, SolarSysInitPlanetClass } from "./enums.ts";
 import type { MoonInitializerFields } from "./moon-initializer.ts";

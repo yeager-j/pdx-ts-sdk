@@ -2,14 +2,9 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/casus_belli_and_war_goals.cwt
 
-import type {
-  ContentField,
-  ContentLocalisation,
-  DefinedContent,
-  EconomicResourceBlock,
-  EffectBlock,
-  WithFrom,
-} from "../content.ts";
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
+import type { EconomicResourceBlock, EffectBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { ScopeName } from "./scopes.ts";
 

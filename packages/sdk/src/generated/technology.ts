@@ -2,7 +2,9 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/technologies_consolidated.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent, WeightBlock } from "../content.ts";
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
+import type { WeightBlock } from "../content/types.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type { ResearchArea, TechAiType } from "./enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./refs.ts";

@@ -3,7 +3,7 @@
 // From: script-docs/v4.4.1/modifiers.log
 // From: modifier_categories.cwt
 
-import type { CustomModifiers } from "../content.ts";
+import type { CustomModifiers } from "../content/types.ts";
 import type { ScopeName } from "./scopes.ts";
 
 /**

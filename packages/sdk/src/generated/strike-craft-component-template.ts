@@ -2,16 +2,15 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/components.cwt
 
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
-  ContentField,
-  ContentLocalisation,
-  DefinedContent,
   EconomicResourceBlockNoProduce,
   EffectBlock,
   ModifierClosure,
   WeightBlock,
   WithFrom,
-} from "../content.ts";
+} from "../content/types.ts";
 import type { Trigger } from "../trigger-core.ts";
 import type {
   AuraType,

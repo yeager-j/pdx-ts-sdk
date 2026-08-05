@@ -2,7 +2,8 @@
 // Source: cwtools-stellaris-config @ 251fe1189b4e
 // From: common/global_ship_designs.cwt
 
-import type { ContentField, ContentLocalisation, DefinedContent } from "../content.ts";
+import type { DefinedContent } from "../content/authoring.ts";
+import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ComponentSlot, SectionSlot, UtilityComponentSlot } from "./enums.ts";
 import type {
   ComponentTemplateRef,
