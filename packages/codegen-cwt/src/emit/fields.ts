@@ -23,7 +23,7 @@ import {
 import type { AliasDecl } from "../cwt/rules.ts";
 import { camelCase, docComment, indefiniteArticle, isPlainName, pascalCase } from "../naming.ts";
 import { CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS, type ContentFieldOverride } from "../overlay.ts";
-import { authoredForm } from "./authored-form.ts";
+import { formOfShape } from "./authored-form.ts";
 import { Emitter, type TsValue } from "./types.ts";
 
 /**
@@ -593,7 +593,7 @@ export function lowerStructuralSplice(
     memberType: arrayType(spliceTypeName(category)),
     metadata:
       `{ key: ${JSON.stringify(splice.memberKey)}, member: ${JSON.stringify(member)}, ` +
-      `shape: "aliasStruct", form: ${JSON.stringify(authoredForm(shape))}, ` +
+      `shape: "aliasStruct", form: ${JSON.stringify(formOfShape(shape))}, ` +
       `category: ${JSON.stringify(category)}, repeated: true }`,
     admits: shape,
     docs: [...docs, ...splice.declaration.docs],
@@ -692,7 +692,7 @@ export function metadata(
     `key: ${JSON.stringify(name)}`,
     `member: ${JSON.stringify(camelCase(name))}`,
     `shape: ${JSON.stringify(shape)}`,
-    `form: ${JSON.stringify(authoredForm({ shape, repeated }))}`,
+    `form: ${JSON.stringify(formOfShape({ shape, repeated }))}`,
     ...extras,
   ];
   if (repeated) {
@@ -987,7 +987,7 @@ function lowerStruct(
     `key: ${JSON.stringify(name)}`,
     `member: ${JSON.stringify(camelCase(name))}`,
     `shape: "struct"`,
-    `form: ${JSON.stringify(authoredForm({ shape: "struct", repeated: structRepeated, wrapped }))}`,
+    `form: ${JSON.stringify(formOfShape({ shape: "struct", repeated: structRepeated, wrapped }))}`,
     `fields: ${fieldsConstant}`,
     ...(wrapped ? ["wrapped: true"] : []),
     ...(repeated ? ["repeated: true"] : []),
@@ -1240,7 +1240,7 @@ function lowerDual(
   // what makes them collide rather than the shapes, an `arity` assertion fixes
   // it upstream of here.
   const forms = arms.map((arm) =>
-    authoredForm({ shape: arm.admits.shape, repeated: arm.admits.repeated, wrapped: arm.wrapped })
+    formOfShape({ shape: arm.admits.shape, repeated: arm.admits.repeated, wrapped: arm.wrapped })
   );
   if (new Set(forms).size !== forms.length) {
     return null;

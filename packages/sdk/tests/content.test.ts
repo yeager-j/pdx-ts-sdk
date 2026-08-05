@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { collection as collectionInternal, type ModItem } from "../src/authoring/feature.ts";
+import { createFeature as createFeatureInternal, type ModItem } from "../src/authoring/feature.ts";
 import { buildMod as buildInternal } from "../src/compiler/compile.ts";
 import { ContentAuthoring } from "../src/content/authoring.ts";
 import {
@@ -1719,7 +1719,7 @@ describe("generated content registries", () => {
     //
     // All three share one output file
     // (common/component_templates/<prefix>_component_templates.txt) and can
-    // sit in one collection: SDK-32 made `render` merge content files that
+    // sit in one feature: SDK-32 made `render` merge content files that
     // share an emitted relPath instead of the later one clobbering the
     // earlier ones.
     const shield = cap.utilityComponentTemplate("small_shield", {
@@ -1872,7 +1872,7 @@ describe("generated content registries", () => {
     // structMap keys inside it are exempt. The pure API demotes the rule to a
     // warning datum on the built value; exactly one warning means the engine
     // keys inside the definition stayed exempt.
-    const shipSizes = collectionInternal(undefined, [
+    const shipSizes = createFeatureInternal(undefined, [
       defineShipSize({
         id: "othermod_cruiser",
         name: "X",

@@ -1,4 +1,4 @@
-import { collection } from "../../packages/sdk/src/authoring/feature.ts";
+import { createFeature } from "../../packages/sdk/src/authoring/feature.ts";
 import { createMod, stellarisIds, type MintedContentId } from "./capability.ts";
 
 const mod = createMod(
@@ -108,5 +108,5 @@ const betaFeature = beta.feature("empty", []);
 
 // @ts-expect-error — a feature is owned by the capability that placed it
 alpha.compile([betaFeature]);
-// @ts-expect-error — legacy collections cannot enter the capability fold directly
-alpha.compile([collection("legacy", [])]);
+// @ts-expect-error — a hand-built feature cannot enter the capability fold directly
+alpha.compile([createFeature("legacy", [])]);

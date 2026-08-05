@@ -61,7 +61,7 @@ export interface EventItemBase {
   readonly warnings: readonly ModWarning[];
 }
 
-export interface OnActionBindingItem {
+export interface OnActionHookItem {
   readonly itemKind: "on-action";
   readonly hook: OnActionRef;
   /** Identity is the ownership proof: this exact value must also be built. */
@@ -81,7 +81,7 @@ export interface ContributionItem {
 }
 
 export type ModItem =
-  ContentItem | EventItemBase | OnActionBindingItem | TechnologyPatchItem | ContributionItem;
+  ContentItem | EventItemBase | OnActionHookItem | TechnologyPatchItem | ContributionItem;
 
 /**
  * What a factory returns (plus its definers): the file stem and the items

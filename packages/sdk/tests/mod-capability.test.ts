@@ -243,7 +243,7 @@ describe("mod capability composition", () => {
       'Feature does not belong to mod prefix "alpha_mod"'
     );
     expect(() =>
-      alpha.compile([{ itemKind: "collection", file: "forged", items: [] }] as never)
+      alpha.compile([{ itemKind: "feature", stem: "forged", items: [] }] as never)
     ).toThrow('Feature does not belong to mod prefix "alpha_mod"');
     const samePrefix = createMod({ name: "Again", prefix: "alpha_mod", supportedVersion: "4.4.*" });
     expect(() => samePrefix.compile([alpha.feature("empty", [])])).toThrow(

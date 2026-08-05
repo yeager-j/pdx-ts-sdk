@@ -186,7 +186,7 @@ describe("mod capability types", () => {
     // @ts-expect-error — branded features cannot cross capabilities.
     beta.compile([alphaFeature]);
     // @ts-expect-error — the legacy collection shape is not a capability feature.
-    alpha.compile([{ itemKind: "collection", file: "legacy", items: [] }]);
+    alpha.compile([{ itemKind: "feature", stem: "legacy", items: [] }]);
   });
 
   it("keeps generic packs, content scope, and handwritten situations coherent", () => {

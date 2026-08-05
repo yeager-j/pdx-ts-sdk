@@ -110,7 +110,7 @@ export async function discoverFeatures<P extends string>(
     if (!isCapabilityFeature(exports.feature)) {
       throw new Error(`${module.relative} must export one capability feature as "feature"`);
     }
-    if (exports.feature.file === undefined) {
+    if (exports.feature.stem === undefined) {
       throw new Error(`${module.relative} exports "feature" without an authored file stem`);
     }
     features.push(exports.feature as CapabilityFeature<P>);
@@ -150,6 +150,6 @@ function isCapabilityFeature(value: unknown): value is CapabilityFeature<string>
     typeof value === "object" &&
     value !== null &&
     "itemKind" in value &&
-    value.itemKind === "collection"
+    value.itemKind === "feature"
   );
 }

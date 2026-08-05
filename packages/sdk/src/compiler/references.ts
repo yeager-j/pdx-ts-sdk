@@ -89,7 +89,7 @@ export function validateReferences(args: {
     if (ownEventId.test(value) && !args.eventIds.has(value)) {
       throw new Error(
         `"${value}" looks like one of this mod's event ids, but no such event is among the ` +
-          `collections passed to buildMod — was the collection holding it included?`
+          `features passed to buildMod — was the feature holding it included?`
       );
     }
   }
@@ -161,8 +161,8 @@ export function validateReferences(args: {
     const target = use.targets.join(" or ");
     throw new Error(
       `${owner} references ${target} "${use.id}" in "${use.field}", but no such ${target} is ` +
-        `among the collections passed to buildMod — the id carries this mod's prefix ` +
-        `"${args.prefix}_", so this build has to define it; was its collection passed to buildMod?`
+        `among the features passed to buildMod — the id carries this mod's prefix ` +
+        `"${args.prefix}_", so this build has to define it; was its feature passed to buildMod?`
     );
   }
 }

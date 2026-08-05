@@ -20,7 +20,7 @@ export type AuthoredForm = "scalar" | "list" | "trigger" | "closure" | "block";
  * arms accept *different* forms, which has to be decided by the same rule the
  * generated descriptor will carry, not a second copy of it.
  */
-export function authoredForm(field: {
+export function formOfShape(field: {
   readonly shape: string;
   readonly repeated?: boolean;
   readonly wrapped?: boolean;

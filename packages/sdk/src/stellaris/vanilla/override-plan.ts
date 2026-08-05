@@ -3,12 +3,12 @@
  * registry's surviving files, compute a filename that provably wins — or
  * refuse with the reason. Pure functions, no IO.
  *
- * The scheme for a last-wins registry is stem-append off the byte-max
- * definer: `stem(L) + "_" + prefix + "_patch.txt"` byte-sorts strictly after
+ * The scheme for a last-wins registry is stem-append off the byte-max defining
+ * file: `stem(L) + "_" + prefix + "_patch.txt"` byte-sorts strictly after
  * `L` because the two agree through the stem and then `L` continues with `.`
  * (0x2E) while the candidate continues with `_` (0x5F). That is a
  * construction, not a proof — the final step re-verifies the computed name
- * against every definer with the real comparator, so a wrong lemma fails
+ * against every defining file with the real comparator, so a wrong lemma fails
  * loudly instead of shipping.
  *
  * Scope, stated everywhere it matters: the enumeration is vanilla plus this
@@ -117,7 +117,7 @@ export function planPatchEmission(args: {
   if (row.repeat.rule !== "last-wins") {
     throw new PdxSdkError(
       `registry \`${registry}\` is ${row.repeat.rule}: winning means sorting *before* the ` +
-        `first definer, and before-first emission is not implemented in this slice`
+        `first defining file, and before-first emission is not implemented in this slice`
     );
   }
   const confidence: WinAssertion["confidence"] =
@@ -148,29 +148,31 @@ export function planPatchEmission(args: {
     }
   }
 
-  const definersByKey = new Map<string, LogicalPath[]>();
+  const definingFilesByKey = new Map<string, LogicalPath[]>();
   for (const patch of patches) {
-    const definers = enumeration
+    const files = enumeration
       .filter((file) => file.keys.includes(patch.key))
       .map((file) => file.path);
-    if (definers.length === 0) {
+    if (files.length === 0) {
       throw new Error(
         `planPatchEmission(${registry}): no surviving file defines "${patch.key}" — ` +
           `a patch can only target a parsed definition`
       );
     }
-    definersByKey.set(patch.key, definers);
+    definingFilesByKey.set(patch.key, files);
   }
 
-  const allDefiners = [...new Set([...definersByKey.values()].flat())].sort(compareLogicalPaths);
-  const bar = allDefiners[allDefiners.length - 1]!;
+  const definingFiles = [...new Set([...definingFilesByKey.values()].flat())].sort(
+    compareLogicalPaths
+  );
+  const bar = definingFiles[definingFiles.length - 1]!;
   const relPath = winningPath({ bar, enumeration, reservedPaths, prefix, dir: row.dir });
   // The assertion that backs "computed from parsed reality": the emitted path
-  // beats every definer of every patched key under the real comparator.
-  for (const definer of allDefiners) {
-    if (compareLogicalPaths(relPath, definer) <= 0) {
+  // beats every defining file of every patched key under the real comparator.
+  for (const file of definingFiles) {
+    if (compareLogicalPaths(relPath, file) <= 0) {
       throw new NoWinningFilenameError(
-        `computed filename ${relPath} does not byte-sort after ${definer} — the stem-append ` +
+        `computed filename ${relPath} does not byte-sort after ${file} — the stem-append ` +
           `lemma failed for registry \`${registry}\`; this is a bug worth reporting`
       );
     }
@@ -181,7 +183,7 @@ export function planPatchEmission(args: {
     key: patch.key,
     rule: "last-wins",
     confidence,
-    beats: definersByKey.get(patch.key)!,
+    beats: definingFilesByKey.get(patch.key)!,
     verifiedAgainst: row.verifiedAgainst,
   }));
 
@@ -198,7 +200,7 @@ export function planPatchEmission(args: {
       : []),
     ...patches.map(
       (patch) =>
-        `#   ${patch.key}  beats ${definersByKey.get(patch.key)!.join(", ")}  ` +
+        `#   ${patch.key}  beats ${definingFilesByKey.get(patch.key)!.join(", ")}  ` +
         `source sha256 ${patch.sourceSha256.slice(0, 12)}`
     ),
   ];
@@ -225,13 +227,13 @@ function winningPath(args: {
   const basename = bar.split("/").pop()!;
   if (!basename.endsWith(".txt")) {
     throw new NoWinningFilenameError(
-      `last definer ${bar} does not end in .txt; the stem-append scheme is only stated for .txt files`
+      `last defining file ${bar} does not end in .txt; the stem-append scheme is only stated for .txt files`
     );
   }
   const stem = basename.slice(0, -".txt".length);
   if (!isAscii(stem)) {
     throw new NoWinningFilenameError(
-      `last definer ${bar} has a non-ASCII name; emitted filenames are ASCII-only by policy ` +
+      `last defining file ${bar} has a non-ASCII name; emitted filenames are ASCII-only by policy ` +
         `(the byte comparator is verified on ASCII discriminators only), so no winning name ` +
         `is constructed past it`
     );
@@ -246,7 +248,7 @@ function winningPath(args: {
     if (byteLength(candidateName) > MAX_BASENAME_BYTES) {
       throw new NoWinningFilenameError(
         `computed filename ${candidateName} is ${byteLength(candidateName)} bytes ` +
-          `(cap ${MAX_BASENAME_BYTES}); the last definer of this key (${bar}) leaves no ` +
+          `(cap ${MAX_BASENAME_BYTES}); the last defining file of this key (${bar}) leaves no ` +
           `winning name within the filesystem limit`
       );
     }

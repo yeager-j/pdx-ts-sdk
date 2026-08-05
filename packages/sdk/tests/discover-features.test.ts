@@ -71,7 +71,7 @@ describe("discoverFeatures", () => {
     const fromUrl = await discoverFeatures<"explicit_discovery">(pathToFileURL(`${root}/`));
     const alpha = await import(pathToFileURL(join(root, "alpha/feature.ts")).href);
 
-    expect(fromPath.map((feature) => feature.file)).toEqual(["alpha", "zeta"]);
+    expect(fromPath.map((feature) => feature.stem)).toEqual(["alpha", "zeta"]);
     expect(fromUrl).toEqual(fromPath);
     expect(fromPath[0]).toBe(alpha.feature);
   });
@@ -89,8 +89,8 @@ describe("discoverFeatures", () => {
       include: /\.feature\.ts$/gy,
     });
 
-    expect(defaultFeatures.map((feature) => feature.file)).toEqual(["alpha", "beta"]);
-    expect(features.map((feature) => feature.file)).toEqual(["alpha", "beta"]);
+    expect(defaultFeatures.map((feature) => feature.stem)).toEqual(["alpha", "beta"]);
+    expect(features.map((feature) => feature.stem)).toEqual(["alpha", "beta"]);
   });
 
   it("keeps source basenames out of output identity", async () => {

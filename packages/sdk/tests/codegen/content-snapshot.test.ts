@@ -1057,7 +1057,7 @@ describe("generated content definers", () => {
     // from a definition to a value, and that is the whole of it.
     expect(definers).not.toContain("items.push");
     expect(definers).not.toContain("makeCollection");
-    expect(definers).not.toContain("Collection<");
+    expect(definers).not.toContain("Feature<");
   });
 
   it("emits the raw patchTechnology and addShipOfSizeLimits, and only those", () => {

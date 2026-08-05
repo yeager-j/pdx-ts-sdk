@@ -27,6 +27,7 @@ import path from "node:path";
 import { parse, type PdxContainer, type PdxValue } from "@pdx-ts/pdxscript";
 
 import type { EmittedField } from "./emit/fields.ts";
+import type { RuleScopes } from "./scope-facts.ts";
 
 /**
  * What the corpus writes under one key, counted once per definition.
@@ -642,8 +643,9 @@ export function conformance(
   };
 }
 
-/** The scopes one rule is legal in, or `"universal"` for a rule legal in all. */
-export type RuleScopes = readonly string[] | "universal";
+// The single declaration lives in `scope-facts.ts`; re-exported here because
+// `@pdx-ts/codegen-cwt/corpus` is the subpath its consumers import from.
+export type { RuleScopes };
 
 /**
  * The four ways a lowered type can disagree with the values behind it.
@@ -659,11 +661,11 @@ export type RuleScopes = readonly string[] | "universal";
  * happens never to repeat is legal, and a value outside a closed union may be
  * an upstream spelling quirk.
  */
-export type ShapeMismatchKind = "form" | "arity" | "literal" | "scope";
+export type ConformanceMismatchKind = "form" | "arity" | "literal" | "scope";
 
 export interface ShapeMismatch {
   readonly field: string;
-  readonly kind: ShapeMismatchKind;
+  readonly kind: ConformanceMismatchKind;
   readonly detail: string;
 }
 
@@ -779,7 +781,7 @@ export function shapeConformance(
     if (observation === undefined) {
       continue;
     }
-    const report = (kind: ShapeMismatchKind, detail: string): void => {
+    const report = (kind: ConformanceMismatchKind, detail: string): void => {
       mismatches.push({ field: field.field, kind, detail });
     };
     const form = WRITTEN_FORM.get(field.shape);

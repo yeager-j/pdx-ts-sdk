@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { collection } from "../src/authoring/feature.ts";
+import { createFeature } from "../src/authoring/feature.ts";
 import { buildMod } from "../src/compiler/compile.ts";
 import { on } from "../src/events/on-actions.ts";
 import { namespace } from "../src/generated/event-definers.ts";
@@ -48,8 +48,8 @@ describe("on-action authoring", () => {
     expect(render(compiled)).toEqual(render(compiled));
   });
 
-  it("emits the same bytes when two collections bind one hook in either order", () => {
-    // Two `on()` calls for the same hook, split across collections. The list
+  it("emits the same bytes when two features bind one hook in either order", () => {
+    // Two `on()` calls for the same hook, split across features. The list
     // inside one call is author data; which call came first is layout, and
     // layout must not reach the output (SDK-23).
     const build = (reversed: boolean) => {
@@ -86,13 +86,11 @@ describe("on-action authoring", () => {
     );
   });
 
-  it("rejects events from a collection outside the build", () => {
+  it("rejects events from a feature outside the build", () => {
     const foreign = namespace("other_mod");
     const event = foreign.defineCountryEvent({ id: 5, isTriggeredOnly: true });
-    const hooks = collection(undefined, [on(onActions.onGameStartCountry, [event])]);
+    const hooks = createFeature(undefined, [on(onActions.onGameStartCountry, [event])]);
 
-    expect(() => buildMod(CONFIG, [hooks])).toThrow(
-      /is not among the collections passed to buildMod/
-    );
+    expect(() => buildMod(CONFIG, [hooks])).toThrow(/is not among the features passed to buildMod/);
   });
 });
