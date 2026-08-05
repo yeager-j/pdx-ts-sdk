@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 33,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tr_adaptability_adopt",
@@ -55,6 +56,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -86,6 +88,7 @@
       "repeated": 8,
       "scalars": 0,
       "blocks": 8,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -104,6 +107,7 @@
       "repeated": 0,
       "scalars": 8,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tradition_aptitude_desc",
@@ -142,6 +146,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 8,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -176,6 +181,7 @@
       "repeated": 0,
       "scalars": 33,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tr_adaptability_finish",
@@ -222,6 +228,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 28,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -326,7 +333,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
-      "bareBlocks": 33,
+      "bareValues": 33,
+      "bareBlocks": 0,
       "values": [
         "tr_adaptability_adaptive_ecology",
         "tr_adaptability_appropriation",
@@ -403,6 +411,7 @@
       "repeated": 0,
       "scalars": 33,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tree_111_11",

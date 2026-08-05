@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 85,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -30,6 +31,7 @@
       "repeated": 0,
       "scalars": 87,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "cb_ae_entertainment",
@@ -88,6 +90,7 @@
       "repeated": 0,
       "scalars": 17,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -103,6 +106,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -117,6 +121,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -131,6 +136,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 42,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -164,6 +170,7 @@
       "repeated": 0,
       "scalars": 35,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "",
@@ -179,6 +186,7 @@
       "repeated": 0,
       "scalars": 8,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         ""
@@ -193,6 +201,7 @@
       "repeated": 0,
       "scalars": 35,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "",
@@ -208,6 +217,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 31,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -230,6 +240,7 @@
       "repeated": 0,
       "scalars": 57,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no_cb"
@@ -244,6 +255,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 51,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -373,6 +385,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 25,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -426,6 +439,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -453,6 +467,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 83,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -511,6 +526,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 85,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -681,6 +697,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -695,6 +712,7 @@
       "repeated": 0,
       "scalars": 21,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -710,6 +728,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -724,6 +743,7 @@
       "repeated": 0,
       "scalars": 53,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "wg_absorption",
@@ -771,6 +791,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -785,6 +806,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -799,6 +821,7 @@
       "repeated": 0,
       "scalars": 62,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-100",
@@ -820,6 +843,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.25",
@@ -836,6 +860,7 @@
       "repeated": 0,
       "scalars": 38,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -851,6 +876,7 @@
       "repeated": 0,
       "scalars": 18,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.25",

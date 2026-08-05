@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 264,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "all",
@@ -24,6 +25,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 492,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -65,6 +67,7 @@
       "repeated": 0,
       "scalars": 679,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "engineering",
@@ -81,7 +84,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 679,
-      "bareBlocks": 679,
+      "bareValues": 679,
+      "bareBlocks": 0,
       "values": [
         "archaeostudies",
         "biology",
@@ -107,6 +111,7 @@
       "repeated": 0,
       "scalars": 664,
       "blocks": 10,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -137,6 +142,7 @@
       "repeated": 0,
       "scalars": 26,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -149,7 +155,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 37,
-      "bareBlocks": 37,
+      "bareValues": 37,
+      "bareBlocks": 0,
       "values": [
         "active_reconnaissance_unlocked",
         "alien_cloning_unlocked",
@@ -198,6 +205,7 @@
       "repeated": 0,
       "scalars": 52,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "bio_ships",
@@ -233,6 +241,7 @@
       "repeated": 0,
       "scalars": 12,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tech_archeology_lab",
@@ -258,6 +267,7 @@
       "repeated": 1,
       "scalars": 52,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -272,6 +282,7 @@
       "repeated": 0,
       "scalars": 13,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -286,6 +297,7 @@
       "repeated": 0,
       "scalars": 237,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -301,6 +313,7 @@
       "repeated": 0,
       "scalars": 43,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -316,6 +329,7 @@
       "repeated": 0,
       "scalars": 26,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-1",
@@ -331,6 +345,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 34,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -352,6 +367,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 243,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1066,6 +1082,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 376,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1381,6 +1398,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 125,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1425,7 +1443,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 504,
-      "bareBlocks": 491,
+      "bareValues": 491,
+      "bareBlocks": 0,
       "values": [
         "tech_archaeostudies",
         "tech_battleship_hull_1",
@@ -1507,6 +1526,7 @@
       "repeated": 3,
       "scalars": 47,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1522,6 +1542,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 19,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1559,6 +1580,7 @@
       "repeated": 16,
       "scalars": 0,
       "blocks": 180,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1684,6 +1706,7 @@
       "repeated": 0,
       "scalars": 11,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "society"
@@ -1698,7 +1721,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 11,
-      "bareBlocks": 11,
+      "bareValues": 11,
+      "bareBlocks": 0,
       "values": [
         "biology",
         "psionics"
@@ -1713,6 +1737,7 @@
       "repeated": 0,
       "scalars": 162,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1728,6 +1753,7 @@
       "repeated": 0,
       "scalars": 174,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1743,6 +1769,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 55,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1932,6 +1959,7 @@
       "repeated": 0,
       "scalars": 180,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tech_archaeo_bio_lasers",
@@ -2009,6 +2037,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 28,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2025,6 +2054,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 180,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2132,6 +2162,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 91,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2148,6 +2179,7 @@
       "repeated": 0,
       "scalars": 679,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -2167,6 +2199,7 @@
       "repeated": 3,
       "scalars": 641,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -2184,7 +2217,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 34,
-      "bareBlocks": 33,
+      "bareValues": 33,
+      "bareBlocks": 0,
       "values": [
         "deposit_blockers",
         "repeatable"
@@ -2199,6 +2233,7 @@
       "repeated": 3,
       "scalars": 0,
       "blocks": 562,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

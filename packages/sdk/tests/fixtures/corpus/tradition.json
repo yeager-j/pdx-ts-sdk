@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 141,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -35,6 +36,7 @@
       "repeated": 2,
       "scalars": 59,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BLANK_STRING",
@@ -107,6 +109,7 @@
       "repeated": 0,
       "scalars": 51,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BLANK_STRING",
@@ -171,6 +174,7 @@
       "repeated": 8,
       "scalars": 0,
       "blocks": 27,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -192,6 +196,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 163,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -921,6 +926,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 41,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -983,6 +989,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 124,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1043,6 +1050,7 @@
       "repeated": 52,
       "scalars": 0,
       "blocks": 98,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1417,6 +1425,7 @@
       "repeated": 0,
       "scalars": 45,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tr_adaptability_survival_fittest_nomad_desc",
@@ -1494,6 +1503,7 @@
       "repeated": 0,
       "scalars": 14,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "tr_archivism_frontier_archaeology_nomads_tt",
@@ -1523,6 +1533,7 @@
       "repeated": 0,
       "scalars": 44,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1538,6 +1549,7 @@
       "repeated": 0,
       "scalars": 94,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1553,6 +1565,7 @@
       "repeated": 0,
       "scalars": 52,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1568,6 +1581,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1584,6 +1598,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 51,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1868,6 +1883,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 11,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1895,6 +1911,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 97,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2152,6 +2169,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2182,6 +2200,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "agenda_confidence_in_variance"
@@ -2196,6 +2215,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 80,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2212,6 +2232,7 @@
       "repeated": 9,
       "scalars": 0,
       "blocks": 13,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2339,6 +2360,7 @@
       "repeated": 0,
       "scalars": 31,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "agenda_astute_observation",

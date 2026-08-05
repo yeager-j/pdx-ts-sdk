@@ -9,7 +9,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 162,
-      "bareBlocks": 162,
+      "bareValues": 162,
+      "bareBlocks": 0,
       "values": [
         "artillery",
         "artillery_stealth",
@@ -41,6 +42,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 97,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -69,6 +71,7 @@
       "repeated": 0,
       "scalars": 319,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -90,6 +93,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -104,6 +108,7 @@
       "repeated": 385,
       "scalars": 0,
       "blocks": 421,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -182,6 +187,7 @@
       "repeated": 0,
       "scalars": 37,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -197,6 +203,7 @@
       "repeated": 0,
       "scalars": 421,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "core",
@@ -274,6 +281,7 @@
       "repeated": 0,
       "scalars": 421,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "EXTRA_LARGE_01",
@@ -351,6 +359,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -369,6 +378,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-5",
@@ -387,6 +397,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-10.7",
@@ -405,6 +416,7 @@
       "repeated": 0,
       "scalars": 34,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-90",
@@ -425,6 +437,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -440,6 +453,7 @@
       "repeated": 0,
       "scalars": 421,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "citadel_extra_large_turret",
@@ -482,6 +496,7 @@
       "repeated": 0,
       "scalars": 482,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ancient_corvette_hull_entity",
@@ -559,6 +574,7 @@
       "repeated": 37,
       "scalars": 482,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -593,6 +609,7 @@
       "repeated": 1,
       "scalars": 482,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_ship_part_core_bow",
@@ -609,6 +626,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -623,6 +641,7 @@
       "repeated": 0,
       "scalars": 174,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -657,6 +676,7 @@
       "repeated": 0,
       "scalars": 120,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -678,7 +698,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 20,
-      "bareBlocks": 9,
+      "bareValues": 9,
+      "bareBlocks": 0,
       "values": [
         "tech_torpedoes_1"
       ],
@@ -697,6 +718,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 133,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -718,6 +740,7 @@
       "repeated": 43,
       "scalars": 481,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ancient_corvette",
@@ -795,6 +818,7 @@
       "repeated": 0,
       "scalars": 247,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -810,6 +834,7 @@
       "repeated": 0,
       "scalars": 130,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",

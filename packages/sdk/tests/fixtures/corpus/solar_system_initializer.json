@@ -9,6 +9,7 @@
       "repeated": 56,
       "scalars": 0,
       "blocks": 166,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -27,6 +28,7 @@
       "repeated": 0,
       "scalars": 165,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "100",
@@ -96,6 +98,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "55",
@@ -111,6 +114,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "35",
@@ -126,6 +130,7 @@
       "repeated": 0,
       "scalars": 166,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "crystal_asteroid_belt",
@@ -145,6 +150,7 @@
       "repeated": 144,
       "scalars": 292,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-110",
@@ -221,6 +227,7 @@
       "repeated": 0,
       "scalars": 355,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "rl_all_stars",
@@ -266,7 +273,8 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 308,
-      "bareBlocks": 308,
+      "bareValues": 308,
+      "bareBlocks": 0,
       "values": [
         "AI_hub",
         "AI_lair",
@@ -343,6 +351,7 @@
       "repeated": 18,
       "scalars": 0,
       "blocks": 229,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -776,6 +785,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 5,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -794,6 +804,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "100"
@@ -808,6 +819,7 @@
       "repeated": 0,
       "scalars": 5,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -822,6 +834,7 @@
       "repeated": 0,
       "scalars": 143,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -840,6 +853,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "DISTAR_COLLAPSE_CAT"
@@ -854,6 +868,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -868,6 +883,7 @@
       "repeated": 0,
       "scalars": 165,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ideal_planet_class",
@@ -909,6 +925,7 @@
       "repeated": 0,
       "scalars": 29,
       "blocks": 173,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -932,6 +949,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "none"
@@ -946,6 +964,7 @@
       "repeated": 0,
       "scalars": 16,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "asteroid",
@@ -963,7 +982,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 26,
-      "bareBlocks": 26,
+      "bareValues": 26,
+      "bareBlocks": 0,
       "values": [
         "earth_habitat",
         "habitat",
@@ -999,6 +1019,7 @@
       "repeated": 0,
       "scalars": 45,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -1013,6 +1034,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1027,6 +1049,7 @@
       "repeated": 4,
       "scalars": 0,
       "blocks": 67,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1290,6 +1313,7 @@
       "repeated": 0,
       "scalars": 17,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "none"
@@ -1304,6 +1328,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1330,6 +1355,7 @@
       "repeated": 0,
       "scalars": 36,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "NAME_Akal_Amectuh",
@@ -1407,6 +1433,7 @@
       "repeated": 0,
       "scalars": 49,
       "blocks": 191,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-130",
@@ -1460,6 +1487,7 @@
       "repeated": 0,
       "scalars": 248,
       "blocks": 6,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -1505,6 +1533,7 @@
       "repeated": 0,
       "scalars": 78,
       "blocks": 46,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -1546,6 +1575,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1560,6 +1590,7 @@
       "repeated": 0,
       "scalars": 104,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "Example Neighbor",
@@ -1637,6 +1668,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "exiled_star_names",
@@ -1653,6 +1685,7 @@
       "repeated": 63,
       "scalars": 0,
       "blocks": 78,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1722,6 +1755,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 18,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1740,6 +1774,7 @@
       "repeated": 0,
       "scalars": 18,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "100",
@@ -1760,6 +1795,7 @@
       "repeated": 0,
       "scalars": 18,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -1779,6 +1815,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1797,6 +1834,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "20"
@@ -1811,6 +1849,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -1825,6 +1864,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 64,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1843,6 +1883,7 @@
       "repeated": 0,
       "scalars": 64,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10",
@@ -1859,6 +1900,7 @@
       "repeated": 0,
       "scalars": 64,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -1873,6 +1915,7 @@
       "repeated": 0,
       "scalars": 78,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "deneb_neighbor_t1",
@@ -1950,6 +1993,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "120",
@@ -1966,6 +2010,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -1982,6 +2027,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "25",
@@ -1997,6 +2043,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 44,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2028,6 +2075,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 3,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2044,6 +2092,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "150",
@@ -2061,6 +2110,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "100"
@@ -2075,6 +2125,7 @@
       "repeated": 344,
       "scalars": 0,
       "blocks": 355,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3256,6 +3307,7 @@
       "repeated": 0,
       "scalars": 18,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "DISTAR_FLARE_CAT",
@@ -3279,6 +3331,7 @@
       "repeated": 3,
       "scalars": 228,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10",
@@ -3304,6 +3357,7 @@
       "repeated": 0,
       "scalars": 354,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ideal_design_class",
@@ -3381,6 +3435,7 @@
       "repeated": 0,
       "scalars": 255,
       "blocks": 202,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -3412,6 +3467,7 @@
       "repeated": 0,
       "scalars": 67,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "none"
@@ -3426,6 +3482,7 @@
       "repeated": 0,
       "scalars": 24,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "barren_planet_mars_entity",
@@ -3452,7 +3509,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 89,
-      "bareBlocks": 88,
+      "bareValues": 88,
+      "bareBlocks": 0,
       "values": [
         "MSI_homeworld",
         "Zrocursor_homeworld",
@@ -3529,6 +3587,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -3543,6 +3602,7 @@
       "repeated": 1,
       "scalars": 313,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -3558,6 +3618,7 @@
       "repeated": 0,
       "scalars": 22,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -3573,6 +3634,7 @@
       "repeated": 8,
       "scalars": 0,
       "blocks": 272,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -4993,6 +5055,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "pm_dangerous_wildlife"
@@ -5007,6 +5070,7 @@
       "repeated": 0,
       "scalars": 82,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "none"
@@ -5021,6 +5085,7 @@
       "repeated": 58,
       "scalars": 0,
       "blocks": 258,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -5521,6 +5586,7 @@
       "repeated": 0,
       "scalars": 109,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "Example Planet",
@@ -5598,6 +5664,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "exiled_colony_names"
@@ -5612,6 +5679,7 @@
       "repeated": 1,
       "scalars": 305,
       "blocks": 256,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-10",
@@ -5696,6 +5764,7 @@
       "repeated": 1,
       "scalars": 354,
       "blocks": 31,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-35",
@@ -5772,6 +5841,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -5788,6 +5858,7 @@
       "repeated": 11,
       "scalars": 0,
       "blocks": 18,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -5916,6 +5987,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "lower_case_latin_letters",
@@ -5931,6 +6003,7 @@
       "repeated": 1,
       "scalars": 200,
       "blocks": 261,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -5994,6 +6067,7 @@
       "repeated": 0,
       "scalars": 17,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -6008,6 +6082,7 @@
       "repeated": 0,
       "scalars": 22,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -6022,6 +6097,7 @@
       "repeated": 1,
       "scalars": 12,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -6036,6 +6112,7 @@
       "repeated": 0,
       "scalars": 71,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10",
@@ -6058,6 +6135,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "num_gateways"
@@ -6072,6 +6150,7 @@
       "repeated": 0,
       "scalars": 30,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "100",
@@ -6089,6 +6168,7 @@
       "repeated": 0,
       "scalars": 239,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "custom_empire",
@@ -6108,6 +6188,7 @@
       "repeated": 0,
       "scalars": 51,
       "blocks": 149,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",

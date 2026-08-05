@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 113,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0"
@@ -23,7 +24,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 155,
-      "bareBlocks": 155,
+      "bareValues": 155,
+      "bareBlocks": 0,
       "values": [
         "artillery",
         "artillery_stealth",
@@ -54,6 +56,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 666,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -93,7 +96,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 14,
-      "bareBlocks": 14,
+      "bareValues": 14,
+      "bareBlocks": 0,
       "values": [
         "BATTLESHIP_CLOAKING_DARK_MATTER",
         "BATTLESHIP_CLOAKING_PSI",
@@ -120,6 +124,7 @@
       "repeated": 0,
       "scalars": 749,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "AFTERBURNER_1",
@@ -197,6 +202,7 @@
       "repeated": 0,
       "scalars": 46,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BOARDING_CABLES_TOOLTIP",
@@ -229,6 +235,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 30,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -275,6 +282,7 @@
       "repeated": 0,
       "scalars": 5,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ships"
@@ -289,6 +297,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 5,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -311,6 +320,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 30,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -406,6 +416,7 @@
       "repeated": 0,
       "scalars": 30,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GROWTH_AURA",
@@ -439,6 +450,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -451,6 +463,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 30,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -469,6 +482,7 @@
       "repeated": 0,
       "scalars": 30,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "friendly_battlefield_repairs",
@@ -502,6 +516,7 @@
       "repeated": 0,
       "scalars": 30,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -521,6 +536,7 @@
       "repeated": 0,
       "scalars": 26,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -536,6 +552,7 @@
       "repeated": 0,
       "scalars": 17,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -551,6 +568,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -565,6 +583,7 @@
       "repeated": 0,
       "scalars": 29,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -579,6 +598,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 22,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -619,6 +639,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "fleets",
@@ -634,6 +655,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -650,6 +672,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 22,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -739,6 +762,7 @@
       "repeated": 0,
       "scalars": 22,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "aura_electromagnetic_disruptor",
@@ -769,6 +793,7 @@
       "repeated": 0,
       "scalars": 5,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "120"
@@ -783,6 +808,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 22,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -801,6 +827,7 @@
       "repeated": 0,
       "scalars": 22,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "hostile_bulwark_hull_degenerator_aura",
@@ -832,6 +859,7 @@
       "repeated": 0,
       "scalars": 22,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -849,6 +877,7 @@
       "repeated": 0,
       "scalars": 17,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -863,6 +892,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "11",
@@ -879,6 +909,7 @@
       "repeated": 0,
       "scalars": 772,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_mutation_berserker_glands",
@@ -956,6 +987,7 @@
       "repeated": 0,
       "scalars": 771,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -970,6 +1002,7 @@
       "repeated": 2,
       "scalars": 12,
       "blocks": 109,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ship_components/behemoth_stage_1_mutations",
@@ -1063,6 +1096,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1077,6 +1111,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1091,6 +1126,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 347,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1196,6 +1232,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 554,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1604,6 +1641,7 @@
       "repeated": 0,
       "scalars": 600,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-10",
@@ -1623,7 +1661,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 661,
-      "bareBlocks": 650,
+      "bareValues": 650,
+      "bareBlocks": 0,
       "values": [
         "tech_afterburners_1",
         "tech_afterburners_2",
@@ -1700,6 +1739,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 630,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1746,7 +1786,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 6,
-      "bareBlocks": 6,
+      "bareValues": 6,
+      "bareBlocks": 0,
       "values": [
         "arkship_build_megastructure",
         "arkship_deep_scan",
@@ -1797,6 +1838,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "2",
@@ -1813,6 +1855,7 @@
       "repeated": 0,
       "scalars": 137,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "arkship",
@@ -1837,6 +1880,7 @@
       "repeated": 0,
       "scalars": 16,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -1851,6 +1895,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 335,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2059,6 +2104,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -2073,6 +2119,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 346,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2094,6 +2141,7 @@
       "repeated": 0,
       "scalars": 772,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "aux",
@@ -2112,6 +2160,7 @@
       "repeated": 0,
       "scalars": 5,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "target_allies"
@@ -2126,6 +2175,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 20,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2149,6 +2199,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 22,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2172,6 +2223,7 @@
       "repeated": 0,
       "scalars": 152,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "artillery",
@@ -2204,6 +2256,7 @@
       "repeated": 0,
       "scalars": 366,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BATTLESHIP_BIO_FUSION_REACTOR",

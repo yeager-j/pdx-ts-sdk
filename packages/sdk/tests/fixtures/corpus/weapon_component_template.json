@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -23,6 +24,7 @@
       "repeated": 0,
       "scalars": 82,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -39,7 +41,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 505,
-      "bareBlocks": 505,
+      "bareValues": 505,
+      "bareBlocks": 0,
       "values": [
         "artillery",
         "artillery_stealth",
@@ -71,6 +74,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 348,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -100,6 +104,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -114,6 +119,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -126,6 +132,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -138,6 +145,7 @@
       "repeated": 0,
       "scalars": 501,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ARCHAEO_BIO_LASER",
@@ -215,6 +223,7 @@
       "repeated": 0,
       "scalars": 8,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "energy_siphon_l_tt",
@@ -232,6 +241,7 @@
       "repeated": 0,
       "scalars": 72,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "caravaneer_turret_01_entity",
@@ -265,6 +275,7 @@
       "repeated": 0,
       "scalars": 75,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10",
@@ -282,6 +293,7 @@
       "repeated": 0,
       "scalars": 59,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -296,6 +308,7 @@
       "repeated": 0,
       "scalars": 555,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_mutation_ancient_collapser_beam",
@@ -373,6 +386,7 @@
       "repeated": 0,
       "scalars": 555,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -387,6 +401,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 20,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -405,6 +420,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 20,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -423,6 +439,7 @@
       "repeated": 0,
       "scalars": 20,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10"
@@ -437,6 +454,7 @@
       "repeated": 0,
       "scalars": 20,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "disruptor_regen_debuff_1",
@@ -454,6 +472,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 20,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -472,6 +491,7 @@
       "repeated": 0,
       "scalars": 20,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "anti_fire_rate",
@@ -487,6 +507,7 @@
       "repeated": 0,
       "scalars": 20,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -503,6 +524,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 36,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -561,6 +583,7 @@
       "repeated": 0,
       "scalars": 83,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -578,6 +601,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 8,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -594,6 +618,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 16,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -612,6 +637,7 @@
       "repeated": 0,
       "scalars": 11,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "assimilation_nanobots_gfx",
@@ -635,7 +661,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 55,
-      "bareBlocks": 55,
+      "bareValues": 55,
+      "bareBlocks": 0,
       "values": [
         "missile",
         "strike_craft"
@@ -650,6 +677,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 232,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -720,7 +748,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 464,
-      "bareBlocks": 464,
+      "bareValues": 464,
+      "bareBlocks": 0,
       "values": [
         "null_void_beam",
         "tech_arc_emitter_1",
@@ -797,6 +826,7 @@
       "repeated": 0,
       "scalars": 22,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -811,6 +841,7 @@
       "repeated": 0,
       "scalars": 577,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "advanced_railgun_l",
@@ -888,6 +919,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 503,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -926,6 +958,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 184,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -947,6 +980,7 @@
       "repeated": 0,
       "scalars": 555,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "engulf",
@@ -970,7 +1004,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 543,
-      "bareBlocks": 543,
+      "bareValues": 543,
+      "bareBlocks": 0,
       "values": [
         "debuffer_role",
         "g_slot",
@@ -1000,6 +1035,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "spread"
@@ -1014,6 +1050,7 @@
       "repeated": 0,
       "scalars": 27,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "target_enemies"
@@ -1028,6 +1065,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 25,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1080,7 +1118,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 3,
-      "bareBlocks": 3,
+      "bareValues": 3,
+      "bareBlocks": 0,
       "values": [
         "constructor",
         "corvette",
@@ -1142,6 +1181,7 @@
       "repeated": 0,
       "scalars": 555,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "engulf",
@@ -1160,6 +1200,7 @@
       "repeated": 0,
       "scalars": 145,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BIO_ARC_EMITTER_2",
@@ -1237,6 +1278,7 @@
       "repeated": 0,
       "scalars": 43,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -1251,6 +1293,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

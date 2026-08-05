@@ -46,7 +46,20 @@ export interface FieldObservation {
   readonly scalars: number;
   /** Definitions writing a block value at least once. */
   readonly blocks: number;
-  /** Definitions whose block value holds bare values rather than entries. */
+  /**
+   * Definitions whose block value holds a bare scalar rather than entries —
+   * `field = { foo bar }`, where a `valueList`'s scalars live.
+   */
+  readonly bareValues: number;
+  /**
+   * Definitions whose block value holds a bare, anonymous sub-block —
+   * `field = { { key = … } { key = … } }`, what a wrapped struct writes.
+   *
+   * Counted apart from {@link bareValues} because the two are different
+   * evidence about opposite lowerings, and one flag for both hid a real defect:
+   * a field misread as a wrapped struct against a corpus of bare *scalars*
+   * satisfied the wrapped check and reported nothing.
+   */
   readonly bareBlocks: number;
   /** Every scalar written, as the game spells it, capped at {@link VALUE_SAMPLE}. */
   readonly values: ReadonlySet<string>;
@@ -354,6 +367,7 @@ function observe(
       repeated: (previous?.repeated ?? 0) + (repeats ? 1 : 0),
       scalars: previous?.scalars ?? 0,
       blocks: previous?.blocks ?? 0,
+      bareValues: previous?.bareValues ?? 0,
       bareBlocks: previous?.bareBlocks ?? 0,
       values: new Set(previous?.values ?? []),
       keys: new Set(previous?.keys ?? []),
@@ -361,7 +375,8 @@ function observe(
     const written = new Set<string>();
     let scalar = false;
     let block = false;
-    let bare = false;
+    let bareValue = false;
+    let bareBlock = false;
     for (const value of values) {
       if (value.kind !== "container") {
         scalar = true;
@@ -381,9 +396,15 @@ function observe(
         if (item.kind === "param") {
           continue;
         }
-        // A bare item is a value too — it is where a `valueList`'s scalars
-        // live, and the only place a closed union can be checked for one.
-        bare = true;
+        // An anonymous sub-block is where a wrapped struct's entries live; a
+        // bare scalar is where a `valueList`'s do, and the only place a closed
+        // union can be checked for one. Never the same count: each is what the
+        // other's lowering being wrong looks like.
+        if (item.kind === "container") {
+          bareBlock = true;
+          continue;
+        }
+        bareValue = true;
         const text = scalarText(item);
         if (text !== null && observation.values.size < VALUE_SAMPLE) {
           observation.values.add(text);
@@ -395,7 +416,8 @@ function observe(
       ...observation,
       scalars: observation.scalars + (scalar ? 1 : 0),
       blocks: observation.blocks + (block ? 1 : 0),
-      bareBlocks: observation.bareBlocks + (bare ? 1 : 0),
+      bareValues: observation.bareValues + (bareValue ? 1 : 0),
+      bareBlocks: observation.bareBlocks + (bareBlock ? 1 : 0),
       // Deduplicated: most definitions of a registry write the same handful of
       // keys, so the distinct sets stay far smaller than the definition count.
       keysByDefinition: seen.some((keys) => sameKeys(keys, written)) ? seen : [...seen, written],
@@ -669,21 +691,42 @@ export function shapeConformance(
     // A dual is exempt: admitting two interiors is the whole point of it, and
     // the arms were each checked against the rules that produced them.
     if (observation.blocks > 0 && form === "block") {
-      // A value list and a wrapped struct both write an unkeyed interior — one
-      // holds bare scalars, the other bare blocks — so bare content is what
-      // they must find and named keys are the defect. Every other block shape
-      // is the reverse. Both directions are checked either way: a wrapped
-      // struct against a keyed interior means the wrapper was misread.
-      const bare = field.shape === "valueList" || field.wrapped === true;
-      if (bare && observation.bareBlocks === 0) {
+      // Three interiors, one per lowering, and each is what the other two being
+      // wrong looks like: a value list holds bare scalars, a wrapped struct
+      // holds bare sub-blocks, every other block shape holds named keys. The
+      // three counts must therefore be asked separately — a single "is it bare"
+      // flag passed a wrapped struct against a corpus of bare scalars.
+      const found = (): string => {
+        const parts = [
+          ...(observation.keys.size > 0
+            ? [`named keys (${[...observation.keys].slice(0, 4).join(" ")})`]
+            : []),
+          ...(observation.bareValues > 0
+            ? [`bare scalars (${[...observation.values].slice(0, 4).join(" ")})`]
+            : []),
+          ...(observation.bareBlocks > 0 ? ["bare blocks"] : []),
+        ];
+        return parts.length === 0 ? "nothing" : parts.join(" and ");
+      };
+      if (field.shape === "valueList") {
+        if (observation.bareValues === 0) {
+          report(
+            "form",
+            `lowered as a value list, but its ${observation.blocks} blocks hold ${found()}`
+          );
+        }
+      } else if (field.wrapped === true) {
+        if (observation.bareBlocks === 0) {
+          report(
+            "form",
+            `lowered as a wrapped struct, but its ${observation.blocks} blocks hold ${found()}`
+          );
+        }
+      } else if (observation.keys.size === 0) {
         report(
           "form",
-          `lowered as ${field.wrapped === true ? "a wrapped struct" : "a value list"}, but all ` +
-            `${observation.blocks} blocks are keyed (${[...observation.keys].slice(0, 4).join(" ")})`
+          `lowered as ${field.shape}, but its ${observation.blocks} blocks hold ${found()}`
         );
-      }
-      if (!bare && observation.keys.size === 0) {
-        report("form", `lowered as ${field.shape}, but all ${observation.blocks} blocks are bare`);
       }
     }
     if (field.repeated && observation.repeated === 0) {

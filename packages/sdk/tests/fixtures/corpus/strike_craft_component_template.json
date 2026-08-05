@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.5",
@@ -25,6 +26,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.7",
@@ -40,7 +42,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 51,
-      "bareBlocks": 51,
+      "bareValues": 51,
+      "bareBlocks": 0,
       "values": [
         "carrier",
         "weapon_role_anti_shield",
@@ -56,6 +59,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 12,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -74,6 +78,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -95,6 +100,7 @@
       "repeated": 0,
       "scalars": 46,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1.5"
@@ -109,6 +115,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.66",
@@ -124,6 +131,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "120"
@@ -138,6 +146,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "AI_STRIKE_CRAFT_1",
@@ -182,6 +191,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "2",
@@ -199,6 +209,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -219,6 +230,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 61,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -237,6 +249,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10",
@@ -265,6 +278,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10",
@@ -288,6 +302,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "100",
@@ -304,6 +319,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ai_01_fighter_entity",
@@ -324,6 +340,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.4",
@@ -344,6 +361,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10",
@@ -371,6 +389,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -385,6 +404,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1.25"
@@ -399,6 +419,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_mutation_ancient_driller_beasts",
@@ -431,6 +452,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -445,6 +467,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.2",
@@ -461,7 +484,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 44,
-      "bareBlocks": 44,
+      "bareValues": 44,
+      "bareBlocks": 0,
       "values": [
         "strike_craft"
       ],
@@ -475,6 +499,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 16,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -497,6 +522,7 @@
       "repeated": 0,
       "scalars": 23,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-30",
@@ -515,7 +541,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 48,
-      "bareBlocks": 48,
+      "bareValues": 48,
+      "bareBlocks": 0,
       "values": [
         "tech_amoeba_strike_craft_1",
         "tech_archaeo_strike_crafts",
@@ -537,6 +564,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "gamma_laser_s",
@@ -560,6 +588,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10",
@@ -576,6 +605,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.5",
@@ -591,6 +621,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 60,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -625,6 +656,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.2",
@@ -643,6 +675,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -664,6 +697,7 @@
       "repeated": 0,
       "scalars": 24,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.5",
@@ -679,6 +713,7 @@
       "repeated": 0,
       "scalars": 55,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -693,6 +728,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "bombers_behavior",
@@ -708,6 +744,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -724,6 +761,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 14,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -740,6 +778,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "LARGE",
@@ -758,6 +797,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.1"
@@ -772,6 +812,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "300",
@@ -790,7 +831,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 61,
-      "bareBlocks": 61,
+      "bareValues": 61,
+      "bareBlocks": 0,
       "values": [
         "weapon_archaeotech",
         "weapon_swarm",
@@ -808,6 +850,7 @@
       "repeated": 0,
       "scalars": 60,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.3",
@@ -828,6 +871,7 @@
       "repeated": 0,
       "scalars": 8,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BIO_STRIKE_CRAFT_HANGAR_1",
@@ -849,6 +893,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "instant",

@@ -9,7 +9,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 7,
-      "bareBlocks": 7,
+      "bareValues": 7,
+      "bareBlocks": 0,
       "values": [
         "TYPE_HEADER_04"
       ],
@@ -23,7 +24,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 7,
-      "bareBlocks": 7,
+      "bareValues": 7,
+      "bareBlocks": 0,
       "values": [
         "pc_volcanic"
       ],
@@ -37,6 +39,7 @@
       "repeated": 0,
       "scalars": 31,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -52,6 +55,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 150,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -136,6 +140,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 141,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -161,6 +166,7 @@
       "repeated": 0,
       "scalars": 40,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "civic_anglers",
@@ -214,6 +220,7 @@
       "repeated": 0,
       "scalars": 18,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -228,6 +235,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "wilderness_01"
@@ -242,6 +250,7 @@
       "repeated": 0,
       "scalars": 14,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "civic_chosen_effects_additional",
@@ -259,6 +268,7 @@
       "repeated": 0,
       "scalars": 271,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "civic_astrometeorology_effect_tooltip",
@@ -336,7 +346,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 58,
-      "bareBlocks": 58,
+      "bareValues": 58,
+      "bareBlocks": 0,
       "values": [
         "Story1",
         "Story2",
@@ -361,6 +372,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "pc_gaia",
@@ -379,6 +391,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 6,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -400,6 +413,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "civic_hive_bodysnatcher_secondary_species",
@@ -419,6 +433,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 3,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -435,6 +450,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "trait_cybernetic",
@@ -451,6 +467,7 @@
       "repeated": 0,
       "scalars": 26,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -465,6 +482,7 @@
       "repeated": 0,
       "scalars": 130,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "gfx/interface/icons/governments/civics/civic_awakened_machine.dds",
@@ -542,7 +560,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 14,
-      "bareBlocks": 14,
+      "bareValues": 14,
+      "bareBlocks": 0,
       "values": [
         "cosmic_dawn_start",
         "custom_starting_init_01",
@@ -578,6 +597,7 @@
       "repeated": 0,
       "scalars": 77,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -592,6 +612,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -608,6 +629,7 @@
       "repeated": 0,
       "scalars": 28,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -622,6 +644,7 @@
       "repeated": 0,
       "scalars": 109,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -650,6 +673,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -679,6 +703,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "CIVIC_NOT_MODDABLE_ONLY_REMOVE"
@@ -693,6 +718,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -723,6 +749,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 303,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2024,6 +2051,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2040,6 +2068,7 @@
       "repeated": 0,
       "scalars": 41,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BLOCKS_COUNCILOR_STATE",
@@ -2080,6 +2109,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -2094,6 +2124,7 @@
       "repeated": 0,
       "scalars": 66,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_evt_metropolis",
@@ -2161,6 +2192,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 217,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2257,6 +2289,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "mindwarden_01"
@@ -2271,6 +2304,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 256,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2607,6 +2641,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 294,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2740,6 +2775,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -2754,6 +2790,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 335,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2775,7 +2812,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 7,
-      "bareBlocks": 7,
+      "bareValues": 7,
+      "bareBlocks": 0,
       "values": [
         "TYPE_HEADER_03"
       ],
@@ -2789,7 +2827,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 7,
-      "bareBlocks": 7,
+      "bareValues": 7,
+      "bareBlocks": 0,
       "values": [
         "pc_alpine",
         "pc_arctic",
@@ -2805,6 +2844,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "wilderness_room"
@@ -2819,6 +2859,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2835,6 +2876,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "trait_cyborg_ritualistic_implants",
@@ -2850,6 +2892,7 @@
       "repeated": 0,
       "scalars": 13,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "pc_gaia",
@@ -2871,6 +2914,7 @@
       "repeated": 7,
       "scalars": 0,
       "blocks": 45,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2938,6 +2982,7 @@
       "repeated": 0,
       "scalars": 36,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "civic_beastmasters_effects",
@@ -2990,6 +3035,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 20,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3085,6 +3131,7 @@
       "repeated": 0,
       "scalars": 22,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "civic_hive_devouring_swarm_lithoid",
@@ -3127,6 +3174,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "civic_eager_explorers_negative_effects",
@@ -3143,6 +3191,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 45,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3252,6 +3301,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 41,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3269,6 +3319,7 @@
       "repeated": 1,
       "scalars": 27,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "trait_aquatic",

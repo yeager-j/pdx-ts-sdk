@@ -489,6 +489,7 @@ describe("shape conformance, per-definition scope", () => {
             repeated: 0,
             scalars: 0,
             blocks: definitions.length,
+            bareValues: 0,
             bareBlocks: 0,
             values: new Set<string>(),
             keys: new Set(definitions.flat()),
@@ -525,64 +526,95 @@ describe("shape conformance, per-definition scope", () => {
 });
 
 /**
- * The interior form check's two unkeyed shapes, whose evidence is the reverse
- * of every other block's.
+ * The interior form check's three shapes, each of which is what the other two
+ * being wrong looks like.
  *
- * A wrapped struct writes bare blocks (`discrete_terms = { { key = … } }`), so
- * "no named keys" is what it looks like when correct — reading that as a defect
- * is what made four real, authorable fields report as unfillable, two of them
- * acknowledged for months with a reason the fixture contradicts. Both
- * directions are asserted: the exemption must not become a blanket one, or a
- * misread wrapper would go unreported.
+ * A wrapped struct writes bare sub-blocks (`discrete_terms = { { key = … } }`),
+ * a value list writes bare scalars (`{ foo bar }`), every other block shape
+ * writes named keys. Reading "no named keys" as a defect is what made four
+ * real, authorable fields report as unfillable, two of them acknowledged for
+ * months with a reason the fixture contradicts — and then reading bare scalars
+ * and bare sub-blocks as one "is it bare" flag hid the opposite defect just as
+ * quietly. Every pairing is asserted here because a check that only ever passes
+ * is what let both through.
  */
-describe("shape conformance, wrapped struct interiors", () => {
+describe("shape conformance, unkeyed block interiors", () => {
   // `repeated` describes the outer *key*, which a wrapper is what stops from
   // repeating: the repetition moved inside it. `discrete_terms` is `0..1`.
-  const wrapped = { field: "discrete_terms", shape: "struct", repeated: false, wrapped: true };
-  const plain = { field: "discrete_terms", shape: "struct", repeated: false };
+  const wrapped = { field: "field", shape: "struct", repeated: false, wrapped: true };
+  const plain = { field: "field", shape: "struct", repeated: false };
+  const list = { field: "field", shape: "valueList", repeated: false };
   const noScopes = (): null => null;
 
-  function corpusOf(observed: { bareBlocks: number; keys: readonly string[] }) {
+  function corpusOf(observed: {
+    bareValues?: number;
+    bareBlocks?: number;
+    keys?: readonly string[];
+  }) {
+    const keys = observed.keys ?? [];
     return {
       definitions: 1,
       files: 1,
       occurrences: new Map([
         [
-          "discrete_terms",
+          "field",
           {
             definitions: 1,
             repeated: 0,
             scalars: 0,
             blocks: 1,
-            bareBlocks: observed.bareBlocks,
-            values: new Set<string>(),
-            keys: new Set(observed.keys),
-            keysByDefinition: [new Set(observed.keys)],
+            bareValues: observed.bareValues ?? 0,
+            bareBlocks: observed.bareBlocks ?? 0,
+            values: new Set(observed.bareValues === undefined ? [] : ["foo"]),
+            keys: new Set(keys),
+            keysByDefinition: [new Set(keys)],
           },
         ],
       ]),
     };
   }
 
-  it("accepts the bare blocks a wrapped struct writes", () => {
-    const bareBlocks = corpusOf({ bareBlocks: 1, keys: [] });
-    expect(shapeConformance(bareBlocks, [wrapped], noScopes)).toEqual([]);
-    // The same observation against a struct that is not wrapped is the real
-    // defect the check exists for, and must still be reported.
-    expect(shapeConformance(bareBlocks, [plain], noScopes).map((one) => one.kind)).toEqual([
-      "form",
-    ]);
+  const kinds = (corpus: ReturnType<typeof corpusOf>, field: typeof wrapped | typeof plain) =>
+    shapeConformance(corpus, [field], noScopes).map((one) => one.kind);
+
+  const bareBlocks = corpusOf({ bareBlocks: 1 });
+  const bareValues = corpusOf({ bareValues: 1 });
+  const keyed = corpusOf({ keys: ["key"] });
+
+  it("accepts each lowering against the interior it writes", () => {
+    expect(kinds(bareBlocks, wrapped)).toEqual([]);
+    expect(kinds(bareValues, list)).toEqual([]);
+    expect(kinds(keyed, plain)).toEqual([]);
   });
 
-  it("reports a wrapped struct whose blocks are keyed after all", () => {
-    // The wrapper was misread: the game writes named entries where the lowering
-    // expects anonymous ones, so the emitted array cannot hold them.
-    const mismatches = shapeConformance(
-      corpusOf({ bareBlocks: 0, keys: ["key"] }),
-      [wrapped],
-      noScopes
-    );
+  it("reports a wrapped struct against bare scalars", () => {
+    // The defect one conflated "is it bare" flag hid: `{ foo bar }` satisfied
+    // the wrapped check, so a field misread as a wrapper reported nothing.
+    const mismatches = shapeConformance(bareValues, [wrapped], noScopes);
     expect(mismatches.map((one) => one.kind)).toEqual(["form"]);
     expect(mismatches[0]?.detail).toContain("lowered as a wrapped struct");
+    expect(mismatches[0]?.detail).toContain("bare scalars (foo)");
+  });
+
+  it("reports a value list against bare sub-blocks", () => {
+    // The same conflation in the other direction: anonymous blocks are not the
+    // scalars a value list would lower each element of.
+    const mismatches = shapeConformance(bareBlocks, [list], noScopes);
+    expect(mismatches.map((one) => one.kind)).toEqual(["form"]);
+    expect(mismatches[0]?.detail).toContain("lowered as a value list");
+    expect(mismatches[0]?.detail).toContain("bare blocks");
+  });
+
+  it("reports either unkeyed lowering against a keyed interior", () => {
+    // The wrapper or the list was misread: the game writes named entries where
+    // the lowering expects anonymous ones.
+    expect(kinds(keyed, wrapped)).toEqual(["form"]);
+    expect(kinds(keyed, list)).toEqual(["form"]);
+  });
+
+  it("still reports an ordinary struct against either bare interior", () => {
+    // The check the exemptions must not become blanket.
+    expect(kinds(bareBlocks, plain)).toEqual(["form"]);
+    expect(kinds(bareValues, plain)).toEqual(["form"]);
   });
 });

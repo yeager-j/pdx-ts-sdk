@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 123,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -53,6 +54,7 @@
       "repeated": 2,
       "scalars": 121,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ancient_battle_site_desc",
@@ -137,6 +139,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "city_of_bones_desc",
@@ -154,6 +157,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -174,6 +178,7 @@
       "repeated": 0,
       "scalars": 61,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -190,6 +195,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-1"
@@ -204,6 +210,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -224,6 +231,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 124,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -240,6 +248,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 53,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -260,6 +269,7 @@
       "repeated": 0,
       "scalars": 123,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_evt_ai_planet",
@@ -336,6 +346,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 16,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -361,6 +372,7 @@
       "repeated": 1,
       "scalars": 44,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "crises",
@@ -377,6 +389,7 @@
       "repeated": 123,
       "scalars": 0,
       "blocks": 123,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -397,6 +410,7 @@
       "repeated": 0,
       "scalars": 123,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-1",
@@ -428,6 +442,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "3",
@@ -444,6 +459,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -460,6 +476,7 @@
       "repeated": 0,
       "scalars": 123,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ancrel.10",
@@ -537,6 +554,7 @@
       "repeated": 0,
       "scalars": 123,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_archaeology_runes_A1",
@@ -586,6 +604,7 @@
       "repeated": 0,
       "scalars": 123,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "2",
@@ -605,6 +624,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 124,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -702,6 +722,7 @@
       "repeated": 0,
       "scalars": 58,
       "blocks": 58,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0"

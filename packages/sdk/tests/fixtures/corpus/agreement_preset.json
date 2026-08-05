@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -23,6 +24,7 @@
       "repeated": 0,
       "scalars": 37,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -37,6 +39,7 @@
       "repeated": 0,
       "scalars": 37,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_diplomacy_status_is_dominion",
@@ -63,6 +66,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 44,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -84,6 +88,7 @@
       "repeated": 0,
       "scalars": 36,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "preset_bulwark",
@@ -102,6 +107,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 44,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -168,6 +174,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -182,6 +189,7 @@
       "repeated": 0,
       "scalars": 18,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "specialist_bulwark",
@@ -198,6 +206,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 45,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -219,6 +228,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 56,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -257,6 +267,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 55,
+      "bareValues": 0,
       "bareBlocks": 55,
       "values": [],
       "keys": [],
@@ -269,6 +280,7 @@
       "repeated": 0,
       "scalars": 55,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "formless_conditions",
@@ -295,6 +307,7 @@
       "repeated": 0,
       "scalars": 55,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "joins_overlord_wars_all",
@@ -340,6 +353,7 @@
       "repeated": 0,
       "scalars": 12,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-100",
@@ -357,6 +371,7 @@
       "repeated": 0,
       "scalars": 12,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -371,6 +386,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 36,
+      "bareValues": 0,
       "bareBlocks": 36,
       "values": [],
       "keys": [],
@@ -383,6 +399,7 @@
       "repeated": 0,
       "scalars": 36,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "resource_subsidies_advanced",
@@ -400,6 +417,7 @@
       "repeated": 0,
       "scalars": 36,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-0.3",

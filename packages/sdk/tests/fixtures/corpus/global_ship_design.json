@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 39,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "is_fallen_empire_hive",
@@ -28,6 +29,7 @@
       "repeated": 0,
       "scalars": 27,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ai_empire",
@@ -47,6 +49,7 @@
       "repeated": 0,
       "scalars": 17,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -61,6 +64,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "5"
@@ -75,6 +79,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 2,
       "values": [],
       "keys": [],
@@ -87,6 +92,7 @@
       "repeated": 2,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "BIOSHIP_SENSOR_1",
@@ -109,6 +115,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -129,6 +136,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -147,6 +155,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "MEDIUM_GUN_01",
@@ -180,6 +189,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ANTI_EVASION_GUN_1",
@@ -200,6 +210,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "mid"
@@ -214,6 +225,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "MAULER_STAGE_1_swarm",
@@ -233,6 +245,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "mauler_stage_1",
@@ -252,6 +265,7 @@
       "repeated": 0,
       "scalars": 89,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -266,6 +280,7 @@
       "repeated": 0,
       "scalars": 136,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -280,6 +295,7 @@
       "repeated": 0,
       "scalars": 76,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -294,6 +310,7 @@
       "repeated": 0,
       "scalars": 20,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "NAME_Cutholoids_Hatchling",
@@ -318,6 +335,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -332,6 +350,7 @@
       "repeated": 357,
       "scalars": 424,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "AI_CORE_DETECTOR",
@@ -409,6 +428,7 @@
       "repeated": 36,
       "scalars": 0,
       "blocks": 431,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -433,6 +453,7 @@
       "repeated": 401,
       "scalars": 0,
       "blocks": 410,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -451,6 +472,7 @@
       "repeated": 0,
       "scalars": 410,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "AUX_UTILITY_1",
@@ -528,6 +550,7 @@
       "repeated": 0,
       "scalars": 410,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "AI_STRIKE_CRAFT",
@@ -605,6 +628,7 @@
       "repeated": 0,
       "scalars": 431,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "bot_1",
@@ -628,6 +652,7 @@
       "repeated": 0,
       "scalars": 431,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "CITADEL_STARBASE_SECTION",
@@ -705,6 +730,7 @@
       "repeated": 0,
       "scalars": 434,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "behemoth_01",
@@ -782,7 +808,8 @@
       "repeated": 0,
       "scalars": 28,
       "blocks": 1,
-      "bareBlocks": 1,
+      "bareValues": 1,
+      "bareBlocks": 0,
       "values": [
         "NAME_Cutholoids",
         "NAME_Cutholoids_Juvenile",
@@ -824,6 +851,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",

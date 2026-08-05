@@ -9,6 +9,7 @@
       "repeated": 3,
       "scalars": 319,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -40,6 +41,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -54,6 +56,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 108,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -92,6 +95,7 @@
       "repeated": 0,
       "scalars": 11,
       "blocks": 68,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -120,6 +124,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -141,6 +146,7 @@
       "repeated": 0,
       "scalars": 20,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -160,6 +166,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.1",
@@ -176,6 +183,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.15",
@@ -191,6 +199,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "arkship_civilian",
@@ -207,6 +216,7 @@
       "repeated": 0,
       "scalars": 23,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -222,6 +232,7 @@
       "repeated": 0,
       "scalars": 10,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_fleet_order_auto_construct",
@@ -237,6 +248,7 @@
       "repeated": 0,
       "scalars": 62,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -252,6 +264,7 @@
       "repeated": 0,
       "scalars": 154,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1080",
@@ -279,6 +292,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "civilian_arkship_tier_1",
@@ -295,6 +309,7 @@
       "repeated": 0,
       "scalars": 18,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "150",
@@ -310,6 +325,7 @@
       "repeated": 0,
       "scalars": 69,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -322,6 +338,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "360"
@@ -336,6 +353,7 @@
       "repeated": 0,
       "scalars": 47,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -351,6 +369,7 @@
       "repeated": 0,
       "scalars": 43,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -366,6 +385,7 @@
       "repeated": 0,
       "scalars": 108,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -381,6 +401,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "pc_ark"
@@ -395,6 +416,7 @@
       "repeated": 1,
       "scalars": 319,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "shipclass_colonizer",
@@ -422,6 +444,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -436,7 +459,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 11,
-      "bareBlocks": 11,
+      "bareValues": 11,
+      "bareBlocks": 0,
       "values": [
         "shipclass_constructor",
         "shipclass_starbase"
@@ -451,6 +475,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -465,6 +490,7 @@
       "repeated": 0,
       "scalars": 159,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.1",
@@ -493,6 +519,7 @@
       "repeated": 0,
       "scalars": 83,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-1",
@@ -513,6 +540,7 @@
       "repeated": 0,
       "scalars": 73,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "10",
@@ -538,6 +566,7 @@
       "repeated": 0,
       "scalars": 157,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -553,7 +582,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 10,
-      "bareBlocks": 10,
+      "bareValues": 10,
+      "bareBlocks": 0,
       "values": [
         "automated_collection",
         "automated_construction",
@@ -573,6 +603,7 @@
       "repeated": 0,
       "scalars": 10,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -585,7 +616,8 @@
       "repeated": 0,
       "scalars": 85,
       "blocks": 46,
-      "bareBlocks": 46,
+      "bareValues": 46,
+      "bareBlocks": 0,
       "values": [
         "starbase_beastport",
         "starbase_defenses",
@@ -602,6 +634,7 @@
       "repeated": 0,
       "scalars": 56,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "artillery",
@@ -621,6 +654,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -635,6 +669,7 @@
       "repeated": 0,
       "scalars": 57,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -650,6 +685,7 @@
       "repeated": 4,
       "scalars": 136,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -665,6 +701,7 @@
       "repeated": 0,
       "scalars": 171,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "abandoned_ship_section_entity",
@@ -742,6 +779,7 @@
       "repeated": 0,
       "scalars": 34,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "food"
@@ -756,6 +794,7 @@
       "repeated": 0,
       "scalars": 317,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -781,6 +820,7 @@
       "repeated": 0,
       "scalars": 10,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -795,6 +835,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -809,6 +850,7 @@
       "repeated": 0,
       "scalars": 96,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -821,7 +863,8 @@
       "repeated": 6,
       "scalars": 161,
       "blocks": 106,
-      "bareBlocks": 106,
+      "bareValues": 106,
+      "bareBlocks": 0,
       "values": [
         "ai_01",
         "ancient",
@@ -861,6 +904,7 @@
       "repeated": 0,
       "scalars": 24,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ship_growth_stage_1",
@@ -877,6 +921,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 15,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -905,7 +950,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
-      "bareBlocks": 1,
+      "bareValues": 1,
+      "bareBlocks": 0,
       "values": [
         "can_repair",
         "can_upgrade"
@@ -920,6 +966,7 @@
       "repeated": 0,
       "scalars": 10,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "B",
@@ -936,6 +983,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "HANGER_STATE"
@@ -950,6 +998,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_arkship_fleetview_civilian",
@@ -970,6 +1019,7 @@
       "repeated": 0,
       "scalars": 35,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0.2",
@@ -992,6 +1042,7 @@
       "repeated": 2,
       "scalars": 308,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ship_size_behemoth",
@@ -1048,6 +1099,7 @@
       "repeated": 0,
       "scalars": 38,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ship_size_military_1",
@@ -1066,6 +1118,7 @@
       "repeated": 0,
       "scalars": 43,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-1",
@@ -1095,6 +1148,7 @@
       "repeated": 0,
       "scalars": 33,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1110,6 +1164,7 @@
       "repeated": 0,
       "scalars": 73,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1125,6 +1180,7 @@
       "repeated": 3,
       "scalars": 249,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1140,6 +1196,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1154,6 +1211,7 @@
       "repeated": 0,
       "scalars": 22,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1169,6 +1227,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1183,6 +1242,7 @@
       "repeated": 0,
       "scalars": 19,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1197,6 +1257,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1211,6 +1272,7 @@
       "repeated": 0,
       "scalars": 63,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1225,6 +1287,7 @@
       "repeated": 0,
       "scalars": 111,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1240,6 +1303,7 @@
       "repeated": 0,
       "scalars": 226,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -1255,6 +1319,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1269,6 +1334,7 @@
       "repeated": 0,
       "scalars": 300,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ship_counter_128",
@@ -1288,6 +1354,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 16,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1315,6 +1382,7 @@
       "repeated": 0,
       "scalars": 16,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_fleet_presence_kaiju_icons_cloaked",
@@ -1331,6 +1399,7 @@
       "repeated": 0,
       "scalars": 10,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_ship_icons_type_arkship_encamped"
@@ -1345,6 +1414,7 @@
       "repeated": 0,
       "scalars": 16,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_fleet_presence_kaiju_icons_mixed",
@@ -1361,6 +1431,7 @@
       "repeated": 0,
       "scalars": 16,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_fleet_presence_kaiju_icons",
@@ -1377,6 +1448,7 @@
       "repeated": 0,
       "scalars": 319,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "100",
@@ -1439,6 +1511,7 @@
       "repeated": 0,
       "scalars": 319,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -1459,6 +1532,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 58,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1475,6 +1549,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 316,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1749,6 +1824,7 @@
       "repeated": 0,
       "scalars": 17,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "extra_large",
@@ -1766,6 +1842,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1780,6 +1857,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -1794,6 +1872,7 @@
       "repeated": 0,
       "scalars": 316,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -1814,6 +1893,7 @@
       "repeated": 0,
       "scalars": 18,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "arkship_civilian_selection",
@@ -1833,6 +1913,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_arkship_planetview_header_civilian",
@@ -1849,6 +1930,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 33,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1889,6 +1971,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1905,6 +1988,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 46,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1960,6 +2044,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 69,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2059,6 +2144,7 @@
       "repeated": 0,
       "scalars": 6,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "NO_COMMUNICATIONS_AMOEBA"
@@ -2073,7 +2159,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 105,
-      "bareBlocks": 105,
+      "bareValues": 105,
+      "bareBlocks": 0,
       "values": [
         "tech_arkship_tier_2",
         "tech_arkship_tier_3",
@@ -2129,6 +2216,7 @@
       "repeated": 0,
       "scalars": 14,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -2143,6 +2231,7 @@
       "repeated": 185,
       "scalars": 191,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "aura_components",
@@ -2174,6 +2263,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 240,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2228,6 +2318,7 @@
       "repeated": 0,
       "scalars": 48,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_role_selection_background",
@@ -2254,6 +2345,7 @@
       "repeated": 0,
       "scalars": 319,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -2288,6 +2380,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -2302,7 +2395,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
-      "bareBlocks": 2,
+      "bareValues": 2,
+      "bareBlocks": 0,
       "values": [
         "collect_waystation_stockpile",
         "logistic_drop_off_stockpile",
@@ -2318,6 +2412,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 315,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2444,6 +2539,7 @@
       "repeated": 1,
       "scalars": 315,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "bot_1",
@@ -2482,6 +2578,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 37,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2502,6 +2599,7 @@
       "repeated": 0,
       "scalars": 86,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "bio_ship",
@@ -2521,6 +2619,7 @@
       "repeated": 0,
       "scalars": 24,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "21",
@@ -2546,6 +2645,7 @@
       "repeated": 0,
       "scalars": 24,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "harbinger_class",
@@ -2567,6 +2667,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 91,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2691,7 +2792,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 61,
-      "bareBlocks": 61,
+      "bareValues": 61,
+      "bareBlocks": 0,
       "values": [
         "artillery",
         "brawler",
@@ -2714,6 +2816,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "2500"
@@ -2728,6 +2831,7 @@
       "repeated": 0,
       "scalars": 315,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -2764,6 +2868,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 38,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2830,6 +2935,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 38,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2854,6 +2960,7 @@
       "repeated": 0,
       "scalars": 26,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "15",
@@ -2873,6 +2980,7 @@
       "repeated": 0,
       "scalars": 26,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "15",
@@ -2892,6 +3000,7 @@
       "repeated": 0,
       "scalars": 14,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "12",
@@ -2909,6 +3018,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -2923,6 +3033,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 38,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2941,6 +3052,7 @@
       "repeated": 0,
       "scalars": 38,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -2958,6 +3070,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "3"
@@ -2972,6 +3085,7 @@
       "repeated": 0,
       "scalars": 14,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -2988,6 +3102,7 @@
       "repeated": 0,
       "scalars": 14,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -3005,6 +3120,7 @@
       "repeated": 0,
       "scalars": 14,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "NAME_Reanimated_Cutholoids",
@@ -3031,6 +3147,7 @@
       "repeated": 0,
       "scalars": 12,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -3045,6 +3162,7 @@
       "repeated": 0,
       "scalars": 8,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -3059,6 +3177,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 43,
+      "bareValues": 0,
       "bareBlocks": 43,
       "values": [],
       "keys": [],
@@ -3071,6 +3190,7 @@
       "repeated": 0,
       "scalars": 43,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "artillery",
@@ -3096,6 +3216,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 43,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3121,6 +3242,7 @@
       "repeated": 0,
       "scalars": 16,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "harbinger_stage_2",
@@ -3150,6 +3272,7 @@
       "repeated": 0,
       "scalars": 92,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "battleship",
@@ -3174,6 +3297,7 @@
       "repeated": 0,
       "scalars": 48,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -3188,6 +3312,7 @@
       "repeated": 0,
       "scalars": 16,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"

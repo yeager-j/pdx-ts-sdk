@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 594,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ALLOW_PSI_CORPS",
@@ -86,6 +87,7 @@
       "repeated": 0,
       "scalars": 191,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -101,6 +103,7 @@
       "repeated": 853,
       "scalars": 0,
       "blocks": 1095,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -132,6 +135,7 @@
       "repeated": 0,
       "scalars": 1095,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "PLANET_CRIME_NO_HAPPINESS_TITLE",
@@ -209,6 +213,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1072,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1339,6 +1344,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 5,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1"
@@ -1365,6 +1371,7 @@
       "repeated": 0,
       "scalars": 56,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "owner.value:pop_to_cyberize_per_month_creed_x100",

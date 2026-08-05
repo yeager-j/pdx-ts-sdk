@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 11,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [],
@@ -21,6 +22,7 @@
       "repeated": 0,
       "scalars": 90,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "3800",
@@ -36,6 +38,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 31,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -57,6 +60,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 86,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -122,6 +126,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 44,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -225,6 +230,7 @@
       "repeated": 0,
       "scalars": 75,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "agenda_a_higher_purpose_finish",
@@ -302,6 +308,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -318,6 +325,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 71,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -773,6 +781,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 90,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [

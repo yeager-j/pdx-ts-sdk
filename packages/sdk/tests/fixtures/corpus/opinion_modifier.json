@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 121,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -24,6 +25,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -38,6 +40,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 294,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "2"
@@ -62,6 +65,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "100",
@@ -78,6 +82,7 @@
       "repeated": 0,
       "scalars": 69,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-100",
@@ -106,6 +111,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -120,6 +126,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "12"
@@ -134,6 +141,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 489,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "-400",
@@ -168,6 +176,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 114,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -545,6 +554,7 @@
       "repeated": 0,
       "scalars": 40,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"

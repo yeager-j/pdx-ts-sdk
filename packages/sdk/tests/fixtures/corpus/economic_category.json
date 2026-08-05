@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",
@@ -24,7 +25,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 10,
-      "bareBlocks": 10,
+      "bareValues": 10,
+      "bareBlocks": 0,
       "values": [
         "consumer_goods",
         "energy",
@@ -41,7 +43,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 78,
-      "bareBlocks": 74,
+      "bareValues": 74,
+      "bareBlocks": 0,
       "values": [
         "produces",
         "upkeep"
@@ -56,7 +59,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 100,
-      "bareBlocks": 92,
+      "bareValues": 92,
+      "bareBlocks": 0,
       "values": [
         "cost",
         "logistics",
@@ -73,6 +77,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -87,6 +92,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "job_artisan",
@@ -112,6 +118,7 @@
       "repeated": 3,
       "scalars": 140,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "army",
@@ -136,6 +143,7 @@
       "repeated": 0,
       "scalars": 253,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "country",
@@ -193,6 +201,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ECONOMICS_SCALED_RESOURCES_EMPIRE_SIZE_STRING"
@@ -207,6 +216,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -234,6 +244,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "gdf_ship",
@@ -264,7 +275,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 4,
-      "bareBlocks": 4,
+      "bareValues": 4,
+      "bareBlocks": 0,
       "values": [
         "add",
         "mult"
@@ -279,6 +291,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -316,6 +329,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -330,6 +344,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 13,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -357,6 +372,7 @@
       "repeated": 0,
       "scalars": 13,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "aesthetic_wonder_specimens",
@@ -388,7 +404,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 13,
-      "bareBlocks": 13,
+      "bareValues": 13,
+      "bareBlocks": 0,
       "values": [
         "add",
         "mult"
@@ -403,6 +420,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 13,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -444,6 +462,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -458,6 +477,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 10,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -485,6 +505,7 @@
       "repeated": 0,
       "scalars": 10,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "planet_enforcers",
@@ -513,7 +534,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 10,
-      "bareBlocks": 10,
+      "bareValues": 10,
+      "bareBlocks": 0,
       "values": [
         "add",
         "mult"
@@ -528,6 +550,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 10,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -572,6 +595,7 @@
       "repeated": 0,
       "scalars": 9,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -586,6 +610,7 @@
       "repeated": 0,
       "scalars": 32,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no",

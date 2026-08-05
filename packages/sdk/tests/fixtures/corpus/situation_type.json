@@ -9,6 +9,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 64,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -41,6 +42,7 @@
       "repeated": 76,
       "scalars": 0,
       "blocks": 89,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -428,6 +430,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 36,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -449,6 +452,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 26,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -495,6 +499,7 @@
       "repeated": 0,
       "scalars": 3,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "approach_situation_the_seal_pump_exotic_gases_tt",
@@ -514,6 +519,7 @@
       "repeated": 0,
       "scalars": 77,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -528,6 +534,7 @@
       "repeated": 0,
       "scalars": 89,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_approach_alloys",
@@ -590,6 +597,7 @@
       "repeated": 0,
       "scalars": 89,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_approach_bg_green",
@@ -606,6 +614,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 42,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -881,6 +890,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 86,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -988,6 +998,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 19,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1037,6 +1048,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 29,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1078,6 +1090,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1116,6 +1129,7 @@
       "repeated": 3,
       "scalars": 0,
       "blocks": 7,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1154,6 +1168,7 @@
       "repeated": 2,
       "scalars": 0,
       "blocks": 3,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1183,6 +1198,7 @@
       "repeated": 0,
       "scalars": 65,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "negative",
@@ -1199,6 +1215,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "negative"
@@ -1213,6 +1230,7 @@
       "repeated": 0,
       "scalars": 85,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_exploding_planet",
@@ -1238,6 +1256,7 @@
       "repeated": 0,
       "scalars": 83,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_outcome_frame_blue",
@@ -1254,6 +1273,7 @@
       "repeated": 4,
       "scalars": 4,
       "blocks": 5,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_breach_shroud_desc",
@@ -1280,6 +1300,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_a_rift_in_space_desc",
@@ -1310,6 +1331,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 5,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1347,6 +1369,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "positive"
@@ -1361,6 +1384,7 @@
       "repeated": 0,
       "scalars": 23,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_outcome_meh",
@@ -1379,6 +1403,7 @@
       "repeated": 0,
       "scalars": 23,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_outcome_frame_blue",
@@ -1395,6 +1420,7 @@
       "repeated": 0,
       "scalars": 65,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0",
@@ -1422,6 +1448,7 @@
       "repeated": 0,
       "scalars": 4,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situations/consume_world_planet_pictures"
@@ -1436,6 +1463,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1467,6 +1495,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 90,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1502,6 +1531,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 34,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1557,6 +1587,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 29,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1598,6 +1629,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 59,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1623,7 +1655,8 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 44,
-      "bareBlocks": 44,
+      "bareValues": 44,
+      "bareBlocks": 0,
       "values": [
         "astral_situation.10",
         "astral_situation.25",
@@ -1700,6 +1733,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 25,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1805,6 +1839,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 88,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1887,6 +1922,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 37,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -1992,6 +2028,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "nomad_max_reserves_breakdown"
@@ -2006,6 +2043,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_nomad_economy_capacity_title"
@@ -2020,6 +2058,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_nomad_economy_reserves_current"
@@ -2034,6 +2073,7 @@
       "repeated": 0,
       "scalars": 2,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "yes"
@@ -2048,6 +2088,7 @@
       "repeated": 4,
       "scalars": 82,
       "blocks": 4,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_evt_a_rift_in_space",
@@ -2129,6 +2170,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 2,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2145,6 +2187,7 @@
       "repeated": 0,
       "scalars": 7,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "bidirectional",
@@ -2160,6 +2203,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "no"
@@ -2174,6 +2218,7 @@
       "repeated": 0,
       "scalars": 83,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "ambitions",
@@ -2193,6 +2238,7 @@
       "repeated": 1,
       "scalars": 0,
       "blocks": 90,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2409,6 +2455,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "light_green",
@@ -2426,6 +2473,7 @@
       "repeated": 1,
       "scalars": 56,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "approach_outcome_caeli",
@@ -2498,6 +2546,7 @@
       "repeated": 0,
       "scalars": 88,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "1",
@@ -2578,6 +2627,7 @@
       "repeated": 0,
       "scalars": 90,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_stage_1",
@@ -2607,6 +2657,7 @@
       "repeated": 0,
       "scalars": 90,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "GFX_situation_stage_frame_blue",
@@ -2627,6 +2678,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 13,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2749,6 +2801,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2765,6 +2818,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 60,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2853,6 +2907,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "20",
@@ -2875,6 +2930,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 6,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2937,6 +2993,7 @@
       "repeated": 6,
       "scalars": 0,
       "blocks": 7,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -2992,6 +3049,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3010,6 +3068,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "0"
@@ -3024,6 +3083,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 3,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3051,6 +3111,7 @@
       "repeated": 1,
       "scalars": 5,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_breach_shroud",
@@ -3074,6 +3135,7 @@
       "repeated": 0,
       "scalars": 1,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_a_rift_in_space",
@@ -3089,6 +3151,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3107,6 +3170,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 1,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3125,6 +3189,7 @@
       "repeated": 10,
       "scalars": 0,
       "blocks": 15,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3143,6 +3208,7 @@
       "repeated": 0,
       "scalars": 15,
       "blocks": 0,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [
         "situation_arkship_consuming_world_absent_desc",
@@ -3174,6 +3240,7 @@
       "repeated": 0,
       "scalars": 0,
       "blocks": 15,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
@@ -3225,6 +3292,7 @@
       "repeated": 6,
       "scalars": 0,
       "blocks": 9,
+      "bareValues": 0,
       "bareBlocks": 0,
       "values": [],
       "keys": [
