@@ -193,6 +193,11 @@ const RULE_FILES = [
   "on_actions.cwt",
   "modifiers.cwt",
   "modifier_categories.cwt",
+  // For `enum[complex_maths_enum]` and `enum[simple_maths_enum]`, which the
+  // weight-block lowering strips out of a `modifier` row to leave the trigger
+  // that gates it. They are declared here rather than in enums.cwt, and no
+  // registry's own source pulls this file in.
+  "modifier_rule.cwt",
   // Loaded ahead of their registries (councilor, economic_category,
   // civic_or_origin): both carry an upstream `## default: no` typo the parser
   // reports as a malformed option, and those three diagnostics are recorded

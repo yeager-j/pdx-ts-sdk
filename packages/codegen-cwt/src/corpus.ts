@@ -61,6 +61,17 @@ export interface FieldObservation {
    * satisfied the wrapped check and reported nothing.
    */
   readonly bareBlocks: number;
+  /**
+   * Definitions whose block value holds nothing at all — no entries and no bare
+   * items. Reported rather than checked: an empty block is compatible with
+   * every block lowering, which is why the interior form check stays silent
+   * where it is all the corpus has (see {@link shapeConformance}).
+   *
+   * At a `weightModifiers` path it counts after the strip, so it is the number
+   * of definitions writing an *ungated* modifier row — a row the SDK could not
+   * author at all while `Modifier.when` was required.
+   */
+  readonly emptyBlocks: number;
   /** Every scalar written, as the game spells it, capped at {@link VALUE_SAMPLE}. */
   readonly values: ReadonlySet<string>;
   /** Every key written directly inside a block value. */
@@ -125,9 +136,13 @@ export interface RegistryCorpus {
  *   block per entry, "siblings" holds the entry's own fields directly and
  *   carries the id in `identityKey`, skipped for the same reason the top level
  *   drops `nameField`.
- * - `weightModifiers` — a weight block's `modifier` rows, whose gating keys
- *   `strippedKeys` names. Nothing lowers to one yet, so the reader throws
- *   rather than recording a shape it has never been handed.
+ * - `weightModifiers` — a weight block's `modifier` rows, recorded under
+ *   `<field>.modifier` with `strippedKeys` (the maths operations and `desc`)
+ *   removed, so what remains is the row's gating trigger. The one mode that
+ *   does not record the container's own entries: `base` and the weight
+ *   operations are the weight block's own top-level shape, already observed
+ *   under the owning key, and recording them here would manufacture interior
+ *   paths no emitted field claims.
  */
 export interface DescentNode {
   /** The game's key at this level; the corpus path grows `<prefix>.<field>`. */
@@ -229,10 +244,53 @@ function descend(
       }
       return;
     case "weightModifiers":
-      throw new Error(
-        `${path} descends as weightModifiers, which no lowering emits yet — the reader would ` +
-          "have to guess which keys gate the row and which are modifier names"
-      );
+      recordWeightModifiers(value, path, node.strippedKeys ?? new Set(), seen, blockArity);
+      return;
+  }
+}
+
+/**
+ * Records each `modifier` row of one weight block under `<path>.modifier`,
+ * stripped down to the keys that gate it.
+ *
+ * A row is `modifier = { <maths operation> … desc = … alias_name[trigger] }`
+ * (`modifier_rule.cwt:5-13`), so removing the operations and `desc` leaves
+ * exactly the trigger keys — which is what the emitted `Trigger<S>` is measured
+ * against. The strip set comes from the emitter, off the same two enums the
+ * grammar names; an empty one would record `add` and `factor` as conditions.
+ *
+ * `complex_trigger_modifier` and `scaled_modifier` rows are left alone. They
+ * are sibling row kinds with their own shapes rather than a gated adjustment,
+ * and reading them through this filter would report their members as trigger
+ * keys (SDK-82).
+ */
+function recordWeightModifiers(
+  weights: PdxContainer,
+  path: string,
+  strippedKeys: ReadonlySet<string>,
+  seen: Map<string, PdxValue[]>,
+  blockArity: Map<string, boolean>
+): void {
+  const rowPath = `${path}.modifier`;
+  let previous = false;
+  for (const item of weights.items) {
+    if (item.kind !== "entry" || item.key !== "modifier" || item.value.kind !== "container") {
+      continue;
+    }
+    // The weight block is the arity boundary, exactly as a struct's block is in
+    // {@link recordBlock}: two rows in one block repeat, one row in each of two
+    // blocks does not.
+    blockArity.set(rowPath, (blockArity.get(rowPath) ?? false) || previous);
+    previous = true;
+    seen.set(rowPath, [
+      ...(seen.get(rowPath) ?? []),
+      {
+        kind: "container",
+        items: item.value.items.filter(
+          (entry) => entry.kind !== "entry" || !strippedKeys.has(entry.key)
+        ),
+      },
+    ]);
   }
 }
 
@@ -390,6 +448,7 @@ function observe(
       blocks: previous?.blocks ?? 0,
       bareValues: previous?.bareValues ?? 0,
       bareBlocks: previous?.bareBlocks ?? 0,
+      emptyBlocks: previous?.emptyBlocks ?? 0,
       values: new Set(previous?.values ?? []),
       keys: new Set(previous?.keys ?? []),
     };
@@ -398,6 +457,7 @@ function observe(
     let block = false;
     let bareValue = false;
     let bareBlock = false;
+    let emptyBlock = false;
     for (const value of values) {
       if (value.kind !== "container") {
         scalar = true;
@@ -408,10 +468,12 @@ function observe(
         continue;
       }
       block = true;
+      let content = false;
       for (const item of value.items) {
         if (item.kind === "entry") {
           observation.keys.add(item.key);
           written.add(item.key);
+          content = true;
           continue;
         }
         if (item.kind === "param") {
@@ -423,14 +485,17 @@ function observe(
         // other's lowering being wrong looks like.
         if (item.kind === "container") {
           bareBlock = true;
+          content = true;
           continue;
         }
         bareValue = true;
+        content = true;
         const text = scalarText(item);
         if (text !== null && observation.values.size < VALUE_SAMPLE) {
           observation.values.add(text);
         }
       }
+      emptyBlock = emptyBlock || !content;
     }
     const seen = previous?.keysByDefinition ?? [];
     into.set(key, {
@@ -439,6 +504,7 @@ function observe(
       blocks: observation.blocks + (block ? 1 : 0),
       bareValues: observation.bareValues + (bareValue ? 1 : 0),
       bareBlocks: observation.bareBlocks + (bareBlock ? 1 : 0),
+      emptyBlocks: observation.emptyBlocks + (emptyBlock ? 1 : 0),
       // Deduplicated: most definitions of a registry write the same handful of
       // keys, so the distinct sets stay far smaller than the definition count.
       keysByDefinition: seen.some((keys) => sameKeys(keys, written)) ? seen : [...seen, written],
@@ -615,6 +681,7 @@ const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
   ["modifierBlock", "block"],
   ["weightBlock", "block"],
   ["weightBlockWithLoc", "block"],
+  ["weightModifier", "block"],
   ["weightedEvents", "block"],
   ["struct", "block"],
   ["aliasStruct", "block"],

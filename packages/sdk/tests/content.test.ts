@@ -3167,3 +3167,51 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
     );
   });
 });
+
+describe("weight rows with no gating condition (SDK-11)", () => {
+  // `Modifier.when` is optional because the grammar and the game both make it
+  // so: `modifier_rule.cwt` requires none of a row's members, and 21 shipped
+  // rows across the corpus are an operation and nothing else — an
+  // unconditional adjustment the SDK could not express while `when` was
+  // required. The row must then emit no condition keys at all: an empty
+  // `trigger`-shaped remnant would be a gate, not the absence of one.
+  const CONFIG = configFor("Ungated weight test", "ungated");
+
+  function ungatedTradition(mod: ReturnType<typeof capabilityFor>) {
+    return mod.tradition("stoicism", {
+      name: "Stoicism",
+      aiWeight: {
+        base: 10,
+        modifiers: [
+          { factor: 2 },
+          { factor: 0.5, when: hasAuthority("auth_machine_intelligence") },
+        ],
+      },
+    });
+  }
+
+  it("emits an ungated row as its operations alone", () => {
+    const cap = capabilityFor(CONFIG);
+    const rendered = render(cap.compile([cap.feature(undefined, [ungatedTradition(cap)])])).get(
+      "common/traditions/ungated_traditions.txt"
+    )!;
+
+    expect(rendered).toContain("modifier = {\n\t\t\tfactor = 2\n\t\t}");
+    // The gated sibling still carries its condition, so the guard narrows to
+    // the absent case rather than dropping every row's trigger.
+    expect(rendered).toContain(
+      "modifier = {\n\t\t\tfactor = 0.5\n\t\t\thas_authority = auth_machine_intelligence\n\t\t}"
+    );
+  });
+
+  it("matches the ungated weight-row golden", async () => {
+    const cap = capabilityFor(CONFIG);
+    const content = render(cap.compile([cap.feature(undefined, [ungatedTradition(cap)])])).get(
+      "common/traditions/ungated_traditions.txt"
+    );
+
+    await expect(content).toMatchFileSnapshot(
+      "__snapshots__/content/ungated-weight-row-traditions.txt"
+    );
+  });
+});

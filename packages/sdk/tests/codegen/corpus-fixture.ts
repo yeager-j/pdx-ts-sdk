@@ -302,6 +302,7 @@ export interface SerializedObservation {
   readonly blocks: number;
   readonly bareValues: number;
   readonly bareBlocks: number;
+  readonly emptyBlocks: number;
   readonly values: readonly string[];
   readonly keys: readonly string[];
   readonly keysByDefinition: readonly (readonly string[])[];
@@ -358,6 +359,7 @@ function serializeCorpus(
       blocks: observation.blocks,
       bareValues: observation.bareValues,
       bareBlocks: observation.bareBlocks,
+      emptyBlocks: observation.emptyBlocks,
       values: sorted(observation.values),
       keys: sorted(observation.keys),
       // Inner and outer order are both meaningless to the checks, so both are
@@ -392,6 +394,7 @@ export function corpusOfFixture(fixture: RegistryFixture): RegistryCorpus {
       blocks: observation.blocks,
       bareValues: observation.bareValues,
       bareBlocks: observation.bareBlocks,
+      emptyBlocks: observation.emptyBlocks,
       values: new Set(observation.values),
       keys: new Set(observation.keys),
       keysByDefinition: observation.keysByDefinition.map((keys) => new Set(keys)),

@@ -33,6 +33,7 @@
  */
 
 import { conformance, shapeConformance, type RuleScopes } from "@pdx-ts/codegen-cwt/corpus";
+import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
 import { describe, expect, it } from "vitest";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
@@ -310,6 +311,30 @@ describe("corpus conformance", () => {
     expect(reports.length).toBeGreaterThan(0);
   });
 
+  it("reports weight rows the corpus writes with no condition", () => {
+    // Reported, not failed, and the evidence behind `Modifier.when` being
+    // optional: a `modifier` row whose only content is an operation is an
+    // unconditional adjustment, legal and shipped. Counted after the strip, so
+    // an empty block at one of these paths is exactly an ungated row.
+    const rows = reports.flatMap((report) =>
+      report.measurement.emitted
+        .filter((field) => field.shape === "weightModifier")
+        .flatMap((field) => {
+          const observation = report.corpus.occurrences.get(field.field);
+          return observation === undefined || observation.emptyBlocks === 0
+            ? []
+            : [
+                `  ${report.registry}.${field.field}: ${observation.emptyBlocks} of ` +
+                  `${observation.definitions} definitions`,
+              ];
+        })
+    );
+    if (rows.length > 0) {
+      console.log("\nweight rows written with no gating condition:\n" + rows.join("\n"));
+    }
+    expect(reports.length).toBeGreaterThan(0);
+  });
+
   it("emits no field the corpus proves unfillable", () => {
     // A `form` or `scope` mismatch is not a legality question the way `invented`
     // is: the game writes it, so it is legal, and the emitted type cannot hold
@@ -486,6 +511,7 @@ describe("shape conformance, per-definition scope", () => {
             blocks: definitions.length,
             bareValues: 0,
             bareBlocks: 0,
+            emptyBlocks: 0,
             values: new Set<string>(),
             keys: new Set(definitions.flat()),
             keysByDefinition,
@@ -548,6 +574,7 @@ describe("shape conformance, unkeyed block interiors", () => {
   function corpusOf(observed: {
     bareValues?: number;
     bareBlocks?: number;
+    emptyBlocks?: number;
     keys?: readonly string[];
   }) {
     const keys = observed.keys ?? [];
@@ -564,6 +591,7 @@ describe("shape conformance, unkeyed block interiors", () => {
             blocks: 1,
             bareValues: observed.bareValues ?? 0,
             bareBlocks: observed.bareBlocks ?? 0,
+            emptyBlocks: observed.emptyBlocks ?? 0,
             values: new Set(observed.bareValues === undefined ? [] : ["foo"]),
             keys: new Set(keys),
             keysByDefinition: [new Set(keys)],
@@ -637,5 +665,111 @@ describe("shape conformance, unkeyed block interiors", () => {
     // block: one keyed block among empty ones is evidence again.
     expect(kinds(corpusOf({ keys: ["key"] }), list)).toEqual(["form"]);
     expect(kinds(corpusOf({ bareValues: 1 }), plain)).toEqual(["form"]);
+  });
+});
+
+/**
+ * A weight block's `modifier` rows, measured the way no other interior can be.
+ *
+ * The rows are stripped down to their gating keys before the reader records
+ * them, so the observation at `<field>.modifier` is a set of trigger keys and
+ * nothing else — which is what makes the scope question askable there at all.
+ * Both branches are asserted here rather than left to the fixture: the shipped
+ * corpus exercises whichever ones it happens to contain, and a branch that has
+ * only ever been green proves nothing about the one it has not seen.
+ */
+describe("shape conformance, weight-block modifier rows", () => {
+  const RULES = new Map<string, RuleScopes>([
+    ["is_capital", ["planet"]],
+    ["has_ship_flag", ["ship"]],
+    ["always", "universal"],
+  ]);
+  const scopesOf = (_clause: "trigger" | "effect", key: string): RuleScopes | null =>
+    RULES.get(key) ?? null;
+
+  const row = (scope: EmittedField["scope"]): EmittedField => ({
+    field: "ai_weight.modifier",
+    shape: "weightModifier",
+    repeated: true,
+    clause: "trigger",
+    scope,
+  });
+
+  /** One observation per definition's row keys; an empty set is an ungated row. */
+  function corpusOf(...definitions: readonly (readonly string[])[]) {
+    const gated = definitions.filter((keys) => keys.length > 0);
+    return {
+      definitions: definitions.length,
+      files: 1,
+      occurrences: new Map([
+        [
+          "ai_weight.modifier",
+          {
+            definitions: definitions.length,
+            // Every definition writes several rows, as the shipped ones do —
+            // otherwise the descriptor's `repeated: true` adds an arity remark
+            // to every case here and buries the verdict under test.
+            repeated: definitions.length,
+            scalars: 0,
+            blocks: definitions.length,
+            bareValues: 0,
+            bareBlocks: 0,
+            emptyBlocks: definitions.length - gated.length,
+            values: new Set<string>(),
+            keys: new Set(definitions.flat()),
+            keysByDefinition: definitions.map((keys) => new Set(keys)),
+          },
+        ],
+      ]),
+    };
+  }
+
+  it("rejects a condition the holder's own scope cannot express", () => {
+    // The fixed-scope branch: a country-scoped weight block's rows are
+    // `Trigger<"country">`, so a planet condition in one is unwritable.
+    const mismatches = shapeConformance(
+      corpusOf(["is_capital", "always"]),
+      [row(["country"])],
+      scopesOf
+    );
+    expect(mismatches.map((one) => one.kind)).toEqual(["scope"]);
+    expect(mismatches[0]?.detail).toContain("typed for scope country");
+    expect(mismatches[0]?.detail).toContain("is_capital");
+  });
+
+  it("accepts a condition legal in the scope the holder was lowered at", () => {
+    expect(shapeConformance(corpusOf(["is_capital"]), [row(["planet"])], scopesOf)).toEqual([]);
+  });
+
+  it("asks the parameterised holder per definition", () => {
+    // `decision.ai_weight` is the shipped case: the definition declares its own
+    // scope, so a planet row and a ship row in two definitions are both
+    // writable — and one definition mixing them is not.
+    const parameter = { parameter: ["planet", "ship"] } as const;
+    expect(
+      shapeConformance(corpusOf(["is_capital"], ["has_ship_flag"]), [row(parameter)], scopesOf)
+    ).toEqual([]);
+    const stranded = shapeConformance(
+      corpusOf(["is_capital", "has_ship_flag"]),
+      [row(parameter)],
+      scopesOf
+    );
+    expect(stranded.map((one) => one.kind)).toEqual(["scope"]);
+    expect(stranded[0]?.detail).toContain("no single scope of planet/ship");
+  });
+
+  it("gives no verdict where every row is ungated", () => {
+    // An ungated row strips to an empty block, which is the interior check's
+    // "no evidence" case rather than a defect — no exemption for this shape is
+    // needed, and asserting it is what keeps that true.
+    const mismatches = shapeConformance(corpusOf([], []), [row(["country"])], scopesOf);
+    expect(mismatches.map((one) => one.kind)).toEqual([]);
+  });
+
+  it("still judges the gated rows beside ungated ones", () => {
+    // Silence is bought by absence of evidence, not by the ungated rows being
+    // present: one condition among them is evidence again.
+    const mismatches = shapeConformance(corpusOf([], ["is_capital"]), [row(["country"])], scopesOf);
+    expect(mismatches.map((one) => one.kind)).toEqual(["scope"]);
   });
 });

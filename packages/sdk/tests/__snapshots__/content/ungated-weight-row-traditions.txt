@@ -1,0 +1,12 @@
+ungated_tradition_stoicism = {
+	ai_weight = {
+		base = 10
+		modifier = {
+			factor = 2
+		}
+		modifier = {
+			factor = 0.5
+			has_authority = auth_machine_intelligence
+		}
+	}
+}

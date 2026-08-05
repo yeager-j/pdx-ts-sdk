@@ -1002,16 +1002,14 @@ describe("generated content authoring types", () => {
         ],
       },
     });
-    // A row must satisfy one arm or the other: `factor` alone, with neither
-    // `when` nor `trigger`/`mode`, is not a legal row of either kind.
+    // `factor` alone is a legal Modifier row: `when` is optional, matching both
+    // `modifier_rule.cwt` (which requires none of a row's members) and the 21
+    // ungated rows the game ships. It is a Modifier rather than an ambiguous
+    // row — `isComplexTriggerModifier` reads the absent `trigger`, not `when`.
     contentMod.tradition("weight_row_shape", {
       name: "X",
       aiWeight: {
-        modifiers: [
-          // @ts-expect-error — neither a Modifier's `when` nor a
-          // ComplexTriggerModifier's `trigger`/`mode` is present
-          { factor: 2 },
-        ],
+        modifiers: [{ factor: 2 }],
       },
     });
     // A complex_trigger_modifier's own `potential` gate is checked exactly

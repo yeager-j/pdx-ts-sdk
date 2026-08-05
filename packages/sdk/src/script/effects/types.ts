@@ -163,8 +163,18 @@ export interface Modifier<S extends ScopeName> {
    * pattern as content ids.
    */
   readonly descKey?: string;
-  /** The gating condition, spliced inline per `modifier_rule.cwt`. */
-  readonly when: Trigger<S>;
+  /**
+   * The gating condition, spliced inline per `modifier_rule.cwt`.
+   *
+   * Optional because the grammar makes it so — a row is operations, an optional
+   * `desc`, and however much of `alias_name[trigger]` the author writes, none of
+   * it required — and because the game ships rows with no condition at all: 159
+   * definitions across seven weight fields (`opinion_modifier.decay` in 115 of
+   * its 138) write an unconditional adjustment as a `modifier` row rather than
+   * folding it into the block's own operations. Requiring `when` made every one
+   * of those unauthorable.
+   */
+  readonly when?: Trigger<S>;
 }
 
 /**
