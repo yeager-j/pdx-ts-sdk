@@ -52,6 +52,8 @@ describe("the public authoring surface", () => {
     void sdk.defineTechnology;
     // @ts-expect-error — vanilla patches are capability methods.
     void sdk.patchTechnology;
+    // @ts-expect-error — and that is true of every patchable registry.
+    void sdk.patchBuilding;
     // @ts-expect-error — contributions are capability methods.
     void sdk.addShipOfSizeLimits;
   });

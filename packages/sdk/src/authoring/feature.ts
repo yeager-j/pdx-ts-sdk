@@ -13,10 +13,15 @@
 import type { ContentItem, ContributionItem } from "../content/types.ts";
 import type { OnActionHookItem } from "../events/on-actions.ts";
 import type { EventItemBase } from "../events/types.ts";
-import type { TechnologyPatchItem } from "../generated/technology.ts";
+import type { ContentPatchItem } from "../stellaris/vanilla/patch.ts";
 
+/**
+ * A patch item enters as the registry-agnostic {@link ContentPatchItem}: the
+ * fold reads the registry off the item, so naming one registry here would be
+ * the one place a second patchable registry had to be spelled by hand.
+ */
 export type ModItem =
-  ContentItem | EventItemBase | OnActionHookItem | TechnologyPatchItem | ContributionItem;
+  ContentItem | EventItemBase | OnActionHookItem | ContentPatchItem | ContributionItem;
 
 /**
  * One output file's worth of items: the file stem and what lands in it. The

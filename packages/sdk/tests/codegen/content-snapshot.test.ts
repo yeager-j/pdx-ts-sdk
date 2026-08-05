@@ -1113,7 +1113,7 @@ describe("generated content definers", () => {
     expect(definers).not.toContain("Feature<");
   });
 
-  it("emits the raw patchTechnology and addShipOfSizeLimits, and only those", () => {
+  it("emits one raw patchX per overlay row, plus addShipOfSizeLimits", () => {
     // Derived from the overlay rather than hand-listed: the emitted patchX set
     // is exactly the registries CONTENT_PATCH_REGISTRIES permits — a row is the
     // whole permission, and a registry without one gets no patch surface.
@@ -1129,6 +1129,15 @@ describe("generated content definers", () => {
         "  return {\n" +
         '    itemKind: "patch",\n' +
         '    patched: patchContent(technology, patch, "technology", TECHNOLOGY_FIELDS),\n' +
+        "  };"
+    );
+    // And a second registry's definer is the same three lines with its own
+    // name, registry key, and field table — no per-registry hand symbol.
+    expect(definers).toContain(
+      "): BuildingPatchItem {\n" +
+        "  return {\n" +
+        '    itemKind: "patch",\n' +
+        '    patched: patchContent(building, patch, "building", BUILDING_FIELDS),\n' +
         "  };"
     );
     expect(definers).toContain('import { patchContent } from "../stellaris/vanilla/patch.ts";');

@@ -2,35 +2,49 @@ import { serialize } from "@pdx-ts/pdxscript";
 
 import type { PlacedItem } from "../authoring/feature.ts";
 import { StaleRuleTableError } from "../errors.ts";
-import type { PatchedTechnology } from "../generated/technology.ts";
-import { normalizeLogicalPath } from "../ordering.ts";
+import type { ContentTypeName } from "../generated/content-registry.ts";
+import { compareLogicalPaths, compareUtf8, normalizeLogicalPath } from "../ordering.ts";
 import {
   collectVarRefs,
   planPatchEmission,
   type PatchPlan,
 } from "../stellaris/vanilla/override-plan.ts";
-import { SUPPORTED_STELLARIS_BUILD } from "../stellaris/vanilla/override-rules.ts";
+import { registryRule, SUPPORTED_STELLARIS_BUILD } from "../stellaris/vanilla/override-rules.ts";
+import type { PatchedContent } from "../stellaris/vanilla/patch.ts";
 import { sha256Hex, type VanillaFile } from "../stellaris/vanilla/view.ts";
 import type { BuildOptions, ResolvedModConfig } from "./config.ts";
 import type { ContentFile } from "./model.ts";
 import type { ReferenceUse } from "./references.ts";
 
+/**
+ * The placed patches, grouped by the registry each one names, and sorted by id
+ * within a group.
+ *
+ * Grouping here rather than at planning time is what keeps the rest of the
+ * fold registry-blind: a patch carries its own registry tag, so nothing has to
+ * ask which registries exist. Duplicate keys are refused per registry, since
+ * two registries may legitimately ship a definition of the same id, and the
+ * one-view check spans every registry — a build patches one vanilla load.
+ */
 export function collectPatches(
   flat: readonly PlacedItem[],
   options: BuildOptions,
   refUses: ReferenceUse[]
-): PatchedTechnology[] {
-  const patches: PatchedTechnology[] = [];
+): ReadonlyMap<string, readonly PatchedContent[]> {
+  const byRegistry = new Map<string, PatchedContent[]>();
+  let expected = options.vanilla?.manifestKey;
   for (const { item } of flat) {
     if (item.itemKind !== "patch") {
       continue;
     }
     const patched = item.patched;
+    const { registry } = patched;
+    const patches = byRegistry.get(registry) ?? [];
     if (patches.some((existing) => existing.id === patched.id)) {
-      throw new Error(`Duplicate patch for technology "${patched.id}"`);
+      throw new Error(`Duplicate patch for ${registry} "${patched.id}"`);
     }
-    const expected = options.vanilla?.manifestKey ?? patches[0]?.source.origin.manifestKey;
-    if (expected !== undefined && patched.source.origin.manifestKey !== expected) {
+    expected ??= patched.source.origin.manifestKey;
+    if (patched.source.origin.manifestKey !== expected) {
       throw new Error(
         `Patch for "${patched.id}" comes from a different vanilla load than ` +
           `${options.vanilla !== undefined ? "the view passed to buildMod" : "earlier patches"} ` +
@@ -39,21 +53,47 @@ export function collectPatches(
       );
     }
     patches.push(patched);
+    byRegistry.set(registry, patches);
     for (const use of patched.refs) {
       refUses.push({ owner: `the patch of ${patched.id}`, use });
     }
   }
-  return patches;
+  return new Map(
+    [...byRegistry].map(([registry, patches]) => [
+      registry,
+      [...patches].sort((a, b) => compareUtf8(a.id, b.id)),
+    ])
+  );
 }
 
+/**
+ * One emission plan per patched registry, in path order.
+ *
+ * Each registry is planned independently — its own enumeration, its own
+ * winning filename — because the game resolves each directory on its own. Both
+ * halves of that enumeration are derived from the registry name: the vanilla
+ * side from the rule table's directory, this mod's side from the content files
+ * that registry wrote. Ordering the plans by emitted path keeps emission a
+ * function of content rather than of the order patches were authored in
+ * (ADR-0005).
+ */
 export function planPatches(
   config: ResolvedModConfig,
-  techFiles: readonly ContentFile[],
-  patches: readonly PatchedTechnology[]
-): PatchPlan | undefined {
-  if (patches.length === 0) {
-    return undefined;
-  }
+  contentFiles: readonly ContentFile[],
+  patchesByRegistry: ReadonlyMap<string, readonly PatchedContent[]>
+): PatchPlan[] {
+  const plans = [...patchesByRegistry]
+    .filter(([, patches]) => patches.length > 0)
+    .map(([registry, patches]) => planRegistry(config, contentFiles, registry, patches));
+  return plans.sort((a, b) => compareLogicalPaths(a.relPath, b.relPath));
+}
+
+function planRegistry(
+  config: ResolvedModConfig,
+  contentFiles: readonly ContentFile[],
+  registry: string,
+  patches: readonly PatchedContent[]
+): PatchPlan {
   const { prefix } = config;
   const origin = patches[0]!.source.origin;
   if (
@@ -68,9 +108,11 @@ export function planPatches(
     );
   }
 
+  const { dir } = registryRule(registry);
+  const ownFiles = contentFiles.filter((file) => file.types.includes(registry as ContentTypeName));
   const enumeration: VanillaFile[] = [
-    ...origin.files.filter((file) => file.path.startsWith("common/technology/")),
-    ...techFiles.map((file) => ({
+    ...origin.files.filter((file) => file.path.startsWith(`${dir}/`)),
+    ...ownFiles.map((file) => ({
       path: normalizeLogicalPath(file.relPath),
       sha256: sha256Hex(serialize(file.entries)),
       keys: file.ids,
@@ -78,7 +120,7 @@ export function planPatches(
   ];
 
   return planPatchEmission({
-    registry: "technology",
+    registry,
     patches: patches.map((patched) => {
       const entry = patched.toEntries();
       const fileLocals = origin.localVariables(patched.source.sourceFile);
@@ -98,7 +140,7 @@ export function planPatches(
       };
     }),
     enumeration,
-    reservedPaths: techFiles.map((file) => file.relPath),
+    reservedPaths: ownFiles.map((file) => file.relPath),
     prefix,
   });
 }

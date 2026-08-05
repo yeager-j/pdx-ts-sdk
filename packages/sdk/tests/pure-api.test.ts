@@ -48,10 +48,11 @@ import {
 } from "../src/index.ts";
 import { anyOf, viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 import { resonancePack } from "./fixtures/resonance-pack.ts";
-import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
+import { BUILDING_FILE, TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
 const FILES = {
   "common/technology/pp_soc_tech.txt": TECH_FILE,
+  "common/buildings/pp_buildings.txt": BUILDING_FILE,
   "common/scripted_variables/pp_vars.txt": VARS_FILE,
 };
 
@@ -133,14 +134,24 @@ function capabilityFeatures() {
     options: [{ name: "Fascinating." }],
   });
   const patch = capability.patchTechnology(
-    vanilla.technology("tech_gene_forging").require("cost", "prerequisites"),
+    vanilla.definition("technology", "tech_gene_forging").require("cost", "prerequisites"),
     (t) => ({
       cost: t.cost.value * 2,
       prerequisites: [...t.prerequisites, grafts],
     })
   );
+  // The second patched registry: one fold, one view, two independently
+  // resolved emissions — and a reference from a building patch to a technology
+  // this mod defines, held to the same guard the technology patch's is.
+  const refineryPatch = capability.patchBuilding(
+    vanilla.definition("building", "building_pp_refinery"),
+    () => ({
+      planetLimit: { base: 2, modifiers: [{ add: 1, when: always() }] },
+      prerequisites: [grafts],
+    })
+  );
   return [
-    capability.feature(undefined, [grafts, patch]),
+    capability.feature(undefined, [grafts, patch, refineryPatch]),
     capability.feature(undefined, [situation]),
     capability.feature(undefined, [
       titan,
@@ -161,6 +172,7 @@ const FIXTURE_CHANNELS = [
   "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
   "common/on_actions/pp_mod_on_actions.txt",
   "localisation/english/pp_mod_l_english.yml",
+  "common/buildings/pp_buildings_pp_mod_patch.txt",
   "common/technology/pp_soc_tech_pp_mod_patch.txt",
 ];
 
@@ -197,7 +209,8 @@ describe("parity with the deleted class builder", () => {
   }
 
   it("computes the builder's patch plan, win assertions included", async () => {
-    await expect(JSON.stringify(pure.patchPlan?.assertions, null, 2) + "\n").toMatchFileSnapshot(
+    const assertions = pure.patchPlans.flatMap((plan) => plan.assertions);
+    await expect(JSON.stringify(assertions, null, 2) + "\n").toMatchFileSnapshot(
       "__snapshots__/pure-api/patch-plan-assertions.json"
     );
     expect(pure.warnings).toEqual([]);
@@ -722,7 +735,7 @@ describe("content reference integrity", () => {
     const orphans = createFeatureInternal("orphan_techs", [marker]);
     const patches = createFeatureInternal(undefined, [
       patchTechnologyInternal(
-        vanilla.technology("tech_gene_forging").require("prerequisites"),
+        vanilla.definition("technology", "tech_gene_forging").require("prerequisites"),
         (t) => ({
           prerequisites: [...t.prerequisites, marker],
         })
@@ -753,7 +766,7 @@ describe("content reference integrity", () => {
       startTech: true,
     });
     const patches = createFeatureInternal(undefined, [
-      patchTechnologyInternal(vanilla.technology("tech_gene_forging"), () => ({
+      patchTechnologyInternal(vanilla.definition("technology", "tech_gene_forging"), () => ({
         prerequisites: [anyOf("tech_helix_mapping", marker)],
       })),
     ]);
@@ -782,7 +795,7 @@ describe("content reference integrity", () => {
     });
     const dependents = createFeatureInternal("dependents", [dependent]);
     const patches = createFeatureInternal(undefined, [
-      patchTechnologyInternal(vanilla.technology("tech_gene_forging"), () => ({
+      patchTechnologyInternal(vanilla.definition("technology", "tech_gene_forging"), () => ({
         technologySwap: [{ name: "pp_mod_tech_gene_forging_frugal", inheritIcon: true }],
       })),
     ]);
@@ -1024,9 +1037,12 @@ describe("collections", () => {
     const alpha = techsWith("alpha_techs", "pp_mod_tech_alpha");
     const beta = techsWith("beta_techs", "pp_mod_tech_beta");
     const patches = createFeatureInternal(undefined, [
-      patchTechnologyInternal(vanilla.technology("tech_gene_forging").require("cost"), (t) => ({
-        cost: t.cost.value * 2,
-      })),
+      patchTechnologyInternal(
+        vanilla.definition("technology", "tech_gene_forging").require("cost"),
+        (t) => ({
+          cost: t.cost.value * 2,
+        })
+      ),
     ]);
     const mod = buildInternal(CONFIG, [alpha, beta, patches], { vanilla });
     const files = render(mod);
@@ -1038,8 +1054,8 @@ describe("collections", () => {
       expect(files.has(ownPath)).toBe(true);
     }
     // The computed patch path never lands on one of the mod's own files.
-    expect(ownPaths).not.toContain(mod.patchPlan!.relPath);
-    expect(files.get(mod.patchPlan!.relPath)).toContain("tech_gene_forging");
+    expect(ownPaths).not.toContain(mod.patchPlans[0]!.relPath);
+    expect(files.get(mod.patchPlans[0]!.relPath)).toContain("tech_gene_forging");
   });
 });
 
@@ -1246,7 +1262,7 @@ tech_probe_zeta = {
       () => {
         betaItems.push(
           orderMod.patchTechnology(
-            probeVanilla.technology("tech_probe_zeta").require("cost"),
+            probeVanilla.definition("technology", "tech_probe_zeta").require("cost"),
             (t) => ({
               cost: t.cost.value * 2,
             })
@@ -1256,7 +1272,7 @@ tech_probe_zeta = {
       () => {
         alphaItems.push(
           orderMod.patchTechnology(
-            probeVanilla.technology("tech_probe_alpha").require("cost"),
+            probeVanilla.definition("technology", "tech_probe_alpha").require("cost"),
             (t) => ({
               cost: t.cost.value * 3,
             })

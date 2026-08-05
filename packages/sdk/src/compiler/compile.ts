@@ -275,7 +275,8 @@ export function buildMod(
   }
   const shipOfSizeLimits = new Set<string>(contributedLimits.sort(compareUtf8));
 
-  const patches = collectPatches(flat, options, refUses);
+  const patchesByRegistry = collectPatches(flat, options, refUses);
+  const patches = [...patchesByRegistry.values()].flat();
   validateReferences({
     prefix: config.prefix,
     contentFiles,
@@ -286,13 +287,8 @@ export function buildMod(
     refUses,
   });
 
-  const orderedPatches = [...patches].sort((a, b) => compareUtf8(a.id, b.id));
-  const patchPlan = planPatches(
-    config,
-    contentFiles.filter((file) => file.types.includes("technology")),
-    orderedPatches
-  );
-  const vanillaOrigin = options.vanilla ?? orderedPatches[0]?.source.origin;
+  const patchPlans = planPatches(config, contentFiles, patchesByRegistry);
+  const vanillaOrigin = options.vanilla ?? patches[0]?.source.origin;
   const vanillaPaths =
     vanillaOrigin === undefined ? undefined : new Set(vanillaOrigin.files.map((file) => file.path));
 
@@ -331,7 +327,7 @@ export function buildMod(
     onActions,
     loc: localization.loc,
     shipOfSizeLimits,
-    patchPlan,
+    patchPlans,
     vanillaPaths,
   });
 }

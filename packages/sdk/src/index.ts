@@ -281,14 +281,19 @@ export {
 export type { PatchPlan, WinAssertion } from "./stellaris/vanilla/override-plan.ts";
 export {
   anyOf,
+  ParsedDefinition,
   ParsedTechnology,
   VanillaView,
   viewFromFiles,
   type AnyOf,
+  type ParsedBuilding,
   type ParsedNumber,
+  type ParsedRegistries,
+  type ParsedRegistryName,
   type Prerequisite,
   type VanillaFile,
 } from "./stellaris/vanilla/view.ts";
+export type { BuildingPatch, PatchedBuilding } from "./generated/building.ts";
 export type { PatchedTechnology, TechnologyPatch } from "./generated/technology.ts";
 export type {
   CheckedVanillaId,

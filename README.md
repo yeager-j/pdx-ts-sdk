@@ -470,15 +470,30 @@ const newTechnology = mod.technology("new", {
   category: "particles",
 });
 const geneTailoring = mod.patchTechnology(
-  vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
+  vanilla.definition("technology", "tech_gene_tailoring").require("cost", "prerequisites"),
   (t) => ({
     cost: t.cost.value * 2, // cost is @tier3cost1 in the file — .value bakes it, visibly
     prerequisites: [...t.prerequisites, newTechnology],
   })
 );
+const cityDistrict = mod.patchBuilding(
+  vanilla.definition("building", "building_capital_1"),
+  () => ({
+    planetLimit: 2,
+    prerequisites: [newTechnology],
+  })
+);
 
-const compiled = mod.compile([mod.feature(undefined, [newTechnology, geneTailoring])], { vanilla });
+const compiled = mod.compile(
+  [mod.feature(undefined, [newTechnology, geneTailoring, cityDistrict])],
+  { vanilla }
+);
 ```
+
+`vanilla.definition(registry, id)` is tagged with the registry it came from, so
+a parsed building cannot be handed to `patchTechnology`. Each patched registry
+gets its own emission, resolved independently — `technology` and `building` are
+the registries whose override rules are verified today.
 
 Fields the transform doesn't touch are carried through byte-faithfully,
 `@variable` references included. The build then emits the patch into a file

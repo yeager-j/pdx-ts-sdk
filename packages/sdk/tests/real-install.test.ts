@@ -45,23 +45,35 @@ afterAll(() => {
 });
 
 describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
-  it("every vanilla technology file builds a typed surface, OR groups included", () => {
+  it("every vanilla technology and building file builds a typed surface", () => {
     const started = performance.now();
     const vanilla = load({ installPath, cache: cacheDir });
     const elapsed = performance.now() - started;
 
     const techFiles = vanilla.files.filter((file) => file.path.startsWith("common/technology/"));
     expect(techFiles.length).toBeGreaterThan(30);
-    const technologies = vanilla.allTechnologies();
+    const technologies = vanilla.definitions("technology");
     expect(technologies.length).toBeGreaterThan(100);
     // The construct the probe's parser had to refuse, now typed data.
     const withAnyOf = technologies.filter((tech) =>
       tech.prerequisites?.some((p) => "kind" in p && p.kind === "any-of")
     );
     expect(withAnyOf.length).toBeGreaterThan(0);
+
+    // The second parsed registry against the same reality: `common/buildings`
+    // is flat (no subdirectory pinning needed), every file builds a surface,
+    // and every `@variable` any of them mentions resolved — `load()` is eager,
+    // so reaching this line at all is that proof.
+    const buildingFiles = vanilla.files.filter((file) => file.path.startsWith("common/buildings/"));
+    expect(buildingFiles.length).toBeGreaterThan(20);
+    const buildings = vanilla.definitions("building");
+    expect(buildings.length).toBeGreaterThan(50);
+    expect(buildings.every((building) => building.registry === "building")).toBe(true);
+
     // The escape-hatch clause: an install layer too slow to run every build.
     console.info(
-      `load(): ${technologies.length} technologies from ${techFiles.length} files ` +
+      `load(): ${technologies.length} technologies from ${techFiles.length} files, ` +
+        `${buildings.length} buildings from ${buildingFiles.length} files, ` +
         `in ${Math.round(elapsed)}ms (build ${vanilla.gameVersion ?? "unknown"})`
     );
   });
@@ -96,7 +108,7 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
       category: "biology",
     });
     const geneTailoringPatch = mod.patchTechnology(
-      vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites"),
+      vanilla.definition("technology", "tech_gene_tailoring").require("cost", "prerequisites"),
       (t) => ({
         cost: t.cost.value * 2,
         prerequisites: [...t.prerequisites, myNewTech],
@@ -106,7 +118,7 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
       vanilla,
     });
 
-    const plan = compiled.patchPlan!;
+    const plan = compiled.patchPlans[0]!;
     const assertion = plan.assertions[0]!;
     expect(assertion.key).toBe("tech_gene_tailoring");
     expect(assertion.beats).toContain("common/technology/00_soc_tech.txt");

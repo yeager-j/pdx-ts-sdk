@@ -175,9 +175,11 @@ describe("registry readers", () => {
   });
 
   it("reports a registry the install does not have rather than failing", () => {
-    const missing = registryReport("building");
+    // The fixture install has no `common/traditions` at all — the miniature
+    // install carries only the directories some test needs.
+    const missing = registryReport("tradition");
     expect(missing).toMatchObject({ ids: 0, files: 0, missing: true });
-    expect(file("registries/building.ts")).toContain("= never;");
+    expect(file("registries/tradition.ts")).toContain("= never;");
   });
 });
 

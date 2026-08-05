@@ -1,7 +1,7 @@
 /**
  * `stellaris.load()`: locate the install, hash and parse the files this
- * slice models (`common/scripted_variables`, `common/technology`), and hand
- * back the typed view. Synchronous by design — the workload is ~35 files —
+ * slice models (`common/scripted_variables` plus every parsed registry), and
+ * hand back the typed view. Synchronous by design — the workload is ~65 files —
  * and eager like everything downstream of it.
  *
  * Reads are non-recursive by evidence: the resolver-evaluation spike
@@ -18,7 +18,15 @@ import { join } from "node:path";
 import { locateInstall } from "../installation/locate.ts";
 import { readGameVersion } from "../installation/version.ts";
 import { cacheKey, readCache, writeCache } from "./cache.ts";
-import { parseStrict, sha256Hex, VanillaView, type ParsedSource } from "./view.ts";
+import {
+  PARSED_REGISTRIES,
+  parsedRegistryDir,
+  parseStrict,
+  sha256Hex,
+  VanillaView,
+  VARIABLES_DIR,
+  type ParsedSource,
+} from "./view.ts";
 
 export interface LoadOptions {
   /** Game root; wins over STELLARIS_PATH and the platform defaults. */
@@ -31,17 +39,23 @@ export interface LoadOptions {
 }
 
 /**
- * The directories this slice parses, each read flat. Subdirectories that
- * exist in the real install are pinned by name — they hold *different*
- * registries (technology categories and tiers), out of this slice's scope
- * and outside the technology enumeration (the registry was measured flat).
- * An unknown subdirectory appearing is vanilla changing shape under us:
- * a loud error, never a silent widen or a silent skip.
+ * The directories this slice reads, each read flat: the `@variable`
+ * provenance directory plus one row per parsed registry.
+ *
+ * Nothing here is spelled by hand. The directory comes from the registry's own
+ * rule-table row (which derives it from the generated content descriptor), and
+ * the subdirectories a registry legitimately has are its
+ * {@link PARSED_REGISTRIES} row's data — so adding a registry to the parse
+ * layer adds nothing to the loader.
  */
-const PARSED_DIRS = [
-  { dir: "common/scripted_variables", knownSubdirs: new Set<string>() },
-  { dir: "common/technology", knownSubdirs: new Set(["category", "tier"]) },
-];
+const PARSED_DIRS: readonly { readonly dir: string; readonly knownSubdirs: ReadonlySet<string> }[] =
+  [
+    { dir: VARIABLES_DIR, knownSubdirs: new Set<string>() },
+    ...PARSED_REGISTRIES.map((row) => ({
+      dir: parsedRegistryDir(row.registry),
+      knownSubdirs: row.knownSubdirs,
+    })),
+  ];
 
 export function load(options: LoadOptions = {}): VanillaView {
   const installPath = locateInstall(options.installPath);

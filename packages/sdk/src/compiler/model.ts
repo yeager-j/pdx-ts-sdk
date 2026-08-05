@@ -46,8 +46,8 @@ export interface PureMod {
   readonly loc: ReadonlyMap<string, string>;
   /** Shared ship-size-limit contribution ids. */
   readonly shipOfSizeLimits: ReadonlySet<string>;
-  /** The planned vanilla technology override, when patches were authored. */
-  readonly patchPlan: PatchPlan | undefined;
+  /** The planned vanilla overrides, one per patched registry, in path order. */
+  readonly patchPlans: readonly PatchPlan[];
   /** Vanilla paths known to the build, used by `render` for collision checks. */
   readonly vanillaPaths: ReadonlySet<string> | undefined;
 }

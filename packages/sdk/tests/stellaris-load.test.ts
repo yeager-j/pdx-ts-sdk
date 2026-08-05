@@ -71,10 +71,14 @@ describe("load", () => {
     expect(view.gameVersion).toBe("4.4.6");
     expect(view.fromCache).toBe(false);
     expect(view.files.map((file) => file.path)).toEqual([
+      "common/buildings/00_fake_buildings.txt",
       "common/scripted_variables/00_fake_vars.txt",
       "common/technology/00_fake_soc_tech.txt",
     ]);
-    const tech = view.technology("tech_fake_farming").require("cost", "startTech");
+    expect(view.definitions("building").map((building) => building.id)).toEqual([
+      "building_fake_hydroponics",
+    ]);
+    const tech = view.definition("technology", "tech_fake_farming").require("cost", "startTech");
     expect(tech.cost.value).toBe(100);
     expect(tech.cost.ref).toBe("@fake_t1cost");
     expect(tech.startTech).toBe(true);
@@ -90,7 +94,7 @@ describe("load", () => {
     expect(second.fromCache).toBe(true);
     expect(second.manifestKey).toBe(first.manifestKey);
     expect(second.gameVersion).toBe(first.gameVersion);
-    expect(second.technology("tech_fake_farming").cost?.value).toBe(100);
+    expect(second.definition("technology", "tech_fake_farming").cost?.value).toBe(100);
   });
 
   it("a changed file changes the key: the cache can never serve stale content", () => {
@@ -106,7 +110,7 @@ describe("load", () => {
     const second = load({ installPath: install, cache });
     expect(second.fromCache).toBe(false);
     expect(second.manifestKey).not.toBe(first.manifestKey);
-    expect(second.technology("tech_fake_farming").cost?.value).toBe(250);
+    expect(second.definition("technology", "tech_fake_farming").cost?.value).toBe(250);
   });
 
   it("cache: false writes nothing", () => {
