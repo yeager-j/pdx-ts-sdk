@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { PureMod } from "../build.ts";
+import type { PureMod } from "../compiler/model.ts";
 import { modDir } from "../stellaris/launcher/mod-directory.ts";
 import { render, renderLauncherDescriptor } from "./render.ts";
 import { write } from "./write.ts";

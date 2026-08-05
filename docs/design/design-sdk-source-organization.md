@@ -1,6 +1,6 @@
 # SDK source organization
 
-> **Accepted proposal, 2026-08-04 — Phases 1, 2, 3, 4, and 5 implemented.** This document records the
+> **Accepted proposal, 2026-08-04 — Phases 1, 2, 3, 4, 5, and 6 implemented.** This document records the
 > agreed target structure for the handwritten source under `packages/sdk/src/` and
 > the migration plan for reaching it. The migration is organizational: it must not
 > change the public package interface, authored behavior, generated PDXScript, or
@@ -52,13 +52,14 @@ authoring interface is mod-bound and immutable, compilation is a deterministic
 fold, rendering is pure, and installation is an impure adapter at the end of the
 pipeline. Those seams should be apparent from the source tree.
 
-Today, most handwritten files sit together at the root of `src/`, and several
-large files combine interfaces with multiple independent implementation concerns:
+Before this migration, most handwritten files sat together at the root of
+`src/`, and several large files combined interfaces with multiple independent
+implementation concerns:
 
-- [`build.ts`](../../packages/sdk/src/build.ts) owns configuration validation,
-  localization, canonical grouping and ordering, vanilla collision checks,
-  dangling-reference validation, patch planning, identifier-package diagnostics,
-  and immutable output construction in addition to coordinating the compile.
+- The former `build.ts` owned configuration validation, localization, canonical
+  grouping and ordering, vanilla collision checks, dangling-reference
+  validation, patch planning, identifier-package diagnostics, and immutable
+  output construction in addition to coordinating the compile.
 - [`content.ts`](../../packages/sdk/src/content.ts) contains public authoring
   types, the descriptor protocol consumed by generated code, reusable block
   encoders, recursive field lowering, localization behavior, and
@@ -542,7 +543,9 @@ surface.
 
 ### Phase 6: deepen the compiler
 
-Decompose `build.ts` last, after the modules it coordinates have stable homes.
+Implemented on `feature/project-structure-reorganization-phase-6`.
+
+Decompose the former `build.ts` last, after the modules it coordinates have stable homes.
 
 Start by extracting leaf responsibilities:
 
@@ -554,6 +557,12 @@ Start by extracting leaf responsibilities:
 6. `patches.ts`.
 
 Then rename the remaining coordinator to `compiler/compile.ts`.
+
+The completed extraction leaves `compiler/compile.ts` as the readable fold
+coordinator and places each leaf responsibility in its named module. The
+coordinator still owns the three-pass content lowering and canonical event,
+on-action, and contribution ordering; no public pass objects or alternate
+compiler entry points were introduced.
 
 The final coordinator should make fold order and canonical ordering easy to
 audit without duplicating their implementation. Do not model each phase as a

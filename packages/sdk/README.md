@@ -313,7 +313,14 @@ src/
 │   ├── mod.ts        createMod and capability-owned authoring operations
 │   ├── feature.ts    feature/item vocabulary and placement helpers
 │   └── discover.ts   discoverFeatures: directory → named feature exports
-├── build.ts           internal fold, cross-feature checks, and warnings
+├── compiler/          deterministic fold and compiler-owned validation
+│   ├── compile.ts     capability features → PureMod coordinator
+│   ├── config.ts      config validation and immutable snapshots
+│   ├── model.ts       compiler-owned output model
+│   ├── localization.ts localization validation and canonical registration
+│   ├── references.ts  event/content dangling-reference validation
+│   ├── patches.ts     patch collection and winning-file planning
+│   └── freeze.ts      emitted-tree immutability
 ├── output/             pure rendering and filesystem materialization
 │   ├── render.ts       compiled mod → path-to-contents map
 │   ├── write.ts        path map → files beneath an explicit root

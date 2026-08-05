@@ -13,7 +13,7 @@ import {
   type ContentItem,
   type EventItemBase,
 } from "../src/authoring/feature.ts";
-import { buildMod as buildInternal } from "../src/build.ts";
+import { buildMod as buildInternal } from "../src/compiler/compile.ts";
 import { defineSituationType as defineSituationTypeInternal } from "../src/content/situations.ts";
 import { on as onInternal } from "../src/events/on-actions.ts";
 import {

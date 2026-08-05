@@ -1,6 +1,6 @@
 /**
  * SDK-37: subtype-qualified reference targets bypassed `buildMod`'s
- * dangling-reference guard (`build.ts`) entirely.
+ * dangling-reference guard (`compiler/references.ts`) entirely.
  *
  * `registriesByTarget` matched a *qualified* target (e.g.
  * `civic_or_origin.civic`) only when a registry's own `referenceName` was

@@ -225,7 +225,8 @@ export type {
   UniversalModifiers,
   UnscopedModifierRecorder,
 } from "./generated/modifiers.ts";
-export type { BuildOptions, EmittedFile, ModConfig, PureMod } from "./build.ts";
+export type { BuildOptions, ModConfig } from "./compiler/config.ts";
+export type { EmittedFile, PureMod } from "./compiler/model.ts";
 export {
   createMod,
   type CapabilityEventHandle,

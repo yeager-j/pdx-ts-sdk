@@ -12,7 +12,7 @@ import {
   type BuildOptions,
   type ModConfig,
   type PureMod,
-} from "../../packages/sdk/src/build.ts";
+} from "../../packages/sdk/src/compiler/compile.ts";
 import { buildEvent } from "../../packages/sdk/src/events/lower.ts";
 import { on } from "../../packages/sdk/src/events/on-actions.ts";
 import type { EventDef, EventRef } from "../../packages/sdk/src/events/types.ts";

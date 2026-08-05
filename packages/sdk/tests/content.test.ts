@@ -3,7 +3,7 @@ import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { collection as collectionInternal, type ModItem } from "../src/authoring/feature.ts";
-import { buildMod as buildInternal } from "../src/build.ts";
+import { buildMod as buildInternal } from "../src/compiler/compile.ts";
 import { ContentAuthoring } from "../src/content/authoring.ts";
 import {
   registerAliasStructFields,

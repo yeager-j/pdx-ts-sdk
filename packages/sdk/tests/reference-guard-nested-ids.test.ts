@@ -1,6 +1,6 @@
 /**
  * SDK-38: nested-definition ids (a tradition's own `tradition_swap` entries)
- * never reached `builtIds`, `buildMod`'s index (`build.ts`) of what a build
+ * never reached `builtIds`, `buildMod`'s index (`compiler/references.ts`) of what a build
  * actually defined.
  *
  * `ContentAuthoring` already tracked nested ids in `nestedIds` for its own
@@ -12,7 +12,7 @@
  * The fold now reads swap ids directly off each definition's own resolved
  * `def`, for every registry the vendored rules declare a `base_type`
  * relationship for (`tradition`, `ascension_perk`, `civic_or_origin`,
- * `technology`, `job` — see `build.ts`'s `SWAP_IDENTITIES` for the complete,
+ * `technology`, `job` — see `compiler/references.ts`'s `SWAP_IDENTITIES` for the complete,
  * mechanically-sourced list). A PR review on the SDK-37/38 pair caught that
  * the original fix only covered `tradition`/`ascension_perk`: enabling the
  * `civic_or_origin.civic` guard fallback (SDK-37) without also folding

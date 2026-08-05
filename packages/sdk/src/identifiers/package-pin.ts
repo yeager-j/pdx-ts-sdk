@@ -1,6 +1,6 @@
 /**
  * The version-pin gate for the optional `@pdx-ts/stellaris-ids` package
- * (SDK-12). Distinct from the rule-table staleness gate in `build.ts`: that
+ * (SDK-12). Distinct from the rule-table staleness gate in `compiler/compile.ts`: that
  * one guards patch emission against an unverified CWT rule table, and only
  * fires when patches exist. This one guards every authored vanilla
  * reference — identifiers influence everything authored, not only patches —

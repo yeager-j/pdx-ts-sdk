@@ -1,11 +1,11 @@
+import { buildMod } from "../compiler/compile.ts";
 import {
-  buildMod,
   resolveConfig,
   type BuildOptions,
   type ModConfig,
-  type PureMod,
   type ResolvedModConfig,
-} from "../build.ts";
+} from "../compiler/config.ts";
+import type { PureMod } from "../compiler/model.ts";
 import { buildEvent } from "../events/lower.ts";
 import { on } from "../events/on-actions.ts";
 import type { EventDef } from "../events/types.ts";
