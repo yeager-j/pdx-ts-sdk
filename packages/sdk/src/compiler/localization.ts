@@ -1,4 +1,4 @@
-import type { ModWarning } from "../authoring/feature.ts";
+import type { ModWarning } from "../diagnostics.ts";
 
 const LOC_FORBIDDEN = /[\r\n\0]/;
 

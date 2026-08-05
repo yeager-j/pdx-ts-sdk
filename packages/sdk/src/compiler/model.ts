@@ -1,7 +1,8 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { EventItemBase, ModWarning } from "../authoring/feature.ts";
 import type { DefinedContent } from "../content/authoring.ts";
+import type { ModWarning } from "../diagnostics.ts";
+import type { EventItemBase } from "../events/types.ts";
 import type { ContentTypeName } from "../generated/content-registry.ts";
 import type { PatchPlan } from "../stellaris/vanilla/override-plan.ts";
 import type { ResolvedModConfig } from "./config.ts";

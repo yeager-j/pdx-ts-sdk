@@ -10,7 +10,7 @@
  * start sites are checked against the declaration.
  *
  * Navigation inside a trigger field (the `target(...)` combinator in
- * `./triggers.ts`) stays author-asserted, since a trigger is a
+ * `../triggers.ts`) stays author-asserted, since a trigger is a
  * free-standing expression tree with no definition object to read a
  * declared scope from. Inside a `startSituation` effect body the type is
  * already known, though — `args.type: SituationTargetContract<T>` carries it
@@ -18,10 +18,10 @@
  * closing the one restatement this contract *can* close.
  */
 
-import type { ScopeObjOf, SituationScope } from "./generated/effects.ts";
-import type { TypedRef } from "./generated/refs.ts";
-import type { ScopeName } from "./generated/scopes.ts";
-import type { ScopeValue } from "./script/effects/types.ts";
+import type { ScopeObjOf, SituationScope } from "../../generated/effects.ts";
+import type { TypedRef } from "../../generated/refs.ts";
+import type { ScopeName } from "../../generated/scopes.ts";
+import type { ScopeValue } from "./types.ts";
 
 /** A defined situation type carrying its author-declared target scope. */
 export interface SituationTargetContract<
@@ -56,7 +56,7 @@ export type SituationEffectScope<T extends ScopeName> = Omit<SituationScope, "ta
 // overload, not a narrowing). tests/codegen/events-snapshot.test.ts pins
 // `startSituation` to this cluster so a clustering change fails loudly
 // instead of silently detaching the overload.
-declare module "./generated/effects.ts" {
+declare module "../../generated/effects.ts" {
   interface EffectsInCountry {
     /**
      * Starts a situation whose type declares `targetScope`, requiring a

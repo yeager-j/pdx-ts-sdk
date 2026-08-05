@@ -14,13 +14,13 @@ import { describe, expect, it } from "vitest";
 import {
   collection as collectionInternal,
   type Collection,
-  type EventItem,
   type ModItem,
   type ModItemInput,
 } from "../src/authoring/feature.ts";
 import { buildMod as buildInternal } from "../src/compiler/compile.ts";
 import { defineSituationType as defineSituationTypeInternal } from "../src/content/situations.ts";
 import { on as onInternal } from "../src/events/on-actions.ts";
+import type { EventItem } from "../src/events/types.ts";
 import {
   addShipOfSizeLimits as addShipOfSizeLimitsInternal,
   defineCountryShipOfSizeLimit as defineCountryShipOfSizeLimitInternal,

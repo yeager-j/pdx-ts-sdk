@@ -7,17 +7,12 @@
 
 import { kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import {
-  flattenItems,
-  type ContentItem,
-  type EventItemBase,
-  type ModItemInput,
-  type ModWarning,
-  type OnActionBindingItem,
-} from "../authoring/feature.ts";
+import { flattenItems, type ModItemInput } from "../authoring/feature.ts";
 import { ContentAuthoring } from "../content/authoring.ts";
-import { OnActionAuthoring } from "../events/on-actions.ts";
-import type { DefinedEvent } from "../events/types.ts";
+import type { ContentItem } from "../content/types.ts";
+import type { ModWarning } from "../diagnostics.ts";
+import { OnActionAuthoring, type OnActionBindingItem } from "../events/on-actions.ts";
+import type { DefinedEvent, EventItemBase } from "../events/types.ts";
 import { CONTENT_REGISTRIES, type ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import {

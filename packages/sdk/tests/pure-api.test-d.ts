@@ -7,15 +7,12 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
-import {
-  collection as collectionInternal,
-  type Collection,
-  type ContentItem,
-  type EventItemBase,
-} from "../src/authoring/feature.ts";
+import { collection as collectionInternal, type Collection } from "../src/authoring/feature.ts";
 import { buildMod as buildInternal } from "../src/compiler/compile.ts";
 import { defineSituationType as defineSituationTypeInternal } from "../src/content/situations.ts";
+import type { ContentItem } from "../src/content/types.ts";
 import { on as onInternal } from "../src/events/on-actions.ts";
+import type { EventItemBase } from "../src/events/types.ts";
 import {
   defineTechnology as defineTechnologyInternal,
   defineTradition as defineTraditionInternal,

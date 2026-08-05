@@ -127,7 +127,7 @@ Not emitted by codegen, each named in the report:
   input scopes (runtime rides the STRUCTURAL table) — and the situation side
   is **declared**: `targetScope` on `defineSituationType` (emits nothing)
   makes `startSituation` require a matching `ScopeRef` witness via an
-  overload merged into the generated signature (`src/situations.ts`).
+  overload merged into the generated signature (`src/script/effects/situations.ts`).
 - The 4 value links (`variable`, `script_value`, `modifier`, `trigger`) — RHS
   number producers, not navigation; they belong to a future script-value
   feature.

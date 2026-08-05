@@ -311,7 +311,7 @@ src/
 ├── index.ts           public capability, discovery, materialization, and types
 ├── authoring/        createMod, feature placement, and named feature discovery
 │   ├── mod.ts        createMod and capability-owned authoring operations
-│   ├── feature.ts    feature/item vocabulary and placement helpers
+│   ├── feature.ts    feature item union and placement helpers
 │   └── discover.ts   discoverFeatures: directory → named feature exports
 ├── compiler/          deterministic fold and compiler-owned validation
 │   ├── compile.ts     capability features → PureMod coordinator
@@ -326,12 +326,12 @@ src/
 │   ├── write.ts        path map → files beneath an explicit root
 │   └── install.ts      atomic launcher-directory installation
 ├── content/           generic content-definition machinery
-│   ├── types.ts       public authored block contracts
+│   ├── types.ts       public authored blocks and content item contracts
 │   ├── schema.ts      generated field metadata and registry descriptors
 │   ├── blocks.ts      reusable PDXScript block encoders
 │   ├── lower.ts       recursive descriptor interpretation
 │   ├── authoring.ts   definition identity, localization, and registration
-│   └── situations.ts  situation type lowering and target-scope contracts
+│   └── situations.ts  hand-written situation type lowering
 ├── events/            event contracts, lowering, and on-action authoring
 │   ├── types.ts       event definitions and fire-site types
 │   ├── lower.ts       event-to-PDXScript lowering
@@ -345,7 +345,9 @@ src/
 │       ├── types.ts    effect contracts and scope references
 │       ├── modifiers.ts modifier and modifier-localization lowering
 │       ├── structural.ts in-game control-flow lowering
+│       ├── situations.ts situation target and effect-scope contracts
 │       └── recorder.ts recordEffects and the scope proxy
+├── diagnostics.ts     shared warning contract
 ├── ordering.ts        canonical logical-path and UTF-8 ordering
 ├── references.ts      recorded content-reference vocabulary
 ├── identifiers/       optional vanilla identifier contracts and package pin

@@ -59,6 +59,12 @@ export interface PatchedTechnology {
   toEntries(): PdxEntry;
 }
 
+/** A vanilla technology patch placed into a capability feature. */
+export interface TechnologyPatchItem {
+  readonly itemKind: "patch";
+  readonly patched: PatchedTechnology;
+}
+
 function numberValue(value: number | ParsedNumber): PdxValue {
   if (typeof value === "number") {
     return scalar(value);

@@ -1,9 +1,8 @@
 import { block, list, scalar, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { EventItem, EventItemBase, OnActionBindingItem } from "../authoring/feature.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { compareUtf8 } from "../ordering.ts";
-import type { DefinedEvent } from "./types.ts";
+import type { DefinedEvent, EventItem, EventItemBase } from "./types.ts";
 
 export interface OnActionRef<
   S extends ScopeName | null = ScopeName | null,
@@ -15,6 +14,17 @@ export interface OnActionRef<
   readonly scope: S;
   /** The FROM scope supplied by the hook, when one is available. */
   readonly from: From;
+}
+
+/** A capability-owned contribution binding authored events to one game hook. */
+export interface OnActionBindingItem {
+  readonly itemKind: "on-action";
+  readonly hook: OnActionRef;
+  /**
+   * The events retain author order because the game fires the hook's event
+   * list as written. Each exact value must also be placed in this mod.
+   */
+  readonly events: readonly EventItemBase[];
 }
 
 interface Registration {

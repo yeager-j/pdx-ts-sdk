@@ -3,8 +3,6 @@ import {
   collection,
   FILE_STEM_PATTERN,
   type Collection,
-  type ContentItem,
-  type EventItem,
   type ModItem,
 } from "../../packages/sdk/src/authoring/feature.ts";
 import {
@@ -13,9 +11,10 @@ import {
   type ModConfig,
   type PureMod,
 } from "../../packages/sdk/src/compiler/compile.ts";
+import type { ContentItem } from "../../packages/sdk/src/content/types.ts";
 import { buildEvent } from "../../packages/sdk/src/events/lower.ts";
 import { on } from "../../packages/sdk/src/events/on-actions.ts";
-import type { EventDef, EventRef } from "../../packages/sdk/src/events/types.ts";
+import type { EventDef, EventItem, EventRef } from "../../packages/sdk/src/events/types.ts";
 import type { AgendaDef } from "../../packages/sdk/src/generated/agenda.ts";
 import type { BuildingDef } from "../../packages/sdk/src/generated/building.ts";
 import {

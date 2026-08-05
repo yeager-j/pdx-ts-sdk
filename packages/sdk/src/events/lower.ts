@@ -2,7 +2,7 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { ModWarning } from "../authoring/feature.ts";
+import type { ModWarning } from "../diagnostics.ts";
 import type { EventKindKey } from "../generated/events.ts";
 import { refId } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
