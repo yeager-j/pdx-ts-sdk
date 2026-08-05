@@ -377,6 +377,69 @@ function containerContext(field: RuleField, ctx: FieldContext): FieldContext {
 }
 
 /**
+ * The keys a `modifier` row spends on arithmetic or display rather than on
+ * gating: `modifier_rule.cwt`'s two maths enums, plus `desc`.
+ *
+ * What remains in a row is the spliced `alias_name[trigger]`, so this set is
+ * exactly what turns a shipped row into the conditions the emitted `Trigger<S>`
+ * has to hold. A missing enum throws rather than degrading to an empty set: the
+ * corpus reader would then record `add` and `factor` as trigger keys, and every
+ * weight block in the game would report a scope mismatch against them.
+ */
+function weightRowOperations(emitter: Emitter): ReadonlySet<string> {
+  const members = (name: string): readonly string[] => {
+    const values = emitter.rules.enums.get(name);
+    if (values === undefined || values.length === 0) {
+      throw new Error(
+        `The rules declare no members for enum[${name}], so a weight block's modifier rows ` +
+          "cannot be stripped down to the conditions that gate them"
+      );
+    }
+    return values;
+  };
+  return new Set([...members("complex_maths_enum"), ...members("simple_maths_enum"), "desc"]);
+}
+
+/**
+ * A weight block's `modifier` rows, as one emitted field and one descent.
+ *
+ * Every other block shape describes its interior through `structShape`, off a
+ * CWT fields table. A weight block has none — `modifier_rule` is an alias
+ * category, and the authoring shape is the SDK's own `WeightBlock<S>` — so the
+ * one interior worth measuring is stated here instead: the row's gating
+ * condition, at the holder's own scope, which is where `Modifier.when`'s
+ * `Trigger<S>` is instantiated.
+ */
+function weightInterior(
+  emitter: Emitter,
+  name: string,
+  path: string,
+  scope: FieldScope
+): Pick<LoweredField, "nested" | "descents"> {
+  return {
+    nested: [
+      {
+        field: `${path}.modifier`,
+        shape: "weightModifier",
+        // `modifiers` is an array and the writer emits one `modifier` block per
+        // row, so the key repeats inside the weight block.
+        repeated: true,
+        clause: "trigger",
+        scope: scope.scopes,
+      },
+    ],
+    descents: [
+      {
+        field: name,
+        mode: "weightModifiers",
+        strippedKeys: weightRowOperations(emitter),
+        children: [],
+      },
+    ],
+  };
+}
+
+/**
  * As {@link scopeType}, for shapes whose scope parameter reaches a
  * `Trigger<S>` contravariantly — a trigger field itself, and a weight block,
  * whose rows carry `when: Trigger<S>`.
@@ -967,6 +1030,7 @@ function lowerOrdinary(
       memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlock"),
       admits: admitsBlock(field, "weightBlock", scope),
+      ...weightInterior(emitter, name, path, scope),
     };
   }
   if (requested === "weightBlockWithLoc") {
@@ -975,6 +1039,7 @@ function lowerOrdinary(
       memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlockWithLoc"),
       admits: admitsBlock(field, "weightBlockWithLoc", scope),
+      ...weightInterior(emitter, name, path, scope),
     };
   }
   if (requested === "aliasStruct") {
@@ -1012,6 +1077,7 @@ function lowerOrdinary(
       memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlock"),
       admits: admitsBlock(field, "weightBlock", scope),
+      ...weightInterior(emitter, name, path, scope),
     };
   }
   if (requested === undefined && category === "modifier_rule_with_loc") {
@@ -1020,6 +1086,7 @@ function lowerOrdinary(
       memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
       metadata: metadata(field, name, "weightBlockWithLoc"),
       admits: admitsBlock(field, "weightBlockWithLoc", scope),
+      ...weightInterior(emitter, name, path, scope),
     };
   }
   if (requested === undefined && category !== null) {

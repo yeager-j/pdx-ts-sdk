@@ -11,6 +11,7 @@
       "blocks": 36,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "weight"
@@ -28,6 +29,7 @@
       "blocks": 20,
       "bareValues": 20,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "2",
@@ -54,6 +56,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -69,6 +72,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -84,6 +88,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -100,6 +105,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -115,6 +121,7 @@
       "blocks": 10,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "always"
@@ -132,6 +139,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civilian_arkship_tier_2_level_tooltip",
         "civilian_arkship_tier_3_level_tooltip",
@@ -153,6 +161,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -173,6 +182,7 @@
       "blocks": 21,
       "bareValues": 21,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "2",
@@ -194,6 +204,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "starbase_level_citadel",
         "starbase_level_civilian_arkship_2",
@@ -225,6 +236,7 @@
       "blocks": 9,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_arkship_blueprint_civilian_tier_1",
         "GFX_arkship_blueprint_civilian_tier_2",
@@ -258,6 +270,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_bioship_starbase_background"
       ],
@@ -273,6 +286,7 @@
       "blocks": 9,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "owner"
@@ -290,6 +304,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -305,6 +320,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "big_starbase_synth_queen",
         "civilian_arkship_tier_1",
@@ -360,6 +376,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -376,6 +393,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1"
       ],
@@ -391,6 +409,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "planet"

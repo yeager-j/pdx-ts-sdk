@@ -682,7 +682,10 @@ export function evaluateWeightBlock<S extends SimScopeName>(
           `which this interpreter does not evaluate. ${coverageSummary()}`
       );
     }
-    if (!evaluate(row.when, scope)) {
+    // A row with no `when` is ungated and always applies — `Modifier.when` is
+    // optional, matching the ungated rows the game ships (159 definitions
+    // across seven weight fields write at least one).
+    if (row.when !== undefined && !evaluate(row.when, scope)) {
       continue;
     }
     value = applyModifierRow(row, value);

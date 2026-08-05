@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "0.04",
@@ -43,6 +44,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -58,6 +60,7 @@
       "blocks": 108,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 9,
       "values": [],
       "keys": [
         "fraction",
@@ -97,6 +100,7 @@
       "blocks": 68,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "10",
@@ -119,6 +123,102 @@
         ]
       ]
     },
+    "ai_ship_data.fraction.modifier": {
+      "definitions": 54,
+      "repeated": 32,
+      "scalars": 0,
+      "blocks": 54,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "country_uses_bio_ships",
+        "has_technology",
+        "has_valid_ai_personality",
+        "has_valid_civic",
+        "is_hive_empire",
+        "is_machine_empire",
+        "is_preferred_weapons",
+        "uses_fauna_ship_sizes",
+        "uses_standard_ship_sizes"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "OR",
+          "has_technology",
+          "has_valid_ai_personality",
+          "has_valid_civic",
+          "uses_standard_ship_sizes"
+        ],
+        [
+          "OR",
+          "country_uses_bio_ships",
+          "has_valid_ai_personality",
+          "has_valid_civic"
+        ],
+        [
+          "OR",
+          "country_uses_bio_ships",
+          "has_valid_ai_personality",
+          "has_valid_civic",
+          "is_machine_empire",
+          "is_preferred_weapons"
+        ],
+        [
+          "OR",
+          "country_uses_bio_ships",
+          "has_valid_ai_personality",
+          "has_valid_civic",
+          "is_preferred_weapons"
+        ],
+        [
+          "OR",
+          "has_technology",
+          "has_valid_ai_personality",
+          "is_hive_empire",
+          "uses_standard_ship_sizes"
+        ],
+        [
+          "OR",
+          "has_valid_ai_personality",
+          "has_valid_civic",
+          "is_machine_empire",
+          "is_preferred_weapons",
+          "uses_standard_ship_sizes"
+        ],
+        [
+          "OR",
+          "has_valid_ai_personality",
+          "is_preferred_weapons",
+          "uses_standard_ship_sizes"
+        ],
+        [
+          "country_uses_bio_ships"
+        ],
+        [
+          "country_uses_bio_ships",
+          "is_preferred_weapons"
+        ],
+        [
+          "has_technology",
+          "is_preferred_weapons",
+          "uses_standard_ship_sizes"
+        ],
+        [
+          "is_preferred_weapons"
+        ],
+        [
+          "uses_fauna_ship_sizes"
+        ],
+        [
+          "uses_standard_ship_sizes"
+        ]
+      ]
+    },
     "ai_ship_data.max": {
       "definitions": 15,
       "repeated": 0,
@@ -126,6 +226,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "10",
@@ -148,6 +249,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "5",
@@ -168,6 +270,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.1",
         "0.5",
@@ -185,6 +288,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.15",
         "value:desired_science_ships_system_mult"
@@ -201,6 +305,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "arkship_civilian",
         "arkship_military",
@@ -218,6 +323,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -234,6 +340,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_fleet_order_auto_construct",
         "GFX_fleet_order_auto_explore_arkship"
@@ -250,6 +357,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -266,6 +374,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1080",
         "120",
@@ -294,6 +403,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civilian_arkship_tier_1",
         "military_arkship_tier_1",
@@ -311,6 +421,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "150",
         "300"
@@ -327,6 +438,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -340,6 +452,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "360"
       ],
@@ -355,6 +468,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -371,6 +485,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -387,6 +502,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -403,6 +519,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "pc_ark"
       ],
@@ -418,6 +535,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "shipclass_colonizer",
         "shipclass_constructor",
@@ -446,6 +564,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -461,6 +580,7 @@
       "blocks": 11,
       "bareValues": 11,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "shipclass_constructor",
         "shipclass_starbase"
@@ -477,6 +597,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -492,6 +613,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.1",
         "1",
@@ -521,6 +643,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-1",
         "0.2",
@@ -542,6 +665,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "10",
         "100",
@@ -568,6 +692,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -584,6 +709,7 @@
       "blocks": 10,
       "bareValues": 10,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "automated_collection",
         "automated_construction",
@@ -605,6 +731,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -618,6 +745,7 @@
       "blocks": 46,
       "bareValues": 46,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "starbase_beastport",
         "starbase_defenses",
@@ -636,6 +764,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "artillery",
         "carrier",
@@ -656,6 +785,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -671,6 +801,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -687,6 +818,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -703,6 +835,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "abandoned_ship_section_entity",
         "ai_01_science_ship_entity",
@@ -781,6 +914,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "food"
       ],
@@ -796,6 +930,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -822,6 +957,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -837,6 +973,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -852,6 +989,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -865,6 +1003,7 @@
       "blocks": 106,
       "bareValues": 106,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ai_01",
         "ancient",
@@ -906,6 +1045,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ship_growth_stage_1",
         "ship_growth_stage_2",
@@ -923,6 +1063,7 @@
       "blocks": 15,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "capabilities",
@@ -952,6 +1093,7 @@
       "blocks": 1,
       "bareValues": 1,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "can_repair",
         "can_upgrade"
@@ -968,6 +1110,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "B",
         "H",
@@ -985,6 +1128,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "HANGER_STATE"
       ],
@@ -1000,6 +1144,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_arkship_fleetview_civilian",
         "GFX_arkship_fleetview_military",
@@ -1021,6 +1166,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.2",
         "0.25",
@@ -1044,6 +1190,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ship_size_behemoth",
         "ship_size_civilian_arkship_tier_1",
@@ -1101,6 +1248,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ship_size_military_1",
         "ship_size_military_16",
@@ -1120,6 +1268,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-1",
         "1",
@@ -1150,6 +1299,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -1166,6 +1316,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -1182,6 +1333,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -1198,6 +1350,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -1213,6 +1366,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -1229,6 +1383,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -1244,6 +1399,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -1259,6 +1415,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -1274,6 +1431,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -1289,6 +1447,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -1305,6 +1464,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -1321,6 +1481,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -1336,6 +1497,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ship_counter_128",
         "ship_counter_16",
@@ -1356,6 +1518,7 @@
       "blocks": 16,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "cloaked",
@@ -1384,6 +1547,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_fleet_presence_kaiju_icons_cloaked",
         "GFX_fleet_presence_paladin_icons_cloaked",
@@ -1401,6 +1565,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_ship_icons_type_arkship_encamped"
       ],
@@ -1416,6 +1581,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_fleet_presence_kaiju_icons_mixed",
         "GFX_fleet_presence_paladin_icons_mixed",
@@ -1433,6 +1599,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_fleet_presence_kaiju_icons",
         "GFX_fleet_presence_paladin_icons",
@@ -1450,6 +1617,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "100",
         "1000",
@@ -1513,6 +1681,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "0.1",
@@ -1534,6 +1703,7 @@
       "blocks": 58,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "alloys"
@@ -1551,6 +1721,7 @@
       "blocks": 316,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "planet_max_districts_add",
@@ -1826,6 +1997,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "extra_large",
         "large",
@@ -1844,6 +2016,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -1859,6 +2032,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -1874,6 +2048,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -1895,6 +2070,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "arkship_civilian_selection",
         "arkship_military_selection",
@@ -1915,6 +2091,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_arkship_planetview_header_civilian",
         "GFX_arkship_planetview_header_military",
@@ -1932,6 +2109,7 @@
       "blocks": 33,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "AND",
@@ -1973,6 +2151,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "is_part_of_galactic_council"
@@ -1990,6 +2169,7 @@
       "blocks": 46,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "AND",
@@ -2046,6 +2226,7 @@
       "blocks": 69,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -2146,6 +2327,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "NO_COMMUNICATIONS_AMOEBA"
       ],
@@ -2161,6 +2343,7 @@
       "blocks": 105,
       "bareValues": 105,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "tech_arkship_tier_2",
         "tech_arkship_tier_3",
@@ -2218,6 +2401,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -2233,6 +2417,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "aura_components",
         "bio_ship_unique_components",
@@ -2265,6 +2450,7 @@
       "blocks": 240,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "category",
@@ -2320,6 +2506,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_role_selection_background",
         "GFX_role_selection_battleship",
@@ -2347,6 +2534,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "0.002",
@@ -2382,6 +2570,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -2397,6 +2586,7 @@
       "blocks": 2,
       "bareValues": 2,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "collect_waystation_stockpile",
         "logistic_drop_off_stockpile",
@@ -2414,6 +2604,7 @@
       "blocks": 315,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "1",
@@ -2541,6 +2732,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "bot_1",
         "bot_2",
@@ -2580,6 +2772,7 @@
       "blocks": 37,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "has_biogenesis_dlc",
@@ -2601,6 +2794,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "bio_ship",
         "crystalline_entity",
@@ -2621,6 +2815,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "21",
         "26",
@@ -2647,6 +2842,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "harbinger_class",
         "mauler_class",
@@ -2669,6 +2865,7 @@
       "blocks": 91,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "arkship_harvest_resources_produces_mult",
@@ -2794,6 +2991,7 @@
       "blocks": 61,
       "bareValues": 61,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "artillery",
         "brawler",
@@ -2818,6 +3016,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "2500"
       ],
@@ -2833,6 +3032,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -2870,6 +3070,7 @@
       "blocks": 38,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "age_threshold",
@@ -2937,6 +3138,7 @@
       "blocks": 38,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "max",
@@ -2962,6 +3164,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "15",
         "30",
@@ -2982,6 +3185,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "15",
         "30",
@@ -3002,6 +3206,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "12",
         "16",
@@ -3020,6 +3225,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -3035,6 +3241,7 @@
       "blocks": 38,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "category",
@@ -3054,6 +3261,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "2",
@@ -3072,6 +3280,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "3"
       ],
@@ -3087,6 +3296,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "10",
@@ -3104,6 +3314,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "10",
@@ -3122,6 +3333,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "NAME_Reanimated_Cutholoids",
         "NAME_Reanimated_Cutholoids_Hatchling",
@@ -3149,6 +3361,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -3164,6 +3377,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -3179,6 +3393,7 @@
       "blocks": 43,
       "bareValues": 0,
       "bareBlocks": 43,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -3192,6 +3407,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "artillery",
         "artillery_stealth",
@@ -3218,6 +3434,7 @@
       "blocks": 43,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",
@@ -3244,6 +3461,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "harbinger_stage_2",
         "harbinger_stage_3",
@@ -3274,6 +3492,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "battleship",
         "colonizer",
@@ -3299,6 +3518,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -3314,6 +3534,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],

@@ -11,6 +11,7 @@
       "blocks": 7,
       "bareValues": 7,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "TYPE_HEADER_04"
       ],
@@ -26,6 +27,7 @@
       "blocks": 7,
       "bareValues": 7,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "pc_volcanic"
       ],
@@ -41,6 +43,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -57,6 +60,7 @@
       "blocks": 150,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -142,6 +146,7 @@
       "blocks": 141,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "base",
@@ -161,6 +166,25 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 75,
+      "repeated": 67,
+      "scalars": 0,
+      "blocks": 75,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 1,
+      "values": [],
+      "keys": [
+        "OR"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "OR"
+        ]
+      ]
+    },
     "alternate_civic_version": {
       "definitions": 40,
       "repeated": 0,
@@ -168,6 +192,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civic_anglers",
         "civic_beastmasters",
@@ -222,6 +247,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -237,6 +263,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "wilderness_01"
       ],
@@ -252,6 +279,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civic_chosen_effects_additional",
         "civic_deep_sleep_effects_additional",
@@ -270,6 +298,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civic_astrometeorology_effect_tooltip",
         "civic_beastmasters_effects",
@@ -348,6 +377,7 @@
       "blocks": 58,
       "bareValues": 58,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "Story1",
         "Story2",
@@ -374,6 +404,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "pc_gaia",
         "pc_habitat",
@@ -393,6 +424,7 @@
       "blocks": 6,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "title",
@@ -415,6 +447,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civic_hive_bodysnatcher_secondary_species",
         "civic_machine_assimilator_secondary_species",
@@ -435,6 +468,7 @@
       "blocks": 3,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "trait"
@@ -452,6 +486,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "trait_cybernetic",
         "trait_hive_mind",
@@ -469,6 +504,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -484,6 +520,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "gfx/interface/icons/governments/civics/civic_awakened_machine.dds",
         "gfx/interface/icons/governments/civics/civic_custodian_directives.dds",
@@ -562,6 +599,7 @@
       "blocks": 14,
       "bareValues": 14,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "cosmic_dawn_start",
         "custom_starting_init_01",
@@ -599,6 +637,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -614,6 +653,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "farmer"
@@ -631,6 +671,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -646,6 +687,7 @@
       "blocks": 33,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -675,6 +717,7 @@
       "blocks": 33,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",
@@ -705,6 +748,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "CIVIC_NOT_MODDABLE_ONLY_REMOVE"
       ],
@@ -720,6 +764,7 @@
       "blocks": 33,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -751,6 +796,7 @@
       "blocks": 303,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 33,
       "values": [],
       "keys": [
         "BIOLOGICAL_species_trait_picks_add",
@@ -2053,6 +2099,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "planet_jobs_unity_produces_mult"
@@ -2070,6 +2117,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "BLOCKS_COUNCILOR_STATE",
         "ORIGIN_REQUIRES_ROBO_MODDING",
@@ -2111,6 +2159,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -2126,6 +2175,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_evt_metropolis",
         "GFX_origin_arc_welders",
@@ -2194,6 +2244,7 @@
       "blocks": 217,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -2291,6 +2342,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "mindwarden_01"
       ],
@@ -2306,6 +2358,7 @@
       "blocks": 256,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 21,
       "values": [],
       "keys": [
         "always",
@@ -2643,6 +2696,7 @@
       "blocks": 294,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",
@@ -2777,6 +2831,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -2792,6 +2847,7 @@
       "blocks": 335,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "base",
@@ -2807,6 +2863,67 @@
         ]
       ]
     },
+    "random_weight.modifier": {
+      "definitions": 19,
+      "repeated": 5,
+      "scalars": 0,
+      "blocks": 19,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "blocks_disruptive_gameplay",
+        "has_global_flag",
+        "has_nomads_dlc",
+        "host_has_dlc",
+        "is_ai",
+        "is_scope_valid",
+        "num_fallen_empires_setting"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "blocks_disruptive_gameplay"
+        ],
+        [
+          "NOT",
+          "blocks_disruptive_gameplay",
+          "has_global_flag"
+        ],
+        [
+          "blocks_disruptive_gameplay"
+        ],
+        [
+          "blocks_disruptive_gameplay",
+          "has_global_flag"
+        ],
+        [
+          "blocks_disruptive_gameplay",
+          "has_nomads_dlc"
+        ],
+        [
+          "has_global_flag"
+        ],
+        [
+          "host_has_dlc"
+        ],
+        [
+          "is_ai"
+        ],
+        [
+          "is_ai",
+          "is_scope_valid"
+        ],
+        [
+          "num_fallen_empires_setting"
+        ]
+      ]
+    },
     "removed_climate_labels": {
       "definitions": 7,
       "repeated": 0,
@@ -2814,6 +2931,7 @@
       "blocks": 7,
       "bareValues": 7,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "TYPE_HEADER_03"
       ],
@@ -2829,6 +2947,7 @@
       "blocks": 7,
       "bareValues": 7,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "pc_alpine",
         "pc_arctic",
@@ -2846,6 +2965,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "wilderness_room"
       ],
@@ -2861,6 +2981,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "trait"
@@ -2878,6 +2999,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "trait_cyborg_ritualistic_implants",
         "trait_latent_psionic"
@@ -2894,6 +3016,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "pc_gaia",
         "pc_habitat",
@@ -2916,6 +3039,7 @@
       "blocks": 45,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "description",
@@ -2984,6 +3108,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civic_beastmasters_effects",
         "civic_cordyceptic_beastmasters_effects",
@@ -3037,6 +3162,7 @@
       "blocks": 20,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "BIOLOGICAL_species_trait_picks_add",
@@ -3133,6 +3259,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civic_hive_devouring_swarm_lithoid",
         "civic_hive_devouring_swarm_lithoid_nomadic",
@@ -3176,6 +3303,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civic_eager_explorers_negative_effects",
         "origin_tooltip_arc_builders_nomadic_negative_effects",
@@ -3193,6 +3321,7 @@
       "blocks": 45,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -3303,6 +3432,7 @@
       "blocks": 41,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 14,
       "values": [],
       "keys": [
         "trait"
@@ -3321,6 +3451,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "trait_aquatic",
         "trait_cave_dweller",

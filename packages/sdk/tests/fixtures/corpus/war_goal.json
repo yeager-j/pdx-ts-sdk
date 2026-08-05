@@ -11,6 +11,7 @@
       "blocks": 85,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "modifier",
@@ -26,6 +27,44 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 13,
+      "repeated": 3,
+      "scalars": 0,
+      "blocks": 13,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "event_target:great_khan",
+        "from",
+        "has_ai_personality_behaviour",
+        "has_ethic",
+        "relative_power"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "event_target:great_khan"
+        ],
+        [
+          "from"
+        ],
+        [
+          "has_ai_personality_behaviour"
+        ],
+        [
+          "has_ethic"
+        ],
+        [
+          "relative_power"
+        ]
+      ]
+    },
     "casus_belli": {
       "definitions": 87,
       "repeated": 0,
@@ -33,6 +72,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "cb_ae_entertainment",
         "cb_ae_total_war",
@@ -92,6 +132,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "occupied_only"
@@ -108,6 +149,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -123,6 +165,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -138,6 +181,7 @@
       "blocks": 42,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "demand_surrender",
@@ -172,6 +216,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "",
         "wg_raid_contract_no_surrender"
@@ -188,6 +233,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         ""
       ],
@@ -203,6 +249,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "",
         "wg_raid_contract_no_surrender"
@@ -219,6 +266,7 @@
       "blocks": 31,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "always",
@@ -242,6 +290,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no_cb"
       ],
@@ -257,6 +306,7 @@
       "blocks": 51,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "FROM",
@@ -387,6 +437,7 @@
       "blocks": 25,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "custom_tooltip",
@@ -441,6 +492,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "every_system_within_border",
@@ -469,6 +521,7 @@
       "blocks": 83,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 2,
       "values": [],
       "keys": [
         "NOT",
@@ -528,6 +581,7 @@
       "blocks": 85,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 2,
       "values": [],
       "keys": [
         "NAND",
@@ -699,6 +753,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -714,6 +769,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -730,6 +786,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -745,6 +802,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "wg_absorption",
         "wg_ae_domination",
@@ -793,6 +851,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -808,6 +867,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -823,6 +883,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "-100",
         "-1000",
@@ -845,6 +906,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.25",
         "0.67",
@@ -862,6 +924,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -878,6 +941,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.25",
         "0.5",

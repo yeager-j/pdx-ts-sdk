@@ -198,8 +198,13 @@ export function modifierEntry(
     }
     entries.push(kv("desc", key));
   }
-  entries.push(...modifier.when.entries);
-  refs?.push(...modifier.when.refs);
+  // An ungated row emits its operations and nothing else: `when` is optional
+  // (see {@link Modifier.when}), and an absent condition must contribute no
+  // keys rather than an empty one the game would read as a failing gate.
+  if (modifier.when !== undefined) {
+    entries.push(...modifier.when.entries);
+    refs?.push(...modifier.when.refs);
+  }
   return block("modifier", entries);
 }
 

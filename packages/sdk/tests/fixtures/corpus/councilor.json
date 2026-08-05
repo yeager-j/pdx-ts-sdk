@@ -11,6 +11,7 @@
       "blocks": 169,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "inline_script"
@@ -28,6 +29,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1"
       ],
@@ -43,6 +45,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "civic_agrarian_idyll",
         "civic_anglers",
@@ -121,6 +124,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "councilor_curator_archivist_conditional_tooltip",
         "councilor_enclave_trader_conditional_tooltip",
@@ -141,6 +145,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "councilor_chief_medium_effect_tooltip",
         "councilor_criminal_heritage_custom_modifier_desc",
@@ -172,6 +177,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "councilor_storm_callers_modifier_tooltip"
       ],
@@ -187,6 +193,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "councilor_curator_archivist_unlock_title",
         "councilor_enclave_trader_unlock_title",
@@ -206,6 +213,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_icon_councilor_corporate_head_treasure_hunter",
         "GFX_icon_councilor_defense",
@@ -231,6 +239,7 @@
       "blocks": 169,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",
@@ -264,6 +273,7 @@
       "blocks": 179,
       "bareValues": 179,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "commander",
         "official",
@@ -281,6 +291,7 @@
       "blocks": 162,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "add_base_country_intel",
@@ -874,6 +885,7 @@
       "blocks": 10,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "always",
@@ -895,6 +907,7 @@
       "blocks": 28,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "always",
@@ -940,6 +953,7 @@
       "blocks": 11,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "commercial_pacts_upkeep_mult",

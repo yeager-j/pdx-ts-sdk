@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "10",
@@ -31,6 +32,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1000",
         "1600"
@@ -47,6 +49,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0.1",
         "0.25"
@@ -63,6 +66,7 @@
       "blocks": 7,
       "bareValues": 7,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "bio_titan",
         "colossus",
@@ -103,6 +107,7 @@
       "blocks": 7,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",

@@ -11,6 +11,7 @@
       "blocks": 46,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "base",
@@ -33,6 +34,270 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 40,
+      "repeated": 37,
+      "scalars": 0,
+      "blocks": 40,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "any_country",
+        "any_neighbor_country",
+        "any_owned_planet",
+        "any_playable_country",
+        "any_subject",
+        "blocks_ai_synthetic_evolution",
+        "blocks_disruptive_gameplay",
+        "count_archaeological_site",
+        "count_envoy",
+        "count_planet_within_border",
+        "count_playable_country",
+        "galaxy_percentage",
+        "has_ai_personality",
+        "has_ascension_perk",
+        "has_civic",
+        "has_country_flag",
+        "has_crisis_level",
+        "has_engineered_evolution_synergy",
+        "has_ethic",
+        "has_flesh_is_weak_anti_synergy",
+        "has_galactic_wonders",
+        "has_mind_over_matter_anti_synergy",
+        "has_monthly_income",
+        "has_organo_machine_interfacing_assimilator_synergy",
+        "has_origin",
+        "has_synthetic_age_anti_synergy",
+        "has_synthetic_evolution_anti_synergy",
+        "has_synthetic_evolution_synergy",
+        "has_tradition",
+        "has_valid_civic",
+        "is_galactic_custodian",
+        "is_genocidal_infernal",
+        "is_hive_empire",
+        "is_homicidal",
+        "is_infernal_empire",
+        "is_lithoid",
+        "is_machine_empire",
+        "is_materialist",
+        "is_megacorp",
+        "is_militarist",
+        "is_pacifist",
+        "is_spiritualist",
+        "is_xenophile",
+        "is_xenophobe",
+        "num_owned_planets",
+        "resource_stockpile_compare",
+        "subjects",
+        "used_naval_capacity_percent",
+        "vassals",
+        "years_passed"
+      ],
+      "keysByDefinition": [
+        [
+          "NOR",
+          "NOT",
+          "OR",
+          "is_galactic_custodian"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "any_playable_country",
+          "blocks_disruptive_gameplay",
+          "count_playable_country",
+          "galaxy_percentage",
+          "has_tradition",
+          "is_genocidal_infernal",
+          "is_homicidal",
+          "is_infernal_empire"
+        ],
+        [
+          "NOR",
+          "NOT",
+          "any_playable_country",
+          "blocks_disruptive_gameplay",
+          "count_playable_country",
+          "galaxy_percentage",
+          "has_tradition",
+          "is_homicidal",
+          "is_infernal_empire"
+        ],
+        [
+          "NOR",
+          "any_country"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "OR",
+          "any_playable_country",
+          "any_subject",
+          "galaxy_percentage",
+          "has_ascension_perk",
+          "has_country_flag",
+          "has_tradition",
+          "vassals"
+        ],
+        [
+          "NOT",
+          "any_playable_country",
+          "galaxy_percentage",
+          "has_ascension_perk",
+          "has_civic",
+          "has_country_flag",
+          "has_tradition",
+          "is_homicidal",
+          "is_lithoid",
+          "is_spiritualist",
+          "is_xenophile"
+        ],
+        [
+          "NOT",
+          "count_planet_within_border"
+        ],
+        [
+          "OR",
+          "any_country",
+          "any_owned_planet",
+          "has_mind_over_matter_anti_synergy",
+          "has_origin",
+          "is_materialist",
+          "is_spiritualist"
+        ],
+        [
+          "OR",
+          "has_ascension_perk",
+          "has_crisis_level",
+          "is_machine_empire",
+          "is_militarist",
+          "is_pacifist",
+          "is_xenophobe"
+        ],
+        [
+          "OR",
+          "has_ethic"
+        ],
+        [
+          "OR",
+          "has_ethic",
+          "is_pacifist",
+          "years_passed"
+        ],
+        [
+          "OR",
+          "has_origin"
+        ],
+        [
+          "OR",
+          "num_owned_planets",
+          "years_passed"
+        ],
+        [
+          "any_country"
+        ],
+        [
+          "any_country",
+          "blocks_ai_synthetic_evolution",
+          "has_synthetic_evolution_anti_synergy",
+          "has_synthetic_evolution_synergy"
+        ],
+        [
+          "any_country",
+          "has_engineered_evolution_synergy"
+        ],
+        [
+          "any_country",
+          "has_flesh_is_weak_anti_synergy",
+          "is_materialist"
+        ],
+        [
+          "any_country",
+          "has_organo_machine_interfacing_assimilator_synergy"
+        ],
+        [
+          "any_country",
+          "has_synthetic_age_anti_synergy"
+        ],
+        [
+          "any_neighbor_country",
+          "has_ai_personality",
+          "has_valid_civic"
+        ],
+        [
+          "any_neighbor_country",
+          "has_civic",
+          "has_tradition",
+          "is_xenophobe"
+        ],
+        [
+          "count_archaeological_site",
+          "has_ethic",
+          "is_spiritualist",
+          "is_xenophile",
+          "is_xenophobe",
+          "resource_stockpile_compare"
+        ],
+        [
+          "count_envoy",
+          "subjects"
+        ],
+        [
+          "has_ascension_perk",
+          "has_ethic",
+          "has_monthly_income",
+          "num_owned_planets",
+          "used_naval_capacity_percent"
+        ],
+        [
+          "has_civic",
+          "is_xenophobe"
+        ],
+        [
+          "has_ethic"
+        ],
+        [
+          "has_ethic",
+          "has_galactic_wonders"
+        ],
+        [
+          "has_ethic",
+          "is_megacorp",
+          "is_pacifist",
+          "is_xenophile"
+        ],
+        [
+          "has_ethic",
+          "is_xenophile",
+          "is_xenophobe"
+        ],
+        [
+          "has_origin",
+          "has_valid_civic",
+          "is_materialist",
+          "is_xenophobe"
+        ],
+        [
+          "has_origin",
+          "is_hive_empire",
+          "is_xenophobe"
+        ],
+        [
+          "has_valid_civic"
+        ],
+        [
+          "num_owned_planets"
+        ]
+      ]
+    },
     "custom_tooltip": {
       "definitions": 2,
       "repeated": 1,
@@ -40,6 +305,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ap_defender_of_the_galaxy_modifier_desc",
         "ap_defender_of_the_galaxy_voidworm_modifier_desc",
@@ -57,6 +323,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ap_technological_ascendancy_tt"
       ],
@@ -72,6 +339,7 @@
       "blocks": 34,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "add_attunement_the_composer_of_strands",
@@ -306,6 +574,7 @@
       "blocks": 38,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "activate_crisis_progression",
@@ -368,6 +637,7 @@
       "blocks": 33,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOR",
@@ -426,6 +696,7 @@
       "blocks": 49,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOR",
@@ -661,6 +932,7 @@
       "blocks": 8,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "custom_tooltip",
@@ -738,6 +1010,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ap_galactic_contender_voidworms_tt",
         "synthetic_age_tooltip_machine_age"
@@ -754,6 +1027,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -770,6 +1044,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -786,6 +1061,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -802,6 +1078,7 @@
       "blocks": 5,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "add_attunement_the_cradle_of_souls",
@@ -869,6 +1146,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "custom_tooltip",
@@ -890,6 +1168,7 @@
       "blocks": 8,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "has_first_contact_dlc",
@@ -933,6 +1212,7 @@
       "blocks": 4,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "factor"
@@ -950,6 +1230,7 @@
       "blocks": 6,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "add_attunement_the_cradle_of_souls",

@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -26,6 +27,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -41,6 +43,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -56,6 +59,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "assimilation",
         "bio_trophy",
@@ -93,6 +97,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -108,6 +113,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -123,6 +129,7 @@
       "blocks": 14,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "category_psionics_draw_chance_mult",
@@ -169,6 +176,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -184,6 +192,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -200,6 +209,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -215,6 +225,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "jobs/academia_recruiter_naval_cap_add",
         "jobs/automodding_priority_alloys",
@@ -262,6 +273,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -278,6 +290,7 @@
       "blocks": 62,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "category",
@@ -297,6 +310,7 @@
       "blocks": 52,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 3,
       "values": [],
       "keys": [
         "arkship_action_speed",
@@ -416,6 +430,7 @@
       "blocks": 317,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "NOR",
@@ -730,6 +745,7 @@
       "blocks": 290,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "has_owner",
@@ -823,6 +839,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -838,6 +855,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -853,6 +871,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -868,6 +887,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -884,6 +904,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -900,6 +921,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -916,6 +938,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no",
         "yes"
@@ -932,6 +955,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "can_fill_drone_job",
         "can_fill_precursor_job",
@@ -951,6 +975,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "purge_clips",
         "purge_cosmogenesis",
@@ -968,6 +993,7 @@
       "blocks": 265,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 4,
       "values": [],
       "keys": [
         "category",
@@ -1017,6 +1043,7 @@
       "blocks": 342,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "default",
@@ -1039,6 +1066,7 @@
       "blocks": 342,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "building_icon",
@@ -1085,6 +1113,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "building_amusement_megaplex",
         "building_archaeostudies_faculty",
@@ -1163,6 +1192,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "BATTLE_THRALL_JOB_TRIGGER",
         "DRONE_JOB_TRIGGER",
@@ -1184,6 +1214,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "job_augmentor_drone_research_desc",
         "job_augmentor_growth_desc",
@@ -1201,6 +1232,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "aid_worker",
         "alloy_drone",
@@ -1279,6 +1311,7 @@
       "blocks": 49,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "building_icon",
@@ -1347,6 +1380,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "aesthetic_wonders_holomuseum",
         "bio_electric_stimulator_3",
@@ -1414,6 +1448,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "BATTLE_THRALL_JOB_TRIGGER",
         "DRONE_JOB_TRIGGER",
@@ -1432,6 +1467,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "archaeoengineers",
         "astral_meteorologist",
@@ -1510,6 +1546,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "angler",
         "archaeoengineers",
@@ -1588,6 +1625,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "archaeoengineers",
         "ashbroker",
@@ -1666,6 +1704,7 @@
       "blocks": 49,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR",
@@ -1937,6 +1976,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "10",
@@ -1975,6 +2015,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "defensive_stations_tracking_add",
@@ -1994,6 +2035,7 @@
       "blocks": 255,
       "bareValues": 198,
       "bareBlocks": 0,
+      "emptyBlocks": 57,
       "values": [
         "alloys",
         "amenities",
@@ -2038,6 +2080,7 @@
       "blocks": 11,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "artisan_jobs_bonus_workforce_mult",
@@ -2106,6 +2149,7 @@
       "blocks": 120,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "artisan_jobs_bonus_workforce_mult",
@@ -2351,6 +2395,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "bonus_pop_growth",
@@ -2370,6 +2415,7 @@
       "blocks": 6,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "bonus_pop_growth",
@@ -2389,6 +2435,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "tags",
@@ -2408,6 +2455,7 @@
       "blocks": 2,
       "bareValues": 2,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "psionic_aura"
       ],
@@ -2423,6 +2471,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "OR"
@@ -2440,6 +2489,7 @@
       "blocks": 286,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "add",
@@ -2477,6 +2527,354 @@
         ],
         [
           "weight"
+        ]
+      ]
+    },
+    "weight.modifier": {
+      "definitions": 138,
+      "repeated": 81,
+      "scalars": 0,
+      "blocks": 138,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 4,
+      "values": [],
+      "keys": [
+        "AND",
+        "NOT",
+        "OR",
+        "can_fill_specialist_job_trigger",
+        "can_take_servant_job",
+        "colony",
+        "colony.controller?",
+        "colony?",
+        "exists",
+        "has_citizenship_rights",
+        "has_living_standard",
+        "has_pop_group_flag",
+        "has_slavery_type",
+        "has_trait",
+        "is_being_assimilated",
+        "is_domestic_servant",
+        "is_enslaved",
+        "is_lithoid",
+        "is_materialist",
+        "is_militarist",
+        "is_pacifist",
+        "is_spiritualist",
+        "owner",
+        "owner?",
+        "pop_has_happiness",
+        "species",
+        "years_passed"
+      ],
+      "keysByDefinition": [
+        [
+          "AND",
+          "NOT",
+          "can_take_servant_job",
+          "colony?",
+          "has_citizenship_rights"
+        ],
+        [
+          "AND",
+          "NOT",
+          "can_take_servant_job",
+          "colony?",
+          "has_citizenship_rights",
+          "has_living_standard",
+          "has_trait"
+        ],
+        [
+          "NOT",
+          "OR",
+          "can_take_servant_job",
+          "has_citizenship_rights"
+        ],
+        [
+          "NOT",
+          "OR",
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "has_trait"
+        ],
+        [
+          "NOT",
+          "OR",
+          "can_take_servant_job",
+          "has_trait",
+          "is_enslaved",
+          "owner"
+        ],
+        [
+          "NOT",
+          "OR",
+          "can_take_servant_job",
+          "is_enslaved",
+          "owner"
+        ],
+        [
+          "NOT",
+          "OR",
+          "colony?",
+          "has_citizenship_rights",
+          "has_trait",
+          "is_domestic_servant"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "colony",
+          "has_citizenship_rights",
+          "has_slavery_type",
+          "is_enslaved",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "colony?",
+          "has_citizenship_rights",
+          "has_slavery_type",
+          "has_trait",
+          "is_enslaved",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "colony?",
+          "has_citizenship_rights",
+          "has_slavery_type",
+          "is_enslaved",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "colony?",
+          "has_slavery_type",
+          "has_trait",
+          "is_enslaved",
+          "species"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "has_citizenship_rights"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "has_living_standard"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "has_living_standard",
+          "has_slavery_type",
+          "has_trait",
+          "is_enslaved"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "has_living_standard",
+          "has_slavery_type",
+          "is_enslaved"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "has_slavery_type",
+          "has_trait",
+          "is_enslaved",
+          "owner"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "has_slavery_type",
+          "is_enslaved"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "has_slavery_type",
+          "is_enslaved",
+          "owner?"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "has_trait"
+        ],
+        [
+          "NOT",
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "owner?"
+        ],
+        [
+          "NOT",
+          "colony.controller?",
+          "has_citizenship_rights"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "can_fill_specialist_job_trigger",
+          "can_take_servant_job",
+          "has_trait",
+          "is_enslaved"
+        ],
+        [
+          "OR",
+          "can_fill_specialist_job_trigger",
+          "can_take_servant_job",
+          "is_enslaved",
+          "owner?"
+        ],
+        [
+          "OR",
+          "colony.controller?"
+        ],
+        [
+          "OR",
+          "colony.controller?",
+          "has_pop_group_flag"
+        ],
+        [
+          "can_take_servant_job",
+          "colony?",
+          "has_trait"
+        ],
+        [
+          "can_take_servant_job",
+          "has_citizenship_rights",
+          "has_slavery_type",
+          "has_trait",
+          "is_enslaved"
+        ],
+        [
+          "can_take_servant_job",
+          "has_trait",
+          "is_enslaved"
+        ],
+        [
+          "can_take_servant_job",
+          "is_enslaved"
+        ],
+        [
+          "can_take_servant_job",
+          "owner"
+        ],
+        [
+          "colony"
+        ],
+        [
+          "colony",
+          "colony.controller?",
+          "owner?"
+        ],
+        [
+          "colony",
+          "exists",
+          "has_trait",
+          "owner",
+          "owner?",
+          "years_passed"
+        ],
+        [
+          "colony",
+          "has_trait",
+          "owner?"
+        ],
+        [
+          "colony.controller?"
+        ],
+        [
+          "colony.controller?",
+          "colony?"
+        ],
+        [
+          "colony?"
+        ],
+        [
+          "colony?",
+          "exists",
+          "has_trait",
+          "owner",
+          "years_passed"
+        ],
+        [
+          "colony?",
+          "has_slavery_type",
+          "has_trait",
+          "is_enslaved",
+          "species"
+        ],
+        [
+          "colony?",
+          "has_trait",
+          "owner?"
+        ],
+        [
+          "colony?",
+          "is_enslaved",
+          "owner?",
+          "pop_has_happiness"
+        ],
+        [
+          "exists",
+          "has_trait",
+          "owner",
+          "owner?",
+          "years_passed"
+        ],
+        [
+          "exists",
+          "has_trait",
+          "owner",
+          "years_passed"
+        ],
+        [
+          "has_citizenship_rights",
+          "has_slavery_type",
+          "is_enslaved"
+        ],
+        [
+          "has_citizenship_rights",
+          "has_trait"
+        ],
+        [
+          "is_being_assimilated"
+        ],
+        [
+          "is_enslaved"
+        ],
+        [
+          "is_lithoid"
+        ],
+        [
+          "is_materialist",
+          "is_spiritualist"
+        ],
+        [
+          "is_militarist",
+          "is_pacifist"
+        ],
+        [
+          "owner"
         ]
       ]
     }

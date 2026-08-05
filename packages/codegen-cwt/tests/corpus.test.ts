@@ -432,6 +432,110 @@ describe("descent below a repeated struct's entry", () => {
   });
 });
 
+describe("weight-modifier descent", () => {
+  // The real strip set: `modifier_rule.cwt`'s two maths enums plus `desc`.
+  // Abbreviated to the members these cases write.
+  const STRIPPED = new Set(["add", "factor", "mult", "round", "desc"]);
+  const AI_WEIGHT: DescentNode = {
+    field: "ai_weight",
+    mode: "weightModifiers",
+    strippedKeys: STRIPPED,
+    children: [],
+  };
+
+  it("records a row's gating keys and nothing the operations own", () => {
+    const corpus = corpusOf(
+      `
+      one = {
+        ai_weight = {
+          base = 1
+          modifier = { factor = 2 desc = some_key is_country_type = default }
+        }
+      }
+    `,
+      [AI_WEIGHT]
+    );
+    expect([...(corpus.occurrences.get("ai_weight.modifier")?.keys ?? [])]).toEqual([
+      "is_country_type",
+    ]);
+    // The weight block's own members stay where the top-level observation
+    // already sees them: descending them would invent interior paths the
+    // emitter never claimed, since a weight block has no CWT fields table.
+    expect(corpus.occurrences.has("ai_weight.base")).toBe(false);
+    expect(corpus.occurrences.has("ai_weight.modifier.factor")).toBe(false);
+  });
+
+  it("keeps each definition's own condition set apart", () => {
+    // What the per-definition scope check reads: two definitions that each pick
+    // one scope are not one definition that mixed them.
+    const corpus = corpusOf(
+      `
+      one = { ai_weight = { modifier = { add = 1 is_capital = yes } } }
+      two = { ai_weight = { modifier = { add = 1 has_ship_flag = x } } }
+    `,
+      [AI_WEIGHT]
+    );
+    expect(
+      corpus.occurrences.get("ai_weight.modifier")?.keysByDefinition.map((keys) => [...keys])
+    ).toEqual([["is_capital"], ["has_ship_flag"]]);
+  });
+
+  it("counts an ungated row as an occurrence with no keys", () => {
+    // 159 shipped definitions write a row with no condition. The row is still
+    // evidence that the
+    // path exists — it just says nothing about which scope it runs in.
+    const corpus = corpusOf(
+      `
+      one = { ai_weight = { modifier = { factor = 0 } } }
+    `,
+      [AI_WEIGHT]
+    );
+    const observation = corpus.occurrences.get("ai_weight.modifier");
+    expect(observation?.definitions).toBe(1);
+    expect(observation?.keys.size).toBe(0);
+    expect(observation?.emptyBlocks).toBe(1);
+  });
+
+  it("treats one weight block as the arity boundary", () => {
+    const corpus = corpusOf(
+      `
+      one = {
+        ai_weight = { modifier = { factor = 2 always = yes } }
+        ai_weight = { modifier = { factor = 3 always = yes } }
+      }
+      two = {
+        ai_weight = {
+          modifier = { factor = 2 always = yes }
+          modifier = { factor = 3 always = no }
+        }
+      }
+    `,
+      [AI_WEIGHT]
+    );
+    expect(corpus.occurrences.get("ai_weight.modifier")?.definitions).toBe(2);
+    expect(corpus.occurrences.get("ai_weight.modifier")?.repeated).toBe(1);
+  });
+
+  it("leaves the sibling row kinds alone", () => {
+    // A `complex_trigger_modifier`'s members are its own shape, not conditions,
+    // and reading them through the modifier filter would report `mode` and
+    // `trigger` as trigger keys. Tracked separately as SDK-82.
+    const corpus = corpusOf(
+      `
+      one = {
+        ai_weight = {
+          complex_trigger_modifier = { trigger = count_owned_pops mode = add }
+          scaled_modifier = { scope = owner calc = pop_amount factor = 2 }
+        }
+      }
+    `,
+      [AI_WEIGHT]
+    );
+    expect(corpus.occurrences.has("ai_weight.modifier")).toBe(false);
+    expect(corpus.occurrences.has("ai_weight.complex_trigger_modifier")).toBe(false);
+  });
+});
+
 /** Every path a descent tree records under, rooted at `prefix`. */
 function descentPaths(nodes: readonly DescentNode[], prefix: string): string[] {
   return nodes.flatMap((node) => {
@@ -478,6 +582,34 @@ describe("the emitter's descent channel", () => {
     // no walk can report an interior nothing promised to author.
     const emitted = new Set(emission.emittedFields.map((field) => field.field));
     expect(emission.corpusDescents.filter((node) => !emitted.has(node.field))).toEqual([]);
+  });
+
+  it("describes a weight block's modifier rows on both sides", () => {
+    // A weight block has no CWT fields table, so its interior is stated by the
+    // lowering rather than derived from one. Both halves are asserted together
+    // for the same reason every other descent is: a descent whose emitted field
+    // does not exist reports an interior nothing claims to author.
+    const emitted = emitRegistry("tradition");
+    const descent = emitted.corpusDescents.find((node) => node.field === "ai_weight");
+    expect(descent?.mode).toBe("weightModifiers");
+    // The strip set is the grammar's own — both maths enums plus `desc` — not a
+    // hand-kept list, so what survives it is exactly the spliced trigger.
+    expect(descent?.strippedKeys?.has("factor")).toBe(true);
+    expect(descent?.strippedKeys?.has("round")).toBe(true);
+    expect(descent?.strippedKeys?.has("desc")).toBe(true);
+    expect(descent?.strippedKeys?.has("is_country_type")).toBe(false);
+    const row = emitted.nestedEmittedFields.find(
+      (field) => field.field === "tradition.ai_weight.modifier"
+    );
+    expect(row).toEqual({
+      field: "tradition.ai_weight.modifier",
+      shape: "weightModifier",
+      repeated: true,
+      clause: "trigger",
+      // The holder's scope: `Modifier.when` is a `Trigger<S>` at whatever S the
+      // weight block itself was lowered at.
+      scope: ["country"],
+    });
   });
 
   it("claims a field at every level of a repeated struct's descent tree", () => {

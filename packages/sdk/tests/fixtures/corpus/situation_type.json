@@ -11,6 +11,7 @@
       "blocks": 64,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -44,6 +45,7 @@
       "blocks": 89,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "ai_weight",
@@ -432,6 +434,7 @@
       "blocks": 36,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "base",
@@ -447,6 +450,42 @@
         ]
       ]
     },
+    "approach.ai_weight.modifier": {
+      "definitions": 15,
+      "repeated": 12,
+      "scalars": 0,
+      "blocks": 15,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "check_variable",
+        "current_stage",
+        "owner",
+        "situation_progress",
+        "target"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "owner",
+          "target"
+        ],
+        [
+          "check_variable",
+          "owner",
+          "situation_progress"
+        ],
+        [
+          "current_stage"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
     "approach.allow": {
       "definitions": 26,
       "repeated": 0,
@@ -454,6 +493,7 @@
       "blocks": 26,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "NOR",
@@ -501,6 +541,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "approach_situation_the_seal_pump_exotic_gases_tt",
         "approach_situation_the_seal_weave_astral_fabric_tt",
@@ -521,6 +562,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -536,6 +578,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_situation_approach_alloys",
         "GFX_situation_approach_amenities",
@@ -599,6 +642,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_situation_approach_bg_green",
         "GFX_situation_approach_bg_red",
@@ -616,6 +660,7 @@
       "blocks": 42,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "all_technology_research_speed",
@@ -892,6 +937,7 @@
       "blocks": 86,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "abort_situation",
@@ -1000,6 +1046,7 @@
       "blocks": 19,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 2,
       "values": [],
       "keys": [
         "NOT",
@@ -1050,6 +1097,7 @@
       "blocks": 29,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "category",
@@ -1092,6 +1140,7 @@
       "blocks": 4,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "job_soldier_stability_add",
@@ -1131,6 +1180,7 @@
       "blocks": 7,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "country_alloys_produces_mult",
@@ -1170,6 +1220,7 @@
       "blocks": 3,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "modifier",
@@ -1200,6 +1251,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "negative",
         "neutral",
@@ -1217,6 +1269,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "negative"
       ],
@@ -1232,6 +1285,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_situation_exploding_planet",
         "GFX_situation_outcome_ascension",
@@ -1258,6 +1312,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_situation_outcome_frame_blue",
         "GFX_situation_outcome_frame_green",
@@ -1275,6 +1330,7 @@
       "blocks": 5,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "situation_breach_shroud_desc",
         "situation_end_of_the_cycle_desc",
@@ -1302,6 +1358,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "situation_a_rift_in_space_desc",
         "situation_a_rift_in_space_desc_riftworld_origin",
@@ -1333,6 +1390,7 @@
       "blocks": 5,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -1371,6 +1429,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "positive"
       ],
@@ -1386,6 +1445,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_situation_outcome_meh",
         "GFX_situation_outcome_negative",
@@ -1405,6 +1465,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_situation_outcome_frame_blue",
         "GFX_situation_outcome_frame_green",
@@ -1422,6 +1483,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0",
         "1",
@@ -1450,6 +1512,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "situations/consume_world_planet_pictures"
       ],
@@ -1465,6 +1528,7 @@
       "blocks": 4,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 2,
       "values": [],
       "keys": [
         "logistic_growth_mult",
@@ -1497,6 +1561,7 @@
       "blocks": 90,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "add",
@@ -1526,6 +1591,216 @@
         ]
       ]
     },
+    "monthly_progress.modifier": {
+      "definitions": 82,
+      "repeated": 75,
+      "scalars": 0,
+      "blocks": 82,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 15,
+      "values": [],
+      "keys": [
+        "AND",
+        "NOR",
+        "NOT",
+        "OR",
+        "any_country",
+        "any_playable_country",
+        "any_system",
+        "check_variable",
+        "check_variable_arithmetic",
+        "count_playable_country",
+        "current_situation_approach",
+        "current_stage",
+        "event_target:aberrant_country",
+        "exists",
+        "has_situation_flag",
+        "is_active_resolution",
+        "is_difficulty",
+        "is_variable_set",
+        "mid_game_years_passed",
+        "owner",
+        "situation_monthly_progress",
+        "situation_progress",
+        "target",
+        "target.solar_system",
+        "target.solar_system.starbase",
+        "target.space_owner"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "AND",
+          "current_situation_approach"
+        ],
+        [
+          "AND",
+          "current_situation_approach",
+          "has_situation_flag",
+          "owner"
+        ],
+        [
+          "AND",
+          "current_situation_approach",
+          "owner"
+        ],
+        [
+          "NOR",
+          "OR",
+          "check_variable",
+          "current_situation_approach",
+          "current_stage",
+          "has_situation_flag",
+          "is_difficulty",
+          "owner"
+        ],
+        [
+          "NOT",
+          "OR",
+          "current_situation_approach",
+          "has_situation_flag",
+          "owner"
+        ],
+        [
+          "NOT",
+          "any_country",
+          "exists",
+          "is_difficulty",
+          "owner",
+          "situation_monthly_progress",
+          "target",
+          "target.solar_system",
+          "target.solar_system.starbase"
+        ],
+        [
+          "NOT",
+          "current_situation_approach"
+        ],
+        [
+          "NOT",
+          "current_situation_approach",
+          "is_variable_set",
+          "situation_progress",
+          "target"
+        ],
+        [
+          "OR",
+          "check_variable",
+          "check_variable_arithmetic",
+          "is_difficulty",
+          "owner",
+          "situation_monthly_progress"
+        ],
+        [
+          "OR",
+          "current_situation_approach"
+        ],
+        [
+          "OR",
+          "owner"
+        ],
+        [
+          "any_country",
+          "any_system"
+        ],
+        [
+          "any_playable_country",
+          "exists",
+          "is_active_resolution",
+          "owner",
+          "situation_progress"
+        ],
+        [
+          "any_playable_country",
+          "exists",
+          "owner"
+        ],
+        [
+          "check_variable",
+          "current_situation_approach",
+          "has_situation_flag"
+        ],
+        [
+          "check_variable_arithmetic",
+          "current_situation_approach",
+          "owner"
+        ],
+        [
+          "check_variable_arithmetic",
+          "event_target:aberrant_country",
+          "has_situation_flag"
+        ],
+        [
+          "check_variable_arithmetic",
+          "owner"
+        ],
+        [
+          "count_playable_country",
+          "current_situation_approach",
+          "owner"
+        ],
+        [
+          "current_situation_approach"
+        ],
+        [
+          "current_situation_approach",
+          "current_stage"
+        ],
+        [
+          "current_situation_approach",
+          "has_situation_flag"
+        ],
+        [
+          "current_situation_approach",
+          "has_situation_flag",
+          "owner"
+        ],
+        [
+          "current_situation_approach",
+          "has_situation_flag",
+          "target"
+        ],
+        [
+          "current_situation_approach",
+          "owner"
+        ],
+        [
+          "current_stage"
+        ],
+        [
+          "current_stage",
+          "has_situation_flag",
+          "owner"
+        ],
+        [
+          "has_situation_flag"
+        ],
+        [
+          "has_situation_flag",
+          "mid_game_years_passed",
+          "owner"
+        ],
+        [
+          "has_situation_flag",
+          "owner"
+        ],
+        [
+          "is_difficulty",
+          "owner",
+          "situation_monthly_progress"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "target"
+        ],
+        [
+          "target.space_owner"
+        ]
+      ]
+    },
     "on_abort": {
       "definitions": 34,
       "repeated": 0,
@@ -1533,6 +1808,7 @@
       "blocks": 34,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "cleanup_separatism_situation",
@@ -1589,6 +1865,7 @@
       "blocks": 29,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "custom_tooltip",
@@ -1631,6 +1908,7 @@
       "blocks": 59,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 2,
       "values": [],
       "keys": [
         "events",
@@ -1657,6 +1935,7 @@
       "blocks": 44,
       "bareValues": 44,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "astral_situation.10",
         "astral_situation.25",
@@ -1735,6 +2014,7 @@
       "blocks": 25,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 2,
       "values": [],
       "keys": [
         "1",
@@ -1841,6 +2121,7 @@
       "blocks": 88,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 3,
       "values": [],
       "keys": [
         "country_defaulted_in_situation_tooltip",
@@ -1924,6 +2205,7 @@
       "blocks": 37,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 2,
       "values": [],
       "keys": [
         "create_black_needle_country",
@@ -2030,6 +2312,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "nomad_max_reserves_breakdown"
       ],
@@ -2045,6 +2328,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "situation_nomad_economy_capacity_title"
       ],
@@ -2060,6 +2344,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "situation_nomad_economy_reserves_current"
       ],
@@ -2075,6 +2360,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "yes"
       ],
@@ -2090,6 +2376,7 @@
       "blocks": 4,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_evt_a_rift_in_space",
         "GFX_evt_acquire_asset",
@@ -2172,6 +2459,7 @@
       "blocks": 2,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "is_nomadic"
@@ -2189,6 +2477,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "bidirectional",
         "monodirectional"
@@ -2205,6 +2494,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "no"
       ],
@@ -2220,6 +2510,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "ambitions",
         "astral_rifts",
@@ -2240,6 +2531,7 @@
       "blocks": 90,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "deficit_first",
@@ -2457,6 +2749,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "light_green",
         "light_orange",
@@ -2475,6 +2768,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "approach_outcome_caeli",
         "approach_outcome_steris",
@@ -2548,6 +2842,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "1",
         "10",
@@ -2629,6 +2924,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_situation_stage_1",
         "GFX_situation_stage_2",
@@ -2659,6 +2955,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "GFX_situation_stage_frame_blue",
         "GFX_situation_stage_frame_gray",
@@ -2680,6 +2977,7 @@
       "blocks": 13,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 1,
       "values": [],
       "keys": [
         "all_technology_research_speed",
@@ -2803,6 +3101,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "target.solar_system"
@@ -2820,6 +3119,7 @@
       "blocks": 60,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 11,
       "values": [],
       "keys": [
         "else",
@@ -2909,6 +3209,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "20",
         "25",
@@ -2925,6 +3226,24 @@
         ]
       ]
     },
+    "stages.section_weight.modifier": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [
+          "owner?"
+        ]
+      ]
+    },
     "stages.target_modifier": {
       "definitions": 6,
       "repeated": 0,
@@ -2932,6 +3251,7 @@
       "blocks": 6,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "country_unity_produces_mult",
@@ -2995,6 +3315,7 @@
       "blocks": 7,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "country_situations_physics_research_produces_add",
@@ -3051,6 +3372,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "planet_stability_add",
@@ -3070,6 +3392,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "0"
       ],
@@ -3085,6 +3408,7 @@
       "blocks": 3,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "biological_logistic_growth_mult",
@@ -3113,6 +3437,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "situation_breach_shroud",
         "situation_end_of_the_cycle",
@@ -3137,6 +3462,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "situation_a_rift_in_space",
         "situation_a_rift_in_space_riftworld"
@@ -3153,6 +3479,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -3172,6 +3499,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "add",
@@ -3191,6 +3519,7 @@
       "blocks": 15,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "text",
@@ -3210,6 +3539,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "situation_arkship_consuming_world_absent_desc",
         "situation_augmentation_center_needed_desc",
@@ -3242,6 +3572,7 @@
       "blocks": 15,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -3294,6 +3625,7 @@
       "blocks": 9,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "arkship_action_speed",

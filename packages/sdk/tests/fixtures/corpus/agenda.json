@@ -11,6 +11,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [],
       "keysByDefinition": [
@@ -24,6 +25,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "3800",
         "value:agenda_mind_over_matter_cost"
@@ -40,6 +42,7 @@
       "blocks": 31,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "base",
@@ -55,6 +58,34 @@
         ]
       ]
     },
+    "ai_weight.modifier": {
+      "definitions": 12,
+      "repeated": 3,
+      "scalars": 0,
+      "blocks": 12,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "any_owned_species",
+        "count_owned_fleet",
+        "has_ap_pending"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "count_owned_fleet"
+        ],
+        [
+          "any_owned_species"
+        ],
+        [
+          "has_ap_pending"
+        ]
+      ]
+    },
     "allow": {
       "definitions": 86,
       "repeated": 0,
@@ -62,6 +93,7 @@
       "blocks": 86,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NOT",
@@ -128,6 +160,7 @@
       "blocks": 44,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "add_resource",
@@ -232,6 +265,7 @@
       "blocks": 0,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [
         "agenda_a_higher_purpose_finish",
         "agenda_augmentation_product_launch_finish",
@@ -310,6 +344,7 @@
       "blocks": 1,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "hidden_effect"
@@ -327,6 +362,7 @@
       "blocks": 71,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "add_base_country_intel",
@@ -783,6 +819,7 @@
       "blocks": 90,
       "bareValues": 0,
       "bareBlocks": 0,
+      "emptyBlocks": 0,
       "values": [],
       "keys": [
         "NAND",
