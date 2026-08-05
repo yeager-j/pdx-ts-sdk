@@ -555,9 +555,8 @@ async function main(): Promise<void> {
     "event-definers.ts",
     header(commit, ["events/events.cwt"]) +
       'import { buildEvent } from "../events/lower.ts";\n' +
-      'import type { EventDef, EventRef } from "../events/types.ts";\n' +
+      'import type { EventDef, EventItem, EventRef } from "../events/types.ts";\n' +
       'import { assertNamespace } from "../authoring/feature.ts";\n' +
-      'import type { EventItem } from "../authoring/feature.ts";\n' +
       'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.definerCode
@@ -967,13 +966,14 @@ function contentDefiners(
     .filter((content) => CONTENT_PATCH_REGISTRIES.has(content.registry))
     .map((content) => content.emission.typeName);
   const refImports = contents.some((content) => CONTENT_CONTRIBUTION_SINKS.has(content.registry));
+  const contentItemTypes = [...runtimeItemTypes].filter((name) => !name.endsWith("PatchItem"));
   const imports =
-    importList("../authoring/feature.ts", [...runtimeItemTypes]) +
+    importList("../content/types.ts", contentItemTypes) +
     (refImports ? 'import { refId, type TypedRef } from "./refs.ts";\n' : "") +
     patchNames
       .map(
         (name) =>
-          `import { patch${name} as transform${name}, type ${name}Patch } ` +
+          `import { patch${name} as transform${name}, type ${name}Patch, type ${name}PatchItem } ` +
           'from "../stellaris/vanilla/patch.ts";\n' +
           `import type { Parsed${name} } from "../stellaris/vanilla/view.ts";\n`
       )
@@ -997,7 +997,7 @@ function contentDefiners(
       'import type { ScopeName } from "./scopes.ts";\n'
     : "";
   const capabilityImports =
-    'import type { ContentItem } from "../authoring/feature.ts";\n' +
+    'import type { ContentItem } from "../content/types.ts";\n' +
     (capabilityRuntimeDefiners.size === 0
       ? ""
       : `import { ${[...capabilityRuntimeDefiners].sort().join(", ")} } from "./content-definers.ts";\n`) +

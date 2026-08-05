@@ -24,7 +24,7 @@ export type {
   UndeclaredFrom,
 } from "./script/effects/types.ts";
 export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
-export type { SituationTargetContract } from "./situations.ts";
+export type { SituationTargetContract } from "./script/effects/situations.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
 export { onActions } from "./generated/on-actions.ts";
 export type { OnActionRef } from "./events/on-actions.ts";
@@ -225,7 +225,8 @@ export type {
   UniversalModifiers,
   UnscopedModifierRecorder,
 } from "./generated/modifiers.ts";
-export type { BuildOptions, EmittedFile, ModConfig, PureMod } from "./build.ts";
+export type { BuildOptions, ModConfig } from "./compiler/config.ts";
+export type { EmittedFile, PureMod } from "./compiler/model.ts";
 export {
   createMod,
   type CapabilityEventHandle,
@@ -248,19 +249,12 @@ export {
 // Generated item unions remain public; their raw constructors are internal
 // lowering machinery used by capability methods.
 export type * from "./generated/content-definers.ts";
-export type {
-  Collection,
-  ContentItem,
-  ContributionItem,
-  EventItem,
-  EventItemBase,
-  ModItem,
-  ModItemInput,
-  ModWarning,
-  OnActionBindingItem,
-  PlacedItem,
-  TechnologyPatchItem,
-} from "./authoring/feature.ts";
+export type { Collection, ModItem, ModItemInput, PlacedItem } from "./authoring/feature.ts";
+export type { ContentItem, ContributionItem } from "./content/types.ts";
+export type { ModWarning } from "./diagnostics.ts";
+export type { OnActionBindingItem } from "./events/on-actions.ts";
+export type { EventItem, EventItemBase } from "./events/types.ts";
+export type { TechnologyPatchItem } from "./stellaris/vanilla/patch.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
   GameVersionError,

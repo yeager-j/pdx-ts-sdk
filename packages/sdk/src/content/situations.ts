@@ -16,7 +16,6 @@
  * available to package internals; public authors use mod capability methods.
  */
 
-import type { ContentItem } from "../authoring/feature.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type {
   SituationApproachFields,
@@ -24,6 +23,7 @@ import type {
   SituationTypeDef,
 } from "../generated/situation-type.ts";
 import type { SituationTrigger } from "../script/triggers.ts";
+import type { ContentItem } from "./types.ts";
 
 /**
  * `approach`'s and `stages`' own trigger fields, narrowed from
@@ -56,7 +56,7 @@ type CheckedStageFields<Approach extends string, Stage extends string> = Omit<
  *
  * One object, doing three jobs: it is the item the capability places,
  * the `targetScope`-carrying ref `startSituation` call sites are checked
- * against (see src/situations.ts), and — `Approach`/`Stage` inferred from this
+ * against (see src/script/effects/situations.ts), and — `Approach`/`Stage` inferred from this
  * same call's own `approach`/`stages` record keys — the boundary
  * `currentSituationApproach`/`currentStage`/`canSetSituationApproach` are
  * checked against (SDK-52, see `SituationTrigger` in `triggers.ts`).

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { defineHardening } from "../../examples/hardening/mod.ts";
 import { defineHelloGalaxy } from "../../examples/hello-galaxy/mod.ts";
-import { buildMod } from "../../packages/sdk/src/build.ts";
+import { buildMod } from "../../packages/sdk/src/compiler/compile.ts";
 import { render } from "../../packages/sdk/src/output/render.ts";
 import { load } from "../../packages/sdk/src/stellaris/vanilla/load.ts";
 import { createMod, stellarisIds, type ModCapability, type ProbeIdProfile } from "./capability.ts";

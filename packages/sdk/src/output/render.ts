@@ -7,7 +7,7 @@
 
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 
-import type { PureMod } from "../build.ts";
+import type { PureMod } from "../compiler/model.ts";
 import { VanillaPathCollisionError } from "../errors.ts";
 import { normalizeLogicalPath } from "../ordering.ts";
 

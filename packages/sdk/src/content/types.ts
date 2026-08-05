@@ -1,6 +1,7 @@
 /**
  * Consumer-facing contracts shared by generated content registries and the generic lowerer.
  */
+import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/modifiers.ts";
 import type { EconomicCategoryRef, TypedRef } from "../generated/refs.ts";
@@ -13,6 +14,29 @@ import type {
   ScriptCtx,
 } from "../script/effects/types.ts";
 import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
+
+/**
+ * A content definition as a value, branded for its registry's CWT reference
+ * name so it flows into matching reference fields and nowhere else.
+ */
+export interface ContentItem<
+  K extends ContentTypeName = ContentTypeName,
+  D extends { readonly id: string } = { readonly id: string },
+> extends TypedRef<ContentReferenceName<K>> {
+  readonly itemKind: "content";
+  readonly type: K;
+  readonly id: D["id"];
+  readonly def: D;
+}
+
+/** A contribution to a shared, non-id-keyed sink (`default = { ... }`). */
+export interface ContributionItem {
+  readonly itemKind: "contribution";
+  readonly registry: "ship_of_size_limits";
+  /** The registry the listed ids name, so own-prefixed ones can be resolved. */
+  readonly refRegistry: ContentTypeName;
+  readonly ids: readonly string[];
+}
 
 /**
  * The declared escape hatch for modifier names the generated tables cannot

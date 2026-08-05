@@ -1,6 +1,6 @@
 # SDK source organization
 
-> **Accepted proposal, 2026-08-04 — Phases 1, 2, 3, 4, and 5 implemented.** This document records the
+> **Accepted proposal, 2026-08-04 — Phases 1, 2, 3, 4, 5, and 6 implemented.** This document records the
 > agreed target structure for the handwritten source under `packages/sdk/src/` and
 > the migration plan for reaching it. The migration is organizational: it must not
 > change the public package interface, authored behavior, generated PDXScript, or
@@ -52,13 +52,14 @@ authoring interface is mod-bound and immutable, compilation is a deterministic
 fold, rendering is pure, and installation is an impure adapter at the end of the
 pipeline. Those seams should be apparent from the source tree.
 
-Today, most handwritten files sit together at the root of `src/`, and several
-large files combine interfaces with multiple independent implementation concerns:
+Before this migration, most handwritten files sat together at the root of
+`src/`, and several large files combined interfaces with multiple independent
+implementation concerns:
 
-- [`build.ts`](../../packages/sdk/src/build.ts) owns configuration validation,
-  localization, canonical grouping and ordering, vanilla collision checks,
-  dangling-reference validation, patch planning, identifier-package diagnostics,
-  and immutable output construction in addition to coordinating the compile.
+- The former `build.ts` owned configuration validation, localization, canonical
+  grouping and ordering, vanilla collision checks, dangling-reference
+  validation, patch planning, identifier-package diagnostics, and immutable
+  output construction in addition to coordinating the compile.
 - [`content.ts`](../../packages/sdk/src/content.ts) contains public authoring
   types, the descriptor protocol consumed by generated code, reusable block
   encoders, recursive field lowering, localization behavior, and
@@ -102,6 +103,7 @@ packages/sdk/src/
 │       ├── types.ts
 │       ├── modifiers.ts
 │       ├── structural.ts
+│       ├── situations.ts
 │       └── recorder.ts
 │
 ├── content/
@@ -154,6 +156,7 @@ packages/sdk/src/
 │   └── package-pin.ts
 │
 ├── generated/
+├── diagnostics.ts
 ├── ordering.ts
 ├── references.ts
 └── errors.ts
@@ -173,8 +176,8 @@ Owns the modder-facing construction model:
 
 - `mod.ts`: `createMod`, prefix and identifier ownership, namespaces, and the
   immutable `ModCapability`;
-- `feature.ts`: the item vocabulary, feature placement, collection flattening,
-  and ownership validation;
+- `feature.ts`: the cross-domain item union, feature placement, collection
+  flattening, and ownership validation;
 - `discover.ts`: the impure directory adapter that discovers named feature
   exports.
 
@@ -192,6 +195,7 @@ particular content registry:
 - scripted trigger and scripted effect bindings;
 - scope values, scope references, and script context values;
 - modifier encoding and modifier-description localization mechanics;
+- situation target and effect-scope contracts;
 - structural effects and recorder lifecycle.
 
 `recordEffects()` remains the deep interface over the effect recorder. The
@@ -208,7 +212,7 @@ Owns the generic content-definition machinery shared by every generated registry
   modifiers;
 - recursive lowering from a generated field schema to PDXScript;
 - `ContentAuthoring` and `DefinedContent`;
-- situation-specific authored contracts that extend generated content shapes.
+- the hand-written situation type definer that extends generated content shapes.
 
 The split between `types.ts` and `schema.ts` is important:
 
@@ -223,7 +227,8 @@ than depending on a single catch-all `content.ts`.
 Owns authored event values, event lowering, localization, and on-action
 contributions:
 
-- `types.ts`: `EventDef`, `EventRef`, options, timing and fire argument types;
+- `types.ts`: `EventDef`, `EventRef`, compiler event items, options, timing and
+  fire argument types;
 - `lower.ts`: `buildEvent`, effect recording, localization extraction, and
   emitted event entries;
 - `on-actions.ts`: on-action references, authored binding items, canonical
@@ -300,7 +305,7 @@ name:
 
 ### Neutral shared contracts
 
-Three small modules are intentionally outside the responsibility folders:
+Four small modules are intentionally outside the responsibility folders:
 
 - `ordering.ts` owns pure UTF-8 comparison and logical-path normalization used
   by authoring, script recording, compilation, rendering, and vanilla override
@@ -308,6 +313,8 @@ Three small modules are intentionally outside the responsibility folders:
 - `references.ts` owns the `ContentRefUse` data contract and path composition
   helper. Content lowering, event/effect recording, and vanilla patches produce
   these values; the compiler consumes them for the dangling-reference guard.
+- `diagnostics.ts` owns the warning contract produced by event/content
+  authoring and consumed by compilation and localization.
 - `identifiers/` owns the optional `@pdx-ts/stellaris-ids` seam. Script bindings
   consume its declaration-merge contracts, while compilation consumes its
   package-presence and version-pin checks.
@@ -339,7 +346,8 @@ The intended dependency direction is:
 authoring ───────────────→ compiler
     │                         │
     ├────────→ content ───────┤
-    └────────→ events ────────┤
+    ├────────→ events ────────┤
+    └────────→ stellaris/vanilla
     content ──────→ script    │
     events ───────→ script    │
 generated ←──────→ content    │
@@ -356,6 +364,8 @@ stellaris/vanilla ────────────→ references
 compiler ─────────────────────→ references
 generated ────────────────────→ references
 
+events/compiler ──────────────→ diagnostics
+
 authoring/events/script/compiler/
 output/stellaris ─────────────→ ordering
 
@@ -370,6 +380,9 @@ Rules implied by that direction:
 - `content/` and `events/` depend on `script/` for trigger values, recorded
   effect closures, modifier encoding, and script contexts.
 - `content/` and `events/` do not import the compiler coordinator.
+- domain item contracts live with `content/`, `events/`, and
+  `stellaris/vanilla`; `authoring/feature.ts` only combines them into the
+  feature item union.
 - `compiler/` may depend on content/event lowering and on a supplied vanilla
   view, but lowerers do not depend on the compiler.
 - vanilla patches may produce neutral `ContentRefUse` values, preserving the
@@ -479,6 +492,11 @@ events.ts     → events/types.ts
 on-actions.ts → events/on-actions.ts
 ```
 
+Move the event and on-action item contracts with those modules, and move the
+content item contracts to `content/types.ts`. Keep only the cross-domain item
+union and feature placement in `authoring/feature.ts`; warnings move to neutral
+`diagnostics.ts`.
+
 Retire the vague `definers.ts` name:
 
 - move situation-specific authoring into `content/situations.ts`;
@@ -529,6 +547,7 @@ along its existing conceptual sections:
 script/effects/types.ts
 script/effects/modifiers.ts
 script/effects/structural.ts
+script/effects/situations.ts
 script/effects/recorder.ts
 ```
 
@@ -536,13 +555,19 @@ Preserve one `recordEffects()` interface. Avoid exposing the recording stack or
 introducing an adapter for every generated effect; generated effect metadata is
 already the data-driven adapter.
 
+Move the root situation target/effect-scope contract into
+`script/effects/situations.ts`; `content/situations.ts` retains only the
+hand-written situation type definer.
+
 Update codegen import templates and regenerate. Existing effect, event,
 scope-safety, scripted-definition, and evaluator tests are the regression
 surface.
 
 ### Phase 6: deepen the compiler
 
-Decompose `build.ts` last, after the modules it coordinates have stable homes.
+Implemented on `feature/project-structure-reorganization-phase-6`.
+
+Decompose the former `build.ts` last, after the modules it coordinates have stable homes.
 
 Start by extracting leaf responsibilities:
 
@@ -554,6 +579,12 @@ Start by extracting leaf responsibilities:
 6. `patches.ts`.
 
 Then rename the remaining coordinator to `compiler/compile.ts`.
+
+The completed extraction leaves `compiler/compile.ts` as the readable fold
+coordinator and places each leaf responsibility in its named module. The
+coordinator still owns the three-pass content lowering and canonical event,
+on-action, and contribution ordering; no public pass objects or alternate
+compiler entry points were introduced.
 
 The final coordinator should make fold order and canonical ordering easy to
 audit without duplicating their implementation. Do not model each phase as a

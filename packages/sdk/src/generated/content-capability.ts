@@ -30,8 +30,8 @@
 // From: common/solar_system_initializers.cwt
 // From: content-manifest.ts
 
-import type { ContentItem } from "../authoring/feature.ts";
 import { defineSituationType, type SituationTypeCapabilityDef } from "../content/situations.ts";
+import type { ContentItem } from "../content/types.ts";
 import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";

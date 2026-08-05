@@ -16,7 +16,7 @@
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { ModWarning } from "../authoring/feature.ts";
+import type { ModWarning } from "../diagnostics.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
 import {
   type EventChainRef,
@@ -35,6 +35,38 @@ import type { Trigger } from "../script/trigger-core.ts";
 import "../generated/event-fires.ts";
 
 declare const eventFromBrand: unique symbol;
+
+/**
+ * A defined event as finished compiler input. Its definition-side
+ * localization, references, and warnings travel with the event value.
+ */
+export interface EventItemBase {
+  readonly itemKind: "event";
+  readonly kind: "event-ref";
+  readonly namespace: string;
+  readonly scope: ScopeName;
+  readonly from: ScopeName | undefined;
+  /** The full id, e.g. `pp_mod_ascension.2`. */
+  readonly id: string;
+  readonly entry: PdxEntry;
+  readonly refs: readonly ContentRefUse[];
+  readonly locEntries: ReadonlyArray<readonly [string, string]>;
+  readonly warnings: readonly ModWarning[];
+}
+
+/**
+ * What an event definer returns, preserving its scope, FROM, and event-kind
+ * contracts for fire sites and on-action bindings.
+ */
+export type EventItem<
+  S extends ScopeName = ScopeName,
+  From extends ScopeName | undefined = ScopeName | undefined,
+  Kind extends string = S,
+> = DefinedEvent<S, From, Kind> & {
+  readonly itemKind: "event";
+  readonly namespace: string;
+  readonly locEntries: ReadonlyArray<readonly [string, string]>;
+};
 
 /**
  * A defined event, usable as the `id` of a fire effect. `From` is the scope

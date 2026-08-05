@@ -135,7 +135,7 @@ export interface ArchaeologicalSiteSpec {
  * situation's relationship to its target is a link (`target = { ... }`), not
  * ownership — `links.cwt` gives it `output_scope = any` and the SDK's own
  * `defineSituationType({ targetScope })` treats it the same way (see
- * `packages/sdk/src/situations.ts`). The fixture only models country
+ * `packages/sdk/src/script/effects/situations.ts`). The fixture only models country
  * targets today (`targetCountry` indexes `FixtureSpec.countries`), matching
  * every situation this harness's probes needed; a situation targeting
  * anything else would need that scope modeled first.

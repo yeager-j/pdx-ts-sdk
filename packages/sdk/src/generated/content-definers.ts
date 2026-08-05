@@ -29,10 +29,11 @@
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
 
-import type { ContentItem, ContributionItem, TechnologyPatchItem } from "../authoring/feature.ts";
+import type { ContentItem, ContributionItem } from "../content/types.ts";
 import {
   patchTechnology as transformTechnology,
   type TechnologyPatch,
+  type TechnologyPatchItem,
 } from "../stellaris/vanilla/patch.ts";
 import type { ParsedTechnology } from "../stellaris/vanilla/view.ts";
 import type { AgendaDef } from "./agenda.ts";

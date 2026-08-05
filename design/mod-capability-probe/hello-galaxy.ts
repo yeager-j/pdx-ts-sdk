@@ -1,4 +1,4 @@
-import type { PureMod } from "../../packages/sdk/src/build.ts";
+import type { PureMod } from "../../packages/sdk/src/compiler/model.ts";
 import {
   and,
   countryFlags,

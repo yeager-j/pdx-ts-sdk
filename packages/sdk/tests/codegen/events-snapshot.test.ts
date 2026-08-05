@@ -105,7 +105,7 @@ describe("generated event surface", () => {
   });
 
   it("keeps startSituation on the EffectsInCountry cluster", () => {
-    // src/situations.ts merges the declared-target overload into this exact
+    // src/script/effects/situations.ts merges the declared-target overload into this exact
     // interface; if clustering ever moves the generated signature, the
     // augmentation would silently detach instead of overloading.
     const effects = readFileSync("packages/sdk/src/generated/effects.ts", "utf8");

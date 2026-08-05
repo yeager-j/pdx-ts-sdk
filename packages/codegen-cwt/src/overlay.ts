@@ -191,7 +191,8 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
       reason:
         "`targetScope` is authored, emits nothing, and is carried on the returned item as the " +
         "situation target contract every `startSituation` call site is checked against " +
-        "(src/situations.ts). The rules declare that contract nowhere, so no mechanical definer " +
+        "(src/script/effects/situations.ts). The rules declare that contract nowhere, so no " +
+        "mechanical definer " +
         "can produce it.",
     },
   ],
