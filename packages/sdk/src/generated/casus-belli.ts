@@ -5,7 +5,7 @@
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EconomicResourceBlock, EffectBlock, WithFrom } from "../content/types.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { Trigger } from "../script/trigger-core.ts";
 import type { ScopeName } from "./scopes.ts";
 
 /**

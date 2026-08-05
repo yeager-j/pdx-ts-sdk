@@ -12,7 +12,7 @@
  */
 
 import { countryFlags } from "../../packages/sdk/src/generated/value-sets.ts";
-import { hasCountryFlag, hasOwner, isAtWar } from "../../packages/sdk/src/triggers.ts";
+import { hasCountryFlag, hasOwner, isAtWar } from "../../packages/sdk/src/script/triggers.ts";
 import { eventTarget } from "./effect-core.ts";
 import { defineCountryEvent, definePlanetEvent } from "./events-sample.ts";
 

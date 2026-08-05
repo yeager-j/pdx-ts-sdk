@@ -6,7 +6,7 @@
  * event kind, each carrying `## type_key_filter = country_event` and
  * `## push_scope = country` — so which kinds exist and which scope each runs
  * in falls out of the rules rather than a hand-maintained table. The runtime
- * (`src/effect-core.ts`) registers a fire-effect encoder per kind from this
+ * (`src/script/effects/recorder.ts`) registers a fire-effect encoder per kind from this
  * table, and `src/events/types.ts` plus `src/events/lower.ts` build the typed
  * definition surface over it.
  *
@@ -349,7 +349,7 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     docComment([
       "Typed fire methods for every event kind, merged into the generated",
       "scope interfaces. The runtime encoder is registered for every kind in",
-      "`EVENT_KINDS` (src/effect-core.ts); these declarations are the typed",
+      "`EVENT_KINDS` (src/script/effects/recorder.ts); these declarations are the typed",
       "surface over it.",
     ]) +
     'declare module "./effects.ts" {\n' +

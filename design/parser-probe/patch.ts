@@ -15,7 +15,7 @@ import {
   type TechnologyCategoryRef,
   type TechnologyRef,
 } from "../../packages/sdk/src/generated/refs.ts";
-import type { Trigger } from "../../packages/sdk/src/trigger-core.ts";
+import type { Trigger } from "../../packages/sdk/src/script/trigger-core.ts";
 import { lowerEntry } from "./emit.ts";
 import type { ParsedNumber, ParsedTechnology } from "./surface.ts";
 

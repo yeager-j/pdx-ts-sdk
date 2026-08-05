@@ -7,9 +7,9 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, it } from "vitest";
 
-import { eventTarget, makeScope } from "../src/effect-core.ts";
 import { planetFlags } from "../src/generated/value-sets.ts";
-import { isAtWar } from "../src/triggers.ts";
+import { eventTarget, makeScope } from "../src/script/effects/recorder.ts";
+import { isAtWar } from "../src/script/triggers.ts";
 
 const sink: PdxEntry[] = [];
 const flags = planetFlags("effects_type_test_flag");

@@ -28,8 +28,8 @@ import {
   renderFired,
   type World,
 } from "../../packages/sdk-testing/src/world.ts";
-import { trigger } from "../../packages/sdk/src/trigger-core.ts";
-import { isAtWar, numOwnedPlanets } from "../../packages/sdk/src/triggers.ts";
+import { trigger } from "../../packages/sdk/src/script/trigger-core.ts";
+import { isAtWar, numOwnedPlanets } from "../../packages/sdk/src/script/triggers.ts";
 import {
   aftershock,
   flags,

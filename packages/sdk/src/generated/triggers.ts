@@ -7,7 +7,12 @@
 import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "../references.ts";
-import { scriptValueScalar, trigger, type ScriptValue, type Trigger } from "../trigger-core.ts";
+import {
+  scriptValueScalar,
+  trigger,
+  type ScriptValue,
+  type Trigger,
+} from "../script/trigger-core.ts";
 import type {
   AiAttitudeBehaviour,
   AnyOrBool,

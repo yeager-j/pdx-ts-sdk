@@ -1144,7 +1144,7 @@ describe("generated content registries", () => {
   it("emits current_situation_approach/current_stage identically once checked (SDK-52)", () => {
     const cap = capabilityFor(configFor("Situation approach test", "sa_test"));
     // currentSituationApproach/currentStage are now hand-written overrides of
-    // the generated leaves (see src/triggers.ts), checked against this same
+    // the generated leaves (see src/script/triggers.ts), checked against this same
     // call's own `approach`/`stages` keys — a compile-time-only change. This
     // pins that the emitted bytes are exactly what the plain generated
     // `kv("current_situation_approach"/"current_stage", value)` always wrote:

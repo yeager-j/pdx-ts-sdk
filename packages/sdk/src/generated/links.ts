@@ -5,7 +5,7 @@
 
 import { block } from "@pdx-ts/pdxscript";
 
-import { trigger, type Trigger } from "../trigger-core.ts";
+import { trigger, type Trigger } from "../script/trigger-core.ts";
 import type { ScopeName } from "./scopes.ts";
 
 /** Scopes from a country to the federation it is a member of. */

@@ -12,7 +12,7 @@ import type {
   WeightBlock,
   WeightBlockWithLoc,
 } from "../content/types.ts";
-import type { ScriptValue, Trigger } from "../trigger-core.ts";
+import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 import type { SituationCategory } from "./enums.ts";
 import type {
   EventScopelessRef,

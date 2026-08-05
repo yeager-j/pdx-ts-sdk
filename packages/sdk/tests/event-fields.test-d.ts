@@ -10,7 +10,7 @@
 import { describe, it } from "vitest";
 
 import { createMod } from "../src/index.ts";
-import { hasAutomationSetting, hasEventChain } from "../src/triggers.ts";
+import { hasAutomationSetting, hasEventChain } from "../src/script/triggers.ts";
 
 function events(prefix: string) {
   return createMod({ name: "Event fields", prefix, supportedVersion: "4.4.*" }).namespace();

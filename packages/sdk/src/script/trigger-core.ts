@@ -1,7 +1,7 @@
 import { varRef, type PdxEntry, type PdxScalar } from "@pdx-ts/pdxscript";
 
-import type { ScopeName } from "./generated/scopes.ts";
-import type { ContentRefUse } from "./references.ts";
+import type { ScopeName } from "../generated/scopes.ts";
+import type { ContentRefUse } from "../references.ts";
 
 declare const scopeBrand: unique symbol;
 declare const scriptValueBrand: unique symbol;

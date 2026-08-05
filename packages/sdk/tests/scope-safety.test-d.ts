@@ -16,7 +16,7 @@ import {
   yearsPassed,
   type ScopeName,
   type Trigger,
-} from "../src/triggers.ts";
+} from "../src/script/triggers.ts";
 
 function countrySlot(_t: Trigger<"country">): void {}
 function planetSlot(_t: Trigger<"planet">): void {}

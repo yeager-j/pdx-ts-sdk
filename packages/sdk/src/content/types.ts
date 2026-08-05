@@ -1,18 +1,18 @@
 /**
  * Consumer-facing contracts shared by generated content registries and the generic lowerer.
  */
+import type { ScopeObjOf } from "../generated/effects.ts";
+import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/modifiers.ts";
+import type { EconomicCategoryRef, TypedRef } from "../generated/refs.ts";
+import type { ScopeName } from "../generated/scopes.ts";
 import type {
   ComplexTriggerModifier,
   ComplexTriggerModifierWithLoc,
   Modifier,
   ModifierWithLoc,
   ScriptCtx,
-} from "../effect-core.ts";
-import type { ScopeObjOf } from "../generated/effects.ts";
-import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/modifiers.ts";
-import type { EconomicCategoryRef, TypedRef } from "../generated/refs.ts";
-import type { ScopeName } from "../generated/scopes.ts";
-import type { ScriptValue, Trigger } from "../trigger-core.ts";
+} from "../script/effects/types.ts";
+import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 
 /**
  * The declared escape hatch for modifier names the generated tables cannot

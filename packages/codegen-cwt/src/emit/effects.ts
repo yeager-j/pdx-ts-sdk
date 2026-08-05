@@ -9,7 +9,7 @@
  *   method signatures once, and the per-scope interfaces (`CountryScope`)
  *   are `extends` compositions. ~1000 signatures total instead of 38 × 560.
  * - `effect-meta.ts` — DATA. One entry per method telling the runtime
- *   recorder (`src/effect-core.ts`, a single scope-agnostic Proxy) how to
+ *   recorder (`src/script/effects/recorder.ts`, a single scope-agnostic Proxy) how to
  *   serialize the call. The Proxy throws on names missing from this table.
  *
  * Scopes come from the rules' `## scopes` with the game dump as fallback,
@@ -460,7 +460,7 @@ export function emitEffects(
     "}\n\n" +
     docComment([
       "How the recorder serializes each effect method. The Proxy in",
-      "`src/effect-core.ts` throws on names missing from this table, so a",
+      "`src/script/effects/recorder.ts` throws on names missing from this table, so a",
       "typo in an untyped position fails loudly instead of recording garbage.",
     ]) +
     "export const EFFECT_META: Record<string, EffectMeta | undefined> = {\n" +

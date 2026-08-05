@@ -1,18 +1,17 @@
 /** Reusable PDXScript encoders for content block shapes. */
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import {
-  assertSynchronousClosure,
-  complexTriggerModifierEntry,
-  modifierEntry,
-  weightOperationEntries,
-  type ComplexTriggerModifier,
-  type Modifier,
-} from "../effect-core.ts";
 import { refId } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { underField, type ContentRefSink, type ContentRefUse } from "../references.ts";
-import { scriptValueScalar, type ScriptValue } from "../trigger-core.ts";
+import {
+  complexTriggerModifierEntry,
+  modifierEntry,
+  weightOperationEntries,
+} from "../script/effects/modifiers.ts";
+import { assertSynchronousClosure } from "../script/effects/recorder.ts";
+import type { ComplexTriggerModifier, Modifier } from "../script/effects/types.ts";
+import { scriptValueScalar, type ScriptValue } from "../script/trigger-core.ts";
 import type {
   EconomicResourceBlock,
   EconomicResourceBlockNoProduce,
@@ -62,7 +61,7 @@ function modifierRecorder(
     if (live.value) {
       return;
     }
-    // Same hazard, and the same fix, as `assertLive` in effect-core.ts: the
+    // Same hazard, and the same fix, as `assertLive` in the effect recorder: the
     // recorder closes over an entry array that is finished data once the
     // closure returns, so a recorder stored somewhere longer-lived would edit
     // an already-built mod and change only what the *next* render emits.

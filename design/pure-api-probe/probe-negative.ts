@@ -6,8 +6,8 @@
  * function that is never called, so the file is inert at runtime.
  */
 
-import { eventTarget } from "../../packages/sdk/src/effect-core.ts";
 import { onActions } from "../../packages/sdk/src/generated/on-actions.ts";
+import { eventTarget } from "../../packages/sdk/src/script/effects/recorder.ts";
 import { buildMod } from "./build.ts";
 import {
   createEvents,

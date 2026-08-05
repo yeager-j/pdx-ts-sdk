@@ -10,7 +10,7 @@ import type {
   TriggeredModifier,
   WeightBlock,
 } from "../content/types.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { Trigger } from "../script/trigger-core.ts";
 import type { JobTrigger } from "./enums.ts";
 import type { BuildingRef, JobRef, PopCategoryRef, PurgeTypeRef, TraitRef } from "./refs.ts";
 

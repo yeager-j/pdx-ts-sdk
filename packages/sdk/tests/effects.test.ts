@@ -1,9 +1,9 @@
 import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { eventTarget, makeScope, recordEffects, scopeRef } from "../src/effect-core.ts";
 import { countryFlags } from "../src/generated/value-sets.ts";
-import { hasOwner, isAtWar } from "../src/triggers.ts";
+import { eventTarget, makeScope, recordEffects, scopeRef } from "../src/script/effects/recorder.ts";
+import { hasOwner, isAtWar } from "../src/script/triggers.ts";
 
 const flags = countryFlags("effects_test_flag");
 const stormWorld = eventTarget<"planet">("effects_test_target");
@@ -346,7 +346,7 @@ every_owned_planet = {
   });
 
   it("writes a Modifier row's ScriptValue operand bare, including a scripted-variable reference (widenedLowering, SDK-47 P1 fix)", () => {
-    // Modifier<S> (effect-core.ts) is hand-written, not generated — its
+    // Modifier<S> (script/effects/types.ts) is hand-written, not generated — its
     // `factor`/`add`/etc. operands are modifier_rule.cwt's `value_field`
     // (SDK-47's primary cited evidence), and modifierEntry is the third and
     // last runtime chokepoint that needed the scriptValueScalar fix. The

@@ -32,7 +32,7 @@ export interface EffectMeta {
 
 /**
  * How the recorder serializes each effect method. The Proxy in
- * `src/effect-core.ts` throws on names missing from this table, so a
+ * `src/script/effects/recorder.ts` throws on names missing from this table, so a
  * typo in an untyped position fails loudly instead of recording garbage.
  */
 export const EFFECT_META: Record<string, EffectMeta | undefined> = {

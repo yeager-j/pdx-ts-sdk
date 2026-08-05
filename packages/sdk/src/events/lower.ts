@@ -3,27 +3,24 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ModWarning } from "../authoring/feature.ts";
-import {
-  modifierDescKey,
-  modifierEntry,
-  recordEffects,
-  registerModifierDescKey,
-  scriptCtx,
-  type Modifier,
-  type ModifierWithLoc,
-  type ScriptCtx,
-} from "../effect-core.ts";
 import type { EventKindKey } from "../generated/events.ts";
 import { refId } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { underField, type ContentRefUse } from "../references.ts";
+import {
+  modifierDescKey,
+  modifierEntry,
+  registerModifierDescKey,
+} from "../script/effects/modifiers.ts";
+import { recordEffects, scriptCtx } from "../script/effects/recorder.ts";
+import type { Modifier, ModifierWithLoc, ScriptCtx } from "../script/effects/types.ts";
 import type { DefinedEvent, EventDef, LocSink } from "./types.ts";
 
 const OPTION_KEYS = "abcdefghijklmnopqrstuvwxyz";
 
 /**
  * Lowers a `WeightBlock`-shaped modifier row list, reusing the `modifier_rule`
- * writer `effect-core.ts` already exposes rather than re-deriving it — the
+ * writer `script/effects/modifiers.ts` already exposes rather than re-deriving it — the
  * only field-specific bits (`factor` vs. `base`, which extra scalars come
  * before the rows) stay with each call site. `ownerKey` is the same
  * `${ownerId}::${fieldPath}` token `registerModifierDescs` below registered
@@ -43,7 +40,7 @@ function modifierRows<S extends ScopeName>(
 
 /**
  * Registers one localisation key per desc-bearing row in a modifier list, via
- * the shared derivation `modifierDescKey` (`effect-core.ts`) — the same one
+ * the shared derivation `modifierDescKey` (`script/effects/modifiers.ts`) — the same one
  * `content.ts`'s `collectModifierDescs` uses, so the two never drift and a
  * future fix to the derivation reaches events automatically. Must run before
  * `modifierRows` lowers the same array: `modifierEntry` throws if a row's

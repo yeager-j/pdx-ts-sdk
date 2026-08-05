@@ -10,7 +10,7 @@ import type {
   WeightBlock,
   WithFrom,
 } from "../content/types.ts";
-import type { Trigger } from "../trigger-core.ts";
+import type { Trigger } from "../script/trigger-core.ts";
 import type { DecisionRef, SoundEffectRef, SoundRef, TechnologyRef } from "./refs.ts";
 
 /** The scopes a decision may declare. */

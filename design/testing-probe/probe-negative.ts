@@ -15,7 +15,7 @@ import "../../packages/sdk-testing/src/matchers.ts";
 
 import type { Country, Planet } from "../../packages/sdk-testing/src/state.ts";
 import { declareFrom, fixture, type World } from "../../packages/sdk-testing/src/world.ts";
-import { hasCountryFlag } from "../../packages/sdk/src/triggers.ts";
+import { hasCountryFlag } from "../../packages/sdk/src/script/triggers.ts";
 import { aftershock, humReturns } from "./probe-mod.ts";
 
 const countryFlag = countryFlags("tp_neg_country_flag");

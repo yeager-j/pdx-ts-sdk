@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { eventTarget } from "../src/effect-core.ts";
 import { countryFlags } from "../src/generated/value-sets.ts";
 import { createMod, render } from "../src/index.ts";
+import { eventTarget } from "../src/script/effects/recorder.ts";
 
 const flags = countryFlags("event_test_flag");
 

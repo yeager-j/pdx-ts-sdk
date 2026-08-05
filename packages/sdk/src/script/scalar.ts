@@ -11,8 +11,8 @@
 
 import { varRef, type PdxScalar } from "@pdx-ts/pdxscript";
 
-import type { ScopeValue } from "./effect-core.ts";
-import type { TypedRef } from "./generated/refs.ts";
+import type { TypedRef } from "../generated/refs.ts";
+import type { ScopeValue } from "./effects/types.ts";
 
 /** Anything that lowers to one PDXScript scalar. */
 export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValue;

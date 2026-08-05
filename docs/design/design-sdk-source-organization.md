@@ -1,6 +1,6 @@
 # SDK source organization
 
-> **Accepted proposal, 2026-08-04 — Phases 1, 2, 3, and 4 implemented.** This document records the
+> **Accepted proposal, 2026-08-04 — Phases 1, 2, 3, 4, and 5 implemented.** This document records the
 > agreed target structure for the handwritten source under `packages/sdk/src/` and
 > the migration plan for reaching it. The migration is organizational: it must not
 > change the public package interface, authored behavior, generated PDXScript, or
@@ -63,7 +63,7 @@ large files combine interfaces with multiple independent implementation concerns
   types, the descriptor protocol consumed by generated code, reusable block
   encoders, recursive field lowering, localization behavior, and
   `ContentAuthoring`.
-- [`effect-core.ts`](../../packages/sdk/src/effect-core.ts) contains scope
+- [`script/effects/recorder.ts`](../../packages/sdk/src/script/effects/recorder.ts) contains scope
   references, script contexts, modifier encoding, localization-key mechanics,
   conditional control flow, structural effects, recorder lifecycle, proxy
   dispatch, and event firing.
@@ -519,7 +519,10 @@ reveals an existing coupling that requires an intentional protocol change.
 
 ### Phase 5: split the effect recorder
 
-Move trigger and scalar modules under `script/`, then split `effect-core.ts`
+Implemented on `feature/project-structure-reorganization-phase-5`.
+
+Move trigger, scalar, and scripted-binding modules under `script/`, then split
+the former `effect-core.ts`
 along its existing conceptual sections:
 
 ```text

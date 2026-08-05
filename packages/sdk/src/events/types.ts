@@ -17,7 +17,6 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ModWarning } from "../authoring/feature.ts";
-import { type Modifier, type ScopeValue, type ScriptCtx } from "../effect-core.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
 import {
   type EventChainRef,
@@ -29,7 +28,8 @@ import {
 } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { ContentRefUse } from "../references.ts";
-import type { Trigger } from "../trigger-core.ts";
+import { type Modifier, type ScopeValue, type ScriptCtx } from "../script/effects/types.ts";
+import type { Trigger } from "../script/trigger-core.ts";
 // The typed fire signatures for every event kind are generated into the
 // scope interfaces — this side-effect import is what loads the augmentation.
 import "../generated/event-fires.ts";
@@ -85,7 +85,7 @@ export interface EventOptionIcon {
 
 /**
  * An `option.ai_chance` block (`events.cwt:358`): the same `modifier_rule`
- * shape `Modifier`/`modifierEntry` (`effect-core.ts`) already lower, with the
+ * shape `Modifier`/`modifierEntry` (`script/effects/modifiers.ts`) already lower, with the
  * base weight spelled `factor` — the arm the corpus actually uses at this
  * position (vanilla `ai_chance` blocks open `factor = <n>`, not `base = <n>`,
  * unlike `situation_type.monthly_progress`'s `WeightBlock`).
@@ -151,7 +151,7 @@ export type EventSituation<S extends ScopeName, From extends ScopeName | undefin
 /**
  * A `mean_time_to_happen` block (`events.cwt:456`, `subtype[!triggered]`):
  * days/months/years plus the same `modifier_rule` modifier rows
- * `Modifier`/`modifierEntry` (`effect-core.ts`) already lower elsewhere.
+ * `Modifier`/`modifierEntry` (`script/effects/modifiers.ts`) already lower elsewhere.
  * Declared under `subtype[!triggered]` in the rules, but accepted
  * unconditionally here — like `hideWindow`/`isTriggeredOnly`/`picture`
  * before it, an attribute-driven subtype (gated by another field's *value*,
@@ -315,7 +315,7 @@ export type DefinedEvent<
   /**
    * Diagnostics collected at define time — today, just an `unstable-desc-key`
    * entry per `aiChance`/`meanTimeToHappen`/`weightMultiplier` modifier row
-   * whose `desc` had no `descKey` (see `modifierDescKey`, `effect-core.ts`).
+   * whose `desc` had no `descKey` (see `modifierDescKey`, `script/effects/modifiers.ts`).
    * Events have no `ContentAuthoring` instance to hang `onUnstableDescKey`
    * off — they are built at the definer call site, before `buildMod` ever
    * runs — so this rides along the same way `refs` and `locEntries` do:
@@ -336,7 +336,7 @@ export interface LocSink {
  * `<id>.a`, `<id>.b`, ... — matching how vanilla names its own option keys.
  *
  * Index-derived, and therefore the translation-misalignment hazard
- * `modifierDescKey` (`effect-core.ts`) refuses for modifier rows: inserting an
+ * `modifierDescKey` (`script/effects/modifiers.ts`) refuses for modifier rows: inserting an
  * option mid-list repoints every later option's key at different text, with no
  * build error and no symptom until someone reads that language. Accepted here
  * rather than avoided, because the key is not only ours — `.a`/`.b` is the

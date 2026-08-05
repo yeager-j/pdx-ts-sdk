@@ -1,15 +1,15 @@
 /** Content definition identity, localization, and authoring registration. */
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { TypedRef } from "../generated/refs.ts";
+import type { ScopeName } from "../generated/scopes.ts";
+import type { ContentRefSink } from "../references.ts";
 import {
   modifierDescKey,
   registerComplexTriggerModifierDescKey,
   registerModifierDescKey,
-  type ModifierWithLoc,
-} from "../effect-core.ts";
-import type { TypedRef } from "../generated/refs.ts";
-import type { ScopeName } from "../generated/scopes.ts";
-import type { ContentRefSink } from "../references.ts";
+} from "../script/effects/modifiers.ts";
+import type { ModifierWithLoc } from "../script/effects/types.ts";
 import { isComplexTriggerModifier } from "./blocks.ts";
 import { dualArm, fieldEntries, resolveFromClosures } from "./lower.ts";
 import type { ContentField, ContentLocalisation, ContentRegistryDescriptor } from "./schema.ts";
@@ -358,7 +358,7 @@ export class ContentAuthoring {
   /**
    * Registers one localisation key per desc-bearing modifier row in a
    * `WeightBlock`. `Modifier` rows go through the shared derivation
-   * `modifierDescKey` — see its doc comment in `effect-core.ts` for the key
+   * `modifierDescKey` — see its doc comment in `script/effects/modifiers.ts` for the key
    * shape, the `descKey`/hash-fallback split, and why the derivation lives
    * there rather than here (`events.ts`'s `registerModifierDescs` is the
    * other caller).
