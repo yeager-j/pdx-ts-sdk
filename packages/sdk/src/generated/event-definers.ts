@@ -273,7 +273,7 @@ export type CapabilityEventHandle<
   define(def: Omit<EventDef<S, From>, "id" | "from">): CapabilityEventItem<P, N, Id, S, From, Kind>;
 };
 
-export interface CapabilityEventBuilder<P extends string, N extends string> {
+export interface CapabilityEventMinter<P extends string, N extends string> {
   readonly namespace: MintedNamespace<P, N>;
   handle<
     const Id extends number,
@@ -673,64 +673,64 @@ export interface CapabilityEvents<P extends string, N extends string> {
 }
 
 export function capabilityEvents<P extends string, N extends string>(
-  builder: CapabilityEventBuilder<P, N>
+  minter: CapabilityEventMinter<P, N>
 ): CapabilityEvents<P, N> {
   return Object.freeze({
-    namespace: builder.namespace,
+    namespace: minter.namespace,
     agreementHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "agreement_event", "agreement", "agreement", contract.from as From),
+    ) => minter.handle(id, "agreement_event", "agreement", "agreement", contract.from as From),
     agreement: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"agreement", From>, "id">
     ) =>
-      builder.handle(id, "agreement_event", "agreement", "agreement", def.from as From).define(def),
+      minter.handle(id, "agreement_event", "agreement", "agreement", def.from as From).define(def),
     astralRiftHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
     ) =>
-      builder.handle(id, "astral_rift_event", "astral_rift", "astral_rift", contract.from as From),
+      minter.handle(id, "astral_rift_event", "astral_rift", "astral_rift", contract.from as From),
     astralRift: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"astral_rift", From>, "id">
     ) =>
-      builder
+      minter
         .handle(id, "astral_rift_event", "astral_rift", "astral_rift", def.from as From)
         .define(def),
     bypassHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "bypass_event", "bypass", "bypass", contract.from as From),
+    ) => minter.handle(id, "bypass_event", "bypass", "bypass", contract.from as From),
     bypass: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"bypass", From>, "id">
-    ) => builder.handle(id, "bypass_event", "bypass", "bypass", def.from as From).define(def),
+    ) => minter.handle(id, "bypass_event", "bypass", "bypass", def.from as From).define(def),
     carrierHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "carrier_event", "carrier", "carrier", contract.from as From),
+    ) => minter.handle(id, "carrier_event", "carrier", "carrier", contract.from as From),
     carrier: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"carrier", From>, "id">
-    ) => builder.handle(id, "carrier_event", "carrier", "carrier", def.from as From).define(def),
+    ) => minter.handle(id, "carrier_event", "carrier", "carrier", def.from as From).define(def),
     colonyHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "colony_event", "colony", "colony", contract.from as From),
+    ) => minter.handle(id, "colony_event", "colony", "colony", contract.from as From),
     colony: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"colony", From>, "id">
-    ) => builder.handle(id, "colony_event", "colony", "colony", def.from as From).define(def),
+    ) => minter.handle(id, "colony_event", "colony", "colony", def.from as From).define(def),
     cosmicStormHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "cosmic_storm_event", "storm", "cosmic_storm", contract.from as From),
+    ) => minter.handle(id, "cosmic_storm_event", "storm", "cosmic_storm", contract.from as From),
     cosmicStorm: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"storm", From>, "id">
     ) =>
-      builder
+      minter
         .handle(id, "cosmic_storm_event", "storm", "cosmic_storm", def.from as From)
         .define(def),
     cosmicStormInfluenceFieldHandle: <
@@ -740,7 +740,7 @@ export function capabilityEvents<P extends string, N extends string>(
       id: Id,
       contract: { readonly from?: From } = {}
     ) =>
-      builder.handle(
+      minter.handle(
         id,
         "cosmic_storm_influence_field_event",
         "cosmic_storm_influence_field",
@@ -754,7 +754,7 @@ export function capabilityEvents<P extends string, N extends string>(
       id: Id,
       def: Omit<EventDef<"cosmic_storm_influence_field", From>, "id">
     ) =>
-      builder
+      minter
         .handle(
           id,
           "cosmic_storm_influence_field_event",
@@ -766,11 +766,11 @@ export function capabilityEvents<P extends string, N extends string>(
     countryHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "country_event", "country", "country", contract.from as From),
+    ) => minter.handle(id, "country_event", "country", "country", contract.from as From),
     country: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"country", From>, "id">
-    ) => builder.handle(id, "country_event", "country", "country", def.from as From).define(def),
+    ) => minter.handle(id, "country_event", "country", "country", def.from as From).define(def),
     espionageOperationHandle: <
       const Id extends number,
       From extends ScopeName | undefined = undefined,
@@ -778,7 +778,7 @@ export function capabilityEvents<P extends string, N extends string>(
       id: Id,
       contract: { readonly from?: From } = {}
     ) =>
-      builder.handle(
+      minter.handle(
         id,
         "espionage_operation_event",
         "espionage_operation",
@@ -789,7 +789,7 @@ export function capabilityEvents<P extends string, N extends string>(
       id: Id,
       def: Omit<EventDef<"espionage_operation", From>, "id">
     ) =>
-      builder
+      minter
         .handle(
           id,
           "espionage_operation_event",
@@ -802,7 +802,7 @@ export function capabilityEvents<P extends string, N extends string>(
       id: Id,
       contract: { readonly from?: From } = {}
     ) =>
-      builder.handle(
+      minter.handle(
         id,
         "first_contact_event",
         "first_contact",
@@ -813,94 +813,94 @@ export function capabilityEvents<P extends string, N extends string>(
       id: Id,
       def: Omit<EventDef<"first_contact", From>, "id">
     ) =>
-      builder
+      minter
         .handle(id, "first_contact_event", "first_contact", "first_contact", def.from as From)
         .define(def),
     fleetHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "fleet_event", "fleet", "fleet", contract.from as From),
+    ) => minter.handle(id, "fleet_event", "fleet", "fleet", contract.from as From),
     fleet: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"fleet", From>, "id">
-    ) => builder.handle(id, "fleet_event", "fleet", "fleet", def.from as From).define(def),
+    ) => minter.handle(id, "fleet_event", "fleet", "fleet", def.from as From).define(def),
     leaderHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "leader_event", "leader", "leader", contract.from as From),
+    ) => minter.handle(id, "leader_event", "leader", "leader", contract.from as From),
     leader: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"leader", From>, "id">
-    ) => builder.handle(id, "leader_event", "leader", "leader", def.from as From).define(def),
+    ) => minter.handle(id, "leader_event", "leader", "leader", def.from as From).define(def),
     observerHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "observer_event", "country", "observer", contract.from as From),
+    ) => minter.handle(id, "observer_event", "country", "observer", contract.from as From),
     observer: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"country", From>, "id">
-    ) => builder.handle(id, "observer_event", "country", "observer", def.from as From).define(def),
+    ) => minter.handle(id, "observer_event", "country", "observer", def.from as From).define(def),
     planetHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "planet_event", "planet", "planet", contract.from as From),
+    ) => minter.handle(id, "planet_event", "planet", "planet", contract.from as From),
     planet: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"planet", From>, "id">
-    ) => builder.handle(id, "planet_event", "planet", "planet", def.from as From).define(def),
+    ) => minter.handle(id, "planet_event", "planet", "planet", def.from as From).define(def),
     popFactionHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
     ) =>
-      builder.handle(id, "pop_faction_event", "pop_faction", "pop_faction", contract.from as From),
+      minter.handle(id, "pop_faction_event", "pop_faction", "pop_faction", contract.from as From),
     popFaction: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"pop_faction", From>, "id">
     ) =>
-      builder
+      minter
         .handle(id, "pop_faction_event", "pop_faction", "pop_faction", def.from as From)
         .define(def),
     popGroupHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "pop_group_event", "pop_group", "pop_group", contract.from as From),
+    ) => minter.handle(id, "pop_group_event", "pop_group", "pop_group", contract.from as From),
     popGroup: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"pop_group", From>, "id">
     ) =>
-      builder.handle(id, "pop_group_event", "pop_group", "pop_group", def.from as From).define(def),
+      minter.handle(id, "pop_group_event", "pop_group", "pop_group", def.from as From).define(def),
     shipHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "ship_event", "ship", "ship", contract.from as From),
+    ) => minter.handle(id, "ship_event", "ship", "ship", contract.from as From),
     ship: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"ship", From>, "id">
-    ) => builder.handle(id, "ship_event", "ship", "ship", def.from as From).define(def),
+    ) => minter.handle(id, "ship_event", "ship", "ship", def.from as From).define(def),
     situationHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "situation_event", "situation", "situation", contract.from as From),
+    ) => minter.handle(id, "situation_event", "situation", "situation", contract.from as From),
     situation: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"situation", From>, "id">
     ) =>
-      builder.handle(id, "situation_event", "situation", "situation", def.from as From).define(def),
+      minter.handle(id, "situation_event", "situation", "situation", def.from as From).define(def),
     starbaseHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "starbase_event", "starbase", "starbase", contract.from as From),
+    ) => minter.handle(id, "starbase_event", "starbase", "starbase", contract.from as From),
     starbase: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"starbase", From>, "id">
-    ) => builder.handle(id, "starbase_event", "starbase", "starbase", def.from as From).define(def),
+    ) => minter.handle(id, "starbase_event", "starbase", "starbase", def.from as From).define(def),
     systemHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       contract: { readonly from?: From } = {}
-    ) => builder.handle(id, "system_event", "system", "system", contract.from as From),
+    ) => minter.handle(id, "system_event", "system", "system", contract.from as From),
     system: <const Id extends number, From extends ScopeName | undefined = undefined>(
       id: Id,
       def: Omit<EventDef<"system", From>, "id">
-    ) => builder.handle(id, "system_event", "system", "system", def.from as From).define(def),
+    ) => minter.handle(id, "system_event", "system", "system", def.from as From).define(def),
   }) as CapabilityEvents<P, N>;
 }

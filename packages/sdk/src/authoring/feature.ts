@@ -2,31 +2,31 @@
  * The pure authoring API's item vocabulary (SDK-22, SDK-23).
  *
  * A capability compiles capability-owned features — never loose items.
- * Capability methods create values, and `mod.feature(file, items)` places
- * them. The internal raw definers and `collection(file, items)` below remain
- * the lowering vocabulary that the capability and fold share.
+ * Capability methods create values, and `mod.feature(stem, items)` places
+ * them. The internal raw definers and `createFeature(stem, items)` below
+ * remain the lowering vocabulary that the capability and fold share.
  *
  * Each domain owns its item contracts. This module only combines that
  * vocabulary into features and places their items into output file stems.
  */
 
 import type { ContentItem, ContributionItem } from "../content/types.ts";
-import type { OnActionBindingItem } from "../events/on-actions.ts";
+import type { OnActionHookItem } from "../events/on-actions.ts";
 import type { EventItemBase } from "../events/types.ts";
 import type { TechnologyPatchItem } from "../stellaris/vanilla/patch.ts";
 
 export type ModItem =
-  ContentItem | EventItemBase | OnActionBindingItem | TechnologyPatchItem | ContributionItem;
+  ContentItem | EventItemBase | OnActionHookItem | TechnologyPatchItem | ContributionItem;
 
 /**
  * One output file's worth of items: the file stem and what lands in it. The
  * list is read when the internal fold runs. Generic in its element type so a
- * technology collection's `items` are technology items — the type says what
- * the collection can contain, not just that it contains "something".
+ * technology feature's `items` are technology items — the type says what the
+ * feature can contain, not just that it contains "something".
  */
-export interface Collection<T extends ModItem = ModItem> {
-  readonly itemKind: "collection";
-  readonly file: string | undefined;
+export interface Feature<T extends ModItem = ModItem> {
+  readonly itemKind: "feature";
+  readonly stem: string | undefined;
   readonly items: readonly T[];
 }
 
@@ -39,7 +39,7 @@ export const FILE_STEM_PATTERN = /^[a-z][a-z0-9_]*$/;
 export function assertFileStem(stem: string): void {
   if (!FILE_STEM_PATTERN.test(stem)) {
     throw new Error(
-      `Collection file stem "${stem}" must be lowercase snake_case ([a-z][a-z0-9_]*) — ` +
+      `Feature file stem "${stem}" must be lowercase snake_case ([a-z][a-z0-9_]*) — ` +
         `flat, no "/": the game does not read registry content out of subdirectories`
     );
   }
@@ -58,24 +58,24 @@ export function assertNamespace(namespace: string): void {
 /**
  * Internal lowering primitive over items that already exist. Capability
  * `feature()` delegates here after it has checked ownership; the stem is
- * validated once for every collection the fold receives.
+ * validated once for every feature the fold receives.
  */
-export function collection<T extends ModItem>(
-  file: string | undefined,
+export function createFeature<T extends ModItem>(
+  stem: string | undefined,
   items: readonly T[]
-): Collection<T> {
-  if (file !== undefined) {
-    assertFileStem(file);
+): Feature<T> {
+  if (stem !== undefined) {
+    assertFileStem(stem);
   }
-  return { itemKind: "collection", file, items };
+  return { itemKind: "feature", stem, items };
 }
 
-export type ModItemInput = Collection | readonly ModItemInput[];
+export type ModItemInput = Feature | readonly ModItemInput[];
 
-/** An item plus the file stem of the collection that created it. */
+/** An item plus the file stem of the feature that created it. */
 export interface PlacedItem {
   readonly item: ModItem;
-  readonly file: string | undefined;
+  readonly stem: string | undefined;
 }
 
 export function flattenItems(items: readonly ModItemInput[]): PlacedItem[] {
@@ -84,13 +84,13 @@ export function flattenItems(items: readonly ModItemInput[]): PlacedItem[] {
     if (Array.isArray(entry)) {
       flat.push(...flattenItems(entry));
     } else {
-      const collection = entry as Collection;
-      if (collection.file !== undefined) {
-        // Collection values are structural; re-assert stems from hand-built ones.
-        assertFileStem(collection.file);
+      const feature = entry as Feature;
+      if (feature.stem !== undefined) {
+        // Feature values are structural; re-assert stems from hand-built ones.
+        assertFileStem(feature.stem);
       }
-      for (const item of collection.items) {
-        flat.push({ item, file: collection.file });
+      for (const item of feature.items) {
+        flat.push({ item, stem: feature.stem });
       }
     }
   }

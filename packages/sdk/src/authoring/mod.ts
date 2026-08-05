@@ -19,7 +19,7 @@ import {
 } from "../generated/content-capability.ts";
 import {
   capabilityEvents,
-  type CapabilityEventBuilder,
+  type CapabilityEventMinter,
   type CapabilityEventHandle as GeneratedCapabilityEventHandle,
   type CapabilityEventItem as GeneratedCapabilityEventItem,
   type CapabilityEvents as GeneratedCapabilityEvents,
@@ -30,9 +30,9 @@ import type { EventKindKey } from "../generated/events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import {
   assertNamespace,
-  collection,
+  createFeature,
   FILE_STEM_PATTERN,
-  type Collection,
+  type Feature,
   type ModItem,
 } from "./feature.ts";
 
@@ -54,7 +54,7 @@ export type MintedContentId<
 > = GeneratedMintedContentId<P, I, K, Name>;
 
 /** A feature placed by one particular mod capability. */
-export type CapabilityFeature<P extends string, T extends ModItem = ModItem> = Collection<T> & {
+export type CapabilityFeature<P extends string, T extends ModItem = ModItem> = Feature<T> & {
   readonly [capabilityFeatureOwner]: CapabilityFeatureOwner<P>;
 };
 
@@ -96,7 +96,7 @@ export type ModCapability<P extends string, I extends IdProfile> = {
   };
   /** Places pure items in one capability-owned feature file. */
   feature<T extends ModItem>(
-    file: string | undefined,
+    stem: string | undefined,
     items: readonly T[]
   ): CapabilityFeature<P, T>;
   /** Compiles only features placed by this capability into a pure mod value. */
@@ -189,12 +189,12 @@ function makeEventHandle<
 function eventsFor<P extends string, N extends string>(prefix: P, name: N): CapabilityEvents<P, N> {
   const namespace = mintNamespace(prefix, name);
   assertNamespace(namespace);
-  const builder: CapabilityEventBuilder<P, N> = {
+  const minter: CapabilityEventMinter<P, N> = {
     namespace,
     handle: (id, kind, scope, subtype, from) =>
       makeEventHandle(namespace, id, kind, scope, subtype, from),
   };
-  return capabilityEvents(builder);
+  return capabilityEvents(minter);
 }
 
 function belongsToPrefix(value: string, prefix: string): boolean {
@@ -292,10 +292,10 @@ export function createMod<const P extends string, const I extends IdProfile>(
     ids,
     ...content,
     namespace: <const N extends string>(name: N = "" as N) => eventsFor(config.prefix, name),
-    feature: <T extends ModItem>(file: string | undefined, items: readonly T[]) => {
+    feature: <T extends ModItem>(stem: string | undefined, items: readonly T[]) => {
       items.forEach((item) => assertCapabilityItem(item, config.prefix));
       return Object.freeze({
-        ...collection(file, items),
+        ...createFeature(stem, items),
         [capabilityFeatureOwner]: owner,
       }) as CapabilityFeature<P, T>;
     },

@@ -302,7 +302,7 @@ describe("discovery contracts", () => {
 });
 
 describe("capability feature ownership", () => {
-  it("rejects a feature from another capability and direct collection input at runtime", () => {
+  it("rejects a feature from another capability and direct feature input at runtime", () => {
     const alpha = createMod(
       { name: "Alpha", prefix: "alpha_feature", supportedVersion: "4.4.*" },
       { ids: stellarisIds }
@@ -323,7 +323,7 @@ describe("capability feature ownership", () => {
       'Feature does not belong to mod prefix "alpha_feature"'
     );
     expect(() =>
-      alpha.compile([{ itemKind: "collection", file: "forged", items: [] }] as never)
+      alpha.compile([{ itemKind: "feature", stem: "forged", items: [] }] as never)
     ).toThrow('Feature does not belong to mod prefix "alpha_feature"');
   });
 

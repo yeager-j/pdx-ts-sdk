@@ -19,7 +19,7 @@ import { locateInstall } from "@pdx-ts/sdk/stellaris";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { checkCallSites } from "../src/callsites.ts";
-import { inferScopes, type Registry } from "../src/infer-scopes.ts";
+import { inferScopes, type ScriptedKind } from "../src/infer-scopes.ts";
 import { VANILLA_MANIFEST, type VanillaScriptedRow } from "../src/manifest.ts";
 import { readScriptedDefinitions } from "../src/read-scripted.ts";
 
@@ -44,7 +44,7 @@ function measure(root: string) {
     trigger: read("scripted_trigger"),
     effect: read("scripted_effect"),
   });
-  const lowered = (registry: Registry): ReadonlyMap<string, RuleScopes> =>
+  const lowered = (registry: ScriptedKind): ReadonlyMap<string, RuleScopes> =>
     new Map(inferred[registry].map((one) => [one.name.toLowerCase(), one.scopes]));
   return checkCallSites(root, { trigger: lowered("trigger"), effect: lowered("effect") });
 }
@@ -81,7 +81,7 @@ describe.skipIf(installRoot === undefined)(
         .slice(0, 20)
         .map(
           (one) =>
-            `${one.registry} ${one.name} is called in ${one.scope} scope (${one.file}) ` +
+            `${one.kind} ${one.name} is called in ${one.scope} scope (${one.file}) ` +
             `but inferred ${one.inferred.join("|")}`
         )
         .join("\n");

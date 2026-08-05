@@ -968,7 +968,7 @@ function contentDefiners(
     }
 
     chunks.push(
-      docComment([`What ${article} ${spoken} collection can contain.`]) +
+      docComment([`What ${article} ${spoken} feature can contain.`]) +
         `export type ${name}Item = ${itemArms.join(" | ")};\n\n` +
         definitions.join("\n")
     );

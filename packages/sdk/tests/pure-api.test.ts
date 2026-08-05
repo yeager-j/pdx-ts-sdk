@@ -12,8 +12,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  collection as collectionInternal,
-  type Collection,
+  createFeature as createFeatureInternal,
+  type Feature,
   type ModItem,
   type ModItemInput,
 } from "../src/authoring/feature.ts";
@@ -169,9 +169,9 @@ function goldenPath(relPath: string): string {
   return `__snapshots__/pure-api/${relPath.replaceAll("/", "__")}`;
 }
 
-function techsWith(file: string | undefined, ...ids: string[]): Collection {
-  return collectionInternal(
-    file,
+function techsWith(stem: string | undefined, ...ids: string[]): Feature {
+  return createFeatureInternal(
+    stem,
     ids.map((id) =>
       defineTechnologyInternal({ id, name: id, area: "physics", tier: 1, category: "particles" })
     )
@@ -226,7 +226,7 @@ describe("assembly-time validation", () => {
   });
 
   it("rejects duplicate localization keys across definitions", () => {
-    const techs = collectionInternal(undefined, [
+    const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
         id: "pp_mod_a",
         name: "A",
@@ -250,7 +250,7 @@ describe("assembly-time validation", () => {
   });
 
   it("reports quote replacement as a warning datum, not console output", () => {
-    const techs = collectionInternal(undefined, [
+    const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
         id: "pp_mod_quoted",
         name: 'The "Hum"',
@@ -281,14 +281,14 @@ describe("event namespaces", () => {
     // holds — so this is exactly the case the define-site check cannot see:
     // each namespace handle has its own `used` set, and only the global check
     // across every collection knows the two collided.
-    const first = collectionInternal("shared_events", [
+    const first = createFeatureInternal("shared_events", [
       namespaceInternal("pp_mod_shared").defineCountryEvent({
         id: 1,
         isTriggeredOnly: true,
         hideWindow: true,
       }),
     ]);
-    const second = collectionInternal("shared_events", [
+    const second = createFeatureInternal("shared_events", [
       namespaceInternal("pp_mod_shared").defineCountryEvent({
         id: 1,
         isTriggeredOnly: true,
@@ -300,7 +300,7 @@ describe("event namespaces", () => {
     );
     // The merge itself is fine: distinct ids in the two collections land in
     // one file, exactly as two same-stem content collections do.
-    const third = collectionInternal("shared_events", [
+    const third = createFeatureInternal("shared_events", [
       namespaceInternal("pp_mod_shared").defineCountryEvent({
         id: 2,
         isTriggeredOnly: true,
@@ -318,14 +318,14 @@ describe("event namespaces", () => {
     // SDK-23 decision 1. A namespace split across two files splits its
     // numeric id space across two independent define-site checks, and makes
     // the emitted file a fact about layout rather than about identity.
-    const first = collectionInternal("a_events", [
+    const first = createFeatureInternal("a_events", [
       namespaceInternal("pp_mod_shared").defineCountryEvent({
         id: 1,
         isTriggeredOnly: true,
         hideWindow: true,
       }),
     ]);
-    const second = collectionInternal("b_events", [
+    const second = createFeatureInternal("b_events", [
       namespaceInternal("pp_mod_shared").defineCountryEvent({
         id: 2,
         isTriggeredOnly: true,
@@ -339,14 +339,14 @@ describe("event namespaces", () => {
   });
 
   it("keeps one namespace per emitted file, catching same-stem merges", () => {
-    const alpha = collectionInternal("shared", [
+    const alpha = createFeatureInternal("shared", [
       namespaceInternal("pp_mod_alpha").defineCountryEvent({
         id: 1,
         isTriggeredOnly: true,
         hideWindow: true,
       }),
     ]);
-    const beta = collectionInternal("shared", [
+    const beta = createFeatureInternal("shared", [
       namespaceInternal("pp_mod_beta").defineCountryEvent({
         id: 2,
         isTriggeredOnly: true,
@@ -359,14 +359,14 @@ describe("event namespaces", () => {
   });
 
   it("gives each namespace its own numeric id space and file", () => {
-    const alpha = collectionInternal("alpha_events", [
+    const alpha = createFeatureInternal("alpha_events", [
       namespaceInternal("pp_mod_alpha").defineCountryEvent({
         id: 1,
         isTriggeredOnly: true,
         hideWindow: true,
       }),
     ]);
-    const beta = collectionInternal("beta_events", [
+    const beta = createFeatureInternal("beta_events", [
       namespaceInternal("pp_mod_beta").defineCountryEvent({
         id: 1,
         isTriggeredOnly: true,
@@ -394,7 +394,7 @@ describe("event namespaces", () => {
       from: "country",
       isTriggeredOnly: true,
     });
-    const included = collectionInternal("events", [
+    const included = createFeatureInternal("events", [
       namespaceInternal("pp_mod").defineCountryEvent({
         id: 21,
         isTriggeredOnly: true,
@@ -421,7 +421,7 @@ describe("event namespaces", () => {
       from: "country",
       isTriggeredOnly: true,
     });
-    const included = collectionInternal("events", [
+    const included = createFeatureInternal("events", [
       namespaceInternal("pp_mod").defineCountryEvent({
         id: 23,
         isTriggeredOnly: true,
@@ -439,11 +439,11 @@ describe("event namespaces", () => {
 
   it("requires on-action events to be collections of the same build", () => {
     const event = namespaceInternal("pp_mod").defineCountryEvent({ id: 31, isTriggeredOnly: true });
-    const hooks = collectionInternal(undefined, [
+    const hooks = createFeatureInternal(undefined, [
       onInternal(onActions.onGameStartCountry, [event]),
     ]);
     expect(() => buildInternal(CONFIG, [hooks])).toThrow(
-      'Event "pp_mod.31" is not among the collections passed to buildMod'
+      'Event "pp_mod.31" is not among the features passed to buildMod'
     );
   });
 });
@@ -451,7 +451,7 @@ describe("event namespaces", () => {
 describe("content reference integrity", () => {
   it("resolves a reference across two collections of the same build", () => {
     const base = techsWith("base_techs", "pp_mod_tech_base");
-    const derived = collectionInternal("derived_techs", [
+    const derived = createFeatureInternal("derived_techs", [
       defineTechnologyInternal({
         id: "pp_mod_tech_derived",
         name: "Derived",
@@ -479,7 +479,7 @@ describe("content reference integrity", () => {
       tier: 1,
       category: "particles",
     });
-    const events = collectionInternal("events", [
+    const events = createFeatureInternal("events", [
       namespaceInternal("pp_mod").defineCountryEvent({
         id: 41,
         isTriggeredOnly: true,
@@ -503,7 +503,7 @@ describe("content reference integrity", () => {
       tier: 1,
       category: "particles",
     });
-    const events = collectionInternal("events", [
+    const events = createFeatureInternal("events", [
       namespaceInternal("pp_mod").defineCountryEvent({
         id: 42,
         isTriggeredOnly: true,
@@ -529,7 +529,7 @@ describe("content reference integrity", () => {
       tier: 1,
       category: "particles",
     });
-    const events = collectionInternal("events", [
+    const events = createFeatureInternal("events", [
       namespaceInternal("pp_mod").defineCountryEvent({
         id: 43,
         isTriggeredOnly: true,
@@ -539,7 +539,7 @@ describe("content reference integrity", () => {
         },
       }),
     ]);
-    const files = render(buildInternal(CONFIG, [collectionInternal("granted", [tech]), events]));
+    const files = render(buildInternal(CONFIG, [createFeatureInternal("granted", [tech]), events]));
     expect(files.get("events/pp_mod_events.txt")).toContain("tech = pp_mod_tech_granted");
   });
 
@@ -551,7 +551,7 @@ describe("content reference integrity", () => {
       tier: 1,
       category: "particles",
     });
-    const included = collectionInternal(undefined, [
+    const included = createFeatureInternal(undefined, [
       defineTechnologyInternal({
         id: "pp_mod_tech_dependent",
         name: "Dependent",
@@ -564,20 +564,20 @@ describe("content reference integrity", () => {
     // `orphans` is never passed — the emitted id has no definition behind it.
     expect(() => buildInternal(CONFIG, [included])).toThrow(
       'technology "pp_mod_tech_dependent" references technology "pp_mod_tech_orphan" in ' +
-        '"prerequisites", but no such technology is among the collections passed to buildMod'
+        '"prerequisites", but no such technology is among the features passed to buildMod'
     );
   });
 
   it("names the registry, not merely the id: a tradition is not a technology", () => {
     // Same id, different registry. An existence-only check would pass this.
-    const traditions = collectionInternal(undefined, [
+    const traditions = createFeatureInternal(undefined, [
       defineTraditionInternal({
         id: "pp_mod_ghost",
         name: "Ghost",
         effects: "Nothing at all.",
       }),
     ]);
-    const techs = collectionInternal(undefined, [
+    const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
         id: "pp_mod_tech_haunted",
         name: "Haunted",
@@ -598,7 +598,7 @@ describe("content reference integrity", () => {
     // template's is `component_template.utility_component_template` — so
     // keying by the registry name meant nothing ever matched and every
     // component template reference read as somebody else's to define.
-    const designs = collectionInternal(undefined, [
+    const designs = createFeatureInternal(undefined, [
       defineGlobalShipDesignInternal({
         id: "pp_mod_design_ghost_component",
         shipSize: "ship_size_corvette",
@@ -616,7 +616,7 @@ describe("content reference integrity", () => {
 
     // Defined, it passes — and the id is matched against that registry's own
     // definitions, not merely against something built somewhere.
-    const components = collectionInternal(undefined, [
+    const components = createFeatureInternal(undefined, [
       defineUtilityComponentTemplateInternal({ id: "pp_mod_component_missing", icon: "GFX_x" }),
     ]);
     expect(() => buildInternal(CONFIG, [designs, components])).not.toThrow();
@@ -627,7 +627,7 @@ describe("content reference integrity", () => {
     // subtype registries satisfies. Keying only by the qualified names left
     // the bare type absent from the map, so these references — the majority
     // of them — read as unauthorable and went unchecked.
-    const designs = collectionInternal(undefined, [
+    const designs = createFeatureInternal(undefined, [
       defineGlobalShipDesignInternal({
         id: "pp_mod_design_ghost_template",
         shipSize: "ship_size_corvette",
@@ -641,7 +641,7 @@ describe("content reference integrity", () => {
     );
 
     // Any of the three registries accounts for it, since the field takes any.
-    const weapons = collectionInternal(undefined, [
+    const weapons = createFeatureInternal(undefined, [
       defineWeaponComponentTemplateInternal({ id: "pp_mod_template_missing", icon: "GFX_x" }),
     ]);
     expect(() => buildInternal(CONFIG, [designs, weapons])).not.toThrow();
@@ -650,7 +650,7 @@ describe("content reference integrity", () => {
   it("checks an own-prefixed raw string exactly like a branded ref", () => {
     // The prefix is per-mod, so an own-prefixed string in a reference field is
     // this mod's content however it was written — which is what catches typos.
-    const techs = collectionInternal(undefined, [
+    const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
         id: "pp_mod_tech_base",
         name: "Base",
@@ -673,7 +673,7 @@ describe("content reference integrity", () => {
   });
 
   it("exempts vanilla and third-party ids, and fields no registry backs", () => {
-    const techs = collectionInternal(undefined, [
+    const techs = createFeatureInternal(undefined, [
       defineTechnologyInternal({
         id: "pp_mod_tech_open",
         name: "Open",
@@ -691,7 +691,7 @@ describe("content reference integrity", () => {
   it("leaves own-prefixed flags, targets and loc keys alone", () => {
     // The scalars a post-hoc scan of the emitted tree would trip over: all
     // own-prefixed, none of them content references.
-    const events = collectionInternal("events", [
+    const events = createFeatureInternal("events", [
       namespaceInternal("pp_mod").defineCountryEvent({
         id: 40,
         title: "Hum",
@@ -719,8 +719,8 @@ describe("content reference integrity", () => {
       category: "biology",
       startTech: true,
     });
-    const orphans = collectionInternal("orphan_techs", [marker]);
-    const patches = collectionInternal(undefined, [
+    const orphans = createFeatureInternal("orphan_techs", [marker]);
+    const patches = createFeatureInternal(undefined, [
       patchTechnologyInternal(
         vanilla.technology("tech_gene_forging").require("prerequisites"),
         (t) => ({
@@ -735,7 +735,7 @@ describe("content reference integrity", () => {
     ).toContain("pp_mod_tech_marker");
     expect(() => buildInternal(CONFIG, [patches], { vanilla })).toThrow(
       'the patch of tech_gene_forging references technology "pp_mod_tech_marker" in ' +
-        '"prerequisites", but no such technology is among the collections passed to buildMod'
+        '"prerequisites", but no such technology is among the features passed to buildMod'
     );
   });
 
@@ -746,7 +746,7 @@ describe("content reference integrity", () => {
       base: 80,
       show: isScopeValid(),
     });
-    const limits = collectionInternal(undefined, [
+    const limits = createFeatureInternal(undefined, [
       titan,
       addShipOfSizeLimitsInternal([titan, "third_party_limit"]),
     ]);
@@ -754,7 +754,7 @@ describe("content reference integrity", () => {
       new Set(["pp_mod_limit_titan", "third_party_limit"])
     );
 
-    const dangling = collectionInternal(undefined, [
+    const dangling = createFeatureInternal(undefined, [
       addShipOfSizeLimitsInternal(["pp_mod_limit_never_defined"]),
     ]);
     expect(() => buildInternal(CONFIG, [dangling])).toThrow(
@@ -771,7 +771,7 @@ describe("collections", () => {
     // the stem it carries names a file in each registry directory those items
     // land in. Stellaris still gets one directory per registry; the author
     // still writes one module per feature.
-    const amplifiers = collectionInternal("amplifiers", [
+    const amplifiers = createFeatureInternal("amplifiers", [
       defineTechnologyInternal({
         id: "pp_mod_tech_amplifier",
         name: "Amplifier",
@@ -826,7 +826,7 @@ describe("collections", () => {
     // `ns.10` after `ns.2` — the reason the event sort reads the numeric half
     // of the id instead of comparing the full id as text.
     const ns = namespaceInternal("pp_mod");
-    const events = collectionInternal(
+    const events = createFeatureInternal(
       "events",
       [10, 2, 1].map((id) => ns.defineCountryEvent({ id, isTriggeredOnly: true, hideWindow: true }))
     );
@@ -842,15 +842,15 @@ describe("collections", () => {
     // Registries do not read subdirectories (common/technology/category/ is
     // a different registry, not layout), and the same check keeps the
     // emitted path safe by construction.
-    expect(() => collectionInternal("category/dawn", [])).toThrow(
-      'Collection file stem "category/dawn" must be lowercase snake_case'
+    expect(() => createFeatureInternal("category/dawn", [])).toThrow(
+      'Feature file stem "category/dawn" must be lowercase snake_case'
     );
-    expect(() => collectionInternal("../escape", [])).toThrow(/must be lowercase snake_case/);
-    // A hand-built Collection value bypasses `collection()`; flattening
+    expect(() => createFeatureInternal("../escape", [])).toThrow(/must be lowercase snake_case/);
+    // A hand-built Feature value bypasses `createFeature()`; flattening
     // re-asserts every stem.
-    const forged: Collection = {
-      itemKind: "collection",
-      file: "category/dawn",
+    const forged: Feature = {
+      itemKind: "feature",
+      stem: "category/dawn",
       items: [],
     };
     expect(() => buildInternal(CONFIG, [forged])).toThrow(/must be lowercase snake_case/);
@@ -903,7 +903,7 @@ describe("collections", () => {
       tags: ["Technologies"],
     };
     const mod = buildInternal(config, [
-      collectionInternal(undefined, [
+      createFeatureInternal(undefined, [
         defineTechnologyInternal({
           id: "pp_mod_tech_frozen",
           name: "Frozen",
@@ -932,7 +932,7 @@ describe("collections", () => {
     // a definition's own description silently overriding a key it does not own.
     expect(() =>
       buildInternal(CONFIG, [
-        collectionInternal(undefined, [
+        createFeatureInternal(undefined, [
           defineTechnologyInternal({
             id: "pp_mod_tech_injected",
             name: 'Fine"\n pp_mod_tech_other:0 "Forged',
@@ -969,7 +969,7 @@ describe("collections", () => {
     // BOTH own files — the SDK-19 constraint with teeth.
     const alpha = techsWith("alpha_techs", "pp_mod_tech_alpha");
     const beta = techsWith("beta_techs", "pp_mod_tech_beta");
-    const patches = collectionInternal(undefined, [
+    const patches = createFeatureInternal(undefined, [
       patchTechnologyInternal(vanilla.technology("tech_gene_forging").require("cost"), (t) => ({
         cost: t.cost.value * 2,
       })),
@@ -1029,7 +1029,7 @@ describe("recorder liveness", () => {
       },
       options: [{ name: "ok" }],
     });
-    const mod = buildInternal(CONFIG, [collectionInternal(undefined, [event])]);
+    const mod = buildInternal(CONFIG, [createFeatureInternal(undefined, [event])]);
     const before = render(mod);
 
     expect(() => leaked!.log("recorded after the closure returned")).toThrow(
@@ -1052,7 +1052,7 @@ describe("recorder liveness", () => {
         m.command.limit.add(1);
       },
     });
-    const mod = buildInternal(CONFIG, [collectionInternal(undefined, [tradition])]);
+    const mod = buildInternal(CONFIG, [createFeatureInternal(undefined, [tradition])]);
     const before = render(mod);
 
     expect(() => leaked!.command.limit.add(2)).toThrow(

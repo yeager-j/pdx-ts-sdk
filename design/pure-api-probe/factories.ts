@@ -34,7 +34,7 @@ import {
   type ContributionItem,
   type EventItemBase,
   type ModItem,
-  type OnActionBindingItem,
+  type OnActionHookItem,
   type TechnologyPatchItem,
 } from "./items.ts";
 
@@ -206,7 +206,7 @@ export function createEvents(file: string, namespace: string): EventCollection {
   };
 }
 
-export interface OnActionCollection extends Collection<OnActionBindingItem> {
+export interface OnActionCollection extends Collection<OnActionHookItem> {
   /** Binds one of this mod's events to a generated on-action hook. The
    * event value must appear in a collection passed to the same `buildMod`. */
   on<S extends ScopeName, From extends ScopeName | undefined>(
@@ -216,7 +216,7 @@ export interface OnActionCollection extends Collection<OnActionBindingItem> {
 }
 
 export function createOnActions(): OnActionCollection {
-  const { collection, items } = makeCollection<OnActionBindingItem>(undefined);
+  const { collection, items } = makeCollection<OnActionHookItem>(undefined);
   return {
     ...collection,
     on(hook, event) {

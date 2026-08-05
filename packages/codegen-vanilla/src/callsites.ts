@@ -28,7 +28,7 @@ import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 import { parse, type PdxItem } from "@pdx-ts/pdxscript";
 import { EVENT_KINDS } from "@pdx-ts/sdk";
 
-import type { Registry } from "./infer-scopes.ts";
+import type { ScriptedKind } from "./infer-scopes.ts";
 
 /** Event body fields whose contents are conditions in the event's own scope. */
 const CONDITION_FIELDS = new Set(["trigger", "is_triggered_only_check"]);
@@ -42,7 +42,7 @@ const TRANSPARENT_EFFECTS = new Set(["if", "else_if", "else", "hidden_effect"]);
 
 export interface ScopeContradiction {
   readonly name: string;
-  readonly registry: Registry;
+  readonly kind: ScriptedKind;
   /** The scope the call site runs in, from the event's own kind. */
   readonly scope: string;
   readonly inferred: readonly string[];
@@ -58,7 +58,7 @@ export interface CallSiteReport {
   readonly contradictions: readonly ScopeContradiction[];
 }
 
-export type InferredScopes = Readonly<Record<Registry, ReadonlyMap<string, RuleScopes>>>;
+export type InferredScopes = Readonly<Record<ScriptedKind, ReadonlyMap<string, RuleScopes>>>;
 
 function eventFiles(dir: string): string[] {
   let names: string[];
@@ -82,15 +82,15 @@ export function checkCallSites(installRoot: string, inferred: InferredScopes): C
   let events = 0;
   let checked = 0;
 
-  const record = (name: string, registry: Registry, scope: string, file: string): void => {
-    const scopes = inferred[registry].get(name.toLowerCase());
+  const record = (name: string, kind: ScriptedKind, scope: string, file: string): void => {
+    const scopes = inferred[kind].get(name.toLowerCase());
     if (scopes === undefined) {
       return;
     }
     checked += 1;
-    covered.add(`${registry}:${name.toLowerCase()}`);
+    covered.add(`${kind}:${name.toLowerCase()}`);
     if (scopes !== "universal" && !scopes.includes(scope)) {
-      contradictions.push({ name, registry, scope, inferred: scopes, file });
+      contradictions.push({ name, kind, scope, inferred: scopes, file });
     }
   };
 

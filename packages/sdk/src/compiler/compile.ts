@@ -11,7 +11,7 @@ import { flattenItems, type ModItemInput } from "../authoring/feature.ts";
 import { ContentAuthoring } from "../content/authoring.ts";
 import type { ContentItem } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
-import { OnActionAuthoring, type OnActionBindingItem } from "../events/on-actions.ts";
+import { OnActionAuthoring, type OnActionHookItem } from "../events/on-actions.ts";
 import type { DefinedEvent, EventItemBase } from "../events/types.ts";
 import { CONTENT_REGISTRIES, type ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeName } from "../generated/scopes.ts";
@@ -46,11 +46,11 @@ function eventNumber(event: EventItemBase, namespace: string): number {
 
 export function buildMod(
   callerConfig: ModConfig | ResolvedModConfig,
-  collections: readonly ModItemInput[],
+  features: readonly ModItemInput[],
   options: BuildOptions = {}
 ): PureMod {
   const config = resolveConfig(callerConfig);
-  const flat = flattenItems(collections);
+  const flat = flattenItems(features);
   const warnings: ModWarning[] = [];
   const localization = createLocalizationAccumulator(warnings);
   const refUses: ReferenceUse[] = [];
@@ -81,7 +81,7 @@ export function buildMod(
 
   // Pass 1: collect and validate items without defining them. Definition is
   // delayed because it registers localization as a side effect.
-  for (const { item, file } of flat) {
+  for (const { item, stem } of flat) {
     if (item.itemKind !== "content") {
       continue;
     }
@@ -108,7 +108,7 @@ export function buildMod(
     }
     ownIds.set(item.def.id, item.type);
     ownIdsByDir.set(descriptor.outputDir, ownIds);
-    const relPath = emissionPath(config.prefix, descriptor.outputDir, file ?? descriptor.fileStem);
+    const relPath = emissionPath(config.prefix, descriptor.outputDir, stem ?? descriptor.fileStem);
     const byPath = rawByType.get(item.type) ?? new Map<string, ContentItem[]>();
     const group = byPath.get(relPath) ?? [];
     group.push(item);
@@ -164,12 +164,12 @@ export function buildMod(
   });
 
   const placedEvents = flat.filter(
-    (placed): placed is { item: EventItemBase; file: string | undefined } =>
+    (placed): placed is { item: EventItemBase; stem: string | undefined } =>
       placed.item.itemKind === "event"
   );
   const eventsByPath = new Map<string, { namespace: string; events: EventItemBase[] }>();
-  for (const { item, file } of placedEvents) {
-    const relPath = emissionPath(config.prefix, "events", file ?? "events");
+  for (const { item, stem } of placedEvents) {
+    const relPath = emissionPath(config.prefix, "events", stem ?? "events");
     const group = eventsByPath.get(relPath);
     if (group === undefined) {
       eventsByPath.set(relPath, { namespace: item.namespace, events: [item] });
@@ -183,9 +183,9 @@ export function buildMod(
     }
   }
   const stemsByNamespace = new Map<string, Set<string>>();
-  for (const { item, file } of placedEvents) {
+  for (const { item, stem } of placedEvents) {
     const stems = stemsByNamespace.get(item.namespace) ?? new Set<string>();
-    stems.add(file ?? "events");
+    stems.add(stem ?? "events");
     stemsByNamespace.set(item.namespace, stems);
   }
   for (const [namespace, stems] of stemsByNamespace) {
@@ -245,7 +245,7 @@ export function buildMod(
     includedEvents.has(event as unknown as EventItemBase)
   );
   const bindings = flat.flatMap(({ item }) => (item.itemKind === "on-action" ? [item] : []));
-  const bindingOrder = (item: OnActionBindingItem): string =>
+  const bindingOrder = (item: OnActionHookItem): string =>
     item.events.map((event) => event.id).join("\u0000");
   const orderedBindings = [...bindings].sort(
     (a, b) => compareUtf8(a.hook.name, b.hook.name) || compareUtf8(bindingOrder(a), bindingOrder(b))

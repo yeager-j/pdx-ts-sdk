@@ -118,11 +118,11 @@ function capabilityBinding(kind: EmittedKind & { scope: string }): string {
     `    ${method}Handle: <const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
     "      id: Id,\n" +
     "      contract: { readonly from?: From } = {}\n" +
-    `    ) => builder.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, contract.from as From),\n` +
+    `    ) => minter.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, contract.from as From),\n` +
     `    ${method}: <const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
     "      id: Id,\n" +
     `      def: Omit<EventDef<${scope}, From>, "id">\n` +
-    `    ) => builder.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, def.from as From).define(def),\n`
+    `    ) => minter.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, def.from as From).define(def),\n`
   );
 }
 
@@ -287,7 +287,7 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     "  readonly id: MintedEventId<P, N, Id>;\n" +
     '  define(def: Omit<EventDef<S, From>, "id" | "from">): CapabilityEventItem<P, N, Id, S, From, Kind>;\n' +
     "};\n\n" +
-    "export interface CapabilityEventBuilder<P extends string, N extends string> {\n" +
+    "export interface CapabilityEventMinter<P extends string, N extends string> {\n" +
     "  readonly namespace: MintedNamespace<P, N>;\n" +
     "  handle<\n" +
     "    const Id extends number,\n" +
@@ -307,10 +307,10 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     scoped.map(capabilitySignature).join("\n") +
     "}\n\n" +
     "export function capabilityEvents<P extends string, N extends string>(\n" +
-    "  builder: CapabilityEventBuilder<P, N>\n" +
+    "  minter: CapabilityEventMinter<P, N>\n" +
     "): CapabilityEvents<P, N> {\n" +
     "  return Object.freeze({\n" +
-    "    namespace: builder.namespace,\n" +
+    "    namespace: minter.namespace,\n" +
     scoped.map(capabilityBinding).join("") +
     "  }) as CapabilityEvents<P, N>;\n" +
     "}\n";

@@ -69,7 +69,7 @@ const CALLER_RELATIVE = new Set([
   "fromfromfromfrom",
 ]);
 
-export type Registry = "trigger" | "effect";
+export type ScriptedKind = "trigger" | "effect";
 
 /** Why a definition ended up unconstrained, or less narrow than it might be. */
 export interface ScopeDiagnostic {
@@ -118,24 +118,26 @@ class Walker {
   private cycles = 0;
 
   private readonly facts: ScopeFacts;
-  private readonly definitions: Readonly<Record<Registry, ReadonlyMap<string, ScriptedDefinition>>>;
+  private readonly definitions: Readonly<
+    Record<ScriptedKind, ReadonlyMap<string, ScriptedDefinition>>
+  >;
 
   constructor(
     facts: ScopeFacts,
-    definitions: Readonly<Record<Registry, ReadonlyMap<string, ScriptedDefinition>>>
+    definitions: Readonly<Record<ScriptedKind, ReadonlyMap<string, ScriptedDefinition>>>
   ) {
     this.facts = facts;
     this.definitions = definitions;
   }
 
-  infer(definition: ScriptedDefinition, registry: Registry): InferredScope {
+  infer(definition: ScriptedDefinition, kind: ScriptedKind): InferredScope {
     this.diagnostics = [];
-    const scopes = this.scopesOf(definition, registry);
+    const scopes = this.scopesOf(definition, kind);
     return { name: definition.name, scopes, diagnostics: this.diagnostics };
   }
 
-  private scopesOf(definition: ScriptedDefinition, registry: Registry): RuleScopes {
-    const key = `${registry}:${definition.name.toLowerCase()}`;
+  private scopesOf(definition: ScriptedDefinition, kind: ScriptedKind): RuleScopes {
+    const key = `${kind}:${definition.name.toLowerCase()}`;
     const cached = this.memo.get(key);
     if (cached !== undefined) {
       return cached;
@@ -149,7 +151,7 @@ class Walker {
     }
     this.active.add(key);
     const before = this.cycles;
-    const body = this.walkBody(definition.body, true, registry);
+    const body = this.walkBody(definition.body, true, kind);
     this.active.delete(key);
     const emptied = body !== "universal" && body.length === 0;
     if (emptied) {
@@ -174,24 +176,24 @@ class Walker {
    * statements run in a pushed scope — they are still walked, so their unknown
    * keys are reported, but they cannot constrain the caller.
    */
-  private walkBody(items: readonly PdxItem[], applies: boolean, registry: Registry): RuleScopes {
+  private walkBody(items: readonly PdxItem[], applies: boolean, kind: ScriptedKind): RuleScopes {
     let scopes: RuleScopes = "universal";
     for (const item of items) {
-      scopes = intersectScopes(scopes, this.walkItem(item, applies, registry));
+      scopes = intersectScopes(scopes, this.walkItem(item, applies, kind));
     }
     return scopes;
   }
 
-  private walkItem(item: PdxItem, applies: boolean, registry: Registry): RuleScopes {
+  private walkItem(item: PdxItem, applies: boolean, kind: ScriptedKind): RuleScopes {
     switch (item.kind) {
       case "entry":
-        return this.walkEntry(item.key, item.value, applies, registry);
+        return this.walkEntry(item.key, item.value, applies, kind);
       case "param":
         // `[[FLAG] ... ]` — present only when the caller defines FLAG, so its
         // conditions are the call site's, not the definition's. Walked for
         // diagnostics with `applies: false`, never for constraint.
         this.note("param-block", item.name);
-        this.walkBody(item.items, false, registry);
+        this.walkBody(item.items, false, kind);
         return "universal";
       default:
         return "universal";
@@ -202,7 +204,7 @@ class Walker {
     rawKey: string,
     value: PdxValue,
     applies: boolean,
-    registry: Registry
+    kind: ScriptedKind
   ): RuleScopes {
     const key = rawKey.toLowerCase();
     const children = itemsOf(value);
@@ -214,7 +216,7 @@ class Walker {
       return "universal";
     }
     if (INTERSECTING.has(key)) {
-      return children === null ? "universal" : this.walkBody(children, applies, registry);
+      return children === null ? "universal" : this.walkBody(children, applies, kind);
     }
     if (UNIONING.has(key)) {
       if (children === null) {
@@ -225,7 +227,7 @@ class Walker {
       // that keeps deliberately dual-scope triggers from emptying.
       let arms: RuleScopes = [];
       for (const child of children) {
-        arms = unionScopes(arms, this.walkItem(child, applies, registry));
+        arms = unionScopes(arms, this.walkItem(child, applies, kind));
       }
       return arms;
     }
@@ -242,27 +244,27 @@ class Walker {
     const link = this.facts.links.get(first);
     if (link !== undefined) {
       if (children !== null && first === key) {
-        this.walkBody(children, false, registry);
+        this.walkBody(children, false, kind);
       }
       return applies ? link.inputScopes : "universal";
     }
 
-    const own = this.definitions[registry].get(key);
+    const own = this.definitions[kind].get(key);
     const nested = own ?? this.definitions.trigger.get(key);
     if (nested !== undefined) {
       // A scripted effect's body reaches scripted triggers through its `limit`
-      // blocks, so the lookup crosses registries — and the callee is walked
-      // under ITS registry, not the caller's.
-      const scopes = this.scopesOf(nested, own === undefined ? "trigger" : registry);
+      // blocks, so the lookup crosses kinds — and the callee is walked
+      // under ITS own kind, not the caller's.
+      const scopes = this.scopesOf(nested, own === undefined ? "trigger" : kind);
       return applies ? scopes : "universal";
     }
 
-    const rule = this.ruleFor(key, registry);
+    const rule = this.ruleFor(key, kind);
     if (rule !== undefined) {
       const declared = applies ? rule.scopes : "universal";
       return children === null
         ? declared
-        : intersectScopes(declared, this.walkRuleBody(rule, children, applies, registry));
+        : intersectScopes(declared, this.walkRuleBody(rule, children, applies, kind));
     }
 
     this.note("unknown-key", rawKey);
@@ -279,7 +281,7 @@ class Walker {
     rule: RuleFact,
     children: readonly PdxItem[],
     applies: boolean,
-    registry: Registry
+    kind: ScriptedKind
   ): RuleScopes {
     let scopes: RuleScopes = "universal";
     for (const child of children) {
@@ -288,10 +290,7 @@ class Walker {
       if (clause !== undefined) {
         const items = child.kind === "entry" ? itemsOf(child.value) : null;
         if (items !== null) {
-          scopes = intersectScopes(
-            scopes,
-            this.walkBody(items, applies && clause === null, registry)
-          );
+          scopes = intersectScopes(scopes, this.walkBody(items, applies && clause === null, kind));
         }
         continue;
       }
@@ -306,16 +305,16 @@ class Walker {
       }
       scopes = intersectScopes(
         scopes,
-        this.walkItem(child, applies && rule.splice.scope === null, registry)
+        this.walkItem(child, applies && rule.splice.scope === null, kind)
       );
     }
     return scopes;
   }
 
-  private ruleFor(key: string, registry: Registry): RuleFact | undefined {
+  private ruleFor(key: string, kind: ScriptedKind): RuleFact | undefined {
     // A scripted effect's body holds effects and, inside `limit`, triggers, so
     // the effect walk falls back to the trigger table.
-    return registry === "trigger"
+    return kind === "trigger"
       ? this.facts.triggers.get(key)
       : (this.facts.effects.get(key) ?? this.facts.triggers.get(key));
   }
@@ -335,8 +334,8 @@ function index(
  */
 export function inferScopes(
   facts: ScopeFacts,
-  sources: Readonly<Record<Registry, readonly ScriptedDefinition[]>>
-): Record<Registry, InferredScope[]> {
+  sources: Readonly<Record<ScriptedKind, readonly ScriptedDefinition[]>>
+): Record<ScriptedKind, InferredScope[]> {
   const walker = new Walker(facts, {
     trigger: index(sources.trigger),
     effect: index(sources.effect),

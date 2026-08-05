@@ -58,15 +58,15 @@ export interface TrieNode {
 }
 
 /**
- * The bucket a vanilla file's stem names under {@link BucketLayout}
+ * The bucket a vanilla file's basename names under {@link BucketLayout}
  * `stripped-file`.
  *
  * Two files can name the same subject (`16_static_modifiers_paragon`,
  * `19_static_modifiers_paragon`) and merge into one bucket, which is the intent
  * — load order is not a category.
  */
-export function fileBucketKey(stem: string, token: string): string {
-  const withoutOrder = stem.replace(/^\d+_/, "");
+export function fileBucketKey(basename: string, token: string): string {
+  const withoutOrder = basename.replace(/^\d+_/, "");
   return withoutOrder === token
     ? ""
     : withoutOrder.startsWith(`${token}_`)

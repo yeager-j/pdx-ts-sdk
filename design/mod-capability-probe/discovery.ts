@@ -7,9 +7,9 @@ import {
   type DiscoverOptions,
 } from "../../packages/sdk/src/authoring/discover.ts";
 import {
-  collection,
+  createFeature,
   FILE_STEM_PATTERN,
-  type Collection,
+  type Feature,
   type ModItem,
 } from "../../packages/sdk/src/authoring/feature.ts";
 import { compareLogicalPaths, normalizeLogicalPath } from "../../packages/sdk/src/ordering.ts";
@@ -19,12 +19,12 @@ const ITEM_KINDS = new Set<string>(["content", "event", "on-action", "patch", "c
 const DEFINER_LIST =
   "defineTechnology, namespace(...).defineCountryEvent, on, patchTechnology, addShipOfSizeLimits, ...";
 
-function isCollection(value: unknown): value is Collection {
+function isFeature(value: unknown): value is Feature {
   return (
     typeof value === "object" &&
     value !== null &&
     "itemKind" in value &&
-    value.itemKind === "collection"
+    value.itemKind === "feature"
   );
 }
 
@@ -41,7 +41,7 @@ function stateless(pattern: RegExp): RegExp {
 export async function discoverEveryExport(
   dir: string | URL,
   options: DiscoverOptions = {}
-): Promise<Collection[]> {
+): Promise<Feature[]> {
   const root = dir instanceof URL ? fileURLToPath(dir) : dir;
   const include = stateless(options.include ?? DEFAULT_CONTENT_PATTERN);
   const entries = await readdir(root, { recursive: true, withFileTypes: true });
@@ -65,12 +65,12 @@ export async function discoverEveryExport(
   const stemmed = modules.map((module) => ({ ...module, stem: fileStemOf(module.absolute) }));
   assertModuleStems(stemmed);
 
-  const collections: Collection[] = [];
+  const features: Feature[] = [];
   for (const module of stemmed) {
     const exports = (await import(pathToFileURL(module.absolute).href)) as Record<string, unknown>;
-    collections.push(collectModule(module.relative, module.stem, exports));
+    features.push(collectModule(module.relative, module.stem, exports));
   }
-  return collections;
+  return features;
 }
 
 /**
@@ -108,10 +108,10 @@ export async function discoverExplicitFeatures<P extends string>(
   const features: CapabilityFeature<P>[] = [];
   for (const { absolute, relative } of modules) {
     const exports = (await import(pathToFileURL(absolute).href)) as Record<string, unknown>;
-    if (!isCollection(exports.feature)) {
-      throw new Error(`${relative} must export one collection as "feature"`);
+    if (!isFeature(exports.feature)) {
+      throw new Error(`${relative} must export one feature as "feature"`);
     }
-    if (exports.feature.file === undefined) {
+    if (exports.feature.stem === undefined) {
       throw new Error(`${relative} explicitly exports a feature without a stem`);
     }
     features.push(exports.feature as CapabilityFeature<P>);
@@ -161,11 +161,7 @@ function assertModuleStems(
   );
 }
 
-function collectModule(
-  relPath: string,
-  stem: string,
-  exports: Record<string, unknown>
-): Collection {
+function collectModule(relPath: string, stem: string, exports: Record<string, unknown>): Feature {
   const items = new Set<ModItem>();
   for (const [name, value] of Object.entries(exports)) {
     collect(relPath, name, value, items);
@@ -178,7 +174,7 @@ function collectModule(
     );
   }
   try {
-    return collection(stem, [...items]);
+    return createFeature(stem, [...items]);
   } catch (error) {
     throw new Error(
       `The discovered module ${relPath} names the file it emits, so its basename is the file ` +

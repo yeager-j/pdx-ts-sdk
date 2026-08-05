@@ -7,7 +7,7 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
-import { collection as collectionInternal, type Collection } from "../src/authoring/feature.ts";
+import { createFeature as createFeatureInternal, type Feature } from "../src/authoring/feature.ts";
 import { buildMod as buildInternal } from "../src/compiler/compile.ts";
 import { defineSituationType as defineSituationTypeInternal } from "../src/content/situations.ts";
 import type { ContentItem } from "../src/content/types.ts";
@@ -28,7 +28,7 @@ import {
 } from "../src/index.ts";
 
 /**
- * The definers, and what a definition is once no collection is in the way:
+ * The definers, and what a definition is once no feature is in the way:
  * the literal id survives, the situation graft's `targetScope` rides on the
  * one object returned, and the registry brand is on the item rather than on
  * whatever collected it.
@@ -83,12 +83,12 @@ describe("capability authoring", () => {
     ]);
     expectTypeOf(techs.items[0]!.type).toEqualTypeOf<"technology">();
     expectTypeOf(techs.items[0]!.id).toEqualTypeOf<"probe_neg_tech_collected">();
-    const asRegistryCollection: Collection<TechnologyItem> = techs;
-    void asRegistryCollection;
-    // @ts-expect-error — a technology collection is not a tradition collection
-    const wrongRegistry: Collection<TraditionItem> = techs;
+    const asRegistryFeature: Feature<TechnologyItem> = techs;
+    void asRegistryFeature;
+    // @ts-expect-error — a technology feature is not a tradition feature
+    const wrongRegistry: Feature<TraditionItem> = techs;
     void wrongRegistry;
-    // @ts-expect-error — a technology collection's items can never be event items
+    // @ts-expect-error — a technology feature's items can never be event items
     const wrongKind: readonly EventItemBase[] = techs.items;
     void wrongKind;
     // Mixed registries are legal and land in one file — the element type is
@@ -103,7 +103,7 @@ describe("capability authoring", () => {
       }),
     ]);
     // @ts-expect-error — the union includes the tradition item
-    const narrowed: Collection<TechnologyItem> = mixed;
+    const narrowed: Feature<TechnologyItem> = mixed;
     void narrowed;
   });
 });
@@ -130,7 +130,7 @@ describe("the capability on() contract", () => {
 });
 
 describe("buildMod's input", () => {
-  it("takes collections, never loose items", () => {
+  it("takes features, never loose items", () => {
     const tech = defineTechnologyInternal({
       id: "probe_neg_loose",
       name: "L",
@@ -138,10 +138,10 @@ describe("buildMod's input", () => {
       tier: 1,
       category: "particles",
     });
-    const techs = collectionInternal(undefined, [tech]);
+    const techs = createFeatureInternal(undefined, [tech]);
     const config = { name: "N", prefix: "probe_neg", supportedVersion: "4.4.*" };
     buildInternal(config, [techs]);
-    // @ts-expect-error — a bare content item is not a collection
+    // @ts-expect-error — a bare content item is not a feature
     buildInternal(config, [tech]);
   });
 });
@@ -153,13 +153,13 @@ describe("buildMod's output", () => {
       isTriggeredOnly: true,
     });
     const mod = buildInternal({ name: "N", prefix: "probe_neg", supportedVersion: "4.4.*" }, [
-      collectionInternal("events", [event]),
-      collectionInternal(undefined, [onInternal(onActions.onGameStartCountry, [event])]),
+      createFeatureInternal("events", [event]),
+      createFeatureInternal(undefined, [onInternal(onActions.onGameStartCountry, [event])]),
     ]);
     expectTypeOf(mod.onActions).toEqualTypeOf<readonly PdxEntry[]>();
     // @ts-expect-error — the accumulator stays inside the fold: registering
     // after buildMod returned would change what render(mod) emits, bypassing
-    // the collection fold and its ordering rules.
+    // the feature fold and its ordering rules.
     mod.onActions.register(onActions.onGameStartCountry, event);
   });
 });

@@ -1,8 +1,8 @@
 import {
   assertNamespace,
-  collection,
+  createFeature,
   FILE_STEM_PATTERN,
-  type Collection,
+  type Feature,
   type ModItem,
 } from "../../packages/sdk/src/authoring/feature.ts";
 import {
@@ -101,7 +101,7 @@ interface CapabilityFeatureOwner<P extends string> {
 }
 
 /** A feature placed by one particular mod capability. */
-export type CapabilityFeature<P extends string, T extends ModItem = ModItem> = Collection<T> & {
+export type CapabilityFeature<P extends string, T extends ModItem = ModItem> = Feature<T> & {
   readonly [capabilityFeatureOwner]: CapabilityFeatureOwner<P>;
 };
 
@@ -157,7 +157,7 @@ export interface ModCapability<P extends string, I extends ProbeIdProfile> {
   ): ContentItem<"edict", EdictDef<MintedContentId<P, I, "edict", N>>>;
   namespace<const N extends string>(name: N): CapabilityEvents<P, N>;
   feature<T extends ModItem>(
-    file: string | undefined,
+    stem: string | undefined,
     items: readonly T[]
   ): CapabilityFeature<P, T>;
   compile(features: readonly CapabilityFeature<P>[], options?: BuildOptions): PureMod;
@@ -385,10 +385,10 @@ export function createMod<const P extends string, const I extends ProbeIdProfile
         id: mintContentId(config.prefix, ids, "edict", name),
       } as EdictDef<MintedContentId<P, I, "edict", N>>),
     namespace: <const N extends string>(name: N) => eventsFor(config.prefix, name),
-    feature: <T extends ModItem>(file: string | undefined, items: readonly T[]) => {
+    feature: <T extends ModItem>(stem: string | undefined, items: readonly T[]) => {
       items.forEach((item) => assertCapabilityItem(item, config.prefix));
       return Object.freeze({
-        ...collection(file, items),
+        ...createFeature(stem, items),
         [capabilityFeatureOwner]: owner,
       }) as CapabilityFeature<P, T>;
     },

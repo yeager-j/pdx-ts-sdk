@@ -47,7 +47,7 @@
 import type { RuleField, RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import { camelCase, docComment, isPlainName, pascalCase } from "../naming.ts";
-import { authoredForm } from "./authored-form.ts";
+import { formOfShape } from "./authored-form.ts";
 import type { Emitter, TsValue } from "./types.ts";
 
 export interface AliasStructEmission {
@@ -256,7 +256,7 @@ function refTypesSuffix(value: TsValue): string {
 function valueField(key: string, value: TsValue): string {
   return (
     `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
-    `shape: "value", form: ${JSON.stringify(authoredForm({ shape: "value" }))}, ` +
+    `shape: "value", form: ${JSON.stringify(formOfShape({ shape: "value" }))}, ` +
     `conversion: ${JSON.stringify(conversionOf(value))}${refTypesSuffix(value)} },\n`
   );
 }
@@ -279,20 +279,20 @@ function clauseFieldsCode(
   return (
     `export const ${groupFieldsConstant}: readonly ContentField[] = [\n` +
     `  { key: "text", member: "text", shape: "value", ` +
-    `form: ${JSON.stringify(authoredForm({ shape: "value" }))}, conversion: "identity" },\n` +
+    `form: ${JSON.stringify(formOfShape({ shape: "value" }))}, conversion: "identity" },\n` +
     `  { key: "value", member: "values", shape: "value", ` +
-    `form: ${JSON.stringify(authoredForm({ shape: "value", repeated: true }))}, ` +
+    `form: ${JSON.stringify(formOfShape({ shape: "value", repeated: true }))}, ` +
     `conversion: ${JSON.stringify(conversionOf(ref))}${suffix}, repeated: true },\n` +
     "];\n\n" +
     `export const ${clauseFieldsConstant}: readonly ContentField[] = [\n` +
     `  { key: "value", member: "value", shape: "value", ` +
-    `form: ${JSON.stringify(authoredForm({ shape: "value" }))}, ` +
+    `form: ${JSON.stringify(formOfShape({ shape: "value" }))}, ` +
     `conversion: ${JSON.stringify(conversionOf(ref))}${suffix} },\n` +
     [...GROUP_KEYS]
       .map(
         (key) =>
           `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
-          `shape: "struct", form: ${JSON.stringify(authoredForm({ shape: "struct", repeated: true }))}, ` +
+          `shape: "struct", form: ${JSON.stringify(formOfShape({ shape: "struct", repeated: true }))}, ` +
           `fields: ${groupFieldsConstant}, repeated: true },\n`
       )
       .join("") +
@@ -371,7 +371,7 @@ export function emitAliasStruct(
       blockMembers.push(`${docs}  ${memberName(name)}?: ${clauseName}<${shape.ref.type}>;\n`);
       metadata.push(
         `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(memberName(name))}, ` +
-          `shape: "struct", form: ${JSON.stringify(authoredForm({ shape: "struct" }))}, ` +
+          `shape: "struct", form: ${JSON.stringify(formOfShape({ shape: "struct" }))}, ` +
           `fields: ${memberClauseFieldsConstant} },\n`
       );
       clauseTables.push(
@@ -381,7 +381,7 @@ export function emitAliasStruct(
       blockMembers.push(`${docs}  ${combinatorMemberName(name)}?: readonly ${typeName}[];\n`);
       metadata.push(
         `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(combinatorMemberName(name))}, ` +
-          `shape: "aliasStruct", form: ${JSON.stringify(authoredForm({ shape: "aliasStruct", repeated: true }))}, ` +
+          `shape: "aliasStruct", form: ${JSON.stringify(formOfShape({ shape: "aliasStruct", repeated: true }))}, ` +
           `category: ${JSON.stringify(category)}, repeated: true },\n`
       );
     }

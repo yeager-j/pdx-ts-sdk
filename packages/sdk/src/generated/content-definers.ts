@@ -73,7 +73,7 @@ import type { UtilityComponentTemplateDef } from "./utility-component-template.t
 import type { WarGoalDef } from "./war-goal.ts";
 import type { WeaponComponentTemplateDef } from "./weapon-component-template.ts";
 
-/** What a technology collection can contain. */
+/** What a technology feature can contain. */
 export type TechnologyItem = ContentItem<"technology", TechnologyDef> | TechnologyPatchItem;
 
 /**
@@ -101,7 +101,7 @@ export function patchTechnology<Source extends ParsedTechnology>(
   return { itemKind: "patch", patched: transformTechnology(technology, patch) };
 }
 
-/** What a building collection can contain. */
+/** What a building feature can contain. */
 export type BuildingItem = ContentItem<"building", BuildingDef>;
 
 /**
@@ -115,7 +115,7 @@ export function defineBuilding<const Id extends string>(
   return { itemKind: "content", type: "building", id: def.id, def };
 }
 
-/** What a tradition collection can contain. */
+/** What a tradition feature can contain. */
 export type TraditionItem = ContentItem<"tradition", TraditionDef>;
 
 /**
@@ -129,7 +129,7 @@ export function defineTradition<const Id extends string>(
   return { itemKind: "content", type: "tradition", id: def.id, def };
 }
 
-/** What a tradition category collection can contain. */
+/** What a tradition category feature can contain. */
 export type TraditionCategoryItem = ContentItem<"tradition_category", TraditionCategoryDef>;
 
 /**
@@ -143,7 +143,7 @@ export function defineTraditionCategory<const Id extends string>(
   return { itemKind: "content", type: "tradition_category", id: def.id, def };
 }
 
-/** What an ascension perk collection can contain. */
+/** What an ascension perk feature can contain. */
 export type AscensionPerkItem = ContentItem<"ascension_perk", AscensionPerkDef>;
 
 /**
@@ -157,7 +157,7 @@ export function defineAscensionPerk<const Id extends string>(
   return { itemKind: "content", type: "ascension_perk", id: def.id, def };
 }
 
-/** What an agenda collection can contain. */
+/** What an agenda feature can contain. */
 export type AgendaItem = ContentItem<"agenda", AgendaDef>;
 
 /**
@@ -171,7 +171,7 @@ export function defineAgenda<const Id extends string>(
   return { itemKind: "content", type: "agenda", id: def.id, def };
 }
 
-/** What an edict collection can contain. */
+/** What an edict feature can contain. */
 export type EdictItem = ContentItem<"edict", EdictDef>;
 
 /**
@@ -185,7 +185,7 @@ export function defineEdict<const Id extends string>(
   return { itemKind: "content", type: "edict", id: def.id, def };
 }
 
-/** What a decision collection can contain. */
+/** What a decision feature can contain. */
 export type DecisionItem = ContentItem<"decision", DecisionDef<string, never>>;
 
 /**
@@ -202,7 +202,7 @@ export function defineDecision<const Id extends string, S extends DecisionScope 
   return { itemKind: "content", type: "decision", id: def.id, def: rest as DecisionDef<Id, never> };
 }
 
-/** What a job collection can contain. */
+/** What a job feature can contain. */
 export type JobItem = ContentItem<"job", JobDef>;
 
 /**
@@ -216,7 +216,7 @@ export function defineJob<const Id extends string>(
   return { itemKind: "content", type: "job", id: def.id, def };
 }
 
-/** What a global ship design collection can contain. */
+/** What a global ship design feature can contain. */
 export type GlobalShipDesignItem = ContentItem<"global_ship_design", GlobalShipDesignDef>;
 
 /**
@@ -230,7 +230,7 @@ export function defineGlobalShipDesign<const Id extends string>(
   return { itemKind: "content", type: "global_ship_design", id: def.id, def };
 }
 
-/** What an utility component template collection can contain. */
+/** What an utility component template feature can contain. */
 export type UtilityComponentTemplateItem = ContentItem<
   "utility_component_template",
   UtilityComponentTemplateDef
@@ -247,7 +247,7 @@ export function defineUtilityComponentTemplate<const Id extends string>(
   return { itemKind: "content", type: "utility_component_template", id: def.id, def };
 }
 
-/** What a weapon component template collection can contain. */
+/** What a weapon component template feature can contain. */
 export type WeaponComponentTemplateItem = ContentItem<
   "weapon_component_template",
   WeaponComponentTemplateDef
@@ -264,7 +264,7 @@ export function defineWeaponComponentTemplate<const Id extends string>(
   return { itemKind: "content", type: "weapon_component_template", id: def.id, def };
 }
 
-/** What a strike craft component template collection can contain. */
+/** What a strike craft component template feature can contain. */
 export type StrikeCraftComponentTemplateItem = ContentItem<
   "strike_craft_component_template",
   StrikeCraftComponentTemplateDef
@@ -281,7 +281,7 @@ export function defineStrikeCraftComponentTemplate<const Id extends string>(
   return { itemKind: "content", type: "strike_craft_component_template", id: def.id, def };
 }
 
-/** What a ship size collection can contain. */
+/** What a ship size feature can contain. */
 export type ShipSizeItem = ContentItem<"ship_size", ShipSizeDef>;
 
 /**
@@ -295,7 +295,7 @@ export function defineShipSize<const Id extends string>(
   return { itemKind: "content", type: "ship_size", id: def.id, def };
 }
 
-/** What an opinion modifier collection can contain. */
+/** What an opinion modifier feature can contain. */
 export type OpinionModifierItem = ContentItem<"opinion_modifier", OpinionModifierDef>;
 
 /**
@@ -309,7 +309,7 @@ export function defineOpinionModifier<const Id extends string>(
   return { itemKind: "content", type: "opinion_modifier", id: def.id, def };
 }
 
-/** What a static modifier collection can contain. */
+/** What a static modifier feature can contain. */
 export type StaticModifierItem = ContentItem<"static_modifier", StaticModifierDef>;
 
 /**
@@ -323,7 +323,7 @@ export function defineStaticModifier<const Id extends string>(
   return { itemKind: "content", type: "static_modifier", id: def.id, def };
 }
 
-/** What a scripted modifier collection can contain. */
+/** What a scripted modifier feature can contain. */
 export type ScriptedModifierItem = ContentItem<"scripted_modifier", ScriptedModifierDef>;
 
 /**
@@ -337,7 +337,7 @@ export function defineScriptedModifier<const Id extends string>(
   return { itemKind: "content", type: "scripted_modifier", id: def.id, def };
 }
 
-/** What a casus belli collection can contain. */
+/** What a casus belli feature can contain. */
 export type CasusBelliItem = ContentItem<"casus_belli", CasusBelliDef>;
 
 /**
@@ -351,7 +351,7 @@ export function defineCasusBelli<const Id extends string>(
   return { itemKind: "content", type: "casus_belli", id: def.id, def };
 }
 
-/** What a war goal collection can contain. */
+/** What a war goal feature can contain. */
 export type WarGoalItem = ContentItem<"war_goal", WarGoalDef>;
 
 /**
@@ -365,7 +365,7 @@ export function defineWarGoal<const Id extends string>(
   return { itemKind: "content", type: "war_goal", id: def.id, def };
 }
 
-/** What an agreement preset collection can contain. */
+/** What an agreement preset feature can contain. */
 export type AgreementPresetItem = ContentItem<"agreement_preset", AgreementPresetDef>;
 
 /**
@@ -379,7 +379,7 @@ export function defineAgreementPreset<const Id extends string>(
   return { itemKind: "content", type: "agreement_preset", id: def.id, def };
 }
 
-/** What a bombardment stance collection can contain. */
+/** What a bombardment stance feature can contain. */
 export type BombardmentStanceItem = ContentItem<"bombardment_stance", BombardmentStanceDef>;
 
 /**
@@ -393,7 +393,7 @@ export function defineBombardmentStance<const Id extends string>(
   return { itemKind: "content", type: "bombardment_stance", id: def.id, def };
 }
 
-/** What an archaeological site type collection can contain. */
+/** What an archaeological site type feature can contain. */
 export type ArchaeologicalSiteTypeItem = ContentItem<
   "archaeological_site_type",
   ArchaeologicalSiteTypeDef
@@ -410,14 +410,14 @@ export function defineArchaeologicalSiteType<const Id extends string>(
   return { itemKind: "content", type: "archaeological_site_type", id: def.id, def };
 }
 
-/** What a situation type collection can contain. */
+/** What a situation type feature can contain. */
 export type SituationTypeItem = ContentItem<"situation_type", SituationTypeDef>;
 
 // defineSituationType is hand-written; re-exported here so every definer this
 // SDK has comes from one module.
 export { defineSituationType } from "../content/situations.ts";
 
-/** What a scripted loc collection can contain. */
+/** What a scripted loc feature can contain. */
 export type ScriptedLocItem = ContentItem<"scripted_loc", ScriptedLocDef>;
 
 /**
@@ -431,7 +431,7 @@ export function defineScriptedLoc<const Id extends string>(
   return { itemKind: "content", type: "scripted_loc", id: def.id, def };
 }
 
-/** What a councilor collection can contain. */
+/** What a councilor feature can contain. */
 export type CouncilorItem = ContentItem<"councilor", CouncilorDef>;
 
 /**
@@ -445,7 +445,7 @@ export function defineCouncilor<const Id extends string>(
   return { itemKind: "content", type: "councilor", id: def.id, def };
 }
 
-/** What an economic category collection can contain. */
+/** What an economic category feature can contain. */
 export type EconomicCategoryItem = ContentItem<"economic_category", EconomicCategoryDef>;
 
 /**
@@ -459,7 +459,7 @@ export function defineEconomicCategory<const Id extends string>(
   return { itemKind: "content", type: "economic_category", id: def.id, def };
 }
 
-/** What a civic or origin collection can contain. */
+/** What a civic or origin feature can contain. */
 export type CivicOrOriginItem = ContentItem<"civic_or_origin", CivicOrOriginDef>;
 
 /**
@@ -473,7 +473,7 @@ export function defineCivicOrOrigin<const Id extends string>(
   return { itemKind: "content", type: "civic_or_origin", id: def.id, def };
 }
 
-/** What a component set collection can contain. */
+/** What a component set feature can contain. */
 export type ComponentSetItem = ContentItem<"component_set", ComponentSetDef>;
 
 /**
@@ -487,7 +487,7 @@ export function defineComponentSet<const Id extends string>(
   return { itemKind: "content", type: "component_set", id: def.id, def };
 }
 
-/** What a section template collection can contain. */
+/** What a section template feature can contain. */
 export type SectionTemplateItem = ContentItem<"section_template", SectionTemplateDef>;
 
 /**
@@ -501,7 +501,7 @@ export function defineSectionTemplate<const Id extends string>(
   return { itemKind: "content", type: "section_template", id: def.id, def };
 }
 
-/** What an ambient object collection can contain. */
+/** What an ambient object feature can contain. */
 export type AmbientObjectItem = ContentItem<"ambient_object", AmbientObjectDef>;
 
 /**
@@ -515,7 +515,7 @@ export function defineAmbientObject<const Id extends string>(
   return { itemKind: "content", type: "ambient_object", id: def.id, def };
 }
 
-/** What a graphical culture collection can contain. */
+/** What a graphical culture feature can contain. */
 export type GraphicalCultureItem = ContentItem<"graphical_culture", GraphicalCultureDef>;
 
 /**
@@ -529,7 +529,7 @@ export function defineGraphicalCulture<const Id extends string>(
   return { itemKind: "content", type: "graphical_culture", id: def.id, def };
 }
 
-/** What a starbase level collection can contain. */
+/** What a starbase level feature can contain. */
 export type StarbaseLevelItem = ContentItem<"starbase_level", StarbaseLevelDef>;
 
 /**
@@ -543,7 +543,7 @@ export function defineStarbaseLevel<const Id extends string>(
   return { itemKind: "content", type: "starbase_level", id: def.id, def };
 }
 
-/** What a species class collection can contain. */
+/** What a species class feature can contain. */
 export type SpeciesClassItem = ContentItem<"species_class", SpeciesClassDef>;
 
 /**
@@ -557,7 +557,7 @@ export function defineSpeciesClass<const Id extends string>(
   return { itemKind: "content", type: "species_class", id: def.id, def };
 }
 
-/** What a country ship of size limit collection can contain. */
+/** What a country ship of size limit feature can contain. */
 export type CountryShipOfSizeLimitItem =
   ContentItem<"country_ship_of_size_limit", CountryShipOfSizeLimitDef> | ContributionItem;
 
@@ -589,7 +589,7 @@ export function addShipOfSizeLimits(
   };
 }
 
-/** What a solar system initializer collection can contain. */
+/** What a solar system initializer feature can contain. */
 export type SolarSystemInitializerItem = ContentItem<
   "solar_system_initializer",
   SolarSystemInitializerDef

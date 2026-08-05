@@ -32,8 +32,8 @@ describe("the public authoring surface", () => {
   it("does not re-export legacy authoring values", () => {
     // @ts-expect-error — assembly is owned by the capability's compile method.
     void sdk.buildMod;
-    // @ts-expect-error — direct file placement is package-internal lowering machinery.
-    void sdk.collection;
+    // @ts-expect-error — direct stem placement is package-internal lowering machinery.
+    void sdk.createFeature;
     // @ts-expect-error — item flattening is package-internal fold machinery.
     void sdk.flattenItems;
     // @ts-expect-error — stem validation is package-internal fold machinery.

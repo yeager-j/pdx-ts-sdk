@@ -16,8 +16,8 @@ export interface OnActionRef<
   readonly from: From;
 }
 
-/** A capability-owned contribution binding authored events to one game hook. */
-export interface OnActionBindingItem {
+/** Authored events attached to one game hook, owned by a capability. */
+export interface OnActionHookItem {
   readonly itemKind: "on-action";
   readonly hook: OnActionRef;
   /**
@@ -27,13 +27,13 @@ export interface OnActionBindingItem {
   readonly events: readonly EventItemBase[];
 }
 
-interface Registration {
+interface HookedEvent {
   readonly hook: OnActionRef;
   readonly event: DefinedEvent<ScopeName, ScopeName | undefined>;
 }
 
 export class OnActionAuthoring {
-  private readonly registrations: Registration[] = [];
+  private readonly hooked: HookedEvent[] = [];
   private readonly ownsEvent: (event: DefinedEvent<ScopeName, ScopeName | undefined>) => boolean;
 
   constructor(ownsEvent: (event: DefinedEvent<ScopeName, ScopeName | undefined>) => boolean) {
@@ -48,7 +48,7 @@ export class OnActionAuthoring {
     }
     if (!this.ownsEvent(event)) {
       throw new Error(
-        `Event "${event.id}" is not among the collections passed to buildMod; on-action ` +
+        `Event "${event.id}" is not among the features passed to buildMod; on-action ` +
           `"${hook.name}" can only fire this mod's own events`
       );
     }
@@ -59,20 +59,20 @@ export class OnActionAuthoring {
       );
     }
     if (
-      this.registrations.some(
+      this.hooked.some(
         (registration) => registration.hook.name === hook.name && registration.event === event
       )
     ) {
       throw new Error(`Event "${event.id}" is already registered on on-action "${hook.name}"`);
     }
-    this.registrations.push({ hook, event });
+    this.hooked.push({ hook, event });
   }
 
   /** The finished hook blocks. `buildMod` keeps this instance to itself and
    * puts only these entries on the mod, so nothing can register after the fold. */
   entries(): PdxEntry[] {
     const byHook = new Map<string, DefinedEvent<ScopeName, ScopeName | undefined>[]>();
-    for (const registration of this.registrations) {
+    for (const registration of this.hooked) {
       const events = byHook.get(registration.hook.name) ?? [];
       events.push(registration.event);
       byHook.set(registration.hook.name, events);
@@ -102,6 +102,6 @@ function contract(scope: ScopeName, from: ScopeName | undefined): string {
 export function on<S extends ScopeName, From extends ScopeName | undefined>(
   hook: OnActionRef<S, From>,
   events: readonly [EventItem<NoInfer<S>, NoInfer<From>>, ...EventItem<NoInfer<S>, NoInfer<From>>[]]
-): OnActionBindingItem {
+): OnActionHookItem {
   return { itemKind: "on-action", hook, events: events as readonly EventItemBase[] };
 }

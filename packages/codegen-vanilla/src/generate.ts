@@ -31,7 +31,7 @@ import {
   trieIndexFile,
   type AugmentPlan,
 } from "./emit.ts";
-import { inferScopes, type InferredScope, type Registry } from "./infer-scopes.ts";
+import { inferScopes, type InferredScope, type ScriptedKind } from "./infer-scopes.ts";
 import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./manifest.ts";
 import { readRegistryIds } from "./read-ids.ts";
 import { readScriptedDefinitions } from "./read-scripted.ts";
@@ -257,9 +257,9 @@ export function generateVanillaPackage(options: GenerateOptions): {
       file,
     });
 
-    const registry: Registry = row.registry === "scripted_trigger" ? "trigger" : "effect";
+    const kind: ScriptedKind = row.registry === "scripted_trigger" ? "trigger" : "effect";
     const scopes = new Map<string, RuleScopes>(
-      inferred[registry].map((one) => [one.name.toLowerCase(), one.scopes])
+      inferred[kind].map((one) => [one.name.toLowerCase(), one.scopes])
     );
     const bindings = emitScriptedBindings(
       row.registry,
@@ -278,7 +278,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
       diagnostics: read.diagnostics,
       missing: read.missing,
       scopeSizes: bindings.bySize,
-      ...attribute(inferred[registry]),
+      ...attribute(inferred[kind]),
       renamed: bindings.renamed,
     });
   }

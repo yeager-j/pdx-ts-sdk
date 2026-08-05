@@ -54,7 +54,7 @@ describe("generated event surface", () => {
     );
     expect(definers).not.toContain("makeCollection");
     expect(definers).not.toContain("items.push");
-    expect(definers).not.toContain("Collection<");
+    expect(definers).not.toContain("Feature<");
     const publicIndex = readFileSync("packages/sdk/src/index.ts", "utf8");
     expect(publicIndex).not.toContain('from "./generated/event-definers.ts"');
     expect(publicIndex).not.toContain("export { namespace");
@@ -71,7 +71,7 @@ describe("generated event surface", () => {
     expect(capability).toContain(
       "export function capabilityEvents<P extends string, N extends string>("
     );
-    expect(capability).toContain('builder.handle(id, "country_event", "country", "country"');
+    expect(capability).toContain('minter.handle(id, "country_event", "country", "country"');
     expect(capability).toContain('CapabilityEventHandle<P, N, Id, "country", From, "observer">');
     expect(capability).toContain(
       "Defines a country event with an id in this capability namespace."
