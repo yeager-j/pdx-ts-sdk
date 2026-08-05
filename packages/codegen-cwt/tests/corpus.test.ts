@@ -23,23 +23,33 @@ import {
   type SpliceMember,
 } from "@pdx-ts/codegen-cwt/corpus";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { describe, expect, it } from "vitest";
 
 /** `planet` holds `planet` and `moon`; `moon` holds `moon`. The real shape. */
-const MOON: SpliceMember = { key: "moon", members: () => [MOON] };
-const PLANET: SpliceMember = { key: "planet", members: () => [PLANET, MOON] };
+const MOON: SpliceMember = { key: "moon", members: () => [MOON], descents: [] };
+const PLANET: SpliceMember = { key: "planet", members: () => [PLANET, MOON], descents: [] };
 
 function corpusOf(
   contents: string,
   descents: readonly DescentNode[] = [],
-  excludedKey: string | null = null
+  excludedKey: string | null = null,
+  spliceMembers: readonly SpliceMember[] = [PLANET]
 ) {
   const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
   mkdirSync(path.join(root, "common/systems"), { recursive: true });
   writeFileSync(path.join(root, "common/systems/test.txt"), contents, "utf8");
-  return readRegistryCorpus(root, "common/systems", null, null, descents, [PLANET], excludedKey);
+  return readRegistryCorpus(
+    root,
+    "common/systems",
+    null,
+    null,
+    descents,
+    spliceMembers,
+    excludedKey
+  );
 }
 
 describe("splice arity", () => {
@@ -77,6 +87,55 @@ describe("splice arity", () => {
     `);
     // Two moons, one of which repeats `size` — the deep block is what counts.
     expect(corpus.occurrences.get("moon.size")?.repeated).toBe(1);
+  });
+});
+
+describe("descent below a spliced block", () => {
+  // `planet.count = { min = int max = int }` — the one shape the splice walk
+  // could not see, since it recorded a leaf's key and stopped there.
+  const COUNT: DescentNode = { field: "count", mode: "struct", children: [] };
+  const DEEP_MOON: SpliceMember = { key: "moon", members: () => [DEEP_MOON], descents: [COUNT] };
+  const DEEP_PLANET: SpliceMember = {
+    key: "planet",
+    members: () => [DEEP_PLANET, DEEP_MOON],
+    descents: [COUNT],
+  };
+  const spliced = (contents: string) => corpusOf(contents, [], null, [DEEP_PLANET]);
+
+  it("records the block's entries under the member key", () => {
+    const corpus = spliced(`
+      one = { planet = { count = { min = 1 max = 3 } } }
+    `);
+    // The owning key keeps its own occurrence, as at every other descent.
+    expect(corpus.occurrences.get("planet.count")?.definitions).toBe(1);
+    expect([...(corpus.occurrences.get("planet.count.min")?.values ?? [])]).toEqual(["1"]);
+    expect([...(corpus.occurrences.get("planet.count.max")?.values ?? [])]).toEqual(["3"]);
+  });
+
+  it("aggregates the interior across depths, as the one field table does", () => {
+    const corpus = spliced(`
+      one = {
+        planet = {
+          count = { min = 1 }
+          planet = { count = { max = 3 } }
+          moon = { count = { min = 2 } }
+        }
+      }
+    `);
+    expect(corpus.occurrences.get("planet.count.min")?.definitions).toBe(1);
+    expect(corpus.occurrences.get("planet.count.max")?.definitions).toBe(1);
+    // A moon is its own category with its own table, so its interior is its own
+    // path — the aggregation is per member key, not across the whole tree.
+    expect(corpus.occurrences.get("moon.count.min")?.definitions).toBe(1);
+  });
+
+  it("treats each interior block as its own arity boundary", () => {
+    const corpus = spliced(`
+      one = { planet = { count = { min = 1 } } planet = { count = { min = 2 } } }
+      two = { planet = { count = { min = 1 min = 2 } } }
+    `);
+    expect(corpus.occurrences.get("planet.count.min")?.definitions).toBe(2);
+    expect(corpus.occurrences.get("planet.count.min")?.repeated).toBe(1);
   });
 });
 
@@ -300,6 +359,14 @@ describe("repeated-struct descent", () => {
   });
 });
 
+/** Every path a descent tree records under, rooted at `prefix`. */
+function descentPaths(nodes: readonly DescentNode[], prefix: string): string[] {
+  return nodes.flatMap((node) => {
+    const path = prefix === "" ? node.field : `${prefix}.${node.field}`;
+    return [path, ...descentPaths(node.children, path)];
+  });
+}
+
 describe("the emitter's descent channel", () => {
   const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
   const rules = loadRules(path.join(ROOT, "vendor/cwtools-stellaris-config/config"));
@@ -334,5 +401,38 @@ describe("the emitter's descent channel", () => {
     // no walk can report an interior nothing promised to author.
     const emitted = new Set(emission.emittedFields.map((field) => field.field));
     expect(emission.corpusDescents.filter((node) => !emitted.has(node.field))).toEqual([]);
+  });
+});
+
+describe("the splice emitter's descent channel", () => {
+  const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+  const rules = loadRules(path.join(ROOT, "vendor/cwtools-stellaris-config/config"));
+  const emitter = new Emitter(rules);
+  emitter.beginFile();
+  const emission = emitAliasSplice(emitter, "planet_initializer")!;
+  emitter.endFile();
+
+  it("reports a member's block interior, rooted at the member key", () => {
+    // `count = { min = int max = int }` beside the scalar `count = int`: the
+    // block arm of a dual, whose interior 289 solar system initializers write
+    // and no side of the gate could see.
+    const emitted = emission.emittedFields.map((field) => field.field);
+    expect(emitted).toContain("planet.count");
+    expect(emitted).toContain("planet.count.min");
+    expect(emitted).toContain("planet.count.max");
+    // Rooted at the member key, not the category: one prefix, and the one the
+    // corpus reader walks under.
+    expect(emitted.filter((field) => field.startsWith("planet_initializer"))).toEqual([]);
+  });
+
+  it("configures the reader for the same fields it lowered", () => {
+    expect(emission.corpusDescents).toContainEqual({
+      field: "count",
+      mode: "struct",
+      children: [],
+    });
+    const claimed = new Set(emission.emittedFields.map((field) => field.field));
+    const paths = descentPaths(emission.corpusDescents, emission.memberKey);
+    expect(paths.filter((path) => !claimed.has(path))).toEqual([]);
   });
 });

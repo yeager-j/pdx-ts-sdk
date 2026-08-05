@@ -26,6 +26,7 @@
  * same `fields.ts` loop `content-type.ts` runs, one level in.
  */
 
+import type { DescentNode } from "../corpus.ts";
 import { isOptional } from "../cwt/model.ts";
 import { camelCase, docComment, indefiniteArticle } from "../naming.ts";
 import { CONTENT_DECLINED_FIELDS, CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS } from "../overlay.ts";
@@ -52,7 +53,8 @@ export interface AliasSpliceEmission {
   readonly spliceCategories: readonly string[];
   /**
    * Fields lowered inside the block, rooted at the *member key* rather than the
-   * category — `planet.class`, `moon.size`.
+   * category — `planet.class`, `moon.size` — including those lowered inside a
+   * member's own block (`planet.count.min`).
    *
    * The rooting is what lets the corpus gate line these up with the real files.
    * One table serves every depth, so a `class` written inside a third-level
@@ -60,6 +62,13 @@ export interface AliasSpliceEmission {
    * and the corpus reader aggregates the same way.
    */
   readonly emittedFields: readonly EmittedField[];
+  /**
+   * How the corpus reader reaches those interiors, from the same lowerings —
+   * the splice's counterpart to `ContentEmission.corpusDescents`. Their `field`
+   * is the member's own key, since the reader roots them at the member key it
+   * is already walking under.
+   */
+  readonly corpusDescents: readonly DescentNode[];
   /** Refused outright by CONTENT_DECLINED_FIELDS, each with its reason. */
   readonly declinedFields: readonly string[];
   /** Declared in the category but not expressible, each with its reason. */
@@ -93,8 +102,15 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
   const declinedFields: string[] = [];
   const unsupported: string[] = [];
   const emittedFields: EmittedField[] = [];
+  const corpusDescents: DescentNode[] = [];
   const extraCode: string[] = [];
   const spliceCategories: string[] = [];
+  // A member's own interior comes back rooted at the category, since that is
+  // the path its overlay rows are keyed by; the corpus reader knows only the
+  // member key. Re-rooting here is the one place the two spellings meet, the
+  // same swap `declinedPathsOf` makes on the test side.
+  const atMemberKey = (field: string): string =>
+    `${splice.memberKey}${field.slice(category.length)}`;
 
   // Overlay rows are keyed by the category, not by the registry that splices
   // it: one lowering serves every consumer and every depth, so pinning a shape
@@ -131,7 +147,11 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     if (lowering.unsupported !== undefined) {
       unsupported.push(...lowering.unsupported);
     }
-    emittedFields.push({ field: `${splice.memberKey}.${name}`, ...lowering.admits });
+    emittedFields.push(
+      { field: `${splice.memberKey}.${name}`, ...lowering.admits },
+      ...(lowering.nested ?? []).map((field) => ({ ...field, field: atMemberKey(field.field) }))
+    );
+    corpusDescents.push(...(lowering.descents ?? []));
   }
 
   // Emitted after the named fields, matching the rules' declaration order and
@@ -184,6 +204,7 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     memberKey: splice.memberKey,
     spliceCategories,
     emittedFields,
+    corpusDescents,
     declinedFields,
     unsupported,
   };

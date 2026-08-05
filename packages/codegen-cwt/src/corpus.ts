@@ -241,10 +241,16 @@ function descend(
  *
  * `members` is a thunk because these are mutually recursive: a `planet` holds
  * `planet` and `moon`, and a `moon` holds `moon`.
+ *
+ * `descents` are the category's own block-valued fields — `planet`'s
+ * `count = { min = ... max = ... }` — from the same emission that produced the
+ * category's emitted fields, for the same reason {@link DescentNode} is
+ * emitter-produced everywhere else.
  */
 export interface SpliceMember {
   readonly key: string;
   readonly members: () => readonly SpliceMember[];
+  readonly descents: readonly DescentNode[];
 }
 
 /**
@@ -264,6 +270,7 @@ function descendSplice(
   blockArity: Map<string, boolean>
 ): void {
   const nested = new Map(member.members().map((inner) => [inner.key, inner]));
+  const children = new Map(member.descents.map((child) => [child.field, child]));
   // Per block, not per definition. A system with eight planets that each write
   // `size` once must not read as `planet.size` repeating — arity is a property
   // of one block, and the accumulated `seen` map cannot express that because
@@ -281,9 +288,20 @@ function descendSplice(
     blockArity.set(path, (blockArity.get(path) ?? false) || withinThisBlock.has(path));
     withinThisBlock.add(path);
     seen.set(path, [...(seen.get(path) ?? []), leaf.value]);
+    if (leaf.value.kind !== "container") {
+      continue;
+    }
     const inner = nested.get(leaf.key);
-    if (inner !== undefined && leaf.value.kind === "container") {
+    if (inner !== undefined) {
       descendSplice(leaf.value, inner, seen, blockArity);
+      continue;
+    }
+    // Rooted at the member key rather than the category, so a `min` inside a
+    // third-level moon's `count` records the same path a first-level planet's
+    // does — the flattening above, one level further in.
+    const child = children.get(leaf.key);
+    if (child !== undefined) {
+      descend(leaf.value, child, member.key, seen, blockArity);
     }
   }
 }
@@ -297,9 +315,11 @@ function descendSplice(
  */
 export function spliceMembersOf(
   categories: readonly string[],
-  resolve: (
-    category: string
-  ) => { readonly memberKey: string; readonly spliceCategories: readonly string[] } | null
+  resolve: (category: string) => {
+    readonly memberKey: string;
+    readonly spliceCategories: readonly string[];
+    readonly corpusDescents: readonly DescentNode[];
+  } | null
 ): SpliceMember[] {
   return categories.flatMap((category) => {
     const resolved = resolve(category);
@@ -312,6 +332,7 @@ export function spliceMembersOf(
             // node per category: `planet_initializer` reaches itself, so
             // building the children eagerly would not terminate.
             members: () => spliceMembersOf(resolved.spliceCategories, resolve),
+            descents: resolved.corpusDescents,
           },
         ];
   });
