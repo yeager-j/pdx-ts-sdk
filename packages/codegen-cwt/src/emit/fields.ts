@@ -11,6 +11,7 @@
  * of growing parallel ones that disagree.
  */
 
+import type { DescentNode } from "../corpus.ts";
 import {
   isOptional,
   isRepeated,
@@ -80,6 +81,19 @@ export interface LoweredField {
   readonly code?: string;
   /** Paths bubbled up from a nested struct level, already prefixed. */
   readonly unsupported?: readonly string[];
+  /**
+   * What the block's own members admit, at their dotted paths and at every
+   * level below — the interior the corpus gate would otherwise measure nothing
+   * against, since `admits` describes only the outer key.
+   */
+  readonly nested?: readonly EmittedField[];
+  /**
+   * How the corpus reader reaches that interior. Produced beside {@link nested}
+   * from one lowering so the two cannot describe different trees: a descent
+   * without its emitted fields manufactures unexpressed paths, and emitted
+   * fields without their descent are measured against nothing.
+   */
+  readonly descents?: readonly DescentNode[];
 }
 
 function bareValuesOf(type: RuleType): readonly RuleType[] | null {
@@ -721,6 +735,10 @@ interface StructShape {
   /** The interface and field-table declarations, for the caller to prepend. */
   readonly code: string;
   readonly unsupported: readonly string[];
+  /** Each member's admits at `${path}.${name}`, plus whatever they nest in turn. */
+  readonly nested: readonly EmittedField[];
+  /** Descent nodes for the members that are themselves blocks worth walking. */
+  readonly children: readonly DescentNode[];
 }
 
 /**
@@ -755,6 +773,8 @@ function structShape(
   const fieldMetadata: string[] = [];
   const extraCode: string[] = [];
   const unsupported: string[] = [];
+  const nested: EmittedField[] = [];
+  const children: DescentNode[] = [];
   for (const [fieldName, group] of grouped) {
     const fieldPath = `${path}.${fieldName}`;
     const lowered = pickOrdinary(
@@ -782,6 +802,8 @@ function structShape(
     if (lowered.unsupported !== undefined) {
       unsupported.push(...lowered.unsupported);
     }
+    nested.push({ field: fieldPath, ...lowered.admits }, ...(lowered.nested ?? []));
+    children.push(...(lowered.descents ?? []));
   }
   if (members.length === 0) {
     return null;
@@ -790,6 +812,8 @@ function structShape(
   return {
     typeName,
     fieldsConstant,
+    nested,
+    children,
     code:
       extraCode.join("") +
       `export interface ${typeName} {\n` +
@@ -832,6 +856,10 @@ function lowerStructMap(
     admits: { shape: "structMap", repeated: repeatsSiblings(field, "structMap") },
     code: shape.code,
     unsupported: shape.unsupported,
+    nested: shape.nested,
+    // One field table serves every engine key, so the key itself never enters
+    // the path the reader records — see `structMap` in {@link DescentNode}.
+    descents: [{ field: name, mode: "structMap", children: shape.children }],
   };
 }
 
@@ -899,6 +927,12 @@ function lowerStruct(
     wrapped,
     code,
     unsupported,
+    nested: shape.nested,
+    // `wrapped` is exactly the reader's distinction too: the container holds
+    // bare anonymous blocks rather than being one.
+    descents: [
+      { field: name, mode: wrapped ? "wrappedStruct" : "struct", children: shape.children },
+    ],
   };
 }
 
@@ -1151,6 +1185,10 @@ function lowerDual(
     },
     code: arms.map((arm) => arm.code ?? "").join(""),
     unsupported: arms.flatMap((arm) => arm.unsupported ?? []),
+    // The block arm alone: a scalar arm has no interior, and both arms share
+    // the one key the reader descends from.
+    ...(block.nested === undefined ? {} : { nested: block.nested }),
+    ...(block.descents === undefined ? {} : { descents: block.descents }),
   };
 }
 

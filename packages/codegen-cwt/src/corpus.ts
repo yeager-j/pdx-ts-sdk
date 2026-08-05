@@ -77,73 +77,149 @@ export interface RegistryCorpus {
   readonly definitions: number;
   readonly files: number;
   /**
-   * Field key -> what definitions write there. A nested field inside a
-   * repeated-struct field (see {@link RepeatedStructField}) is reported under
-   * a dotted path (`stages.icon`, `approach.on_select`) alongside the owning
-   * field's own top-level occurrence, so coverage inside the struct is visible
-   * and attributable instead of collapsing into the single top-level key.
+   * Field key -> what definitions write there. A field written inside a block
+   * the reader descends into (see {@link DescentNode}) is reported under a
+   * dotted path (`stages.icon`, `term_data.discrete_terms.key`) alongside the
+   * owning field's own top-level occurrence, so coverage inside the block is
+   * visible and attributable instead of collapsing into the single top-level
+   * key.
    */
   readonly occurrences: ReadonlyMap<string, FieldObservation>;
 }
 
 /**
- * Identifies one of a registry's repeated-struct fields (see
- * `docs/roadmap.md`'s "Repeated-struct field shape") so the corpus reader can
- * descend into it. Mirrors `REPEATED_STRUCT_DEFINITIONS`' `keying` /
- * `identityKey` exactly — the two are meant to be built from the same overlay
- * entries, not redefine the split.
+ * One block-valued field the reader descends into, and the nodes for whatever
+ * it in turn contains.
+ *
+ * Emitter-produced, never hand-written: `ContentEmission.corpusDescents` builds
+ * these out of the same lowerings that produce `nestedEmittedFields`, so the
+ * paths the reader records and the paths the emitter claims cannot drift apart.
+ * A descent the emitter did not lower would manufacture "unexpressed" entries
+ * for interiors no side ever promised.
+ *
+ * `mode` says how the container reaches the blocks whose entries are recorded,
+ * which is the only thing the arms differ in:
+ *
+ * - `struct` — the container *is* the block:
+ *   `forbidden_peace_offers = { demand_surrender = ... }`.
+ * - `wrappedStruct` — its items are bare anonymous blocks:
+ *   `resource_terms = { { key = ... value = ... } { ... } }`.
+ * - `structMap` — its items are engine-keyed blocks:
+ *   `section_slots = { mid = { locator = ... } }`. The engine key stays out of
+ *   the path, since the emitter has one field table for every key.
+ * - `repeatedStruct` — `keying` decides, mirroring `REPEATED_STRUCT_DEFINITIONS`
+ *   exactly rather than redefining the split: "container" holds one id-keyed
+ *   block per entry, "siblings" holds the entry's own fields directly and
+ *   carries the id in `identityKey`, skipped for the same reason the top level
+ *   drops `nameField`.
+ * - `weightModifiers` — a weight block's `modifier` rows, whose gating keys
+ *   `strippedKeys` names. Nothing lowers to one yet, so the reader throws
+ *   rather than recording a shape it has never been handed.
  */
-export interface RepeatedStructField {
-  /** The top-level field key, e.g. "stages" or "approach". */
+export interface DescentNode {
+  /** The game's key at this level; the corpus path grows `<prefix>.<field>`. */
   readonly field: string;
-  readonly keying: "container" | "siblings";
-  /** Required for "siblings" — the body field carrying the id, skipped when descending. */
+  readonly mode: "struct" | "wrappedStruct" | "structMap" | "repeatedStruct" | "weightModifiers";
+  /** `repeatedStruct` only. */
+  readonly keying?: "container" | "siblings";
+  /** `repeatedStruct` with "siblings" keying only — the field carrying the id. */
   readonly identityKey?: string;
+  /** `weightModifiers` only — the gating keys stripped before the rest is recorded. */
+  readonly strippedKeys?: ReadonlySet<string>;
+  readonly children: readonly DescentNode[];
 }
 
 /**
- * Adds one occurrence of every nested field found inside a repeated-struct
- * field to `seen`, deduplicated exactly like the top level: a definition
- * writing `icon` in two different stages, or the same field in two `approach`
- * blocks, still counts once.
+ * Records one block's entries under `<path>.<key>`, recursing into whichever
+ * of them a child node names.
  *
- * "container" (`stages = { stage_1 = { icon = ... } }`): the outer container's
- * items are themselves id-keyed blocks, so descend once more into each and
- * report their fields under `<field>.<name>`.
- *
- * "siblings" (`approach = { name = approach_a icon = ... }`): the container
- * passed in already holds the entry's own fields directly — the caller is
- * invoked once per occurrence, since duplicate keys at the top level (several
- * `approach = { ... }` blocks) already arrive as separate items. The identity
- * field itself is skipped, the same reason the top level drops `nameField`.
+ * The block boundary is this call. Arity is a property of one block and the
+ * accumulated `seen` map has already flattened every block of a definition into
+ * one list, so `blockArity` has to be decided here — see {@link observe}. Two
+ * stages each writing `icon` once are two blocks, not a repetition.
  */
-function descendRepeatedStruct(
-  value: PdxContainer,
-  struct: RepeatedStructField,
-  seen: Map<string, PdxValue[]>
+function recordBlock(
+  block: PdxContainer,
+  path: string,
+  children: ReadonlyMap<string, DescentNode>,
+  skip: string | undefined,
+  seen: Map<string, PdxValue[]>,
+  blockArity: Map<string, boolean>
 ): void {
-  const record = (key: string, written: PdxValue): void => {
-    seen.set(`${struct.field}.${key}`, [...(seen.get(`${struct.field}.${key}`) ?? []), written]);
-  };
-  if (struct.keying === "container") {
-    for (const sub of value.items) {
-      if (sub.kind !== "entry" || sub.value.kind !== "container") {
-        continue;
-      }
-      for (const leaf of sub.value.items) {
-        if (leaf.kind !== "entry") {
-          continue;
-        }
-        record(leaf.key, leaf.value);
-      }
-    }
-    return;
-  }
-  for (const leaf of value.items) {
-    if (leaf.kind !== "entry" || leaf.key === struct.identityKey) {
+  const withinThisBlock = new Set<string>();
+  for (const leaf of block.items) {
+    if (leaf.kind !== "entry" || leaf.key === skip) {
       continue;
     }
-    record(leaf.key, leaf.value);
+    const leafPath = `${path}.${leaf.key}`;
+    blockArity.set(leafPath, (blockArity.get(leafPath) ?? false) || withinThisBlock.has(leafPath));
+    withinThisBlock.add(leafPath);
+    seen.set(leafPath, [...(seen.get(leafPath) ?? []), leaf.value]);
+    const child = children.get(leaf.key);
+    if (child !== undefined && leaf.value.kind === "container") {
+      descend(leaf.value, child, path, seen, blockArity);
+    }
+  }
+}
+
+/**
+ * Adds one occurrence of every field written inside a descended block to
+ * `seen`, deduplicated exactly like the top level: a definition writing `icon`
+ * in two different stages, or the same field in two `approach` blocks, still
+ * counts once.
+ *
+ * `prefix` is the owning path, empty at the definition's own level, so one
+ * recursion handles a struct inside a struct without the caller tracking depth.
+ */
+function descend(
+  value: PdxContainer,
+  node: DescentNode,
+  prefix: string,
+  seen: Map<string, PdxValue[]>,
+  blockArity: Map<string, boolean>
+): void {
+  const path = prefix === "" ? node.field : `${prefix}.${node.field}`;
+  const children = new Map(node.children.map((child) => [child.field, child]));
+  const record = (block: PdxContainer, skip?: string): void => {
+    recordBlock(block, path, children, skip, seen, blockArity);
+  };
+  switch (node.mode) {
+    case "struct":
+      record(value);
+      return;
+    case "wrappedStruct":
+      for (const item of value.items) {
+        if (item.kind === "container") {
+          record(item);
+        }
+      }
+      return;
+    case "structMap":
+      for (const item of value.items) {
+        if (item.kind === "entry" && item.value.kind === "container") {
+          record(item.value);
+        }
+      }
+      return;
+    case "repeatedStruct":
+      if (node.keying !== "container") {
+        // The caller is invoked once per occurrence: duplicate keys at the
+        // owning level (several `approach = { ... }` blocks) already arrive as
+        // separate items, so this container holds one entry's fields.
+        record(value, node.identityKey);
+        return;
+      }
+      for (const sub of value.items) {
+        if (sub.kind === "entry" && sub.value.kind === "container") {
+          record(sub.value);
+        }
+      }
+      return;
+    case "weightModifiers":
+      throw new Error(
+        `${path} descends as weightModifiers, which no lowering emits yet — the reader would ` +
+          "have to guess which keys gate the row and which are modifier names"
+      );
   }
 }
 
@@ -172,7 +248,7 @@ function descendSplice(
   value: PdxContainer,
   member: SpliceMember,
   seen: Map<string, PdxValue[]>,
-  spliceArity: Map<string, boolean>
+  blockArity: Map<string, boolean>
 ): void {
   const nested = new Map(member.members().map((inner) => [inner.key, inner]));
   // Per block, not per definition. A system with eight planets that each write
@@ -186,15 +262,15 @@ function descendSplice(
       continue;
     }
     const path = `${member.key}.${leaf.key}`;
-    // Presence marks the path as splice-owned even when it never repeats, so
+    // Presence marks the path as descent-owned even when it never repeats, so
     // `observe` knows to take its arity from here rather than from the
     // flattened value list.
-    spliceArity.set(path, (spliceArity.get(path) ?? false) || withinThisBlock.has(path));
+    blockArity.set(path, (blockArity.get(path) ?? false) || withinThisBlock.has(path));
     withinThisBlock.add(path);
     seen.set(path, [...(seen.get(path) ?? []), leaf.value]);
     const inner = nested.get(leaf.key);
     if (inner !== undefined && leaf.value.kind === "container") {
-      descendSplice(leaf.value, inner, seen, spliceArity);
+      descendSplice(leaf.value, inner, seen, blockArity);
     }
   }
 }
@@ -260,18 +336,19 @@ function observe(
   into: Map<string, FieldObservation>,
   written: ReadonlyMap<string, PdxValue[]>,
   /**
-   * Splice-owned paths, each mapped to whether it repeated inside a single
+   * Descent-owned paths, each mapped to whether it repeated inside a single
    * block — counted at a boundary the accumulated `written` map has already
-   * flattened away, see {@link descendSplice}. For these, `values.length` is
-   * the count across every block in the definition and says nothing about
-   * arity, so this decides it instead. Repeated-struct paths are dotted too but
-   * are absent here, and keep the ordinary rule.
+   * flattened away, see {@link recordBlock} and {@link descendSplice}. For
+   * these, `values.length` is the count across every block in the definition
+   * and says nothing about arity, so this decides it instead. Only the
+   * definition's own top-level keys are absent here, and the definition is
+   * their block, so they keep the ordinary rule.
    */
-  spliceArity: ReadonlyMap<string, boolean> = new Map()
+  blockArity: ReadonlyMap<string, boolean> = new Map()
 ) {
   for (const [key, values] of written) {
     const previous = into.get(key);
-    const repeats = spliceArity.get(key) ?? values.length > 1;
+    const repeats = blockArity.get(key) ?? values.length > 1;
     const observation = {
       definitions: (previous?.definitions ?? 0) + 1,
       repeated: (previous?.repeated ?? 0) + (repeats ? 1 : 0),
@@ -345,16 +422,16 @@ export interface ConformanceReport {
  * key is a repeated keyword instead and the id sits in a body field — so only
  * entries under that keyword count, and the name field is not a field.
  *
- * `repeatedStructFields` names this registry's repeated-struct fields (if
- * any), so their contents are visible too instead of collapsing into one
- * opaque top-level key — see {@link descendRepeatedStruct}.
+ * `descents` names this registry's block-valued fields (if any), so their
+ * contents are visible too instead of collapsing into one opaque top-level key
+ * — see {@link DescentNode}.
  */
 export function readRegistryCorpus(
   root: string,
   registryPath: string,
   keyword: string | null,
   nameField: string | null,
-  repeatedStructFields: readonly RepeatedStructField[] = [],
+  descents: readonly DescentNode[] = [],
   spliceMembers: readonly SpliceMember[] = [],
   /**
    * A top-level key belonging to a sibling type that shares this directory,
@@ -377,7 +454,7 @@ export function readRegistryCorpus(
   } catch {
     return { definitions: 0, files: 0, occurrences: new Map() };
   }
-  const structByField = new Map(repeatedStructFields.map((field) => [field.field, field]));
+  const descentByField = new Map(descents.map((node) => [node.field, node]));
   const spliceByKey = new Map(spliceMembers.map((member) => [member.key, member]));
   const occurrences = new Map<string, FieldObservation>();
   let definitions = 0;
@@ -395,22 +472,22 @@ export function readRegistryCorpus(
       }
       definitions += 1;
       const written = new Map<string, PdxValue[]>();
-      const spliceArity = new Map<string, boolean>();
+      const blockArity = new Map<string, boolean>();
       for (const field of item.value.items) {
         if (field.kind !== "entry" || field.key === nameField) {
           continue;
         }
         written.set(field.key, [...(written.get(field.key) ?? []), field.value]);
-        const struct = structByField.get(field.key);
-        if (struct !== undefined && field.value.kind === "container") {
-          descendRepeatedStruct(field.value, struct, written);
+        const node = descentByField.get(field.key);
+        if (node !== undefined && field.value.kind === "container") {
+          descend(field.value, node, "", written, blockArity);
         }
         const splice = spliceByKey.get(field.key);
         if (splice !== undefined && field.value.kind === "container") {
-          descendSplice(field.value, splice, written, spliceArity);
+          descendSplice(field.value, splice, written, blockArity);
         }
       }
-      observe(occurrences, written, spliceArity);
+      observe(occurrences, written, blockArity);
     }
   }
   return { definitions, files: names.length, occurrences };
