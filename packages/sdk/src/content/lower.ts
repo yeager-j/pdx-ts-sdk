@@ -320,8 +320,19 @@ export function fieldEntries(
       field.shape !== "valueList" &&
       value.some((item) => passthroughEntry(item) !== undefined)
     ) {
+      const key = "key" in field ? field.key : undefined;
       for (const item of value as readonly unknown[]) {
         const parsed = passthroughEntry(item);
+        if (parsed !== undefined && parsed.key !== key) {
+          // The splice writes the parsed entry as it stands, key and all, so an
+          // entry from a different field would replace this member's
+          // occurrences with something the game reads as another key entirely.
+          throw new Error(
+            `"${field.member}" was given a parsed "${parsed.key}" entry, and this member ` +
+              `writes "${key}": a passthrough carries its own key, so only an occurrence of ` +
+              "this member's own key can ride through it"
+          );
+        }
         entries.push(
           ...(parsed !== undefined
             ? [parsed]

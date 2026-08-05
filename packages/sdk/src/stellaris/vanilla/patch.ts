@@ -29,8 +29,15 @@ import { container, quoted, scalar, type PdxEntry, type PdxItem } from "@pdx-ts/
 import { fieldEntries } from "../../content/lower.ts";
 import type { ContentField } from "../../content/schema.ts";
 import { refId } from "../../generated/refs.ts";
-import type { ContentRefUse } from "../../references.ts";
+import type { ContentRefSink, ContentRefUse } from "../../references.ts";
 import type { AnyOf, ParsedNumber } from "./view.ts";
+
+/** What the shared lowering reads; the same shape `fieldEntries` is handed. */
+interface LoweringContext {
+  readonly collect: ContentRefSink;
+  readonly path: string;
+  readonly ownerId: string;
+}
 
 /**
  * What the transform needs from a parsed definition: its key and the body it
@@ -67,8 +74,19 @@ export type PatchInput<T, Extra = never> =
 
 export interface PatchedContent<Source extends ParsedDefinition = ParsedDefinition> {
   readonly id: string;
+  /** The registry the patched definition belongs to. */
+  readonly registry: string;
   /** The vanilla definition this patch transforms — provenance for the win engine. */
   readonly source: Source;
+  /**
+   * The patched members as the callback returned them, before lowering.
+   *
+   * A patch is an authoring surface like `define`'s, so the build reads it the
+   * same way `DefinedContent.def` is read — the nested identities it authors
+   * (a `technology_swap` this mod adds) are ids of this mod's own, and other
+   * definitions may name them.
+   */
+  readonly def: Readonly<Record<string, unknown>>;
   /**
    * The content references the patched fields write, for `buildMod`'s
    * dangling-reference guard. A patch is the other way a definition of this
@@ -126,14 +144,42 @@ function quotesItems(field: ContentField): boolean {
 }
 
 /**
+ * The content types a field's ids may name, looking through a dual — the same
+ * `refTypes` the define path's own lowering reads, never a list this module
+ * keeps.
+ */
+function refTypesOf(field: ContentField): readonly string[] | undefined {
+  if ("refTypes" in field && field.refTypes !== undefined) {
+    return field.refTypes;
+  }
+  if (field.shape === "dual") {
+    for (const arm of field.arms) {
+      const types = refTypesOf(arm);
+      if (types !== undefined) {
+        return types;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
  * An alternation group as the game writes it: `OR = { a b }` inside the list.
  *
- * It is a whole entry rather than a scalar, which no authoring member's
- * element type can be, so it enters the lowering as a passthrough.
+ * It is a whole entry rather than a scalar, which no authoring member's element
+ * type can be, so it enters the lowering as a passthrough — which means
+ * `contentScalar` never sees its options, and the references they name have to
+ * be reported here or nowhere. An id inside an OR group is a reference exactly
+ * as a bare one beside it is.
  */
-function anyOfEntry(group: AnyOf<unknown>, quote: boolean): PdxEntry {
+function anyOfEntry(group: AnyOf<unknown>, field: ContentField, ctx: LoweringContext): PdxEntry {
+  const quote = quotesItems(field);
+  const targets = refTypesOf(field);
   const options = group.options.map((option) => {
     const id = String(refId(option as string));
+    if (targets !== undefined && !id.startsWith("@")) {
+      ctx.collect({ targets, id, field: keyOf(field) ?? field.member });
+    }
     return quote ? quoted(id) : scalar(id);
   });
   return { kind: "entry", key: "OR", op: "=", value: container(options) };
@@ -143,19 +189,18 @@ function anyOfEntry(group: AnyOf<unknown>, quote: boolean): PdxEntry {
  * The patch-only input forms, rewritten into what `fieldEntries` already
  * understands. Everything else is handed to the define path untouched.
  */
-function lowerable(value: unknown, field: ContentField): unknown {
+function lowerable(value: unknown, field: ContentField, ctx: LoweringContext): unknown {
   if (isParsedNumber(value)) {
     return parsedScalar(value);
   }
   if (!Array.isArray(value)) {
     return value;
   }
-  const quote = quotesItems(field);
   return (value as readonly unknown[]).map((item) => {
     if (isParsedNumber(item)) {
       return parsedScalar(item);
     }
-    return isAnyOf(item) ? anyOfEntry(item, quote) : item;
+    return isAnyOf(item) ? anyOfEntry(item, field, ctx) : item;
   });
 }
 
@@ -270,7 +315,7 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
   );
   assertPatchable(patched, source, registry, patchable);
   const refs: ContentRefUse[] = [];
-  const ctx = {
+  const ctx: LoweringContext = {
     collect: (use: ContentRefUse) => refs.push(use),
     path: "",
     ownerId: source.id,
@@ -286,13 +331,15 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
       continue;
     }
     assertNoLocalisation(value, field, field.member);
-    const entries = fieldEntries({ [field.member]: lowerable(value, field) }, [field], ctx);
+    const entries = fieldEntries({ [field.member]: lowerable(value, field, ctx) }, [field], ctx);
     replacements.set(key, [...(replacements.get(key) ?? []), ...entries]);
   }
 
   return {
     id: source.id,
+    registry,
     source,
+    def: patched,
     refs,
     toEntries(): PdxEntry {
       const body: PdxEntry[] = [];

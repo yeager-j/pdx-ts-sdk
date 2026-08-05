@@ -343,6 +343,21 @@ describe("descriptor-derived patching", () => {
     });
   });
 
+  it("records every option of an alternation group as a reference", () => {
+    // The group lowers to a passthrough entry, so the scalar lowering never
+    // sees its options — the transform reports them, against the same
+    // `refTypes` the descriptor declares for the field around them.
+    const patched = patchTechnology(geneForging, (t) => ({
+      prerequisites: [...t.prerequisites, anyOf("tech_a", "pp_tech_b")],
+    }));
+    // Every id the member writes, grouped or not, on the same terms.
+    expect([...patched.refs].sort((a, b) => a.id.localeCompare(b.id))).toEqual([
+      { targets: ["technology"], id: "pp_tech_b", field: "prerequisites" },
+      { targets: ["technology"], id: "tech_a", field: "prerequisites" },
+      { targets: ["technology"], id: "tech_helix_mapping", field: "prerequisites" },
+    ]);
+  });
+
   it("keeps a bare number in a ref-valued field out of the reference guard", () => {
     // Vanilla's tiers are the integers 0-5, so `tier: 3` names no id.
     const patched = patchTechnology(geneForging, () => ({ tier: 3 }));
@@ -449,6 +464,16 @@ describe("patched technology swaps", () => {
       "tech_pp_swaps = {\n\tarea = society\n" +
         "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_c\n\t\tinherit_name = yes\n\t}\n" +
         "\tgateway = biological\n}\n"
+    );
+  });
+
+  it("refuses a parsed entry belonging to another member", () => {
+    // A passthrough carries its own key, so an `area` entry spliced into
+    // `technologySwap` would delete the swaps and write a second `area` where
+    // they stood. Loud, rather than a body the author never described.
+    const area = swapped.body.find((entry) => entry.key === "area")!;
+    expect(() => patchTechnology(swapped, () => ({ technologySwap: [area] }))).toThrow(
+      '"technologySwap" was given a parsed "area" entry, and this member writes "technology_swap"'
     );
   });
 
