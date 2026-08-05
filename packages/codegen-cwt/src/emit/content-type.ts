@@ -66,8 +66,11 @@ export interface ContentEmission {
    * measuring coverage has to resolve the category itself.
    */
   readonly inlineSplices: readonly string[];
-  /** Present in the rules but not expressible: blocked on emitter machinery. */
-  readonly machineryBacklog: readonly string[];
+  /**
+   * Present in the rules but not expressible: blocked on emitter machinery,
+   * each with what stopped the lowering. The only reason a declared field is
+   * absent from the authoring surface other than `declinedFields`.
+   */
   readonly unsupported: readonly string[];
   readonly localisationAliases: readonly string[];
   /**
@@ -735,7 +738,6 @@ export function emitContentType(
     corpusDescents,
     declinedFields: declinedFields.sort(),
     inlineSplices,
-    machineryBacklog: [...unsupported].sort(),
     unsupported,
     scopeParameter: parameter,
     localisationAliases: [...localisationPlan.aliases, ...localisationAliases],

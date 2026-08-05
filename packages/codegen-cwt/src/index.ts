@@ -656,7 +656,6 @@ async function main(): Promise<void> {
       `${type} alias categories spliced unkeyed at the top level`,
       content.emission.inlineSplices
     );
-    reportSection(`${type} fields blocked on emitter machinery`, content.emission.machineryBacklog);
     reportSection(
       `${content.registry} fields the emitter could not lower`,
       content.emission.unsupported
