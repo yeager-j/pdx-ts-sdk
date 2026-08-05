@@ -1,6 +1,6 @@
 /**
  * The FROM contract, held against the pure authoring API — the probe's claims
- * 5, 5b, and 7 (see docs/verdict-effects-probe.md) pinned on the namespace
+ * 5, 5b, and 7 (see docs/verdict/verdict-effects-probe.md) pinned on the namespace
  * definers mod authors actually call.
  */
 

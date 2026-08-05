@@ -142,7 +142,7 @@ export interface Modifier<S extends ScopeName> {
    * `modifier_rule.cwt`). Like every other definition-attached localization
    * slot in the SDK, the author writes text and a key is generated and
    * registered automatically — see `ContentAuthoring`'s modifier-desc
-   * collection in `content.ts`, which is the only pathway that can safely
+   * collection in `content/authoring.ts`, which is the only pathway that can safely
    * auto-register (it runs once, at `define()` time, against a stable
    * definition id). `randomList`/`lockedRandomList`/`random` and other
    * runtime-recorded effect modifiers have no such stable, once-only
@@ -157,7 +157,7 @@ export interface Modifier<S extends ScopeName> {
    * automatic and stable under reordering, but it changes (and orphans any
    * shipped translation) whenever the English text is edited. Supplying
    * `descKey` pins the key so translations survive text edits too; see
-   * `ContentAuthoring`'s modifier-desc collection in `content.ts` for the
+   * `ContentAuthoring`'s modifier-desc collection in `content/authoring.ts` for the
    * exact key format and the `mod.warnings` entry an unset `descKey` emits.
    * Ignored when `desc` is not set. Lowercase snake_case, matching the same
    * pattern as content ids.
@@ -252,7 +252,7 @@ export interface ComplexTriggerModifier<S extends ScopeName> {
   /**
    * Display text for this row's tooltip, auto-registered as localisation the
    * same way {@link Modifier.desc} is — see `ContentAuthoring`'s
-   * modifier-desc collection in `content.ts`. `complexTriggerModifierEntry`
+   * modifier-desc collection in `content/authoring.ts`. `complexTriggerModifierEntry`
    * below throws if `desc` reaches it unresolved.
    */
   readonly desc?: string;
@@ -273,7 +273,7 @@ export interface ComplexTriggerModifier<S extends ScopeName> {
  * omitted: `WeightBlockRow`'s union of this type with `ModifierWithLoc`
  * would otherwise let `divide`/`minValue`/`maxValue` leak back in, the same
  * excess-property leniency `ExclusiveModifierRow`/
- * `ExclusiveComplexTriggerModifierRow` in `content.ts` exist to close —
+ * `ExclusiveComplexTriggerModifierRow` in `content/types.ts` exist to close —
  * `ModifierWithLoc` (inherited from `Modifier`) still declares all three, so
  * a plain `Omit` here would make them "not excess" for the row as a whole
  * even though this specific row kind cannot legally carry them.

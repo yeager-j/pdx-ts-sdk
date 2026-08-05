@@ -2,7 +2,7 @@
  * The vocabulary for recorded content references.
  *
  * It lives in its own module because all three encoders write them: content
- * lowering (`content.ts`), the trigger builders (`script/trigger-core.ts`), and
+ * lowering (`content/lower.ts`), the trigger builders (`script/trigger-core.ts`), and
  * the effect recorder (`script/effects/recorder.ts`). `buildMod` resolves whatever they record
  * against the ids the build actually defined.
  *

@@ -24,7 +24,7 @@
  * This proxy holds no id data at all; the generated `VanillaTries` node
  * interfaces are the only thing keeping a completion honest, exactly as the
  * scoped-modifier recorder's path proxy does for modifier keys
- * (`src/content.ts`).
+ * (`src/content/types.ts`).
  */
 
 // `registry` is not read below — it documents which registry a call site

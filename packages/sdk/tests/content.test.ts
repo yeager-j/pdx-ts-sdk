@@ -2435,7 +2435,7 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
  *
  * `government_trigger`'s consumer registry (`civic_or_origin`) is not generated
  * yet, so the field tables here are transcribed from what
- * `tools/codegen/emit/alias-struct.ts` emits for the real category — the
+ * `packages/codegen-cwt/src/emit/alias-struct.ts` emits for the real category — the
  * codegen side is asserted in `tests/codegen/alias-struct.test.ts`. The
  * expected output is pinned against real vanilla civics: `civic_corvee_system`
  * and `civic_corporate_dominion` in

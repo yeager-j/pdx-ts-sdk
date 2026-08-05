@@ -327,7 +327,7 @@ export class VanillaView {
       throw new SwapPatchError(
         `"${id}" is a technology_swap inside ${swap.parent} (${swap.file}): patching into a ` +
           `swap is refused — swap override semantics have no oracle evidence ` +
-          `(docs/handoff-patches.md, open question 3). Patch ${swap.parent} instead; its swaps ` +
+          `(docs/handoff/handoff-patches.md, open question 3). Patch ${swap.parent} instead; its swaps ` +
           `ride through unchanged.`
       );
     }

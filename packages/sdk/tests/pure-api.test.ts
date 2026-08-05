@@ -1007,7 +1007,7 @@ describe("lowering determinism", () => {
  * A recorder is valid only inside the closure it was handed to.
  *
  * Both recorders — the effect scope object (`script/effects/recorder.ts`) and the modifier
- * path recorder (`content.ts`) — are proxies over an entry array that the
+ * path recorder (`content/types.ts`) — are proxies over an entry array that the
  * lowering keeps by reference. Stored somewhere longer-lived than the closure,
  * either one used to record into an already-built, already-frozen `PureMod`:
  * no error, and a second `render` of that same value emitting different bytes

@@ -117,7 +117,7 @@ not the package itself, and never reads an install.
   Stellaris install to regenerate against, so this check cannot run there and is never made to pass
   vacuously in its absence.
 
-## Adding a new content type
+## Adding a new registry
 
 The content system is deliberately generic. Adding a registry such as `ascension_perk` should
 generate `AscensionPerkDef`, `DefinedAscensionPerk`, the capability's `mod.ascensionPerk` method,
@@ -190,7 +190,7 @@ pre-review of a list.
      `packages/sdk/tests/__snapshots__/content/`, built with
      `render(mod.compile([mod.feature(undefined, [mod.ascensionPerk("example", { ... })])]))`
 7. Add or update a README example when the new registry introduces an authoring pattern users
-   would not infer from existing content types.
+   would not infer from existing registries.
 
 Use the generated naming rather than adding hand-written aliases: a snake-case type such as
 `ascension_perk` becomes `AscensionPerk`, `mod.ascensionPerk`, `AscensionPerkItem`, and

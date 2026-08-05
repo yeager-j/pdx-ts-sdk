@@ -142,7 +142,7 @@ export const STRUCTURAL_EFFECT_METHODS = new Set([
  * Their `id` argument is an `EventRef` carrying the fired event's FROM
  * contract, and each needs the hand-written witness-overload pair the probe
  * validated (`from: ctx.self`, with `NoInfer` on the witness) — see
- * `docs/verdict-effects-probe.md`. Generating them as plain `id: string`
+ * `docs/verdict/verdict-effects-probe.md`. Generating them as plain `id: string`
  * methods would silently bypass the contract, so they are skipped until the
  * event system lands.
  */
@@ -211,7 +211,7 @@ export const CONTENT_PATCH_REGISTRIES = new Map<string, string>([
   [
     "technology",
     "the only registry the vanilla loader parses and the patch resolver plans emission for " +
-      "(src/resolver, src/vanilla) — verified in-game by the patches-that-provably-win calibration",
+      "(packages/sdk/src/stellaris/vanilla/, src/compiler/patches.ts) — verified in-game by the patches-that-provably-win calibration",
   ],
 ]);
 

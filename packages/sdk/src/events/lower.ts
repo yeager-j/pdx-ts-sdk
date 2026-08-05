@@ -26,7 +26,7 @@ const OPTION_KEYS = "abcdefghijklmnopqrstuvwxyz";
  * `${ownerId}::${fieldPath}` token `registerModifierDescs` below registered
  * this same field's desc-bearing rows under — required so a shared row
  * object resolves its own occurrence's key at lowering (PR #16 review
- * finding 3), the same reasoning `content.ts`'s `descOwnerKey` documents.
+ * finding 3), the same reasoning `content/lower.ts`'s `descOwnerKey` documents.
  */
 function modifierRows<S extends ScopeName>(
   modifiers: readonly Modifier<S>[] | undefined,
@@ -41,7 +41,7 @@ function modifierRows<S extends ScopeName>(
 /**
  * Registers one localisation key per desc-bearing row in a modifier list, via
  * the shared derivation `modifierDescKey` (`script/effects/modifiers.ts`) — the same one
- * `content.ts`'s `collectModifierDescs` uses, so the two never drift and a
+ * `content/authoring.ts`'s `collectModifierDescs` uses, so the two never drift and a
  * future fix to the derivation reaches events automatically. Must run before
  * `modifierRows` lowers the same array: `modifierEntry` throws if a row's
  * `desc` reaches it unregistered, and an event has the stable id and
@@ -55,7 +55,7 @@ function modifierRows<S extends ScopeName>(
  *
  * Returns the `${ownerId}::${fieldPath}` token every row on this field was
  * registered under, for the caller to hand to the matching `modifierRows`
- * call — the same per-owner-occurrence scheme `content.ts`'s `descOwnerKey`
+ * call — the same per-owner-occurrence scheme `content/lower.ts`'s `descOwnerKey`
  * uses, needed so a row object reused across two fields resolves its own
  * key rather than whichever registration ran last (PR #16 review finding 3).
  */
