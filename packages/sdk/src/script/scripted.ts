@@ -15,7 +15,7 @@
  * What is left here is the factory those bindings are built on, and the escape
  * hatch for definitions no install-derived package can know: another mod's
  * scripted trigger, or a vanilla one newer than the pinned package. There the
- * scope is the author's assertion — the same deal `docs/handoff-vanilla-surface.md`
+ * scope is the author's assertion — the same deal `docs/handoff/handoff-vanilla-surface.md`
  * settled on, now the fallback rather than the whole story.
  *
  * ```ts
@@ -233,7 +233,7 @@ function scriptedEntry(name: string, args: ScriptedParams | undefined): PdxEntry
 
 /**
  * Builds a checked `{ trigger, parameters }` pair for a
- * `ComplexTriggerModifier` row (`content.ts`, `script/effects/modifiers.ts`): the name and
+ * `ComplexTriggerModifier` row (`content/types.ts`, `script/effects/modifiers.ts`): the name and
  * its parameter bag are checked against `@pdx-ts/stellaris-ids`'s scripted
  * triggers when it is installed — the same conditional machinery {@link
  * scriptedTrigger} uses — and degrade to unchecked `string`/{@link

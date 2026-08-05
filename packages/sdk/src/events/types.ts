@@ -6,7 +6,7 @@
  * witness value — usually `ctx.self`, proving the firing event's own scope is
  * the FROM the target expects. A witness that is any other ref emits the
  * game's own `scopes = { from = ... }` override block. Validated by the
- * probe: see `docs/verdict-effects-probe.md` (including why the witness needs
+ * probe: see `docs/verdict/verdict-effects-probe.md` (including why the witness needs
  * `NoInfer` and why an undeclared FROM is a sentinel rather than `never`).
  *
  * Event closures run eagerly, inside define: errors carry the author's
@@ -159,7 +159,7 @@ export interface EventOption<S extends ScopeName, From extends ScopeName | undef
 /**
  * A `location` value (`events.cwt:308`, `scope_field`): either a fixed
  * {@link ScopeValue} or a closure handed the event's FROM/self context that
- * returns one, the same `WithFrom`-style dual `content.ts` uses for
+ * returns one, the same `WithFrom`-style dual `content/schema.ts` uses for
  * declarative fields that can want FROM — `location: (ctx) => ctx.from` is
  * the dig-stage idiom (every vanilla archaeology-site event opens
  * `location = from`). A plain value covers the rest: a saved

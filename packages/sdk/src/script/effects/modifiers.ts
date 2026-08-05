@@ -58,7 +58,7 @@ export const DESC_KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
  * the derivation fell back to a content hash rather than an author-supplied
  * `descKey`. The warning is returned rather than emitted so this function
  * stays free of any opinion about where a caller's diagnostics land —
- * `content.ts` has `onUnstableDescKey` wired to `mod.warnings` already;
+ * `content/authoring.ts` has `onUnstableDescKey` wired to `mod.warnings` already;
  * `events.ts` threads it through `DefinedEvent.warnings` instead, since an
  * event has no `ContentAuthoring` instance to hang a callback off.
  */
@@ -87,11 +87,11 @@ export interface ModifierDescKeyResult {
  * rather than position, so it survives reordering and insertion, but it
  * changes (and orphans any existing translation) whenever the English text
  * is edited; the caller is expected to surface `unstableWarning` when that
- * happens, the same way `content.ts`'s `onUnstableDescKey`/`mod.warnings`
+ * happens, the same way `content/authoring.ts`'s `onUnstableDescKey`/`mod.warnings`
  * already does, rather than let the fallback stay silently unattended.
  *
  * The single derivation, shared rather than duplicated per caller
- * (`content.ts`'s `collectModifierDescs`, `events.ts`'s
+ * (`content/authoring.ts`'s `collectModifierDescs`, `events/lower.ts`'s
  * `registerModifierDescs`) — every caller inherits a future change to this
  * scheme in one place.
  */
@@ -122,7 +122,7 @@ export function modifierDescKey(
 /**
  * A weight-shaped row's `complex_maths_enum` arms, without the members that
  * are the row's own rather than the operation's — the gate and its tooltip.
- * `content.ts`'s `WeightBlockOperations` is the same set, spelled from the
+ * `content/types.ts`'s `WeightBlockOperations` is the same set, spelled from the
  * same place ({@link Modifier}).
  */
 export type WeightOperations = Omit<Modifier<ScopeName>, "desc" | "descKey" | "when">;
@@ -131,7 +131,7 @@ export type WeightOperations = Omit<Modifier<ScopeName>, "desc" | "descKey" | "w
  * The operations in emission order, as (member, emitted key) pairs.
  *
  * Two lowerings read this: {@link modifierEntry} below, for a `modifier` row,
- * and `content.ts`'s `weightBlock`, for the operations written directly as
+ * and `content/blocks.ts`'s `weightBlock`, for the operations written directly as
  * siblings of `base`. They are the same `complex_maths_enum` arms in the same
  * order, and a second hand-spelled sequence is a divergence nothing would
  * report — the emitted bytes stay well-formed either way, so a member added

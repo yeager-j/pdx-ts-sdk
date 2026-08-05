@@ -10,7 +10,7 @@
  * answer once, here, at codegen time, and write it into the descriptor's own
  * `form` property; the runtime then only ever reads `field.form`, never
  * reclassifies a shape into a form itself. See `ContentField.form` in
- * `@pdx-ts/sdk`'s `content.ts` for the consuming side.
+ * `@pdx-ts/sdk`'s `content/schema.ts` for the consuming side.
  */
 export type AuthoredForm = "scalar" | "list" | "trigger" | "closure" | "block";
 

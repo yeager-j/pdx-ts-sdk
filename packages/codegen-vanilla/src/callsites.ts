@@ -19,7 +19,7 @@
  *
  * Mutation-tested: making a link's body constrain its caller — the likeliest
  * error in the analysis — produces 328 contradictions here. See
- * `docs/verdict-scripted-scope.md`.
+ * `docs/verdict/verdict-scripted-scope.md`.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
