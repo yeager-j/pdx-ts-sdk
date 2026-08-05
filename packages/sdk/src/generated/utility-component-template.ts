@@ -465,7 +465,7 @@ export interface UtilityComponentTemplateFields {
   customTooltip?: string;
   shouldAiUse?: boolean;
   validForCountry?: Trigger<"country">;
-  aiWeight?: WeightBlock<never>;
+  aiWeight?: WeightBlock<"country">;
   /**
    * Only when utility_component_template subtype `weapon_component_template` applies.
    * Only when utility_component_template subtype `strike_craft_component_template` applies.

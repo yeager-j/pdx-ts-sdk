@@ -1474,6 +1474,48 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "never writes this field, but the rules declare it authorable.",
     },
   ],
+  // The three rows below are one finding, once per registry that splices the
+  // AI's design-weight grammar. CWT annotates no scope on `ai_weight`, so its
+  // `modifier` rows lowered to `Trigger<never>` — writable but unchecked, and
+  // measured by the corpus gate as admitting only universally legal
+  // conditions. That the silence is an omission rather than a claim is visible
+  // in the rules themselves: components.cwt:176-181 carries
+  // `## replace_scopes = { root = country this = country }` on
+  // `valid_for_country` and nothing at all on the `ai_weight` declared three
+  // lines below it. Which scope it omitted is what the corpus settles — across
+  // all three registries, every per-definition condition set that any rule
+  // constrains intersects to exactly `country`, and no definition mixes
+  // scopes; what is left over is combinators and scope links (`OR`, `NOT`,
+  // `NOR`, `owner`, `from`), which constrain nothing either way.
+  [
+    "section_template.ai_weight",
+    {
+      scope: "country",
+      reason:
+        "64 of 482 shipped section templates gate their design weight, on country conditions " +
+        "throughout (`is_ai`, `has_technology`, `is_preferred_weapons`). See the note above for " +
+        "why the rules' silence here is an omission rather than a contrary claim.",
+    },
+  ],
+  [
+    "utility_component_template.ai_weight",
+    {
+      scope: "country",
+      reason:
+        "253 of 848 shipped utility components gate their design weight, on country conditions " +
+        "throughout (`has_country_resource`, `has_monthly_income`, `has_policy_flag`, `is_ai`, " +
+        "`is_country_type`, `is_preferred_weapons`). See the note above.",
+    },
+  ],
+  [
+    "weapon_component_template.ai_weight",
+    {
+      scope: "country",
+      reason:
+        "324 of 591 shipped weapon components gate their design weight, on country conditions " +
+        "throughout (`has_ascension_perk`, `has_country_flag`, `is_ai`). See the note above.",
+    },
+  ],
   [
     "species_class.modifier",
     {
