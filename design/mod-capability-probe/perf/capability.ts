@@ -1,4 +1,5 @@
-import { defineSituationType } from "../../../packages/sdk/src/definers.ts";
+import type { ContentItem } from "../../../packages/sdk/src/authoring/feature.ts";
+import { defineSituationType } from "../../../packages/sdk/src/content/situations.ts";
 import type { AgreementPresetDef } from "../../../packages/sdk/src/generated/agreement-preset.ts";
 import type { AmbientObjectDef } from "../../../packages/sdk/src/generated/ambient-object.ts";
 import type { ArchaeologicalSiteTypeDef } from "../../../packages/sdk/src/generated/archaeological-site-type.ts";
@@ -27,7 +28,6 @@ import type { StrikeCraftComponentTemplateDef } from "../../../packages/sdk/src/
 import type { UtilityComponentTemplateDef } from "../../../packages/sdk/src/generated/utility-component-template.ts";
 import type { WarGoalDef } from "../../../packages/sdk/src/generated/war-goal.ts";
 import type { WeaponComponentTemplateDef } from "../../../packages/sdk/src/generated/weapon-component-template.ts";
-import type { ContentItem } from "../../../packages/sdk/src/items.ts";
 import { createMod, stellarisIds, type ModCapability, type ProbeIdProfile } from "../capability.ts";
 import { names } from "./names.ts";
 

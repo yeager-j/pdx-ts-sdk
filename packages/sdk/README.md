@@ -309,16 +309,22 @@ re-emit as references.
 ```
 src/
 ├── index.ts           public capability, discovery, materialization, and types
-├── mod-capability.ts  createMod and capability-owned authoring operations
+├── authoring/        createMod, feature placement, and named feature discovery
+│   ├── mod.ts        createMod and capability-owned authoring operations
+│   ├── feature.ts    feature/item vocabulary and placement helpers
+│   └── discover.ts   discoverFeatures: directory → named feature exports
 ├── build.ts           internal fold, cross-feature checks, and warnings
 ├── output/             pure rendering and filesystem materialization
 │   ├── render.ts       compiled mod → path-to-contents map
 │   ├── write.ts        path map → files beneath an explicit root
 │   └── install.ts      atomic launcher-directory installation
-├── discover.ts        discoverFeatures: directory → named feature exports
 ├── content.ts         generic content lowering and modifier recorder
-├── events.ts          internal event lowering and namespace mechanics
-├── on-actions.ts      on-action lowering
+├── content/           situation-specific content authoring contracts
+│   └── situations.ts  situation type lowering and target-scope contracts
+├── events/            event contracts, lowering, and on-action authoring
+│   ├── types.ts       event definitions and fire-site types
+│   ├── lower.ts       event-to-PDXScript lowering
+│   └── on-actions.ts  on-action lowering and binding construction
 ├── trigger-core.ts    Trigger<S>, scope brand, and trigger()
 ├── effect-core.ts     scope-object recorder, ScopeRef, and event targets
 ├── ordering.ts        canonical logical-path and UTF-8 ordering

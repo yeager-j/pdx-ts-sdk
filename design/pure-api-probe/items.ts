@@ -13,9 +13,9 @@
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { OnActionRef } from "../../packages/sdk/src/events/on-actions.ts";
 import type { ContentTypeName } from "../../packages/sdk/src/generated/content-registry.ts";
 import type { ScopeName } from "../../packages/sdk/src/generated/scopes.ts";
-import type { OnActionRef } from "../../packages/sdk/src/on-actions.ts";
 import type { ContentRefUse } from "../../packages/sdk/src/references.ts";
 import type { PatchedTechnology } from "../../packages/sdk/src/stellaris/vanilla/patch.ts";
 

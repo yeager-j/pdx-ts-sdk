@@ -5,9 +5,10 @@ import {
   type ModConfig,
   type PureMod,
   type ResolvedModConfig,
-} from "./build.ts";
-import { on } from "./definers.ts";
-import { buildEvent, type EventDef } from "./events.ts";
+} from "../build.ts";
+import { buildEvent } from "../events/lower.ts";
+import { on } from "../events/on-actions.ts";
+import type { EventDef } from "../events/types.ts";
 import {
   contentCapabilityMethods,
   DEFAULT_ID_PROFILE,
@@ -15,7 +16,7 @@ import {
   type ContentIdMinter,
   type IdProfile as GeneratedIdProfile,
   type MintedContentId as GeneratedMintedContentId,
-} from "./generated/content-capability.ts";
+} from "../generated/content-capability.ts";
 import {
   capabilityEvents,
   type CapabilityEventBuilder,
@@ -24,16 +25,16 @@ import {
   type CapabilityEvents as GeneratedCapabilityEvents,
   type MintedEventId,
   type MintedNamespace,
-} from "./generated/event-definers.ts";
-import type { EventKindKey } from "./generated/events.ts";
-import type { ScopeName } from "./generated/scopes.ts";
+} from "../generated/event-definers.ts";
+import type { EventKindKey } from "../generated/events.ts";
+import type { ScopeName } from "../generated/scopes.ts";
 import {
   assertNamespace,
   collection,
   FILE_STEM_PATTERN,
   type Collection,
   type ModItem,
-} from "./items.ts";
+} from "./feature.ts";
 
 const capabilityFeatureOwner: unique symbol = Symbol("mod capability feature owner");
 
@@ -74,7 +75,7 @@ export type CapabilityEventHandle<
  * A defined capability event with its exact prefix, namespace, numeric id,
  * scope, and FROM contract preserved for public return values and fire sites.
  */
-export type { CapabilityEventItem } from "./generated/event-definers.ts";
+export type { CapabilityEventItem } from "../generated/event-definers.ts";
 
 /**
  * Immutable, mod-bound authoring functions. The capability owns its config,

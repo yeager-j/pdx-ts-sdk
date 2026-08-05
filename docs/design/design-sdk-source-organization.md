@@ -1,6 +1,6 @@
 # SDK source organization
 
-> **Accepted proposal, 2026-08-04 — Phases 1 and 2 implemented.** This document records the
+> **Accepted proposal, 2026-08-04 — Phases 1, 2, and 3 implemented.** This document records the
 > agreed target structure for the handwritten source under `packages/sdk/src/` and
 > the migration plan for reaching it. The migration is organizational: it must not
 > change the public package interface, authored behavior, generated PDXScript, or
@@ -67,7 +67,8 @@ large files combine interfaces with multiple independent implementation concerns
   references, script contexts, modifier encoding, localization-key mechanics,
   conditional control flow, structural effects, recorder lifecycle, proxy
   dispatch, and event firing.
-- [`events.ts`](../../packages/sdk/src/events.ts) contains both the public event
+- [`events/types.ts`](../../packages/sdk/src/events/types.ts) and
+  [`events/lower.ts`](../../packages/sdk/src/events/lower.ts) contain the public event
   model and its lowering implementation.
 - [`output/render.ts`](../../packages/sdk/src/output/render.ts) contains pure rendering,
   generic filesystem writing, and atomic launcher installation.
@@ -459,6 +460,8 @@ Acceptance evidence should explicitly show that:
 - a failed render or staging write leaves the previous install intact.
 
 ### Phase 3: organize authoring and events
+
+Implemented on `feature/project-structure-reorganization-phase-3`.
 
 Move:
 

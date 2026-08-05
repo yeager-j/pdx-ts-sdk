@@ -29,7 +29,7 @@
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
 
-import type { ContentItem, ContributionItem, TechnologyPatchItem } from "../items.ts";
+import type { ContentItem, ContributionItem, TechnologyPatchItem } from "../authoring/feature.ts";
 import {
   patchTechnology as transformTechnology,
   type TechnologyPatch,
@@ -414,7 +414,7 @@ export type SituationTypeItem = ContentItem<"situation_type", SituationTypeDef>;
 
 // defineSituationType is hand-written; re-exported here so every definer this
 // SDK has comes from one module.
-export { defineSituationType } from "../definers.ts";
+export { defineSituationType } from "../content/situations.ts";
 
 /** What a scripted loc collection can contain. */
 export type ScriptedLocItem = ContentItem<"scripted_loc", ScriptedLocDef>;

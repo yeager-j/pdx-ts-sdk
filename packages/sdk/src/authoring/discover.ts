@@ -21,8 +21,8 @@ import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import type { CapabilityFeature } from "./mod-capability.ts";
-import { compareLogicalPaths, normalizeLogicalPath } from "./ordering.ts";
+import { compareLogicalPaths, normalizeLogicalPath } from "../ordering.ts";
+import type { CapabilityFeature } from "./mod.ts";
 
 /**
  * The default set of explicit feature modules: `.ts`, minus companion files.

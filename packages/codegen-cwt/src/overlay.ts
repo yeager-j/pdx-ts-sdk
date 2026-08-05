@@ -175,7 +175,7 @@ export interface HandWrittenDefiner {
 }
 
 /**
- * Registries whose `defineX` is re-exported from `src/definers.ts` instead of
+ * Registries whose `defineX` is re-exported from `src/content/situations.ts` instead of
  * being the mechanical one the emitter would write.
  *
  * The `HAND_WRITTEN_TRIGGERS` arrangement, one level up: codegen skips the

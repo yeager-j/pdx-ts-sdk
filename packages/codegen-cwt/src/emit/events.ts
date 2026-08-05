@@ -7,7 +7,8 @@
  * `## push_scope = country` — so which kinds exist and which scope each runs
  * in falls out of the rules rather than a hand-maintained table. The runtime
  * (`src/effect-core.ts`) registers a fire-effect encoder per kind from this
- * table, and `src/events.ts` builds the typed definition surface over it.
+ * table, and `src/events/types.ts` plus `src/events/lower.ts` build the typed
+ * definition surface over it.
  *
  * Three outputs:
  *
