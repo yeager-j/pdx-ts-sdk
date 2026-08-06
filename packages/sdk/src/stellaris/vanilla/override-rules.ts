@@ -79,7 +79,6 @@ export type StandaloneRegistry =
   | "scripted-effects"
   | "events"
   | "scripted-constants"
-  | "megastructures"
   | "ship-components"
   | "localization";
 
@@ -177,11 +176,15 @@ export const REGISTRY_RULES: readonly RegistryRow[] = [
    * observable could not discriminate — the registry's diagnostics report
    * missing localization and sprites, which vanilla supplies regardless.
    * The replacement cell is therefore an *assumption*, not a finding, and
-   * every win asserted through it carries `confidence: "assumed"`.
+   * every win asserted through it carries `confidence: "assumed"` — a patch
+   * file emitted for this registry states the judgment in its own header.
+   *
+   * The row is manifest-backed now that `megastructure` is a content registry,
+   * so its directory is the descriptor's `outputDir` rather than a second
+   * hand-written spelling of `common/megastructures`.
    */
   {
-    registry: "megastructures",
-    dir: "common/megastructures",
+    registry: "megastructure",
     repeat: { state: "verified", rule: "last-wins", runs: ["r8"] },
     replacement: {
       state: "assumed",

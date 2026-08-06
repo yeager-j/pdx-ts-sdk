@@ -1,0 +1,28 @@
+megastructure_fake_array_0 = {
+	entity = "fake_array_construction_entity"
+	construction_entity = "fake_array_construction_entity"
+	place_entity_on_planet_plane = no
+	build_time = @fake_buildtime
+	prerequisites = { tech_fake_farming }
+	resources = {
+		category = megastructures
+		cost = {
+			unity = @fake_t1cost
+		}
+		upkeep = {
+			energy = 5
+		}
+	}
+}
+
+megastructure_fake_array_1 = {
+	entity = "fake_array_entity"
+	build_time = @fake_buildtime
+	upgrade_from = { megastructure_fake_array_0 }
+	triggered_country_modifier = {
+		potential = {
+			always = yes
+		}
+		country_naval_cap_add = 10
+	}
+}

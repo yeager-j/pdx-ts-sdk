@@ -7,6 +7,8 @@ import {
   discoverFeatures,
   type BuildingItem,
   type BuildingPatchItem,
+  type MegastructureItem,
+  type MegastructurePatchItem,
   type TechnologyItem,
   type TechnologyPatchItem,
 } from "../src/index.ts";
@@ -47,6 +49,7 @@ describe("the public authoring surface", () => {
     const view = viewFromFiles({
       "common/technology/vanilla.txt": "tech_ps_forging = {\n\tarea = society\n}\n",
       "common/buildings/vanilla.txt": "building_ps_refinery = {\n\tplanet_limit = 1\n}\n",
+      "common/megastructures/vanilla.txt": "megastructure_ps_array = {\n\tbuild_time = 1800\n}\n",
     });
     const technology: TechnologyPatchItem = mod.patchTechnology(
       view.definition("technology", "tech_ps_forging"),
@@ -56,11 +59,16 @@ describe("the public authoring surface", () => {
       view.definition("building", "building_ps_refinery"),
       () => ({ planetLimit: 2 })
     );
+    const megastructure: MegastructurePatchItem = mod.patchMegastructure(
+      view.definition("megastructure", "megastructure_ps_array"),
+      () => ({ buildTime: 2400 })
+    );
     // And each is a member of its own registry's item union, so a feature
     // typed to one registry accepts its patches beside its definitions.
     expectTypeOf(technology).toExtend<TechnologyItem>();
     expectTypeOf(building).toExtend<BuildingItem>();
-    expectTypeOf(mod.feature(undefined, [technology, building])).toBeObject();
+    expectTypeOf(megastructure).toExtend<MegastructureItem>();
+    expectTypeOf(mod.feature(undefined, [technology, building, megastructure])).toBeObject();
   });
 
   it("does not re-export legacy authoring values", () => {
@@ -88,6 +96,8 @@ describe("the public authoring surface", () => {
     void sdk.patchTechnology;
     // @ts-expect-error — and that is true of every patchable registry.
     void sdk.patchBuilding;
+    // @ts-expect-error — including the newest one.
+    void sdk.patchMegastructure;
     // @ts-expect-error — contributions are capability methods.
     void sdk.addShipOfSizeLimits;
   });

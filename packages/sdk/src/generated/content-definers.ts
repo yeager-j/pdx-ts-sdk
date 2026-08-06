@@ -32,7 +32,11 @@
 
 import type { ContentItem, ContributionItem } from "../content/types.ts";
 import { patchContent } from "../stellaris/vanilla/patch.ts";
-import type { ParsedBuilding, ParsedTechnology } from "../stellaris/vanilla/view.ts";
+import type {
+  ParsedBuilding,
+  ParsedMegastructure,
+  ParsedTechnology,
+} from "../stellaris/vanilla/view.ts";
 import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";
@@ -57,7 +61,13 @@ import type { EdictDef } from "./edict.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
 import type { JobDef } from "./job.ts";
-import type { MegastructureDef } from "./megastructure.ts";
+import {
+  MEGASTRUCTURE_FIELDS,
+  MEGASTRUCTURE_LOCALISATION,
+  type MegastructureDef,
+  type MegastructurePatch,
+  type MegastructurePatchItem,
+} from "./megastructure.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import { refId, type TypedRef } from "./refs.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
@@ -659,7 +669,8 @@ export function defineSolarSystemInitializer<const Id extends string>(
 }
 
 /** What a megastructure feature can contain. */
-export type MegastructureItem = ContentItem<"megastructure", MegastructureDef>;
+export type MegastructureItem =
+  ContentItem<"megastructure", MegastructureDef> | MegastructurePatchItem;
 
 /**
  * Internal lowering primitive for a megastructure. Public authors call
@@ -670,4 +681,32 @@ export function defineMegastructure<const Id extends string>(
   def: MegastructureDef<Id>
 ): ContentItem<"megastructure", MegastructureDef<Id>> {
   return { itemKind: "content", type: "megastructure", id: def.id, def };
+}
+
+/**
+ * Internal lowering primitive for patching a vanilla megastructure. The transform
+ * runs here (pure); public authors call the capability method, while the duplicate-key
+ * and one-view checks stay in
+ * the internal fold, which sees every patch together, and the emitted filename
+ * is always resolver-computed — a patch item never carries a file of its own.
+ * `prefix` is the mod prefix the capability closure binds: a patch that mints a
+ * localisation key of its own derives it from `<prefix>_<vanilla id>`, so the key
+ * cannot collide with vanilla's by construction.
+ */
+export function patchMegastructure<Source extends ParsedMegastructure>(
+  megastructure: Source,
+  patch: (megastructure: Source) => MegastructurePatch,
+  prefix: string
+): MegastructurePatchItem {
+  return {
+    itemKind: "patch",
+    patched: patchContent(
+      megastructure,
+      patch,
+      "megastructure",
+      MEGASTRUCTURE_FIELDS,
+      MEGASTRUCTURE_LOCALISATION,
+      prefix
+    ),
+  };
 }

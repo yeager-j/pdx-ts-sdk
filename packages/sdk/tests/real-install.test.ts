@@ -70,10 +70,23 @@ describe.skipIf(installPath === undefined)("real install (non-gating)", () => {
     expect(buildings.length).toBeGreaterThan(50);
     expect(buildings.every((building) => building.registry === "building")).toBe(true);
 
+    // And the third. `common/megastructures` is pinned flat the same way
+    // `common/buildings` is, so reaching this line proves both halves of that
+    // row: no unknown subdirectory appeared, and every shipped megastructure
+    // built a surface with every `@variable` it mentions resolved.
+    const megaFiles = vanilla.files.filter((file) =>
+      file.path.startsWith("common/megastructures/")
+    );
+    expect(megaFiles.length).toBeGreaterThan(20);
+    const megastructures = vanilla.definitions("megastructure");
+    expect(megastructures.length).toBeGreaterThan(100);
+    expect(megastructures.every((mega) => mega.registry === "megastructure")).toBe(true);
+
     // The escape-hatch clause: an install layer too slow to run every build.
     console.info(
       `load(): ${technologies.length} technologies from ${techFiles.length} files, ` +
         `${buildings.length} buildings from ${buildingFiles.length} files, ` +
+        `${megastructures.length} megastructures from ${megaFiles.length} files, ` +
         `in ${Math.round(elapsed)}ms (build ${vanilla.gameVersion ?? "unknown"})`
     );
   });

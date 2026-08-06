@@ -13,6 +13,8 @@ import type {
   WithFrom,
 } from "../content/types.ts";
 import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
+import type { ContentPatchItem, PatchedContent, PatchInput } from "../stellaris/vanilla/patch.ts";
+import type { ParsedMegastructure } from "../stellaris/vanilla/view.ts";
 import type { MegaBuildType, MegastructureBlockType } from "./enums.ts";
 import type {
   BypassRef,
@@ -159,6 +161,149 @@ export type DefinedMegastructure<Id extends string = string> = DefinedContent<
   "megastructure",
   MegastructureDef<Id>
 >;
+
+/**
+ * What a patch of a vanilla megastructure may change.
+ * Closed, so a typo is a compile error, and `id`-less: a patched definition
+ * keeps vanilla's identity, because the override has to target the vanilla
+ * key to win.
+ */
+export interface MegastructurePatch {
+  /**
+   * Replacement English text for vanilla's own `<vanilla id>` key.
+   * Emitted to `localisation/replace/`, the layer the game resolves ahead
+   * of the ordinary one — a rename, not a new key.
+   */
+  readonly name?: string;
+  /**
+   * Replacement English text for vanilla's own `<vanilla id>_DESC` key.
+   * Emitted to `localisation/replace/`, the layer the game resolves ahead
+   * of the ordinary one — a rename, not a new key.
+   */
+  readonly desc?: string;
+  /**
+   * Replacement English text for vanilla's own `<vanilla id>_MEGASTRUCTURE_DETAILS` key.
+   * Emitted to `localisation/replace/`, the layer the game resolves ahead
+   * of the ordinary one — a rename, not a new key.
+   */
+  readonly details?: string;
+  /**
+   * Replacement English text for vanilla's own `<vanilla id>_CONSTRUCTION_INFO_DELAYED` key.
+   * Emitted to `localisation/replace/`, the layer the game resolves ahead
+   * of the ordinary one — a rename, not a new key.
+   */
+  readonly delayedInfo?: string;
+  readonly entity?: PatchInput<ModelEntityRef | string>;
+  readonly constructionEntity?: PatchInput<string>;
+  readonly rotateToCenter?: PatchInput<boolean>;
+  readonly scaleOffset?: PatchInput<boolean>;
+  readonly isGrandArchive?: PatchInput<boolean>;
+  /** to avoid z-fighting of construction entity with the base entity */
+  readonly constructionScale?: PatchInput<number>;
+  readonly portrait?: PatchInput<SpriteRef | string>;
+  /**
+   * If specified, fleets that can potentially build the megastructure will have a separate order button with this icon.
+   * The icon should also have a version with the "_selected" suffix.
+   * Only shown for ships that can build megastructures via construction_capabilities, not scripted actions.
+   * Not currently supported for megastructures with must_select_ship_design = yes.
+   */
+  readonly orderIcon?: PatchInput<SpriteRef | string>;
+  readonly isShroudSeal?: PatchInput<boolean>;
+  /** default: yes */
+  readonly placeEntityOnPlanetPlane?: PatchInput<boolean>;
+  readonly entityOffset?: PatchInput<MegastructureEntityOffset>;
+  readonly planeOffset?: PatchInput<number>;
+  readonly constructionBlocksOthers?: PatchInput<boolean>;
+  /** deprecated, replaced with `build_type = inside_gravity_well/outside_gravity_well/around_planet' */
+  readonly buildOutsideGravityWell?: PatchInput<boolean>;
+  /** inside_gravity_well/outside_gravity_well/around_planet default = around_planet, decided how and where the MS is built */
+  readonly buildType?: PatchInput<MegaBuildType>;
+  /** default: yes */
+  readonly showGalacticMapIcon?: PatchInput<boolean>;
+  /** default: no */
+  readonly hideName?: PatchInput<boolean>;
+  /** default = no, means the mega structure should offer a choice of design when becoming a starbase (only applies to megastructure that become starbases ) */
+  readonly mustSelectShipDesign?: PatchInput<boolean>;
+  /** default: yes */
+  readonly showInOutliner?: PatchInput<boolean>;
+  readonly bypassType?: PatchInput<BypassRef | string>;
+  /** also possible to use here upgrade_desc = hide, and localisations are not required in that case */
+  readonly upgradeDesc?: PatchInput<string | "hide">;
+  readonly upgradeFrom?: PatchInput<(MegastructureRef | string)[]>;
+  readonly customTooltipRequirements?: PatchInput<string>;
+  readonly buildSystemTooltip?: PatchInput<SystemTooltipRef | string>;
+  readonly tooltipSystemScore?: PatchInput<WeightBlock<"system">>;
+  readonly tooltipSystemScoreLowThreshold?: PatchInput<number>;
+  readonly tooltipSystemScoreHighThreshold?: PatchInput<number>;
+  readonly tooltipShowStarResources?: PatchInput<boolean>;
+  readonly tooltipBestSystemsHeader?: PatchInput<string>;
+  readonly tooltipSystemFilter?: PatchInput<WithFrom<Trigger<"system">, "system", "country">>;
+  readonly prerequisites?: PatchInput<(TechnologyRef | string)[]>;
+  /** Only when megastructure subtype `has_prereqs` applies. */
+  readonly showPrereqs?: PatchInput<boolean>;
+  /** Only when megastructure subtype `has_prereqs` applies. */
+  readonly prereqName?: PatchInput<string>;
+  readonly potential?: PatchInput<Trigger<"country">>;
+  readonly possible?: PatchInput<WithFrom<Trigger<"system">, "system", "country">>;
+  readonly contextMenuPotential?: PatchInput<WithFrom<Trigger<"system">, "system", "country">>;
+  /** Use for megastructures that have their own dedicated context_menu_potential shortcut and order_icon, so the general picker is redundant. */
+  readonly buildMenuPotential?: PatchInput<WithFrom<Trigger<"fleet">, "fleet", "country">>;
+  readonly buildTime?: PatchInput<number>;
+  readonly starbase?: PatchInput<StarbaseLevelRef | string>;
+  /** an extra trigger to allow scripted reasons to hide the megastructure. if defined both show_in_outliner and this trigger need to be true for the megastructure to show in the outliner. scope: megastructure */
+  readonly outlinerTrigger?: PatchInput<Trigger<"megastructure">>;
+  readonly resources?: PatchInput<EconomicResourceBlock<ScopeName>[]>;
+  readonly overlordCanUpgrade?: PatchInput<boolean>;
+  /** default = no; decides if the megastructure will mine the underlying resources if its on top of a planet/star */
+  readonly usePlanetResource?: PatchInput<boolean>;
+  readonly scalesWithPlanet?: PatchInput<boolean>;
+  readonly isRuinedOrbitalRing?: PatchInput<boolean>;
+  /** accepts country modifiers */
+  readonly countryModifier?: PatchInput<ModifierClosure<"country">>;
+  readonly triggeredCountryModifier?: PatchInput<TriggeredModifier<"country">[]>;
+  readonly shipModifier?: PatchInput<ModifierClosure<"ship">>;
+  readonly stationModifier?: PatchInput<ModifierClosure<"megastructure">>;
+  readonly onBuildQueued?: PatchInput<EffectBlock<"system", "country">>;
+  readonly onBuildUnqueued?: PatchInput<EffectBlock<"system", "country">>;
+  readonly onBuildStart?: PatchInput<EffectBlock<"system", "country">>;
+  readonly onBuildCancel?: PatchInput<EffectBlock<"system", "country">>;
+  readonly onBuildComplete?: PatchInput<EffectBlock<"system", "country">>;
+  readonly aiWeight?: PatchInput<WithFrom<WeightBlock<"system">, "system", "country">>;
+  readonly overclockTypes?: PatchInput<(MegastructureOverclockTypeRef | string)[]>;
+  readonly cycleLengthInDays?: PatchInput<ScriptValue>;
+  readonly cycleTitle?: PatchInput<string>;
+  readonly cycleDesc?: PatchInput<string>;
+  readonly cycleIcon?: PatchInput<SpriteRef | string>;
+  readonly onCycleComplete?: PatchInput<EffectBlock<"system", "country">>;
+  readonly sensorRange?: PatchInput<number>;
+  readonly hyperlaneRange?: PatchInput<number>;
+  /** the type of constructions that block (and are in turn blocked by) this construction, default: multi_stage_type */
+  readonly constructionBlocksAndBlockedBy?: PatchInput<MegastructureBlockType>;
+  readonly buildMegastructureNoCostLocalizationKey?: PatchInput<string>;
+  readonly victoryScore?: PatchInput<number>;
+  readonly dismantleCost?: PatchInput<EconomicResourceBlock<ScopeName>>;
+  readonly dismantleTime?: PatchInput<number>;
+  readonly dismantlePotential?: PatchInput<
+    WithFrom<Trigger<"megastructure">, "megastructure", "country">
+  >;
+  readonly canBeDismantledByNonOwner?: PatchInput<boolean>;
+  readonly dismantlePossible?: PatchInput<
+    WithFrom<Trigger<"megastructure">, "megastructure", "country">
+  >;
+  readonly onDismantleStart?: PatchInput<EffectBlock<"system", "country">>;
+  readonly onDismantleCancel?: PatchInput<EffectBlock<"system", "country">>;
+  readonly onDismantleComplete?: PatchInput<EffectBlock<"system", "country">>;
+  readonly shouldAiDismantle?: PatchInput<
+    WithFrom<Trigger<"megastructure">, "megastructure", "country">
+  >;
+  readonly scriptedAction?: PatchInput<(ScriptedActionRef | string)[]>;
+}
+
+/** A patched vanilla megastructure, ready for the win engine. */
+export type PatchedMegastructure = PatchedContent<ParsedMegastructure>;
+
+/** A patched vanilla megastructure placed into a capability feature. */
+export type MegastructurePatchItem = ContentPatchItem<ParsedMegastructure>;
 
 export const MEGASTRUCTURE_FIELDS: readonly ContentField[] = [
   { key: "entity", member: "entity", shape: "value", form: "scalar", conversion: "ref" },
