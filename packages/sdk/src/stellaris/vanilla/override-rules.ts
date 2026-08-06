@@ -22,6 +22,7 @@
  */
 
 import { UnverifiedRegistryError } from "../../errors.ts";
+import { CONTENT_REGISTRIES, type ContentTypeName } from "../../generated/content-registry.ts";
 
 /** The build every verdict below was captured against (Pegasus). */
 export const SUPPORTED_STELLARIS_BUILD = "4.4.6";
@@ -45,15 +46,56 @@ export type RuleCell<T> =
     }
   | { readonly state: "refused"; readonly reason: string; readonly settledBy: string };
 
-export interface RegistryRow {
-  readonly registry: string;
-  /** The logical directory the registry's files live under. */
-  readonly dir: string;
+/** The cells and build pin every row carries, however its directory is settled. */
+interface RegistryRowBase {
   /** What happens on a repeat registration of one key. */
   readonly repeat: RuleCell<RepeatRule>;
   /** What the winning definition contributes: whole-object, no inheritance. */
   readonly replacement: RuleCell<"whole-object">;
   readonly verifiedAgainst: typeof SUPPORTED_STELLARIS_BUILD;
+}
+
+/**
+ * A row for a registry the content manifest already describes. It is spelled
+ * the way the manifest and the generated descriptors spell it — one name per
+ * registry across the SDK — and it stores no directory: `outputDir` on the
+ * descriptor is the derived answer, and `dir?: never` makes a second,
+ * hand-written one unrepresentable rather than merely discouraged.
+ */
+export interface ManifestRegistryRow extends RegistryRowBase {
+  readonly registry: ContentTypeName;
+  readonly dir?: never;
+}
+
+/**
+ * The registries with no generated descriptor to derive a directory from —
+ * script and localization surfaces the content manifest does not model, plus
+ * `ship-components`, which is deliberately standalone: it stands for three
+ * `component_template` descriptors at once, so no single `outputDir` is its
+ * answer, and its repeat cell is refused anyway.
+ */
+export type StandaloneRegistry =
+  | "scripted-triggers"
+  | "scripted-effects"
+  | "events"
+  | "scripted-constants"
+  | "megastructures"
+  | "ship-components"
+  | "localization";
+
+export interface StandaloneRegistryRow extends RegistryRowBase {
+  readonly registry: StandaloneRegistry;
+  /** The logical directory the registry's files live under. */
+  readonly dir: string;
+}
+
+export type RegistryRow = ManifestRegistryRow | StandaloneRegistryRow;
+
+/** A row with its directory settled — derived for manifest rows, stored otherwise. */
+export interface ResolvedRegistryRow extends RegistryRowBase {
+  readonly registry: string;
+  /** The logical directory the registry's files live under. */
+  readonly dir: string;
 }
 
 export const REGISTRY_RULES: readonly RegistryRow[] = [
@@ -66,8 +108,7 @@ export const REGISTRY_RULES: readonly RegistryRow[] = [
    * inheritance.
    */
   {
-    registry: "technologies",
-    dir: "common/technology",
+    registry: "technology",
     repeat: { state: "verified", rule: "last-wins", runs: ["r0", "r1", "r4", "r10"] },
     replacement: { state: "verified", rule: "whole-object", runs: ["r1", "r10"] },
     verifiedAgainst: SUPPORTED_STELLARIS_BUILD,
@@ -78,8 +119,7 @@ export const REGISTRY_RULES: readonly RegistryRow[] = [
    * key omitting it, which is only possible under whole-object replacement.
    */
   {
-    registry: "buildings",
-    dir: "common/buildings",
+    registry: "building",
     repeat: { state: "verified", rule: "last-wins", runs: ["r8"] },
     replacement: { state: "verified", rule: "whole-object", runs: ["r8"] },
     verifiedAgainst: SUPPORTED_STELLARIS_BUILD,
@@ -201,8 +241,12 @@ export const REGISTRY_RULES: readonly RegistryRow[] = [
   },
 ];
 
-/** Looks up a row; an unknown registry is a caller bug, named loudly. */
-export function registryRule(registry: string): RegistryRow {
+/**
+ * Looks up a row and settles its directory; an unknown registry is a caller
+ * bug, named loudly. A manifest row's dir comes from the generated descriptor
+ * rather than from the table, so the two can never drift apart.
+ */
+export function registryRule(registry: string): ResolvedRegistryRow {
   const row = REGISTRY_RULES.find((candidate) => candidate.registry === registry);
   if (row === undefined) {
     const known = REGISTRY_RULES.map((candidate) => candidate.registry).join(", ");
@@ -210,7 +254,21 @@ export function registryRule(registry: string): RegistryRow {
       `Unknown registry \`${registry}\`; the rule table covers: ${known}`
     );
   }
-  return row;
+  return { ...row, dir: registryDir(row) };
+}
+
+function registryDir(row: RegistryRow): string {
+  if (row.dir !== undefined) {
+    return row.dir;
+  }
+  const descriptor = CONTENT_REGISTRIES.find((candidate) => candidate.type === row.registry);
+  if (descriptor === undefined) {
+    throw new Error(
+      `rule table row \`${row.registry}\` is manifest-backed but no generated content registry ` +
+        `descriptor has that type; the row names a registry the manifest does not define`
+    );
+  }
+  return descriptor.outputDir;
 }
 
 /**
@@ -219,7 +277,7 @@ export function registryRule(registry: string): RegistryRow {
  * the reason, what would settle it, and the build pin.
  */
 export function unverifiedCellError(
-  row: RegistryRow,
+  row: ResolvedRegistryRow,
   cell: "repeat" | "replacement"
 ): UnverifiedRegistryError {
   const refused = row[cell];

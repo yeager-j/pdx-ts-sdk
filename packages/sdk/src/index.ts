@@ -272,7 +272,11 @@ export { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "./o
 export {
   REGISTRY_RULES,
   SUPPORTED_STELLARIS_BUILD,
+  type ManifestRegistryRow,
   type RegistryRow,
+  type ResolvedRegistryRow,
+  type StandaloneRegistry,
+  type StandaloneRegistryRow,
 } from "./stellaris/vanilla/override-rules.ts";
 export type { PatchPlan, WinAssertion } from "./stellaris/vanilla/override-plan.ts";
 export {

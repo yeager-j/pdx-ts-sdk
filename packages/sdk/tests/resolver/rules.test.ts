@@ -9,6 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import { UnverifiedRegistryError } from "../../src/errors.ts";
+import { CONTENT_REGISTRIES } from "../../src/generated/content-registry.ts";
 import {
   REGISTRY_RULES,
   registryRule,
@@ -19,8 +20,8 @@ import {
 describe("the rule table", () => {
   it("covers exactly the registries the handoff names", () => {
     expect(REGISTRY_RULES.map((row) => row.registry)).toEqual([
-      "technologies",
-      "buildings",
+      "technology",
+      "building",
       "scripted-triggers",
       "scripted-effects",
       "events",
@@ -51,8 +52,8 @@ describe("the rule table", () => {
     }
   });
 
-  it("technologies are fully verified last-wins whole-object", () => {
-    const row = registryRule("technologies");
+  it("technology is fully verified last-wins whole-object", () => {
+    const row = registryRule("technology");
     expect(row.repeat).toEqual({
       state: "verified",
       rule: "last-wins",
@@ -77,7 +78,26 @@ describe("the rule table", () => {
 
   it("an unknown registry names the known ones", () => {
     expect(() => registryRule("starbases")).toThrow(UnverifiedRegistryError);
-    expect(() => registryRule("starbases")).toThrow(/technologies, buildings/);
+    expect(() => registryRule("starbases")).toThrow(/technology, building/);
+  });
+
+  it("derives a manifest-backed row's dir from the generated descriptor", () => {
+    for (const registry of ["technology", "building"] as const) {
+      const descriptor = CONTENT_REGISTRIES.find((candidate) => candidate.type === registry);
+      expect(descriptor).toBeDefined();
+      expect(registryRule(registry).dir).toBe(descriptor!.outputDir);
+    }
+    // The derivation is the claim; these pin what it currently resolves to.
+    expect(registryRule("technology").dir).toBe("common/technology");
+    expect(registryRule("building").dir).toBe("common/buildings");
+  });
+
+  it("stores no dir on a manifest-backed row", () => {
+    for (const registry of ["technology", "building"]) {
+      const row = REGISTRY_RULES.find((candidate) => candidate.registry === registry);
+      expect(row).toBeDefined();
+      expect(Object.hasOwn(row!, "dir")).toBe(false);
+    }
   });
 });
 
@@ -91,7 +111,7 @@ describe("refusal messages", () => {
   });
 
   it("refuses to build a refusal from a cell that is not refused", () => {
-    expect(() => unverifiedCellError(registryRule("technologies"), "repeat")).toThrow(
+    expect(() => unverifiedCellError(registryRule("technology"), "repeat")).toThrow(
       /verified cell/
     );
   });
