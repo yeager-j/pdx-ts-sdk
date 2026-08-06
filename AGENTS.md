@@ -122,90 +122,23 @@ not the package itself, and never reads an install.
   Stellaris install to regenerate against, so this check cannot run there and is never made to pass
   vacuously in its absence.
 
-## Adding a new registry
+## Adding a registry, adding a patch registry
 
-The content system is deliberately generic. Adding a registry such as `ascension_perk` should
-generate `AscensionPerkDef`, `DefinedAscensionPerk`, the capability's `mod.ascensionPerk` method,
-and its `AscensionPerkItem` union without a new emitter, writer class, or type-name conditional.
+Both are recipes rather than ground rules, so they live as skills and load only
+when the task fires them:
 
-Every field the emitter can lower is emitted automatically — there is no curated field allowlist to
-maintain. A field being mechanically typeable is still not proof the SDK lowers it _correctly_, but
-that risk is caught by evidence (the corpus conformance gate below and the tests you add), not by
-pre-review of a list.
+- `add-registry` (`.claude/skills/add-registry/`) — a new content registry:
+  `mod.<type>`, its `Def`/`Item` types, the overlay rows, and the four kinds of
+  evidence, from one manifest row.
+- `add-patch-registry` (`.claude/skills/add-patch-registry/`) — whole-object
+  patching for a registry: the oracle-backed rule row, the parse row, and the
+  `CONTENT_PATCH_REGISTRIES` overlay row that generates the whole `patchX`
+  surface.
 
-1. Find the CWT `type[...]` declaration and its source file under
-   `vendor/cwtools-stellaris-config/config/`. Confirm the declared `path` is the Stellaris output
-   directory you expect. If the rules mark the type `name_field = "..."`, the entries are keyed by a
-   repeated top-level keyword rather than by id; work out that keyword (checking any
-   `type_key_filter` the rules declare) — you will need it in the next step.
-2. Add the type and source file to the explicit allowlist in
-   `packages/codegen-cwt/src/content-manifest.ts`,
-   with a `keyword` for `name_field` registries. The capability method's name follows from the type
-   name, so the entry carries no plural or placement metadata: nothing about the registry has to be spelled
-   twice.
-3. Run `npm run codegen` and read its report. Add overlay rows only where the emitted shape is
-   actually wrong or the rules need help:
-   - `REQUIRED_LOCALISATION` for localization the authoring API should require
-   - `FIELD_WIDENINGS` for intentional ergonomic input forms
-   - `CONTENT_FIELD_OVERRIDES` when the field shape cannot be inferred correctly. A field the rules
-     declare twice, once as a scalar and once as a block, needs no row: it lowers to a `dual` of
-     both arms on its own. Requesting a `shape` there suppresses that, so only pin an arm when you
-     mean to make the other unauthorable.
-   - nested-definition metadata only when the CWT field is genuinely a nested content definition
-   - a `scope` or `arity` assertion on `CONTENT_FIELD_OVERRIDES` when CWT states game semantics
-     wrongly rather than incompletely, or a `CONTENT_SCOPE_PARAMETERS` row when CWT scopes a body
-     `any` and is _right_ — the scope is then a property of each definition, declared by a `scope`
-     member the definer strips. All three need evidence, and shape conformance is where that
-     evidence comes from — never assert one from a reading of the rules alone.
-   - `CONTENT_DECLINED_FIELDS`, the only way to keep a field the emitter _can_ lower out of the
-     authoring surface. It should stay nearly empty: a field whose lowered shape is wrong is better
-     measured and fixed than withheld. Its one entry so far (`change_orbit`, SDK-30) is not that
-     case — the field is positional sugar the SDK has no way to preserve the position of once
-     multiple repeated occurrences collapse into one array-shaped member, and a mod author loses
-     nothing by declining it: the long form (`class: "none", orbitDistance: n` on the next
-     `planet`/`moon` block) already types and emits the identical geometry, correctly positioned.
-     A future row needs that same property — a genuine second spelling of a capability the SDK
-     already emits correctly, not a shape the emitter merely lowers badly — to clear the bar.
-4. Re-run codegen and inspect its report and generated files. Fix the generic model when a shape is
-   reusable. Do not add `if (type === "...")` branches to the generic writer or emitter.
-5. Export the new generated public types from `packages/sdk/src/index.ts`.
-6. Add all four kinds of evidence, all of them written through the capability:
-   - codegen coverage in `packages/sdk/tests/codegen/content-snapshot.test.ts`
-   - corpus coverage in `packages/sdk/tests/codegen/corpus-conformance.test.ts` — hermetic: it
-     measures the emitted interface against the committed corpus fixture under
-     `packages/sdk/tests/fixtures/corpus/` (derived observations of every shipped definition —
-     field names, forms, counts — extracted from the real installed game), both for presence and
-     for shape, so it runs in plain `npm test` and CI. Adding a registry means regenerating the
-     fixture: run `npm run corpus:extract` (install-gated, like `codegen:vanilla`), read its
-     report, and review and commit the fixture diff with the change. A registry recording zero
-     definitions means the path or keyword is wrong. A field the game writes at the presence floor
-     or above that no author can produce fails — fix the lowering, or acknowledge it with a reason
-     and issue (labeled "Corpus Gap" in Linear, so the gap backlog is queryable) in
-     `packages/sdk/tests/codegen/corpus-gaps.ts`, which is measurement for review,
-     not acceptance. A new `form` or `scope` mismatch fails the same way: fix the lowering rather
-     than acknowledging it. A field the emitter invents with zero real precedent is worth verifying
-     by hand against the vendored rules. `npm run corpus:check` re-extracts and diffs against the
-     committed fixture — maintainer-local and install-gated, mirroring `codegen:vanilla:check` —
-     and the test's version canary warns, never fails, when a local install has patched past the
-     fixture.
-   - compile-time API and scope/reference safety in `packages/sdk/tests/content.test-d.ts`: the
-     capability preserves the literal id, the returned item flows into its own registry's reference
-     fields, and another registry's item does not.
-   - runtime serialization coverage and file snapshots in `packages/sdk/tests/content.test.ts` and
-     `packages/sdk/tests/__snapshots__/content/`, built with
-     `render(mod.compile([mod.feature(undefined, [mod.ascensionPerk("example", { ... })])]))`
-7. Add or update a README example when the new registry introduces an authoring pattern users
-   would not infer from existing registries.
-
-Use the generated naming rather than adding hand-written aliases: a snake-case type such as
-`ascension_perk` becomes `AscensionPerk`, `mod.ascensionPerk`, `AscensionPerkItem`, and
-`packages/sdk/src/generated/ascension-perk.ts`.
-
-Capability content methods and `patchX` have different evidence requirements. A prefixed new definition cannot
-collide with vanilla ids, but a vanilla patch is a whole-object override whose load order and
-emission must be verified per registry. `patchX` is an overlay row
-(`CONTENT_PATCH_REGISTRIES`), not a consequence of `mod.ascensionPerk` existing — do not add
-`mod.patchAscensionPerk` merely because `mod.ascensionPerk` exists.
+`patchX` is not a consequence of `mod.x` existing: a patch is a whole-object
+override whose load order and emission are verified per registry, and the
+overlay row is the permission. Do not add `mod.patchAscensionPerk` merely
+because `mod.ascensionPerk` exists.
 
 ## PDXScript parser
 
