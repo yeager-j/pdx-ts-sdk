@@ -623,6 +623,19 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
         "`ship` the case that has to be declared.",
     },
   ],
+  [
+    "special_project",
+    {
+      scopes: ["country", "planet", "ship", "carrier"],
+      fallback: "country",
+      reason:
+        "special_projects.cwt leaves the event-dependent clauses unpinned: a project may run " +
+        "against country, planet, ship, or carrier event scope. The corpus records all four " +
+        "across on_success/on_progress/on_start, while its AI and cost weights are country " +
+        "conditions. `scope` declares which context this definition's unpinned clauses use; " +
+        "country is the ordinary fallback.",
+    },
+  ],
 ]);
 
 export type ContentFieldShape =
@@ -815,6 +828,17 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "own clause — SDK-56's initial evidence sweep missed for_species (it credited the row to " +
         "job.triggered_planet_pop_group_modifier_for_species, a different registry with the same " +
         "field name), caught in review and folded in rather than left for another follow-up.",
+    },
+  ],
+  [
+    "event_chain.counter",
+    {
+      shape: "structMap",
+      reason:
+        "Each counter name is an engine-visible key inside one event chain, with an optional " +
+        "localisation.max block beneath it. CWT expresses that as an enum-keyed block, which is " +
+        "the same engine-keyed map shape structMap already lowers for section_slots: counter " +
+        "names are not content ids, take no mod prefix, and have no meaningful order.",
     },
   ],
   [

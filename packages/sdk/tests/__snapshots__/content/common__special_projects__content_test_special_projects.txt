@@ -1,0 +1,33 @@
+special_project = {
+	key = content_test_special_project_crystal_recovery
+	event_chain = content_test_event_chain_crystal_signal
+	cost = {
+		base = 100
+		modifier = {
+			factor = 2
+			always = yes
+		}
+	}
+	event_scope = ship_event
+	same_option_group_as = { content_test_special_project_crystal_survey }
+}
+
+special_project = {
+	key = content_test_special_project_crystal_survey
+	event_chain = content_test_event_chain_crystal_signal
+	cost = 250
+	tech_department = physics_technology
+	event_scope = planet_event
+	requirements = {
+		has_technology = tech_lasers_2
+		research_station = yes
+	}
+	triggered_requirement = {
+		text = content_test_crystal_survey_requirement
+		count = 1
+		trigger = {
+			always = yes
+		}
+	}
+	on_start = {}
+}

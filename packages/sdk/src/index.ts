@@ -85,6 +85,11 @@ export type {
 } from "./generated/decision.ts";
 export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";
 export type {
+  DefinedEventChain,
+  EventChainDef,
+  EventChainFields,
+} from "./generated/event-chain.ts";
+export type {
   DefinedEconomicCategory,
   EconomicCategoryDef,
   EconomicCategoryFields,
@@ -153,6 +158,14 @@ export type {
   SolarSystemInitializerDef,
   SolarSystemInitializerFields,
 } from "./generated/solar-system-initializer.ts";
+export type {
+  DefinedSpecialProject,
+  SpecialProjectDef,
+  SpecialProjectFields,
+  SpecialProjectRequirements,
+  SpecialProjectScope,
+  SpecialProjectTriggeredRequirement,
+} from "./generated/special-project.ts";
 export type {
   DefinedSpeciesClass,
   SpeciesClassDef,

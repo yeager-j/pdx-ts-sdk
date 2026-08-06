@@ -28,6 +28,8 @@
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
+// From: common/event_chains.cwt
+// From: common/special_projects.cwt
 // From: common/megastructures.cwt
 // From: content-manifest.ts
 
@@ -65,6 +67,7 @@ import {
   defineDecision,
   defineEconomicCategory,
   defineEdict,
+  defineEventChain,
   defineGlobalShipDesign,
   defineGraphicalCulture,
   defineJob,
@@ -75,6 +78,7 @@ import {
   defineSectionTemplate,
   defineShipSize,
   defineSolarSystemInitializer,
+  defineSpecialProject,
   defineSpeciesClass,
   defineStarbaseLevel,
   defineStaticModifier,
@@ -94,6 +98,7 @@ import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts"
 import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
+import type { EventChainDef } from "./event-chain.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
 import type { JobDef } from "./job.ts";
@@ -110,6 +115,7 @@ import type { SectionTemplateDef } from "./section-template.ts";
 import type { ShipSizeDef } from "./ship-size.ts";
 import type { SituationTypeDef } from "./situation-type.ts";
 import type { SolarSystemInitializerDef } from "./solar-system-initializer.ts";
+import type { SpecialProjectDef, SpecialProjectScope } from "./special-project.ts";
 import type { SpeciesClassDef } from "./species-class.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
 import type { StaticModifierDef } from "./static-modifier.ts";
@@ -323,6 +329,16 @@ export interface IdProfile {
    */
   readonly solarSystemInitializer: string;
   /**
+   * The segment inserted between the mod prefix and an event chain's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly eventChain: string;
+  /**
+   * The segment inserted between the mod prefix and a special project's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly specialProject: string;
+  /**
    * The segment inserted between the mod prefix and a megastructure's logical name.
    * Override it when this registry needs a different id convention.
    */
@@ -366,6 +382,8 @@ export const DEFAULT_ID_PROFILE = Object.freeze({
   speciesClass: "species_class",
   countryShipOfSizeLimit: "country_ship_of_size_limit",
   solarSystemInitializer: "solar_system_initializer",
+  eventChain: "event_chain",
+  specialProject: "special_project",
   megastructure: "megastructure",
 }) satisfies IdProfile;
 
@@ -812,6 +830,27 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>
   >;
   /**
+   * Defines an event chain from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  eventChain<const Name extends string>(
+    name: Name,
+    def: Omit<EventChainDef<MintedContentId<P, I, "eventChain", Name>>, "id">
+  ): ContentItem<"event_chain", EventChainDef<MintedContentId<P, I, "eventChain", Name>>>;
+  /**
+   * Defines a special project from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  specialProject<const Name extends string, S extends SpecialProjectScope = "country">(
+    name: Name,
+    def: Omit<SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>, S>, "id">
+  ): ContentItem<
+    "special_project",
+    SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>, never>
+  >;
+  /**
    * Defines a megastructure from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -1146,6 +1185,21 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         ...def,
         id: mint("solarSystemInitializer", name),
       } as SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>),
+    eventChain: <const Name extends string>(
+      name: Name,
+      def: Omit<EventChainDef<MintedContentId<P, I, "eventChain", Name>>, "id">
+    ) =>
+      defineEventChain({ ...def, id: mint("eventChain", name) } as EventChainDef<
+        MintedContentId<P, I, "eventChain", Name>
+      >),
+    specialProject: <const Name extends string, S extends SpecialProjectScope = "country">(
+      name: Name,
+      def: Omit<SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>, S>, "id">
+    ) =>
+      defineSpecialProject({ ...def, id: mint("specialProject", name) } as SpecialProjectDef<
+        MintedContentId<P, I, "specialProject", Name>,
+        S
+      >),
     megastructure: <const Name extends string>(
       name: Name,
       def: Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">

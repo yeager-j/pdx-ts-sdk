@@ -1001,6 +1001,24 @@ describe("content-type codegen", () => {
     expect(fieldNames(solarSystem?.emittedFields ?? [])).toContain("planet");
   });
 
+  it("generates event chains and special projects through the generic content model", () => {
+    const eventChain = emissions.get("event_chain");
+    expect(eventChain?.code).toContain("export interface EventChainDef");
+    expect(eventChain?.code).toContain("counter?: Readonly<Record<string, EventChainCounter>>;");
+    expect(eventChain?.code).toContain("export interface EventChainCounter");
+    expect(eventChain?.code).toContain("max?: number;");
+    expect(eventChain?.code).toContain('abortTrigger?: Trigger<"country">;');
+    expect(eventChain?.code).toContain('{ member: "title", pattern: "$_title", required: false }');
+    expect(eventChain?.unsupported).toEqual([]);
+
+    const specialProject = emissions.get("special_project");
+    expect(specialProject?.code).toContain("export interface SpecialProjectDef");
+    expect(specialProject?.code).toContain("eventChain?: EventChainRef | string;");
+    expect(specialProject?.code).toContain("eventScope: SpEventScope;");
+    expect(specialProject?.code).toContain("onSuccess?: EffectBlock<NoInfer<S>>;");
+    expect(specialProject?.code).toContain('shape: "dual"');
+  });
+
   it("lowers megastructure's economic and modifier splices, leaving only placement_rules", () => {
     const megastructure = emissions.get("megastructure");
     expect(megastructure?.code).toContain("export interface MegastructureDef");

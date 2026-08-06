@@ -28,6 +28,8 @@
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
+// From: common/event_chains.cwt
+// From: common/special_projects.cwt
 // From: common/megastructures.cwt
 
 import type { ContentItem, ContributionItem } from "../content/types.ts";
@@ -58,6 +60,7 @@ import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts"
 import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
+import type { EventChainDef } from "./event-chain.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
 import type { JobDef } from "./job.ts";
@@ -76,6 +79,7 @@ import type { SectionTemplateDef } from "./section-template.ts";
 import type { ShipSizeDef } from "./ship-size.ts";
 import type { SituationTypeDef } from "./situation-type.ts";
 import type { SolarSystemInitializerDef } from "./solar-system-initializer.ts";
+import type { SpecialProjectDef, SpecialProjectScope } from "./special-project.ts";
 import type { SpeciesClassDef } from "./species-class.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
 import type { StaticModifierDef } from "./static-modifier.ts";
@@ -666,6 +670,43 @@ export function defineSolarSystemInitializer<const Id extends string>(
   def: SolarSystemInitializerDef<Id>
 ): ContentItem<"solar_system_initializer", SolarSystemInitializerDef<Id>> {
   return { itemKind: "content", type: "solar_system_initializer", id: def.id, def };
+}
+
+/** What an event chain feature can contain. */
+export type EventChainItem = ContentItem<"event_chain", EventChainDef>;
+
+/**
+ * Internal lowering primitive for an event chain. Public authors call
+ * `mod.eventChain(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineEventChain<const Id extends string>(
+  def: EventChainDef<Id>
+): ContentItem<"event_chain", EventChainDef<Id>> {
+  return { itemKind: "content", type: "event_chain", id: def.id, def };
+}
+
+/** What a special project feature can contain. */
+export type SpecialProjectItem = ContentItem<"special_project", SpecialProjectDef<string, never>>;
+
+/**
+ * Internal lowering primitive for a special project. Public authors call
+ * `mod.specialProject(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ * `scope` names which scope this definition's clauses run in and emits
+ * nothing; it defaults to `country`.
+ */
+export function defineSpecialProject<
+  const Id extends string,
+  S extends SpecialProjectScope = "country",
+>(def: SpecialProjectDef<Id, S>): ContentItem<"special_project", SpecialProjectDef<Id, never>> {
+  const { scope, ...rest } = def;
+  return {
+    itemKind: "content",
+    type: "special_project",
+    id: def.id,
+    def: rest as SpecialProjectDef<Id, never>,
+  };
 }
 
 /** What a megastructure feature can contain. */

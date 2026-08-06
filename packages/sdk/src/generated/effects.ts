@@ -15,6 +15,7 @@ import type {
   AggroRangeMeasureFrom,
   AgreementSubjectExpand,
   AgreementWar,
+  EventChainCounter,
   FederationSuccessionTerm,
   FederationSuccessionType,
   FleetStance,
@@ -2516,7 +2517,7 @@ export interface EffectsInCountry {
    */
   addEventChainCounter(args: {
     eventChain: EventChainRef | string;
-    counter: string;
+    counter: EventChainCounter;
     amount: ScriptValue;
   }): void;
 
@@ -5096,7 +5097,10 @@ export interface EffectsInCountry {
    * reset_event_chain_counter = { event_chain = <key> counter = <key> }
    * ```
    */
-  resetEventChainCounter(args: { eventChain: EventChainRef | string; counter: string }): void;
+  resetEventChainCounter(args: {
+    eventChain: EventChainRef | string;
+    counter: EventChainCounter;
+  }): void;
 
   /**
    * Resets the cooldown period of all policies for a country

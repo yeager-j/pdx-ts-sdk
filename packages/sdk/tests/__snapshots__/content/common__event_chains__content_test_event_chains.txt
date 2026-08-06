@@ -1,0 +1,11 @@
+content_test_event_chain_crystal_signal = {
+	icon = gfx/interface/icons/situation_log/situation_log_ancient_relics.dds
+	counter = {
+		crystals_analyzed = {
+			max = 3
+		}
+	}
+	abort_trigger = {
+		has_country_flag = content_test_machine_agenda_started
+	}
+}
