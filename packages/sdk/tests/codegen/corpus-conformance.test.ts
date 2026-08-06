@@ -394,6 +394,44 @@ describe("corpus conformance", () => {
     console.log("\nshape observations (reported, not failed):\n" + rows.join("\n"));
     expect(reports.length).toBeGreaterThan(0);
   });
+
+  /**
+   * The one thing the presence-floor gate structurally cannot see, pinned by
+   * hand so it is not invisible.
+   *
+   * A gap row is matched against a corpus *path*, and a path inside a block
+   * exists only where the emitter emits a `DescentNode`. `economicResources`
+   * is a hand-written block shape (`EconomicResourceBlock`, not a CWT field
+   * table), so it emits none and nothing under `resources.` is ever a path —
+   * a `building.resources.inline_script` row is reported stale by "keeps every
+   * acknowledged gap live" the moment it is added, which is prose wearing a
+   * gate's clothes. What the fixture *does* record for a non-descended block
+   * is the observed sub-key set, so that is what this pins.
+   */
+  it("pins the sub-keys shipped buildings write inside resources (SDK-62 residue)", () => {
+    const observation = byRegistry.get("building")?.corpus.occurrences.get("resources");
+    // EconomicResourceBlock's members, minus `logistics`, which no building
+    // writes. Every observed sub-key outside this set is unauthorable.
+    const expressible = new Set(["category", "cost", "produces", "upkeep", "logistics"]);
+    const inexpressible = [...(observation?.keys ?? [])].filter((key) => !expressible.has(key));
+    // Exactly one, and it is a known gap with an owner: `inline_script`, the
+    // same macro[inline_script] machinery SDK-17 tracks for the top-level
+    // building.inline_script row. A second entry here is a NEW hole and this
+    // fails naming it; an empty list means inline_script support landed and
+    // the overlay row's residue paragraph needs deleting.
+    expect(inexpressible).toEqual(["inline_script"]);
+    // 332 of 458 shipped buildings nest it (install-measured at 4.4.6). The
+    // fixture carries no per-sub-key count, so the shape census is the
+    // fixture-side proxy that moves when that population does: 7 of the 14
+    // distinct key-sets vanilla writes include inline_script, and exactly one
+    // of those is `category` + `inline_script` alone — building_order_keep,
+    // whose whole resources block is inexpressible rather than merely
+    // lossy.
+    const shapes = observation?.keysByDefinition ?? [];
+    const withInline = shapes.filter((keys) => keys.has("inline_script"));
+    expect([shapes.length, withInline.length]).toEqual([14, 7]);
+    expect(withInline.filter((keys) => keys.size === 2)).toHaveLength(1);
+  });
 });
 
 /**

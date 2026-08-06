@@ -1372,6 +1372,53 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("authors building.resources as a plain economic_template splice (SDK-62)", () => {
+    // buildings.cwt:242-246 is the byte-identical `category`-beside-splice
+    // declaration megastructure.resources, job.resources and
+    // decision.resources already lower. The splice is plain
+    // economic_template, not economic_template_no_produce, so this is
+    // EconomicResourceBlock and `produces` is a real member — and the scope
+    // is colony because building's body is (`## push_scope = colony`), read
+    // off the rules rather than asserted by an overlay row.
+    expectTypeOf<BuildingFields["resources"]>().toEqualTypeOf<
+      EconomicResourceBlock<"colony">[] | undefined
+    >();
+
+    contentMod.building("resources", {
+      name: "X",
+      resources: [
+        {
+          category: "planet_buildings",
+          cost: { amounts: { alloys: 300 } },
+          upkeep: { amounts: { energy: 5 }, when: isCapital() },
+          produces: { amounts: { physics_research: 10 } },
+        },
+      ],
+    });
+
+    contentMod.building("resources_wrong_shape", {
+      name: "X",
+      resources: [
+        {
+          // @ts-expect-error — the amounts map is required inside each arm;
+          // a bare resource-name map is not the block shape
+          cost: { alloys: 300 },
+        },
+      ],
+    });
+
+    contentMod.building("resources_wrong_scope", {
+      name: "X",
+      resources: [
+        {
+          // @ts-expect-error — building's body is colony-scoped, so a
+          // ship-scope condition is not a legal `when` here
+          cost: { amounts: { alloys: 300 }, when: hasShipFlag("x") },
+        },
+      ],
+    });
+  });
+
   it("pins starbase_level's upgrade/downgrade triggers to starbase scope", () => {
     contentMod.starbaseLevel("x", {
       shipSize: "ship_size_starbase_i",

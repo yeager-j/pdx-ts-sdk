@@ -327,6 +327,32 @@ describe("patching two registries in one mod", () => {
     ]);
   });
 
+  it("carries an unauthorable nested inline_script through a patch untouched (SDK-62)", () => {
+    // The counterpart to the SDK-62 residue the overlay row states: 332 of 458
+    // shipped buildings nest an `inline_script` inside `resources`, and
+    // `EconomicResourceBlock` has no member for it, so a definer cannot write
+    // that block. A patch does not have to — emission walks the parsed body
+    // and substitutes only the members the patch named, so a block nobody
+    // touched survives byte-for-byte, in its own slot. Passthrough is what
+    // covers the gap authoring cannot, and it is only worth anything if the
+    // unmodelled interior survives too, not just the key.
+    const content = twoRegistryMod().patchPlans[0]!.content;
+    expect(content).toContain(
+      "\tresources = {\n" +
+        "\t\tcategory = planet_buildings\n" +
+        "\t\tinline_script = {\n" +
+        "\t\t\tscript = jobs/building_jobs\n" +
+        "\t\t\tBUILDING = pp_refinery\n" +
+        "\t\t}\n" +
+        "\t\tcost = {\n\t\t\tminerals = 300\n\t\t}\n" +
+        "\t\tupkeep = {\n\t\t\tenergy = 5\n\t\t}\n" +
+        "\t}\n"
+    );
+    // Its slot is the source's, not an append: the patched `planet_limit`
+    // that followed it in vanilla still follows it here.
+    expect(content.indexOf("\tresources = {")).toBeLessThan(content.indexOf("\tplanet_limit = {"));
+  });
+
   it("re-declares the building file's own local variable, and only that", () => {
     const content = twoRegistryMod().patchPlans[0]!.content;
     expect(content).toContain("\n@pp_refinery_buildtime = 480\n");

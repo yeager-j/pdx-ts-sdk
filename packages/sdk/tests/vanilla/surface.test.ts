@@ -619,6 +619,7 @@ describe("the building slice", () => {
       "allow",
       "prerequisites",
       "upgrades",
+      "resources",
       "planet_limit",
       "triggered_planet_modifier",
       "triggered_planet_modifier",
@@ -667,7 +668,10 @@ describe("the building slice", () => {
       ],
     }));
     const emitted = serialize([patched.toEntries()]);
-    // Each patched key kept its slot, and the untouched ones rode through.
+    // Each patched key kept its slot, and the untouched ones rode through —
+    // including `resources`, whose nested `inline_script` no authoring surface
+    // can express (SDK-62 residue, SDK-17 machinery). Passthrough covering
+    // what a definer cannot write is the point of walking the parsed body.
     expect(emitted).toBe(
       "building_pp_refinery = {\n" +
         "\tbase_buildtime = @pp_refinery_buildtime\n" +
@@ -677,6 +681,15 @@ describe("the building slice", () => {
         "\tallow = {\n\t\thas_major_upgraded_capital = yes\n\t}\n" +
         '\tprerequisites = { "tech_gene_forging" }\n' +
         "\tupgrades = { building_pp_refinery_2 }\n" +
+        "\tresources = {\n" +
+        "\t\tcategory = planet_buildings\n" +
+        "\t\tinline_script = {\n" +
+        "\t\t\tscript = jobs/building_jobs\n" +
+        "\t\t\tBUILDING = pp_refinery\n" +
+        "\t\t}\n" +
+        "\t\tcost = {\n\t\t\tminerals = 300\n\t\t}\n" +
+        "\t\tupkeep = {\n\t\t\tenergy = 5\n\t\t}\n" +
+        "\t}\n" +
         "\tplanet_limit = {\n\t\tbase = 2\n\t\tmodifier = {\n\t\t\tadd = 1\n\t\t\talways = yes\n\t\t}\n\t}\n" +
         "\ttriggered_planet_modifier = {\n" +
         "\t\tpotential = {\n\t\t\texists = owner\n\t\t}\n" +

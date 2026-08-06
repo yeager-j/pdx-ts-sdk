@@ -11,7 +11,11 @@
  * no example of — repeated `triggered_planet_modifier` blocks, a `planet_limit`
  * written as a bare number in one building and as a block in the other (CWT
  * declares both, so the field lowers to a dual), plus a file-local `@variable`,
- * `prerequisites` and `upgrades`.
+ * `prerequisites` and `upgrades`. Its `resources` block is the way 332 of the
+ * 458 shipped buildings write one — an `inline_script` nested beside the
+ * cost/upkeep arms, which `EconomicResourceBlock` has no member for (SDK-17).
+ * A patch has to carry that block through untouched or lose it, the same
+ * property `placement_rules` pins for megastructures below.
  *
  * `MEGASTRUCTURE_FILE` is the third, and it is here for the shapes the first
  * two have no example of: an `economic_template` block (`resources`, with
@@ -163,6 +167,20 @@ building_pp_refinery = {
 
 	prerequisites = { "tech_gene_forging" }
 	upgrades = { building_pp_refinery_2 }
+
+	resources = {
+		category = planet_buildings
+		inline_script = {
+			script = jobs/building_jobs
+			BUILDING = pp_refinery
+		}
+		cost = {
+			minerals = 300
+		}
+		upkeep = {
+			energy = 5
+		}
+	}
 
 	planet_limit = 1
 

@@ -13,6 +13,23 @@ content_test_building_lab_1 = {
 	planet_modifier = {
 		planet_jobs_engineering_research_produces_mult = 0.1
 	}
+	resources = {
+		category = planet_buildings
+		cost = {
+			alloys = 300
+		}
+		produces = {
+			physics_research = 10
+		}
+		upkeep = {
+			trigger = {
+				is_capital = yes
+			}
+			energy = 5
+			multiplier = 1
+			multiplier = 2
+		}
+	}
 	upgrades = { building_research_lab_2 }
 	prerequisites = { tech_basic_science_lab_1 }
 	convert_to = { building_ruined_lab }
