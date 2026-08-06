@@ -36,12 +36,17 @@ source change).
    model when a shape is reusable; a per-type branch in the writer or emitter
    means the model is wrong.
 5. Export the new generated public types from `packages/sdk/src/index.ts`.
-6. Add all four kinds of evidence, all written through the capability
+6. The manifest also drives the install-derived id package: run
+   `npm run codegen:vanilla` (install-gated), read its report, and review the
+   `packages/stellaris-ids/src` diff as a public-API change, per AGENTS.md's
+   "Vanilla identifier package" rules.
+7. Add all four kinds of evidence, all written through the capability
    (reference below). Done when: every kind is present, the corpus gate
-   records a non-zero definition count for the registry, and every corpus
-   mismatch is either fixed or acknowledged in `corpus-gaps.ts` with a reason
-   and a Linear issue.
-7. Add or update a README example only when the registry introduces an
+   records a non-zero definition count for the registry, every presence gap is
+   either fixed or acknowledged in `corpus-gaps.ts` with a reason and a Linear
+   issue, and every `form` or `scope` mismatch is fixed — acknowledgment
+   covers presence gaps only; the gate rejects a shape mismatch regardless.
+8. Add or update a README example only when the registry introduces an
    authoring pattern users would not infer from existing registries.
 
 Use the generated naming, never hand-written aliases: snake-case

@@ -35,9 +35,18 @@ evidence.
    registries (r1, r8 each covered more than one) — so calibrate the next few
    candidates together. Done when the `rules.test.ts` shape gates pass: the
    row is in the pinned list, build-pinned, every non-refused cell citing runs.
+   **Two non-refused cells are the prerequisite for step 3.** A refused cell
+   means the registry is not patchable: granting the permission anyway would
+   generate a `patchX` whose every call throws. Record what would settle the
+   cell (its `settledBy`) and stop — `ship-components` is the standing example
+   of a row that deliberately carries no permission.
 2. **Parse row**: add the registry to `PARSED_REGISTRIES` and the
    `ParsedRegistries` interface in
-   `packages/sdk/src/stellaris/vanilla/view.ts`. Verify `knownSubdirs`
+   `packages/sdk/src/stellaris/vanilla/view.ts`, and export a `ParsedX` alias
+   (or class) from `view.ts`, using that name in `ParsedRegistries` — the
+   generated modules import `Parsed<TypeName>` from `view.ts` unconditionally,
+   so an inline `ParsedDefinition<"x">` type strands regeneration on a missing
+   import. Verify `knownSubdirs`
    against a real install — an unknown subdirectory is a loud load error, not
    a guess. If the registry carries nested swap identities, they are a
    `SWAP_IDENTITIES` row in `packages/sdk/src/content/swaps.ts`. Add fixture
@@ -48,10 +57,14 @@ evidence.
 3. **The permission**: add the registry to `CONTENT_PATCH_REGISTRIES`
    (`packages/codegen-cwt/src/overlay.ts`) with a reason citing the rule
    row's evidence, then `npm run codegen`. Done when the row alone produced
-   the whole surface — an emitter change means the generic model is wrong;
-   fix the model, never fork it per registry. Read the report's patch
-   section: every excluded field carries a mechanical reason, and the loc
-   members are listed. Review the generated diff as a public-API change.
+   the whole *generated* surface — an emitter change means the generic model
+   is wrong; fix the model, never fork it per registry. Read the report's
+   patch section: every excluded field carries a mechanical reason, and the
+   loc members are listed. Review the generated diff as a public-API change.
+   Then export the generated triple — `XPatch`, `PatchedX`, `XPatchItem` —
+   from `packages/sdk/src/index.ts`, the one hand-written step; the derived
+   export guard (`content-snapshot.test.ts` / `public-surface.test-d.ts`)
+   names exactly what is missing until it is done.
 4. **Evidence**, mirroring the technology/building precedent:
    - `patches.test.ts`: hermetic end-to-end — emitted file-key list, a
      full-file golden under `__snapshots__/patches/`, and full `WinAssertion`
