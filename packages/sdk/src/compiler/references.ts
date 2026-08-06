@@ -1,22 +1,9 @@
 import type { PdxItem } from "@pdx-ts/pdxscript";
 
+import { SWAP_IDENTITIES, type SwapIdentity } from "../content/swaps.ts";
 import { CONTENT_REGISTRIES } from "../generated/content-registry.ts";
 import type { ContentRefUse } from "../references.ts";
 import type { ContentFile, DefinedGroup, EmittedFile } from "./model.ts";
-
-export interface SwapIdentity {
-  readonly registryType: string;
-  readonly path: readonly string[];
-  readonly keying: "record-keys" | "array-names";
-}
-
-export const SWAP_IDENTITIES: readonly SwapIdentity[] = [
-  { registryType: "tradition", path: ["traditionSwap"], keying: "record-keys" },
-  { registryType: "ascension_perk", path: ["traditionSwap"], keying: "record-keys" },
-  { registryType: "civic_or_origin", path: ["swapType"], keying: "array-names" },
-  { registryType: "technology", path: ["technologySwap"], keying: "array-names" },
-  { registryType: "job", path: ["swappableData", "swapType"], keying: "array-names" },
-];
 
 const readSwapPath = (value: unknown, path: readonly string[]): unknown =>
   path.reduce<unknown>(

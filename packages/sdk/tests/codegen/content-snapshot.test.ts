@@ -1113,7 +1113,7 @@ describe("generated content definers", () => {
     expect(definers).not.toContain("Feature<");
   });
 
-  it("emits the raw patchTechnology and addShipOfSizeLimits, and only those", () => {
+  it("emits one raw patchX per overlay row, plus addShipOfSizeLimits", () => {
     // Derived from the overlay rather than hand-listed: the emitted patchX set
     // is exactly the registries CONTENT_PATCH_REGISTRIES permits — a row is the
     // whole permission, and a registry without one gets no patch surface.
@@ -1129,6 +1129,15 @@ describe("generated content definers", () => {
         "  return {\n" +
         '    itemKind: "patch",\n' +
         '    patched: patchContent(technology, patch, "technology", TECHNOLOGY_FIELDS),\n' +
+        "  };"
+    );
+    // And a second registry's definer is the same three lines with its own
+    // name, registry key, and field table — no per-registry hand symbol.
+    expect(definers).toContain(
+      "): BuildingPatchItem {\n" +
+        "  return {\n" +
+        '    itemKind: "patch",\n' +
+        '    patched: patchContent(building, patch, "building", BUILDING_FIELDS),\n' +
         "  };"
     );
     expect(definers).toContain('import { patchContent } from "../stellaris/vanilla/patch.ts";');
@@ -1182,6 +1191,22 @@ describe("generated content definers", () => {
     expect(publicIndex).not.toContain("export { defineTechnology");
     expect(publicIndex).not.toContain("export { patchTechnology");
     expect(publicIndex).not.toContain("export { addShipOfSizeLimits");
+  });
+
+  it("exports every patchable registry's whole patch vocabulary, symmetrically", () => {
+    // The three names `patchTypes` generates per overlay row. A registry whose
+    // patch item is unnameable from the root cannot be typed by a consumer at
+    // all — the package publishes no generated-module subpath — and the
+    // asymmetry is invisible until someone tries. Derived from the overlay, so
+    // a third row is held to the same bar without editing this test.
+    const publicIndex = readFileSync("packages/sdk/src/index.ts", "utf8");
+    const missing = [...CONTENT_PATCH_REGISTRIES.keys()].flatMap((registry) => {
+      const name = pascalCase(registry);
+      return [`${name}Patch`, `Patched${name}`, `${name}PatchItem`].filter(
+        (symbol) => !new RegExp(`\\b${symbol}\\b`).test(publicIndex)
+      );
+    });
+    expect(missing).toEqual([]);
   });
 
   it("derives every nested identity table from repeated-struct metadata", () => {

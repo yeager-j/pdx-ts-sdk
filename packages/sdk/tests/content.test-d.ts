@@ -27,6 +27,7 @@ import {
   type BuildingDef,
   type BuildingFields,
   type BuildingItem,
+  type BuildingPatch,
   type BuildingRef,
   type CasusBelliRef,
   type ComponentTemplateRef,
@@ -1559,8 +1560,11 @@ describe("generated patch authoring types", () => {
   const view = viewFromFiles({
     "common/technology/pp_soc_tech.txt":
       "tech_pp_forging = {\n\tarea = society\n\ttier = 3\n\tcategory = { biology }\n}\n",
+    "common/buildings/pp_buildings.txt":
+      "building_pp_refinery = {\n\tcategory = manufacturing\n\tplanet_limit = 1\n}\n",
   });
-  const forging = view.technology("tech_pp_forging");
+  const forging = view.definition("technology", "tech_pp_forging");
+  const refinery = view.definition("building", "building_pp_refinery");
 
   it("keeps vanilla's identity: a patch cannot set an id", () => {
     // A patched definition keeps vanilla's key, or the override does not win.
@@ -1613,5 +1617,37 @@ describe("generated patch authoring types", () => {
     contentMod.patchTechnology(looksParsed, () => ({ cost: 1 }));
     // @ts-expect-error — a definition of this mod's own is not a patch source.
     contentMod.patchTechnology(defineBuilding({ id: "content_types_b", name: "B" }), () => ({}));
+  });
+
+  it("keeps two registries' parsed definitions apart, in both directions", () => {
+    // The registry tag, not the modelled fields, is what does this: a parsed
+    // building models nothing at all, so structural typing alone would let it
+    // stand in for anything with an `id` and a `body`.
+    expectTypeOf(refinery.registry).toEqualTypeOf<"building">();
+    expectTypeOf(forging.registry).toEqualTypeOf<"technology">();
+    // @ts-expect-error — a parsed building is not a patch source for technology.
+    contentMod.patchTechnology(refinery, () => ({ cost: 1 }));
+    // @ts-expect-error — nor the other way round.
+    contentMod.patchBuilding(forging, () => ({ planetLimit: 1 }));
+    // Each in its own registry compiles, and the patched item carries the tag.
+    expectTypeOf(
+      contentMod.patchBuilding(refinery, () => ({ planetLimit: 2 })).patched.registry
+    ).toEqualTypeOf<"building">();
+    expectTypeOf(
+      contentMod.patchTechnology(forging, () => ({ tier: 2 })).patched.registry
+    ).toEqualTypeOf<"technology">();
+  });
+
+  it("gives the second registry the same closed, id-less patch type", () => {
+    expectTypeOf<BuildingPatch>().not.toHaveProperty("id");
+    expectTypeOf<BuildingPatch>().not.toHaveProperty("name");
+    const patch: BuildingPatch = {
+      planetLimit: 1,
+      // @ts-expect-error — closed, so a patched id is a compile error here.
+      id: "content_types_building_elsewhere",
+    };
+    void patch;
+    // @ts-expect-error — a member naming nothing the patch type has.
+    contentMod.patchBuilding(refinery, () => ({ planetLmit: 1 }));
   });
 });

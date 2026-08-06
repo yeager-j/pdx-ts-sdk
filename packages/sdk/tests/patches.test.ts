@@ -9,12 +9,13 @@
 import { describe, expect, it } from "vitest";
 
 import { StaleRuleTableError, VanillaPathCollisionError } from "../src/errors.ts";
-import { createMod, render, type ModConfig, type TechnologyItem } from "../src/index.ts";
+import { always, createMod, render, type ModConfig, type TechnologyItem } from "../src/index.ts";
 import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
-import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
+import { BUILDING_FILE, TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
 const FILES = {
   "common/technology/pp_soc_tech.txt": TECH_FILE,
+  "common/buildings/pp_buildings.txt": BUILDING_FILE,
   "common/scripted_variables/pp_vars.txt": VARS_FILE,
 };
 
@@ -27,28 +28,28 @@ function makeConfig(config: Partial<ModConfig> = {}): ModConfig {
   };
 }
 
+const vanilla = viewFromFiles(FILES, { gameVersion: "4.4.6" });
+
+function patchedTechnologies(mod: ReturnType<typeof createMod>): TechnologyItem[] {
+  const myNewTech = mod.technology("chimeric_grafts", {
+    name: "Chimeric Grafts",
+    area: "society",
+    tier: 3,
+    category: "biology",
+  });
+  return [
+    myNewTech,
+    mod.patchTechnology(
+      vanilla.definition("technology", "tech_gene_forging").require("cost", "prerequisites"),
+      (t) => ({
+        cost: t.cost.value * 2,
+        prerequisites: [...t.prerequisites, myNewTech],
+      })
+    ),
+  ];
+}
+
 describe("patching end to end", () => {
-  const vanilla = viewFromFiles(FILES, { gameVersion: "4.4.6" });
-
-  function patchedTechnologies(mod: ReturnType<typeof createMod>): TechnologyItem[] {
-    const myNewTech = mod.technology("chimeric_grafts", {
-      name: "Chimeric Grafts",
-      area: "society",
-      tier: 3,
-      category: "biology",
-    });
-    return [
-      myNewTech,
-      mod.patchTechnology(
-        vanilla.technology("tech_gene_forging").require("cost", "prerequisites"),
-        (t) => ({
-          cost: t.cost.value * 2,
-          prerequisites: [...t.prerequisites, myNewTech],
-        })
-      ),
-    ];
-  }
-
   function patchedMod() {
     const mod = createMod(makeConfig());
     return mod.compile([mod.feature(undefined, patchedTechnologies(mod))]);
@@ -72,7 +73,7 @@ describe("patching end to end", () => {
     // game scopes it there, so the patch file must re-declare it. @t3weight
     // and @pp_boost live in common/scripted_variables and resolve cross-file
     // (spike run r1), so they stay bare references.
-    const content = patchedMod().patchPlan!.content;
+    const content = patchedMod().patchPlans[0]!.content;
     expect(content).toContain("\n@tech_gene_forging_POINTS = 2\n");
     expect(content).not.toContain("@t3weight =");
     expect(content).not.toContain("@pp_boost =");
@@ -80,7 +81,7 @@ describe("patching end to end", () => {
   });
 
   it("asserts the win with the full beaten list and the build pin", () => {
-    const plan = patchedMod().patchPlan;
+    const plan = patchedMod().patchPlans[0];
     expect(plan?.assertions).toEqual([
       {
         registry: "technology",
@@ -103,7 +104,9 @@ describe("patching end to end", () => {
     const mod = createMod(makeConfig());
     const technologies = mod.feature(undefined, [
       ...patchedTechnologies(mod),
-      mod.patchTechnology(vanilla.technology("tech_gene_forging"), () => ({ tier: 4 })),
+      mod.patchTechnology(vanilla.definition("technology", "tech_gene_forging"), () => ({
+        tier: 4,
+      })),
     ]);
     expect(() => mod.compile([technologies])).toThrow(
       /Duplicate patch for technology "tech_gene_forging"/
@@ -119,7 +122,7 @@ describe("patching end to end", () => {
     });
     const technologies = mod.feature(undefined, [
       ...patchedTechnologies(mod),
-      mod.patchTechnology(other.technology("tech_pp_drifted"), () => ({ tier: 4 })),
+      mod.patchTechnology(other.definition("technology", "tech_pp_drifted"), () => ({ tier: 4 })),
     ]);
     expect(() => mod.compile([technologies])).toThrow(/different vanilla load/);
   });
@@ -128,7 +131,9 @@ describe("patching end to end", () => {
     const mod = createMod(makeConfig());
     const drifted = viewFromFiles(FILES, { gameVersion: "4.5.0" });
     const technologies = mod.feature(undefined, [
-      mod.patchTechnology(drifted.technology("tech_gene_forging"), () => ({ tier: 4 })),
+      mod.patchTechnology(drifted.definition("technology", "tech_gene_forging"), () => ({
+        tier: 4,
+      })),
     ]);
     expect(() => mod.compile([technologies])).toThrow(StaleRuleTableError);
     expect(() => mod.compile([technologies])).toThrow(/acceptGameVersion: "4\.5\.0"/);
@@ -138,7 +143,9 @@ describe("patching end to end", () => {
     const mod = createMod(makeConfig({ acceptGameVersion: "4.5.0" }));
     const drifted = viewFromFiles(FILES, { gameVersion: "4.5.0" });
     const technologies = mod.feature(undefined, [
-      mod.patchTechnology(drifted.technology("tech_gene_forging"), () => ({ tier: 4 })),
+      mod.patchTechnology(drifted.definition("technology", "tech_gene_forging"), () => ({
+        tier: 4,
+      })),
     ]);
     expect(render(mod.compile([technologies])).size).toBeGreaterThan(0);
   });
@@ -149,7 +156,9 @@ describe("patching end to end", () => {
     // gate exists for real installs, which always have launcher-settings.json.
     const versionless = viewFromFiles(FILES);
     const technologies = mod.feature(undefined, [
-      mod.patchTechnology(versionless.technology("tech_gene_forging"), () => ({ tier: 4 })),
+      mod.patchTechnology(versionless.definition("technology", "tech_gene_forging"), () => ({
+        tier: 4,
+      })),
     ]);
     expect(render(mod.compile([technologies])).size).toBeGreaterThan(0);
   });
@@ -168,13 +177,15 @@ describe("patching end to end", () => {
         tier: 1,
         category: "computing",
       }),
-      mod.patchTechnology(clashing.technology("tech_gene_forging"), () => ({ tier: 4 })),
+      mod.patchTechnology(clashing.definition("technology", "tech_gene_forging"), () => ({
+        tier: 4,
+      })),
     ]);
     expect(() => render(mod.compile([technologies]))).toThrow(VanillaPathCollisionError);
   });
 
-  it("the patch plan is undefined when nothing is patched", () => {
-    expect(createMod(makeConfig()).compile([]).patchPlan).toBeUndefined();
+  it("there are no patch plans when nothing is patched", () => {
+    expect(createMod(makeConfig()).compile([]).patchPlans).toEqual([]);
   });
 });
 
@@ -229,5 +240,116 @@ describe("the vanilla path guard without any patch", () => {
     // Unchanged behavior: nothing was loaded, so nothing is known to collide.
     expect(mod.compile([techs(mod)]).vanillaPaths).toBeUndefined();
     expect(render(mod.compile([techs(mod)])).size).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The second registry, end to end, and the property the whole seam exists for:
+ * adding it changed no emission code, so the technology emission is unmoved.
+ * Each registry is resolved on its own — its own enumeration, its own winning
+ * filename, its own rule-table row — and the plans are ordered by the path they
+ * emit to rather than by the order the patches were authored in (ADR-0005).
+ */
+describe("patching two registries in one mod", () => {
+  const refinery = vanilla.definition("building", "building_pp_refinery");
+
+  function twoRegistryMod() {
+    const mod = createMod(makeConfig());
+    const carried = refinery.body.filter((entry) => entry.key === "triggered_planet_modifier");
+    return mod.compile([
+      mod.feature(undefined, [
+        ...patchedTechnologies(mod),
+        mod.patchBuilding(refinery, () => ({
+          potential: always(),
+          planetLimit: { base: 2, modifiers: [{ add: 1, when: always() }] },
+          triggeredPlanetModifier: [
+            ...carried,
+            { when: always(), modifier: (m) => m.raw("planet_jobs_produces_mult", 0.3) },
+          ],
+        })),
+      ]),
+    ]);
+  }
+
+  it("plans one emission per patched registry, ordered by emitted path", () => {
+    expect(twoRegistryMod().patchPlans.map((plan) => plan.relPath)).toEqual([
+      "common/buildings/pp_buildings_pp_mod_patch.txt",
+      "common/technology/pp_soc_tech_pp_mod_patch.txt",
+    ]);
+  });
+
+  it("emits both patch files beside the mod's own content", async () => {
+    const files = render(twoRegistryMod());
+    expect([...files.keys()]).toEqual([
+      "descriptor.mod",
+      "common/technology/pp_mod_technology.txt",
+      "localisation/english/pp_mod_l_english.yml",
+      "common/buildings/pp_buildings_pp_mod_patch.txt",
+      "common/technology/pp_soc_tech_pp_mod_patch.txt",
+    ]);
+    await expect(files.get("common/buildings/pp_buildings_pp_mod_patch.txt")).toMatchFileSnapshot(
+      "__snapshots__/patches/common__buildings__pp_buildings_pp_mod_patch.txt"
+    );
+    // The same golden the technology-only mod above is pinned against: adding a
+    // building patch must not move a byte of the technology emission.
+    await expect(files.get("common/technology/pp_soc_tech_pp_mod_patch.txt")).toMatchFileSnapshot(
+      "__snapshots__/patches/common__technology__pp_soc_tech_pp_mod_patch.txt"
+    );
+  });
+
+  it("asserts each win against its own registry's rule row", () => {
+    const [buildings, technology] = twoRegistryMod().patchPlans;
+    expect(buildings!.assertions).toEqual([
+      {
+        registry: "building",
+        key: "building_pp_refinery",
+        rule: "last-wins",
+        confidence: "verified",
+        beats: ["common/buildings/pp_buildings.txt"],
+        verifiedAgainst: "4.4.6",
+      },
+    ]);
+    expect(technology!.assertions).toEqual([
+      {
+        registry: "technology",
+        key: "tech_gene_forging",
+        rule: "last-wins",
+        confidence: "verified",
+        beats: ["common/technology/pp_soc_tech.txt"],
+        verifiedAgainst: "4.4.6",
+      },
+    ]);
+  });
+
+  it("re-declares the building file's own local variable, and only that", () => {
+    const content = twoRegistryMod().patchPlans[0]!.content;
+    expect(content).toContain("\n@pp_refinery_buildtime = 480\n");
+    expect(content).not.toContain("@t3cost =");
+  });
+
+  it("rejects a second patch for the same building, naming the registry", () => {
+    const mod = createMod(makeConfig());
+    const feature = mod.feature(undefined, [
+      mod.patchBuilding(refinery, () => ({ planetLimit: 2 })),
+      mod.patchBuilding(refinery, () => ({ planetLimit: 3 })),
+    ]);
+    expect(() => mod.compile([feature])).toThrow(
+      /Duplicate patch for building "building_pp_refinery"/
+    );
+  });
+
+  it("keeps ids of different registries apart when they collide", () => {
+    // Same id in two registries is legal in the game and must stay legal here:
+    // the duplicate check is per registry, not per view.
+    const collide = viewFromFiles({
+      "common/technology/pp_collide_tech.txt": "shared_id = {\n\tarea = physics\n}\n",
+      "common/buildings/pp_collide_buildings.txt": "shared_id = {\n\tcategory = resource\n}\n",
+    });
+    const mod = createMod(makeConfig());
+    const feature = mod.feature(undefined, [
+      mod.patchTechnology(collide.definition("technology", "shared_id"), () => ({ tier: 2 })),
+      mod.patchBuilding(collide.definition("building", "shared_id"), () => ({ planetLimit: 1 })),
+    ]);
+    expect(mod.compile([feature]).patchPlans).toHaveLength(2);
   });
 });

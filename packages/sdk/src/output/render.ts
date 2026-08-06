@@ -39,8 +39,8 @@ export function render(mod: PureMod): Map<string, string> {
   }
   files.set(`localisation/english/${prefix}_l_english.yml`, renderLocalization(mod));
 
-  if (mod.patchPlan !== undefined) {
-    files.set(mod.patchPlan.relPath, mod.patchPlan.content);
+  for (const plan of mod.patchPlans) {
+    files.set(plan.relPath, plan.content);
   }
   // Runs whenever the build knew about a vanilla load, not only when it
   // patched one: emitting over a vanilla file replaces that file wholesale

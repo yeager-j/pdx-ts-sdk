@@ -30,24 +30,13 @@ import { fieldEntries } from "../../content/lower.ts";
 import type { ContentField } from "../../content/schema.ts";
 import { refId } from "../../generated/refs.ts";
 import type { ContentRefSink, ContentRefUse } from "../../references.ts";
-import type { AnyOf, ParsedNumber } from "./view.ts";
+import type { AnyOf, ParsedDefinition, ParsedNumber } from "./view.ts";
 
 /** What the shared lowering reads; the same shape `fieldEntries` is handed. */
 interface LoweringContext {
   readonly collect: ContentRefSink;
   readonly path: string;
   readonly ownerId: string;
-}
-
-/**
- * What the transform needs from a parsed definition: its key and the body it
- * re-emits around the patched members. The registry-specific parsed class
- * (`ParsedTechnology`) satisfies it and carries the rest.
- */
-export interface ParsedDefinition {
-  readonly id: string;
-  /** The full parsed body, in file order — the source of truth for emission. */
-  readonly body: readonly PdxEntry[];
 }
 
 /**
@@ -74,8 +63,8 @@ export type PatchInput<T, Extra = never> =
 
 export interface PatchedContent<Source extends ParsedDefinition = ParsedDefinition> {
   readonly id: string;
-  /** The registry the patched definition belongs to. */
-  readonly registry: string;
+  /** The registry the patched definition belongs to — the source's own tag. */
+  readonly registry: Source["registry"];
   /** The vanilla definition this patch transforms — provenance for the win engine. */
   readonly source: Source;
   /**
@@ -212,6 +201,17 @@ function lowerable(value: unknown, field: ContentField, ctx: LoweringContext): u
  * pre-pass that sees the whole definition; a patch runs no such pass, and the
  * prefix-derived minting rule for patched definitions is not in yet. Dropping
  * the text or inventing an unstable key would both be worse than saying so.
+ *
+ * The shapes covered are exactly the ones that pre-pass reaches
+ * (`ContentAuthoring.collectRepeatedStructs`): `weightBlock`/`weightBlockWithLoc`
+ * rows carrying `desc`, `repeatedStruct` ids carrying localisation, and — since
+ * the walk descends `struct` levels — anything either of those is nested
+ * inside. The other block shapes a definition can hold mint nothing: a
+ * `triggeredModifierBlock`'s `description`/`custom_tooltip`, and a `locKey`
+ * scalar such as `triggered_desc.text`, are keys the author writes and the
+ * lowering copies; `modifierBlock` and `effect` run recorders that emit
+ * `name = amount` rows and script entries only. Those ride through a patch
+ * unchanged, and refusing them would refuse valid work.
  */
 function assertNoLocalisation(value: unknown, field: ContentField, member: string): void {
   switch (field.shape) {
@@ -243,6 +243,24 @@ function assertNoLocalisation(value: unknown, field: ContentField, member: strin
         assertNoLocalisation(value, arm, member);
       }
       return;
+    case "struct": {
+      // A struct carries no localisation of its own, but the fields inside it
+      // are ordinary fields — `technology_swap`'s `weight` is a dual whose
+      // block arm is a `WeightBlock`, and a desc'd row there needs the same
+      // key mint one at the top level does. A passthrough element carries a
+      // parsed occurrence rather than an authored record, so it has no member
+      // to read and drops out on its own.
+      const items = Array.isArray(value) ? (value as readonly unknown[]) : [value];
+      for (const item of items) {
+        for (const nested of field.fields) {
+          const inner = (item as Readonly<Record<string, unknown>> | null)?.[nested.member];
+          if (inner !== undefined) {
+            assertNoLocalisation(inner, nested, `${member}.${nested.member}`);
+          }
+        }
+      }
+      return;
+    }
     default:
       return;
   }
@@ -306,7 +324,7 @@ function assertPatchable(
 export function patchContent<Source extends ParsedDefinition, Patch extends object>(
   source: Source,
   patch: (source: Source) => Patch,
-  registry: string,
+  registry: Source["registry"],
   fields: readonly ContentField[]
 ): PatchedContent<Source> {
   const patched = patch(source) as Readonly<Record<string, unknown>>;

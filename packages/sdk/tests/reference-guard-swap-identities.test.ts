@@ -1,5 +1,5 @@
 /**
- * The sync gate for `compiler/references.ts`'s `SWAP_IDENTITIES` table.
+ * The sync gate for `content/swaps.ts`'s `SWAP_IDENTITIES` table.
  *
  * The table hand-copies three facts about the vendored rules per row: which
  * registries declare a nested "swap" type via `base_type`, which member of the
@@ -35,8 +35,8 @@ import path from "node:path";
 import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { describe, expect, it } from "vitest";
 
-import { SWAP_IDENTITIES, type SwapIdentity } from "../src/compiler/references.ts";
 import type { ContentField } from "../src/content/schema.ts";
+import { SWAP_IDENTITIES, type SwapIdentity } from "../src/content/swaps.ts";
 import { CONTENT_REGISTRIES } from "../src/generated/content-registry.ts";
 
 // Repo-root-relative: vitest runs from the workspace root, the same way
@@ -317,7 +317,7 @@ describe("SWAP_IDENTITIES against the vendored rules", () => {
       unaccounted.map((declaration) => `${declaration.baseType} (${declaration.typeName})`),
       "the vendored rules declare a base_type this build does not account for. Its swap ids " +
         "will not join the declaring registry's built-id set, so the reference guard rejects " +
-        "every reference to one. Add a row to SWAP_IDENTITIES in compiler/references.ts, or — if the " +
+        "every reference to one. Add a row to SWAP_IDENTITIES in content/swaps.ts, or — if the " +
         "registry is not one the SDK defines — a DOCUMENTED_EXCLUSIONS entry here.\n" +
         unaccounted.map((d) => `  ${d.file}:${d.line}  base_type = ${d.baseType}`).join("\n")
     ).toEqual([]);

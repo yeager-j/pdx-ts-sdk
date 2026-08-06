@@ -15,7 +15,7 @@ const files = render(hardening.mod);
 
 describe("hardening example", () => {
   it("renders every implemented registry, on-actions, events, localization, and the patch", () => {
-    const patchPath = hardening.mod.patchPlan!.relPath;
+    const patchPath = hardening.mod.patchPlans[0]!.relPath;
     expect([...files.keys()]).toEqual([
       "descriptor.mod",
       "common/technology/pdx_hardening_technology.txt",

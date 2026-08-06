@@ -210,8 +210,14 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
 export const CONTENT_PATCH_REGISTRIES = new Map<string, string>([
   [
     "technology",
-    "the only registry the vanilla loader parses and the patch resolver plans emission for " +
+    "the first registry the vanilla loader parses and the patch resolver plans emission for " +
       "(packages/sdk/src/stellaris/vanilla/, src/compiler/patches.ts) — verified in-game by the patches-that-provably-win calibration",
+  ],
+  [
+    "building",
+    "parsed by the vanilla loader beside technology (PARSED_REGISTRIES in " +
+      "packages/sdk/src/stellaris/vanilla/view.ts), and its rule-table row is fully verified — " +
+      "r8 established last-wins and whole-object replacement from matching diagnostics",
   ],
 ]);
 

@@ -11,6 +11,8 @@ import type {
   WeightBlock,
 } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
+import type { ContentPatchItem, PatchedContent, PatchInput } from "../stellaris/vanilla/patch.ts";
+import type { ParsedBuilding } from "../stellaris/vanilla/view.ts";
 import type { BuildingCategory } from "./enums.ts";
 import type { BuildingRef, SpriteRef, TechnologyRef } from "./refs.ts";
 import type { BuildingSet } from "./value-sets.ts";
@@ -151,6 +153,103 @@ export type DefinedBuilding<Id extends string = string> = DefinedContent<
   "building",
   BuildingDef<Id>
 >;
+
+/**
+ * What a patch of a vanilla building may change.
+ * Closed, so a typo is a compile error, and `id`-less: a patched definition
+ * keeps vanilla's identity, because the override has to target the vanilla
+ * key to win.
+ */
+export interface BuildingPatch {
+  readonly conditionalDesc?: PatchInput<BuildingDesc[]>;
+  /** optional: default is no limit Mult by -1 to remove limit (still affected by is_capped_by_modifier = yes) */
+  readonly districtLimit?: PatchInput<number | WeightBlock<"colony">>;
+  readonly ownerType?: PatchInput<"corporate" | "subject_holding">;
+  readonly ruinedIcon?: PatchInput<string | SpriteRef>;
+  /** used to match with a planet class' building set, can be assigned to multiple sets. Used to remove from construction lists */
+  readonly buildingSets?: PatchInput<BuildingSet[]>;
+  readonly baseBuildtime?: PatchInput<number>;
+  /** optional: default is no limit. Don't set base to less than 0, it will ignore it (for performance optimisation reasons) Mult by -1 to remove limit */
+  readonly empireLimit?: PatchInput<number | WeightBlock<"country">>;
+  /** optional: default is no limit Mult by -1 to remove limit (still affected by is_capped_by_modifier = yes) */
+  readonly planetLimit?: PatchInput<number | WeightBlock<"planet">>;
+  /** whether this building is exempt from being swapped into groups by the AI; default: no */
+  readonly exemptFromAiPlanetSpecialization?: PatchInput<boolean>;
+  readonly category?: PatchInput<BuildingCategory>;
+  readonly icon?: PatchInput<string | BuildingRef>;
+  readonly capital?: PatchInput<boolean>;
+  readonly canDemolish?: PatchInput<boolean>;
+  readonly canBeRuined?: PatchInput<boolean>;
+  readonly canBeDisabled?: PatchInput<boolean>;
+  readonly canBuild?: PatchInput<boolean>;
+  readonly baseCapAmount?: PatchInput<number>;
+  readonly addToFirstBuildingSlot?: PatchInput<true>;
+  readonly isCappedByModifier?: PatchInput<boolean>;
+  readonly planetaryFtlInhibitor?: PatchInput<boolean>;
+  readonly positionPriority?: PatchInput<number>;
+  /** colony automation will not try to upgrade this */
+  readonly skipAutomationUpgrading?: PatchInput<boolean>;
+  /** trigger for allowing/graying out building construction */
+  readonly allow?: PatchInput<Trigger<"colony">>;
+  /** Only when building subtype `capital` applies. */
+  readonly capitalTier?: PatchInput<number>;
+  /** an action when queued */
+  readonly onQueued?: PatchInput<EffectBlock<"colony">>;
+  /** an action when unqueued */
+  readonly onUnqueued?: PatchInput<EffectBlock<"colony">>;
+  /** an action when built */
+  readonly onBuilt?: PatchInput<EffectBlock<"colony">>;
+  /** an action when enabled */
+  readonly onEnabled?: PatchInput<EffectBlock<"colony">>;
+  readonly customStormAiWeight?: PatchInput<WeightBlock<"colony">>;
+  /** an action when destroyed */
+  readonly onDestroy?: PatchInput<EffectBlock<"colony">>;
+  /** an action when repaired */
+  readonly onRepaired?: PatchInput<EffectBlock<"colony">>;
+  /** don't know whether it have quantity limit */
+  readonly showInTech?: PatchInput<(TechnologyRef | string)[]>;
+  /** trigger for displaying building in construction list */
+  readonly potential?: PatchInput<Trigger<"colony">>;
+  /** ongoing construction will be canceled if this trigger returns true */
+  readonly abortTrigger?: PatchInput<Trigger<"colony">>;
+  /** ongoing construction will be canceled if this trigger returns true */
+  readonly abortConstructionTrigger?: PatchInput<Trigger<"colony">>;
+  /** set building to ruined if this trigger returns true */
+  readonly ruinedTrigger?: PatchInput<Trigger<"colony">>;
+  /** building will be destroyed (more likely converted, see below) if this trigger returns true */
+  readonly destroyTrigger?: PatchInput<Trigger<"colony">>;
+  readonly showTechUnlockIf?: PatchInput<Trigger<"country">>;
+  readonly planetModifier?: PatchInput<ModifierClosure<"colony">>;
+  readonly countryModifier?: PatchInput<ModifierClosure<"country">>;
+  readonly armyModifier?: PatchInput<ModifierClosure<"army">>;
+  readonly systemModifier?: PatchInput<ModifierClosure<"system">>;
+  readonly triggeredPlanetPopGroupModifierForSpecies?: PatchInput<TriggeredModifier<"pop_group">[]>;
+  readonly triggeredPlanetPopGroupModifierForAll?: PatchInput<TriggeredModifier<"pop_group">[]>;
+  readonly triggeredPlanetModifier?: PatchInput<TriggeredModifier<"colony">[]>;
+  readonly triggeredCountryModifier?: PatchInput<TriggeredModifier<"country">[]>;
+  readonly triggeredArmyModifier?: PatchInput<TriggeredModifier<"army">[]>;
+  readonly triggeredDesc?: PatchInput<BuildingTriggeredDesc[]>;
+  readonly autoGenerateDescription?: PatchInput<boolean>;
+  /** building(s) this can be upgraded to */
+  readonly upgrades?: PatchInput<(BuildingRef | string)[]>;
+  readonly prerequisites?: PatchInput<(TechnologyRef | string)[]>;
+  /** not used anymore unless you overwrite economic_plans to not be used. */
+  readonly aiWeight?: PatchInput<WeightBlock<"colony">>;
+  /** lists candidates this can be converted to if destroy_trigger returns true (e.g. post-conquest) */
+  readonly convertTo?: PatchInput<(BuildingRef | string)[]>;
+  /** Property on buildings which when added to the AI build queue will remove all non essential build tasks. */
+  readonly isEssential?: PatchInput<boolean>;
+  readonly aiEstimateWithoutUnemployment?: PatchInput<boolean>;
+  readonly additionalAiWeight?: PatchInput<number>;
+  readonly aiWeightCoefficient?: PatchInput<number>;
+  readonly customTooltip?: PatchInput<string>;
+}
+
+/** A patched vanilla building, ready for the win engine. */
+export type PatchedBuilding = PatchedContent<ParsedBuilding>;
+
+/** A patched vanilla building placed into a capability feature. */
+export type BuildingPatchItem = ContentPatchItem<ParsedBuilding>;
 
 export const BUILDING_FIELDS: readonly ContentField[] = [
   {

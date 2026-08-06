@@ -28,7 +28,9 @@ const marker = mod.technology("marker", {
   startTech: true,
 });
 
-const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
+const geneTailoring = vanilla
+  .definition("technology", "tech_gene_tailoring")
+  .require("cost", "prerequisites");
 const vanillaCost = geneTailoring.cost.value;
 
 const geneTailoringPatch = mod.patchTechnology(geneTailoring, (t) => ({
@@ -44,7 +46,7 @@ const compiled = mod.compile([mod.feature(undefined, [marker, geneTailoringPatch
 // sibling `pdx_calib.mod` beside it — the same descriptor plus a `path=` line.
 const { contentDir } = await install(compiled);
 
-const plan = compiled.patchPlan!;
+const plan = compiled.patchPlans[0]!;
 console.log(`Installed to ${contentDir}`);
 for (const relPath of render(compiled).keys()) {
   console.log(`  wrote ${relPath}`);

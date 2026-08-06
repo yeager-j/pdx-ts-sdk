@@ -1,0 +1,15 @@
+building_fake_hydroponics = {
+	base_buildtime = @fake_buildtime
+	category = resource
+	icon = building_fake_hydroponics
+	planet_limit = 1
+	prerequisites = { tech_fake_farming }
+	triggered_planet_modifier = {
+		potential = {
+			exists = owner
+		}
+		modifier = {
+			planet_jobs_food_produces_mult = 0.1
+		}
+	}
+}

@@ -254,6 +254,7 @@ export type { ContentItem, ContributionItem } from "./content/types.ts";
 export type { ModWarning } from "./diagnostics.ts";
 export type { OnActionHookItem } from "./events/on-actions.ts";
 export type { EventItem, EventItemBase } from "./events/types.ts";
+export type { BuildingPatchItem } from "./generated/building.ts";
 export type { TechnologyPatchItem } from "./generated/technology.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
@@ -281,14 +282,19 @@ export {
 export type { PatchPlan, WinAssertion } from "./stellaris/vanilla/override-plan.ts";
 export {
   anyOf,
+  ParsedDefinition,
   ParsedTechnology,
   VanillaView,
   viewFromFiles,
   type AnyOf,
+  type ParsedBuilding,
   type ParsedNumber,
+  type ParsedRegistries,
+  type ParsedRegistryName,
   type Prerequisite,
   type VanillaFile,
 } from "./stellaris/vanilla/view.ts";
+export type { BuildingPatch, PatchedBuilding } from "./generated/building.ts";
 export type { PatchedTechnology, TechnologyPatch } from "./generated/technology.ts";
 export type {
   CheckedVanillaId,

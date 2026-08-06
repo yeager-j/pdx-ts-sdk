@@ -1,1 +1,2 @@
 @fake_t1cost = 100
+@fake_buildtime = 240

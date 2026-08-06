@@ -156,7 +156,9 @@ export function defineHardening(vanilla: VanillaView) {
 
   const entryHook = mod.on(onActions.onGameStartCountry, [entryEvent]);
 
-  const geneTailoring = vanilla.technology("tech_gene_tailoring").require("cost", "prerequisites");
+  const geneTailoring = vanilla
+    .definition("technology", "tech_gene_tailoring")
+    .require("cost", "prerequisites");
   const geneTailoringPatch = mod.patchTechnology(geneTailoring, (technology) => ({
     cost: technology.cost.value * 2,
     prerequisites: [...technology.prerequisites, markerTechnology],

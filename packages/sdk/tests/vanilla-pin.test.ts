@@ -245,7 +245,9 @@ describe("the mod capability's version-pin hook", () => {
     const drifted = viewFromFiles(FILES, { gameVersion: "4.5.0" });
     const { mod, technologies } = technologyFeature();
     const patched = mod.feature(undefined, [
-      mod.patchTechnology(drifted.technology("tech_gene_forging"), () => ({ tier: 4 })),
+      mod.patchTechnology(drifted.definition("technology", "tech_gene_forging"), () => ({
+        tier: 4,
+      })),
     ]);
 
     // Each half alone, so the combination below is provably both-stale rather

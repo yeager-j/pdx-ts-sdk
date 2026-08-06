@@ -78,6 +78,7 @@ import {
   defineUtilityComponentTemplate,
   defineWarGoal,
   defineWeaponComponentTemplate,
+  patchBuilding,
   patchTechnology,
 } from "./content-definers.ts";
 import type { CouncilorDef } from "./councilor.ts";
@@ -391,6 +392,11 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<BuildingDef<MintedContentId<P, I, "building", Name>>, "id">
   ): ContentItem<"building", BuildingDef<MintedContentId<P, I, "building", Name>>>;
+  /**
+   * Patches a vanilla building as a whole-object override.
+   * Unlike a capability definition method, it mints no id and owns no new content.
+   */
+  readonly patchBuilding: typeof patchBuilding;
   /**
    * Defines a tradition from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -799,6 +805,7 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       defineBuilding({ ...def, id: mint("building", name) } as BuildingDef<
         MintedContentId<P, I, "building", Name>
       >),
+    patchBuilding,
     tradition: <const Name extends string>(
       name: Name,
       def: Omit<TraditionDef<MintedContentId<P, I, "tradition", Name>>, "id">

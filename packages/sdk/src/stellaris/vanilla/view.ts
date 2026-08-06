@@ -2,19 +2,24 @@
  * The typed surface over parsed vanilla files, built on the `@pdx-ts/pdxscript`
  * AST.
  *
- * `ParsedTechnology` is a readonly view over the parsed entry list. Fields
- * the surface models are typed, widened where vanilla demands it: numeric
- * fields are `ParsedNumber` (resolved value plus `@variable` provenance —
- * arithmetic is poisoned by the object type, `.value` bakes visibly), refs
- * wear the optional `TypedRef` brand, `area` is validated at parse time, and
- * prerequisites admit vanilla's `OR = { ... }` groups as `AnyOf` values —
- * ordinary data here, where the probe's parser had to refuse them.
- * Everything unmodelled stays in `rest`, carried through in original order
- * and never property-accessible.
+ * {@link ParsedDefinition} is a readonly view over one shipped definition's
+ * parsed entry list, tagged with the registry it came from so a parsed
+ * building cannot be handed to `patchTechnology`. Everything the surface does
+ * not model stays in `rest`, carried through in original order and never
+ * property-accessible — which for a registry with no reader of its own is the
+ * whole body.
+ *
+ * {@link ParsedTechnology} is the one registry that models fields today:
+ * numeric fields are `ParsedNumber` (resolved value plus `@variable`
+ * provenance — arithmetic is poisoned by the object type, `.value` bakes
+ * visibly), refs wear the optional `TypedRef` brand, `area` is validated at
+ * parse time, and prerequisites admit vanilla's `OR = { ... }` groups as
+ * `AnyOf` values — ordinary data here, where the probe's parser had to refuse
+ * them.
  *
  * Nothing resolves silently: an unknown `@variable`, an invalid `area`, a
- * parser repair diagnostic, an unknown technology id all throw with file and
- * line. Each technology carries its provenance — source file, source bytes'
+ * parser repair diagnostic, an unknown definition id all throw with file and
+ * line. Each definition carries its provenance — source file, source bytes'
  * sha256, and the view it came from — which is what the win engine computes
  * filenames against and what version-drift detection hashes.
  */
@@ -22,11 +27,13 @@
 import { createHash } from "node:crypto";
 import { parse, type PdxContainer, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
+import { parsedSwapDeclarations, type ParsedSwapDeclaration } from "../../content/swaps.ts";
 import { SwapPatchError } from "../../errors.ts";
 import type { ResearchArea } from "../../generated/enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef } from "../../generated/refs.ts";
 import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../../ordering.ts";
 import { trigger, type Trigger } from "../../script/trigger-core.ts";
+import { registryRule } from "./override-rules.ts";
 
 /**
  * A number as a vanilla file states it: the resolved value, plus the
@@ -89,7 +96,7 @@ class VarTable {
     const defined = [...(this.locals.get(file)?.keys() ?? []), ...this.global.keys()];
     const known = defined.length > 0 ? defined.join(", ") : "none";
     throw new Error(
-      `${file}:${line ?? "?"}: ${name} is not defined in ${file} or common/scripted_variables ` +
+      `${file}:${line ?? "?"}: ${name} is not defined in ${file} or ${VARIABLES_DIR} ` +
         `(defined: ${known})`
     );
   }
@@ -104,58 +111,93 @@ export interface VanillaFile {
   readonly keys: readonly string[];
 }
 
-interface TechnologyInit {
+/** What every parsed definition carries, whatever registry read it. */
+export interface ParsedDefinitionInit<R extends string> {
+  readonly registry: R;
   readonly id: string;
   readonly sourceFile: LogicalPath;
   readonly sourceSha256: string;
   readonly origin: VanillaView;
   readonly line: number | undefined;
   readonly body: readonly PdxEntry[];
-  readonly cost?: ParsedNumber;
-  readonly tier?: ParsedNumber;
-  readonly weight?: ParsedNumber;
-  readonly area: ResearchArea;
-  readonly category: readonly TechnologyCategoryRef[];
-  readonly prerequisites?: readonly Prerequisite[];
-  readonly startTech?: boolean;
-  readonly isRare?: boolean;
-  readonly potential?: Trigger<"country">;
   readonly rest: readonly PdxEntry[];
 }
 
-type RequirableField =
-  "cost" | "tier" | "weight" | "prerequisites" | "potential" | "startTech" | "isRare";
-
-export class ParsedTechnology {
+/**
+ * One shipped definition, tagged with the registry it was parsed from.
+ *
+ * The tag is what makes the patch surface registry-safe without any runtime
+ * check: `patchBuilding` takes a `ParsedDefinition<"building">`, so a parsed
+ * technology is a compile error there and vice versa.
+ */
+export class ParsedDefinition<R extends string = string> {
+  /** The registry this definition belongs to — the compile-time tag. */
+  readonly registry: R;
   readonly id: string;
-  /** The file that defined this technology, as a logical path. */
+  /** The file that defined it, as a logical path. */
   readonly sourceFile: LogicalPath;
   /** sha256 (hex) of the defining file's source bytes. */
   readonly sourceSha256: string;
-  /** The view this technology was parsed from. @internal */
+  /** The view this definition was parsed from. @internal */
   readonly origin: VanillaView;
   /** The full parsed body, in file order — the source of truth for emission. */
   readonly body: readonly PdxEntry[];
-  readonly cost?: ParsedNumber;
-  readonly tier?: ParsedNumber;
-  readonly weight?: ParsedNumber;
-  readonly area: ResearchArea;
-  readonly category: readonly TechnologyCategoryRef[];
-  readonly prerequisites?: readonly Prerequisite[];
-  readonly startTech?: boolean;
-  readonly isRare?: boolean;
-  readonly potential?: Trigger<"country">;
   /** Entries the surface does not model — carried through, never dropped. */
   readonly rest: readonly PdxEntry[];
   private readonly line: number | undefined;
 
-  constructor(init: TechnologyInit) {
+  constructor(init: ParsedDefinitionInit<R>) {
+    this.registry = init.registry;
     this.id = init.id;
     this.sourceFile = init.sourceFile;
     this.sourceSha256 = init.sourceSha256;
     this.origin = init.origin;
     this.line = init.line;
     this.body = init.body;
+    this.rest = init.rest;
+  }
+
+  /** `file:line` of the definition — the linter's citation. */
+  get citation(): string {
+    return `${this.sourceFile}:${this.line ?? "?"}`;
+  }
+
+  toEntries(): PdxEntry {
+    return { kind: "entry", key: this.id, op: "=", value: { kind: "container", items: this.body } };
+  }
+}
+
+/** A parsed vanilla building. Nothing about its body is modelled yet. */
+export type ParsedBuilding = ParsedDefinition<"building">;
+
+interface TechnologyInit extends ParsedDefinitionInit<"technology"> {
+  readonly cost?: ParsedNumber;
+  readonly tier?: ParsedNumber;
+  readonly weight?: ParsedNumber;
+  readonly area: ResearchArea;
+  readonly category: readonly TechnologyCategoryRef[];
+  readonly prerequisites?: readonly Prerequisite[];
+  readonly startTech?: boolean;
+  readonly isRare?: boolean;
+  readonly potential?: Trigger<"country">;
+}
+
+type RequirableField =
+  "cost" | "tier" | "weight" | "prerequisites" | "potential" | "startTech" | "isRare";
+
+export class ParsedTechnology extends ParsedDefinition<"technology"> {
+  readonly cost?: ParsedNumber;
+  readonly tier?: ParsedNumber;
+  readonly weight?: ParsedNumber;
+  readonly area: ResearchArea;
+  readonly category: readonly TechnologyCategoryRef[];
+  readonly prerequisites?: readonly Prerequisite[];
+  readonly startTech?: boolean;
+  readonly isRare?: boolean;
+  readonly potential?: Trigger<"country">;
+
+  constructor(init: TechnologyInit) {
+    super(init);
     this.cost = init.cost;
     this.tier = init.tier;
     this.weight = init.weight;
@@ -165,12 +207,6 @@ export class ParsedTechnology {
     this.startTech = init.startTech;
     this.isRare = init.isRare;
     this.potential = init.potential;
-    this.rest = init.rest;
-  }
-
-  /** `file:line` of the definition — the linter's citation. */
-  get citation(): string {
-    return `${this.sourceFile}:${this.line ?? "?"}`;
   }
 
   /**
@@ -190,14 +226,74 @@ export class ParsedTechnology {
     }
     return this as this & { readonly [P in K]-?: NonNullable<ParsedTechnology[P]> };
   }
+}
 
-  toEntries(): PdxEntry {
-    return { kind: "entry", key: this.id, op: "=", value: { kind: "container", items: this.body } };
-  }
+/**
+ * Reads one definition of a registry from its parsed entry, given a body whose
+ * `@variables` have already been validated.
+ *
+ * A registry with no reader gets {@link ParsedDefinition} itself: every entry
+ * lands in `rest`, byte-faithful and patchable, which is exactly the guarantee
+ * a modelled field has to earn its way past.
+ */
+type DefinitionReader = (init: ParsedDefinitionInit<string>, vars: VarTable) => ParsedDefinition;
+
+/**
+ * The registries this slice parses, as row data.
+ *
+ * The directory is never spelled here — it comes from the registry's own rule
+ * table row, which derives it from the generated content descriptor, so the
+ * three can never drift apart. Subdirectories that exist in the real install
+ * are pinned by name: they hold *different* registries (technology categories
+ * and tiers), out of this slice's scope and outside the registry's own
+ * enumeration, which was measured flat. An unknown subdirectory appearing is
+ * vanilla changing shape under us: a loud error, never a silent widen or skip.
+ */
+export interface ParsedRegistryRow {
+  readonly registry: ParsedRegistryName;
+  readonly knownSubdirs: ReadonlySet<string>;
+  readonly read?: DefinitionReader;
+}
+
+/**
+ * The parsed type each registry's definitions have. One row per
+ * {@link PARSED_REGISTRIES} row: a registry whose fields nothing models yet
+ * maps to the plain tagged {@link ParsedDefinition}.
+ */
+export interface ParsedRegistries {
+  readonly technology: ParsedTechnology;
+  readonly building: ParsedBuilding;
+}
+
+export type ParsedRegistryName = keyof ParsedRegistries;
+
+export const PARSED_REGISTRIES: readonly ParsedRegistryRow[] = [
+  { registry: "technology", knownSubdirs: new Set(["category", "tier"]), read: readTechnology },
+  // Verified flat against the installed game: `common/buildings` holds 28
+  // files and no subdirectory at all.
+  { registry: "building", knownSubdirs: new Set<string>() },
+];
+
+/**
+ * `@variable` provenance rather than a patchable registry: the directory is
+ * parsed for its cross-file constants, and nothing in it is a definition the
+ * SDK patches.
+ */
+export const VARIABLES_DIR = registryRule("scripted-constants").dir;
+
+/** Each parsed registry's directory, resolved once from the rule table. */
+const PARSED_DIRS: readonly { readonly row: ParsedRegistryRow; readonly dir: string }[] =
+  PARSED_REGISTRIES.map((row) => ({ row, dir: registryRule(row.registry).dir }));
+
+/** The directory a parsed registry reads, for the loader's enumeration. */
+export function parsedRegistryDir(registry: ParsedRegistryName): string {
+  return registryRule(registry).dir;
 }
 
 interface SwapRecord {
   readonly parent: string;
+  /** The PDXScript key of the block declaring the swap, for the diagnostic. */
+  readonly key: string;
   readonly file: LogicalPath;
 }
 
@@ -228,8 +324,8 @@ export class VanillaView {
    * inputs share it, so a build can tell "same vanilla" from "different loads".
    */
   readonly manifestKey: string;
-  private readonly technologies: ReadonlyMap<string, ParsedTechnology>;
-  private readonly swaps: ReadonlyMap<string, SwapRecord>;
+  private readonly parsed: ReadonlyMap<string, ReadonlyMap<string, ParsedDefinition>>;
+  private readonly swaps: ReadonlyMap<string, ReadonlyMap<string, SwapRecord>>;
   private readonly globalVars: ReadonlyMap<string, number>;
   private readonly localVars: ReadonlyMap<string, ReadonlyMap<string, number>>;
 
@@ -240,13 +336,9 @@ export class VanillaView {
 
     const normalized = sources.map((source) => {
       const path = normalizeLogicalPath(source.path);
-      if (
-        !path.startsWith("common/technology/") &&
-        !path.startsWith("common/scripted_variables/")
-      ) {
-        throw new Error(
-          `Unsupported path ${path}: this slice parses common/technology and common/scripted_variables`
-        );
+      if (registryOfPath(path) === undefined && !path.startsWith(`${VARIABLES_DIR}/`)) {
+        const parsed = [...PARSED_DIRS.map((entry) => entry.dir), VARIABLES_DIR].join(", ");
+        throw new Error(`Unsupported path ${path}: this slice parses ${parsed}`);
       }
       return { ...source, path };
     });
@@ -257,7 +349,7 @@ export class VanillaView {
     for (const source of normalized) {
       const variables = fileVariables(source);
       locals.set(source.path, variables);
-      if (source.path.startsWith("common/scripted_variables/")) {
+      if (source.path.startsWith(`${VARIABLES_DIR}/`)) {
         for (const [name, value] of variables) {
           global.set(name, value);
         }
@@ -267,11 +359,12 @@ export class VanillaView {
     this.globalVars = global;
     this.localVars = locals;
 
-    const technologies = new Map<string, ParsedTechnology>();
-    const swaps = new Map<string, SwapRecord>();
+    const parsed = new Map<string, Map<string, ParsedDefinition>>();
+    const swaps = new Map<string, Map<string, SwapRecord>>();
     const files: VanillaFile[] = [];
     for (const source of normalized) {
       const keys: string[] = [];
+      const row = registryOfPath(source.path);
       for (const item of source.items) {
         if (item.kind !== "entry") {
           throw new Error(
@@ -282,17 +375,21 @@ export class VanillaView {
           continue;
         }
         keys.push(item.key);
-        if (source.path.startsWith("common/technology/")) {
-          const tech = buildTechnology(item, source, this, vars);
-          technologies.set(item.key, tech);
-          registerSwaps(item, source.path, swaps);
+        if (row === undefined) {
+          continue;
         }
+        const definitions = parsed.get(row.registry) ?? new Map<string, ParsedDefinition>();
+        definitions.set(item.key, readDefinition(item, source, row, this, vars));
+        parsed.set(row.registry, definitions);
+        const declared = swaps.get(row.registry) ?? new Map<string, SwapRecord>();
+        registerSwaps(item, row.registry, source.path, declared);
+        swaps.set(row.registry, declared);
       }
       files.push({ path: source.path, sha256: source.sha256, keys });
     }
 
     this.files = files;
-    this.technologies = technologies;
+    this.parsed = parsed;
     this.swaps = swaps;
     this.manifestKey = manifestKeyOf(files);
   }
@@ -312,36 +409,39 @@ export class VanillaView {
     return this.globalVars.has(name);
   }
 
-  /** Every parsed technology, in enumeration-then-definition order. */
-  allTechnologies(): readonly ParsedTechnology[] {
-    return [...this.technologies.values()];
+  /** Every parsed definition of one registry, in enumeration-then-file order. */
+  definitions<R extends ParsedRegistryName>(registry: R): readonly ParsedRegistries[R][] {
+    return [...(this.parsed.get(registry)?.values() ?? [])] as ParsedRegistries[R][];
   }
 
-  technology(id: string): ParsedTechnology {
-    const tech = this.technologies.get(id);
-    if (tech !== undefined) {
-      return tech;
+  /** One parsed definition, or a loud error naming what the view does have. */
+  definition<R extends ParsedRegistryName>(registry: R, id: string): ParsedRegistries[R] {
+    const definitions = this.parsed.get(registry);
+    const found = definitions?.get(id);
+    if (found !== undefined) {
+      return found as ParsedRegistries[R];
     }
-    const swap = this.swaps.get(id);
+    const swap = this.swaps.get(registry)?.get(id);
     if (swap !== undefined) {
       throw new SwapPatchError(
-        `"${id}" is a technology_swap inside ${swap.parent} (${swap.file}): patching into a ` +
+        `"${id}" is a ${swap.key} inside ${swap.parent} (${swap.file}): patching into a ` +
           `swap is refused — swap override semantics have no oracle evidence ` +
           `Patch ${swap.parent} instead; its swaps ` +
           `ride through unchanged.`
       );
     }
-    const near = [...this.technologies.keys()].filter((key) => key.includes(id)).slice(0, 5);
+    const near = [...(definitions?.keys() ?? [])].filter((key) => key.includes(id)).slice(0, 5);
     const hint = near.length > 0 ? ` (did you mean: ${near.join(", ")}?)` : "";
     throw new Error(
-      `Unknown technology "${id}"; the parsed files define ${this.technologies.size} technologies${hint}`
+      `Unknown ${registry} "${id}"; the parsed files define ${definitions?.size ?? 0} ` +
+        `definitions of \`${registry}\`${hint}`
     );
   }
 }
 
 /**
  * Parses a set of vanilla sources keyed by game-relative path. Eager by
- * design: every technology is built — areas validated, every `@variable`
+ * design: every definition is built — areas validated, every `@variable`
  * resolved — before the view returns, so bad input fails at the parse, not
  * at first use. Strict: a parser repair diagnostic is an error here.
  */
@@ -370,6 +470,10 @@ export function parseStrict(path: string, source: string, sha256?: string): Pars
 
 export function sha256Hex(content: string | Uint8Array): string {
   return createHash("sha256").update(content).digest("hex");
+}
+
+function registryOfPath(path: string): ParsedRegistryRow | undefined {
+  return PARSED_DIRS.find((entry) => path.startsWith(`${entry.dir}/`))?.row;
 }
 
 function manifestKeyOf(files: readonly VanillaFile[]): string {
@@ -523,19 +627,41 @@ function triggerField(entry: PdxEntry, file: string): Trigger<"country"> {
   return trigger<"country">(entriesOnly(entry.value, entry.key, file, entryLine(entry)));
 }
 
-function buildTechnology(
+/**
+ * The shared half of every read: the body is entries-only, every `@variable`
+ * it mentions resolves, and nothing else is assumed about it. The registry's
+ * own reader — when it has one — then claims whichever entries it models.
+ */
+function readDefinition(
   entry: PdxEntry,
   source: { readonly path: LogicalPath; readonly sha256: string },
+  row: ParsedRegistryRow,
   origin: VanillaView,
   vars: VarTable
-): ParsedTechnology {
+): ParsedDefinition {
   const file = source.path;
   if (entry.value.kind !== "container") {
-    throw new Error(`${file}:${entryLine(entry) ?? "?"}: technology ${entry.key} must be a block`);
+    throw new Error(
+      `${file}:${entryLine(entry) ?? "?"}: ${row.registry} ${entry.key} must be a block`
+    );
   }
   const body = entriesOnly(entry.value, entry.key, file, entryLine(entry));
   validateVariables(body, file, entryLine(entry), vars);
+  const init: ParsedDefinitionInit<string> = {
+    registry: row.registry,
+    id: entry.key,
+    sourceFile: source.path,
+    sourceSha256: source.sha256,
+    origin,
+    line: entryLine(entry),
+    body,
+    rest: body,
+  };
+  return row.read === undefined ? new ParsedDefinition(init) : row.read(init, vars);
+}
 
+function readTechnology(init: ParsedDefinitionInit<string>, vars: VarTable): ParsedTechnology {
+  const file = init.sourceFile;
   const fields: {
     cost?: ParsedNumber;
     tier?: ParsedNumber;
@@ -560,7 +686,7 @@ function buildTechnology(
     return current ?? parsed;
   };
 
-  for (const field of body) {
+  for (const field of init.body) {
     switch (field.key) {
       case "cost":
         fields.cost = numeric(field, fields.cost);
@@ -595,15 +721,11 @@ function buildTechnology(
   }
 
   if (fields.area === undefined) {
-    throw new Error(`${file}:${entryLine(entry) ?? "?"}: technology ${entry.key} has no area`);
+    throw new Error(`${file}:${init.line ?? "?"}: technology ${init.id} has no area`);
   }
   return new ParsedTechnology({
-    id: entry.key,
-    sourceFile: source.path,
-    sourceSha256: source.sha256,
-    origin,
-    line: entryLine(entry),
-    body,
+    ...init,
+    registry: "technology",
     ...fields,
     area: fields.area,
     category: fields.category ?? [],
@@ -611,22 +733,64 @@ function buildTechnology(
   });
 }
 
-function registerSwaps(entry: PdxEntry, file: LogicalPath, swaps: Map<string, SwapRecord>): void {
-  if (entry.value.kind !== "container") {
-    return;
+/** Resolved once per registry: the walk below runs for every definition. */
+const swapDeclarations = new Map<string, readonly ParsedSwapDeclaration[]>();
+
+function declarationsFor(registry: string): readonly ParsedSwapDeclaration[] {
+  const cached = swapDeclarations.get(registry);
+  if (cached !== undefined) {
+    return cached;
   }
-  for (const item of entry.value.items) {
-    if (
-      item.kind !== "entry" ||
-      item.key !== "technology_swap" ||
-      item.value.kind !== "container"
-    ) {
-      continue;
-    }
-    for (const inner of item.value.items) {
-      if (inner.kind === "entry" && inner.key === "name" && inner.value.kind === "str") {
-        swaps.set(inner.value.value, { parent: entry.key, file });
+  const resolved = parsedSwapDeclarations(registry);
+  swapDeclarations.set(registry, resolved);
+  return resolved;
+}
+
+/**
+ * Records every id this definition declares as a swap of itself, so naming one
+ * as a patch target refuses with the parent to patch instead. Which nested
+ * blocks those are is `SWAP_IDENTITIES` data resolved against the registry's
+ * own field descriptors — a registry declaring no swaps records nothing, at no
+ * cost and with no branch.
+ */
+function registerSwaps(
+  entry: PdxEntry,
+  registry: string,
+  file: LogicalPath,
+  into: Map<string, SwapRecord>
+): void {
+  for (const declaration of declarationsFor(registry)) {
+    const key = declaration.keys[declaration.keys.length - 1]!;
+    for (const swap of blocksAt(entry.value, declaration.keys)) {
+      for (const name of swapNames(swap, declaration.nameKey)) {
+        into.set(name, { parent: entry.key, key, file });
       }
     }
   }
+}
+
+/** Every container reached by following the nested keys from a value. */
+function blocksAt(value: PdxItem, keys: readonly string[]): PdxContainer[] {
+  if (value.kind !== "container") {
+    return [];
+  }
+  const [head, ...rest] = keys;
+  const matched = value.items.flatMap((item) =>
+    item.kind === "entry" && item.key === head && item.value.kind === "container"
+      ? [item.value]
+      : []
+  );
+  return rest.length === 0 ? matched : matched.flatMap((inner) => blocksAt(inner, rest));
+}
+
+function swapNames(swap: PdxContainer, nameKey: string | null): string[] {
+  return swap.items.flatMap((item) => {
+    if (item.kind !== "entry") {
+      return [];
+    }
+    if (nameKey === null) {
+      return [item.key];
+    }
+    return item.key === nameKey && item.value.kind === "str" ? [item.value.value] : [];
+  });
 }

@@ -5,6 +5,13 @@
  * construct the probe's parser had to refuse — `prerequisites = { ref OR =
  * { ... } }`, the mixed container five vanilla files use — which the
  * package AST carries as ordinary data.
+ *
+ * `BUILDING_FILE` is the second registry's equivalent: a structural clone of
+ * the shapes vanilla buildings actually write that the technology fixture has
+ * no example of — repeated `triggered_planet_modifier` blocks, a `planet_limit`
+ * written as a bare number in one building and as a block in the other (CWT
+ * declares both, so the field lowers to a dual), plus a file-local `@variable`,
+ * `prerequisites` and `upgrades`.
  */
 
 export const TECH_FILE = `# ##################
@@ -121,5 +128,81 @@ export const OR_TECH_FILE = `tech_pp_missiles_2 = {
 	tier = 1
 	category = { propulsion }
 	prerequisites = { tech_pp_missiles_1 OR = { tech_pp_lasers_1 tech_pp_mass_drivers_1 } }
+}
+`;
+
+/** Shaped like `common/buildings/04_pop_assembly_buildings.txt`. */
+export const BUILDING_FILE = `# ##################
+# Refinery
+# ##################
+
+@pp_refinery_buildtime = 480
+
+building_pp_refinery = {
+	base_buildtime = @pp_refinery_buildtime
+	category = manufacturing
+	icon = building_pp_refinery
+
+	potential = {
+		exists = owner
+		has_upgraded_capital = yes
+	}
+
+	allow = {
+		has_major_upgraded_capital = yes
+	}
+
+	prerequisites = { "tech_gene_forging" }
+	upgrades = { building_pp_refinery_2 }
+
+	planet_limit = 1
+
+	triggered_planet_modifier = {
+		potential = {
+			exists = owner
+		}
+		modifier = {
+			planet_jobs_produces_mult = 0.1
+		}
+	}
+
+	triggered_planet_modifier = {
+		potential = {
+			has_modifier = pp_storm_touched
+		}
+		modifier = {
+			planet_jobs_upkeep_mult = -0.05
+		}
+	}
+
+	ai_weight = {
+		weight = 5
+	}
+}
+
+building_pp_refinery_2 = {
+	base_buildtime = @pp_refinery_buildtime
+	category = manufacturing
+	icon = building_pp_refinery_2
+
+	building_sets = { pp_refinery_set }
+	prerequisites = { "tech_gene_forging" }
+
+	planet_limit = {
+		base = 1
+		modifier = {
+			add = 1
+			has_ascension_perk = ap_engineered_evolution
+		}
+	}
+
+	triggered_planet_modifier = {
+		potential = {
+			always = yes
+		}
+		modifier = {
+			planet_jobs_produces_mult = 0.2
+		}
+	}
 }
 `;

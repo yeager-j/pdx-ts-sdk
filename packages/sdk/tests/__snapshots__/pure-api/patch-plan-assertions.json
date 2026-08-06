@@ -1,5 +1,15 @@
 [
   {
+    "registry": "building",
+    "key": "building_pp_refinery",
+    "rule": "last-wins",
+    "confidence": "verified",
+    "beats": [
+      "common/buildings/pp_buildings.txt"
+    ],
+    "verifiedAgainst": "4.4.6"
+  },
+  {
     "registry": "technology",
     "key": "tech_gene_forging",
     "rule": "last-wins",

@@ -9,15 +9,19 @@ import { parse, serialize, withoutLines } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { SwapPatchError } from "../../src/errors.ts";
-import { patchTechnology as patchTechnologyItem } from "../../src/generated/content-definers.ts";
+import {
+  patchBuilding as patchBuildingItem,
+  patchTechnology as patchTechnologyItem,
+} from "../../src/generated/content-definers.ts";
 import type { TechnologyPatch } from "../../src/generated/technology.ts";
+import { always } from "../../src/index.ts";
 import {
   anyOf,
   sha256Hex,
   viewFromFiles,
   type ParsedTechnology,
 } from "../../src/stellaris/vanilla/view.ts";
-import { OR_TECH_FILE, TECH_FILE, VARS_FILE } from "../fixtures/vanilla-fixture.ts";
+import { BUILDING_FILE, OR_TECH_FILE, TECH_FILE, VARS_FILE } from "../fixtures/vanilla-fixture.ts";
 
 /**
  * The generated definer returns a placeable item; these tests measure the
@@ -35,7 +39,7 @@ const FILES = {
 
 const vanilla = viewFromFiles(FILES);
 const geneForging = vanilla
-  .technology("tech_gene_forging")
+  .definition("technology", "tech_gene_forging")
   .require("cost", "prerequisites", "weight");
 
 // The unpatched fixture tech re-emitted in repo formatting, hand-written
@@ -199,25 +203,33 @@ describe("typed vanilla surface", () => {
   });
 
   it("throws on an unknown technology with a nearest-match hint", () => {
-    expect(() => vanilla.technology("gene_forging")).toThrow(/1 technologies/);
-    expect(() => vanilla.technology("gene_forging")).toThrow(/tech_gene_forging/);
+    expect(() => vanilla.definition("technology", "gene_forging")).toThrow(
+      /1 definitions of `technology`/
+    );
+    expect(() => vanilla.definition("technology", "gene_forging")).toThrow(/tech_gene_forging/);
   });
 
   it("refuses a technology_swap name, pointing at the parent", () => {
-    expect(() => vanilla.technology("tech_gene_forging_overtuned")).toThrow(SwapPatchError);
-    expect(() => vanilla.technology("tech_gene_forging_overtuned")).toThrow(
+    expect(() => vanilla.definition("technology", "tech_gene_forging_overtuned")).toThrow(
+      SwapPatchError
+    );
+    expect(() => vanilla.definition("technology", "tech_gene_forging_overtuned")).toThrow(
       /technology_swap inside tech_gene_forging/
     );
     // Pins the actionable half of the message, not a doc reference: the reason
     // it is refused and what to do instead.
-    expect(() => vanilla.technology("tech_gene_forging_overtuned")).toThrow(/no oracle evidence/);
-    expect(() => vanilla.technology("tech_gene_forging_overtuned")).toThrow(
+    expect(() => vanilla.definition("technology", "tech_gene_forging_overtuned")).toThrow(
+      /no oracle evidence/
+    );
+    expect(() => vanilla.definition("technology", "tech_gene_forging_overtuned")).toThrow(
       /Patch tech_gene_forging instead/
     );
   });
 
   it("require() names the missing field loudly", () => {
-    expect(() => vanilla.technology("tech_gene_forging").require("isRare")).toThrow(/isRare/);
+    expect(() => vanilla.definition("technology", "tech_gene_forging").require("isRare")).toThrow(
+      /isRare/
+    );
   });
 
   it("a block cost is unmodelled: carried in rest, invisible to the type", () => {
@@ -228,7 +240,7 @@ describe("typed vanilla surface", () => {
       "common/technology/pp_storm.txt":
         "tech_pp_storm = {\n\tcost = {\n\t\tfactor = 2\n\t}\n\tarea = physics\n\ttier = 2\n}\n",
     });
-    const storm = view.technology("tech_pp_storm");
+    const storm = view.definition("technology", "tech_pp_storm");
     expect(storm.cost).toBeUndefined();
     expect(storm.rest.map((entry) => entry.key)).toEqual(["cost"]);
     expect(() => storm.require("cost")).toThrow(/has no cost/);
@@ -263,7 +275,10 @@ describe("typed vanilla surface", () => {
   });
 
   it("refuses paths outside the parsed slice", () => {
-    expect(() => viewFromFiles({ "common/buildings/pp.txt": "" })).toThrow(/Unsupported path/);
+    // A real registry the SDK defines content for, and deliberately does not
+    // parse: the slice is PARSED_REGISTRIES, not "anything under common".
+    expect(() => viewFromFiles({ "common/traditions/pp.txt": "" })).toThrow(/Unsupported path/);
+    expect(() => viewFromFiles({ "common/traditions/pp.txt": "" })).toThrow(/common\/buildings/);
   });
 });
 
@@ -271,7 +286,7 @@ describe("OR-prerequisites", () => {
   const view = viewFromFiles({
     "common/technology/pp_eng_tech.txt": OR_TECH_FILE,
   });
-  const missiles = view.technology("tech_pp_missiles_2").require("prerequisites");
+  const missiles = view.definition("technology", "tech_pp_missiles_2").require("prerequisites");
 
   it("types the OR group as AnyOf alongside plain refs", () => {
     expect(missiles.prerequisites).toEqual([
@@ -372,7 +387,9 @@ describe("descriptor-derived patching", () => {
         "\tcategory = { c2 }\n}\n",
     });
     const emitted = serialize([
-      patchTechnology(view.technology("tech_pp_dup"), () => ({ category: ["c3"] })).toEntries(),
+      patchTechnology(view.definition("technology", "tech_pp_dup"), () => ({
+        category: ["c3"],
+      })).toEntries(),
     ]);
     expect(emitted).toBe(
       "tech_pp_dup = {\n\tarea = physics\n\tcategory = { c3 }\n\tgateway = g\n}\n"
@@ -452,7 +469,7 @@ describe("patched technology swaps", () => {
       "\tgateway = biological\n" +
       "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_b\n\t\tinherit_effects = no\n\t}\n}\n",
   });
-  const swapped = view.technology("tech_pp_swaps");
+  const swapped = view.definition("technology", "tech_pp_swaps");
 
   it("replaces every swap block at the first one's position", () => {
     const emitted = serialize([
@@ -491,5 +508,203 @@ describe("patched technology swaps", () => {
         "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_c\n\t}\n" +
         "\tgateway = biological\n}\n"
     );
+  });
+});
+
+/**
+ * The second registry through the same seam. Nothing below is a building-shaped
+ * variant of the machinery above — it is the same transform, the same view, and
+ * the same descriptors, reached through a registry whose parsed side models no
+ * fields at all. That is the property: a registry costs an overlay row and a
+ * `PARSED_REGISTRIES` row, not a code path.
+ */
+describe("the building slice", () => {
+  const view = viewFromFiles({ "common/buildings/pp_buildings.txt": BUILDING_FILE });
+  const refinery = view.definition("building", "building_pp_refinery");
+
+  it("parses every definition with its provenance and its registry tag", () => {
+    expect(view.definitions("building").map((building) => building.id)).toEqual([
+      "building_pp_refinery",
+      "building_pp_refinery_2",
+    ]);
+    expect(refinery.registry).toBe("building");
+    expect(refinery.sourceFile).toBe("common/buildings/pp_buildings.txt");
+    expect(refinery.sourceSha256).toBe(sha256Hex(BUILDING_FILE));
+    expect(refinery.citation).toMatch(/^common\/buildings\/pp_buildings\.txt:\d+$/);
+    expect(refinery.origin).toBe(view);
+  });
+
+  it("models no field, so the whole body rides in rest", () => {
+    // Nothing is property-accessible and nothing is dropped: `rest` is the
+    // body, which is what makes a registry with no reader still patchable.
+    expect(refinery.rest).toBe(refinery.body);
+    expect(refinery.rest.map((entry) => entry.key)).toEqual([
+      "base_buildtime",
+      "category",
+      "icon",
+      "potential",
+      "allow",
+      "prerequisites",
+      "upgrades",
+      "planet_limit",
+      "triggered_planet_modifier",
+      "triggered_planet_modifier",
+      "ai_weight",
+    ]);
+  });
+
+  it("re-emission is a semantic fixpoint", () => {
+    const emitted = serialize([refinery.toEntries()]);
+    const reparsed = parse(emitted, "emitted.txt");
+    expect(reparsed.diagnostics).toEqual([]);
+    expect(serialize(reparsed.items)).toBe(emitted);
+    expect(withoutLines(reparsed.items)).toEqual(
+      withoutLines(parse(BUILDING_FILE, "buildings.txt").items.slice(1, 2))
+    );
+  });
+
+  it("resolves the file-local @variable rather than trusting it", () => {
+    expect(() =>
+      viewFromFiles({
+        "common/buildings/broken.txt": "building_pp_x = {\n\tbase_buildtime = @nope\n}\n",
+      })
+    ).toThrow(/@nope/);
+  });
+
+  it("refuses a swap name for a registry that declares none, as an unknown id", () => {
+    // `SWAP_IDENTITIES` has no building row, so nothing is registered as a
+    // swap and the refusal above never fires here — an unknown id is just
+    // unknown, with the same nearest-match hint.
+    expect(() => view.definition("building", "building_pp_refiner")).toThrow(
+      /Unknown building "building_pp_refiner"/
+    );
+    expect(() => view.definition("building", "building_pp_refiner")).toThrow(
+      /2 definitions of `building`/
+    );
+  });
+
+  it("patches in place: a replaced trigger, an appended block, a flipped dual", () => {
+    const kept = refinery.body.filter((entry) => entry.key === "triggered_planet_modifier");
+    const patched = patchBuildingItem(refinery, () => ({
+      potential: always(),
+      planetLimit: { base: 2, modifiers: [{ add: 1, when: always() }] },
+      triggeredPlanetModifier: [
+        ...kept,
+        { when: always(), modifier: (m) => m.raw("planet_jobs_produces_mult", 0.3) },
+      ],
+    })).patched;
+    const emitted = serialize([patched.toEntries()]);
+    // Each patched key kept its slot, and the untouched ones rode through.
+    expect(emitted).toBe(
+      "building_pp_refinery = {\n" +
+        "\tbase_buildtime = @pp_refinery_buildtime\n" +
+        "\tcategory = manufacturing\n" +
+        "\ticon = building_pp_refinery\n" +
+        "\tpotential = {\n\t\talways = yes\n\t}\n" +
+        "\tallow = {\n\t\thas_major_upgraded_capital = yes\n\t}\n" +
+        '\tprerequisites = { "tech_gene_forging" }\n' +
+        "\tupgrades = { building_pp_refinery_2 }\n" +
+        "\tplanet_limit = {\n\t\tbase = 2\n\t\tmodifier = {\n\t\t\tadd = 1\n\t\t\talways = yes\n\t\t}\n\t}\n" +
+        "\ttriggered_planet_modifier = {\n" +
+        "\t\tpotential = {\n\t\t\texists = owner\n\t\t}\n" +
+        "\t\tmodifier = {\n\t\t\tplanet_jobs_produces_mult = 0.1\n\t\t}\n" +
+        "\t}\n" +
+        "\ttriggered_planet_modifier = {\n" +
+        "\t\tpotential = {\n\t\t\thas_modifier = pp_storm_touched\n\t\t}\n" +
+        "\t\tmodifier = {\n\t\t\tplanet_jobs_upkeep_mult = -0.05\n\t\t}\n" +
+        "\t}\n" +
+        "\ttriggered_planet_modifier = {\n" +
+        "\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tmodifier = {\n\t\t\tplanet_jobs_produces_mult = 0.3\n\t\t}\n" +
+        "\t}\n" +
+        "\tai_weight = {\n\t\tweight = 5\n\t}\n" +
+        "}\n"
+    );
+  });
+
+  it("flips the other building's dual the other way, block to scalar", () => {
+    const upgraded = view.definition("building", "building_pp_refinery_2");
+    const emitted = serialize([
+      patchBuildingItem(upgraded, () => ({ planetLimit: 3 })).patched.toEntries(),
+    ]);
+    expect(emitted).toContain("\tplanet_limit = 3\n");
+    expect(emitted).not.toContain("ap_engineered_evolution");
+  });
+
+  it("refuses a parsed entry belonging to another member, as it does elsewhere", () => {
+    const allow = refinery.body.find((entry) => entry.key === "allow")!;
+    expect(() => patchBuildingItem(refinery, () => ({ triggeredPlanetModifier: [allow] }))).toThrow(
+      '"triggeredPlanetModifier" was given a parsed "allow" entry, and this member writes ' +
+        '"triggered_planet_modifier"'
+    );
+  });
+
+  it("records the references a patched ref-valued member writes", () => {
+    const patched = patchBuildingItem(refinery, () => ({
+      upgrades: [{ id: "pp_building_annex" }],
+      prerequisites: ["pp_tech_refining"],
+    })).patched;
+    expect([...patched.refs].sort((a, b) => a.id.localeCompare(b.id))).toEqual([
+      { targets: ["building"], id: "pp_building_annex", field: "upgrades" },
+      { targets: ["technology"], id: "pp_tech_refining", field: "prerequisites" },
+    ]);
+  });
+});
+
+/**
+ * Which shapes a patch may carry is a question about the *define* path: the
+ * only localisation a definition mints for itself comes from
+ * `ContentAuthoring`'s pre-pass, which reaches `weightBlock` desc rows and
+ * `repeatedStruct` ids — and, since it descends `struct` levels, anything
+ * nested inside one. Everything else a definition can hold is a key the author
+ * wrote, copied verbatim by the lowering, and rides a patch unchanged.
+ */
+describe("what a patch may and may not carry", () => {
+  const view = viewFromFiles({ "common/buildings/pp_buildings.txt": BUILDING_FILE });
+  const refinery = view.definition("building", "building_pp_refinery");
+
+  it("carries the four building shapes that mint nothing", () => {
+    const emitted = serialize([
+      patchBuildingItem(refinery, () => ({
+        // triggeredModifierBlock: `description` and `custom_tooltip` are keys,
+        // and the modifier recorder writes `name = amount` rows.
+        triggeredPlanetModifier: [
+          {
+            when: always(),
+            description: "pp_refinery_bonus_desc",
+            modifier: (m) => m.raw("planet_jobs_produces_mult", 0.4),
+          },
+        ],
+        // modifierBlock: a recorder, nothing else.
+        planetModifier: (m) => m.raw("planet_housing_add", 2),
+        // effect: the effect recorder collects references, never localisation.
+        onBuilt: (colony) => {
+          colony.addModifier({ modifier: "pp_refinery_online", days: -1 });
+        },
+        // struct: `triggered_desc.text` is a locKey field — a pointer at a key
+        // the author owns, not a key the SDK mints.
+        triggeredDesc: [{ trigger: always(), text: "pp_refinery_triggered_desc" }],
+      })).patched.toEntries(),
+    ]);
+    expect(emitted).toContain("\t\tdescription = pp_refinery_bonus_desc\n");
+    expect(emitted).toContain("\tplanet_modifier = {\n\t\tplanet_housing_add = 2\n\t}\n");
+    expect(emitted).toContain("\ton_built = {\n\t\tadd_modifier = {");
+    expect(emitted).toContain("\t\ttext = pp_refinery_triggered_desc\n");
+  });
+
+  it("refuses a desc'd modifier row nested inside a struct member", () => {
+    // `technology_swap` is a struct whose `weight` is a dual with a WeightBlock
+    // arm — one level down from where the refusal used to stop looking, and a
+    // level the define path's own pre-pass descends.
+    expect(() =>
+      patchTechnology(geneForging, () => ({
+        technologySwap: [
+          {
+            name: "tech_gene_forging_frugal",
+            weight: { modifiers: [{ factor: 2, desc: "Because reasons" }] },
+          },
+        ],
+      }))
+    ).toThrow(/The patched "technologySwap\.weight" has a modifier row with a desc/);
   });
 });

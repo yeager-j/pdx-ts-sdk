@@ -31,14 +31,19 @@
 
 import type { ContentItem, ContributionItem } from "../content/types.ts";
 import { patchContent } from "../stellaris/vanilla/patch.ts";
-import type { ParsedTechnology } from "../stellaris/vanilla/view.ts";
+import type { ParsedBuilding, ParsedTechnology } from "../stellaris/vanilla/view.ts";
 import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";
 import type { ArchaeologicalSiteTypeDef } from "./archaeological-site-type.ts";
 import type { AscensionPerkDef } from "./ascension-perk.ts";
 import type { BombardmentStanceDef } from "./bombardment-stance.ts";
-import type { BuildingDef } from "./building.ts";
+import {
+  BUILDING_FIELDS,
+  type BuildingDef,
+  type BuildingPatch,
+  type BuildingPatchItem,
+} from "./building.ts";
 import type { CasusBelliDef } from "./casus-belli.ts";
 import type { CivicOrOriginDef } from "./civic-or-origin.ts";
 import type { ComponentSetDef } from "./component-set.ts";
@@ -106,7 +111,7 @@ export function patchTechnology<Source extends ParsedTechnology>(
 }
 
 /** What a building feature can contain. */
-export type BuildingItem = ContentItem<"building", BuildingDef>;
+export type BuildingItem = ContentItem<"building", BuildingDef> | BuildingPatchItem;
 
 /**
  * Internal lowering primitive for a building. Public authors call
@@ -117,6 +122,23 @@ export function defineBuilding<const Id extends string>(
   def: BuildingDef<Id>
 ): ContentItem<"building", BuildingDef<Id>> {
   return { itemKind: "content", type: "building", id: def.id, def };
+}
+
+/**
+ * Internal lowering primitive for patching a vanilla building. The transform
+ * runs here (pure); public authors call the capability method, while the duplicate-key
+ * and one-view checks stay in
+ * the internal fold, which sees every patch together, and the emitted filename
+ * is always resolver-computed — a patch item never carries a file of its own.
+ */
+export function patchBuilding<Source extends ParsedBuilding>(
+  building: Source,
+  patch: (building: Source) => BuildingPatch
+): BuildingPatchItem {
+  return {
+    itemKind: "patch",
+    patched: patchContent(building, patch, "building", BUILDING_FIELDS),
+  };
 }
 
 /** What a tradition feature can contain. */
