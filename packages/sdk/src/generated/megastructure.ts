@@ -117,7 +117,7 @@ export interface MegastructureFields {
   isRuinedOrbitalRing?: boolean;
   /** accepts country modifiers */
   countryModifier?: ModifierClosure<"country">;
-  triggeredCountryModifier?: TriggeredModifier<"country">;
+  triggeredCountryModifier?: TriggeredModifier<"country">[];
   shipModifier?: ModifierClosure<"ship">;
   stationModifier?: ModifierClosure<"megastructure">;
   onBuildQueued?: EffectBlock<"system", "country">;
@@ -452,7 +452,8 @@ export const MEGASTRUCTURE_FIELDS: readonly ContentField[] = [
     key: "triggered_country_modifier",
     member: "triggeredCountryModifier",
     shape: "triggeredModifierBlock",
-    form: "block",
+    form: "list",
+    repeated: true,
   },
   { key: "ship_modifier", member: "shipModifier", shape: "modifierBlock", form: "closure" },
   { key: "station_modifier", member: "stationModifier", shape: "modifierBlock", form: "closure" },

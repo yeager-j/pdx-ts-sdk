@@ -55,4 +55,12 @@ content_test_megastructure_foundry_2 = {
 			country_unity_produces_mult = 0.05
 		}
 	}
+	triggered_country_modifier = {
+		potential = {
+			has_technology = tech_mega_shipyard
+		}
+		modifier = {
+			country_naval_cap_add = 25
+		}
+	}
 }

@@ -40,6 +40,7 @@ import {
   type EventFleetRef,
   type GovernmentTriggerBlock,
   type JobRef,
+  type MegastructureFields,
   type ModifierClosure,
   type OpinionModifierRef,
   type ScopeRef,
@@ -1534,6 +1535,30 @@ describe("generated content authoring types", () => {
       name: "X",
       // @ts-expect-error — `upgrades` names buildings, not megastructures.
       upgrades: [gateway],
+    });
+  });
+
+  it("takes a megastructure's triggered country modifiers as a list", () => {
+    // megastructures.cwt declares the key `0..1` and vanilla's shroud_seal
+    // writes two, so an `arity: "repeated"` overlay row lifts the member — the
+    // type is the whole fix, since a singular member makes the second block
+    // unwritable rather than merely awkward.
+    expectTypeOf<MegastructureFields["triggeredCountryModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"country">[] | undefined
+    >();
+    contentMod.megastructure("two_modifiers", {
+      name: "X",
+      entity: "x_entity",
+      triggeredCountryModifier: [
+        { when: hasCountryFlag("first"), modifier: (m) => m.country.naval.cap.add(10) },
+        { when: hasCountryFlag("second"), modifier: (m) => m.country.naval.cap.add(20) },
+      ],
+    });
+    contentMod.megastructure("bare_modifier", {
+      name: "X",
+      entity: "x_entity",
+      // @ts-expect-error — a list, so a bare block no longer assigns.
+      triggeredCountryModifier: { when: hasCountryFlag("only"), modifier: (m) => m.raw("x", 1) },
     });
   });
 

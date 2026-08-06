@@ -733,16 +733,24 @@ export interface ContentFieldOverride {
    */
   readonly scope?: string;
   /**
-   * Asserts that the key is written at most once, where CWT's cardinality says
-   * otherwise and the corpus proves it wrong.
-   *
-   * `## cardinality = 0..inf` on a bare `bool` lowers to `boolean[]` — a field
-   * whose only sensible authoring is one flag. Like {@link scope}, this states
-   * game semantics the rules get wrong, so a row needs evidence: the arity
-   * mismatches shape conformance reports are that evidence, and a row here
+   * Asserts how often the key may be written, where CWT's cardinality says
+   * otherwise and the corpus proves it wrong. Like {@link scope}, this states
+   * game semantics the rules get wrong, so a row needs evidence and a row
    * without one is a guess.
+   *
+   * `"single"` narrows: `## cardinality = 0..inf` on a bare `bool` lowers to
+   * `boolean[]`, a field whose only sensible authoring is one flag.
+   *
+   * `"repeated"` widens, and is the harder direction to catch. A field CWT
+   * declares `0..1` lowers to a singular member, so a second block the game
+   * writes is not merely awkward to author — it is unwritable, and the
+   * definition cannot be reproduced at all. Shape conformance does not find
+   * these on its own: `corpus.ts` reports an `arity` mismatch only when the
+   * SDK lowered a list the corpus never repeats, never the reverse, so the
+   * evidence for a `"repeated"` row is the fixture's own `repeated` count
+   * (`packages/sdk/tests/fixtures/corpus/<registry>.json`) read directly.
    */
-  readonly arity?: "single";
+  readonly arity?: "single" | "repeated";
   /**
    * Authoring member name, when the mechanically derived one collides with a
    * localisation slot: `desc = { trigger text }` (the repeated block form of
@@ -1812,8 +1820,16 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     "megastructure.triggered_country_modifier",
     {
       shape: "triggeredModifierBlock",
+      arity: "repeated",
       reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map. " +
+        "megastructures.cwt:221-223 declares the key `## cardinality = 0..1`, and the shipped " +
+        "data says otherwise: the corpus fixture records `repeated: 1` of the 1 definition that " +
+        "writes it (packages/sdk/tests/fixtures/corpus/megastructure.json), which is " +
+        "22_shroud_seal.txt's `shroud_seal` writing two blocks — one gating " +
+        "country_naval_cap_add on a relic, the second gating shroud_storm_repelling on a " +
+        "technology. Two potentials cannot merge into one block, so the singular member the " +
+        "rules imply leaves the second one unwritable rather than merely awkward.",
     },
   ],
 ]);

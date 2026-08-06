@@ -902,10 +902,20 @@ function defineContentExample(): PureMod {
     upgradeFrom: [foundry],
     buildTime: 5_400,
     countryModifier: (m) => m.country.naval.cap.add(100),
-    triggeredCountryModifier: {
-      when: hasCountryFlag("content_test_machine_agenda_started"),
-      modifier: (m) => m.country.unity.produces.mult(0.05),
-    },
+    // Two blocks, not one: the rules declare `## cardinality = 0..1` and
+    // vanilla's own shroud_seal writes the key twice, so the field carries an
+    // `arity: "repeated"` assertion. Two potentials cannot merge into one
+    // block, which is what makes the second unwritable without it.
+    triggeredCountryModifier: [
+      {
+        when: hasCountryFlag("content_test_machine_agenda_started"),
+        modifier: (m) => m.country.unity.produces.mult(0.05),
+      },
+      {
+        when: hasTechnology("tech_mega_shipyard"),
+        modifier: (m) => m.country.naval.cap.add(25),
+      },
+    ],
   });
 
   // The neighbor a system links to, defined first so the link below is a
@@ -1057,6 +1067,15 @@ describe("generated content registries", () => {
     expect(rendered).toContain("\tcountry_modifier = {\n\t\tcountry_naval_cap_add = 50");
     expect(rendered).toContain("\tstation_modifier = {\n\t\tstarbase_shipyard_capacity_add = 5");
     expect(rendered).toContain("\t\tmodifier = {\n\t\t\tcountry_unity_produces_mult = 0.05");
+    // The rules say `0..1`; vanilla's shroud_seal writes two, so an
+    // `arity: "repeated"` assertion makes the member a list. Both blocks reach
+    // the file, in the order they were authored — two potentials cannot merge
+    // into one block, so losing the second would lose a whole modifier.
+    const upgrade = rendered.slice(rendered.indexOf("content_test_megastructure_foundry_2 = {"));
+    expect(upgrade.match(/^\ttriggered_country_modifier = \{$/gm)).toHaveLength(2);
+    expect(upgrade.indexOf("country_unity_produces_mult = 0.05")).toBeLessThan(
+      upgrade.indexOf("has_technology = tech_mega_shipyard")
+    );
     // The FROM the rules name on `possible` reaches the emitted script.
     expect(rendered).toContain(
       "\tpossible = {\n\t\tfrom = {\n\t\t\thas_country_flag = content_test_can_build_foundry"

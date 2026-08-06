@@ -258,6 +258,30 @@ describe("content-type codegen", () => {
     ]);
   });
 
+  it("asserts the widening arity direction too, where a 0..1 key repeats in the corpus", () => {
+    // The mirror of the row above, and the more damaging direction: a `0..1`
+    // the game contradicts does not merely make the member awkward, it makes
+    // the second block unwritable. megastructures.cwt:221-223 declares
+    // triggered_country_modifier `0..1`; vanilla's shroud_seal writes two,
+    // gating different modifiers on different potentials, so an
+    // `arity: "repeated"` row lifts the member to a list.
+    const megastructure = emissions.get("megastructure")!;
+    expect(megastructure.code).toContain(
+      'triggeredCountryModifier?: TriggeredModifier<"country">[];'
+    );
+    // The descriptor the writer reads has to agree with the member type —
+    // asserting the cardinality once, before either is derived, is what keeps
+    // them from disagreeing.
+    expect(megastructure.code).toContain('form: "list"');
+    expect(
+      megastructure.emittedFields.find((field) => field.field === "triggered_country_modifier")
+        ?.repeated
+    ).toBe(true);
+    // The assertion is scoped to the one field that earned it: country_modifier
+    // sits beside it under the same rules and stays singular.
+    expect(megastructure.code).toContain('countryModifier?: ModifierClosure<"country">;');
+  });
+
   it("emits fields the curated list used to withhold", () => {
     // Each of these lowers cleanly and was absent only because nobody had
     // written it down. decision.sound in particular is set by 66 shipped
@@ -992,8 +1016,10 @@ describe("content-type codegen", () => {
     expect(megastructure?.code).toContain('countryModifier?: ModifierClosure<"country">;');
     expect(megastructure?.code).toContain('shipModifier?: ModifierClosure<"ship">;');
     expect(megastructure?.code).toContain('stationModifier?: ModifierClosure<"megastructure">;');
+    // A list, not a single block — see the arity-assertion test above for the
+    // corpus evidence that the rules' `0..1` is wrong here.
     expect(megastructure?.code).toContain(
-      'triggeredCountryModifier?: TriggeredModifier<"country">;'
+      'triggeredCountryModifier?: TriggeredModifier<"country">[];'
     );
     // The build hooks are system-scoped with the building country as FROM, and
     // the type says so rather than flattening to one scope.
