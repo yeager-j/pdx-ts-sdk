@@ -145,6 +145,18 @@ export type DefinedTechnology<Id extends string = string> = DefinedContent<
  * key to win.
  */
 export interface TechnologyPatch {
+  /**
+   * Replacement English text for vanilla's own `<vanilla id>` key.
+   * Emitted to `localisation/replace/`, the layer the game resolves ahead
+   * of the ordinary one — a rename, not a new key.
+   */
+  readonly name?: string;
+  /**
+   * Replacement English text for vanilla's own `<vanilla id>_desc` key.
+   * Emitted to `localisation/replace/`, the layer the game resolves ahead
+   * of the ordinary one — a rename, not a new key.
+   */
+  readonly desc?: string;
   readonly area?: PatchInput<ResearchArea>;
   readonly tier?: PatchInput<TechnologyTierRef | string | number>;
   readonly category?: PatchInput<

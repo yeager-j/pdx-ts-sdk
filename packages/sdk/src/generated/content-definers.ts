@@ -40,6 +40,7 @@ import type { AscensionPerkDef } from "./ascension-perk.ts";
 import type { BombardmentStanceDef } from "./bombardment-stance.ts";
 import {
   BUILDING_FIELDS,
+  BUILDING_LOCALISATION,
   type BuildingDef,
   type BuildingPatch,
   type BuildingPatchItem,
@@ -69,6 +70,7 @@ import type { StaticModifierDef } from "./static-modifier.ts";
 import type { StrikeCraftComponentTemplateDef } from "./strike-craft-component-template.ts";
 import {
   TECHNOLOGY_FIELDS,
+  TECHNOLOGY_LOCALISATION,
   type TechnologyDef,
   type TechnologyPatch,
   type TechnologyPatchItem,
@@ -99,14 +101,25 @@ export function defineTechnology<const Id extends string>(
  * and one-view checks stay in
  * the internal fold, which sees every patch together, and the emitted filename
  * is always resolver-computed — a patch item never carries a file of its own.
+ * `prefix` is the mod prefix the capability closure binds: a patch that mints a
+ * localisation key of its own derives it from `<prefix>_<vanilla id>`, so the key
+ * cannot collide with vanilla's by construction.
  */
 export function patchTechnology<Source extends ParsedTechnology>(
   technology: Source,
-  patch: (technology: Source) => TechnologyPatch
+  patch: (technology: Source) => TechnologyPatch,
+  prefix: string
 ): TechnologyPatchItem {
   return {
     itemKind: "patch",
-    patched: patchContent(technology, patch, "technology", TECHNOLOGY_FIELDS),
+    patched: patchContent(
+      technology,
+      patch,
+      "technology",
+      TECHNOLOGY_FIELDS,
+      TECHNOLOGY_LOCALISATION,
+      prefix
+    ),
   };
 }
 
@@ -130,14 +143,25 @@ export function defineBuilding<const Id extends string>(
  * and one-view checks stay in
  * the internal fold, which sees every patch together, and the emitted filename
  * is always resolver-computed — a patch item never carries a file of its own.
+ * `prefix` is the mod prefix the capability closure binds: a patch that mints a
+ * localisation key of its own derives it from `<prefix>_<vanilla id>`, so the key
+ * cannot collide with vanilla's by construction.
  */
 export function patchBuilding<Source extends ParsedBuilding>(
   building: Source,
-  patch: (building: Source) => BuildingPatch
+  patch: (building: Source) => BuildingPatch,
+  prefix: string
 ): BuildingPatchItem {
   return {
     itemKind: "patch",
-    patched: patchContent(building, patch, "building", BUILDING_FIELDS),
+    patched: patchContent(
+      building,
+      patch,
+      "building",
+      BUILDING_FIELDS,
+      BUILDING_LOCALISATION,
+      prefix
+    ),
   };
 }
 

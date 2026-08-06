@@ -22,14 +22,35 @@
  *   quote-promote `"@t3cost"` into a string the game cannot resolve;
  * - a passthrough (a parsed occurrence taken from the source body, or an
  *   {@link AnyOf} group) is emitted verbatim rather than re-lowered.
+ *
+ * Display text enters through two doors, and they are different mechanisms
+ * rather than one with two spellings. A registry's own localisation slots
+ * (`name`, `desc`) are a *rename*: the text replaces what vanilla already
+ * defines, so it is written under vanilla's own key and lands in
+ * `localisation/replace/`, the layer the game resolves first — a layer, never
+ * a claim about filename order. Text on a patched member (a desc'd modifier
+ * row) is new, so it needs a key nothing else can be using; the key is the
+ * define path's own derivation with `<prefix>_<vanillaId>` substituted for the
+ * owner, and it lands in the ordinary layer beside every other key this mod
+ * mints.
  */
 
 import { container, quoted, scalar, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
+import { localisationKey, type LocalisationEntry } from "../../content/authoring.ts";
+import { isComplexTriggerModifier } from "../../content/blocks.ts";
 import { fieldEntries } from "../../content/lower.ts";
-import type { ContentField } from "../../content/schema.ts";
+import type { ContentField, ContentLocalisation } from "../../content/schema.ts";
+import type { ModWarning } from "../../diagnostics.ts";
 import { refId } from "../../generated/refs.ts";
+import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefSink, ContentRefUse } from "../../references.ts";
+import {
+  modifierDescKey,
+  registerComplexTriggerModifierDescKey,
+  registerModifierDescKey,
+} from "../../script/effects/modifiers.ts";
+import type { ModifierWithLoc } from "../../script/effects/types.ts";
 import type { AnyOf, ParsedDefinition, ParsedNumber } from "./view.ts";
 
 /** What the shared lowering reads; the same shape `fieldEntries` is handed. */
@@ -84,6 +105,28 @@ export interface PatchedContent<Source extends ParsedDefinition = ParsedDefiniti
    * to resolve on the same terms a `define`'s do.
    */
   readonly refs: readonly ContentRefUse[];
+  /**
+   * Text this patch mints keys of its own for, bound for the mod's ordinary
+   * localization file.
+   *
+   * Every key here is built from `<prefix>_<vanillaId>`, so it cannot collide
+   * with a vanilla key by construction — the same guarantee `assertPrefixed`
+   * gives a definition's own ids, reached by substituting the owner rather
+   * than by checking the result.
+   */
+  readonly loc: readonly LocalisationEntry[];
+  /**
+   * Replacement text for keys vanilla already defines — a rename.
+   *
+   * Keyed by vanilla's own slot key (the registry's localisation pattern
+   * applied to the vanilla id), so it is bound for `localisation/replace/`,
+   * the layer the game resolves ahead of the ordinary one. Filename order
+   * never decides a localisation winner, so this is a mechanism rather than a
+   * claim, and carries no win assertion.
+   */
+  readonly replaceLoc: readonly LocalisationEntry[];
+  /** Diagnostics raised while minting keys, for `mod.warnings`. */
+  readonly warnings: readonly ModWarning[];
   toEntries(): PdxEntry;
 }
 
@@ -194,71 +237,155 @@ function lowerable(value: unknown, field: ContentField, ctx: LoweringContext): u
 }
 
 /**
- * Refuses a patched member carrying display text the patch path cannot mint a
- * localisation key for.
+ * What the minting walk below accumulates: the owning identity, the entries it
+ * mints, and the diagnostics it raises.
+ */
+interface MintContext {
+  /**
+   * `<prefix>_<vanillaId>` — the identity every key this walk mints is built
+   * from, and the `ownerId` the lowering will resolve those keys under.
+   *
+   * A patched definition keeps vanilla's id in the emitted file, but a
+   * localisation key is not the definition, and a key derived from the bare
+   * vanilla id would be a key vanilla itself might already define. Prefixing
+   * the owner is the same construction `assertPrefixed` enforces for content
+   * this mod defines, applied at the one place a patch mints anything.
+   */
+  readonly ownerId: string;
+  readonly into: LocalisationEntry[];
+  readonly warnings: ModWarning[];
+}
+
+/**
+ * An authored record, as opposed to a passthrough occurrence.
  *
- * `defineX` registers a desc-bearing modifier row's key in a `ContentAuthoring`
- * pre-pass that sees the whole definition; a patch runs no such pass, and the
- * prefix-derived minting rule for patched definitions is not in yet. Dropping
- * the text or inventing an unstable key would both be worse than saying so.
+ * Only authored values can carry display text: a passthrough is already a
+ * PDXScript node taken from the shipped body, so its text (if any) is
+ * vanilla's own, already keyed, and re-emitted verbatim. Minting for one would
+ * invent a key for a `desc = <key>` line the game already resolves. Every node
+ * kind carries `kind`, and no authored record does.
+ */
+function isAuthoredRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null && !Array.isArray(value) && !("kind" in value);
+}
+
+/** The define path's own path accumulation: enclosing keys joined with `_`. */
+function joinFieldPath(path: string, key: string): string {
+  return path === "" ? key : `${path}_${key}`;
+}
+
+/**
+ * Mints and registers one localisation key per desc-bearing row of a patched
+ * `WeightBlock`.
  *
- * The shapes covered are exactly the ones that pre-pass reaches
- * (`ContentAuthoring.collectRepeatedStructs`): `weightBlock`/`weightBlockWithLoc`
- * rows carrying `desc`, `repeatedStruct` ids carrying localisation, and — since
- * the walk descends `struct` levels — anything either of those is nested
- * inside. The other block shapes a definition can hold mint nothing: a
+ * This is `ContentAuthoring.collectModifierDescs` with the owner substituted,
+ * deliberately reusing `modifierDescKey` and the index-keyed complex form
+ * rather than forking them: a patched row and a defined row derive their keys
+ * the same way, differing only in what `ownerId` is. Registration runs before
+ * the field lowers, exactly as `define`'s pre-pass does, because
+ * `modifierEntry` refuses a `desc` it cannot resolve a key for.
+ */
+function mintModifierDescs(
+  value: unknown,
+  fieldKey: string,
+  fieldPath: string,
+  ctx: MintContext
+): void {
+  const rows = (value as { readonly modifiers?: unknown }).modifiers;
+  if (!Array.isArray(rows)) {
+    return;
+  }
+  const ownerKey = `${ctx.ownerId}::${fieldKey}`;
+  (rows as readonly unknown[]).forEach((row, index) => {
+    if (!isAuthoredRecord(row) || row["desc"] === undefined) {
+      return;
+    }
+    const typed = row as unknown as ModifierWithLoc<ScopeName>;
+    if (isComplexTriggerModifier(typed)) {
+      const key = `${ctx.ownerId}_${fieldPath}_${index}`;
+      ctx.into.push([key, typed.desc]);
+      registerComplexTriggerModifierDescKey(typed, ownerKey, key);
+      return;
+    }
+    const { key, unstableWarning } = modifierDescKey(ctx.ownerId, fieldPath, typed);
+    if (unstableWarning !== undefined) {
+      ctx.warnings.push({ code: "unstable-desc-key", message: unstableWarning });
+    }
+    ctx.into.push([key, typed.desc]);
+    registerModifierDescKey(typed, ownerKey, key);
+  });
+}
+
+/**
+ * Mints the localisation a patched member needs, and refuses the shapes that
+ * still have nowhere to put one.
+ *
+ * The shapes reached are exactly the ones `define`'s own pre-pass
+ * (`ContentAuthoring.collectRepeatedStructs`) reaches:
+ * `weightBlock`/`weightBlockWithLoc` rows carrying `desc`, `repeatedStruct`
+ * ids carrying localisation, and — since the walk descends `struct` and `dual`
+ * levels — anything either is nested inside. The first is minted here; the
+ * second is refused, because a `repeatedStruct` entry's key *is* an id of this
+ * mod's own and a patch has no minting rule for one (no live patch registry
+ * has such a field, so nothing is withheld in practice).
+ *
+ * The other block shapes a definition can hold mint nothing: a
  * `triggeredModifierBlock`'s `description`/`custom_tooltip`, and a `locKey`
  * scalar such as `triggered_desc.text`, are keys the author writes and the
  * lowering copies; `modifierBlock` and `effect` run recorders that emit
- * `name = amount` rows and script entries only. Those ride through a patch
- * unchanged, and refusing them would refuse valid work.
+ * `name = amount` rows and script entries only. Those ride through unchanged.
  */
-function assertNoLocalisation(value: unknown, field: ContentField, member: string): void {
+function mintLocalisation(
+  value: unknown,
+  field: ContentField,
+  member: string,
+  path: string,
+  ctx: MintContext
+): void {
   switch (field.shape) {
     case "weightBlock":
-    case "weightBlockWithLoc": {
-      const rows =
-        (value as { readonly modifiers?: readonly { desc?: unknown }[] }).modifiers ?? [];
-      if (rows.some((row) => row.desc !== undefined)) {
-        throw new Error(
-          `The patched "${member}" has a modifier row with a desc, which needs a localisation ` +
-            "key minted for it, and a patch has nowhere yet to register one: desc'd modifier " +
-            "rows in patches arrive with the patch-localization change. Patch the field without " +
-            "desc, or define your own content instead of patching."
-        );
-      }
+    case "weightBlockWithLoc":
+      mintModifierDescs(value, field.key, joinFieldPath(path, field.key), ctx);
       return;
-    }
     case "repeatedStruct":
       if (field.localisation.length > 0) {
         throw new Error(
           `The patched "${member}" is a nested definition whose ids carry localisation, and a ` +
-            "patch has nowhere yet to register one: patched localization arrives with the " +
-            "patch-localization change."
+            "patch has no rule for minting an id of its own inside a definition it does not " +
+            "own. Patched localization covers renames (the registry's own name/desc members) " +
+            "and desc'd modifier rows in weight blocks; define your own content for the rest."
         );
       }
       return;
     case "dual":
+      // Every arm, not the resolved one: `dualArm` throws on a form no arm
+      // takes, and the lowering below is where that belongs. An arm whose
+      // shape does not match what the author passed finds nothing and mints
+      // nothing on its own.
       for (const arm of field.arms) {
-        assertNoLocalisation(value, arm, member);
+        mintLocalisation(value, arm, member, path, ctx);
       }
       return;
     case "struct": {
       // A struct carries no localisation of its own, but the fields inside it
       // are ordinary fields — `technology_swap`'s `weight` is a dual whose
-      // block arm is a `WeightBlock`, and a desc'd row there needs the same
-      // key mint one at the top level does. A passthrough element carries a
-      // parsed occurrence rather than an authored record, so it has no member
-      // to read and drops out on its own.
+      // block arm is a `WeightBlock`, and a desc'd row there mints the same
+      // key one at the top level does. Passthrough elements keep their index,
+      // so an authored sibling's path does not move when one is added.
       const items = Array.isArray(value) ? (value as readonly unknown[]) : [value];
-      for (const item of items) {
+      const fieldPath = joinFieldPath(path, field.key);
+      items.forEach((item, index) => {
+        if (!isAuthoredRecord(item)) {
+          return;
+        }
+        const itemPath = field.repeated ? `${fieldPath}_${index}` : fieldPath;
         for (const nested of field.fields) {
-          const inner = (item as Readonly<Record<string, unknown>> | null)?.[nested.member];
+          const inner = item[nested.member];
           if (inner !== undefined) {
-            assertNoLocalisation(inner, nested, `${member}.${nested.member}`);
+            mintLocalisation(inner, nested, `${member}.${nested.member}`, itemPath, ctx);
           }
         }
-      }
+      });
       return;
     }
     default:
@@ -289,9 +416,13 @@ function assertPatchable(
   patched: Readonly<Record<string, unknown>>,
   source: ParsedDefinition,
   registry: string,
-  patchable: ReadonlyMap<string, ContentField>
+  patchable: ReadonlyMap<string, ContentField>,
+  locSlots: ReadonlyMap<string, ContentLocalisation>
 ): void {
   for (const member of Object.keys(patched)) {
+    if (locSlots.has(member)) {
+      continue;
+    }
     if (member === "id") {
       throw new Error(
         `A patch of ${registry} "${source.id}" may not set "id": a patched definition keeps ` +
@@ -325,18 +456,49 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
   source: Source,
   patch: (source: Source) => Patch,
   registry: Source["registry"],
-  fields: readonly ContentField[]
+  fields: readonly ContentField[],
+  localisation: readonly ContentLocalisation[],
+  prefix: string
 ): PatchedContent<Source> {
   const patched = patch(source) as Readonly<Record<string, unknown>>;
   const patchable = new Map(
     fields.flatMap((field) => (keyOf(field) === undefined ? [] : [[field.member, field] as const]))
   );
-  assertPatchable(patched, source, registry, patchable);
+  const locSlots = new Map(localisation.map((slot) => [slot.member, slot] as const));
+  assertPatchable(patched, source, registry, patchable, locSlots);
+
+  // A rename writes vanilla's own slot key — the registry's pattern applied to
+  // the vanilla id — so the text lands where the game already looks. It is a
+  // replacement, not a new key, which is why it goes to its own layer rather
+  // than beside the minted keys below.
+  const replaceLoc: LocalisationEntry[] = [];
+  for (const slot of localisation) {
+    const text = patched[slot.member];
+    if (text !== undefined) {
+      replaceLoc.push([localisationKey(slot.pattern, source.id), text as string]);
+    }
+  }
+
+  const mint: MintContext = {
+    ownerId: `${prefix}_${source.id}`,
+    into: [],
+    warnings: [],
+  };
+  // Every field's keys are minted before any field lowers, mirroring the two
+  // passes `define` runs for the same reason: `modifierEntry` resolves a row's
+  // key at lowering time and refuses one that was never registered.
+  for (const field of fields) {
+    const value = patched[field.member];
+    if (value !== undefined && keyOf(field) !== undefined) {
+      mintLocalisation(value, field, field.member, "", mint);
+    }
+  }
+
   const refs: ContentRefUse[] = [];
   const ctx: LoweringContext = {
     collect: (use: ContentRefUse) => refs.push(use),
     path: "",
-    ownerId: source.id,
+    ownerId: mint.ownerId,
   };
   const replacements = new Map<string, PdxEntry[]>();
   for (const field of fields) {
@@ -348,7 +510,6 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
     if (key === undefined) {
       continue;
     }
-    assertNoLocalisation(value, field, field.member);
     const entries = fieldEntries({ [field.member]: lowerable(value, field, ctx) }, [field], ctx);
     replacements.set(key, [...(replacements.get(key) ?? []), ...entries]);
   }
@@ -359,6 +520,9 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
     source,
     def: patched,
     refs,
+    loc: mint.into,
+    replaceLoc,
+    warnings: mint.warnings,
     toEntries(): PdxEntry {
       const body: PdxEntry[] = [];
       const substituted = new Set<string>();

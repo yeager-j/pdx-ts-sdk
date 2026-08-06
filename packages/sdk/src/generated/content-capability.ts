@@ -32,13 +32,14 @@
 
 import { defineSituationType, type SituationTypeCapabilityDef } from "../content/situations.ts";
 import type { ContentItem } from "../content/types.ts";
+import type { ParsedBuilding, ParsedTechnology } from "../stellaris/vanilla/view.ts";
 import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";
 import type { ArchaeologicalSiteTypeDef } from "./archaeological-site-type.ts";
 import type { AscensionPerkDef } from "./ascension-perk.ts";
 import type { BombardmentStanceDef } from "./bombardment-stance.ts";
-import type { BuildingDef } from "./building.ts";
+import type { BuildingDef, BuildingPatch, BuildingPatchItem } from "./building.ts";
 import type { CasusBelliDef } from "./casus-belli.ts";
 import type { CivicOrOriginDef } from "./civic-or-origin.ts";
 import type { ComponentSetDef } from "./component-set.ts";
@@ -101,7 +102,7 @@ import type { SpeciesClassDef } from "./species-class.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
 import type { StaticModifierDef } from "./static-modifier.ts";
 import type { StrikeCraftComponentTemplateDef } from "./strike-craft-component-template.ts";
-import type { TechnologyDef } from "./technology.ts";
+import type { TechnologyDef, TechnologyPatch, TechnologyPatchItem } from "./technology.ts";
 import type { TraditionCategoryDef } from "./tradition-category.ts";
 import type { TraditionDef } from "./tradition.ts";
 import type { UtilityComponentTemplateDef } from "./utility-component-template.ts";
@@ -380,9 +381,14 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
   ): ContentItem<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;
   /**
    * Patches a vanilla technology as a whole-object override.
-   * Unlike a capability definition method, it mints no id and owns no new content.
+   * Unlike a capability definition method, it mints no id and owns no new content —
+   * but it does mint localisation keys for text it adds, from this capability's
+   * prefix, which is why the method is bound to the capability rather than free.
    */
-  readonly patchTechnology: typeof patchTechnology;
+  patchTechnology<Source extends ParsedTechnology>(
+    technology: Source,
+    patch: (technology: Source) => TechnologyPatch
+  ): TechnologyPatchItem;
   /**
    * Defines a building from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -394,9 +400,14 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
   ): ContentItem<"building", BuildingDef<MintedContentId<P, I, "building", Name>>>;
   /**
    * Patches a vanilla building as a whole-object override.
-   * Unlike a capability definition method, it mints no id and owns no new content.
+   * Unlike a capability definition method, it mints no id and owns no new content —
+   * but it does mint localisation keys for text it adds, from this capability's
+   * prefix, which is why the method is bound to the capability rather than free.
    */
-  readonly patchBuilding: typeof patchBuilding;
+  patchBuilding<Source extends ParsedBuilding>(
+    building: Source,
+    patch: (building: Source) => BuildingPatch
+  ): BuildingPatchItem;
   /**
    * Defines a tradition from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -787,7 +798,8 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
 /** Builds the internal content-method table for a mod capability. */
 export function contentCapabilityMethods<P extends string, I extends IdProfile>(
   mint: ContentIdMinter<P, I>,
-  assertNestedId: NestedDefinitionIdAsserter
+  assertNestedId: NestedDefinitionIdAsserter,
+  prefix: P
 ): ContentCapabilityMethods<P, I> {
   return Object.freeze({
     technology: <const Name extends string>(
@@ -797,7 +809,10 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       defineTechnology({ ...def, id: mint("technology", name) } as TechnologyDef<
         MintedContentId<P, I, "technology", Name>
       >),
-    patchTechnology,
+    patchTechnology: <Source extends ParsedTechnology>(
+      technology: Source,
+      patch: (technology: Source) => TechnologyPatch
+    ) => patchTechnology(technology, patch, prefix),
     building: <const Name extends string>(
       name: Name,
       def: Omit<BuildingDef<MintedContentId<P, I, "building", Name>>, "id">
@@ -805,7 +820,10 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       defineBuilding({ ...def, id: mint("building", name) } as BuildingDef<
         MintedContentId<P, I, "building", Name>
       >),
-    patchBuilding,
+    patchBuilding: <Source extends ParsedBuilding>(
+      building: Source,
+      patch: (building: Source) => BuildingPatch
+    ) => patchBuilding(building, patch, prefix),
     tradition: <const Name extends string>(
       name: Name,
       def: Omit<TraditionDef<MintedContentId<P, I, "tradition", Name>>, "id">

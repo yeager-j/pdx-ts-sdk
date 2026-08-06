@@ -8,20 +8,30 @@
 import { parse, serialize, withoutLines } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import type { ContentField } from "../../src/content/schema.ts";
 import { SwapPatchError } from "../../src/errors.ts";
+import type { BuildingPatch } from "../../src/generated/building.ts";
 import {
   patchBuilding as patchBuildingItem,
   patchTechnology as patchTechnologyItem,
 } from "../../src/generated/content-definers.ts";
 import type { TechnologyPatch } from "../../src/generated/technology.ts";
 import { always } from "../../src/index.ts";
+import { patchContent } from "../../src/stellaris/vanilla/patch.ts";
 import {
   anyOf,
   sha256Hex,
   viewFromFiles,
+  type ParsedBuilding,
   type ParsedTechnology,
 } from "../../src/stellaris/vanilla/view.ts";
 import { BUILDING_FILE, OR_TECH_FILE, TECH_FILE, VARS_FILE } from "../fixtures/vanilla-fixture.ts";
+
+/**
+ * The prefix a capability would bind into its `patchX` closure. Every
+ * localisation key a patch mints starts with it.
+ */
+const PREFIX = "pp";
 
 /**
  * The generated definer returns a placeable item; these tests measure the
@@ -30,7 +40,12 @@ import { BUILDING_FILE, OR_TECH_FILE, TECH_FILE, VARS_FILE } from "../fixtures/v
 const patchTechnology = <Source extends ParsedTechnology>(
   technology: Source,
   patch: (technology: Source) => TechnologyPatch
-) => patchTechnologyItem(technology, patch).patched;
+) => patchTechnologyItem(technology, patch, PREFIX).patched;
+
+const patchBuilding = <Source extends ParsedBuilding>(
+  building: Source,
+  patch: (building: Source) => BuildingPatch
+) => patchBuildingItem(building, patch, PREFIX).patched;
 
 const FILES = {
   "common/technology/pp_soc_tech.txt": TECH_FILE,
@@ -411,12 +426,57 @@ describe("descriptor-derived patching", () => {
     );
   });
 
-  it("refuses a desc-bearing modifier row until patches can mint its key", () => {
-    expect(() =>
-      patchTechnology(geneForging, () => ({
-        weightModifier: { modifiers: [{ factor: 2, desc: "Because reasons" }] },
-      }))
-    ).toThrow(/desc'd modifier rows in patches arrive with the patch-localization change/);
+  it("mints a prefixed key for a desc-bearing modifier row, and lowers it", () => {
+    const patched = patchTechnology(geneForging, () => ({
+      weightModifier: { modifiers: [{ factor: 2, desc: "Because reasons" }] },
+    }));
+    // The key is the define path's own derivation with the owner substituted:
+    // `<prefix>_<vanillaId>` leads it, so it cannot be a key vanilla defines.
+    const [entry] = patched.loc;
+    expect(entry?.[0]).toMatch(/^pp_tech_gene_forging_weight_modifier_[0-9a-f]{8}$/);
+    expect(entry?.[1]).toBe("Because reasons");
+    expect(patched.replaceLoc).toEqual([]);
+    expect(serialize([patched.toEntries()])).toContain(`\t\tdesc = ${entry![0]}\n`);
+  });
+
+  it("pins the minted key to an author-supplied descKey, through the same owner", () => {
+    const patched = patchTechnology(geneForging, () => ({
+      weightModifier: {
+        modifiers: [{ factor: 2, desc: "Because reasons", descKey: "flesh_is_weak" }],
+      },
+    }));
+    expect(patched.loc).toEqual([
+      ["pp_tech_gene_forging_weight_modifier_flesh_is_weak", "Because reasons"],
+    ]);
+    expect(patched.warnings).toEqual([]);
+  });
+
+  it("warns, rather than throws, when the minted key is a hash of the text", () => {
+    const patched = patchTechnology(geneForging, () => ({
+      weightModifier: { modifiers: [{ factor: 2, desc: "Because reasons" }] },
+    }));
+    expect(patched.warnings).toEqual([
+      {
+        code: "unstable-desc-key",
+        message: expect.stringContaining('Modifier desc on "pp_tech_gene_forging"'),
+      },
+    ]);
+  });
+
+  it("renames through the registry's own localisation slots, under vanilla's keys", () => {
+    const patched = patchTechnology(geneForging, () => ({
+      name: "Chimeric Forging",
+      desc: "Rewritten flavour.",
+    }));
+    // Vanilla's own slot keys — the declared pattern applied to the vanilla id
+    // — so the replacement lands where the game already looks. Nothing about
+    // the emitted body changes: a rename is localisation, not script.
+    expect(patched.replaceLoc).toEqual([
+      ["tech_gene_forging", "Chimeric Forging"],
+      ["tech_gene_forging_desc", "Rewritten flavour."],
+    ]);
+    expect(patched.loc).toEqual([]);
+    expect(serialize([patched.toEntries()])).toBe(GOLDEN_ROUNDTRIP);
   });
 });
 
@@ -447,11 +507,10 @@ describe("patch members the transform cannot emit", () => {
     expect(() => patchTechnology(geneForging, () => ({ cost: 1, costt: 2 }))).toThrow(
       /did you mean: cost, costPerLevel\?/
     );
-    // A localisation slot is a real member of the definition and deliberately
-    // not of the patch, so it fails here rather than emitting nothing.
-    expect(() => patchTechnology(geneForging, () => ({ cost: 1, name: "Renamed" }))).toThrow(
-      /"name", which is not a patchable technology member/
-    );
+    // A localisation slot IS a patchable member — it writes no body key, so
+    // the patchable-field map does not have it, and it must not be mistaken
+    // for a typo on the way past.
+    expect(() => patchTechnology(geneForging, () => ({ cost: 1, name: "Renamed" }))).not.toThrow();
   });
 });
 
@@ -585,14 +644,14 @@ describe("the building slice", () => {
 
   it("patches in place: a replaced trigger, an appended block, a flipped dual", () => {
     const kept = refinery.body.filter((entry) => entry.key === "triggered_planet_modifier");
-    const patched = patchBuildingItem(refinery, () => ({
+    const patched = patchBuilding(refinery, () => ({
       potential: always(),
       planetLimit: { base: 2, modifiers: [{ add: 1, when: always() }] },
       triggeredPlanetModifier: [
         ...kept,
         { when: always(), modifier: (m) => m.raw("planet_jobs_produces_mult", 0.3) },
       ],
-    })).patched;
+    }));
     const emitted = serialize([patched.toEntries()]);
     // Each patched key kept its slot, and the untouched ones rode through.
     expect(emitted).toBe(
@@ -624,26 +683,24 @@ describe("the building slice", () => {
 
   it("flips the other building's dual the other way, block to scalar", () => {
     const upgraded = view.definition("building", "building_pp_refinery_2");
-    const emitted = serialize([
-      patchBuildingItem(upgraded, () => ({ planetLimit: 3 })).patched.toEntries(),
-    ]);
+    const emitted = serialize([patchBuilding(upgraded, () => ({ planetLimit: 3 })).toEntries()]);
     expect(emitted).toContain("\tplanet_limit = 3\n");
     expect(emitted).not.toContain("ap_engineered_evolution");
   });
 
   it("refuses a parsed entry belonging to another member, as it does elsewhere", () => {
     const allow = refinery.body.find((entry) => entry.key === "allow")!;
-    expect(() => patchBuildingItem(refinery, () => ({ triggeredPlanetModifier: [allow] }))).toThrow(
+    expect(() => patchBuilding(refinery, () => ({ triggeredPlanetModifier: [allow] }))).toThrow(
       '"triggeredPlanetModifier" was given a parsed "allow" entry, and this member writes ' +
         '"triggered_planet_modifier"'
     );
   });
 
   it("records the references a patched ref-valued member writes", () => {
-    const patched = patchBuildingItem(refinery, () => ({
+    const patched = patchBuilding(refinery, () => ({
       upgrades: [{ id: "pp_building_annex" }],
       prerequisites: ["pp_tech_refining"],
-    })).patched;
+    }));
     expect([...patched.refs].sort((a, b) => a.id.localeCompare(b.id))).toEqual([
       { targets: ["building"], id: "pp_building_annex", field: "upgrades" },
       { targets: ["technology"], id: "pp_tech_refining", field: "prerequisites" },
@@ -665,7 +722,7 @@ describe("what a patch may and may not carry", () => {
 
   it("carries the four building shapes that mint nothing", () => {
     const emitted = serialize([
-      patchBuildingItem(refinery, () => ({
+      patchBuilding(refinery, () => ({
         // triggeredModifierBlock: `description` and `custom_tooltip` are keys,
         // and the modifier recorder writes `name = amount` rows.
         triggeredPlanetModifier: [
@@ -684,7 +741,7 @@ describe("what a patch may and may not carry", () => {
         // struct: `triggered_desc.text` is a locKey field — a pointer at a key
         // the author owns, not a key the SDK mints.
         triggeredDesc: [{ trigger: always(), text: "pp_refinery_triggered_desc" }],
-      })).patched.toEntries(),
+      })).toEntries(),
     ]);
     expect(emitted).toContain("\t\tdescription = pp_refinery_bonus_desc\n");
     expect(emitted).toContain("\tplanet_modifier = {\n\t\tplanet_housing_add = 2\n\t}\n");
@@ -692,19 +749,59 @@ describe("what a patch may and may not carry", () => {
     expect(emitted).toContain("\t\ttext = pp_refinery_triggered_desc\n");
   });
 
-  it("refuses a desc'd modifier row nested inside a struct member", () => {
+  it("mints for a desc'd modifier row nested inside a struct member", () => {
     // `technology_swap` is a struct whose `weight` is a dual with a WeightBlock
-    // arm — one level down from where the refusal used to stop looking, and a
-    // level the define path's own pre-pass descends.
+    // arm — one level down from the top, and a level the define path's own
+    // pre-pass descends. The struct key and the entry's index are in the
+    // minted key, so two swaps do not share one.
+    const patched = patchTechnology(geneForging, () => ({
+      technologySwap: [
+        {
+          name: "tech_gene_forging_frugal",
+          weight: { modifiers: [{ factor: 2, desc: "Cheaper", descKey: "frugal" }] },
+        },
+        {
+          name: "tech_gene_forging_lavish",
+          weight: { modifiers: [{ factor: 3, desc: "Pricier", descKey: "lavish" }] },
+        },
+      ],
+    }));
+    expect(patched.loc).toEqual([
+      ["pp_tech_gene_forging_technology_swap_0_weight_frugal", "Cheaper"],
+      ["pp_tech_gene_forging_technology_swap_1_weight_lavish", "Pricier"],
+    ]);
+    const emitted = serialize([patched.toEntries()]);
+    expect(emitted).toContain(
+      "\t\t\tdesc = pp_tech_gene_forging_technology_swap_0_weight_frugal\n"
+    );
+    expect(emitted).toContain(
+      "\t\t\tdesc = pp_tech_gene_forging_technology_swap_1_weight_lavish\n"
+    );
+  });
+
+  it("refuses a nested definition whose ids would need localisation of their own", () => {
+    // No live patch registry has such a field, so this is the refusal reached
+    // by construction rather than through a registry: a `repeatedStruct` entry
+    // key is an id of this mod's own, and a patch has no rule for minting one
+    // inside a definition it does not own.
+    const nested: ContentField = {
+      key: "swap",
+      member: "swap",
+      shape: "repeatedStruct",
+      form: "block",
+      keying: "container",
+      fields: [],
+      localisation: [{ member: "name", pattern: "$", required: true }],
+    };
     expect(() =>
-      patchTechnology(geneForging, () => ({
-        technologySwap: [
-          {
-            name: "tech_gene_forging_frugal",
-            weight: { modifiers: [{ factor: 2, desc: "Because reasons" }] },
-          },
-        ],
-      }))
-    ).toThrow(/The patched "technologySwap\.weight" has a modifier row with a desc/);
+      patchContent(
+        refinery,
+        () => ({ swap: { pp_thing: { name: "Thing" } } }),
+        "building",
+        [nested],
+        [],
+        PREFIX
+      )
+    ).toThrow(/is a nested definition whose ids carry localisation/);
   });
 });

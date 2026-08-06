@@ -1023,28 +1023,30 @@ describe("content-type codegen", () => {
   /**
    * The patch surface is generated, not hand-listed: a `CONTENT_PATCH_REGISTRIES`
    * row produces one optional member per field the transform can splice, in the
-   * same forms the definition's own members take. A member missing here would be
-   * a member of the API no patch author can reach.
+   * same forms the definition's own members take, plus one per declared
+   * localisation slot. A member missing here would be a member of the API no
+   * patch author can reach.
    */
   it("derives the patch type's membership from the emitted fields", () => {
     for (const registry of CONTENT_PATCH_REGISTRIES.keys()) {
       const emission = emissions.get(registry);
       const name = pascalCase(registry);
-      const slots = [...(emission?.code.matchAll(/\{ member: "(\w+)", pattern:/g) ?? [])].map(
-        (match) => match[1]!
-      );
+      const slots = [
+        ...(emission?.code.matchAll(/\{ member: "(\w+)", pattern: "([^"]+)"/g) ?? []),
+      ].map((match) => [match[1]!, match[2]!] as const);
+      // The slots lead, then the body fields, and the two together are exactly
+      // the definition's own members: nothing is dropped from the patch type.
       expect(interfaceMembers(emission?.code ?? "", `${name}Patch`), registry).toEqual(
-        interfaceMembers(emission?.code ?? "", `${name}Fields`).filter(
-          (member) => !slots.includes(member)
-        )
+        interfaceMembers(emission?.code ?? "", `${name}Fields`)
       );
-      // Every absence is reported with its reason, and the only ones here are
-      // the localisation slots.
-      expect(emission?.patchExclusions, registry).toEqual(
+      // Nothing is excluded any more — the slots that used to be are members,
+      // each reported with the vanilla key its text replaces.
+      expect(emission?.patchExclusions, registry).toEqual([]);
+      expect(emission?.patchLocMembers, registry).toEqual(
         slots.map(
-          (slot) =>
-            `${registry}.${slot} — a localisation slot; its key is minted by a pre-pass the ` +
-            "patch path does not run"
+          ([member, pattern]) =>
+            `${registry}.${member} — replacement text under ` +
+            `\`${pattern.replace("$", "<vanilla id>")}\``
         )
       );
     }
@@ -1128,16 +1130,30 @@ describe("generated content definers", () => {
       "): TechnologyPatchItem {\n" +
         "  return {\n" +
         '    itemKind: "patch",\n' +
-        '    patched: patchContent(technology, patch, "technology", TECHNOLOGY_FIELDS),\n' +
+        "    patched: patchContent(\n" +
+        "      technology,\n" +
+        "      patch,\n" +
+        '      "technology",\n' +
+        "      TECHNOLOGY_FIELDS,\n" +
+        "      TECHNOLOGY_LOCALISATION,\n" +
+        "      prefix\n" +
+        "    ),\n" +
         "  };"
     );
-    // And a second registry's definer is the same three lines with its own
-    // name, registry key, and field table — no per-registry hand symbol.
+    // And a second registry's definer is the same call with its own name,
+    // registry key, and tables — no per-registry hand symbol.
     expect(definers).toContain(
       "): BuildingPatchItem {\n" +
         "  return {\n" +
         '    itemKind: "patch",\n' +
-        '    patched: patchContent(building, patch, "building", BUILDING_FIELDS),\n' +
+        "    patched: patchContent(\n" +
+        "      building,\n" +
+        "      patch,\n" +
+        '      "building",\n' +
+        "      BUILDING_FIELDS,\n" +
+        "      BUILDING_LOCALISATION,\n" +
+        "      prefix\n" +
+        "    ),\n" +
         "  };"
     );
     expect(definers).toContain('import { patchContent } from "../stellaris/vanilla/patch.ts";');
@@ -1170,13 +1186,22 @@ describe("generated content definers", () => {
     expect(capability).toContain(
       'SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>, T, Approach, Stage>'
     );
-    expect(capability).toContain("readonly patchTechnology: typeof patchTechnology;");
+    // `patchX` is a closure over the prefix, not a re-export: a patch mints
+    // localisation keys from it, so the capability has to bind it the same way
+    // it binds `mint` into every `defineX`.
+    expect(capability).toContain(
+      "    patchTechnology: <Source extends ParsedTechnology>(\n" +
+        "      technology: Source,\n" +
+        "      patch: (technology: Source) => TechnologyPatch\n" +
+        "    ) => patchTechnology(technology, patch, prefix),"
+    );
+    expect(capability).toContain("  prefix: P\n): ContentCapabilityMethods<P, I> {");
     expect(capability).toContain("readonly addShipOfSizeLimits: typeof addShipOfSizeLimits;");
     expect(capability).toContain(
       "The capability mints and owns the full id; the returned branded reference"
     );
     expect(capability).toContain(
-      "Unlike a capability definition method, it mints no id and owns no new content."
+      "Unlike a capability definition method, it mints no id and owns no new content —"
     );
     expect(capability).toContain(
       "This is an id-less additive contribution, not a capability-owned definition."

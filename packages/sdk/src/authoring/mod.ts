@@ -284,7 +284,8 @@ export function createMod<const P extends string, const I extends IdProfile>(
   const owner: CapabilityFeatureOwner<P> = Object.freeze({ prefix: config.prefix });
   const content = contentCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
     mintContentId(config.prefix, ids),
-    assertNestedDefinitionId(config.prefix)
+    assertNestedDefinitionId(config.prefix),
+    config.prefix
   );
 
   return Object.freeze({

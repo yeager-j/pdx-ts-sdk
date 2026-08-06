@@ -34,6 +34,34 @@ import type { ComplexTriggerModifier, Modifier, ModifierWithLoc } from "./types.
 const modifierDescKeys = new WeakMap<Modifier<ScopeName>, Map<string, string>>();
 
 /**
+ * Refuses a second registration of one row object under one owner token that
+ * resolved to a different key.
+ *
+ * The token is `${ownerId}::${fieldKey}`, which is all the writer can rebuild
+ * from a row at lowering time. Two `WeightBlock`s reachable under the same
+ * owner *and* the same field key — the same struct field's two repeated
+ * entries, say — therefore share a token while deriving different keys from
+ * their differing paths. Sharing one row object between them is the only way
+ * to reach that, and silently keeping the last registration is exactly the
+ * misresolution PR #16 finding 3 was about. Saying so is better than picking.
+ */
+function assertNoRegistrationConflict(
+  existing: string | undefined,
+  ownerKey: string,
+  key: string
+): void {
+  if (existing === undefined || existing === key) {
+    return;
+  }
+  const [ownerId, fieldKey] = ownerKey.split("::");
+  throw new Error(
+    `The same modifier row object is used twice under "${ownerId}" on "${fieldKey}", and the ` +
+      `two occurrences derive different localisation keys ("${existing}" and "${key}"), so ` +
+      "the writer cannot tell them apart. Give each occurrence its own row object."
+  );
+}
+
+/**
  * SDK-internal: records the localisation key a modifier row's `desc`
  * resolved to, for one `${ownerId}::${fieldKey}` occurrence of that row.
  */
@@ -45,9 +73,10 @@ export function registerModifierDescKey(
   const existing = modifierDescKeys.get(modifier);
   if (existing === undefined) {
     modifierDescKeys.set(modifier, new Map([[ownerKey, key]]));
-  } else {
-    existing.set(ownerKey, key);
+    return;
   }
+  assertNoRegistrationConflict(existing.get(ownerKey), ownerKey, key);
+  existing.set(ownerKey, key);
 }
 
 /** `Modifier.descKey`'s required shape — lowercase snake_case, matching content ids. */
@@ -225,9 +254,10 @@ export function registerComplexTriggerModifierDescKey(
   const existing = complexTriggerModifierDescKeys.get(modifier);
   if (existing === undefined) {
     complexTriggerModifierDescKeys.set(modifier, new Map([[ownerKey, key]]));
-  } else {
-    existing.set(ownerKey, key);
+    return;
   }
+  assertNoRegistrationConflict(existing.get(ownerKey), ownerKey, key);
+  existing.set(ownerKey, key);
 }
 
 /**

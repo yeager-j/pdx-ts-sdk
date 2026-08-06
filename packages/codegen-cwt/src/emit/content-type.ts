@@ -88,6 +88,12 @@ export interface ContentEmission {
   readonly patchExclusions: readonly string[];
   /** The patch member widenings applied, each with its reason. */
   readonly patchWidenings: readonly string[];
+  /**
+   * The localisation slots a patch may rewrite, each with the vanilla key its
+   * text replaces. Derived from the registry's own declared localisation
+   * table, so a slot the definition can author is a slot a patch can rename.
+   */
+  readonly patchLocMembers: readonly string[];
 }
 
 /** One member of the emitted patch type, in the rules' declaration order. */
@@ -476,22 +482,43 @@ interface ScopeParameter {
  * item vocabulary names.
  *
  * Membership is derived, never curated. A patch keeps vanilla's identity, so
- * `id` is absent — the override must target the vanilla key to win — and the
- * localisation slots are absent because their keys are minted by a pre-pass the
- * patch path does not run. Everything else the definition itself admits, the
- * patch admits, in the same forms: `PatchInput` only adds the ways a shipped
- * definition's own values come back in.
+ * `id` is absent — the override must target the vanilla key to win. Everything
+ * else the definition itself admits, the patch admits, in the same forms:
+ * `PatchInput` only adds the ways a shipped definition's own values come back
+ * in.
+ *
+ * The localisation slots are members too, read off the same declared table the
+ * definition's own text members come from, and always optional here: a patch
+ * that renames nothing is the ordinary case. Their text is a *replacement*,
+ * emitted under vanilla's own key for the slot, so unlike every other member
+ * they are not body fields and never reach the splice.
  */
 function patchTypes(
   type: ContentType,
   typeName: string,
   generic: string,
   patchMembers: readonly PatchMember[],
-  localisationSlots: readonly string[],
+  localisationPlan: LocalisationPlan,
   patchWidenings: string[],
-  patchExclusions: string[]
+  patchLocMembers: string[]
 ): string {
   const parsed = `Parsed${typeName}`;
+  const locMembers = localisationPlan.entries.map((entry) => {
+    const member = camelCase(entry.key);
+    const pattern = entry.pattern.replace("$", "<vanilla id>");
+    patchLocMembers.push(`${type.name}.${member} — replacement text under \`${pattern}\``);
+    return (
+      docComment(
+        [
+          `Replacement English text for vanilla's own \`${pattern}\` key.`,
+          "",
+          "Emitted to `localisation/replace/`, the layer the game resolves ahead",
+          "of the ordinary one — a rename, not a new key.",
+        ],
+        "  "
+      ) + `  readonly ${member}?: string;\n`
+    );
+  });
   const members = patchMembers.map((entry) => {
     const widening = PATCH_WIDENINGS.get(`${type.name}.${entry.member}`);
     if (widening !== undefined) {
@@ -512,13 +539,6 @@ function patchTypes(
         `${widening.reason}`
     );
   }
-  patchExclusions.push(
-    ...localisationSlots.map(
-      (slot) =>
-        `${type.name}.${slot} — a localisation slot; its key is minted by a pre-pass the ` +
-        "patch path does not run"
-    )
-  );
   return (
     docComment([
       `What a patch of a vanilla ${type.name} may change.`,
@@ -528,6 +548,7 @@ function patchTypes(
       "key to win.",
     ]) +
     `export interface ${typeName}Patch${generic} {\n` +
+    locMembers.join("") +
     members.join("") +
     "}\n\n" +
     docComment([`A patched vanilla ${type.name}, ready for the win engine.`]) +
@@ -583,6 +604,7 @@ export function emitContentType(
   const patchMembers: PatchMember[] = [];
   const patchExclusions: string[] = [];
   const patchWidenings: string[] = [];
+  const patchLocMembers: string[] = [];
   const localisationPlan = planLocalisation(type);
   // A body field can share a name with a localization slot without meaning the
   // same thing — `building.desc` (`single_alias_right[triggered_desc_clause]`,
@@ -802,9 +824,9 @@ export function emitContentType(
         typeName,
         generic,
         patchMembers,
-        [...localisationMemberNames],
+        localisationPlan,
         patchWidenings,
-        patchExclusions
+        patchLocMembers
       )
     : "";
   const code =
@@ -854,5 +876,6 @@ export function emitContentType(
     localisationAliases: [...localisationPlan.aliases, ...localisationAliases],
     patchExclusions: patchCode === "" ? [] : patchExclusions,
     patchWidenings: patchCode === "" ? [] : patchWidenings,
+    patchLocMembers: patchCode === "" ? [] : patchLocMembers,
   };
 }

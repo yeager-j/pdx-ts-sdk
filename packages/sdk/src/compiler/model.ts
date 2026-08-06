@@ -44,6 +44,14 @@ export interface PureMod {
   readonly onActions: readonly PdxEntry[];
   /** Localization entries in canonical registration order. */
   readonly loc: ReadonlyMap<string, string>;
+  /**
+   * Replacement text for keys vanilla already defines, from patch renames.
+   *
+   * A separate map because it is a separate emitted file: `localisation/replace/`
+   * is the layer the game resolves ahead of the ordinary one, which is what
+   * makes a rename win without any claim about filename order.
+   */
+  readonly replaceLoc: ReadonlyMap<string, string>;
   /** Shared ship-size-limit contribution ids. */
   readonly shipOfSizeLimits: ReadonlySet<string>;
   /** The planned vanilla overrides, one per patched registry, in path order. */
