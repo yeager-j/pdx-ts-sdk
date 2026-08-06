@@ -1,0 +1,58 @@
+content_test_megastructure_foundry_1 = {
+	entity = mega_shipyard_01_entity
+	construction_entity = mega_shipyard_construction_01_entity
+	portrait = GFX_megastructure_mega_shipyard
+	build_type = outside_gravity_well
+	show_galactic_map_icon = yes
+	prerequisites = { tech_mega_shipyard }
+	potential = {
+		has_country_flag = content_test_machine_agenda_started
+	}
+	possible = {
+		from = {
+			has_country_flag = content_test_can_build_foundry
+		}
+	}
+	build_time = 3600
+	resources = {
+		category = megastructures
+		cost = {
+			alloys = 5000
+		}
+	}
+	country_modifier = {
+		country_naval_cap_add = 50
+	}
+	station_modifier = {
+		starbase_shipyard_capacity_add = 5
+	}
+	on_build_complete = {
+		set_star_flag = content_test_foundry_online
+	}
+	ai_weight = {
+		base = 10
+	}
+	dismantle_cost = {
+		cost = {
+			alloys = 500
+		}
+	}
+	dismantle_time = 720
+}
+
+content_test_megastructure_foundry_2 = {
+	entity = mega_shipyard_02_entity
+	upgrade_from = { content_test_megastructure_foundry_1 }
+	build_time = 5400
+	country_modifier = {
+		country_naval_cap_add = 100
+	}
+	triggered_country_modifier = {
+		potential = {
+			has_country_flag = content_test_machine_agenda_started
+		}
+		modifier = {
+			country_unity_produces_mult = 0.05
+		}
+	}
+}

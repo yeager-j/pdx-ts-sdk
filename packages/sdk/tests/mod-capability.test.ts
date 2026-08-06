@@ -47,6 +47,7 @@ const COMPLETE_PROFILE = {
   speciesClass: "species_class",
   countryShipOfSizeLimit: "country_ship_of_size_limit",
   solarSystemInitializer: "solar_system_initializer",
+  megastructure: "megastructure",
 } as const satisfies IdProfile;
 
 function mod() {

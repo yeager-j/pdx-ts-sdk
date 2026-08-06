@@ -20,6 +20,7 @@ export type { VanillaEdictId } from "./registries/edict.ts";
 export type { VanillaGlobalShipDesignId } from "./registries/global-ship-design.ts";
 export type { VanillaGraphicalCultureId } from "./registries/graphical-culture.ts";
 export type { VanillaJobId } from "./registries/job.ts";
+export type { VanillaMegastructureId } from "./registries/megastructure.ts";
 export type { VanillaOpinionModifierId } from "./registries/opinion-modifier.ts";
 export type { VanillaResourceId } from "./registries/resource.ts";
 export type { VanillaScriptedEffectParams } from "./scripted-effects.ts";

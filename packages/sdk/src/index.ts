@@ -106,6 +106,11 @@ export type {
 } from "./generated/global-ship-design.ts";
 export type { DefinedJob, JobDef, JobFields } from "./generated/job.ts";
 export type {
+  DefinedMegastructure,
+  MegastructureDef,
+  MegastructureFields,
+} from "./generated/megastructure.ts";
+export type {
   DefinedOpinionModifier,
   OpinionModifierDef,
   OpinionModifierFields,

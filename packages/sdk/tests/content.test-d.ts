@@ -1503,6 +1503,70 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("preserves a megastructure's id and brands its self-reference", () => {
+    const gateway = contentMod.megastructure("gateway", {
+      name: "Gateway",
+      entity: "gateway_entity",
+      buildTime: 3600,
+      countryModifier: (m) => m.country.naval.cap.add(10),
+    });
+    expectTypeOf(gateway.id).toEqualTypeOf<"content_types_megastructure_gateway">();
+    // `upgrade_from = { <megastructure> }` points the registry at itself, so
+    // this is the reference test and the self-reference test at once — and a
+    // raw vanilla id stays available beside the branded one.
+    contentMod.megastructure("gateway_ruined", {
+      name: "Ruined Gateway",
+      entity: "gateway_ruined_entity",
+      upgradeFrom: [gateway, "dyson_sphere_1"],
+    });
+    const wrongRegistry = defineBuilding({
+      id: "content_types_megastructure_wrong_registry",
+      name: "X",
+    });
+    contentMod.megastructure("bad_upgrade", {
+      name: "X",
+      entity: "x_entity",
+      // @ts-expect-error — a BuildingRef is not a MegastructureRef.
+      upgradeFrom: [wrongRegistry],
+    });
+    // The other direction: a megastructure is not a building.
+    contentMod.building("wrong_megastructure", {
+      name: "X",
+      // @ts-expect-error — `upgrades` names buildings, not megastructures.
+      upgrades: [gateway],
+    });
+  });
+
+  it("scopes a megastructure's clauses by the rules' replace_scopes", () => {
+    contentMod.megastructure("scopes", {
+      name: "X",
+      entity: "x_entity",
+      // potential is country-scoped, possible system-scoped with the building
+      // country as FROM — megastructures.cwt:161-165.
+      potential: hasCountryFlag("country_only"),
+      possible: (system) => system.from.trigger(hasCountryFlag("country_only")),
+      onBuildComplete: (system) => {
+        system.setStarFlag("content_types_flag");
+      },
+      // A station modifier applies in megastructure scope, not country.
+      stationModifier: (m) => m.unchecked("starbase_shipyard_capacity_add", 5),
+    });
+    contentMod.megastructure("bad_scopes", {
+      name: "X",
+      entity: "x_entity",
+      // @ts-expect-error — potential runs in country scope, not planet
+      potential: hasPlanetFlag("planet_only"),
+    });
+    contentMod.megastructure("bad_effect_scope", {
+      name: "X",
+      entity: "x_entity",
+      onBuildStart: (system) => {
+        // @ts-expect-error — build hooks run in system, not planet, scope
+        system.setCapital(true);
+      },
+    });
+  });
+
   it("keeps the planet and moon bodies distinct, and the registry's refs branded", () => {
     const outpost = contentMod.solarSystemInitializer("for_refs", {
       class: "sc_g",

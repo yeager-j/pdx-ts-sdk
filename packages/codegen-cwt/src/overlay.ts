@@ -387,6 +387,10 @@ export const REQUIRED_LOCALISATION = new Set([
   "agreement_preset.name",
   "bombardment_stance.name",
   "archaeological_site_type.name",
+  // All 164 shipped megastructures carry a localised name, and the game shows
+  // it in the construction menu and the outliner, so an unnamed one is a
+  // visible bug the same way an unnamed static modifier is.
+  "megastructure.name",
 ]);
 
 export interface ConditionalLocalisation {
@@ -1752,6 +1756,64 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "triggered_modifier_clause combines a potential trigger with an open modifier-name map, " +
         "repeated 0..inf (components.cwt:433-435).",
+    },
+  ],
+  [
+    "megastructure.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics, " +
+        "the same declaration (a `category` sibling beside the splice) job.resources and " +
+        "decision.resources already lower this way. 111 shipped occurrences.",
+    },
+  ],
+  [
+    "megastructure.dismantle_cost",
+    {
+      shape: "economicResources",
+      reason:
+        "The same economic_template splice as megastructure.resources, declared again for the " +
+        "refund paid when the megastructure is taken down (megastructures.cwt:293-297).",
+    },
+  ],
+  [
+    "megastructure.country_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "megastructures.cwt:212-219 spells modifier_clause out inline — an open modifier-name map " +
+        "(`alias_name[modifier]`) beside optional custom_tooltip/show_only_custom_tooltip — so it " +
+        "lowers the same way building.country_modifier's spliced clause does. 57 of the 58 " +
+        "shipped megastructures that write it write a plain map of country modifier names " +
+        "(`all_technology_research_speed`, `country_naval_cap_add`); the one exception writes " +
+        "`custom_tooltip` alone, the ancillary key no ModifierClosure field anywhere in the SDK " +
+        "authors yet — one definition, far below the corpus presence floor.",
+    },
+  ],
+  [
+    "megastructure.ship_modifier",
+    {
+      shape: "modifierBlock",
+      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
+    },
+  ],
+  [
+    "megastructure.station_modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields; all 14 " +
+        "shipped occurrences are plain maps in megastructure scope " +
+        "(`starbase_shipyard_capacity_add`, `catapult_range_base`).",
+    },
+  ],
+  [
+    "megastructure.triggered_country_modifier",
+    {
+      shape: "triggeredModifierBlock",
+      reason:
+        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
     },
   ],
 ]);

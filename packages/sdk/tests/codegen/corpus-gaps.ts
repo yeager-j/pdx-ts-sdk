@@ -138,4 +138,16 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
       "An open scalar-keyed map of floats (`scalar = float`); needs scalar-keyed map machinery.",
     issue: "SDK-67",
   },
+  {
+    registry: "megastructure",
+    field: "placement_rules",
+    count: 27,
+    reason:
+      "An `alias_name[trigger]` splice beside a named `planet_possible` sibling " +
+      "(megastructures.cwt:234-240): not a pure splice, so it is not the trigger shape, and " +
+      "structShape declines any block holding a splice rather than dropping it. The same " +
+      "declaration is why decision.custom_tooltip and component_template.custom_tooltip are " +
+      "unlowerable, so one shape closes all three.",
+    issue: "SDK-84",
+  },
 ];

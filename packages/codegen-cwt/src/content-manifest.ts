@@ -151,6 +151,7 @@ export const CONTENT_MANIFEST = [
     type: "solar_system_initializer",
     source: "common/solar_system_initializers.cwt",
   },
+  { type: "megastructure", source: "common/megastructures.cwt" },
 ] as const satisfies readonly ContentManifestEntry[];
 
 /**
