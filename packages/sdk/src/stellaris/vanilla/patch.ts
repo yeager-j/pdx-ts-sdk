@@ -127,6 +127,18 @@ export interface PatchedContent<Source extends ParsedDefinition = ParsedDefiniti
   readonly replaceLoc: readonly LocalisationEntry[];
   /** Diagnostics raised while minting keys, for `mod.warnings`. */
   readonly warnings: readonly ModWarning[];
+  /**
+   * The mod prefix the capability closure minted this patch with.
+   *
+   * A patch keeps vanilla's id, so it has no id of its own to check ownership
+   * against — which is why placing one used to be exempt from the capability's
+   * ownership check entirely. It is no longer id-less in the sense that
+   * matters: every key it mints is built from this prefix, so a patch minted
+   * by one capability and placed in another's feature would write that
+   * capability's keys and references into this one's output. Carrying the
+   * prefix is what makes that checkable (`assertCapabilityItem`).
+   */
+  readonly prefix: string;
   toEntries(): PdxEntry;
 }
 
@@ -523,6 +535,7 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
     loc: mint.into,
     replaceLoc,
     warnings: mint.warnings,
+    prefix,
     toEntries(): PdxEntry {
       const body: PdxEntry[] = [];
       const substituted = new Set<string>();

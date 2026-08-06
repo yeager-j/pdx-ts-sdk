@@ -9,6 +9,7 @@ import {
   type IdProfile,
   type ModCapability,
 } from "../src/index.ts";
+import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 
 const COMPLETE_PROFILE = {
   technology: "tech",
@@ -291,6 +292,41 @@ describe("mod capability composition", () => {
       files.get("common/country_limits/ownership_limits/contrib_mod_ownership_limits.txt")
     ).toContain(
       "default = {\n\tship_of_size_limits = { contrib_mod_country_ship_of_size_limit_titan }\n}"
+    );
+  });
+
+  it("rejects a patch minted by one capability and placed in another's feature", () => {
+    // A patch keeps vanilla's id, so it has no id of its own to hold to the
+    // prefix — which is why placing one was exempt from the ownership check
+    // entirely. It is not identity-free any more: the capability binds its
+    // prefix into `patchX`, and every localisation key the patch mints comes
+    // from it, so a foreign patch would write another mod's keys into this
+    // one's output. Nothing else would notice.
+    const vanilla = viewFromFiles({
+      "common/technology/pp_tech.txt": "tech_probe = {\n\tarea = physics\n\ttier = 1\n}\n",
+    });
+    const alpha = createMod({ name: "Alpha", prefix: "alpha_mod", supportedVersion: "4.4.*" });
+    const beta = createMod({ name: "Beta", prefix: "beta_mod", supportedVersion: "4.4.*" });
+    const alphaPatch = alpha.patchTechnology(
+      vanilla.definition("technology", "tech_probe"),
+      () => ({
+        name: "Renamed by Alpha",
+        weightModifier: { modifiers: [{ factor: 2, desc: "Because.", descKey: "because" }] },
+      })
+    );
+
+    expect(() => beta.feature(undefined, [alphaPatch])).toThrow(
+      'The technology patch of "tech_probe" was created by the capability for mod prefix ' +
+        '"alpha_mod", not "beta_mod"'
+    );
+    // And the same item in its own capability's feature still builds, keys and
+    // all — the check is ownership, not a new restriction on patching.
+    const files = render(alpha.compile([alpha.feature(undefined, [alphaPatch])]));
+    expect(files.get("localisation/english/alpha_mod_l_english.yml")).toContain(
+      "alpha_mod_tech_probe_weight_modifier_because"
+    );
+    expect(files.get("localisation/replace/english/alpha_mod_l_english.yml")).toContain(
+      'tech_probe:0 "Renamed by Alpha"'
     );
   });
 });
