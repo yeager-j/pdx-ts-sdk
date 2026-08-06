@@ -174,6 +174,7 @@ const FIXTURE_CHANNELS = [
   "events/pp_mod_events.txt",
   "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
   "common/on_actions/pp_mod_on_actions.txt",
+  "localisation/english/pp_mod_events_l_english.yml",
   "localisation/english/pp_mod_l_english.yml",
   "localisation/replace/english/pp_mod_l_english.yml",
   "common/buildings/pp_buildings_pp_mod_patch.txt",
@@ -870,7 +871,7 @@ describe("collections", () => {
       "descriptor.mod",
       "common/technology/pp_mod_amplifiers.txt",
       "events/pp_mod_amplifiers.txt",
-      "localisation/english/pp_mod_l_english.yml",
+      "localisation/english/pp_mod_amplifiers_l_english.yml",
     ]);
     expect(files.get("common/technology/pp_mod_amplifiers.txt")).toContain(
       "pp_mod_tech_amplifier = {"
@@ -1327,8 +1328,12 @@ tech_probe_zeta = {
       "events/pp_mod_zeta_events.txt",
       "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
       "common/on_actions/pp_mod_on_actions.txt",
-      "localisation/english/pp_mod_l_english.yml",
-      "localisation/replace/english/pp_mod_l_english.yml",
+      "localisation/english/pp_mod_alpha_techs_l_english.yml",
+      "localisation/english/pp_mod_beta_techs_l_english.yml",
+      "localisation/english/pp_mod_events_l_english.yml",
+      "localisation/english/pp_mod_zeta_events_l_english.yml",
+      "localisation/replace/english/pp_mod_alpha_techs_l_english.yml",
+      "localisation/replace/english/pp_mod_beta_techs_l_english.yml",
       "common/technology/00_probe_tech_pp_mod_patch.txt",
     ]);
     expect([...backward.entries()]).toEqual([...forward.entries()]);

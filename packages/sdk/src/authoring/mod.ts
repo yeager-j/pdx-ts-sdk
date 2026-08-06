@@ -35,6 +35,13 @@ import {
   type Feature,
   type ModItem,
 } from "./feature.ts";
+import {
+  createLocalizationItem,
+  createReplacementLocalizationItem,
+  type LocalizationItem,
+  type LocalizationText,
+  type ReplacementLocalizationItem,
+} from "./localization.ts";
 
 const capabilityFeatureOwner: unique symbol = Symbol("mod capability feature owner");
 
@@ -103,6 +110,27 @@ export type ModCapability<P extends string, I extends IdProfile> = {
   compile(features: readonly CapabilityFeature<P>[], options?: BuildOptions): PureMod;
   /** Creates a pure on-action contribution; place its returned value in a feature. */
   readonly on: typeof on;
+  /**
+   * Creates standalone localization under a key owned by this mod.
+   *
+   * Place the returned item in a feature and use its exact `.key` wherever
+   * Stellaris expects a localization key.
+   */
+  localization<const Suffix extends string>(
+    keySuffix: Suffix,
+    text: LocalizationText
+  ): LocalizationItem<P, Suffix>;
+  /**
+   * Deliberately replaces an existing localization key without adding the mod prefix.
+   *
+   * Use this for free-standing keys that a typed content patch cannot reach,
+   * such as event option text. The returned item always emits through the
+   * feature's `localisation/replace/` files.
+   */
+  replaceLocalization<const Key extends string>(
+    key: Key,
+    text: LocalizationText
+  ): ReplacementLocalizationItem<P, Key>;
 } & ContentCapabilityMethods<P, I>;
 
 function assertLogicalName(name: string): void {
@@ -249,6 +277,13 @@ function assertCapabilityItem(item: ModItem, prefix: string): void {
       // dangling-reference guard against the definitions this build actually
       // contains. There is no capability identity baked in to disagree with.
       return;
+    case "localization":
+      if (item.prefix !== prefix) {
+        throw new Error(
+          `Localization key "${item.key}" belongs to mod prefix "${item.prefix}", not "${prefix}"`
+        );
+      }
+      return;
   }
 }
 
@@ -325,5 +360,9 @@ export function createMod<const P extends string, const I extends IdProfile>(
       return buildMod(config, features, buildOptions);
     },
     on,
+    localization: <const Suffix extends string>(keySuffix: Suffix, text: LocalizationText) =>
+      createLocalizationItem(config.prefix, keySuffix, text),
+    replaceLocalization: <const Key extends string>(key: Key, text: LocalizationText) =>
+      createReplacementLocalizationItem(config.prefix, key, text),
   }) as ModCapability<P, I | typeof DEFAULT_ID_PROFILE>;
 }

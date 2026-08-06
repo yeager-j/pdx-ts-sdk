@@ -246,7 +246,7 @@ export type {
   UnscopedModifierRecorder,
 } from "./generated/modifiers.ts";
 export type { BuildOptions, ModConfig } from "./compiler/config.ts";
-export type { EmittedFile, PureMod } from "./compiler/model.ts";
+export type { EmittedFile, LocalizationFile, PureMod } from "./compiler/model.ts";
 export {
   createMod,
   type CapabilityEventHandle,
@@ -257,6 +257,15 @@ export {
   type MintedContentId,
   type ModCapability,
 } from "./authoring/mod.ts";
+export {
+  LOCALIZATION_LANGUAGES,
+  type LocalizationItem,
+  type LocalizationLanguage,
+  type LocalizationText,
+  type LocalizationTranslations,
+  type MintedLocalizationKey,
+  type ReplacementLocalizationItem,
+} from "./authoring/localization.ts";
 export { install, type InstallOptions, type InstallResult } from "./output/install.ts";
 export { render } from "./output/render.ts";
 export { renderLauncherDescriptor } from "./output/render.ts";

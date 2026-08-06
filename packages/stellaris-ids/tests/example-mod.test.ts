@@ -30,7 +30,8 @@ describe("hello-galaxy example mod", () => {
       "common/technology/hello_galaxy_amplifiers.txt",
       "common/technology/hello_galaxy_resonance.txt",
       "events/hello_galaxy_resonance.txt",
-      "localisation/english/hello_galaxy_l_english.yml",
+      "localisation/english/hello_galaxy_amplifiers_l_english.yml",
+      "localisation/english/hello_galaxy_resonance_l_english.yml",
     ]);
   });
 
@@ -45,9 +46,14 @@ describe("hello-galaxy example mod", () => {
   });
 
   it("starts the localization file with a UTF-8 BOM", () => {
-    const loc = files.get("localisation/english/hello_galaxy_l_english.yml")!;
-    expect(loc.charCodeAt(0)).toBe(0xfeff);
-    expect(loc.slice(1)).toMatch(/^l_english:\n/);
+    const localizationFiles = [...files]
+      .filter(([path]) => path.startsWith("localisation/english/"))
+      .map(([, content]) => content);
+    expect(localizationFiles).toHaveLength(2);
+    for (const localization of localizationFiles) {
+      expect(localization.charCodeAt(0)).toBe(0xfeff);
+      expect(localization.slice(1)).toMatch(/^l_english:\n/);
+    }
   });
 
   for (const [relPath, content] of files) {
@@ -85,23 +91,26 @@ const EXAMPLE_TECHNOLOGY_KEYS = [
   "hello_galaxy_tech_resonance_weapons",
 ];
 
-const EXAMPLE_LOCALISATION =
+const AMPLIFIERS_LOCALIZATION =
   "﻿l_english:\n" +
   ' hello_galaxy_tech_amplifier_1:0 "Attuned Resonance Amplifiers"\n' +
   ' hello_galaxy_tech_amplifier_2:0 "Harmonic Resonance Amplifiers"\n' +
   ' hello_galaxy_tech_amplifier_3:0 "Coherent Resonance Amplifiers"\n' +
   ' hello_galaxy_tech_amplifier_4:0 "Superradiant Resonance Amplifiers"\n' +
-  ' hello_galaxy_tech_amplifier_5:0 "Transcendent Resonance Amplifiers"\n' +
+  ' hello_galaxy_tech_amplifier_5:0 "Transcendent Resonance Amplifiers"\n';
+
+const RESONANCE_LOCALIZATION =
+  "﻿l_english:\n" +
+  ' hello_galaxy_resonance.1.a:0 "Fascinating."\n' +
+  ' hello_galaxy_resonance.1.desc:0 "Deep in the lattice, something answers back."\n' +
+  ' hello_galaxy_resonance.1.name:0 "The Hum Returns"\n' +
+  ' hello_galaxy_resonance.2.a:0 "Noted."\n' +
+  ' hello_galaxy_resonance.2.desc:0 "The crystal hum lingers over this world."\n' +
+  ' hello_galaxy_resonance.2.name:0 "Aftershock"\n' +
   ' hello_galaxy_tech_resonance_theory:0 "Crystal Resonance Theory"\n' +
   ' hello_galaxy_tech_resonance_theory_desc:0 "The lattice hums at frequencies we are only beginning to hear."\n' +
   ' hello_galaxy_tech_resonance_weapons:0 "Resonance Disruptors"\n' +
-  ' hello_galaxy_tech_resonance_weapons_desc:0 "Weaponized harmonics that shatter hulls from within."\n' +
-  ' hello_galaxy_resonance.1.name:0 "The Hum Returns"\n' +
-  ' hello_galaxy_resonance.1.desc:0 "Deep in the lattice, something answers back."\n' +
-  ' hello_galaxy_resonance.1.a:0 "Fascinating."\n' +
-  ' hello_galaxy_resonance.2.name:0 "Aftershock"\n' +
-  ' hello_galaxy_resonance.2.desc:0 "The crystal hum lingers over this world."\n' +
-  ' hello_galaxy_resonance.2.a:0 "Noted."\n';
+  ' hello_galaxy_tech_resonance_weapons_desc:0 "Weaponized harmonics that shatter hulls from within."\n';
 
 describe("hello-galaxy preserves its authored feature identity", () => {
   it("emits the same set of technologies, redistributed across two files", () => {
@@ -128,9 +137,14 @@ describe("hello-galaxy preserves its authored feature identity", () => {
     ]);
   });
 
-  it("emits localization byte-identical to the authored namespace contract", () => {
+  it("emits localization byte-identical to each authored feature contract", () => {
     // Localization rides with definitions and is keyed by the same explicit
     // ids, including their authored namespace.
-    expect(files.get("localisation/english/hello_galaxy_l_english.yml")).toBe(EXAMPLE_LOCALISATION);
+    expect(files.get("localisation/english/hello_galaxy_amplifiers_l_english.yml")).toBe(
+      AMPLIFIERS_LOCALIZATION
+    );
+    expect(files.get("localisation/english/hello_galaxy_resonance_l_english.yml")).toBe(
+      RESONANCE_LOCALIZATION
+    );
   });
 });

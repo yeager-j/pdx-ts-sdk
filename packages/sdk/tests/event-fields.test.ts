@@ -236,7 +236,7 @@ describe("previously-omitted EventDef fields", () => {
     expect(rendered).toContain("force_open = yes");
     expect(rendered).toContain("message_desc = event_fields.1012.message_desc");
     expect(rendered).toContain("diplomatic_title = event_fields.1012.diplomatic_title");
-    const loc = files.get("localisation/english/event_fields_l_english.yml")!;
+    const loc = files.get("localisation/english/event_fields_events_l_english.yml")!;
     expect(loc).toContain(' event_fields.1012.message_desc:0 "A message feed entry."');
     expect(loc).toContain(' event_fields.1012.diplomatic_title:0 "A diplomatic screen title."');
   });
@@ -302,7 +302,7 @@ describe("previously-omitted EventOption fields", () => {
     expect(rendered).toContain("custom_gui = event_fields_gui");
     expect(rendered).toContain("tag = event_fields_tag");
 
-    const loc = files.get("localisation/english/event_fields_l_english.yml")!;
+    const loc = files.get("localisation/english/event_fields_events_l_english.yml")!;
     expect(loc).toContain(' event_fields.1020.a.icon:0 "An icon caption."');
     expect(loc).toContain(' event_fields.1020.a.response:0 "The AI\'s response."');
   });
@@ -370,7 +370,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       "ai_chance = {\n\t\t\tfactor = 10\n\t\t\tmodifier = {\n\t\t\t\tfactor = 4\n\t\t\t\tdesc = event_fields.1030_option_0.ai_chance_ai_chance_tooltip"
     );
 
-    const loc = files.get("localisation/english/event_fields_l_english.yml")!;
+    const loc = files.get("localisation/english/event_fields_events_l_english.yml")!;
     expect(loc).toContain(
       ' event_fields.1030_mean_time_to_happen_mtth_tooltip:0 "MTTH modifier tooltip."'
     );
@@ -409,7 +409,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       },
     });
     const beforeLoc = render(mod.compile([mod.feature("events", [before])])).get(
-      "localisation/english/event_fields_l_english.yml"
+      "localisation/english/event_fields_events_l_english.yml"
     )!;
     const pinnedKeyBefore = keyFor("Pinned tooltip\\.", beforeLoc);
     const unpinnedKeyBefore = keyFor("Unpinned tooltip\\.", beforeLoc);
@@ -442,7 +442,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       },
     });
     const afterLoc = render(mod.compile([mod.feature("events", [after])])).get(
-      "localisation/english/event_fields_l_english.yml"
+      "localisation/english/event_fields_events_l_english.yml"
     )!;
     expect(keyFor("Pinned tooltip\\.", afterLoc)).toBe(pinnedKeyBefore);
     expect(keyFor("Unpinned tooltip\\.", afterLoc)).toBe(unpinnedKeyBefore);
@@ -522,7 +522,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       },
     });
     const beforeLoc = render(mod.compile([mod.feature("events", [before])])).get(
-      "localisation/english/event_fields_l_english.yml"
+      "localisation/english/event_fields_events_l_english.yml"
     )!;
     const stableKeyBefore = keyFor("Stable tooltip\\.", beforeLoc);
 
@@ -537,7 +537,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       },
     });
     const afterLoc = render(mod.compile([mod.feature("events", [after])])).get(
-      "localisation/english/event_fields_l_english.yml"
+      "localisation/english/event_fields_events_l_english.yml"
     )!;
     const stableKeyAfter = keyFor("Stable tooltip\\.", afterLoc);
 

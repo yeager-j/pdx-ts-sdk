@@ -130,7 +130,11 @@ export class ContentAuthoring {
     this.onLocKeyLooksLikeText = onLocKeyLooksLikeText ?? ((): void => {});
   }
 
-  define<K extends string, D extends ContentDef>(type: K, rawDef: D): DefinedContent<K, D> {
+  define<K extends string, D extends ContentDef>(
+    type: K,
+    rawDef: D,
+    registerLoc: RegisterLoc = this.registerLoc
+  ): DefinedContent<K, D> {
     const descriptor = this.byType.get(type);
     if (descriptor === undefined) {
       throw new Error(`Unknown generated content type "${type}"`);
@@ -155,7 +159,7 @@ export class ContentAuthoring {
     const nestedIds = new Map<string, Set<string>>();
     this.collectLocalisation(def.id, def, descriptor.localisation, localisation);
     this.collectRepeatedStructs(def.id, "", def, descriptor.fields, type, nestedIds, localisation);
-    this.registerLoc(localisation);
+    registerLoc(localisation);
     for (const [identity, pending] of nestedIds) {
       const ids = this.nestedIds.get(identity) ?? new Set<string>();
       for (const id of pending) {
