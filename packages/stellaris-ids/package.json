@@ -1,6 +1,6 @@
 {
   "name": "@pdx-ts/stellaris-ids",
-  "version": "4.4.6",
+  "version": "4.4.6-r.1",
   "description": "Vanilla Stellaris identifiers (technologies, scripted triggers/effects, sprites, sounds, ...), install-derived and version-pinned to the game — declaration-merges into @pdx-ts/sdk to check vanilla references at compile time",
   "type": "module",
   "license": "MIT",
@@ -30,7 +30,7 @@
     "PROVENANCE.md"
   ],
   "peerDependencies": {
-    "@pdx-ts/sdk": "^0.1.0"
+    "@pdx-ts/sdk": ">=0.2.0 <1.0.0"
   },
   "devDependencies": {
     "@pdx-ts/codegen-vanilla": "*"

@@ -3,6 +3,7 @@
  * filesystem — which is the point of keeping the plan pure.
  */
 
+import semver from "semver";
 import { describe, expect, it } from "vitest";
 
 import type { Resolved } from "../src/options.ts";
@@ -140,10 +141,21 @@ describe("dependency resolution", () => {
     expect(dependencies!["@pdx-ts/pdxscript"]).toBe("file:/repo/pdx-sdk/packages/pdxscript");
   });
 
-  it("pins the identifier package to the exact detected build", () => {
-    // Its npm version *is* the game version, so a range would be meaningless.
+  it("pins the identifier package to the newest revision of the detected build", () => {
     const { dependencies } = manifest(plan({ gameVersion: "4.4.6" }));
-    expect(dependencies!["@pdx-ts/stellaris-ids"]).toBe("4.4.6");
+    expect(dependencies!["@pdx-ts/stellaris-ids"]).toBe(">=4.4.6-0 <4.4.6");
+  });
+
+  it("resolves that range to the newest revision, and never to a bare build", () => {
+    // The two properties the range exists for, checked against the resolver npm
+    // itself uses rather than by reading the string. A bare `4.4.6` on the
+    // registry predates the revision scheme — it is the one version that must
+    // not win, and highest-wins would otherwise hand it every install.
+    const range = manifest(plan({ gameVersion: "4.4.6" })).dependencies!["@pdx-ts/stellaris-ids"]!;
+    expect(semver.maxSatisfying(["4.4.6", "4.4.6-r.1", "4.4.6-r.2"], range)).toBe("4.4.6-r.2");
+    expect(semver.maxSatisfying(["4.4.6-r.9", "4.4.6-r.10"], range)).toBe("4.4.6-r.10");
+    expect(semver.satisfies("4.4.6", range)).toBe(false);
+    expect(semver.satisfies("4.4.7-r.1", range)).toBe(false);
   });
 
   it("omits the identifier package when no build was detected", () => {

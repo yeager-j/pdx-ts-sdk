@@ -2,20 +2,21 @@
  * What the published package promises, and what must not be true when it is.
  *
  * These are release rules a reviewer would otherwise have to remember, and one
- * of them — that the CLI must not ship depending on an unpublished SDK — is the
- * rule that stops `npx create-stellaris-mod` from scaffolding a project whose
- * very first `npm install` 404s.
+ * of them — that the CLI must not take the SDK as a runtime dependency — is the
+ * rule that keeps the CLI's release schedule independent of the SDK's.
  */
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { main } from "../src/cli.ts";
 import { FLAGS, helpText, type FlagName } from "../src/options.ts";
 
 const PACKAGE = path.resolve(import.meta.dirname, "..");
 
 const manifest = JSON.parse(readFileSync(path.join(PACKAGE, "package.json"), "utf8")) as {
+  version: string;
   bin: Record<string, string>;
   files: string[];
   engines: Record<string, string>;
@@ -44,10 +45,30 @@ describe("the published package", () => {
 
   it("keeps the SDK a devDependency, so the CLI's release is not coupled to it", () => {
     // `detect.ts` deliberately duplicates a little of the SDK rather than
-    // depending on it: @pdx-ts/sdk is not publishable yet, and a runtime
-    // dependency would make this package unpublishable too.
+    // depending on it: a runtime dependency would pin this CLI to one SDK
+    // version, when its whole job is to scaffold against a range.
     expect(manifest.dependencies["@pdx-ts/sdk"]).toBeUndefined();
     expect(manifest.devDependencies["@pdx-ts/sdk"]).toBeDefined();
+  });
+
+  it("reports the version it was published as", async () => {
+    // `--version` reads a constant in cli.ts, which is a hand-maintained copy
+    // of the manifest's. Nothing at runtime notices when a release bumps one
+    // and forgets the other, so the drift is silent and ships — this is the
+    // only thing that catches it.
+    const written: string[] = [];
+    const spy = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation((chunk: string | Uint8Array) => {
+        written.push(String(chunk));
+        return true;
+      });
+    try {
+      await main(["--version"]);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(written.join("").trim()).toBe(manifest.version);
   });
 
   it("does not require type stripping of its own", () => {

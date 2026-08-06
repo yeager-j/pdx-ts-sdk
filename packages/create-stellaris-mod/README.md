@@ -65,7 +65,9 @@ vanilla ids as unchecked strings.
 
 ## `--local`, and why it exists
 
-`@pdx-ts/sdk` is not published to npm yet, so the default registry ranges will 404. Point the CLI at a checkout instead:
+The default registry ranges resolve from npm. To develop against an unreleased
+checkout of the SDK instead — testing an SDK change against a real scaffold —
+point the CLI at it:
 
 ```bash
 npx create-stellaris-mod my-mod --local ~/code/pdx-sdk

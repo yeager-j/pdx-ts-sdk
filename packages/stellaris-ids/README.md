@@ -3,9 +3,19 @@
 Every identifier a real, installed copy of Stellaris defines — content ids for
 39 registries, scripted trigger and effect names with their `$PARAM$` lists,
 sprite and sound names — shipped as TypeScript literal-union types,
-version-pinned to the game build. The package's npm version _is_ the game
-version: `@pdx-ts/stellaris-ids@4.4.6` carries the identifiers of Stellaris
-4.4.6 and nothing else.
+version-pinned to the game build. The package's npm version carries the game
+version: `4.4.6-r.1` carries the identifiers of Stellaris 4.4.6 and nothing
+else, where `-r.1` counts publishes of that one build.
+
+Install a build by range rather than by version, so you get its newest
+revision:
+
+```json
+"@pdx-ts/stellaris-ids": ">=4.4.6-0 <4.4.6"
+```
+
+`create-stellaris-mod` writes this for you. [PROVENANCE.md](PROVENANCE.md)
+("Revisions") explains why both bounds are needed.
 
 Types only: there are no runtime exports, no materialized constants, and —
 deliberately — no script bodies, localized text, or asset data.

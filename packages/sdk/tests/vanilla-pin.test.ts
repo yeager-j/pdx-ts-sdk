@@ -44,8 +44,22 @@ describe("checkVanillaPackagePin", () => {
     }
   });
 
-  it("strips a prerelease suffix before comparing (4.4.6-r1 pins 4.4.6)", () => {
-    expect(() => checkVanillaPackagePin("4.4.6-r1", "4.4.6", undefined)).not.toThrow();
+  it("strips a revision suffix before comparing (4.4.6-r.2 pins 4.4.6)", () => {
+    expect(() => checkVanillaPackagePin("4.4.6-r.2", "4.4.6", undefined)).not.toThrow();
+    expect(() => checkVanillaPackagePin("4.4.6-r.10", "4.4.6", undefined)).not.toThrow();
+  });
+
+  it("names an install range that can actually resolve a revision", () => {
+    // Not `@4.5.0`. Every published version is a `-r.<n>` revision, which an
+    // ordinary range matches none of — so the bare version resolves to nothing,
+    // or to a pre-scheme build that is exactly what the range excludes. A
+    // mismatch message that prints an uninstallable command is worse than none.
+    try {
+      checkVanillaPackagePin("4.4.6", "4.5.0", undefined);
+      expect.unreachable("expected checkVanillaPackagePin to throw");
+    } catch (error) {
+      expect((error as Error).message).toContain(">=4.5.0-0 <4.5.0");
+    }
   });
 
   it("passes on the unstamped sentinel 0.0.0 regardless of the install version", () => {
@@ -99,7 +113,7 @@ describe("vanillaIdsCheckWarning", () => {
 
   it("stays silent when the package pins the install's own version", () => {
     expect(vanillaIdsCheckWarning("4.4.6", "4.4.6", undefined)).toBeUndefined();
-    expect(vanillaIdsCheckWarning("4.4.6-r1", "4.4.6", undefined)).toBeUndefined();
+    expect(vanillaIdsCheckWarning("4.4.6-r.1", "4.4.6", undefined)).toBeUndefined();
   });
 
   it("stays silent when there is no install version to compare against", () => {
@@ -115,11 +129,16 @@ describe("vanillaIdsCheckWarning", () => {
 
 describe("installedVanillaPackageVersion", () => {
   it("resolves the workspace package's stamped version via the default specifier", () => {
-    // The workspace package is generated and stamped (4.4.6 today), so this
+    // The workspace package is generated and stamped (4.4.6-r.1 today), so this
     // asserts the shape rather than a literal — a regeneration against a newer
     // install is supposed to move it, and only `PROVENANCE.md`'s consistency
     // check and the install-gated conformance gate pin the exact value.
-    expect(installedVanillaPackageVersion()).toMatch(/^\d+\.\d+\.\d+/);
+    //
+    // The revision is part of the shape, not decoration: a bare `4.4.6` is a
+    // version npm has already consumed and can never reissue, so a stamp
+    // without one is a package that cannot be published (PROVENANCE.md,
+    // "Revisions").
+    expect(installedVanillaPackageVersion()).toMatch(/^\d+\.\d+\.\d+-r\.\d+$/);
     expect(installedVanillaPackageVersion()).not.toBe("0.0.0");
   });
 
@@ -127,6 +146,17 @@ describe("installedVanillaPackageVersion", () => {
     expect(installedVanillaPackageVersion("@pdx-ts/does-not-exist/package.json")).toBeUndefined();
   });
 });
+
+/**
+ * The game build the installed package describes, which is its version minus
+ * the `-r.<n>` revision counting publishes of that build. The two are not
+ * interchangeable: `4.4.6-r.1` is a package version and never an install
+ * version, so a view built from the raw string claims an install that cannot
+ * exist and the gate below fires on it.
+ */
+function installedGameVersion(): string {
+  return installedVanillaPackageVersion()!.split(/[-+]/, 1)[0]!;
+}
 
 describe("the mod capability's version-pin hook", () => {
   const FILES = {
@@ -168,7 +198,7 @@ describe("the mod capability's version-pin hook", () => {
       expect(error).toBeInstanceOf(VanillaPackageMismatchError);
       const message = (error as Error).message;
       expect(message).toContain("4.5.0");
-      expect(message).toContain(installedVanillaPackageVersion()!);
+      expect(message).toContain(installedGameVersion());
     }
   });
 
@@ -180,7 +210,7 @@ describe("the mod capability's version-pin hook", () => {
 
   it("passes when the view's install matches the package", () => {
     const vanilla = viewFromFiles(FILES, {
-      gameVersion: installedVanillaPackageVersion(),
+      gameVersion: installedGameVersion(),
     });
     const { mod, technologies } = technologyFeature();
     expect(() => render(mod.compile([technologies], { vanilla }))).not.toThrow();
@@ -209,7 +239,7 @@ describe("the mod capability's version-pin hook", () => {
       const warnings = uncheckedWarnings(mod.compile([technologies], { vanilla }));
       expect(warnings).toHaveLength(1);
       expect(warnings[0]!.message).toContain("4.5.0");
-      expect(warnings[0]!.message).toContain(installedVanillaPackageVersion()!);
+      expect(warnings[0]!.message).toContain(installedGameVersion());
       // Warnings are data, and the message says how to get the protection back.
       expect(warnings[0]!.message).toContain("uncheckedVanillaIds: true");
     });
@@ -225,7 +255,7 @@ describe("the mod capability's version-pin hook", () => {
     it("stays quiet when the installed package matches the install", () => {
       // The healthy world, through the real resolver: the canary must not be
       // a warning every ordinary build carries.
-      const vanilla = viewFromFiles(FILES, { gameVersion: installedVanillaPackageVersion() });
+      const vanilla = viewFromFiles(FILES, { gameVersion: installedGameVersion() });
       const { mod, technologies } = technologyFeature();
       expect(uncheckedWarnings(mod.compile([technologies], { vanilla }))).toEqual([]);
     });

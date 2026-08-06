@@ -3,9 +3,9 @@
  *
  * This duplicates `stellaris.describeInstall()` rather than importing it, and
  * the duplication is deliberate: taking `@pdx-ts/sdk` as a runtime dependency
- * would couple this CLI's release to the SDK's, and the SDK is not publishable
- * yet (its `exports` point at raw `.ts`, which Node refuses to strip under
- * `node_modules`). The SDK remains the authority — `packages/sdk/src/stellaris/`
+ * would couple this CLI's release to the SDK's, so `npx create-stellaris-mod`
+ * would resolve an SDK version before knowing which one the scaffold should
+ * pin. The SDK remains the authority — `packages/sdk/src/stellaris/`
  * is where these rules live, this is a copy, and `detect.test.ts` asserts the
  * two agree, since the SDK *is* available as a devDependency.
  */

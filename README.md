@@ -558,7 +558,7 @@ design boundaries — live in [AGENTS.md](AGENTS.md).
 
 ## Status
 
-Prototype, unpublished, built and verified against Stellaris 4.4.6. Emitted
+0.x, built and verified against Stellaris 4.4.6. Emitted
 output is pinned by golden files, generated types by drift gates, override
 behavior by an in-game calibration record, and the parser by a round-trip
 fixpoint over the entire vanilla `common/` tree.

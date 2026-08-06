@@ -19,13 +19,46 @@ a bundler drops the ones a mod does not import.
 
 Generated from Stellaris **4.4.6**.
 
-The npm `version` *is* the game version: `@pdx-ts/codegen-vanilla` stamps
+The npm `version` carries the game version: `@pdx-ts/codegen-vanilla` stamps
 `package.json` with `major.minor.patch` from the installed game's
 `launcher-settings.json`, so there is one authority for which build these
 identifiers came from. The SDK compares its own install's version against this
 package's `package.json` version and refuses to build silently on a mismatch
 (`VanillaPackageMismatchError`; `buildMod`'s `acceptGameVersion` is the
 deliberate escape).
+
+### Revisions
+
+The stamped version is the game version plus a `-r.<n>` revision — `4.4.6-r.1`,
+`4.4.6-r.2` — and a bare `4.4.6` is never published. npm can never reuse a
+version number, so numbering by game version alone allows exactly one publish
+per game release, and this package can need a second long before Paradox ships
+anything: a widened peer range, a regenerated registry, a generator fix. The
+revision is what makes a second publish of one build possible.
+
+Consumers ask for a build by range rather than by version:
+
+```json
+"@pdx-ts/stellaris-ids": ">=4.4.6-0 <4.4.6"
+```
+
+Both bounds do work. `>=4.4.6-0` is what admits prereleases at all — an
+ordinary range like `^4.4.6` matches none of them. `<4.4.6` then excludes the
+bare version, which by definition predates this scheme; without it, highest-wins
+would hand every install that pre-scheme build instead of the newest revision.
+`create-stellaris-mod` emits this range, and the SDK's mismatch message prints
+it.
+
+`r.1` rather than `r1`: the dot makes the number its own numeric identifier, so
+`-r.10` sorts above `-r.9`. Run together they are one alphanumeric identifier
+compared lexically, and the tenth revision would sort below the ninth.
+
+Regenerating does not move the revision. A new game build restarts at `-r.1`;
+regenerating the build already stamped leaves the version untouched, because
+`codegen:vanilla:check` regenerates and then diffs `package.json` and a version
+that moved every run would fail it unconditionally. **Bump `-r.<n>` by hand as
+part of publishing**, which is the decision it records — a second publish of one
+game build.
 
 The 4.4.6 generation read 39 registries and 30,085 ids, plus 1,618 scripted
 triggers (86 parameterized) and 1,657 scripted effects (382 parameterized).

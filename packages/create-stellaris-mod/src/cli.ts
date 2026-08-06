@@ -21,7 +21,7 @@ import { helpText, parseArgv, type Resolved } from "./options.ts";
 import { planFiles } from "./plan.ts";
 import { resolveInteractive, resolveNonInteractive } from "./prompts.ts";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 export async function main(argv: readonly string[], cwd = process.cwd()): Promise<number> {
   let parsed;
@@ -157,18 +157,6 @@ function plannedCommands(resolved: Resolved): string[] {
 function nextSteps(resolved: Resolved, targetDir: string, installed: boolean): string {
   const pm = resolved.packageManager;
   const lines = ["", `Scaffolded ${resolved.name} in ${targetDir}`, ""];
-
-  if (resolved.localSdk === undefined) {
-    // Saying this plainly is the honest thing: the packages are not on npm
-    // yet, so a registry install will fail, and finding that out from a 404 is
-    // worse than being told.
-    lines.push(
-      "Note: @pdx-ts/sdk is not published to npm yet, so installing from the",
-      "registry will fail. Re-run with --local <path-to-pdx-sdk> to depend on a",
-      "local checkout instead.",
-      ""
-    );
-  }
 
   lines.push("Next:");
   lines.push(`  cd ${shortestPath(targetDir)}`);

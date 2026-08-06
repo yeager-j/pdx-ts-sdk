@@ -59,8 +59,9 @@ const realInstallGameVersion =
   realInstallPath === undefined ? undefined : readGameVersion(realInstallPath);
 
 /**
- * `@pdx-ts/stellaris-ids`'s npm version *is* the game version it was
- * generated from (AGENTS.md, "Vanilla identifier package") — it is
+ * `@pdx-ts/stellaris-ids`'s npm version carries the game version it was
+ * generated from, plus a `-r.<n>` revision (AGENTS.md, "Vanilla identifier
+ * package"; PROVENANCE.md, "Revisions") — it is
  * regenerated from a pinned install, not derived live, so a game update
  * alone can leave the workspace-built tarball this suite installs pinned to
  * a version the currently detected install no longer matches.

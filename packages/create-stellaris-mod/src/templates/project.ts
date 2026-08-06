@@ -22,8 +22,8 @@ const VERSIONS = {
   eslint: "^9.0.0",
   eslint_js: "^9.0.0",
   typescript_eslint: "^8.0.0",
-  sdk: "^0.1.0",
-  sdkTesting: "^0.1.0",
+  sdk: "^0.2.0",
+  sdkTesting: "^0.2.0",
 } as const;
 
 function json(value: unknown): string {
@@ -63,7 +63,7 @@ function testingDependency(resolved: Resolved): Record<string, string> {
 /**
  * Whether the identifier package can be pinned at all.
  *
- * Its npm version *is* the game version, so only a plain `major.minor.patch`
+ * Its npm version carries the game version, so only a plain `major.minor.patch`
  * has a counterpart to install — a four-part Paradox build has none. Exported
  * because the source templates must ask the same question: emitting the
  * `import "@pdx-ts/stellaris-ids"` side effect for a dependency this declined
@@ -82,10 +82,27 @@ function idsDependency(resolved: Resolved): Record<string, string> {
   if (resolved.localSdk !== undefined) {
     return { "@pdx-ts/stellaris-ids": `file:${resolved.localSdk}/packages/stellaris-ids` };
   }
-  // The package's npm version *is* the game version, so this is an exact pin
-  // rather than a range: 4.4.6 carries the identifiers of Stellaris 4.4.6 and
-  // the SDK refuses a build whose install disagrees.
-  return { "@pdx-ts/stellaris-ids": gameVersion };
+  return { "@pdx-ts/stellaris-ids": idsRange(gameVersion) };
+}
+
+/**
+ * The range selecting the newest *revision* of one game build's identifiers.
+ *
+ * The package's version is the game version carrying a `-r.<n>` revision
+ * suffix, because a package can need a fix — a widened peer range, a
+ * regenerated registry — between two game releases, and npm can never reuse a
+ * version number. So `4.4.6` names a build and `-r.1`, `-r.2` name successive
+ * publishes of it.
+ *
+ * Both bounds earn their place. `>=4.4.6-0` is what admits prereleases at all:
+ * an ordinary range like `^4.4.6` matches no prerelease, so it would find
+ * nothing. `<4.4.6` then *excludes the bare build* — every published version is
+ * a revision, and a bare `4.4.6` on the registry is by definition one that
+ * predates this scheme. Highest-wins within the range then means newest
+ * revision, which is the whole point.
+ */
+export function idsRange(gameVersion: string): string {
+  return `>=${gameVersion}-0 <${gameVersion}`;
 }
 
 export function packageJson(resolved: Resolved, packageName: string): string {

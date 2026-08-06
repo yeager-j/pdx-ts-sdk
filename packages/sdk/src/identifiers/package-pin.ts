@@ -46,12 +46,26 @@ export function installedVanillaPackageVersion(
 
 /**
  * Strips a prerelease/build suffix from a semver string, e.g.
- * `"4.4.6-r2+build"` -> `"4.4.6"`. The identifier package pins a game
- * version by its `major.minor.patch` alone, so a regen-fix release
- * (`4.4.6-r2`) still pins install `4.4.6`.
+ * `"4.4.6-r.2+build"` -> `"4.4.6"`. The identifier package pins a game version
+ * by its `major.minor.patch` alone, and every published version carries a
+ * `-r.<n>` revision suffix counting publishes of that one build, so a
+ * regen-fix release (`4.4.6-r.2`) still pins install `4.4.6`.
  */
 function corePatchVersion(version: string): string {
   return version.split(/[-+]/, 1)[0]!;
+}
+
+/**
+ * How to ask npm for the identifier package matching one game build.
+ *
+ * Not `@4.4.6`: every published version is a `-r.<n>` revision of a build, and
+ * an ordinary range matches no prerelease, so naming the bare version finds
+ * either nothing or — on a registry still carrying one — a build that predates
+ * the revision scheme. Kept beside the check that prints it, since a wrong
+ * install line is worse than none.
+ */
+export function vanillaPackageInstallRange(gameVersion: string): string {
+  return `>=${gameVersion}-0 <${gameVersion}`;
 }
 
 /**
@@ -92,7 +106,9 @@ export function checkVanillaPackagePin(
   }
   throw new VanillaPackageMismatchError(
     `the install is Stellaris ${installGameVersion} but @pdx-ts/stellaris-ids is pinned to ` +
-      `${pinned} — install @pdx-ts/stellaris-ids@${installGameVersion} to match, or set ` +
+      `${pinned} — install "@pdx-ts/stellaris-ids": "${vanillaPackageInstallRange(
+        installGameVersion
+      )}" to match, or set ` +
       `acceptGameVersion: "${installGameVersion}" to proceed on mismatched identifier types`
   );
 }
@@ -172,7 +188,8 @@ export function vanillaIdsCheckWarning(
     `Vanilla ids are checked against the wrong game build: @pdx-ts/stellaris-ids is pinned to ` +
     `${pinned} but this build's install is Stellaris ${installGameVersion}, accepted via ` +
     `acceptGameVersion: "${acceptGameVersion}". Ids that moved between those builds typecheck ` +
-    `here and are still wrong in game. Install @pdx-ts/stellaris-ids@${installGameVersion} to ` +
+    `here and are still wrong in game. Install "@pdx-ts/stellaris-ids": ` +
+    `"${vanillaPackageInstallRange(installGameVersion)}" to ` +
     `match the install (and import it somewhere in the project — an installed package that is ` +
     `never imported checks nothing at all), or set uncheckedVanillaIds: true on the mod config ` +
     `to acknowledge building on mismatched identifier types.`

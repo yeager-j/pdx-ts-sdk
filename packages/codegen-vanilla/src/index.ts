@@ -18,6 +18,7 @@ import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/stellaris";
 
 import { formatEmitted } from "./format.ts";
 import { generateVanillaPackage, type VanillaReport } from "./generate.ts";
+import { stampedVersionFor } from "./version.ts";
 
 /**
  * Anchored to the module rather than the process, so the repo this writes into
@@ -63,9 +64,9 @@ function existingFiles(dir: string, prefix = ""): string[] {
  *
  * `requireGameVersion` states the fact (what the file says and why it is not a
  * usable version); the rethrow below states what that costs *here*, which the
- * SDK has no business knowing. The package version *is* the game version, so a
- * missing or unexpected version string cannot be defaulted past: it would stamp
- * a package claiming to describe a build nobody can identify.
+ * SDK has no business knowing. The package version carries the game version, so
+ * a missing or unexpected version string cannot be defaulted past: it would
+ * stamp a package claiming to describe a build nobody can identify.
  */
 function readGameVersion(installRoot: string): string {
   try {
@@ -73,7 +74,7 @@ function readGameVersion(installRoot: string): string {
   } catch (error) {
     throw new Error(
       `${error instanceof Error ? error.message : String(error)}. ` +
-        "The package version is the game version, so a four-part Paradox version needs a " +
+        "The package version carries the game version, so a four-part Paradox version needs a " +
         "deliberate mapping to semver (and a note in PROVENANCE.md) before regenerating — " +
         "pick the npm version by hand rather than letting this script guess.",
       { cause: error }
@@ -81,11 +82,14 @@ function readGameVersion(installRoot: string): string {
   }
 }
 
-function stampVersion(version: string): void {
+function stampVersion(gameVersion: string): string {
   const file = path.join(PACKAGE_DIR, "package.json");
   const manifest = JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
-  manifest["version"] = version;
+  const current = typeof manifest["version"] === "string" ? manifest["version"] : "0.0.0";
+  const next = stampedVersionFor(gameVersion, current);
+  manifest["version"] = next;
   writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  return next;
 }
 
 function reportSection(title: string, lines: readonly string[]): void {
@@ -225,8 +229,11 @@ async function main(): Promise<void> {
   for (const [file, contents] of formatted) {
     write(file, contents);
   }
-  stampVersion(gameVersion);
+  const stamped = stampVersion(gameVersion);
   printReport(report, stale);
+  // The revision, not just the build, is what gets published — and it is the
+  // one number a regeneration changes that no diff of `src/` shows.
+  console.log(`\nstamped @pdx-ts/stellaris-ids@${stamped} (Stellaris ${gameVersion})`);
 }
 
 await main();

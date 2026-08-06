@@ -104,6 +104,13 @@ not the package itself, and never reads an install.
 - Review the complete `packages/stellaris-ids/src` diff as a public-API change, the same way a
   `src/generated/` diff is reviewed. Commit the generated output together with the change that
   produced it (a game patch, a generator fix).
+- The stamped version is the game version plus a `-r.<n>` revision (`4.4.6-r.1`), never a bare
+  game version, because npm can never reuse a version number and this package needs more than one
+  publish per game release. Consumers install by the range `>=4.4.6-0 <4.4.6`, which
+  `create-stellaris-mod` emits and the SDK's mismatch message prints. Regenerating deliberately
+  does *not* move the revision — that would fail `codegen:vanilla:check`, which diffs
+  `package.json` — so bump `-r.<n>` by hand when publishing a second time against one game build.
+  `packages/stellaris-ids/PROVENANCE.md` ("Revisions") is the authority.
 - Licensing boundary, enforced by the generator itself rather than left to convention: this package
   emits ids, definition names, scripted trigger/effect names and their `$PARAM$` lists, event
   ids/namespaces, and the scope each scripted definition is legal in — never script bodies,

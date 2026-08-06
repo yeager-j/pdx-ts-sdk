@@ -80,7 +80,7 @@ differential are the gates that catch what hand-written cases miss.
 
 ## Status
 
-0.x, unpublished — the API may still move while the SDK consumes it. Built as
+0.x — the API may still move while the SDK consumes it. Built as
 the foundation of [@pdx-ts/sdk](../sdk/README.md); the parser is deliberately
 standalone and game-semantics-free.
 
