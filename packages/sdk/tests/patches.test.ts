@@ -423,11 +423,8 @@ describe("patching a registry whose replacement rule is assumed", () => {
     const files = render(megastructureMod());
     expect([...files.keys()]).toEqual([
       "descriptor.mod",
-      // Every mod emits this, empty or not; nothing here mints a key.
-      "localisation/english/pp_mod_l_english.yml",
       "common/megastructures/pp_megastructures_pp_mod_patch.txt",
     ]);
-    expect(files.get("localisation/english/pp_mod_l_english.yml")).toBe("﻿l_english:\n");
     await expect(
       files.get("common/megastructures/pp_megastructures_pp_mod_patch.txt")
     ).toMatchFileSnapshot(
@@ -513,7 +510,7 @@ describe("patched localization end to end", () => {
   function localizedMod() {
     const mod = createMod(makeConfig());
     return mod.compile([
-      mod.feature(undefined, [
+      mod.feature("localized", [
         mod.technology("chimeric_grafts", {
           name: "Chimeric Grafts",
           area: "society",
@@ -538,16 +535,16 @@ describe("patched localization end to end", () => {
     const files = render(localizedMod());
     expect([...files.keys()]).toEqual([
       "descriptor.mod",
-      "common/technology/pp_mod_technology.txt",
-      "localisation/english/pp_mod_l_english.yml",
-      "localisation/replace/english/pp_mod_l_english.yml",
+      "common/technology/pp_mod_localized.txt",
+      "localisation/english/pp_mod_localized_l_english.yml",
+      "localisation/replace/english/pp_mod_localized_l_english.yml",
       "common/buildings/pp_buildings_pp_mod_patch.txt",
       "common/technology/pp_soc_tech_pp_mod_patch.txt",
     ]);
     // Full file: the BOM, the `l_english:` header, and vanilla's own keys in
     // sorted order — nothing about it depends on which patch was authored first.
     await expect(
-      files.get("localisation/replace/english/pp_mod_l_english.yml")
+      files.get("localisation/replace/english/pp_mod_localized_l_english.yml")
     ).toMatchFileSnapshot(
       "__snapshots__/patches/localisation__replace__english__pp_mod_l_english.yml"
     );
@@ -556,7 +553,7 @@ describe("patched localization end to end", () => {
   it("mints the patched member's key into the ordinary layer, and emits it", () => {
     const files = render(localizedMod());
     // Prefixed by construction, so it cannot be a key vanilla already defines.
-    expect(files.get("localisation/english/pp_mod_l_english.yml")).toContain(
+    expect(files.get("localisation/english/pp_mod_localized_l_english.yml")).toContain(
       ' pp_mod_building_pp_refinery_planet_limit_crowded:0 "Crowded world"'
     );
     // And the patched body points at exactly that key.

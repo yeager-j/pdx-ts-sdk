@@ -64,6 +64,16 @@ function capabilityFor(config: ReturnType<typeof configFor>) {
   });
 }
 
+function localizationMap(mod: PureMod, language = "english"): ReadonlyMap<string, string> {
+  return new Map(
+    mod.localizationFiles
+      .filter(
+        (file) => file.language === language && !file.relPath.startsWith("localisation/replace/")
+      )
+      .flatMap((file) => file.entries)
+  );
+}
+
 const CONFIG = configFor("Content test", "content_test");
 
 function defineContentExample(): PureMod {
@@ -2993,8 +3003,10 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     const after = cap.compile([cap.feature(undefined, [situationWithRows(cap, withInsertion)])]);
 
     for (const desc of descs) {
-      expect(keyForText(after.loc, desc)).toBe(keyForText(before.loc, desc));
-      expect(keyForText(after.loc, desc)).toBeDefined();
+      expect(keyForText(localizationMap(after), desc)).toBe(
+        keyForText(localizationMap(before), desc)
+      );
+      expect(keyForText(localizationMap(after), desc)).toBeDefined();
     }
   });
 
@@ -3017,9 +3029,9 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
 
     const mod = cap.compile([cap.feature(undefined, [situation])]);
 
-    expect(mod.loc.get("desc_key_test_situation_pinned_monthly_progress_flesh_is_weak")).toBe(
-      "The Flesh is Weak."
-    );
+    expect(
+      localizationMap(mod).get("desc_key_test_situation_pinned_monthly_progress_flesh_is_weak")
+    ).toBe("The Flesh is Weak.");
     expect(mod.warnings).toEqual([]);
   });
 
@@ -3038,7 +3050,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     const mod = cap.compile([cap.feature(undefined, [situation])]);
 
     const expectedKey = `desc_key_test_situation_unkeyed_monthly_progress_${expectedSlug}`;
-    expect(mod.loc.get(expectedKey)).toBe(desc);
+    expect(localizationMap(mod).get(expectedKey)).toBe(desc);
     expect(mod.warnings).toEqual([
       {
         code: "unstable-desc-key",
@@ -3076,7 +3088,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     const mod = cap.compile([cap.feature(undefined, [technology])]);
 
     const key = "desc_key_test_tech_nested_desc_technology_swap_0_weight_frugal";
-    expect(mod.loc.get(key)).toBe("Cheaper.");
+    expect(localizationMap(mod).get(key)).toBe("Cheaper.");
     expect(render(mod).get("common/technology/desc_key_test_technology.txt")).toContain(
       `desc = ${key}`
     );
@@ -3155,8 +3167,8 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     const expectedKey = `desc_key_test_situation_shared_text_monthly_progress_${expectedSlug}`;
 
     // One yml entry, not two identical ones.
-    expect(mod.loc.get(expectedKey)).toBe(desc);
-    expect([...mod.loc.values()].filter((text) => text === desc)).toHaveLength(1);
+    expect(localizationMap(mod).get(expectedKey)).toBe(desc);
+    expect([...localizationMap(mod).values()].filter((text) => text === desc)).toHaveLength(1);
 
     // Both modifier rows reference that same key in the emitted content.
     const content = render(mod).get("common/situations/desc_key_test_situations.txt")!;

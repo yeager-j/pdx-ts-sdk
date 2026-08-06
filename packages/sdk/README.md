@@ -123,6 +123,53 @@ in one feature. Raw definers, raw event/on-action constructors, collection
 assembly, and the old export-discovery mechanism are package internals, not
 public alternatives to the capability.
 
+### Standalone localization
+
+Use `mod.localization(keySuffix, text)` for tooltips, counters, scripted
+localization outputs, menu strings, and other text that does not belong to a
+definition slot. It returns an immutable feature item whose `.key` is the
+mod-prefixed key Stellaris reads:
+
+```ts
+const ascensionCounter = mod.localization("ASCENSION_COUNTER", {
+  english: "Ascension progress",
+  french: "Progression de l'ascension",
+});
+
+export const feature = mod.feature("ascension", [ascensionCounter]);
+
+// Use ascensionCounter.key in any field that expects a localization key.
+```
+
+Localization follows feature layout. The example above writes
+`localisation/english/mymod_ascension_l_english.yml` and its French counterpart;
+definition- and event-attached English text in the same feature lands in the
+same English file. Patch renames use the corresponding feature filename under
+`localisation/replace/`.
+
+The key suffix preserves case and may contain ASCII letters, digits, `_`, `.`,
+`-`, and `'`. This is the complete character set observed across Stellaris
+4.4.6's 161,829 shipped localization keys, not a claim that the engine rejects
+every other character.
+
+When the intent is to override an existing free-standing key, use the separate
+exact-key API:
+
+```ts
+const optionText = mod.replaceLocalization("crisis.2010.a", {
+  english: "Reconsider.",
+  french: "Réfléchissez.",
+});
+
+export const feature = mod.feature("crisis", [optionText]);
+```
+
+`replaceLocalization` does not add the mod prefix. Its name is the explicit
+opt-in to collision, and its entries always go to the feature's
+`localisation/replace/<language>/` file. Typed content patches use that same
+layer automatically for registry-declared rename slots; new supporting text
+minted inside a patch remains prefixed in ordinary localization.
+
 ### Triggers, effects, and scope safety
 
 Triggers are declarative expression trees. Effects are closures that run once

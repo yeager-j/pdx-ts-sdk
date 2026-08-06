@@ -36,7 +36,7 @@ describe("event definitions in a namespace", () => {
       options: [{ name: "First." }, { name: "Second." }],
     });
     const loc = render(mod.compile([mod.feature("events", [titled])])).get(
-      "localisation/english/event_test_l_english.yml"
+      "localisation/english/event_test_events_l_english.yml"
     )!;
     expect(loc).toContain(' event_test.2.name:0 "A Title"');
     expect(loc).toContain(' event_test.2.desc:0 "A description."');

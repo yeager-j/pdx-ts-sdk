@@ -269,7 +269,7 @@ describe("a scaffolded project", () => {
     expect(output).toContain("common/technology/smoke_mod_example.txt");
     expect(output).toContain("events/smoke_mod_example.txt");
     expect(output).toContain("descriptor.mod");
-    expect(output).toContain("localisation/english/smoke_mod_l_english.yml");
+    expect(output).toContain("localisation/english/smoke_mod_example_l_english.yml");
 
     const events = runIn(projectDir, "cat", ["out/events/smoke_mod_example.txt"]);
     expect(events).toContain("namespace = smoke_mod");

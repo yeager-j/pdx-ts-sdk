@@ -8,6 +8,7 @@
 import { kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import { flattenItems, type ModItemInput } from "../authoring/feature.ts";
+import { LOCALIZATION_LANGUAGES } from "../authoring/localization.ts";
 import { ContentAuthoring } from "../content/authoring.ts";
 import type { ContentItem } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
@@ -34,7 +35,7 @@ import { collectPatches, planPatches } from "./patches.ts";
 import { validateReferences, type ReferenceUse } from "./references.ts";
 
 export { type BuildOptions, type ModConfig } from "./config.ts";
-export { type EmittedFile, type PureMod } from "./model.ts";
+export { type EmittedFile, type LocalizationFile, type PureMod } from "./model.ts";
 
 function emissionPath(prefix: string, outputDir: string, stem: string): string {
   return `${outputDir}/${prefix}_${stem}.txt`;
@@ -53,18 +54,12 @@ export function buildMod(
   const flat = flattenItems(features);
   const warnings: ModWarning[] = [];
   const localization = createLocalizationAccumulator(warnings);
-  // A second accumulator rather than a second bucket in the first: the two
-  // land in different files, and a replacement key is vanilla's own while
-  // every ordinary key is this mod's, so they cannot legitimately collide.
-  // What each one *can* collide with is another entry in its own file, and
-  // that is the check both of them still run.
-  const replaceLocalization = createLocalizationAccumulator(warnings);
   const refUses: ReferenceUse[] = [];
 
   const content = new ContentAuthoring(
     config.prefix,
     CONTENT_REGISTRIES,
-    localization.register,
+    () => {},
     (message) => warnings.push({ code: "missing-prefix", message }),
     (message) => warnings.push({ code: "unstable-desc-key", message }),
     (message) => warnings.push({ code: "loc-key-looks-like-text", message })
@@ -83,7 +78,10 @@ export function buildMod(
     CONTENT_REGISTRIES.map((descriptor) => [descriptor.type as ContentTypeName, descriptor])
   );
   const ownIdsByDir = new Map<string, Map<string, ContentTypeName>>();
-  const rawByType = new Map<ContentTypeName, Map<string, ContentItem[]>>();
+  const rawByType = new Map<
+    ContentTypeName,
+    Map<string, { items: Array<{ item: ContentItem; stem: string | undefined }> }>
+  >();
 
   // Pass 1: collect and validate items without defining them. Definition is
   // delayed because it registers localization as a side effect.
@@ -115,9 +113,11 @@ export function buildMod(
     ownIds.set(item.def.id, item.type);
     ownIdsByDir.set(descriptor.outputDir, ownIds);
     const relPath = emissionPath(config.prefix, descriptor.outputDir, stem ?? descriptor.fileStem);
-    const byPath = rawByType.get(item.type) ?? new Map<string, ContentItem[]>();
-    const group = byPath.get(relPath) ?? [];
-    group.push(item);
+    const byPath =
+      rawByType.get(item.type) ??
+      new Map<string, { items: Array<{ item: ContentItem; stem: string | undefined }> }>();
+    const group = byPath.get(relPath) ?? { items: [] };
+    group.items.push({ item, stem });
     byPath.set(relPath, group);
     rawByType.set(item.type, byPath);
   }
@@ -132,11 +132,21 @@ export function buildMod(
       continue;
     }
     for (const relPath of [...byPath.keys()].sort(compareUtf8)) {
-      const items = [...byPath.get(relPath)!].sort((a, b) => compareUtf8(a.def.id, b.def.id));
+      const group = byPath.get(relPath)!;
+      const items = [...group.items].sort((a, b) => compareUtf8(a.item.def.id, b.item.def.id));
       definedGroups.push({
         type,
         relPath,
-        defined: items.map((item) => content.define(item.type, item.def)),
+        defined: items.map(({ item, stem }) =>
+          content.define(item.type, item.def, (entries) =>
+            localization.register({
+              layer: "ordinary",
+              language: "english",
+              stem,
+              entries,
+            })
+          )
+        ),
       });
     }
   }
@@ -173,6 +183,7 @@ export function buildMod(
     (placed): placed is { item: EventItemBase; stem: string | undefined } =>
       placed.item.itemKind === "event"
   );
+  const eventStem = new Map(placedEvents.map(({ item, stem }) => [item, stem] as const));
   const eventsByPath = new Map<string, { namespace: string; events: EventItemBase[] }>();
   for (const { item, stem } of placedEvents) {
     const relPath = emissionPath(config.prefix, "events", stem ?? "events");
@@ -217,18 +228,25 @@ export function buildMod(
 
   const eventIds = new Set<string>();
   const namespaces: string[] = [];
-  for (const item of orderedEvents) {
-    if (eventIds.has(item.id)) {
-      throw new Error(`Duplicate event id "${item.id}"`);
-    }
-    eventIds.add(item.id);
-    for (const use of item.refs) {
-      refUses.push({ owner: `event "${item.id}"`, use });
-    }
-    localization.register(item.locEntries);
-    warnings.push(...item.warnings);
-    if (!namespaces.includes(item.namespace)) {
-      namespaces.push(item.namespace);
+  for (const group of eventGroups) {
+    for (const item of group.events) {
+      if (eventIds.has(item.id)) {
+        throw new Error(`Duplicate event id "${item.id}"`);
+      }
+      eventIds.add(item.id);
+      for (const use of item.refs) {
+        refUses.push({ owner: `event "${item.id}"`, use });
+      }
+      localization.register({
+        layer: "ordinary",
+        language: "english",
+        stem: eventStem.get(item),
+        entries: item.locEntries,
+      });
+      warnings.push(...item.warnings);
+      if (!namespaces.includes(item.namespace)) {
+        namespaces.push(item.namespace);
+      }
     }
   }
   for (const namespace of namespaces) {
@@ -289,10 +307,41 @@ export function buildMod(
   const locOrderedPatches = [...patches].sort(
     (a, b) => compareUtf8(a.registry, b.registry) || compareUtf8(a.id, b.id)
   );
+  const patchStem = new Map(
+    flat.flatMap(({ item, stem }) =>
+      item.itemKind === "patch" ? [[item.patched, stem] as const] : []
+    )
+  );
   for (const patched of locOrderedPatches) {
     warnings.push(...patched.warnings);
-    localization.register(patched.loc);
-    replaceLocalization.register(patched.replaceLoc);
+    localization.register({
+      layer: "ordinary",
+      language: "english",
+      stem: patchStem.get(patched),
+      entries: patched.loc,
+    });
+    localization.register({
+      layer: "replace",
+      language: "english",
+      stem: patchStem.get(patched),
+      entries: patched.replaceLoc,
+    });
+  }
+  for (const { item, stem } of flat) {
+    if (item.itemKind !== "localization") {
+      continue;
+    }
+    for (const language of LOCALIZATION_LANGUAGES) {
+      const text = item.translations[language];
+      if (text !== undefined) {
+        localization.register({
+          layer: item.layer,
+          language,
+          stem,
+          entries: [[item.key, text]],
+        });
+      }
+    }
   }
   validateReferences({
     prefix: config.prefix,
@@ -335,6 +384,8 @@ export function buildMod(
   }
   freezeItems(onActions);
 
+  const localizationFiles = localization.finish(config.prefix);
+
   return Object.freeze({
     config,
     warnings,
@@ -342,8 +393,7 @@ export function buildMod(
     eventFiles,
     events: orderedEvents,
     onActions,
-    loc: localization.loc,
-    replaceLoc: replaceLocalization.loc,
+    localizationFiles,
     shipOfSizeLimits,
     patchPlans,
     vanillaPaths,

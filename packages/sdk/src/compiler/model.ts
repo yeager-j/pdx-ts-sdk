@@ -1,5 +1,6 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { LocalizationLanguage } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import type { EventItemBase } from "../events/types.ts";
@@ -28,6 +29,16 @@ export interface DefinedGroup {
   readonly defined: readonly DefinedContent<string, { readonly id: string }>[];
 }
 
+/** One fully resolved localization file, ready for pure rendering. */
+export interface LocalizationFile {
+  /** The normalized path relative to the mod root. */
+  readonly relPath: string;
+  /** The language used by both the directory/filename and file header. */
+  readonly language: LocalizationLanguage;
+  /** Entries sorted by localization key. */
+  readonly entries: readonly (readonly [key: string, text: string])[];
+}
+
 /** The assembled mod: a value, not a builder. `render(mod)` consumes it. */
 export interface PureMod {
   /** Validated and immutable launcher configuration. */
@@ -42,16 +53,8 @@ export interface PureMod {
   readonly events: readonly EventItemBase[];
   /** On-action hook blocks in canonical emission order. */
   readonly onActions: readonly PdxEntry[];
-  /** Localization entries in canonical registration order. */
-  readonly loc: ReadonlyMap<string, string>;
-  /**
-   * Replacement text for keys vanilla already defines, from patch renames.
-   *
-   * A separate map because it is a separate emitted file: `localisation/replace/`
-   * is the layer the game resolves ahead of the ordinary one, which is what
-   * makes a rename win without any claim about filename order.
-   */
-  readonly replaceLoc: ReadonlyMap<string, string>;
+  /** Feature-scoped ordinary and replacement localization files, in path order. */
+  readonly localizationFiles: readonly LocalizationFile[];
   /** Shared ship-size-limit contribution ids. */
   readonly shipOfSizeLimits: ReadonlySet<string>;
   /** The planned vanilla overrides, one per patched registry, in path order. */
