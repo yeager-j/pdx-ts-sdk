@@ -37,6 +37,7 @@ import {
   type EconomicResourceBlock,
   type EconomicResourceBlockNoProduce,
   type EdictRef,
+  type EventChainRef,
   type EventFleetRef,
   type GovernmentTriggerBlock,
   type JobRef,
@@ -47,6 +48,7 @@ import {
   type ScopeRef,
   type ScriptValue,
   type SectionTemplateFields,
+  type SpecialProjectRef,
   type StrikeCraftComponentTemplateFields,
   type TechnologyPatch,
   type TechnologyRef,
@@ -1554,6 +1556,61 @@ describe("generated content authoring types", () => {
       // vanilla id beside it.
       neighborSystem: [{ initializer: outpost }, { initializer: "sol_system_initializer" }],
     });
+  });
+
+  it("preserves event-chain and special-project ids and brands their references", () => {
+    const chain = contentMod.eventChain("signal", { title: "Signal" });
+    expectTypeOf(chain.id).toEqualTypeOf<"content_types_event_chain_signal">();
+    contentMod.eventChain("counter", {
+      counter: { crystals_analyzed: { max: 3 } },
+    });
+    contentMod.eventChain("bad_counter", {
+      counter: {
+        crystals_analyzed: {
+          // @ts-expect-error — a counter maximum is numeric.
+          max: "three",
+        },
+      },
+    });
+    const project = contentMod.specialProject("survey", {
+      name: "Survey",
+      eventChain: chain,
+      eventScope: "planet_event",
+      sameOptionGroupAs: ["some_other_mod_project"],
+    });
+    expectTypeOf(project.id).toEqualTypeOf<"content_types_special_project_survey">();
+    contentMod.specialProject("recovery", {
+      name: "Recover",
+      eventChain: "vanilla_chain",
+      eventScope: "ship_event",
+      sameOptionGroupAs: [project],
+    });
+    contentMod.specialProject("ship_callbacks", {
+      eventScope: "ship_event",
+      onSuccess: (ship) => ship.setShipFlag("content_types_ship_callbacks"),
+      cost: { modifiers: [{ factor: 2, when: hasCountryFlag("content_types_weight") }] },
+    });
+    contentMod.specialProject("invalid_ship_callback", {
+      eventScope: "ship_event",
+      onSuccess: (ship) => {
+        // @ts-expect-error — eventScope, not an author assertion, controls callback scope.
+        ship.setCountryFlag("content_types_wrong_scope");
+      },
+    });
+    const wrongRegistry = defineBuilding({
+      id: "content_types_special_project_wrong_registry",
+      name: "X",
+    });
+    contentMod.specialProject("wrong_refs", {
+      name: "X",
+      // @ts-expect-error — event_chain rejects a building reference.
+      eventChain: wrongRegistry,
+      eventScope: "country_event",
+    });
+    // @ts-expect-error — a special project cannot flow into an event-chain reference.
+    const _wrongChain: EventChainRef = project;
+    // @ts-expect-error — an event chain cannot flow into a special-project reference.
+    const _wrongProject: SpecialProjectRef = chain;
   });
 
   it("preserves a megastructure's id and brands its self-reference", () => {

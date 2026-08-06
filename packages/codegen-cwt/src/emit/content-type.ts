@@ -22,6 +22,7 @@ import {
   REPEATED_STRUCT_FIELD_OVERRIDES,
   REQUIRED_LOCALISATION,
   SYNTHETIC_LOCALISATION,
+  type ContentScopeParameter,
   type RepeatedStructDefinition,
 } from "../overlay.ts";
 import {
@@ -451,7 +452,29 @@ function scopeParameterOf(emitter: Emitter, registry: string): ScopeParameter | 
   if (!scopes.includes(fallback)) {
     throw new Error(`Overlay scope parameter for ${registry} defaults outside its own scope list`);
   }
-  return { typeName: `${pascalCase(registry)}Scope`, scopes, fallback };
+  const selector = row.selector;
+  if (selector !== undefined) {
+    if (!Object.values(selector.scopes).every((scope) => scopes.includes(canonical(scope)))) {
+      throw new Error(`Overlay scope selector for ${registry} maps outside its own scope list`);
+    }
+    return {
+      typeName: `${pascalCase(registry)}Scope`,
+      scopes,
+      fallback,
+      parameterName: "E",
+      parameterType: selector.typeName,
+      parameterFallback: selector.fallback,
+      selector,
+    };
+  }
+  return {
+    typeName: `${pascalCase(registry)}Scope`,
+    scopes,
+    fallback,
+    parameterName: "S",
+    parameterType: `${pascalCase(registry)}Scope`,
+    parameterFallback: fallback,
+  };
 }
 
 /**
@@ -474,6 +497,10 @@ interface ScopeParameter {
   readonly typeName: string;
   readonly scopes: readonly string[];
   readonly fallback: string;
+  readonly parameterName: "S" | "E";
+  readonly parameterType: string;
+  readonly parameterFallback: string;
+  readonly selector?: NonNullable<ContentScopeParameter["selector"]>;
 }
 
 /**
@@ -581,7 +608,12 @@ export function emitContentType(
     // `NoInfer` makes the `scope` member the sole inference site for S. Without
     // it TypeScript would also infer from the `Trigger<S>` positions, which are
     // contravariant, and land somewhere unrelated to what the author declared.
-    unpinned: parameter === null ? "ScopeName" : "NoInfer<S>",
+    unpinned:
+      parameter === null
+        ? "ScopeName"
+        : parameter.selector === undefined
+          ? "NoInfer<S>"
+          : `NoInfer<${pascalCase(type.name)}ScopeOf<E>>`,
   };
   // {@link underParameter} over a field that carries its own path. A nested
   // field's scope is the definition's parameter exactly as a top-level one's
@@ -749,11 +781,15 @@ export function emitContentType(
       continue;
     }
     const widening = FIELD_WIDENINGS.get(path);
+    const loweredContext =
+      parameter?.selector !== undefined && !parameter.selector.scopedMembers.includes(member)
+        ? { ...fieldContext, unpinned: '"country"' }
+        : fieldContext;
     const lowered = pickOrdinary(
       emitter,
       group,
       name,
-      fieldContext,
+      loweredContext,
       override,
       widening?.extraType,
       path
@@ -764,8 +800,10 @@ export function emitContentType(
     }
     const optional = group.every((field) => isOptional(field.cardinality));
     const docs = docComment([...new Set(group.flatMap((field) => field.docs))], "  ");
-    members.push(`${docs}  ${member}${optional ? "?" : ""}: ${lowered.memberType};\n`);
-    patchMembers.push({ member, docs, memberType: lowered.memberType });
+    const memberType =
+      parameter?.selector?.member === member ? parameter.parameterName : lowered.memberType;
+    members.push(`${docs}  ${member}${optional ? "?" : ""}: ${memberType};\n`);
+    patchMembers.push({ member, docs, memberType });
     fieldMetadata.push(
       override?.member === undefined
         ? lowered.metadata
@@ -789,6 +827,8 @@ export function emitContentType(
   }
 
   const typeName = pascalCase(type.name);
+  const fieldsName =
+    parameter?.selector === undefined ? `${typeName}Fields` : `${typeName}FieldsBase`;
   const fieldsConstant = `${type.name.toUpperCase()}_FIELDS`;
   const localisationConstant = `${type.name.toUpperCase()}_LOCALISATION`;
   // A parameterised registry carries S on both interfaces and one extra
@@ -799,9 +839,10 @@ export function emitContentType(
   const generic =
     parameter === null
       ? ""
-      : `<S extends ${parameter.typeName} = ${JSON.stringify(parameter.fallback)}>`;
+      : `<${parameter.parameterName} extends ${parameter.parameterType} = ` +
+        `${JSON.stringify(parameter.parameterFallback)}>`;
   const scopeMember =
-    parameter === null
+    parameter === null || parameter.selector !== undefined
       ? ""
       : docComment(
           [
@@ -817,7 +858,17 @@ export function emitContentType(
       ? ""
       : docComment([`The scopes ${indefiniteArticle(type.name)} ${type.name} may declare.`]) +
         `export type ${parameter.typeName} = ` +
-        `${parameter.scopes.map((scope) => JSON.stringify(scope)).join(" | ")};\n\n`;
+        `${parameter.scopes.map((scope) => JSON.stringify(scope)).join(" | ")};\n\n` +
+        (parameter.selector === undefined
+          ? ""
+          : `export type ${pascalCase(type.name)}ScopeOf<E extends ${parameter.parameterType}> =\n` +
+            Object.entries(parameter.selector.scopes)
+              .map(
+                ([eventScope, scope]) =>
+                  `  E extends ${JSON.stringify(eventScope)} ? ${JSON.stringify(scope)} :`
+              )
+              .join("\n") +
+            `\n  never;\n\n`);
   const patchCode = CONTENT_PATCH_REGISTRIES.has(type.name)
     ? patchTypes(
         type,
@@ -837,16 +888,22 @@ export function emitContentType(
       "",
       `Generated from \`type[${cwtType.name}]\` at \`${type.path}\`.`,
     ]) +
-    `export interface ${typeName}Fields${generic} {\n` +
+    `export interface ${fieldsName}${generic} {\n` +
     scopeMember +
     localisationMembers(type, localisationPlan) +
     members.join("") +
     "}\n\n" +
+    (parameter?.selector === undefined
+      ? ""
+      : `export type ${typeName}Fields<E extends ${parameter.parameterType} = ` +
+        `${parameter.parameterType}> = E extends ${parameter.parameterType} ? ` +
+        `${fieldsName}<E> : never;\n\n`) +
     (parameter === null
       ? `export interface ${typeName}Def<Id extends string = string> extends ${typeName}Fields {\n`
       : `export interface ${typeName}Def<\n  Id extends string = string,\n` +
-        `  S extends ${parameter.typeName} = ${JSON.stringify(parameter.fallback)},\n` +
-        `> extends ${typeName}Fields<S> {\n`) +
+        `  ${parameter.parameterName} extends ${parameter.parameterType} = ` +
+        `${JSON.stringify(parameter.parameterFallback)},\n` +
+        `> extends ${fieldsName}<${parameter.parameterName}> {\n`) +
     "  /** Full content id, including the mod prefix. */\n" +
     "  id: Id;\n" +
     "}\n\n" +

@@ -469,17 +469,20 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
 
   it("lowers majorTrigger as a country-scope predicate, evaluated per recipient country rather than the event's own scope", () => {
     const events = makeEvents();
+    const chain = mod.eventChain("chain", {});
     // A fleet event: majorTrigger must still accept a country-only predicate
     // (events.cwt:419-425 — it filters recipient countries, not fleets).
     const flagged = events.fleet(1031, {
       hideWindow: true,
       major: true,
-      majorTrigger: hasEventChain("event_fields_chain"),
+      majorTrigger: hasEventChain(chain),
     });
-    const rendered = render(mod.compile([mod.feature("events", [flagged])])).get(
+    const rendered = render(mod.compile([mod.feature("events", [chain, flagged])])).get(
       "events/event_fields_events.txt"
     )!;
-    expect(rendered).toContain("major_trigger = {\n\t\thas_event_chain = event_fields_chain");
+    expect(rendered).toContain(
+      "major_trigger = {\n\t\thas_event_chain = event_fields_event_chain_chain"
+    );
   });
 
   it("lowers situation = from via the same context-closure idiom as location", () => {

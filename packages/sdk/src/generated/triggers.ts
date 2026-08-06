@@ -26,6 +26,7 @@ import type {
   Dlc,
   ElectionType,
   EnvoyTask,
+  EventChainCounter,
   FederationSetting,
   FleetOrder,
   GalaxySetupValue,
@@ -7504,7 +7505,7 @@ export function hasCompletedEventChain(value: EventChainRef | string): Trigger<"
 
 export interface HasCompletedEventChainCounterArgs {
   eventChain: EventChainRef | string;
-  counter: string;
+  counter: EventChainCounter;
 }
 
 /**

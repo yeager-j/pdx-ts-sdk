@@ -89,7 +89,7 @@ function walk(dir: string, extension: string, recurse: boolean): string[] {
  */
 function nameFieldValue(items: readonly PdxItem[], nameField: string): string | null {
   for (const item of items) {
-    if (item.kind !== "entry" || item.key !== nameField) {
+    if (item.kind !== "entry" || item.key.toLowerCase() !== nameField.toLowerCase()) {
       continue;
     }
     if (item.value.kind === "str") {

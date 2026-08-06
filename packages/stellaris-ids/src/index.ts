@@ -17,6 +17,7 @@ export type { VanillaCountryShipOfSizeLimitId } from "./registries/country-ship-
 export type { VanillaDecisionId } from "./registries/decision.ts";
 export type { VanillaEconomicCategoryId } from "./registries/economic-category.ts";
 export type { VanillaEdictId } from "./registries/edict.ts";
+export type { VanillaEventChainId } from "./registries/event-chain.ts";
 export type { VanillaGlobalShipDesignId } from "./registries/global-ship-design.ts";
 export type { VanillaGraphicalCultureId } from "./registries/graphical-culture.ts";
 export type { VanillaJobId } from "./registries/job.ts";
@@ -35,6 +36,7 @@ export type { VanillaSoundEffectId } from "./registries/sound-effect.ts";
 export type { VanillaSoundEffectTrie } from "./registries/sound-effect/index.ts";
 export type { VanillaSoundId } from "./registries/sound.ts";
 export type { VanillaSoundTrie } from "./registries/sound/index.ts";
+export type { VanillaSpecialProjectId } from "./registries/special-project.ts";
 export type { VanillaSpeciesClassId } from "./registries/species-class.ts";
 export type { VanillaSpriteId } from "./registries/sprite.ts";
 export type { VanillaSpriteTrie } from "./registries/sprite/index.ts";

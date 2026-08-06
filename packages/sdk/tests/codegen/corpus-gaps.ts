@@ -130,6 +130,13 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     issue: "SDK-67",
   },
   {
+    registry: "special_project",
+    field: "inline_script",
+    count: 105,
+    reason: "CWT `macro[inline_script]`; needs first-class inline-script machinery.",
+    issue: "SDK-17",
+  },
+  {
     registry: "megastructure",
     field: "placement_rules",
     count: 27,

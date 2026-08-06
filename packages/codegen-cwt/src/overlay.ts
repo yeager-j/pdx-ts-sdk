@@ -586,6 +586,14 @@ export interface ContentScopeParameter {
   readonly scopes: readonly string[];
   /** The scope a definition that declares none runs in. */
   readonly fallback: string;
+  /** A game field that selects the scope instead of a synthetic `scope` member. */
+  readonly selector?: {
+    readonly member: string;
+    readonly scopedMembers: readonly string[];
+    readonly typeName: string;
+    readonly fallback: string;
+    readonly scopes: Readonly<Record<string, string>>;
+  };
   readonly reason: string;
 }
 
@@ -621,6 +629,31 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
         "condition across all 111 shipped decisions is planet-valid — none writes a country-only " +
         "condition directly, they navigate through `owner` — so `planet` is the fallback and " +
         "`ship` the case that has to be declared.",
+    },
+  ],
+  [
+    "special_project",
+    {
+      scopes: ["country", "planet", "ship", "carrier"],
+      fallback: "country",
+      selector: {
+        member: "eventScope",
+        scopedMembers: ["onSuccess", "onProgress25", "onProgress50", "onProgress75", "onStart"],
+        typeName: "SpEventScope",
+        fallback: "country_event",
+        scopes: {
+          country_event: "country",
+          planet_event: "planet",
+          ship_event: "ship",
+          carrier_event: "carrier",
+        },
+      },
+      reason:
+        "special_projects.cwt leaves the event-dependent clauses unpinned: a project may run " +
+        "against country, planet, ship, or carrier event scope. The corpus records all four " +
+        "across on_success/on_progress/on_start, while its AI and cost weights are country " +
+        "conditions. event_scope is the engine's authoritative selector for the callback context, " +
+        "so the generated callback scope is derived from it rather than author-declared.",
     },
   ],
 ]);
@@ -802,6 +835,34 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "special_project.desc",
+    {
+      member: "conditionalDesc",
+      reason:
+        "The repeated trigger+text desc block is distinct from the desc flavour-text localisation " +
+        "slot. Six shipped projects use the block form; rename it exactly as building.desc does " +
+        "so both authoring paths remain available.",
+    },
+  ],
+  [
+    "special_project.cost",
+    {
+      scope: "country",
+      reason:
+        "special_projects.cwt evaluates conditional cost modifiers against the project owner " +
+        "(country), regardless of event_scope; event-dependent callbacks are separately derived.",
+    },
+  ],
+  [
+    "special_project.AI_wait_days",
+    {
+      scope: "country",
+      reason:
+        "special_projects.cwt evaluates AI wait weights against the project owner (country), " +
+        "regardless of event_scope.",
+    },
+  ],
+  [
     "building.triggered_planet_modifier",
     {
       shape: "triggeredModifierBlock",
@@ -815,6 +876,17 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "own clause — SDK-56's initial evidence sweep missed for_species (it credited the row to " +
         "job.triggered_planet_pop_group_modifier_for_species, a different registry with the same " +
         "field name), caught in review and folded in rather than left for another follow-up.",
+    },
+  ],
+  [
+    "event_chain.counter",
+    {
+      shape: "structMap",
+      reason:
+        "Each counter name is an engine-visible key inside one event chain, with an optional " +
+        "localisation.max block beneath it. CWT expresses that as an enum-keyed block, which is " +
+        "the same engine-keyed map shape structMap already lowers for section_slots: counter " +
+        "names are not content ids, take no mod prefix, and have no meaningful order.",
     },
   ],
   [

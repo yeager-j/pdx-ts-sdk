@@ -1,0 +1,3 @@
+special_project = {
+  KEY = fake_uppercase_project
+}

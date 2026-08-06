@@ -1,0 +1,1846 @@
+{
+  "registry": "special_project",
+  "definitions": 720,
+  "files": 28,
+  "fingerprint": "088fef92ed4b2bfe9097136780553af7b88325832b1286db9d8ba0ec74fda429",
+  "fields": {
+    "AI_wait_days": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "modifier",
+        "mult",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "base",
+          "modifier",
+          "mult"
+        ],
+        [
+          "modifier",
+          "weight"
+        ]
+      ]
+    },
+    "AI_wait_days.modifier": {
+      "definitions": 6,
+      "repeated": 4,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "from",
+        "has_ethic",
+        "is_authoritarian",
+        "is_difficulty",
+        "is_egalitarian",
+        "is_materialist",
+        "is_militarist",
+        "is_pacifist",
+        "is_spiritualist",
+        "mid_game_years_passed"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "has_ethic",
+          "is_authoritarian",
+          "is_egalitarian",
+          "is_materialist",
+          "is_militarist",
+          "is_pacifist",
+          "is_spiritualist"
+        ],
+        [
+          "from"
+        ],
+        [
+          "is_difficulty"
+        ],
+        [
+          "is_egalitarian",
+          "is_materialist",
+          "is_militarist",
+          "is_pacifist",
+          "is_spiritualist"
+        ],
+        [
+          "mid_game_years_passed"
+        ]
+      ]
+    },
+    "KEY": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "hegemony_joint_project_leader",
+        "hegemony_joint_project_member",
+        "military_joint_project"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "abort_trigger": {
+      "definitions": 126,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 126,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 23,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "OR",
+        "check_variable",
+        "event_target:champions_forge_enclave_country",
+        "event_target:desertling_planet",
+        "event_target:flooding_planet",
+        "event_target:myrmeku_planet",
+        "event_target:non_believers_planet",
+        "event_target:pre_ftl_planet",
+        "event_target:ratling_capital",
+        "event_target:ratling_planet_2",
+        "event_target:ratling_planet_3",
+        "event_target:ratling_planet_4",
+        "event_target:ratling_planet_5",
+        "event_target:ratling_planet_6",
+        "exists",
+        "from",
+        "fromfrom",
+        "fromfrom.solar_system",
+        "has_country_flag",
+        "has_global_flag",
+        "has_non_hostile_origin_dragon_trigger",
+        "has_technology",
+        "is_reanimator",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "NOR"
+        ],
+        [
+          "NOR",
+          "fromfrom"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "event_target:champions_forge_enclave_country"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "check_variable"
+        ],
+        [
+          "event_target:desertling_planet"
+        ],
+        [
+          "event_target:flooding_planet"
+        ],
+        [
+          "event_target:myrmeku_planet"
+        ],
+        [
+          "event_target:non_believers_planet"
+        ],
+        [
+          "event_target:pre_ftl_planet",
+          "exists"
+        ],
+        [
+          "event_target:ratling_capital"
+        ],
+        [
+          "event_target:ratling_planet_2"
+        ],
+        [
+          "event_target:ratling_planet_3"
+        ],
+        [
+          "event_target:ratling_planet_4"
+        ],
+        [
+          "event_target:ratling_planet_5"
+        ],
+        [
+          "event_target:ratling_planet_6"
+        ],
+        [
+          "from"
+        ],
+        [
+          "fromfrom"
+        ],
+        [
+          "fromfrom.solar_system"
+        ],
+        [
+          "has_country_flag"
+        ],
+        [
+          "has_country_flag",
+          "has_global_flag"
+        ],
+        [
+          "has_global_flag"
+        ],
+        [
+          "has_non_hostile_origin_dragon_trigger"
+        ],
+        [
+          "has_technology"
+        ],
+        [
+          "is_reanimator"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
+    "cost": {
+      "definitions": 402,
+      "repeated": 0,
+      "scalars": 391,
+      "blocks": 11,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "0",
+        "1000",
+        "10000",
+        "1200",
+        "12000",
+        "1500",
+        "18000",
+        "200",
+        "2000",
+        "20000",
+        "24000",
+        "250",
+        "2500",
+        "25000",
+        "3000",
+        "30000",
+        "3500",
+        "4000",
+        "500",
+        "5000",
+        "50000",
+        "600",
+        "6000",
+        "600000",
+        "750",
+        "7500",
+        "8000"
+      ],
+      "keys": [
+        "base",
+        "modifier",
+        "scaled_modifier"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ],
+        [
+          "base",
+          "scaled_modifier"
+        ]
+      ]
+    },
+    "cost.modifier": {
+      "definitions": 2,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_technology",
+        "has_tradition"
+      ],
+      "keysByDefinition": [
+        [
+          "has_technology"
+        ],
+        [
+          "has_tradition"
+        ]
+      ]
+    },
+    "days_to_research": {
+      "definitions": 426,
+      "repeated": 0,
+      "scalars": 426,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "0",
+        "1",
+        "10",
+        "100",
+        "1080",
+        "120",
+        "135",
+        "140",
+        "160",
+        "180",
+        "1800",
+        "20",
+        "200",
+        "210",
+        "240",
+        "250",
+        "280",
+        "30",
+        "300",
+        "35",
+        "350",
+        "360",
+        "3600",
+        "390",
+        "40",
+        "400",
+        "430",
+        "45",
+        "450",
+        "50",
+        "540",
+        "60",
+        "600",
+        "7",
+        "720",
+        "730",
+        "80",
+        "90"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "desc": {
+      "definitions": 6,
+      "repeated": 6,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "text",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "text",
+          "trigger"
+        ]
+      ]
+    },
+    "energy": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "3000",
+        "500"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "event_chain": {
+      "definitions": 271,
+      "repeated": 2,
+      "scalars": 271,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "WORM_CHAIN_1",
+        "WORM_CHAIN_2",
+        "abandoned_terraforming_chain",
+        "ai_crisis_chain",
+        "baol_chain",
+        "become_the_crisis_chain",
+        "clone_fertility_chain",
+        "cosmogenesis_planet_pickup_chain",
+        "cs_adAkkaria_chain",
+        "cs_but_they_are_cute_chain",
+        "cs_collided_planet_chain",
+        "cs_crimson_crawlers_chain",
+        "cs_inetian_chain",
+        "cs_stormbound_chain",
+        "cs_stormfrenzy_chain",
+        "cutholoid_discovered_chain",
+        "cybrex_chain",
+        "cybrex_homeworld_chain",
+        "dismembered_cloud_chain",
+        "enigmatic_fortress_chain",
+        "feral_overload_chain",
+        "first_league_chain",
+        "first_league_homeworld_chain",
+        "fotd_chain",
+        "fruitful_partnership_chain",
+        "fruitful_partnership_war_chain",
+        "galactic_hyperthermia_chain",
+        "generation_ship_chain",
+        "hegemony_joint_project_chain",
+        "hunting_hyacinth",
+        "intercepting_history_chain",
+        "irassian_chain",
+        "irassian_homeworld_chain",
+        "ketling_study_chain",
+        "leylines_chain",
+        "living_planet_chain",
+        "machine_uprising_chain",
+        "mass_extinction_chain",
+        "migrating_forests_chain",
+        "myrmeku_chain",
+        "nemma_world_chain",
+        "old_gods_chain",
+        "paragon_legendary_leader_chain",
+        "parvus_III_chain",
+        "payback_restore_warship_chain",
+        "prethoryn_scourge_chain",
+        "radical_cult",
+        "red_giant_event_chain",
+        "relentless_pursuit_chain",
+        "rubricator_chain",
+        "shrouded_ship_chain",
+        "specimen_procurement_chain",
+        "stratovent_world_chain",
+        "sublight_probes_chain",
+        "subterranean_civilization_chain",
+        "tiyanki_graveyard_chain",
+        "treasure_hunters_origin_story_chain",
+        "treasure_troves_chain",
+        "vultaum_chain",
+        "vultaum_homeworld_chain",
+        "wenkwort_chain",
+        "wrecked_fleet_chain",
+        "yuht_chain",
+        "yuht_homeworld_chain"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "event_scope": {
+      "definitions": 615,
+      "repeated": 0,
+      "scalars": 615,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "carrier_event",
+        "country_event",
+        "planet_event",
+        "ship_event"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "fail_trigger": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "fromfrom.solar_system"
+      ],
+      "keysByDefinition": [
+        [
+          "fromfrom.solar_system"
+        ]
+      ]
+    },
+    "icon": {
+      "definitions": 491,
+      "repeated": 0,
+      "scalars": 491,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "gfx/interface/icons/situation_log/situation_log_ai.dds",
+        "gfx/interface/icons/situation_log/situation_log_alert.dds",
+        "gfx/interface/icons/situation_log/situation_log_astral_rift.dds",
+        "gfx/interface/icons/situation_log/situation_log_combat.dds",
+        "gfx/interface/icons/situation_log/situation_log_debris.dds",
+        "gfx/interface/icons/situation_log/situation_log_engineering.dds",
+        "gfx/interface/icons/situation_log/situation_log_extradimensional.dds",
+        "gfx/interface/icons/situation_log/situation_log_federation.dds",
+        "gfx/interface/icons/situation_log/situation_log_gravity_snare.dds",
+        "gfx/interface/icons/situation_log/situation_log_main_quest.dds",
+        "gfx/interface/icons/situation_log/situation_log_physics.dds",
+        "gfx/interface/icons/situation_log/situation_log_planet.dds",
+        "gfx/interface/icons/situation_log/situation_log_precursor.dds",
+        "gfx/interface/icons/situation_log/situation_log_projectile.dds",
+        "gfx/interface/icons/situation_log/situation_log_quest.dds",
+        "gfx/interface/icons/situation_log/situation_log_radar.dds",
+        "gfx/interface/icons/situation_log/situation_log_scanning_beam.dds",
+        "gfx/interface/icons/situation_log/situation_log_ship.dds",
+        "gfx/interface/icons/situation_log/situation_log_society.dds",
+        "gfx/interface/icons/situation_log/situation_log_space_creature.dds",
+        "gfx/interface/icons/situation_log/situation_log_synth_queen.dds",
+        "gfx/interface/icons/situation_log/situation_log_tick.dds"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 105,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 105,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "CHAIN_ID",
+        "EVENT_ID",
+        "ISSUER",
+        "KEY",
+        "PATRON",
+        "PICTURE",
+        "RESEARCH",
+        "RESOURCE",
+        "SHIP_CATEGORY",
+        "TECH_DEPARTMENT",
+        "TYPE",
+        "VARIANT",
+        "script"
+      ],
+      "keysByDefinition": [
+        [
+          "CHAIN_ID",
+          "KEY",
+          "script"
+        ],
+        [
+          "EVENT_ID",
+          "KEY",
+          "PICTURE",
+          "script"
+        ],
+        [
+          "EVENT_ID",
+          "PICTURE",
+          "SHIP_CATEGORY",
+          "script"
+        ],
+        [
+          "ISSUER",
+          "PICTURE",
+          "VARIANT",
+          "script"
+        ],
+        [
+          "PATRON",
+          "PICTURE",
+          "script"
+        ],
+        [
+          "PICTURE",
+          "RESEARCH",
+          "RESOURCE",
+          "script"
+        ],
+        [
+          "PICTURE",
+          "TECH_DEPARTMENT",
+          "script"
+        ],
+        [
+          "RESEARCH",
+          "script"
+        ],
+        [
+          "RESOURCE",
+          "script"
+        ],
+        [
+          "TYPE",
+          "script"
+        ],
+        [
+          "script"
+        ]
+      ]
+    },
+    "location": {
+      "definitions": 180,
+      "repeated": 0,
+      "scalars": 180,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "Yes",
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_cancel": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 18,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 6,
+      "values": [],
+      "keys": [
+        "country_event",
+        "fromfrom",
+        "if",
+        "owner",
+        "set_country_flag"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "country_event"
+        ],
+        [
+          "country_event",
+          "fromfrom"
+        ],
+        [
+          "fromfrom"
+        ],
+        [
+          "if"
+        ],
+        [
+          "if",
+          "set_country_flag"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
+    "on_fail": {
+      "definitions": 316,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 316,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 251,
+      "values": [],
+      "keys": [
+        "FROM",
+        "country_event",
+        "destroy_ambient_object",
+        "end_event_chain",
+        "every_federation_ally",
+        "federation",
+        "from",
+        "fromfrom",
+        "if",
+        "owner",
+        "random_list",
+        "set_country_flag",
+        "set_timed_country_flag",
+        "solar_system"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "FROM"
+        ],
+        [
+          "country_event"
+        ],
+        [
+          "country_event",
+          "end_event_chain"
+        ],
+        [
+          "destroy_ambient_object"
+        ],
+        [
+          "end_event_chain",
+          "random_list"
+        ],
+        [
+          "every_federation_ally",
+          "federation",
+          "set_country_flag"
+        ],
+        [
+          "federation",
+          "if",
+          "set_timed_country_flag"
+        ],
+        [
+          "from"
+        ],
+        [
+          "fromfrom"
+        ],
+        [
+          "if"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "random_list"
+        ],
+        [
+          "solar_system"
+        ]
+      ]
+    },
+    "on_progress_25": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 7,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 3,
+      "values": [],
+      "keys": [
+        "owner",
+        "ship_event"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "owner"
+        ],
+        [
+          "ship_event"
+        ]
+      ]
+    },
+    "on_progress_50": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 10,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "carrier_event",
+        "country_event",
+        "from",
+        "owner",
+        "ship_event"
+      ],
+      "keysByDefinition": [
+        [
+          "carrier_event"
+        ],
+        [
+          "country_event"
+        ],
+        [
+          "from"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "ship_event"
+        ]
+      ]
+    },
+    "on_progress_75": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 3,
+      "values": [],
+      "keys": [
+        "owner",
+        "ship_event"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "owner"
+        ],
+        [
+          "ship_event"
+        ]
+      ]
+    },
+    "on_start": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 23,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 14,
+      "values": [],
+      "keys": [
+        "else_if",
+        "from.owner",
+        "if",
+        "owner",
+        "ship_event",
+        "solar_system"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "else_if",
+          "if"
+        ],
+        [
+          "from.owner"
+        ],
+        [
+          "if"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "ship_event"
+        ],
+        [
+          "solar_system"
+        ]
+      ]
+    },
+    "on_success": {
+      "definitions": 605,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 605,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 2,
+      "values": [],
+      "keys": [
+        "FROM",
+        "PREV",
+        "carrier_event",
+        "controller",
+        "country_event",
+        "delete_ship",
+        "destroy_ambient_object",
+        "else",
+        "else_if",
+        "event_target:ambushing_cutholoid",
+        "event_target:breach_shroud_owner",
+        "event_target:cutholoid_under_radar",
+        "event_target:cutholoids_country",
+        "event_target:flesh_weak_owner",
+        "event_target:form_covenant_owner",
+        "event_target:fruitful_project_owner",
+        "event_target:probe_crashsite",
+        "event_target:synth_evo_owner",
+        "fleet",
+        "from",
+        "from.fleet",
+        "from.owner",
+        "fromfrom",
+        "give_specimen",
+        "hidden_effect",
+        "if",
+        "leader",
+        "owner",
+        "owner.federation",
+        "prev",
+        "random_list",
+        "random_megastructure",
+        "remove_modifier",
+        "root",
+        "set_country_flag",
+        "ship_event",
+        "solar_system",
+        "solar_system.star",
+        "space_owner",
+        "spawn_cutholoid_from_asteroid",
+        "while"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "FROM",
+          "owner"
+        ],
+        [
+          "PREV"
+        ],
+        [
+          "carrier_event"
+        ],
+        [
+          "carrier_event",
+          "owner"
+        ],
+        [
+          "carrier_event",
+          "owner",
+          "remove_modifier"
+        ],
+        [
+          "controller"
+        ],
+        [
+          "controller",
+          "destroy_ambient_object"
+        ],
+        [
+          "controller",
+          "event_target:ambushing_cutholoid",
+          "from",
+          "spawn_cutholoid_from_asteroid"
+        ],
+        [
+          "country_event"
+        ],
+        [
+          "country_event",
+          "from"
+        ],
+        [
+          "country_event",
+          "if",
+          "random_list",
+          "set_country_flag"
+        ],
+        [
+          "country_event",
+          "owner"
+        ],
+        [
+          "country_event",
+          "random_list",
+          "set_country_flag"
+        ],
+        [
+          "country_event",
+          "set_country_flag"
+        ],
+        [
+          "delete_ship",
+          "hidden_effect",
+          "leader"
+        ],
+        [
+          "destroy_ambient_object",
+          "ship_event"
+        ],
+        [
+          "else",
+          "else_if",
+          "if"
+        ],
+        [
+          "else",
+          "else_if",
+          "if",
+          "owner"
+        ],
+        [
+          "else",
+          "if"
+        ],
+        [
+          "else",
+          "if",
+          "owner",
+          "owner.federation"
+        ],
+        [
+          "event_target:breach_shroud_owner"
+        ],
+        [
+          "event_target:cutholoid_under_radar",
+          "event_target:cutholoids_country",
+          "from.fleet"
+        ],
+        [
+          "event_target:flesh_weak_owner"
+        ],
+        [
+          "event_target:form_covenant_owner"
+        ],
+        [
+          "event_target:fruitful_project_owner",
+          "owner"
+        ],
+        [
+          "event_target:probe_crashsite"
+        ],
+        [
+          "event_target:synth_evo_owner"
+        ],
+        [
+          "fleet",
+          "if"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "owner"
+        ],
+        [
+          "from",
+          "prev"
+        ],
+        [
+          "from",
+          "ship_event"
+        ],
+        [
+          "from",
+          "solar_system"
+        ],
+        [
+          "from.owner"
+        ],
+        [
+          "fromfrom"
+        ],
+        [
+          "give_specimen",
+          "set_country_flag"
+        ],
+        [
+          "hidden_effect"
+        ],
+        [
+          "if"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner",
+          "random_list"
+        ],
+        [
+          "owner",
+          "ship_event"
+        ],
+        [
+          "owner",
+          "solar_system"
+        ],
+        [
+          "owner",
+          "solar_system.star"
+        ],
+        [
+          "owner",
+          "space_owner"
+        ],
+        [
+          "owner",
+          "while"
+        ],
+        [
+          "prev"
+        ],
+        [
+          "prev",
+          "root"
+        ],
+        [
+          "random_list"
+        ],
+        [
+          "random_megastructure",
+          "set_country_flag"
+        ],
+        [
+          "root"
+        ],
+        [
+          "ship_event"
+        ]
+      ]
+    },
+    "picture": {
+      "definitions": 615,
+      "repeated": 0,
+      "scalars": 615,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_evt_alien_city",
+        "GFX_evt_alien_nature",
+        "GFX_evt_alien_planet",
+        "GFX_evt_alien_ruins",
+        "GFX_evt_ancient_databank",
+        "GFX_evt_animal_wildlife",
+        "GFX_evt_archaeological_dig",
+        "GFX_evt_asteroid_approaching_planet",
+        "GFX_evt_asteroid_field",
+        "GFX_evt_astral_rift_research_lab_specimen",
+        "GFX_evt_atmospheric_flight",
+        "GFX_evt_big_landing_ship",
+        "GFX_evt_clones",
+        "GFX_evt_colony_settlement",
+        "GFX_evt_continental",
+        "GFX_evt_cover_blown",
+        "GFX_evt_cybernetics",
+        "GFX_evt_decryption",
+        "GFX_evt_desert",
+        "GFX_evt_disease_outbreak",
+        "GFX_evt_engineering_research",
+        "GFX_evt_federation_fleet",
+        "GFX_evt_fleet_evil",
+        "GFX_evt_frozen",
+        "GFX_evt_gas_giant",
+        "GFX_evt_genetic_modification",
+        "GFX_evt_gray_goo",
+        "GFX_evt_hangar_bay",
+        "GFX_evt_here_be_dragons",
+        "GFX_evt_hive",
+        "GFX_evt_infested",
+        "GFX_evt_junkheap",
+        "GFX_evt_landing_ship",
+        "GFX_evt_microscopic_life",
+        "GFX_evt_mining_station",
+        "GFX_evt_molten",
+        "GFX_evt_necromancy",
+        "GFX_evt_nuclear_explosion",
+        "GFX_evt_ocean",
+        "GFX_evt_outpost",
+        "GFX_evt_physics_research",
+        "GFX_evt_robot_assembly_plant",
+        "GFX_evt_sabotaged_ship",
+        "GFX_evt_sapient_AI",
+        "GFX_evt_satellite_in_orbit",
+        "GFX_evt_shattered_planet",
+        "GFX_evt_ship_in_orbit",
+        "GFX_evt_ship_in_orbit_2",
+        "GFX_evt_ship_under_attack",
+        "GFX_evt_small_space_battle",
+        "GFX_evt_smugglers_in_bar",
+        "GFX_evt_society_research",
+        "GFX_evt_space_debris",
+        "GFX_evt_space_hangar",
+        "GFX_evt_star_chart",
+        "GFX_evt_star_yellow",
+        "GFX_evt_surreal_visions",
+        "GFX_evt_tomb_world",
+        "GFX_evt_toxic",
+        "GFX_evt_tropical",
+        "GFX_evt_underground_civilization",
+        "GFX_evt_unknown_ships",
+        "GFX_evt_warm_barren",
+        "GFX_evt_wormhole"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "project_type": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "project_type_bombardment",
+        "project_type_contract"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "remove_when_completed": {
+      "definitions": 42,
+      "repeated": 0,
+      "scalars": 42,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements": {
+      "definitions": 447,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 447,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 66,
+      "values": [],
+      "keys": [
+        "assault_armies",
+        "carries_colony",
+        "fleet_power",
+        "handled_by_event_tooltip",
+        "has_technology",
+        "has_trait",
+        "is_founder_species",
+        "leader",
+        "shipclass_constructor",
+        "shipclass_military",
+        "shipclass_science_ship",
+        "shipclass_transport",
+        "size_requirement",
+        "skill"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "assault_armies"
+        ],
+        [
+          "carries_colony"
+        ],
+        [
+          "fleet_power"
+        ],
+        [
+          "fleet_power",
+          "leader"
+        ],
+        [
+          "handled_by_event_tooltip"
+        ],
+        [
+          "handled_by_event_tooltip",
+          "has_technology"
+        ],
+        [
+          "has_technology",
+          "leader",
+          "shipclass_science_ship"
+        ],
+        [
+          "has_trait",
+          "leader",
+          "shipclass_science_ship"
+        ],
+        [
+          "is_founder_species",
+          "leader"
+        ],
+        [
+          "is_founder_species",
+          "leader",
+          "shipclass_science_ship"
+        ],
+        [
+          "leader"
+        ],
+        [
+          "leader",
+          "shipclass_science_ship"
+        ],
+        [
+          "leader",
+          "shipclass_science_ship",
+          "skill"
+        ],
+        [
+          "shipclass_constructor"
+        ],
+        [
+          "shipclass_military"
+        ],
+        [
+          "shipclass_science_ship"
+        ],
+        [
+          "shipclass_transport"
+        ],
+        [
+          "size_requirement"
+        ]
+      ]
+    },
+    "requirements.assault_armies": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.carries_colony": {
+      "definitions": 21,
+      "repeated": 0,
+      "scalars": 21,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.fleet_power": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "10000",
+        "1600",
+        "2000",
+        "4000",
+        "50000",
+        "90"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.handled_by_event_tooltip": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "ACTIVATE_GATEWAY_PROJECT_TT",
+        "ENDBRINGERS_COMMUNE_WITH_THE_VOICE_PROJECT_TOOLTIP",
+        "ENDBRINGERS_PSIONICS_TRADITION_PROJECT_TOOLTIP",
+        "ENDBRINGERS_PSIONIC_THEORY_PROJECT_TOOLTIP",
+        "EXPLORE_BORDER_SYSTEM_TOOLTIP",
+        "GATEWAY_VOIDWORMS_KILL_PROJECT_TT",
+        "MINDWARDENS_THE_FIRST_ENCLAVE_NOTE",
+        "RESEARCH_GATEWAY_ACTIVATION_PROJECT_TT",
+        "TREASURE_HUNTERS_BLACK_NEEDLE_PROJECT_TOOLTIP",
+        "TREASURE_HUNTERS_EXHIBITION_PROJECT_TOOLTIP",
+        "TREASURE_TROVE_EVENT_TOOLTIP",
+        "VOIDWORM_GLANDS_PROJECT_TOOLTIP"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.has_technology": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "tech_galactic_archivism",
+        "tech_gravity_wells",
+        "tech_psionic_theory"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.has_trait": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "leader_trait_legendary_far_from_home",
+        "leader_trait_psionic"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.is_founder_species": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.leader": {
+      "definitions": 294,
+      "repeated": 0,
+      "scalars": 294,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "commander",
+        "scientist"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.shipclass_constructor": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.shipclass_military": {
+      "definitions": 12,
+      "repeated": 0,
+      "scalars": 12,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1",
+        "15",
+        "2",
+        "3",
+        "6"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.shipclass_science_ship": {
+      "definitions": 307,
+      "repeated": 0,
+      "scalars": 307,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1",
+        "2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.shipclass_transport": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1",
+        "2",
+        "4"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.size_requirement": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "count",
+        "ship_size"
+      ],
+      "keysByDefinition": [
+        [
+          "count",
+          "ship_size"
+        ]
+      ]
+    },
+    "requirements.size_requirement.count": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.size_requirement.ship_size": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "behemoth_03",
+        "monadic_qerr"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "requirements.skill": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1",
+        "2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "same_option_group_as": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 22,
+      "bareValues": 22,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "ABANDONED_TERRAFORMING_1_PROJECT",
+        "BLACK_NEEDLE_BASE_BOMBARD",
+        "CLONE_SOLDIER_UNLOCK_FERTILITY",
+        "CLONE_SOLDIER_UNLOCK_POTENTIAL",
+        "ENIGMATIC_FORTRESS_1A",
+        "ENIGMATIC_FORTRESS_5A",
+        "HIDDEN_CUTHOLOID_ATTACK_PROJECT",
+        "HIDDEN_CUTHOLOID_CAPTURE_PROJECT",
+        "KETLING_PROJECT_1",
+        "MIGRATING_FORESTS_1_PROJECT",
+        "PROJECT_MACHINE_UPRISING_PATCH",
+        "RESTORE_HABITAT_PROJECT",
+        "RESTORE_WARSHIP_PROJECT",
+        "SEISMIC_DISTURBANCE_1_PROJECT"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "situation_log_category": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "crises"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "sound": {
+      "definitions": 29,
+      "repeated": 0,
+      "scalars": 29,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tech_department": {
+      "definitions": 506,
+      "repeated": 0,
+      "scalars": 506,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "engineering_technology",
+        "physics_technology",
+        "society_technology"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "timelimit": {
+      "definitions": 255,
+      "repeated": 0,
+      "scalars": 255,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "-1",
+        "1080",
+        "150",
+        "1800",
+        "200",
+        "2160",
+        "270",
+        "360",
+        "3600",
+        "540",
+        "60",
+        "720",
+        "900"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_requirement": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 41,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "count",
+        "text",
+        "trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "count",
+          "text",
+          "trigger"
+        ],
+        [
+          "text",
+          "trigger"
+        ]
+      ]
+    },
+    "triggered_requirement.count": {
+      "definitions": 40,
+      "repeated": 0,
+      "scalars": 40,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_requirement.text": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 41,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "ARKSHIP_SPINAL_FRACTURE_PROJECT_REQUIREMENT",
+        "BLACK_NEEDLE_BASE_BOMBARD_2_PROJECT_REQUIREMENT",
+        "BLACK_NEEDLE_BASE_BOMBARD_PROJECT_REQUIREMENT",
+        "CHAMPIONS_FORGE_TRAVEL_FLEET_REQ",
+        "CONSTRUCTOR_PROJECT_REQUIREMENTS",
+        "HIDDEN_CUTHOLOID_ATTACK_PROJECT_REQUIREMENT",
+        "MANUFACTORY_PROJECT_FLEET_REQUIREMENT",
+        "NOMADIC_PRINCESS_SPECIAL_PROJECT_REQUIREMENT",
+        "STAR_CROSSED_POD_PROJECT_REQUIREMENT"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_requirement.trigger": {
+      "definitions": 41,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 41,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "exists",
+        "fleet_power",
+        "is_ship_class",
+        "leader?"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "exists"
+        ],
+        [
+          "OR",
+          "fleet_power"
+        ],
+        [
+          "OR",
+          "leader?"
+        ],
+        [
+          "is_ship_class"
+        ]
+      ]
+    }
+  }
+}

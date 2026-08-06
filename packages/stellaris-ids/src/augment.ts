@@ -15,6 +15,7 @@ import type { VanillaCountryShipOfSizeLimitId } from "./registries/country-ship-
 import type { VanillaDecisionId } from "./registries/decision.ts";
 import type { VanillaEconomicCategoryId } from "./registries/economic-category.ts";
 import type { VanillaEdictId } from "./registries/edict.ts";
+import type { VanillaEventChainId } from "./registries/event-chain.ts";
 import type { VanillaGlobalShipDesignId } from "./registries/global-ship-design.ts";
 import type { VanillaGraphicalCultureId } from "./registries/graphical-culture.ts";
 import type { VanillaJobId } from "./registries/job.ts";
@@ -31,6 +32,7 @@ import type { VanillaSoundEffectId } from "./registries/sound-effect.ts";
 import type { VanillaSoundEffectTrie } from "./registries/sound-effect/index.ts";
 import type { VanillaSoundId } from "./registries/sound.ts";
 import type { VanillaSoundTrie } from "./registries/sound/index.ts";
+import type { VanillaSpecialProjectId } from "./registries/special-project.ts";
 import type { VanillaSpeciesClassId } from "./registries/species-class.ts";
 import type { VanillaSpriteId } from "./registries/sprite.ts";
 import type { VanillaSpriteTrie } from "./registries/sprite/index.ts";
@@ -84,6 +86,8 @@ declare module "@pdx-ts/sdk" {
     readonly species_class: VanillaSpeciesClassId;
     readonly country_ship_of_size_limit: VanillaCountryShipOfSizeLimitId;
     readonly solar_system_initializer: VanillaSolarSystemInitializerId;
+    readonly event_chain: VanillaEventChainId;
+    readonly special_project: VanillaSpecialProjectId;
     readonly megastructure: VanillaMegastructureId;
     readonly sound: VanillaSoundId;
     readonly sound_effect: VanillaSoundEffectId;

@@ -130,6 +130,12 @@ export type EnvoyTask =
   | "patron_attunement"
   | "none";
 
+/**
+ * `enum[event_chain_counter]`.
+ * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ */
+export type EventChainCounter = string;
+
 /** `enum[federation_setting]`. */
 export type FederationSetting = "research_sharing" | "failed_vote_half_price";
 
@@ -382,6 +388,9 @@ export type SolarSysInitPlanetClass =
   | "random_asteroid"
   | "none";
 
+/** `enum[sp_event_scope]`. */
+export type SpEventScope = "ship_event" | "planet_event" | "country_event" | "carrier_event";
+
 /** `enum[species_rights_type]`. */
 export type SpeciesRightsType =
   | "citizenship"
@@ -408,6 +417,9 @@ export type TargetFocus = "single" | "spread";
 
 /** `enum[tech_ai_type]`. */
 export type TechAiType = "all" | "military";
+
+/** `enum[tech_department]`. */
+export type TechDepartment = "society_technology" | "engineering_technology" | "physics_technology";
 
 /** `enum[technology_area]`. */
 export type TechnologyArea = "engineering" | "society" | "physics";

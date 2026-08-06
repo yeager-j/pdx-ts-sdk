@@ -28,6 +28,8 @@
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
+// From: common/event_chains.cwt
+// From: common/special_projects.cwt
 // From: common/megastructures.cwt
 
 import type { ContentRegistryDescriptor } from "../content/schema.ts";
@@ -55,6 +57,7 @@ import {
 import { DECISION_FIELDS, DECISION_LOCALISATION } from "./decision.ts";
 import { ECONOMIC_CATEGORY_FIELDS, ECONOMIC_CATEGORY_LOCALISATION } from "./economic-category.ts";
 import { EDICT_FIELDS, EDICT_LOCALISATION } from "./edict.ts";
+import { EVENT_CHAIN_FIELDS, EVENT_CHAIN_LOCALISATION } from "./event-chain.ts";
 import {
   GLOBAL_SHIP_DESIGN_FIELDS,
   GLOBAL_SHIP_DESIGN_LOCALISATION,
@@ -72,6 +75,7 @@ import {
   SOLAR_SYSTEM_INITIALIZER_FIELDS,
   SOLAR_SYSTEM_INITIALIZER_LOCALISATION,
 } from "./solar-system-initializer.ts";
+import { SPECIAL_PROJECT_FIELDS, SPECIAL_PROJECT_LOCALISATION } from "./special-project.ts";
 import { SPECIES_CLASS_FIELDS, SPECIES_CLASS_LOCALISATION } from "./species-class.ts";
 import { STARBASE_LEVEL_FIELDS, STARBASE_LEVEL_LOCALISATION } from "./starbase-level.ts";
 import { STATIC_MODIFIER_FIELDS, STATIC_MODIFIER_LOCALISATION } from "./static-modifier.ts";
@@ -383,6 +387,23 @@ export const CONTENT_REGISTRIES = [
     fileStem: "solar_system_initializers",
     fields: SOLAR_SYSTEM_INITIALIZER_FIELDS,
     localisation: SOLAR_SYSTEM_INITIALIZER_LOCALISATION,
+  },
+  {
+    type: "event_chain",
+    referenceName: "event_chain",
+    outputDir: "common/event_chains",
+    fileStem: "event_chains",
+    fields: EVENT_CHAIN_FIELDS,
+    localisation: EVENT_CHAIN_LOCALISATION,
+  },
+  {
+    type: "special_project",
+    referenceName: "special_project",
+    outputDir: "common/special_projects",
+    fileStem: "special_projects",
+    fields: SPECIAL_PROJECT_FIELDS,
+    localisation: SPECIAL_PROJECT_LOCALISATION,
+    keyedBy: { keyword: "special_project", nameField: "key" },
   },
   {
     type: "megastructure",

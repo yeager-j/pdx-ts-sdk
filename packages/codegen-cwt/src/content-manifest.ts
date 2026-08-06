@@ -151,6 +151,12 @@ export const CONTENT_MANIFEST = [
     type: "solar_system_initializer",
     source: "common/solar_system_initializers.cwt",
   },
+  { type: "event_chain", source: "common/event_chains.cwt" },
+  {
+    type: "special_project",
+    source: "common/special_projects.cwt",
+    keyword: "special_project",
+  },
   { type: "megastructure", source: "common/megastructures.cwt" },
 ] as const satisfies readonly ContentManifestEntry[];
 

@@ -994,6 +994,43 @@ function defineContentExample(): PureMod {
     ],
   });
 
+  const chain = mod.eventChain("crystal_signal", {
+    title: "Crystal Signal",
+    desc: "A strange signal resonates from the planet below.",
+    icon: "gfx/interface/icons/situation_log/situation_log_ancient_relics.dds",
+    counter: { crystals_analyzed: { max: 3 } },
+    abortTrigger: hasCountryFlag("content_test_machine_agenda_started"),
+  });
+
+  const surveyProject = mod.specialProject("crystal_survey", {
+    name: "Survey the Crystal Signal",
+    desc: "Determine the source of the signal.",
+    eventChain: chain,
+    cost: 250,
+    techDepartment: "physics_technology",
+    eventScope: "planet_event",
+    requirements: { researchStation: true, hasTechnology: "tech_lasers_2" },
+    triggeredRequirement: {
+      text: "content_test_crystal_survey_requirement",
+      count: 1,
+      trigger: always(),
+    },
+    conditionalDesc: [{ text: "content_test_crystal_survey_condition", trigger: always() }],
+    onStart: () => {},
+  });
+
+  const recoveryProject = mod.specialProject("crystal_recovery", {
+    name: "Recover the Crystal",
+    eventChain: chain,
+    cost: {
+      base: 100,
+      modifiers: [{ factor: 2, when: always() }],
+      scaledModifiers: [{ scope: "country", calc: "planets_in_country", factor: 0.5 }],
+    },
+    eventScope: "ship_event",
+    sameOptionGroupAs: [surveyProject],
+  });
+
   return mod.compile([
     mod.feature(undefined, [
       agenda,
@@ -1030,6 +1067,9 @@ function defineContentExample(): PureMod {
       foundryUpgrade,
       neighborSystem,
       homeSystem,
+      chain,
+      surveyProject,
+      recoveryProject,
     ]),
     mod.feature("events", digEvents),
   ]);
@@ -1102,6 +1142,30 @@ describe("generated content registries", () => {
     expect(localisation).toContain('content_test_megastructure_foundry_1:0 "Synthetic Foundry"');
     expect(localisation).toContain(
       'content_test_megastructure_foundry_1_MEGASTRUCTURE_DETAILS:0 "Constructs synthetic bodies at scale."'
+    );
+  });
+
+  it("writes event chains and name-field special projects with branded references", () => {
+    const chains = files.get("common/event_chains/content_test_event_chains.txt")!;
+    expect(chains).toContain("content_test_event_chain_crystal_signal = {");
+    expect(chains).toContain("crystals_analyzed = {\n\t\t\tmax = 3");
+    expect(chains).toContain("abort_trigger = {");
+
+    const projects = files.get("common/special_projects/content_test_special_projects.txt")!;
+    expect(projects).toContain("special_project = {");
+    expect(projects).toContain("key = content_test_special_project_crystal_survey");
+    expect(projects).toContain("event_chain = content_test_event_chain_crystal_signal");
+    expect(projects).toContain(
+      "same_option_group_as = { content_test_special_project_crystal_survey }"
+    );
+    expect(projects).toContain("cost = {\n\t\tbase = 100");
+
+    const localisation = files.get("localisation/english/content_test_l_english.yml")!;
+    expect(localisation).toContain(
+      'content_test_event_chain_crystal_signal_title:0 "Crystal Signal"'
+    );
+    expect(localisation).toContain(
+      'content_test_special_project_crystal_survey:0 "Survey the Crystal Signal"'
     );
   });
 
