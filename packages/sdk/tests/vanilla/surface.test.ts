@@ -9,9 +9,24 @@ import { parse, serialize, withoutLines } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { SwapPatchError } from "../../src/errors.ts";
-import { patchTechnology } from "../../src/stellaris/vanilla/patch.ts";
-import { anyOf, sha256Hex, viewFromFiles } from "../../src/stellaris/vanilla/view.ts";
+import { patchTechnology as patchTechnologyItem } from "../../src/generated/content-definers.ts";
+import type { TechnologyPatch } from "../../src/generated/technology.ts";
+import {
+  anyOf,
+  sha256Hex,
+  viewFromFiles,
+  type ParsedTechnology,
+} from "../../src/stellaris/vanilla/view.ts";
 import { OR_TECH_FILE, TECH_FILE, VARS_FILE } from "../fixtures/vanilla-fixture.ts";
+
+/**
+ * The generated definer returns a placeable item; these tests measure the
+ * transform underneath it.
+ */
+const patchTechnology = <Source extends ParsedTechnology>(
+  technology: Source,
+  patch: (technology: Source) => TechnologyPatch
+) => patchTechnologyItem(technology, patch).patched;
 
 const FILES = {
   "common/technology/pp_soc_tech.txt": TECH_FILE,
@@ -290,5 +305,191 @@ describe("OR-prerequisites", () => {
       options: [{ id: "tech_a" }, { id: "tech_b" }],
     });
     expect(() => anyOf()).toThrow(/at least one/);
+  });
+
+  it("a freshly built OR group is a legal patch input, by the patch widening", () => {
+    const patched = patchTechnology(missiles, () => ({
+      prerequisites: [anyOf("tech_pp_lasers_1", "pp_tech_torpedoes")],
+    }));
+    expect(serialize([patched.toEntries()])).toContain(
+      '\tprerequisites = {\n\t\tOR = { "tech_pp_lasers_1" "pp_tech_torpedoes" }\n\t}\n'
+    );
+  });
+});
+
+/**
+ * What the hand-written transform could not do, and what it silently got
+ * wrong. Both follow from lowering through the registry's own field
+ * descriptors: the forms they admit are the forms a patch admits, and the
+ * references they declare are the references a patch records.
+ */
+describe("descriptor-derived patching", () => {
+  it("admits the dual field's block arm, which the hand-listed type dropped", () => {
+    const patched = patchTechnology(geneForging, () => ({ cost: { base: 5000, factor: 2 } }));
+    expect(serialize([patched.toEntries()])).toContain(
+      "\tcost = {\n\t\tbase = 5000\n\t\tfactor = 2\n\t}\n"
+    );
+  });
+
+  it("records the reference a patched ref-valued field writes", () => {
+    // `tier` is `<technology_tier>` in the rules, and the hand-written
+    // transform wrote it without recording the use — the descriptor declares
+    // it, so the lowering collects it like any other.
+    const patched = patchTechnology(geneForging, () => ({ tier: { id: "pp_tier_4" } }));
+    expect(patched.refs).toContainEqual({
+      targets: ["technology_tier"],
+      id: "pp_tier_4",
+      field: "tier",
+    });
+  });
+
+  it("records every option of an alternation group as a reference", () => {
+    // The group lowers to a passthrough entry, so the scalar lowering never
+    // sees its options — the transform reports them, against the same
+    // `refTypes` the descriptor declares for the field around them.
+    const patched = patchTechnology(geneForging, (t) => ({
+      prerequisites: [...t.prerequisites, anyOf("tech_a", "pp_tech_b")],
+    }));
+    // Every id the member writes, grouped or not, on the same terms.
+    expect([...patched.refs].sort((a, b) => a.id.localeCompare(b.id))).toEqual([
+      { targets: ["technology"], id: "pp_tech_b", field: "prerequisites" },
+      { targets: ["technology"], id: "tech_a", field: "prerequisites" },
+      { targets: ["technology"], id: "tech_helix_mapping", field: "prerequisites" },
+    ]);
+  });
+
+  it("keeps a bare number in a ref-valued field out of the reference guard", () => {
+    // Vanilla's tiers are the integers 0-5, so `tier: 3` names no id.
+    const patched = patchTechnology(geneForging, () => ({ tier: 3 }));
+    expect(patched.refs).toEqual([]);
+    expect(serialize([patched.toEntries()])).toContain("\ttier = 3\n");
+  });
+
+  it("replaces every occurrence of a repeated key, at the first one's position", () => {
+    const view = viewFromFiles({
+      "common/technology/pp_dup.txt":
+        "tech_pp_dup = {\n\tarea = physics\n\tcategory = { c1 }\n\tgateway = g\n" +
+        "\tcategory = { c2 }\n}\n",
+    });
+    const emitted = serialize([
+      patchTechnology(view.technology("tech_pp_dup"), () => ({ category: ["c3"] })).toEntries(),
+    ]);
+    expect(emitted).toBe(
+      "tech_pp_dup = {\n\tarea = physics\n\tcategory = { c3 }\n\tgateway = g\n}\n"
+    );
+  });
+
+  it("carries parsed occurrences through beside freshly authored ones", () => {
+    const swap = geneForging.body.find((entry) => entry.key === "technology_swap")!;
+    const emitted = serialize([
+      patchTechnology(geneForging, () => ({
+        technologySwap: [swap, { name: "tech_gene_forging_frugal", inheritIcon: true }],
+      })).toEntries(),
+    ]);
+    // The parsed one is spliced as it stands, interior and all...
+    expect(emitted).toContain("\t\thas_origin = origin_overtuned\n");
+    // ...and the fresh one lowers through the same descriptor beside it.
+    expect(emitted).toContain(
+      "\ttechnology_swap = {\n\t\tname = tech_gene_forging_frugal\n\t\tinherit_icon = yes\n\t}\n"
+    );
+  });
+
+  it("refuses a desc-bearing modifier row until patches can mint its key", () => {
+    expect(() =>
+      patchTechnology(geneForging, () => ({
+        weightModifier: { modifiers: [{ factor: 2, desc: "Because reasons" }] },
+      }))
+    ).toThrow(/desc'd modifier rows in patches arrive with the patch-localization change/);
+  });
+});
+
+/**
+ * A patch member the transform would not emit has to fail loudly. The lowering
+ * iterates descriptors rather than the patch object, so an unknown key is
+ * dropped in silence otherwise — and the compiler catches neither case:
+ * TypeScript performs no excess-property check on an object literal returned
+ * from an inferred-return arrow, which is the shape every patch callback has.
+ */
+describe("patch members the transform cannot emit", () => {
+  it("refuses `id`, which vanilla's identity already settles", () => {
+    expect(() =>
+      // @ts-expect-error — pinned as an error where the compiler does see it.
+      patchTechnology(geneForging, (): TechnologyPatch => ({ cost: 1, id: "pp_tech_elsewhere" }))
+    ).toThrow(/may not set "id"/);
+    // The real idiom, which the compiler does NOT reject: an inferred-return
+    // arrow gets no excess-property check, so this is caught here or nowhere.
+    expect(() => patchTechnology(geneForging, () => ({ cost: 1, id: "pp_x" }))).toThrow(
+      /keeps vanilla's identity/
+    );
+  });
+
+  it("refuses a member the registry does not have, with a nearest-match hint", () => {
+    expect(() => patchTechnology(geneForging, () => ({ cost: 1, costt: 2 }))).toThrow(
+      /"costt", which is not a patchable technology member/
+    );
+    expect(() => patchTechnology(geneForging, () => ({ cost: 1, costt: 2 }))).toThrow(
+      /did you mean: cost, costPerLevel\?/
+    );
+    // A localisation slot is a real member of the definition and deliberately
+    // not of the patch, so it fails here rather than emitting nothing.
+    expect(() => patchTechnology(geneForging, () => ({ cost: 1, name: "Renamed" }))).toThrow(
+      /"name", which is not a patchable technology member/
+    );
+  });
+});
+
+/**
+ * `technology_swap` is an ordinary repeated struct in patch position. Replacing
+ * the swap blocks of a technology this mod is already overriding whole is not
+ * the refused case — that is patching *into* a swap as an override target,
+ * which `VanillaView.technology` still refuses (see `SwapPatchError` above).
+ */
+describe("patched technology swaps", () => {
+  const view = viewFromFiles({
+    "common/technology/pp_swaps.txt":
+      "tech_pp_swaps = {\n\tarea = society\n" +
+      "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_a\n\t\tinherit_icon = yes\n\t}\n" +
+      "\tgateway = biological\n" +
+      "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_b\n\t\tinherit_effects = no\n\t}\n}\n",
+  });
+  const swapped = view.technology("tech_pp_swaps");
+
+  it("replaces every swap block at the first one's position", () => {
+    const emitted = serialize([
+      patchTechnology(swapped, () => ({
+        technologySwap: [{ name: "tech_pp_swaps_c", inheritName: true }],
+      })).toEntries(),
+    ]);
+    expect(emitted).toBe(
+      "tech_pp_swaps = {\n\tarea = society\n" +
+        "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_c\n\t\tinherit_name = yes\n\t}\n" +
+        "\tgateway = biological\n}\n"
+    );
+  });
+
+  it("refuses a parsed entry belonging to another member", () => {
+    // A passthrough carries its own key, so an `area` entry spliced into
+    // `technologySwap` would delete the swaps and write a second `area` where
+    // they stood. Loud, rather than a body the author never described.
+    const area = swapped.body.find((entry) => entry.key === "area")!;
+    expect(() => patchTechnology(swapped, () => ({ technologySwap: [area] }))).toThrow(
+      '"technologySwap" was given a parsed "area" entry, and this member writes "technology_swap"'
+    );
+  });
+
+  it("keeps the parsed swaps byte-faithful when one fresh swap joins them", () => {
+    const parsed = swapped.body.filter((entry) => entry.key === "technology_swap");
+    const emitted = serialize([
+      patchTechnology(swapped, () => ({
+        technologySwap: [...parsed, { name: "tech_pp_swaps_c" }],
+      })).toEntries(),
+    ]);
+    expect(emitted).toBe(
+      "tech_pp_swaps = {\n\tarea = society\n" +
+        "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_a\n\t\tinherit_icon = yes\n\t}\n" +
+        "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_b\n\t\tinherit_effects = no\n\t}\n" +
+        "\ttechnology_swap = {\n\t\tname = tech_pp_swaps_c\n\t}\n" +
+        "\tgateway = biological\n}\n"
+    );
   });
 });

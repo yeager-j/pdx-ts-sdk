@@ -282,6 +282,7 @@ export function buildMod(
     eventFiles,
     eventIds,
     definedGroups,
+    patched: patches,
     refUses,
   });
 

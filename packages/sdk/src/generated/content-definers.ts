@@ -30,11 +30,7 @@
 // From: common/solar_system_initializers.cwt
 
 import type { ContentItem, ContributionItem } from "../content/types.ts";
-import {
-  patchTechnology as transformTechnology,
-  type TechnologyPatch,
-  type TechnologyPatchItem,
-} from "../stellaris/vanilla/patch.ts";
+import { patchContent } from "../stellaris/vanilla/patch.ts";
 import type { ParsedTechnology } from "../stellaris/vanilla/view.ts";
 import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
@@ -66,7 +62,12 @@ import type { SpeciesClassDef } from "./species-class.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
 import type { StaticModifierDef } from "./static-modifier.ts";
 import type { StrikeCraftComponentTemplateDef } from "./strike-craft-component-template.ts";
-import type { TechnologyDef } from "./technology.ts";
+import {
+  TECHNOLOGY_FIELDS,
+  type TechnologyDef,
+  type TechnologyPatch,
+  type TechnologyPatchItem,
+} from "./technology.ts";
 import type { TraditionCategoryDef } from "./tradition-category.ts";
 import type { TraditionDef } from "./tradition.ts";
 import type { UtilityComponentTemplateDef } from "./utility-component-template.ts";
@@ -98,7 +99,10 @@ export function patchTechnology<Source extends ParsedTechnology>(
   technology: Source,
   patch: (technology: Source) => TechnologyPatch
 ): TechnologyPatchItem {
-  return { itemKind: "patch", patched: transformTechnology(technology, patch) };
+  return {
+    itemKind: "patch",
+    patched: patchContent(technology, patch, "technology", TECHNOLOGY_FIELDS),
+  };
 }
 
 /** What a building feature can contain. */

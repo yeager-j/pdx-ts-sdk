@@ -53,6 +53,16 @@ export function validateReferences(args: {
   readonly eventFiles: readonly EmittedFile[];
   readonly eventIds: ReadonlySet<string>;
   readonly definedGroups: readonly DefinedGroup[];
+  /**
+   * The patched definitions, as authoring objects. A patch is the other place
+   * this mod's own nested identities are written — a `technology_swap` a patch
+   * adds to a vanilla technology is an id of this mod's, and another definition
+   * may name it — so the swap-identity pass reads them beside the definitions.
+   */
+  readonly patched: readonly {
+    readonly registry: string;
+    readonly def: Readonly<Record<string, unknown>>;
+  }[];
   readonly refUses: readonly ReferenceUse[];
 }): void {
   const ownEventId = new RegExp(`^${args.prefix}(_[a-z0-9_]*)?\\.\\d+$`);
@@ -127,13 +137,22 @@ export function validateReferences(args: {
     definedByType.set(group.type, [...(definedByType.get(group.type) ?? []), ...group.defined]);
   }
   for (const { registryType, path, keying } of SWAP_IDENTITIES) {
-    const defined = definedByType.get(registryType);
-    if (defined === undefined) {
+    // A swap authored in a patch is registered exactly like one authored in a
+    // definition: same path, same keying, no registry conditional. Vanilla's
+    // own swaps carried through as passthrough entries are skipped for free —
+    // they carry a PDXScript `key`, not an authored `name` — which is right,
+    // since a swap riding through keeps vanilla's identity and registers
+    // nothing.
+    const authored: unknown[] = [
+      ...(definedByType.get(registryType) ?? []).map((definition) => definition.def),
+      ...args.patched.filter((patch) => patch.registry === registryType).map((patch) => patch.def),
+    ];
+    if (authored.length === 0) {
       continue;
     }
     const ids = builtIds.get(registryType) ?? new Set<string>();
-    for (const definition of defined) {
-      for (const id of swapIds(readSwapPath(definition.def, path), keying)) {
+    for (const definition of authored) {
+      for (const id of swapIds(readSwapPath(definition, path), keying)) {
         ids.add(id);
       }
     }

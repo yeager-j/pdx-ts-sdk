@@ -2,6 +2,7 @@ import { serialize } from "@pdx-ts/pdxscript";
 
 import type { PlacedItem } from "../authoring/feature.ts";
 import { StaleRuleTableError } from "../errors.ts";
+import type { PatchedTechnology } from "../generated/technology.ts";
 import { normalizeLogicalPath } from "../ordering.ts";
 import {
   collectVarRefs,
@@ -9,7 +10,6 @@ import {
   type PatchPlan,
 } from "../stellaris/vanilla/override-plan.ts";
 import { SUPPORTED_STELLARIS_BUILD } from "../stellaris/vanilla/override-rules.ts";
-import type { PatchedTechnology } from "../stellaris/vanilla/patch.ts";
 import { sha256Hex, type VanillaFile } from "../stellaris/vanilla/view.ts";
 import type { BuildOptions, ResolvedModConfig } from "./config.ts";
 import type { ContentFile } from "./model.ts";

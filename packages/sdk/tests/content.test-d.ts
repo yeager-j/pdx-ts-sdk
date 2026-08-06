@@ -3,6 +3,7 @@ import { describe, expectTypeOf, it } from "vitest";
 import { defineBuilding } from "../src/generated/content-definers.ts";
 import {
   always,
+  anyOf,
   canGoMia,
   canJoinFactions,
   createMod,
@@ -44,6 +45,7 @@ import {
   type ScriptValue,
   type SectionTemplateFields,
   type StrikeCraftComponentTemplateFields,
+  type TechnologyPatch,
   type TechnologyRef,
   type TraditionSwapFields,
   type Trigger,
@@ -52,6 +54,7 @@ import {
   type WarGoalRef,
   type WeaponComponentTemplateFields,
 } from "../src/index.ts";
+import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 
 const CONTENT_TYPES_CONFIG = {
   name: "Content types",
@@ -1544,5 +1547,71 @@ describe("generated content authoring types", () => {
         },
       ],
     });
+  });
+});
+
+/**
+ * The patch surface is generated from the same field descriptors the
+ * definition's own members come from, so what it accepts is checked the same
+ * way — and what it must not accept is the identity it exists to keep.
+ */
+describe("generated patch authoring types", () => {
+  const view = viewFromFiles({
+    "common/technology/pp_soc_tech.txt":
+      "tech_pp_forging = {\n\tarea = society\n\ttier = 3\n\tcategory = { biology }\n}\n",
+  });
+  const forging = view.technology("tech_pp_forging");
+
+  it("keeps vanilla's identity: a patch cannot set an id", () => {
+    // A patched definition keeps vanilla's key, or the override does not win.
+    expectTypeOf<TechnologyPatch>().not.toHaveProperty("id");
+    const patch: TechnologyPatch = {
+      cost: 8000,
+      // @ts-expect-error — and the type is closed, so saying so is an error.
+      id: "content_types_tech_elsewhere",
+    };
+    void patch;
+    // Nor are the localisation slots patchable yet: their keys are minted by a
+    // pre-pass the patch path does not run.
+    expectTypeOf<TechnologyPatch>().not.toHaveProperty("name");
+    // @ts-expect-error — a member naming nothing the patch type has, in the one
+    // position the compiler does check it: an object with no member in common.
+    contentMod.patchTechnology(forging, () => ({ csot: 8000 }));
+  });
+
+  it("leaves an unknown member beside a known one to the runtime guard", () => {
+    // Pinning what the compiler does NOT do, because it decides where the
+    // check has to live. TypeScript performs no excess-property check on an
+    // object literal returned from an inferred-return arrow, so neither of
+    // these is a type error — `patchContent` refuses them at build time
+    // instead (`tests/vanilla/surface.test.ts`), rather than silently
+    // emitting nothing for the member.
+    expectTypeOf(() => ({ cost: 8000, id: "x" })).toExtend<() => TechnologyPatch>();
+    expectTypeOf(() => ({ cost: 8000, costt: 2 })).toExtend<() => TechnologyPatch>();
+  });
+
+  it("admits the definition's own forms, plus the ways parsed values come back", () => {
+    contentMod.patchTechnology(forging.require("tier"), (technology) => ({
+      // The dual field's block arm, which the definition admits too.
+      cost: { base: 4000, factor: 2 },
+      // A parsed number, carried back with its `@variable` provenance.
+      tier: technology.tier,
+      // The widened element form: vanilla's own `OR = { ... }` groups.
+      prerequisites: [anyOf("tech_pp_lasers_1"), "content_types_tech_marker"],
+    }));
+    contentMod.patchTechnology(forging, () => ({
+      // @ts-expect-error — `area` is an enum, and a parsed number is not one.
+      area: { value: 3 },
+    }));
+  });
+
+  it("takes only its own registry's parsed definition", () => {
+    // A structurally parsed-definition-shaped value is not a parsed
+    // technology: the capability method names the registry it patches.
+    const looksParsed = { id: "tech_pp_forging", body: [] };
+    // @ts-expect-error — not a ParsedTechnology.
+    contentMod.patchTechnology(looksParsed, () => ({ cost: 1 }));
+    // @ts-expect-error — a definition of this mod's own is not a patch source.
+    contentMod.patchTechnology(defineBuilding({ id: "content_types_b", name: "B" }), () => ({}));
   });
 });

@@ -46,7 +46,7 @@ import {
   type ModifierClosure,
   type ScopeObjOf,
 } from "../src/index.ts";
-import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+import { anyOf, viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 import { resonancePack } from "./fixtures/resonance-pack.ts";
 import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
@@ -736,6 +736,60 @@ describe("content reference integrity", () => {
     expect(() => buildInternal(CONFIG, [patches], { vanilla })).toThrow(
       'the patch of tech_gene_forging references technology "pp_mod_tech_marker" in ' +
         '"prerequisites", but no such technology is among the features passed to buildMod'
+    );
+  });
+
+  it("holds an id inside a patched OR group to the same standard", () => {
+    // An alternation group lowers to a passthrough entry, so its options never
+    // reach the scalar lowering that collects references — they have to be
+    // reported by the transform, or a mod-owned technology named only inside
+    // an `anyOf` would slip past the guard entirely.
+    const marker = defineTechnologyInternal({
+      id: "pp_mod_tech_alternative",
+      name: "Alternative",
+      area: "society",
+      tier: 0,
+      category: "biology",
+      startTech: true,
+    });
+    const patches = createFeatureInternal(undefined, [
+      patchTechnologyInternal(vanilla.technology("tech_gene_forging"), () => ({
+        prerequisites: [anyOf("tech_helix_mapping", marker)],
+      })),
+    ]);
+    expect(
+      render(
+        buildInternal(CONFIG, [createFeatureInternal("alt_techs", [marker]), patches], { vanilla })
+      ).get("common/technology/pp_mod_alt_techs.txt")
+    ).toContain("pp_mod_tech_alternative");
+    expect(() => buildInternal(CONFIG, [patches], { vanilla })).toThrow(
+      'the patch of tech_gene_forging references technology "pp_mod_tech_alternative" in ' +
+        '"prerequisites", but no such technology is among the features passed to buildMod'
+    );
+  });
+
+  it("registers a swap a patch authors, so other definitions may name it", () => {
+    // `technology_swap` names are ids of this mod's own wherever they are
+    // authored. A definition names one; the patch that adds it is what makes
+    // it exist, exactly as a `define` would.
+    const dependent = defineTechnologyInternal({
+      id: "pp_mod_tech_dependent",
+      name: "Dependent",
+      area: "society",
+      tier: 0,
+      category: "biology",
+      prerequisites: ["pp_mod_tech_gene_forging_frugal"],
+    });
+    const dependents = createFeatureInternal("dependents", [dependent]);
+    const patches = createFeatureInternal(undefined, [
+      patchTechnologyInternal(vanilla.technology("tech_gene_forging"), () => ({
+        technologySwap: [{ name: "pp_mod_tech_gene_forging_frugal", inheritIcon: true }],
+      })),
+    ]);
+    expect(buildInternal(CONFIG, [dependents, patches], { vanilla }).warnings).toEqual([]);
+    // Without the patch nothing defines the swap, and the same reference fails.
+    expect(() => buildInternal(CONFIG, [dependents], { vanilla })).toThrow(
+      'references technology "pp_mod_tech_gene_forging_frugal" in "prerequisites"'
     );
   });
 

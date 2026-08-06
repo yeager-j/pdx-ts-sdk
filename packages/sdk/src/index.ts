@@ -254,7 +254,7 @@ export type { ContentItem, ContributionItem } from "./content/types.ts";
 export type { ModWarning } from "./diagnostics.ts";
 export type { OnActionHookItem } from "./events/on-actions.ts";
 export type { EventItem, EventItemBase } from "./events/types.ts";
-export type { TechnologyPatchItem } from "./stellaris/vanilla/patch.ts";
+export type { TechnologyPatchItem } from "./generated/technology.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
   GameVersionError,
@@ -289,7 +289,7 @@ export {
   type Prerequisite,
   type VanillaFile,
 } from "./stellaris/vanilla/view.ts";
-export type { PatchedTechnology, TechnologyPatch } from "./stellaris/vanilla/patch.ts";
+export type { PatchedTechnology, TechnologyPatch } from "./generated/technology.ts";
 export type {
   CheckedVanillaId,
   InvalidVanillaId,

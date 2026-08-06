@@ -14,8 +14,10 @@ import {
   CONDITIONALLY_REQUIRED_LOCALISATION,
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
+  CONTENT_PATCH_REGISTRIES,
   CONTENT_SCOPE_PARAMETERS,
   FIELD_WIDENINGS,
+  PATCH_WIDENINGS,
   REPEATED_STRUCT_DEFINITIONS,
   REPEATED_STRUCT_FIELD_OVERRIDES,
   REQUIRED_LOCALISATION,
@@ -78,6 +80,21 @@ export interface ContentEmission {
    * so the definer emitter can thread S and strip the `scope` member.
    */
   readonly scopeParameter: ScopeParameter | null;
+  /**
+   * Emitted fields a `CONTENT_PATCH_REGISTRIES` patch cannot carry, each with
+   * the mechanical reason. Empty for a registry with no patch surface, since
+   * nothing was left out of one.
+   */
+  readonly patchExclusions: readonly string[];
+  /** The patch member widenings applied, each with its reason. */
+  readonly patchWidenings: readonly string[];
+}
+
+/** One member of the emitted patch type, in the rules' declaration order. */
+interface PatchMember {
+  readonly member: string;
+  readonly docs: string;
+  readonly memberType: string;
 }
 interface LocalisationPlan {
   readonly entries: ContentType["localisation"];
@@ -453,6 +470,73 @@ interface ScopeParameter {
   readonly fallback: string;
 }
 
+/**
+ * The whole patch surface of a `CONTENT_PATCH_REGISTRIES` registry: one
+ * optional member per field the transform can splice, plus the two aliases the
+ * item vocabulary names.
+ *
+ * Membership is derived, never curated. A patch keeps vanilla's identity, so
+ * `id` is absent — the override must target the vanilla key to win — and the
+ * localisation slots are absent because their keys are minted by a pre-pass the
+ * patch path does not run. Everything else the definition itself admits, the
+ * patch admits, in the same forms: `PatchInput` only adds the ways a shipped
+ * definition's own values come back in.
+ */
+function patchTypes(
+  type: ContentType,
+  typeName: string,
+  generic: string,
+  patchMembers: readonly PatchMember[],
+  localisationSlots: readonly string[],
+  patchWidenings: string[],
+  patchExclusions: string[]
+): string {
+  const parsed = `Parsed${typeName}`;
+  const members = patchMembers.map((entry) => {
+    const widening = PATCH_WIDENINGS.get(`${type.name}.${entry.member}`);
+    if (widening !== undefined) {
+      patchWidenings.push(
+        `${type.name}.${entry.member} also admits ${widening.extraType} — ${widening.reason}`
+      );
+    }
+    const extra = widening === undefined ? "" : `, ${widening.extraType}`;
+    return `${entry.docs}  readonly ${entry.member}?: PatchInput<${entry.memberType}${extra}>;\n`;
+  });
+  for (const [path, widening] of PATCH_WIDENINGS) {
+    const [registry, member] = path.split(".");
+    if (registry !== type.name || patchMembers.some((entry) => entry.member === member)) {
+      continue;
+    }
+    throw new Error(
+      `PATCH_WIDENINGS widens ${path}, but the patch type has no "${member}" member: ` +
+        `${widening.reason}`
+    );
+  }
+  patchExclusions.push(
+    ...localisationSlots.map(
+      (slot) =>
+        `${type.name}.${slot} — a localisation slot; its key is minted by a pre-pass the ` +
+        "patch path does not run"
+    )
+  );
+  return (
+    docComment([
+      `What a patch of a vanilla ${type.name} may change.`,
+      "",
+      "Closed, so a typo is a compile error, and `id`-less: a patched definition",
+      "keeps vanilla's identity, because the override has to target the vanilla",
+      "key to win.",
+    ]) +
+    `export interface ${typeName}Patch${generic} {\n` +
+    members.join("") +
+    "}\n\n" +
+    docComment([`A patched vanilla ${type.name}, ready for the win engine.`]) +
+    `export type Patched${typeName} = PatchedContent<${parsed}>;\n\n` +
+    docComment([`A patched vanilla ${type.name} placed into a capability feature.`]) +
+    `export type ${typeName}PatchItem = ContentPatchItem<${parsed}>;\n\n`
+  );
+}
+
 export function emitContentType(
   emitter: Emitter,
   cwtType: ContentType,
@@ -496,6 +580,9 @@ export function emitContentType(
   const members: string[] = [];
   const fieldMetadata: string[] = [];
   const emittedMembers = new Set<string>();
+  const patchMembers: PatchMember[] = [];
+  const patchExclusions: string[] = [];
+  const patchWidenings: string[] = [];
   const localisationPlan = planLocalisation(type);
   // A body field can share a name with a localization slot without meaning the
   // same thing — `building.desc` (`single_alias_right[triggered_desc_clause]`,
@@ -555,6 +642,20 @@ export function emitContentType(
       fieldMetadata.push(lowered.metadata);
       emittedMembers.add(lowered.member);
       inlineSplices.push(category);
+      // A splice the game reads at the block root writes no key of its own, so
+      // a patch has no slot in the parsed body to substitute for it.
+      if (lowered.key === undefined) {
+        patchExclusions.push(
+          `${type.name}.${lowered.member} — spliced unkeyed into the definition's own body, ` +
+            "so a patch has no key to replace"
+        );
+      } else {
+        patchMembers.push({
+          member: lowered.member,
+          docs: docComment(lowered.docs, "  "),
+          memberType: lowered.memberType,
+        });
+      }
       // A structural splice names a real key the corpus can be measured
       // against; `inlineModifiers` does not, since its rows carry no key.
       if (lowered.key !== undefined) {
@@ -599,10 +700,9 @@ export function emitContentType(
         continue;
       }
       const optional = group.every((field) => isOptional(field.cardinality));
-      members.push(
-        docComment([...new Set(group.flatMap((field) => field.docs))], "  ") +
-          `  ${camelCase(name)}${optional ? "?" : ""}: ${nested.memberType};\n`
-      );
+      const docs = docComment([...new Set(group.flatMap((field) => field.docs))], "  ");
+      members.push(`${docs}  ${camelCase(name)}${optional ? "?" : ""}: ${nested.memberType};\n`);
+      patchMembers.push({ member: camelCase(name), docs, memberType: nested.memberType });
       extraCode.push(nested.code);
       fieldMetadata.push(nested.metadata);
       declinedFields.push(...nested.declinedFields);
@@ -641,10 +741,9 @@ export function emitContentType(
       continue;
     }
     const optional = group.every((field) => isOptional(field.cardinality));
-    members.push(
-      docComment([...new Set(group.flatMap((field) => field.docs))], "  ") +
-        `  ${member}${optional ? "?" : ""}: ${lowered.memberType};\n`
-    );
+    const docs = docComment([...new Set(group.flatMap((field) => field.docs))], "  ");
+    members.push(`${docs}  ${member}${optional ? "?" : ""}: ${lowered.memberType};\n`);
+    patchMembers.push({ member, docs, memberType: lowered.memberType });
     fieldMetadata.push(
       override?.member === undefined
         ? lowered.metadata
@@ -697,6 +796,17 @@ export function emitContentType(
       : docComment([`The scopes ${indefiniteArticle(type.name)} ${type.name} may declare.`]) +
         `export type ${parameter.typeName} = ` +
         `${parameter.scopes.map((scope) => JSON.stringify(scope)).join(" | ")};\n\n`;
+  const patchCode = CONTENT_PATCH_REGISTRIES.has(type.name)
+    ? patchTypes(
+        type,
+        typeName,
+        generic,
+        patchMembers,
+        [...localisationMemberNames],
+        patchWidenings,
+        patchExclusions
+      )
+    : "";
   const code =
     extraCode.join("") +
     scopeType_ +
@@ -722,6 +832,7 @@ export function emitContentType(
     `  ${JSON.stringify(type.name)},\n` +
     `  ${typeName}Def<Id>\n` +
     ">;\n\n" +
+    patchCode +
     `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
     fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
     "];\n\n" +
@@ -741,5 +852,7 @@ export function emitContentType(
     unsupported,
     scopeParameter: parameter,
     localisationAliases: [...localisationPlan.aliases, ...localisationAliases],
+    patchExclusions: patchCode === "" ? [] : patchExclusions,
+    patchWidenings: patchCode === "" ? [] : patchWidenings,
   };
 }

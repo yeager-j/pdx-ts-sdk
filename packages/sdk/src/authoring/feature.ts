@@ -13,7 +13,7 @@
 import type { ContentItem, ContributionItem } from "../content/types.ts";
 import type { OnActionHookItem } from "../events/on-actions.ts";
 import type { EventItemBase } from "../events/types.ts";
-import type { TechnologyPatchItem } from "../stellaris/vanilla/patch.ts";
+import type { TechnologyPatchItem } from "../generated/technology.ts";
 
 export type ModItem =
   ContentItem | EventItemBase | OnActionHookItem | TechnologyPatchItem | ContributionItem;
