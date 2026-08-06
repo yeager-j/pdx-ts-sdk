@@ -18,6 +18,7 @@ import type { VanillaEdictId } from "./registries/edict.ts";
 import type { VanillaGlobalShipDesignId } from "./registries/global-ship-design.ts";
 import type { VanillaGraphicalCultureId } from "./registries/graphical-culture.ts";
 import type { VanillaJobId } from "./registries/job.ts";
+import type { VanillaMegastructureId } from "./registries/megastructure.ts";
 import type { VanillaOpinionModifierId } from "./registries/opinion-modifier.ts";
 import type { VanillaResourceId } from "./registries/resource.ts";
 import type { VanillaScriptedLocId } from "./registries/scripted-loc.ts";
@@ -83,6 +84,7 @@ declare module "@pdx-ts/sdk" {
     readonly species_class: VanillaSpeciesClassId;
     readonly country_ship_of_size_limit: VanillaCountryShipOfSizeLimitId;
     readonly solar_system_initializer: VanillaSolarSystemInitializerId;
+    readonly megastructure: VanillaMegastructureId;
     readonly sound: VanillaSoundId;
     readonly sound_effect: VanillaSoundEffectId;
     readonly sprite: VanillaSpriteId;

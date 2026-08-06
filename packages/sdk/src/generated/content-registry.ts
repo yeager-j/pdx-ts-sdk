@@ -28,6 +28,7 @@
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
+// From: common/megastructures.cwt
 
 import type { ContentRegistryDescriptor } from "../content/schema.ts";
 import { AGENDA_FIELDS, AGENDA_LOCALISATION } from "./agenda.ts";
@@ -60,6 +61,7 @@ import {
 } from "./global-ship-design.ts";
 import { GRAPHICAL_CULTURE_FIELDS, GRAPHICAL_CULTURE_LOCALISATION } from "./graphical-culture.ts";
 import { JOB_FIELDS, JOB_LOCALISATION } from "./job.ts";
+import { MEGASTRUCTURE_FIELDS, MEGASTRUCTURE_LOCALISATION } from "./megastructure.ts";
 import { OPINION_MODIFIER_FIELDS, OPINION_MODIFIER_LOCALISATION } from "./opinion-modifier.ts";
 import { SCRIPTED_LOC_FIELDS, SCRIPTED_LOC_LOCALISATION } from "./scripted-loc.ts";
 import { SCRIPTED_MODIFIER_FIELDS, SCRIPTED_MODIFIER_LOCALISATION } from "./scripted-modifier.ts";
@@ -381,6 +383,14 @@ export const CONTENT_REGISTRIES = [
     fileStem: "solar_system_initializers",
     fields: SOLAR_SYSTEM_INITIALIZER_FIELDS,
     localisation: SOLAR_SYSTEM_INITIALIZER_LOCALISATION,
+  },
+  {
+    type: "megastructure",
+    referenceName: "megastructure",
+    outputDir: "common/megastructures",
+    fileStem: "megastructures",
+    fields: MEGASTRUCTURE_FIELDS,
+    localisation: MEGASTRUCTURE_LOCALISATION,
   },
 ] as const satisfies readonly ContentRegistryDescriptor[];
 

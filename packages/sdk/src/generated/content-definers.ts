@@ -28,6 +28,7 @@
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
+// From: common/megastructures.cwt
 
 import type { ContentItem, ContributionItem } from "../content/types.ts";
 import { patchContent } from "../stellaris/vanilla/patch.ts";
@@ -56,6 +57,7 @@ import type { EdictDef } from "./edict.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
 import type { JobDef } from "./job.ts";
+import type { MegastructureDef } from "./megastructure.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import { refId, type TypedRef } from "./refs.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
@@ -654,4 +656,18 @@ export function defineSolarSystemInitializer<const Id extends string>(
   def: SolarSystemInitializerDef<Id>
 ): ContentItem<"solar_system_initializer", SolarSystemInitializerDef<Id>> {
   return { itemKind: "content", type: "solar_system_initializer", id: def.id, def };
+}
+
+/** What a megastructure feature can contain. */
+export type MegastructureItem = ContentItem<"megastructure", MegastructureDef>;
+
+/**
+ * Internal lowering primitive for a megastructure. Public authors call
+ * `mod.megastructure(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineMegastructure<const Id extends string>(
+  def: MegastructureDef<Id>
+): ContentItem<"megastructure", MegastructureDef<Id>> {
+  return { itemKind: "content", type: "megastructure", id: def.id, def };
 }

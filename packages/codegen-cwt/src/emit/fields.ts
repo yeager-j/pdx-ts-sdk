@@ -1299,20 +1299,23 @@ function lowerScalarUnion(
 }
 
 /**
- * Applies an overlay arity assertion by narrowing the declared cardinality.
+ * Applies an overlay arity assertion by correcting the declared cardinality.
  *
  * Everything downstream — the member type, the field metadata's `repeated`, the
  * shape descriptor — already reads the cardinality, so correcting it once here
- * is what keeps the three from disagreeing about whether the key repeats.
+ * is what keeps the three from disagreeing about whether the key repeats. The
+ * minimum is left alone in both directions: how often a key may be written is a
+ * different claim from whether it must be.
  */
 function assertedArity(
   group: readonly RuleField[],
   override: ContentFieldOverride | undefined
 ): readonly RuleField[] {
-  if (override?.arity !== "single") {
+  const max = override?.arity === "single" ? 1 : override?.arity === "repeated" ? null : undefined;
+  if (max === undefined) {
     return group;
   }
-  return group.map((field) => ({ ...field, cardinality: { ...field.cardinality, max: 1 } }));
+  return group.map((field) => ({ ...field, cardinality: { ...field.cardinality, max } }));
 }
 
 export function pickOrdinary(

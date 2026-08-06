@@ -28,6 +28,7 @@
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
+// From: common/megastructures.cwt
 // From: content-manifest.ts (VANILLA_REF_EXTRAS)
 
 import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../identifiers/contracts.ts";
@@ -54,6 +55,7 @@ import type {
   GlobalShipDesignRef,
   GraphicalCultureRef,
   JobRef,
+  MegastructureRef,
   OpinionModifierRef,
   ResourceRef,
   ScriptedLocRef,
@@ -491,6 +493,18 @@ export function countryShipOfSizeLimit<const Id extends VanillaId<"country_ship_
 export function solarSystemInitializer<const Id extends VanillaId<"solar_system_initializer">>(
   id: Id
 ): SolarSystemInitializerRef & { readonly id: Id } {
+  return { id };
+}
+
+/**
+ * A checked reference to a vanilla megastructure id.
+ * Checked against @pdx-ts/stellaris-ids when it is installed; any
+ * string otherwise. Zero runtime validation either way — this only
+ * constructs the branded reference the rest of the SDK already accepts.
+ */
+export function megastructure<const Id extends VanillaId<"megastructure">>(
+  id: Id
+): MegastructureRef & { readonly id: Id } {
   return { id };
 }
 

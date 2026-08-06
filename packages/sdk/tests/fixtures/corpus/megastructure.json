@@ -1,0 +1,2315 @@
+{
+  "registry": "megastructure",
+  "definitions": 164,
+  "files": 30,
+  "fingerprint": "9d5449744f1c264c1fbe4743db2a03a694f27d4ad2500deec67a451e7ad26832",
+  "fields": {
+    "ai_weight": {
+      "definitions": 35,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 35,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "complex_trigger_modifier",
+        "factor",
+        "inline_script",
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "base",
+          "modifier"
+        ],
+        [
+          "complex_trigger_modifier",
+          "factor",
+          "modifier"
+        ],
+        [
+          "factor"
+        ],
+        [
+          "factor",
+          "inline_script",
+          "modifier"
+        ],
+        [
+          "factor",
+          "modifier"
+        ],
+        [
+          "modifier",
+          "weight"
+        ]
+      ]
+    },
+    "ai_weight.modifier": {
+      "definitions": 27,
+      "repeated": 25,
+      "scalars": 0,
+      "blocks": 27,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 2,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "any_fleet_in_system",
+        "any_neighbor_system",
+        "any_playable_country",
+        "any_system_planet",
+        "any_system_planet_colony",
+        "count_system_planet_colony",
+        "end_game_years_passed",
+        "exists",
+        "from",
+        "has_star_flag",
+        "is_bottleneck_system",
+        "is_capital_system",
+        "is_point_of_interest",
+        "mid_game_years_passed",
+        "owner",
+        "owner?",
+        "sector",
+        "sector?",
+        "solar_system",
+        "starbase",
+        "system_has_hostile_aura",
+        "years_passed"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "any_neighbor_system",
+          "count_system_planet_colony",
+          "from",
+          "is_capital_system"
+        ],
+        [
+          "NOT",
+          "from",
+          "owner?",
+          "starbase"
+        ],
+        [
+          "OR",
+          "any_fleet_in_system",
+          "any_neighbor_system",
+          "any_system_planet",
+          "from",
+          "has_star_flag",
+          "is_point_of_interest",
+          "owner?",
+          "solar_system",
+          "years_passed"
+        ],
+        [
+          "OR",
+          "end_game_years_passed",
+          "from",
+          "mid_game_years_passed"
+        ],
+        [
+          "OR",
+          "exists",
+          "owner",
+          "sector",
+          "starbase"
+        ],
+        [
+          "any_neighbor_system",
+          "any_playable_country",
+          "from",
+          "system_has_hostile_aura"
+        ],
+        [
+          "any_neighbor_system",
+          "any_system_planet_colony",
+          "solar_system"
+        ],
+        [
+          "any_neighbor_system",
+          "from",
+          "is_bottleneck_system",
+          "starbase"
+        ],
+        [
+          "any_neighbor_system",
+          "from",
+          "owner?"
+        ],
+        [
+          "any_neighbor_system",
+          "from",
+          "starbase"
+        ],
+        [
+          "any_neighbor_system",
+          "starbase"
+        ],
+        [
+          "any_system_planet",
+          "exists",
+          "sector",
+          "solar_system",
+          "starbase"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "sector?",
+          "starbase"
+        ]
+      ]
+    },
+    "build_megastructure_no_cost_localization_key": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "FLASH_FORGE_MEGASTRUCTURE"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "build_menu_potential": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ]
+      ]
+    },
+    "build_outside_gravity_well": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "build_system_tooltip": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "arc_furnace_tooltip",
+        "habitat_tooltip"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "build_time": {
+      "definitions": 113,
+      "repeated": 0,
+      "scalars": 113,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1",
+        "1080",
+        "180",
+        "1800",
+        "20",
+        "2400",
+        "360",
+        "3600",
+        "4800",
+        "720",
+        "7200",
+        "900"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "build_type": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "inside_gravity_well",
+        "outside_gravity_well"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "bypass_type": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "gateway",
+        "gateway_ness",
+        "lgate",
+        "quantum_catapult",
+        "relay_bypass"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "can_be_dismantled_by_non_owner": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "construction_blocks_and_blocked_by": {
+      "definitions": 39,
+      "repeated": 0,
+      "scalars": 39,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "none",
+        "self_type"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "construction_entity": {
+      "definitions": 134,
+      "repeated": 0,
+      "scalars": 134,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "arc_crucible_stage_1_entity",
+        "arc_crucible_stage_2_entity",
+        "arc_crucible_stage_3_entity",
+        "arc_crucible_stage_4_entity",
+        "construction_platform_entity",
+        "deep_space_01_starbase_citadel_section_1_entity",
+        "dyson_sphere_frame_entity",
+        "dyson_sphere_part_1_entity",
+        "dyson_sphere_part_2_entity",
+        "dyson_sphere_part_3_entity",
+        "dyson_sphere_part_4_entity",
+        "dyson_swarm_phase_1_entity",
+        "dyson_swarm_phase_2_entity",
+        "dyson_swarm_phase_3_entity",
+        "gateway_portal_entity",
+        "grand_archive_entity",
+        "hyper_relay_entity",
+        "infernal_01_galactic_crucible_construction_frame_entity",
+        "infernal_01_galactic_crucible_part_1_entity",
+        "infernal_01_galactic_crucible_part_2_entity",
+        "infernal_01_galactic_crucible_part_3_entity",
+        "infernal_01_galactic_crucible_part_4_entity",
+        "interstellar_assembly_01_destroyed_entity",
+        "interstellar_assembly_stage_1_entity",
+        "interstellar_assembly_stage_2_entity",
+        "interstellar_assembly_stage_3_entity",
+        "interstellar_assembly_stage_4_entity",
+        "kaiju_01_big_egg_destroyed_entity",
+        "kaiju_01_big_egg_entity",
+        "kaiju_01_egg_destroyed_entity",
+        "kaiju_01_egg_entity",
+        "matter_decompressor_stage_1_construction_entity",
+        "matter_decompressor_stage_2_construction_entity",
+        "matter_decompressor_stage_3_construction_entity",
+        "matter_decompressor_stage_4_construction_entity",
+        "mega_art_institution_01_destroyed_entity",
+        "mega_art_institution_stage_1_entity",
+        "mega_art_institution_stage_2_entity",
+        "mega_art_institution_stage_3_entity",
+        "mega_shipyard_01_destroyed_entity",
+        "mega_shipyard_01_stage_1_entity",
+        "mega_shipyard_01_stage_2_entity",
+        "mega_shipyard_01_stage_3_entity",
+        "monadic_qerr_entity",
+        "neural_calculator_destroyed_entity",
+        "neural_calculator_phase_1_entity",
+        "orbital_ring_construction_entity",
+        "quantum_catapult_01_destroyed_entity",
+        "quantum_catapult_stage_1_entity",
+        "quantum_catapult_stage_2_entity",
+        "quantum_catapult_stage_3_entity",
+        "ringworld_phase_3_construction_entity",
+        "ringworld_seam_entity_01_full_entity",
+        "spyorb_phase_01_construction_entity",
+        "spyorb_phase_02_construction_entity",
+        "spyorb_phase_03_construction_entity",
+        "spyorb_phase_04_construction_entity",
+        "strategic_coordination_center_01_destroyed_entity",
+        "strategic_coordination_center_stage_1_entity",
+        "strategic_coordination_center_stage_2_entity",
+        "strategic_coordination_center_stage_3_entity",
+        "thinktank_phase_01_entity",
+        "thinktank_phase_02_entity",
+        "thinktank_phase_03_entity"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "construction_scale": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1.02",
+        "1.2"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "context_menu_potential": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "has_any_hyper_relay"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "has_any_hyper_relay"
+        ]
+      ]
+    },
+    "country_modifier": {
+      "definitions": 58,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 58,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "add_base_country_intel",
+        "all_technology_research_speed",
+        "country_naval_cap_add",
+        "country_resource_max_energy_add",
+        "country_starbase_capacity_add",
+        "country_vivarium_max_capacity_add",
+        "custom_tooltip",
+        "diplo_weight_mult",
+        "empire_size_mult",
+        "envoys_add",
+        "fleet_mia_time_mult",
+        "intel_decryption_add",
+        "planet_amenities_mult",
+        "planetary_ascension_cost_mult",
+        "ship_fire_rate_mult",
+        "ship_speed_mult",
+        "ship_windup_mult",
+        "starbase_defense_platform_capacity_add",
+        "starbase_shipyard_build_speed_mult"
+      ],
+      "keysByDefinition": [
+        [
+          "add_base_country_intel",
+          "intel_decryption_add",
+          "ship_windup_mult"
+        ],
+        [
+          "add_base_country_intel",
+          "ship_windup_mult"
+        ],
+        [
+          "all_technology_research_speed"
+        ],
+        [
+          "country_naval_cap_add"
+        ],
+        [
+          "country_naval_cap_add",
+          "country_starbase_capacity_add",
+          "ship_speed_mult",
+          "starbase_defense_platform_capacity_add"
+        ],
+        [
+          "country_resource_max_energy_add",
+          "ship_fire_rate_mult"
+        ],
+        [
+          "country_vivarium_max_capacity_add"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "diplo_weight_mult"
+        ],
+        [
+          "diplo_weight_mult",
+          "empire_size_mult",
+          "envoys_add"
+        ],
+        [
+          "fleet_mia_time_mult"
+        ],
+        [
+          "planet_amenities_mult"
+        ],
+        [
+          "planet_amenities_mult",
+          "planetary_ascension_cost_mult"
+        ],
+        [
+          "ship_fire_rate_mult"
+        ],
+        [
+          "starbase_shipyard_build_speed_mult"
+        ]
+      ]
+    },
+    "custom_tooltip_requirements": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 18,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_DYSON_GUN",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_DYSON_SPHERE",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_DYSON_SWARM",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_HABITAT_CENTRAL_COMPLEX",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_MATTER_DECOMPRESSOR",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_NEEDLE",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_ONE_PER_COUNTRY",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_ORBITAL_RING",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_OUTSIDE_GRAVITY_WELL",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_QUANTUM_CATAPULT",
+        "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_RING_WORLD"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cycle_desc": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "SPAWN_CONDUITS_DESC"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cycle_icon": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_ship_class_conduit"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cycle_length_in_days": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "value:gh_conduit_interval_value"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cycle_title": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "SPAWN_CONDUITS"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "dismantle_cost": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 11,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost"
+      ],
+      "keysByDefinition": [
+        [
+          "category",
+          "cost"
+        ]
+      ]
+    },
+    "dismantle_possible": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 13,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "can_dismantle_megastructure",
+        "if",
+        "solar_system"
+      ],
+      "keysByDefinition": [
+        [
+          "can_dismantle_megastructure"
+        ],
+        [
+          "if",
+          "solar_system"
+        ]
+      ]
+    },
+    "dismantle_potential": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 14,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "always"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ]
+      ]
+    },
+    "dismantle_time": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 13,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "180",
+        "360"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "entity": {
+      "definitions": 161,
+      "repeated": 0,
+      "scalars": 161,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "",
+        "arc_crucible_destroyed_entity",
+        "arc_crucible_stage_1_entity",
+        "arc_crucible_stage_2_entity",
+        "arc_crucible_stage_3_entity",
+        "arc_crucible_stage_4_entity",
+        "construction_platform_entity",
+        "deactivated_gateway_entity",
+        "dyson_sphere_destroyed_entity",
+        "dyson_sphere_phase_01_entity",
+        "dyson_sphere_phase_02_entity",
+        "dyson_sphere_phase_03_entity",
+        "dyson_sphere_phase_04_entity",
+        "dyson_sphere_phase_05_entity",
+        "dyson_swarm_phase_1_entity",
+        "dyson_swarm_phase_2_entity",
+        "dyson_swarm_phase_3_entity",
+        "gateway_entity",
+        "grand_archive_entity",
+        "hyper_relay_01_destroyed_entity",
+        "hyper_relay_entity",
+        "interstellar_assembly_01_destroyed_entity",
+        "interstellar_assembly_stage_1_entity",
+        "interstellar_assembly_stage_2_entity",
+        "interstellar_assembly_stage_3_entity",
+        "interstellar_assembly_stage_4_entity",
+        "kaiju_01_egg_destroyed_entity",
+        "kaiju_01_egg_entity",
+        "matter_decompressor_destroyed_01_entity",
+        "matter_decompressor_stage_1_entity",
+        "matter_decompressor_stage_2_entity",
+        "matter_decompressor_stage_3_entity",
+        "matter_decompressor_stage_4_entity",
+        "mega_art_institution_01_destroyed_entity",
+        "mega_art_institution_stage_1_entity",
+        "mega_art_institution_stage_2_entity",
+        "mega_art_institution_stage_3_entity",
+        "mega_shipyard_01_destroyed_entity",
+        "mega_shipyard_01_stage_1_entity",
+        "mega_shipyard_01_stage_2_entity",
+        "mega_shipyard_01_stage_3_entity",
+        "monadic_qerr_entity",
+        "neural_calculator_destroyed_entity",
+        "orbital_ring_01_destroyed_entity",
+        "quantum_catapult_01_destroyed_entity",
+        "quantum_catapult_stage_1_entity",
+        "quantum_catapult_stage_2_entity",
+        "quantum_catapult_stage_3_entity",
+        "reactivated_gateway_entity",
+        "ringworld_3x_seams_entity",
+        "ringworld_destroyed_entity",
+        "spy_orb_destroyed_entity",
+        "spyorb_phase_01_entity",
+        "spyorb_phase_02_entity",
+        "spyorb_phase_03_entity",
+        "spyorb_phase_04_entity",
+        "strategic_coordination_center_01_destroyed_entity",
+        "strategic_coordination_center_stage_1_entity",
+        "strategic_coordination_center_stage_2_entity",
+        "strategic_coordination_center_stage_3_entity",
+        "think_tank_destroyed_01_entity",
+        "thinktank_phase_01_entity",
+        "thinktank_phase_02_entity",
+        "thinktank_phase_03_entity"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "entity_offset": {
+      "definitions": 107,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 107,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "x",
+        "y"
+      ],
+      "keysByDefinition": [
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    "entity_offset.x": {
+      "definitions": 107,
+      "repeated": 0,
+      "scalars": 107,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "-0.1",
+        "-20",
+        "-27",
+        "-40",
+        "-7",
+        "0",
+        "0.1",
+        "7"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "entity_offset.y": {
+      "definitions": 107,
+      "repeated": 0,
+      "scalars": 107,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "-0.1",
+        "-20",
+        "-27",
+        "-30",
+        "-7",
+        "0",
+        "0.1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hide_name": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hyperlane_range": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "30",
+        "60",
+        "90"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "ENTITY",
+        "SHIP_SIZE",
+        "TECHNOLOGY",
+        "script"
+      ],
+      "keysByDefinition": [
+        [
+          "ENTITY",
+          "SHIP_SIZE",
+          "TECHNOLOGY",
+          "script"
+        ]
+      ]
+    },
+    "is_grand_archive": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_ruined_orbital_ring": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "is_shroud_seal": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "must_select_ship_design": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_build_cancel": {
+      "definitions": 44,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 44,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 29,
+      "values": [],
+      "keys": [
+        "from",
+        "if",
+        "remove_star_flag"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "from"
+        ],
+        [
+          "if",
+          "remove_star_flag"
+        ],
+        [
+          "remove_star_flag"
+        ]
+      ]
+    },
+    "on_build_complete": {
+      "definitions": 109,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 109,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 5,
+      "values": [],
+      "keys": [
+        "activate_gateway",
+        "add_eotc_aura_shroud_seal",
+        "add_modifier",
+        "create_fleet",
+        "create_message",
+        "else",
+        "every_playable_country",
+        "every_system_ambient_object",
+        "every_system_planet",
+        "fire_on_action",
+        "from",
+        "fromfrom",
+        "fromfrom.planet",
+        "fromfrom.solar_system",
+        "fromfromfrom",
+        "if",
+        "owner",
+        "prev",
+        "random_system_planet",
+        "remove_megastructure",
+        "remove_star_flag",
+        "remove_system_terraforming_candidates",
+        "set_asteroid_belt",
+        "set_star_flag",
+        "solar_system",
+        "spawn_behemoth_hatchling_effect",
+        "spawn_fast_egg_fleet_effect",
+        "spawn_megastructure",
+        "spawn_planet",
+        "spawn_slow_egg_fleet_effect"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "activate_gateway"
+        ],
+        [
+          "activate_gateway",
+          "from",
+          "if"
+        ],
+        [
+          "activate_gateway",
+          "fromfrom",
+          "if"
+        ],
+        [
+          "activate_gateway",
+          "if"
+        ],
+        [
+          "add_eotc_aura_shroud_seal",
+          "add_modifier",
+          "every_playable_country"
+        ],
+        [
+          "create_fleet",
+          "from",
+          "remove_megastructure",
+          "remove_system_terraforming_candidates"
+        ],
+        [
+          "create_message",
+          "else",
+          "fromfrom.planet",
+          "if",
+          "remove_megastructure",
+          "spawn_behemoth_hatchling_effect"
+        ],
+        [
+          "create_message",
+          "from",
+          "fromfrom.planet",
+          "remove_megastructure",
+          "spawn_fast_egg_fleet_effect"
+        ],
+        [
+          "create_message",
+          "from",
+          "fromfrom.planet",
+          "remove_megastructure",
+          "spawn_slow_egg_fleet_effect"
+        ],
+        [
+          "else",
+          "from",
+          "fromfrom.planet",
+          "fromfrom.solar_system",
+          "if",
+          "remove_megastructure"
+        ],
+        [
+          "else",
+          "fromfrom",
+          "fromfrom.planet",
+          "if"
+        ],
+        [
+          "else",
+          "fromfrom.planet",
+          "if",
+          "remove_megastructure",
+          "spawn_megastructure"
+        ],
+        [
+          "every_system_ambient_object",
+          "every_system_planet",
+          "from",
+          "remove_star_flag",
+          "remove_system_terraforming_candidates"
+        ],
+        [
+          "every_system_ambient_object",
+          "from"
+        ],
+        [
+          "every_system_ambient_object",
+          "from",
+          "if",
+          "remove_megastructure",
+          "spawn_planet"
+        ],
+        [
+          "every_system_ambient_object",
+          "from",
+          "random_system_planet",
+          "remove_megastructure"
+        ],
+        [
+          "every_system_ambient_object",
+          "from",
+          "set_star_flag"
+        ],
+        [
+          "every_system_ambient_object",
+          "owner"
+        ],
+        [
+          "every_system_planet",
+          "from",
+          "fromfrom",
+          "fromfrom.planet"
+        ],
+        [
+          "every_system_planet",
+          "from",
+          "remove_star_flag",
+          "remove_system_terraforming_candidates"
+        ],
+        [
+          "every_system_planet",
+          "remove_megastructure",
+          "set_asteroid_belt",
+          "spawn_megastructure"
+        ],
+        [
+          "fire_on_action",
+          "from",
+          "fromfrom",
+          "prev"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "fromfrom"
+        ],
+        [
+          "from",
+          "fromfrom",
+          "remove_star_flag",
+          "set_star_flag"
+        ],
+        [
+          "from",
+          "fromfrom.planet"
+        ],
+        [
+          "from",
+          "fromfrom.planet",
+          "if",
+          "remove_megastructure",
+          "spawn_planet"
+        ],
+        [
+          "from",
+          "fromfrom.planet",
+          "if",
+          "remove_star_flag"
+        ],
+        [
+          "from",
+          "fromfrom.planet",
+          "remove_megastructure"
+        ],
+        [
+          "from",
+          "fromfrom.planet",
+          "remove_star_flag"
+        ],
+        [
+          "from",
+          "fromfrom.planet",
+          "remove_star_flag",
+          "remove_system_terraforming_candidates",
+          "set_star_flag"
+        ],
+        [
+          "from",
+          "fromfrom.planet",
+          "set_star_flag"
+        ],
+        [
+          "from",
+          "fromfrom.solar_system",
+          "remove_megastructure",
+          "solar_system",
+          "spawn_planet"
+        ],
+        [
+          "from",
+          "fromfromfrom"
+        ],
+        [
+          "from",
+          "if",
+          "remove_star_flag"
+        ],
+        [
+          "from",
+          "remove_megastructure",
+          "solar_system",
+          "spawn_planet"
+        ],
+        [
+          "from",
+          "remove_star_flag"
+        ],
+        [
+          "from",
+          "remove_star_flag",
+          "remove_system_terraforming_candidates"
+        ],
+        [
+          "from",
+          "set_star_flag"
+        ],
+        [
+          "fromfrom"
+        ],
+        [
+          "fromfrom.planet"
+        ],
+        [
+          "fromfrom.planet",
+          "if"
+        ],
+        [
+          "fromfrom.planet",
+          "set_star_flag"
+        ],
+        [
+          "if"
+        ],
+        [
+          "remove_star_flag",
+          "remove_system_terraforming_candidates"
+        ],
+        [
+          "set_star_flag"
+        ]
+      ]
+    },
+    "on_build_queued": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "fromfrom"
+      ],
+      "keysByDefinition": [
+        [
+          "fromfrom"
+        ]
+      ]
+    },
+    "on_build_start": {
+      "definitions": 57,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 57,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 29,
+      "values": [],
+      "keys": [
+        "from",
+        "fromfrom",
+        "if",
+        "set_star_flag"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "set_star_flag"
+        ],
+        [
+          "fromfrom"
+        ],
+        [
+          "fromfrom",
+          "set_star_flag"
+        ],
+        [
+          "if",
+          "set_star_flag"
+        ],
+        [
+          "set_star_flag"
+        ]
+      ]
+    },
+    "on_build_unqueued": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "fromfrom"
+      ],
+      "keysByDefinition": [
+        [
+          "fromfrom"
+        ]
+      ]
+    },
+    "on_cycle_complete": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "fromfrom.owner"
+      ],
+      "keysByDefinition": [
+        [
+          "fromfrom.owner"
+        ]
+      ]
+    },
+    "on_dismantle_complete": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 13,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "every_system_planet",
+        "from",
+        "if",
+        "on_shroud_seal_destroyed",
+        "random_system_planet"
+      ],
+      "keysByDefinition": [
+        [
+          "every_system_planet",
+          "from",
+          "random_system_planet"
+        ],
+        [
+          "from"
+        ],
+        [
+          "from",
+          "if",
+          "random_system_planet"
+        ],
+        [
+          "from",
+          "random_system_planet"
+        ],
+        [
+          "on_shroud_seal_destroyed"
+        ]
+      ]
+    },
+    "order_icon": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_fleet_order_button_build_starbase_station"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "outliner_trigger": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "exists",
+        "if",
+        "owner",
+        "system_has_arc_furnace"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "exists",
+          "if",
+          "owner",
+          "system_has_arc_furnace"
+        ],
+        [
+          "exists",
+          "owner"
+        ]
+      ]
+    },
+    "overclock_types": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 5,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "overclock_gc_default",
+        "overclock_gc_eco",
+        "overclock_gc_high",
+        "overclock_gc_war"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "overlord_can_upgrade": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "place_entity_on_planet_plane": {
+      "definitions": 119,
+      "repeated": 0,
+      "scalars": 119,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "placement_rules": {
+      "definitions": 27,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 27,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 4,
+      "values": [],
+      "keys": [
+        "planet_possible"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "planet_possible"
+        ]
+      ]
+    },
+    "plane_offset": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "-3"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "portrait": {
+      "definitions": 149,
+      "repeated": 0,
+      "scalars": 149,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_mega_art_installation_background",
+        "GFX_megastructure_arc_furnace_background",
+        "GFX_megastructure_behemoth_egg_background",
+        "GFX_megastructure_construction_background",
+        "GFX_megastructure_crucible_background",
+        "GFX_megastructure_crucible_complete_background",
+        "GFX_megastructure_dyson_gun_background",
+        "GFX_megastructure_dyson_sphere_background",
+        "GFX_megastructure_dyson_swarm_background",
+        "GFX_megastructure_grand_archive_background",
+        "GFX_megastructure_habitat_background",
+        "GFX_megastructure_hyper_relay_background",
+        "GFX_megastructure_interstellar_assembly_background",
+        "GFX_megastructure_matter_decompressor_background",
+        "GFX_megastructure_mega_shipyard_background",
+        "GFX_megastructure_quantum_catapult_background",
+        "GFX_megastructure_shroud_seal_background",
+        "GFX_megastructure_spy_orb_background",
+        "GFX_megastructure_strategic_coordination_center_background",
+        "GFX_megastructure_think_tank_background"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible": {
+      "definitions": 64,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 64,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "custom_tooltip",
+        "else",
+        "exists",
+        "from",
+        "hidden_trigger",
+        "if",
+        "inline_script"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "else",
+          "if"
+        ],
+        [
+          "custom_tooltip",
+          "from"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_trigger"
+        ],
+        [
+          "custom_tooltip",
+          "inline_script"
+        ],
+        [
+          "exists",
+          "from"
+        ],
+        [
+          "from"
+        ],
+        [
+          "inline_script"
+        ]
+      ]
+    },
+    "potential": {
+      "definitions": 91,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 91,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "always",
+        "has_ancrel",
+        "has_country_flag",
+        "has_crisis_level",
+        "has_grand_archive",
+        "has_gw_matter_decompressor",
+        "has_machine_age_dlc",
+        "has_nemesis",
+        "has_technology",
+        "if",
+        "is_country_type",
+        "is_nomadic",
+        "owner",
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "has_crisis_level"
+        ],
+        [
+          "NOT",
+          "has_technology"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "always"
+        ],
+        [
+          "has_ancrel"
+        ],
+        [
+          "has_country_flag"
+        ],
+        [
+          "has_country_flag",
+          "has_nemesis"
+        ],
+        [
+          "has_crisis_level"
+        ],
+        [
+          "has_grand_archive",
+          "is_country_type"
+        ],
+        [
+          "has_gw_matter_decompressor"
+        ],
+        [
+          "has_machine_age_dlc"
+        ],
+        [
+          "has_technology"
+        ],
+        [
+          "if",
+          "is_nomadic"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner?"
+        ]
+      ]
+    },
+    "prereq_name": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "RING_WORLD_SHOW_NAME"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prerequisites": {
+      "definitions": 65,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 65,
+      "bareValues": 65,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "tech_cosmogenesis_world",
+        "tech_deep_space_citadel",
+        "tech_dyson_gun",
+        "tech_dyson_sphere",
+        "tech_dyson_swarm",
+        "tech_galactic_archivism",
+        "tech_interstellar_assembly",
+        "tech_matter_decompressor",
+        "tech_mega_art",
+        "tech_mega_shipyard",
+        "tech_orbital_arc_furnace",
+        "tech_psionic_suppression",
+        "tech_quantum_catapult",
+        "tech_ring_world",
+        "tech_science_nexus",
+        "tech_sentry_array",
+        "tech_strategic_coordination",
+        "tech_waystation_1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "resources": {
+      "definitions": 111,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 111,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "category",
+        "cost",
+        "produces",
+        "upkeep"
+      ],
+      "keysByDefinition": [
+        [
+          "category"
+        ],
+        [
+          "category",
+          "cost"
+        ],
+        [
+          "category",
+          "cost",
+          "produces"
+        ],
+        [
+          "category",
+          "cost",
+          "produces",
+          "upkeep"
+        ],
+        [
+          "category",
+          "cost",
+          "upkeep"
+        ],
+        [
+          "category",
+          "produces",
+          "upkeep"
+        ]
+      ]
+    },
+    "rotate_to_center": {
+      "definitions": 17,
+      "repeated": 0,
+      "scalars": 17,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "scale_offset": {
+      "definitions": 17,
+      "repeated": 0,
+      "scalars": 17,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "scales_with_planet": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "scripted_action": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareValues": 4,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "dyson_shoot"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "sensor_range": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "20",
+        "40",
+        "60"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ship_modifier": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "ship_starting_experience_add"
+      ],
+      "keysByDefinition": [
+        [
+          "ship_starting_experience_add"
+        ]
+      ]
+    },
+    "should_ai_dismantle": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "from"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "from"
+        ]
+      ]
+    },
+    "show_galactic_map_icon": {
+      "definitions": 43,
+      "repeated": 0,
+      "scalars": 43,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_in_outliner": {
+      "definitions": 64,
+      "repeated": 0,
+      "scalars": 64,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_prereqs": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "starbase": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "starbase_level_deep_space_citadel_1",
+        "starbase_level_orbital_ring_tier_1",
+        "starbase_level_waystation_1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "station_modifier": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 14,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "catapult_range_base",
+        "catapult_spread_base",
+        "quantum_catapult_megastructure_bypass_windup_mult",
+        "starbase_shipyard_capacity_add"
+      ],
+      "keysByDefinition": [
+        [
+          "catapult_range_base",
+          "catapult_spread_base",
+          "quantum_catapult_megastructure_bypass_windup_mult"
+        ],
+        [
+          "starbase_shipyard_capacity_add"
+        ]
+      ]
+    },
+    "tooltip_best_systems_header": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "MEGASTRUCTURE_ARC_FURNACE_BEST_SYSTEMS_TOOLTIP_HEADER",
+        "MEGASTRUCTURE_DYSON_SWARM_BEST_SYSTEMS_TOOLTIP_HEADER",
+        "MEGASTRUCTURE_HABITAT_BEST_SYSTEMS_TOOLTIP_HEADER"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tooltip_show_star_resources": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tooltip_system_filter": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOR",
+        "NOT",
+        "is_binary_star",
+        "is_trinary_star",
+        "system_has_arc_furnace",
+        "system_has_dyson_swarm"
+      ],
+      "keysByDefinition": [
+        [
+          "NOR",
+          "is_binary_star",
+          "is_trinary_star",
+          "system_has_dyson_swarm"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "system_has_arc_furnace"
+        ]
+      ]
+    },
+    "tooltip_system_score": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "add",
+        "base",
+        "complex_trigger_modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "add",
+          "base"
+        ],
+        [
+          "base",
+          "complex_trigger_modifier"
+        ]
+      ]
+    },
+    "tooltip_system_score_high_threshold": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "16"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tooltip_system_score_low_threshold": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "10"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "triggered_country_modifier": {
+      "definitions": 1,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_naval_cap_add",
+        "potential",
+        "shroud_storm_repelling"
+      ],
+      "keysByDefinition": [
+        [
+          "country_naval_cap_add",
+          "potential",
+          "shroud_storm_repelling"
+        ]
+      ]
+    },
+    "upgrade_desc": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "hide"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "upgrade_from": {
+      "definitions": 92,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 92,
+      "bareValues": 84,
+      "bareBlocks": 0,
+      "emptyBlocks": 8,
+      "values": [
+        "crisis_sphere_0",
+        "crisis_sphere_1",
+        "crisis_sphere_2",
+        "crisis_sphere_3",
+        "crisis_sphere_ruined",
+        "dyson_sphere_0",
+        "dyson_sphere_1",
+        "dyson_sphere_2",
+        "dyson_sphere_3",
+        "dyson_sphere_4",
+        "dyson_sphere_5",
+        "dyson_sphere_restored",
+        "dyson_sphere_ruined",
+        "dyson_swarm_3",
+        "gateway_0",
+        "gateway_ness_ruined",
+        "gateway_ruined",
+        "hyper_relay_ruined",
+        "interstellar_assembly_0",
+        "interstellar_assembly_1",
+        "interstellar_assembly_2",
+        "interstellar_assembly_3",
+        "interstellar_assembly_ruined",
+        "matter_decompressor_0",
+        "matter_decompressor_1",
+        "matter_decompressor_2",
+        "matter_decompressor_3",
+        "matter_decompressor_ruined",
+        "mega_art_installation_0",
+        "mega_art_installation_1",
+        "mega_art_installation_2",
+        "mega_art_installation_3",
+        "mega_art_installation_restored",
+        "mega_art_installation_ruined",
+        "mega_shipyard_0",
+        "mega_shipyard_1",
+        "mega_shipyard_2",
+        "mega_shipyard_ruined",
+        "orbital_arc_furnace_1",
+        "orbital_ring_ruined",
+        "quantum_catapult_0",
+        "quantum_catapult_1",
+        "quantum_catapult_2",
+        "quantum_catapult_restored_slingshot",
+        "quantum_catapult_ruined",
+        "quantum_catapult_ruined_slingshot",
+        "ring_world_1",
+        "ring_world_2",
+        "ring_world_2_intermediate",
+        "ring_world_ruined",
+        "spy_orb_0",
+        "spy_orb_1",
+        "spy_orb_2",
+        "spy_orb_3",
+        "spy_orb_ruined",
+        "strategic_coordination_center_0",
+        "strategic_coordination_center_1",
+        "strategic_coordination_center_2",
+        "strategic_coordination_center_ruined",
+        "think_tank_0",
+        "think_tank_1",
+        "think_tank_2",
+        "think_tank_3",
+        "think_tank_ruined"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "use_planet_resource": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 16,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "victory_score": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1000",
+        "10000",
+        "2500",
+        "5000"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

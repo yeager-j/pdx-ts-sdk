@@ -28,6 +28,7 @@
 // From: common/species_consolidated.cwt
 // From: common/country_limits.cwt
 // From: common/solar_system_initializers.cwt
+// From: common/megastructures.cwt
 // From: content-manifest.ts
 
 import { defineSituationType, type SituationTypeCapabilityDef } from "../content/situations.ts";
@@ -63,6 +64,7 @@ import {
   defineGlobalShipDesign,
   defineGraphicalCulture,
   defineJob,
+  defineMegastructure,
   defineOpinionModifier,
   defineScriptedLoc,
   defineScriptedModifier,
@@ -90,6 +92,7 @@ import type { EdictDef } from "./edict.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
 import type { JobDef } from "./job.ts";
+import type { MegastructureDef } from "./megastructure.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { ScopeName } from "./scopes.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
@@ -310,6 +313,11 @@ export interface IdProfile {
    * Override it when this registry needs a different id convention.
    */
   readonly solarSystemInitializer: string;
+  /**
+   * The segment inserted between the mod prefix and a megastructure's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly megastructure: string;
 }
 
 /** The conventional id segments used when no profile override is supplied. */
@@ -349,6 +357,7 @@ export const DEFAULT_ID_PROFILE = Object.freeze({
   speciesClass: "species_class",
   countryShipOfSizeLimit: "country_ship_of_size_limit",
   solarSystemInitializer: "solar_system_initializer",
+  megastructure: "megastructure",
 }) satisfies IdProfile;
 
 /** The literal id a capability mints for one logical content name. */
@@ -793,6 +802,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     "solar_system_initializer",
     SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>
   >;
+  /**
+   * Defines a megastructure from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  megastructure<const Name extends string>(
+    name: Name,
+    def: Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">
+  ): ContentItem<"megastructure", MegastructureDef<MintedContentId<P, I, "megastructure", Name>>>;
 }
 
 /** Builds the internal content-method table for a mod capability. */
@@ -1109,5 +1127,12 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         ...def,
         id: mint("solarSystemInitializer", name),
       } as SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>),
+    megastructure: <const Name extends string>(
+      name: Name,
+      def: Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">
+    ) =>
+      defineMegastructure({ ...def, id: mint("megastructure", name) } as MegastructureDef<
+        MintedContentId<P, I, "megastructure", Name>
+      >),
   }) as ContentCapabilityMethods<P, I>;
 }

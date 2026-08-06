@@ -258,6 +258,30 @@ describe("content-type codegen", () => {
     ]);
   });
 
+  it("asserts the widening arity direction too, where a 0..1 key repeats in the corpus", () => {
+    // The mirror of the row above, and the more damaging direction: a `0..1`
+    // the game contradicts does not merely make the member awkward, it makes
+    // the second block unwritable. megastructures.cwt:221-223 declares
+    // triggered_country_modifier `0..1`; vanilla's shroud_seal writes two,
+    // gating different modifiers on different potentials, so an
+    // `arity: "repeated"` row lifts the member to a list.
+    const megastructure = emissions.get("megastructure")!;
+    expect(megastructure.code).toContain(
+      'triggeredCountryModifier?: TriggeredModifier<"country">[];'
+    );
+    // The descriptor the writer reads has to agree with the member type —
+    // asserting the cardinality once, before either is derived, is what keeps
+    // them from disagreeing.
+    expect(megastructure.code).toContain('form: "list"');
+    expect(
+      megastructure.emittedFields.find((field) => field.field === "triggered_country_modifier")
+        ?.repeated
+    ).toBe(true);
+    // The assertion is scoped to the one field that earned it: country_modifier
+    // sits beside it under the same rules and stays singular.
+    expect(megastructure.code).toContain('countryModifier?: ModifierClosure<"country">;');
+  });
+
   it("emits fields the curated list used to withhold", () => {
     // Each of these lowers cleanly and was absent only because nobody had
     // written it down. decision.sound in particular is set by 66 shipped
@@ -977,6 +1001,50 @@ describe("content-type codegen", () => {
     expect(fieldNames(solarSystem?.emittedFields ?? [])).toContain("planet");
   });
 
+  it("lowers megastructure's economic and modifier splices, leaving only placement_rules", () => {
+    const megastructure = emissions.get("megastructure");
+    expect(megastructure?.code).toContain("export interface MegastructureDef");
+    // `resources` and `dismantle_cost` are the same declaration — a `category`
+    // sibling beside the economic_template splice — that job.resources and
+    // decision.resources already lower; only `resources` carries
+    // `## cardinality = 0..inf`, so only it comes out an array.
+    expect(megastructure?.code).toContain("resources?: EconomicResourceBlock<ScopeName>[];");
+    expect(megastructure?.code).toContain("dismantleCost?: EconomicResourceBlock<ScopeName>;");
+    // Four modifier splices, each pinned by its own `## replace_scopes` rather
+    // than by an overlay `scope` assertion — a megastructure's station
+    // modifier really does apply in megastructure scope.
+    expect(megastructure?.code).toContain('countryModifier?: ModifierClosure<"country">;');
+    expect(megastructure?.code).toContain('shipModifier?: ModifierClosure<"ship">;');
+    expect(megastructure?.code).toContain('stationModifier?: ModifierClosure<"megastructure">;');
+    // A list, not a single block — see the arity-assertion test above for the
+    // corpus evidence that the rules' `0..1` is wrong here.
+    expect(megastructure?.code).toContain(
+      'triggeredCountryModifier?: TriggeredModifier<"country">[];'
+    );
+    // The build hooks are system-scoped with the building country as FROM, and
+    // the type says so rather than flattening to one scope.
+    expect(megastructure?.code).toContain(
+      'possible?: WithFrom<Trigger<"system">, "system", "country">;'
+    );
+    expect(megastructure?.code).toContain('onBuildComplete?: EffectBlock<"system", "country">;');
+    expect(megastructure?.code).toContain('potential?: Trigger<"country">;');
+    // `upgrade_desc` is declared twice, `localisation` and the literal `hide`;
+    // the two arms union without an overlay row.
+    expect(megastructure?.code).toContain('upgradeDesc?: string | "hide";');
+    // Every shipped megastructure is named in the build menu, so the slot is a
+    // REQUIRED_LOCALISATION row and the member is not optional.
+    expect(megastructure?.code).toContain("  name: string;");
+    expect(megastructure?.code).toContain('{ member: "name", pattern: "$", required: true }');
+    expect(fieldNames(megastructure!.emittedFields)).toContain("resources");
+    expect(fieldNames(megastructure!.emittedFields)).toContain("country_modifier");
+    // The registry's one unlowerable field: an `alias_name[trigger]` splice
+    // beside a named `planet_possible` sibling, acknowledged in corpus-gaps.ts
+    // against SDK-84 rather than half-lowered.
+    expect(megastructure?.unsupported).toEqual([
+      "placement_rules (no declaration the emitter can lower)",
+    ]);
+  });
+
   it("emits the planet and moon categories as mutually recursive blocks", () => {
     const planet = emitAliasSplice(emitter, "planet_initializer");
     const moon = emitAliasSplice(emitter, "moon_initializer");
@@ -1071,8 +1139,8 @@ describe("content-type codegen", () => {
  * what guarantees the file matches the emitter, so asserting against the file
  * also asserts against what ships.
  *
- * The claim is that all 34 raw definers are available from this one internal
- * module — 33 mechanical, one re-exported from the hand-written graft — and
+ * The claim is that all 36 raw definers are available from this one internal
+ * module — 35 mechanical, one re-exported from the hand-written graft — and
  * that none registers anything. Capability methods and `feature()` own public
  * authoring and placement.
  */
@@ -1087,7 +1155,7 @@ describe("generated content definers", () => {
       expect(definers, entry.type).toContain(`export type ${name}Item =`);
       expect(definers, entry.type).toMatch(new RegExp(`\\bdefine${name}\\b`));
     }
-    // 33 mechanical `export function defineX` plus the graft's re-export.
+    // 35 mechanical `export function defineX` plus the graft's re-export.
     expect(definers.match(/^export function define\w+</gm)).toHaveLength(
       CONTENT_MANIFEST.length - HAND_WRITTEN_CONTENT_DEFINERS.size
     );

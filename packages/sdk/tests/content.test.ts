@@ -865,6 +865,59 @@ function defineContentExample(): PureMod {
   // Not a define: the ownership limit has no id this mod owns.
   const ownershipLimits = mod.addShipOfSizeLimits([titanLimit]);
 
+  // Two stages of one megastructure: the second names the first through
+  // `upgrade_from`, the registry's own self-reference, so the emitted id is
+  // the prefixed one rather than whatever string was typed.
+  const foundry = mod.megastructure("foundry_1", {
+    name: "Synthetic Foundry",
+    desc: "A ring of automated assembly yards.",
+    details: "Constructs synthetic bodies at scale.",
+    entity: "mega_shipyard_01_entity",
+    constructionEntity: "mega_shipyard_construction_01_entity",
+    portrait: "GFX_megastructure_mega_shipyard",
+    buildTime: 3_600,
+    buildType: "outside_gravity_well",
+    showGalacticMapIcon: true,
+    prerequisites: ["tech_mega_shipyard"],
+    // potential is country-scoped; possible is system-scoped with the
+    // building country as FROM (megastructures.cwt:161-165).
+    potential: hasCountryFlag("content_test_machine_agenda_started"),
+    possible: (system) => system.from.trigger(hasCountryFlag("content_test_can_build_foundry")),
+    resources: [{ category: "megastructures", cost: { amounts: { alloys: 5_000 } } }],
+    countryModifier: (m) => m.country.naval.cap.add(50),
+    stationModifier: (m) => m.unchecked("starbase_shipyard_capacity_add", 5),
+    onBuildComplete: (system) => {
+      system.setStarFlag("content_test_foundry_online");
+    },
+    aiWeight: { base: 10 },
+    dismantleCost: { cost: { amounts: { alloys: 500 } } },
+    dismantleTime: 720,
+  });
+
+  const foundryUpgrade = mod.megastructure("foundry_2", {
+    name: "Synthetic Foundry Complex",
+    desc: "The foundry, doubled and rethought.",
+    details: "Constructs synthetic bodies at scale.",
+    entity: "mega_shipyard_02_entity",
+    upgradeFrom: [foundry],
+    buildTime: 5_400,
+    countryModifier: (m) => m.country.naval.cap.add(100),
+    // Two blocks, not one: the rules declare `## cardinality = 0..1` and
+    // vanilla's own shroud_seal writes the key twice, so the field carries an
+    // `arity: "repeated"` assertion. Two potentials cannot merge into one
+    // block, which is what makes the second unwritable without it.
+    triggeredCountryModifier: [
+      {
+        when: hasCountryFlag("content_test_machine_agenda_started"),
+        modifier: (m) => m.country.unity.produces.mult(0.05),
+      },
+      {
+        when: hasTechnology("tech_mega_shipyard"),
+        modifier: (m) => m.country.naval.cap.add(25),
+      },
+    ],
+  });
+
   // The neighbor a system links to, defined first so the link below is a
   // branded ref into this same registry rather than a raw string.
   const neighborSystem = mod.solarSystemInitializer("outpost", {
@@ -961,6 +1014,8 @@ function defineContentExample(): PureMod {
       speciesClass,
       titanLimit,
       ownershipLimits,
+      foundry,
+      foundryUpgrade,
       neighborSystem,
       homeSystem,
     ]),
@@ -996,6 +1051,46 @@ describe("generated content registries", () => {
     );
     expect(rendered).not.toContain("name =");
     expect(rendered).not.toContain("desc =");
+  });
+
+  it("writes a megastructure's costs, modifiers and upgrade chain", () => {
+    const rendered = files.get("common/megastructures/content_test_megastructures.txt")!;
+    // `resources` keeps the `category` sibling beside the cost arm — the
+    // declaration that made this field need an overlay row at all.
+    expect(rendered).toContain(
+      "\tresources = {\n\t\tcategory = megastructures\n\t\tcost = {\n\t\t\talloys = 5000"
+    );
+    // dismantle_cost is the same shape without a category, singular rather
+    // than repeated.
+    expect(rendered).toContain("\tdismantle_cost = {\n\t\tcost = {\n\t\t\talloys = 500");
+    // Three modifier splices, each a flat map of the game's own names.
+    expect(rendered).toContain("\tcountry_modifier = {\n\t\tcountry_naval_cap_add = 50");
+    expect(rendered).toContain("\tstation_modifier = {\n\t\tstarbase_shipyard_capacity_add = 5");
+    expect(rendered).toContain("\t\tmodifier = {\n\t\t\tcountry_unity_produces_mult = 0.05");
+    // The rules say `0..1`; vanilla's shroud_seal writes two, so an
+    // `arity: "repeated"` assertion makes the member a list. Both blocks reach
+    // the file, in the order they were authored — two potentials cannot merge
+    // into one block, so losing the second would lose a whole modifier.
+    const upgrade = rendered.slice(rendered.indexOf("content_test_megastructure_foundry_2 = {"));
+    expect(upgrade.match(/^\ttriggered_country_modifier = \{$/gm)).toHaveLength(2);
+    expect(upgrade.indexOf("country_unity_produces_mult = 0.05")).toBeLessThan(
+      upgrade.indexOf("has_technology = tech_mega_shipyard")
+    );
+    // The FROM the rules name on `possible` reaches the emitted script.
+    expect(rendered).toContain(
+      "\tpossible = {\n\t\tfrom = {\n\t\t\thas_country_flag = content_test_can_build_foundry"
+    );
+    // `upgrade_from` is this registry pointing at itself, so the branded item
+    // writes the other definition's prefixed id.
+    expect(rendered).toContain("upgrade_from = { content_test_megastructure_foundry_1 }");
+    // placement_rules is the one field the emitter cannot lower (SDK-84), so
+    // nothing in the authoring surface can produce it.
+    expect(rendered).not.toContain("placement_rules");
+    const localisation = files.get("localisation/english/content_test_l_english.yml")!;
+    expect(localisation).toContain('content_test_megastructure_foundry_1:0 "Synthetic Foundry"');
+    expect(localisation).toContain(
+      'content_test_megastructure_foundry_1_MEGASTRUCTURE_DETAILS:0 "Constructs synthetic bodies at scale."'
+    );
   });
 
   it("writes a solar system's planets and moons as ordered anonymous siblings", () => {

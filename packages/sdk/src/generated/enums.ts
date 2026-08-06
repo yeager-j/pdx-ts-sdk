@@ -226,6 +226,12 @@ export type JobTrigger =
   | "can_fill_drone_job"
   | "can_fill_precursor_job";
 
+/** `enum[mega_build_type]`. */
+export type MegaBuildType = "inside_gravity_well" | "outside_gravity_well" | "around_planet";
+
+/** `enum[megastructure_block_type]`. */
+export type MegastructureBlockType = "none" | "self_type" | "multi_stage_type";
+
 /** `enum[mia_type]`. */
 export type MiaType = "mia_return_home" | "mia_emergency_ftl" | "mia_fleet_eaten";
 

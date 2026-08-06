@@ -305,6 +305,11 @@ export type MapSetupScenarioRef = TypedRef<"map_setup_scenario" | `map_setup_sce
 /** A reference to a `<megastructure>`. */
 export type MegastructureRef = TypedRef<"megastructure" | `megastructure.${string}`>;
 
+/** A reference to a `<megastructure_overclock_type>`. */
+export type MegastructureOverclockTypeRef = TypedRef<
+  "megastructure_overclock_type" | `megastructure_overclock_type.${string}`
+>;
+
 /** A reference to a `<menace_perk>`. */
 export type MenacePerkRef = TypedRef<"menace_perk" | `menace_perk.${string}`>;
 
@@ -526,6 +531,9 @@ export type StaticModifierRef = TypedRef<"static_modifier" | `static_modifier.${
 
 /** A reference to a `<storm_types>`. */
 export type StormTypesRef = TypedRef<"storm_types" | `storm_types.${string}`>;
+
+/** A reference to a `<system_tooltip>`. */
+export type SystemTooltipRef = TypedRef<"system_tooltip" | `system_tooltip.${string}`>;
 
 /** A reference to a `<target_type>`. */
 export type TargetTypeRef = TypedRef<"target_type" | `target_type.${string}`>;
