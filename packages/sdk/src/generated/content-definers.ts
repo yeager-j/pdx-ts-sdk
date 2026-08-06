@@ -60,6 +60,7 @@ import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts"
 import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
+import type { SpEventScope } from "./enums.ts";
 import type { EventChainDef } from "./event-chain.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
@@ -693,19 +694,17 @@ export type SpecialProjectItem = ContentItem<"special_project", SpecialProjectDe
  * Internal lowering primitive for a special project. Public authors call
  * `mod.specialProject(name, def)`, then place the returned item with
  * `mod.feature(...)` before compiling the same capability.
- * `scope` names which scope this definition's clauses run in and emits
- * nothing; it defaults to `country`.
+ * `eventScope` selects which scope this definition's callbacks run in.
  */
 export function defineSpecialProject<
   const Id extends string,
-  S extends SpecialProjectScope = "country",
->(def: SpecialProjectDef<Id, S>): ContentItem<"special_project", SpecialProjectDef<Id, never>> {
-  const { scope, ...rest } = def;
+  E extends SpEventScope = "country_event",
+>(def: SpecialProjectDef<Id, E>): ContentItem<"special_project", SpecialProjectDef<Id, never>> {
   return {
     itemKind: "content",
     type: "special_project",
     id: def.id,
-    def: rest as SpecialProjectDef<Id, never>,
+    def: def as SpecialProjectDef<Id, never>,
   };
 }
 

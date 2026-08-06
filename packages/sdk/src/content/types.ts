@@ -144,6 +144,24 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
  */
 export type WeightBlockOperations<S extends ScopeName> = Omit<Modifier<S>, "desc" | "when">;
 
+/** The calculation performed by a `scaled_modifier` row. */
+export type ScaledModifierCalc =
+  "pop_amount" | "pop_happiness" | "planet_distance_empire" | "planets_in_country";
+
+/**
+ * A `scaled_modifier` row inside a {@link WeightBlock}. Its `limit` runs in
+ * the scope selected by `scope`, which the game's rules leave open-ended.
+ */
+export interface ScaledModifier {
+  readonly limit?: Trigger<never>;
+  readonly scope: ScopeName;
+  readonly calc: ScaledModifierCalc;
+  readonly factor?: number;
+  readonly add?: number;
+  readonly div?: number;
+  readonly mul?: number;
+}
+
 /**
  * `M` with {@link ComplexTriggerModifier}'s characteristic members
  * (`trigger`, `mode`) forbidden. Plain structural typing lets a value
@@ -210,6 +228,8 @@ export interface WeightBlock<
   readonly base?: number;
   /** Conditional adjustments emitted as repeated `modifier` or `complex_trigger_modifier` blocks. */
   readonly modifiers?: readonly WeightBlockRow<S, M>[];
+  /** Scaled adjustments emitted as repeated `scaled_modifier` blocks. */
+  readonly scaledModifiers?: readonly ScaledModifier[];
 }
 
 /**

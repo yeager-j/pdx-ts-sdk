@@ -1576,7 +1576,6 @@ describe("generated content authoring types", () => {
       name: "Survey",
       eventChain: chain,
       eventScope: "planet_event",
-      scope: "planet",
       sameOptionGroupAs: ["some_other_mod_project"],
     });
     expectTypeOf(project.id).toEqualTypeOf<"content_types_special_project_survey">();
@@ -1584,8 +1583,19 @@ describe("generated content authoring types", () => {
       name: "Recover",
       eventChain: "vanilla_chain",
       eventScope: "ship_event",
-      scope: "ship",
       sameOptionGroupAs: [project],
+    });
+    contentMod.specialProject("ship_callbacks", {
+      eventScope: "ship_event",
+      onSuccess: (ship) => ship.setShipFlag("content_types_ship_callbacks"),
+      cost: { modifiers: [{ factor: 2, when: hasCountryFlag("content_types_weight") }] },
+    });
+    contentMod.specialProject("invalid_ship_callback", {
+      eventScope: "ship_event",
+      onSuccess: (ship) => {
+        // @ts-expect-error — eventScope, not an author assertion, controls callback scope.
+        ship.setCountryFlag("content_types_wrong_scope");
+      },
     });
     const wrongRegistry = defineBuilding({
       id: "content_types_special_project_wrong_registry",
@@ -1596,7 +1606,6 @@ describe("generated content authoring types", () => {
       // @ts-expect-error — event_chain rejects a building reference.
       eventChain: wrongRegistry,
       eventScope: "country_event",
-      scope: "country",
     });
     // @ts-expect-error — a special project cannot flow into an event-chain reference.
     const _wrongChain: EventChainRef = project;

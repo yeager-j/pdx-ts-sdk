@@ -98,6 +98,7 @@ import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts"
 import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
+import type { SpEventScope } from "./enums.ts";
 import type { EventChainDef } from "./event-chain.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
@@ -115,7 +116,11 @@ import type { SectionTemplateDef } from "./section-template.ts";
 import type { ShipSizeDef } from "./ship-size.ts";
 import type { SituationTypeDef } from "./situation-type.ts";
 import type { SolarSystemInitializerDef } from "./solar-system-initializer.ts";
-import type { SpecialProjectDef, SpecialProjectScope } from "./special-project.ts";
+import type {
+  SpecialProjectDef,
+  SpecialProjectFields,
+  SpecialProjectScope,
+} from "./special-project.ts";
 import type { SpeciesClassDef } from "./species-class.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
 import type { StaticModifierDef } from "./static-modifier.ts";
@@ -843,9 +848,13 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
    */
-  specialProject<const Name extends string, S extends SpecialProjectScope = "country">(
+  specialProject<const Name extends string>(
     name: Name,
-    def: Omit<SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>, S>, "id">
+    def:
+      | SpecialProjectFields<"country_event">
+      | SpecialProjectFields<"planet_event">
+      | SpecialProjectFields<"ship_event">
+      | SpecialProjectFields<"carrier_event">
   ): ContentItem<
     "special_project",
     SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>, never>
@@ -1192,13 +1201,13 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       defineEventChain({ ...def, id: mint("eventChain", name) } as EventChainDef<
         MintedContentId<P, I, "eventChain", Name>
       >),
-    specialProject: <const Name extends string, S extends SpecialProjectScope = "country">(
+    specialProject: <const Name extends string, E extends SpEventScope = "country_event">(
       name: Name,
-      def: Omit<SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>, S>, "id">
+      def: SpecialProjectFields<E>
     ) =>
       defineSpecialProject({ ...def, id: mint("specialProject", name) } as SpecialProjectDef<
         MintedContentId<P, I, "specialProject", Name>,
-        S
+        E
       >),
     megastructure: <const Name extends string>(
       name: Name,

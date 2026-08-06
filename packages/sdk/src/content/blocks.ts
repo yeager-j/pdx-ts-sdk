@@ -17,6 +17,7 @@ import type {
   EconomicResourceBlockNoProduce,
   EconomicResourceOperation,
   ModifierClosure,
+  ScaledModifier,
   TriggeredModifier,
   WeightBlock,
   WeightBlockRow,
@@ -173,8 +174,26 @@ export function weightBlock(
         : modifierEntry(row, refs, ownerKey)
     )
   );
+  for (const modifier of value.scaledModifiers ?? []) {
+    entries.push(scaledModifierEntry(modifier, refs));
+  }
   collectRefs(ctx, refs, key);
   return block(key, entries);
+}
+
+function scaledModifierEntry(modifier: ScaledModifier, refs: ContentRefUse[]): PdxEntry {
+  const entries: PdxEntry[] = [];
+  if (modifier.limit !== undefined) {
+    entries.push(block("limit", [...modifier.limit.entries]));
+    refs.push(...modifier.limit.refs);
+  }
+  entries.push(kv("scope", modifier.scope), kv("calc", modifier.calc));
+  for (const key of ["factor", "add", "div", "mul"] as const) {
+    if (modifier[key] !== undefined) {
+      entries.push(kv(key, modifier[key]));
+    }
+  }
+  return block("scaled_modifier", entries);
 }
 
 function repeatedNumbers(

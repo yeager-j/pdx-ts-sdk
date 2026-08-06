@@ -1009,22 +1009,25 @@ function defineContentExample(): PureMod {
     cost: 250,
     techDepartment: "physics_technology",
     eventScope: "planet_event",
-    scope: "planet",
     requirements: { researchStation: true, hasTechnology: "tech_lasers_2" },
     triggeredRequirement: {
       text: "content_test_crystal_survey_requirement",
       count: 1,
       trigger: always(),
     },
+    conditionalDesc: [{ text: "content_test_crystal_survey_condition", trigger: always() }],
     onStart: () => {},
   });
 
   const recoveryProject = mod.specialProject("crystal_recovery", {
     name: "Recover the Crystal",
     eventChain: chain,
-    cost: { base: 100, modifiers: [{ factor: 2, when: always() }] },
+    cost: {
+      base: 100,
+      modifiers: [{ factor: 2, when: always() }],
+      scaledModifiers: [{ scope: "country", calc: "planets_in_country", factor: 0.5 }],
+    },
     eventScope: "ship_event",
-    scope: "ship",
     sameOptionGroupAs: [surveyProject],
   });
 

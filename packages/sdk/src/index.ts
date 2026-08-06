@@ -225,6 +225,8 @@ export type {
   EffectBlock,
   ModifierBlock,
   ModifierClosure,
+  ScaledModifier,
+  ScaledModifierCalc,
   TriggeredModifier,
   WeightBlock,
   WeightBlockOperations,

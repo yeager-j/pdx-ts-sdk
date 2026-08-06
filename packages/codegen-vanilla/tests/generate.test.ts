@@ -19,6 +19,7 @@ import { describe, expect, it } from "vitest";
 
 import { formatEmitted } from "../src/format.ts";
 import { generateVanillaPackage } from "../src/generate.ts";
+import { readRegistryIds } from "../src/read-ids.ts";
 import { bucketPath, fileBucketKey } from "../src/trie.ts";
 import { stampedVersionFor } from "../src/version.ts";
 
@@ -174,6 +175,21 @@ describe("registry readers", () => {
         | "GFX_ship_combat_2";
       "
     `);
+  });
+
+  it("accepts name fields regardless of their source-key casing", () => {
+    const ids = readRegistryIds(OPTIONS.installRoot, {
+      registry: "special_project",
+      path: "common/special_projects",
+      extension: ".txt",
+      keyword: "special_project",
+      nameField: "key",
+      skipRootKey: null,
+      excludedKey: null,
+      pathStrict: false,
+      bucket: "stripped-file",
+    });
+    expect(ids.ids).toEqual(["fake_uppercase_project"]);
   });
 
   it("reports a registry the install does not have rather than failing", () => {

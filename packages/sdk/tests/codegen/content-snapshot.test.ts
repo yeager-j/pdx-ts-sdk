@@ -1014,8 +1014,10 @@ describe("content-type codegen", () => {
     const specialProject = emissions.get("special_project");
     expect(specialProject?.code).toContain("export interface SpecialProjectDef");
     expect(specialProject?.code).toContain("eventChain?: EventChainRef | string;");
-    expect(specialProject?.code).toContain("eventScope: SpEventScope;");
-    expect(specialProject?.code).toContain("onSuccess?: EffectBlock<NoInfer<S>>;");
+    expect(specialProject?.code).toContain("eventScope: E;");
+    expect(specialProject?.code).toContain("SpecialProjectScopeOf<E>");
+    expect(specialProject?.code).toContain('cost?: number | WeightBlock<"country">;');
+    expect(specialProject?.code).toContain("conditionalDesc?: SpecialProjectDesc[];");
     expect(specialProject?.code).toContain('shape: "dual"');
   });
 

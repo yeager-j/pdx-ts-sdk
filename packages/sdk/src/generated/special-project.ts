@@ -18,6 +18,23 @@ import type {
   TraitLeaderTraitRef,
 } from "./refs.ts";
 
+export interface SpecialProjectDesc {
+  text: string;
+  trigger: Trigger<"country">;
+}
+
+export const SPECIAL_PROJECT_DESC_FIELDS: readonly ContentField[] = [
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
+  { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
+];
+
 export interface SpecialProjectRequirementsSizeRequirement {
   shipSize: ShipSizeRef | string;
   count: number;
@@ -213,23 +230,27 @@ export const SPECIAL_PROJECT_TRIGGERED_REQUIREMENT_FIELDS: readonly ContentField
 /** The scopes a special_project may declare. */
 export type SpecialProjectScope = "country" | "planet" | "ship" | "carrier";
 
+export type SpecialProjectScopeOf<E extends SpEventScope> = E extends "country_event"
+  ? "country"
+  : E extends "planet_event"
+    ? "planet"
+    : E extends "ship_event"
+      ? "ship"
+      : E extends "carrier_event"
+        ? "carrier"
+        : never;
+
 /**
  * A special_project, as the game's rules describe it.
  * Generated from `type[special_project]` at `game/common/special_projects`.
  */
-export interface SpecialProjectFields<S extends SpecialProjectScope = "country"> {
-  /**
-   * The scope this definition's own clauses run in.
-   * Emits nothing — it names a fact the game already knows and the rules
-   * decline to state (`this = any`). Defaults to `country`.
-   */
-  scope?: S;
+export interface SpecialProjectFieldsBase<E extends SpEventScope = "country_event"> {
   /** English text emitted to localization under `<id>`. */
   name?: string;
   /** English text emitted to localization under `<id>_DESC`. */
   desc?: string;
   eventChain?: EventChainRef | string;
-  cost?: number | WeightBlock<NoInfer<S>>;
+  cost?: number | WeightBlock<"country">;
   energy?: number;
   /**
    * Only when special_project subtype `cost` applies.
@@ -243,34 +264,39 @@ export interface SpecialProjectFields<S extends SpecialProjectScope = "country">
   location?: boolean;
   removeWhenCompleted?: boolean;
   projectType?: string;
-  eventScope: SpEventScope;
+  eventScope: E;
   /** this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location) */
   failTrigger?: Trigger<"country">;
   timelimit?: number;
   daysToResearch?: number;
+  conditionalDesc?: SpecialProjectDesc[];
   sameOptionGroupAs?: (SpecialProjectRef | string)[];
   sound?: boolean;
-  aIWaitDays?: WeightBlock<NoInfer<S>>;
+  aIWaitDays?: WeightBlock<"country">;
   requirements?: SpecialProjectRequirements;
   triggeredRequirement?: SpecialProjectTriggeredRequirement;
   /** this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location) */
   abortTrigger?: Trigger<"country">;
   /** this = event scope (ship or planet); from = project creation scope (usually equals location) */
-  onSuccess?: EffectBlock<NoInfer<S>>;
-  onProgress25?: EffectBlock<NoInfer<S>>;
-  onProgress50?: EffectBlock<NoInfer<S>>;
-  onProgress75?: EffectBlock<NoInfer<S>>;
-  onStart?: EffectBlock<NoInfer<S>>;
+  onSuccess?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
+  onProgress25?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
+  onProgress50?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
+  onProgress75?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
+  onStart?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
   /** this = country (project owner); from = project creation scope (usually equals location) */
   onFail?: EffectBlock<"country">;
   /** new thing from 2.1.3 patch, have it from? */
   onCancel?: EffectBlock<"country">;
 }
 
+export type SpecialProjectFields<E extends SpEventScope = SpEventScope> = E extends SpEventScope
+  ? SpecialProjectFieldsBase<E>
+  : never;
+
 export interface SpecialProjectDef<
   Id extends string = string,
-  S extends SpecialProjectScope = "country",
-> extends SpecialProjectFields<S> {
+  E extends SpEventScope = "country_event",
+> extends SpecialProjectFieldsBase<E> {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
@@ -354,6 +380,14 @@ export const SPECIAL_PROJECT_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+  },
+  {
+    key: "desc",
+    member: "conditionalDesc",
+    shape: "struct",
+    form: "list",
+    fields: SPECIAL_PROJECT_DESC_FIELDS,
+    repeated: true,
   },
   {
     key: "same_option_group_as",

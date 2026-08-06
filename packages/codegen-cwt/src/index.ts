@@ -794,10 +794,27 @@ function contentDefiners(
       const parameters =
         scoped === null
           ? "<const Name extends string>"
-          : `<\n    const Name extends string,\n    S extends ${scoped.typeName} = ` +
-            `${JSON.stringify(scoped.fallback)},\n  >`;
-      const def = `${name}Def<${minted}${scoped === null ? "" : ", S"}>`;
+          : `<\n    const Name extends string,\n    ${scoped.parameterName} extends ` +
+            `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},\n  >`;
+      const def = `${name}Def<${minted}${scoped === null ? "" : `, ${scoped.parameterName}`}>`;
+      const input =
+        scoped?.selector === undefined
+          ? `Omit<${def}, "id">`
+          : `${name}Fields<${scoped.parameterName}>`;
       const result = `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
+      const signatures =
+        scoped?.selector === undefined
+          ? `  ${method}${parameters}(\n` +
+            `    name: Name,\n` +
+            `    def: ${input}\n` +
+            `  ): ContentItem<${key}, ${result}>;`
+          : `  ${method}<const Name extends string>(\n` +
+            `    name: Name,\n` +
+            `    def: ` +
+            Object.keys(scoped.selector.scopes)
+              .map((eventScope) => `${name}Fields<${JSON.stringify(eventScope)}>`)
+              .join(" | ") +
+            `\n  ): ContentItem<${key}, ${name}Def<${minted}, never>>;`;
       capabilityMembers.push(
         docComment(
           [
@@ -812,17 +829,13 @@ function contentDefiners(
                 ]),
           ],
           "  "
-        ) +
-          `  ${method}${parameters}(\n` +
-          `    name: Name,\n` +
-          `    def: Omit<${def}, "id">\n` +
-          `  ): ContentItem<${key}, ${result}>;`
+        ) + signatures
       );
       capabilityBindings.push(
         capabilityBinding(
           method,
           parameters,
-          `Omit<${def}, "id">`,
+          input,
           `define${name}`,
           def,
           nestedDefinitionMembers,
@@ -923,14 +936,17 @@ function contentDefiners(
       const parameters =
         scoped === null
           ? "<const Id extends string>"
-          : `<\n  const Id extends string,\n  S extends ${scoped.typeName} = ` +
-            `${JSON.stringify(scoped.fallback)},\n>`;
+          : `<\n  const Id extends string,\n  ${scoped.parameterName} extends ` +
+            `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},\n>`;
       const body =
         scoped === null
           ? `  return { itemKind: "content", type: ${key}, id: def.id, def };\n`
-          : `  const { scope, ...rest } = def;\n` +
-            `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-            `def: rest as ${name}Def<Id, never> };\n`;
+          : scoped.selector === undefined
+            ? `  const { scope, ...rest } = def;\n` +
+              `  return { itemKind: "content", type: ${key}, id: def.id, ` +
+              `def: rest as ${name}Def<Id, never> };\n`
+            : `  return { itemKind: "content", type: ${key}, id: def.id, ` +
+              `def: def as ${name}Def<Id, never> };\n`;
       definitions.push(
         docComment([
           `Internal lowering primitive for ${article} ${spoken}. Public authors call`,
@@ -940,12 +956,18 @@ function contentDefiners(
             ? []
             : [
                 "",
-                "`scope` names which scope this definition's clauses run in and emits",
-                `nothing; it defaults to \`${scoped.fallback}\`.`,
+                ...(scoped.selector === undefined
+                  ? [
+                      "`scope` names which scope this definition's clauses run in and emits",
+                      `nothing; it defaults to \`${scoped.fallback}\`.`,
+                    ]
+                  : [
+                      `\`${scoped.selector.member}\` selects which scope this definition's callbacks run in.`,
+                    ]),
               ]),
         ]) +
           `export function define${name}${parameters}(\n` +
-          `  def: ${name}Def<Id${scoped === null ? "" : ", S"}>\n` +
+          `  def: ${name}Def<Id${scoped === null ? "" : `, ${scoped.parameterName}`}>\n` +
           `): ContentItem<${key}, ${name}Def<Id${scoped === null ? "" : ", never"}>> {\n` +
           body +
           "}\n"
@@ -1066,7 +1088,16 @@ function contentDefiners(
         ];
         return `import { ${names.join(", ")} } from ${JSON.stringify(from)};\n`;
       })
-      .join("");
+      .join("") +
+    importList("./enums.ts", [
+      ...new Set(
+        contents.flatMap((content) =>
+          content.emission.scopeParameter?.selector === undefined
+            ? []
+            : [content.emission.scopeParameter.parameterType]
+        )
+      ),
+    ]);
   const graftImports = contents.some((content) =>
     HAND_WRITTEN_CONTENT_DEFINERS.has(content.registry)
   )
@@ -1092,6 +1123,9 @@ function contentDefiners(
       .map((content) =>
         importList(`./${content.registry.replaceAll("_", "-")}.ts`, [
           `${content.emission.typeName}Def`,
+          ...(content.emission.scopeParameter?.selector === undefined
+            ? []
+            : [`${content.emission.typeName}Fields`]),
           ...(content.emission.scopeParameter === null
             ? []
             : [content.emission.scopeParameter.typeName]),
@@ -1101,6 +1135,15 @@ function contentDefiners(
         ])
       )
       .join("") +
+    importList("./enums.ts", [
+      ...new Set(
+        contents.flatMap((content) =>
+          content.emission.scopeParameter?.selector === undefined
+            ? []
+            : [content.emission.scopeParameter.parameterType]
+        )
+      ),
+    ]) +
     graftImports;
   const capability =
     nestedDefinitionTables.join("\n") +
