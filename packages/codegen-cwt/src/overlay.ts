@@ -1002,7 +1002,20 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "this way, repeated 0..inf. The splice is plain economic_template, so cost/upkeep/" +
         "produces are all game-legal. 458 shipped buildings write it (corpus gap SDK-62, whose " +
         "acknowledgment claimed the `category` sibling made this lowering unusable — the " +
-        "megastructure rows falsified that).",
+        "megastructure rows falsified that). " +
+        "RESIDUE, stated here because no gate can state it: 332 of those 458 nest an " +
+        "`inline_script` INSIDE the resources block (Stellaris 4.4.6), and " +
+        "EconomicResourceBlock has no member for it, so that subset stays unauthorable — one " +
+        "building (building_order_keep) writes category+inline_script and nothing else, making " +
+        "its whole block inexpressible; the rest pair it with cost/upkeep/produces arms that do " +
+        "author. It is the same macro[inline_script] machinery SDK-17 tracks for the top-level " +
+        "building.inline_script gap, one level down, and closed by the same fix. corpus-gaps.ts " +
+        "cannot carry this: an acknowledged gap is matched against a corpus path, and paths " +
+        "inside a block exist only where the emitter emits a DescentNode — economicResources is " +
+        "a hand-written block shape and emits none, so a `resources.inline_script` row is " +
+        "reported stale the moment it is added rather than measured. " +
+        "`corpus-conformance.test.ts` pins the fixture's observed sub-key set instead, so a new " +
+        "inexpressible sub-key (or inline_script support landing) fails and forces a re-look.",
     },
   ],
   [
