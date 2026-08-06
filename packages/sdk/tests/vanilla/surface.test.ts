@@ -13,8 +13,10 @@ import { SwapPatchError } from "../../src/errors.ts";
 import type { BuildingPatch } from "../../src/generated/building.ts";
 import {
   patchBuilding as patchBuildingItem,
+  patchMegastructure as patchMegastructureItem,
   patchTechnology as patchTechnologyItem,
 } from "../../src/generated/content-definers.ts";
+import type { MegastructurePatch } from "../../src/generated/megastructure.ts";
 import type { TechnologyPatch } from "../../src/generated/technology.ts";
 import { always } from "../../src/index.ts";
 import { patchContent } from "../../src/stellaris/vanilla/patch.ts";
@@ -23,9 +25,16 @@ import {
   sha256Hex,
   viewFromFiles,
   type ParsedBuilding,
+  type ParsedMegastructure,
   type ParsedTechnology,
 } from "../../src/stellaris/vanilla/view.ts";
-import { BUILDING_FILE, OR_TECH_FILE, TECH_FILE, VARS_FILE } from "../fixtures/vanilla-fixture.ts";
+import {
+  BUILDING_FILE,
+  MEGASTRUCTURE_FILE,
+  OR_TECH_FILE,
+  TECH_FILE,
+  VARS_FILE,
+} from "../fixtures/vanilla-fixture.ts";
 
 /**
  * The prefix a capability would bind into its `patchX` closure. Every
@@ -46,6 +55,11 @@ const patchBuilding = <Source extends ParsedBuilding>(
   building: Source,
   patch: (building: Source) => BuildingPatch
 ) => patchBuildingItem(building, patch, PREFIX).patched;
+
+const patchMegastructure = <Source extends ParsedMegastructure>(
+  megastructure: Source,
+  patch: (megastructure: Source) => MegastructurePatch
+) => patchMegastructureItem(megastructure, patch, PREFIX).patched;
 
 const FILES = {
   "common/technology/pp_soc_tech.txt": TECH_FILE,
@@ -705,6 +719,211 @@ describe("the building slice", () => {
       { targets: ["building"], id: "pp_building_annex", field: "upgrades" },
       { targets: ["technology"], id: "pp_tech_refining", field: "prerequisites" },
     ]);
+  });
+});
+
+/**
+ * The third registry, and the first whose rule-table replacement cell is a
+ * judgment rather than a finding. Nothing about the parse or the transform
+ * changes for that — the confidence rides on the *win*, which this file does
+ * not compute — so what is measured here is the same property the building
+ * slice measures, through shapes neither earlier registry writes: an
+ * `economic_template` block, an inline nested struct, and a field the emitter
+ * declines outright.
+ */
+describe("the megastructure slice", () => {
+  const view = viewFromFiles({
+    "common/megastructures/pp_megastructures.txt": MEGASTRUCTURE_FILE,
+    "common/scripted_variables/pp_vars.txt": VARS_FILE,
+  });
+  const array0 = view.definition("megastructure", "megastructure_pp_array_0");
+
+  it("parses every definition with its provenance and its registry tag", () => {
+    expect(view.definitions("megastructure").map((mega) => mega.id)).toEqual([
+      "megastructure_pp_array_0",
+      "megastructure_pp_array_1",
+    ]);
+    expect(array0.registry).toBe("megastructure");
+    expect(array0.sourceFile).toBe("common/megastructures/pp_megastructures.txt");
+    expect(array0.sourceSha256).toBe(sha256Hex(MEGASTRUCTURE_FILE));
+    expect(array0.origin).toBe(view);
+  });
+
+  it("models no field, so the whole body rides in rest", () => {
+    expect(array0.rest).toBe(array0.body);
+    expect(array0.rest.map((entry) => entry.key)).toEqual([
+      "entity",
+      "construction_entity",
+      "portrait",
+      "place_entity_on_planet_plane",
+      "entity_offset",
+      "build_time",
+      "resources",
+      "custom_tooltip_requirements",
+      "prerequisites",
+      "potential",
+      "possible",
+      "placement_rules",
+      "ai_weight",
+    ]);
+  });
+
+  it("re-emission is a semantic fixpoint", () => {
+    const emitted = serialize([array0.toEntries()]);
+    const reparsed = parse(emitted, "emitted.txt");
+    expect(reparsed.diagnostics).toEqual([]);
+    expect(serialize(reparsed.items)).toBe(emitted);
+    expect(withoutLines(reparsed.items)).toEqual(
+      withoutLines(parse(MEGASTRUCTURE_FILE, "megastructures.txt").items.slice(2, 3))
+    );
+  });
+
+  it("resolves both file-local @variables rather than trusting them", () => {
+    expect(() =>
+      viewFromFiles({
+        "common/megastructures/broken.txt":
+          "megastructure_pp_x = {\n\tentity_offset = { x = 0 y = @nope }\n}\n",
+      })
+    ).toThrow(/@nope/);
+  });
+
+  it("patches in place: a replaced economic block, an appended member", () => {
+    const patched = patchMegastructure(array0, () => ({
+      buildTime: 2400,
+      resources: [
+        {
+          category: "megastructures",
+          cost: { amounts: { unity: 7500 } },
+          upkeep: { amounts: { energy: 8 } },
+        },
+      ],
+      triggeredCountryModifier: [
+        { when: always(), modifier: (m) => m.raw("country_naval_cap_add", 25) },
+      ],
+    }));
+    const emitted = serialize([patched.toEntries()]);
+    // Replaced in the slot vanilla wrote it in...
+    expect(emitted).toContain("\tbuild_time = 2400\n");
+    expect(emitted).toContain(
+      "\tresources = {\n" +
+        "\t\tcategory = megastructures\n" +
+        "\t\tcost = {\n\t\t\tunity = 7500\n\t\t}\n" +
+        "\t\tupkeep = {\n\t\t\tenergy = 8\n\t\t}\n" +
+        "\t}\n"
+    );
+    // ...and a member vanilla did not write is appended rather than refused.
+    expect(emitted).toContain(
+      "\ttriggered_country_modifier = {\n" +
+        "\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tmodifier = {\n\t\t\tcountry_naval_cap_add = 25\n\t\t}\n" +
+        "\t}\n"
+    );
+  });
+
+  it("carries a field the emitter declines through a patch, byte-exact", () => {
+    // `placement_rules` is an acknowledged corpus gap (SDK-84): no author can
+    // write it, so the only way a patched megastructure keeps it is by riding
+    // through untouched. Losing it would silently change the definition.
+    const emitted = serialize([patchMegastructure(array0, () => ({ buildTime: 60 })).toEntries()]);
+    expect(emitted).toContain(
+      "\tplacement_rules = {\n" +
+        "\t\tplanet_possible = {\n" +
+        "\t\t\tNOT = {\n\t\t\t\tis_planet_class = pc_gas_giant\n\t\t\t}\n" +
+        "\t\t}\n" +
+        "\t}\n"
+    );
+  });
+
+  it("carries an untouched nested struct through with its @reference intact", () => {
+    // Vanilla writes `entity_offset = { x = 0 y = @... }` on one line; the
+    // package serializer promises a semantic round trip, not a byte-identical
+    // one, so it comes back as a block. What must survive is the `@variable`
+    // reference — baked to `-20` here, the emitted file would need no
+    // declaration and the patch's local re-declaration would be wrong.
+    const emitted = serialize([patchMegastructure(array0, () => ({ buildTime: 60 })).toEntries()]);
+    expect(emitted).toContain("\tentity_offset = {\n\t\tx = 0\n\t\ty = @pp_array_offset_y\n\t}\n");
+  });
+
+  it("keeps a carried occurrence beside a fresh one, at the first one's position", () => {
+    // `triggered_country_modifier` repeats — the rules declare
+    // `## cardinality = 0..1` and vanilla's own `shroud_seal` writes it twice,
+    // so the member is a list on both surfaces. Replacement is still
+    // all-occurrences-at-the-first-one's-position (the technology `category`
+    // rule), and with a list nothing is lost by it: an author spreads the
+    // occurrences they mean to keep and authors the rest beside them.
+    const array1 = view.definition("megastructure", "megastructure_pp_array_1");
+    const kept = array1.body.filter((entry) => entry.key === "triggered_country_modifier")[1]!;
+    const emitted = serialize([
+      patchMegastructure(array1, () => ({
+        triggeredCountryModifier: [
+          kept,
+          { when: always(), modifier: (m) => m.raw("country_naval_cap_add", 40) },
+        ],
+      })).toEntries(),
+    ]);
+    // Both blocks, in the order the array gave them, in the slot the first
+    // vanilla occurrence held — before `ai_weight`, which did not move.
+    expect(emitted).toBe(
+      "megastructure_pp_array_1 = {\n" +
+        '\tentity = "pp_array_entity"\n' +
+        '\tconstruction_entity = "pp_array_construction_entity"\n' +
+        '\tportrait = "GFX_megastructure_pp_array_background"\n' +
+        "\tplace_entity_on_planet_plane = no\n" +
+        "\tbuild_time = @pp_array_buildtime\n" +
+        "\tupgrade_from = { megastructure_pp_array_0 }\n" +
+        "\tresources = {\n" +
+        "\t\tcategory = megastructures\n" +
+        "\t\tcost = {\n\t\t\tunity = 10000\n\t\t}\n" +
+        "\t\tupkeep = {\n\t\t\tenergy = 10\n\t\t}\n" +
+        "\t}\n" +
+        "\ttriggered_country_modifier = {\n" +
+        "\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tall_technology_research_speed = 0.05\n" +
+        "\t}\n" +
+        "\ttriggered_country_modifier = {\n" +
+        "\t\tpotential = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tmodifier = {\n\t\t\tcountry_naval_cap_add = 40\n\t\t}\n" +
+        "\t}\n" +
+        "\tai_weight = {\n" +
+        "\t\tweight = 5\n" +
+        "\t\tmodifier = {\n" +
+        "\t\t\tfactor = 2\n" +
+        "\t\t\tfrom = {\n\t\t\t\thas_ascension_perk = ap_galactic_wonders\n\t\t\t}\n" +
+        "\t\t}\n" +
+        "\t}\n" +
+        "}\n"
+    );
+    // The occurrence the author did not carry is the only thing dropped.
+    expect(emitted).not.toContain("has_technology = tech_pp_resonance");
+  });
+
+  it("records the references a patched ref-valued member writes", () => {
+    const patched = patchMegastructure(array0, () => ({
+      prerequisites: ["pp_tech_resonance"],
+      upgradeFrom: [{ id: "pp_megastructure_seed" }],
+    }));
+    expect([...patched.refs].sort((a, b) => a.id.localeCompare(b.id))).toEqual([
+      { targets: ["megastructure"], id: "pp_megastructure_seed", field: "upgrade_from" },
+      { targets: ["technology"], id: "pp_tech_resonance", field: "prerequisites" },
+    ]);
+  });
+
+  it("renames through all four of the registry's localisation slots", () => {
+    const patched = patchMegastructure(array0, () => ({
+      name: "Resonance Array",
+      desc: "A lattice tuned to the system's star.",
+      details: "Amplifies research across the empire.",
+      delayedInfo: "Construction continues.",
+    }));
+    expect(patched.replaceLoc).toEqual([
+      ["megastructure_pp_array_0", "Resonance Array"],
+      ["megastructure_pp_array_0_DESC", "A lattice tuned to the system's star."],
+      ["megastructure_pp_array_0_MEGASTRUCTURE_DETAILS", "Amplifies research across the empire."],
+      ["megastructure_pp_array_0_CONSTRUCTION_INFO_DELAYED", "Construction continues."],
+    ]);
+    expect(patched.loc).toEqual([]);
+    // A rename is localisation, not script: the body is the unpatched one.
+    expect(serialize([patched.toEntries()])).toBe(serialize([array0.toEntries()]));
   });
 });
 

@@ -41,6 +41,7 @@ import {
   type GovernmentTriggerBlock,
   type JobRef,
   type MegastructureFields,
+  type MegastructurePatch,
   type ModifierClosure,
   type OpinionModifierRef,
   type ScopeRef,
@@ -56,6 +57,10 @@ import {
   type WarGoalRef,
   type WeaponComponentTemplateFields,
 } from "../src/index.ts";
+// The generated patch members are spelled in terms of `PatchInput`, which the
+// package does not re-export — a consumer never names it, but pinning a member
+// against its exact type does.
+import type { PatchInput } from "../src/stellaris/vanilla/patch.ts";
 import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 
 const CONTENT_TYPES_CONFIG = {
@@ -1651,9 +1656,12 @@ describe("generated patch authoring types", () => {
       "tech_pp_forging = {\n\tarea = society\n\ttier = 3\n\tcategory = { biology }\n}\n",
     "common/buildings/pp_buildings.txt":
       "building_pp_refinery = {\n\tcategory = manufacturing\n\tplanet_limit = 1\n}\n",
+    "common/megastructures/pp_megastructures.txt":
+      "megastructure_pp_array = {\n\tentity = pp_array_entity\n\tbuild_time = 1800\n}\n",
   });
   const forging = view.definition("technology", "tech_pp_forging");
   const refinery = view.definition("building", "building_pp_refinery");
+  const array = view.definition("megastructure", "megastructure_pp_array");
 
   it("keeps vanilla's identity: a patch cannot set an id", () => {
     // A patched definition keeps vanilla's key, or the override does not win.
@@ -1748,5 +1756,52 @@ describe("generated patch authoring types", () => {
     void patch;
     // @ts-expect-error — a member naming nothing the patch type has.
     contentMod.patchBuilding(refinery, () => ({ planetLmit: 1 }));
+  });
+
+  it("keeps the third registry apart from both of the others, in every direction", () => {
+    expectTypeOf(array.registry).toEqualTypeOf<"megastructure">();
+    // @ts-expect-error — a parsed megastructure is not a technology patch source.
+    contentMod.patchTechnology(array, () => ({ cost: 1 }));
+    // @ts-expect-error — nor a building one.
+    contentMod.patchBuilding(array, () => ({ planetLimit: 1 }));
+    // @ts-expect-error — and neither of theirs stands in for a megastructure.
+    contentMod.patchMegastructure(forging, () => ({ buildTime: 1 }));
+    // @ts-expect-error — in both directions, as with every other pair.
+    contentMod.patchMegastructure(refinery, () => ({ buildTime: 1 }));
+    expectTypeOf(
+      contentMod.patchMegastructure(array, () => ({ buildTime: 2400 })).patched.registry
+    ).toEqualTypeOf<"megastructure">();
+  });
+
+  it("gives the third registry the same closed, id-less patch type and its four slots", () => {
+    expectTypeOf<MegastructurePatch>().not.toHaveProperty("id");
+    const patch: MegastructurePatch = {
+      buildTime: 2400,
+      // @ts-expect-error — closed, so a patched id is a compile error here.
+      id: "content_types_megastructure_elsewhere",
+    };
+    void patch;
+    // Four declared localisation slots rather than the other two registries'
+    // two: the member list is the registry's own table, never a fixed pair.
+    expectTypeOf<MegastructurePatch["name"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<MegastructurePatch["desc"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<MegastructurePatch["details"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<MegastructurePatch["delayedInfo"]>().toEqualTypeOf<string | undefined>();
+    // @ts-expect-error — a member naming nothing the patch type has.
+    contentMod.patchMegastructure(array, () => ({ buildTme: 1 }));
+  });
+
+  it("carries the repeated-member arity assertion onto the patch surface too", () => {
+    // The `arity: "repeated"` row corrects the declared cardinality once, so
+    // the patch member is a list for the same reason the definition's is —
+    // a patch that could carry only one block could not reproduce a vanilla
+    // megastructure writing two, which is the case the row exists for.
+    expectTypeOf<MegastructurePatch["triggeredCountryModifier"]>().toEqualTypeOf<
+      PatchInput<TriggeredModifier<"country">[]> | undefined
+    >();
+    contentMod.patchMegastructure(array, () => ({
+      // @ts-expect-error — a bare block is not a list, here as on the definer.
+      triggeredCountryModifier: { when: always(), modifier: (m) => m.country.naval.cap.add(1) },
+    }));
   });
 });

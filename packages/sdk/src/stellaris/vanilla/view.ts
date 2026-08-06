@@ -170,6 +170,9 @@ export class ParsedDefinition<R extends string = string> {
 /** A parsed vanilla building. Nothing about its body is modelled yet. */
 export type ParsedBuilding = ParsedDefinition<"building">;
 
+/** A parsed vanilla megastructure. Nothing about its body is modelled yet. */
+export type ParsedMegastructure = ParsedDefinition<"megastructure">;
+
 interface TechnologyInit extends ParsedDefinitionInit<"technology"> {
   readonly cost?: ParsedNumber;
   readonly tier?: ParsedNumber;
@@ -263,6 +266,7 @@ export interface ParsedRegistryRow {
 export interface ParsedRegistries {
   readonly technology: ParsedTechnology;
   readonly building: ParsedBuilding;
+  readonly megastructure: ParsedMegastructure;
 }
 
 export type ParsedRegistryName = keyof ParsedRegistries;
@@ -272,6 +276,9 @@ export const PARSED_REGISTRIES: readonly ParsedRegistryRow[] = [
   // Verified flat against the installed game: `common/buildings` holds 28
   // files and no subdirectory at all.
   { registry: "building", knownSubdirs: new Set<string>() },
+  // Verified flat the same way: `common/megastructures` holds 30 files and no
+  // subdirectory at all.
+  { registry: "megastructure", knownSubdirs: new Set<string>() },
 ];
 
 /**

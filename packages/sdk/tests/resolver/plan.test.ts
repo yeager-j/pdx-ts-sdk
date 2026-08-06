@@ -182,7 +182,7 @@ describe("planPatchEmission", () => {
 
   it("surfaces an assumed cell in the assertion and the file header", () => {
     const result = plan({
-      registry: "megastructures",
+      registry: "megastructure",
       enumeration: [file("common/megastructures/00_mega.txt", "tech_gene_tailoring")],
     });
     expect(result.assertions[0]?.confidence).toBe("assumed");

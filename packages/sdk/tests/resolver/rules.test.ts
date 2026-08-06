@@ -26,7 +26,7 @@ describe("the rule table", () => {
       "scripted-effects",
       "events",
       "scripted-constants",
-      "megastructures",
+      "megastructure",
       "ship-components",
       "localization",
     ]);
@@ -62,8 +62,8 @@ describe("the rule table", () => {
     expect(row.replacement.state).toBe("verified");
   });
 
-  it("megastructures carry a named judgment, never a silent upgrade", () => {
-    const row = registryRule("megastructures");
+  it("megastructure carries a named judgment, never a silent upgrade", () => {
+    const row = registryRule("megastructure");
     expect(row.replacement.state).toBe("assumed");
     if (row.replacement.state === "assumed") {
       expect(row.replacement.judgment).toContain("Jackson, 2026-07-31");
@@ -82,7 +82,7 @@ describe("the rule table", () => {
   });
 
   it("derives a manifest-backed row's dir from the generated descriptor", () => {
-    for (const registry of ["technology", "building"] as const) {
+    for (const registry of ["technology", "building", "megastructure"] as const) {
       const descriptor = CONTENT_REGISTRIES.find((candidate) => candidate.type === registry);
       expect(descriptor).toBeDefined();
       expect(registryRule(registry).dir).toBe(descriptor!.outputDir);
@@ -90,10 +90,11 @@ describe("the rule table", () => {
     // The derivation is the claim; these pin what it currently resolves to.
     expect(registryRule("technology").dir).toBe("common/technology");
     expect(registryRule("building").dir).toBe("common/buildings");
+    expect(registryRule("megastructure").dir).toBe("common/megastructures");
   });
 
   it("stores no dir on a manifest-backed row", () => {
-    for (const registry of ["technology", "building"]) {
+    for (const registry of ["technology", "building", "megastructure"]) {
       const row = REGISTRY_RULES.find((candidate) => candidate.registry === registry);
       expect(row).toBeDefined();
       expect(Object.hasOwn(row!, "dir")).toBe(false);

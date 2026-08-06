@@ -492,8 +492,12 @@ const compiled = mod.compile(
 
 `vanilla.definition(registry, id)` is tagged with the registry it came from, so
 a parsed building cannot be handed to `patchTechnology`. Each patched registry
-gets its own emission, resolved independently — `technology` and `building` are
-the registries whose override rules are verified today.
+gets its own emission, resolved independently — `technology`, `building` and
+`megastructure` are the registries with a `patchX` today. The first two rest on
+fully verified override rules; `megastructure`'s whole-object replacement is a
+recorded judgment rather than a finding, so every win it backs reports
+`confidence: "assumed"` and the emitted patch file states the judgment in its
+own header.
 
 Fields the transform doesn't touch are carried through byte-faithfully,
 `@variable` references included. The build then emits the patch into a file

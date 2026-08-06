@@ -260,6 +260,7 @@ export type { ModWarning } from "./diagnostics.ts";
 export type { OnActionHookItem } from "./events/on-actions.ts";
 export type { EventItem, EventItemBase } from "./events/types.ts";
 export type { BuildingPatchItem } from "./generated/building.ts";
+export type { MegastructurePatchItem } from "./generated/megastructure.ts";
 export type { TechnologyPatchItem } from "./generated/technology.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
@@ -293,6 +294,7 @@ export {
   viewFromFiles,
   type AnyOf,
   type ParsedBuilding,
+  type ParsedMegastructure,
   type ParsedNumber,
   type ParsedRegistries,
   type ParsedRegistryName,
@@ -300,6 +302,7 @@ export {
   type VanillaFile,
 } from "./stellaris/vanilla/view.ts";
 export type { BuildingPatch, PatchedBuilding } from "./generated/building.ts";
+export type { MegastructurePatch, PatchedMegastructure } from "./generated/megastructure.ts";
 export type { PatchedTechnology, TechnologyPatch } from "./generated/technology.ts";
 export type {
   CheckedVanillaId,

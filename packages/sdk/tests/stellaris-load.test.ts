@@ -72,11 +72,16 @@ describe("load", () => {
     expect(view.fromCache).toBe(false);
     expect(view.files.map((file) => file.path)).toEqual([
       "common/buildings/00_fake_buildings.txt",
+      "common/megastructures/00_fake_megastructures.txt",
       "common/scripted_variables/00_fake_vars.txt",
       "common/technology/00_fake_soc_tech.txt",
     ]);
     expect(view.definitions("building").map((building) => building.id)).toEqual([
       "building_fake_hydroponics",
+    ]);
+    expect(view.definitions("megastructure").map((mega) => mega.id)).toEqual([
+      "megastructure_fake_array_0",
+      "megastructure_fake_array_1",
     ]);
     const tech = view.definition("technology", "tech_fake_farming").require("cost", "startTech");
     expect(tech.cost.value).toBe(100);

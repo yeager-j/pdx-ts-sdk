@@ -33,7 +33,11 @@
 
 import { defineSituationType, type SituationTypeCapabilityDef } from "../content/situations.ts";
 import type { ContentItem } from "../content/types.ts";
-import type { ParsedBuilding, ParsedTechnology } from "../stellaris/vanilla/view.ts";
+import type {
+  ParsedBuilding,
+  ParsedMegastructure,
+  ParsedTechnology,
+} from "../stellaris/vanilla/view.ts";
 import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";
@@ -82,6 +86,7 @@ import {
   defineWarGoal,
   defineWeaponComponentTemplate,
   patchBuilding,
+  patchMegastructure,
   patchTechnology,
 } from "./content-definers.ts";
 import type { CouncilorDef } from "./councilor.ts";
@@ -92,7 +97,11 @@ import type { EdictDef } from "./edict.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
 import type { JobDef } from "./job.ts";
-import type { MegastructureDef } from "./megastructure.ts";
+import type {
+  MegastructureDef,
+  MegastructurePatch,
+  MegastructurePatchItem,
+} from "./megastructure.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { ScopeName } from "./scopes.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
@@ -811,6 +820,16 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">
   ): ContentItem<"megastructure", MegastructureDef<MintedContentId<P, I, "megastructure", Name>>>;
+  /**
+   * Patches a vanilla megastructure as a whole-object override.
+   * Unlike a capability definition method, it mints no id and owns no new content —
+   * but it does mint localisation keys for text it adds, from this capability's
+   * prefix, which is why the method is bound to the capability rather than free.
+   */
+  patchMegastructure<Source extends ParsedMegastructure>(
+    megastructure: Source,
+    patch: (megastructure: Source) => MegastructurePatch
+  ): MegastructurePatchItem;
 }
 
 /** Builds the internal content-method table for a mod capability. */
@@ -1134,5 +1153,9 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       defineMegastructure({ ...def, id: mint("megastructure", name) } as MegastructureDef<
         MintedContentId<P, I, "megastructure", Name>
       >),
+    patchMegastructure: <Source extends ParsedMegastructure>(
+      megastructure: Source,
+      patch: (megastructure: Source) => MegastructurePatch
+    ) => patchMegastructure(megastructure, patch, prefix),
   }) as ContentCapabilityMethods<P, I>;
 }

@@ -12,6 +12,15 @@
  * written as a bare number in one building and as a block in the other (CWT
  * declares both, so the field lowers to a dual), plus a file-local `@variable`,
  * `prerequisites` and `upgrades`.
+ *
+ * `MEGASTRUCTURE_FILE` is the third, and it is here for the shapes the first
+ * two have no example of: an `economic_template` block (`resources`, with
+ * repeated `cost` arms and an `upkeep`), a nested `struct` written inline
+ * (`entity_offset`), an upgrade chain through `upgrade_from`, repeated
+ * `triggered_country_modifier` blocks written the way vanilla writes them
+ * (bare modifier names, no `modifier = { ... }` wrapper), and
+ * `placement_rules` — a field the emitter declines (SDK-84), so a patch has to
+ * carry it through untouched or lose it.
  */
 
 export const TECH_FILE = `# ##################
@@ -202,6 +211,117 @@ building_pp_refinery_2 = {
 		}
 		modifier = {
 			planet_jobs_produces_mult = 0.2
+		}
+	}
+}
+`;
+
+/** Shaped like `common/megastructures/03_think_tank.txt` and `22_shroud_seal.txt`. */
+export const MEGASTRUCTURE_FILE = `# ##################
+# Resonance Array
+# ##################
+
+@pp_array_buildtime = 1800
+@pp_array_offset_y = -20
+
+megastructure_pp_array_0 = {
+	entity = "pp_array_construction_entity"
+	construction_entity = "pp_array_construction_entity"
+	portrait = "GFX_megastructure_construction_background"
+	place_entity_on_planet_plane = no
+	entity_offset = { x = 0 y = @pp_array_offset_y }
+	build_time = @pp_array_buildtime
+
+	resources = {
+		category = megastructures
+		cost = {
+			unity = 5000
+		}
+		cost = {
+			trigger = {
+				country_uses_bio_ships = yes
+			}
+			alloys = 5000
+			mult = 0.5
+		}
+
+		upkeep = {
+			energy = 5
+		}
+	}
+
+	custom_tooltip_requirements = "MEGASTRUCTURE_TOOLTIP_REQUIREMENTS_ONE_PER_COUNTRY"
+	prerequisites = { "tech_pp_resonance" }
+
+	potential = {
+		has_technology = tech_pp_resonance
+	}
+
+	possible = {
+		hidden_trigger = {
+			exists = starbase
+		}
+		custom_tooltip = {
+			fail_text = "requires_inside_border"
+			is_inside_border = from
+		}
+	}
+
+	placement_rules = {
+		planet_possible = {
+			NOT = {
+				is_planet_class = pc_gas_giant
+			}
+		}
+	}
+
+	ai_weight = {
+		weight = @pp_boost
+	}
+}
+
+megastructure_pp_array_1 = {
+	entity = "pp_array_entity"
+	construction_entity = "pp_array_construction_entity"
+	portrait = "GFX_megastructure_pp_array_background"
+	place_entity_on_planet_plane = no
+	build_time = @pp_array_buildtime
+	upgrade_from = { megastructure_pp_array_0 }
+
+	resources = {
+		category = megastructures
+		cost = {
+			unity = 10000
+		}
+
+		upkeep = {
+			energy = 10
+		}
+	}
+
+	triggered_country_modifier = {
+		potential = {
+			owner? = {
+				has_technology = tech_pp_resonance
+			}
+		}
+		country_naval_cap_add = 10
+	}
+
+	triggered_country_modifier = {
+		potential = {
+			always = yes
+		}
+		all_technology_research_speed = 0.05
+	}
+
+	ai_weight = {
+		weight = 5
+		modifier = {
+			factor = 2
+			from = {
+				has_ascension_perk = ap_galactic_wonders
+			}
 		}
 	}
 }

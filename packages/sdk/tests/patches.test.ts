@@ -11,11 +11,17 @@ import { describe, expect, it } from "vitest";
 import { StaleRuleTableError, VanillaPathCollisionError } from "../src/errors.ts";
 import { always, createMod, render, type ModConfig, type TechnologyItem } from "../src/index.ts";
 import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
-import { BUILDING_FILE, TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
+import {
+  BUILDING_FILE,
+  MEGASTRUCTURE_FILE,
+  TECH_FILE,
+  VARS_FILE,
+} from "./fixtures/vanilla-fixture.ts";
 
 const FILES = {
   "common/technology/pp_soc_tech.txt": TECH_FILE,
   "common/buildings/pp_buildings.txt": BUILDING_FILE,
+  "common/megastructures/pp_megastructures.txt": MEGASTRUCTURE_FILE,
   "common/scripted_variables/pp_vars.txt": VARS_FILE,
 };
 
@@ -351,6 +357,120 @@ describe("patching two registries in one mod", () => {
       mod.patchBuilding(collide.definition("building", "shared_id"), () => ({ planetLimit: 1 })),
     ]);
     expect(mod.compile([feature]).patchPlans).toHaveLength(2);
+  });
+});
+
+/**
+ * The registry whose rule-table replacement cell is a judgment rather than a
+ * finding. Everything about the emission is the same machinery the two verified
+ * registries use — that is the point of the row being the only permission — and
+ * the one thing that differs is the thing that should: the assertion reports
+ * `confidence: "assumed"` and the emitted file states the judgment in its own
+ * header, where a reader of the mod can see it.
+ */
+describe("patching a registry whose replacement rule is assumed", () => {
+  const array0 = vanilla.definition("megastructure", "megastructure_pp_array_0");
+
+  function megastructureMod() {
+    const mod = createMod(makeConfig());
+    return mod.compile([
+      mod.feature(undefined, [
+        mod.patchMegastructure(array0, () => ({
+          buildTime: 2400,
+          resources: [
+            {
+              category: "megastructures",
+              cost: { amounts: { unity: 7500 } },
+              upkeep: { amounts: { energy: 8 } },
+            },
+          ],
+          prerequisites: ["pp_tech_resonance"],
+          triggeredCountryModifier: [
+            { when: always(), modifier: (m) => m.raw("country_naval_cap_add", 25) },
+          ],
+        })),
+      ]),
+    ]);
+  }
+
+  it("emits the patch into a file computed to sort after the definer", async () => {
+    const files = render(megastructureMod());
+    expect([...files.keys()]).toEqual([
+      "descriptor.mod",
+      // Every mod emits this, empty or not; nothing here mints a key.
+      "localisation/english/pp_mod_l_english.yml",
+      "common/megastructures/pp_megastructures_pp_mod_patch.txt",
+    ]);
+    expect(files.get("localisation/english/pp_mod_l_english.yml")).toBe("﻿l_english:\n");
+    await expect(
+      files.get("common/megastructures/pp_megastructures_pp_mod_patch.txt")
+    ).toMatchFileSnapshot(
+      "__snapshots__/patches/common__megastructures__pp_megastructures_pp_mod_patch.txt"
+    );
+  });
+
+  it("asserts the win at assumed confidence, with the full beaten list", () => {
+    expect(megastructureMod().patchPlans[0]?.assertions).toEqual([
+      {
+        registry: "megastructure",
+        key: "megastructure_pp_array_0",
+        rule: "last-wins",
+        confidence: "assumed",
+        beats: ["common/megastructures/pp_megastructures.txt"],
+        verifiedAgainst: "4.4.6",
+      },
+    ]);
+  });
+
+  it("states the judgment in the emitted header rather than laundering it", () => {
+    const content = megastructureMod().patchPlans[0]!.content;
+    expect(content).toContain("# ASSUMED field-replacement rule: Jackson, 2026-07-31");
+    // The duplicate-winner cell *is* verified (r8), so only one header line.
+    expect(content).not.toContain("# ASSUMED duplicate-winner rule");
+  });
+
+  it("re-declares the file-local variable the patched body still references", () => {
+    // `@pp_array_buildtime` is replaced by the patch, so the emitted body no
+    // longer names it; `@pp_array_offset_y` rides through inside entity_offset
+    // and must be re-declared. `@pp_boost` is a cross-file constant.
+    const content = megastructureMod().patchPlans[0]!.content;
+    expect(content).toContain("\n@pp_array_offset_y = -20\n");
+    expect(content).not.toContain("@pp_array_buildtime =");
+    expect(content).not.toContain("@pp_boost =");
+    expect(content).toContain("weight = @pp_boost");
+  });
+
+  it("rejects a second patch for the same megastructure, naming the registry", () => {
+    const mod = createMod(makeConfig());
+    const feature = mod.feature(undefined, [
+      mod.patchMegastructure(array0, () => ({ buildTime: 60 })),
+      mod.patchMegastructure(array0, () => ({ buildTime: 90 })),
+    ]);
+    expect(() => mod.compile([feature])).toThrow(
+      /Duplicate patch for megastructure "megastructure_pp_array_0"/
+    );
+  });
+
+  it("plans three registries side by side, each ordered by its emitted path", () => {
+    const mod = createMod(makeConfig());
+    const compiled = mod.compile([
+      mod.feature(undefined, [
+        ...patchedTechnologies(mod),
+        mod.patchBuilding(vanilla.definition("building", "building_pp_refinery"), () => ({
+          planetLimit: 2,
+        })),
+        mod.patchMegastructure(array0, () => ({ buildTime: 2400 })),
+      ]),
+    ]);
+    expect(compiled.patchPlans.map((plan) => plan.relPath)).toEqual([
+      "common/buildings/pp_buildings_pp_mod_patch.txt",
+      "common/megastructures/pp_megastructures_pp_mod_patch.txt",
+      "common/technology/pp_soc_tech_pp_mod_patch.txt",
+    ]);
+    // Each registry answers to its own row: two verified, one assumed.
+    expect(compiled.patchPlans.flatMap((plan) => plan.assertions).map((a) => a.confidence)).toEqual(
+      ["verified", "assumed", "verified"]
+    );
   });
 });
 
