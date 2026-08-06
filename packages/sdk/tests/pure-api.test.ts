@@ -136,6 +136,9 @@ function capabilityFeatures() {
   const patch = capability.patchTechnology(
     vanilla.definition("technology", "tech_gene_forging").require("cost", "prerequisites"),
     (t) => ({
+      // A rename: display text only, so it changes nothing about the emitted
+      // patch file and everything about which channels the fixture exercises.
+      name: "Chimeric Forging",
       cost: t.cost.value * 2,
       prerequisites: [...t.prerequisites, grafts],
     })
@@ -172,6 +175,7 @@ const FIXTURE_CHANNELS = [
   "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
   "common/on_actions/pp_mod_on_actions.txt",
   "localisation/english/pp_mod_l_english.yml",
+  "localisation/replace/english/pp_mod_l_english.yml",
   "common/buildings/pp_buildings_pp_mod_patch.txt",
   "common/technology/pp_soc_tech_pp_mod_patch.txt",
 ];
@@ -738,7 +742,8 @@ describe("content reference integrity", () => {
         vanilla.definition("technology", "tech_gene_forging").require("prerequisites"),
         (t) => ({
           prerequisites: [...t.prerequisites, marker],
-        })
+        }),
+        CONFIG.prefix
       ),
     ]);
     expect(
@@ -766,9 +771,13 @@ describe("content reference integrity", () => {
       startTech: true,
     });
     const patches = createFeatureInternal(undefined, [
-      patchTechnologyInternal(vanilla.definition("technology", "tech_gene_forging"), () => ({
-        prerequisites: [anyOf("tech_helix_mapping", marker)],
-      })),
+      patchTechnologyInternal(
+        vanilla.definition("technology", "tech_gene_forging"),
+        () => ({
+          prerequisites: [anyOf("tech_helix_mapping", marker)],
+        }),
+        CONFIG.prefix
+      ),
     ]);
     expect(
       render(
@@ -795,9 +804,13 @@ describe("content reference integrity", () => {
     });
     const dependents = createFeatureInternal("dependents", [dependent]);
     const patches = createFeatureInternal(undefined, [
-      patchTechnologyInternal(vanilla.definition("technology", "tech_gene_forging"), () => ({
-        technologySwap: [{ name: "pp_mod_tech_gene_forging_frugal", inheritIcon: true }],
-      })),
+      patchTechnologyInternal(
+        vanilla.definition("technology", "tech_gene_forging"),
+        () => ({
+          technologySwap: [{ name: "pp_mod_tech_gene_forging_frugal", inheritIcon: true }],
+        }),
+        CONFIG.prefix
+      ),
     ]);
     expect(buildInternal(CONFIG, [dependents, patches], { vanilla }).warnings).toEqual([]);
     // Without the patch nothing defines the swap, and the same reference fails.
@@ -1041,7 +1054,8 @@ describe("collections", () => {
         vanilla.definition("technology", "tech_gene_forging").require("cost"),
         (t) => ({
           cost: t.cost.value * 2,
-        })
+        }),
+        CONFIG.prefix
       ),
     ]);
     const mod = buildInternal(CONFIG, [alpha, beta, patches], { vanilla });
@@ -1264,6 +1278,10 @@ tech_probe_zeta = {
           orderMod.patchTechnology(
             probeVanilla.definition("technology", "tech_probe_zeta").require("cost"),
             (t) => ({
+              // Renamed as well as repriced: the replace layer's key order has
+              // to be a function of the keys, not of which patch was authored
+              // first — the very thing this probe reverses.
+              name: "Zeta, renamed",
               cost: t.cost.value * 2,
             })
           )
@@ -1274,6 +1292,7 @@ tech_probe_zeta = {
           orderMod.patchTechnology(
             probeVanilla.definition("technology", "tech_probe_alpha").require("cost"),
             (t) => ({
+              name: "Alpha, renamed",
               cost: t.cost.value * 3,
             })
           )
@@ -1309,6 +1328,7 @@ tech_probe_zeta = {
       "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
       "common/on_actions/pp_mod_on_actions.txt",
       "localisation/english/pp_mod_l_english.yml",
+      "localisation/replace/english/pp_mod_l_english.yml",
       "common/technology/00_probe_tech_pp_mod_patch.txt",
     ]);
     expect([...backward.entries()]).toEqual([...forward.entries()]);

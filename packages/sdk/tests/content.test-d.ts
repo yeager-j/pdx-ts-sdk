@@ -1575,9 +1575,6 @@ describe("generated patch authoring types", () => {
       id: "content_types_tech_elsewhere",
     };
     void patch;
-    // Nor are the localisation slots patchable yet: their keys are minted by a
-    // pre-pass the patch path does not run.
-    expectTypeOf<TechnologyPatch>().not.toHaveProperty("name");
     // @ts-expect-error — a member naming nothing the patch type has, in the one
     // position the compiler does check it: an object with no member in common.
     contentMod.patchTechnology(forging, () => ({ csot: 8000 }));
@@ -1638,9 +1635,22 @@ describe("generated patch authoring types", () => {
     ).toEqualTypeOf<"technology">();
   });
 
+  it("carries the registry's localisation slots as optional replacement text", () => {
+    // Derived from the same declared localisation table the definition's own
+    // text members come from — not a hand-listed pair — so both registries
+    // have both slots, both optional, both plain strings: the text replaces
+    // vanilla's, and the key is vanilla's own rather than anything authored.
+    expectTypeOf<TechnologyPatch["name"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<TechnologyPatch["desc"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<BuildingPatch["name"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<BuildingPatch["desc"]>().toEqualTypeOf<string | undefined>();
+    // A rename alone is a complete patch: nothing about the body is required.
+    const rename: TechnologyPatch = { name: "Renamed" };
+    void rename;
+  });
+
   it("gives the second registry the same closed, id-less patch type", () => {
     expectTypeOf<BuildingPatch>().not.toHaveProperty("id");
-    expectTypeOf<BuildingPatch>().not.toHaveProperty("name");
     const patch: BuildingPatch = {
       planetLimit: 1,
       // @ts-expect-error — closed, so a patched id is a compile error here.

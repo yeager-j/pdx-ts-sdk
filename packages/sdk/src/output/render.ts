@@ -1,15 +1,17 @@
 /**
  * Pure rendering: emission grouping (collections' file hints, the patch plan)
  * happened in `buildMod`; this module serializes the value. Localization stays
- * a single file regardless of hints — splitting it is a separate decision for
- * the standalone-localization work.
+ * a single file per layer regardless of hints — splitting the ordinary file is
+ * a separate decision for the standalone-localization work. The second layer,
+ * `localisation/replace/`, is not a split: it is the game's own mechanism for
+ * overriding text vanilla already defines, and only patch renames land there.
  */
 
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 
 import type { PureMod } from "../compiler/model.ts";
 import { VanillaPathCollisionError } from "../errors.ts";
-import { normalizeLogicalPath } from "../ordering.ts";
+import { compareUtf8, normalizeLogicalPath } from "../ordering.ts";
 
 export function render(mod: PureMod): Map<string, string> {
   const { prefix } = mod.config;
@@ -37,7 +39,18 @@ export function render(mod: PureMod): Map<string, string> {
   if (mod.onActions.length > 0) {
     files.set(`common/on_actions/${prefix}_on_actions.txt`, serialize(mod.onActions));
   }
-  files.set(`localisation/english/${prefix}_l_english.yml`, renderLocalization(mod));
+  files.set(`localisation/english/${prefix}_l_english.yml`, renderLocalization(mod.loc));
+  // Only when a patch actually renamed something: an empty replace file would
+  // still be a file the game loads and a path this mod claims.
+  if (mod.replaceLoc.size > 0) {
+    files.set(
+      `localisation/replace/english/${prefix}_l_english.yml`,
+      // Sorted, unlike the ordinary file: these keys are vanilla's, arriving
+      // in patch order rather than in an order the mod's own content fixes,
+      // so the content itself has to settle it (ADR-0005).
+      renderLocalization(new Map([...mod.replaceLoc].sort(([a], [b]) => compareUtf8(a, b))))
+    );
+  }
 
   for (const plan of mod.patchPlans) {
     files.set(plan.relPath, plan.content);
@@ -98,8 +111,8 @@ export function renderLauncherDescriptor(mod: PureMod, contentDir: string): stri
   return [...descriptorLines(mod), `path="${contentDir}"`].join("\n") + "\n";
 }
 
-function renderLocalization(mod: PureMod): string {
+function renderLocalization(entries: ReadonlyMap<string, string>): string {
   // The BOM is mandatory: Stellaris silently ignores localization files without it.
-  const lines = [...mod.loc].map(([key, text]) => ` ${key}:0 "${text}"`);
+  const lines = [...entries].map(([key, text]) => ` ${key}:0 "${text}"`);
   return "\uFEFF" + ["l_english:", ...lines].join("\n") + "\n";
 }

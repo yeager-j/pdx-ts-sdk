@@ -155,6 +155,12 @@ Author-supplied display text, which rides with the definition that needs it and
 is never authored standalone. Spelled `localisation` only when naming the game's
 directory or a cwtools rule keyword.
 
+**Rename**:
+Replacement text a patch writes under a key vanilla already defines, emitted to
+`localisation/replace/`. A layer, not a load-order claim — no win assertion is
+involved, because filename order never decides a localisation winner.
+_Avoid_: loc override, retitle
+
 **On-action hook**:
 A named engine callback a feature binds events to. Only scoped hooks are
 supported; a scopeless one throws rather than being guessed at.

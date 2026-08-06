@@ -2861,6 +2861,66 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     ]);
   });
 
+  it("lowers a desc'd row nested inside a struct member", () => {
+    // The registration token is `${ownerId}::${fieldKey}` on both sides: the
+    // walk that mints the key and the writer that resolves it. It used to be
+    // the walk's accumulated *path* on one side and the bare field key on the
+    // other, which the writer cannot rebuild — so every row a `struct` level
+    // down registered under a token nothing ever looked up, and `modifierEntry`
+    // threw as though the row had never been registered at all. The key's own
+    // value still carries the path, so two struct positions stay distinct.
+    const cap = capabilityFor(DESC_KEY_CONFIG);
+    const technology = cap.technology("nested_desc", {
+      name: "Nested Desc Test",
+      area: "society",
+      tier: 1,
+      category: "biology",
+      technologySwap: [
+        {
+          name: "desc_key_test_tech_nested_desc_frugal",
+          weight: { modifiers: [{ factor: 2, desc: "Cheaper.", descKey: "frugal" }] },
+        },
+      ],
+    });
+
+    const mod = cap.compile([cap.feature(undefined, [technology])]);
+
+    const key = "desc_key_test_tech_nested_desc_technology_swap_0_weight_frugal";
+    expect(mod.loc.get(key)).toBe("Cheaper.");
+    expect(render(mod).get("common/technology/desc_key_test_technology.txt")).toContain(
+      `desc = ${key}`
+    );
+  });
+
+  it("refuses one row object shared by two occurrences the writer cannot tell apart", () => {
+    // Two repeated `struct` entries share a field key, so they share the
+    // registration token, while deriving different keys from their differing
+    // paths. Only a shared row object can reach that, and keeping the last
+    // registration would render one occurrence under the other's key.
+    const cap = capabilityFor(DESC_KEY_CONFIG);
+    const sharedRow = { factor: 2, desc: "Cheaper.", descKey: "frugal" } as const;
+    const technology = cap.technology("shared_nested_row", {
+      name: "Shared Nested Row Test",
+      area: "society",
+      tier: 1,
+      category: "biology",
+      technologySwap: [
+        {
+          name: "desc_key_test_tech_shared_nested_row_a",
+          weight: { modifiers: [sharedRow] },
+        },
+        {
+          name: "desc_key_test_tech_shared_nested_row_b",
+          weight: { modifiers: [sharedRow] },
+        },
+      ],
+    });
+
+    expect(() => cap.compile([cap.feature(undefined, [technology])])).toThrow(
+      /The same modifier row object is used twice under "desc_key_test_tech_shared_nested_row"/
+    );
+  });
+
   it("rejects a descKey that is not lowercase snake_case", () => {
     const cap = capabilityFor(DESC_KEY_CONFIG);
     const situation = cap.situationType("bad_key", {

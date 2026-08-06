@@ -353,3 +353,106 @@ describe("patching two registries in one mod", () => {
     expect(mod.compile([feature]).patchPlans).toHaveLength(2);
   });
 });
+
+/**
+ * Display text through both doors at once, in one mod: a technology renamed
+ * (vanilla's own slot keys, rewritten in the `replace/` layer) and a building
+ * given new text on a patched member (a key minted from the mod prefix, in the
+ * ordinary layer). The two are different mechanisms and land in different
+ * files, which is the whole reason there are two.
+ */
+describe("patched localization end to end", () => {
+  const refinery = vanilla.definition("building", "building_pp_refinery");
+
+  function localizedMod() {
+    const mod = createMod(makeConfig());
+    return mod.compile([
+      mod.feature(undefined, [
+        mod.technology("chimeric_grafts", {
+          name: "Chimeric Grafts",
+          area: "society",
+          tier: 3,
+          category: "biology",
+        }),
+        mod.patchTechnology(vanilla.definition("technology", "tech_gene_forging"), () => ({
+          name: "Chimeric Forging",
+          desc: "Now with grafts.",
+        })),
+        mod.patchBuilding(refinery, () => ({
+          planetLimit: {
+            base: 2,
+            modifiers: [{ add: 1, when: always(), desc: "Crowded world", descKey: "crowded" }],
+          },
+        })),
+      ]),
+    ]);
+  }
+
+  it("emits the replace layer beside the ordinary one", async () => {
+    const files = render(localizedMod());
+    expect([...files.keys()]).toEqual([
+      "descriptor.mod",
+      "common/technology/pp_mod_technology.txt",
+      "localisation/english/pp_mod_l_english.yml",
+      "localisation/replace/english/pp_mod_l_english.yml",
+      "common/buildings/pp_buildings_pp_mod_patch.txt",
+      "common/technology/pp_soc_tech_pp_mod_patch.txt",
+    ]);
+    // Full file: the BOM, the `l_english:` header, and vanilla's own keys in
+    // sorted order — nothing about it depends on which patch was authored first.
+    await expect(
+      files.get("localisation/replace/english/pp_mod_l_english.yml")
+    ).toMatchFileSnapshot(
+      "__snapshots__/patches/localisation__replace__english__pp_mod_l_english.yml"
+    );
+  });
+
+  it("mints the patched member's key into the ordinary layer, and emits it", () => {
+    const files = render(localizedMod());
+    // Prefixed by construction, so it cannot be a key vanilla already defines.
+    expect(files.get("localisation/english/pp_mod_l_english.yml")).toContain(
+      ' pp_mod_building_pp_refinery_planet_limit_crowded:0 "Crowded world"'
+    );
+    // And the patched body points at exactly that key.
+    expect(files.get("common/buildings/pp_buildings_pp_mod_patch.txt")).toContain(
+      "\t\t\tdesc = pp_mod_building_pp_refinery_planet_limit_crowded\n"
+    );
+  });
+
+  it("renames without touching the emitted body or the win assertions", () => {
+    const mod = localizedMod();
+    // A rename is localisation, not script: the technology patch file is the
+    // one a rename-free build emits, and no assertion is made about it — the
+    // replace layer wins by layer order, never by filename.
+    expect(mod.patchPlans.flatMap((plan) => plan.assertions).map((a) => a.registry)).toEqual([
+      "building",
+      "technology",
+    ]);
+    expect(mod.warnings).toEqual([]);
+  });
+
+  it("refuses an authored key that collides with a minted patch key", () => {
+    // A minted key lands in the ordinary layer beside every authored one, so
+    // it faces the same duplicate check — and the two spellings really can
+    // meet: the patch mints `<prefix>_tech_gene_forging_weight_modifier_x`,
+    // and a technology named `gene_forging_weight_modifier_x` has exactly that
+    // id, whose `name` slot writes exactly that key.
+    const mod = createMod(makeConfig());
+    const feature = mod.feature(undefined, [
+      mod.patchTechnology(vanilla.definition("technology", "tech_gene_forging"), () => ({
+        weightModifier: {
+          modifiers: [{ factor: 2, desc: "Because reasons", descKey: "x" }],
+        },
+      })),
+      mod.technology("gene_forging_weight_modifier_x", {
+        name: "Something else entirely",
+        area: "society",
+        tier: 1,
+        category: "biology",
+      }),
+    ]);
+    expect(() => mod.compile([feature])).toThrow(
+      'Duplicate localization key "pp_mod_tech_gene_forging_weight_modifier_x"'
+    );
+  });
+});

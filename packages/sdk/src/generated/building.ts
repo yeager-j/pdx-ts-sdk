@@ -161,6 +161,18 @@ export type DefinedBuilding<Id extends string = string> = DefinedContent<
  * key to win.
  */
 export interface BuildingPatch {
+  /**
+   * Replacement English text for vanilla's own `<vanilla id>` key.
+   * Emitted to `localisation/replace/`, the layer the game resolves ahead
+   * of the ordinary one — a rename, not a new key.
+   */
+  readonly name?: string;
+  /**
+   * Replacement English text for vanilla's own `<vanilla id>_desc` key.
+   * Emitted to `localisation/replace/`, the layer the game resolves ahead
+   * of the ordinary one — a rename, not a new key.
+   */
+  readonly desc?: string;
   readonly conditionalDesc?: PatchInput<BuildingDesc[]>;
   /** optional: default is no limit Mult by -1 to remove limit (still affected by is_capped_by_modifier = yes) */
   readonly districtLimit?: PatchInput<number | WeightBlock<"colony">>;

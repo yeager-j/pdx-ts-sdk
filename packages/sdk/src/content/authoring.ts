@@ -29,7 +29,8 @@ export interface DefinedContent<
 }
 
 type ContentDef = { readonly id: string };
-type LocalisationEntry = readonly [key: string, text: string];
+/** One `.yml` line's worth of localization, before any file is chosen for it. */
+export type LocalisationEntry = readonly [key: string, text: string];
 type RegisterLoc = (entries: readonly LocalisationEntry[]) => void;
 
 /**
@@ -83,7 +84,13 @@ class ContentDefinition<K extends string, D extends ContentDef> implements Defin
   }
 }
 
-function localisationKey(pattern: string, id: string): string {
+/**
+ * A localisation slot's key for one identity: the slot's declared pattern with
+ * `$` filled in. Shared with the patch path (`stellaris/vanilla/patch.ts`),
+ * which applies the very same pattern to the *vanilla* id it is renaming, so
+ * the replacement text lands on the key the game already reads.
+ */
+export function localisationKey(pattern: string, id: string): string {
   return pattern.replace("$", id);
 }
 
@@ -290,7 +297,13 @@ export class ContentAuthoring {
         continue;
       }
       if (field.shape === "weightBlock" || field.shape === "weightBlockWithLoc") {
-        this.collectModifierDescs(ownerId, fieldPath, raw as WeightBlock<ScopeName>, localisation);
+        this.collectModifierDescs(
+          ownerId,
+          fieldPath,
+          field.key,
+          raw as WeightBlock<ScopeName>,
+          localisation
+        );
         continue;
       }
       if (field.shape === "dual") {
@@ -371,23 +384,36 @@ export class ContentAuthoring {
    * sharing one `modifiers` array never collide on the same key either.
    *
    * The registration itself is keyed by the row object *and* by
-   * `${ownerId}::${fieldPath}` (this method's own two parameters, joined the
-   * same way `descOwnerKey` joins them on the render side) — not by the row
-   * object alone. An author can legally reuse the exact same row object
-   * across two definitions, or across two `WeightBlock` fields of one
-   * definition, and each occurrence needs to resolve its own key at
-   * lowering, not whichever occurrence happened to register last (PR #16
-   * review finding 3) — orthogonal to what determines the key's *value*
-   * above: SDK-48 fixed what the key is derived from, this fixes what the
-   * registration is keyed by, and both apply together.
+   * `${ownerId}::${fieldKey}` — the token `descOwnerKey` rebuilds on the
+   * render side — not by the row object alone. An author can legally reuse
+   * the exact same row object across two definitions, or across two
+   * `WeightBlock` fields of one definition, and each occurrence needs to
+   * resolve its own key at lowering, not whichever occurrence happened to
+   * register last (PR #16 review finding 3) — orthogonal to what determines
+   * the key's *value* above: SDK-48 fixed what the key is derived from, this
+   * fixes what the registration is keyed by, and both apply together.
+   *
+   * The token is the field's own key rather than `fieldPath`, because
+   * `fieldPath` is a thing only this walk knows: it accumulates enclosing
+   * `struct` keys and repeated indices, and the writer — which resolves the
+   * key from the row at lowering time — has neither. Keying registration by
+   * the path while lookup used the bare key made every desc'd row nested
+   * inside a `struct` (`technology_swap.weight`) unlowerable: the
+   * registration was real but unfindable, and `modifierEntry` threw as
+   * though the row had never been registered. `fieldPath` still derives the
+   * key's *value*, so two struct positions still emit distinct localisation
+   * keys; only the registration token is the coarser of the two, and
+   * {@link registerModifierDescKey} refuses a collision on it outright
+   * rather than letting one occurrence resolve another's key.
    */
   private collectModifierDescs(
     ownerId: string,
     fieldPath: string,
+    fieldKey: string,
     weight: WeightBlock<ScopeName>,
     into: LocalisationEntry[]
   ): void {
-    const ownerKey = `${ownerId}::${fieldPath}`;
+    const ownerKey = `${ownerId}::${fieldKey}`;
     weight.modifiers?.forEach((row, index) => {
       if (row.desc === undefined) {
         return;

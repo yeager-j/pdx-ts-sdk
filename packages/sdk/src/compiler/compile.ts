@@ -53,6 +53,12 @@ export function buildMod(
   const flat = flattenItems(features);
   const warnings: ModWarning[] = [];
   const localization = createLocalizationAccumulator(warnings);
+  // A second accumulator rather than a second bucket in the first: the two
+  // land in different files, and a replacement key is vanilla's own while
+  // every ordinary key is this mod's, so they cannot legitimately collide.
+  // What each one *can* collide with is another entry in its own file, and
+  // that is the check both of them still run.
+  const replaceLocalization = createLocalizationAccumulator(warnings);
   const refUses: ReferenceUse[] = [];
 
   const content = new ContentAuthoring(
@@ -277,6 +283,17 @@ export function buildMod(
 
   const patchesByRegistry = collectPatches(flat, options, refUses);
   const patches = [...patchesByRegistry.values()].flat();
+  // Registry then id: `patchesByRegistry` is keyed in the order the registries
+  // first appeared among the items, which is authoring order, and localization
+  // is registered in the order it is emitted (ADR-0005).
+  const locOrderedPatches = [...patches].sort(
+    (a, b) => compareUtf8(a.registry, b.registry) || compareUtf8(a.id, b.id)
+  );
+  for (const patched of locOrderedPatches) {
+    warnings.push(...patched.warnings);
+    localization.register(patched.loc);
+    replaceLocalization.register(patched.replaceLoc);
+  }
   validateReferences({
     prefix: config.prefix,
     contentFiles,
@@ -326,6 +343,7 @@ export function buildMod(
     events: orderedEvents,
     onActions,
     loc: localization.loc,
+    replaceLoc: replaceLocalization.loc,
     shipOfSizeLimits,
     patchPlans,
     vanillaPaths,

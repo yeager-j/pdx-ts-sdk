@@ -227,7 +227,27 @@ function assertCapabilityItem(item: ModItem, prefix: string): void {
       );
       return;
     case "patch":
+      // A patch keeps vanilla's id, so there is no id to hold to the prefix —
+      // that half of the old blanket exemption still stands. The other half
+      // does not: the capability binds its prefix into `patchX`, and every
+      // localisation key the patch mints is built from it, so an item minted
+      // by one capability and placed in another's feature would write the
+      // first's keys into the second's output. The baked prefix is what makes
+      // that ownership checkable at all.
+      if (item.patched.prefix !== prefix) {
+        throw new Error(
+          `The ${item.patched.registry} patch of "${item.patched.id}" was created by the ` +
+            `capability for mod prefix "${item.patched.prefix}", not "${prefix}", so it mints ` +
+            `localisation keys belonging to a different mod. Create the patch with the same ` +
+            "capability that places it."
+        );
+      }
+      return;
     case "contribution":
+      // Nothing prefix-bound: `addShipOfSizeLimits` is a free function that
+      // binds no prefix, and the ids it lists are held to the fold's own
+      // dangling-reference guard against the definitions this build actually
+      // contains. There is no capability identity baked in to disagree with.
       return;
   }
 }
@@ -284,7 +304,8 @@ export function createMod<const P extends string, const I extends IdProfile>(
   const owner: CapabilityFeatureOwner<P> = Object.freeze({ prefix: config.prefix });
   const content = contentCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
     mintContentId(config.prefix, ids),
-    assertNestedDefinitionId(config.prefix)
+    assertNestedDefinitionId(config.prefix),
+    config.prefix
   );
 
   return Object.freeze({

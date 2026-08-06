@@ -692,6 +692,7 @@ async function main(): Promise<void> {
       content.emission.patchExclusions
     );
     reportSection(`${content.registry} patch members widened`, content.emission.patchWidenings);
+    reportSection(`${content.registry} patch loc members`, content.emission.patchLocMembers);
   }
 }
 
@@ -736,6 +737,7 @@ function contentDefiners(
   const defaultProfileMembers: string[] = [];
   const capabilityRuntimeDefiners = new Set<string>();
   const nestedDefinitionTables: string[] = [];
+  const capabilityPatchTypes: { registry: string; emission: ContentEmission }[] = [];
 
   for (const content of contents) {
     const { registry, emission } = content;
@@ -876,13 +878,25 @@ function contentDefiners(
         docComment(
           [
             `Patches a vanilla ${spoken} as a whole-object override.`,
-            "Unlike a capability definition method, it mints no id and owns no new content.",
+            "Unlike a capability definition method, it mints no id and owns no new content —",
+            "but it does mint localisation keys for text it adds, from this capability's",
+            "prefix, which is why the method is bound to the capability rather than free.",
           ],
           "  "
-        ) + `  readonly patch${name}: typeof patch${name};`
+        ) +
+          `  patch${name}<Source extends Parsed${name}>(\n` +
+          `    ${camelCase(registry)}: Source,\n` +
+          `    patch: (${camelCase(registry)}: Source) => ${name}Patch\n` +
+          `  ): ${name}PatchItem;`
       );
-      capabilityBindings.push(`    patch${name},`);
+      capabilityBindings.push(
+        `    patch${name}: <Source extends Parsed${name}>(\n` +
+          `      ${camelCase(registry)}: Source,\n` +
+          `      patch: (${camelCase(registry)}: Source) => ${name}Patch\n` +
+          `    ) => patch${name}(${camelCase(registry)}, patch, prefix),`
+      );
       capabilityRuntimeDefiners.add(`patch${name}`);
+      capabilityPatchTypes.push(content);
     }
     if (contribution !== undefined) {
       capabilityMembers.push(
@@ -952,14 +966,26 @@ function contentDefiners(
           "and one-view checks stay in",
           "the internal fold, which sees every patch together, and the emitted filename",
           "is always resolver-computed — a patch item never carries a file of its own.",
+          "",
+          "`prefix` is the mod prefix the capability closure binds: a patch that mints a",
+          "localisation key of its own derives it from `<prefix>_<vanilla id>`, so the key",
+          "cannot collide with vanilla's by construction.",
         ]) +
           `export function patch${name}<Source extends Parsed${name}>(\n` +
           `  ${camelCase(registry)}: Source,\n` +
-          `  patch: (${camelCase(registry)}: Source) => ${name}Patch\n` +
+          `  patch: (${camelCase(registry)}: Source) => ${name}Patch,\n` +
+          `  prefix: string\n` +
           `): ${name}PatchItem {\n` +
           `  return {\n` +
           `    itemKind: "patch",\n` +
-          `    patched: patchContent(${camelCase(registry)}, patch, ${key}, ${emission.fieldsConstant}),\n` +
+          `    patched: patchContent(\n` +
+          `      ${camelCase(registry)},\n` +
+          `      patch,\n` +
+          `      ${key},\n` +
+          `      ${emission.fieldsConstant},\n` +
+          `      ${emission.localisationConstant},\n` +
+          `      prefix\n` +
+          `    ),\n` +
           "  };\n" +
           "}\n"
       );
@@ -1029,6 +1055,7 @@ function contentDefiners(
         }
         const names = [
           content.emission.fieldsConstant,
+          content.emission.localisationConstant,
           ...[
             ...types,
             `${content.emission.typeName}Patch`,
@@ -1051,6 +1078,16 @@ function contentDefiners(
     (capabilityRuntimeDefiners.size === 0
       ? ""
       : `import { ${[...capabilityRuntimeDefiners].sort().join(", ")} } from "./content-definers.ts";\n`) +
+    // The parsed side of every patchable registry: a capability's `patchX` is a
+    // closure over the prefix rather than a re-export, so its signature is
+    // spelled here and needs the same types the free function's does.
+    capabilityPatchTypes
+      .map(
+        (content) =>
+          `import type { Parsed${content.emission.typeName} } ` +
+          'from "../stellaris/vanilla/view.ts";\n'
+      )
+      .join("") +
     contents
       .map((content) =>
         importList(`./${content.registry.replaceAll("_", "-")}.ts`, [
@@ -1058,6 +1095,9 @@ function contentDefiners(
           ...(content.emission.scopeParameter === null
             ? []
             : [content.emission.scopeParameter.typeName]),
+          ...(CONTENT_PATCH_REGISTRIES.has(content.registry)
+            ? [`${content.emission.typeName}Patch`, `${content.emission.typeName}PatchItem`]
+            : []),
         ])
       )
       .join("") +
@@ -1112,7 +1152,8 @@ function contentDefiners(
     docComment(["Builds the internal content-method table for a mod capability."]) +
     "export function contentCapabilityMethods<P extends string, I extends IdProfile>(\n" +
     "  mint: ContentIdMinter<P, I>,\n" +
-    "  assertNestedId: NestedDefinitionIdAsserter\n" +
+    "  assertNestedId: NestedDefinitionIdAsserter,\n" +
+    "  prefix: P\n" +
     "): ContentCapabilityMethods<P, I> {\n" +
     "  return Object.freeze({\n" +
     capabilityBindings.join("\n") +
