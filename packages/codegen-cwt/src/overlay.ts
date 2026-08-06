@@ -993,6 +993,19 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "building.resources",
+    {
+      shape: "economicResources",
+      reason:
+        "buildings.cwt:242-246 declares the byte-identical `category`-beside-`economic_template`-" +
+        "splice that decision.resources, job.resources and megastructure.resources already lower " +
+        "this way, repeated 0..inf. The splice is plain economic_template, so cost/upkeep/" +
+        "produces are all game-legal. 458 shipped buildings write it (corpus gap SDK-62, whose " +
+        "acknowledgment claimed the `category` sibling made this lowering unusable — the " +
+        "megastructure rows falsified that).",
+    },
+  ],
+  [
     "tradition.modifier",
     {
       shape: "modifierBlock",

@@ -79,15 +79,6 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
   },
   {
     registry: "building",
-    field: "resources",
-    count: 458,
-    reason:
-      "A `category` sibling beside the `alias_name[economic_template]` splice; the " +
-      "economicResources lowering other registries use does not fit this declaration.",
-    issue: "SDK-62",
-  },
-  {
-    registry: "building",
     field: "inline_script",
     count: 285,
     reason: "CWT `macro[inline_script]`; needs first-class inline-script machinery.",

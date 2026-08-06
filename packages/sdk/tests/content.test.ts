@@ -157,6 +157,18 @@ function defineContentExample(): PureMod {
     canBuild: true,
     isCappedByModifier: true,
     allow: isCapital(),
+    // SDK-62: the same `category`-beside-economic_template splice job,
+    // decision and megastructure already lower. All three arms at once —
+    // 458 shipped buildings write this field, and cost/upkeep/produces is
+    // the shape most of them write.
+    resources: [
+      {
+        category: "planet_buildings",
+        cost: { amounts: { alloys: 300 } },
+        upkeep: { amounts: { energy: 5 }, when: isCapital(), multiplier: [1, 2] },
+        produces: { amounts: { physics_research: 10 } },
+      },
+    ],
     planetModifier: (m) => m.planet.jobs.engineering.research.produces.mult(0.1),
     showInTech: ["tech_basic_science_lab_1"],
     // A vanilla building: nothing in this fixture defines a second lab, and an
@@ -1090,6 +1102,25 @@ describe("generated content registries", () => {
     expect(localisation).toContain('content_test_megastructure_foundry_1:0 "Synthetic Foundry"');
     expect(localisation).toContain(
       'content_test_megastructure_foundry_1_MEGASTRUCTURE_DETAILS:0 "Constructs synthetic bodies at scale."'
+    );
+  });
+
+  it("writes a building's cost, upkeep and produces arms (SDK-62)", () => {
+    const rendered = files.get("common/buildings/content_test_buildings.txt")!;
+    // The `category` sibling sits beside the spliced arms, not inside one —
+    // the shape SDK-62's acknowledgment claimed economicResources could not
+    // carry, and the shape megastructure/job/decision already emit.
+    expect(rendered).toContain(
+      "\tresources = {\n\t\tcategory = planet_buildings\n\t\tcost = {\n\t\t\talloys = 300\n\t\t}"
+    );
+    // The splice is plain economic_template, so all three arms are legal —
+    // unlike the weapon/strike-craft rows, which admit no `produces`.
+    expect(rendered).toContain("\t\tproduces = {\n\t\t\tphysics_research = 10\n\t\t}");
+    // The upkeep arm's trigger is colony-scoped, which the rules state
+    // (`## push_scope = colony` on `building`) rather than an overlay row.
+    expect(rendered).toContain(
+      "\t\tupkeep = {\n\t\t\ttrigger = {\n\t\t\t\tis_capital = yes\n\t\t\t}\n" +
+        "\t\t\tenergy = 5\n\t\t\tmultiplier = 1\n\t\t\tmultiplier = 2\n\t\t}"
     );
   });
 
