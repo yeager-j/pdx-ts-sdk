@@ -1,6 +1,6 @@
 # Context Map
 
-`@pdx-ts/sdk` spans five bounded contexts. They do not share one language: a
+`@pdx-ts/sdk` spans six bounded contexts. They do not share one language: a
 word that is load-bearing in one is often meaningless in another, and several
 words change meaning as they cross a boundary. Each context's glossary is the
 authority for its own terms.
@@ -21,10 +21,9 @@ authority for its own terms.
 - [Simulation](./packages/sdk-testing/CONTEXT.md) — `packages/sdk-testing`.
   Interpreting recorded triggers and effects outside the game, over a
   whitelisted subset of its semantics.
-
-`packages/create-stellaris-mod` belongs to no context. It scaffolds a starter
-project and borrows Authoring's vocabulary wholesale; it introduces none of its
-own.
+- [Scaffolding](./packages/create-stellaris-mod/CONTEXT.md) —
+  `packages/create-stellaris-mod`. Turning generated field knowledge and
+  curated conventions into TypeScript source a mod author owns.
 
 ## Relationships
 
@@ -46,6 +45,15 @@ direction is stated in passing; the translation is the point.
   reclassifies a shape into a form itself. **`emit` means different things on
   the two sides**: writing TypeScript in CWT Codegen, writing PDXScript in
   Authoring.
+
+- **CWT Codegen → Scaffolding.** The Supported authoring model reaches
+  Scaffolding only through the generated Authoring surface against which
+  built-in recipes are compiled and built. No parallel field schema crosses
+  this edge; recipe topology and conventions are curated in Scaffolding.
+
+- **Scaffolding → Authoring.** A recipe emits TypeScript source containing one
+  Authoring **Feature**. An item recipe places one **Item** in it; a feature
+  recipe coordinates several.
 
 - **CWT Codegen → PDXScript Syntax.** Codegen uses the parser to read the
   corpus extracted from a real install. The dependency runs one way only, and

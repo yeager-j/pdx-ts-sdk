@@ -14,7 +14,7 @@ underneath it; `packages/codegen-cwt` and `packages/codegen-vanilla` are the two
 `packages/stellaris-ids` is the install-derived identifier package. Every gate below runs from
 the repository root.
 
-[CONTEXT-MAP.md](CONTEXT-MAP.md) is the vocabulary authority: it names this repo's five
+[CONTEXT-MAP.md](CONTEXT-MAP.md) is the vocabulary authority: it names this repo's six
 bounded contexts and links each one's glossary. When a word here is load-bearing, that is
 where it is defined — this file states process, not meaning. Decisions that would otherwise
 look arbitrary are recorded in `docs/adr/`.
