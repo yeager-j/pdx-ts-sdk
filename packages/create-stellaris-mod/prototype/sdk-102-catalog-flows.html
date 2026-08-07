@@ -1,0 +1,1404 @@
+<!doctype html>
+<!--
+  PROTOTYPE — throwaway, not production.
+
+  SDK-102: Prototype catalog discovery and the starter recipe flows.
+  Question: what should an author experience across `list`, `view`, the
+  searchable `generate` picker, the comprehensive technology/building
+  templates, the guided event flow, and the composed research-quest flow —
+  including intent-question order, shared answers, structural defaults,
+  cancellation, dry-run, and the generated source preview?
+
+  Open this file in any browser. No install, no server.
+
+  The Engine script below is a pure module (no DOM access) simulating the
+  future create-stellaris-mod catalog CLI per the closed decisions on
+  SDK-96/97/98/101. The page is a throwaway shell around it. API names in
+  the generated-source previews are illustrative, not final.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PROTOTYPE — create-stellaris-mod catalog flows (SDK-102)</title>
+<style>
+  :root {
+    --accent: #b8860b;
+    --accent-soft: #f5ecd7;
+    --ink: #26282e;
+    --muted: #6b7078;
+    --line: #e2e0da;
+    --paper: #faf9f6;
+    --card: #ffffff;
+    --term-bg: #16181f;
+    --term-ink: #d6d9e0;
+    --term-dim: #7a8090;
+    --term-accent: #e3b341;
+    --term-err: #e06c75;
+    --term-ok: #98c379;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
+  header h1 { font-size: 21px; margin: 0 0 6px; }
+  header .badge {
+    display: inline-block; background: var(--accent); color: #fff;
+    font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    padding: 2px 8px; border-radius: 4px; vertical-align: 3px; margin-right: 10px;
+  }
+  header p { margin: 0 0 4px; color: var(--muted); max-width: 78ch; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 22px 0 0; }
+  .tabs button {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 6px; padding: 6px 11px; font-size: 13px; cursor: pointer;
+  }
+  .tabs button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .scenario {
+    background: var(--accent-soft); border: 1px solid #e6d9b8; border-radius: 8px;
+    padding: 14px 16px; margin-top: 14px;
+  }
+  .scenario h2 { margin: 0 0 6px; font-size: 15px; }
+  .scenario p { margin: 0 0 10px; max-width: 90ch; }
+  .scenario .open-point { color: #8a6d1d; font-size: 13px; }
+  .steps { display: flex; flex-wrap: wrap; gap: 8px; }
+  .steps button {
+    border: 1px solid var(--accent); background: #fff; color: var(--ink);
+    border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+  }
+  .steps button:disabled { opacity: .35; cursor: default; }
+  .steps button.done { background: var(--accent); color: #fff; }
+  .steps .reset { border-color: var(--line); color: var(--muted); }
+  .cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; margin-top: 18px; }
+  @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
+  .panel-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; margin: 0 0 8px; }
+  #terminal {
+    background: var(--term-bg); color: var(--term-ink); border-radius: 10px;
+    padding: 16px 18px; font: 13px/1.6 ui-monospace, "SF Mono", Menlo, monospace;
+    min-height: 340px; max-height: 560px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  #terminal .dim { color: var(--term-dim); }
+  #terminal .acc { color: var(--term-accent); }
+  #terminal .err { color: var(--term-err); }
+  #terminal .ok { color: var(--term-ok); }
+  #terminal .choice-row { cursor: pointer; border-radius: 4px; }
+  #terminal .choice-row:hover { background: #232633; }
+  #terminal .prompt-input {
+    background: #232633; border: 1px solid #3a3f52; color: var(--term-ink);
+    font: inherit; border-radius: 4px; padding: 2px 8px; width: 320px; max-width: 80%;
+  }
+  #terminal .inline-btn {
+    background: #232633; border: 1px solid #3a3f52; color: var(--term-accent);
+    font: inherit; border-radius: 4px; padding: 1px 10px; cursor: pointer; margin-left: 6px;
+  }
+  .state-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .state-card h3 { margin: 0 0 8px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .state-card table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .state-card td, .state-card th { text-align: left; padding: 3px 8px 3px 0; vertical-align: top; }
+  .state-card th { color: var(--muted); font-weight: 600; }
+  .kv { color: var(--muted); }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; }
+  .cmdline {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px;
+    background: #f1efe9; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+    word-break: break-all;
+  }
+  .pill { display: inline-block; border-radius: 10px; padding: 0 8px; font-size: 11.5px; border: 1px solid var(--line); background: #f4f3ef; margin-left: 4px; }
+  .pill.active { background: #e7f3e2; border-color: #bcd9b0; }
+  .pill.commented { background: #fdf3da; border-color: #ecd9a2; }
+  .pill.omitted { background: #f6e4e2; border-color: #e4bcb8; color: #8c4a44; }
+  .pill.excluded { background: #f6e4e2; border-color: #e4bcb8; color: #8c4a44; }
+  .pill.included { background: #e7f3e2; border-color: #bcd9b0; }
+  .controls { margin-top: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .controls .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 10px; }
+  .controls .row:last-child { margin-bottom: 0; }
+  .controls label { font-size: 13px; color: var(--ink); display: inline-flex; align-items: center; gap: 5px; }
+  .controls select, .controls input[type=text] {
+    font: 13px system-ui; padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px; background: #fff;
+  }
+  .controls button {
+    border: 1px solid var(--accent); background: var(--accent); color: #fff;
+    border-radius: 6px; padding: 6px 13px; font-size: 13px; cursor: pointer;
+  }
+  .controls button.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+  .controls button.danger { background: #b3423a; border-color: #b3423a; }
+  .controls button:disabled { opacity: .4; cursor: default; }
+  .controls .sep { color: var(--line); }
+  #preview-wrap { margin-top: 18px; }
+  #preview {
+    background: var(--term-bg); color: var(--term-ink); border-radius: 10px;
+    padding: 16px 18px; font: 12.5px/1.55 ui-monospace, "SF Mono", Menlo, monospace;
+    overflow: auto; max-height: 720px; white-space: pre;
+  }
+  #preview .cmt { color: var(--term-dim); }
+  #preview .ph { color: var(--term-accent); font-weight: 600; }
+  .hint { font-size: 12.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1><span class="badge">PROTOTYPE</span>create-stellaris-mod — catalog &amp; generate flows</h1>
+    <p>What should an author experience across <b>list</b>, <b>view</b>, the searchable <b>generate</b> picker,
+       and the four starter recipes — question order, shared answers, defaults, cancellation, dry-run,
+       and the generated source preview? Click through the walkthroughs, or free-play below. Everything is
+       simulated; nothing touches disk. (SDK-102)</p>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="scenario-pane"></div>
+
+  <div class="cols">
+    <div>
+      <p class="panel-title">Terminal (simulated)</p>
+      <div id="terminal"></div>
+      <div class="controls" id="controls"></div>
+    </div>
+    <div>
+      <p class="panel-title">What the machine sees</p>
+      <div id="state"></div>
+    </div>
+  </div>
+
+  <div id="preview-wrap" hidden>
+    <p class="panel-title" id="preview-title">Generated source preview</p>
+    <div id="preview"></div>
+  </div>
+</main>
+
+<script>
+/* ============================================================
+   ENGINE — pure module, zero DOM access. The liftable part.
+   Simulates the catalog CLI per SDK-96/97/98/101 decisions.
+   ============================================================ */
+const Engine = (() => {
+  "use strict";
+
+  // ---------- small helpers (derive.ts-style) ----------
+  const kebab = (s) => s.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+  const slugify = (name) =>
+    String(name).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "unnamed";
+  const camel = (slug) => slug.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
+
+  // ---------- closed predicate algebra (SDK-97/98) ----------
+  function evalPredicate(p, answers) {
+    if (!p) return true;
+    if (p.all) return p.all.every((x) => evalPredicate(x, answers));
+    if (p.any) return p.any.some((x) => evalPredicate(x, answers));
+    if (p.not) return !evalPredicate(p.not, answers);
+    if (p.equals) return answers[p.equals[0]] === p.equals[1];
+    if (p.oneOf) return p.oneOf[1].includes(answers[p.oneOf[0]]);
+    if (p.present) return answers[p.present] !== undefined;
+    throw new Error("unknown predicate");
+  }
+  function predicateLabel(p) {
+    if (!p) return "always";
+    if (p.all) return p.all.map(predicateLabel).join(" and ");
+    if (p.any) return p.any.map(predicateLabel).join(" or ");
+    if (p.not) return "not (" + predicateLabel(p.not) + ")";
+    if (p.equals) return p.equals[0] + " = " + p.equals[1];
+    if (p.oneOf) return p.oneOf[0] + " in [" + p.oneOf[1].join(", ") + "]";
+    if (p.present) return p.present + " present";
+    return "?";
+  }
+
+  // ---------- the catalog value (SDK-98 shape, SDK-101 curation) ----------
+  // Derived, never stored: flag = kebab(key); Item/Feature = plan count;
+  // zero-question/guided = question count.
+  const eq = (k, v) => ({ equals: [k, v] });
+
+  const CATALOG = [
+    {
+      id: "technology",
+      title: "Starter technology",
+      summary: "One complete technology; every supported field visible, no questions.",
+      families: ["technology"],
+      questions: [],
+      plans: [
+        {
+          handle: "technology",
+          family: "technology",
+          idOf: (ctx) => ctx.prefix + "_" + ctx.slug,
+          surface: [
+            { field: "name", state: "active" },
+            { field: "desc", state: "active" },
+            { field: "area", state: "active", note: "closed domain: physics | society | engineering" },
+            { field: "category", state: "active", note: "typed reference to a technology category" },
+            { field: "tier", state: "active", note: "0..5" },
+            { field: "cost", state: "active", note: "scalar in the starter" },
+            { field: "weight", state: "commented", note: "weight in the research-deck draw" },
+            { field: "prerequisites", state: "commented", note: "typed references to earlier technologies" },
+            { field: "isRare", state: "commented", note: "rare techs draw less often" },
+            { field: "potential", state: "commented", note: "country-scoped gate" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "building",
+      title: "Starter building",
+      summary: "One ordinary planet building with category, set, build time, and resources.",
+      families: ["building"],
+      questions: [],
+      plans: [
+        {
+          handle: "building",
+          family: "building",
+          idOf: (ctx) => ctx.prefix + "_" + ctx.slug,
+          surface: [
+            { field: "name", state: "active" },
+            { field: "desc", state: "active" },
+            { field: "category", state: "active", note: "typed reference to a building category" },
+            { field: "buildingSets", state: "active", note: "every ordinary building belongs to a set" },
+            { field: "baseBuildtime", state: "active" },
+            { field: "resources", state: "active", note: "cost / upkeep / produces" },
+            { field: "prerequisites", state: "commented", note: "typed references to technologies" },
+            { field: "upgrades", state: "commented", note: "typed reference to a successor building" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "event",
+      title: "Starter event",
+      summary: "A single typed event — visible window or hidden effect.",
+      families: ["event"],
+      questions: [
+        {
+          key: "visibility",
+          message: "Visible window or hidden effect?",
+          kind: "select",
+          choices: [
+            { value: "visible", hint: "a window the player sees and answers" },
+            { value: "hidden", hint: "runs its effects silently" },
+          ],
+          default: "visible",
+          help: "Hidden events need no title or description.",
+        },
+        {
+          key: "eventKind",
+          message: "What does this event happen to?",
+          kind: "select",
+          choices: [
+            { value: "country" },
+            { value: "planet" },
+            { value: "ship" },
+            { value: "fleet" },
+          ],
+          default: "country",
+          help: "The kind selects the root scope every trigger and effect sees.",
+        },
+      ],
+      plans: [
+        {
+          handle: "event",
+          family: "event",
+          idOf: (ctx) => ctx.prefix + "_" + ctx.slug + ".1",
+          surface: [
+            { field: "title", state: "active", onlyWhen: eq("visibility", "visible") },
+            { field: "desc", state: "active", onlyWhen: eq("visibility", "visible") },
+            { field: "options", state: "active", onlyWhen: eq("visibility", "visible") },
+            { field: "picture", state: "commented", onlyWhen: eq("visibility", "visible"), note: "event window art" },
+            { field: "sound", state: "commented", onlyWhen: eq("visibility", "visible") },
+            { field: "hideWindow", state: "active", onlyWhen: eq("visibility", "hidden") },
+            { field: "isTriggeredOnly", state: "active" },
+            { field: "immediate", state: "active" },
+            { field: "trigger", state: "commented", note: "eligibility gate when fired by on-actions" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "research-quest",
+      title: "Research quest",
+      summary: "A situation-log quest: on-action entry, event chain, starter event, special project(s), completion.",
+      families: ["event-chain", "event", "special-project", "on-action"],
+      questions: [
+        {
+          key: "projects",
+          message: "How many special projects?",
+          kind: "select",
+          choices: [
+            { value: "one", hint: "a single research project" },
+            { value: "two", hint: "two competing paths — completing one cancels the other" },
+          ],
+          default: "one",
+          help: "Two projects become competing choices in the situation log.",
+        },
+      ],
+      plans: [
+        { handle: "event_chain", family: "event-chain", idOf: (c) => c.prefix + "_" + c.slug },
+        { handle: "completion_event_1", family: "event", idOf: (c) => c.prefix + "_" + c.slug + ".2" },
+        {
+          handle: "completion_event_2", family: "event",
+          includeWhen: eq("projects", "two"), idOf: (c) => c.prefix + "_" + c.slug + ".3",
+        },
+        { handle: "special_project_1", family: "special-project", idOf: (c) => c.prefix + "_" + c.slug + "_project_1" },
+        {
+          handle: "special_project_2", family: "special-project",
+          includeWhen: eq("projects", "two"), idOf: (c) => c.prefix + "_" + c.slug + "_project_2",
+          binding: "sameOptionGroupAs → handle(special_project_1)",
+        },
+        { handle: "starter_event", family: "event", idOf: (c) => c.prefix + "_" + c.slug + ".1" },
+        { handle: "on_action_entry", family: "on-action", idOf: () => "on_colony_2_years_old" },
+      ],
+    },
+  ];
+
+  const recipeById = (id) => CATALOG.find((r) => r.id === id);
+  const labelsOf = (r) => ({
+    composition: r.plans.length > 1 ? "Feature" : "Item",
+    interaction: r.questions.length === 0 ? "zero-question" : "guided",
+  });
+  const flagOf = (q) => "--" + kebab(q.key);
+
+  // ---------- transcript lines ----------
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const L = (html, cls) => ({ html, cls: cls || "" });
+  const plain = (text, cls) => L(esc(text), cls);
+
+  // ---------- list / view (project-independent, SDK-96) ----------
+  function renderList() {
+    const lines = [];
+    lines.push(plain("$ npx create-stellaris-mod list", "dim"));
+    lines.push(plain(""));
+    lines.push(plain("Recipe catalog (" + CATALOG.length + " recipes)"));
+    lines.push(plain(""));
+    for (const r of CATALOG) {
+      const l = labelsOf(r);
+      lines.push(L("  <span class='acc'>" + esc(r.id).padEnd(16) + "</span>" +
+        esc(l.composition + " · " + l.interaction).padEnd(26) + esc(r.title)));
+      lines.push(L("  " + "".padEnd(16) + "<span class='dim'>" + esc(r.summary) + "</span>"));
+      lines.push(L("  " + "".padEnd(16) + "<span class='dim'>families: " + esc(r.families.join(", ")) + "</span>"));
+      lines.push(plain(""));
+    }
+    lines.push(plain("Run `view <recipe>` for its questions and flags.", "dim"));
+    return lines;
+  }
+
+  function renderView(id) {
+    const r = recipeById(id);
+    const lines = [];
+    lines.push(plain("$ npx create-stellaris-mod view " + id, "dim"));
+    lines.push(plain(""));
+    if (!r) {
+      lines.push(plain("Unknown recipe: " + id, "err"));
+      return lines;
+    }
+    const l = labelsOf(r);
+    lines.push(L("<span class='acc'>" + esc(r.id) + "</span> — " + esc(r.title)));
+    lines.push(plain("  " + l.composition + " recipe · " + l.interaction + " · families: " + r.families.join(", ")));
+    lines.push(plain(""));
+    lines.push(plain("  " + r.summary));
+    lines.push(plain(""));
+    lines.push(plain("  Output   <content-directory>/<name>.ts   (one file; the feature owns it)"));
+    lines.push(plain(""));
+    lines.push(plain("  Arguments"));
+    lines.push(L("    <span class='acc'>[name]</span>   what the feature is called; prompted when omitted."));
+    lines.push(plain(""));
+    lines.push(plain("  Questions"));
+    if (r.questions.length === 0) {
+      lines.push(plain("    (none — every remaining value is edited in the generated source)", "dim"));
+    } else {
+      for (const q of r.questions) {
+        const choices = q.choices.map((c) => c.value).join("|");
+        lines.push(L("    <span class='acc'>" + esc(flagOf(q)) + "</span> &lt;" + esc(choices) + "&gt;   " +
+          esc(q.message) + " <span class='dim'>(default: " + esc(q.default) + ")</span>"));
+        if (q.help) lines.push(L("        <span class='dim'>" + esc(q.help) + "</span>"));
+        if (q.askWhen) lines.push(L("        <span class='dim'>asked when " + esc(predicateLabel(q.askWhen)) + "</span>"));
+      }
+    }
+    lines.push(plain(""));
+    lines.push(plain("  Deterministic run", "dim"));
+    const flagsDemo = r.questions.map((q) => " " + flagOf(q) + " " + q.default).join("");
+    lines.push(plain("    npx create-stellaris-mod generate " + r.id + " <name>" + flagsDemo + " --yes", "dim"));
+    return lines;
+  }
+
+  // ---------- generate session (state machine) ----------
+  function newSession(opts) {
+    // opts: { recipeId|null, nameArg|null, flags {key:value}, yes, dryRun, tty,
+    //         confirmWrite, env: { manifest: "ok"|"missing"|"invalid", collision } }
+    return {
+      ...opts,
+      phase: "start",
+      waiting: null,
+      answers: [],       // { key, label, value, source: "flag"|"prompt"|"default"|"argument" }
+      skipped: [],       // { key, why }
+      resolved: null,
+      lines: [],
+      exitCode: null,
+      done: false,
+    };
+  }
+  const answersRecord = (s) => Object.fromEntries(s.answers.map((a) => [a.key, a.value]));
+  const interactive = (s) => s.tty && !s.yes;
+
+  const MANIFEST = { prefix: "hello_galaxy", name: "Hello Galaxy", contentDirectory: "src/content" };
+
+  function finish(s, code) {
+    s.exitCode = code;
+    s.done = true;
+    s.waiting = null;
+    return s;
+  }
+
+  function recordAnswer(s, key, label, value, source) {
+    s.answers.push({ key, label, value, source });
+    const src =
+      source === "flag" ? " <span class='dim'>(from --" + esc(kebab(key)) + ")</span>" :
+      source === "default" ? " <span class='dim'>(default)</span>" :
+      source === "argument" ? " <span class='dim'>(argument)</span>" : "";
+    s.lines.push(L("<span class='ok'>◇</span>  " + esc(label) + " <span class='acc'>" + esc(String(value)) + "</span>" + src));
+  }
+
+  function advance(s) {
+    while (!s.done && !s.waiting) {
+      switch (s.phase) {
+        case "start": {
+          s.lines.push(L("<span class='dim'>$ " + esc(commandLine(s)) + "</span>"));
+          s.lines.push(plain(""));
+          s.lines.push(plain("┌  create-stellaris-mod"));
+          s.phase = "preflight";
+          break;
+        }
+        case "preflight": {
+          // SDK-96: manifest + SDK compatibility fail BEFORE any prompt.
+          if (s.env.manifest === "missing") {
+            s.lines.push(L("<span class='err'>└  No stellaris-mod.json found here or in any parent directory.</span>"));
+            s.lines.push(L("   <span class='dim'>generate needs a project. Run `init` first, or pass --cwd &lt;path&gt;.</span>"));
+            return finish(s, 1);
+          }
+          if (s.env.manifest === "invalid") {
+            s.lines.push(L("<span class='err'>└  stellaris-mod.json is invalid: expected exactly one mod entry.</span>"));
+            s.lines.push(L("   <span class='dim'>Fix the manifest; generate never repairs it.</span>"));
+            return finish(s, 1);
+          }
+          s.lines.push(L("│  <span class='dim'>project: " + esc(MANIFEST.name) + " (" + esc(MANIFEST.prefix) + ") · @pdx-ts/sdk compatible</span>"));
+          s.phase = s.recipeId ? "name" : "picker";
+          break;
+        }
+        case "picker": {
+          if (!interactive(s)) {
+            s.lines.push(L("<span class='err'>└  A recipe name is required when running non-interactively.</span>"));
+            s.lines.push(L("   <span class='dim'>Try: generate technology — or run `list` to see the catalog.</span>"));
+            return finish(s, 1);
+          }
+          s.waiting = { type: "picker", message: "Which recipe?", filter: "" };
+          return s;
+        }
+        case "name": {
+          if (s.nameArg) {
+            recordAnswer(s, "name", "Feature name", s.nameArg, "argument");
+            s.phase = "name-echo";
+          } else if (!interactive(s)) {
+            s.lines.push(L("<span class='err'>└  A name is required: pass it as an argument.</span>"));
+            s.lines.push(L("   <span class='dim'>generate " + esc(s.recipeId) + " &lt;name&gt; — there is no default name.</span>"));
+            return finish(s, 1);
+          } else {
+            s.waiting = { type: "text", message: "What is this feature called?", key: "name" };
+            return s;
+          }
+          break;
+        }
+        case "name-echo": {
+          const slug = slugify(answersRecord(s).name);
+          s.lines.push(L("│  <span class='dim'>will create <span class='acc'>" +
+            esc(MANIFEST.contentDirectory + "/" + slug + ".ts") + "</span>, ids prefixed <span class='acc'>" +
+            esc(MANIFEST.prefix + "_" + slug) + "</span></span>"));
+          s.qIndex = 0;
+          s.phase = "questions";
+          break;
+        }
+        case "questions": {
+          const r = recipeById(s.recipeId);
+          const record = answersRecord(s);
+          let advanced = false;
+          while (s.qIndex < r.questions.length) {
+            const q = r.questions[s.qIndex];
+            if (!evalPredicate(q.askWhen, record)) {
+              s.skipped.push({ key: q.key, why: predicateLabel(q.askWhen) + " is false" });
+              s.qIndex++;
+              continue;
+            }
+            const flagValue = s.flags[q.key];
+            if (flagValue !== undefined) {
+              recordAnswer(s, q.key, q.message, flagValue, "flag");
+              s.qIndex++;
+              continue;
+            }
+            if (!interactive(s)) {
+              recordAnswer(s, q.key, q.message, q.default, "default");
+              s.qIndex++;
+              continue;
+            }
+            s.waiting = { type: q.kind, message: q.message, key: q.key, choices: q.choices, default: q.default, help: q.help };
+            advanced = true;
+            break;
+          }
+          if (advanced) return s;
+          if (s.qIndex >= r.questions.length) s.phase = "resolve";
+          break;
+        }
+        case "resolve": {
+          const r = recipeById(s.recipeId);
+          s.resolved = resolve(r, answersRecord(s));
+          if (s.env.collision) {
+            s.lines.push(L("<span class='err'>└  Refusing to overwrite " + esc(s.resolved.file) + " — the file already exists.</span>"));
+            s.lines.push(L("   <span class='dim'>Generated source is yours once written; pick another name or move the file.</span>"));
+            return finish(s, 1);
+          }
+          if (s.dryRun) {
+            s.lines.push(plain("│"));
+            s.lines.push(plain("│  Would generate:"));
+            s.lines.push(L("│    <span class='acc'>" + esc(s.resolved.file) + "</span>"));
+            s.lines.push(L("└  <span class='dim'>Dry run — nothing was written.</span>"));
+            return finish(s, 0);
+          }
+          if (s.confirmWrite && interactive(s)) {
+            s.waiting = { type: "confirm", message: "Write " + s.resolved.file + "?", key: "__write" };
+            return s;
+          }
+          s.phase = "write";
+          break;
+        }
+        case "write": {
+          s.lines.push(L("<span class='ok'>└  Generated " + esc(s.resolved.file) + "</span>"));
+          return finish(s, 0);
+        }
+        default:
+          throw new Error("unknown phase " + s.phase);
+      }
+    }
+    return s;
+  }
+
+  function provide(s, value) {
+    const w = s.waiting;
+    if (!w) return s;
+    s.waiting = null;
+    if (w.type === "picker") {
+      s.recipeId = value;
+      s.lines.push(L("<span class='ok'>◇</span>  Which recipe? <span class='acc'>" + esc(value) + "</span>"));
+      s.phase = "name";
+    } else if (w.key === "name") {
+      recordAnswer(s, "name", "Feature name", value, "prompt");
+      s.phase = "name-echo";
+    } else if (w.key === "__write") {
+      if (value === true) {
+        s.lines.push(L("<span class='ok'>◇</span>  Write " + esc(s.resolved.file) + "? <span class='acc'>yes</span>"));
+        s.phase = "write";
+      } else {
+        s.lines.push(L("<span class='ok'>◇</span>  Write " + esc(s.resolved.file) + "? <span class='acc'>no</span>"));
+        s.lines.push(L("└  <span class='dim'>Nothing was written.</span>"));
+        return finish(s, 0), s;
+      }
+    } else {
+      recordAnswer(s, w.key, w.message, value, "prompt");
+      s.qIndex++;
+    }
+    return advance(s);
+  }
+
+  function cancel(s) {
+    if (s.done) return s;
+    s.waiting = null;
+    s.lines.push(plain("│"));
+    s.lines.push(L("<span class='err'>└  Nothing was written.</span> <span class='dim'>(exit 130)</span>"));
+    return finish(s, 130), s;
+  }
+
+  function commandLine(s) {
+    let cmd = "npx create-stellaris-mod generate";
+    if (s.recipeId) cmd += " " + s.recipeId;
+    if (s.nameArg) cmd += ' "' + s.nameArg + '"';
+    for (const [k, v] of Object.entries(s.flags)) cmd += " --" + kebab(k) + " " + v;
+    if (s.yes) cmd += " --yes";
+    if (s.dryRun) cmd += " --dry-run";
+    return cmd;
+  }
+
+  // ---------- resolution → Resolved plans (predicate-free; the SDK-103 seam) ----------
+  function resolve(recipe, answers) {
+    const slug = slugify(answers.name || "unnamed");
+    const ctx = { prefix: MANIFEST.prefix, slug, camel: camel(slug), answers };
+    const plans = recipe.plans.map((p) => {
+      const included = evalPredicate(p.includeWhen, answers);
+      return {
+        handle: p.handle,
+        family: p.family,
+        included,
+        why: included ? null : predicateLabel(p.includeWhen) + " is false",
+        id: included ? p.idOf(ctx) : null,
+        binding: p.binding || null,
+        fields: (p.surface || []).map((f) => ({
+          field: f.field,
+          state: evalPredicate(f.onlyWhen, answers) ? f.state : "omitted",
+          note: f.note || null,
+        })),
+      };
+    });
+    const file = MANIFEST.contentDirectory + "/" + slug + ".ts";
+    return { plans, file, source: SOURCES[recipe.id](ctx, plans) };
+  }
+
+  // ---------- generated-source builders (hand-written per family) ----------
+  // Template surface: required/selected structure ACTIVE with unmistakable
+  // placeholders; optional fields COMMENTED type-correct examples; alternative
+  // arms separate commented choices; branch-impossible fields OMITTED.
+  const PH = (label) => '"PLACEHOLDER: ' + label + '"';
+
+  function techSource(ctx) {
+    const c = ctx.camel;
+    return [
+      "/**",
+      " * " + (ctx.answers.name || "Unnamed") + " — a technology.",
+      " *",
+      " * Generated by create-stellaris-mod. This file is yours: edit the",
+      " * placeholders, uncomment what you need, delete what you do not.",
+      " */",
+      'import { mod } from "../mod.ts";',
+      "",
+      "export const " + c + " = mod.technology(" + JSON.stringify(ctx.slug) + ", {",
+      "  name: " + PH("display name") + ",",
+      "  desc: " + PH("one-line description") + ",",
+      '  area: "physics", // one of: physics | society | engineering',
+      '  category: "computing", // a technology-category id',
+      "  tier: 1, // 0..5; prerequisites conventionally point one tier down",
+      "  cost: 1000,",
+      "",
+      "  // optional: weight in the research-deck draw.",
+      "  // weight: 100,",
+      "",
+      "  // optional: earlier technologies this one requires.",
+      '  // prerequisites: ["tech_basic_science_lab_1"],',
+      "",
+      "  // optional: rare technologies draw less often and render purple.",
+      "  // isRare: true,",
+      "",
+      "  // optional: country-scoped gate on who can ever draw this.",
+      "  // potential: hasCountryFlag(flags." + ctx.prefix + "_some_flag),",
+      "});",
+      "",
+      "export const feature = mod.feature(" + JSON.stringify(ctx.slug) + ", [" + c + "]);",
+      "",
+    ].join("\n");
+  }
+
+  function buildingSource(ctx) {
+    const c = ctx.camel;
+    return [
+      "/**",
+      " * " + (ctx.answers.name || "Unnamed") + " — a planet building.",
+      " *",
+      " * Generated by create-stellaris-mod. This file is yours.",
+      " */",
+      'import { mod } from "../mod.ts";',
+      "",
+      "export const " + c + " = mod.building(" + JSON.stringify(ctx.slug) + ", {",
+      "  name: " + PH("display name") + ",",
+      "  desc: " + PH("one-line description") + ",",
+      '  category: "research", // a building-category id',
+      '  buildingSets: ["standard"], // every ordinary building belongs to at least one set',
+      "  baseBuildtime: 360,",
+      "  resources: {",
+      '    category: "planet_buildings",',
+      "    cost: { minerals: 500 },",
+      "    upkeep: { energy: 2 },",
+      "    produces: { physics_research: 4 },",
+      "  },",
+      "",
+      "  // optional: technologies required before this appears.",
+      '  // prerequisites: ["tech_basic_science_lab_1"],',
+      "",
+      "  // optional: the building this upgrades into.",
+      '  // upgrades: ["building_' + ctx.slug + '_2"],',
+      "});",
+      "",
+      "export const feature = mod.feature(" + JSON.stringify(ctx.slug) + ", [" + c + "]);",
+      "",
+    ].join("\n");
+  }
+
+  function eventSource(ctx) {
+    const c = ctx.camel;
+    const kind = ctx.answers.eventKind || "country";
+    const hidden = ctx.answers.visibility === "hidden";
+    const lines = [
+      "/**",
+      " * " + (ctx.answers.name || "Unnamed") + " — a " + (hidden ? "hidden" : "visible") + " " + kind + " event.",
+      " *",
+      " * Generated by create-stellaris-mod. This file is yours.",
+      " */",
+      'import { mod } from "../mod.ts";',
+      "",
+      "const events = mod.namespace(" + JSON.stringify(ctx.slug) + ");",
+      "",
+      "export const " + c + " = events." + kind + "(1, {",
+    ];
+    if (hidden) {
+      lines.push("  hideWindow: true, // no window: title, desc, and options are omitted");
+    } else {
+      lines.push("  title: " + PH("window title") + ",");
+      lines.push("  desc: " + PH("event text") + ",");
+    }
+    lines.push("  isTriggeredOnly: true, // fired by script; flip to false for a spontaneous event");
+    if (!hidden) {
+      lines.push("");
+      lines.push("  // optional: art and sound for the event window.");
+      lines.push('  // picture: vanilla.sprite("GFX_evt_alien_nature"),');
+      lines.push('  // sound: "event_default",');
+    }
+    lines.push("");
+    lines.push("  // optional: eligibility gate when fired by an on-action.");
+    lines.push("  // trigger: isAtWar(),");
+    lines.push("");
+    lines.push("  immediate: (" + kind + ") => {");
+    lines.push("    " + kind + '.log("PLACEHOLDER: immediate effects");');
+    lines.push("  },");
+    if (!hidden) {
+      lines.push("  options: [");
+      lines.push("    {");
+      lines.push("      name: " + PH("option label") + ",");
+      lines.push("      // optional: effects when the option is picked.");
+      lines.push("      // do: (" + kind + ") => { ... },");
+      lines.push("    },");
+      lines.push("  ],");
+    }
+    lines.push("});");
+    lines.push("");
+    lines.push("export const feature = mod.feature(" + JSON.stringify(ctx.slug) + ", [" + c + "]);");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+  function questSource(ctx, plans) {
+    const two = ctx.answers.projects === "two";
+    const s = ctx.slug;
+    const lines = [
+      "/**",
+      " * " + (ctx.answers.name || "Unnamed") + " — a research quest.",
+      " *",
+      " * One situation-log chain: an on-action fires the starter event, the",
+      " * starter begins the chain and enables " + (two ? "two competing special projects" : "a special project") + ",",
+      " * and completion events end the chain.",
+      " *",
+      " * Items are declared reference-first (completion events before the",
+      " * projects that fire them) because definitions are evaluated eagerly.",
+      " * Generated by create-stellaris-mod. This file is yours.",
+      " */",
+      'import { mod } from "../mod.ts";',
+      "",
+      "const events = mod.namespace(" + JSON.stringify(s) + ");",
+      "",
+      "export const chain = mod.eventChain(" + JSON.stringify(s) + ", {",
+      "  title: " + PH("quest title") + ",",
+      "  desc: " + PH("quest description") + ",",
+      '  icon: "GFX_event_chain_icon_default",',
+      '  picture: "GFX_evt_default",',
+      "  // optional: situation-log grouping.",
+      '  // category: "developments",',
+      "  // optional: progress counters shown in the situation log.",
+      "  // counters: { clues_found: { max: 3 } },",
+      "});",
+      "",
+      "export const projectComplete = events.planet(2, {",
+      '  from: "country",',
+      "  title: " + PH("completion title") + ",",
+      "  desc: " + PH("completion text") + ",",
+      "  isTriggeredOnly: true,",
+      "  immediate: (planet, ctx) => {",
+      "    ctx.from.effects((country) => country.endEventChain(chain));",
+      "  },",
+      "  options: [{ name: " + PH("acknowledge") + " }],",
+      "});",
+      "",
+    ];
+    if (two) {
+      lines.push(
+        "export const rivalComplete = events.planet(3, {",
+        '  from: "country",',
+        "  title: " + PH("second completion title") + ",",
+        "  desc: " + PH("second completion text") + ",",
+        "  isTriggeredOnly: true,",
+        "  immediate: (planet, ctx) => {",
+        "    ctx.from.effects((country) => country.endEventChain(chain));",
+        "  },",
+        "  options: [{ name: " + PH("acknowledge") + " }],",
+        "});",
+        ""
+      );
+    }
+    lines.push(
+      "export const project = mod.specialProject(" + JSON.stringify(s + "_project_1") + ", {",
+      "  name: " + PH("project name") + ",",
+      "  desc: " + PH("project description") + ",",
+      "  eventChain: chain,",
+      '  eventScope: "planet_event", // success effects run in planet scope',
+      "  cost: 1000, // society/physics/engineering research points",
+      '  techDepartment: "society",',
+      "  // optional: fail the project after a deadline.",
+      "  // daysLimit: 360,",
+      "  onSuccess: (planet) => {",
+      "    planet.planetEvent({ id: projectComplete });",
+      "  },",
+      "});",
+      ""
+    );
+    if (two) {
+      lines.push(
+        "export const rivalProject = mod.specialProject(" + JSON.stringify(s + "_project_2") + ", {",
+        "  name: " + PH("second project name") + ",",
+        "  desc: " + PH("second project description") + ",",
+        "  eventChain: chain,",
+        '  eventScope: "planet_event",',
+        "  cost: 5000,",
+        '  techDepartment: "engineering",',
+        "  sameOptionGroupAs: project, // typed handle — completing one cancels the other",
+        "  onSuccess: (planet) => {",
+        "    planet.planetEvent({ id: rivalComplete });",
+        "  },",
+        "});",
+        ""
+      );
+    }
+    lines.push(
+      "export const start = events.planet(1, {",
+      '  from: "country",',
+      "  title: " + PH("discovery title") + ",",
+      "  desc: " + PH("discovery text") + ",",
+      "  isTriggeredOnly: true,",
+      "  immediate: (planet, ctx) => {",
+      "    ctx.from.effects((country) => {",
+      "      country.beginEventChain({ chain, target: planet });",
+      "    });",
+      "    planet.enableSpecialProject(project);"
+    );
+    if (two) lines.push("    planet.enableSpecialProject(rivalProject);");
+    lines.push(
+      "  },",
+      "  options: [{ name: " + PH("acknowledge") + " }],",
+      "});",
+      "",
+      "export const hook = mod.onAction(\"on_colony_2_years_old\", {",
+      "  // a weighted roll among every valid candidate event.",
+      "  randomEvents: [{ weight: 3, event: start }],",
+      "  // alternative: fire deterministically for every valid colony instead.",
+      "  // events: [start],",
+      "});",
+      "",
+      "export const feature = mod.feature(" + JSON.stringify(s) + ", [",
+      "  chain,",
+      "  projectComplete,"
+    );
+    if (two) lines.push("  rivalComplete,");
+    lines.push("  project,");
+    if (two) lines.push("  rivalProject,");
+    lines.push(
+      "  start,",
+      "  hook,",
+      "]);",
+      ""
+    );
+    return lines.join("\n");
+  }
+
+  const SOURCES = {
+    technology: techSource,
+    building: buildingSource,
+    event: eventSource,
+    "research-quest": questSource,
+  };
+
+  return {
+    CATALOG, MANIFEST, recipeById, labelsOf, flagOf, kebab, slugify,
+    evalPredicate, predicateLabel,
+    renderList, renderView,
+    newSession, advance, provide, cancel, commandLine, answersRecord,
+  };
+})();
+</script>
+
+<script>
+/* ============================================================
+   SHELL — throwaway page around the engine. Not liftable.
+   ============================================================ */
+(() => {
+  "use strict";
+  const E = Engine;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  const ui = {
+    env: { manifest: "ok", collision: false },
+    fp: { recipe: "", name: "", flags: {}, yes: false, dryRun: false, tty: true, confirm: true },
+    session: null,
+    output: null, // list/view transcript when no session
+    tab: 0,
+    stepDone: 0,
+  };
+
+  // ---------- actions (used by free-play AND scenario steps) ----------
+  function doList() {
+    ui.session = null;
+    ui.output = E.renderList();
+    renderAll();
+  }
+  function doView(id) {
+    ui.session = null;
+    ui.output = E.renderView(id);
+    renderAll();
+  }
+  function startGenerate() {
+    const fp = ui.fp;
+    const s = E.newSession({
+      recipeId: fp.recipe || null,
+      nameArg: fp.name.trim() || null,
+      flags: { ...fp.flags },
+      yes: fp.yes,
+      dryRun: fp.dryRun,
+      tty: fp.tty,
+      confirmWrite: fp.confirm,
+      env: { ...ui.env },
+    });
+    ui.output = null;
+    ui.session = E.advance(s);
+    renderAll();
+  }
+  function give(value) {
+    if (!ui.session || !ui.session.waiting) return;
+    E.provide(ui.session, value);
+    renderAll();
+  }
+  function doCancel() {
+    if (!ui.session || ui.session.done) return;
+    E.cancel(ui.session);
+    renderAll();
+  }
+  function pickerFilter(str) {
+    if (ui.session && ui.session.waiting && ui.session.waiting.type === "picker") {
+      ui.session.waiting.filter = str;
+      renderAll(true);
+    }
+  }
+  function setFp(patch) { Object.assign(ui.fp, patch); renderAll(); }
+  function setFlags(patch) {
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === "") delete ui.fp.flags[k];
+      else ui.fp.flags[k] = v;
+    }
+    renderAll();
+  }
+  function setEnv(patch) { Object.assign(ui.env, patch); renderAll(); }
+  function resetAll(fpPatch) {
+    ui.env = { manifest: "ok", collision: false };
+    ui.fp = { recipe: "", name: "", flags: {}, yes: false, dryRun: false, tty: true, confirm: true };
+    if (fpPatch) Object.assign(ui.fp, fpPatch);
+    ui.session = null;
+    ui.output = null;
+    renderAll();
+  }
+
+  // ---------- terminal ----------
+  function renderTerminal(keepFocus) {
+    const t = $("terminal");
+    const lines = ui.session ? ui.session.lines : (ui.output || []);
+    let html = lines.map((l) => "<div class='" + l.cls + "'>" + (l.html || "&nbsp;") + "</div>").join("");
+    if (!ui.session && !ui.output) {
+      html = "<div class='dim'>No command yet. Use a walkthrough above, or the free-play controls below.</div>";
+    }
+    const w = ui.session && ui.session.waiting;
+    if (w) {
+      html += "<div>&nbsp;</div>";
+      if (w.type === "picker") {
+        html += "<div><span class='acc'>◆</span>  " + esc(w.message) +
+          "  <input class='prompt-input' id='picker-input' placeholder='type to filter…' value='" + esc(w.filter) + "' /></div>";
+        const matches = E.CATALOG.filter((r) =>
+          (r.id + " " + r.title).toLowerCase().includes(w.filter.toLowerCase()));
+        if (matches.length === 0) html += "<div class='dim'>│  (no recipe matches)</div>";
+        for (const r of matches) {
+          const l = E.labelsOf(r);
+          html += "<div class='choice-row' data-pick='" + esc(r.id) + "'>│  <span class='acc'>○ " +
+            esc(r.id) + "</span> <span class='dim'>— " + esc(r.title) + " (" + l.composition + " · " + l.interaction + ")</span></div>";
+        }
+        html += "<div class='dim'>│  esc cancels — same as Ctrl+C</div>";
+      } else if (w.type === "select") {
+        html += "<div><span class='acc'>◆</span>  " + esc(w.message) + "</div>";
+        if (w.help) html += "<div class='dim'>│  " + esc(w.help) + "</div>";
+        for (const c of w.choices) {
+          const mark = c.value === w.default ? "●" : "○";
+          const defNote = c.value === w.default ? " <span class='dim'>(default)</span>" : "";
+          const hint = c.hint ? " <span class='dim'>— " + esc(c.hint) + "</span>" : "";
+          html += "<div class='choice-row' data-answer='" + esc(c.value) + "'>│  <span class='acc'>" +
+            mark + " " + esc(c.value) + "</span>" + defNote + hint + "</div>";
+        }
+      } else if (w.type === "text") {
+        html += "<div><span class='acc'>◆</span>  " + esc(w.message) +
+          "  <input class='prompt-input' id='text-input' placeholder='e.g. Gauss Cannons' />" +
+          "<button class='inline-btn' id='text-submit'>enter</button></div>";
+      } else if (w.type === "confirm") {
+        html += "<div><span class='acc'>◆</span>  " + esc(w.message) +
+          "  <button class='inline-btn' data-confirm='yes'>Yes</button><button class='inline-btn' data-confirm='no'>no</button></div>";
+      }
+    }
+    t.innerHTML = html;
+    t.scrollTop = t.scrollHeight;
+
+    for (const el of t.querySelectorAll("[data-pick]")) el.onclick = () => give(el.dataset.pick);
+    for (const el of t.querySelectorAll("[data-answer]")) el.onclick = () => give(el.dataset.answer);
+    for (const el of t.querySelectorAll("[data-confirm]")) el.onclick = () => give(el.dataset.confirm === "yes");
+    const pi = $("picker-input");
+    if (pi) {
+      pi.oninput = () => pickerFilter(pi.value);
+      pi.onkeydown = (ev) => { if (ev.key === "Escape") doCancel(); };
+      if (keepFocus) { pi.focus(); pi.setSelectionRange(pi.value.length, pi.value.length); }
+    }
+    const ti = $("text-input");
+    if (ti) {
+      const submit = () => { if (ti.value.trim()) give(ti.value.trim()); };
+      ti.onkeydown = (ev) => { if (ev.key === "Enter") submit(); if (ev.key === "Escape") doCancel(); };
+      $("text-submit").onclick = submit;
+      ti.focus();
+    }
+  }
+
+  // ---------- state panel ----------
+  function renderState() {
+    const s = ui.session;
+    const fp = ui.fp;
+    let html = "";
+
+    html += "<div class='state-card'><h3>Command being built</h3><div class='cmdline'>" +
+      esc(previewCommand()) + "</div>" +
+      "<div class='hint' style='margin-top:6px'>Every question's flag is its kebab-cased answer key — the non-TTY path `view` teaches.</div></div>";
+
+    html += "<div class='state-card'><h3>Environment</h3><table>" +
+      "<tr><td class='kv'>stellaris-mod.json</td><td>" + esc(ui.env.manifest) +
+      (ui.env.manifest === "ok" ? " <span class='mono dim'>(" + esc(E.MANIFEST.prefix) + " · " + esc(E.MANIFEST.contentDirectory) + ")</span>" : "") + "</td></tr>" +
+      "<tr><td class='kv'>terminal</td><td>" + (fp.tty ? "interactive (TTY)" : "non-TTY (CI)") + "</td></tr>" +
+      "<tr><td class='kv'>target file collision</td><td>" + (ui.env.collision ? "yes — a file already exists" : "no") + "</td></tr>" +
+      "</table></div>";
+
+    if (s) {
+      const phase = s.done
+        ? (s.exitCode === 0 ? "finished (exit 0)" : s.exitCode === 130 ? "cancelled (exit 130)" : "refused (exit " + s.exitCode + ")")
+        : s.waiting ? "waiting on: " + esc(s.waiting.message) : s.phase;
+      html += "<div class='state-card'><h3>Session</h3><table>" +
+        "<tr><td class='kv'>phase</td><td>" + phase + "</td></tr>" +
+        "<tr><td class='kv'>mode</td><td>" + (s.yes ? "--yes " : "") + (s.dryRun ? "--dry-run " : "") + (s.tty ? "TTY" : "non-TTY") + "</td></tr>" +
+        "</table></div>";
+
+      if (s.answers.length) {
+        html += "<div class='state-card'><h3>Answer record (shared by every plan)</h3><table>" +
+          "<tr><th>key</th><th>value</th><th>came from</th></tr>" +
+          s.answers.map((a) => "<tr><td class='mono'>" + esc(a.key) + "</td><td>" + esc(String(a.value)) +
+            "</td><td class='kv'>" + a.source + "</td></tr>").join("") + "</table>";
+        if (s.skipped.length) {
+          html += "<div class='hint' style='margin-top:6px'>skipped: " +
+            s.skipped.map((k) => esc(k.key) + " (" + esc(k.why) + ")").join("; ") + "</div>";
+        }
+        html += "</div>";
+      }
+
+      if (s.resolved) {
+        const r = s.resolved;
+        html += "<div class='state-card'><h3>Resolved plans (predicate-free — what rendering sees)</h3><table>" +
+          "<tr><th>handle</th><th>family</th><th></th></tr>" +
+          r.plans.map((p) => "<tr><td class='mono'>" + esc(p.handle) + "</td><td>" + esc(p.family) + "</td><td>" +
+            (p.included
+              ? "<span class='pill included'>included</span> <span class='mono dim'>" + esc(p.id) + "</span>" +
+                (p.binding ? "<div class='hint mono'>" + esc(p.binding) + "</div>" : "")
+              : "<span class='pill excluded'>excluded</span> <span class='hint'>" + esc(p.why) + "</span>") +
+            "</td></tr>").join("") + "</table></div>";
+
+        const fielded = r.plans.filter((p) => p.included && p.fields.length);
+        for (const p of fielded) {
+          html += "<div class='state-card'><h3>Template surface — " + esc(p.handle) + "</h3><div>" +
+            p.fields.map((f) => "<span class='pill " + f.state + "' title='" + esc(f.note || "") + "'>" +
+              esc(f.field) + " · " + f.state + "</span>").join(" ") +
+            "</div><div class='hint' style='margin-top:6px'>active = real code with placeholders · commented = type-correct example to uncomment · omitted = impossible for this branch</div></div>";
+        }
+
+        html += "<div class='state-card'><h3>Planned files</h3><div class='mono'>" + esc(r.file) +
+          "</div><div class='hint'>One authored Feature file — Item and Feature recipes alike.</div></div>";
+      }
+    } else {
+      html += "<div class='state-card'><h3>Session</h3><div class='hint'>No generate session running.</div></div>";
+    }
+    $("state").innerHTML = html;
+  }
+
+  function previewCommand() {
+    if (ui.session) return E.commandLine(ui.session);
+    const fp = ui.fp;
+    let cmd = "npx create-stellaris-mod generate";
+    if (fp.recipe) cmd += " " + fp.recipe;
+    if (fp.name.trim()) cmd += ' "' + fp.name.trim() + '"';
+    for (const [k, v] of Object.entries(fp.flags)) cmd += " --" + E.kebab(k) + " " + v;
+    if (fp.yes) cmd += " --yes";
+    if (fp.dryRun) cmd += " --dry-run";
+    return cmd;
+  }
+
+  // ---------- free-play controls ----------
+  function renderControls() {
+    const fp = ui.fp;
+    let html = "";
+    html += "<div class='row'>" +
+      "<button id='c-list' class='secondary'>list</button>" +
+      "<label>view <select id='c-view'><option value=''>…</option>" +
+      E.CATALOG.map((r) => "<option>" + esc(r.id) + "</option>").join("") + "</select></label>" +
+      "<span class='sep'>│</span>" +
+      "<label>recipe <select id='c-recipe'><option value=''>(picker)</option>" +
+      E.CATALOG.map((r) => "<option " + (fp.recipe === r.id ? "selected" : "") + ">" + esc(r.id) + "</option>").join("") +
+      "</select></label>" +
+      "<label>name <input type='text' id='c-name' placeholder='(prompted if empty)' value='" + esc(fp.name) + "' /></label>" +
+      "<button id='c-generate'>generate</button>" +
+      "<button id='c-cancel' class='danger' " + (ui.session && ui.session.waiting ? "" : "disabled") + ">Ctrl+C</button>" +
+      "</div>";
+
+    const rec = fp.recipe && E.recipeById(fp.recipe);
+    if (rec && rec.questions.length) {
+      html += "<div class='row'><span class='hint'>flags:</span>" + rec.questions.map((q) => {
+        const cur = fp.flags[q.key] || "";
+        return "<label class='mono'>" + esc(E.flagOf(q)) + " <select data-flag='" + esc(q.key) + "'>" +
+          "<option value=''>(not set)</option>" +
+          q.choices.map((c) => "<option " + (cur === c.value ? "selected" : "") + ">" + esc(c.value) + "</option>").join("") +
+          "</select></label>";
+      }).join("") + "</div>";
+    }
+
+    html += "<div class='row'>" +
+      "<label><input type='checkbox' id='c-yes' " + (fp.yes ? "checked" : "") + " /> --yes</label>" +
+      "<label><input type='checkbox' id='c-dry' " + (fp.dryRun ? "checked" : "") + " /> --dry-run</label>" +
+      "<label><input type='checkbox' id='c-tty' " + (fp.tty ? "checked" : "") + " /> TTY</label>" +
+      "<label><input type='checkbox' id='c-confirm' " + (fp.confirm ? "checked" : "") + " /> confirm before write <span class='hint'>(open point)</span></label>" +
+      "<span class='sep'>│</span>" +
+      "<label>manifest <select id='c-manifest'>" +
+      ["ok", "missing", "invalid"].map((m) => "<option " + (ui.env.manifest === m ? "selected" : "") + ">" + m + "</option>").join("") +
+      "</select></label>" +
+      "<label><input type='checkbox' id='c-collision' " + (ui.env.collision ? "checked" : "") + " /> target file exists</label>" +
+      "</div>";
+
+    const el = $("controls");
+    el.innerHTML = html;
+    $("c-list").onclick = doList;
+    $("c-view").onchange = (ev) => { if (ev.target.value) doView(ev.target.value); ev.target.value = ""; };
+    $("c-recipe").onchange = (ev) => setFp({ recipe: ev.target.value, flags: {} });
+    $("c-name").onchange = (ev) => setFp({ name: ev.target.value });
+    $("c-generate").onclick = startGenerate;
+    $("c-cancel").onclick = doCancel;
+    for (const sel of el.querySelectorAll("[data-flag]")) {
+      sel.onchange = () => setFlags({ [sel.dataset.flag]: sel.value });
+    }
+    $("c-yes").onchange = (ev) => setFp({ yes: ev.target.checked });
+    $("c-dry").onchange = (ev) => setFp({ dryRun: ev.target.checked });
+    $("c-tty").onchange = (ev) => setFp({ tty: ev.target.checked });
+    $("c-confirm").onchange = (ev) => setFp({ confirm: ev.target.checked });
+    $("c-manifest").onchange = (ev) => setEnv({ manifest: ev.target.value });
+    $("c-collision").onchange = (ev) => setEnv({ collision: ev.target.checked });
+  }
+
+  // ---------- source preview ----------
+  function renderPreview() {
+    const wrap = $("preview-wrap");
+    const s = ui.session;
+    if (!s || !s.resolved || s.exitCode === 130 || (s.done && s.exitCode !== 0 && !s.dryRun)) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    $("preview-title").textContent =
+      (s.dryRun ? "What would be written — " : "Generated source — ") + s.resolved.file;
+    const html = s.resolved.source.split("\n").map((line) => {
+      let cls = "";
+      if (/^\s*(\/\/|\/\*|\*)/.test(line)) cls = "cmt";
+      let e = esc(line);
+      e = e.replace(/PLACEHOLDER: [^&"]*/g, (m) => "<span class='ph'>" + m + "</span>");
+      return "<div class='" + cls + "'>" + (e || "&nbsp;") + "</div>";
+    }).join("");
+    $("preview").innerHTML = html;
+  }
+
+  // ---------- scenarios ----------
+  const SCENARIOS = [
+    {
+      title: "Free play",
+      prose: "Poke at anything: run list/view, start generate with any combination of recipe, name, flags, " +
+        "--yes, --dry-run, TTY, manifest state, and collisions. The right panel always shows what the machine sees.",
+      open: "",
+      steps: [],
+    },
+    {
+      title: "1 · Discovery",
+      prose: "An author who has never seen the catalog. `list` shows every recipe with both derived labels " +
+        "(Item/Feature, zero-question/guided) and the families it touches. `view research-quest` adds every question " +
+        "with its flag, choices, help line, and the output filename pattern — the non-TTY path to a deterministic --yes run.",
+      open: "Open point: is research-quest's view still readable at this length?",
+      steps: [
+        { label: "Run list", run: () => { resetAll(); doList(); } },
+        { label: "View research-quest", run: () => doView("research-quest") },
+      ],
+    },
+    {
+      title: "2 · Picker search",
+      prose: "Bare `generate` with no recipe opens a searchable picker. Type to filter; each row carries the summary " +
+        "and labels so choosing doesn't require a prior `list`.",
+      open: "Open point: how much detail belongs in a picker row? Should esc equal Ctrl+C (it does here)?",
+      steps: [
+        { label: "Start bare generate", run: () => { resetAll(); startGenerate(); } },
+        { label: "Type “bu”", run: () => pickerFilter("bu") },
+        { label: "Choose building", run: () => give("building") },
+        { label: "Name it “Geothermal Vents”", run: () => give("Geothermal Vents") },
+        { label: "Confirm the write", run: () => give(true) },
+      ],
+    },
+    {
+      title: "3 · Technology + dry-run",
+      prose: "The zero-question comprehensive template. With a name argument there is nothing to ask: the run goes " +
+        "straight from preflight to the plan. --dry-run stops after resolution and prints the one file it would write — " +
+        "deterministically, because rendering only ever sees the resolved plan.",
+      open: "Open point: technology is classified zero-question, yet the name still has to come from somewhere. " +
+        "Here it's a positional argument with a prompt fallback — react to that.",
+      steps: [
+        { label: "generate technology “Gauss Cannons” --dry-run", run: () => { resetAll({ recipe: "technology", name: "Gauss Cannons", dryRun: true }); startGenerate(); } },
+        { label: "Re-run without --dry-run", run: () => { setFp({ dryRun: false }); startGenerate(); } },
+        { label: "Confirm the write", run: () => give(true) },
+      ],
+    },
+    {
+      title: "4 · Building: active vs commented",
+      prose: "The comprehensive building template. In the preview: category, building set, build time, and resources " +
+        "are active with unmistakable placeholders; prerequisites and upgrades are commented, type-correct examples. " +
+        "The template-surface chips on the right mirror the same tri-state.",
+      open: "",
+      steps: [
+        { label: "generate building “Geothermal Vents”", run: () => { resetAll({ recipe: "building", name: "Geothermal Vents" }); startGenerate(); } },
+        { label: "Confirm the write", run: () => give(true) },
+      ],
+    },
+    {
+      title: "5 · Event, visible (defaults)",
+      prose: "The guided flow. Question order: visibility first (it decides which fields can exist at all), then kind " +
+        "(it selects the root scope). Accept both defaults and the preview activates title, desc, and options.",
+      open: "Open point: should the default choice be preselected on Enter, clack-style? Here it's just marked ●.",
+      steps: [
+        { label: "generate event “Distress Signal”", run: () => { resetAll({ recipe: "event", name: "Distress Signal" }); startGenerate(); } },
+        { label: "Answer: visible (the default)", run: () => give("visible") },
+        { label: "Answer: country (the default)", run: () => give("country") },
+        { label: "Confirm the write", run: () => give(true) },
+      ],
+    },
+    {
+      title: "6 · Event, hidden branch",
+      prose: "Same recipe, other branch. Answer hidden and watch title, desc, options, picture, and sound flip to " +
+        "omitted in the template surface — impossible fields are not commented, they are gone. hideWindow appears active " +
+        "instead. The help line under the prompt is the one curated conclusion, never a statistic.",
+      open: "",
+      steps: [
+        { label: "generate event “Silent Purge”", run: () => { resetAll({ recipe: "event", name: "Silent Purge" }); startGenerate(); } },
+        { label: "Answer: hidden", run: () => give("hidden") },
+        { label: "Answer: country", run: () => give("country") },
+        { label: "Confirm the write", run: () => give(true) },
+      ],
+    },
+    {
+      title: "7 · Research quest: shared answers, two projects",
+      prose: "The composed Feature recipe. One name answer flows into every plan's id — chain, events, projects. " +
+        "Answer “two” and two excluded plans join the resolved set: the rival project (bound to project 1 via a " +
+        "typed handle, sameOptionGroupAs) and its completion event. Still one generated file.",
+      open: "Open point: the generated file declares completion events before the projects that fire them " +
+        "(reference-first). Does that read acceptably?",
+      steps: [
+        { label: "generate research-quest “Buried Signals”", run: () => { resetAll({ recipe: "research-quest", name: "Buried Signals" }); startGenerate(); } },
+        { label: "Answer: two projects", run: () => give("two") },
+        { label: "Confirm the write", run: () => give(true) },
+      ],
+    },
+    {
+      title: "8 · Cancellation",
+      prose: "Ctrl+C at any prompt abandons everything: “Nothing was written.”, exit 130, no partial state, no " +
+        "file. The session panel shows nothing resolved.",
+      open: "",
+      steps: [
+        { label: "generate research-quest “Buried Signals”", run: () => { resetAll({ recipe: "research-quest", name: "Buried Signals" }); startGenerate(); } },
+        { label: "Ctrl+C at the question", run: () => doCancel() },
+      ],
+    },
+    {
+      title: "9 · Flags win; --yes is deterministic",
+      prose: "Every question's flag beats its prompt: with --visibility hidden --event-kind planet --yes there are no " +
+        "prompts at all — flag-supplied answers echo dimmed, defaults fill anything left. Run it twice: identical output. " +
+        "Then flip to non-TTY and drop the name: the run fails loudly instead of hanging, because a name has no default.",
+      open: "",
+      steps: [
+        { label: "generate event with flags + --yes", run: () => { resetAll({ recipe: "event", name: "Silent Purge", yes: true, flags: { visibility: "hidden", eventKind: "planet" } }); startGenerate(); } },
+        { label: "Run it again (identical)", run: () => startGenerate() },
+        { label: "Non-TTY, no name → loud failure", run: () => { setFp({ name: "", tty: false }); startGenerate(); } },
+      ],
+    },
+    {
+      title: "10 · Refusals",
+      prose: "Two guard rails. A missing (or invalid) project manifest fails before any prompt — generate never asks " +
+        "questions it can't act on. And a target-file collision refuses after resolution, before writing: generated " +
+        "source is author-owned, so the tool never overwrites.",
+      open: "",
+      steps: [
+        { label: "No manifest → fails before prompting", run: () => { resetAll({ recipe: "technology", name: "Gauss Cannons" }); setEnv({ manifest: "missing" }); startGenerate(); } },
+        { label: "Manifest ok, file exists → refuses to overwrite", run: () => { setEnv({ manifest: "ok", collision: true }); startGenerate(); } },
+      ],
+    },
+  ];
+
+  function renderTabs() {
+    $("tabs").innerHTML = SCENARIOS.map((sc, i) =>
+      "<button class='" + (ui.tab === i ? "on" : "") + "' data-tab='" + i + "'>" + esc(sc.title) + "</button>").join("");
+    for (const b of document.querySelectorAll("[data-tab]")) {
+      b.onclick = () => {
+        ui.tab = Number(b.dataset.tab);
+        ui.stepDone = 0;
+        resetAll();
+      };
+    }
+  }
+
+  function renderScenario() {
+    const sc = SCENARIOS[ui.tab];
+    let html = "<div class='scenario'><h2>" + esc(sc.title) + "</h2><p>" + esc(sc.prose) + "</p>";
+    if (sc.open) html += "<p class='open-point'>" + esc(sc.open) + "</p>";
+    if (sc.steps.length) {
+      html += "<div class='steps'>" + sc.steps.map((st, i) => {
+        const cls = i < ui.stepDone ? "done" : "";
+        const dis = i > ui.stepDone ? "disabled" : "";
+        return "<button class='" + cls + "' data-step='" + i + "' " + dis + ">" + (i + 1) + ". " + esc(st.label) + "</button>";
+      }).join("") + "<button class='reset' data-step='reset'>↺ start over</button></div>";
+    }
+    html += "</div>";
+    $("scenario-pane").innerHTML = html;
+    for (const b of document.querySelectorAll("[data-step]")) {
+      b.onclick = () => {
+        if (b.dataset.step === "reset") { ui.stepDone = 0; resetAll(); return; }
+        const i = Number(b.dataset.step);
+        if (i !== ui.stepDone) return;
+        ui.stepDone++;
+        SCENARIOS[ui.tab].steps[i].run();
+      };
+    }
+  }
+
+  function renderAll(keepFocus) {
+    renderTabs();
+    renderScenario();
+    renderTerminal(keepFocus);
+    renderState();
+    renderControls();
+    renderPreview();
+  }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
