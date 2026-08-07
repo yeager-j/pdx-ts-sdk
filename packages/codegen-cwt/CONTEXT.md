@@ -37,6 +37,13 @@ Every place the generated API deliberately departs from a mechanical reading of
 the rules, each row carrying its reason. The audited exception list, not a
 patch file.
 
+**Supported authoring model**:
+The canonical post-overlay representation of the game forms the SDK chooses to
+author. The public TypeScript surface is its generated projection; Scaffolding
+proves built-in recipes against that surface rather than consuming a second
+schema projection.
+_Avoid_: raw CWT model, prompt schema, runtime descriptor
+
 **Graft**:
 A hand-written definer re-exported in place of the mechanical one, where the
 generic emitter cannot produce the right surface.

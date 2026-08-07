@@ -46,9 +46,10 @@ direction is stated in passing; the translation is the point.
   the two sides**: writing TypeScript in CWT Codegen, writing PDXScript in
   Authoring.
 
-- **CWT Codegen → Scaffolding.** Mechanically derived field facts become the
-  prompt schema an item recipe reads. Recipe topology does not cross this edge:
-  it is curated in Scaffolding rather than inferred from field legality.
+- **CWT Codegen → Scaffolding.** The Supported authoring model reaches
+  Scaffolding only through the generated Authoring surface against which
+  built-in recipes are compiled and built. No parallel field schema crosses
+  this edge; recipe topology and conventions are curated in Scaffolding.
 
 - **Scaffolding → Authoring.** A recipe emits TypeScript source containing one
   Authoring **Feature**. An item recipe places one **Item** in it; a feature
