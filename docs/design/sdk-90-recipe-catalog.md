@@ -313,7 +313,9 @@ not an Intent question.
 ### Discovery
 
 - Bare `generate` opens a type-to-filter picker with title, Item/Feature label,
-  and short summary.
+  and short summary when prompting is available. When stdin is non-TTY, the
+  recipe id and name are both required; `generate --yes` without either fails
+  before Project Manifest discovery.
 - `list` prints deterministic summaries and requires no project.
 - `view <recipe>` prints metadata, every question/flag/choice/Default/help, the
   output filename pattern, and a copyable `generate` command. It requires no
@@ -327,22 +329,27 @@ not an Intent question.
 2. Discover and validate the Project Manifest.
 3. Validate `#mod`, `contentDirectory`, and SDK compatibility.
 4. Resolve or prompt for the name and derive all names once.
-5. Echo the target path and logical-name facts.
+5. In interactive mode, present the target path and logical-name facts through
+   the terminal adapter on stderr. Non-interactive runs omit this preview.
 6. Resolve each static question in order: a supplied flag wins; `--yes` and
    non-TTY operation use Default answers; otherwise prompt.
 7. Call the pure Catalog and obtain Generated Feature Source.
-8. Preflight the target dirent.
+8. Perform a non-mutating preflight of the target and its existing ancestors.
 9. In interactive mode, confirm the exact target path.
-10. Print byte-identical dry-run output or publish exclusively.
+10. Print byte-identical dry-run output or create any missing directories and
+    publish exclusively.
 
 Cancellation at any prompt prints `Nothing was written.` and exits 130.
-Non-TTY operation without a name fails rather than hanging. Successful real
-generation prints only the generated path.
+Cancellation and dry-run leave missing content directories absent. Non-TTY
+operation without a recipe id or name fails rather than hanging. Successful
+real generation writes exactly the generated path plus one newline to stdout;
+interactive previews, answer-source echoes, prompts, and confirmation remain
+on stderr.
 
-Dry-run performs every preflight and renders the exact bytes a real run would
-publish. It prints `would write <path>` plus the source. If the target exists,
-it also reports that a real run would refuse but still exits zero; failures that
-prevent rendering remain nonzero.
+Dry-run performs every non-mutating preflight and renders the exact bytes a real
+run would publish. It prints `would write <path>` plus the source to stdout. If
+the target exists, it also reports that a real run would refuse but still exits
+zero; failures that prevent rendering remain nonzero.
 
 ## Source formatting
 
@@ -368,30 +375,37 @@ on Prettier or any TypeScript printer.
 - Resolve the discovered Project Manifest root to its real path.
 - Walk every existing `contentDirectory` segment with `lstat`; every segment
   must be a real directory, never a symlink or other dirent.
-- Create missing segments one at a time, then verify them the same way.
-- Resolve the final directory and require real-path containment beneath the
-  manifest root before rendering or writing.
+- At the first missing segment, record the remaining suffix and stop. Preflight
+  never creates a directory.
+- Resolve the deepest existing ancestor and require real-path containment
+  beneath the manifest root before rendering or prompting for confirmation.
 
 The target basename comes only from validated name derivation. The publisher
 must never replace any existing dirent, including a file, directory, or
 symlink:
 
-1. Create an unpredictable temporary file in the target directory with
+1. After confirmation, create missing `contentDirectory` segments one at a
+   time. If a segment races into existence, inspect it rather than accepting
+   it; every resulting segment must be a real directory, never a symlink.
+2. Resolve the completed directory and require real-path containment beneath
+   the manifest root again.
+3. Create an unpredictable temporary file in the target directory with
    exclusive creation.
-2. Write the complete bytes, flush them, and close the file.
-3. Publish with an atomic no-replace operation. On supported local filesystems,
+4. Write the complete bytes, flush them, and close the file.
+5. Publish with an atomic no-replace operation. On supported local filesystems,
    hard-linking the temporary file to the target provides this guarantee:
    `EEXIST` is a collision, never permission to overwrite.
-4. Unlink the temporary name after publication. A crash between link and
+6. Unlink the temporary name after publication. A crash between link and
    cleanup may leave a complete target plus an orphaned temporary file, never a
    partial or replaced target.
-5. If the filesystem cannot provide the no-replace guarantee, fail loudly. Do
+7. If the filesystem cannot provide the no-replace guarantee, fail loudly. Do
    not fall back to ordinary `rename`, whose overwrite semantics make a prior
    `lstat` race-unsafe.
 
 Tests use real temporary directories and cover traversal, absolute paths,
 symlinked ancestors, every target-dirent kind, a target introduced at the
-publication boundary, cleanup, and unsupported-publication failure.
+publication boundary, cleanup, unsupported-publication failure, and missing
+directories remaining absent after dry-run or cancellation.
 
 ## Verification gates
 
@@ -446,9 +460,9 @@ formatted, and show no source injection.
 - Programmatic CLI invocation uses injected stdin/stdout/stderr and returns an
   exit code. Golden transcripts cover `list`, every `view`, Default and
   flag-supplied generation, dry-run, invalid flags, invalid manifest/SDK,
-  collisions, cancellation, and missing non-TTY name.
+  collisions, cancellation, missing non-TTY recipe, and missing non-TTY name.
 - Interactive tests cover picker/question order, flag-beats-prompt, echoing the
-  answer source, confirm-before-write, and exit 130.
+  answer source, confirm-before-write, exit 130, and stderr/stdout separation.
 - One child-process smoke test invokes the real binary once to prove argv,
   shebang, filesystem wiring, and actual process exit behavior.
 - Real-filesystem tests prove containment and exclusive publication. Filesystem
