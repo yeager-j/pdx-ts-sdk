@@ -70,9 +70,12 @@ const HEADER = `/**
 /**
  * The technology's fields, as source lines at zero indent.
  *
- * Active fields first, then the two optional examples. Each example is
- * uncomment-ready against the imports and names this file already has, which is
- * the whole test of whether an example belongs in a starter at all.
+ * Active fields first, then the two optional examples. Each example compiles as
+ * written the moment its `// ` is removed — it names nothing this file does not
+ * already have — which is the whole test of whether an example belongs in a
+ * starter at all, and which `recipe-matrix.test.ts` uncomments and compiles
+ * rather than taking on trust. So the cross-file idiom is prose: the example
+ * itself uses a vanilla id, which is a plain string the SDK accepts.
  */
 function fields(names: DerivedNames): readonly string[] {
   return [
@@ -83,11 +86,10 @@ function fields(names: DerivedNames): readonly string[] {
     `tier: 1,`,
     `cost: 2000,`,
     "",
-    "// Technologies that have to be researched first. Every feature file exports",
-    "// its items, so import one and list it here:",
-    "//",
-    '//   import { plasmaWeapons } from "./plasma_weapons.ts";',
-    "//   prerequisites: [plasmaWeapons],",
+    "// Technologies that must be researched first. A vanilla technology is a plain",
+    "// string, checked against the game when @pdx-ts/stellaris-ids is installed; one",
+    "// of your own is the binding another feature file exports, imported as usual.",
+    '// prerequisites: ["tech_basic_science_lab_1"],',
     "",
     "// How likely the game is to offer this as a research option next to the",
     "// others in its category. 100 is the conventional starting weight.",

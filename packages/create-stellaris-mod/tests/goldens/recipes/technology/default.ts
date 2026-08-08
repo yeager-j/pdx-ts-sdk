@@ -21,11 +21,10 @@ export const resonanceTheory = mod.technology("resonance_theory", {
   tier: 1,
   cost: 2000,
 
-  // Technologies that have to be researched first. Every feature file exports
-  // its items, so import one and list it here:
-  //
-  //   import { plasmaWeapons } from "./plasma_weapons.ts";
-  //   prerequisites: [plasmaWeapons],
+  // Technologies that must be researched first. A vanilla technology is a plain
+  // string, checked against the game when @pdx-ts/stellaris-ids is installed; one
+  // of your own is the binding another feature file exports, imported as usual.
+  // prerequisites: ["tech_basic_science_lab_1"],
 
   // How likely the game is to offer this as a research option next to the
   // others in its category. 100 is the conventional starting weight.
