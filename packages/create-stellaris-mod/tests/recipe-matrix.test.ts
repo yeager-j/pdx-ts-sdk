@@ -57,13 +57,16 @@ async function prettier(source: string): Promise<string> {
 }
 
 describe("the source matrix", () => {
-  it("has exactly one reachable variant in this release", () => {
+  it("has exactly three reachable variants in this release", () => {
     const counts = CATALOG.list().map((summary) => ({
       id: summary.id,
       variants: variants(CATALOG.view(summary.id).questions).length,
     }));
-    expect(counts).toEqual([{ id: "technology", variants: 1 }]);
-    expect(counts.reduce((total, recipe) => total + recipe.variants, 0)).toBe(1);
+    expect(counts).toEqual([
+      { id: "research-quest", variants: 2 },
+      { id: "technology", variants: 1 },
+    ]);
+    expect(counts.reduce((total, recipe) => total + recipe.variants, 0)).toBe(3);
   });
 });
 
@@ -125,6 +128,121 @@ describe("technology, with its only answer set", () => {
         expect(project.outFiles()).toEqual([technology, "descriptor.mod", localization]);
         expect(project.readOut(technology)).toContain(`${PREFIX}_tech_${STEM}`);
         expect(project.readOut(localization)).toContain(NAME);
+      },
+      COMPILER_TIMEOUT
+    );
+  });
+});
+
+describe.each([["one"], ["two"]] as const)("research-quest, answering projects=%s", (projects) => {
+  const generated = CATALOG.generate({
+    recipeId: "research-quest",
+    name: NAME,
+    answers: { projects },
+  });
+
+  it("names the file after the derived stem", () => {
+    expect(generated.stem).toBe(STEM);
+    expect(generated.basename).toBe(`${STEM}.ts`);
+  });
+
+  it("matches the reviewed golden byte for byte", () => {
+    expectGolden(`recipes/research-quest/${projects}.ts`, generated.contents);
+  });
+
+  it("renders the same bytes a second time", () => {
+    const again = CATALOG.generate({
+      recipeId: "research-quest",
+      name: NAME,
+      answers: { projects },
+    });
+    expect(again.contents).toBe(generated.contents);
+  });
+
+  it("is already formatted, so an author's first `npm run format` is a no-op", async () => {
+    expect(await prettier(generated.contents)).toBe(generated.contents);
+  });
+
+  it("ends with exactly one newline and carries no trailing whitespace", () => {
+    expect(generated.contents.endsWith("\n")).toBe(true);
+    expect(generated.contents.endsWith("\n\n")).toBe(false);
+    expect(generated.contents.split("\n").filter((line) => /\s$/.test(line))).toEqual([]);
+  });
+
+  describe("in a real project", () => {
+    let project: GoldenProject;
+
+    beforeAll(() => {
+      project = createGoldenProject();
+      project.place(generated.basename, generated.contents);
+    }, COMPILER_TIMEOUT);
+
+    afterAll(() => project?.dispose());
+
+    it(
+      "typechecks against the real SDK surface",
+      () => {
+        const result = project.typecheck();
+        expect(result.output).toBe("");
+        expect(result.status).toBe(0);
+      },
+      COMPILER_TIMEOUT
+    );
+
+    it(
+      "builds, and emits every coordinated registry file",
+      () => {
+        const result = project.build();
+        expect(result.status, result.output).toBe(0);
+
+        const chain = `common/event_chains/${PREFIX}_${STEM}.txt`;
+        const onActions = `common/on_actions/${PREFIX}_on_actions.txt`;
+        const specialProjects = `common/special_projects/${PREFIX}_${STEM}.txt`;
+        const events = `events/${PREFIX}_${STEM}.txt`;
+        const localization = `localisation/english/${PREFIX}_${STEM}_l_english.yml`;
+        expect(project.outFiles()).toEqual([
+          chain,
+          onActions,
+          specialProjects,
+          "descriptor.mod",
+          events,
+          localization,
+        ]);
+
+        expect(project.readOut(chain)).toContain(`${PREFIX}_event_chain_${STEM}`);
+
+        const projectsOut = project.readOut(specialProjects);
+        if (projects === "one") {
+          expect(projectsOut).toContain(`key = ${PREFIX}_special_project_${STEM}\n`);
+          expect(projectsOut).not.toContain("same_option_group_as");
+        } else {
+          expect(projectsOut).toContain(`key = ${PREFIX}_special_project_${STEM}_1`);
+          expect(projectsOut).toContain(`key = ${PREFIX}_special_project_${STEM}_2`);
+          expect(projectsOut).toContain(
+            `same_option_group_as = { ${PREFIX}_special_project_${STEM}_1 }`
+          );
+        }
+
+        const eventsOut = project.readOut(events);
+        expect(eventsOut).toContain(`namespace = ${PREFIX}_${STEM}`);
+        expect(eventsOut).toContain(`id = ${PREFIX}_${STEM}.1`);
+        expect(eventsOut).toContain(`id = ${PREFIX}_${STEM}.2`);
+        if (projects === "one") {
+          expect(eventsOut).not.toContain(`id = ${PREFIX}_${STEM}.3`);
+        } else {
+          expect(eventsOut).toContain(`id = ${PREFIX}_${STEM}.3`);
+        }
+        expect(eventsOut).toContain("is_triggered_only = yes");
+        expect(eventsOut).toContain(`begin_event_chain`);
+        expect(eventsOut).toContain(`end_event_chain = ${PREFIX}_event_chain_${STEM}`);
+
+        const onActionsOut = project.readOut(onActions);
+        expect(onActionsOut).toContain("on_game_start_country");
+        expect(onActionsOut).toContain(`${PREFIX}_${STEM}.1`);
+
+        const localizationOut = project.readOut(localization);
+        expect(localizationOut).toContain(NAME);
+        expect(localizationOut).toContain("PLACEHOLDER:");
       },
       COMPILER_TIMEOUT
     );
@@ -201,11 +319,30 @@ describe("the commented examples", () => {
     "compile as written, once their `// ` is removed",
     () => {
       const generated = CATALOG.generate({ recipeId: "technology", name: NAME, answers: {} });
-      const { source, uncommented } = uncomment(generated.contents);
+      const { source, uncommented } = uncomment(generated.contents, ["prerequisites", "weight"]);
       expect(uncommented, "both examples must actually have been uncommented").toEqual([
         "prerequisites",
         "weight",
       ]);
+
+      project.place(generated.basename, source);
+      const result = project.typecheck();
+      expect(result.output).toBe("");
+      expect(result.status).toBe(0);
+    },
+    COMPILER_TIMEOUT
+  );
+
+  it.each([["one"], ["two"]] as const)(
+    "compile as written in research-quest projects=%s, once their `// ` is removed",
+    (projects) => {
+      const generated = CATALOG.generate({
+        recipeId: "research-quest",
+        name: NAME,
+        answers: { projects },
+      });
+      const { source, uncommented } = uncomment(generated.contents, ["timelimit"]);
+      expect(uncommented, "the example must actually have been uncommented").toEqual(["timelimit"]);
 
       project.place(generated.basename, source);
       const result = project.typecheck();
@@ -221,14 +358,18 @@ describe("the commented examples", () => {
  * fields it found — an example that stopped matching would otherwise turn this
  * gate into a second compile of the unmodified file.
  */
-function uncomment(source: string): { source: string; uncommented: string[] } {
+function uncomment(
+  source: string,
+  fields: readonly string[]
+): { source: string; uncommented: string[] } {
   const uncommented: string[] = [];
+  const pattern = new RegExp(`^(\\s*)// ((?:${fields.join("|")}):.*)$`);
   const lines = source.split("\n").map((line) => {
-    const match = /^(\s*)\/\/ ((prerequisites|weight):.*)$/.exec(line);
+    const match = pattern.exec(line);
     if (match === null) {
       return line;
     }
-    uncommented.push(match[3]!);
+    uncommented.push(match[2]!.split(":")[0]!);
     return `${match[1]}${match[2]}`;
   });
   return { source: lines.join("\n"), uncommented };
@@ -295,6 +436,30 @@ describe("the compiler gate", () => {
       const result = project.typecheck();
       expect(result.status).not.toBe(0);
       expect(result.output).toContain("chemistry");
+    },
+    COMPILER_TIMEOUT
+  );
+
+  it(
+    "fails on a generated research-quest call the SDK would refuse",
+    () => {
+      // The same control for the feature recipe: its file coordinates several
+      // registries, so this proves the compiler sees that file too.
+      const good = CATALOG.generate({
+        recipeId: "research-quest",
+        name: NAME,
+        answers: { projects: "two" },
+      });
+      const bad = good.contents.replace(
+        'eventScope: "country_event"',
+        'eventScope: "cabbage_event"'
+      );
+      expect(bad, "the mutation must actually have applied").not.toBe(good.contents);
+
+      project.place(good.basename, bad);
+      const result = project.typecheck();
+      expect(result.status).not.toBe(0);
+      expect(result.output).toContain("cabbage_event");
     },
     COMPILER_TIMEOUT
   );

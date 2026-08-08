@@ -14,20 +14,16 @@
  * it from, so it ships as a greppable `PLACEHOLDER:` value that still typechecks
  * and still builds.
  *
- * The renderer owns the whole source shape, including where the lines break.
- * That is not decoration: the package promises every generated file is already
- * Prettier-formatted, and Prettier's own choice of shape depends on how long the
- * author's name turned out to be. `recipe-matrix.test.ts` and
- * `adversarial-names.test.ts` hold this to real Prettier across the whole
- * accepted length range.
+ * The renderer owns the source's content and structure — field order, which
+ * bodies are expanded, the comments — and nothing about line width: the
+ * catalog runs the pinned Prettier over the render (`../format.ts`), so a long
+ * author name reflows by the formatter's own judgment rather than by
+ * arithmetic here.
  */
 
 import { quoteTs } from "../../quote.ts";
 import { defineRecipe } from "../catalog.ts";
 import type { DerivedNames } from "../types.ts";
-
-/** The repository's Prettier `printWidth`, which the emitted source must respect. */
-const PRINT_WIDTH = 100;
 
 /**
  * The vanilla technology the `prerequisites` example cites. Interpolated rather
@@ -122,45 +118,24 @@ function fields(names: DerivedNames): readonly string[] {
 }
 
 /**
- * `const <identifier> = mod.technology("<logical name>", { ... });`
- *
- * Prettier hugs the object argument as long as the line that opens it fits, and
- * breaks every argument out once it does not. Both shapes are spelled here
- * because the renderer returns finished source: emitting the hugged shape for a
- * long name would be emitting source Prettier disagrees with.
+ * `const <identifier> = mod.technology("<logical name>", { ... });` — always
+ * the hugged shape. The body stays expanded because it is written across
+ * lines; whether the opening line survives a long name is the formatter's
+ * call, not this one.
  */
 function technologyCall(names: DerivedNames): string {
   const open = `export const ${names.identifier} = mod.technology(`;
-  const logicalName = quoteTs(names.logicalName);
-  const body = fields(names);
-  if (`${open}${logicalName}, {`.length <= PRINT_WIDTH) {
-    return [`${open}${logicalName}, {`, ...indent(body, "  "), "});"].join("\n");
-  }
-  return [open, `  ${logicalName},`, "  {", ...indent(body, "    "), "  }", ");"].join("\n");
+  return [`${open}${quoteTs(names.logicalName)}, {`, ...indent(fields(names), "  "), "});"].join(
+    "\n"
+  );
 }
 
 /**
- * `export const feature = mod.feature("<stem>", [<identifier>]);`
- *
- * Three shapes, for the same reason: flat while it fits, then the array broken
- * out, then every argument broken out once even the opening line is too long.
+ * `export const feature = mod.feature("<stem>", [<identifier>]);` — written
+ * flat; the formatter breaks it out when the line does not fit.
  */
 function featureCall(names: DerivedNames): string {
-  const stem = quoteTs(names.stem);
-  const flat = `export const feature = mod.feature(${stem}, [${names.identifier}]);`;
-  if (flat.length <= PRINT_WIDTH) {
-    return flat;
-  }
-  const open = `export const feature = mod.feature(${stem}, [`;
-  if (open.length <= PRINT_WIDTH) {
-    return [open, `  ${names.identifier},`, "]);"].join("\n");
-  }
-  return [
-    "export const feature = mod.feature(",
-    `  ${stem},`,
-    `  [${names.identifier}]`,
-    ");",
-  ].join("\n");
+  return `export const feature = mod.feature(${quoteTs(names.stem)}, [${names.identifier}]);`;
 }
 
 /** Blank lines stay blank: an indented empty line is trailing whitespace. */

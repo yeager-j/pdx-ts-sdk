@@ -1,0 +1,2 @@
+out| <project>/src/content/resonance_theory.ts
+exit 0
