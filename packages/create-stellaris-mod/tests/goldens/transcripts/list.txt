@@ -1,7 +1,10 @@
 out| Recipes:
 out|
-out|   technology  Technology  Item recipe
-out|               One researchable technology, plus the feature file that places it.
+out|   research-quest  Research quest  Feature recipe
+out|                   An event chain, the special projects that advance it, and the events that begin and end it.
+out|
+out|   technology      Technology      Item recipe
+out|                   One researchable technology, plus the feature file that places it.
 out|
 out| See what a recipe asks, and the flags that answer it without prompting:
 out|

@@ -107,6 +107,7 @@ function serialize(events: readonly CaptureEvent[]): string[] {
 const DISCOVERY: readonly (readonly [string, readonly string[]])[] = [
   ["list", ["list"]],
   ["view-technology", ["view", "technology"]],
+  ["view-research-quest", ["view", "research-quest"]],
   ["view-unknown", ["view", "nope"]],
   ["view-without-a-recipe", ["view"]],
 ];
@@ -341,6 +342,58 @@ describe("generate", () => {
     });
     expect(code).toBe(1);
     expectGolden("transcripts/generate-without-a-name.txt", transcript);
+  });
+
+  const QUEST_GOLDENS = {
+    one: path.resolve(import.meta.dirname, "goldens/recipes/research-quest/one.ts"),
+    two: path.resolve(import.meta.dirname, "goldens/recipes/research-quest/two.ts"),
+  } as const;
+
+  it("answers a recipe question from its flag, without prompting", async () => {
+    const target = open();
+    const { transcript, code } = await run(
+      ["generate", "research-quest", "Resonance Theory", "--projects", "two", "--yes"],
+      { cwd: target.dir, project: target }
+    );
+
+    expect(code).toBe(0);
+    expectGolden("transcripts/generate-research-quest-flags.txt", transcript);
+    expect(written(target)).toBe(readFileSync(QUEST_GOLDENS.two, "utf8"));
+  });
+
+  it("resolves a recipe question to its Default under --yes", async () => {
+    const target = open();
+    const { transcript, code } = await run(
+      ["generate", "research-quest", "Resonance Theory", "--yes"],
+      { cwd: target.dir, project: target }
+    );
+
+    expect(code).toBe(0);
+    expectGolden("transcripts/generate-research-quest-defaults.txt", transcript);
+    expect(written(target)).toBe(readFileSync(QUEST_GOLDENS.one, "utf8"));
+  });
+
+  it("asks a recipe question between the preview and the confirmation", async () => {
+    const target = open();
+    const { transcript } = await run(["generate"], {
+      cwd: target.dir,
+      project: target,
+      answers: ["research-quest", "Resonance Theory", "two", true],
+    });
+
+    expectGolden("transcripts/generate-research-quest-interactive.txt", transcript);
+    expect(written(target)).toBe(readFileSync(QUEST_GOLDENS.two, "utf8"));
+  });
+
+  it("echoes where a flag-supplied answer came from instead of asking", async () => {
+    const target = open();
+    const { transcript } = await run(
+      ["generate", "research-quest", "Resonance Theory", "--projects", "two"],
+      { cwd: target.dir, project: target, answers: [true] }
+    );
+
+    expectGolden("transcripts/generate-research-quest-flag-echo.txt", transcript);
+    expect(written(target)).toBe(readFileSync(QUEST_GOLDENS.two, "utf8"));
   });
 
   const CANCELLATIONS: readonly (readonly [

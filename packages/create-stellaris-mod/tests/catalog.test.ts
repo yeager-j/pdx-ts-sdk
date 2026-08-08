@@ -215,13 +215,18 @@ describe("generate", () => {
   });
 });
 
-describe("the technology recipe", () => {
-  it("is an Item recipe that creates a technology", () => {
+describe("the baked recipes", () => {
+  it("carry the reviewed classifications, and nothing else is registered", () => {
     // The declared classification and the reviewed output contract are two
     // statements about one recipe; `recipe-matrix.test.ts` builds the output
     // that proves the second.
-    const [technology, ...rest] = CATALOG.list();
+    const [researchQuest, technology, ...rest] = CATALOG.list();
     expect(rest).toEqual([]);
+    expect(researchQuest).toMatchObject({
+      id: "research-quest",
+      kind: "feature",
+      itemKinds: ["event_chain", "special_project", "event", "on_action"],
+    });
     expect(technology).toMatchObject({ id: "technology", kind: "item", itemKinds: ["technology"] });
   });
 });

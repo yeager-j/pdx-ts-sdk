@@ -19,6 +19,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { FILE_STEM_PATTERN } from "../../sdk/src/authoring/feature.ts";
 import { deriveNames, NameError, STEM_PATTERN } from "../src/catalog/names.ts";
+import { researchQuestRecipe } from "../src/catalog/recipes/research-quest.ts";
 import { technologyRecipe } from "../src/catalog/recipes/technology.ts";
 import type { DerivedNames } from "../src/catalog/types.ts";
 import { quoteTs } from "../src/quote.ts";
@@ -29,6 +30,16 @@ const COMPILER_TIMEOUT = 180_000;
 /** The longest stem the derivation accepts, and one character more. */
 const AT_LIMIT = "a".repeat(64);
 const OVER_LIMIT = "a".repeat(65);
+
+/**
+ * Both sides of every line-shape flip a renderer owns. The renderers emit the
+ * exact shape Prettier would pick, and that choice flips at specific stem
+ * lengths — `mod.feature(...)` goes flat→hugged at 13 and hugged→broken at 61,
+ * `mod.specialProject(...)` breaks at 46/47/54 depending on the binding, and
+ * `mod.eventChain(...)` breaks at 60. A corpus without both neighbours of each
+ * flip would hold the formatting promise everywhere except where it can fail.
+ */
+const BOUNDARY_LENGTHS = [12, 13, 45, 46, 47, 53, 54, 59, 60, 61] as const;
 
 /** Names that must derive, with the stem each one has to produce. */
 const ACCEPTED: readonly (readonly [string, string])[] = [
@@ -46,6 +57,7 @@ const ACCEPTED: readonly (readonly [string, string])[] = [
   ["back`tick` array", "back_tick_array"],
   ["dollar ${brace} drive", "dollar_brace_drive"],
   ["end of comment */ escape", "end_of_comment_escape"],
+  ...BOUNDARY_LENGTHS.map((length) => ["a".repeat(length), "a".repeat(length)] as const),
   [AT_LIMIT, AT_LIMIT],
 ];
 
@@ -100,6 +112,12 @@ const RESERVED = new Set([
 
 function renderFor(names: DerivedNames): string {
   return technologyRecipe.render({ names, answers: {} });
+}
+
+const QUEST_VARIANTS = ["one", "two"] as const;
+
+function renderQuestFor(names: DerivedNames, projects: "one" | "two"): string {
+  return researchQuestRecipe.render({ names, answers: { projects } });
 }
 
 /**
@@ -210,6 +228,40 @@ describe("names the derivation accepts", () => {
       expect(await prettier(source)).toBe(source);
     }
   );
+
+  it.each(ACCEPTED.map(([name]) => [JSON.stringify(name), name] as const))(
+    "renders %s into both research-quest variants without letting it out of its literal",
+    (_label, name) => {
+      const names = deriveNames(name);
+      for (const projects of QUEST_VARIANTS) {
+        const source = renderQuestFor(names, projects);
+
+        // The author's text reaches source in one place, quoted: the chain's
+        // title. Every other string in the file is recipe-authored.
+        expect(source).toContain(`title: ${quoteTs(names.title)},`);
+
+        // The bindings are fixed recipe words, so with the title neutralized
+        // the code is not merely injection-free but byte-identical.
+        expect(codeOnly(source)).toBe(
+          codeOnly(renderQuestFor({ ...names, title: "Benign" }, projects))
+        );
+        for (const stray of ['"', "'", "`", "$", "\\"]) {
+          expect(codeOnly(source), stray).not.toContain(stray);
+        }
+      }
+    }
+  );
+
+  it.each(ACCEPTED.map(([name]) => [JSON.stringify(name), name] as const))(
+    "renders %s into both research-quest variants already formatted",
+    async (_label, name) => {
+      const names = deriveNames(name);
+      for (const projects of QUEST_VARIANTS) {
+        const source = renderQuestFor(names, projects);
+        expect(await prettier(source), projects).toBe(source);
+      }
+    }
+  );
 });
 
 /**
@@ -251,6 +303,77 @@ describe("every accepted name, in one real project", () => {
         const technology = `common/technology/golden_mod_${stem}.txt`;
         expect(emitted, stem).toContain(technology);
         expect(project.readOut(technology)).toContain(`golden_mod_tech_${stem}`);
+      }
+    },
+    COMPILER_TIMEOUT
+  );
+});
+
+/**
+ * The same shared-project economy for the feature recipe, with the structural
+ * superset variant: every accepted name renders `projects=two`, so every
+ * correlated symbol and logical id — the chain, both projects, all three
+ * events, the option-group link, and the merged on-action registration — is
+ * proved per name against the real compiler and the real build. A quest per
+ * name also means every feature registers the same `on_game_start_country`
+ * hook, so the one `<prefix>_on_actions.txt` merging them all is itself under
+ * test.
+ */
+describe("every accepted name, as a two-project research quest, in one real project", () => {
+  let project: GoldenProject;
+
+  beforeAll(() => {
+    project = createGoldenProject();
+    for (const [name] of ACCEPTED) {
+      const names = deriveNames(name);
+      project.place(names.basename, renderQuestFor(names, "two"));
+    }
+  }, COMPILER_TIMEOUT);
+
+  afterAll(() => project?.dispose());
+
+  it(
+    "typechecks",
+    () => {
+      const result = project.typecheck();
+      expect(result.output).toBe("");
+      expect(result.status).toBe(0);
+    },
+    COMPILER_TIMEOUT
+  );
+
+  it(
+    "builds every correlated id per name",
+    () => {
+      const result = project.build();
+      expect(result.status, result.output).toBe(0);
+
+      const emitted = project.outFiles();
+      const onActions = project.readOut("common/on_actions/golden_mod_on_actions.txt");
+      for (const [, stem] of ACCEPTED) {
+        const chain = `common/event_chains/golden_mod_${stem}.txt`;
+        const specialProjects = `common/special_projects/golden_mod_${stem}.txt`;
+        const events = `events/golden_mod_${stem}.txt`;
+        expect(emitted, stem).toContain(chain);
+        expect(emitted, stem).toContain(specialProjects);
+        expect(emitted, stem).toContain(events);
+
+        expect(project.readOut(chain)).toContain(`golden_mod_event_chain_${stem}`);
+
+        const projectsOut = project.readOut(specialProjects);
+        expect(projectsOut).toContain(`key = golden_mod_special_project_${stem}_1`);
+        expect(projectsOut).toContain(`key = golden_mod_special_project_${stem}_2`);
+        expect(projectsOut).toContain(
+          `same_option_group_as = { golden_mod_special_project_${stem}_1 }`
+        );
+
+        const eventsOut = project.readOut(events);
+        expect(eventsOut).toContain(`namespace = golden_mod_${stem}`);
+        for (const id of [1, 2, 3]) {
+          expect(eventsOut, `${stem}.${id}`).toContain(`id = golden_mod_${stem}.${id}`);
+        }
+
+        expect(onActions, stem).toContain(`golden_mod_${stem}.1`);
       }
     },
     COMPILER_TIMEOUT

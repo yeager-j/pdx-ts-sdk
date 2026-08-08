@@ -1,0 +1,10 @@
+err| note: About to generate
+err|   Recipe    research-quest — Feature recipe
+err|   Name      Resonance Theory
+err|   File      src/content/resonance_theory.ts
+err|   Ids       from "resonance_theory", under the golden_mod prefix
+err|   Binding   resonanceTheory
+err| info: projects: two — from --projects
+err| ? Write <project>/src/content/resonance_theory.ts? › yes
+out| <project>/src/content/resonance_theory.ts
+exit 0

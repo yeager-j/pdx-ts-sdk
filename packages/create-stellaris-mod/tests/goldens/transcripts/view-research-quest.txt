@@ -1,0 +1,24 @@
+out| research-quest — Research quest
+out|
+out|   An event chain, the special projects that advance it, and the events that begin and end it.
+out|
+out|   Kind     Feature recipe — one feature file holding several coordinated items
+out|   Creates  event_chain, special_project, event, on_action
+out|   Writes   <contentDirectory>/<derived_name>.ts
+out|
+out| Questions:
+out|
+out|   Asked in this order. Each one has a flag, so a scripted run never prompts.
+out|
+out|   --projects <one|two>
+out|       Both answers share the chain, starter event, and on-action wiring; `two` adds the rival project, its own completion event, and the option-group correlation between the pair. (default: one)
+out|         one  One special project — A single research project completes the quest.
+out|         two  Two rival projects — Two projects share one option group, so starting either is a choice against the other.
+out|
+out| Generate it:
+out|
+out|   npx create-stellaris-mod generate research-quest "<name>" --projects one
+out|
+out| The name is the display name. The filename, the content id, and the
+out| TypeScript binding are all derived from it.
+exit 0

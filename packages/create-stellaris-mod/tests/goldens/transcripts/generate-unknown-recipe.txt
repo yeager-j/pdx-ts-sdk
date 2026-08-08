@@ -2,6 +2,7 @@ err| There is no recipe called "nope".
 err|
 err| This release carries:
 err|
+err|   research-quest
 err|   technology
 err|
 err| Run `npx create-stellaris-mod list` to see what each one does.
