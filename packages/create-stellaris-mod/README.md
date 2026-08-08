@@ -4,7 +4,12 @@ Scaffold a Stellaris mod project that builds with [@pdx-ts/sdk](../sdk/README.md
 
 ```bash
 npx create-stellaris-mod my-mod
+npx create-stellaris-mod init my-mod   # the same thing, spelled canonically
 ```
+
+`init`, `list`, `view` and `generate` are reserved first-position command names;
+anything else is the directory to scaffold into. The last three arrive with the
+Recipe Catalog and report as much until then.
 
 It finds your Stellaris install, reads the build from `launcher-settings.json`,
 and writes a project that typechecks, tests and builds on the first
@@ -14,10 +19,12 @@ and writes a project that typechecks, tests and builds on the first
 ```
 my-mod/
 ├── package.json  tsconfig.json  vitest.config.ts
+├── stellaris-mod.json     the Project Manifest: mod identity and launcher metadata
+├── stellaris-mod.schema.json  its schema, for your editor
 ├── .prettierrc            (--no-prettier to skip)
 ├── eslint.config.js       (--no-eslint to skip)
 └── src/
-    ├── mod.ts              config + buildTheMod(): discover named features and compile them
+    ├── mod.ts              wires the manifest to createMod, + buildTheMod()
     ├── index.ts            build: render the fold and write it to out/
     ├── install.ts          build + drop it where the launcher looks
     ├── vanilla.ts          the parsed install, when one was found
@@ -26,6 +33,14 @@ my-mod/
         ├── example.ts      named `feature`: a technology, event, and firing hook
         └── example.test.ts colocated, and skipped by discovery
 ```
+
+`stellaris-mod.json` is the single author-owned source of truth for the mod's
+identity, launcher metadata, and where generated feature source goes. Its sole
+key under `mod` is the mod prefix, so `keyof typeof manifest.mod` recovers it as
+a literal type; `src/mod.ts` is wiring from it to `createMod` rather than a
+second place the same facts are written. The scaffolded package also declares
+`"#mod": "./src/mod.ts"` in `package.json#imports`, and feature modules import
+the mod through it rather than computing a relative path.
 
 Importing `mod.ts` builds nothing — `mod` is an immutable capability — so
 `index.ts` and `install.ts` each import its `buildTheMod()` and add their own

@@ -43,6 +43,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { locateInstall, readGameVersion } from "../../sdk/src/stellaris/index.ts";
 import { main } from "../src/cli.ts";
+import { parseManifest } from "../src/manifest.ts";
 
 const REPO = path.resolve(import.meta.dirname, "../../..");
 const ROOT_MODULES = path.join(REPO, "node_modules");
@@ -170,6 +171,33 @@ afterAll(() => {
 });
 
 describe("a scaffolded project", () => {
+  it("carries a Project Manifest the CLI can read back", () => {
+    // The emitter and the adapter `generate` will use are different modules.
+    // This is the round trip on real bytes on a real disk: what init wrote is
+    // what a later command can read.
+    const manifestPath = path.join(projectDir, "stellaris-mod.json");
+    expect(existsSync(manifestPath)).toBe(true);
+    expect(existsSync(path.join(projectDir, "stellaris-mod.schema.json"))).toBe(true);
+
+    const manifest = parseManifest(readFileSync(manifestPath, "utf8"), manifestPath);
+    expect(manifest.prefix).toBe("smoke_mod");
+    expect(manifest.config.name).toBe("Smoke Mod");
+    expect(manifest.contentDirectory).toBe("src/content");
+  });
+
+  it("aliases the mod module as #mod", () => {
+    // Declared here, and proved by the typecheck, build, lint and test steps
+    // below — all of which resolve `#mod` through Node's and TypeScript's real
+    // resolvers against real packed tarballs.
+    const pkg = JSON.parse(readFileSync(path.join(projectDir, "package.json"), "utf8")) as {
+      imports: Record<string, string>;
+    };
+    expect(pkg.imports["#mod"]).toBe("./src/mod.ts");
+    expect(readFileSync(path.join(projectDir, "src/content/example.ts"), "utf8")).toContain(
+      'import { mod } from "#mod"'
+    );
+  });
+
   it("does not write to disk merely by importing config (SDK-54)", () => {
     // config lives in src/mod.ts, which only reads: discovering and folding
     // content touches no disk. A test — or anything else — that imports

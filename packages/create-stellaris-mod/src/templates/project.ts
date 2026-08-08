@@ -13,8 +13,12 @@
 
 import type { Resolved } from "../options.ts";
 
-/** Pinned so a scaffold is reproducible, and matching what the SDK develops against. */
-const VERSIONS = {
+/**
+ * Pinned so a scaffold is reproducible, and matching what the SDK develops
+ * against. Exported because `sdk` is one half of a drift check: a scaffolded
+ * project's SDK range has to stay a subset of `VERIFIED_SDK_RANGE`.
+ */
+export const VERSIONS = {
   types_node: "^26.1.2",
   typescript: "^6.0.3",
   vitest: "^4.0.5",
@@ -143,6 +147,10 @@ export function packageJson(resolved: Resolved, packageName: string): string {
     // Not advisory: `npm run build` is `node src/index.ts`, which needs Node's
     // native TypeScript type stripping.
     engines: { node: ">=22.18.0" },
+    // Every feature module imports the mod as `#mod`, so moving a module
+    // between directories under src/content/ never rewrites an import — and a
+    // generated file has no relative path to compute in the first place.
+    imports: { "#mod": "./src/mod.ts" },
     scripts,
     dependencies: { ...sdkDependencies(resolved), ...idsDependency(resolved) },
     devDependencies: Object.fromEntries(Object.entries(devDependencies).sort()),

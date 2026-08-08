@@ -10,6 +10,12 @@
 import { toPackageName } from "./derive.ts";
 import type { Resolved } from "./options.ts";
 import {
+  MANIFEST_FILE,
+  MANIFEST_SCHEMA_FILE,
+  manifestJson,
+  manifestSchema,
+} from "./templates/manifest.ts";
+import {
   eslintConfig,
   gitignore,
   packageJson,
@@ -33,6 +39,11 @@ export function planFiles(resolved: Resolved, packageName?: string): Map<string,
   const name = packageName ?? toPackageName(resolved.targetDir.split(/[\\/]/).pop() ?? "");
 
   files.set("package.json", packageJson(resolved, name));
+  // The Project Manifest, and the schema `$schema` points at relatively. Both
+  // are the author's from here on: `generate` reads the manifest and never
+  // repairs or migrates it.
+  files.set(MANIFEST_FILE, manifestJson(resolved));
+  files.set(MANIFEST_SCHEMA_FILE, manifestSchema());
   files.set("tsconfig.json", tsconfigJson());
   files.set("vitest.config.ts", vitestConfig());
   files.set(".gitignore", gitignore());

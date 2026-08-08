@@ -49,6 +49,8 @@ describe("the scaffolded tree", () => {
       "src/install.ts",
       "src/mod.ts",
       "src/vanilla.ts",
+      "stellaris-mod.json",
+      "stellaris-mod.schema.json",
       "tsconfig.json",
       "vitest.config.ts",
     ]);
@@ -81,7 +83,12 @@ describe("the scaffolded tree", () => {
   });
 
   it("emits strict JSON where the format is strict", () => {
-    for (const relPath of ["package.json", ".prettierrc"]) {
+    for (const relPath of [
+      "package.json",
+      ".prettierrc",
+      "stellaris-mod.json",
+      "stellaris-mod.schema.json",
+    ]) {
       expect(() => JSON.parse(plan().get(relPath)!), relPath).not.toThrow();
     }
   });
@@ -110,7 +117,7 @@ describe("the scaffolded tree", () => {
 
   it("carries the author's prefix into every place the SDK will read it", () => {
     const files = plan({ prefix: "aurora", name: "Aurora" });
-    expect(files.get("src/mod.ts")).toContain('prefix: "aurora"');
+    expect(files.get("stellaris-mod.json")).toContain('"aurora": {');
     expect(files.get("src/flags.ts")).toContain('countryFlags("aurora_welcomed")');
     expect(files.get("src/content/example.ts")).toContain('mod.technology("first_steps"');
     expect(files.get("src/content/example.ts")).toContain("mod.namespace()");
@@ -118,10 +125,54 @@ describe("the scaffolded tree", () => {
     expect(files.get("src/content/example.test.ts")).toContain("aurora_welcomed");
   });
 
-  it("quotes a mod name that would otherwise break the file it lands in", () => {
-    expect(plan({ name: 'The "Real" Mod' }).get("src/mod.ts")).toContain(
-      'name: "The \\"Real\\" Mod"'
+  it("escapes a mod name that would otherwise break the file it lands in", () => {
+    expect(plan({ name: 'The "Real" Mod' }).get("stellaris-mod.json")).toContain(
+      '"name": "The \\"Real\\" Mod"'
     );
+  });
+});
+
+/**
+ * The Project Manifest is the single author-owned source of truth for mod
+ * identity. `src/mod.ts` is wiring from it to `createMod`, not a second place
+ * the same facts are written — so the assertions worth making are that the
+ * facts are in the manifest and that `src/mod.ts` no longer restates them.
+ */
+describe("the Project Manifest", () => {
+  it("holds exactly one mod entry, keyed by the prefix", () => {
+    const manifest = JSON.parse(plan().get("stellaris-mod.json")!) as {
+      $schema: string;
+      mod: Record<string, unknown>;
+      contentDirectory: string;
+    };
+    expect(Object.keys(manifest.mod)).toEqual(["my_mod"]);
+    expect(manifest.$schema).toBe("./stellaris-mod.schema.json");
+    expect(manifest.contentDirectory).toBe("src/content");
+  });
+
+  it("is where src/mod.ts reads the config from", () => {
+    const mod = plan().get("src/mod.ts")!;
+    expect(mod).toContain('import manifest from "../stellaris-mod.json" with { type: "json" }');
+    expect(mod).toContain("keyof typeof manifest.mod");
+    expect(mod).toContain("export const config = { prefix, ...manifest.mod[prefix] }");
+    // The facts live in the manifest now; a literal here would be a second
+    // configuration source, which is the thing the manifest replaces.
+    expect(mod).not.toContain('name: "My Mod"');
+    expect(mod).not.toContain('supportedVersion: "');
+  });
+
+  it("refuses to guess when the manifest declares more than one mod", () => {
+    // `keyof typeof manifest.mod` only recovers the prefix because there is
+    // exactly one key. The generated guard says so at runtime rather than
+    // letting `Object.keys(...)[0]` pick one.
+    expect(plan().get("src/mod.ts")).toContain("must declare exactly one mod");
+  });
+
+  it("aliases the mod module, so feature source computes no relative path", () => {
+    const { imports } = manifest(plan()) as unknown as { imports: Record<string, string> };
+    expect(imports["#mod"]).toBe("./src/mod.ts");
+    expect(plan().get("src/content/example.ts")).toContain('import { mod } from "#mod"');
+    expect(plan().get("src/content/example.ts")).not.toContain('from "../mod.ts"');
   });
 });
 
