@@ -974,6 +974,30 @@
           "shroud_delve_cost"
         ]
       ]
+    },
+    "triggered_country_modifier.potential": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 11,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "exists",
+        "has_shroud_dlc",
+        "is_nomadic"
+      ],
+      "keysByDefinition": [
+        [
+          "exists",
+          "is_nomadic"
+        ],
+        [
+          "has_shroud_dlc"
+        ]
+      ]
     }
   }
 }

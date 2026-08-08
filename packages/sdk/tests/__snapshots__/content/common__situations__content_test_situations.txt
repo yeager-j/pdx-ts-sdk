@@ -19,7 +19,7 @@ content_test_situation_machine_uprising = {
 	}
 	triggered_modifier = {
 		potential = {
-			has_authority = auth_machine_intelligence
+			has_situation_flag = content_test_situation_uprising_contained
 		}
 		country_unity_produces_mult = -0.05
 	}
@@ -101,7 +101,7 @@ content_test_situation_machine_uprising = {
 			}
 			triggered_modifier = {
 				potential = {
-					has_authority = auth_machine_intelligence
+					has_situation_flag = content_test_situation_uprising_contained
 				}
 				country_unity_produces_mult = -0.05
 			}

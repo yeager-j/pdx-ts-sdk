@@ -45,9 +45,13 @@ import {
   type MegastructurePatch,
   type ModifierClosure,
   type OpinionModifierRef,
+  type ScopeName,
   type ScopeRef,
   type ScriptValue,
   type SectionTemplateFields,
+  type SituationApproachFields,
+  type SituationStageFields,
+  type SituationTypeFields,
   type SpecialProjectRef,
   type StrikeCraftComponentTemplateFields,
   type TechnologyPatch,
@@ -1294,13 +1298,13 @@ describe("generated content authoring types", () => {
       ModifierClosure<"system"> | undefined
     >();
     expectTypeOf<BuildingFields["triggeredCountryModifier"]>().toEqualTypeOf<
-      TriggeredModifier<"country">[] | undefined
+      TriggeredModifier<"country", "planet">[] | undefined
     >();
     expectTypeOf<BuildingFields["triggeredArmyModifier"]>().toEqualTypeOf<
-      TriggeredModifier<"army">[] | undefined
+      TriggeredModifier<"army", "planet">[] | undefined
     >();
     expectTypeOf<BuildingFields["triggeredPlanetPopGroupModifierForAll"]>().toEqualTypeOf<
-      TriggeredModifier<"pop_group">[] | undefined
+      TriggeredModifier<"pop_group", "planet">[] | undefined
     >();
     // The seventh field caught in review: a different clause
     // (triggered_modifier_by_pop_group_clause, not by_planet_clause) but the
@@ -1311,22 +1315,15 @@ describe("generated content authoring types", () => {
       TriggeredModifier<"pop_group">[] | undefined
     >();
 
-    // KNOWN BUG (bug-bash finding, documented in overlay.ts's
-    // building.triggered_country_modifier reason, not fixed here):
-    // triggered_country_modifier splices triggered_modifier_by_planet_clause,
-    // whose own `potential` field pushes to PLANET scope (aliases.cwt:114-115)
-    // — independent of this field's own `## replace_scopes = { this = country
-    // ... }` (buildings.cwt:229-230), which governs only the *modifier* half.
-    // TriggeredModifier<"country">'s single scope parameter cannot represent
-    // that split, so hasAuthority() (country-scoped) below type-checks as a
-    // valid `when` even though the rules license only a planet-scope
-    // condition there — the accepting half of the same bug isCapital()'s
-    // rejection above demonstrates. Both directions need the same fix: a
-    // second, independent scope parameter on TriggeredModifier<S>.
     contentMod.building("modifier_potential_scope_hole", {
       name: "X",
       triggeredCountryModifier: [
         {
+          when: isCapital(),
+          modifiers: (m) => m.raw("country_edict_fund_add", 10),
+        },
+        {
+          // @ts-expect-error — potential runs in planet scope, not country
           when: hasAuthority("auth_democratic"),
           modifiers: (m) => m.raw("country_edict_fund_add", 10),
         },
@@ -1349,26 +1346,70 @@ describe("generated content authoring types", () => {
       },
       triggeredArmyModifier: [
         {
-          // @ts-expect-error — KNOWN BUG, pinned rather than endorsed (see
-          // building.triggered_army_modifier's overlay.ts reason and
-          // building.triggered_country_modifier's for the full account): the
-          // rules push `potential` to planet scope here
-          // (aliases.cwt:114-115), not army — so isCapital() (a real,
-          // legal planet-scope condition) is wrongly rejected by
-          // TriggeredModifier<"army">'s single scope parameter, and an
-          // army-scoped condition the rules do NOT license for `potential`
-          // would be wrongly accepted in its place. Fixing the type to
-          // reject correctly (and accept isCapital() here) needs a second,
-          // independent scope parameter on TriggeredModifier<S> — tracked
-          // separately, not built into this PR.
           when: isCapital(),
           modifiers: (m) => m.raw("armies_cost_mult", -0.05),
+        },
+        {
+          // @ts-expect-error — potential runs in planet scope, not country
+          when: hasAuthority("auth_democratic"),
+          modifiers: (m) => m.raw("armies_cost_mult", -0.05),
+        },
+      ],
+      triggeredPlanetPopGroupModifierForAll: [
+        {
+          when: isCapital(),
+          modifiers: (m) => m.pop.happiness(0.1),
+        },
+        {
+          // @ts-expect-error — potential runs in planet scope, not country
+          when: hasAuthority("auth_democratic"),
+          modifiers: (m) => m.pop.happiness(0.1),
         },
       ],
       triggeredPlanetPopGroupModifierForSpecies: [
         {
           when: always(),
           modifiers: (m) => m.pop.happiness(0.1),
+        },
+      ],
+    });
+  });
+
+  it("splits every situation triggered modifier potential from its modifier scope (SDK-61)", () => {
+    expectTypeOf<SituationTypeFields["triggeredModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"country", "situation">[] | undefined
+    >();
+    expectTypeOf<SituationTypeFields["triggeredTargetModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"planet", "situation">[] | undefined
+    >();
+    expectTypeOf<SituationApproachFields["triggeredModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"country", "situation">[] | undefined
+    >();
+    expectTypeOf<SituationApproachFields["triggeredTargetModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"planet", "situation">[] | undefined
+    >();
+    expectTypeOf<SituationStageFields["triggeredModifier"]>().toEqualTypeOf<
+      TriggeredModifier<"country", "situation">[] | undefined
+    >();
+    expectTypeOf<SituationStageFields["triggeredTargetModifier"]>().toEqualTypeOf<
+      TriggeredModifier<ScopeName, "situation">[] | undefined
+    >();
+
+    contentMod.situationType("triggered_modifier_scopes", {
+      name: "X",
+      monthlyProgress: { base: 1 },
+      triggeredModifier: [
+        {
+          // @ts-expect-error — the nested potential runs in situation scope
+          when: hasAuthority("auth_democratic"),
+          modifiers: (m) => m.country.naval.cap.add(1),
+        },
+      ],
+      triggeredTargetModifier: [
+        {
+          // @ts-expect-error — the nested potential runs in situation scope
+          when: isCapital(),
+          modifiers: (m) => m.planet.jobs.produces.mult(0.1),
         },
       ],
     });

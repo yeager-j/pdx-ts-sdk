@@ -1293,6 +1293,47 @@
           "potential"
         ]
       ]
+    },
+    "triggered_modifier.potential": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "calc_true_if",
+        "has_biogenesis_dlc",
+        "has_grand_archive_dlc",
+        "is_eager_explorer_empire",
+        "is_nomadic",
+        "is_wilderness_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "calc_true_if"
+        ],
+        [
+          "has_biogenesis_dlc"
+        ],
+        [
+          "has_grand_archive_dlc"
+        ],
+        [
+          "is_eager_explorer_empire",
+          "is_nomadic"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "is_wilderness_empire"
+        ]
+      ]
     }
   }
 }

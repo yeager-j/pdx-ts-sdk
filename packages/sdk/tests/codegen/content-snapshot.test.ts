@@ -129,19 +129,16 @@ describe("content-type codegen", () => {
     expect(emissions.get("ascension_perk")?.code).toContain(
       'triggeredModifier?: TriggeredModifier<"country">[];'
     );
-    // SDK-56: building's triggered modifier trio all splice
-    // triggered_modifier_by_planet_clause (aliases.cwt:113), which reuses
-    // the plain triggeredModifierBlock shape building.triggered_planet_modifier
-    // (SDK-39) already proved out — push_scope is not part of the emitted
-    // shape, only the field-level `replace_scopes` scope parameter is.
+    // The modifier body keeps the field's replace scope, while the nested
+    // potential follows the clause's own planet push_scope.
     expect(emissions.get("building")?.code).toContain(
-      'triggeredCountryModifier?: TriggeredModifier<"country">[];'
+      'triggeredCountryModifier?: TriggeredModifier<"country", "planet">[];'
     );
     expect(emissions.get("building")?.code).toContain(
-      'triggeredArmyModifier?: TriggeredModifier<"army">[];'
+      'triggeredArmyModifier?: TriggeredModifier<"army", "planet">[];'
     );
     expect(emissions.get("building")?.code).toContain(
-      'triggeredPlanetPopGroupModifierForAll?: TriggeredModifier<"pop_group">[];'
+      'triggeredPlanetPopGroupModifierForAll?: TriggeredModifier<"pop_group", "planet">[];'
     );
     // SDK-56: the seventh field, caught in review — for_species splices
     // triggered_modifier_by_pop_group_clause, not the by_planet_clause the
@@ -151,6 +148,31 @@ describe("content-type codegen", () => {
     expect(emissions.get("building")?.code).toContain(
       'triggeredPlanetPopGroupModifierForSpecies?: TriggeredModifier<"pop_group">[];'
     );
+    expect(emissions.get("situation_type")?.code).toContain(
+      'triggeredModifier?: TriggeredModifier<"country", "situation">[];'
+    );
+    expect(emissions.get("situation_type")?.code).toContain(
+      'triggeredTargetModifier?: TriggeredModifier<ScopeName, "situation">[];'
+    );
+  });
+
+  it("refuses a triggered-modifier shape without one nested potential declaration", () => {
+    const body = rules.bodies.get("building")!;
+    const malformed = {
+      ...body,
+      fields: body.fields.map((field) =>
+        field.key.kind === "name" &&
+        field.key.name === "triggered_country_modifier" &&
+        field.type.kind === "block"
+          ? { ...field, type: { ...field.type, fields: [] } }
+          : field
+      ),
+    };
+    const isolated = new Emitter(rules);
+    isolated.beginFile();
+    expect(() =>
+      emitContentType(isolated, rules.contentTypes.get("building")!, malformed, "building")
+    ).toThrow("A triggered-modifier block must expand to exactly one named potential declaration");
   });
 
   it("generates ascension perks and their swaps without registry-specific code", () => {

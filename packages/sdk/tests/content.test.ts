@@ -583,7 +583,7 @@ function defineContentExample(): PureMod {
     targetModifier: (m) => m.pop.happiness(0.05),
     triggeredModifier: [
       {
-        when: hasAuthority("auth_machine_intelligence"),
+        when: hasSituationFlag("content_test_situation_uprising_contained"),
         modifiers: (m) => m.country.unity.produces.mult(-0.05),
       },
     ],
@@ -610,7 +610,7 @@ function defineContentExample(): PureMod {
         potential: always(),
         triggeredModifier: [
           {
-            when: hasAuthority("auth_machine_intelligence"),
+            when: hasSituationFlag("content_test_situation_uprising_contained"),
             modifiers: (m) => m.country.unity.produces.mult(-0.05),
           },
         ],
@@ -3316,22 +3316,11 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
   // sweep — it matched the field name to job's identically-named field
   // instead of checking the registry.
   //
-  // KNOWN GAP, also caught in bug-bash review: triggered_country_modifier,
-  // triggered_army_modifier, and triggered_planet_pop_group_modifier_for_all
-  // splice triggered_modifier_by_planet_clause, whose own `potential` field
-  // pushes to planet scope (aliases.cwt:114-115) independent of the scope
-  // each field's own replace_scopes declares for its *modifier* half. The
-  // hand-written TriggeredModifier<S> (packages/sdk/src/content.ts) has one
-  // scope parameter for both halves, so `when` is currently mis-typed for
-  // these three (and, pre-existing on main, situation_type's six
-  // triggered_modifier/triggered_target_modifier rows). This is a
-  // compile-time authoring-safety gap only — the tests below assert emitted
-  // PDXScript text, which is correct regardless, since TypeScript's `S` never
-  // reaches serialization. See each affected field's overlay.ts reason for
-  // the full account and why the type fix is tracked separately rather than
-  // built into this PR. triggered_planet_pop_group_modifier_for_species
-  // (splicing the pop_group variant) was checked for the same defect and is
-  // NOT affected — see its own overlay reason.
+  // SDK-61 separates these three fields' planet-scoped potentials from their
+  // country/army/pop_group modifier scopes. That distinction is compile-time
+  // only, so the serialization assertions below still cover the same block
+  // shape. triggered_planet_pop_group_modifier_for_species splices the
+  // pop_group variant, where the two scopes coincide.
   const CONFIG = configFor("SDK-56 building modifiers test", "sdk56");
 
   it("emits building's plain modifier trio: country_modifier/army_modifier/system_modifier (buildingModifiers)", () => {
@@ -3357,15 +3346,14 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
   it("emits building's triggered modifier trio: triggered_country_modifier/triggered_army_modifier/triggered_planet_pop_group_modifier_for_all (buildingModifiers)", () => {
     const cap = capabilityFor(CONFIG);
     // All three splice triggered_modifier_by_planet_clause (aliases.cwt:113),
-    // shape-identical to the plain triggered_modifier_clause building.
-    // triggered_planet_modifier already proved out (SDK-39) — only push_scope
-    // differs between the clauses, and push_scope is not part of the emitted
-    // shape.
+    // shape-identical to the plain triggered_modifier_clause building, but its
+    // potential pushes to planet scope while each modifier body uses its own
+    // field-level replace scope.
     const building = cap.building("triggered_modifier_trio", {
       name: "Sdk56 Triggered Modifier Trio",
       triggeredCountryModifier: [
         {
-          when: hasAuthority("auth_democratic"),
+          when: isCapital(),
           modifiers: (m) => m.raw("country_edict_fund_add", 25),
         },
       ],
@@ -3388,7 +3376,7 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
     )!;
 
     expect(rendered).toContain(
-      "triggered_country_modifier = {\n\t\tpotential = {\n\t\t\thas_authority = auth_democratic\n\t\t}\n" +
+      "triggered_country_modifier = {\n\t\tpotential = {\n\t\t\tis_capital = yes\n\t\t}\n" +
         "\t\tcountry_edict_fund_add = 25\n\t}"
     );
     expect(rendered).toContain(

@@ -2319,6 +2319,26 @@
         ]
       ]
     },
+    "triggered_ship_design_modifier.potential": {
+      "definitions": 20,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 20,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "exists",
+        "from"
+      ],
+      "keysByDefinition": [
+        [
+          "exists",
+          "from"
+        ]
+      ]
+    },
     "triggered_ship_modifier": {
       "definitions": 22,
       "repeated": 0,
@@ -2341,6 +2361,33 @@
         [
           "potential",
           "ship_shield_reduction"
+        ]
+      ]
+    },
+    "triggered_ship_modifier.potential": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 22,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_armor_percentage",
+        "has_non_psionic_shields",
+        "is_cloaked"
+      ],
+      "keysByDefinition": [
+        [
+          "has_armor_percentage"
+        ],
+        [
+          "has_non_psionic_shields",
+          "is_cloaked"
+        ],
+        [
+          "is_cloaked"
         ]
       ]
     },

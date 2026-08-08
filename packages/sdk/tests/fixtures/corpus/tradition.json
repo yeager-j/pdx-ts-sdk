@@ -2243,6 +2243,24 @@
         ]
       ]
     },
+    "tradition_swap.triggered_modifier.potential": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ]
+      ]
+    },
     "tradition_swap.unlocks_agenda": {
       "definitions": 1,
       "repeated": 0,
@@ -2403,6 +2421,52 @@
           "planet_districts_upkeep_mult",
           "planet_pops_upkeep_mult",
           "potential"
+        ]
+      ]
+    },
+    "triggered_modifier.potential": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 13,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "always",
+        "country_uses_consumer_goods",
+        "is_nomadic",
+        "is_rival_economically_superior",
+        "is_rival_militarily_superior",
+        "is_rival_technologically_superior",
+        "is_wilderness_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ],
+        [
+          "always"
+        ],
+        [
+          "country_uses_consumer_goods"
+        ],
+        [
+          "is_nomadic"
+        ],
+        [
+          "is_nomadic",
+          "is_wilderness_empire"
+        ],
+        [
+          "is_rival_economically_superior",
+          "is_rival_militarily_superior",
+          "is_rival_technologically_superior"
+        ],
+        [
+          "is_wilderness_empire"
         ]
       ]
     },

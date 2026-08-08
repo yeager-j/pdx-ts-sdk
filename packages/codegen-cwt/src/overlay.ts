@@ -956,15 +956,13 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "triggered_modifier_by_planet_clause (aliases.cwt:113) reuses building.triggered_planet_modifier's " +
         "triggeredModifierBlock shape (buildings.cwt:224). SDK-56: 5 shipped buildings write this " +
-        "key and the row was missing, so the writer silently dropped it. KNOWN MIS-SCOPED " +
-        "POTENTIAL, caught in bug-bash review (not fixed here — see triggered_country_modifier's " +
-        "reason below for the full account): by_planet_clause's own `potential` field carries " +
+        "key and the row was missing, so the writer silently dropped it. By_planet_clause's own " +
+        "`potential` field carries " +
         "`## push_scope = planet` (aliases.cwt:114-115), while this field's own " +
         "`## replace_scopes = { this = pop_group root = pop_group }` (buildings.cwt:223-224) governs " +
-        'the modifier half. TriggeredModifier<"pop_group"> gives both halves the field\'s pop_group ' +
-        "scope, which is right for `modifiers` and wrong for `when`: `when` should type as " +
-        'Trigger<"planet">, matching the planet the building sits on, not the pop_group the ' +
-        "modifier targets.",
+        "the modifier half. SDK-61 derives both declarations structurally and emits " +
+        'TriggeredModifier<"pop_group", "planet">, matching the planet the building sits on ' +
+        "and the pop_group the modifier targets.",
     },
   ],
   [
@@ -976,29 +974,12 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "triggeredModifierBlock shape (buildings.cwt:230). SDK-56: 114 shipped buildings write this " +
         "key — the largest single silently-dropped field the sweep found — and the row was missing, " +
         "so the writer silently dropped it in full.\n\n" +
-        "KNOWN MIS-SCOPED POTENTIAL, caught in bug-bash review and left unfixed pending a dedicated " +
-        "follow-up (filed separately; not built into this seven-row overlay PR). " +
         "triggered_modifier_by_planet_clause's own `potential` field carries `## push_scope = planet` " +
         "(aliases.cwt:114-115), independent of whatever scope the splicing field itself declares. " +
         "This field's own `## replace_scopes = { this = country root = country }` " +
-        "(buildings.cwt:229-230) governs the *modifier* half correctly (country is right: 114 real " +
-        "buildings write country-scoped modifier names here). But TriggeredModifierBlock's single " +
-        'scope parameter also gives `when` that same "country" scope, when the rules say `when` ' +
-        'runs at "planet" (the planet the building sits on) instead. In practice: a real, ' +
-        "game-legal potential like `isCapital()` (planet/colony-scoped) is REJECTED by the current " +
-        '`TriggeredModifier<"country">` type, while a country-only condition like `hasAuthority(...)` ' +
-        "is ACCEPTED and would emit a `potential` block the game evaluates in planet scope — silently " +
-        "wrong in the accepting direction too, not just the rejecting one. The three building rows " +
-        "splicing by_planet_clause (this one, triggered_army_modifier, " +
-        "triggered_planet_pop_group_modifier_for_all) all carry this same defect, as does every " +
-        "other triggeredModifierBlock row whose splice pushes a different scope onto `potential` " +
-        "than its own field declares for the modifier (situation_type's six triggered_modifier / " +
-        "triggered_target_modifier rows, pre-existing on main, splice " +
-        "triggered_modifier_by_situation_clause the same way). Fixing it needs a second scope " +
-        "parameter on the hand-written TriggeredModifier<S> (packages/sdk/src/content.ts) plus new " +
-        "emitter capability to resolve a spliced alias's own nested-field scope rather than reusing " +
-        "the splicing field's scope wholesale — real, shared-type-touching machinery, not a per-row " +
-        "assertion, and out of scope for this PR by design.",
+        "(buildings.cwt:229-230) governs the modifier half. SDK-61 derives those two scopes once " +
+        'from the expanded clause and emits `TriggeredModifier<"country", "planet">`, so ' +
+        "planet conditions are checked independently from country modifier names.",
     },
   ],
   [
@@ -1010,11 +991,9 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "triggeredModifierBlock shape (buildings.cwt:233). SDK-56: zero shipped buildings write this " +
         "key, but the shape is already corpus-proven via its siblings splicing the identical " +
         "by_planet clause on the same registry — added for consistency rather than declined for " +
-        "lack of its own precedent. KNOWN MIS-SCOPED POTENTIAL, the same defect as " +
-        "triggered_country_modifier above (see that row's reason for the full account): `when` " +
-        'should type as Trigger<"planet"> (aliases.cwt:114-115\'s push_scope on `potential`), not ' +
-        'Trigger<"army">, which TriggeredModifier<"army">\'s single scope parameter currently ' +
-        "forces on both halves.",
+        "lack of its own precedent. Its `potential` pushes to planet while the modifier field " +
+        "replaces scope with army; SDK-61 therefore emits " +
+        '`TriggeredModifier<"army", "planet">` from those two declarations.',
     },
   ],
   [

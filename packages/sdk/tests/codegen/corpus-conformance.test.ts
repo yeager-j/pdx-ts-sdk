@@ -851,3 +851,69 @@ describe("shape conformance, weight-block modifier rows", () => {
     expect(mismatches.map((one) => one.kind)).toEqual(["scope"]);
   });
 });
+
+describe("shape conformance, triggered-modifier potential", () => {
+  const RULES = new Map<string, RuleScopes>([
+    ["is_capital", ["planet"]],
+    ["always", "universal"],
+  ]);
+  const scopesOf = (_clause: "trigger" | "effect", key: string): RuleScopes | null =>
+    RULES.get(key) ?? null;
+  const observation = {
+    definitions: 1,
+    files: 1,
+    occurrences: new Map([
+      [
+        "building.triggered_country_modifier.potential",
+        {
+          definitions: 1,
+          repeated: 0,
+          scalars: 0,
+          blocks: 1,
+          bareValues: 0,
+          bareBlocks: 0,
+          emptyBlocks: 0,
+          values: new Set<string>(),
+          keys: new Set(["is_capital"]),
+          keysByDefinition: [new Set(["is_capital"])],
+        },
+      ],
+    ]),
+  };
+  const field = (scope: EmittedField["scope"]): EmittedField => ({
+    field: "building.triggered_country_modifier.potential",
+    shape: "trigger",
+    repeated: false,
+    clause: "trigger",
+    scope,
+  });
+
+  it("rejects reusing the modifier scope for a pushed potential", () => {
+    const mismatches = shapeConformance(observation, [field(["country"])], scopesOf);
+    expect(mismatches.map((one) => one.kind)).toEqual(["scope"]);
+    expect(mismatches[0]?.detail).toContain("typed for scope country");
+    expect(shapeConformance(observation, [field(["planet"])], scopesOf)).toEqual([]);
+  });
+
+  it("rejects a scalar potential the TriggeredModifier interface cannot author", () => {
+    const scalar = {
+      ...observation,
+      occurrences: new Map([
+        [
+          "building.triggered_country_modifier.potential",
+          {
+            ...observation.occurrences.get("building.triggered_country_modifier.potential")!,
+            scalars: 1,
+            blocks: 0,
+            values: new Set(["yes"]),
+            keys: new Set<string>(),
+            keysByDefinition: [new Set<string>()],
+          },
+        ],
+      ]),
+    };
+    const mismatches = shapeConformance(scalar, [field(["planet"])], scopesOf);
+    expect(mismatches.map((one) => one.kind)).toEqual(["form"]);
+    expect(mismatches[0]?.detail).toContain("write a scalar (yes)");
+  });
+});

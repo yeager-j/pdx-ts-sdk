@@ -2180,6 +2180,24 @@
         ]
       ]
     },
+    "triggered_country_modifier.potential": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [
+          "owner?"
+        ]
+      ]
+    },
     "upgrade_desc": {
       "definitions": 2,
       "repeated": 0,

@@ -536,6 +536,70 @@ describe("weight-modifier descent", () => {
   });
 });
 
+describe("triggered-modifier potential descent", () => {
+  const TRIGGERED_MODIFIER: DescentNode = {
+    field: "triggered_modifier",
+    mode: "triggeredModifierPotential",
+    children: [],
+  };
+
+  it("records only potential conditions, not modifier names", () => {
+    const corpus = corpusOf(
+      `
+      one = {
+        triggered_modifier = {
+          potential = { is_capital = yes }
+          country_unity_produces_add = 2
+          modifier = { country_naval_cap_add = 5 }
+        }
+      }
+    `,
+      [TRIGGERED_MODIFIER]
+    );
+    expect([...(corpus.occurrences.get("triggered_modifier.potential")?.keys ?? [])]).toEqual([
+      "is_capital",
+    ]);
+    expect(corpus.occurrences.has("triggered_modifier.country_unity_produces_add")).toBe(false);
+    expect(corpus.occurrences.has("triggered_modifier.modifier")).toBe(false);
+  });
+
+  it("preserves a scalar potential for shape conformance", () => {
+    const corpus = corpusOf(
+      `
+      one = {
+        triggered_modifier = { potential = yes }
+      }
+    `,
+      [TRIGGERED_MODIFIER]
+    );
+    const potential = corpus.occurrences.get("triggered_modifier.potential");
+    expect(potential?.scalars).toBe(1);
+    expect(potential?.blocks).toBe(0);
+    expect([...potential!.values]).toEqual(["yes"]);
+  });
+
+  it("measures potential arity per triggered-modifier row", () => {
+    const corpus = corpusOf(
+      `
+      one = {
+        triggered_modifier = { potential = { always = yes } }
+        triggered_modifier = { potential = { always = yes } }
+      }
+      two = {
+        triggered_modifier = {
+          potential = { always = yes }
+          potential = { always = no }
+        }
+      }
+    `,
+      [TRIGGERED_MODIFIER]
+    );
+    const potential = corpus.occurrences.get("triggered_modifier.potential");
+    expect(potential?.definitions).toBe(2);
+    expect(potential?.repeated).toBe(1);
+  });
+});
+
 /** Every path a descent tree records under, rooted at `prefix`. */
 function descentPaths(nodes: readonly DescentNode[], prefix: string): string[] {
   return nodes.flatMap((node) => {
@@ -609,6 +673,22 @@ describe("the emitter's descent channel", () => {
       // The holder's scope: `Modifier.when` is a `Trigger<S>` at whatever S the
       // weight block itself was lowered at.
       scope: ["country"],
+    });
+  });
+
+  it("describes a triggered modifier's potential on both sides", () => {
+    const emitted = emitRegistry("building");
+    expect(emitted.corpusDescents).toContainEqual({
+      field: "triggered_country_modifier",
+      mode: "triggeredModifierPotential",
+      children: [],
+    });
+    expect(emitted.nestedEmittedFields).toContainEqual({
+      field: "building.triggered_country_modifier.potential",
+      shape: "trigger",
+      repeated: false,
+      clause: "trigger",
+      scope: ["planet"],
     });
   });
 
