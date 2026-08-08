@@ -1,4 +1,4 @@
-out| <project>/src/content/resonance_theory.ts
 err| warning: The project depends on @pdx-ts/sdk as "file:../pdx-sdk/packages/sdk", which is not a semver range, so no version can be proved to be inside ^0.2.0. A `file:`, `link:`, `workspace:` or git dependency can be anything at all.
 err| warning: generating anyway, because --allow-unsupported-sdk was given.
+out| <project>/src/content/resonance_theory.ts
 exit 0

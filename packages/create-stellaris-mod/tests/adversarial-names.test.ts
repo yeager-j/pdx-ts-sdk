@@ -173,6 +173,20 @@ describe("names the derivation accepts", () => {
   );
 
   it.each(ACCEPTED.map(([name]) => [JSON.stringify(name), name] as const))(
+    "derives %s to the same names a second time, from its own title",
+    (_label, name) => {
+      // `generate` derives once to show the target path and the logical-name
+      // facts, and then hands the *normalized title* to the catalog, which
+      // derives again to produce the basename it publishes. Those two
+      // derivations have to agree or the file lands somewhere other than the
+      // path an author confirmed — so idempotence over the title is a property
+      // this corpus pins rather than a claim the command makes about itself.
+      const once = deriveNames(name);
+      expect(deriveNames(once.title)).toEqual(once);
+    }
+  );
+
+  it.each(ACCEPTED.map(([name]) => [JSON.stringify(name), name] as const))(
     "renders %s without letting it out of its string literal",
     (_label, name) => {
       const names = deriveNames(name);

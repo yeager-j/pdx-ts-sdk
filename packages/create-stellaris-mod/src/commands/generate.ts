@@ -200,9 +200,12 @@ export async function runGenerate(
 
     // 7. The pure catalog, once. This same value feeds the dry run and the
     //    publisher, so what an author previews is what an author gets. The
-    //    normalized title goes in rather than the raw argument: the catalog
-    //    derives its own names from it, and handing it the value this command
-    //    already derived from is what makes the two agree by construction.
+    //    normalized title goes in rather than the raw argument, and the catalog
+    //    derives its own names from it — so the path shown at step 5 and the
+    //    basename published at step 10 agree only if the derivation is
+    //    idempotent over its own title. That is an invariant rather than a
+    //    construction, and `adversarial-names.test.ts` pins it across the
+    //    hostile-name corpus.
     const generated = CATALOG.generate({ recipeId, name: names.title, answers });
 
     // 8. A look at the target, which creates nothing.

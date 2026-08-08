@@ -6,7 +6,9 @@
  * reviewed the way documentation is — by reading the committed file and the
  * diff against it. The `out|`/`err|` prefixes are what make the review
  * possible: a transcript records not just what was written but *where*, and the
- * catalog's promise is that only the result goes to stdout.
+ * catalog's promise is that only the result goes to stdout. The lines are in
+ * the order they were written, so a transcript is a session rather than two
+ * streams stacked on top of each other.
  *
  * The generate transcripts run against a real copy of the golden fixture
  * project in a temporary directory, so they are evidence about a real
@@ -21,7 +23,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { main } from "../src/cli.ts";
-import { capture } from "./helpers/capture.ts";
+import { capture, type CaptureEvent, type Channel } from "./helpers/capture.ts";
 import { createTempProject, type TempProject } from "./helpers/golden-project.ts";
 import { expectGolden } from "./helpers/goldens.ts";
 import { CANCEL, fakeTerminal, type ScriptedAnswer } from "./helpers/terminal.ts";
@@ -42,14 +44,12 @@ interface RunOptions {
 }
 
 async function run(argv: readonly string[], options: RunOptions = {}): Promise<Run> {
-  const { io, out, err } = capture(options.cwd ?? "/tmp/somewhere", options.answers !== undefined);
+  const { io, events } = capture(options.cwd ?? "/tmp/somewhere", options.answers !== undefined);
   const terminal = fakeTerminal(io, options.answers ?? []);
   const code = await main([...argv], io, terminal);
   terminal.expectDrained();
 
-  const transcript = [...stream("out", out()), ...stream("err", err()), `exit ${code}`, ""].join(
-    "\n"
-  );
+  const transcript = [...serialize(events()), `exit ${code}`, ""].join("\n");
   return { transcript: normalize(transcript, options.project), code };
 }
 
@@ -63,20 +63,38 @@ function normalize(transcript: string, project: TempProject | undefined): string
     .reduce((text, dir) => text.split(dir).join("<project>"), transcript);
 }
 
-function stream(tag: string, text: string): string[] {
-  if (text === "") {
-    return [];
+/**
+ * Every recorded write, as tagged lines in the order they happened.
+ *
+ * A line is emitted when its newline arrives, which is the moment it became
+ * visible — so an interactive session reads the way it ran: the prompts, then
+ * the confirmation, then the path on stdout. Grouping by stream instead would
+ * print the result above the questions that produced it.
+ *
+ * A stream that ends mid-line is recorded as it is and then said out loud,
+ * because a missing final newline is worth seeing rather than rounding off.
+ */
+function serialize(events: readonly CaptureEvent[]): string[] {
+  const pending = new Map<Channel, string>();
+  const lines: string[] = [];
+
+  const tagged = (channel: Channel, line: string): string =>
+    line === "" ? `${channel}|` : `${channel}| ${line}`;
+
+  for (const { channel, text } of events) {
+    const parts = `${pending.get(channel) ?? ""}${text}`.split("\n");
+    pending.set(channel, parts.pop()!);
+    for (const part of parts) {
+      lines.push(tagged(channel, part));
+    }
   }
-  const lines = text.split("\n");
-  // A trailing newline ends the last line rather than starting an empty one.
-  // If one is missing that is worth seeing, so it is recorded rather than
-  // rounded off.
-  const complete = lines.at(-1) === "";
-  if (complete) {
-    lines.pop();
+
+  for (const [channel, rest] of pending) {
+    if (rest !== "") {
+      lines.push(tagged(channel, rest), `${channel}| (no trailing newline)`);
+    }
   }
-  const recorded = lines.map((line) => (line === "" ? `${tag}|` : `${tag}| ${line}`));
-  return complete ? recorded : [...recorded, `${tag}| (no trailing newline)`];
+  return lines;
 }
 
 const DISCOVERY: readonly (readonly [string, readonly string[]])[] = [
