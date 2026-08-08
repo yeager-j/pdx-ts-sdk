@@ -33,5 +33,16 @@
   // program — one import anywhere would make this program the present world.
   // The example compiles under `packages/stellaris-ids/tsconfig.json` instead,
   // which is the world a real mod author is in.
-  "exclude": ["node_modules", "dist", "packages/stellaris-ids", "examples"]
+  // The scaffolder's golden fixture project and its recorded goldens are a mod
+  // author's program, not this one: they compile under their own tsconfig with
+  // `@pdx-ts/sdk` symlinked in, which is what the matrix harness runs `tsc -p`
+  // over.
+  "exclude": [
+    "node_modules",
+    "dist",
+    "packages/stellaris-ids",
+    "examples",
+    "packages/create-stellaris-mod/tests/fixtures",
+    "packages/create-stellaris-mod/tests/goldens"
+  ]
 }

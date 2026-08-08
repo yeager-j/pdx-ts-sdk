@@ -11,10 +11,12 @@ import path from "node:path";
 import semver from "semver";
 import { describe, expect, it, vi } from "vitest";
 
+import { CATALOG } from "../src/catalog/index.ts";
 import { main } from "../src/cli.ts";
 import { COMMANDS, FLAGS, helpText, type CommandName, type FlagName } from "../src/options.ts";
 import { VERIFIED_SDK_RANGE } from "../src/sdk-range.ts";
 import { VERSIONS } from "../src/templates/project.ts";
+import { capture } from "./helpers/capture.ts";
 
 const PACKAGE = path.resolve(import.meta.dirname, "..");
 
@@ -123,6 +125,36 @@ describe("--help", () => {
     expect(helpText()).toContain("--no-git");
     expect(helpText()).not.toMatch(/^\s+--git\s/m);
   });
+});
+
+/**
+ * The same drift invariant, one level down. `view` is where an author reads what
+ * a recipe will ask and how to answer it without prompting, so a question the
+ * page does not document is a flag nobody can discover.
+ */
+describe("view", () => {
+  it.each(CATALOG.list().map((summary) => summary.id))(
+    "documents every flag %s's questions become",
+    async (id) => {
+      const { io, out } = capture();
+      expect(await main(["view", id], io)).toBe(0);
+
+      const questions = CATALOG.view(id).questions;
+      for (const question of questions) {
+        expect(out(), `--${question.key} is asked but undocumented`).toContain(`--${question.key}`);
+        for (const choice of question.choices) {
+          expect(out(), `${question.key}=${choice.value} is offered but undocumented`).toContain(
+            choice.value
+          );
+        }
+      }
+      if (questions.length === 0) {
+        // Not a vacuous pass: the page has to say so, so the loop above being
+        // empty is a documented fact rather than a silent gap.
+        expect(out()).toContain("asks nothing");
+      }
+    }
+  );
 });
 
 /**

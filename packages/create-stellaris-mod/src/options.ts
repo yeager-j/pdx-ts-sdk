@@ -26,6 +26,27 @@ export const COMMANDS = {
 
 export type CommandName = keyof typeof COMMANDS;
 
+/**
+ * The flags `generate` owns whatever recipe is selected.
+ *
+ * A recipe's question key becomes `--<key>`, so a question called `dry-run`
+ * would silently shadow the flag that decides whether anything is written. The
+ * catalog rejects that collision when it is constructed rather than when
+ * somebody runs the recipe, and this is the list it checks against — stated
+ * once, here, beside the command table it belongs to.
+ *
+ * `help` and `version` are in it for the same reason even though they are not
+ * generate-specific: `--help` must keep meaning help.
+ */
+export const COMMON_GENERATE_FLAGS = [
+  "cwd",
+  "yes",
+  "dry-run",
+  "allow-unsupported-sdk",
+  "help",
+  "version",
+] as const;
+
 export interface SplitArgv {
   readonly command: CommandName;
   /** `argv` with the command name removed, when one was spelled out. */
@@ -158,9 +179,20 @@ const USAGE: Record<CommandName, readonly string[]> = {
 };
 
 /**
- * `--help`, per command. `init` gets the flag table, because `init` is the only
- * command implemented here and its flags are the ones a help-drift test can
- * hold to the parser.
+ * The one sentence each catalog command's help ends on: the thing worth knowing
+ * that its usage line does not already say. `generate` has no flag table yet, so
+ * what it has to say is that it does not exist.
+ */
+const CLOSING_NOTE: Record<Exclude<CommandName, "init">, () => string> = {
+  list: () => "It needs no project: the catalog is baked into this release.",
+  view: () => "Run `npx create-stellaris-mod list` for the recipe ids.",
+  generate: () => catalogPending("generate"),
+};
+
+/**
+ * `--help`, per command. `init` gets the flag table, because its flags are the
+ * ones a help-drift test can hold to the parser; the catalog commands take no
+ * flags of their own, and `view` documents each recipe's flags on its own page.
  */
 export function helpText(command: CommandName = "init"): string {
   const lines = [
@@ -173,7 +205,13 @@ export function helpText(command: CommandName = "init"): string {
   ];
 
   if (command !== "init") {
-    lines.push(catalogPending(command), "");
+    lines.push(
+      "Options:",
+      `  ${"-h, --help".padEnd(30)} ${FLAGS.help.describe}`,
+      "",
+      CLOSING_NOTE[command](),
+      ""
+    );
     return lines.join("\n");
   }
 

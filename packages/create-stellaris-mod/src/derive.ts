@@ -8,6 +8,8 @@
  * grammar breaks a test here rather than a stranger's scaffold.
  */
 
+import { slugify } from "./fold.ts";
+
 /** The SDK's rule, restated only so this module needs no runtime dependency. */
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 
@@ -16,39 +18,17 @@ export function isValidPrefix(prefix: string): boolean {
 }
 
 /**
- * Latin letters that are not accented forms of an ASCII letter, so NFKD leaves
- * them whole and the a-z filter would delete them outright — turning
- * `Ærø Ascendancy` into `r_ascendancy`. Spelled out because a mangled default
- * is worse than a long-ish table, and Stellaris mod names are not all English.
- */
-const TRANSLITERATIONS: ReadonlyArray<readonly [RegExp, string]> = [
-  [/æ/g, "ae"],
-  [/œ/g, "oe"],
-  [/ø/g, "o"],
-  [/ð/g, "d"],
-  [/þ/g, "th"],
-  [/ß/g, "ss"],
-  [/ł/g, "l"],
-  [/đ/g, "d"],
-  [/ħ/g, "h"],
-  [/ŋ/g, "ng"],
-];
-
-/**
  * A display name into a mod prefix: `"Hello Galaxy"` -> `hello_galaxy`.
  *
- * Accents fold onto their base letter and the letters above transliterate, so
- * `Ærø Ascendancy` becomes `aero_ascendancy` rather than losing three of its
- * characters. A name that begins with a digit gets a `mod_` prefix: ids and
- * file stems must start with a letter, and refusing outright would be a dead
- * end for a legitimate name like `4X Overhaul`.
+ * The fold in `fold.ts` does the character work — accents onto their base
+ * letter, `Ærø Ascendancy` into `aero_ascendancy` rather than losing three of
+ * its characters. What is this module's own is the never-fail part: an empty
+ * fold becomes `my_mod`, and a name that begins with a digit gets a `mod_`
+ * prefix, because ids and file stems must start with a letter and refusing
+ * outright would be a dead end for a legitimate name like `4X Overhaul`.
  */
 export function toPrefix(name: string): string {
-  let folded = name.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  for (const [pattern, replacement] of TRANSLITERATIONS) {
-    folded = folded.replace(pattern, replacement);
-  }
-  const slug = folded.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const slug = slugify(name);
   if (slug === "") {
     return "my_mod";
   }

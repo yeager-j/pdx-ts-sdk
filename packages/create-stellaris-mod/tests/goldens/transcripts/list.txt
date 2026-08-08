@@ -1,0 +1,9 @@
+out| Recipes:
+out|
+out|   technology  Technology  Item recipe
+out|               One researchable technology, plus the feature file that places it.
+out|
+out| See what a recipe asks, and the flags that answer it without prompting:
+out|
+out|   npx create-stellaris-mod view <recipe>
+exit 0
