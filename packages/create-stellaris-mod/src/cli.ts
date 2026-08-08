@@ -13,16 +13,24 @@
  */
 
 import { runInit } from "./commands/init.ts";
+import { runList } from "./commands/list.ts";
 import { runPending } from "./commands/pending.ts";
+import { runView } from "./commands/view.ts";
 import { processIo, type CliIo } from "./io.ts";
 import { splitCommand } from "./options.ts";
 
 export async function main(argv: readonly string[], io: CliIo = processIo()): Promise<number> {
   const { command, rest } = splitCommand(argv);
-  if (command === "init") {
-    return runInit(rest, io);
+  switch (command) {
+    case "init":
+      return runInit(rest, io);
+    case "list":
+      return runList(rest, io);
+    case "view":
+      return runView(rest, io);
+    case "generate":
+      return runPending(command, rest, io);
   }
-  return runPending(command, rest, io);
 }
 
 export { detectPackageManager } from "./exec.ts";

@@ -9,51 +9,18 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { Readable, Writable } from "node:stream";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { main } from "../src/cli.ts";
 import { supportedVersionFor } from "../src/detect.ts";
-import type { CliIo } from "../src/io.ts";
 import { parseManifest } from "../src/manifest.ts";
 import { COMMANDS, splitCommand, type CommandName } from "../src/options.ts";
 import { FALLBACK_GAME_VERSION, supportedVersionProblem } from "../src/prompts.ts";
 import { VERSION } from "../src/version.ts";
+import { capture } from "./helpers/capture.ts";
 
-interface Capture {
-  readonly io: CliIo;
-  out(): string;
-  err(): string;
-}
-
-function capture(cwd = "/tmp/somewhere"): Capture {
-  const out: string[] = [];
-  const err: string[] = [];
-  const sink = (into: string[]): Writable =>
-    new Writable({
-      write(chunk: unknown, _encoding, callback) {
-        into.push(String(chunk));
-        callback();
-      },
-    });
-  return {
-    io: {
-      cwd,
-      // Not a TTY: nothing here may reach a prompt, and a test that hangs
-      // waiting for one is the failure mode worth making impossible.
-      stdin: Readable.from([]),
-      stdout: sink(out),
-      stderr: sink(err),
-    },
-    out: () => out.join(""),
-    err: () => err.join(""),
-  };
-}
-
-const RESERVED = ["list", "view", "generate"] as const satisfies readonly Exclude<
-  CommandName,
-  "init"
->[];
+/** Reserved, and still waiting on the half of the catalog that writes files. */
+const PENDING = ["generate"] as const satisfies readonly Exclude<CommandName, "init">[];
 
 describe("splitCommand", () => {
   it("takes a reserved first argument as the command, and strips it", () => {
@@ -80,20 +47,80 @@ describe("splitCommand", () => {
   });
 });
 
-describe("the reserved catalog commands", () => {
-  it.each(RESERVED)("says %s arrives with the Recipe Catalog, and fails", async (command) => {
+describe("the catalog commands still waiting on their implementation", () => {
+  it.each(PENDING)("says what %s cannot do yet, and fails", async (command) => {
     const { io, out, err } = capture();
     expect(await main([command], io)).toBe(1);
-    expect(err()).toContain("Recipe Catalog");
     expect(err()).toContain(command);
+    expect(err()).toContain("cannot write a feature file");
+    // And points at the half that does work. This release carries the catalog,
+    // so a message claiming otherwise would be telling an author the thing in
+    // front of them is not there — naming both working commands is what a
+    // regression to that wording would fail on.
+    expect(err()).toContain("list");
+    expect(err()).toContain("view");
+    expect(out()).toBe("");
+  });
+});
+
+describe("--help", () => {
+  it.each(Object.keys(COMMANDS) as CommandName[])(
+    "answers %s --help on stdout, and succeeds",
+    async (command) => {
+      const { io, out, err } = capture();
+      expect(await main([command, "--help"], io)).toBe(0);
+      expect(out()).toContain("create-stellaris-mod");
+      expect(out()).toContain(command);
+      expect(err()).toBe("");
+    }
+  );
+});
+
+describe("list", () => {
+  it("prints every recipe on stdout, and needs no project", async () => {
+    const { io, out, err } = capture("/nowhere/at/all");
+    expect(await main(["list"], io)).toBe(0);
+    expect(out()).toContain("technology");
+    expect(err()).toBe("");
+  });
+
+  it("refuses an argument rather than ignoring it", async () => {
+    const { io, out, err } = capture();
+    expect(await main(["list", "technology"], io)).toBe(1);
+    expect(err()).toContain("takes no arguments");
+    expect(out()).toBe("");
+  });
+});
+
+describe("view", () => {
+  it("prints one recipe's page on stdout, and needs no project", async () => {
+    const { io, out, err } = capture("/nowhere/at/all");
+    expect(await main(["view", "technology"], io)).toBe(0);
+    expect(out()).toContain("Item recipe");
+    expect(out()).toContain("npx create-stellaris-mod generate technology");
+    expect(err()).toBe("");
+  });
+
+  it("answers an unknown recipe with the ids that exist, on stderr", async () => {
+    const { io, out, err } = capture();
+    expect(await main(["view", "nope"], io)).toBe(1);
+    expect(err()).toContain('"nope"');
+    expect(err()).toContain("technology");
     expect(out()).toBe("");
   });
 
-  it.each(RESERVED)("answers %s --help on stdout, and succeeds", async (command) => {
+  it("answers a missing recipe id the same way", async () => {
     const { io, out, err } = capture();
-    expect(await main([command, "--help"], io)).toBe(0);
-    expect(out()).toContain(`create-stellaris-mod ${command}`);
-    expect(err()).toBe("");
+    expect(await main(["view"], io)).toBe(1);
+    expect(err()).toContain("needs a recipe id");
+    expect(err()).toContain("technology");
+    expect(out()).toBe("");
+  });
+
+  it("refuses two recipe ids, which would silently view one", async () => {
+    const { io, err } = capture();
+    expect(await main(["view", "technology", "building"], io)).toBe(1);
+    expect(err()).toContain("takes one recipe id");
   });
 });
 

@@ -1,0 +1,11 @@
+{
+  "name": "golden-fixture",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#mod": "./src/mod.ts"
+  },
+  "devDependencies": {
+    "@pdx-ts/sdk": "^0.2.0"
+  }
+}

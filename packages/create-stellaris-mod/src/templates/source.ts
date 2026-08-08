@@ -6,12 +6,8 @@
  */
 
 import type { Resolved } from "../options.ts";
+import { quoteTs } from "../quote.ts";
 import { canPinIds } from "./project.ts";
-
-/** A TS string literal, so a mod name with an apostrophe cannot break the file. */
-function quote(value: string): string {
-  return JSON.stringify(value);
-}
 
 export function modTs(resolved: Resolved): string {
   // The same predicate the dependency uses: importing a package the manifest
@@ -333,7 +329,7 @@ function fallbackConst(resolved: Resolved): string {
  * The install this project was scaffolded against. Machine-specific: set
  * \`STELLARIS_PATH\` instead if you share this repository, which wins over it.
  */
-const SCAFFOLDED_INSTALL = ${quote(resolved.installPath)};
+const SCAFFOLDED_INSTALL = ${quoteTs(resolved.installPath)};
 `;
 }
 

@@ -1,0 +1,11 @@
+{
+  "mod": {
+    "golden_mod": {
+      "name": "Golden Fixture",
+      "version": "0.1.0",
+      "supportedVersion": "v4.4.*",
+      "tags": ["Technologies"]
+    }
+  },
+  "contentDirectory": "src/content"
+}

@@ -1,0 +1,19 @@
+out| technology — Technology
+out|
+out|   One researchable technology, plus the feature file that places it.
+out|
+out|   Kind     Item recipe — one feature file holding one item
+out|   Creates  technology
+out|   Writes   <contentDirectory>/<derived_name>.ts
+out|
+out| Questions:
+out|
+out|   This recipe asks nothing, so it takes no recipe flags.
+out|
+out| Generate it:
+out|
+out|   npx create-stellaris-mod generate technology "<name>"
+out|
+out| The name is the display name. The filename, the content id, and the
+out| TypeScript binding are all derived from it.
+exit 0
