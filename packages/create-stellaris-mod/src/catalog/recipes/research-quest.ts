@@ -29,21 +29,16 @@
  *   at build time (`onSuccess` names a completion event declared below it) —
  *   and `events.countryHandle` stays out because nothing here requires it.
  *
- * The renderer owns the whole source shape, including where lines break, for
- * the same reason `technology.ts` does: the package promises generated files
- * arrive already Prettier-formatted, and Prettier's choice of shape depends on
- * how long the author's name turned out to be. The hug/break flip in `call`
- * and the three shapes in `featureCall` reproduce real Prettier behavior,
- * verified across the entire accepted length range by `recipe-matrix.test.ts`
- * and `adversarial-names.test.ts`.
+ * The renderer owns the source's content and structure — declaration order,
+ * which object bodies are expanded, the comments — and nothing about line
+ * width: the catalog runs the pinned Prettier over the render (`../format.ts`),
+ * so a long author name reflows by the formatter's own judgment rather than by
+ * arithmetic here.
  */
 
 import { quoteTs } from "../../quote.ts";
 import { defineRecipe } from "../catalog.ts";
 import type { DerivedNames } from "../types.ts";
-
-/** The repository's Prettier `printWidth`, which the emitted source must respect. */
-const PRINT_WIDTH = 100;
 
 type Projects = "one" | "two";
 
@@ -317,39 +312,27 @@ function items(projects: Projects): string {
 }
 
 /**
- * `mod.<definer>("<logical name>", { ... });`
- *
- * Prettier hugs the object argument as long as the line that opens it fits, and
- * breaks every argument out once it does not. Both shapes are spelled here
- * because the renderer returns finished source: emitting the hugged shape for a
- * long name would be emitting source Prettier disagrees with.
+ * `mod.<definer>("<logical name>", { ... });` — always the hugged shape. The
+ * body stays expanded because it is written across lines; whether the opening
+ * line survives an author's long name is the formatter's call, not this one.
  */
 function call(open: string, logicalName: string, body: readonly string[]): string {
-  if (`${open}${logicalName}, {`.length <= PRINT_WIDTH) {
-    return [`${open}${logicalName}, {`, ...indent(body, "  "), "});"].join("\n");
-  }
-  return [open, `  ${logicalName},`, "  {", ...indent(body, "    "), "  }", ");"].join("\n");
+  return [`${open}${logicalName}, {`, ...indent(body, "  "), "});"].join("\n");
 }
 
 /**
- * `export const feature = mod.feature("<stem>", [<items>]);`
- *
- * Three shapes: flat while it fits, then the array broken out one item per
- * line, then every argument broken out — where the item list fits inline again
- * at its shallower indent, which is how Prettier prints it.
+ * `export const feature = mod.feature("<stem>", [ ... ]);` — one item per
+ * line, always: a coordinated Feature's roster reads as a list, and this is
+ * the shape Prettier keeps for it at any conventional name length.
  */
 function featureCall(names: DerivedNames, projects: Projects): string {
-  const stem = quoteTs(names.stem);
-  const list = items(projects);
-  const flat = `export const feature = mod.feature(${stem}, [${list}]);`;
-  if (flat.length <= PRINT_WIDTH) {
-    return flat;
-  }
-  const open = `export const feature = mod.feature(${stem}, [`;
-  if (open.length <= PRINT_WIDTH) {
-    return [open, ...list.split(", ").map((item) => `  ${item},`), "]);"].join("\n");
-  }
-  return ["export const feature = mod.feature(", `  ${stem},`, `  [${list}]`, ");"].join("\n");
+  return [
+    `export const feature = mod.feature(${quoteTs(names.stem)}, [`,
+    ...items(projects)
+      .split(", ")
+      .map((item) => `  ${item},`),
+    "]);",
+  ].join("\n");
 }
 
 /** Blank lines stay blank: an indented empty line is trailing whitespace. */

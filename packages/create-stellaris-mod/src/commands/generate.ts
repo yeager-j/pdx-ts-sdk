@@ -14,7 +14,9 @@
  *   7. call the pure catalog once;
  *   8. preflight the target without touching anything;
  *   9. confirm the exact path (interactive only);
- *  10. print the dry run, or create the directories and publish exclusively.
+ *  10. print the dry run, or create the directories, publish exclusively, and
+ *      hand the written file to the project's own Prettier when one is
+ *      installed (`../format-project.ts`).
  *
  * Everything that can refuse comes before anything an author has to answer, and
  * everything an author answers comes before anything is created. A command that
@@ -35,6 +37,7 @@ import { UnknownRecipeError } from "../catalog/catalog.ts";
 import { CATALOG } from "../catalog/index.ts";
 import { deriveNames, NameError } from "../catalog/names.ts";
 import type { ChoiceQuestion, DerivedNames, RecipeView } from "../catalog/types.ts";
+import { formatWithProjectPrettier } from "../format-project.ts";
 import type { CliIo } from "../io.ts";
 import { findManifest, MANIFEST_BASENAME, ManifestError } from "../manifest.ts";
 import { helpText, OptionsError, parseGenerateArgv, parseRecipeFlags } from "../options.ts";
@@ -252,8 +255,14 @@ export async function runGenerate(
       throw new CancelledError();
     }
 
-    // 10. Directories, then the bytes, then the one line stdout carries.
+    // 10. Directories, then the bytes, then the project's own formatter, then
+    //     the one line stdout carries. Formatting failure is a warning rather
+    //     than a failure: the file is already the author's.
     const written = await publishExclusive(preflight, generated.contents);
+    const formatWarning = await formatWithProjectPrettier(found.rootDir, written);
+    if (formatWarning !== undefined) {
+      io.stderr.write(`warning: ${formatWarning}\n`);
+    }
     io.stdout.write(`${written}\n`);
     return 0;
   } catch (error) {

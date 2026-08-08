@@ -336,8 +336,9 @@ not an Intent question.
 7. Call the pure Catalog and obtain Generated Feature Source.
 8. Perform a non-mutating preflight of the target and its existing ancestors.
 9. In interactive mode, confirm the exact target path.
-10. Print byte-identical dry-run output or create any missing directories and
-    publish exclusively.
+10. Print byte-identical dry-run output or create any missing directories,
+    publish exclusively, and hand the written file to the project's own
+    Prettier when one is installed (see Source formatting).
 
 Cancellation at any prompt prints `Nothing was written.` and exits 130.
 Cancellation and dry-run leave missing content directories absent. Non-TTY
@@ -355,15 +356,32 @@ rendering remain nonzero.
 
 ## Source formatting
 
-Recipe renderers return already formatted source. The runtime does not depend
-on Prettier or any TypeScript printer.
+*Redrawn during SDK-112 review: renderers originally returned already formatted
+source and reproduced Prettier's wrapping rules by hand. Holding that promise
+across every accepted name length meant per-construct width arithmetic plus a
+boundary-length corpus, and the acceptance review judged the mimicry not worth
+keeping.*
 
-- Every reachable variant is required to be byte-stable under the repository's
-  pinned/default Prettier configuration.
-- The stability corpus includes canonical and boundary-length legal names so
-  interpolation cannot silently introduce wrapping drift.
-- This is not a promise about an author's custom formatter configuration after
-  generation.
+Recipe renderers emit well-formed, conventionally shaped source and own its
+content — imports and their order, declaration order, expanded object bodies,
+comments. They do not reproduce Prettier's wrapping rules, and the runtime
+still has no formatter dependency.
+
+After real publication, `generate` resolves the project's own Prettier from
+the manifest root — the same install `init` offers and an author may decline —
+and runs it over the written file, so the file lands in the project's own
+style. No install means no formatting: the opt-out is the absence of the
+dependency. A formatter that fails leaves the published file as generated and
+prints a warning; generation has already succeeded.
+
+- Committed goldens pin the renderer's exact bytes, and each reviewed golden
+  must additionally be a fixpoint of the repository's own Prettier
+  configuration at the canonical name, so the committed evidence stays
+  readable.
+- There is no per-name formatting promise: an unusual name length may wrap
+  differently than Prettier would, and the project's own formatter settles it.
+- Dry run prints the bytes the publisher would write, before any project
+  formatter touches them.
 - Source always ends with one newline and uses repository-standard imports and
   ESM `.ts` conventions where relative imports occur.
 
@@ -454,8 +472,9 @@ compiler gate fails rather than passing vacuously.
 
 A separate adversarial-name corpus covers punctuation normalized by policy,
 apostrophes, reserved words, leading digits, Unicode rejection/normalization
-boundaries, and the maximum accepted length. It must compile, build, remain
-formatted, and show no source injection.
+boundaries, and the maximum accepted length. It must compile, build, and show
+no source injection; per-name formatting is the project formatter's job (see
+Source formatting).
 
 ### CLI and filesystem
 
