@@ -67,4 +67,55 @@ describe("Technology", () => {
       "mymod_tech_minimal = {\n\tarea = society\n\ttier = 1\n\tcategory = { statecraft }\n\tcost = 100\n}\n"
     );
   });
+
+  it("emits the modifier clause at both levels the rules declare it (SDK-63)", () => {
+    // 243 shipped technologies write `modifier`, and 55 write the same clause
+    // again inside `technology_swap` — the largest unlowered field on the
+    // registry, silently dropped by the writer until each got its
+    // CONTENT_FIELD_OVERRIDES row. The nested block is not a copy of the
+    // outer one: a swap declares the modifiers that replace the parent's when
+    // the swap's own trigger holds, so both have to survive one definition.
+    const gained = mod.technology("gene_banks", {
+      name: "Gene Banks",
+      cost: 2000,
+      area: "society",
+      tier: 2,
+      category: "biology",
+      modifier: (m) => m.raw("all_technology_research_speed", 0.05),
+      technologySwap: [
+        {
+          name: "gene_seed_purification",
+          trigger: hasCountryFlag("purifier"),
+          modifier: (m) => {
+            m.raw("all_technology_research_speed", 0.1);
+            m.country.unity.produces.mult(0.02);
+          },
+        },
+      ],
+    });
+    const file = mod.compile([mod.feature(undefined, [gained])]).contentFiles[0]!;
+    const entry = file.entries[file.ids.indexOf("mymod_tech_gene_banks")]!;
+    expect(serialize([entry])).toMatchInlineSnapshot(`
+      "mymod_tech_gene_banks = {
+      	area = society
+      	tier = 2
+      	category = { biology }
+      	cost = 2000
+      	technology_swap = {
+      		name = gene_seed_purification
+      		trigger = {
+      			has_country_flag = purifier
+      		}
+      		modifier = {
+      			all_technology_research_speed = 0.1
+      			country_unity_produces_mult = 0.02
+      		}
+      	}
+      	modifier = {
+      		all_technology_research_speed = 0.05
+      	}
+      }
+      "
+    `);
+  });
 });

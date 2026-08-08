@@ -4,7 +4,7 @@
 
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
-import type { WeightBlock } from "../content/types.ts";
+import type { ModifierClosure, WeightBlock } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { ContentPatchItem, PatchedContent, PatchInput } from "../stellaris/vanilla/patch.ts";
 import type { AnyOf, ParsedTechnology } from "../stellaris/vanilla/view.ts";
@@ -18,6 +18,7 @@ export interface TechnologyTechnologySwap {
   inheritName?: boolean;
   inheritEffects?: boolean;
   trigger?: Trigger<"country">;
+  modifier?: ModifierClosure<"country">;
   area?: ResearchArea;
   category?: (TechnologyCategoryRef | string)[];
   weight?: number | WeightBlock<never>;
@@ -47,6 +48,7 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   { key: "area", member: "area", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "category",
@@ -122,6 +124,7 @@ export interface TechnologyFields {
   isDangerous?: boolean;
   isInsight?: boolean;
   featureFlags?: FeatureFlag[];
+  modifier?: ModifierClosure<"country">;
   weightModifier?: WeightBlock<"country">;
   aiWeight?: WeightBlock<"country">;
   /** Only when technology subtype `start` applies. */
@@ -205,6 +208,7 @@ export interface TechnologyPatch {
   readonly isDangerous?: PatchInput<boolean>;
   readonly isInsight?: PatchInput<boolean>;
   readonly featureFlags?: PatchInput<FeatureFlag[]>;
+  readonly modifier?: PatchInput<ModifierClosure<"country">>;
   readonly weightModifier?: PatchInput<WeightBlock<"country">>;
   readonly aiWeight?: PatchInput<WeightBlock<"country">>;
   /** Only when technology subtype `start` applies. */
@@ -344,6 +348,7 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
     form: "list",
     conversion: "identity",
   },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   { key: "weight_modifier", member: "weightModifier", shape: "weightBlock", form: "block" },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
   { key: "starting_potential", member: "startingPotential", shape: "trigger", form: "trigger" },

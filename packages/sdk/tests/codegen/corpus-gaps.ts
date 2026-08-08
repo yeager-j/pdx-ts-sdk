@@ -35,25 +35,6 @@ export interface AcknowledgedGap {
 export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
   {
     registry: "technology",
-    field: "modifier",
-    count: 243,
-    reason:
-      "Declared `single_alias_right[modifier_clause]`, which the emitter has no lowering for " +
-      'in this position ("no declaration the emitter can lower").',
-    issue: "SDK-63",
-  },
-  {
-    registry: "technology",
-    field: "technology_swap.modifier",
-    count: 55,
-    reason:
-      "The same modifier_clause gap as technology.modifier above, one level down inside the " +
-      "technology_swap struct (technologies_consolidated.cwt:162-163) — invisible until the " +
-      "corpus gate started descending into plain structs, and closed by the same fix.",
-    issue: "SDK-63",
-  },
-  {
-    registry: "technology",
     field: "prereqfor_desc",
     count: 125,
     reason:
