@@ -14,13 +14,13 @@
  */
 
 import type { CliIo } from "../io.ts";
-import { catalogPending, helpText } from "../options.ts";
+import { generatePending, helpText } from "../options.ts";
 
 export function runPending(command: "generate", argv: readonly string[], io: CliIo): number {
   if (argv.includes("--help") || argv.includes("-h")) {
     io.stdout.write(helpText(command));
     return 0;
   }
-  io.stderr.write(`${catalogPending(command)}\n`);
+  io.stderr.write(`${generatePending()}\n`);
   return 1;
 }

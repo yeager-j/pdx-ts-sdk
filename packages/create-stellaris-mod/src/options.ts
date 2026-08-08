@@ -179,14 +179,14 @@ const USAGE: Record<CommandName, readonly string[]> = {
 };
 
 /**
- * The one sentence each catalog command's help ends on: the thing worth knowing
- * that its usage line does not already say. `generate` has no flag table yet, so
- * what it has to say is that it does not exist.
+ * What each catalog command's help ends on: the thing worth knowing that its
+ * usage line does not already say. `generate` has no flag table yet, so what it
+ * has to say is which part of it is still missing.
  */
 const CLOSING_NOTE: Record<Exclude<CommandName, "init">, () => string> = {
   list: () => "It needs no project: the catalog is baked into this release.",
   view: () => "Run `npx create-stellaris-mod list` for the recipe ids.",
-  generate: () => catalogPending("generate"),
+  generate: () => generatePending(),
 };
 
 /**
@@ -235,14 +235,24 @@ export function helpText(command: CommandName = "init"): string {
 }
 
 /**
- * What a reserved-but-unimplemented command says. One sentence, on stderr, with
- * a nonzero exit: reserving the name early is what keeps `init` from ever being
- * ambiguous, but a reserved name that silently succeeds would be worse than one
- * that does not exist.
+ * What `generate` says until it can write a file. On stderr, with a nonzero
+ * exit: reserving the name early is what keeps `init` from ever being ambiguous,
+ * but a reserved name that silently succeeds would be worse than one that does
+ * not exist.
+ *
+ * It names what is missing rather than gesturing at the catalog, because the
+ * catalog is not missing — this release carries it, and `list` and `view` are
+ * how an author reaches it today. Saying otherwise would be telling somebody the
+ * thing in front of them is not there.
+ *
+ * No command parameter: `generate` is the only command this is true of, and a
+ * parameter would be an invitation to reuse the sentence for a command it is
+ * false about.
  */
-export function catalogPending(command: CommandName): string {
+export function generatePending(): string {
   return (
-    `\`create-stellaris-mod ${command}\` arrives with the Recipe Catalog, which this ` +
-    `release does not carry yet.`
+    "`create-stellaris-mod generate` cannot write a feature file into a project yet.\n" +
+    "The rest of the catalog is here: `list` shows every recipe, and `view <recipe>`\n" +
+    "shows what one would write and how to ask for it."
   );
 }

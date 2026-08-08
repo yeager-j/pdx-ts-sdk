@@ -48,11 +48,17 @@ describe("splitCommand", () => {
 });
 
 describe("the catalog commands still waiting on their implementation", () => {
-  it.each(PENDING)("says %s arrives with the Recipe Catalog, and fails", async (command) => {
+  it.each(PENDING)("says what %s cannot do yet, and fails", async (command) => {
     const { io, out, err } = capture();
     expect(await main([command], io)).toBe(1);
-    expect(err()).toContain("Recipe Catalog");
     expect(err()).toContain(command);
+    expect(err()).toContain("cannot write a feature file");
+    // And points at the half that does work. This release carries the catalog,
+    // so a message claiming otherwise would be telling an author the thing in
+    // front of them is not there — naming both working commands is what a
+    // regression to that wording would fail on.
+    expect(err()).toContain("list");
+    expect(err()).toContain("view");
     expect(out()).toBe("");
   });
 });
