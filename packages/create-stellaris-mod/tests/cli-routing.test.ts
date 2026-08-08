@@ -6,12 +6,18 @@
  * it exercises parsing, resolution and planning, and touches no disk.
  */
 
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { Readable, Writable } from "node:stream";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { main } from "../src/cli.ts";
+import { supportedVersionFor } from "../src/detect.ts";
 import type { CliIo } from "../src/io.ts";
+import { parseManifest } from "../src/manifest.ts";
 import { COMMANDS, splitCommand, type CommandName } from "../src/options.ts";
+import { FALLBACK_GAME_VERSION, supportedVersionProblem } from "../src/prompts.ts";
 import { VERSION } from "../src/version.ts";
 
 interface Capture {
@@ -141,5 +147,68 @@ describe("init", () => {
     expect(err()).toContain("--nonsense");
     expect(err()).toContain("Options:");
     expect(out()).toBe("");
+  });
+});
+
+/**
+ * init's promise is that it never writes a Project Manifest `generate` cannot
+ * read. `supportedVersion` is the one field an author can hand the CLI that
+ * both `parseManifest` and the SDK's `resolveConfig` would refuse, so it is
+ * checked during resolution — before anything reaches the disk.
+ */
+describe("the launcher version init writes", () => {
+  let root: string | undefined;
+
+  afterEach(() => {
+    if (root !== undefined) {
+      rmSync(root, { recursive: true, force: true });
+      root = undefined;
+    }
+  });
+
+  it("refuses a value the launcher would silently reject, writing nothing", async () => {
+    root = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-version-"));
+    const { io, out, err } = capture(root);
+
+    // Deliberately not --dry-run: the point is that resolution fails before
+    // the scaffold touches the filesystem at all.
+    expect(
+      await main(
+        ["--yes", "--no-git", "--no-install", "--supported-version", "banana", "my-mod"],
+        io
+      )
+    ).toBe(1);
+    expect(err()).toContain("--supported-version");
+    expect(err()).toContain('"banana"');
+    expect(err()).toContain('"v4.4.*"');
+    expect(out()).toBe("");
+    expect(existsSync(path.join(root, "my-mod"))).toBe(false);
+  });
+
+  it("takes a legal explicit value, and puts it in the manifest", async () => {
+    root = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-version-"));
+    const { io } = capture(root);
+
+    expect(
+      await main(["--yes", "--no-git", "--no-install", "--supported-version", "v4.*", "my-mod"], io)
+    ).toBe(0);
+    const manifestPath = path.join(root, "my-mod/stellaris-mod.json");
+    expect(
+      parseManifest(readFileSync(manifestPath, "utf8"), manifestPath).config.supportedVersion
+    ).toBe("v4.*");
+  });
+
+  it("leaves the derived and fallback values alone, because they are already legal", () => {
+    // The check guards what an author supplies. Detection derives `v<major>.<minor>.*`
+    // and the no-install fallback is a literal — if either stopped matching, every
+    // ordinary scaffold would fail rather than one bad flag.
+    expect(supportedVersionProblem(supportedVersionFor(FALLBACK_GAME_VERSION)!)).toBeUndefined();
+    expect(supportedVersionProblem("v4.4.*")).toBeUndefined();
+    for (const build of ["4.4.6", "4.4.6.1", "v5.0.0"]) {
+      const derived = supportedVersionFor(build);
+      expect(derived === undefined || supportedVersionProblem(derived) === undefined, build).toBe(
+        true
+      );
+    }
   });
 });
