@@ -894,4 +894,26 @@ describe("shape conformance, triggered-modifier potential", () => {
     expect(mismatches[0]?.detail).toContain("typed for scope country");
     expect(shapeConformance(observation, [field(["planet"])], scopesOf)).toEqual([]);
   });
+
+  it("rejects a scalar potential the TriggeredModifier interface cannot author", () => {
+    const scalar = {
+      ...observation,
+      occurrences: new Map([
+        [
+          "building.triggered_country_modifier.potential",
+          {
+            ...observation.occurrences.get("building.triggered_country_modifier.potential")!,
+            scalars: 1,
+            blocks: 0,
+            values: new Set(["yes"]),
+            keys: new Set<string>(),
+            keysByDefinition: [new Set<string>()],
+          },
+        ],
+      ]),
+    };
+    const mismatches = shapeConformance(scalar, [field(["planet"])], scopesOf);
+    expect(mismatches.map((one) => one.kind)).toEqual(["form"]);
+    expect(mismatches[0]?.detail).toContain("write a scalar (yes)");
+  });
 });

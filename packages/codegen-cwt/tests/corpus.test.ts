@@ -563,6 +563,21 @@ describe("triggered-modifier potential descent", () => {
     expect(corpus.occurrences.has("triggered_modifier.modifier")).toBe(false);
   });
 
+  it("preserves a scalar potential for shape conformance", () => {
+    const corpus = corpusOf(
+      `
+      one = {
+        triggered_modifier = { potential = yes }
+      }
+    `,
+      [TRIGGERED_MODIFIER]
+    );
+    const potential = corpus.occurrences.get("triggered_modifier.potential");
+    expect(potential?.scalars).toBe(1);
+    expect(potential?.blocks).toBe(0);
+    expect([...potential!.values]).toEqual(["yes"]);
+  });
+
   it("measures potential arity per triggered-modifier row", () => {
     const corpus = corpusOf(
       `

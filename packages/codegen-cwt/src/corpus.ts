@@ -308,7 +308,7 @@ function recordWeightModifiers(
 }
 
 /**
- * Records only the condition body from each triggered-modifier row.
+ * Records only the potential value from each triggered-modifier row.
  *
  * The outer field can repeat, but arity belongs to a single row: two rows with
  * one potential each are not a repeated `potential` field. Modifier names are
@@ -324,7 +324,7 @@ function recordTriggeredModifierPotential(
   const potentialPath = `${path}.potential`;
   let previous = false;
   for (const item of modifier.items) {
-    if (item.kind !== "entry" || item.key !== "potential" || item.value.kind !== "container") {
+    if (item.kind !== "entry" || item.key !== "potential") {
       continue;
     }
     blockArity.set(potentialPath, (blockArity.get(potentialPath) ?? false) || previous);
