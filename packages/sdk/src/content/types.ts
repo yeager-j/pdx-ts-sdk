@@ -302,10 +302,19 @@ export type EffectBlock<S extends ScopeName, From extends ScopeName | undefined 
 export type WithFrom<T, S extends ScopeName, From extends ScopeName | undefined = undefined> =
   T | ((ctx: ScriptCtx<S, From>) => T);
 
-/** The common potential-plus-modifiers form behind `triggered_modifier_clause`. */
-export interface TriggeredModifier<S extends ScopeName> {
+/**
+ * The common potential-plus-modifiers form behind `triggered_modifier_clause`.
+ *
+ * The modifier body and its `potential` can run in different scopes where a
+ * clause pushes scope for the condition. `PotentialScope` defaults to the
+ * modifier scope for clauses whose two halves share one scope.
+ */
+export interface TriggeredModifier<
+  ModifierScope extends ScopeName,
+  PotentialScope extends ScopeName = ModifierScope,
+> {
   /** In-game condition emitted under the clause's `potential` block. */
-  readonly when?: Trigger<S>;
+  readonly when?: Trigger<PotentialScope>;
   /** Optional localization key identifying the clause. */
   readonly key?: string;
   /** Whether the modifier remains visible when its potential fails. */
@@ -313,9 +322,9 @@ export interface TriggeredModifier<S extends ScopeName> {
   /** Replacement text shown when the potential fails. */
   readonly notPotentialOverrideTextKey?: string;
   /** Modifiers nested under an explicit `modifier` block. */
-  readonly modifier?: ModifierClosure<S>;
+  readonly modifier?: ModifierClosure<ModifierScope>;
   /** Modifiers spliced directly into the triggered-modifier block. */
-  readonly modifiers?: ModifierClosure<S>;
+  readonly modifiers?: ModifierClosure<ModifierScope>;
   /** Optional localization key describing the modifier. */
   readonly description?: string;
   /** Values substituted into the description localization. */

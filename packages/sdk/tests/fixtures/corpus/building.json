@@ -3602,6 +3602,73 @@
         ]
       ]
     },
+    "triggered_country_modifier.potential": {
+      "definitions": 48,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 48,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "branch_office_owner",
+        "exists",
+        "has_active_building",
+        "has_shroud_dlc",
+        "is_planet_class",
+        "owner",
+        "owner?",
+        "planet.owner"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "always",
+          "branch_office_owner"
+        ],
+        [
+          "branch_office_owner"
+        ],
+        [
+          "exists",
+          "has_shroud_dlc",
+          "owner"
+        ],
+        [
+          "exists",
+          "is_planet_class",
+          "owner"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "exists",
+          "owner",
+          "owner?"
+        ],
+        [
+          "has_active_building"
+        ],
+        [
+          "has_shroud_dlc"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner?"
+        ],
+        [
+          "planet.owner"
+        ]
+      ]
+    },
     "triggered_desc": {
       "definitions": 108,
       "repeated": 38,
@@ -4906,6 +4973,226 @@
         ]
       ]
     },
+    "triggered_planet_modifier.potential": {
+      "definitions": 206,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 206,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "always",
+        "any_owned_pop_group",
+        "branch_office_owner",
+        "check_variable",
+        "exists",
+        "has_building",
+        "has_carrier_flag",
+        "has_cosmic_storms_dlc",
+        "has_modifier",
+        "has_ringworld_output_boost",
+        "industrial_jobs_are_catalytic_trigger",
+        "is_active_resolution",
+        "is_planet_class",
+        "organic_pops_last_month_growth",
+        "overlord_has_more_than_num_armies_on_planet",
+        "overlord_has_num_armies_on_planet",
+        "owner",
+        "owner.overlord",
+        "owner?",
+        "owner_has_resolution",
+        "planet",
+        "planet.orbital_defence",
+        "planet.owner",
+        "sapient_pop_amount",
+        "solar_system?"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "exists",
+          "owner"
+        ],
+        [
+          "NOT",
+          "has_ringworld_output_boost",
+          "is_planet_class",
+          "owner"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "always",
+          "branch_office_owner"
+        ],
+        [
+          "OR",
+          "exists",
+          "has_modifier",
+          "owner",
+          "planet"
+        ],
+        [
+          "OR",
+          "exists",
+          "owner"
+        ],
+        [
+          "always"
+        ],
+        [
+          "always",
+          "any_owned_pop_group",
+          "branch_office_owner",
+          "exists",
+          "owner"
+        ],
+        [
+          "always",
+          "branch_office_owner"
+        ],
+        [
+          "always",
+          "branch_office_owner",
+          "owner"
+        ],
+        [
+          "always",
+          "exists"
+        ],
+        [
+          "always",
+          "owner_has_resolution"
+        ],
+        [
+          "any_owned_pop_group",
+          "exists",
+          "owner"
+        ],
+        [
+          "branch_office_owner"
+        ],
+        [
+          "check_variable",
+          "exists",
+          "owner"
+        ],
+        [
+          "exists"
+        ],
+        [
+          "exists",
+          "has_carrier_flag",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_modifier",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_ringworld_output_boost",
+          "owner"
+        ],
+        [
+          "exists",
+          "is_planet_class",
+          "owner"
+        ],
+        [
+          "exists",
+          "owner"
+        ],
+        [
+          "exists",
+          "owner",
+          "owner.overlord"
+        ],
+        [
+          "exists",
+          "owner",
+          "owner?"
+        ],
+        [
+          "exists",
+          "owner",
+          "planet.orbital_defence"
+        ],
+        [
+          "exists",
+          "owner",
+          "planet.owner"
+        ],
+        [
+          "exists",
+          "owner",
+          "sapient_pop_amount"
+        ],
+        [
+          "exists",
+          "owner",
+          "solar_system?"
+        ],
+        [
+          "exists",
+          "owner.overlord"
+        ],
+        [
+          "exists",
+          "planet.owner"
+        ],
+        [
+          "has_building"
+        ],
+        [
+          "has_cosmic_storms_dlc"
+        ],
+        [
+          "has_modifier",
+          "is_active_resolution",
+          "owner"
+        ],
+        [
+          "has_ringworld_output_boost"
+        ],
+        [
+          "industrial_jobs_are_catalytic_trigger"
+        ],
+        [
+          "industrial_jobs_are_catalytic_trigger",
+          "owner"
+        ],
+        [
+          "organic_pops_last_month_growth"
+        ],
+        [
+          "overlord_has_more_than_num_armies_on_planet",
+          "overlord_has_num_armies_on_planet"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner.overlord"
+        ],
+        [
+          "owner?"
+        ],
+        [
+          "planet"
+        ]
+      ]
+    },
     "triggered_planet_pop_group_modifier_for_all": {
       "definitions": 2,
       "repeated": 2,
@@ -4926,6 +5213,26 @@
         ]
       ]
     },
+    "triggered_planet_pop_group_modifier_for_all.potential": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "exists",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "exists",
+          "owner"
+        ]
+      ]
+    },
     "triggered_planet_pop_group_modifier_for_species": {
       "definitions": 1,
       "repeated": 1,
@@ -4943,6 +5250,26 @@
         [
           "bonus_pop_growth",
           "potential"
+        ]
+      ]
+    },
+    "triggered_planet_pop_group_modifier_for_species.potential": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_infertile_clone_soldier_trait",
+        "planet"
+      ],
+      "keysByDefinition": [
+        [
+          "has_infertile_clone_soldier_trait",
+          "planet"
         ]
       ]
     },

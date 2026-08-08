@@ -2142,6 +2142,32 @@
         ]
       ]
     },
+    "triggered_country_modifier.potential": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 11,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "entertainer_is_duelist_trigger",
+        "exists",
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [
+          "entertainer_is_duelist_trigger"
+        ],
+        [
+          "exists"
+        ],
+        [
+          "owner?"
+        ]
+      ]
+    },
     "triggered_planet_modifier": {
       "definitions": 120,
       "repeated": 41,
@@ -2388,6 +2414,200 @@
         ]
       ]
     },
+    "triggered_planet_modifier.potential": {
+      "definitions": 118,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 118,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "always",
+        "artisan_is_pearl_diver_trigger",
+        "biologist_is_ranger_trigger",
+        "biologist_is_vent_researcher_trigger",
+        "biologist_is_zookeeper_trigger",
+        "bureaucrat_is_culture_worker",
+        "bureaucrat_is_death_priest",
+        "bureaucrat_is_fire_dancer",
+        "bureaucrat_is_haruspex",
+        "bureaucrat_is_low_tech_priest",
+        "bureaucrat_is_memorialist",
+        "bureaucrat_is_numistic_priest",
+        "bureaucrat_is_preacher",
+        "bureaucrat_is_priest",
+        "bureaucrat_is_sacred_path_specialist",
+        "bureaucrat_is_steward",
+        "bureaucrat_is_unifier",
+        "check_modifier_value",
+        "colony",
+        "colony.growing_species",
+        "colony.growing_species?",
+        "colony.orbital_defence.starbase?",
+        "colony.orbital_defence?",
+        "colony.owner?",
+        "colony?",
+        "exists",
+        "has_councilor",
+        "has_designation",
+        "is_cyborg_empire",
+        "leader?",
+        "owner",
+        "owner?",
+        "politician_is_blazing_harbinger",
+        "politician_is_noble",
+        "politician_is_sacred_path_elite",
+        "ship.starbase?",
+        "spawning_drone_is_offspring_drone_trigger",
+        "starbase?",
+        "technician_is_fuel_chemist_trigger",
+        "technician_is_shield_tuner_trigger",
+        "trader_is_subterranean",
+        "wrangler_is_animal_handler_trigger",
+        "wrangler_is_symbiosis_integrator_trigger"
+      ],
+      "keysByDefinition": [
+        [
+          "OR",
+          "always",
+          "has_designation",
+          "owner?",
+          "politician_is_blazing_harbinger",
+          "politician_is_noble",
+          "politician_is_sacred_path_elite"
+        ],
+        [
+          "OR",
+          "bureaucrat_is_culture_worker",
+          "bureaucrat_is_death_priest",
+          "bureaucrat_is_fire_dancer",
+          "bureaucrat_is_haruspex",
+          "bureaucrat_is_low_tech_priest",
+          "bureaucrat_is_memorialist",
+          "bureaucrat_is_numistic_priest",
+          "bureaucrat_is_preacher",
+          "bureaucrat_is_priest",
+          "bureaucrat_is_sacred_path_specialist",
+          "bureaucrat_is_steward",
+          "bureaucrat_is_unifier",
+          "colony?",
+          "leader?",
+          "owner?"
+        ],
+        [
+          "OR",
+          "colony",
+          "owner?"
+        ],
+        [
+          "OR",
+          "owner?",
+          "wrangler_is_animal_handler_trigger"
+        ],
+        [
+          "always"
+        ],
+        [
+          "always",
+          "colony",
+          "colony.orbital_defence?",
+          "owner?",
+          "ship.starbase?"
+        ],
+        [
+          "always",
+          "colony.growing_species",
+          "exists",
+          "owner?",
+          "spawning_drone_is_offspring_drone_trigger"
+        ],
+        [
+          "always",
+          "colony.growing_species?",
+          "owner?"
+        ],
+        [
+          "always",
+          "is_cyborg_empire",
+          "owner?"
+        ],
+        [
+          "always",
+          "owner?"
+        ],
+        [
+          "artisan_is_pearl_diver_trigger",
+          "owner?"
+        ],
+        [
+          "biologist_is_ranger_trigger",
+          "biologist_is_vent_researcher_trigger",
+          "biologist_is_zookeeper_trigger",
+          "leader?",
+          "owner?"
+        ],
+        [
+          "check_modifier_value",
+          "owner?"
+        ],
+        [
+          "colony"
+        ],
+        [
+          "colony.orbital_defence.starbase?",
+          "owner?",
+          "starbase?"
+        ],
+        [
+          "colony.orbital_defence.starbase?",
+          "owner?",
+          "starbase?",
+          "trader_is_subterranean"
+        ],
+        [
+          "colony.owner?",
+          "wrangler_is_symbiosis_integrator_trigger"
+        ],
+        [
+          "colony?"
+        ],
+        [
+          "colony?",
+          "leader?",
+          "owner?"
+        ],
+        [
+          "colony?",
+          "owner?"
+        ],
+        [
+          "has_councilor"
+        ],
+        [
+          "is_cyborg_empire",
+          "owner",
+          "owner?"
+        ],
+        [
+          "leader?",
+          "owner?"
+        ],
+        [
+          "owner?"
+        ],
+        [
+          "owner?",
+          "starbase?"
+        ],
+        [
+          "technician_is_fuel_chemist_trigger",
+          "technician_is_shield_tuner_trigger"
+        ]
+      ]
+    },
     "triggered_planet_pop_group_modifier_for_all": {
       "definitions": 2,
       "repeated": 0,
@@ -2408,6 +2628,28 @@
         ]
       ]
     },
+    "triggered_planet_pop_group_modifier_for_all.potential": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_modifier",
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [
+          "has_modifier"
+        ],
+        [
+          "owner?"
+        ]
+      ]
+    },
     "triggered_planet_pop_group_modifier_for_species": {
       "definitions": 6,
       "repeated": 1,
@@ -2425,6 +2667,34 @@
         [
           "bonus_pop_growth",
           "potential"
+        ]
+      ]
+    },
+    "triggered_planet_pop_group_modifier_for_species.potential": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "has_trait",
+        "is_hive_species",
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "has_trait",
+          "owner?"
+        ],
+        [
+          "is_hive_species"
         ]
       ]
     },

@@ -440,6 +440,48 @@ function weightInterior(
   };
 }
 
+/** Finds the one condition declaration a triggered-modifier block promises. */
+function triggeredModifierPotential(field: RuleField): RuleField {
+  if (field.type.kind !== "block") {
+    throw new Error(
+      "A triggered-modifier field must expand to a block with a potential declaration"
+    );
+  }
+  const potentials = field.type.fields.filter(
+    (
+      inner
+    ): inner is RuleField & {
+      readonly key: { readonly kind: "name"; readonly name: "potential" };
+    } => inner.key.kind === "name" && inner.key.name === "potential"
+  );
+  if (potentials.length !== 1) {
+    throw new Error(
+      "A triggered-modifier block must expand to exactly one named potential declaration"
+    );
+  }
+  return potentials[0]!;
+}
+
+/** The potential condition and its emitter-owned corpus descent. */
+function triggeredModifierInterior(
+  name: string,
+  path: string,
+  potentialScope: FieldScope
+): Pick<LoweredField, "nested" | "descents"> {
+  return {
+    nested: [
+      {
+        field: `${path}.potential`,
+        shape: "trigger",
+        repeated: false,
+        clause: "trigger",
+        scope: potentialScope.scopes,
+      },
+    ],
+    descents: [{ field: name, mode: "triggeredModifierPotential", children: [] }],
+  };
+}
+
 /**
  * As {@link scopeType}, for shapes whose scope parameter reaches a
  * `Trigger<S>` contravariantly — a trigger field itself, and a weight block,
@@ -1127,15 +1169,24 @@ function lowerOrdinary(
     };
   }
   if (requested === "triggeredModifierBlock") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    const memberType = `TriggeredModifier<${scope.type}>`;
+    const modifierScope = scopeType(emitter, field, ctx, override?.scope);
+    const potentialScope = scopeType(
+      emitter,
+      triggeredModifierPotential(field),
+      containerContext(field, ctx)
+    );
+    const memberType =
+      modifierScope.type === potentialScope.type
+        ? `TriggeredModifier<${modifierScope.type}>`
+        : `TriggeredModifier<${modifierScope.type}, ${potentialScope.type}>`;
     return {
       memberType: withFrom(
         isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        scope
+        modifierScope
       ),
       metadata: metadata(field, name, "triggeredModifierBlock"),
-      admits: admitsBlock(field, "triggeredModifierBlock", scope),
+      admits: admitsBlock(field, "triggeredModifierBlock", modifierScope),
+      ...triggeredModifierInterior(name, path, potentialScope),
     };
   }
   if (requested === "value") {
