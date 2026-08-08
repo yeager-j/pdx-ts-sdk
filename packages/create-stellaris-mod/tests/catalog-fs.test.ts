@@ -27,6 +27,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
+import { open } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -153,6 +154,19 @@ describe("preflight", () => {
     await expect(preflight(root)).rejects.toThrow(ContainmentError);
   });
 
+  it("takes a directory whose name merely starts with dots", async () => {
+    // `..generated` is a legal directory name, and containment is a question
+    // about where a path resolves rather than about how it is spelled. A prefix
+    // test on ".." would refuse this one and be wrong about it.
+    const root = makeRoot();
+    const result = await preflightTarget(root, ["..generated"], BASENAME);
+
+    expect(result.missingSegments).toEqual(["..generated"]);
+    const written = await publishExclusive(result, CONTENTS);
+    expect(written).toBe(path.join(root, "..generated", BASENAME));
+    expect(readFileSync(written, "utf8")).toBe(CONTENTS);
+  });
+
   it("works through a project root that is itself reached by a symlink", async () => {
     // The rule is about real paths, not about the spelling used to get there.
     const real = makeRoot();
@@ -266,6 +280,33 @@ describe("publishing", () => {
 
     await expect(publishExclusive(result, CONTENTS)).rejects.toThrow(ContainmentError);
     expect(readdirSync(elsewhere)).toEqual([]);
+  });
+
+  it("leaves no temporary file behind when the write itself fails", async () => {
+    // A full disk is the ordinary way this happens, and it is the one failure
+    // that used to litter: the bytes never arrive, the dotfile does.
+    const root = makeRoot();
+    const result = await preflight(root);
+
+    await expect(
+      publishExclusive(result, CONTENTS, {
+        // The real exclusive create, so there is a real file to clean up; only
+        // the write fails.
+        open: async (target, flags, mode) => {
+          const handle = await open(target, flags, mode);
+          return {
+            writeFile: () =>
+              Promise.reject(Object.assign(new Error("ENOSPC: no space left"), { code: "ENOSPC" })),
+            sync: () => handle.sync(),
+            close: () => handle.close(),
+          };
+        },
+      })
+    ).rejects.toThrow(/ENOSPC/);
+
+    const dir = path.join(root, ...SEGMENTS);
+    expect(existsSync(path.join(dir, BASENAME))).toBe(false);
+    expect(onlyEntries(dir)).toEqual([]);
   });
 
   it.each(["EPERM", "ENOTSUP"])(

@@ -27,7 +27,7 @@
 
 import { randomBytes } from "node:crypto";
 import type { Stats } from "node:fs";
-import { link as fsLink, lstat, mkdir, open, realpath, unlink } from "node:fs/promises";
+import { link as fsLink, open as fsOpen, lstat, mkdir, realpath, unlink } from "node:fs/promises";
 import path from "node:path";
 
 export class PublishError extends Error {
@@ -199,14 +199,28 @@ export async function preflightTarget(
   };
 }
 
+/** The part of a `FileHandle` publication uses. */
+export interface ExclusiveFile {
+  writeFile(contents: string, encoding: BufferEncoding): Promise<void>;
+  sync(): Promise<void>;
+  close(): Promise<void>;
+}
+
+/**
+ * The two filesystem primitives publication cannot do without, injectable for
+ * one reason each — and for no other reason. Nothing in the product passes
+ * either.
+ *
+ * A filesystem that cannot hard-link, and a disk that fills up halfway through
+ * a write, are both states this code must handle and neither can be mounted on
+ * demand in a test. Everything else in this module is exercised against a real
+ * temporary directory.
+ */
 export interface PublishOptions {
-  /**
-   * The no-replace publication primitive. It exists as a parameter for exactly
-   * one reason: a test has to be able to simulate a filesystem that cannot
-   * provide the guarantee, and there is no portable way to mount one. Nothing
-   * in the product ever passes it.
-   */
+  /** The no-replace publication primitive. */
   readonly link?: (existingPath: string, newPath: string) => Promise<void>;
+  /** Exclusive creation of the temporary file. */
+  readonly open?: (path: string, flags: "wx", mode: number) => Promise<ExclusiveFile>;
 }
 
 /**
@@ -222,6 +236,7 @@ export async function publishExclusive(
   options: PublishOptions = {}
 ): Promise<string> {
   const link = options.link ?? fsLink;
+  const open = options.open ?? fsOpen;
 
   let dir = preflight.existingDir;
   for (const segment of preflight.missingSegments) {
@@ -254,28 +269,34 @@ export async function publishExclusive(
   const temporary = path.join(real, `.${preflight.basename}.${randomBytes(12).toString("hex")}`);
 
   const handle = await open(temporary, "wx", 0o644);
+  // One `finally` over the temporary file's whole life, because every way this
+  // can fail — a full disk mid-write, a refused fsync, an unlinkable target —
+  // leaves the same litter otherwise: a dotfile in somebody's source tree that
+  // nothing will ever come back for.
   try {
-    await handle.writeFile(contents, "utf8");
-    // Flushed before it is published, so the name never appears pointing at
-    // bytes that are not on the disk yet.
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
-
-  try {
-    await link(temporary, target);
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code === "EEXIST") {
-      throw new CollisionError(collisionMessage(target));
+    try {
+      await handle.writeFile(contents, "utf8");
+      // Flushed before it is published, so the name never appears pointing at
+      // bytes that are not on the disk yet.
+      await handle.sync();
+    } finally {
+      await handle.close();
     }
-    throw new UnsupportedPublicationError(
-      `${real} cannot publish a file without risking replacing one (${code ?? "unknown error"} ` +
-        `from link()). This CLI will not fall back to rename(), which overwrites — on that path ` +
-        `a file of somebody's own could be destroyed to write this one. Generate into a ` +
-        `directory on an ordinary local filesystem instead.`
-    );
+
+    try {
+      await link(temporary, target);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "EEXIST") {
+        throw new CollisionError(collisionMessage(target));
+      }
+      throw new UnsupportedPublicationError(
+        `${real} cannot publish a file without risking replacing one (${code ?? "unknown error"} ` +
+          `from link()). This CLI will not fall back to rename(), which overwrites — on that ` +
+          `path a file of somebody's own could be destroyed to write this one. Generate into a ` +
+          `directory on an ordinary local filesystem instead.`
+      );
+    }
   } finally {
     // A crash between the link and this leaves a complete target plus an
     // orphaned dotfile: untidy, and the only failure mode worth having.
@@ -321,7 +342,11 @@ async function classify(targetPath: string): Promise<TargetKind> {
 
 function requireContainment(rootDir: string, real: string, shown: string): void {
   const relative = path.relative(rootDir, real);
-  if (relative !== "" && (relative.startsWith("..") || path.isAbsolute(relative))) {
+  // `..` and `../…` are escapes; `..generated` is a directory with an unusual
+  // but perfectly legal name, and refusing it would be this check inventing a
+  // rule about filenames rather than about containment.
+  const escapes = relative === ".." || relative.startsWith(`..${path.sep}`);
+  if (relative !== "" && (escapes || path.isAbsolute(relative))) {
     throw new ContainmentError(
       `${shown} resolves to ${real}, which is outside the project at ${rootDir}. Generated ` +
         `source is only ever written inside the project its manifest describes.`

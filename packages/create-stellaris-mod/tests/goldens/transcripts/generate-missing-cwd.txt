@@ -1,0 +1,2 @@
+err| --cwd "nowhere" is not a directory that exists (<project>/nowhere).
+exit 1

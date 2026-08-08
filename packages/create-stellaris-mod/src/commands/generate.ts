@@ -130,7 +130,24 @@ export async function runGenerate(
     }
 
     // 2. The Project Manifest. Never created, repaired, or migrated here.
-    const startDir = path.resolve(io.cwd, parsed.cwd ?? ".");
+    //
+    // The search start is resolved to its real path first, because the walk
+    // upward is lexical: from a symlinked `--cwd` the lexical parents are the
+    // link's, not the project's, and the manifest one directory above the real
+    // location would go unseen while some unrelated ancestor's was found.
+    const given = path.resolve(io.cwd, parsed.cwd ?? ".");
+    let startDir: string;
+    try {
+      startDir = await realpath(given);
+    } catch {
+      return fail(
+        parsed.cwd === undefined
+          ? `The current directory (${given}) no longer exists, so there is nowhere to search ` +
+              `for a project.`
+          : `--cwd ${JSON.stringify(parsed.cwd)} is not a directory that exists (${given}).`
+      );
+    }
+
     const found = await findManifest(startDir);
     if (found === undefined) {
       return fail(
@@ -144,8 +161,7 @@ export async function runGenerate(
 
     // 3. `#mod`, `contentDirectory`, and the SDK range.
     const project = await readProjectPackage(found.rootDir);
-    const modImport = project.imports?.["#mod"];
-    if (typeof modImport !== "string") {
+    if (typeof project.modImport !== "string") {
       return fail(
         `${path.join(found.rootDir, "package.json")} does not map "#mod" to a module, and every ` +
           `generated feature file imports\n\`{ mod } from "#mod"\`. Add it:\n\n` +
@@ -156,9 +172,8 @@ export async function runGenerate(
     const segments = validateContentDirectory(found.manifest.contentDirectory);
 
     const compatibility = checkSdkCompatibility({
-      declaredSpecifier:
-        project.dependencies?.[SDK_PACKAGE] ?? project.devDependencies?.[SDK_PACKAGE],
-      installedVersion: await readInstalledSdkVersion(found.rootDir),
+      declaredSpecifier: project.declaredSpecifier,
+      installedVersion: await findInstalledSdkVersion(found.rootDir),
     });
     if (!compatibility.supported) {
       if (!parsed.allowUnsupportedSdk) {
@@ -248,6 +263,18 @@ export async function runGenerate(
       error instanceof NameError
     ) {
       return fail(error.message);
+    }
+    // A refused stat, a read-only directory, a full disk. These are ordinary
+    // facts about a machine rather than defects in this program, and a stack
+    // trace is the wrong way to tell somebody their content directory is not
+    // writable. Node's own message already names the code, the call and the
+    // path, so it is quoted rather than paraphrased.
+    const code = (error as NodeJS.ErrnoException | undefined)?.code;
+    if (error instanceof Error && typeof code === "string") {
+      return fail(
+        `${error.message}\n\nThe filesystem refused an operation this generation needed ` +
+          `(${code}), so nothing was published.`
+      );
     }
     throw error;
   }
@@ -343,11 +370,26 @@ export async function resolveAnswers(input: AnswerResolution): Promise<Record<st
 }
 
 interface ProjectPackage {
-  readonly imports?: Record<string, unknown>;
-  readonly dependencies?: Record<string, string>;
-  readonly devDependencies?: Record<string, string>;
+  /** The `#mod` entry, still unchecked: only its presence and type matter here. */
+  readonly modImport: unknown;
+  /** What either dependency block asks for, from whichever declares it. */
+  readonly declaredSpecifier: string | undefined;
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * The two facts `generate` needs out of the project's `package.json`, read with
+ * the shape checked rather than asserted.
+ *
+ * A `package.json` is a file people edit, and `JSON.parse(...) as Package` is a
+ * promise the parser cannot keep: `null`, an array, or a dependency block whose
+ * values are objects would all sail through the cast and fail much later as a
+ * TypeError with a stack trace. Every fault here is an ordinary message about
+ * somebody's file instead.
+ */
 async function readProjectPackage(rootDir: string): Promise<ProjectPackage> {
   const file = path.join(rootDir, "package.json");
   let bytes: string;
@@ -359,29 +401,87 @@ async function readProjectPackage(rootDir: string): Promise<ProjectPackage> {
         `can generate into.`
     );
   }
+
+  let root: unknown;
   try {
-    return JSON.parse(bytes) as ProjectPackage;
+    root = JSON.parse(bytes);
   } catch (error) {
     throw new ManifestError(
       `${file} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
     );
   }
+  if (!isPlainObject(root)) {
+    throw new ManifestError(`${file} must be a JSON object, and is not one.`);
+  }
+
+  const imports = root["imports"];
+  if (imports !== undefined && !isPlainObject(imports)) {
+    throw new ManifestError(`${file}: "imports" must be a JSON object, and is not one.`);
+  }
+
+  let declaredSpecifier: string | undefined;
+  for (const block of ["dependencies", "devDependencies"] as const) {
+    const declared = root[block];
+    if (declared === undefined) {
+      continue;
+    }
+    if (!isPlainObject(declared)) {
+      throw new ManifestError(`${file}: "${block}" must be a JSON object, and is not one.`);
+    }
+    const specifier = declared[SDK_PACKAGE];
+    if (specifier === undefined || declaredSpecifier !== undefined) {
+      continue;
+    }
+    if (typeof specifier !== "string") {
+      throw new ManifestError(
+        `${file}: "${block}"."${SDK_PACKAGE}" must be a version range written as a string, and ` +
+          `is not one. Nothing can be proved about a dependency that is not spelled out.`
+      );
+    }
+    declaredSpecifier = specifier;
+  }
+
+  return { modImport: imports?.["#mod"], declaredSpecifier };
 }
 
 /**
- * The installed SDK's version, when there is one to read. Its absence is not a
- * fault — a declared range that is provably inside the verified one is evidence
- * on its own, and an author may reasonably generate before installing.
+ * The installed SDK's version, when there is one to read.
+ *
+ * The walk upward is Node's own lookup, not thoroughness for its own sake: in a
+ * workspace the SDK is installed once at the root and the project resolves it
+ * from there, so checking only `<project>/node_modules` would find nothing and
+ * silently skip the version check on exactly the layout where a stale hoisted
+ * copy is most likely.
+ *
+ * `createRequire(...).resolve` would be the obvious spelling and does not work:
+ * the SDK's `exports` map does not expose `package.json`, so resolution of the
+ * one file that carries the version fails.
+ *
+ * An absent install is not a fault — a declared range provably inside the
+ * verified one is evidence on its own, and authors generate before installing.
  */
-async function readInstalledSdkVersion(rootDir: string): Promise<string | undefined> {
-  try {
-    const bytes = await readFile(
-      path.join(rootDir, "node_modules", ...SDK_PACKAGE.split("/"), "package.json"),
-      "utf8"
-    );
-    const version = (JSON.parse(bytes) as { version?: unknown }).version;
-    return typeof version === "string" ? version : undefined;
-  } catch {
-    return undefined;
+export async function findInstalledSdkVersion(startDir: string): Promise<string | undefined> {
+  let dir = path.resolve(startDir);
+  for (;;) {
+    const file = path.join(dir, "node_modules", ...SDK_PACKAGE.split("/"), "package.json");
+    let installed: unknown;
+    let isInstalled = false;
+    try {
+      installed = JSON.parse(await readFile(file, "utf8"));
+      isInstalled = true;
+    } catch {
+      // Not installed at this level; keep walking, the way Node would.
+    }
+    if (isInstalled) {
+      // The first installation found is the one that would be resolved, so its
+      // version is the answer even when that turns out to be no answer at all.
+      const version = isPlainObject(installed) ? installed["version"] : undefined;
+      return typeof version === "string" ? version : undefined;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      return undefined;
+    }
+    dir = parent;
   }
 }

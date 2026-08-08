@@ -40,9 +40,12 @@ my-mod/
 identity, launcher metadata, and where generated feature source goes. Its sole
 key under `mod` is the mod prefix, so `keyof typeof manifest.mod` recovers it as
 a literal type; `src/mod.ts` is wiring from it to `createMod` rather than a
-second place the same facts are written. The scaffolded package also declares
-`"#mod": "./src/mod.ts"` in `package.json#imports`, and feature modules import
-the mod through it rather than computing a relative path.
+second place the same facts are written. Its `contentDirectory` is the single
+placement authority: `src/mod.ts` discovers features there and `generate` writes
+them there, so moving the directory in the manifest moves both and a generated
+file cannot land somewhere the build does not look. The scaffolded package also
+declares `"#mod": "./src/mod.ts"` in `package.json#imports`, and feature modules
+import the mod through it rather than computing a relative path.
 
 Importing `mod.ts` builds nothing — `mod` is an immutable capability — so
 `index.ts` and `install.ts` each import its `buildTheMod()` and add their own

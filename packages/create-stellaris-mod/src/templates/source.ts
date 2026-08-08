@@ -42,9 +42,9 @@ export function modTs(resolved: Resolved): string {
  * \`npm run build\` (\`src/index.ts\`) and \`npm run install-mod\`
  * (\`src/install.ts\`) both call \`buildTheMod()\` once and add their own single
  * disk-touching step (\`write\` vs \`install\`) on top, instead of each folding
- * \`src/content/\` a second time.
+ * the content directory a second time.
  *
- * \`buildTheMod()\` itself is not pure: \`discoverFeatures\` walks \`src/content/\`
+ * \`buildTheMod()\` itself is not pure: \`discoverFeatures\` walks that directory
  * and imports each selected module — real disk reads, running your code — to
  * read its named \`feature\` export, and (when a vanilla install was found)
  * \`loadVanilla()\` parses the game and may write a cache under
@@ -74,10 +74,16 @@ export const config = { ...manifest.mod[prefix], prefix };
 
 export const mod = createMod(config);
 
+// Where feature source lives, read from the manifest rather than repeated here.
+// \`create-stellaris-mod generate\` writes into \`contentDirectory\`, so this is the
+// same fact read back: changing it in the manifest moves both the writing and
+// the discovery, and a generated file can never land somewhere the build does
+// not look. The path is project-relative and this file is \`src/mod.ts\`, hence
+// the \`../\`.
+const contentDir = new URL(\`../\${manifest.contentDirectory}/\`, import.meta.url);
+
 export async function buildTheMod(): Promise<PureMod> {
-  const features = await discoverFeatures<typeof mod.config.prefix>(
-    new URL("./content/", import.meta.url)
-  );
+  const features = await discoverFeatures<typeof mod.config.prefix>(contentDir);
 ${vanillaUse}
 }
 `;

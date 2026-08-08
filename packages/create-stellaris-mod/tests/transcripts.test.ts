@@ -17,7 +17,14 @@
  * runs.
  */
 
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -254,8 +261,25 @@ describe("generate", () => {
     expect(code).toBe(1);
     expectGolden(
       "transcripts/generate-missing-manifest.txt",
-      transcript.split(elsewhere).join("<elsewhere>")
+      // Both spellings: the command reports the directory it really searched,
+      // and on macOS a temporary directory is reached through a symlinked /var.
+      [realpathSync(elsewhere), elsewhere]
+        .sort((a, b) => b.length - a.length)
+        .reduce((text, dir) => text.split(dir).join("<elsewhere>"), transcript)
     );
+  });
+
+  it("says a --cwd that does not exist is the problem", async () => {
+    // Not "there is no project here": the directory the author named is the
+    // fact that is wrong, and reporting the search would send them looking for
+    // a manifest instead of for a typo.
+    const target = open();
+    const { transcript, code } = await run(
+      ["generate", "technology", "Resonance Theory", "--yes", "--cwd", "nowhere"],
+      { cwd: target.dir, project: target }
+    );
+    expect(code).toBe(1);
+    expectGolden("transcripts/generate-missing-cwd.txt", transcript);
   });
 
   it("reports a manifest it cannot read rather than searching past it", async () => {
