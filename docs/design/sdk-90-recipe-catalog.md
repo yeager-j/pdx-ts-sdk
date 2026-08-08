@@ -347,9 +347,11 @@ interactive previews, answer-source echoes, prompts, and confirmation remain
 on stderr.
 
 Dry-run performs every non-mutating preflight and renders the exact bytes a real
-run would publish. It prints `would write <path>` plus the source to stdout. If
-the target exists, it also reports that a real run would refuse but still exits
-zero; failures that prevent rendering remain nonzero.
+run would publish. It does not ask for the step 9 confirmation: nothing will be
+written, so there is nothing to ask permission for. It prints
+`would write <path>` plus the source to stdout. If the target exists, it also
+reports that a real run would refuse but still exits zero; failures that prevent
+rendering remain nonzero.
 
 ## Source formatting
 

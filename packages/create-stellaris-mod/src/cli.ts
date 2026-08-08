@@ -10,26 +10,46 @@
  * at all — is the compatibility spelling of `init`, so bare
  * `create-stellaris-mod my-mod` keeps meaning what it always did and shares one
  * code path with `create-stellaris-mod init my-mod`.
+ *
+ * The one thing decided here beyond routing is what cancelling means. Every
+ * prompt in every command throws `CancelledError` rather than exiting, and this
+ * is the single place that catches it: one sentence, one exit code, no command
+ * able to disagree about either.
  */
 
+import { runGenerate } from "./commands/generate.ts";
 import { runInit } from "./commands/init.ts";
 import { runList } from "./commands/list.ts";
-import { runPending } from "./commands/pending.ts";
 import { runView } from "./commands/view.ts";
 import { processIo, type CliIo } from "./io.ts";
 import { splitCommand } from "./options.ts";
+import { CancelledError, clackTerminal, type Terminal } from "./terminal.ts";
 
-export async function main(argv: readonly string[], io: CliIo = processIo()): Promise<number> {
+export async function main(
+  argv: readonly string[],
+  io: CliIo = processIo(),
+  terminal: Terminal = clackTerminal(io)
+): Promise<number> {
   const { command, rest } = splitCommand(argv);
-  switch (command) {
-    case "init":
-      return runInit(rest, io);
-    case "list":
-      return runList(rest, io);
-    case "view":
-      return runView(rest, io);
-    case "generate":
-      return runPending(command, rest, io);
+  try {
+    switch (command) {
+      case "init":
+        return await runInit(rest, io);
+      case "list":
+        return runList(rest, io);
+      case "view":
+        return runView(rest, io);
+      case "generate":
+        return await runGenerate(rest, io, terminal);
+    }
+  } catch (error) {
+    if (!(error instanceof CancelledError)) {
+      throw error;
+    }
+    // 130 is the shell's own spelling of "ended by ctrl-c", and the sentence
+    // is the promise: a cancelled run left the project exactly as it was.
+    io.stderr.write("Nothing was written.\n");
+    return 130;
   }
 }
 

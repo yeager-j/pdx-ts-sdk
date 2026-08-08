@@ -19,9 +19,6 @@ import { FALLBACK_GAME_VERSION, supportedVersionProblem } from "../src/prompts.t
 import { VERSION } from "../src/version.ts";
 import { capture } from "./helpers/capture.ts";
 
-/** Reserved, and still waiting on the half of the catalog that writes files. */
-const PENDING = ["generate"] as const satisfies readonly Exclude<CommandName, "init">[];
-
 describe("splitCommand", () => {
   it("takes a reserved first argument as the command, and strips it", () => {
     expect(splitCommand(["init", "my-mod"])).toEqual({ command: "init", rest: ["my-mod"] });
@@ -47,18 +44,30 @@ describe("splitCommand", () => {
   });
 });
 
-describe("the catalog commands still waiting on their implementation", () => {
-  it.each(PENDING)("says what %s cannot do yet, and fails", async (command) => {
+describe("generate", () => {
+  it("fails before looking for a project when there is nobody to ask", async () => {
+    // Order matters here: a command that asks for a manifest first would report
+    // the wrong problem to anyone running it outside a project, and a CI run
+    // must never reach a prompt at all.
+    const { io, out, err } = capture("/nowhere/at/all");
+    expect(await main(["generate"], io)).toBe(1);
+    expect(err()).toContain("a recipe id and a name");
+    expect(err()).not.toContain("stellaris-mod.json");
+    expect(out()).toBe("");
+  });
+
+  it("reports the version, like every other command", async () => {
     const { io, out, err } = capture();
-    expect(await main([command], io)).toBe(1);
-    expect(err()).toContain(command);
-    expect(err()).toContain("cannot write a feature file");
-    // And points at the half that does work. This release carries the catalog,
-    // so a message claiming otherwise would be telling an author the thing in
-    // front of them is not there — naming both working commands is what a
-    // regression to that wording would fail on.
-    expect(err()).toContain("list");
-    expect(err()).toContain("view");
+    expect(await main(["generate", "--version"], io)).toBe(0);
+    expect(out()).toBe(`${VERSION}\n`);
+    expect(err()).toBe("");
+  });
+
+  it("answers an unparseable flag with the message and the help, on stderr", async () => {
+    const { io, out, err } = capture();
+    expect(await main(["generate", "--cwd"], io)).toBe(1);
+    expect(err()).toContain("--cwd needs a value");
+    expect(err()).toContain("Options:");
     expect(out()).toBe("");
   });
 });

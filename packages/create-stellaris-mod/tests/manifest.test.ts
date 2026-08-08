@@ -16,11 +16,19 @@
  * validator either.
  */
 
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { describe, expect, it } from "vitest";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { resolveConfig, type ModConfig } from "../../sdk/src/compiler/config.ts";
-import { ManifestError, parseManifest, type ProjectModConfig } from "../src/manifest.ts";
+import {
+  findManifest,
+  ManifestError,
+  parseManifest,
+  type ProjectModConfig,
+} from "../src/manifest.ts";
 import type { Resolved } from "../src/options.ts";
 import { manifestJson, manifestSchema } from "../src/templates/manifest.ts";
 
@@ -264,6 +272,62 @@ describe("parseManifest", () => {
       expect(() => parseManifest(bytes, SOURCE)).toThrow(pattern);
       expect(() => parseManifest(bytes, SOURCE)).toThrow(SOURCE);
     }
+  });
+});
+
+/**
+ * The upward search. It is what lets `generate` be run from inside a project
+ * rather than only from its root, and the one behaviour worth stating twice is
+ * that a manifest which does not parse *stops* the walk — continuing past it
+ * would generate into a different project than the one the author is standing
+ * in, at exactly the moment their own manifest has a typo in it.
+ */
+describe("findManifest", () => {
+  let root: string | undefined;
+
+  afterEach(() => {
+    if (root !== undefined) {
+      rmSync(root, { recursive: true, force: true });
+      root = undefined;
+    }
+  });
+
+  /** `false` writes no manifest at all, which is the not-a-project case. */
+  function project(manifest: string | false = json(MINIMAL)): string {
+    root = realpathSync(mkdtempSync(path.join(tmpdir(), "pdx-find-manifest-")));
+    mkdirSync(path.join(root, "project/src/content"), { recursive: true });
+    if (manifest !== false) {
+      writeFileSync(path.join(root, "project/stellaris-mod.json"), manifest);
+    }
+    return root;
+  }
+
+  it("finds a manifest in the directory it starts from", async () => {
+    const dir = path.join(project(), "project");
+    const found = await findManifest(dir);
+    expect(found?.rootDir).toBe(dir);
+    expect(found?.manifest.prefix).toBe("my_mod");
+  });
+
+  it("finds one above the directory it starts from", async () => {
+    const base = project();
+    const found = await findManifest(path.join(base, "project/src/content"));
+    expect(found?.rootDir).toBe(path.join(base, "project"));
+  });
+
+  it("returns nothing when there is none all the way up", async () => {
+    const base = project(false);
+    expect(await findManifest(path.join(base, "project/src/content"))).toBeUndefined();
+  });
+
+  it("throws on a manifest it cannot read rather than searching past it", async () => {
+    const base = project("{ not json");
+    // The parent has a perfectly good manifest, and finding it would be worse
+    // than failing: the author is standing in the broken project.
+    writeFileSync(path.join(base, "stellaris-mod.json"), json(MINIMAL));
+    await expect(findManifest(path.join(base, "project/src/content"))).rejects.toThrow(
+      ManifestError
+    );
   });
 });
 

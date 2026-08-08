@@ -1,0 +1,6 @@
+err| `create-stellaris-mod generate` needs a name here: stdin is not a terminal, so there is nobody to ask.
+err|
+err|   npx create-stellaris-mod generate <recipe> "<name>"
+err|
+err| Run `npx create-stellaris-mod list` to see what this release carries.
+exit 1

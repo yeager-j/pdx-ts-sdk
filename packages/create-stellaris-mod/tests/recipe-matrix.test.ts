@@ -13,7 +13,7 @@
  * negative control at the bottom is what proves they would have noticed.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { format, resolveConfig, type Options } from "prettier";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -21,6 +21,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CATALOG } from "../src/catalog/index.ts";
 import { VANILLA_EXAMPLE_IDS } from "../src/catalog/recipes/technology.ts";
 import type { ChoiceQuestion } from "../src/catalog/types.ts";
+import { main } from "../src/cli.ts";
+import { capture } from "./helpers/capture.ts";
 import { createGoldenProject, type GoldenProject } from "./helpers/golden-project.ts";
 import { expectGolden } from "./helpers/goldens.ts";
 
@@ -127,6 +129,55 @@ describe("technology, with its only answer set", () => {
       COMPILER_TIMEOUT
     );
   });
+});
+
+/**
+ * The manifest is the single placement authority, proved the only way that
+ * counts: move `contentDirectory`, run the real command, and build the project.
+ *
+ * The failure this guards against is the quiet one. `generate` honours the
+ * manifest, so a project whose `src/mod.ts` discovered a hard-coded `content/`
+ * would take the generated file happily and emit a mod without it — no error,
+ * no warning, just a technology that is not in the game.
+ */
+describe("a project that moved its content directory", () => {
+  let project: GoldenProject;
+  let exitCode: number;
+  let stdout: string;
+
+  beforeAll(async () => {
+    project = createGoldenProject();
+    const manifestPath = path.join(project.dir, "stellaris-mod.json");
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+      contentDirectory: string;
+    };
+    manifest.contentDirectory = "src/features/generated";
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    // The old directory stays, empty, so discovery finding the file is a
+    // statement about the manifest rather than about the only directory left.
+    const { io, out } = capture(project.dir);
+    exitCode = await main(["generate", "technology", NAME, "--yes"], io);
+    stdout = out();
+  }, COMPILER_TIMEOUT);
+
+  afterAll(() => project?.dispose());
+
+  it("writes into the directory the manifest names", () => {
+    expect(exitCode).toBe(0);
+    expect(stdout.trim().endsWith(`src/features/generated/${STEM}.ts`)).toBe(true);
+    expect(existsSync(path.join(project.dir, `src/features/generated/${STEM}.ts`))).toBe(true);
+    expect(existsSync(path.join(project.dir, `src/content/${STEM}.ts`))).toBe(false);
+  });
+
+  it(
+    "builds it, because discovery reads the same field",
+    () => {
+      const result = project.build();
+      expect(result.status, result.output).toBe(0);
+      expect(project.outFiles()).toContain(`common/technology/${PREFIX}_${STEM}.txt`);
+    },
+    COMPILER_TIMEOUT
+  );
 });
 
 /**

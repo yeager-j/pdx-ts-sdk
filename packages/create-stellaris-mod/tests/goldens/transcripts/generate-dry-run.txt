@@ -1,0 +1,36 @@
+out| would write <project>/src/content/resonance_theory.ts
+out| /**
+out|  * One technology, and the feature that places it.
+out|  *
+out|  * Generated once by the `technology` recipe, and yours from here. Nothing reads
+out|  * this file back: there is no marker in it, no version, and no upgrade — so
+out|  * rename it, add to it, or delete it as the mod grows.
+out|  *
+out|  * `#mod` is the project's own alias for `src/mod.ts` (see `package.json#imports`),
+out|  * so moving this file deeper inside the content directory never rewrites the
+out|  * import. The filename decides nothing either: the `mod.feature(...)` call at the
+out|  * bottom is what names the emitted files.
+out|  */
+out|
+out| import { mod } from "#mod";
+out|
+out| export const resonanceTheory = mod.technology("resonance_theory", {
+out|   name: "Resonance Theory",
+out|   desc: "PLACEHOLDER: what researching this unlocks, in a sentence or two.",
+out|   area: "physics",
+out|   category: "particles",
+out|   tier: 1,
+out|   cost: 2000,
+out|
+out|   // Technologies that must be researched first. A vanilla technology is a plain
+out|   // string, checked against the game when @pdx-ts/stellaris-ids is installed; one
+out|   // of your own is the binding another feature file exports, imported as usual.
+out|   // prerequisites: ["tech_basic_science_lab_1"],
+out|
+out|   // How likely the game is to offer this as a research option next to the
+out|   // others in its category. 100 is the conventional starting weight.
+out|   // weight: 100,
+out| });
+out|
+out| export const feature = mod.feature("resonance_theory", [resonanceTheory]);
+exit 0

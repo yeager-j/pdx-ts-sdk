@@ -22,6 +22,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -63,6 +64,34 @@ export interface GoldenProject {
   outFiles(): string[];
   readOut(relPath: string): string;
   dispose(): void;
+}
+
+export interface TempProject {
+  /** The copy, as a test refers to it. */
+  readonly dir: string;
+  /** The same directory after `realpath`, which is what the CLI prints. */
+  readonly realDir: string;
+  dispose(): void;
+}
+
+/**
+ * The same fixture project, copied *without* the `node_modules` symlinks.
+ *
+ * That absence is the point rather than an economy: `generate` never loads the
+ * SDK, so a project it can generate into is one that has not been installed
+ * yet. The fixture's own `package.json` declares `@pdx-ts/sdk` in
+ * `devDependencies`, which is what the compatibility preflight reads.
+ */
+export function createTempProject(): TempProject {
+  const dir = mkdtempSync(path.join(tmpdir(), "pdx-generate-project-"));
+  cpSync(FIXTURE, dir, { recursive: true });
+  return {
+    dir,
+    // macOS puts temporary directories under a symlinked /var, so the path the
+    // CLI resolves and prints is not the one `mkdtemp` returned.
+    realDir: realpathSync(dir),
+    dispose: () => rmSync(dir, { recursive: true, force: true }),
+  };
 }
 
 export function createGoldenProject(): GoldenProject {

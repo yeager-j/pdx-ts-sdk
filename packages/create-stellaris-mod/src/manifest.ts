@@ -16,6 +16,12 @@
  * instruction.
  */
 
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+/** The one filename a project's manifest can have. */
+export const MANIFEST_BASENAME = "stellaris-mod.json";
+
 /** The SDK's rule, restated only so this module needs no runtime dependency. */
 export const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 
@@ -214,6 +220,53 @@ function readModConfig(value: unknown, prefix: string, sourcePath: string): Proj
       ? {}
       : { uncheckedVanillaIds: config.uncheckedVanillaIds }),
   };
+}
+
+export interface FoundManifest {
+  /** The directory the manifest sits in, which is the project root. */
+  readonly rootDir: string;
+  readonly manifest: ProjectManifest;
+}
+
+/**
+ * The nearest Project Manifest at or above `startDir`, or `undefined` when
+ * there is none anywhere up to the filesystem root.
+ *
+ * Searching upward is what lets `generate` be run from inside `src/content/`
+ * rather than only from a project root, the way `git` and every package manager
+ * behave.
+ *
+ * A manifest that exists but does not parse stops the search rather than
+ * continuing past it. The alternative silently generates into a *different*
+ * project than the one the author is standing in — and it would do that
+ * precisely when their own manifest has a typo in it, which is the worst
+ * possible moment to become quietly helpful.
+ */
+export async function findManifest(startDir: string): Promise<FoundManifest | undefined> {
+  let dir = path.resolve(startDir);
+  for (;;) {
+    const sourcePath = path.join(dir, MANIFEST_BASENAME);
+    let bytes: string | undefined;
+    try {
+      bytes = await readFile(sourcePath, "utf8");
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== "ENOENT" && code !== "ENOTDIR") {
+        throw new ManifestError(
+          `${sourcePath} exists but could not be read (${code ?? "unknown error"}).`
+        );
+      }
+    }
+    if (bytes !== undefined) {
+      return { rootDir: dir, manifest: parseManifest(bytes, sourcePath) };
+    }
+
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      return undefined;
+    }
+    dir = parent;
+  }
 }
 
 function readContentDirectory(value: unknown, sourcePath: string): string {

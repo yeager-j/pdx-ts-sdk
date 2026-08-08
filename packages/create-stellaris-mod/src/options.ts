@@ -26,27 +26,6 @@ export const COMMANDS = {
 
 export type CommandName = keyof typeof COMMANDS;
 
-/**
- * The flags `generate` owns whatever recipe is selected.
- *
- * A recipe's question key becomes `--<key>`, so a question called `dry-run`
- * would silently shadow the flag that decides whether anything is written. The
- * catalog rejects that collision when it is constructed rather than when
- * somebody runs the recipe, and this is the list it checks against — stated
- * once, here, beside the command table it belongs to.
- *
- * `help` and `version` are in it for the same reason even though they are not
- * generate-specific: `--help` must keep meaning help.
- */
-export const COMMON_GENERATE_FLAGS = [
-  "cwd",
-  "yes",
-  "dry-run",
-  "allow-unsupported-sdk",
-  "help",
-  "version",
-] as const;
-
 export interface SplitArgv {
   readonly command: CommandName;
   /** `argv` with the command name removed, when one was spelled out. */
@@ -124,6 +103,61 @@ export const FLAGS = {
 
 export type FlagName = keyof typeof FLAGS;
 
+/**
+ * The flags `generate` owns whatever recipe is selected.
+ *
+ * `--cwd` is generate's own; the rest are shared with `init` and reuse its
+ * specs, because `--dry-run` promising one thing under one command and another
+ * under the next is exactly the drift a second table invites.
+ */
+export const GENERATE_FLAGS = {
+  cwd: {
+    type: "string",
+    value: "<path>",
+    describe: "Start the manifest search here, not in the current directory",
+  },
+  yes: FLAGS.yes,
+  "dry-run": FLAGS["dry-run"],
+  "allow-unsupported-sdk": {
+    type: "boolean",
+    describe: "Generate even when the SDK range cannot be proved supported",
+  },
+  help: FLAGS.help,
+  version: FLAGS.version,
+} as const satisfies Record<string, FlagSpec>;
+
+export type GenerateFlagName = keyof typeof GENERATE_FLAGS;
+
+/**
+ * The same table as a list of names, for the one consumer that needs the names
+ * alone: a recipe's question key becomes `--<key>`, so a question called
+ * `dry-run` would silently shadow the flag that decides whether anything is
+ * written. The catalog rejects that collision when it is constructed rather
+ * than when somebody runs the recipe, and this is the list it checks against.
+ *
+ * `help` and `version` are in it even though they are not generate-specific:
+ * `--help` must keep meaning help under every command.
+ *
+ * `satisfies` catches a name here that the table does not carry; a test catches
+ * the other direction, which no type can.
+ */
+export const COMMON_GENERATE_FLAGS = [
+  "cwd",
+  "yes",
+  "dry-run",
+  "allow-unsupported-sdk",
+  "help",
+  "version",
+] as const satisfies readonly GenerateFlagName[];
+
+/** A fault in what an author typed, as opposed to a fault in their project. */
+export class OptionsError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "OptionsError";
+  }
+}
+
 /** Everything the scaffold needs, with every question already answered. */
 export interface Resolved {
   readonly targetDir: string;
@@ -170,6 +204,209 @@ export function parseArgv(argv: readonly string[]): ParsedArgv {
   return { values: values as ParsedArgv["values"], positionals };
 }
 
+/** What `generate`'s first parsing phase resolves, before a recipe is known. */
+export interface GenerateArgv {
+  readonly recipeId: string | undefined;
+  readonly name: string | undefined;
+  readonly cwd: string | undefined;
+  readonly yes: boolean;
+  readonly dryRun: boolean;
+  readonly allowUnsupportedSdk: boolean;
+  readonly help: boolean;
+  readonly version: boolean;
+  /**
+   * Everything phase one did not consume, in the order it was written. These
+   * are the recipe's own flags, and they cannot be checked until the recipe is
+   * resolved — which is the whole reason parsing is two phases.
+   */
+  readonly rest: readonly string[];
+}
+
+function isFlag(arg: string): boolean {
+  return arg.length > 1 && arg.startsWith("-");
+}
+
+/** `--cwd=/tmp` and `-y` both land here as a name and an optional inline value. */
+function splitFlag(arg: string): { name: string; inlineValue: string | undefined } {
+  if (arg.startsWith("--")) {
+    const equals = arg.indexOf("=");
+    return equals === -1
+      ? { name: arg.slice(2), inlineValue: undefined }
+      : { name: arg.slice(2, equals), inlineValue: arg.slice(equals + 1) };
+  }
+  // An unrecognized short flag keeps its own spelling, so the message an author
+  // reads says `-x` rather than `x`.
+  return { name: SHORT_FLAGS.get(arg.slice(1)) ?? arg, inlineValue: undefined };
+}
+
+const SHORT_FLAGS = new Map(
+  (Object.entries(GENERATE_FLAGS) as [GenerateFlagName, FlagSpec][])
+    .filter(([, spec]) => spec.short !== undefined)
+    .map(([name, spec]) => [spec.short!, name as string])
+);
+
+/**
+ * Phase one: the command's own flags and its two positionals, with everything
+ * else kept for phase two.
+ *
+ * The retention rule is the only subtle part. An unrecognized `--area` might
+ * take a value or might not, and phase one cannot know which — only the recipe
+ * does. So an unrecognized flag keeps the token after it as well, unless that
+ * token is itself a flag. That is what makes both orderings work:
+ * `generate technology "Name" --area particles` and
+ * `generate technology --area particles "Name"` produce the same two
+ * positionals and the same leftovers.
+ */
+export function parseGenerateArgv(argv: readonly string[]): GenerateArgv {
+  const values = new Map<string, string | boolean>();
+  const positionals: string[] = [];
+  const rest: string[] = [];
+  let endOfFlags = false;
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]!;
+    if (endOfFlags || !isFlag(arg)) {
+      positionals.push(arg);
+      continue;
+    }
+    if (arg === "--") {
+      endOfFlags = true;
+      continue;
+    }
+
+    const { name, inlineValue } = splitFlag(arg);
+    const spec: FlagSpec | undefined = (GENERATE_FLAGS as Record<string, FlagSpec>)[name];
+    if (spec === undefined) {
+      rest.push(arg);
+      const next = argv[index + 1];
+      if (inlineValue === undefined && next !== undefined && next !== "--" && !isFlag(next)) {
+        rest.push(next);
+        index += 1;
+      }
+      continue;
+    }
+
+    if (values.has(name)) {
+      throw new OptionsError(
+        `--${name} was given twice. Each flag answers one question, so a second one would ` +
+          `silently win over the first.`
+      );
+    }
+    if (spec.type === "boolean") {
+      if (inlineValue !== undefined) {
+        throw new OptionsError(`--${name} takes no value, and was given ${quote(inlineValue)}.`);
+      }
+      values.set(name, true);
+      continue;
+    }
+    const value = inlineValue ?? argv[++index];
+    if (value === undefined) {
+      throw new OptionsError(`--${name} needs a value ${spec.value ?? "<value>"}.`);
+    }
+    values.set(name, value);
+  }
+
+  if (positionals.length > 2) {
+    throw new OptionsError(
+      `\`generate\` takes a recipe and a name, and got ${positionals.length} arguments ` +
+        `(${positionals.map(quote).join(", ")}). A name with spaces in it needs quoting.`
+    );
+  }
+
+  const cwd = values.get("cwd");
+  return {
+    recipeId: positionals[0],
+    name: positionals[1],
+    cwd: typeof cwd === "string" ? cwd : undefined,
+    yes: values.get("yes") === true,
+    dryRun: values.get("dry-run") === true,
+    allowUnsupportedSdk: values.get("allow-unsupported-sdk") === true,
+    help: values.get("help") === true,
+    version: values.get("version") === true,
+    rest,
+  };
+}
+
+/**
+ * Phase two: the leftovers, against the questions the resolved recipe asks.
+ *
+ * Strict in every direction — an unknown flag, a flag twice, a flag without a
+ * value, a value the question does not offer, and a bare leftover word are all
+ * refused rather than ignored. Only the answers an author actually supplied
+ * come back; Default answers belong to the invocation and are applied by the
+ * command, which is what lets it say where each answer came from.
+ */
+export function parseRecipeFlags(
+  rest: readonly string[],
+  recipeId: string,
+  questions: readonly QuestionShape[]
+): ReadonlyMap<string, string> {
+  const asked = new Map(questions.map((question) => [question.key, question]));
+  const answers = new Map<string, string>();
+
+  for (let index = 0; index < rest.length; index += 1) {
+    const arg = rest[index]!;
+    if (!isFlag(arg)) {
+      throw new OptionsError(
+        `\`generate ${recipeId}\` got ${quote(arg)}, which is neither a flag nor one of the two ` +
+          `arguments it takes (a recipe and a name).`
+      );
+    }
+
+    const { name, inlineValue } = splitFlag(arg);
+    const question = asked.get(name);
+    if (question === undefined) {
+      throw new OptionsError(
+        `\`generate ${recipeId}\` has no ${arg.startsWith("--") ? `--${name}` : name} flag.\n\n` +
+          `${recipeFlagList(recipeId, questions)}`
+      );
+    }
+    if (answers.has(name)) {
+      throw new OptionsError(
+        `--${name} was given twice. Each flag answers one question, so a second one would ` +
+          `silently win over the first.`
+      );
+    }
+
+    const value = inlineValue ?? rest[++index];
+    if (value === undefined) {
+      throw new OptionsError(
+        `--${name} needs a value: ${question.choices.map((choice) => choice.value).join(", ")}.`
+      );
+    }
+    if (!question.choices.some((choice) => choice.value === value)) {
+      throw new OptionsError(
+        `--${name} ${quote(value)} is not one of ${recipeId}'s answers ` +
+          `(${question.choices.map((choice) => choice.value).join(", ")}).`
+      );
+    }
+    answers.set(name, value);
+  }
+
+  return answers;
+}
+
+/**
+ * The question shape phase two needs, restated structurally so `options.ts`
+ * does not import the catalog that imports it.
+ */
+export interface QuestionShape {
+  readonly key: string;
+  readonly choices: readonly { readonly value: string }[];
+}
+
+function recipeFlagList(recipeId: string, questions: readonly QuestionShape[]): string {
+  const own =
+    questions.length === 0
+      ? `\`${recipeId}\` asks nothing, so it takes no recipe flags of its own.`
+      : `\`${recipeId}\` takes ${questions.map((question) => `--${question.key}`).join(", ")}.`;
+  return `${own}\n\`generate\` itself takes ${COMMON_GENERATE_FLAGS.map((flag) => `--${flag}`).join(", ")}.`;
+}
+
+function quote(value: string): string {
+  return JSON.stringify(value);
+}
+
 /** The one-line usage each command answers `--help` with. */
 const USAGE: Record<CommandName, readonly string[]> = {
   init: ["npx create-stellaris-mod [directory]", "npx create-stellaris-mod init [directory]"],
@@ -179,20 +416,33 @@ const USAGE: Record<CommandName, readonly string[]> = {
 };
 
 /**
- * What each catalog command's help ends on: the thing worth knowing that its
- * usage line does not already say. `generate` has no flag table yet, so what it
- * has to say is which part of it is still missing.
+ * The flag table each command's `--help` prints. `list` and `view` take no
+ * flags of their own; `view` documents each recipe's flags on its own page.
  */
-const CLOSING_NOTE: Record<Exclude<CommandName, "init">, () => string> = {
-  list: () => "It needs no project: the catalog is baked into this release.",
-  view: () => "Run `npx create-stellaris-mod list` for the recipe ids.",
-  generate: () => generatePending(),
+const COMMAND_FLAGS: Record<CommandName, Record<string, FlagSpec>> = {
+  init: FLAGS,
+  list: { help: FLAGS.help },
+  view: { help: FLAGS.help },
+  generate: GENERATE_FLAGS,
 };
 
 /**
- * `--help`, per command. `init` gets the flag table, because its flags are the
- * ones a help-drift test can hold to the parser; the catalog commands take no
- * flags of their own, and `view` documents each recipe's flags on its own page.
+ * What each catalog command's help ends on: the thing worth knowing that its
+ * usage line does not already say.
+ */
+const CLOSING_NOTE: Record<Exclude<CommandName, "init">, string> = {
+  list: "It needs no project: the catalog is baked into this release.",
+  view: "Run `npx create-stellaris-mod list` for the recipe ids.",
+  generate: [
+    "A recipe's own questions become flags of their own, so a scripted run never",
+    "prompts: `npx create-stellaris-mod view <recipe>` lists them. Without --yes,",
+    "and with a terminal to ask in, anything not given as a flag is prompted for.",
+  ].join("\n"),
+};
+
+/**
+ * `--help`, per command. Each command's own flag table is what a help-drift
+ * test can hold to its parser, so each one prints its own.
  */
 export function helpText(command: CommandName = "init"): string {
   const lines = [
@@ -204,27 +454,25 @@ export function helpText(command: CommandName = "init"): string {
     "",
   ];
 
-  if (command !== "init") {
-    lines.push(
-      "Options:",
-      `  ${"-h, --help".padEnd(30)} ${FLAGS.help.describe}`,
-      "",
-      CLOSING_NOTE[command](),
-      ""
-    );
-    return lines.join("\n");
+  if (command === "init") {
+    lines.push("Commands:");
+    for (const [name, describe] of Object.entries(COMMANDS)) {
+      lines.push(`  ${name.padEnd(30)} ${describe}`);
+    }
+    lines.push("");
   }
 
-  lines.push("Commands:");
-  for (const [name, describe] of Object.entries(COMMANDS)) {
-    lines.push(`  ${name.padEnd(30)} ${describe}`);
-  }
-  lines.push("", "Options:");
-  for (const [name, spec] of Object.entries(FLAGS) as [FlagName, FlagSpec][]) {
+  lines.push("Options:");
+  for (const [name, spec] of Object.entries(COMMAND_FLAGS[command])) {
     const flag = spec.negatable === true ? `--no-${name}` : `--${name}`;
     const short = spec.short === undefined ? "" : `-${spec.short}, `;
     const value = spec.value === undefined ? "" : ` ${spec.value}`;
     lines.push(`  ${`${short}${flag}${value}`.padEnd(30)} ${spec.describe}`);
+  }
+
+  if (command !== "init") {
+    lines.push("", CLOSING_NOTE[command], "");
+    return lines.join("\n");
   }
   lines.push(
     "",
@@ -232,27 +480,4 @@ export function helpText(command: CommandName = "init"): string {
     "stdin is not a TTY, it never asks anything."
   );
   return lines.join("\n") + "\n";
-}
-
-/**
- * What `generate` says until it can write a file. On stderr, with a nonzero
- * exit: reserving the name early is what keeps `init` from ever being ambiguous,
- * but a reserved name that silently succeeds would be worse than one that does
- * not exist.
- *
- * It names what is missing rather than gesturing at the catalog, because the
- * catalog is not missing — this release carries it, and `list` and `view` are
- * how an author reaches it today. Saying otherwise would be telling somebody the
- * thing in front of them is not there.
- *
- * No command parameter: `generate` is the only command this is true of, and a
- * parameter would be an invitation to reuse the sentence for a command it is
- * false about.
- */
-export function generatePending(): string {
-  return (
-    "`create-stellaris-mod generate` cannot write a feature file into a project yet.\n" +
-    "The rest of the catalog is here: `list` shows every recipe, and `view <recipe>`\n" +
-    "shows what one would write and how to ask for it."
-  );
 }

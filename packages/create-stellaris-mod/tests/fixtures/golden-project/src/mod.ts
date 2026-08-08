@@ -26,9 +26,12 @@ export const config = { ...manifest.mod[prefix], prefix };
 
 export const mod = createMod(config);
 
+// The manifest is the single placement authority: `generate` writes into
+// `contentDirectory` and discovery reads the same field, so a project that moves
+// it moves both. Project-relative, and this file is `src/mod.ts`, hence the `../`.
+const contentDir = new URL(`../${manifest.contentDirectory}/`, import.meta.url);
+
 export async function buildTheMod(): Promise<PureMod> {
-  const features = await discoverFeatures<typeof mod.config.prefix>(
-    new URL("./content/", import.meta.url)
-  );
+  const features = await discoverFeatures<typeof mod.config.prefix>(contentDir);
   return mod.compile(features);
 }

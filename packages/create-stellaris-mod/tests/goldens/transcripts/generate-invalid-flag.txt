@@ -1,0 +1,5 @@
+err| `generate technology` has no --area flag.
+err|
+err| `technology` asks nothing, so it takes no recipe flags of its own.
+err| `generate` itself takes --cwd, --yes, --dry-run, --allow-unsupported-sdk, --help, --version.
+exit 1

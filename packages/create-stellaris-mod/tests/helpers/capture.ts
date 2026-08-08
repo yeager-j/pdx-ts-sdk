@@ -5,38 +5,64 @@
  * in-process and stdout and stderr are readable *apart* — which is the thing
  * being asserted whenever a command promises that only its result goes to
  * stdout.
+ *
+ * Every write is recorded once, into one ordered list, and `out()`/`err()` are
+ * views over it. Two separate buffers would answer "what went to stdout"
+ * correctly and "what did this session look like" wrongly: an interactive run
+ * writes prompts to stderr and its result to stdout, and a transcript that
+ * prints one stream after the other shows the result arriving before the
+ * questions that produced it. The order things were written in is part of what
+ * a golden transcript is evidence for.
  */
 
 import { Readable, Writable } from "node:stream";
 
 import type { CliIo } from "../../src/io.ts";
 
+export type Channel = "out" | "err";
+
+export interface CaptureEvent {
+  readonly channel: Channel;
+  readonly text: string;
+}
+
 export interface Capture {
   readonly io: CliIo;
   out(): string;
   err(): string;
+  /** Every write, in the order it happened. */
+  events(): readonly CaptureEvent[];
 }
 
-export function capture(cwd = "/tmp/somewhere"): Capture {
-  const out: string[] = [];
-  const err: string[] = [];
-  const sink = (into: string[]): Writable =>
+/**
+ * `tty` is what decides whether the CLI believes there is somebody to ask. It
+ * defaults off, because a test that reaches a real prompt hangs, and the
+ * interactive flows are driven through the scripted `Terminal` instead.
+ */
+export function capture(cwd = "/tmp/somewhere", tty = false): Capture {
+  const events: CaptureEvent[] = [];
+  const sink = (channel: Channel): Writable =>
     new Writable({
       write(chunk: unknown, _encoding, callback) {
-        into.push(String(chunk));
+        events.push({ channel, text: String(chunk) });
         callback();
       },
     });
+  const joined = (channel: Channel): string =>
+    events
+      .filter((event) => event.channel === channel)
+      .map((event) => event.text)
+      .join("");
+
   return {
     io: {
       cwd,
-      // Not a TTY: nothing here may reach a prompt, and a test that hangs
-      // waiting for one is the failure mode worth making impossible.
-      stdin: Readable.from([]),
-      stdout: sink(out),
-      stderr: sink(err),
+      stdin: Object.assign(Readable.from([]), { isTTY: tty }),
+      stdout: sink("out"),
+      stderr: sink("err"),
     },
-    out: () => out.join(""),
-    err: () => err.join(""),
+    out: () => joined("out"),
+    err: () => joined("err"),
+    events: () => events,
   };
 }

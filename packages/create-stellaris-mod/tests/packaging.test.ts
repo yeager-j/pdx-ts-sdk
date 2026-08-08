@@ -13,7 +13,15 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CATALOG } from "../src/catalog/index.ts";
 import { main } from "../src/cli.ts";
-import { COMMANDS, FLAGS, helpText, type CommandName, type FlagName } from "../src/options.ts";
+import {
+  COMMANDS,
+  COMMON_GENERATE_FLAGS,
+  FLAGS,
+  GENERATE_FLAGS,
+  helpText,
+  type CommandName,
+  type FlagName,
+} from "../src/options.ts";
 import { VERIFIED_SDK_RANGE } from "../src/sdk-range.ts";
 import { VERSIONS } from "../src/templates/project.ts";
 import { capture } from "./helpers/capture.ts";
@@ -97,12 +105,27 @@ describe("--help", () => {
   it("documents every flag init's parser accepts", () => {
     // Two lists drift: a flag added to the parser and forgotten in the help is
     // invisible, and one documented but unparsed is worse. The invariant is
-    // per-command — `init` owns this flag table, and the catalog commands will
-    // own their own.
+    // per-command — `init` owns this flag table, and the catalog commands own
+    // their own.
     const help = helpText("init");
     for (const name of Object.keys(FLAGS) as FlagName[]) {
       expect(help, `--${name} is parsed but undocumented`).toContain(name);
     }
+  });
+
+  it("documents every flag generate's parser accepts", () => {
+    const help = helpText("generate");
+    for (const name of Object.keys(GENERATE_FLAGS)) {
+      expect(help, `--${name} is parsed but undocumented`).toContain(`--${name}`);
+    }
+  });
+
+  it("keeps the flag table and the collision list saying the same thing", () => {
+    // `COMMON_GENERATE_FLAGS` is what the catalog checks a question key
+    // against, and a name missing from it is a flag a recipe could quietly take
+    // over. `satisfies` catches a name in the list that the table lacks; only
+    // this catches the other direction.
+    expect([...COMMON_GENERATE_FLAGS].sort()).toEqual(Object.keys(GENERATE_FLAGS).sort());
   });
 
   it("lists every command, so a reserved name is discoverable", () => {

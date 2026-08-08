@@ -1,0 +1,9 @@
+err| note: About to generate
+err|   Recipe    technology — Item recipe
+err|   Name      Resonance Theory
+err|   File      src/content/resonance_theory.ts
+err|   Ids       from "resonance_theory", under the golden_mod prefix
+err|   Binding   resonanceTheory
+err| ? Write <project>/src/content/resonance_theory.ts? › no
+err| Nothing was written.
+exit 130

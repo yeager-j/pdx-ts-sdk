@@ -1,0 +1,12 @@
+err| ? What is it called? › !!!
+err| ! "!!!" has no letters or digits left after folding it down to a filename, so there is nothing to name the file, the id, or the binding after. Include at least one letter or digit that survives as ASCII.
+err| ? What is it called? › Resonance Theory
+err| note: About to generate
+err|   Recipe    technology — Item recipe
+err|   Name      Resonance Theory
+err|   File      src/content/resonance_theory.ts
+err|   Ids       from "resonance_theory", under the golden_mod prefix
+err|   Binding   resonanceTheory
+err| ? Write <project>/src/content/resonance_theory.ts? › yes
+out| <project>/src/content/resonance_theory.ts
+exit 0

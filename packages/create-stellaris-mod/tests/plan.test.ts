@@ -184,6 +184,27 @@ describe("the Project Manifest", () => {
     expect(plan().get("src/mod.ts")).toContain("must declare exactly one mod");
   });
 
+  it("discovers features where the manifest says they are, not where a convention says", () => {
+    // The manifest is the single placement authority. `generate` writes into
+    // `contentDirectory`; if this file hard-coded `./content/` instead, an
+    // author who moved the directory would get generated files the build never
+    // imports — present, correct, and silently absent from the mod.
+    const mod = plan().get("src/mod.ts")!;
+    expect(mod).toContain("new URL(`../${manifest.contentDirectory}/`, import.meta.url)");
+    expect(mod).not.toContain('new URL("./content/"');
+    expect(manifest(plan())["imports"]).toBeDefined();
+
+    // The emitted expression, evaluated against both a default and a moved
+    // directory: `src/mod.ts` is one level inside the project, so `../` lands
+    // on the root and the manifest's own path continues from there.
+    for (const contentDirectory of ["src/content", "src/features/generated"]) {
+      const base = "file:///project/src/mod.ts";
+      expect(new URL(`../${contentDirectory}/`, base).pathname).toBe(
+        `/project/${contentDirectory}/`
+      );
+    }
+  });
+
   it("aliases the mod module, so feature source computes no relative path", () => {
     const { imports } = manifest(plan()) as unknown as { imports: Record<string, string> };
     expect(imports["#mod"]).toBe("./src/mod.ts");
