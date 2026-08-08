@@ -29,6 +29,30 @@ import type { DerivedNames } from "../types.ts";
 /** The repository's Prettier `printWidth`, which the emitted source must respect. */
 const PRINT_WIDTH = 100;
 
+/**
+ * The vanilla technology the `prerequisites` example cites. Interpolated rather
+ * than written into the comment text, so the id an author reads and the id the
+ * gate below checks cannot become two different facts.
+ */
+const PREREQUISITE_EXAMPLE = "tech_basic_science_lab_1";
+
+/**
+ * Every vanilla id this recipe's examples cite, keyed by the registry in
+ * `@pdx-ts/stellaris-ids` that has to still carry it.
+ *
+ * A vanilla id in a curated example is a restated fact about the game, and this
+ * repository's rule for a restated fact is that something must break when it
+ * stops being true — the same trade `PREFIX_PATTERN` and the manifest's
+ * launcher-version grammar make. `recipe-matrix.test.ts` reads the committed
+ * registry, so a regenerated identifier package that drops this id fails there
+ * rather than in an author's project. The coupling is dev-time only: nothing
+ * here imports the package, and `packaging.test.ts` is what pins the runtime
+ * dependencies.
+ */
+export const VANILLA_EXAMPLE_IDS = {
+  technology: [PREREQUISITE_EXAMPLE],
+} as const satisfies Readonly<Record<string, readonly string[]>>;
+
 export const technologyRecipe = defineRecipe({
   summary: {
     id: "technology",
@@ -89,7 +113,7 @@ function fields(names: DerivedNames): readonly string[] {
     "// Technologies that must be researched first. A vanilla technology is a plain",
     "// string, checked against the game when @pdx-ts/stellaris-ids is installed; one",
     "// of your own is the binding another feature file exports, imported as usual.",
-    '// prerequisites: ["tech_basic_science_lab_1"],',
+    `// prerequisites: [${quoteTs(PREREQUISITE_EXAMPLE)}],`,
     "",
     "// How likely the game is to offer this as a research option next to the",
     "// others in its category. 100 is the conventional starting weight.",

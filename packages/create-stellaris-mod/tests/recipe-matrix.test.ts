@@ -13,11 +13,13 @@
  * negative control at the bottom is what proves they would have noticed.
  */
 
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { format, resolveConfig, type Options } from "prettier";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { CATALOG } from "../src/catalog/index.ts";
+import { VANILLA_EXAMPLE_IDS } from "../src/catalog/recipes/technology.ts";
 import type { ChoiceQuestion } from "../src/catalog/types.ts";
 import { createGoldenProject, type GoldenProject } from "./helpers/golden-project.ts";
 import { expectGolden } from "./helpers/goldens.ts";
@@ -180,6 +182,44 @@ function uncomment(source: string): { source: string; uncommented: string[] } {
   });
   return { source: lines.join("\n"), uncommented };
 }
+
+/**
+ * A vanilla id in a curated example is a fact about the game restated inside
+ * this package, and a restated fact gets a sync gate. The compiler cannot help
+ * here: `prerequisites` takes a plain string for exactly the reason that makes
+ * an intentional vanilla reference expressible, so a dead id typechecks and
+ * builds and only fails when the game silently ignores the technology.
+ *
+ * Read as text rather than imported: `packages/stellaris-ids` is outside this
+ * program on purpose — its module augmentation is global — and this needs the
+ * committed bytes, not the types.
+ */
+describe("the vanilla ids the examples cite", () => {
+  const ID_REGISTRIES = path.resolve(import.meta.dirname, "../../stellaris-ids/src/registries");
+
+  const cited = Object.entries(VANILLA_EXAMPLE_IDS).flatMap(([registry, ids]) =>
+    ids.map((id) => [registry, id] as const)
+  );
+
+  it.each(cited)("%s: %s is still cited by the recipe, and still exists", (registry, id) => {
+    // Both directions. A declared id nothing renders would make the check below
+    // pass forever on an example no author will ever read.
+    const generated = CATALOG.generate({ recipeId: "technology", name: NAME, answers: {} });
+    expect(
+      generated.contents,
+      `${id} is declared in VANILLA_EXAMPLE_IDS but appears nowhere in the generated source`
+    ).toContain(id);
+
+    const registryFile = path.join(ID_REGISTRIES, `${registry}.ts`);
+    expect(
+      readFileSync(registryFile, "utf8"),
+      `${id} is no longer in packages/stellaris-ids/src/registries/${registry}.ts. That package ` +
+        `is regenerated from an install, so an id leaving it means the game dropped or renamed ` +
+        `it — the curated example in src/catalog/recipes/technology.ts needs re-reviewing ` +
+        `against the current game, not silently repointing at whatever is nearby.`
+    ).toContain(`"${id}"`);
+  });
+});
 
 describe("the compiler gate", () => {
   let project: GoldenProject;
