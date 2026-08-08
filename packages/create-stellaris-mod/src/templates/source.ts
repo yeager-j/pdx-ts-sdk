@@ -33,11 +33,16 @@ export function modTs(resolved: Resolved): string {
         `  return mod.compile(features, vanilla === undefined ? {} : { vanilla });`;
 
   return `/**
- * The mod definition: config, its capability, plus \`buildTheMod()\` — the
- * impure discovery shell around the SDK's pure fold. Importing this file builds
- * nothing: \`config\` and \`mod\` are plain values, so a test — or anything
- * else — that only wants the mod's prefix can import it without triggering a
- * build as a side effect.
+ * The wiring from \`stellaris-mod.json\` to the mod capability, plus
+ * \`buildTheMod()\` — the impure discovery shell around the SDK's pure fold.
+ *
+ * The manifest is the configuration; this file is not a second copy of it. The
+ * sole key under \`mod\` is the mod prefix, so \`keyof typeof manifest.mod\`
+ * recovers it as a literal type and every id minted from it stays checked.
+ *
+ * Importing this file builds nothing: \`config\` and \`mod\` are plain values, so
+ * a test — or anything else — that only wants the mod's prefix can import it
+ * without triggering a build as a side effect.
  * \`npm run build\` (\`src/index.ts\`) and \`npm run install-mod\`
  * (\`src/install.ts\`) both call \`buildTheMod()\` once and add their own single
  * disk-touching step (\`write\` vs \`install\`) on top, instead of each folding
@@ -52,16 +57,24 @@ export function modTs(resolved: Resolved): string {
  */
 
 import { createMod, discoverFeatures, type PureMod } from "@pdx-ts/sdk";
+import manifest from "../stellaris-mod.json" with { type: "json" };
 ${idsImport}${vanillaWiring}
-export const config = {
-  name: ${quote(resolved.name)},
-  // Every id and every emitted filename starts with this. It is what makes the
-  // mod structurally incapable of overwriting someone else's content.
-  prefix: ${quote(resolved.prefix)} as const,
-  version: "0.1.0",
-  supportedVersion: ${quote(resolved.supportedVersion)},
-  tags: ${JSON.stringify(resolved.tags)},
-};
+const prefixes = Object.keys(manifest.mod);
+if (prefixes.length !== 1) {
+  throw new Error(
+    \`stellaris-mod.json must declare exactly one mod, and declares \${prefixes.length}. \` +
+      \`The single key under "mod" is this mod's prefix.\`
+  );
+}
+
+// Every id and every emitted filename starts with this. It is what makes the
+// mod structurally incapable of overwriting someone else's content.
+const prefix = prefixes[0] as keyof typeof manifest.mod;
+
+// \`prefix\` goes last on purpose: the key under \`mod\` is the prefix, so a
+// \`prefix\` field written inside the entry — a copy of the old shape — must not
+// be able to quietly rename every id this mod mints.
+export const config = { ...manifest.mod[prefix], prefix };
 
 export const mod = createMod(config);
 
@@ -210,12 +223,15 @@ export function contentExampleTs(resolved: Resolved): string {
  * Rename this file and the emitted filenames follow. Add \`weapons.ts\` beside it
  * and you get another pair — with no directory in your source tree shaped like
  * the output tree.
+ *
+ * \`#mod\` is the project's own import alias for \`src/mod.ts\` (see
+ * \`package.json#imports\`), so moving this module deeper never rewrites it.
  */
 
 import { hasCountryFlag, not, onActions } from "@pdx-ts/sdk";
 
+import { mod } from "#mod";
 import { flags } from "../flags.ts";
-import { mod } from "../mod.ts";
 
 export const firstSteps = mod.technology("first_steps", {
   name: "First Steps",

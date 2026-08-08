@@ -12,6 +12,7 @@ import { cancel, confirm, intro, isCancel, log, note, text } from "@clack/prompt
 import { isValidPrefix, toDisplayName, toPrefix, toTags } from "./derive.ts";
 import { detectInstall, isInstall, readGameVersion, supportedVersionFor } from "./detect.ts";
 import { detectPackageManager } from "./exec.ts";
+import { SUPPORTED_VERSION_PATTERN } from "./manifest.ts";
 import type { ParsedArgv, Resolved } from "./options.ts";
 
 /** The build the SDK's rule table is verified against — the no-install fallback. */
@@ -31,6 +32,44 @@ export function nameProblem(name: string): string | undefined {
     return "A mod name cannot contain a double quote — the launcher descriptor has no way to escape it.";
   }
   return undefined;
+}
+
+/**
+ * The launcher's `supported_version` grammar, said early.
+ *
+ * Detection derives this value and derives it correctly; the author-supplied
+ * flag and prompt are the paths that can produce something else. Checking here
+ * is what keeps init's promise that it never writes a Project Manifest
+ * `generate` cannot read — `parseManifest` enforces the same grammar, and
+ * without this the scaffold could write a file its own adapter refuses and the
+ * launcher would silently reject.
+ */
+export function supportedVersionProblem(value: string): string | undefined {
+  if (SUPPORTED_VERSION_PATTERN.test(value)) {
+    return undefined;
+  }
+  return (
+    "A supported version must be a launcher version pattern — one to three dot-separated " +
+    'parts, each a number or "*", such as "v4.4.*", "v4.*" or "v4.4.6". It is written ' +
+    "verbatim into descriptor.mod, a format with no way to say anything else, and the " +
+    "launcher answers an unreadable one by refusing the mod without saying why."
+  );
+}
+
+/**
+ * The flag, checked before it can reach the manifest. Returns `undefined` when
+ * no flag was given, so the caller's `??` chain still falls through to
+ * detection.
+ */
+function checkedSupportedVersionFlag(value: string | undefined): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const problem = supportedVersionProblem(value);
+  if (problem !== undefined) {
+    throw new Error(`${problem} (--supported-version ${JSON.stringify(value)})`);
+  }
+  return value;
 }
 
 function stop(): never {
@@ -74,15 +113,16 @@ export function resolveNonInteractive(argv: ParsedArgv, targetDir: string): Reso
   const explicitPath = flag(values, "stellaris-path");
   const detected = detectInstall(explicitPath);
   const gameVersion = detected?.gameVersion;
+  const supportedVersion =
+    checkedSupportedVersionFlag(flag(values, "supported-version")) ??
+    supportedVersionFor(gameVersion ?? FALLBACK_GAME_VERSION) ??
+    "v4.4.*";
 
   return {
     targetDir,
     name,
     prefix: flag(values, "prefix") ?? toPrefix(name),
-    supportedVersion:
-      flag(values, "supported-version") ??
-      supportedVersionFor(gameVersion ?? FALLBACK_GAME_VERSION) ??
-      "v4.4.*",
+    supportedVersion,
     tags: toTags(flag(values, "tags")),
     installPath: detected?.installPath,
     installPathIsExplicit: explicitPath !== undefined && explicitPath !== "",
@@ -140,13 +180,17 @@ export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
   const install = await askInstall(flag(values, "stellaris-path"));
 
   const supportedVersion =
-    flag(values, "supported-version") ??
+    checkedSupportedVersionFlag(flag(values, "supported-version")) ??
     unwrap(
       await text({
         message: "Which game versions does it support?",
         placeholder: supportedVersionFor(install?.gameVersion ?? FALLBACK_GAME_VERSION),
         defaultValue:
           supportedVersionFor(install?.gameVersion ?? FALLBACK_GAME_VERSION) ?? "v4.4.*",
+        // An empty submit means "take the offered default", which clack
+        // substitutes after validation runs — and the default is derived, so it
+        // is already a legal pattern. Only what the author types is checked.
+        validate: (value = "") => (value === "" ? undefined : supportedVersionProblem(value)),
       })
     );
 

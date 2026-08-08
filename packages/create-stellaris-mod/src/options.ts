@@ -1,5 +1,6 @@
 /**
- * The flag table, and the resolved shape the rest of the CLI consumes.
+ * The command table, the init flag table, and the resolved shape the rest of
+ * the CLI consumes.
  *
  * One table feeds both `parseArgs` and `--help`, because two lists drift: a
  * flag added to the parser and forgotten in the help text is invisible, and one
@@ -7,6 +8,46 @@
  */
 
 import { parseArgs, type ParseArgsConfig } from "node:util";
+
+/**
+ * The reserved first-position command names.
+ *
+ * Reserving them is a real, if tiny, breaking change: a directory literally
+ * named `list` can no longer be scaffolded as bare `create-stellaris-mod list`,
+ * and needs `create-stellaris-mod init list` instead. That is the price of
+ * having commands at all, and the canonical spelling exists for exactly this.
+ */
+export const COMMANDS = {
+  init: "Scaffold a new mod project (the default)",
+  list: "List the recipes the catalog can generate",
+  view: "Show one recipe's questions, flags, and defaults",
+  generate: "Generate one feature source file into a project",
+} as const;
+
+export type CommandName = keyof typeof COMMANDS;
+
+export interface SplitArgv {
+  readonly command: CommandName;
+  /** `argv` with the command name removed, when one was spelled out. */
+  readonly rest: readonly string[];
+}
+
+/**
+ * Which command this argv selects, before any flag is parsed.
+ *
+ * The command has to be the *first* argument rather than the first positional,
+ * and that is not laziness: the flag table is per-command, so working out which
+ * arguments are positionals already requires knowing the command. Every
+ * command-shaped CLI takes the same route, and `--name init my-mod` — where
+ * `init` is a value, not a command — is the case that rules the alternative out.
+ */
+export function splitCommand(argv: readonly string[]): SplitArgv {
+  const first = argv[0];
+  if (first !== undefined && Object.hasOwn(COMMANDS, first)) {
+    return { command: first as CommandName, rest: argv.slice(1) };
+  }
+  return { command: "init", rest: argv };
+}
 
 export interface FlagSpec {
   readonly type: "string" | "boolean";
@@ -108,14 +149,39 @@ export function parseArgv(argv: readonly string[]): ParsedArgv {
   return { values: values as ParsedArgv["values"], positionals };
 }
 
-export function helpText(): string {
+/** The one-line usage each command answers `--help` with. */
+const USAGE: Record<CommandName, readonly string[]> = {
+  init: ["npx create-stellaris-mod [directory]", "npx create-stellaris-mod init [directory]"],
+  list: ["npx create-stellaris-mod list"],
+  view: ["npx create-stellaris-mod view <recipe>"],
+  generate: ["npx create-stellaris-mod generate [recipe] [name]"],
+};
+
+/**
+ * `--help`, per command. `init` gets the flag table, because `init` is the only
+ * command implemented here and its flags are the ones a help-drift test can
+ * hold to the parser.
+ */
+export function helpText(command: CommandName = "init"): string {
   const lines = [
-    "Scaffold a Stellaris mod project that builds with @pdx-ts/sdk.",
+    command === "init"
+      ? "Scaffold a Stellaris mod project that builds with @pdx-ts/sdk."
+      : `create-stellaris-mod ${command} — ${COMMANDS[command]}.`,
     "",
-    "  npx create-stellaris-mod [directory]",
+    ...USAGE[command].map((usage) => `  ${usage}`),
     "",
-    "Options:",
   ];
+
+  if (command !== "init") {
+    lines.push(catalogPending(command), "");
+    return lines.join("\n");
+  }
+
+  lines.push("Commands:");
+  for (const [name, describe] of Object.entries(COMMANDS)) {
+    lines.push(`  ${name.padEnd(30)} ${describe}`);
+  }
+  lines.push("", "Options:");
   for (const [name, spec] of Object.entries(FLAGS) as [FlagName, FlagSpec][]) {
     const flag = spec.negatable === true ? `--no-${name}` : `--${name}`;
     const short = spec.short === undefined ? "" : `-${spec.short}, `;
@@ -128,4 +194,17 @@ export function helpText(): string {
     "stdin is not a TTY, it never asks anything."
   );
   return lines.join("\n") + "\n";
+}
+
+/**
+ * What a reserved-but-unimplemented command says. One sentence, on stderr, with
+ * a nonzero exit: reserving the name early is what keeps `init` from ever being
+ * ambiguous, but a reserved name that silently succeeds would be worse than one
+ * that does not exist.
+ */
+export function catalogPending(command: CommandName): string {
+  return (
+    `\`create-stellaris-mod ${command}\` arrives with the Recipe Catalog, which this ` +
+    `release does not carry yet.`
+  );
 }
