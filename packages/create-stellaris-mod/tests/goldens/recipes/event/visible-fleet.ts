@@ -30,8 +30,9 @@ const events = mod.namespace("resonance_theory");
 
 // Nothing fires this on its own: `isTriggeredOnly` tells the game never to
 // schedule it. Give it a hook — `mod.on(onActions.<action>, [resonanceTheory])` —
-// or fire it from another event with `fleetEvent({ id: resonanceTheory })`. The
-// `research-quest` recipe generates one wired end to end.
+// or fire it from another event's effects, where the fire operation is a
+// method on the scope you are in: `<scope>.fleetEvent({ id: resonanceTheory })`.
+// The `research-quest` recipe generates one wired end to end.
 export const resonanceTheory = events.fleet(1, {
   title: "PLACEHOLDER: the headline the event window shows.",
   desc: "PLACEHOLDER: what happened, in a paragraph.",
@@ -43,13 +44,19 @@ export const resonanceTheory = events.fleet(1, {
         // `fleet` is this event's root scope, and the kind is what fixed it.
         // `setFleetFlag` is in scope here; the other three scopes' flag
         // effects are not. Flags are how the rest of your script learns this ran.
-        fleet.setFleetFlag("resonance_theory_fired");
+        //
+        // Flag names are shared with every other mod the player has loaded, so this
+        // one carries the mod prefix the way the scaffolded example does. Reading it
+        // back — `hasCountryFlag` and its siblings — takes the same string.
+        fleet.setFleetFlag(`${mod.config.prefix}_resonance_theory_fired`);
       },
     },
   ],
 
-  // The artwork the event window shows. A vanilla sprite is a plain string,
-  // checked against the game when @pdx-ts/stellaris-ids is installed.
+  // The artwork the event window shows. The field takes a vanilla sprite id as
+  // a plain string, as given — nothing checks a bare literal. `vanilla.sprite(...)`
+  // from @pdx-ts/sdk is the checked form, against the real id set when
+  // @pdx-ts/stellaris-ids is installed.
   // picture: "GFX_evt_mysterious_signal",
 
   // Fires at most once per game, no matter how often its hook runs.

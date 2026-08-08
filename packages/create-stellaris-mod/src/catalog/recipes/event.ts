@@ -235,8 +235,9 @@ function eventCall(names: DerivedNames, visibility: Visibility, kind: EventKind)
   return [
     "// Nothing fires this on its own: `isTriggeredOnly` tells the game never to",
     `// schedule it. Give it a hook — \`mod.on(onActions.<action>, [${names.identifier}])\` —`,
-    `// or fire it from another event with \`${fire}({ id: ${names.identifier} })\`. The`,
-    "// `research-quest` recipe generates one wired end to end.",
+    "// or fire it from another event's effects, where the fire operation is a",
+    `// method on the scope you are in: \`<scope>.${fire}({ id: ${names.identifier} })\`.`,
+    "// The `research-quest` recipe generates one wired end to end.",
     `export const ${names.identifier} = events.${kind}(1, {`,
     ...indent(
       visibility === "visible" ? visibleFields(names, kind) : hiddenFields(names, kind),
@@ -260,8 +261,10 @@ function visibleFields(names: DerivedNames, kind: EventKind): readonly string[] 
     "  },",
     "],",
     "",
-    "// The artwork the event window shows. A vanilla sprite is a plain string,",
-    "// checked against the game when @pdx-ts/stellaris-ids is installed.",
+    "// The artwork the event window shows. The field takes a vanilla sprite id as",
+    "// a plain string, as given — nothing checks a bare literal. `vanilla.sprite(...)`",
+    "// from @pdx-ts/sdk is the checked form, against the real id set when",
+    "// @pdx-ts/stellaris-ids is installed.",
     `// picture: ${quoteTs(PICTURE_EXAMPLE)},`,
     "",
     ...FIRE_ONLY_ONCE_EXAMPLE,
@@ -297,7 +300,11 @@ function flagLines(names: DerivedNames, kind: EventKind): readonly string[] {
     `// \`${kind}\` is this event's root scope, and the kind is what fixed it.`,
     `// \`${flagEffect}\` is in scope here; the other three scopes' flag`,
     "// effects are not. Flags are how the rest of your script learns this ran.",
-    `${kind}.${flagEffect}(${quoteTs(`${names.stem}_fired`)});`,
+    "//",
+    "// Flag names are shared with every other mod the player has loaded, so this",
+    "// one carries the mod prefix the way the scaffolded example does. Reading it",
+    "// back — `hasCountryFlag` and its siblings — takes the same string.",
+    `${kind}.${flagEffect}(\`\${mod.config.prefix}_${names.stem}_fired\`);`,
   ];
 }
 

@@ -293,8 +293,11 @@ describe.each(EVENT_VARIANTS)(
           expect(eventsOut).toContain(`id = ${PREFIX}_${STEM}.1`);
           expect(eventsOut).toContain("is_triggered_only = yes");
           // The one line that differs per kind, which is the whole point of
-          // the `event-kind` question.
-          expect(eventsOut).toContain(`${FLAG_EFFECTS[kind]} = ${STEM}_fired`);
+          // the `event-kind` question. The flag carries the mod prefix because
+          // flag names are shared with every other mod the player has loaded,
+          // and the prefix reaches the emitted string through `mod.config` —
+          // so this also proves that interpolation survives the build.
+          expect(eventsOut).toContain(`${FLAG_EFFECTS[kind]} = ${PREFIX}_${STEM}_fired`);
 
           if (visibility === "visible") {
             expect(eventsOut).toContain(`title = ${PREFIX}_${STEM}.1.name`);

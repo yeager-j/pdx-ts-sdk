@@ -23,8 +23,10 @@ out|   tier: 1,
 out|   cost: 2000,
 out|
 out|   // Technologies that must be researched first. A vanilla technology is a plain
-out|   // string, checked against the game when @pdx-ts/stellaris-ids is installed; one
-out|   // of your own is the binding another feature file exports, imported as usual.
+out|   // string, taken as given — nothing checks a bare literal;
+out|   // `vanilla.technology(...)` from @pdx-ts/sdk is the checked form, against the
+out|   // real id set when @pdx-ts/stellaris-ids is installed. One of your own is the
+out|   // binding another feature file exports, imported as usual.
 out|   // prerequisites: ["tech_basic_science_lab_1"],
 out|
 out|   // How likely the game is to offer this as a research option next to the

@@ -16,6 +16,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { FILE_STEM_PATTERN } from "../../sdk/src/authoring/feature.ts";
 import { deriveNames, NameError, STEM_PATTERN } from "../src/catalog/names.ts";
+import { buildingRecipe } from "../src/catalog/recipes/building.ts";
+import { eventRecipe } from "../src/catalog/recipes/event.ts";
 import { researchQuestRecipe } from "../src/catalog/recipes/research-quest.ts";
 import { technologyRecipe } from "../src/catalog/recipes/technology.ts";
 import type { DerivedNames } from "../src/catalog/types.ts";
@@ -36,6 +38,10 @@ const ACCEPTED: readonly (readonly [string, string])[] = [
   ["await", "await"],
   ["new", "new"],
   ["3D Printing", "feature_3d_printing"],
+  // Derives to the word a generated file already binds for its event namespace
+  // handle. Nothing about it is illegal as an identifier, which is exactly why
+  // it needs a name in this corpus rather than a guard in one recipe.
+  ["Events", "events"],
   ["  padded  ", "padded"],
   ["Ω Particle", "particle"],
   ['Robert"); DROP TABLE', "robert_drop_table"],
@@ -104,6 +110,20 @@ const QUEST_VARIANTS = ["one", "two"] as const;
 
 function renderQuestFor(names: DerivedNames, projects: "one" | "two"): string {
   return researchQuestRecipe.render({ names, answers: { projects } });
+}
+
+function renderBuildingFor(names: DerivedNames): string {
+  return buildingRecipe.render({ names, answers: {} });
+}
+
+/**
+ * One event variant per name, and the visibility/kind pair is not the point:
+ * every variant opens the same `const events` handle, which is the binding a
+ * derived identifier can collide with. `recipe-matrix.test.ts` proves all eight
+ * at the canonical name; this proves one against every hostile name.
+ */
+function renderEventFor(names: DerivedNames): string {
+  return eventRecipe.render({ names, answers: { visibility: "visible", "event-kind": "country" } });
 }
 
 /**
@@ -343,6 +363,57 @@ describe("every accepted name, as a two-project research quest, in one real proj
         }
 
         expect(onActions, stem).toContain(`golden_mod_${stem}.1`);
+      }
+    },
+    COMPILER_TIMEOUT
+  );
+});
+
+/**
+ * The two Item recipes added in SDK-111, on the same shared-project economy.
+ *
+ * They earn a place here for a reason `technology` does not cover: both bind
+ * the derived identifier *beside* a fixed recipe word, so a name is no longer
+ * only a literal and a filename — it is a declaration that has to coexist with
+ * the ones the recipe writes itself. `generate event "Events"` derived to
+ * `events` and collided with the namespace handle, and nothing caught it,
+ * because no corpus rendered this recipe.
+ */
+describe.each([
+  ["building", renderBuildingFor, (stem: string) => `common/buildings/golden_mod_${stem}.txt`],
+  ["event", renderEventFor, (stem: string) => `events/golden_mod_${stem}.txt`],
+] as const)("every accepted name, as a %s, in one real project", (_id, render, emittedPath) => {
+  let project: GoldenProject;
+
+  beforeAll(() => {
+    project = createGoldenProject();
+    for (const [name] of ACCEPTED) {
+      const names = deriveNames(name);
+      project.place(names.basename, render(names));
+    }
+  }, COMPILER_TIMEOUT);
+
+  afterAll(() => project?.dispose());
+
+  it(
+    "typechecks",
+    () => {
+      const result = project.typecheck();
+      expect(result.output).toBe("");
+      expect(result.status).toBe(0);
+    },
+    COMPILER_TIMEOUT
+  );
+
+  it(
+    "builds one per name",
+    () => {
+      const result = project.build();
+      expect(result.status, result.output).toBe(0);
+
+      const emitted = project.outFiles();
+      for (const [, stem] of ACCEPTED) {
+        expect(emitted, stem).toContain(emittedPath(stem));
       }
     },
     COMPILER_TIMEOUT

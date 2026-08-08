@@ -22,8 +22,10 @@ export const resonanceTheory = mod.technology("resonance_theory", {
   cost: 2000,
 
   // Technologies that must be researched first. A vanilla technology is a plain
-  // string, checked against the game when @pdx-ts/stellaris-ids is installed; one
-  // of your own is the binding another feature file exports, imported as usual.
+  // string, taken as given — nothing checks a bare literal;
+  // `vanilla.technology(...)` from @pdx-ts/sdk is the checked form, against the
+  // real id set when @pdx-ts/stellaris-ids is installed. One of your own is the
+  // binding another feature file exports, imported as usual.
   // prerequisites: ["tech_basic_science_lab_1"],
 
   // How likely the game is to offer this as a research option next to the

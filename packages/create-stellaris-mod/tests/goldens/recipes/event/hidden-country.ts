@@ -30,8 +30,9 @@ const events = mod.namespace("resonance_theory");
 
 // Nothing fires this on its own: `isTriggeredOnly` tells the game never to
 // schedule it. Give it a hook — `mod.on(onActions.<action>, [resonanceTheory])` —
-// or fire it from another event with `countryEvent({ id: resonanceTheory })`. The
-// `research-quest` recipe generates one wired end to end.
+// or fire it from another event's effects, where the fire operation is a
+// method on the scope you are in: `<scope>.countryEvent({ id: resonanceTheory })`.
+// The `research-quest` recipe generates one wired end to end.
 export const resonanceTheory = events.country(1, {
   // No window at all: `immediate` runs the moment the event fires and the
   // player is shown nothing, so the fields a window would need have nothing
@@ -42,7 +43,11 @@ export const resonanceTheory = events.country(1, {
     // `country` is this event's root scope, and the kind is what fixed it.
     // `setCountryFlag` is in scope here; the other three scopes' flag
     // effects are not. Flags are how the rest of your script learns this ran.
-    country.setCountryFlag("resonance_theory_fired");
+    //
+    // Flag names are shared with every other mod the player has loaded, so this
+    // one carries the mod prefix the way the scaffolded example does. Reading it
+    // back — `hasCountryFlag` and its siblings — takes the same string.
+    country.setCountryFlag(`${mod.config.prefix}_resonance_theory_fired`);
   },
 
   // Fires at most once per game, no matter how often its hook runs.
