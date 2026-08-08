@@ -1,0 +1,2 @@
+err| --event-kind "pop" is not one of event's answers (country, planet, ship, fleet).
+exit 1

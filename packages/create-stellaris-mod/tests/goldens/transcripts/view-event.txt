@@ -1,0 +1,31 @@
+out| event — Event
+out|
+out|   One event, visible or hidden, in the scope you choose.
+out|
+out|   Kind     Item recipe — one feature file holding one item
+out|   Creates  event
+out|   Writes   <contentDirectory>/<derived_name>.ts
+out|
+out| Questions:
+out|
+out|   Asked in this order. Each one has a flag, so a scripted run never prompts.
+out|
+out|   --visibility <visible|hidden>
+out|       A visible event carries the window fields and does its work in an option's effects; a hidden one carries `hideWindow` and does its work in `immediate`, with no window fields at all. (default: visible)
+out|         visible  Visible — A window with a title, a description, and one option the player picks.
+out|         hidden   Hidden — No window: the effects run the moment the event fires.
+out|
+out|   --event-kind <country|planet|ship|fleet>
+out|       The kind picks the definer, and the definer fixes the scope every callback in the file receives: a ship event's callbacks take a ship, so only ship-scope effects are legal in them. (default: country)
+out|         country  A country — The empire itself — the kind most events are.
+out|         planet   A planet — One planet, colonized or not.
+out|         ship     A ship — A single ship, such as a science ship.
+out|         fleet    A fleet — A whole fleet, including a one-ship fleet.
+out|
+out| Generate it:
+out|
+out|   npx create-stellaris-mod generate event "<name>" --visibility visible --event-kind country
+out|
+out| The name is the display name. The filename, the content id, and the
+out| TypeScript binding are all derived from it.
+exit 0

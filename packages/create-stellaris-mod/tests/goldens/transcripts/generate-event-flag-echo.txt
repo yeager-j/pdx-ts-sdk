@@ -1,11 +1,11 @@
-err| ? Which recipe? › research-quest
-err| ? What is it called? › Resonance Theory
 err| note: About to generate
-err|   Recipe    research-quest — Feature recipe
+err|   Recipe    event — Item recipe
 err|   Name      Resonance Theory
 err|   File      src/content/resonance_theory.ts
 err|   Ids       from "resonance_theory", under the golden_mod prefix
-err| ? How many special projects advance the quest? › two
+err|   Binding   resonanceTheory
+err| info: visibility: hidden — from --visibility
+err| ? What does the event happen to? › ship
 err| ? Write <project>/src/content/resonance_theory.ts? › yes
 out| <project>/src/content/resonance_theory.ts
 exit 0

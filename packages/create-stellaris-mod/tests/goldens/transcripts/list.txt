@@ -1,5 +1,11 @@
 out| Recipes:
 out|
+out|   building        Building        Item recipe
+out|                   One constructible planet building, plus the feature file that places it.
+out|
+out|   event           Event           Item recipe
+out|                   One event, visible or hidden, in the scope you choose.
+out|
 out|   research-quest  Research quest  Feature recipe
 out|                   An event chain, the special projects that advance it, and the events that begin and end it.
 out|

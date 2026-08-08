@@ -100,6 +100,11 @@ const RESERVED_IDENTIFIERS: ReadonlySet<string> = new Set([
   // Bound by every generated file.
   "feature",
   "mod",
+  // Bound by every generated file that opens an event namespace. Not every
+  // recipe does, but the derivation has one answer per name rather than one
+  // per recipe, and a name that collides in one file is a file that does not
+  // parse — `generate event "Events"` would otherwise declare `events` twice.
+  "events",
 ]);
 
 export class NameError extends Error {
