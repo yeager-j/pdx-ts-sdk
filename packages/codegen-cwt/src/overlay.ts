@@ -1037,6 +1037,34 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "technology.modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "modifier_clause is an open modifier-name map with optional ancillary fields " +
+        "(technologies_consolidated.cwt:237-238), the same declaration every other registry's " +
+        "modifierBlock row splices. 243 shipped technologies write it — the single largest " +
+        "unlowered field on the registry — and without the row the writer drops it silently " +
+        "(SDK-63). The field's own `## replace_scopes = { this = country root = country }` " +
+        "supplies the country scope; no `scope` row is needed. The clause's ancillary fields " +
+        "(description/description_parameters/show_only_custom_tooltip/custom_tooltip) stay " +
+        "unmodeled, the same trade every modifierBlock row already makes: 24 of the 243 write " +
+        "one, all but two of those custom_tooltip.",
+    },
+  ],
+  [
+    "technology.technology_swap.modifier",
+    {
+      shape: "modifierBlock",
+      reason:
+        "The same modifier_clause one level down inside the technology_swap struct " +
+        "(technologies_consolidated.cwt:162-163), carrying its own identical " +
+        "`## replace_scopes = { this = country root = country }`. 55 shipped technologies write " +
+        "it; invisible until the corpus gate started descending plain structs, and closed by " +
+        "the same row shape as its parent (SDK-63).",
+    },
+  ],
+  [
     "building.planet_modifier",
     {
       shape: "modifierBlock",

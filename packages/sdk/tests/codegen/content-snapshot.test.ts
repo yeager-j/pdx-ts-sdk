@@ -117,6 +117,25 @@ describe("content-type codegen", () => {
     expect(emissions.get("building")?.code).toContain(
       'systemModifier?: ModifierClosure<"system">;'
     );
+    // SDK-63: technology's own modifier_clause, at both levels the rules
+    // declare it. Each carries its own
+    // `## replace_scopes = { this = country root = country }`
+    // (technologies_consolidated.cwt:237-238 and 162-163) — the nested one is
+    // not inherited from the parent field, it is declared again inside the
+    // technology_swap struct, and the struct's members are typed against the
+    // same context the top level's are.
+    expect(emissions.get("technology")?.code).toContain('modifier?: ModifierClosure<"country">;');
+    const swapBody = emissions
+      .get("technology")
+      ?.code?.match(/export interface TechnologyTechnologySwap \{([\s\S]*?)\n\}/)?.[1];
+    expect(swapBody).toContain('modifier?: ModifierClosure<"country">;');
+    // Both are named to the corpus gate under the paths it measures, which is
+    // what retires their `corpus-gaps.ts` rows: a member that only exists on
+    // the interface leaves the nested path unexpressed.
+    expect(fieldNames(emissions.get("technology")!.emittedFields)).toContain("modifier");
+    expect(fieldNames(emissions.get("technology")!.nestedEmittedFields)).toContain(
+      "technology.technology_swap.modifier"
+    );
   });
 
   it("emits reusable economic and triggered-modifier blocks", () => {

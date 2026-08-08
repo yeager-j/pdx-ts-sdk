@@ -193,6 +193,43 @@ describe("patching end to end", () => {
   it("there are no patch plans when nothing is patched", () => {
     expect(createMod(makeConfig()).compile([]).patchPlans).toEqual([]);
   });
+
+  /**
+   * SDK-63's decisive hermetic check, and the reason the field mattered
+   * beyond authoring: `tech_gene_forging`'s `modifier` block is the shape
+   * `tech_gene_tailoring` really ships. Before the lowering it was
+   * unmodelled — carried through a patch as an opaque `rest` entry, and
+   * unwritable in a definition of the mod's own. Now it is a patchable
+   * member that substitutes vanilla's own block at vanilla's own position,
+   * rather than being appended after it.
+   */
+  it("replaces a vanilla technology's own modifier block in place (SDK-63)", () => {
+    const mod = createMod(makeConfig());
+    const patch = mod.patchTechnology(
+      vanilla.definition("technology", "tech_gene_forging"),
+      () => ({ modifier: (m) => m.raw("BIOLOGICAL_species_trait_points_add", 4) })
+    );
+    const content = mod.compile([mod.feature(undefined, [patch])]).patchPlans[0]!.content;
+
+    expect(content).toContain("\tmodifier = {\n\t\tBIOLOGICAL_species_trait_points_add = 4\n\t}\n");
+    // One `modifier` key, in vanilla's own slot: between `gateway` and
+    // `feature_flags`, not appended at the end of the body.
+    expect(content.match(/^\tmodifier = \{$/gm)).toHaveLength(1);
+    expect(content.indexOf("\tmodifier = {")).toBeGreaterThan(content.indexOf("gateway ="));
+    expect(content.indexOf("\tmodifier = {")).toBeLessThan(content.indexOf("feature_flags ="));
+    // The trade the overlay row states, made visible rather than left to be
+    // discovered: modifier_clause's ancillary fields are not modelled, so
+    // replacing the block drops vanilla's own description keys with it. A
+    // patch that wants them keeps them by not patching `modifier` at all —
+    // the untouched passthrough the golden above still pins.
+    expect(content).not.toContain("description = tech_gene_forging_modifier_desc");
+    expect(content).not.toContain("description_parameters");
+    // And the substitution is complete rather than partial: the file-local
+    // `@tech_gene_forging_POINTS` the replaced block was the only reader of
+    // is no longer re-declared, where the untouched golden above does declare
+    // it.
+    expect(content).not.toContain("@tech_gene_forging_POINTS");
+  });
 });
 
 describe("the vanilla path guard without any patch", () => {

@@ -54,6 +54,7 @@ import {
   type SituationTypeFields,
   type SpecialProjectRef,
   type StrikeCraftComponentTemplateFields,
+  type TechnologyFields,
   type TechnologyPatch,
   type TechnologyRef,
   type TraditionSwapFields,
@@ -1370,6 +1371,65 @@ describe("generated content authoring types", () => {
         {
           when: always(),
           modifiers: (m) => m.pop.happiness(0.1),
+        },
+      ],
+    });
+  });
+
+  it("authors technology's modifier at both levels the rules declare it (SDK-63)", () => {
+    // technologies_consolidated.cwt declares the same
+    // `single_alias_right[modifier_clause]` twice — once on the definition
+    // body (237-238) and once inside the technology_swap struct (162-163) —
+    // each with its own `## replace_scopes = { this = country root = country }`.
+    // The nested one is not inherited from the parent: it is declared again,
+    // which is why closing the top level alone would have left the swap's
+    // 55 shipped uses unauthorable.
+    expectTypeOf<TechnologyFields["modifier"]>().toEqualTypeOf<
+      ModifierClosure<"country"> | undefined
+    >();
+    type TechnologySwap = NonNullable<TechnologyFields["technologySwap"]>[number];
+    expectTypeOf<TechnologySwap["modifier"]>().toEqualTypeOf<
+      ModifierClosure<"country"> | undefined
+    >();
+    // The patch surface gets the member too — technology is a patch registry,
+    // so a vanilla technology's modifier block is now replaceable rather than
+    // only preservable as an unmodelled `rest` entry.
+    expectTypeOf<TechnologyPatch["modifier"]>().toEqualTypeOf<
+      PatchInput<ModifierClosure<"country">> | undefined
+    >();
+
+    contentMod.technology("modifier_scopes", {
+      name: "X",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      modifier: (m) => m.all.technology.research.speed(0.05),
+      technologySwap: [
+        {
+          name: "swap",
+          modifier: (m) => m.raw("all_technology_research_speed", 0.1),
+        },
+      ],
+    });
+
+    contentMod.technology("modifier_wrong_scope", {
+      name: "X",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      modifier: (m) => {
+        // @ts-expect-error — federation_fleet_cap_add is federation-scoped
+        // only, and the clause's own replace_scopes pin this to country
+        m.raw("federation_fleet_cap_add", 5);
+      },
+      technologySwap: [
+        {
+          name: "swap",
+          modifier: (m) => {
+            // @ts-expect-error — the nested clause carries the same country
+            // scope, declared in its own right rather than inherited
+            m.raw("federation_fleet_cap_add", 5);
+          },
         },
       ],
     });
