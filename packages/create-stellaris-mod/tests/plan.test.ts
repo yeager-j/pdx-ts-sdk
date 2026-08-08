@@ -154,11 +154,27 @@ describe("the Project Manifest", () => {
     const mod = plan().get("src/mod.ts")!;
     expect(mod).toContain('import manifest from "../stellaris-mod.json" with { type: "json" }');
     expect(mod).toContain("keyof typeof manifest.mod");
-    expect(mod).toContain("export const config = { prefix, ...manifest.mod[prefix] }");
     // The facts live in the manifest now; a literal here would be a second
     // configuration source, which is the thing the manifest replaces.
     expect(mod).not.toContain('name: "My Mod"');
     expect(mod).not.toContain('supportedVersion: "');
+  });
+
+  it("keeps the sole mod key authoritative over anything inside the entry", () => {
+    // Spread order is the whole guarantee here. The generated project reads its
+    // manifest with a JSON import and never runs `parseManifest`, so a `prefix`
+    // field hand-written inside the mod entry — the shape `src/mod.ts` used to
+    // carry, and the natural thing to paste back in — is a value the adapter
+    // would reject and this file would otherwise silently obey, renaming every
+    // id the mod mints. `prefix` last means the key always wins.
+    const mod = plan().get("src/mod.ts")!;
+    expect(mod).toContain("export const config = { ...manifest.mod[prefix], prefix }");
+    expect(mod).not.toContain("{ prefix, ...manifest.mod[prefix] }");
+
+    // The emitted expression, evaluated: the key beats a nested field.
+    const manifestMod = { my_mod: { name: "My Mod", prefix: "impostor" } };
+    const prefix = "my_mod" as keyof typeof manifestMod;
+    expect({ ...manifestMod[prefix], prefix }.prefix).toBe("my_mod");
   });
 
   it("refuses to guess when the manifest declares more than one mod", () => {

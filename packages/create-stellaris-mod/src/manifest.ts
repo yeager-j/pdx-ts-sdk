@@ -17,7 +17,19 @@
  */
 
 /** The SDK's rule, restated only so this module needs no runtime dependency. */
-const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
+export const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+/**
+ * The launcher's `supported_version` grammar — one to three dot-separated parts,
+ * each a number or `*`. The SDK's rule, restated only so this module needs no
+ * runtime dependency, and enforced here rather than left to the project's own
+ * build: a manifest the SDK will refuse is one no later command should accept.
+ *
+ * `manifest.test.ts` runs a sample table through this and through the SDK's real
+ * `resolveConfig`, so a change to the SDK's grammar breaks a test here rather
+ * than a stranger's project.
+ */
+export const SUPPORTED_VERSION_PATTERN = /^v?(\d+|\*)(\.(\d+|\*)){0,2}$/;
 
 const TOP_LEVEL_KEYS = ["$schema", "mod", "contentDirectory"] as const;
 
@@ -182,6 +194,14 @@ function readModConfig(value: unknown, prefix: string, sourcePath: string): Proj
   }
 
   const config = value as ProjectModConfig & Record<string, unknown>;
+  if (!SUPPORTED_VERSION_PATTERN.test(config.supportedVersion)) {
+    throw new ManifestError(
+      `${at}.supportedVersion ${JSON.stringify(config.supportedVersion)} is not a launcher ` +
+        `version pattern (e.g. "v4.4.*", "v4.*", "v4.4.6"): one to three dot-separated parts, ` +
+        `each a number or "*". It is written verbatim into descriptor.mod, and the launcher ` +
+        `answers an unreadable one by silently refusing the mod.`
+    );
+  }
   return {
     name: config.name,
     ...(config.version === undefined ? {} : { version: config.version }),

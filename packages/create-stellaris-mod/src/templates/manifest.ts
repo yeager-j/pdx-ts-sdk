@@ -12,15 +12,18 @@
  * dependency, a network fetch, or a URL that has to keep resolving forever.
  * `src/manifest.ts` enforces the same rules at runtime; `manifest.test.ts` runs
  * one corpus through both.
+ *
+ * The two grammars come from `src/manifest.ts` as `RegExp.source` rather than
+ * being written out a third time. JSON Schema's `pattern` is an ECMA-262
+ * regular expression, so the adapter's own regex *is* the schema's — a
+ * restatement here would be one more thing that can silently disagree.
  */
 
+import { PREFIX_PATTERN, SUPPORTED_VERSION_PATTERN } from "../manifest.ts";
 import type { Resolved } from "../options.ts";
 
 export const MANIFEST_FILE = "stellaris-mod.json";
 export const MANIFEST_SCHEMA_FILE = "stellaris-mod.schema.json";
-
-/** The SDK's rule, restated here because the schema is data, not code. */
-const PREFIX_PATTERN = "^[a-z][a-z0-9_]*$";
 
 function json(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
@@ -60,7 +63,7 @@ export function manifestSchema(): string {
         type: "object",
         minProperties: 1,
         maxProperties: 1,
-        propertyNames: { pattern: PREFIX_PATTERN },
+        propertyNames: { pattern: PREFIX_PATTERN.source },
         additionalProperties: { $ref: "#/$defs/modConfig" },
       },
       contentDirectory: {
@@ -78,8 +81,11 @@ export function manifestSchema(): string {
           name: { description: "Display name shown in the launcher.", type: "string" },
           version: { type: "string" },
           supportedVersion: {
-            description: 'Game version pattern, e.g. "v4.4.*".',
+            description:
+              'Launcher version pattern, e.g. "v4.4.*": one to three dot-separated parts, ' +
+              'each a number or "*".',
             type: "string",
+            pattern: SUPPORTED_VERSION_PATTERN.source,
           },
           tags: { description: "Launcher tags.", type: "array", items: { type: "string" } },
           acceptGameVersion: {

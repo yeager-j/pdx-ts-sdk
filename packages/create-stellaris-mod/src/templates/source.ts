@@ -71,7 +71,10 @@ if (prefixes.length !== 1) {
 // mod structurally incapable of overwriting someone else's content.
 const prefix = prefixes[0] as keyof typeof manifest.mod;
 
-export const config = { prefix, ...manifest.mod[prefix] };
+// \`prefix\` goes last on purpose: the key under \`mod\` is the prefix, so a
+// \`prefix\` field written inside the entry — a copy of the old shape — must not
+// be able to quietly rename every id this mod mints.
+export const config = { ...manifest.mod[prefix], prefix };
 
 export const mod = createMod(config);
 

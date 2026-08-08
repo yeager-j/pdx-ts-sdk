@@ -19,7 +19,7 @@
 import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
 
-import type { ModConfig } from "../../sdk/src/compiler/config.ts";
+import { resolveConfig, type ModConfig } from "../../sdk/src/compiler/config.ts";
 import { ManifestError, parseManifest, type ProjectModConfig } from "../src/manifest.ts";
 import type { Resolved } from "../src/options.ts";
 import { manifestJson, manifestSchema } from "../src/templates/manifest.ts";
@@ -157,6 +157,29 @@ const CORPUS: readonly Case[] = [
     bytes: withMod({ ...MINIMAL.mod.my_mod, acceptGameVersion: 4.4 }),
     valid: false,
   },
+  // The launcher version grammar, both sides of it. A manifest the SDK's
+  // `resolveConfig` will refuse is one no command should accept, so the whole
+  // point is that these verdicts are the SDK's.
+  ...(
+    [
+      ["v4.4.*", true],
+      ["4.4", true],
+      ["*", true],
+      ["v4.4.6", true],
+      ["v*", true],
+      ["4.*.6", true],
+      ["banana", false],
+      ["v4.4.4.4", false],
+      ["4.x", false],
+      ["4.", false],
+      ["V4.4.*", false],
+      ["", false],
+    ] as const
+  ).map(([supportedVersion, valid]) => ({
+    name: `supportedVersion ${JSON.stringify(supportedVersion)}`,
+    bytes: withMod({ name: "My Mod", supportedVersion }),
+    valid,
+  })),
   {
     name: "a numeric contentDirectory",
     bytes: json({ ...MINIMAL, contentDirectory: 7 }),
@@ -229,6 +252,10 @@ describe("parseManifest", () => {
       [withMod({ supportedVersion: "v4.4.*" }), /mod\.my_mod has no "name" field/],
       [json({ ...MINIMAL, recipes: [] }), /unknown key "recipes"/],
       [
+        withMod({ name: "My Mod", supportedVersion: "banana" }),
+        /supportedVersion "banana" is not a launcher version pattern/,
+      ],
+      [
         json({ ...MINIMAL, contentDirectory: 7 }),
         /"contentDirectory" must be a string, and is a number/,
       ],
@@ -236,6 +263,66 @@ describe("parseManifest", () => {
     for (const [bytes, pattern] of faults) {
       expect(() => parseManifest(bytes, SOURCE)).toThrow(pattern);
       expect(() => parseManifest(bytes, SOURCE)).toThrow(SOURCE);
+    }
+  });
+});
+
+/**
+ * The two grammars this module restates are the SDK's, and a restatement is
+ * only safe when something checks it. `SUPPORTED_VERSION_PATTERN` is not
+ * exported from the SDK, so this compares *behavior* rather than regex source:
+ * every sample goes through `resolveConfig` — the real validator a scaffolded
+ * project's build runs — and through `parseManifest`, and the two must reach
+ * the same verdict. Widening or tightening the SDK's grammar breaks this test
+ * rather than a stranger's project.
+ */
+describe("the grammars restated from the SDK", () => {
+  const SAMPLES = [
+    "v4.4.*",
+    "4.4",
+    "*",
+    "v4.4.6",
+    "v*",
+    "4.*.6",
+    "*.*.*",
+    "banana",
+    "v4.4.4.4",
+    "4.x",
+    "4.",
+    "v",
+    "V4.4.*",
+    "",
+    "4 .4",
+    "v4.4.*extra",
+  ] as const;
+
+  function sdkAccepts(supportedVersion: string): boolean {
+    try {
+      resolveConfig({ name: "My Mod", prefix: "my_mod", supportedVersion });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  it.each(SAMPLES)("agrees with resolveConfig about supportedVersion %o", (supportedVersion) => {
+    expect(accepts(withMod({ name: "My Mod", supportedVersion }))).toBe(
+      sdkAccepts(supportedVersion)
+    );
+  });
+
+  it("agrees with resolveConfig about the prefix grammar", () => {
+    for (const prefix of ["my_mod", "a", "a_1_b", "4x", "MyMod", "my-mod", "", "_x"]) {
+      let sdkAccepted: boolean;
+      try {
+        resolveConfig({ name: "My Mod", prefix, supportedVersion: "v4.4.*" });
+        sdkAccepted = true;
+      } catch {
+        sdkAccepted = false;
+      }
+      expect(accepts(withMod({ name: "My Mod", supportedVersion: "v4.4.*" }, prefix)), prefix).toBe(
+        sdkAccepted
+      );
     }
   });
 });
