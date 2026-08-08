@@ -1,0 +1,2 @@
+err| <project>/stellaris-mod.json: "mod" must hold exactly one entry, and holds 0. Its key is the mod prefix, which is what lets `keyof typeof manifest.mod` recover it.
+exit 1

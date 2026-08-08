@@ -17,6 +17,7 @@ import type { CliIo } from "../io.ts";
 import { helpText, parseArgv, type Resolved } from "../options.ts";
 import { planFiles } from "../plan.ts";
 import { resolveInteractive, resolveNonInteractive } from "../prompts.ts";
+import { CancelledError } from "../terminal.ts";
 import { VERSION } from "../version.ts";
 
 export async function runInit(argv: readonly string[], io: CliIo): Promise<number> {
@@ -45,9 +46,14 @@ export async function runInit(argv: readonly string[], io: CliIo): Promise<numbe
   let resolved: Resolved;
   try {
     resolved = interactive
-      ? await resolveInteractive(parsed)
+      ? await resolveInteractive(parsed, io)
       : resolveNonInteractive(parsed, parsed.positionals[0] ?? "my-stellaris-mod");
   } catch (error) {
+    // Cancellation is not this command's to report: `main` catches it once, so
+    // ctrl-c says the same thing here as it does under `generate`.
+    if (error instanceof CancelledError) {
+      throw error;
+    }
     io.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }

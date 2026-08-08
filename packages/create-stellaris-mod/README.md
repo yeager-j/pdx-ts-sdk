@@ -8,8 +8,10 @@ npx create-stellaris-mod init my-mod   # the same thing, spelled canonically
 ```
 
 `init`, `list`, `view` and `generate` are reserved first-position command names;
-anything else is the directory to scaffold into. The last three arrive with the
-Recipe Catalog and report as much until then.
+anything else is the directory to scaffold into. The last three are the Recipe
+Catalog: `list` shows what this release can generate, `view <recipe>` shows what
+one recipe asks and how to answer it without prompting, and `generate` writes a
+feature source file into a project that already exists.
 
 It finds your Stellaris install, reads the build from `launcher-settings.json`,
 and writes a project that typechecks, tests and builds on the first
@@ -77,6 +79,38 @@ on a prompt nobody will see.
 A missing Stellaris install is not fatal: the scaffold drops `src/vanilla.ts`
 and the identifier-package pin, and the mod still builds — it just builds with
 vanilla ids as unchecked strings.
+
+## Generating a feature
+
+```bash
+npx create-stellaris-mod list                                  # what this release carries
+npx create-stellaris-mod view technology                       # what it asks, and the flags
+npx create-stellaris-mod generate technology "Resonance Theory"
+```
+
+`generate` writes one file into an existing project and never touches anything
+else. It searches upward from the current directory for `stellaris-mod.json`
+(`--cwd <path>` starts the search elsewhere), checks that the project maps
+`#mod` and depends on an SDK range this release verified its recipes against,
+and then writes `<contentDirectory>/<derived_name>.ts`. The name you type
+becomes the filename, the content ids and the TypeScript binding.
+
+```
+--cwd <path>   --yes   --dry-run   --allow-unsupported-sdk
+```
+
+Plus `--<question>` for every question the chosen recipe asks; `view <recipe>`
+lists those. With `--yes`, or when stdin is not a TTY, the recipe id and the
+name are both required and every question takes its default.
+
+The file is never written over anything: an existing file, directory or symlink
+of that name is a refusal, not an overwrite, and `--dry-run` prints the exact
+bytes a real run would publish without creating so much as a directory. A
+successful run puts the written path — and nothing else — on stdout.
+
+`--allow-unsupported-sdk` downgrades the compatibility refusal to a warning. It
+changes only that decision: it does not load the SDK, weaken what is generated,
+or make a later build succeed.
 
 ## `--local`, and why it exists
 

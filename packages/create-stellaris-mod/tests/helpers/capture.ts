@@ -17,7 +17,12 @@ export interface Capture {
   err(): string;
 }
 
-export function capture(cwd = "/tmp/somewhere"): Capture {
+/**
+ * `tty` is what decides whether the CLI believes there is somebody to ask. It
+ * defaults off, because a test that reaches a real prompt hangs, and the
+ * interactive flows are driven through the scripted `Terminal` instead.
+ */
+export function capture(cwd = "/tmp/somewhere", tty = false): Capture {
   const out: string[] = [];
   const err: string[] = [];
   const sink = (into: string[]): Writable =>
@@ -30,9 +35,7 @@ export function capture(cwd = "/tmp/somewhere"): Capture {
   return {
     io: {
       cwd,
-      // Not a TTY: nothing here may reach a prompt, and a test that hangs
-      // waiting for one is the failure mode worth making impossible.
-      stdin: Readable.from([]),
+      stdin: Object.assign(Readable.from([]), { isTTY: tty }),
       stdout: sink(out),
       stderr: sink(err),
     },

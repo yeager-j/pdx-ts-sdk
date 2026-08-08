@@ -7,13 +7,15 @@
  * same questions from defaults and this module never runs.
  */
 
-import { cancel, confirm, intro, isCancel, log, note, text } from "@clack/prompts";
+import { confirm, intro, isCancel, log, note, text } from "@clack/prompts";
 
 import { isValidPrefix, toDisplayName, toPrefix, toTags } from "./derive.ts";
 import { detectInstall, isInstall, readGameVersion, supportedVersionFor } from "./detect.ts";
 import { detectPackageManager } from "./exec.ts";
+import type { CliIo } from "./io.ts";
 import { SUPPORTED_VERSION_PATTERN } from "./manifest.ts";
 import type { ParsedArgv, Resolved } from "./options.ts";
+import { CancelledError } from "./terminal.ts";
 
 /** The build the SDK's rule table is verified against — the no-install fallback. */
 export const FALLBACK_GAME_VERSION = "4.4.6";
@@ -72,14 +74,14 @@ function checkedSupportedVersionFlag(value: string | undefined): string | undefi
   return value;
 }
 
-function stop(): never {
-  cancel("Nothing was written.");
-  process.exit(130);
-}
-
+/**
+ * Cancelling throws rather than exiting. `cli.ts` catches it once, writes
+ * `Nothing was written.` and returns 130 — so this module can be driven
+ * in-process by a test, and so ctrl-c means the same thing under every command.
+ */
 function unwrap<T>(value: T | symbol): T {
   if (isCancel(value)) {
-    stop();
+    throw new CancelledError();
   }
   return value as T;
 }
@@ -136,14 +138,18 @@ export function resolveNonInteractive(argv: ParsedArgv, targetDir: string): Reso
   };
 }
 
-export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
+export async function resolveInteractive(argv: ParsedArgv, io: CliIo): Promise<Resolved> {
   const { values, positionals } = argv;
-  intro("create-stellaris-mod");
+  // Prompt chrome goes to stderr, so a scaffold's stdout stays the thing worth
+  // piping — the same rule every other command in this CLI keeps.
+  const streams = { input: io.stdin, output: io.stderr } as const;
+  intro("create-stellaris-mod", streams);
 
   const targetDir =
     positionals[0] ??
     unwrap(
       await text({
+        ...streams,
         message: "Where should the project go?",
         placeholder: "my-stellaris-mod",
         defaultValue: "my-stellaris-mod",
@@ -155,6 +161,7 @@ export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
     flag(values, "name") ??
     unwrap(
       await text({
+        ...streams,
         message: "What is the mod called?",
         placeholder: toDisplayName(dirName),
         defaultValue: toDisplayName(dirName),
@@ -166,6 +173,7 @@ export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
     flag(values, "prefix") ??
     unwrap(
       await text({
+        ...streams,
         message: "Mod prefix? Every id and filename starts with it.",
         placeholder: toPrefix(name),
         defaultValue: toPrefix(name),
@@ -177,12 +185,13 @@ export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
     );
 
   // Detection runs first so the question is a confirmation, not an interrogation.
-  const install = await askInstall(flag(values, "stellaris-path"));
+  const install = await askInstall(flag(values, "stellaris-path"), streams);
 
   const supportedVersion =
     checkedSupportedVersionFlag(flag(values, "supported-version")) ??
     unwrap(
       await text({
+        ...streams,
         message: "Which game versions does it support?",
         placeholder: supportedVersionFor(install?.gameVersion ?? FALLBACK_GAME_VERSION),
         defaultValue:
@@ -195,14 +204,16 @@ export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
     );
 
   const prettier =
-    boolFlag(values, "prettier") ?? unwrap(await confirm({ message: "Add Prettier?" }));
-  const eslint = boolFlag(values, "eslint") ?? unwrap(await confirm({ message: "Add ESLint?" }));
+    boolFlag(values, "prettier") ?? unwrap(await confirm({ ...streams, message: "Add Prettier?" }));
+  const eslint =
+    boolFlag(values, "eslint") ?? unwrap(await confirm({ ...streams, message: "Add ESLint?" }));
   const git =
-    boolFlag(values, "git") ?? unwrap(await confirm({ message: "Initialize a git repository?" }));
+    boolFlag(values, "git") ??
+    unwrap(await confirm({ ...streams, message: "Initialize a git repository?" }));
   const packageManager = flag(values, "pm") ?? detectPackageManager();
   const shouldInstall =
     boolFlag(values, "install") ??
-    unwrap(await confirm({ message: `Install dependencies with ${packageManager}?` }));
+    unwrap(await confirm({ ...streams, message: `Install dependencies with ${packageManager}?` }));
 
   return {
     targetDir,
@@ -228,7 +239,8 @@ export async function resolveInteractive(argv: ParsedArgv): Promise<Resolved> {
  * identifier pin, and the mod still builds.
  */
 async function askInstall(
-  explicit: string | undefined
+  explicit: string | undefined,
+  streams: { readonly input: CliIo["stdin"]; readonly output: CliIo["stderr"] }
 ): Promise<
   { installPath: string; gameVersion: string | undefined; isExplicit: boolean } | undefined
 > {
@@ -237,18 +249,22 @@ async function askInstall(
   if (detected !== undefined) {
     const version = detected.gameVersion ?? "unknown build";
     const useIt = unwrap(
-      await confirm({ message: `Found Stellaris ${version} at ${detected.installPath}. Use it?` })
+      await confirm({
+        ...streams,
+        message: `Found Stellaris ${version} at ${detected.installPath}. Use it?`,
+      })
     );
     if (useIt) {
       return { ...detected, isExplicit: fromFlag };
     }
   } else {
-    log.warn("No Stellaris install found where the SDK looks.");
+    log.warn("No Stellaris install found where the SDK looks.", streams);
   }
 
   for (;;) {
     const typed = unwrap(
       await text({
+        ...streams,
         message: "Path to your Stellaris install (blank to skip)",
         placeholder: "leave blank to build without vanilla checks",
         defaultValue: "",
@@ -259,7 +275,8 @@ async function askInstall(
         "Without an install the mod still builds — vanilla ids stay unchecked\n" +
           "strings and patching is unavailable. Set STELLARIS_PATH later to\n" +
           "turn both on.",
-        "Building without vanilla"
+        "Building without vanilla",
+        streams
       );
       return undefined;
     }
@@ -267,6 +284,6 @@ async function askInstall(
       // Typed by hand, so detection in the generated project would not find it.
       return { installPath: typed, gameVersion: readGameVersion(typed), isExplicit: true };
     }
-    log.error(`${typed} is not a Stellaris install — no common/technology inside it.`);
+    log.error(`${typed} is not a Stellaris install — no common/technology inside it.`, streams);
   }
 }

@@ -1,0 +1,6 @@
+err| There is no stellaris-mod.json in <elsewhere>, or in any directory above it.
+err|
+err| `generate` writes into a project that already exists: the manifest is what names the mod prefix
+err| and says where feature source goes. Scaffold one with `npx create-stellaris-mod init`, or run
+err| this inside a project — `--cwd <path>` starts the search somewhere else.
+exit 1
