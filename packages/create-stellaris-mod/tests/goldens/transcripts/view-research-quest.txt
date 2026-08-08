@@ -19,6 +19,6 @@ out| Generate it:
 out|
 out|   npx create-stellaris-mod generate research-quest "<name>" --projects one
 out|
-out| The name is the display name. The filename, the content id, and the
-out| TypeScript binding are all derived from it.
+out| The name is the display name. The filename and the content ids are
+out| derived from it; the items inside are bound to names this recipe chooses.
 exit 0

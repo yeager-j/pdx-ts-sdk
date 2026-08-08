@@ -1,0 +1,59 @@
+/**
+ * One fleet event, and the feature that places it.
+ *
+ * Generated once by the `event` recipe, and yours from here. Nothing reads
+ * this file back: there is no marker in it, no version, and no upgrade — so
+ * rename it, add to it, or delete it as the mod grows.
+ *
+ * The definer is what makes this a `fleet_event`. There is no `type`
+ * field to set: `events.fleet(...)` decides both the kind the game reads and the
+ * scope every callback below is handed, so the event happens to a fleet and the
+ * effects legal inside it are fleet-scope effects. Firing it from elsewhere goes
+ * through `fleetEvent`.
+ *
+ * It shows a window. `title`, `desc` and the option's `name` are English text
+ * here and localization keys in the emitted mod, and the option's `effects` are
+ * what runs when the player picks it.
+ *
+ * `#mod` is the project's own alias for `src/mod.ts` (see `package.json#imports`),
+ * so moving this file deeper inside the content directory never rewrites the
+ * import. The filename decides nothing either: the `mod.feature(...)` call at the
+ * bottom is what names the emitted files.
+ */
+
+import { mod } from "#mod";
+
+// One event namespace per feature file; the event below is
+// `<prefix>_resonance_theory.1` from birth. The handle stays local — a namespace
+// belongs to exactly one file and must not be exported.
+const events = mod.namespace("resonance_theory");
+
+// Nothing fires this on its own: `isTriggeredOnly` tells the game never to
+// schedule it. Give it a hook — `mod.on(onActions.<action>, [resonanceTheory])` —
+// or fire it from another event with `fleetEvent({ id: resonanceTheory })`. The
+// `research-quest` recipe generates one wired end to end.
+export const resonanceTheory = events.fleet(1, {
+  title: "PLACEHOLDER: the headline the event window shows.",
+  desc: "PLACEHOLDER: what happened, in a paragraph.",
+  isTriggeredOnly: true,
+  options: [
+    {
+      name: "PLACEHOLDER: acknowledge it.",
+      effects: (fleet) => {
+        // `fleet` is this event's root scope, and the kind is what fixed it.
+        // `setFleetFlag` is in scope here; the other three scopes' flag
+        // effects are not. Flags are how the rest of your script learns this ran.
+        fleet.setFleetFlag("resonance_theory_fired");
+      },
+    },
+  ],
+
+  // The artwork the event window shows. A vanilla sprite is a plain string,
+  // checked against the game when @pdx-ts/stellaris-ids is installed.
+  // picture: "GFX_evt_mysterious_signal",
+
+  // Fires at most once per game, no matter how often its hook runs.
+  // fireOnlyOnce: true,
+});
+
+export const feature = mod.feature("resonance_theory", [resonanceTheory]);

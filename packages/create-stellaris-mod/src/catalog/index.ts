@@ -9,7 +9,14 @@
  */
 
 import { createCatalog } from "./catalog.ts";
+import { buildingRecipe } from "./recipes/building.ts";
+import { eventRecipe } from "./recipes/event.ts";
 import { researchQuestRecipe } from "./recipes/research-quest.ts";
 import { technologyRecipe } from "./recipes/technology.ts";
 
-export const CATALOG = createCatalog([technologyRecipe, researchQuestRecipe]);
+export const CATALOG = createCatalog([
+  technologyRecipe,
+  buildingRecipe,
+  eventRecipe,
+  researchQuestRecipe,
+]);

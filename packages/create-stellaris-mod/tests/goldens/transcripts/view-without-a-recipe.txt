@@ -2,6 +2,8 @@ err| `create-stellaris-mod view` needs a recipe id.
 err|
 err| This release carries:
 err|
+err|   building
+err|   event
 err|   research-quest
 err|   technology
 err|

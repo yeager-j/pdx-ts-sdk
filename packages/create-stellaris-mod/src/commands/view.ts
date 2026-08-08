@@ -13,7 +13,7 @@
 
 import { UnknownRecipeError } from "../catalog/catalog.ts";
 import { CATALOG } from "../catalog/index.ts";
-import type { ChoiceQuestion, RecipeView } from "../catalog/types.ts";
+import type { ChoiceQuestion, RecipeSummary, RecipeView } from "../catalog/types.ts";
 import type { CliIo } from "../io.ts";
 import { helpText } from "../options.ts";
 import { kindLabel } from "./list.ts";
@@ -95,10 +95,30 @@ function page(view: RecipeView): string {
     "",
     `  ${view.command}`,
     "",
-    "The name is the display name. The filename, the content id, and the",
-    "TypeScript binding are all derived from it.",
+    ...derivation(summary),
     "",
   ].join("\n");
+}
+
+/**
+ * What the name the author types goes on to decide.
+ *
+ * Split by Item/Feature because the last clause is only true of one of them. An
+ * Item recipe's file exports one item, bound to the identifier derived from the
+ * name. A Feature recipe's file exports several under recipe-chosen role words —
+ * `chain`, `started`, `completed` — which the name has no say in, so claiming
+ * otherwise would describe a file the author is not about to get.
+ */
+function derivation(summary: RecipeSummary): string[] {
+  return summary.kind === "item"
+    ? [
+        "The name is the display name. The filename, the content id, and the",
+        "TypeScript binding are all derived from it.",
+      ]
+    : [
+        "The name is the display name. The filename and the content ids are",
+        "derived from it; the items inside are bound to names this recipe chooses.",
+      ];
 }
 
 function questions(asked: readonly ChoiceQuestion[]): string[] {

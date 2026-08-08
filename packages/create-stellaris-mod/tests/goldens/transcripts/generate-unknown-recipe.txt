@@ -2,6 +2,8 @@ err| There is no recipe called "nope".
 err|
 err| This release carries:
 err|
+err|   building
+err|   event
 err|   research-quest
 err|   technology
 err|

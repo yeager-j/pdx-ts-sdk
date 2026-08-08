@@ -26,6 +26,7 @@ import {
   type AnyRecipe,
 } from "../src/catalog/catalog.ts";
 import { CATALOG } from "../src/catalog/index.ts";
+import { deriveNames } from "../src/catalog/names.ts";
 import type { ChoiceQuestion, DerivedNames, RecipeSummary } from "../src/catalog/types.ts";
 import { COMMON_GENERATE_FLAGS } from "../src/options.ts";
 
@@ -220,8 +221,10 @@ describe("the baked recipes", () => {
     // The declared classification and the reviewed output contract are two
     // statements about one recipe; `recipe-matrix.test.ts` builds the output
     // that proves the second.
-    const [researchQuest, technology, ...rest] = CATALOG.list();
+    const [building, event, researchQuest, technology, ...rest] = CATALOG.list();
     expect(rest).toEqual([]);
+    expect(building).toMatchObject({ id: "building", kind: "item", itemKinds: ["building"] });
+    expect(event).toMatchObject({ id: "event", kind: "item", itemKinds: ["event"] });
     expect(researchQuest).toMatchObject({
       id: "research-quest",
       kind: "feature",
@@ -229,7 +232,44 @@ describe("the baked recipes", () => {
     });
     expect(technology).toMatchObject({ id: "technology", kind: "item", itemKinds: ["technology"] });
   });
+
+  /**
+   * `generate`'s preview promises an Item recipe's binding by name, and `view`
+   * says the binding is derived from the name. Both are claims about source
+   * neither command has rendered, so they are held to it here: an Item recipe
+   * binds the derived identifier, and a Feature recipe — whose items carry
+   * recipe-chosen role words — does not, which is the condition both commands
+   * branch on. Without this, the preview would drift back into describing a file
+   * the author is not about to get.
+   */
+  it.each(CATALOG.list().map((summary) => [summary.id, summary.kind] as const))(
+    "%s binds what the Item/Feature axis says it binds",
+    (id, kind) => {
+      // Derived rather than restated: the identifier the commands print comes
+      // from `deriveNames`, so the expectation has to come from there too.
+      const name = "Some Name";
+      const { identifier } = deriveNames(name);
+      for (const answers of variants(CATALOG.view(id).questions)) {
+        const { contents } = CATALOG.generate({ recipeId: id, name, answers });
+        expect(
+          contents.includes(`export const ${identifier} =`),
+          `${id} (${kind}) with ${JSON.stringify(answers)}`
+        ).toBe(kind === "item");
+      }
+    }
+  );
 });
+
+/** Every combination of every question's choices, in question order. */
+function variants(questions: readonly ChoiceQuestion[]): Record<string, string>[] {
+  return questions.reduce<Record<string, string>[]>(
+    (answers, question) =>
+      answers.flatMap((answer) =>
+        question.choices.map((choice) => ({ ...answer, [question.key]: choice.value }))
+      ),
+    [{}]
+  );
+}
 
 describe("defineRecipe", () => {
   it("narrows a renderer's answers to its own question's choices", () => {

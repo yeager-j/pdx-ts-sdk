@@ -202,7 +202,12 @@ export async function runGenerate(
           `Name      ${names.title}`,
           `File      ${path.relative(found.rootDir, targetPath)}`,
           `Ids       from "${names.logicalName}", under the ${found.manifest.prefix} prefix`,
-          `Binding   ${names.identifier}`,
+          // Only an Item recipe has one binding to name. A Feature recipe's file
+          // exports several items under recipe-chosen role words, so there is no
+          // single derived name to promise — and promising one anyway was the
+          // preview telling an author something the file would not honour.
+          // `catalog.test.ts` holds both arms of this condition to the source.
+          ...(view.summary.kind === "item" ? [`Binding   ${names.identifier}`] : []),
         ].join("\n"),
         "About to generate"
       );

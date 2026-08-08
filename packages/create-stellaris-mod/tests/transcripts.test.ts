@@ -36,6 +36,7 @@ import { expectGolden } from "./helpers/goldens.ts";
 import { CANCEL, fakeTerminal, type ScriptedAnswer } from "./helpers/terminal.ts";
 
 const GOLDEN_SOURCE = path.resolve(import.meta.dirname, "goldens/recipes/technology/default.ts");
+const BUILDING_GOLDEN = path.resolve(import.meta.dirname, "goldens/recipes/building/default.ts");
 
 interface Run {
   readonly transcript: string;
@@ -107,6 +108,8 @@ function serialize(events: readonly CaptureEvent[]): string[] {
 const DISCOVERY: readonly (readonly [string, readonly string[]])[] = [
   ["list", ["list"]],
   ["view-technology", ["view", "technology"]],
+  ["view-building", ["view", "building"]],
+  ["view-event", ["view", "event"]],
   ["view-research-quest", ["view", "research-quest"]],
   ["view-unknown", ["view", "nope"]],
   ["view-without-a-recipe", ["view"]],
@@ -394,6 +397,92 @@ describe("generate", () => {
 
     expectGolden("transcripts/generate-research-quest-flag-echo.txt", transcript);
     expect(written(target)).toBe(readFileSync(QUEST_GOLDENS.two, "utf8"));
+  });
+
+  it("asks nothing for a recipe that has nothing to ask", async () => {
+    const target = open();
+    const { transcript, code } = await run(["generate", "building", "Resonance Theory", "--yes"], {
+      cwd: target.dir,
+      project: target,
+    });
+
+    expect(code).toBe(0);
+    expectGolden("transcripts/generate-building-defaults.txt", transcript);
+    expect(written(target)).toBe(readFileSync(BUILDING_GOLDEN, "utf8"));
+  });
+
+  const EVENT_GOLDEN = (visibility: string, kind: string): string =>
+    path.resolve(import.meta.dirname, `goldens/recipes/event/${visibility}-${kind}.ts`);
+
+  it("answers both of a recipe's questions from their flags", async () => {
+    const target = open();
+    const { transcript, code } = await run(
+      [
+        "generate",
+        "event",
+        "Resonance Theory",
+        "--visibility",
+        "hidden",
+        "--event-kind",
+        "ship",
+        "--yes",
+      ],
+      { cwd: target.dir, project: target }
+    );
+
+    expect(code).toBe(0);
+    expectGolden("transcripts/generate-event-flags.txt", transcript);
+    expect(written(target)).toBe(readFileSync(EVENT_GOLDEN("hidden", "ship"), "utf8"));
+  });
+
+  it("resolves both questions to their Defaults under --yes", async () => {
+    const target = open();
+    const { transcript, code } = await run(["generate", "event", "Resonance Theory", "--yes"], {
+      cwd: target.dir,
+      project: target,
+    });
+
+    expect(code).toBe(0);
+    expectGolden("transcripts/generate-event-defaults.txt", transcript);
+    expect(written(target)).toBe(readFileSync(EVENT_GOLDEN("visible", "country"), "utf8"));
+  });
+
+  it("asks a recipe's questions in the order it declares them", async () => {
+    const target = open();
+    const { transcript } = await run(["generate"], {
+      cwd: target.dir,
+      project: target,
+      // Picker, name, then visibility *then* event-kind, then confirm. The
+      // order is the recipe's, and a transcript is the only place it is
+      // visible as a sequence rather than as an array index.
+      answers: ["event", "Resonance Theory", "hidden", "ship", true],
+    });
+
+    expectGolden("transcripts/generate-event-interactive.txt", transcript);
+    expect(written(target)).toBe(readFileSync(EVENT_GOLDEN("hidden", "ship"), "utf8"));
+  });
+
+  it("echoes the flag-supplied answer and asks only for the other one", async () => {
+    const target = open();
+    const { transcript } = await run(
+      ["generate", "event", "Resonance Theory", "--visibility", "hidden"],
+      { cwd: target.dir, project: target, answers: ["ship", true] }
+    );
+
+    expectGolden("transcripts/generate-event-flag-echo.txt", transcript);
+    expect(written(target)).toBe(readFileSync(EVENT_GOLDEN("hidden", "ship"), "utf8"));
+  });
+
+  it("refuses an answer the recipe does not offer, and lists the ones it does", async () => {
+    const target = open();
+    const { transcript, code } = await run(
+      ["generate", "event", "Resonance Theory", "--event-kind", "pop", "--yes"],
+      { cwd: target.dir, project: target }
+    );
+
+    expect(code).toBe(1);
+    expectGolden("transcripts/generate-event-invalid-answer.txt", transcript);
+    expect(existsSync(path.join(target.dir, "src/content/resonance_theory.ts"))).toBe(false);
   });
 
   const CANCELLATIONS: readonly (readonly [
