@@ -1588,6 +1588,28 @@
           "potential"
         ]
       ]
+    },
+    "triggered_country_modifier.potential": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "is_gestalt",
+        "is_synthetic_empire"
+      ],
+      "keysByDefinition": [
+        [
+          "is_gestalt"
+        ],
+        [
+          "is_synthetic_empire"
+        ]
+      ]
     }
   }
 }

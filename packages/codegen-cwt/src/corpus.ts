@@ -144,11 +144,20 @@ export interface RegistryCorpus {
  *   operations are the weight block's own top-level shape, already observed
  *   under the owning key, and recording them here would manufacture interior
  *   paths no emitted field claims.
+ * - `triggeredModifierPotential` — a triggered-modifier block's `potential`
+ *   condition, recorded under `<field>.potential`. Modifier keys are not
+ *   conditions and remain intentionally opaque.
  */
 export interface DescentNode {
   /** The game's key at this level; the corpus path grows `<prefix>.<field>`. */
   readonly field: string;
-  readonly mode: "struct" | "wrappedStruct" | "structMap" | "repeatedStruct" | "weightModifiers";
+  readonly mode:
+    | "struct"
+    | "wrappedStruct"
+    | "structMap"
+    | "repeatedStruct"
+    | "weightModifiers"
+    | "triggeredModifierPotential";
   /** `repeatedStruct` only. */
   readonly keying?: "container" | "siblings";
   /** `repeatedStruct` with "siblings" keying only — the field carrying the id. */
@@ -247,6 +256,9 @@ function descend(
     case "weightModifiers":
       recordWeightModifiers(value, path, node.strippedKeys ?? new Set(), seen, blockArity);
       return;
+    case "triggeredModifierPotential":
+      recordTriggeredModifierPotential(value, path, seen, blockArity);
+      return;
   }
 }
 
@@ -292,6 +304,32 @@ function recordWeightModifiers(
         ),
       },
     ]);
+  }
+}
+
+/**
+ * Records only the condition body from each triggered-modifier row.
+ *
+ * The outer field can repeat, but arity belongs to a single row: two rows with
+ * one potential each are not a repeated `potential` field. Modifier names are
+ * deliberately ignored because the hand-written block models them through its
+ * closure rather than as trigger keys.
+ */
+function recordTriggeredModifierPotential(
+  modifier: PdxContainer,
+  path: string,
+  seen: Map<string, PdxValue[]>,
+  blockArity: Map<string, boolean>
+): void {
+  const potentialPath = `${path}.potential`;
+  let previous = false;
+  for (const item of modifier.items) {
+    if (item.kind !== "entry" || item.key !== "potential" || item.value.kind !== "container") {
+      continue;
+    }
+    blockArity.set(potentialPath, (blockArity.get(potentialPath) ?? false) || previous);
+    previous = true;
+    seen.set(potentialPath, [...(seen.get(potentialPath) ?? []), item.value]);
   }
 }
 

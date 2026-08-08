@@ -583,7 +583,7 @@ function defineContentExample(): PureMod {
     targetModifier: (m) => m.pop.happiness(0.05),
     triggeredModifier: [
       {
-        when: hasAuthority("auth_machine_intelligence"),
+        when: hasSituationFlag("content_test_situation_uprising_contained"),
         modifiers: (m) => m.country.unity.produces.mult(-0.05),
       },
     ],
@@ -610,7 +610,7 @@ function defineContentExample(): PureMod {
         potential: always(),
         triggeredModifier: [
           {
-            when: hasAuthority("auth_machine_intelligence"),
+            when: hasSituationFlag("content_test_situation_uprising_contained"),
             modifiers: (m) => m.country.unity.produces.mult(-0.05),
           },
         ],
@@ -3357,15 +3357,14 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
   it("emits building's triggered modifier trio: triggered_country_modifier/triggered_army_modifier/triggered_planet_pop_group_modifier_for_all (buildingModifiers)", () => {
     const cap = capabilityFor(CONFIG);
     // All three splice triggered_modifier_by_planet_clause (aliases.cwt:113),
-    // shape-identical to the plain triggered_modifier_clause building.
-    // triggered_planet_modifier already proved out (SDK-39) — only push_scope
-    // differs between the clauses, and push_scope is not part of the emitted
-    // shape.
+    // shape-identical to the plain triggered_modifier_clause building, but its
+    // potential pushes to planet scope while each modifier body uses its own
+    // field-level replace scope.
     const building = cap.building("triggered_modifier_trio", {
       name: "Sdk56 Triggered Modifier Trio",
       triggeredCountryModifier: [
         {
-          when: hasAuthority("auth_democratic"),
+          when: isCapital(),
           modifiers: (m) => m.raw("country_edict_fund_add", 25),
         },
       ],
@@ -3388,7 +3387,7 @@ describe("SDK-56 building modifier fields (buildingModifiers)", () => {
     )!;
 
     expect(rendered).toContain(
-      "triggered_country_modifier = {\n\t\tpotential = {\n\t\t\thas_authority = auth_democratic\n\t\t}\n" +
+      "triggered_country_modifier = {\n\t\tpotential = {\n\t\t\tis_capital = yes\n\t\t}\n" +
         "\t\tcountry_edict_fund_add = 25\n\t}"
     );
     expect(rendered).toContain(

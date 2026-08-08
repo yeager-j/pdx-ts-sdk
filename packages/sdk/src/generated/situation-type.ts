@@ -113,8 +113,8 @@ export interface SituationApproachFields {
   potential?: Trigger<"situation">;
   modifier?: ModifierClosure<"country">;
   targetModifier?: ModifierClosure<"planet">;
-  triggeredModifier?: TriggeredModifier<"country">[];
-  triggeredTargetModifier?: TriggeredModifier<"planet">[];
+  triggeredModifier?: TriggeredModifier<"country", "situation">[];
+  triggeredTargetModifier?: TriggeredModifier<"planet", "situation">[];
   customTooltipWithModifiers?: string;
   resources?: EconomicResourceBlock<"situation">[];
   onSelect?: EffectBlock<"situation">;
@@ -218,11 +218,11 @@ export interface SituationStageFields {
   onEnter?: EffectBlock<"situation">;
   potential?: Trigger<"situation">;
   modifier?: ModifierClosure<"country">;
-  triggeredModifier?: TriggeredModifier<"country">[];
+  triggeredModifier?: TriggeredModifier<"country", "situation">[];
   /** Target is typically a single colony carrier, your whole empire, or no target */
   targetModifier?: ModifierClosure<ScopeName>;
   /** Target is typically a single colony carrier, your whole empire, or no target */
-  triggeredTargetModifier?: TriggeredModifier<ScopeName>[];
+  triggeredTargetModifier?: TriggeredModifier<ScopeName, "situation">[];
 }
 
 export const SITUATION_STAGE_FIELDS: readonly ContentField[] = [
@@ -341,8 +341,8 @@ export interface SituationTypeFields {
   abortTrigger?: Trigger<"situation">;
   modifier?: ModifierClosure<"country">;
   targetModifier?: ModifierClosure<"planet">;
-  triggeredModifier?: TriggeredModifier<"country">[];
-  triggeredTargetModifier?: TriggeredModifier<"planet">[];
+  triggeredModifier?: TriggeredModifier<"country", "situation">[];
+  triggeredTargetModifier?: TriggeredModifier<"planet", "situation">[];
   onMonthly?: SituationTypeOnMonthly;
   monthlyProgress: WeightBlockWithLoc<"situation">;
   approach?: Readonly<Record<string, SituationApproachFields>>;

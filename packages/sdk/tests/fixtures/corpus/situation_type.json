@@ -1213,6 +1213,34 @@
         ]
       ]
     },
+    "approach.triggered_modifier.potential": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "current_stage",
+        "has_situation_flag",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "has_situation_flag"
+        ],
+        [
+          "current_stage"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
     "approach.triggered_target_modifier": {
       "definitions": 3,
       "repeated": 2,
@@ -1241,6 +1269,28 @@
           "planet_jobs_specialist_produces_mult",
           "planet_jobs_worker_produces_mult",
           "potential"
+        ]
+      ]
+    },
+    "approach.triggered_target_modifier.potential": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "owner"
         ]
       ]
     },
@@ -3365,6 +3415,36 @@
         ]
       ]
     },
+    "stages.triggered_modifier.potential": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 7,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "check_variable",
+        "current_situation_approach",
+        "owner",
+        "owner?"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "check_variable",
+          "current_situation_approach",
+          "owner?"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
     "stages.triggered_target_modifier": {
       "definitions": 1,
       "repeated": 0,
@@ -3382,6 +3462,24 @@
         [
           "planet_stability_add",
           "potential"
+        ]
+      ]
+    },
+    "stages.triggered_target_modifier.potential": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
         ]
       ]
     },
@@ -3690,6 +3788,40 @@
           "planet_jobs_unity_produces_mult",
           "planet_jobs_upkeep_mult",
           "potential"
+        ]
+      ]
+    },
+    "triggered_modifier.potential": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 9,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "has_situation_flag",
+        "owner",
+        "situation_monthly_progress"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ],
+        [
+          "has_situation_flag"
+        ],
+        [
+          "has_situation_flag",
+          "owner"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "situation_monthly_progress"
         ]
       ]
     }
