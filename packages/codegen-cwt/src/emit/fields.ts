@@ -140,6 +140,43 @@ function structBlockOf(
   return null;
 }
 
+/** One enum-keyed block declaration, and the key set the rules close it to. */
+interface EnumKeyedEntry {
+  readonly declaration: RuleField;
+  readonly block: BlockType;
+  readonly values: readonly string[];
+}
+
+/**
+ * Finds that declaration inside a block type:
+ * `enum[prereq_for_category] = { title = localisation … }`.
+ *
+ * Unlike `scalar = { … }`, which says nothing about which keys are legal, an
+ * enum key names its keys exactly — so the declaration is one shape written
+ * under each of a known, small set of names, and {@link enumKeyedMembers}
+ * lowers it that way without an overlay row to disambiguate it.
+ *
+ * Declines a block with more than one such declaration, and an enum the rules
+ * name but never populate (`valueFor` already reads that as an open `string`,
+ * which is not a key set anything could expand).
+ */
+function enumKeyedEntryOf(emitter: Emitter, block: BlockType): EnumKeyedEntry | null {
+  const candidates = block.fields.flatMap((field) =>
+    field.key.kind === "computed" && field.key.type.kind === "enum" && field.type.kind === "block"
+      ? [{ declaration: field, block: field.type, enumName: field.key.type.name }]
+      : []
+  );
+  if (candidates.length !== 1) {
+    return null;
+  }
+  const { declaration, block: entry, enumName } = candidates[0]!;
+  const values = emitter.rules.enums.get(enumName);
+  if (values === undefined || values.length === 0 || !values.every(isPlainName)) {
+    return null;
+  }
+  return { declaration, block: entry, values };
+}
+
 /**
  * Finds the single wildcard-keyed block declaration inside a block type, the
  * shape CWT uses for a keyed collection: `stages = { scalar = { icon = ... } }`
@@ -854,14 +891,104 @@ interface StructShape {
   readonly children: readonly DescentNode[];
 }
 
+/** The same interior, re-rooted under one of the keys that shares it. */
+function reroot(fields: readonly EmittedField[], from: string, to: string): EmittedField[] {
+  return fields.map((field) => ({ ...field, field: to + field.field.slice(from.length) }));
+}
+
+/**
+ * Expands an enum-keyed block declaration into one authoring member per enum
+ * value, all sharing a single entry interface.
+ *
+ * A `Record` keyed by the enum would be the obvious lowering and is the wrong
+ * one: every other key in the SDK reaches its member in camelCase (`inherit_icon`
+ * is `inheritIcon`), and a record's keys would be the game's spelling —
+ * `diplo_action` beside `hidePrereqForDesc` in the same object literal. Naming
+ * the members instead invents nothing, since every name comes from the enum, and
+ * leaves the block's ordinary named siblings (`hide_prereq_for_desc`) exactly
+ * where the rules put them rather than displacing them into a wrapper.
+ *
+ * One interface, not one per key: the rules declare one shape, and emitting six
+ * structurally identical `…Ship`/`…Custom` interfaces would put that duplication
+ * in the public API. The corpus reader still records each key's interior at its
+ * own path, so the shared interior is {@link reroot}ed once per key.
+ *
+ * Every member is optional and each carries the declaration's own repetition:
+ * `## cardinality = 0..4` bounds how many entries the block may hold in total,
+ * not how often one key may be written, so it can neither require a key nor
+ * cap one — and vanilla does write `custom` three times inside a single
+ * `prereqfor_desc`.
+ */
+interface EnumKeyedMembers extends Pick<
+  StructShape,
+  "code" | "unsupported" | "nested" | "children"
+> {
+  /** One interface member per enum value, already indented and documented. */
+  readonly members: readonly string[];
+  readonly fieldMetadata: readonly string[];
+}
+
+function enumKeyedMembers(
+  emitter: Emitter,
+  keyed: EnumKeyedEntry,
+  name: string,
+  path: string,
+  ctx: FieldContext
+): EnumKeyedMembers | null {
+  const entryPath = `${path}.entry`;
+  const entry = structShape(
+    emitter,
+    keyed.block,
+    name,
+    entryPath,
+    containerContext(keyed.declaration, ctx)
+  );
+  if (entry === null) {
+    return null;
+  }
+  const members: string[] = [];
+  const fieldMetadata: string[] = [];
+  const nested: EmittedField[] = [];
+  const children: DescentNode[] = [];
+  const docs = docComment(keyed.declaration.docs, "  ");
+  for (const value of keyed.values) {
+    const memberPath = `${path}.${value}`;
+    const field: RuleField = {
+      ...keyed.declaration,
+      key: { kind: "name", name: value },
+      cardinality: { ...keyed.declaration.cardinality, min: 0 },
+    };
+    const repeated = repeatsSiblings(field, "struct");
+    members.push(
+      docs + `  ${camelCase(value)}?: ${repeated ? arrayType(entry.typeName) : entry.typeName};\n`
+    );
+    fieldMetadata.push(metadata(field, value, "struct", [`fields: ${entry.fieldsConstant}`]));
+    nested.push(
+      { field: memberPath, shape: "struct", repeated },
+      ...reroot(entry.nested, entryPath, memberPath)
+    );
+    children.push({ field: value, mode: "struct", children: entry.children });
+  }
+  return {
+    members,
+    fieldMetadata,
+    code: entry.code,
+    unsupported: entry.unsupported,
+    nested,
+    children,
+  };
+}
+
 /**
  * Builds the interface and runtime field table for one anonymous block's named
  * members, recursing through the ordinary field pipeline so a struct nested
  * inside a struct falls out for free.
  *
- * Declines a block holding a splice (`alias_name`), subtype, or computed key:
+ * Declines a block holding a splice (`alias_name`), subtype, or wildcard key:
  * those are invisible to `mergeByName`, so emitting only the ordinary fields
- * would silently drop the rest. The caller reports the path as unsupported.
+ * would silently drop the rest. The caller reports the path as unsupported. An
+ * *enum*-keyed block is the one computed key that does not decline, because its
+ * key set is closed and named — see {@link enumKeyedMembers}.
  *
  * Shared by every shape whose value is an anonymous block — `lowerStruct` and
  * `lowerStructMap` differ only in how they find that block and what they wrap
@@ -874,11 +1001,14 @@ function structShape(
   path: string,
   ctx: FieldContext
 ): StructShape | null {
-  if (block.fields.some((inner) => inner.key.kind !== "name")) {
+  const keyed = enumKeyedEntryOf(emitter, block);
+  const ordinary =
+    keyed === null ? block.fields : block.fields.filter((inner) => inner !== keyed.declaration);
+  if (ordinary.some((inner) => inner.key.kind !== "name")) {
     return null;
   }
-  const grouped = mergeByName(block.fields, pascalCase(name));
-  if (grouped.size === 0) {
+  const grouped = mergeByName(ordinary, pascalCase(name));
+  if (grouped.size === 0 && keyed === null) {
     return null;
   }
   const typeName = pascalCase(path);
@@ -917,6 +1047,27 @@ function structShape(
     }
     nested.push({ field: fieldPath, ...lowered.admits }, ...(lowered.nested ?? []));
     children.push(...(lowered.descents ?? []));
+  }
+  if (keyed !== null) {
+    // Two ways the expansion could collide with the block's own named fields,
+    // both declining rather than emitting a duplicate: a sibling that is also
+    // an enum value would author as one member holding two shapes, and a
+    // sibling named `entry` would take the interface name the shared entry
+    // shape claims. Neither occurs in the vendored rules; the point is that
+    // hitting one reports the block instead of generating a broken file.
+    const taken = new Set([...grouped.keys()].map(camelCase));
+    const collides =
+      grouped.has("entry") || keyed.values.some((value) => taken.has(camelCase(value)));
+    const expanded = collides ? null : enumKeyedMembers(emitter, keyed, name, path, ctx);
+    if (expanded === null) {
+      return null;
+    }
+    members.push(...expanded.members);
+    fieldMetadata.push(...expanded.fieldMetadata);
+    extraCode.push(expanded.code);
+    unsupported.push(...expanded.unsupported);
+    nested.push(...expanded.nested);
+    children.push(...expanded.children);
   }
   if (members.length === 0) {
     return null;

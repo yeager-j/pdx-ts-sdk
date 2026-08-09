@@ -378,6 +378,70 @@
         ]
       ]
     },
+    "desc.text": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 6,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "BEHEMOTH_CRISIS_SPECIAL_PROJECT_4_DESC",
+        "BEHEMOTH_CRISIS_SPECIAL_PROJECT_4_DESC_HIVE",
+        "BEHEMOTH_CRISIS_SPECIAL_PROJECT_4_DESC_MACHINE",
+        "CLONE_SOLDIER_UNLOCK_FERTILITY_BIOGENESIS_DESC",
+        "CLONE_SOLDIER_UNLOCK_FERTILITY_UTOPIA_DESC",
+        "CLONE_SOLDIER_UNLOCK_POTENTIAL_BIOGENESIS_DESC",
+        "CLONE_SOLDIER_UNLOCK_POTENTIAL_UTOPIA_DESC",
+        "REANIMATE_LOST_AMOEBA_DESC",
+        "REANIMATE_LOST_AMOEBA_DESC_SCIENCE",
+        "RECOVER_DISABLED_NOMAD_VESSEL_ARKSHIP_DESC",
+        "RECOVER_DISABLED_NOMAD_VESSEL_WAYSTATION_DESC",
+        "TAME_THE_SWARM_DESC",
+        "TAME_THE_SWARM_DESC_ARTIFICIAL"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "desc.trigger": {
+      "definitions": 6,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 6,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "exists",
+        "has_biogenesis_dlc",
+        "is_arkship_ship",
+        "owner",
+        "owner.capital_scope"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "exists"
+        ],
+        [
+          "has_biogenesis_dlc"
+        ],
+        [
+          "is_arkship_ship"
+        ],
+        [
+          "owner"
+        ],
+        [
+          "owner.capital_scope"
+        ]
+      ]
+    },
     "energy": {
       "definitions": 3,
       "repeated": 0,

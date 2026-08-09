@@ -1065,6 +1065,29 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "technology.prereqfor_desc",
+    {
+      arity: "repeated",
+      reason:
+        "CWT declares `## cardinality = 0..1` (technologies_consolidated.cwt:241) and the " +
+        "corpus contradicts it: tech_gene_expressions writes two prereqfor_desc blocks, one " +
+        "per unlock tooltip, which the fixture records as `repeated: 1` of 125. The block " +
+        "itself lowers with no shape row — the enum-keyed entry declaration expands to one " +
+        "member per `enum[prereq_for_category]` value on its own (SDK-64) — so this row " +
+        "asserts only the arity the rules get wrong.",
+    },
+  ],
+  [
+    "technology.technology_swap.prereqfor_desc",
+    {
+      arity: "repeated",
+      reason:
+        "The same declaration one level down (technologies_consolidated.cwt:164-172), with the " +
+        "same `## cardinality = 0..1` and the same contradiction: the fixture records " +
+        "`repeated: 2` of 28 technology_swap blocks writing theirs twice (SDK-64).",
+    },
+  ],
+  [
     "building.planet_modifier",
     {
       shape: "modifierBlock",
