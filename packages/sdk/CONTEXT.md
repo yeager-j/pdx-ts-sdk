@@ -17,8 +17,9 @@ prefix and id profile, and every authoring method hangs off it.
 _Avoid_: builder, factory, registry object
 
 **Feature**:
-One output file's worth of items, named by a stem. One feature fans out across
-every registry its items belong to, keeping its stem in each.
+One authored unit of capability-owned Items, named by a stem. The stem groups
+output whose placement the SDK owns; an Item with a complete logical path,
+such as an Asset file, keeps that path.
 _Avoid_: collection, group, module
 
 **Item**:
@@ -37,8 +38,50 @@ The deterministic pass from placed features to a `PureMod`. It is where
 duplicate ids, dangling references, and namespace collisions are caught.
 
 **PureMod**:
-The assembled mod as a value rather than a builder — the thing `render`,
-`write`, and `install` consume.
+The assembled mod as a value rather than a builder — the thing `render`
+consumes to produce a Rendered mod.
+
+**Rendered mod**:
+The immutable, canonically ordered files `render` derives from one `PureMod`.
+It is the value `write` and `install` materialize; repeated renders promise the
+same paths and bytes, not the same object identity.
+
+**Rendered file**:
+One logical path and immutable payload in a Rendered mod. Text remains an
+inspectable string; opaque bytes can be copied out deliberately but are not
+exposed as mutable SDK-owned storage.
+
+**Materialization**:
+Making an output directory exactly match one Rendered mod after proving the
+directory still matches the SDK's last successful materialization. Distinct
+from installation, which also owns the launcher-side descriptor.
+
+**Materialization drift**:
+Any added, removed, type-changed, or byte-changed path since the SDK last
+materialized an output. Ordinary materialization refuses drift rather than
+silently destroying it.
+
+**Materialization manifest**:
+The SDK-owned record of the paths and byte identities from its last successful
+materialization. It proves ownership and detects Materialization drift; it is
+not mod content.
+
+**Asset file**:
+An opaque sequence of bytes deliberately included at one logical path and
+preserved byte-for-byte in the assembled mod.
+_Avoid_: passthrough (that is the parsed-patch sense)
+
+**GFX definition**:
+A typed graphical declaration — such as a sprite, mesh, or particle — that
+becomes part of a `.gfx` file. Distinct from an asset file: the SDK lowers a
+definition rather than preserving authored bytes.
+
+**Envelope**:
+The root container block (`spriteTypes`, `objectTypes`) holding every GFX
+definition in a `.gfx` file. A lowering fact, never authored: an emitted file
+carries exactly one, while shipped files may repeat it — a reading-side fact
+carrying no meaning.
+_Avoid_: wrapper, root key (that is the CWT `skip_root_key` sense)
 
 **Contribution**:
 An item that adds to a shared, non-id-keyed object several features write into
@@ -64,14 +107,36 @@ in `hello_galaxy_tech_resonance`.
 To construct a prefixed or branded value through its single constructor. Ids,
 namespaces, and logical paths are minted, never assembled by hand.
 
+**Shape mint**:
+Minting a sprite name through a rules-derived inference pattern — a shape the
+game uses to compute a sprite name from a content key, such as the text-icon
+or fleet-order-button forms — rather than through the default prefix position.
+The pattern's target may be an authored item or an intentional raw third-party
+key.
+_Avoid_: pinned name, exact name
+
 **Stem**:
 The output filename component the SDK controls, before the extension. One stem
 can produce several files across directories.
 _Avoid_: file, basename, name
 
 **Logical path**:
-A normalized, `/`-separated path relative to the mod root, in the form the game
-resolves overrides by.
+A normalized, case-preserving, `/`-separated path relative to the mod root, in
+the form the game resolves overrides by. Its spelling must be reproducible on
+every supported materialization filesystem; portable aliases and file/directory
+conflicts are refused rather than collapsed.
+
+**Path claim**:
+One output producer's exclusive assembly-time ownership of a logical path.
+Items that deliberately share a generated file are combined before its claim;
+a second claim is a collision even when it would produce identical bytes.
+
+**Vanilla path inventory**:
+The version-pinned, content-free set of logical paths the base game and its
+official DLC occupy. Assembly unions every matching live and
+`@pdx-ts/stellaris-ids` inventory available, so ordinary output cannot silently
+replace a vanilla file.
+_Avoid_: file map (there are no mapped values or file contents)
 
 **Enumeration order**:
 The byte-sorted file list the patch plan reasons against — the order the game
