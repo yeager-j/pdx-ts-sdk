@@ -7,7 +7,8 @@ description: User-invoked development workflow in which a frontier coordinator w
 
 Keep the frontier model responsible for intent, design, and acceptance. Give execution to one
 smaller implementation agent, then keep that same agent through every repair cycle so it retains the
-codebase and implementation context it already earned.
+codebase and implementation context it already earned. If work is split into multiple PRs, use a fresh
+subagent when moving on to the next task.
 
 ## Non-Negotiable Roles
 
@@ -16,6 +17,9 @@ codebase and implementation context it already earned.
 - Use a smaller model for exploration and implementation. Select a model named by the user first;
   otherwise select the strongest available coding model below the coordinator's tier. Never invent a
   model identifier or silently delegate to a coordinator-equivalent model.
+  - Defaults:
+    - Claude: Sonnet for low/medium difficulty tasks, Opus for medium/high difficulty tasks. Use Haiku for exploration.
+    - Codex: Luna (XHigh Effort) for low/medium difficulty tasks, Terra (High Effort) for medium/high difficulty tasks. Use Luna for exploration.
 - Create one implementation agent and record its handle immediately. Resume that agent for every
   implementation follow-up and fault repair; do not replace it while it remains available.
 - Review the finished work yourself. Never delegate final review or accept the implementation
@@ -50,7 +54,7 @@ affected callers, and verification command from current evidence?
 ├── Yes → Inspect the decision-driving files directly and write the plan.
 └── No
     ├── Is the missing context discoverable read-only in the repository?
-    │   ├── Yes → Launch one smaller-model explorer, then write the plan.
+    │   ├── Yes → Launch one smaller-model (Luna or Haiku) explorer, then write the plan.
     │   └── No → Obtain the missing external context or ask the user.
 ```
 
@@ -160,4 +164,5 @@ Report:
 - assumptions and deliberately deferred concerns;
 - any context loss or deviation from the planned delegation model.
 
-Do not claim completion until the frontier review and its verification pass.
+Do not claim completion until the frontier review and its verification pass. When moving on to the next task or
+PR, use a *fresh* subagent, not the subagent you used for the previous task.
