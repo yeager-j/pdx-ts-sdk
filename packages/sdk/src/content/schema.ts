@@ -127,6 +127,12 @@ interface ContentInlineModifiersField {
   readonly member: string;
 }
 
+/** A trigger spliced directly into its owning struct, with no game key. */
+interface ContentInlineTriggerField {
+  readonly shape: "inlineTrigger";
+  readonly member: string;
+}
+
 interface ContentWeightField extends ContentFieldBase {
   readonly shape: "weightBlock";
 }
@@ -191,6 +197,12 @@ interface ContentStructField extends ContentFieldBase {
    * an array value, independent of `repeated`.
    */
   readonly wrapped?: boolean;
+}
+
+/** A struct whose `when` member writes direct trigger entries beside its named siblings. */
+interface ContentTriggerStructField extends ContentFieldBase {
+  readonly shape: "triggerStruct";
+  readonly fields: readonly ContentField[];
 }
 
 /**
@@ -280,11 +292,13 @@ export type ContentField =
   | ContentTriggeredModifierField
   | ContentModifierField
   | ContentInlineModifiersField
+  | ContentInlineTriggerField
   | ContentWeightField
   | ContentWeightWithLocField
   | ContentDualField
   | ContentWeightedEventsField
   | ContentStructField
+  | ContentTriggerStructField
   | ContentAliasStructField
   | ContentStructMapField
   | ContentScalarMapField
@@ -299,7 +313,10 @@ export type ContentField =
  * need) is what lets {@link dualArm} read `.form` off an arm without a runtime
  * guard.
  */
-export type ContentDualArm = Exclude<ContentField, ContentDualField | ContentInlineModifiersField>;
+export type ContentDualArm = Exclude<
+  ContentField,
+  ContentDualField | ContentInlineModifiersField | ContentInlineTriggerField
+>;
 
 /**
  * The five shapes an authored value can arrive in, which is all the writer

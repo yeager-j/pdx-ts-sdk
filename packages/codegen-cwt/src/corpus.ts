@@ -150,6 +150,9 @@ export interface RegistryCorpus {
  * - `economicResourceOperationTrigger` — an economic operation's direct
  *   `trigger` condition, recorded under `<field>.trigger`. Resource and
  *   complex-maths keys are operation data, not trigger clauses.
+ * - `triggerStruct` — named sibling entries stay at their own paths, while
+ *   every other direct entry is observed as the synthetic flattened `when`
+ *   trigger.
  */
 export interface DescentNode {
   /** The game's key at this level; the corpus path grows `<prefix>.<field>`. */
@@ -161,13 +164,16 @@ export interface DescentNode {
     | "repeatedStruct"
     | "weightModifiers"
     | "triggeredModifierPotential"
-    | "economicResourceOperationTrigger";
+    | "economicResourceOperationTrigger"
+    | "triggerStruct";
   /** `repeatedStruct` only. */
   readonly keying?: "container" | "siblings";
   /** `repeatedStruct` with "siblings" keying only — the field carrying the id. */
   readonly identityKey?: string;
   /** `weightModifiers` only — the gating keys stripped before the rest is recorded. */
   readonly strippedKeys?: ReadonlySet<string>;
+  /** `triggerStruct` only — direct keys authored as ordinary struct members. */
+  readonly ordinaryKeys?: readonly string[];
   readonly children: readonly DescentNode[];
 }
 
@@ -266,6 +272,34 @@ function descend(
     case "economicResourceOperationTrigger":
       recordEconomicResourceOperationTrigger(value, path, seen, blockArity);
       return;
+    case "triggerStruct":
+      recordTriggerStruct(value, path, node, children, seen, blockArity);
+      return;
+  }
+}
+
+function recordTriggerStruct(
+  value: PdxContainer,
+  path: string,
+  node: DescentNode,
+  children: ReadonlyMap<string, DescentNode>,
+  seen: Map<string, PdxValue[]>,
+  blockArity: Map<string, boolean>
+): void {
+  const ordinary = new Set(node.ordinaryKeys ?? []);
+  const named = value.items.filter(
+    (item): item is Extract<(typeof value.items)[number], { kind: "entry" }> =>
+      item.kind === "entry" && ordinary.has(item.key)
+  );
+  recordBlock({ kind: "container", items: named }, path, children, undefined, seen, blockArity);
+  const trigger = value.items.filter(
+    (item): item is Extract<(typeof value.items)[number], { kind: "entry" }> =>
+      item.kind === "entry" && !ordinary.has(item.key)
+  );
+  if (trigger.length > 0) {
+    const when = `${path}.when`;
+    blockArity.set(when, false);
+    seen.set(when, [...(seen.get(when) ?? []), { kind: "container", items: trigger }]);
   }
 }
 

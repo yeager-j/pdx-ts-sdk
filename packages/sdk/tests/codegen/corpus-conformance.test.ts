@@ -204,7 +204,13 @@ const byRegistry = new Map(reports.map((report) => [report.registry, report]));
  * `modifier` row, and recording nothing there is the correct reading, not a
  * hole. Eleven such blocks exist across the fixture today.
  */
-const TOTAL_RECORDING_MODES = new Set(["struct", "wrappedStruct", "structMap", "repeatedStruct"]);
+const TOTAL_RECORDING_MODES = new Set([
+  "struct",
+  "wrappedStruct",
+  "structMap",
+  "repeatedStruct",
+  "triggerStruct",
+]);
 
 /** Every descent path in one registry's tree, with the mode that reaches it. */
 function descentPaths(
@@ -235,6 +241,34 @@ function mismatchesOfKind(kinds: readonly string[]): { key: string; detail: stri
 }
 
 describe("corpus conformance", () => {
+  it("records mixed trigger structs at their sibling and synthetic trigger paths", () => {
+    const megastructure = loadRegistryFixture("megastructure")!;
+    expect(megastructure.fields.placement_rules).toMatchObject({
+      definitions: 27,
+      blocks: 27,
+      emptyBlocks: 4,
+    });
+    expect(megastructure.fields["placement_rules.planet_possible"]).toMatchObject({
+      definitions: 23,
+      blocks: 23,
+      keys: ["custom_tooltip", "if", "is_planet_class", "is_star_class"],
+    });
+    // Vanilla 4.4.6 writes no direct alias-trigger entries in placement_rules;
+    // the generated `when` remains legal API rather than a corpus invention.
+    expect(megastructure.fields["placement_rules.when"]).toBeUndefined();
+
+    const decision = loadRegistryFixture("decision")!;
+    expect(decision.fields["custom_tooltip.success_text"]).toMatchObject({
+      definitions: 4,
+      scalars: 4,
+    });
+    expect(decision.fields["custom_tooltip.when"]).toMatchObject({
+      definitions: 4,
+      blocks: 4,
+      keys: ["NOT", "check_variable", "count_deposits", "owner"],
+    });
+  });
+
   it("has a committed fixture for every manifested registry", () => {
     // The hermetic gate is only as honest as its evidence: a manifested
     // registry with no fixture would silently measure nothing, which is the

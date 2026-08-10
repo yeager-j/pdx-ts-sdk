@@ -378,7 +378,8 @@ function mintLocalisation(
         mintLocalisation(value, arm, member, path, ctx);
       }
       return;
-    case "struct": {
+    case "struct":
+    case "triggerStruct": {
       // A struct carries no localisation of its own, but the fields inside it
       // are ordinary fields — `technology_swap`'s `weight` is a dual whose
       // block arm is a `WeightBlock`, and a desc'd row there mints the same

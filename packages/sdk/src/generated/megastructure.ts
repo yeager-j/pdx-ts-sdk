@@ -39,6 +39,16 @@ export const MEGASTRUCTURE_ENTITY_OFFSET_FIELDS: readonly ContentField[] = [
   { key: "y", member: "y", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+export interface MegastructurePlacementRules {
+  planetPossible?: Trigger<"planet">;
+  when?: Trigger<never>;
+}
+
+export const MEGASTRUCTURE_PLACEMENT_RULES_FIELDS: readonly ContentField[] = [
+  { key: "planet_possible", member: "planetPossible", shape: "trigger", form: "trigger" },
+  { member: "when", shape: "inlineTrigger" },
+];
+
 /**
  * A megastructure, as the game's rules describe it.
  * Generated from `type[megastructure]` at `game/common/megastructures`.
@@ -122,6 +132,7 @@ export interface MegastructureFields {
   triggeredCountryModifier?: TriggeredModifier<"country">[];
   shipModifier?: ModifierClosure<"ship">;
   stationModifier?: ModifierClosure<"megastructure">;
+  placementRules?: MegastructurePlacementRules;
   onBuildQueued?: EffectBlock<"system", "country">;
   onBuildUnqueued?: EffectBlock<"system", "country">;
   onBuildStart?: EffectBlock<"system", "country">;
@@ -263,6 +274,7 @@ export interface MegastructurePatch {
   readonly triggeredCountryModifier?: PatchInput<TriggeredModifier<"country">[]>;
   readonly shipModifier?: PatchInput<ModifierClosure<"ship">>;
   readonly stationModifier?: PatchInput<ModifierClosure<"megastructure">>;
+  readonly placementRules?: PatchInput<MegastructurePlacementRules>;
   readonly onBuildQueued?: PatchInput<EffectBlock<"system", "country">>;
   readonly onBuildUnqueued?: PatchInput<EffectBlock<"system", "country">>;
   readonly onBuildStart?: PatchInput<EffectBlock<"system", "country">>;
@@ -602,6 +614,13 @@ export const MEGASTRUCTURE_FIELDS: readonly ContentField[] = [
   },
   { key: "ship_modifier", member: "shipModifier", shape: "modifierBlock", form: "closure" },
   { key: "station_modifier", member: "stationModifier", shape: "modifierBlock", form: "closure" },
+  {
+    key: "placement_rules",
+    member: "placementRules",
+    shape: "triggerStruct",
+    form: "block",
+    fields: MEGASTRUCTURE_PLACEMENT_RULES_FIELDS,
+  },
   { key: "on_build_queued", member: "onBuildQueued", shape: "effect", form: "closure" },
   { key: "on_build_unqueued", member: "onBuildUnqueued", shape: "effect", form: "closure" },
   { key: "on_build_start", member: "onBuildStart", shape: "effect", form: "closure" },

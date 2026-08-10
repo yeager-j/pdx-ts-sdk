@@ -30,6 +30,7 @@ import {
   constantCase,
   flatten,
   lowerTopLevelSplice,
+  memberOptional,
   mergeByName,
   metadata,
   pickOrdinary,
@@ -363,7 +364,7 @@ function repeatedStructEmission(
       unsupported.push(`${fieldPath} (no declaration the emitter can lower)`);
       continue;
     }
-    const optional = group.every((field) => isOptional(field.cardinality));
+    const optional = memberOptional(group, REPEATED_STRUCT_FIELD_OVERRIDES.get(fieldPath));
     members.push(
       docComment([...new Set(group.flatMap((field) => field.docs))], "  ") +
         `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
@@ -614,6 +615,16 @@ export function emitContentType(
         : parameter.selector === undefined
           ? "NoInfer<S>"
           : `NoInfer<${pascalCase(type.name)}ScopeOf<E>>`,
+    ...(parameter === null
+      ? {}
+      : {
+          nestedTypeParameter: {
+            declaration:
+              `<${parameter.parameterName} extends ${parameter.parameterType} = ` +
+              `${JSON.stringify(parameter.parameterFallback)}>`,
+            argument: parameter.parameterName,
+          },
+        }),
   };
   // {@link underParameter} over a field that carries its own path. A nested
   // field's scope is the definition's parameter exactly as a top-level one's
@@ -753,7 +764,7 @@ export function emitContentType(
         unsupported.push(`${name} (repeated-struct overlay is incomplete)`);
         continue;
       }
-      const optional = group.every((field) => isOptional(field.cardinality));
+      const optional = memberOptional(group, override);
       const docs = docComment([...new Set(group.flatMap((field) => field.docs))], "  ");
       members.push(`${docs}  ${camelCase(name)}${optional ? "?" : ""}: ${nested.memberType};\n`);
       patchMembers.push({ member: camelCase(name), docs, memberType: nested.memberType });
@@ -798,7 +809,7 @@ export function emitContentType(
       unsupported.push(`${name} (no declaration the emitter can lower)`);
       continue;
     }
-    const optional = group.every((field) => isOptional(field.cardinality));
+    const optional = memberOptional(group, override);
     const docs = docComment([...new Set(group.flatMap((field) => field.docs))], "  ");
     const memberType =
       parameter?.selector?.member === member ? parameter.parameterName : lowered.memberType;

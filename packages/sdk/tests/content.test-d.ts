@@ -1937,6 +1937,13 @@ describe("generated content authoring types", () => {
   });
 
   it("scopes a megastructure's clauses by the rules' replace_scopes", () => {
+    expectTypeOf<MegastructureFields["placementRules"]>().toEqualTypeOf<
+      | {
+          planetPossible?: Trigger<"planet">;
+          when?: Trigger<never>;
+        }
+      | undefined
+    >();
     contentMod.megastructure("scopes", {
       name: "X",
       entity: "x_entity",
@@ -1949,6 +1956,18 @@ describe("generated content authoring types", () => {
       },
       // A station modifier applies in megastructure scope, not country.
       stationModifier: (m) => m.unchecked("starbase_shipyard_capacity_add", 5),
+      placementRules: {
+        when: hasCountryFlag("unchecked_placement_scope"),
+        planetPossible: hasPlanetFlag("planet_only"),
+      },
+    });
+    contentMod.megastructure("bad_placement_scope", {
+      name: "X",
+      entity: "x_entity",
+      placementRules: {
+        // @ts-expect-error — planet_possible has its own planet replace_scope.
+        planetPossible: hasCountryFlag("country_only"),
+      },
     });
     contentMod.megastructure("bad_scopes", {
       name: "X",
@@ -1964,6 +1983,32 @@ describe("generated content authoring types", () => {
         system.setCapital(true);
       },
     });
+  });
+
+  it("keeps mixed tooltip blocks optional and dual with their scalar forms", () => {
+    contentMod.decision("tooltip", {
+      name: "X",
+      effect: () => {},
+      customTooltip: { when: hasPlanetFlag("planet_only") },
+    });
+    contentMod.decision("tooltip_wrong_scope", {
+      name: "X",
+      effect: () => {},
+      customTooltip: {
+        // @ts-expect-error — the default decision scope is planet.
+        when: hasCountryFlag("country_only"),
+      },
+    });
+    expectTypeOf<UtilityComponentTemplateFields["customTooltip"]>().toEqualTypeOf<
+      | string
+      | {
+          text?: "" | string;
+          failText?: "default" | string;
+          successText?: string;
+          when?: Trigger<never>;
+        }
+      | undefined
+    >();
   });
 
   it("keeps the planet and moon bodies distinct, and the registry's refs branded", () => {

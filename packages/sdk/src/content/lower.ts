@@ -108,6 +108,7 @@ export function dualArm(field: ContentDualField, value: unknown): ContentDualArm
 function acceptsFromClosure(field: ContentField): boolean {
   switch (field.shape) {
     case "trigger":
+    case "inlineTrigger":
     case "weightBlock":
     case "weightBlockWithLoc":
     case "economicResources":
@@ -169,7 +170,7 @@ export function resolveFromClosures(
       resolved[field.member] = resolveFromClosure(field, value);
       continue;
     }
-    if (field.shape === "struct") {
+    if (field.shape === "struct" || field.shape === "triggerStruct") {
       resolved[field.member] = field.repeated
         ? (value as readonly Readonly<Record<string, unknown>>[]).map((item) =>
             resolveFromClosures(item, field.fields)
@@ -432,6 +433,10 @@ export function fieldEntries(
       case "inlineModifiers":
         entries.push(...modifierEntries(value as ModifierClosure));
         break;
+      case "inlineTrigger":
+        entries.push(...(value as Trigger<ScopeName>).entries);
+        collectRefs(ctx, (value as Trigger<ScopeName>).refs, field.member);
+        break;
       case "weightBlock":
       case "weightBlockWithLoc":
         entries.push(weightBlock(field.key, value as WeightBlock<ScopeName>, ctx));
@@ -474,6 +479,17 @@ export function fieldEntries(
           );
           break;
         }
+        const values = field.repeated
+          ? (value as readonly Readonly<Record<string, unknown>>[])
+          : [value as Readonly<Record<string, unknown>>];
+        entries.push(
+          ...values.map((item) =>
+            block(field.key, fieldEntries(item, field.fields, childContext(ctx, field.key)))
+          )
+        );
+        break;
+      }
+      case "triggerStruct": {
         const values = field.repeated
           ? (value as readonly Readonly<Record<string, unknown>>[])
           : [value as Readonly<Record<string, unknown>>];

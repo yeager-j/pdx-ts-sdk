@@ -833,10 +833,7 @@ describe("the megastructure slice", () => {
     );
   });
 
-  it("carries a field the emitter declines through a patch, byte-exact", () => {
-    // `placement_rules` is an acknowledged corpus gap (SDK-84): no author can
-    // write it, so the only way a patched megastructure keeps it is by riding
-    // through untouched. Losing it would silently change the definition.
+  it("carries an untouched mixed trigger struct through a patch, byte-exact", () => {
     const emitted = serialize([patchMegastructure(array0, () => ({ buildTime: 60 })).toEntries()]);
     expect(emitted).toContain(
       "\tplacement_rules = {\n" +
@@ -845,6 +842,18 @@ describe("the megastructure slice", () => {
         "\t\t}\n" +
         "\t}\n"
     );
+  });
+
+  it("patches a mixed trigger struct with its trigger flattened beside siblings", () => {
+    const emitted = serialize([
+      patchMegastructure(array0, () => ({
+        placementRules: { when: always(), planetPossible: always() },
+      })).toEntries(),
+    ]);
+    expect(emitted).toContain(
+      "\tplacement_rules = {\n\t\tplanet_possible = {\n\t\t\talways = yes\n\t\t}\n\t\talways = yes\n\t}\n"
+    );
+    expect(emitted).not.toContain("when =");
   });
 
   it("carries an untouched nested struct through with its @reference intact", () => {

@@ -278,6 +278,10 @@ function defineContentExample(): PureMod {
     important: true,
     enactmentTime: 360,
     icon: "GFX_decision_machine_ascendancy",
+    customTooltip: {
+      successText: "content_test_machine_ascendancy_ready",
+      when: always(),
+    },
     resources: [
       {
         category: "decisions",
@@ -908,6 +912,10 @@ function defineContentExample(): PureMod {
     // potential is country-scoped; possible is system-scoped with the
     // building country as FROM (megastructures.cwt:161-165).
     potential: hasCountryFlag("content_test_machine_agenda_started"),
+    placementRules: {
+      when: hasCountryFlag("content_test_machine_agenda_started"),
+      planetPossible: isCapital(),
+    },
     possible: (system) => system.from.trigger(hasCountryFlag("content_test_can_build_foundry")),
     resources: [{ category: "megastructures", cost: { amounts: { alloys: 5_000 } } }],
     countryModifier: (m) => m.country.naval.cap.add(50),
@@ -1149,9 +1157,12 @@ describe("generated content registries", () => {
     // `upgrade_from` is this registry pointing at itself, so the branded item
     // writes the other definition's prefixed id.
     expect(rendered).toContain("upgrade_from = { content_test_megastructure_foundry_1 }");
-    // placement_rules is the one field the emitter cannot lower (SDK-84), so
-    // nothing in the authoring surface can produce it.
-    expect(rendered).not.toContain("placement_rules");
+    expect(rendered).toContain(
+      "\tplacement_rules = {\n" +
+        "\t\tplanet_possible = {\n\t\t\tis_capital = yes\n\t\t}\n" +
+        "\t\thas_country_flag = content_test_machine_agenda_started\n\t}"
+    );
+    expect(rendered).not.toContain("when =");
     const localisation = files.get("localisation/english/content_test_l_english.yml")!;
     expect(localisation).toContain('content_test_megastructure_foundry_1:0 "Synthetic Foundry"');
     expect(localisation).toContain(

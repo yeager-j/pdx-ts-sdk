@@ -806,6 +806,13 @@ export interface ContentFieldOverride {
    */
   readonly arity?: "single" | "repeated";
   /**
+   * Makes the authored member optional when the CWT cardinality is known to
+   * overstate its presence. This is evidence-backed like `scope` and `arity`:
+   * the override corrects one generated optionality decision at its source,
+   * rather than each registry growing its own exception.
+   */
+  readonly optional?: true;
+  /**
    * Authoring member name, when the mechanically derived one collides with a
    * localisation slot: `desc = { trigger text }` (the repeated block form of
    * the `desc` key) is a different thing from the `desc` flavor-text member
@@ -824,6 +831,16 @@ export interface ContentFieldOverride {
  * localization identity.
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+  [
+    "decision.custom_tooltip",
+    {
+      optional: true,
+      reason:
+        "decisions.cwt omits a cardinality annotation, but Stellaris 4.4.6 writes this block " +
+        "in only 4 of 111 shipped decisions. It is an optional tooltip override, not a required " +
+        "part of every decision (SDK-84 corpus evidence).",
+    },
+  ],
   [
     "archaeological_site_type.desc",
     {

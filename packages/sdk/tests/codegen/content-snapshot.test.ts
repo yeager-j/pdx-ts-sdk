@@ -1,9 +1,14 @@
 import { readFileSync } from "node:fs";
 import { CONTENT_MANIFEST, type ContentManifestEntry } from "@pdx-ts/codegen-cwt/content-manifest";
+import type { RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
-import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
+import {
+  pickOrdinary,
+  type EmittedField,
+  type FieldContext,
+} from "@pdx-ts/codegen-cwt/emit/fields";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import {
@@ -48,6 +53,67 @@ const emissions = new Map(
 );
 
 describe("content-type codegen", () => {
+  it("declines ambiguous mixed trigger structs instead of dropping declarations", () => {
+    const field = (key: RuleField["key"]): RuleField => ({
+      key,
+      type:
+        key.kind === "aliasName"
+          ? { kind: "aliasMatchLeft", category: key.category }
+          : { kind: "int", range: null },
+      cardinality: { min: 0, max: 1 },
+      docs: [],
+      scope: null,
+      line: 1,
+      comparison: false,
+    });
+    const trigger = field({ kind: "aliasName", category: "trigger" });
+    const sibling = field({ kind: "name", name: "text" });
+    const ctx: FieldContext = { scope: null, unpinned: "ScopeName" };
+    const mixed = (fields: readonly RuleField[]) => ({
+      ...sibling,
+      type: { kind: "block" as const, fields, bare: [] },
+    });
+    expect(
+      pickOrdinary(
+        emitter,
+        [
+          mixed([
+            trigger,
+            sibling,
+            field({ kind: "computed", type: { kind: "int", range: null } }),
+          ]),
+        ],
+        "mixed",
+        ctx,
+        undefined,
+        undefined,
+        "test.mixed"
+      )
+    ).toBeNull();
+    expect(
+      pickOrdinary(
+        emitter,
+        [mixed([trigger, sibling, field({ kind: "aliasName", category: "effect" })])],
+        "mixed",
+        ctx,
+        undefined,
+        undefined,
+        "test.mixed"
+      )
+    ).toBeNull();
+    expect(
+      pickOrdinary(
+        emitter,
+        [mixed([trigger, sibling, field({ kind: "name", name: "when" })])],
+        "mixed",
+        ctx,
+        undefined,
+        undefined,
+        "test.mixed"
+      )
+    ).toBeNull();
+  });
+
   it("parses every manifest source without recovery", () => {
     const manifestSources = new Set<string>(CONTENT_MANIFEST.map((entry) => entry.source));
     expect(rules.diagnostics.filter((diagnostic) => manifestSources.has(diagnostic.file))).toEqual(
@@ -1195,7 +1261,7 @@ describe("content-type codegen", () => {
     expect(specialProject?.code).toContain('shape: "dual"');
   });
 
-  it("lowers megastructure's economic and modifier splices, leaving only placement_rules", () => {
+  it("lowers megastructure's economic, modifier, and mixed trigger-struct fields", () => {
     const megastructure = emissions.get("megastructure");
     expect(megastructure?.code).toContain("export interface MegastructureDef");
     // `resources` and `dismantle_cost` are the same declaration — a `category`
@@ -1231,12 +1297,36 @@ describe("content-type codegen", () => {
     expect(megastructure?.code).toContain('{ member: "name", pattern: "$", required: true }');
     expect(fieldNames(megastructure!.emittedFields)).toContain("resources");
     expect(fieldNames(megastructure!.emittedFields)).toContain("country_modifier");
-    // The registry's one unlowerable field: an `alias_name[trigger]` splice
-    // beside a named `planet_possible` sibling, acknowledged in corpus-gaps.ts
-    // against SDK-84 rather than half-lowered.
-    expect(megastructure?.unsupported).toEqual([
-      "placement_rules (no declaration the emitter can lower)",
-    ]);
+    expect(megastructure?.code).toContain("placementRules?: MegastructurePlacementRules;");
+    expect(megastructure?.code).toContain('planetPossible?: Trigger<"planet">;');
+    expect(megastructure?.code).toContain("when?: Trigger<never>;");
+    expect(megastructure?.code).toContain('shape: "triggerStruct"');
+    expect(megastructure?.unsupported).toEqual([]);
+  });
+
+  it("lowers the common component and parameterised decision tooltip blocks", () => {
+    for (const registry of [
+      "utility_component_template",
+      "weapon_component_template",
+      "strike_craft_component_template",
+    ]) {
+      const code = emissions.get(registry)?.code;
+      expect(code).toContain("customTooltip?: string | ");
+      expect(code).toContain('shape: "triggerStruct"');
+      expect(code).toContain("when?: Trigger<never>;");
+    }
+    const decision = emissions.get("decision");
+    expect(decision?.code).toContain("customTooltip?: DecisionCustomTooltip<S>;");
+    expect(decision?.code).toContain(
+      'when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;'
+    );
+    expect(decision?.nestedEmittedFields).toContainEqual({
+      field: "decision.custom_tooltip.when",
+      shape: "trigger",
+      repeated: false,
+      clause: "trigger",
+      scope: { parameter: ["planet", "ship"] },
+    });
   });
 
   it("emits the planet and moon categories as mutually recursive blocks", () => {

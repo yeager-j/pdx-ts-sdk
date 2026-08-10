@@ -289,6 +289,8 @@ function aliasScalarFields(emitter: Emitter, category: string): RuleField[] | nu
 export interface FieldContext {
   readonly scope: ScopeContext | null;
   readonly unpinned: string;
+  /** The enclosing registry's authoring parameter, for nested typed blocks. */
+  readonly nestedTypeParameter?: { readonly declaration: string; readonly argument: string };
 }
 
 interface FieldScope {
@@ -835,6 +837,14 @@ export function repeatsSiblings(field: RuleField, shape: string): boolean {
   return isRepeated(field.cardinality) && shape !== "valueList";
 }
 
+/** One evidence-backed optionality decision, shared by every generated member. */
+export function memberOptional(
+  group: readonly RuleField[],
+  override: ContentFieldOverride | undefined
+): boolean {
+  return override?.optional === true || group.every((field) => isOptional(field.cardinality));
+}
+
 export function metadata(
   field: RuleField,
   name: string,
@@ -957,6 +967,8 @@ function lowerValueList(
  */
 interface StructShape {
   readonly typeName: string;
+  /** The name authors use, including an enclosing scope parameter where needed. */
+  readonly memberType: string;
   readonly fieldsConstant: string;
   /** The interface and field-table declarations, for the caller to prepend. */
   readonly code: string;
@@ -965,6 +977,48 @@ interface StructShape {
   readonly nested: readonly EmittedField[];
   /** Descent nodes for the members that are themselves blocks worth walking. */
   readonly children: readonly DescentNode[];
+}
+
+interface TriggerStruct {
+  readonly block: BlockType;
+  readonly trigger: RuleField;
+  readonly ordinaryKeys: readonly string[];
+}
+
+/**
+ * The one mixed block shape a normal struct cannot lower without losing its
+ * splice: direct trigger entries plus ordinary named siblings.  It is narrow
+ * on purpose; every other splice/computed/subtype/bare combination remains
+ * unsupported rather than being partially emitted.
+ */
+function triggerStructOf(type: RuleType): TriggerStruct | null {
+  if (type.kind !== "block" || type.bare.length !== 0) {
+    return null;
+  }
+  const triggers = type.fields.filter(
+    (field): field is AliasNameField =>
+      field.key.kind === "aliasName" && field.key.category === "trigger"
+  );
+  const ordinary = type.fields.filter(
+    (field): field is RuleField & { readonly key: Extract<FieldKey, { readonly kind: "name" }> } =>
+      field.key.kind === "name"
+  );
+  if (
+    triggers.length !== 1 ||
+    ordinary.length === 0 ||
+    triggers.length + ordinary.length !== type.fields.length
+  ) {
+    return null;
+  }
+  const ordinaryKeys = ordinary.map((field) => field.key.name);
+  if (ordinaryKeys.some((key) => camelCase(key) === "when")) {
+    return null;
+  }
+  return {
+    block: { kind: "block", fields: ordinary, bare: [] },
+    trigger: triggers[0]!,
+    ordinaryKeys,
+  };
 }
 
 /** The same interior, re-rooted under one of the keys that shares it. */
@@ -1075,7 +1129,8 @@ function structShape(
   block: BlockType,
   name: string,
   path: string,
-  ctx: FieldContext
+  ctx: FieldContext,
+  inlineTrigger?: FieldScope
 ): StructShape | null {
   const keyed = enumKeyedEntryOf(emitter, block);
   const ordinary =
@@ -1109,7 +1164,7 @@ function structShape(
       unsupported.push(`${fieldPath} (no declaration the emitter can lower)`);
       continue;
     }
-    const optional = group.every((inner) => isOptional(inner.cardinality));
+    const optional = memberOptional(group, CONTENT_FIELD_OVERRIDES.get(fieldPath));
     members.push(
       docComment([...new Set(group.flatMap((inner) => inner.docs))], "  ") +
         `  ${camelCase(fieldName)}${optional ? "?" : ""}: ${lowered.memberType};\n`
@@ -1145,18 +1200,31 @@ function structShape(
     nested.push(...expanded.nested);
     children.push(...expanded.children);
   }
+  if (inlineTrigger !== undefined) {
+    members.push(`  when?: ${withFrom(`Trigger<${inlineTrigger.type}>`, inlineTrigger)};\n`);
+    fieldMetadata.push('{ member: "when", shape: "inlineTrigger" }');
+    nested.push({
+      field: `${path}.when`,
+      shape: "trigger",
+      repeated: false,
+      clause: "trigger",
+      scope: inlineTrigger.scopes,
+    });
+  }
   if (members.length === 0) {
     return null;
   }
   const fieldsConstant = `${constantCase(typeName)}_FIELDS`;
+  const generic = inlineTrigger === undefined ? undefined : ctx.nestedTypeParameter;
   return {
     typeName,
+    memberType: generic === undefined ? typeName : `${typeName}<${generic.argument}>`,
     fieldsConstant,
     nested,
     children,
     code:
       extraCode.join("") +
-      `export interface ${typeName} {\n` +
+      `export interface ${typeName}${generic?.declaration ?? ""} {\n` +
       members.join("") +
       "}\n\n" +
       `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
@@ -1276,6 +1344,45 @@ function lowerStruct(
   };
 }
 
+function lowerTriggerStruct(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  path: string,
+  ctx: FieldContext
+): LoweredField | null {
+  const located = triggerStructOf(field.type);
+  if (located === null) {
+    return null;
+  }
+  const container = containerContext(field, ctx);
+  const triggerScope = contravariantScopeType(emitter, located.trigger, container);
+  const shape = structShape(emitter, located.block, name, path, container, triggerScope);
+  if (shape === null) {
+    return null;
+  }
+  const repeated = isRepeated(field.cardinality);
+  return {
+    memberType: repeated ? arrayType(shape.memberType) : shape.memberType,
+    metadata:
+      `{ key: ${JSON.stringify(name)}, member: ${JSON.stringify(camelCase(name))}, ` +
+      `shape: "triggerStruct", form: ${JSON.stringify(formOfShape({ shape: "triggerStruct", repeated }))}, ` +
+      `fields: ${shape.fieldsConstant}${repeated ? ", repeated: true" : ""} }`,
+    admits: { shape: "triggerStruct", repeated },
+    code: shape.code,
+    unsupported: shape.unsupported,
+    nested: shape.nested,
+    descents: [
+      {
+        field: name,
+        mode: "triggerStruct",
+        ordinaryKeys: located.ordinaryKeys,
+        children: shape.children,
+      },
+    ],
+  };
+}
+
 function lowerOrdinary(
   emitter: Emitter,
   field: RuleField,
@@ -1323,6 +1430,12 @@ function lowerOrdinary(
   }
   if (requested === "valueList") {
     return lowerValueList(emitter, field, name, widening, override?.quoted ?? false);
+  }
+  if (requested === undefined) {
+    const triggerStruct = lowerTriggerStruct(emitter, field, name, path, ctx);
+    if (triggerStruct !== null) {
+      return triggerStruct;
+    }
   }
   const category = spliceCategory(field.type);
   if (requested === "trigger" || (requested === undefined && category === "trigger")) {

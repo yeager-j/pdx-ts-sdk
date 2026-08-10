@@ -36,6 +36,7 @@ export function formOfShape(field: {
     case "weightedEvents":
       return "list";
     case "struct":
+    case "triggerStruct":
       return field.repeated === true || field.wrapped === true ? "list" : "block";
     case "value":
     case "economicResources":
