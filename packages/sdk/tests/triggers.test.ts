@@ -1,7 +1,9 @@
 import { kv, serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import type { PlanetClassRef } from "../src/generated/refs.ts";
 import { eventTarget } from "../src/script/effects/recorder.ts";
+import { toScalar } from "../src/script/scalar.ts";
 import {
   and,
   anyCountry,
@@ -243,6 +245,19 @@ describe("trigger builders", () => {
       "is_planet_class = event_target:triggers_test_world\n"
     );
     expect(serialize([...isPlanetClass("pc_gaia").entries])).toBe("is_planet_class = pc_gaia\n");
+  });
+
+  it("unwraps a reference by its kind, not by whether it carries a path", () => {
+    // `TypedRef` is branded but structurally open, so a content reference may
+    // legitimately carry a `path` of its own — a file path, a lookup key.
+    // Deciding on presence would have written that path where the game
+    // requires an id. `ScopeValue`'s `kind` discriminant is what decides.
+    const gaia: PlanetClassRef & { path: string } = { id: "pc_gaia", path: "not_a_scope" };
+    expect(serialize([...isPlanetClass(gaia).entries])).toBe("is_planet_class = pc_gaia\n");
+    expect(toScalar(gaia)).toBe("pc_gaia");
+    expect(toScalar(eventTarget<"planet">("triggers_test_world"))).toBe(
+      "event_target:triggers_test_world"
+    );
   });
 
   it("throws an explanatory error when a trigger is called like a function", () => {

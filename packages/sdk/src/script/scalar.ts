@@ -22,7 +22,11 @@ export function toScalar(
   booleanLiterals: readonly ("yes" | "no")[] = []
 ): string | number | boolean | PdxScalar {
   if (typeof value === "object" && value !== null) {
-    if ("path" in value) {
+    // On `ScopeValue`'s own discriminant rather than on whether a `path`
+    // property happens to be there, matching generated `refId`: a branded
+    // content reference is structurally open, so one that carries a `path` of
+    // its own must still serialize the id the game requires.
+    if ("kind" in value && (value as ScopeValue).kind === "scope-ref") {
       return (value as ScopeValue).path;
     }
     if ("id" in value) {

@@ -166,12 +166,23 @@ export function emitRefs(emitter: Emitter): string {
       "against those as freely: `is_planet_class` takes a `<planet_class>` or any",
       "scope the game coerces to a planet. It lowers to its path rather than an id,",
       "which is the only reason the two are told apart here at all.",
+      "",
+      "Told apart by `ScopeValue`'s `kind` discriminant rather than by whether a",
+      "`path` property is present: a content reference is branded but structurally",
+      "open, so an object that is genuinely a `<planet_class>` and happens to carry",
+      "a `path` of its own would otherwise serialize that path in place of the id",
+      "the game requires. `src/script/scalar.ts` reads the same discriminant.",
     ]) +
     "export function refId<T extends string | number | boolean>(\n" +
-    "  value: TypedRef<string> | { readonly path: string } | T\n" +
+    '  value: TypedRef<string> | { readonly kind: "scope-ref"; readonly path: string } | T\n' +
     "): string | T {\n" +
     '  if (typeof value === "object") {\n' +
-    '    return "path" in value ? value.path : value.id;\n' +
+    '    if ("kind" in value && value.kind === "scope-ref") {\n' +
+    "      return value.path;\n" +
+    "    }\n" +
+    "    // Everything else is a content reference: a `kind` this function does\n" +
+    "    // not know belongs to the referenced object, not to the reference.\n" +
+    "    return (value as TypedRef<string>).id;\n" +
     "  }\n" +
     "  return value;\n" +
     "}\n\n" +
