@@ -272,7 +272,38 @@ describe("content-type codegen", () => {
     expect(() =>
       emitContentType(isolated, rules.contentTypes.get("building")!, malformed, "building")
     ).toThrow(
-      "An economic-resource operation field must declare exactly one open <resource> numeric arm, optional trigger clause, and complex_maths_enum value-field arm"
+      "An economic-resource operation field must declare exactly one open <resource> numeric arm, one 0..1 pure trigger alias, and complex_maths_enum value-field arm"
+    );
+  });
+
+  it("refuses a repeated trigger in an economic resource operation", () => {
+    const body = rules.bodies.get("building")!;
+    const malformed = {
+      ...body,
+      fields: body.fields.map((field) =>
+        field.key.kind === "name" &&
+        field.key.name === "ai_resource_production" &&
+        field.type.kind === "block"
+          ? {
+              ...field,
+              type: {
+                ...field.type,
+                fields: field.type.fields.map((inner) =>
+                  inner.key.kind === "name" && inner.key.name === "trigger"
+                    ? { ...inner, cardinality: { min: 0, max: null } }
+                    : inner
+                ),
+              },
+            }
+          : field
+      ),
+    };
+    const isolated = new Emitter(rules);
+    isolated.beginFile();
+    expect(() =>
+      emitContentType(isolated, rules.contentTypes.get("building")!, malformed, "building")
+    ).toThrow(
+      "An economic-resource operation field must declare exactly one open <resource> numeric arm, one 0..1 pure trigger alias, and complex_maths_enum value-field arm"
     );
   });
 

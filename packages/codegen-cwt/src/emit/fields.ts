@@ -543,16 +543,15 @@ function economicResourceOperationParts(field: RuleField): EconomicResourceOpera
       inner.key.kind === "computed" &&
       inner.key.type.kind === "typeRef" &&
       inner.key.type.name === "resource" &&
-      (inner.type.kind === "int" || inner.type.kind === "float") &&
-      inner.cardinality.min === 1 &&
-      inner.cardinality.max === null
+      (inner.type.kind === "int" || inner.type.kind === "float")
   );
   const triggers = field.type.fields.filter(
     (inner) =>
       inner.key.kind === "name" &&
       inner.key.name === "trigger" &&
-      inner.type.kind === "block" &&
-      isOptional(inner.cardinality)
+      spliceCategory(inner.type) === "trigger" &&
+      inner.cardinality.min === 0 &&
+      inner.cardinality.max === 1
   );
   const maths = field.type.fields.filter(
     (inner) =>
@@ -570,7 +569,7 @@ function economicResourceOperationParts(field: RuleField): EconomicResourceOpera
     field.type.fields.length !== 3
   ) {
     throw new Error(
-      "An economic-resource operation field must declare exactly one open <resource> numeric arm, optional trigger clause, and complex_maths_enum value-field arm"
+      "An economic-resource operation field must declare exactly one open <resource> numeric arm, one 0..1 pure trigger alias, and complex_maths_enum value-field arm"
     );
   }
   return { trigger: triggers[0]! };
@@ -1386,22 +1385,20 @@ function lowerOrdinary(
   }
   if (requested === "economicResourceOperation") {
     const parts = economicResourceOperationParts(field);
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    const triggerScope = scopeType(emitter, parts.trigger, containerContext(field, ctx));
-    if (triggerScope.type !== scope.type) {
-      throw new Error(
-        "An economic-resource operation's trigger clause must run in the operation field's scope"
-      );
-    }
-    const memberType = `EconomicResourceOperation<${scope.type}>`;
+    const triggerScope = contravariantScopeType(
+      emitter,
+      parts.trigger,
+      containerContext(field, ctx)
+    );
+    const memberType = `EconomicResourceOperation<${triggerScope.type}>`;
     return {
       memberType: withFrom(
         isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        scope
+        triggerScope
       ),
       metadata: metadata(field, name, "economicResourceOperation"),
-      admits: admitsBlock(field, "economicResourceOperation", scope),
-      ...economicResourceOperationInterior(name, path, scope),
+      admits: admitsBlock(field, "economicResourceOperation", triggerScope),
+      ...economicResourceOperationInterior(name, path, triggerScope),
     };
   }
   if (requested === "economicResourcesNoProduce") {
