@@ -64,4 +64,16 @@ building_pp_refinery = {
 	ai_weight = {
 		weight = 5
 	}
+	ai_resource_production = {
+		trigger = {
+			always = yes
+		}
+		energy = 2
+		mult = 1
+		mult = 2
+	}
+	ai_resource_production = {
+		unity = 1
+		multiplier = 0.5
+	}
 }

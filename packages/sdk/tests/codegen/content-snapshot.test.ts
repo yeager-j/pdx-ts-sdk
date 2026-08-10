@@ -1,9 +1,14 @@
 import { readFileSync } from "node:fs";
 import { CONTENT_MANIFEST, type ContentManifestEntry } from "@pdx-ts/codegen-cwt/content-manifest";
+import type { RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
-import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
+import {
+  pickOrdinary,
+  type EmittedField,
+  type FieldContext,
+} from "@pdx-ts/codegen-cwt/emit/fields";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import {
@@ -48,6 +53,67 @@ const emissions = new Map(
 );
 
 describe("content-type codegen", () => {
+  it("declines ambiguous mixed trigger structs instead of dropping declarations", () => {
+    const field = (key: RuleField["key"]): RuleField => ({
+      key,
+      type:
+        key.kind === "aliasName"
+          ? { kind: "aliasMatchLeft", category: key.category }
+          : { kind: "int", range: null },
+      cardinality: { min: 0, max: 1 },
+      docs: [],
+      scope: null,
+      line: 1,
+      comparison: false,
+    });
+    const trigger = field({ kind: "aliasName", category: "trigger" });
+    const sibling = field({ kind: "name", name: "text" });
+    const ctx: FieldContext = { scope: null, unpinned: "ScopeName" };
+    const mixed = (fields: readonly RuleField[]) => ({
+      ...sibling,
+      type: { kind: "block" as const, fields, bare: [] },
+    });
+    expect(
+      pickOrdinary(
+        emitter,
+        [
+          mixed([
+            trigger,
+            sibling,
+            field({ kind: "computed", type: { kind: "int", range: null } }),
+          ]),
+        ],
+        "mixed",
+        ctx,
+        undefined,
+        undefined,
+        "test.mixed"
+      )
+    ).toBeNull();
+    expect(
+      pickOrdinary(
+        emitter,
+        [mixed([trigger, sibling, field({ kind: "aliasName", category: "effect" })])],
+        "mixed",
+        ctx,
+        undefined,
+        undefined,
+        "test.mixed"
+      )
+    ).toBeNull();
+    expect(
+      pickOrdinary(
+        emitter,
+        [mixed([trigger, sibling, field({ kind: "name", name: "when" })])],
+        "mixed",
+        ctx,
+        undefined,
+        undefined,
+        "test.mixed"
+      )
+    ).toBeNull();
+  });
+
   it("parses every manifest source without recovery", () => {
     const manifestSources = new Set<string>(CONTENT_MANIFEST.map((entry) => entry.source));
     expect(rules.diagnostics.filter((diagnostic) => manifestSources.has(diagnostic.file))).toEqual(
@@ -58,6 +124,24 @@ describe("content-type codegen", () => {
   it("carries a registry's body scope into trigger fields", () => {
     expect(emissions.get("building")?.code).toContain('allow?: Trigger<"colony">;');
     expect(emissions.get("building")?.code).toContain('potential?: Trigger<"colony">;');
+    expect(emissions.get("building")?.code).toContain(
+      'aiResourceProduction?: EconomicResourceOperation<"colony">[];'
+    );
+    expect(emissions.get("building")?.code).toContain(
+      '{ key: "ai_resource_production", member: "aiResourceProduction", shape: "economicResourceOperation", form: "block", repeated: true }'
+    );
+    expect(emissions.get("building")?.nestedEmittedFields).toContainEqual({
+      field: "building.ai_resource_production.trigger",
+      shape: "trigger",
+      repeated: false,
+      clause: "trigger",
+      scope: ["colony"],
+    });
+    expect(emissions.get("building")?.corpusDescents).toContainEqual({
+      field: "ai_resource_production",
+      mode: "economicResourceOperationTrigger",
+      children: [],
+    });
   });
 
   it("emits repeated-struct definitions as data-driven field tables", () => {
@@ -222,6 +306,71 @@ describe("content-type codegen", () => {
     expect(() =>
       emitContentType(isolated, rules.contentTypes.get("building")!, malformed, "building")
     ).toThrow("A triggered-modifier block must expand to exactly one named potential declaration");
+  });
+
+  it("refuses an economic operation shape that would drop a declared sibling", () => {
+    const body = rules.bodies.get("building")!;
+    const malformed = {
+      ...body,
+      fields: body.fields.map((field) =>
+        field.key.kind === "name" &&
+        field.key.name === "ai_resource_production" &&
+        field.type.kind === "block"
+          ? {
+              ...field,
+              type: {
+                ...field.type,
+                fields: field.type.fields.filter(
+                  (inner) =>
+                    !(
+                      inner.key.kind === "computed" &&
+                      inner.key.type.kind === "enum" &&
+                      inner.key.type.name === "complex_maths_enum"
+                    )
+                ),
+              },
+            }
+          : field
+      ),
+    };
+    const isolated = new Emitter(rules);
+    isolated.beginFile();
+    expect(() =>
+      emitContentType(isolated, rules.contentTypes.get("building")!, malformed, "building")
+    ).toThrow(
+      "An economic-resource operation field must declare exactly one open <resource> numeric arm, one 0..1 pure trigger alias, and complex_maths_enum value-field arm"
+    );
+  });
+
+  it("refuses a repeated trigger in an economic resource operation", () => {
+    const body = rules.bodies.get("building")!;
+    const malformed = {
+      ...body,
+      fields: body.fields.map((field) =>
+        field.key.kind === "name" &&
+        field.key.name === "ai_resource_production" &&
+        field.type.kind === "block"
+          ? {
+              ...field,
+              type: {
+                ...field.type,
+                fields: field.type.fields.map((inner) =>
+                  inner.key.kind === "name" && inner.key.name === "trigger"
+                    ? { ...inner, cardinality: { min: 0, max: null } }
+                    : inner
+                ),
+              },
+            }
+          : field
+      ),
+    };
+    const isolated = new Emitter(rules);
+    isolated.beginFile();
+    expect(() =>
+      emitContentType(isolated, rules.contentTypes.get("building")!, malformed, "building")
+    ).toThrow(
+      "An economic-resource operation field must declare exactly one open <resource> numeric arm, one 0..1 pure trigger alias, and complex_maths_enum value-field arm"
+    );
   });
 
   it("generates ascension perks and their swaps without registry-specific code", () => {
@@ -694,7 +843,7 @@ describe("content-type codegen", () => {
     expect(emissions.get("situation_type")?.code).toContain('keying: "container"');
   });
 
-  it("lowers a ref-keyed scalar map, the shape two registries needed", () => {
+  it("lowers a ref-keyed scalar map, including technology's open weight groups", () => {
     // `{ <resource> = float }` and `{ <job> = int }` are computed keys, which
     // mergeByName drops — so nothing reached these fields at all.
     // leader_background_job_weight sat on the machinery backlog until
@@ -706,9 +855,16 @@ describe("content-type codegen", () => {
     );
     const civic = emissions.get("civic_or_origin");
     expect(civic?.code).toContain("leaderBackgroundJobWeight?: Readonly<Record<string, number>>;");
-    // Both registries now lower everything the rules declare.
+    const technology = emissions.get("technology")!;
+    expect(technology.code).toContain("modWeightIfGroupPicked?: Readonly<Record<string, number>>;");
+    expect(technology.code).toContain(
+      '{ key: "mod_weight_if_group_picked", member: "modWeightIfGroupPicked", shape: "scalarMap", form: "block" }'
+    );
+    expect(fieldNames(technology.emittedFields)).toContain("mod_weight_if_group_picked");
+    // All scalar-map consumers now lower everything their rules declare.
     expect(shipSize?.unsupported).toEqual([]);
     expect(civic?.unsupported).toEqual([]);
+    expect(technology.unsupported).toEqual([]);
   });
 
   it("carries ship_size's per-field modifier scopes", () => {
@@ -894,12 +1050,13 @@ describe("content-type codegen", () => {
     expect(utility?.code).toContain('triggeredShipDesignModifier?: TriggeredModifier<"design">[];');
     expect(fieldNames(utility!.emittedFields)).toContain("resources");
     expect(fieldNames(utility!.emittedFields)).toContain("modifier");
-    // target_weights and the friendly_aura/hostile_aura nested modifiers are
-    // pre-existing gaps this ticket does not touch — exact-line membership so
-    // this assertion does not accidentally require fixing them too (their
-    // report lines are prefixed with "friendly_aura."/"hostile_aura.").
+    // target_weights is a weapon-only scalar map in SDK-67. Utility and
+    // strike-craft target_weights remain unsupported because their declarations
+    // are not present on those subtype bodies; exact membership keeps this
+    // ticket from borrowing a shape across registries.
     expect(utility?.unsupported).not.toContain("resources (no declaration the emitter can lower)");
     expect(utility?.unsupported).not.toContain("modifier (no declaration the emitter can lower)");
+    expect(utility?.unsupported).toContain("target_weights (no declaration the emitter can lower)");
 
     const weapon = emissions.get("weapon_component_template");
     expect(weapon?.code).toContain("export interface WeaponComponentTemplateDef");
@@ -910,10 +1067,19 @@ describe("content-type codegen", () => {
     expect(weapon?.code).toContain('resources?: EconomicResourceBlockNoProduce<"ship">[];');
     expect(weapon?.code).toContain('shape: "economicResourcesNoProduce"');
     expect(weapon?.code).not.toContain('resources?: EconomicResourceBlock<"ship">[];');
+    expect(weapon?.code).toContain("targetWeights?: Readonly<Record<string, number>>;");
+    expect(weapon?.code).toContain(
+      '{ key: "target_weights", member: "targetWeights", shape: "scalarMap", form: "block" }'
+    );
     expect(weapon?.code).toContain('modifier?: ModifierClosure<"ship">;');
     expect(weapon?.code).toContain('shipDesignModifier?: ModifierClosure<"design">;');
     expect(fieldNames(weapon!.emittedFields)).toContain("resources");
     expect(fieldNames(weapon!.emittedFields)).toContain("modifier");
+    expect(fieldNames(weapon!.emittedFields)).toContain("target_weights");
+    expect(weapon?.unsupported).toEqual([
+      "weapon_component_template.friendly_aura.modifier (no declaration the emitter can lower)",
+      "weapon_component_template.hostile_aura.modifier (no declaration the emitter can lower)",
+    ]);
 
     // strike_craft_component_template only declares resources and
     // ship_modifier (components.cwt:332-343) — no modifier,
@@ -942,6 +1108,9 @@ describe("content-type codegen", () => {
     // Confirms the four fields strike_craft genuinely does not declare stay
     // unsupported rather than silently picking up weapon's/utility's shapes.
     expect(strikeCraft?.unsupported).toContain("modifier (no declaration the emitter can lower)");
+    expect(strikeCraft?.unsupported).toContain(
+      "target_weights (no declaration the emitter can lower)"
+    );
     expect(strikeCraft?.unsupported).toContain(
       "ship_design_modifier (no declaration the emitter can lower)"
     );
@@ -1092,7 +1261,7 @@ describe("content-type codegen", () => {
     expect(specialProject?.code).toContain('shape: "dual"');
   });
 
-  it("lowers megastructure's economic and modifier splices, leaving only placement_rules", () => {
+  it("lowers megastructure's economic, modifier, and mixed trigger-struct fields", () => {
     const megastructure = emissions.get("megastructure");
     expect(megastructure?.code).toContain("export interface MegastructureDef");
     // `resources` and `dismantle_cost` are the same declaration — a `category`
@@ -1128,12 +1297,36 @@ describe("content-type codegen", () => {
     expect(megastructure?.code).toContain('{ member: "name", pattern: "$", required: true }');
     expect(fieldNames(megastructure!.emittedFields)).toContain("resources");
     expect(fieldNames(megastructure!.emittedFields)).toContain("country_modifier");
-    // The registry's one unlowerable field: an `alias_name[trigger]` splice
-    // beside a named `planet_possible` sibling, acknowledged in corpus-gaps.ts
-    // against SDK-84 rather than half-lowered.
-    expect(megastructure?.unsupported).toEqual([
-      "placement_rules (no declaration the emitter can lower)",
-    ]);
+    expect(megastructure?.code).toContain("placementRules?: MegastructurePlacementRules;");
+    expect(megastructure?.code).toContain('planetPossible?: Trigger<"planet">;');
+    expect(megastructure?.code).toContain("when?: Trigger<never>;");
+    expect(megastructure?.code).toContain('shape: "triggerStruct"');
+    expect(megastructure?.unsupported).toEqual([]);
+  });
+
+  it("lowers the common component and parameterised decision tooltip blocks", () => {
+    for (const registry of [
+      "utility_component_template",
+      "weapon_component_template",
+      "strike_craft_component_template",
+    ]) {
+      const code = emissions.get(registry)?.code;
+      expect(code).toContain("customTooltip?: string | ");
+      expect(code).toContain('shape: "triggerStruct"');
+      expect(code).toContain("when?: Trigger<never>;");
+    }
+    const decision = emissions.get("decision");
+    expect(decision?.code).toContain("customTooltip?: DecisionCustomTooltip<S>;");
+    expect(decision?.code).toContain(
+      'when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;'
+    );
+    expect(decision?.nestedEmittedFields).toContainEqual({
+      field: "decision.custom_tooltip.when",
+      shape: "trigger",
+      repeated: false,
+      clause: "trigger",
+      scope: { parameter: ["planet", "ship"] },
+    });
   });
 
   it("emits the planet and moon categories as mutually recursive blocks", () => {

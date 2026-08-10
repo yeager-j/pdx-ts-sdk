@@ -665,6 +665,17 @@ export type ContentFieldShape =
   | "effect"
   | "economicResources"
   /**
+   * A repeated resource-name operation with one condition sibling and the
+   * complex maths operations alongside it: `ai_resource_production = {
+   * <resource> = float trigger = { ... } mult = value }`.
+   *
+   * This is deliberately distinct from `economicResources`: the latter owns
+   * a named collection of cost/production/upkeep/logistics operations, while
+   * this shape is itself one such operation. Both use the shared
+   * `EconomicResourceOperation<S>` contract at runtime.
+   */
+  | "economicResourceOperation"
+  /**
    * The same `economicResources` shape, minus the `produces` arm — for a
    * field CWT splices from `economic_template_no_produce` rather than plain
    * `economic_template`. Lowers to `EconomicResourceBlockNoProduce<S>`
@@ -795,6 +806,13 @@ export interface ContentFieldOverride {
    */
   readonly arity?: "single" | "repeated";
   /**
+   * Makes the authored member optional when the CWT cardinality is known to
+   * overstate its presence. This is evidence-backed like `scope` and `arity`:
+   * the override corrects one generated optionality decision at its source,
+   * rather than each registry growing its own exception.
+   */
+  readonly optional?: true;
+  /**
    * Authoring member name, when the mechanically derived one collides with a
    * localisation slot: `desc = { trigger text }` (the repeated block form of
    * the `desc` key) is a different thing from the `desc` flavor-text member
@@ -813,6 +831,16 @@ export interface ContentFieldOverride {
  * localization identity.
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+  [
+    "decision.custom_tooltip",
+    {
+      optional: true,
+      reason:
+        "decisions.cwt omits a cardinality annotation, but Stellaris 4.4.6 writes this block " +
+        "in only 4 of 111 shipped decisions. It is an optional tooltip override, not a required " +
+        "part of every decision (SDK-84 corpus evidence).",
+    },
+  ],
   [
     "archaeological_site_type.desc",
     {
@@ -1037,6 +1065,20 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "technology.mod_weight_if_group_picked",
+    {
+      shape: "scalarMap",
+      arity: "single",
+      reason:
+        "The rules declare the outer key 0..inf, but Stellaris 4.4.6 writes exactly one " +
+        "block in each of 34 definitions (no repeated outer blocks), with one empty block and " +
+        "33 inner rows. A single map is the sensible authoring contract and keeps the member " +
+        "type, metadata, and scalarMap writer aligned. Inner keys are open " +
+        "value[tech_weight_group] names (repeatable and deposit_blockers in this corpus), so " +
+        "the map stays keyed by string rather than a closed union.",
+    },
+  ],
+  [
     "technology.modifier",
     {
       shape: "modifierBlock",
@@ -1118,6 +1160,18 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "reported stale the moment it is added rather than measured. " +
         "`corpus-conformance.test.ts` pins the fixture's observed sub-key set instead, so a new " +
         "inexpressible sub-key (or inline_script support landing) fails and forces a re-look.",
+    },
+  ],
+  [
+    "building.ai_resource_production",
+    {
+      shape: "economicResourceOperation",
+      reason:
+        "buildings.cwt:269-276 declares one repeated operation directly: an open <resource> " +
+        "numeric map, optional trigger_clause, and complex_maths_enum value fields. The 4.4.6 " +
+        "install writes 60 blocks across 39 buildings; 12 definitions repeat it (1x27, 2x6, " +
+        "3x3, 4x3), with no direct inner-key repeats. This is the reusable operation contract " +
+        "already used by economic_template, not a building-specific map.",
     },
   ],
   [
@@ -1761,6 +1815,20 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "espionage_operation.resources (espionage.cwt:113), repeated 0..inf " +
         "(components.cwt:184-190) — `produces` is not game-legal on this splice, unlike " +
         "job.resources' plain economic_template.",
+    },
+  ],
+  [
+    "weapon_component_template.target_weights",
+    {
+      shape: "scalarMap",
+      reason:
+        "An open scalar-keyed map of floats (`scalar = float`) from components.cwt:274-277. " +
+        "Stellaris 4.4.6 writes 25 definitions / 25 blocks, 149 numeric inner rows, 0 outer " +
+        "repeats, 0 duplicate inner keys, and 18 open scalar keys. The rules name a scalar " +
+        "key rather than a closed enum, so keys remain string. A read-only whole-vendor scan " +
+        "found 36 structurally similar computed-key scalar declarations with mixed boolean, " +
+        "reference, string, and weighted-event semantics; this explicit row is intentionally " +
+        "limited to weapon target_weights and does not infer utility or strike-craft paths.",
     },
   ],
   [

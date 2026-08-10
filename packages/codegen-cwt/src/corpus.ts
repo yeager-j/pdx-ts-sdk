@@ -147,6 +147,12 @@ export interface RegistryCorpus {
  * - `triggeredModifierPotential` — a triggered-modifier block's `potential`
  *   condition, recorded under `<field>.potential`. Modifier keys are not
  *   conditions and remain intentionally opaque.
+ * - `economicResourceOperationTrigger` — an economic operation's direct
+ *   `trigger` condition, recorded under `<field>.trigger`. Resource and
+ *   complex-maths keys are operation data, not trigger clauses.
+ * - `triggerStruct` — named sibling entries stay at their own paths, while
+ *   every other direct entry is observed as the synthetic flattened `when`
+ *   trigger.
  */
 export interface DescentNode {
   /** The game's key at this level; the corpus path grows `<prefix>.<field>`. */
@@ -157,13 +163,17 @@ export interface DescentNode {
     | "structMap"
     | "repeatedStruct"
     | "weightModifiers"
-    | "triggeredModifierPotential";
+    | "triggeredModifierPotential"
+    | "economicResourceOperationTrigger"
+    | "triggerStruct";
   /** `repeatedStruct` only. */
   readonly keying?: "container" | "siblings";
   /** `repeatedStruct` with "siblings" keying only — the field carrying the id. */
   readonly identityKey?: string;
   /** `weightModifiers` only — the gating keys stripped before the rest is recorded. */
   readonly strippedKeys?: ReadonlySet<string>;
+  /** `triggerStruct` only — direct keys authored as ordinary struct members. */
+  readonly ordinaryKeys?: readonly string[];
   readonly children: readonly DescentNode[];
 }
 
@@ -259,6 +269,37 @@ function descend(
     case "triggeredModifierPotential":
       recordTriggeredModifierPotential(value, path, seen, blockArity);
       return;
+    case "economicResourceOperationTrigger":
+      recordEconomicResourceOperationTrigger(value, path, seen, blockArity);
+      return;
+    case "triggerStruct":
+      recordTriggerStruct(value, path, node, children, seen, blockArity);
+      return;
+  }
+}
+
+function recordTriggerStruct(
+  value: PdxContainer,
+  path: string,
+  node: DescentNode,
+  children: ReadonlyMap<string, DescentNode>,
+  seen: Map<string, PdxValue[]>,
+  blockArity: Map<string, boolean>
+): void {
+  const ordinary = new Set(node.ordinaryKeys ?? []);
+  const named = value.items.filter(
+    (item): item is Extract<(typeof value.items)[number], { kind: "entry" }> =>
+      item.kind === "entry" && ordinary.has(item.key)
+  );
+  recordBlock({ kind: "container", items: named }, path, children, undefined, seen, blockArity);
+  const trigger = value.items.filter(
+    (item): item is Extract<(typeof value.items)[number], { kind: "entry" }> =>
+      item.kind === "entry" && !ordinary.has(item.key)
+  );
+  if (trigger.length > 0) {
+    const when = `${path}.when`;
+    blockArity.set(when, false);
+    seen.set(when, [...(seen.get(when) ?? []), { kind: "container", items: trigger }]);
   }
 }
 
@@ -330,6 +371,25 @@ function recordTriggeredModifierPotential(
     blockArity.set(potentialPath, (blockArity.get(potentialPath) ?? false) || previous);
     previous = true;
     seen.set(potentialPath, [...(seen.get(potentialPath) ?? []), item.value]);
+  }
+}
+
+/** Records only direct trigger clauses from an economic resource operation. */
+function recordEconomicResourceOperationTrigger(
+  operation: PdxContainer,
+  path: string,
+  seen: Map<string, PdxValue[]>,
+  blockArity: Map<string, boolean>
+): void {
+  const triggerPath = `${path}.trigger`;
+  let previous = false;
+  for (const item of operation.items) {
+    if (item.kind !== "entry" || item.key !== "trigger") {
+      continue;
+    }
+    blockArity.set(triggerPath, (blockArity.get(triggerPath) ?? false) || previous);
+    previous = true;
+    seen.set(triggerPath, [...(seen.get(triggerPath) ?? []), item.value]);
   }
 }
 

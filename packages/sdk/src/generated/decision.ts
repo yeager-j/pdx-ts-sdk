@@ -13,6 +13,27 @@ import type {
 import type { Trigger } from "../script/trigger-core.ts";
 import type { DecisionRef, SoundEffectRef, SoundRef, TechnologyRef } from "./refs.ts";
 
+export interface DecisionCustomTooltip<S extends DecisionScope = "planet"> {
+  text?: "" | string;
+  failText?: "default" | string;
+  successText?: string;
+  when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;
+}
+
+export const DECISION_CUSTOM_TOOLTIP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "fail_text", member: "failText", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "success_text",
+    member: "successText",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
+  { member: "when", shape: "inlineTrigger" },
+];
+
 /** The scopes a decision may declare. */
 export type DecisionScope = "planet" | "ship";
 
@@ -34,6 +55,7 @@ export interface DecisionFields<S extends DecisionScope = "planet"> {
   ownedPlanetsOnly?: boolean;
   important?: boolean;
   enactmentTime?: number;
+  customTooltip?: DecisionCustomTooltip<S>;
   sound?: SoundRef | string | SoundEffectRef;
   icon?: string | DecisionRef;
   resources?: WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, "country">;
@@ -77,6 +99,13 @@ export const DECISION_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "identity",
+  },
+  {
+    key: "custom_tooltip",
+    member: "customTooltip",
+    shape: "triggerStruct",
+    form: "block",
+    fields: DECISION_CUSTOM_TOOLTIP_FIELDS,
   },
   {
     key: "sound",

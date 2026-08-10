@@ -34,27 +34,11 @@ export interface AcknowledgedGap {
 
 export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
   {
-    registry: "technology",
-    field: "mod_weight_if_group_picked",
-    count: 34,
-    reason: "A map keyed by `value[tech_weight_group]`; needs value-set-keyed map machinery.",
-    issue: "SDK-66",
-  },
-  {
     registry: "building",
     field: "inline_script",
     count: 285,
     reason: "CWT `macro[inline_script]`; needs first-class inline-script machinery.",
     issue: "SDK-17",
-  },
-  {
-    registry: "building",
-    field: "ai_resource_production",
-    count: 39,
-    reason:
-      "A map keyed by `<resource>` references with trigger and complex-maths siblings; needs " +
-      "reference-keyed map machinery.",
-    issue: "SDK-65",
   },
   {
     registry: "tradition",
@@ -85,30 +69,10 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     issue: "SDK-17",
   },
   {
-    registry: "weapon_component_template",
-    field: "target_weights",
-    count: 25,
-    reason:
-      "An open scalar-keyed map of floats (`scalar = float`); needs scalar-keyed map machinery.",
-    issue: "SDK-67",
-  },
-  {
     registry: "special_project",
     field: "inline_script",
     count: 105,
     reason: "CWT `macro[inline_script]`; needs first-class inline-script machinery.",
     issue: "SDK-17",
-  },
-  {
-    registry: "megastructure",
-    field: "placement_rules",
-    count: 27,
-    reason:
-      "An `alias_name[trigger]` splice beside a named `planet_possible` sibling " +
-      "(megastructures.cwt:234-240): not a pure splice, so it is not the trigger shape, and " +
-      "structShape declines any block holding a splice rather than dropping it. The same " +
-      "declaration is why decision.custom_tooltip and component_template.custom_tooltip are " +
-      "unlowerable, so one shape closes all three.",
-    issue: "SDK-84",
   },
 ];

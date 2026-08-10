@@ -354,6 +354,55 @@
         ]
       ]
     },
+    "custom_tooltip.success_text": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "decision_open_shroud_rift_max_uses",
+        "not_toxifying_world_pass",
+        "prismatic_ice_max_3_times_pass_with_var",
+        "requires_max_3_times_ice_dumping"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "custom_tooltip.when": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "check_variable",
+        "count_deposits",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "check_variable"
+        ],
+        [
+          "count_deposits"
+        ],
+        [
+          "owner"
+        ]
+      ]
+    },
     "effect": {
       "definitions": 111,
       "repeated": 0,

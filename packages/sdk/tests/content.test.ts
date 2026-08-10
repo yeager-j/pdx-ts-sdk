@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { createFeature as createFeatureInternal, type ModItem } from "../src/authoring/feature.ts";
 import { buildMod as buildInternal } from "../src/compiler/compile.ts";
 import { ContentAuthoring } from "../src/content/authoring.ts";
+import { resolveFromClosures } from "../src/content/lower.ts";
 import {
   registerAliasStructFields,
   type ContentField,
@@ -63,6 +64,40 @@ function capabilityFor(config: ReturnType<typeof configFor>) {
     },
   });
 }
+
+describe("content closure resolution", () => {
+  it("resolves an inline trigger closure inside a dual trigger struct", () => {
+    const fields: readonly ContentField[] = [
+      {
+        key: "custom_tooltip",
+        member: "customTooltip",
+        shape: "dual",
+        arms: [
+          {
+            key: "custom_tooltip",
+            member: "customTooltip",
+            shape: "value",
+            form: "scalar",
+            conversion: "identity",
+          },
+          {
+            key: "custom_tooltip",
+            member: "customTooltip",
+            shape: "triggerStruct",
+            form: "block",
+            fields: [{ member: "when", shape: "inlineTrigger" }],
+          },
+        ],
+      },
+    ];
+    const trigger = always();
+    const resolved = resolveFromClosures({ customTooltip: { when: () => trigger } }, fields) as {
+      readonly customTooltip: { readonly when: unknown };
+    };
+
+    expect(resolved.customTooltip.when).toBe(trigger);
+  });
+});
 
 function localizationMap(mod: PureMod, language = "english"): ReadonlyMap<string, string> {
   return new Map(
@@ -179,6 +214,10 @@ function defineContentExample(): PureMod {
         produces: { amounts: { physics_research: 10 } },
       },
     ],
+    aiResourceProduction: [
+      { amounts: { energy: 2, unity: 1 }, when: isCapital(), mult: [1, 2] },
+      { amounts: { alloys: 1 }, multiplier: 0.5 },
+    ],
     planetModifier: (m) => m.planet.jobs.engineering.research.produces.mult(0.1),
     showInTech: ["tech_basic_science_lab_1"],
     // A vanilla building: nothing in this fixture defines a second lab, and an
@@ -274,6 +313,10 @@ function defineContentExample(): PureMod {
     important: true,
     enactmentTime: 360,
     icon: "GFX_decision_machine_ascendancy",
+    customTooltip: {
+      successText: "content_test_machine_ascendancy_ready",
+      when: always(),
+    },
     resources: [
       {
         category: "decisions",
@@ -904,6 +947,10 @@ function defineContentExample(): PureMod {
     // potential is country-scoped; possible is system-scoped with the
     // building country as FROM (megastructures.cwt:161-165).
     potential: hasCountryFlag("content_test_machine_agenda_started"),
+    placementRules: {
+      when: hasCountryFlag("content_test_machine_agenda_started"),
+      planetPossible: isCapital(),
+    },
     possible: (system) => system.from.trigger(hasCountryFlag("content_test_can_build_foundry")),
     resources: [{ category: "megastructures", cost: { amounts: { alloys: 5_000 } } }],
     countryModifier: (m) => m.country.naval.cap.add(50),
@@ -1145,9 +1192,12 @@ describe("generated content registries", () => {
     // `upgrade_from` is this registry pointing at itself, so the branded item
     // writes the other definition's prefixed id.
     expect(rendered).toContain("upgrade_from = { content_test_megastructure_foundry_1 }");
-    // placement_rules is the one field the emitter cannot lower (SDK-84), so
-    // nothing in the authoring surface can produce it.
-    expect(rendered).not.toContain("placement_rules");
+    expect(rendered).toContain(
+      "\tplacement_rules = {\n" +
+        "\t\tplanet_possible = {\n\t\t\tis_capital = yes\n\t\t}\n" +
+        "\t\thas_country_flag = content_test_machine_agenda_started\n\t}"
+    );
+    expect(rendered).not.toContain("when =");
     const localisation = files.get("localisation/english/content_test_l_english.yml")!;
     expect(localisation).toContain('content_test_megastructure_foundry_1:0 "Synthetic Foundry"');
     expect(localisation).toContain(
@@ -1195,6 +1245,11 @@ describe("generated content registries", () => {
     expect(rendered).toContain(
       "\t\tupkeep = {\n\t\t\ttrigger = {\n\t\t\t\tis_capital = yes\n\t\t\t}\n" +
         "\t\t\tenergy = 5\n\t\t\tmultiplier = 1\n\t\t\tmultiplier = 2\n\t\t}"
+    );
+    expect(rendered).toContain(
+      "\tai_resource_production = {\n\t\ttrigger = {\n\t\t\tis_capital = yes\n\t\t}\n" +
+        "\t\tenergy = 2\n\t\tunity = 1\n\t\tmult = 1\n\t\tmult = 2\n\t}\n" +
+        "\tai_resource_production = {\n\t\talloys = 1\n\t\tmultiplier = 0.5\n\t}"
     );
   });
 
@@ -1873,6 +1928,56 @@ describe("generated content registries", () => {
     // No prefixing, and no `ss_test_mid` localisation key invented for a slot.
     expect(rendered).not.toContain("ss_test_mid");
     expect(files.get("localisation/english/ss_test_l_english.yml")).not.toContain("mid");
+  });
+
+  it("writes technology weight-group maps as one flat scalar block (SDK-66)", () => {
+    const cap = capabilityFor(configFor("Technology weight map test", "tw_test"));
+    const technology = cap.technology("weight_groups", {
+      name: "Weight Groups",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      modWeightIfGroupPicked: {
+        repeatable: 2,
+        deposit_blockers: 0.5,
+        third_party_group: 1.25,
+      },
+    });
+    const rendered = render(cap.compile([cap.feature(undefined, [technology])])).get(
+      "common/technology/tw_test_technology.txt"
+    );
+    expect(rendered).toContain(
+      "\tmod_weight_if_group_picked = {\n" +
+        "\t\trepeatable = 2\n" +
+        "\t\tdeposit_blockers = 0.5\n" +
+        "\t\tthird_party_group = 1.25\n" +
+        "\t}\n"
+    );
+    expect(rendered).not.toContain("mod_weight_if_group_picked = {\n\t\t{");
+  });
+
+  it("writes weapon target weights as one flat scalar block (SDK-67)", () => {
+    const cap = capabilityFor(configFor("Weapon target weights test", "wt_test"));
+    const weapon = cap.weaponComponentTemplate("target_weights", {
+      icon: "GFX_weapon_target_weights",
+      targetWeights: {
+        corvette: 1,
+        cruiser: 2.5,
+        third_party_target: 0.25,
+      },
+    });
+    const rendered = render(cap.compile([cap.feature(undefined, [weapon])])).get(
+      "common/component_templates/wt_test_component_templates.txt"
+    );
+    expect(rendered).toContain(
+      "\ttarget_weights = {\n" +
+        "\t\tcorvette = 1\n" +
+        "\t\tcruiser = 2.5\n" +
+        "\t\tthird_party_target = 0.25\n" +
+        "\t}\n"
+    );
+    expect(rendered).not.toContain("corvette = {\n");
+    expect(rendered).not.toContain("targetWeights");
   });
 
   it("takes the definition's scope for the clauses CWT leaves to it", () => {

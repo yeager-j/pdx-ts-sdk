@@ -283,7 +283,11 @@ export class ContentAuthoring {
       const raw = def[field.member];
       // An unkeyed splice has no key to build a path from, and nothing inside
       // it carries an identity or localisation of its own.
-      if (raw === undefined || field.shape === "inlineModifiers") {
+      if (
+        raw === undefined ||
+        field.shape === "inlineModifiers" ||
+        field.shape === "inlineTrigger"
+      ) {
         continue;
       }
       const fieldPath = path === "" ? field.key : `${path}_${field.key}`;
@@ -326,7 +330,7 @@ export class ContentAuthoring {
         );
         continue;
       }
-      if (field.shape === "struct") {
+      if (field.shape === "struct" || field.shape === "triggerStruct") {
         const items = field.repeated
           ? (raw as readonly Readonly<Record<string, unknown>>[])
           : [raw as Readonly<Record<string, unknown>>];

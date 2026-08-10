@@ -1538,6 +1538,40 @@
         ]
       ]
     },
+    "placement_rules.planet_possible": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 23,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "if",
+        "is_planet_class",
+        "is_star_class"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "if"
+        ],
+        [
+          "custom_tooltip",
+          "if",
+          "is_planet_class"
+        ],
+        [
+          "custom_tooltip",
+          "is_star_class"
+        ]
+      ]
+    },
     "plane_offset": {
       "definitions": 14,
       "repeated": 0,

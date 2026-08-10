@@ -204,7 +204,13 @@ const byRegistry = new Map(reports.map((report) => [report.registry, report]));
  * `modifier` row, and recording nothing there is the correct reading, not a
  * hole. Eleven such blocks exist across the fixture today.
  */
-const TOTAL_RECORDING_MODES = new Set(["struct", "wrappedStruct", "structMap", "repeatedStruct"]);
+const TOTAL_RECORDING_MODES = new Set([
+  "struct",
+  "wrappedStruct",
+  "structMap",
+  "repeatedStruct",
+  "triggerStruct",
+]);
 
 /** Every descent path in one registry's tree, with the mode that reaches it. */
 function descentPaths(
@@ -235,6 +241,34 @@ function mismatchesOfKind(kinds: readonly string[]): { key: string; detail: stri
 }
 
 describe("corpus conformance", () => {
+  it("records mixed trigger structs at their sibling and synthetic trigger paths", () => {
+    const megastructure = loadRegistryFixture("megastructure")!;
+    expect(megastructure.fields.placement_rules).toMatchObject({
+      definitions: 27,
+      blocks: 27,
+      emptyBlocks: 4,
+    });
+    expect(megastructure.fields["placement_rules.planet_possible"]).toMatchObject({
+      definitions: 23,
+      blocks: 23,
+      keys: ["custom_tooltip", "if", "is_planet_class", "is_star_class"],
+    });
+    // Vanilla 4.4.6 writes no direct alias-trigger entries in placement_rules;
+    // the generated `when` remains legal API rather than a corpus invention.
+    expect(megastructure.fields["placement_rules.when"]).toBeUndefined();
+
+    const decision = loadRegistryFixture("decision")!;
+    expect(decision.fields["custom_tooltip.success_text"]).toMatchObject({
+      definitions: 4,
+      scalars: 4,
+    });
+    expect(decision.fields["custom_tooltip.when"]).toMatchObject({
+      definitions: 4,
+      blocks: 4,
+      keys: ["NOT", "check_variable", "count_deposits", "owner"],
+    });
+  });
+
   it("has a committed fixture for every manifested registry", () => {
     // The hermetic gate is only as honest as its evidence: a manifested
     // registry with no fixture would silently measure nothing, which is the
@@ -462,6 +496,80 @@ describe("corpus conformance", () => {
       .sort();
     console.log("\nshape observations (reported, not failed):\n" + rows.join("\n"));
     expect(reports.length).toBeGreaterThan(0);
+  });
+
+  it("measures building.ai_resource_production and its colony trigger interior (SDK-65)", () => {
+    const building = byRegistry.get("building")!;
+    const operation = building.corpus.occurrences.get("ai_resource_production");
+    const trigger = building.corpus.occurrences.get("ai_resource_production.trigger");
+    expect(operation).toMatchObject({ definitions: 39, repeated: 12, blocks: 39 });
+    expect(trigger).toMatchObject({ definitions: 21, repeated: 0, blocks: 21 });
+    expect(building.unexpressed).not.toContainEqual(
+      expect.objectContaining({ field: "ai_resource_production" })
+    );
+    expect(building.shape).not.toContainEqual(
+      expect.objectContaining({ field: "ai_resource_production" })
+    );
+    expect(building.shape).not.toContainEqual(
+      expect.objectContaining({ field: "ai_resource_production.trigger" })
+    );
+  });
+
+  it("measures technology.mod_weight_if_group_picked's single open map (SDK-66)", () => {
+    const technology = byRegistry.get("technology")!;
+    const observation = technology.corpus.occurrences.get("mod_weight_if_group_picked");
+    expect(observation).toMatchObject({
+      definitions: 34,
+      repeated: 0,
+      blocks: 34,
+      emptyBlocks: 1,
+    });
+    // One empty outer block leaves 33 blocks with inner rows; the fixture's
+    // block count includes that empty declaration.
+    expect(observation!.blocks - observation!.emptyBlocks).toBe(33);
+    expect(observation!.keys).toEqual(new Set(["deposit_blockers", "repeatable"]));
+    expect(technology.unexpressed).not.toContainEqual(
+      expect.objectContaining({ field: "mod_weight_if_group_picked" })
+    );
+    expect(technology.shape).not.toContainEqual(
+      expect.objectContaining({ field: "mod_weight_if_group_picked" })
+    );
+  });
+
+  it("measures weapon target_weights' flat open map (SDK-67)", () => {
+    const weapon = byRegistry.get("weapon_component_template")!;
+    const observation = weapon.corpus.occurrences.get("target_weights");
+    expect(observation).toMatchObject({
+      definitions: 25,
+      repeated: 0,
+      blocks: 25,
+    });
+    expect(observation?.keys).toEqual(
+      new Set([
+        "battleship",
+        "corvette",
+        "cruiser",
+        "destroyer",
+        "frigate",
+        "harbinger_stage_1",
+        "harbinger_stage_2",
+        "harbinger_stage_3",
+        "mauler_stage_1",
+        "mauler_stage_2",
+        "mauler_stage_3",
+        "stinger_stage_1",
+        "stinger_stage_2",
+        "stinger_stage_3",
+        "titan",
+        "weaver_stage_1",
+        "weaver_stage_2",
+        "weaver_stage_3",
+      ])
+    );
+    expect(weapon.unexpressed).not.toContainEqual(
+      expect.objectContaining({ field: "target_weights" })
+    );
+    expect(weapon.shape).not.toContainEqual(expect.objectContaining({ field: "target_weights" }));
   });
 
   /**

@@ -36,6 +36,7 @@ import {
   type DecisionRef,
   type EconomicResourceBlock,
   type EconomicResourceBlockNoProduce,
+  type EconomicResourceOperation,
   type EdictRef,
   type EventChainRef,
   type EventFleetRef,
@@ -1377,6 +1378,74 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("authors technology's open single weight-group map (SDK-66)", () => {
+    expectTypeOf<TechnologyFields["modWeightIfGroupPicked"]>().toEqualTypeOf<
+      Readonly<Record<string, number>> | undefined
+    >();
+    expectTypeOf<TechnologyPatch["modWeightIfGroupPicked"]>().toEqualTypeOf<
+      PatchInput<Readonly<Record<string, number>>> | undefined
+    >();
+
+    contentMod.technology("mod_weight_if_group_picked", {
+      name: "Weight Group Test",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      // Keys remain open because value[tech_weight_group] is an engine value
+      // set, not a closed enum in the SDK surface.
+      modWeightIfGroupPicked: {
+        repeatable: 2,
+        deposit_blockers: 0.5,
+        third_party_group: 1.25,
+      },
+    });
+    contentMod.technology("mod_weight_if_group_picked_bad_value", {
+      name: "Weight Group Bad Value",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      // @ts-expect-error — scalarMap values are numbers, not nested blocks.
+      modWeightIfGroupPicked: { repeatable: { value: 2 } },
+    });
+    contentMod.technology("mod_weight_if_group_picked_bad_form", {
+      name: "Weight Group Bad Form",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      // @ts-expect-error — the outer member is one record, not an array of
+      // repeated maps; arity: "single" keeps its type and metadata aligned.
+      modWeightIfGroupPicked: [{ repeatable: 2 }],
+    });
+  });
+
+  it("authors weapon_component_template's open target-weight map (SDK-67)", () => {
+    expectTypeOf<WeaponComponentTemplateFields["targetWeights"]>().toEqualTypeOf<
+      Readonly<Record<string, number>> | undefined
+    >();
+
+    contentMod.weaponComponentTemplate("target_weights", {
+      icon: "GFX_weapon_target_weights",
+      targetWeights: {
+        corvette: 1,
+        cruiser: 2.5,
+        third_party_target: 0.25,
+      },
+    });
+    contentMod.weaponComponentTemplate("target_weights_bad_value", {
+      icon: "GFX_weapon_target_weights",
+      targetWeights: {
+        // @ts-expect-error — scalarMap values are numbers, not nested blocks.
+        corvette: { weight: 1 },
+      },
+    });
+    contentMod.weaponComponentTemplate("target_weights_bad_form", {
+      icon: "GFX_weapon_target_weights",
+      // @ts-expect-error — the outer target_weights block is a single map, not
+      // a repeated list of maps.
+      targetWeights: [{ corvette: 1 }],
+    });
+  });
+
   it("authors technology's modifier at both levels the rules declare it (SDK-63)", () => {
     // technologies_consolidated.cwt declares the same
     // `single_alias_right[modifier_clause]` twice — once on the definition
@@ -1572,6 +1641,46 @@ describe("generated content authoring types", () => {
           // @ts-expect-error — building's body is colony-scoped, so a
           // ship-scope condition is not a legal `when` here
           cost: { amounts: { alloys: 300 }, when: hasShipFlag("x") },
+        },
+      ],
+    });
+  });
+
+  it("authors repeated building.ai_resource_production operations (SDK-65)", () => {
+    expectTypeOf<BuildingFields["aiResourceProduction"]>().toEqualTypeOf<
+      EconomicResourceOperation<"colony">[] | undefined
+    >();
+    expectTypeOf<BuildingPatch["aiResourceProduction"]>().toEqualTypeOf<
+      PatchInput<EconomicResourceOperation<"colony">[]> | undefined
+    >();
+
+    contentMod.building("ai_resource_production", {
+      name: "X",
+      aiResourceProduction: [
+        { amounts: { energy: 2 }, when: isCapital(), mult: [1, 2] },
+        { amounts: { unity: 1 }, multiplier: 0.5 },
+      ],
+    });
+
+    contentMod.building("ai_resource_production_wrong_form", {
+      name: "X",
+      aiResourceProduction: [
+        {
+          // @ts-expect-error — the operation owns an `amounts` map; its
+          // resource ids are not direct object members.
+          energy: 2,
+        },
+      ],
+    });
+
+    contentMod.building("ai_resource_production_wrong_scope", {
+      name: "X",
+      aiResourceProduction: [
+        {
+          amounts: { energy: 2 },
+          // @ts-expect-error — this direct trigger runs in the building's
+          // colony scope, not ship scope.
+          when: hasShipFlag("x"),
         },
       ],
     });
@@ -1828,6 +1937,20 @@ describe("generated content authoring types", () => {
   });
 
   it("scopes a megastructure's clauses by the rules' replace_scopes", () => {
+    expectTypeOf<MegastructureFields["placementRules"]>().toEqualTypeOf<
+      | {
+          planetPossible?: Trigger<"planet">;
+          when?: Trigger<never>;
+        }
+      | undefined
+    >();
+    expectTypeOf<MegastructurePatch["placementRules"]>().toEqualTypeOf<
+      | PatchInput<{
+          planetPossible?: Trigger<"planet">;
+          when?: Trigger<never>;
+        }>
+      | undefined
+    >();
     contentMod.megastructure("scopes", {
       name: "X",
       entity: "x_entity",
@@ -1840,6 +1963,18 @@ describe("generated content authoring types", () => {
       },
       // A station modifier applies in megastructure scope, not country.
       stationModifier: (m) => m.unchecked("starbase_shipyard_capacity_add", 5),
+      placementRules: {
+        when: hasCountryFlag("unchecked_placement_scope"),
+        planetPossible: hasPlanetFlag("planet_only"),
+      },
+    });
+    contentMod.megastructure("bad_placement_scope", {
+      name: "X",
+      entity: "x_entity",
+      placementRules: {
+        // @ts-expect-error — planet_possible has its own planet replace_scope.
+        planetPossible: hasCountryFlag("country_only"),
+      },
     });
     contentMod.megastructure("bad_scopes", {
       name: "X",
@@ -1855,6 +1990,32 @@ describe("generated content authoring types", () => {
         system.setCapital(true);
       },
     });
+  });
+
+  it("keeps mixed tooltip blocks optional and dual with their scalar forms", () => {
+    contentMod.decision("tooltip", {
+      name: "X",
+      effect: () => {},
+      customTooltip: { when: hasPlanetFlag("planet_only") },
+    });
+    contentMod.decision("tooltip_wrong_scope", {
+      name: "X",
+      effect: () => {},
+      customTooltip: {
+        // @ts-expect-error — the default decision scope is planet.
+        when: hasCountryFlag("country_only"),
+      },
+    });
+    expectTypeOf<UtilityComponentTemplateFields["customTooltip"]>().toEqualTypeOf<
+      | string
+      | {
+          text?: "" | string;
+          failText?: "default" | string;
+          successText?: string;
+          when?: Trigger<never>;
+        }
+      | undefined
+    >();
   });
 
   it("keeps the planet and moon bodies distinct, and the registry's refs branded", () => {

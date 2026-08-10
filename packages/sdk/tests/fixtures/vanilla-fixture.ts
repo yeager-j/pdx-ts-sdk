@@ -23,8 +23,9 @@
  * (`entity_offset`), an upgrade chain through `upgrade_from`, repeated
  * `triggered_country_modifier` blocks written the way vanilla writes them
  * (bare modifier names, no `modifier = { ... }` wrapper), and
- * `placement_rules` — a field the emitter declines (SDK-84), so a patch has to
- * carry it through untouched or lose it.
+ * `placement_rules` — now authorable through SDK-84's mixed trigger-struct
+ * lowering, while this fixture still pins its vanilla patch round-trip and
+ * passthrough behavior.
  */
 
 export const TECH_FILE = `# ##################

@@ -20,6 +20,7 @@ import { scriptValueScalar, type ScriptValue, type Trigger } from "../script/tri
 import {
   ECONOMIC_RESOURCE_OPERATIONS,
   ECONOMIC_RESOURCE_OPERATIONS_NO_PRODUCE,
+  economicOperation,
   economicResourceBlock,
   modifierBlock,
   modifierEntries,
@@ -38,6 +39,7 @@ import {
 import type {
   EconomicResourceBlock,
   EconomicResourceBlockNoProduce,
+  EconomicResourceOperation,
   EffectBlock,
   ModifierClosure,
   TriggeredModifier,
@@ -106,10 +108,12 @@ export function dualArm(field: ContentDualField, value: unknown): ContentDualArm
 function acceptsFromClosure(field: ContentField): boolean {
   switch (field.shape) {
     case "trigger":
+    case "inlineTrigger":
     case "weightBlock":
     case "weightBlockWithLoc":
     case "economicResources":
     case "economicResourcesNoProduce":
+    case "economicResourceOperation":
     case "triggeredModifierBlock":
       return true;
     case "dual":
@@ -162,11 +166,17 @@ export function resolveFromClosures(
     if (value === undefined) {
       continue;
     }
+    if (field.shape === "dual") {
+      const arm = dualArm(field, value);
+      const nested = resolveFromClosures({ [arm.member]: value }, [arm]);
+      resolved[field.member] = nested[arm.member];
+      continue;
+    }
     if (acceptsFromClosure(field)) {
       resolved[field.member] = resolveFromClosure(field, value);
       continue;
     }
-    if (field.shape === "struct") {
+    if (field.shape === "struct" || field.shape === "triggerStruct") {
       resolved[field.member] = field.repeated
         ? (value as readonly Readonly<Record<string, unknown>>[]).map((item) =>
             resolveFromClosures(item, field.fields)
@@ -409,6 +419,13 @@ export function fieldEntries(
         );
         break;
       }
+      case "economicResourceOperation": {
+        const values = field.repeated
+          ? (value as readonly EconomicResourceOperation<ScopeName>[])
+          : [value as EconomicResourceOperation<ScopeName>];
+        entries.push(...values.map((item) => economicOperation(field.key, item, ctx)));
+        break;
+      }
       case "triggeredModifierBlock": {
         const values = field.repeated
           ? (value as readonly TriggeredModifier<ScopeName>[])
@@ -421,6 +438,10 @@ export function fieldEntries(
         break;
       case "inlineModifiers":
         entries.push(...modifierEntries(value as ModifierClosure));
+        break;
+      case "inlineTrigger":
+        entries.push(...(value as Trigger<ScopeName>).entries);
+        collectRefs(ctx, (value as Trigger<ScopeName>).refs, field.member);
         break;
       case "weightBlock":
       case "weightBlockWithLoc":
@@ -464,6 +485,17 @@ export function fieldEntries(
           );
           break;
         }
+        const values = field.repeated
+          ? (value as readonly Readonly<Record<string, unknown>>[])
+          : [value as Readonly<Record<string, unknown>>];
+        entries.push(
+          ...values.map((item) =>
+            block(field.key, fieldEntries(item, field.fields, childContext(ctx, field.key)))
+          )
+        );
+        break;
+      }
+      case "triggerStruct": {
         const values = field.repeated
           ? (value as readonly Readonly<Record<string, unknown>>[])
           : [value as Readonly<Record<string, unknown>>];

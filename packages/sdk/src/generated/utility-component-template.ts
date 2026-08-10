@@ -39,6 +39,27 @@ import type {
 } from "./refs.ts";
 import type { UpgradePath } from "./value-sets.ts";
 
+export interface UtilityComponentTemplateCustomTooltip {
+  text?: "" | string;
+  failText?: "default" | string;
+  successText?: string;
+  when?: Trigger<never>;
+}
+
+export const UTILITY_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS: readonly ContentField[] = [
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "fail_text", member: "failText", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "success_text",
+    member: "successText",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
+  { member: "when", shape: "inlineTrigger" },
+];
+
 export interface UtilityComponentTemplateInjectedModifierModifier {
   modifier: ModifierRef | string | StaticModifierRef;
   days?: number;
@@ -462,7 +483,7 @@ export interface UtilityComponentTemplateFields {
   shipLimit?: number;
   sizeRestriction?: (ShipSizeRef | string | "null")[];
   blockedBy?: (ComponentTemplateRef | string)[];
-  customTooltip?: string;
+  customTooltip?: string | UtilityComponentTemplateCustomTooltip;
   shouldAiUse?: boolean;
   validForCountry?: Trigger<"country">;
   aiWeight?: WeightBlock<"country">;
@@ -792,10 +813,24 @@ export const UTILITY_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
   {
     key: "custom_tooltip",
     member: "customTooltip",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-    locKey: true,
+    shape: "dual",
+    arms: [
+      {
+        key: "custom_tooltip",
+        member: "customTooltip",
+        shape: "value",
+        form: "scalar",
+        conversion: "identity",
+        locKey: true,
+      },
+      {
+        key: "custom_tooltip",
+        member: "customTooltip",
+        shape: "triggerStruct",
+        form: "block",
+        fields: UTILITY_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS,
+      },
+    ],
   },
   {
     key: "should_ai_use",

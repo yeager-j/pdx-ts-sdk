@@ -89,6 +89,11 @@ interface ContentEconomicResourcesField extends ContentFieldBase {
   readonly shape: "economicResources";
 }
 
+/** One directly-authored {@link EconomicResourceOperation}, rather than an economic template. */
+interface ContentEconomicResourceOperationField extends ContentFieldBase {
+  readonly shape: "economicResourceOperation";
+}
+
 /**
  * {@link ContentEconomicResourcesField} for a field CWT splices from
  * `economic_template_no_produce` rather than plain `economic_template` — the
@@ -119,6 +124,12 @@ interface ContentModifierField extends ContentFieldBase {
  */
 interface ContentInlineModifiersField {
   readonly shape: "inlineModifiers";
+  readonly member: string;
+}
+
+/** A trigger spliced directly into its owning struct, with no game key. */
+interface ContentInlineTriggerField {
+  readonly shape: "inlineTrigger";
   readonly member: string;
 }
 
@@ -186,6 +197,12 @@ interface ContentStructField extends ContentFieldBase {
    * an array value, independent of `repeated`.
    */
   readonly wrapped?: boolean;
+}
+
+/** A struct whose `when` member writes direct trigger entries beside its named siblings. */
+interface ContentTriggerStructField extends ContentFieldBase {
+  readonly shape: "triggerStruct";
+  readonly fields: readonly ContentField[];
 }
 
 /**
@@ -270,15 +287,18 @@ export type ContentField =
   | ContentTriggerField
   | ContentEffectField
   | ContentEconomicResourcesField
+  | ContentEconomicResourceOperationField
   | ContentEconomicResourcesNoProduceField
   | ContentTriggeredModifierField
   | ContentModifierField
   | ContentInlineModifiersField
+  | ContentInlineTriggerField
   | ContentWeightField
   | ContentWeightWithLocField
   | ContentDualField
   | ContentWeightedEventsField
   | ContentStructField
+  | ContentTriggerStructField
   | ContentAliasStructField
   | ContentStructMapField
   | ContentScalarMapField
@@ -293,7 +313,10 @@ export type ContentField =
  * need) is what lets {@link dualArm} read `.form` off an arm without a runtime
  * guard.
  */
-export type ContentDualArm = Exclude<ContentField, ContentDualField | ContentInlineModifiersField>;
+export type ContentDualArm = Exclude<
+  ContentField,
+  ContentDualField | ContentInlineModifiersField | ContentInlineTriggerField
+>;
 
 /**
  * The five shapes an authored value can arrive in, which is all the writer
