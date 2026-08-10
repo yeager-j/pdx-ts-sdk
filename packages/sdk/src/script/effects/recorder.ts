@@ -153,7 +153,7 @@ function fieldEntries(
     }
     switch (field.kind) {
       case "value": {
-        const scalar = toScalar(value);
+        const scalar = toScalar(value, field.booleanLiterals);
         recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
         entries.push(kv(field.key, scalar));
         break;
@@ -162,7 +162,7 @@ function fieldEntries(
         if (Array.isArray(value)) {
           entries.push(cmp(field.key, value[0] as PdxOp, value[1] as number));
         } else {
-          const scalar = toScalar(value);
+          const scalar = toScalar(value, field.booleanLiterals);
           recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
           entries.push(kv(field.key, scalar));
         }
@@ -401,7 +401,7 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
         return (value: boolean = true) => sink.push(kv(meta.key, value));
       case "value":
         return (value: unknown) => {
-          const scalar = toScalar(value);
+          const scalar = toScalar(value, shape.booleanLiterals);
           recordRef(refs, shape.refTypes, meta.key, scalar);
           sink.push(kv(meta.key, scalar));
         };

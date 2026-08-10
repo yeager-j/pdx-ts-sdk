@@ -17,7 +17,10 @@ import type { ScopeValue } from "./effects/types.ts";
 /** Anything that lowers to one PDXScript scalar. */
 export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValue;
 
-export function toScalar(value: unknown): string | number | boolean | PdxScalar {
+export function toScalar(
+  value: unknown,
+  booleanLiterals: readonly ("yes" | "no")[] = []
+): string | number | boolean | PdxScalar {
   if (typeof value === "object" && value !== null) {
     if ("path" in value) {
       return (value as ScopeValue).path;
@@ -35,6 +38,13 @@ export function toScalar(value: unknown): string | number | boolean | PdxScalar 
   // check is safe to apply unconditionally here too.
   if (typeof value === "string" && value.startsWith("@")) {
     return varRef(value);
+  }
+  if (
+    typeof value === "string" &&
+    (value === "yes" || value === "no") &&
+    booleanLiterals.includes(value)
+  ) {
+    return value === "yes";
   }
   return value as string | number | boolean;
 }

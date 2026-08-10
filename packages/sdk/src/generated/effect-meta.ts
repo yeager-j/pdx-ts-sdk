@@ -17,11 +17,17 @@ export interface EffectFieldMeta {
    * `buildMod` resolves what the recorder reports against the built ids.
    */
   readonly refTypes?: readonly string[];
+  /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */
+  readonly booleanLiterals?: readonly ("yes" | "no")[];
 }
 
 export type EffectShapeMeta =
   | { readonly kind: "bool" }
-  | { readonly kind: "value"; readonly refTypes?: readonly string[] }
+  | {
+      readonly kind: "value";
+      readonly refTypes?: readonly string[];
+      readonly booleanLiterals?: readonly ("yes" | "no")[];
+    }
   | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }
   | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null };
 
@@ -264,7 +270,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "mult", key: "mult", kind: "value" },
         { prop: "multiplier", key: "multiplier", kind: "value" },
         { prop: "timeMultiplier", key: "time_multiplier", kind: "value" },
-        { prop: "clearOnOwnerChange", key: "clear_on_owner_change", kind: "value" },
+        {
+          prop: "clearOnOwnerChange",
+          key: "clear_on_owner_change",
+          kind: "value",
+          booleanLiterals: ["yes"],
+        },
       ],
     },
   },
@@ -572,7 +583,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "species", key: "species", kind: "value" },
-        { prop: "changeAll", key: "change_all", kind: "value" },
+        { prop: "changeAll", key: "change_all", kind: "value", booleanLiterals: ["yes"] },
       ],
     },
   },
@@ -779,7 +790,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "center", key: "center", kind: "value" },
         { prop: "radius", key: "radius", kind: "modifiers" },
-        { prop: "isTimedInfluenceField", key: "is_timed_influence_field", kind: "value" },
+        {
+          prop: "isTimedInfluenceField",
+          key: "is_timed_influence_field",
+          kind: "value",
+          booleanLiterals: ["yes"],
+        },
       ],
     },
   },
@@ -1523,7 +1539,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "trigger", key: "trigger", kind: "value" },
         { prop: "parameters", key: "parameters", kind: "value" },
         { prop: "variable", key: "variable", kind: "value" },
-        { prop: "rounded", key: "rounded", kind: "value" },
+        { prop: "rounded", key: "rounded", kind: "value", booleanLiterals: ["yes"] },
       ],
     },
   },
@@ -4253,7 +4269,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   removeCommunications: { key: "remove_communications", shape: { kind: "value" } },
   removeCountryFlag: { key: "remove_country_flag", shape: { kind: "value" } },
-  removeDeposit: { key: "remove_deposit", shape: { kind: "value" } },
+  removeDeposit: { key: "remove_deposit", shape: { kind: "value", booleanLiterals: ["yes"] } },
   removeDepositFlag: { key: "remove_deposit_flag", shape: { kind: "value" } },
   removeDesignFlag: { key: "remove_design_flag", shape: { kind: "value" } },
   removeDistrict: { key: "remove_district", shape: { kind: "value", refTypes: ["district"] } },
@@ -4804,7 +4820,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setGalacticEmperor: { key: "set_galactic_emperor", shape: { kind: "bool" } },
   setGender: { key: "set_gender", shape: { kind: "value" } },
   setGlobalFlag: { key: "set_global_flag", shape: { kind: "value" } },
-  setGovernmentCooldown: { key: "set_government_cooldown", shape: { kind: "value" } },
+  setGovernmentCooldown: {
+    key: "set_government_cooldown",
+    shape: { kind: "value", booleanLiterals: ["no"] },
+  },
   setGraphicalCulture: { key: "set_graphical_culture", shape: { kind: "value" } },
   setHabitabilityTrait: {
     key: "set_habitability_trait",
@@ -5523,7 +5542,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "type", key: "type", kind: "value", refTypes: ["storm_types"] },
         { prop: "cosmicStormStartPosition", key: "cosmic_storm_start_position", kind: "value" },
-        { prop: "immediate", key: "immediate", kind: "value" },
+        { prop: "immediate", key: "immediate", kind: "value", booleanLiterals: ["yes"] },
       ],
     },
   },
