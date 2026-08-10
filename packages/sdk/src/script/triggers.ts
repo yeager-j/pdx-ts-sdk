@@ -10,6 +10,12 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import type {
+  EventChainCounterOf,
+  EventChainItem,
+  ExternalEventChainRef,
+} from "../content/event-chains.ts";
+import { refId } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { conjoin, trigger, type Trigger } from "./trigger-core.ts";
 
@@ -89,6 +95,45 @@ export function canSetSituationApproach<const Approach extends string>(
   value: Approach
 ): SituationTrigger<Approach, never> {
   return trigger([kv("can_set_situation_approach", value)]) as SituationTrigger<Approach, never>;
+}
+
+type DefinedEventChainCounterArgs<Chain extends EventChainItem> = {
+  readonly eventChain: Chain;
+  readonly counter: EventChainCounterOf<Chain>;
+};
+
+type ExternalEventChainCounterArgs = {
+  readonly eventChain: ExternalEventChainRef;
+  readonly counter: string;
+};
+
+/** Checks whether the country completed a declared counter in an event chain. */
+export function hasCompletedEventChainCounter<Chain extends EventChainItem>(
+  args: DefinedEventChainCounterArgs<Chain>
+): Trigger<"country">;
+/** Checks a vanilla or third-party chain counter whose declaration is not available to this build. */
+export function hasCompletedEventChainCounter(
+  args: ExternalEventChainCounterArgs
+): Trigger<"country">;
+export function hasCompletedEventChainCounter(
+  args: DefinedEventChainCounterArgs<EventChainItem> | ExternalEventChainCounterArgs
+): Trigger<"country"> {
+  const id = String(refId(args.eventChain));
+  return trigger(
+    [
+      block("has_completed_event_chain_counter", [
+        kv("event_chain", id),
+        kv("counter", args.counter),
+      ]),
+    ],
+    [
+      {
+        targets: ["event_chain"],
+        id,
+        field: "has_completed_event_chain_counter.event_chain",
+      },
+    ]
+  );
 }
 
 /** Operand references travel with the combinator: a technology named inside an

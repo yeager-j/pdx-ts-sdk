@@ -10,6 +10,7 @@ import {
   currentSituationApproach,
   currentStage,
   hasAuthority,
+  hasCompletedEventChainCounter,
   hasCountryFlag,
   hasPlanetFlag,
   hasShipFlag,
@@ -38,6 +39,7 @@ import {
   type EconomicResourceBlockNoProduce,
   type EconomicResourceOperation,
   type EdictRef,
+  type EventChainCounterOf,
   type EventChainRef,
   type EventFleetRef,
   type GovernmentTriggerBlock,
@@ -1876,6 +1878,44 @@ describe("generated content authoring types", () => {
     const _wrongChain: EventChainRef = project;
     // @ts-expect-error — an event chain cannot flow into a special-project reference.
     const _wrongProject: SpecialProjectRef = chain;
+  });
+
+  it("connects an event chain's declared counters to every counter consumer", () => {
+    const insightChain = contentMod.eventChain("insights", {
+      counter: { insights: { max: 6 } },
+    });
+    const artifactChain = contentMod.eventChain("artifacts", {
+      counter: { artifacts: { max: 3 } },
+    });
+    const emptyChain = contentMod.eventChain("empty", {});
+    const country = makeScope<"country">([]);
+
+    expectTypeOf<EventChainCounterOf<typeof insightChain>>().toEqualTypeOf<"insights">();
+    country.addEventChainCounter({ eventChain: insightChain, counter: "insights", amount: 1 });
+    country.resetEventChainCounter({ eventChain: insightChain, counter: "insights" });
+    hasCompletedEventChainCounter({ eventChain: insightChain, counter: "insights" });
+    country.addEventChainCounter({
+      eventChain: "other_mod_chain",
+      counter: "any_counter",
+      amount: 1,
+    });
+    country.resetEventChainCounter({
+      eventChain: vanilla.eventChain("vanilla_chain"),
+      counter: "vanilla_counter",
+    });
+
+    // @ts-expect-error — the chain did not declare this counter.
+    country.addEventChainCounter({ eventChain: insightChain, counter: "insght", amount: 1 });
+    // @ts-expect-error — reset has the same counter contract.
+    country.resetEventChainCounter({ eventChain: insightChain, counter: "insght" });
+    // @ts-expect-error — completion checks share the same counter contract.
+    hasCompletedEventChainCounter({ eventChain: insightChain, counter: "insght" });
+    // @ts-expect-error — a counter from a different chain is not interchangeable.
+    country.addEventChainCounter({ eventChain: insightChain, counter: "artifacts", amount: 1 });
+    // @ts-expect-error — a chain without a counter map declares no usable counters.
+    country.resetEventChainCounter({ eventChain: emptyChain, counter: "anything" });
+
+    expectTypeOf<EventChainCounterOf<typeof artifactChain>>().toEqualTypeOf<"artifacts">();
   });
 
   it("preserves a megastructure's id and brands its self-reference", () => {

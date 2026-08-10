@@ -30,6 +30,7 @@ export type { VanillaScriptedModifierId } from "./registries/scripted-modifier.t
 export type { VanillaScriptedTriggerParams } from "./scripted-triggers.ts";
 export type { VanillaSectionTemplateId } from "./registries/section-template.ts";
 export type { VanillaShipSizeId } from "./registries/ship-size.ts";
+export type { VanillaSituationLogCategoryId } from "./registries/situation-log-category.ts";
 export type { VanillaSituationTypeId } from "./registries/situation-type.ts";
 export type { VanillaSolarSystemInitializerId } from "./registries/solar-system-initializer.ts";
 export type { VanillaSoundEffectId } from "./registries/sound-effect.ts";

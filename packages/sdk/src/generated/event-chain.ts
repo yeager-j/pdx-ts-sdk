@@ -7,11 +7,11 @@ import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { SituationLogCategoryRef, SpriteRef } from "./refs.ts";
 
-export interface EventChainCounter {
+export interface EventChainCounterDefinition {
   max?: number;
 }
 
-export const EVENT_CHAIN_COUNTER_FIELDS: readonly ContentField[] = [
+export const EVENT_CHAIN_COUNTER_DEFINITION_FIELDS: readonly ContentField[] = [
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
@@ -26,7 +26,7 @@ export interface EventChainFields {
   desc?: string;
   icon?: string;
   picture?: SpriteRef | string;
-  counter?: Readonly<Record<string, EventChainCounter>>;
+  counter?: Readonly<Record<string, EventChainCounterDefinition>>;
   situationLogCategory?: SituationLogCategoryRef | string;
   abortTrigger?: Trigger<"country">;
 }
@@ -56,7 +56,7 @@ export const EVENT_CHAIN_FIELDS: readonly ContentField[] = [
     member: "counter",
     shape: "structMap",
     form: "block",
-    fields: EVENT_CHAIN_COUNTER_FIELDS,
+    fields: EVENT_CHAIN_COUNTER_DEFINITION_FIELDS,
     repeated: true,
   },
   {

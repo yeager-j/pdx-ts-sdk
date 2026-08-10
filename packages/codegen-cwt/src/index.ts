@@ -756,7 +756,7 @@ function contentDefiners(
       .map((field) => camelCase(field.field))
       .sort();
     const nestedDefinitionTable = `${registry.toUpperCase()}_NESTED_DEFINITION_MEMBERS`;
-    if (nestedDefinitionMembers.length > 0) {
+    if (nestedDefinitionMembers.length > 0 && graft === undefined) {
       nestedDefinitionTables.push(
         `const ${nestedDefinitionTable} = ${JSON.stringify(nestedDefinitionMembers)} as const;\n`
       );
@@ -844,48 +844,6 @@ function contentDefiners(
         )
       );
       capabilityRuntimeDefiners.add(`define${name}`);
-    } else {
-      capabilityMembers.push(
-        docComment(
-          [
-            `Defines ${article} ${spoken} from its logical name.`,
-            "The capability mints and owns the full id; the returned branded reference",
-            "flows into matching content-reference fields.",
-            ...(nestedDefinitionMembers.length === 0
-              ? []
-              : [
-                  "Nested-definition record keys are full ids and must belong to this capability's",
-                  "prefix, because other fields may reference them directly.",
-                ]),
-          ],
-          "  "
-        ) +
-          `  ${method}<\n` +
-          `    const Name extends string,\n` +
-          `    T extends ScopeName | undefined = undefined,\n` +
-          `    const Approach extends string = never,\n` +
-          `    const Stage extends string = never,\n` +
-          `  >(\n` +
-          `    name: Name,\n` +
-          `    def: Omit<SituationTypeCapabilityDef<${minted}, T, Approach, Stage>, "id">\n` +
-          `  ): ContentItem<${key}, ${name}Def<${minted}>> & { readonly targetScope: T };`
-      );
-      capabilityBindings.push(
-        capabilityBinding(
-          method,
-          `<\n` +
-            `      const Name extends string,\n` +
-            `      T extends ScopeName | undefined = undefined,\n` +
-            `      const Approach extends string = never,\n` +
-            `      const Stage extends string = never,\n` +
-            `    >`,
-          `Omit<SituationTypeCapabilityDef<${minted}, T, Approach, Stage>, "id">`,
-          `define${name}`,
-          `SituationTypeCapabilityDef<${minted}, T, Approach, Stage>`,
-          nestedDefinitionMembers,
-          nestedDefinitionTable
-        )
-      );
     }
     if (patchable !== undefined) {
       capabilityMembers.push(
@@ -978,7 +936,7 @@ function contentDefiners(
       definitions.push(
         `// define${name} is hand-written; re-exported here so every definer this\n` +
           "// SDK has comes from one module.\n" +
-          `export { define${name} } from "../content/situations.ts";\n`
+          `export { ${graft.definer} } from ${JSON.stringify(graft.module)};\n`
       );
     }
     if (patchable !== undefined) {
@@ -1099,12 +1057,6 @@ function contentDefiners(
         )
       ),
     ]);
-  const graftImports = contents.some((content) =>
-    HAND_WRITTEN_CONTENT_DEFINERS.has(content.registry)
-  )
-    ? 'import { defineSituationType, type SituationTypeCapabilityDef } from "../content/situations.ts";\n' +
-      'import type { ScopeName } from "./scopes.ts";\n'
-    : "";
   const capabilityImports =
     'import type { ContentItem } from "../content/types.ts";\n' +
     (capabilityRuntimeDefiners.size === 0
@@ -1144,8 +1096,7 @@ function contentDefiners(
             : [content.emission.scopeParameter.parameterType]
         )
       ),
-    ]) +
-    graftImports;
+    ]);
   const capability =
     nestedDefinitionTables.join("\n") +
     "type NestedDefinitionIdAsserter = (id: string) => void;\n\n" +

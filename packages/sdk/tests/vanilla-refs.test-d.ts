@@ -21,6 +21,7 @@ import {
   type ScopeName,
   type ScriptedEffectCall,
   type ScriptedParamValue,
+  type SituationLogCategoryRef,
   type SpriteRef,
   type TechnologyRef,
   type Trigger,
@@ -43,6 +44,12 @@ describe("checked registry helpers without the package", () => {
       category: "computing",
       prerequisites: [vanilla.technology("tech_lasers_1")],
     });
+  });
+
+  it("keeps situation-log categories constructible without the identifier package", () => {
+    const category = vanilla.situationLogCategory("any_category");
+    expectTypeOf(category.id).toEqualTypeOf<"any_category">();
+    expectTypeOf(category).toExtend<SituationLogCategoryRef>();
   });
 
   it("still brands per registry, so a building is not a technology prerequisite", () => {

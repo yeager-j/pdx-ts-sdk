@@ -65,6 +65,30 @@ add_resource = {
 `);
   });
 
+  it("records event-chain counter operations through the hand-written counter contract", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+
+    country.addEventChainCounter({
+      eventChain: "effects_test_chain",
+      counter: "insights",
+      amount: 1,
+    });
+    country.resetEventChainCounter({ eventChain: "effects_test_chain", counter: "insights" });
+
+    expect(serialize(sink)).toBe(`add_event_chain_counter = {
+	event_chain = effects_test_chain
+	counter = insights
+	amount = 1
+}
+
+reset_event_chain_counter = {
+	event_chain = effects_test_chain
+	counter = insights
+}
+`);
+  });
+
   it("records a scope link as a body-only block", () => {
     const sink: PdxEntry[] = [];
     const planet = makeScope<"planet">(sink);

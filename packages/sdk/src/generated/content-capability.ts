@@ -33,7 +33,6 @@
 // From: common/megastructures.cwt
 // From: content-manifest.ts
 
-import { defineSituationType, type SituationTypeCapabilityDef } from "../content/situations.ts";
 import type { ContentItem } from "../content/types.ts";
 import type {
   ParsedBuilding,
@@ -67,7 +66,6 @@ import {
   defineDecision,
   defineEconomicCategory,
   defineEdict,
-  defineEventChain,
   defineGlobalShipDesign,
   defineGraphicalCulture,
   defineJob,
@@ -109,7 +107,6 @@ import type {
   MegastructurePatchItem,
 } from "./megastructure.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
-import type { ScopeName } from "./scopes.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
 import type { SectionTemplateDef } from "./section-template.ts";
@@ -135,8 +132,6 @@ import type { WeaponComponentTemplateDef } from "./weapon-component-template.ts"
 const TRADITION_NESTED_DEFINITION_MEMBERS = ["traditionSwap"] as const;
 
 const ASCENSION_PERK_NESTED_DEFINITION_MEMBERS = ["traditionSwap"] as const;
-
-const SITUATION_TYPE_NESTED_DEFINITION_MEMBERS = ["approach", "stages"] as const;
 type NestedDefinitionIdAsserter = (id: string) => void;
 
 function assertNestedDefinitionIds(
@@ -679,28 +674,6 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>
   >;
   /**
-   * Defines a situation type from its logical name.
-   * The capability mints and owns the full id; the returned branded reference
-   * flows into matching content-reference fields.
-   * Nested-definition record keys are full ids and must belong to this capability's
-   * prefix, because other fields may reference them directly.
-   */
-  situationType<
-    const Name extends string,
-    T extends ScopeName | undefined = undefined,
-    const Approach extends string = never,
-    const Stage extends string = never,
-  >(
-    name: Name,
-    def: Omit<
-      SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>, T, Approach, Stage>,
-      "id"
-    >
-  ): ContentItem<
-    "situation_type",
-    SituationTypeDef<MintedContentId<P, I, "situationType", Name>>
-  > & { readonly targetScope: T };
-  /**
    * Defines a scripted loc from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -834,15 +807,6 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     "solar_system_initializer",
     SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>
   >;
-  /**
-   * Defines an event chain from its logical name.
-   * The capability mints and owns the full id; the returned branded reference
-   * flows into matching content-reference fields.
-   */
-  eventChain<const Name extends string>(
-    name: Name,
-    def: Omit<EventChainDef<MintedContentId<P, I, "eventChain", Name>>, "id">
-  ): ContentItem<"event_chain", EventChainDef<MintedContentId<P, I, "eventChain", Name>>>;
   /**
    * Defines a special project from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1073,34 +1037,6 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         ...def,
         id: mint("archaeologicalSiteType", name),
       } as ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>),
-    situationType: <
-      const Name extends string,
-      T extends ScopeName | undefined = undefined,
-      const Approach extends string = never,
-      const Stage extends string = never,
-    >(
-      name: Name,
-      def: Omit<
-        SituationTypeCapabilityDef<
-          MintedContentId<P, I, "situationType", Name>,
-          T,
-          Approach,
-          Stage
-        >,
-        "id"
-      >
-    ) => {
-      assertNestedDefinitionIds(def, assertNestedId, SITUATION_TYPE_NESTED_DEFINITION_MEMBERS);
-      return defineSituationType({
-        ...def,
-        id: mint("situationType", name),
-      } as SituationTypeCapabilityDef<
-        MintedContentId<P, I, "situationType", Name>,
-        T,
-        Approach,
-        Stage
-      >);
-    },
     scriptedLoc: <const Name extends string>(
       name: Name,
       def: Omit<ScriptedLocDef<MintedContentId<P, I, "scriptedLoc", Name>>, "id">
@@ -1194,13 +1130,6 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         ...def,
         id: mint("solarSystemInitializer", name),
       } as SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>),
-    eventChain: <const Name extends string>(
-      name: Name,
-      def: Omit<EventChainDef<MintedContentId<P, I, "eventChain", Name>>, "id">
-    ) =>
-      defineEventChain({ ...def, id: mint("eventChain", name) } as EventChainDef<
-        MintedContentId<P, I, "eventChain", Name>
-      >),
     specialProject: <const Name extends string, E extends SpEventScope = "country_event">(
       name: Name,
       def: SpecialProjectFields<E>

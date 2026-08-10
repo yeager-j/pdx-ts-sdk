@@ -26,6 +26,7 @@ import type { VanillaScriptedLocId } from "./registries/scripted-loc.ts";
 import type { VanillaScriptedModifierId } from "./registries/scripted-modifier.ts";
 import type { VanillaSectionTemplateId } from "./registries/section-template.ts";
 import type { VanillaShipSizeId } from "./registries/ship-size.ts";
+import type { VanillaSituationLogCategoryId } from "./registries/situation-log-category.ts";
 import type { VanillaSituationTypeId } from "./registries/situation-type.ts";
 import type { VanillaSolarSystemInitializerId } from "./registries/solar-system-initializer.ts";
 import type { VanillaSoundEffectId } from "./registries/sound-effect.ts";
@@ -93,6 +94,7 @@ declare module "@pdx-ts/sdk" {
     readonly sound_effect: VanillaSoundEffectId;
     readonly sprite: VanillaSpriteId;
     readonly resource: VanillaResourceId;
+    readonly situation_log_category: VanillaSituationLogCategoryId;
   }
   interface VanillaScriptedTriggers extends VanillaScriptedTriggerParams {}
   interface VanillaScriptedEffects extends VanillaScriptedEffectParams {}

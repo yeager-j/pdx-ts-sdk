@@ -676,16 +676,9 @@ export function defineSolarSystemInitializer<const Id extends string>(
 /** What an event chain feature can contain. */
 export type EventChainItem = ContentItem<"event_chain", EventChainDef>;
 
-/**
- * Internal lowering primitive for an event chain. Public authors call
- * `mod.eventChain(name, def)`, then place the returned item with
- * `mod.feature(...)` before compiling the same capability.
- */
-export function defineEventChain<const Id extends string>(
-  def: EventChainDef<Id>
-): ContentItem<"event_chain", EventChainDef<Id>> {
-  return { itemKind: "content", type: "event_chain", id: def.id, def };
-}
+// defineEventChain is hand-written; re-exported here so every definer this
+// SDK has comes from one module.
+export { defineEventChain } from "../content/event-chains.ts";
 
 /** What a special project feature can contain. */
 export type SpecialProjectItem = ContentItem<"special_project", SpecialProjectDef<string, never>>;

@@ -102,6 +102,12 @@ const EXTRA_ROWS: readonly VanillaManifestRow[] = [
     bucket: "file",
   },
   { kind: "ids", type: "resource", registry: "resource", source: "common/strategic_resources.cwt" },
+  {
+    kind: "ids",
+    type: "situation_log_category",
+    registry: "situation_log_category",
+    source: "common/situation_logs.cwt",
+  },
 ];
 
 export const VANILLA_MANIFEST: readonly VanillaManifestRow[] = [...CONTENT_ROWS, ...EXTRA_ROWS];

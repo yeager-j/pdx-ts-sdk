@@ -154,17 +154,6 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   addDistrict: { key: "add_district", shape: { kind: "value", refTypes: ["district"] } },
   addEdict: { key: "add_edict", shape: { kind: "value", refTypes: ["edict"] } },
   addEspionageInformation: { key: "add_espionage_information", shape: { kind: "value" } },
-  addEventChainCounter: {
-    key: "add_event_chain_counter",
-    shape: {
-      kind: "fields",
-      fields: [
-        { prop: "eventChain", key: "event_chain", kind: "value", refTypes: ["event_chain"] },
-        { prop: "counter", key: "counter", kind: "value" },
-        { prop: "amount", key: "amount", kind: "value" },
-      ],
-    },
-  },
   addExpeditionLogEntry: {
     key: "add_expedition_log_entry",
     shape: {
@@ -4490,16 +4479,6 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   rerollRandom: { key: "reroll_random", shape: { kind: "bool" } },
   researchStation: { key: "research_station", shape: { kind: "wrapper", fields: null } },
   resetCurrentStage: { key: "reset_current_stage", shape: { kind: "bool" } },
-  resetEventChainCounter: {
-    key: "reset_event_chain_counter",
-    shape: {
-      kind: "fields",
-      fields: [
-        { prop: "eventChain", key: "event_chain", kind: "value", refTypes: ["event_chain"] },
-        { prop: "counter", key: "counter", kind: "value" },
-      ],
-    },
-  },
   resetGrowth: { key: "reset_growth", shape: { kind: "bool" } },
   resetPolicyCooldowns: { key: "reset_policy_cooldowns", shape: { kind: "bool" } },
   resetYearsOfPeace: { key: "reset_years_of_peace", shape: { kind: "bool" } },

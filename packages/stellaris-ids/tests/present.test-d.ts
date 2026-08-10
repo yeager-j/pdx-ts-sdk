@@ -23,6 +23,7 @@ import {
   vanilla,
   type ScopeName,
   type ScriptedEffectCall,
+  type SituationLogCategoryRef,
   type SpriteRef,
   type StaticModifierRef,
   type TechnologyRef,
@@ -61,6 +62,14 @@ describe("checked registry helpers", () => {
     // @ts-expect-error
     vanilla.technology("building_capital");
     expectTypeOf(vanilla.building("building_capital").id).toEqualTypeOf<"building_capital">();
+  });
+
+  it("checks situation-log category ids", () => {
+    const category = vanilla.situationLogCategory("anomalies");
+    expectTypeOf(category.id).toEqualTypeOf<"anomalies">();
+    expectTypeOf(category).toExtend<SituationLogCategoryRef>();
+    // @ts-expect-error this category does not exist in vanilla.
+    vanilla.situationLogCategory("definitely_not_a_category");
   });
 
   it("still accepts a plain string in a ref field, for other mods' content", () => {
