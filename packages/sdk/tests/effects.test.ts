@@ -393,4 +393,33 @@ every_owned_planet = {
         "}\n"
     );
   });
+
+  it("lowers rule-declared yes/no literal arms to booleans", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+    const planet = makeScope<"planet">(sink);
+
+    country.setGovernmentCooldown("no");
+    country.setGovernmentCooldown("default");
+    country.setGovernmentCooldown(500);
+    planet.removeDeposit("yes");
+    country.changeDominantSpecies({ species: "species_test", changeAll: "yes" });
+    country.log("yes");
+
+    expect(serialize(sink)).toBe(`set_government_cooldown = no
+
+set_government_cooldown = default
+
+set_government_cooldown = 500
+
+remove_deposit = yes
+
+change_dominant_species = {
+	species = species_test
+	change_all = yes
+}
+
+log = "yes"
+`);
+  });
 });

@@ -34,6 +34,13 @@ export interface TsValue {
    */
   readonly literals?: readonly string[];
   /**
+   * Literal boolean tokens this shape admits, including when another arm makes
+   * the overall value domain open. Effect metadata uses this at runtime to
+   * distinguish a rule-declared `yes`/`no` token from an arbitrary string
+   * whose spelling happens to match one.
+   */
+  readonly booleanLiterals?: readonly ("yes" | "no")[];
+  /**
    * True for `value_field`/`int_value_field` only: the emitted expression is
    * a `ScriptValue`, not a plain scalar, so a `@name` scripted-variable input
    * needs `scriptValueScalar` (`trigger-core.ts`) around it before it reaches
@@ -142,7 +149,12 @@ export class Emitter {
       case "scopeGroup":
         return { type: "string", toScalar: (e) => e };
       case "literal":
-        return { type: JSON.stringify(type.text), toScalar: (e) => e, literals: [type.text] };
+        return {
+          type: JSON.stringify(type.text),
+          toScalar: (e) => e,
+          literals: [type.text],
+          ...(type.text === "yes" || type.text === "no" ? { booleanLiterals: [type.text] } : {}),
+        };
       case "enum": {
         const members = this.rules.enums.get(type.name);
         if (members === undefined) {
@@ -189,8 +201,15 @@ export class Emitter {
     const literals = values.every((value) => value!.literals !== undefined)
       ? [...new Set(values.flatMap((value) => [...value!.literals!]))]
       : undefined;
+    const booleanLiterals = [...new Set(values.flatMap((value) => value!.booleanLiterals ?? []))];
     if (converts.size > 1) {
-      return { type: parts.join(" | "), toScalar: (e) => `refId(${e})`, refTypes, literals };
+      return {
+        type: parts.join(" | "),
+        toScalar: (e) => `refId(${e})`,
+        refTypes,
+        literals,
+        ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
+      };
     }
     // Propagated only on this branch: `refId(e)` above is not `scriptValueScalar`-
     // wrappable, and a value_field arm overloaded alongside a typeRef is not a
@@ -201,6 +220,7 @@ export class Emitter {
       toScalar: values[0]!.toScalar,
       refTypes,
       literals,
+      ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
       ...(scriptValue === undefined ? {} : { scriptValue }),
     };
   }

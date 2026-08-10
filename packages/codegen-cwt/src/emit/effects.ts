@@ -223,6 +223,12 @@ function refTypesMeta(value: TsValue | undefined): string {
   return value?.refTypes === undefined ? "" : `, refTypes: ${JSON.stringify(value.refTypes)}`;
 }
 
+function booleanLiteralsMeta(value: TsValue | undefined): string {
+  return value?.booleanLiterals === undefined
+    ? ""
+    : `, booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`;
+}
+
 function fieldMeta(field: ArgField): string {
   const kind =
     field.value.kind === "scalar"
@@ -235,7 +241,10 @@ function fieldMeta(field: ArgField): string {
             ? "modifiers"
             : "effect";
   const refTypes = refTypesMeta(field.value.kind === "scalar" ? field.value.value : undefined);
-  return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: ${JSON.stringify(kind)}${refTypes} }`;
+  const booleanLiterals = booleanLiteralsMeta(
+    field.value.kind === "scalar" ? field.value.value : undefined
+  );
+  return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: ${JSON.stringify(kind)}${refTypes}${booleanLiterals} }`;
 }
 
 function metaEntry(effect: EmittedEffect): string {
@@ -246,7 +255,7 @@ function metaEntry(effect: EmittedEffect): string {
     case "bool":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "bool" } },\n`;
     case "value":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "value"${refTypesMeta(shape.value)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "value"${refTypesMeta(shape.value)}${booleanLiteralsMeta(shape.value)} } },\n`;
     case "fields":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
     case "wrapper":
@@ -447,10 +456,12 @@ export function emitEffects(
       "  "
     ) +
     "  readonly refTypes?: readonly string[];\n" +
+    "  /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */\n" +
+    '  readonly booleanLiterals?: readonly ("yes" | "no")[];\n' +
     "}\n\n" +
     "export type EffectShapeMeta =\n" +
     '  | { readonly kind: "bool" }\n' +
-    '  | { readonly kind: "value"; readonly refTypes?: readonly string[] }\n' +
+    '  | { readonly kind: "value"; readonly refTypes?: readonly string[]; readonly booleanLiterals?: readonly ("yes" | "no")[] }\n' +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null };\n\n' +
     "export interface EffectMeta {\n" +
