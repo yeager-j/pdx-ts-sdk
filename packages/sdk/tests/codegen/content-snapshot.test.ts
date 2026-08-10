@@ -138,6 +138,36 @@ describe("content-type codegen", () => {
     );
   });
 
+  it("expands an enum-keyed block into one member per key (SDK-64)", () => {
+    // `enum[prereq_for_category] = { title = localisation … }` names its keys
+    // exactly, unlike `scalar = { … }`, so the block lowers with no overlay row
+    // to disambiguate it: one member per enum value, in the SDK's own
+    // camelCase, beside the ordinary `hide_prereq_for_desc` sibling the same
+    // block declares.
+    const technology = emissions.get("technology")!;
+    const body = technology.code.match(
+      /export interface TechnologyPrereqforDesc \{([\s\S]*?)\n\}/
+    )?.[1];
+    expect(body).toContain("hidePrereqForDesc?: PrereqForCategory[];");
+    expect(body).toContain("diploAction?: TechnologyPrereqforDescEntry[];");
+    // One entry interface for all six keys: the rules declare one shape, and
+    // six structurally identical interfaces would put that duplication in the
+    // public API.
+    expect(technology.code.match(/export interface TechnologyPrereqforDescEntry \{/g)).toHaveLength(
+      1
+    );
+    expect(technology.code).toContain('key: "diplo_action", member: "diploAction"');
+    // Named to the corpus gate at each key's own path, which is what retires
+    // the `corpus-gaps.ts` rows — the reader records `prereqfor_desc.custom`
+    // and its interior separately per key, so one shared interface still has
+    // to claim all of them.
+    const nested = fieldNames(technology.nestedEmittedFields);
+    expect(nested).toContain("technology.prereqfor_desc.custom");
+    expect(nested).toContain("technology.prereqfor_desc.custom.title");
+    expect(nested).toContain("technology.prereqfor_desc.hide_prereq_for_desc");
+    expect(nested).toContain("technology.technology_swap.prereqfor_desc.custom.desc");
+  });
+
   it("emits reusable economic and triggered-modifier blocks", () => {
     const edict = emissions.get("edict");
     expect(edict?.code).toContain('resources?: EconomicResourceBlock<"country">[];');

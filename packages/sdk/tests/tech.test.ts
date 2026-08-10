@@ -118,4 +118,79 @@ describe("Technology", () => {
       "
     `);
   });
+
+  it("writes prereqfor_desc's enum keys at both levels (SDK-64)", () => {
+    // `enum[prereq_for_category] = { title desc }` is one declaration under a
+    // closed set of names, so it authors as one member per name rather than as
+    // a record whose keys would have to be the game's spelling —
+    // `diploAction`, beside the `hidePrereqForDesc` sibling the same block
+    // declares. Each key is a list because vanilla writes `custom` three times
+    // inside one `prereqfor_desc`, and the whole block repeats because
+    // tech_gene_expressions writes two of them.
+    const unlock = mod.technology("ion_cannon", {
+      name: "Ion Cannon",
+      cost: 3000,
+      area: "physics",
+      tier: 3,
+      category: "particles",
+      prereqforDesc: [
+        {
+          hidePrereqForDesc: ["component"],
+          custom: [
+            { title: "TECH_UNLOCK_ION_CANNON_TITLE", desc: "TECH_UNLOCK_ION_CANNON_DESC" },
+            { title: "TECH_UNLOCK_ION_AURAS_TITLE" },
+          ],
+          diploAction: [{ title: "TECH_UNLOCK_ION_DIPLO_TITLE" }],
+        },
+        { custom: [{ title: "TECH_UNLOCK_ION_REFIT_TITLE" }] },
+      ],
+      technologySwap: [
+        {
+          name: "bio_ion_cannon",
+          trigger: hasCountryFlag("bio_ships"),
+          prereqforDesc: [{ ship: [{ title: "TECH_UNLOCK_BIO_ION_TITLE" }] }],
+        },
+      ],
+    });
+    const file = mod.compile([mod.feature(undefined, [unlock])]).contentFiles[0]!;
+    const entry = file.entries[file.ids.indexOf("mymod_tech_ion_cannon")]!;
+    expect(serialize([entry])).toMatchInlineSnapshot(`
+      "mymod_tech_ion_cannon = {
+      	area = physics
+      	tier = 3
+      	category = { particles }
+      	cost = 3000
+      	technology_swap = {
+      		name = bio_ion_cannon
+      		trigger = {
+      			has_country_flag = bio_ships
+      		}
+      		prereqfor_desc = {
+      			ship = {
+      				title = TECH_UNLOCK_BIO_ION_TITLE
+      			}
+      		}
+      	}
+      	prereqfor_desc = {
+      		hide_prereq_for_desc = component
+      		custom = {
+      			title = TECH_UNLOCK_ION_CANNON_TITLE
+      			desc = TECH_UNLOCK_ION_CANNON_DESC
+      		}
+      		custom = {
+      			title = TECH_UNLOCK_ION_AURAS_TITLE
+      		}
+      		diplo_action = {
+      			title = TECH_UNLOCK_ION_DIPLO_TITLE
+      		}
+      	}
+      	prereqfor_desc = {
+      		custom = {
+      			title = TECH_UNLOCK_ION_REFIT_TITLE
+      		}
+      	}
+      }
+      "
+    `);
+  });
 });

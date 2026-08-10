@@ -265,6 +265,10 @@ export type PlanetResourceCompareType = "produces" | "upkeep" | "balance";
 /** `enum[point_defence_target]`. */
 export type PointDefenceTarget = "missile" | "strike_craft";
 
+/** `enum[prereq_for_category]`. */
+export type PrereqForCategory =
+  "ship" | "custom" | "component" | "diplo_action" | "feature" | "resource";
+
 /** `enum[refresh_portraits]`. */
 export type RefreshPortraits = "planet" | "room" | "character" | "all";
 

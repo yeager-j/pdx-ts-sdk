@@ -1706,6 +1706,466 @@
         ]
       ]
     },
+    "prereqfor_desc.component": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 10,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "desc",
+        "title"
+      ],
+      "keysByDefinition": [
+        [
+          "desc",
+          "title"
+        ]
+      ]
+    },
+    "prereqfor_desc.component.desc": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "TECH_UNLOCK_CONTAINMENT_VESSEL_DESC",
+        "TECH_UNLOCK_CURATOR_LAB_1_DESC",
+        "TECH_UNLOCK_CURATOR_LAB_2_DESC",
+        "TECH_UNLOCK_JUMPDRIVE_1_DESC",
+        "TECH_UNLOCK_PSI_JUMPDRIVE_1_DESC",
+        "TECH_UNLOCK_SENSOR_2_DESC",
+        "TECH_UNLOCK_SENSOR_3_DESC",
+        "TECH_UNLOCK_SENSOR_4_DESC",
+        "TECH_UNLOCK_SUBSPACE_DRIVE_DESC"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prereqfor_desc.component.title": {
+      "definitions": 10,
+      "repeated": 0,
+      "scalars": 10,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "TECH_UNLOCK_CONTAINMENT_VESSEL_TITLE",
+        "TECH_UNLOCK_CURATOR_LAB_1_TITLE",
+        "TECH_UNLOCK_CURATOR_LAB_2_TITLE",
+        "TECH_UNLOCK_JUMPDRIVE_1_TITLE",
+        "TECH_UNLOCK_PSI_JUMPDRIVE_1_TITLE",
+        "TECH_UNLOCK_SENSOR_2_TITLE",
+        "TECH_UNLOCK_SENSOR_3_TITLE",
+        "TECH_UNLOCK_SENSOR_4_TITLE",
+        "TECH_UNLOCK_SUBSPACE_DRIVE_TITLE"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prereqfor_desc.custom": {
+      "definitions": 65,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 65,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "desc",
+        "title"
+      ],
+      "keysByDefinition": [
+        [
+          "desc",
+          "title"
+        ],
+        [
+          "title"
+        ]
+      ]
+    },
+    "prereqfor_desc.custom.desc": {
+      "definitions": 56,
+      "repeated": 0,
+      "scalars": 56,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "AGENDA_UNLOCK_NODE_CULLING_DESC",
+        "AGENDA_UNLOCK_NODE_REFORMATTING_DESC",
+        "TECH_UNLOCK_ADVANCED_GROWTH_CHAMBER_DESC",
+        "TECH_UNLOCK_ANTIMATTER_POWER_DESC",
+        "TECH_UNLOCK_CLEAR_BLOCKER_CONTRACT_DESC",
+        "TECH_UNLOCK_CLOAKING_1_DESC",
+        "TECH_UNLOCK_CLOAKING_2_DESC",
+        "TECH_UNLOCK_CLOAKING_3_DESC",
+        "TECH_UNLOCK_CLOAKING_DARK_MATTER_DESC",
+        "TECH_UNLOCK_CLOAKING_PSI_DESC",
+        "TECH_UNLOCK_COLD_FUSION_POWER_DESC",
+        "TECH_UNLOCK_COMBAT_COMPUTERS_1_DESC",
+        "TECH_UNLOCK_COMBAT_COMPUTERS_2_DESC",
+        "TECH_UNLOCK_COMBAT_COMPUTERS_3_DESC",
+        "TECH_UNLOCK_COMBAT_COMPUTERS_AUTONOMOUS_DESC",
+        "TECH_UNLOCK_COMBAT_COMPUTER_PRECOG_DESC",
+        "TECH_UNLOCK_CONSTRUCTION_SHIP_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_COSMOWORLD_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_DARK_MATTER_POWER_DESC",
+        "TECH_UNLOCK_DARK_MATTER_PROPULSION_DESC",
+        "TECH_UNLOCK_DEEP_SCAN_CONTRACT_DESC",
+        "TECH_UNLOCK_EPIGENETICS_DESC",
+        "TECH_UNLOCK_FISSION_POWER_DESC",
+        "TECH_UNLOCK_FUSION_POWER_DESC",
+        "TECH_UNLOCK_GENE_EXPRESSIONS_DESC",
+        "TECH_UNLOCK_HYPERDRIVE_1_DESC",
+        "TECH_UNLOCK_HYPERDRIVE_2_DESC",
+        "TECH_UNLOCK_HYPERDRIVE_3_DESC",
+        "TECH_UNLOCK_IDENTITY_COPY_DESC",
+        "TECH_UNLOCK_IDENTITY_FUSION_DESC",
+        "TECH_UNLOCK_IDENTITY_INITIALIZATION_DESC",
+        "TECH_UNLOCK_ION_CANNON_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_LEVIATHAN_MACHINE_DESC",
+        "TECH_UNLOCK_MINING_STATION_DESC",
+        "TECH_UNLOCK_RESEARCH_STATION_DESC",
+        "TECH_UNLOCK_SCRAMBLER_DESC",
+        "TECH_UNLOCK_STELLAR_IGNITION_CONTRACT_DESC",
+        "TECH_UNLOCK_THRUSTER_1_DESC",
+        "TECH_UNLOCK_THRUSTER_2_DESC",
+        "TECH_UNLOCK_THRUSTER_3_DESC",
+        "TECH_UNLOCK_THRUSTER_4_DESC",
+        "TECH_UNLOCK_VOCATIONAL_GENES_DESC",
+        "TECH_UNLOCK_WAYSTATION_2_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_ZERO_POINT_POWER_DESC",
+        "cosmogenesis_level_1_tech_desc",
+        "cosmogenesis_level_2_tech_desc",
+        "cosmogenesis_level_3_tech_desc",
+        "cosmogenesis_level_4_tech_desc",
+        "cosmogenesis_level_5_tech_desc",
+        "cosmogenesis_thesis_tech_desc",
+        "lgate_activation_desc",
+        "tech_akx_worm_partial_custom_desc",
+        "tech_controlled_mutations_2_tooltip",
+        "tech_improved_incubators_tt_desc",
+        "tech_metabolic_gases_tt_desc",
+        "tech_repeatable_lcluster_clue_desc",
+        "tech_storm_prediction_1_tooltip",
+        "tech_storm_prediction_2_tooltip"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prereqfor_desc.custom.title": {
+      "definitions": 65,
+      "repeated": 0,
+      "scalars": 65,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "TECH_UNLOCK_ADVANCED_GROWTH_CHAMBER_TITLE",
+        "TECH_UNLOCK_ANTIMATTER_POWER_TITLE",
+        "TECH_UNLOCK_CLEAR_BLOCKER_CONTRACT_TITLE",
+        "TECH_UNLOCK_CLOAKING_1_TITLE",
+        "TECH_UNLOCK_CLOAKING_2_TITLE",
+        "TECH_UNLOCK_CLOAKING_3_TITLE",
+        "TECH_UNLOCK_CLOAKING_DARK_MATTER_TITLE",
+        "TECH_UNLOCK_CLOAKING_PSI_TITLE",
+        "TECH_UNLOCK_COLD_FUSION_POWER_TITLE",
+        "TECH_UNLOCK_COMBAT_COMPUTERS_1_TITLE",
+        "TECH_UNLOCK_COMBAT_COMPUTERS_2_TITLE",
+        "TECH_UNLOCK_COMBAT_COMPUTERS_3_TITLE",
+        "TECH_UNLOCK_COMBAT_COMPUTERS_AUTONOMOUS_TITLE",
+        "TECH_UNLOCK_CONSTRUCTION_SHIP_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_COSMOWORLD_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_DARK_MATTER_POWER_TITLE",
+        "TECH_UNLOCK_DARK_MATTER_PROPULSION_TITLE",
+        "TECH_UNLOCK_DEEP_SCAN_CONTRACT_TITLE",
+        "TECH_UNLOCK_EPIGENETICS_TITLE",
+        "TECH_UNLOCK_FISSION_POWER_TITLE",
+        "TECH_UNLOCK_FUSION_POWER_TITLE",
+        "TECH_UNLOCK_GENE_EXPRESSIONS_TITLE",
+        "TECH_UNLOCK_HYPERDRIVE_1_TITLE",
+        "TECH_UNLOCK_HYPERDRIVE_2_TITLE",
+        "TECH_UNLOCK_HYPERDRIVE_3_TITLE",
+        "TECH_UNLOCK_IDENTITY_COPY_TITLE",
+        "TECH_UNLOCK_IDENTITY_FUSION_TITLE",
+        "TECH_UNLOCK_IDENTITY_INITIALIZATION_TITLE",
+        "TECH_UNLOCK_ION_CANNON_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_LEVIATHAN_MACHINE_TITLE",
+        "TECH_UNLOCK_MINING_STATION_TITLE",
+        "TECH_UNLOCK_RESEARCH_STATION_TITLE",
+        "TECH_UNLOCK_SCRAMBLER_TITLE",
+        "TECH_UNLOCK_STELLAR_IGNITION_CONTRACT_TITLE",
+        "TECH_UNLOCK_THRUSTER_1_TITLE",
+        "TECH_UNLOCK_THRUSTER_2_TITLE",
+        "TECH_UNLOCK_THRUSTER_3_TITLE",
+        "TECH_UNLOCK_THRUSTER_4_TITLE",
+        "TECH_UNLOCK_VOCATIONAL_GENES_TITLE",
+        "TECH_UNLOCK_WAYSTATION_2_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_ZERO_POINT_POWER_TITLE",
+        "add_lcluster_clue",
+        "cosmogenesis_level_1_tech_title",
+        "cosmogenesis_level_2_tech_title",
+        "cosmogenesis_level_3_tech_title",
+        "cosmogenesis_level_4_tech_title",
+        "cosmogenesis_level_5_tech_title",
+        "cosmogenesis_thesis_tech_title",
+        "lgate_activation_title",
+        "tech_akx_worm_partial_custom",
+        "tech_alien_cloning_tt",
+        "tech_combat_computers_bio_integration_effect",
+        "tech_controlled_mutations_2_title",
+        "tech_hyper_drive_bio_integration_effect",
+        "tech_improved_incubators_tt",
+        "tech_metabolic_gases_tt",
+        "tech_predatory_tactics_effect",
+        "tech_psionic_suppression_feature_tt",
+        "tech_satisfying_insults_effect",
+        "tech_sensors_bio_integration_effect",
+        "tech_storm_prediction_1_title",
+        "tech_storm_prediction_2_title",
+        "tech_thrusters_bio_integration_effect",
+        "tech_unusual_senses_effect"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prereqfor_desc.diplo_action": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "desc",
+        "title"
+      ],
+      "keysByDefinition": [
+        [
+          "desc",
+          "title"
+        ]
+      ]
+    },
+    "prereqfor_desc.diplo_action.desc": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "TECH_UNLOCK_TERRAFORMING_NUKED_CHANGE_DESC",
+        "TECH_UNLOCK_VOLCANIC_TERRAFORM_DESC",
+        "TECH_UNLOCK_VOLCANO_TERRAFORM_DESC"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prereqfor_desc.diplo_action.title": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "TECH_UNLOCK_TERRAFORMING_NUKED_CHANGE_TITLE",
+        "TECH_UNLOCK_VOLCANIC_TERRAFORM_TITLE",
+        "TECH_UNLOCK_VOLCANO_TERRAFORM_TITLE"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prereqfor_desc.hide_prereq_for_desc": {
+      "definitions": 38,
+      "repeated": 0,
+      "scalars": 38,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "component",
+        "ship"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prereqfor_desc.ship": {
+      "definitions": 47,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 47,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "desc",
+        "title"
+      ],
+      "keysByDefinition": [
+        [
+          "desc",
+          "title"
+        ]
+      ]
+    },
+    "prereqfor_desc.ship.desc": {
+      "definitions": 47,
+      "repeated": 0,
+      "scalars": 47,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "TECH_UNLOCK_ARKSHIP_1_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_ARKSHIP_2_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_ARKSHIP_3_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_BATTLECRUISER_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_BATTLESHIP_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_CITADEL_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_CIVILIAN_ARKSHIP_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_COLONY_SHIP_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_COLOSSUS_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_CORVETTE_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_COSMO_HARBINGER_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_COSMO_MAULER_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_COSMO_STINGER_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_COSMO_WEAVER_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_CRUISER_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_DESTROYER_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_ESCORT_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_FETITAN_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_JUGGERNAUT_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_MILITARY_ARKSHIP_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_OUTPOST_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_SCIENCE_ARKSHIP_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_SCIENCE_SHIP_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_STARHOLD_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_STARPORT_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_STAR_FORTRESS_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_TITAN_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_WAYSTATION_3_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_harbinger_stage_1_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_harbinger_stage_2_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_harbinger_stage_3_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_mauler_stage_1_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_mauler_stage_2_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_mauler_stage_3_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_stinger_stage_1_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_stinger_stage_2_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_stinger_stage_3_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_weaver_stage_1_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_weaver_stage_2_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_weaver_stage_3_CONSTRUCTION_DESC",
+        "deep_space_citadel_0_MEGASTRUCTURE_DETAILS",
+        "dyson_gun_0_MEGASTRUCTURE_DETAILS",
+        "dyson_swarm_1_MEGASTRUCTURE_DETAILS",
+        "habitat_central_complex_MEGASTRUCTURE_DETAILS",
+        "orbital_arc_furnace_1_MEGASTRUCTURE_DETAILS",
+        "orbital_ring_tier_1_MEGASTRUCTURE_DETAILS",
+        "waystation_megastructure_MEGASTRUCTURE_DETAILS"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prereqfor_desc.ship.title": {
+      "definitions": 47,
+      "repeated": 0,
+      "scalars": 47,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "TECH_UNLOCK_ARKSHIP_1_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_ARKSHIP_2_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_ARKSHIP_3_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_BATTLECRUISER_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_BATTLESHIP_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_CITADEL_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_CIVILIAN_ARKSHIP_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_COLONY_SHIP_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_COLOSSUS_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_CORVETTE_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_COSMO_HARBINGER_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_COSMO_MAULER_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_COSMO_STINGER_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_COSMO_WEAVER_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_CRUISER_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_DESTROYER_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_ESCORT_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_FETITAN_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_JUGGERNAUT_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_MILITARY_ARKSHIP_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_OUTPOST_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_SCIENCE_ARKSHIP_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_SCIENCE_SHIP_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_STARHOLD_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_STARPORT_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_STAR_FORTRESS_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_TITAN_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_WAYSTATION_3_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_harbinger_stage_1_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_harbinger_stage_2_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_harbinger_stage_3_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_mauler_stage_1_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_mauler_stage_2_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_mauler_stage_3_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_stinger_stage_1_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_stinger_stage_2_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_stinger_stage_3_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_weaver_stage_1_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_weaver_stage_2_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_weaver_stage_3_CONSTRUCTION_TITLE",
+        "allow_arc_furnace",
+        "allow_deep_space_citadel",
+        "allow_dyson_gun",
+        "allow_dyson_swarm",
+        "allow_habitats",
+        "allow_orbital_rings",
+        "allow_waystations"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
     "prerequisites": {
       "definitions": 504,
       "repeated": 0,
@@ -2326,6 +2786,120 @@
         [
           "custom"
         ]
+      ]
+    },
+    "technology_swap.prereqfor_desc.custom": {
+      "definitions": 28,
+      "repeated": 2,
+      "scalars": 0,
+      "blocks": 28,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "desc",
+        "title"
+      ],
+      "keysByDefinition": [
+        [
+          "desc",
+          "title"
+        ],
+        [
+          "title"
+        ]
+      ]
+    },
+    "technology_swap.prereqfor_desc.custom.desc": {
+      "definitions": 24,
+      "repeated": 0,
+      "scalars": 24,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "AGENDA_UNLOCK_NODE_CULLING_DESC",
+        "REDUCED_CLONE_DEGRADATION_DESC",
+        "TECH_UNLOCK_ARKSHIP_GROWTH_CHAMBER_DESC",
+        "TECH_UNLOCK_ARKSHIP_JUGGERNAUT_AURAS_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_ARKSHIP_TITAN_AURAS_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_BIOSHIP_SENSOR_2_DESC",
+        "TECH_UNLOCK_BIOSHIP_SENSOR_3_DESC",
+        "TECH_UNLOCK_BIOSHIP_SENSOR_4_DESC",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_1_DESC",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_2_DESC",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_3_DESC",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_4_DESC",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_5_DESC",
+        "TECH_UNLOCK_BIO_ANTIMATTER_POWER_DESC",
+        "TECH_UNLOCK_BIO_COLD_FUSION_POWER_DESC",
+        "TECH_UNLOCK_BIO_DARK_MATTER_POWER_DESC",
+        "TECH_UNLOCK_BIO_FISSION_POWER_DESC",
+        "TECH_UNLOCK_BIO_FUSION_POWER_DESC",
+        "TECH_UNLOCK_BIO_HYPERDRIVE_1_DESC",
+        "TECH_UNLOCK_BIO_HYPERDRIVE_2_DESC",
+        "TECH_UNLOCK_BIO_HYPERDRIVE_3_DESC",
+        "TECH_UNLOCK_BIO_JUMPDRIVE_1_DESC",
+        "TECH_UNLOCK_BIO_PSI_JUMPDRIVE_1_DESC",
+        "TECH_UNLOCK_BIO_ZERO_POINT_POWER_DESC",
+        "TECH_UNLOCK_DEEP_SCAN_CONTRACT_DESC",
+        "TECH_UNLOCK_ION_CANNON_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_LOGISTIC_SHIP_CONSTRUCTION_DESC",
+        "TECH_UNLOCK_SENSOR_2_DESC"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "technology_swap.prereqfor_desc.custom.title": {
+      "definitions": 28,
+      "repeated": 0,
+      "scalars": 28,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "AGENDA_UNLOCK_NODE_CULLING_TITLE",
+        "REDUCED_CLONE_DEGRADATION_TITLE",
+        "TECH_UNLOCK_ARKSHIP_GROWTH_CHAMBER_TITLE",
+        "TECH_UNLOCK_ARKSHIP_JUGGERNAUT_AURAS_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_ARKSHIP_TITAN_AURAS_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_BIOSHIP_SENSOR_2_TITLE",
+        "TECH_UNLOCK_BIOSHIP_SENSOR_3_TITLE",
+        "TECH_UNLOCK_BIOSHIP_SENSOR_4_TITLE",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_1_TITLE",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_2_TITLE",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_3_TITLE",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_4_TITLE",
+        "TECH_UNLOCK_BIOSHIP_THRUSTER_5_TITLE",
+        "TECH_UNLOCK_BIO_ANTIMATTER_POWER_TITLE",
+        "TECH_UNLOCK_BIO_COLD_FUSION_POWER_TITLE",
+        "TECH_UNLOCK_BIO_DARK_MATTER_POWER_TITLE",
+        "TECH_UNLOCK_BIO_FISSION_POWER_TITLE",
+        "TECH_UNLOCK_BIO_FUSION_POWER_TITLE",
+        "TECH_UNLOCK_BIO_HYPERDRIVE_1_TITLE",
+        "TECH_UNLOCK_BIO_HYPERDRIVE_2_TITLE",
+        "TECH_UNLOCK_BIO_HYPERDRIVE_3_TITLE",
+        "TECH_UNLOCK_BIO_JUMPDRIVE_1_TITLE",
+        "TECH_UNLOCK_BIO_PSI_JUMPDRIVE_1_TITLE",
+        "TECH_UNLOCK_BIO_ZERO_POINT_POWER_TITLE",
+        "TECH_UNLOCK_DEEP_SCAN_CONTRACT_TITLE",
+        "TECH_UNLOCK_ION_CANNON_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_LOGISTIC_SHIP_CONSTRUCTION_TITLE",
+        "TECH_UNLOCK_SENSOR_2_TITLE",
+        "tech_generate_celestial_storm_tt",
+        "tech_generate_electric_storm_tt",
+        "tech_generate_gravity_storm_tt",
+        "tech_generate_magnetic_storm_tt",
+        "tech_generate_particle_storm_tt"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
       ]
     },
     "technology_swap.trigger": {

@@ -35,24 +35,6 @@ export interface AcknowledgedGap {
 export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
   {
     registry: "technology",
-    field: "prereqfor_desc",
-    count: 125,
-    reason:
-      "A block keyed by `enum[prereq_for_category]` with title/desc sub-blocks; needs " +
-      "enum-keyed map machinery.",
-    issue: "SDK-64",
-  },
-  {
-    registry: "technology",
-    field: "technology_swap.prereqfor_desc",
-    count: 28,
-    reason:
-      "The same enum-keyed map as technology.prereqfor_desc above, declared again inside " +
-      "technology_swap (technologies_consolidated.cwt:164-172) and closed by the same machinery.",
-    issue: "SDK-64",
-  },
-  {
-    registry: "technology",
     field: "mod_weight_if_group_picked",
     count: 34,
     reason: "A map keyed by `value[tech_weight_group]`; needs value-set-keyed map machinery.",

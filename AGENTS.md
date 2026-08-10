@@ -129,10 +129,10 @@ not the package itself, and never reads an install.
   Stellaris install to regenerate against, so this check cannot run there and is never made to pass
   vacuously in its absence.
 
-## Adding a registry, adding a patch registry
+## Adding a registry, adding a patch registry, closing a corpus gap
 
-Both are recipes rather than ground rules, so they live as skills and load only
-when the task fires them:
+All three are recipes rather than ground rules, so they live as skills and load
+only when the task fires them:
 
 - `add-registry` (`.claude/skills/add-registry/`) — a new content registry:
   `mod.<type>`, its `Def`/`Item` types, the overlay rows, and the four kinds of
@@ -141,6 +141,10 @@ when the task fires them:
   patching for a registry: the oracle-backed rule row, the parse row, and the
   `CONTENT_PATCH_REGISTRIES` overlay row that generates the whole `patchX`
   surface.
+- `close-corpus-gap` (`.claude/skills/close-corpus-gap/`) — lowering a field
+  the game writes and no author can produce, retiring its `corpus-gaps.ts`
+  row: measuring the real shape against the install before encoding it, and
+  where the generic model absorbs it.
 
 `patchX` is not a consequence of `mod.x` existing: a patch is a whole-object
 override whose load order and emission are verified per registry, and the

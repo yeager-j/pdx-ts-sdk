@@ -45,6 +45,7 @@ import {
   type MegastructurePatch,
   type ModifierClosure,
   type OpinionModifierRef,
+  type PrereqForCategory,
   type ScopeName,
   type ScopeRef,
   type ScriptValue,
@@ -1430,6 +1431,60 @@ describe("generated content authoring types", () => {
             // scope, declared in its own right rather than inherited
             m.raw("federation_fleet_cap_add", 5);
           },
+        },
+      ],
+    });
+  });
+
+  it("authors prereqfor_desc's enum keys as members at both levels (SDK-64)", () => {
+    // The rules close the key set — `enum[prereq_for_category] = { title desc }`
+    // (technologies_consolidated.cwt:245-249, and again at 169-173 inside
+    // technology_swap) — so every key is a named member, in the SDK's own
+    // camelCase, sharing one entry interface. A `Record<PrereqForCategory, …>`
+    // would have spelled the keys the game's way and put `diplo_action` beside
+    // the `hidePrereqForDesc` sibling the same block declares.
+    type PrereqforDesc = NonNullable<TechnologyFields["prereqforDesc"]>[number];
+    type Entry = NonNullable<PrereqforDesc["custom"]>[number];
+    expectTypeOf<PrereqforDesc["hidePrereqForDesc"]>().toEqualTypeOf<
+      PrereqForCategory[] | undefined
+    >();
+    expectTypeOf<PrereqforDesc["diploAction"]>().toEqualTypeOf<Entry[] | undefined>();
+    expectTypeOf<Entry>().toEqualTypeOf<{ title: string; desc?: string }>();
+    // The same declaration one level down is its own lowering, not the
+    // parent's: closing only the top level would have left 28 shipped
+    // technology_swap blocks unauthorable.
+    type Swap = NonNullable<TechnologyFields["technologySwap"]>[number];
+    type SwapPrereqforDesc = NonNullable<Swap["prereqforDesc"]>[number];
+    expectTypeOf<SwapPrereqforDesc["ship"]>().toEqualTypeOf<
+      { title: string; desc?: string }[] | undefined
+    >();
+    expectTypeOf<TechnologyPatch["prereqforDesc"]>().toEqualTypeOf<
+      PatchInput<PrereqforDesc[]> | undefined
+    >();
+
+    contentMod.technology("prereqfor_desc_keys", {
+      name: "X",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      prereqforDesc: [
+        {
+          hidePrereqForDesc: ["component"],
+          custom: [{ title: "X_TITLE", desc: "X_DESC" }],
+        },
+      ],
+    });
+
+    contentMod.technology("prereqfor_desc_bad_key", {
+      name: "X",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      prereqforDesc: [
+        {
+          // @ts-expect-error — `hull` is not one of enum[prereq_for_category]'s
+          // six members, and the key set is closed by the rules
+          hull: [{ title: "X_TITLE" }],
         },
       ],
     });

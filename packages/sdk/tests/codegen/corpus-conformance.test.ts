@@ -23,7 +23,9 @@
  *   author can fill; `arity` and `literal` are reported, because a list the
  *   game never repeats and an oddly spelled scalar are both legal.
  * - **Fixture integrity.** Every manifested registry has a fixture with a
- *   nonzero definition count, and no stale fixture lingers.
+ *   nonzero definition count, no stale fixture lingers, and no fixture
+ *   predates a descent the emitter now produces — the one staleness the
+ *   install-gated half cannot report to CI.
  *
  * The version canary is the loop's freshness signal: with no local install it
  * is silent; with an install whose build differs from the fixture's it prints
@@ -32,7 +34,12 @@
  * game must notice.
  */
 
-import { conformance, shapeConformance, type RuleScopes } from "@pdx-ts/codegen-cwt/corpus";
+import {
+  conformance,
+  shapeConformance,
+  type DescentNode,
+  type RuleScopes,
+} from "@pdx-ts/codegen-cwt/corpus";
 import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
 import { describe, expect, it } from "vitest";
 
@@ -187,6 +194,29 @@ const reports = MEASUREMENTS.flatMap((measurement) => {
 });
 const byRegistry = new Map(reports.map((report) => [report.registry, report]));
 
+/**
+ * The descent modes that record *every* key of the blocks they reach, so an
+ * observed non-empty block under one of them must leave at least one interior
+ * path behind.
+ *
+ * `weightModifiers` and `triggeredModifierPotential` are excluded because they
+ * are selective by design: a weight block written as `{ factor = 2 }` has no
+ * `modifier` row, and recording nothing there is the correct reading, not a
+ * hole. Eleven such blocks exist across the fixture today.
+ */
+const TOTAL_RECORDING_MODES = new Set(["struct", "wrappedStruct", "structMap", "repeatedStruct"]);
+
+/** Every descent path in one registry's tree, with the mode that reaches it. */
+function descentPaths(
+  nodes: readonly DescentNode[],
+  prefix = ""
+): { path: string; mode: string }[] {
+  return nodes.flatMap((node) => {
+    const path = prefix === "" ? node.field : `${prefix}.${node.field}`;
+    return [{ path, mode: node.mode }, ...descentPaths(node.children, path)];
+  });
+}
+
 /** Observed fields nothing can author: unexpressed minus the declined rows. */
 function unauthorable(report: (typeof reports)[number]) {
   return report.unexpressed.filter((entry) => !report.measurement.declinedPaths.has(entry.field));
@@ -225,6 +255,45 @@ describe("corpus conformance", () => {
     const stale = fixtureStems()
       .filter((stem) => !manifested.has(stem))
       .map((stem) => `${FIXTURE_PATH}/${stem}.json names no manifested registry — ${REMEDY}`);
+    expect(stale).toEqual([]);
+  });
+
+  it("records the interior of every block the emitter descends into", () => {
+    // The one kind of fixture staleness the loop could not otherwise see. The
+    // install-gated `corpus:check` re-extracts and diffs, but CI has no
+    // install, so a fixture that is not the emitter's own output rides along
+    // with every gate green — and one did: `special_project.json` was
+    // committed without `desc.text` / `desc.trigger` even though `desc` was
+    // already lowered, descended, and observed writing six non-empty blocks.
+    // Nothing failed for three PRs, and the paths reappeared as unexplained
+    // drift the next time anyone ran the extractor.
+    //
+    // This is the hermetic half of that check, and it needs no install: the
+    // reader records every key of a block it descends with a total mode, so an
+    // observed non-empty block with no interior path beneath it is a
+    // contradiction between the fixture and the emitter that produced it. It
+    // cannot prove a fixture current — only re-extraction does that — but it
+    // does prove the fixture was extracted with these descents in place.
+    const stale = reports.flatMap((report) =>
+      descentPaths(report.measurement.descents)
+        .filter((node) => TOTAL_RECORDING_MODES.has(node.mode))
+        .flatMap((node) => {
+          const observation = report.corpus.occurrences.get(node.path);
+          if (observation === undefined || observation.blocks - observation.emptyBlocks === 0) {
+            return [];
+          }
+          const interior = [...report.corpus.occurrences.keys()].some((field) =>
+            field.startsWith(`${node.path}.`)
+          );
+          return interior
+            ? []
+            : [
+                `${report.registry}.${node.path}: ${observation.blocks} blocks observed and no ` +
+                  `interior path recorded, so the fixture predates the ${node.mode} descent — ` +
+                  REMEDY,
+              ];
+        })
+    );
     expect(stale).toEqual([]);
   });
 

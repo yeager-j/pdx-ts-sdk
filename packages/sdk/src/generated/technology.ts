@@ -8,9 +8,102 @@ import type { ModifierClosure, WeightBlock } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { ContentPatchItem, PatchedContent, PatchInput } from "../stellaris/vanilla/patch.ts";
 import type { AnyOf, ParsedTechnology } from "../stellaris/vanilla/view.ts";
-import type { ResearchArea, TechAiType } from "./enums.ts";
+import type { PrereqForCategory, ResearchArea, TechAiType } from "./enums.ts";
 import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./refs.ts";
 import type { FeatureFlag, TechWeightGroup } from "./value-sets.ts";
+
+export interface TechnologyTechnologySwapPrereqforDescEntry {
+  title: string;
+  desc?: string;
+}
+
+export const TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS: readonly ContentField[] = [
+  {
+    key: "title",
+    member: "title",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
+  {
+    key: "desc",
+    member: "desc",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
+];
+
+export interface TechnologyTechnologySwapPrereqforDesc {
+  hidePrereqForDesc?: PrereqForCategory[];
+  ship?: TechnologyTechnologySwapPrereqforDescEntry[];
+  custom?: TechnologyTechnologySwapPrereqforDescEntry[];
+  component?: TechnologyTechnologySwapPrereqforDescEntry[];
+  diploAction?: TechnologyTechnologySwapPrereqforDescEntry[];
+  feature?: TechnologyTechnologySwapPrereqforDescEntry[];
+  resource?: TechnologyTechnologySwapPrereqforDescEntry[];
+}
+
+export const TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_FIELDS: readonly ContentField[] = [
+  {
+    key: "hide_prereq_for_desc",
+    member: "hidePrereqForDesc",
+    shape: "value",
+    form: "list",
+    conversion: "identity",
+    repeated: true,
+  },
+  {
+    key: "ship",
+    member: "ship",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "custom",
+    member: "custom",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "component",
+    member: "component",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "diplo_action",
+    member: "diploAction",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "feature",
+    member: "feature",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "resource",
+    member: "resource",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+];
 
 export interface TechnologyTechnologySwap {
   name?: string;
@@ -19,6 +112,7 @@ export interface TechnologyTechnologySwap {
   inheritEffects?: boolean;
   trigger?: Trigger<"country">;
   modifier?: ModifierClosure<"country">;
+  prereqforDesc?: TechnologyTechnologySwapPrereqforDesc[];
   area?: ResearchArea;
   category?: (TechnologyCategoryRef | string)[];
   weight?: number | WeightBlock<never>;
@@ -49,6 +143,14 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
   },
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
   { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
+  {
+    key: "prereqfor_desc",
+    member: "prereqforDesc",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_FIELDS,
+    repeated: true,
+  },
   { key: "area", member: "area", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "category",
@@ -66,6 +168,99 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
       { key: "weight", member: "weight", shape: "value", form: "scalar", conversion: "identity" },
       { key: "weight", member: "weight", shape: "weightBlock", form: "block" },
     ],
+  },
+];
+
+export interface TechnologyPrereqforDescEntry {
+  title: string;
+  desc?: string;
+}
+
+export const TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS: readonly ContentField[] = [
+  {
+    key: "title",
+    member: "title",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
+  {
+    key: "desc",
+    member: "desc",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
+];
+
+export interface TechnologyPrereqforDesc {
+  hidePrereqForDesc?: PrereqForCategory[];
+  ship?: TechnologyPrereqforDescEntry[];
+  custom?: TechnologyPrereqforDescEntry[];
+  component?: TechnologyPrereqforDescEntry[];
+  diploAction?: TechnologyPrereqforDescEntry[];
+  feature?: TechnologyPrereqforDescEntry[];
+  resource?: TechnologyPrereqforDescEntry[];
+}
+
+export const TECHNOLOGY_PREREQFOR_DESC_FIELDS: readonly ContentField[] = [
+  {
+    key: "hide_prereq_for_desc",
+    member: "hidePrereqForDesc",
+    shape: "value",
+    form: "list",
+    conversion: "identity",
+    repeated: true,
+  },
+  {
+    key: "ship",
+    member: "ship",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "custom",
+    member: "custom",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "component",
+    member: "component",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "diplo_action",
+    member: "diploAction",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "feature",
+    member: "feature",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
+  },
+  {
+    key: "resource",
+    member: "resource",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS,
+    repeated: true,
   },
 ];
 
@@ -125,6 +320,7 @@ export interface TechnologyFields {
   isInsight?: boolean;
   featureFlags?: FeatureFlag[];
   modifier?: ModifierClosure<"country">;
+  prereqforDesc?: TechnologyPrereqforDesc[];
   weightModifier?: WeightBlock<"country">;
   aiWeight?: WeightBlock<"country">;
   /** Only when technology subtype `start` applies. */
@@ -209,6 +405,7 @@ export interface TechnologyPatch {
   readonly isInsight?: PatchInput<boolean>;
   readonly featureFlags?: PatchInput<FeatureFlag[]>;
   readonly modifier?: PatchInput<ModifierClosure<"country">>;
+  readonly prereqforDesc?: PatchInput<TechnologyPrereqforDesc[]>;
   readonly weightModifier?: PatchInput<WeightBlock<"country">>;
   readonly aiWeight?: PatchInput<WeightBlock<"country">>;
   /** Only when technology subtype `start` applies. */
@@ -349,6 +546,14 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
+  {
+    key: "prereqfor_desc",
+    member: "prereqforDesc",
+    shape: "struct",
+    form: "list",
+    fields: TECHNOLOGY_PREREQFOR_DESC_FIELDS,
+    repeated: true,
+  },
   { key: "weight_modifier", member: "weightModifier", shape: "weightBlock", form: "block" },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
   { key: "starting_potential", member: "startingPotential", shape: "trigger", form: "trigger" },
