@@ -176,10 +176,12 @@ describe("content-type codegen", () => {
 
   it("infers reusable effect closures with the content body's scope", () => {
     const agenda = emissions.get("agenda");
-    expect(agenda?.code).toContain('initEffect?: EffectBlock<"country">;');
-    expect(agenda?.code).toContain('effect?: EffectBlock<"country">;');
+    expect(agenda?.code).toContain('initEffect?: EffectBlock<"country", undefined, "country">;');
+    expect(agenda?.code).toContain('effect?: EffectBlock<"country", undefined, "country">;');
     expect(agenda?.code).toContain('shape: "effect"');
-    expect(emissions.get("ascension_perk")?.code).toContain('onEnabled?: EffectBlock<"country">;');
+    expect(emissions.get("ascension_perk")?.code).toContain(
+      'onEnabled?: EffectBlock<"country", undefined, "country">;'
+    );
   });
 
   it("carries each modifier field's scope into its recorder closure", () => {
@@ -521,7 +523,7 @@ describe("content-type codegen", () => {
     expect(warGoal?.code).toContain("export interface WarGoalDef");
     expect(warGoal?.code).toContain("casusBelli: CasusBelliRef | string;");
     expect(warGoal?.code).toContain(
-      'aiWeight?: WithFrom<WeightBlock<"country">, "country", "country">;'
+      'aiWeight?: WithFrom<WeightBlock<"country">, "country", "country", "country">;'
     );
     // forbidden_peace_offers is a fixed-shape anonymous block — the same struct
     // shape shape 3 generalizes down to cardinality 0..1 — so it is no longer
@@ -540,11 +542,11 @@ describe("content-type codegen", () => {
     // in CWT's own declaration order, which is why the two differ.
     const bombardmentStance = emissions.get("bombardment_stance");
     expect(bombardmentStance?.code).toContain(
-      'planetDamage?: number | WithFrom<WeightBlock<"fleet">, "fleet", "planet">;'
+      'planetDamage?: number | WithFrom<WeightBlock<"fleet">, "fleet", "planet", "fleet">;'
     );
     // A pure modifier_rule splice needs no overlay row either — it infers weightBlock.
     expect(bombardmentStance?.code).toContain(
-      'aiWeight: WithFrom<WeightBlock<"fleet">, "fleet", "planet">;'
+      'aiWeight: WithFrom<WeightBlock<"fleet">, "fleet", "planet", "fleet">;'
     );
 
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
@@ -561,18 +563,40 @@ describe("content-type codegen", () => {
     // is a `from = { ... }` block — so the closure gets it as `ctx.from`.
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
     expect(archaeologicalSiteType?.code).toContain(
-      'onRollFailed: EffectBlock<"fleet", "archaeological_site">;'
+      'onRollFailed: EffectBlock<"fleet", "archaeological_site", "fleet">;'
     );
-    // A `push_scope` names `this` and leaves FROM alone, so the same registry's
-    // on_create keeps the one-argument form and its ctx.from stays unreadable.
+    // The same registry's on_create is `{ root = archaeological_site this =
+    // archaeological_site }` — no FROM in a `replace_scopes` means cleared, so
+    // the FROM slot stays the undeclared sentinel while ROOT is spelled.
     expect(archaeologicalSiteType?.code).toContain(
-      'onCreate?: EffectBlock<"archaeological_site">;'
+      'onCreate?: EffectBlock<"archaeological_site", undefined, "archaeological_site">;'
     );
     // Each registry's own rules decide the scope, rather than one convention:
     // a war goal's FROM is the targeted country.
     expect(emissions.get("war_goal")?.code).toContain(
-      'onAccept?: EffectBlock<"country", "country">;'
+      'onAccept?: EffectBlock<"country", "country", "country">;'
     );
+  });
+
+  it("carries a block's declared ROOT independently of the scope it runs in", () => {
+    // `## replace_scopes = { this = planet root = country prev = system ... }`
+    // on a planet initializer's init_effect. THIS and ROOT are different
+    // scopes here, and vanilla's own `root = { ... }` inside one of these runs
+    // against the fallen empire — typing ROOT as the block's own scope would
+    // both admit planet effects the game rejects and reject the country
+    // operations the block reaches for ROOT to perform.
+    expect(emitAliasSplice(emitter, "planet_initializer")?.code).toContain(
+      'initEffect?: EffectBlock<"planet", undefined, "country">;'
+    );
+    // `root = any` names no scope, so it stays unreadable rather than lowering
+    // to something an author could navigate — the same rule `from = any`
+    // already follows. The top-level init_effect is that case.
+    expect(emissions.get("solar_system_initializer")?.code).toContain(
+      'initEffect?: EffectBlock<"system">;'
+    );
+    // A `push_scope` states only THIS, and an unannotated field states
+    // nothing, so neither invents a ROOT.
+    expect(emissions.get("building")?.code).not.toContain("EffectBlock<NoInfer<S>, undefined,");
   });
 
   it("gives a declarative field with a FROM the closure form too", () => {
@@ -580,7 +604,7 @@ describe("content-type codegen", () => {
     // added closure form rather than through an argument list they never had.
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
     expect(archaeologicalSiteType?.code).toContain(
-      'allow: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site">;'
+      'allow: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site", "fleet">;'
     );
     // A field with no FROM keeps the plain type: the closure form exists to
     // carry FROM, so a field without one has nothing to offer it.
@@ -589,7 +613,7 @@ describe("content-type codegen", () => {
     // A dual keeps arm-by-arm dispatch: only the arm that can hold a condition
     // grows the closure form.
     expect(emissions.get("opinion_modifier")?.code).toContain(
-      'opinion: WithFrom<WeightBlock<"country">, "country", "country"> | number;'
+      'opinion: WithFrom<WeightBlock<"country">, "country", "country", "country"> | number;'
     );
   });
 
@@ -682,9 +706,13 @@ describe("content-type codegen", () => {
   it("lowers situation fields nested inside stages and approach without registry-specific code", () => {
     const situation = emissions.get("situation_type");
     expect(situation?.code).toContain('modifier?: ModifierClosure<"country">;');
-    expect(situation?.code).toContain('onSelect?: EffectBlock<"situation">;');
+    expect(situation?.code).toContain(
+      'onSelect?: EffectBlock<"situation", undefined, "situation">;'
+    );
     expect(situation?.code).toContain('resources?: EconomicResourceBlock<"situation">[];');
-    expect(situation?.code).toContain('onFirstEnter?: EffectBlock<"situation">;');
+    expect(situation?.code).toContain(
+      'onFirstEnter?: EffectBlock<"situation", undefined, "situation">;'
+    );
   });
 
   it("accepts both forms of situations' dual declarations, including inside stages", () => {
@@ -1286,9 +1314,11 @@ describe("content-type codegen", () => {
     // The build hooks are system-scoped with the building country as FROM, and
     // the type says so rather than flattening to one scope.
     expect(megastructure?.code).toContain(
-      'possible?: WithFrom<Trigger<"system">, "system", "country">;'
+      'possible?: WithFrom<Trigger<"system">, "system", "country", "system">;'
     );
-    expect(megastructure?.code).toContain('onBuildComplete?: EffectBlock<"system", "country">;');
+    expect(megastructure?.code).toContain(
+      'onBuildComplete?: EffectBlock<"system", "country", "system">;'
+    );
     expect(megastructure?.code).toContain('potential?: Trigger<"country">;');
     // `upgrade_desc` is declared twice, `localisation` and the literal `hide`;
     // the two arms union without an overlay row.
@@ -1349,7 +1379,7 @@ describe("content-type codegen", () => {
     expect(moon?.code).not.toContain("planet?:");
     expect(moon?.spliceCategories).toEqual(["moon_initializer"]);
     // Scope comes from the nested `## replace_scopes`, not an overlay row.
-    expect(planet?.code).toContain('initEffect?: EffectBlock<"planet">;');
+    expect(planet?.code).toContain('initEffect?: EffectBlock<"planet", undefined, "country">;');
     // SDK-30: `change_orbit` inside a planet is the same positional sugar as
     // the top-level one (advances the orbit cursor for the moons that
     // follow it) and is declined the same way — not emitted at all, long

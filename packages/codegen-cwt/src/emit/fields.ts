@@ -309,6 +309,14 @@ interface FieldScope {
    * game hands it as FROM.
    */
   readonly from: string | null;
+  /**
+   * The scope ROOT holds inside this block, on the same terms as {@link
+   * FieldScope.from} — and independent of `type`, which is the whole reason it
+   * is carried separately. `## replace_scopes = { this = planet root = country
+   * ... }` on a solar system initializer's `init_effect` means the block runs
+   * in planet scope while `root = { ... }` runs in country scope.
+   */
+  readonly root: string | null;
 }
 
 /**
@@ -320,8 +328,33 @@ interface FieldScope {
  * definition's FROM standing.
  */
 function fromType(emitter: Emitter, field: RuleField, ctx: FieldContext): string | null {
+  return ambientType(emitter, field, ctx, "from");
+}
+
+/**
+ * The scope ROOT holds inside one field's block, on {@link fromType}'s terms.
+ *
+ * Separate from the field's own scope rather than derived from it: a
+ * `replace_scopes` names THIS and ROOT independently and the two often differ,
+ * so ROOT is only ever what the rules say it is. Where they say nothing it
+ * stays `null` — a `push_scope` never states ROOT, and neither does an
+ * unannotated field, so inheriting or guessing one would put a scope on the
+ * ref that nothing in the rules backs.
+ */
+function rootType(emitter: Emitter, field: RuleField, ctx: FieldContext): string | null {
+  return ambientType(emitter, field, ctx, "root");
+}
+
+function ambientType(
+  emitter: Emitter,
+  field: RuleField,
+  ctx: FieldContext,
+  ambient: "from" | "root"
+): string | null {
   const declared =
-    field.scope?.replaces === true ? field.scope.from : (field.scope?.from ?? ctx.scope?.from);
+    field.scope?.replaces === true
+      ? field.scope[ambient]
+      : (field.scope?.[ambient] ?? ctx.scope?.[ambient]);
   if (declared === undefined || declared === null) {
     return null;
   }
@@ -336,14 +369,15 @@ function scopeType(
   asserted?: string
 ): FieldScope {
   const from = fromType(emitter, field, ctx);
+  const root = rootType(emitter, field, ctx);
   if (asserted !== undefined) {
     const canonical = emitter.canonicalScope(asserted);
     if (canonical === null) {
       throw new Error(`Overlay asserts unknown scope "${asserted}"`);
     }
-    return { type: JSON.stringify(canonical), scopes: [canonical], from };
+    return { type: JSON.stringify(canonical), scopes: [canonical], from, root };
   }
-  const unpinned: FieldScope = { type: ctx.unpinned, scopes: "any", from };
+  const unpinned: FieldScope = { type: ctx.unpinned, scopes: "any", from, root };
   const declared = field.scope?.this ?? ctx.scope?.this;
   if (declared === undefined || declared === null) {
     return unpinned;
@@ -351,16 +385,22 @@ function scopeType(
   const canonical = emitter.canonicalScope(declared);
   return canonical === null
     ? unpinned
-    : { type: JSON.stringify(canonical), scopes: [canonical], from };
+    : { type: JSON.stringify(canonical), scopes: [canonical], from, root };
 }
 
 /**
- * `EffectBlock`'s type arguments: the block's own scope, plus the scope its
- * closure's `ctx.from` holds where the rules declare one. A block with no
- * declared FROM emits the one-argument form, so the default keeps FROM
- * unreadable there rather than admitting a ref the game will not honour.
+ * `EffectBlock`'s type arguments: the block's own scope, plus the scopes its
+ * closure's `ctx.from` and `ctx.root` hold where the rules declare them. Each
+ * trailing argument is emitted only as far as it says something — a block with
+ * neither emits the one-argument form — so the defaults keep an undeclared
+ * ambient scope unreadable rather than admitting a ref the game will not
+ * honour. A declared ROOT with no FROM still has to spell the FROM slot, and
+ * `undefined` is exactly the sentinel the default already means.
  */
 function effectBlockArgs(scope: FieldScope): string {
+  if (scope.root !== null) {
+    return `${scope.type}, ${scope.from ?? "undefined"}, ${scope.root}`;
+  }
   return scope.from === null ? scope.type : `${scope.type}, ${scope.from}`;
 }
 
@@ -372,9 +412,19 @@ function effectBlockArgs(scope: FieldScope): string {
  * effect field there is no argument list to hand FROM to — the closure form is
  * that argument list. Only fields with a FROM get it: the plain form stays the
  * only way to write a condition that has no FROM to name.
+ *
+ * FROM alone decides whether the wrapper appears; a declared ROOT rides along
+ * on the closure the FROM already earned. A field that declares ROOT and no
+ * FROM therefore keeps the plain form and cannot reach either — a known gap
+ * rather than a judgement about that field, since the wrapper's whole reason
+ * to exist is the missing argument list.
  */
 function withFrom(inner: string, scope: FieldScope): string {
-  return scope.from === null ? inner : `WithFrom<${inner}, ${scope.type}, ${scope.from}>`;
+  if (scope.from === null) {
+    return inner;
+  }
+  const root = scope.root === null ? "" : `, ${scope.root}`;
+  return `WithFrom<${inner}, ${scope.type}, ${scope.from}${root}>`;
 }
 
 /**

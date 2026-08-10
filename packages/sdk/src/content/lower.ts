@@ -137,8 +137,8 @@ function resolveFromClosure(field: ContentField, value: unknown): unknown {
   if ((value as { readonly kind?: unknown }).kind === "trigger") {
     return value;
   }
-  return (value as (ctx: ScriptCtx<ScopeName, ScopeName>) => unknown)(
-    scriptCtx<ScopeName, ScopeName>()
+  return (value as (ctx: ScriptCtx<ScopeName, ScopeName, ScopeName>) => unknown)(
+    scriptCtx<ScopeName, ScopeName, ScopeName>()
   );
 }
 
@@ -382,11 +382,15 @@ export function fieldEntries(
         // other; the recorder reports them here so they face the same
         // integrity check as the declarative fields around them.
         const recorded: ContentRefUse[] = [];
-        // Every effect block gets the same ctx object: `this` and `from` are
-        // fixed script paths, and which of them the block may *read* is the
-        // generated signature's business, settled before this runs.
+        // Every effect block gets the same ctx object: `this`, `root` and
+        // `from` are fixed script paths, and which of them the block may
+        // *read* is the generated signature's business, settled before this
+        // runs.
         const child = recordEffects(recorded, (scope) =>
-          (value as EffectBlock<ScopeName, ScopeName>)(scope, scriptCtx<ScopeName, ScopeName>())
+          (value as EffectBlock<ScopeName, ScopeName, ScopeName>)(
+            scope,
+            scriptCtx<ScopeName, ScopeName, ScopeName>()
+          )
         );
         entries.push(block(field.key, child));
         collectRefs(ctx, recorded, field.key);

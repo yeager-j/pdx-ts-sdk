@@ -22,6 +22,7 @@ export type {
   ScriptCtx,
   StructuralEffects,
   UndeclaredFrom,
+  UndeclaredRoot,
 } from "./script/effects/types.ts";
 export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
 export type { SituationTargetContract } from "./script/effects/situations.ts";

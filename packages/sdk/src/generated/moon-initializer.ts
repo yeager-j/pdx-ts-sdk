@@ -107,7 +107,7 @@ export interface MoonInitializerFields {
   resource?: (ResourceRef | string)[];
   anomaly?: AnomalyCategoryRef | string | "none";
   /** The scope will be a planet scope, with prev being the system. prevprev will be the system that triggered this system's initialization ( if any ). Root will be the first system in this initializer tree */
-  initEffect?: EffectBlock<"planet">;
+  initEffect?: EffectBlock<"planet", undefined, "country">;
   depositBlockers?: "none";
   moon?: MoonInitializerFields[];
 }

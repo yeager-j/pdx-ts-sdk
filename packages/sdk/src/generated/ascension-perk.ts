@@ -26,7 +26,7 @@ export interface AscensionPerkSwapFields {
   customTooltipWithModifiers?: string[];
   /** accepts only country modifiers */
   modifier?: ModifierClosure<"country">;
-  onEnabled?: EffectBlock<"country">;
+  onEnabled?: EffectBlock<"country", undefined, "country">;
   /** this determines the chances of a tradition swap appearing for a given empire IF multiple swaps are potential. */
   weight?: WeightBlock<"country">;
   trigger?: Trigger<"country">;
@@ -95,7 +95,7 @@ export interface AscensionPerkFields {
   desc?: string;
   potential?: Trigger<"country">;
   possible?: Trigger<"country">;
-  onEnabled?: EffectBlock<"country">;
+  onEnabled?: EffectBlock<"country", undefined, "country">;
   modifier?: ModifierClosure<"country">;
   triggeredModifier?: TriggeredModifier<"country">[];
   aiWeight?: WeightBlock<"country">;
