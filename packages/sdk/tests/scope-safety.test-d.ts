@@ -10,6 +10,8 @@ import {
   hasPlanetFlag,
   hiddenTrigger,
   isAtWar,
+  nand,
+  nor,
   overlord,
   owner,
   target,
@@ -52,6 +54,19 @@ describe("scope safety", () => {
   it("infers the scope intersection for and()", () => {
     const combined = and(hasCountryFlag("x"), hasGlobalFlag("y"));
     expectTypeOf(combined).toExtend<Trigger<"country">>();
+  });
+
+  it("infers the scope intersection for nor() and nand()", () => {
+    const neither = nor(hasCountryFlag("x"), hasGlobalFlag("y"));
+    const notBoth = nand(hasCountryFlag("x"), hasGlobalFlag("y"));
+    expectTypeOf(neither).toExtend<Trigger<"country">>();
+    expectTypeOf(notBoth).toExtend<Trigger<"country">>();
+    countrySlot(neither);
+    countrySlot(notBoth);
+    // @ts-expect-error — combinators still reject operands with no common scope
+    nor(hasCountryFlag("x"), hasPlanetFlag("y"));
+    // @ts-expect-error — combinators still reject operands with no common scope
+    nand(hasCountryFlag("x"), hasPlanetFlag("y"));
   });
 
   it("ergonomics: a.and(b) is a method now, not a compile error", () => {

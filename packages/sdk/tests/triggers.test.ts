@@ -12,6 +12,8 @@ import {
   hasTechnology,
   hiddenTrigger,
   isAi,
+  nand,
+  nor,
   not,
   or,
   owner,
@@ -35,6 +37,20 @@ describe("trigger builders", () => {
       }
       "
     `);
+  });
+
+  it("emits NOR and NAND blocks directly, including their single-operand form", () => {
+    const neither = nor(hasCountryFlag("ascended"), yearsPassed(">=", 50));
+    const notBoth = nand(hasCountryFlag("ascended"), yearsPassed(">=", 50));
+    const single = nor(hasCountryFlag("ascended"));
+
+    expect(serialize([...neither.entries])).toBe(
+      "NOR = {\n\thas_country_flag = ascended\n\tyears_passed >= 50\n}\n"
+    );
+    expect(serialize([...notBoth.entries])).toBe(
+      "NAND = {\n\thas_country_flag = ascended\n\tyears_passed >= 50\n}\n"
+    );
+    expect(serialize([...single.entries])).toBe("NOR = {\n\thas_country_flag = ascended\n}\n");
   });
 
   it("emits a scope link as one navigation block, and() spliced flat inside it", () => {
@@ -171,6 +187,28 @@ describe("trigger builders", () => {
         "\tyears_passed >= 50\n" +
         "}\n"
     );
+  });
+
+  it("preserves a multi-entry operand as an AND group inside NOR and NAND", () => {
+    const multiEntry = trigger<"country">([
+      kv("has_country_flag", "ascended"),
+      kv("has_global_flag", "crisis_active"),
+    ]);
+
+    for (const [name, condition] of [
+      ["NOR", nor(multiEntry, yearsPassed(">=", 50))],
+      ["NAND", nand(multiEntry, yearsPassed(">=", 50))],
+    ] as const) {
+      expect(serialize([...condition.entries])).toBe(
+        `${name} = {\n` +
+          "\tAND = {\n" +
+          "\t\thas_country_flag = ascended\n" +
+          "\t\thas_global_flag = crisis_active\n" +
+          "\t}\n" +
+          "\tyears_passed >= 50\n" +
+          "}\n"
+      );
+    }
   });
 
   it("accepts tech references by object", () => {

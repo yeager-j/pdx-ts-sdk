@@ -75,7 +75,7 @@ export type Explanation =
       readonly detail: string;
     }
   | {
-      readonly kind: "all" | "any" | "none";
+      readonly kind: "all" | "any" | "none" | "notAll";
       readonly label: string;
       readonly result: boolean;
       readonly children: readonly Explanation[];
@@ -126,7 +126,10 @@ function unimplementedTriggerKeys(entries: readonly PdxEntry[], found: Set<strin
   }
 }
 
-function combine(mode: "all" | "any" | "none", children: readonly Explanation[]): boolean {
+function combine(
+  mode: "all" | "any" | "none" | "notAll",
+  children: readonly Explanation[]
+): boolean {
   switch (mode) {
     case "all":
       return children.every((child) => child.result);
@@ -134,6 +137,8 @@ function combine(mode: "all" | "any" | "none", children: readonly Explanation[])
       return children.some((child) => child.result);
     case "none":
       return children.every((child) => !child.result);
+    case "notAll":
+      return children.some((child) => !child.result);
   }
 }
 

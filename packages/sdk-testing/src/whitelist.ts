@@ -302,8 +302,8 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
 
 export interface CombinatorImpl {
   readonly note: string;
-  /** all = every child true; any = some child true; none = every child false. */
-  readonly mode: "all" | "any" | "none";
+  /** all = every child true; any = some child true; none = every child false; notAll = some child false. */
+  readonly mode: "all" | "any" | "none" | "notAll";
 }
 
 export const COMBINATOR_SEMANTICS: Readonly<Record<string, CombinatorImpl>> = {
@@ -313,6 +313,8 @@ export const COMBINATOR_SEMANTICS: Readonly<Record<string, CombinatorImpl>> = {
     note: "Paradox's NOT is actually NOR over its entries: true iff every entry is false.",
     mode: "none",
   },
+  NOR: { note: "No entry may hold.", mode: "none" },
+  NAND: { note: "At least one entry must not hold.", mode: "notAll" },
   hidden_trigger: {
     note: "Transparent: every entry must hold, exactly as AND. Hiding is a tooltip concern with no bearing on whether the condition holds, and the block changes no scope.",
     mode: "all",

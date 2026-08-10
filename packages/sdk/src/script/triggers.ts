@@ -185,6 +185,42 @@ export function or<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
 }
 
 /**
+ * `NOR = { ... }` passes when none of its operands pass.
+ *
+ * Like `or()`, every operand stays grouped: a multi-entry trigger represents
+ * an implicit AND and must not be split into separate NOR operands.
+ */
+export function nor<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
+  return trigger(
+    [
+      block(
+        "NOR",
+        triggers.flatMap((operand) => grouped(operand))
+      ),
+    ],
+    operandRefs(triggers)
+  );
+}
+
+/**
+ * `NAND = { ... }` passes unless every operand passes.
+ *
+ * Operands use the same grouping as `or()` and `nor()`, preserving a
+ * multi-entry trigger as one condition rather than changing its meaning.
+ */
+export function nand<S extends ScopeName>(...triggers: Trigger<S>[]): Trigger<S> {
+  return trigger(
+    [
+      block(
+        "NAND",
+        triggers.flatMap((operand) => grouped(operand))
+      ),
+    ],
+    operandRefs(triggers)
+  );
+}
+
+/**
  * `NOT = { ... }` negates the AND of its immediate children as one unit — a
  * single-entry condition negates directly, and a multi-entry one (an
  * unwrapped `and()`) is re-grouped first, or the flattening would silently
