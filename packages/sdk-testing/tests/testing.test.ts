@@ -7,12 +7,14 @@ import {
   hasCountryFlag,
   hasGlobalFlag,
   hiddenTrigger,
+  nand,
+  nor,
   or,
   trigger,
 } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
-import { evaluate, fixture } from "../src/index.ts";
+import { evaluate, explain, fixture } from "../src/index.ts";
 
 const flags = countryFlags("testing_group_left", "testing_group_right");
 const globals = globalFlags("testing_group_middle");
@@ -50,6 +52,43 @@ describe("production testing module", () => {
         world.country(0)
       )
     ).toBe(true);
+  });
+
+  it("evaluates NOR and NAND through the interpreter", () => {
+    const countryCondition = hasCountryFlag(flags.testing_group_left);
+    const globalCondition = hasGlobalFlag(globals.testing_group_middle);
+
+    for (const { countryFlags, globalFlags, neither, notBoth } of [
+      { countryFlags: [], globalFlags: [], neither: true, notBoth: true },
+      { countryFlags: [flags.testing_group_left], globalFlags: [], neither: false, notBoth: true },
+      {
+        countryFlags: [],
+        globalFlags: [globals.testing_group_middle],
+        neither: false,
+        notBoth: true,
+      },
+      {
+        countryFlags: [flags.testing_group_left],
+        globalFlags: [globals.testing_group_middle],
+        neither: false,
+        notBoth: false,
+      },
+    ]) {
+      const world = fixture(
+        { globalFlags, countries: [{ name: "player", flags: countryFlags }] },
+        { events: [] }
+      );
+      const country = world.country(0);
+
+      expect(evaluate(nor(countryCondition, globalCondition), country)).toBe(neither);
+      expect(evaluate(nand(countryCondition, globalCondition), country)).toBe(notBoth);
+    }
+
+    const world = fixture({ countries: [{ name: "player" }] }, { events: [] });
+    expect(explain(nand(countryCondition, globalCondition), world.country(0))).toMatchObject({
+      kind: "notAll",
+      result: true,
+    });
   });
 
   it("runs hidden effects and evaluates hidden conditions, transparently", () => {
