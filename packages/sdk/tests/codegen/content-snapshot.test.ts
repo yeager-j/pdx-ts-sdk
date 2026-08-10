@@ -984,12 +984,13 @@ describe("content-type codegen", () => {
     expect(utility?.code).toContain('triggeredShipDesignModifier?: TriggeredModifier<"design">[];');
     expect(fieldNames(utility!.emittedFields)).toContain("resources");
     expect(fieldNames(utility!.emittedFields)).toContain("modifier");
-    // target_weights and the friendly_aura/hostile_aura nested modifiers are
-    // pre-existing gaps this ticket does not touch — exact-line membership so
-    // this assertion does not accidentally require fixing them too (their
-    // report lines are prefixed with "friendly_aura."/"hostile_aura.").
+    // target_weights is a weapon-only scalar map in SDK-67. Utility and
+    // strike-craft target_weights remain unsupported because their declarations
+    // are not present on those subtype bodies; exact membership keeps this
+    // ticket from borrowing a shape across registries.
     expect(utility?.unsupported).not.toContain("resources (no declaration the emitter can lower)");
     expect(utility?.unsupported).not.toContain("modifier (no declaration the emitter can lower)");
+    expect(utility?.unsupported).toContain("target_weights (no declaration the emitter can lower)");
 
     const weapon = emissions.get("weapon_component_template");
     expect(weapon?.code).toContain("export interface WeaponComponentTemplateDef");
@@ -1000,10 +1001,19 @@ describe("content-type codegen", () => {
     expect(weapon?.code).toContain('resources?: EconomicResourceBlockNoProduce<"ship">[];');
     expect(weapon?.code).toContain('shape: "economicResourcesNoProduce"');
     expect(weapon?.code).not.toContain('resources?: EconomicResourceBlock<"ship">[];');
+    expect(weapon?.code).toContain("targetWeights?: Readonly<Record<string, number>>;");
+    expect(weapon?.code).toContain(
+      '{ key: "target_weights", member: "targetWeights", shape: "scalarMap", form: "block" }'
+    );
     expect(weapon?.code).toContain('modifier?: ModifierClosure<"ship">;');
     expect(weapon?.code).toContain('shipDesignModifier?: ModifierClosure<"design">;');
     expect(fieldNames(weapon!.emittedFields)).toContain("resources");
     expect(fieldNames(weapon!.emittedFields)).toContain("modifier");
+    expect(fieldNames(weapon!.emittedFields)).toContain("target_weights");
+    expect(weapon?.unsupported).toEqual([
+      "weapon_component_template.friendly_aura.modifier (no declaration the emitter can lower)",
+      "weapon_component_template.hostile_aura.modifier (no declaration the emitter can lower)",
+    ]);
 
     // strike_craft_component_template only declares resources and
     // ship_modifier (components.cwt:332-343) — no modifier,
@@ -1032,6 +1042,9 @@ describe("content-type codegen", () => {
     // Confirms the four fields strike_craft genuinely does not declare stay
     // unsupported rather than silently picking up weapon's/utility's shapes.
     expect(strikeCraft?.unsupported).toContain("modifier (no declaration the emitter can lower)");
+    expect(strikeCraft?.unsupported).toContain(
+      "target_weights (no declaration the emitter can lower)"
+    );
     expect(strikeCraft?.unsupported).toContain(
       "ship_design_modifier (no declaration the emitter can lower)"
     );

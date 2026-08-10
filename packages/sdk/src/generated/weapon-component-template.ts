@@ -554,6 +554,8 @@ export interface WeaponComponentTemplateFields {
   staticRotation?: boolean;
   /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   planetDestructionGfx?: string;
+  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  targetWeights?: Readonly<Record<string, number>>;
   /**
    * Only when weapon_component_template subtype `weapon_component_template` applies.
    * Only when weapon_component_template subtype `strike_craft_component_template` applies.
@@ -924,6 +926,7 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     form: "scalar",
     conversion: "identity",
   },
+  { key: "target_weights", member: "targetWeights", shape: "scalarMap", form: "block" },
   {
     key: "damage",
     member: "damage",

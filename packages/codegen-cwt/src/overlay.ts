@@ -1801,6 +1801,20 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "weapon_component_template.target_weights",
+    {
+      shape: "scalarMap",
+      reason:
+        "An open scalar-keyed map of floats (`scalar = float`) from components.cwt:274-277. " +
+        "Stellaris 4.4.6 writes 25 definitions / 25 blocks, 149 numeric inner rows, 0 outer " +
+        "repeats, 0 duplicate inner keys, and 18 open scalar keys. The rules name a scalar " +
+        "key rather than a closed enum, so keys remain string. A read-only whole-vendor scan " +
+        "found 36 structurally similar computed-key scalar declarations with mixed boolean, " +
+        "reference, string, and weighted-event semantics; this explicit row is intentionally " +
+        "limited to weapon target_weights and does not infer utility or strike-craft paths.",
+    },
+  ],
+  [
     "weapon_component_template.modifier",
     {
       shape: "modifierBlock",

@@ -1418,6 +1418,34 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("authors weapon_component_template's open target-weight map (SDK-67)", () => {
+    expectTypeOf<WeaponComponentTemplateFields["targetWeights"]>().toEqualTypeOf<
+      Readonly<Record<string, number>> | undefined
+    >();
+
+    contentMod.weaponComponentTemplate("target_weights", {
+      icon: "GFX_weapon_target_weights",
+      targetWeights: {
+        corvette: 1,
+        cruiser: 2.5,
+        third_party_target: 0.25,
+      },
+    });
+    contentMod.weaponComponentTemplate("target_weights_bad_value", {
+      icon: "GFX_weapon_target_weights",
+      targetWeights: {
+        // @ts-expect-error — scalarMap values are numbers, not nested blocks.
+        corvette: { weight: 1 },
+      },
+    });
+    contentMod.weaponComponentTemplate("target_weights_bad_form", {
+      icon: "GFX_weapon_target_weights",
+      // @ts-expect-error — the outer target_weights block is a single map, not
+      // a repeated list of maps.
+      targetWeights: [{ corvette: 1 }],
+    });
+  });
+
   it("authors technology's modifier at both levels the rules declare it (SDK-63)", () => {
     // technologies_consolidated.cwt declares the same
     // `single_alias_right[modifier_clause]` twice — once on the definition

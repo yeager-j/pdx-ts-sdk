@@ -69,14 +69,6 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     issue: "SDK-17",
   },
   {
-    registry: "weapon_component_template",
-    field: "target_weights",
-    count: 25,
-    reason:
-      "An open scalar-keyed map of floats (`scalar = float`); needs scalar-keyed map machinery.",
-    issue: "SDK-67",
-  },
-  {
     registry: "special_project",
     field: "inline_script",
     count: 105,

@@ -1910,6 +1910,30 @@ describe("generated content registries", () => {
     expect(rendered).not.toContain("mod_weight_if_group_picked = {\n\t\t{");
   });
 
+  it("writes weapon target weights as one flat scalar block (SDK-67)", () => {
+    const cap = capabilityFor(configFor("Weapon target weights test", "wt_test"));
+    const weapon = cap.weaponComponentTemplate("target_weights", {
+      icon: "GFX_weapon_target_weights",
+      targetWeights: {
+        corvette: 1,
+        cruiser: 2.5,
+        third_party_target: 0.25,
+      },
+    });
+    const rendered = render(cap.compile([cap.feature(undefined, [weapon])])).get(
+      "common/component_templates/wt_test_component_templates.txt"
+    );
+    expect(rendered).toContain(
+      "\ttarget_weights = {\n" +
+        "\t\tcorvette = 1\n" +
+        "\t\tcruiser = 2.5\n" +
+        "\t\tthird_party_target = 0.25\n" +
+        "\t}\n"
+    );
+    expect(rendered).not.toContain("corvette = {\n");
+    expect(rendered).not.toContain("targetWeights");
+  });
+
   it("takes the definition's scope for the clauses CWT leaves to it", () => {
     const cap = capabilityFor(configFor("Decision scope test", "sc_test"));
     // CWT annotates the decision body `this = any` and means it: the same

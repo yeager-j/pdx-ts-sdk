@@ -502,6 +502,42 @@ describe("corpus conformance", () => {
     );
   });
 
+  it("measures weapon target_weights' flat open map (SDK-67)", () => {
+    const weapon = byRegistry.get("weapon_component_template")!;
+    const observation = weapon.corpus.occurrences.get("target_weights");
+    expect(observation).toMatchObject({
+      definitions: 25,
+      repeated: 0,
+      blocks: 25,
+    });
+    expect(observation?.keys).toEqual(
+      new Set([
+        "battleship",
+        "corvette",
+        "cruiser",
+        "destroyer",
+        "frigate",
+        "harbinger_stage_1",
+        "harbinger_stage_2",
+        "harbinger_stage_3",
+        "mauler_stage_1",
+        "mauler_stage_2",
+        "mauler_stage_3",
+        "stinger_stage_1",
+        "stinger_stage_2",
+        "stinger_stage_3",
+        "titan",
+        "weaver_stage_1",
+        "weaver_stage_2",
+        "weaver_stage_3",
+      ])
+    );
+    expect(weapon.unexpressed).not.toContainEqual(
+      expect.objectContaining({ field: "target_weights" })
+    );
+    expect(weapon.shape).not.toContainEqual(expect.objectContaining({ field: "target_weights" }));
+  });
+
   /**
    * The one thing the presence-floor gate structurally cannot see, pinned by
    * hand so it is not invisible.
