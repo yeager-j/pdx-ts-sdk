@@ -130,12 +130,6 @@ export type EnvoyTask =
   | "patron_attunement"
   | "none";
 
-/**
- * `enum[event_chain_counter]`.
- * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
- */
-export type EventChainCounter = string;
-
 /** `enum[federation_setting]`. */
 export type FederationSetting = "research_sharing" | "failed_vote_half_price";
 

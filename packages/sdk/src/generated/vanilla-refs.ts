@@ -65,6 +65,7 @@ import type {
   ScriptedModifierRef,
   SectionTemplateRef,
   ShipSizeRef,
+  SituationLogCategoryRef,
   SituationTypeRef,
   SolarSystemInitializerRef,
   SoundEffectRef,
@@ -593,5 +594,17 @@ export const sprite: VanillaTrie<"sprite"> &
 export function resource<const Id extends VanillaId<"resource">>(
   id: Id
 ): ResourceRef & { readonly id: Id } {
+  return { id };
+}
+
+/**
+ * A checked reference to a vanilla situation log category id.
+ * Checked against @pdx-ts/stellaris-ids when it is installed; any
+ * string otherwise. Zero runtime validation either way — this only
+ * constructs the branded reference the rest of the SDK already accepts.
+ */
+export function situationLogCategory<const Id extends VanillaId<"situation_log_category">>(
+  id: Id
+): SituationLogCategoryRef & { readonly id: Id } {
   return { id };
 }

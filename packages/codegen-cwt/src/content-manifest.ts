@@ -181,4 +181,5 @@ export const VANILLA_REF_EXTRAS = [
   { type: "sound_effect", oversized: true },
   { type: "sprite", oversized: true },
   { type: "resource" },
+  { type: "situation_log_category" },
 ] as const satisfies readonly VanillaRefExtra[];

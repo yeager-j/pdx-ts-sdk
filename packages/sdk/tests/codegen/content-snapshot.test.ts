@@ -1244,8 +1244,10 @@ describe("content-type codegen", () => {
   it("generates event chains and special projects through the generic content model", () => {
     const eventChain = emissions.get("event_chain");
     expect(eventChain?.code).toContain("export interface EventChainDef");
-    expect(eventChain?.code).toContain("counter?: Readonly<Record<string, EventChainCounter>>;");
-    expect(eventChain?.code).toContain("export interface EventChainCounter");
+    expect(eventChain?.code).toContain(
+      "counter?: Readonly<Record<string, EventChainCounterDefinition>>;"
+    );
+    expect(eventChain?.code).toContain("export interface EventChainCounterDefinition");
     expect(eventChain?.code).toContain("max?: number;");
     expect(eventChain?.code).toContain('abortTrigger?: Trigger<"country">;');
     expect(eventChain?.code).toContain('{ member: "title", pattern: "$_title", required: false }');
@@ -1535,9 +1537,8 @@ describe("generated content definers", () => {
     expect(capability).toContain(
       '): ContentItem<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;'
     );
-    expect(capability).toContain(
-      'SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>, T, Approach, Stage>'
-    );
+    expect(capability).not.toContain("SituationTypeCapabilityDef");
+    expect(capability).not.toContain("EventChainCapabilityDef");
     // `patchX` is a closure over the prefix, not a re-export: a patch mints
     // localisation keys from it, so the capability has to bind it the same way
     // it binds `mint` into every `defineX`.
@@ -1599,12 +1600,13 @@ describe("generated content definers", () => {
           )
           .sort(),
       };
-    }).filter((entry) => entry.members.length > 0);
+    }).filter(
+      (entry) => entry.members.length > 0 && !HAND_WRITTEN_CONTENT_DEFINERS.has(entry.registry)
+    );
 
     expect(nestedByRegistry).toEqual([
       { registry: "tradition", members: ["traditionSwap"] },
       { registry: "ascension_perk", members: ["traditionSwap"] },
-      { registry: "situation_type", members: ["approach", "stages"] },
     ]);
     for (const { registry, members } of nestedByRegistry) {
       const table = `${registry.toUpperCase()}_NESTED_DEFINITION_MEMBERS`;

@@ -6,6 +6,7 @@ import {
   anyCountry,
   currentSituationApproach,
   currentStage,
+  hasCompletedEventChainCounter,
   hasCountryFlag,
   hasGlobalFlag,
   hasTechnology,
@@ -175,6 +176,16 @@ describe("trigger builders", () => {
   it("accepts tech references by object", () => {
     const condition = hasTechnology({ id: "tech_lasers_1" });
     expect(serialize([...condition.entries])).toBe("has_technology = tech_lasers_1\n");
+  });
+
+  it("writes an event-chain counter check with its chain reference", () => {
+    const condition = hasCompletedEventChainCounter({
+      eventChain: { id: "effects_test_chain" },
+      counter: "insights",
+    });
+    expect(serialize([...condition.entries])).toBe(
+      "has_completed_event_chain_counter = {\n\tevent_chain = effects_test_chain\n\tcounter = insights\n}\n"
+    );
   });
 
   it("throws an explanatory error when a trigger is called like a function", () => {

@@ -6,6 +6,14 @@ import {
   type ResolvedModConfig,
 } from "../compiler/config.ts";
 import type { PureMod } from "../compiler/model.ts";
+import {
+  eventChainCapabilityMethods,
+  type EventChainCapabilityMethods,
+} from "../content/event-chains.ts";
+import {
+  situationTypeCapabilityMethods,
+  type SituationTypeCapabilityMethods,
+} from "../content/situations.ts";
 import { buildEvent } from "../events/lower.ts";
 import { on } from "../events/on-actions.ts";
 import type { EventDef } from "../events/types.ts";
@@ -131,7 +139,9 @@ export type ModCapability<P extends string, I extends IdProfile> = {
     key: Key,
     text: LocalizationText
   ): ReplacementLocalizationItem<P, Key>;
-} & ContentCapabilityMethods<P, I>;
+} & ContentCapabilityMethods<P, I> &
+  SituationTypeCapabilityMethods<P, I> &
+  EventChainCapabilityMethods<P, I>;
 
 function assertLogicalName(name: string): void {
   if (!FILE_STEM_PATTERN.test(name)) {
@@ -342,11 +352,20 @@ export function createMod<const P extends string, const I extends IdProfile>(
     assertNestedDefinitionId(config.prefix),
     config.prefix
   );
+  const situationTypes = situationTypeCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
+    mintContentId(config.prefix, ids),
+    assertNestedDefinitionId(config.prefix)
+  );
+  const eventChains = eventChainCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
+    mintContentId(config.prefix, ids)
+  );
 
   return Object.freeze({
     config,
     ids,
     ...content,
+    ...situationTypes,
+    ...eventChains,
     namespace: <const N extends string>(name: N = "" as N) => eventsFor(config.prefix, name),
     feature: <T extends ModItem>(stem: string | undefined, items: readonly T[]) => {
       items.forEach((item) => assertCapabilityItem(item, config.prefix));

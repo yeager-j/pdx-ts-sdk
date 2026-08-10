@@ -16,6 +16,11 @@
  * available to package internals; public authors use mod capability methods.
  */
 
+import type {
+  ContentIdMinter,
+  IdProfile,
+  MintedContentId,
+} from "../generated/content-capability.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type {
   SituationApproachFields,
@@ -114,4 +119,43 @@ export function defineSituationType<
     def: rest as SituationTypeDef<Id>,
     targetScope: targetScope as T,
   };
+}
+
+/** Situation-type authoring methods bound to one mod capability. */
+export interface SituationTypeCapabilityMethods<P extends string, I extends IdProfile> {
+  situationType<
+    const Name extends string,
+    T extends ScopeName | undefined = undefined,
+    const Approach extends string = never,
+    const Stage extends string = never,
+  >(
+    name: Name,
+    def: Omit<
+      SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>, T, Approach, Stage>,
+      "id"
+    >
+  ): ContentItem<
+    "situation_type",
+    SituationTypeDef<MintedContentId<P, I, "situationType", Name>>
+  > & {
+    readonly targetScope: T;
+  };
+}
+
+/** Binds the situation-type capability method to one content-id minter. */
+export function situationTypeCapabilityMethods<P extends string, I extends IdProfile>(
+  mint: ContentIdMinter<P, I>,
+  assertNestedId: (id: string) => void
+): SituationTypeCapabilityMethods<P, I> {
+  return {
+    situationType: (name, def) => {
+      for (const id of [...Object.keys(def.approach ?? {}), ...Object.keys(def.stages ?? {})]) {
+        assertNestedId(id);
+      }
+      return defineSituationType({
+        ...def,
+        id: mint("situationType", name),
+      } as SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", typeof name>>);
+    },
+  } as SituationTypeCapabilityMethods<P, I>;
 }

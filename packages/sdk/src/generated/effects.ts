@@ -15,7 +15,6 @@ import type {
   AggroRangeMeasureFrom,
   AgreementSubjectExpand,
   AgreementWar,
-  EventChainCounter,
   FederationSuccessionTerm,
   FederationSuccessionType,
   FleetStance,
@@ -2508,18 +2507,6 @@ export interface EffectsInCountry {
    * ```
    */
   addEdict(value: EdictRef | string): void;
-
-  /**
-   * Increments (or decrements with negative values) an event chain counter for the scoped country by a specific amount
-   * ```
-   * add_event_chain_counter = { event_chain = <key> counter = <key> amount = <int>/<variable> }
-   * ```
-   */
-  addEventChainCounter(args: {
-    eventChain: EventChainRef | string;
-    counter: EventChainCounter;
-    amount: ScriptValue;
-  }): void;
 
   /**
    * Add <value> favors for scoped country to use on target country.
@@ -5089,17 +5076,6 @@ export interface EffectsInCountry {
   replacePatron(args: {
     newPatron: PatronTypeRef | string;
     replacedPatron: PatronTypeRef | string;
-  }): void;
-
-  /**
-   * Resets n event chain counter for the scoped country
-   * ```
-   * reset_event_chain_counter = { event_chain = <key> counter = <key> }
-   * ```
-   */
-  resetEventChainCounter(args: {
-    eventChain: EventChainRef | string;
-    counter: EventChainCounter;
   }): void;
 
   /**

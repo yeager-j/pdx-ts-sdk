@@ -1130,7 +1130,8 @@ function structShape(
   name: string,
   path: string,
   ctx: FieldContext,
-  inlineTrigger?: FieldScope
+  inlineTrigger?: FieldScope,
+  typeNameOverride?: string
 ): StructShape | null {
   const keyed = enumKeyedEntryOf(emitter, block);
   const ordinary =
@@ -1142,7 +1143,7 @@ function structShape(
   if (grouped.size === 0 && keyed === null) {
     return null;
   }
-  const typeName = pascalCase(path);
+  const typeName = typeNameOverride ?? pascalCase(path);
   const members: string[] = [];
   const fieldMetadata: string[] = [];
   const extraCode: string[] = [];
@@ -1248,13 +1249,22 @@ function lowerStructMap(
   field: RuleField,
   name: string,
   path: string,
-  ctx: FieldContext
+  ctx: FieldContext,
+  typeNameOverride?: string
 ): LoweredField | null {
   const block = wildcardBlockOf(field.type);
   if (block === null) {
     return null;
   }
-  const shape = structShape(emitter, block, name, path, containerContext(field, ctx));
+  const shape = structShape(
+    emitter,
+    block,
+    name,
+    path,
+    containerContext(field, ctx),
+    undefined,
+    typeNameOverride
+  );
   if (shape === null) {
     return null;
   }
@@ -1554,7 +1564,7 @@ function lowerOrdinary(
     return lowerStruct(emitter, field, name, path, ctx);
   }
   if (requested === "structMap") {
-    return lowerStructMap(emitter, field, name, path, ctx);
+    return lowerStructMap(emitter, field, name, path, ctx, override?.nestedTypeName);
   }
   if (requested === "scalarMap") {
     return lowerScalarMap(emitter, field, name);

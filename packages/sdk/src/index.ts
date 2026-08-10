@@ -86,9 +86,11 @@ export type {
 export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";
 export type {
   DefinedEventChain,
+  EventChainCounterDefinition,
   EventChainDef,
   EventChainFields,
 } from "./generated/event-chain.ts";
+export type { EventChainCounterOf } from "./content/event-chains.ts";
 export type {
   DefinedEconomicCategory,
   EconomicCategoryDef,

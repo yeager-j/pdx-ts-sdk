@@ -84,6 +84,7 @@ export const HAND_WRITTEN_TRIGGERS = new Set([
   "current_situation_approach",
   "current_stage",
   "can_set_situation_approach",
+  "has_completed_event_chain_counter",
 ]);
 
 /**
@@ -112,6 +113,8 @@ export const HAND_WRITTEN_EFFECTS = new Set([
   "save_global_event_target_as",
   "add_resource",
   "hidden_effect",
+  "add_event_chain_counter",
+  "reset_event_chain_counter",
 ]);
 
 /**
@@ -134,6 +137,8 @@ export const STRUCTURAL_EFFECT_METHODS = new Set([
   "saveGlobalEventTargetAs",
   "addResource",
   "run",
+  "addEventChainCounter",
+  "resetEventChainCounter",
 ]);
 
 /**
@@ -172,6 +177,10 @@ export const FIRE_EFFECTS = new Set([
 
 export interface HandWrittenDefiner {
   readonly reason: string;
+  /** Module exporting the definition-side lowering primitive. */
+  readonly module: string;
+  /** Exported lowering function name. */
+  readonly definer: string;
 }
 
 /**
@@ -194,6 +203,18 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
         "(src/script/effects/situations.ts). The rules declare that contract nowhere, so no " +
         "mechanical definer " +
         "can produce it.",
+      module: "../content/situations.ts",
+      definer: "defineSituationType",
+    },
+  ],
+  [
+    "event_chain",
+    {
+      reason:
+        "Counter keys are declared by one event chain and consumed by three script operations; " +
+        "the returned item carries that literal key union so those consumers can reject a typo.",
+      module: "../content/event-chains.ts",
+      definer: "defineEventChain",
     },
   ],
 ]);
@@ -819,6 +840,8 @@ export interface ContentFieldOverride {
    * the localisation table claims, and both must stay authorable.
    */
   readonly member?: string;
+  /** Public name for a nested struct the mechanical path-derived name misstates. */
+  readonly nestedTypeName?: string;
   readonly reason: string;
 }
 
@@ -910,6 +933,7 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     "event_chain.counter",
     {
       shape: "structMap",
+      nestedTypeName: "EventChainCounterDefinition",
       reason:
         "Each counter name is an engine-visible key inside one event chain, with an optional " +
         "localisation.max block beneath it. CWT expresses that as an enum-keyed block, which is " +

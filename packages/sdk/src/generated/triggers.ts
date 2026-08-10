@@ -26,7 +26,6 @@ import type {
   Dlc,
   ElectionType,
   EnvoyTask,
-  EventChainCounter,
   FederationSetting,
   FleetOrder,
   GalaxySetupValue,
@@ -7501,33 +7500,6 @@ export function hasCompletedEventChain(value: EventChainRef | string): Trigger<"
     [kv("has_completed_event_chain", id)],
     [{ targets: ["event_chain"], id, field: "has_completed_event_chain" }]
   );
-}
-
-export interface HasCompletedEventChainCounterArgs {
-  eventChain: EventChainRef | string;
-  counter: EventChainCounter;
-}
-
-/**
- * Checks if the country has completed a specific counter in an event chain
- * ```
- * has_completed_event_chain_counter = { event_chain = amoebas_2_chain counter = amoebas_slaughtered }
- * ```
- */
-export function hasCompletedEventChainCounter(
-  args: HasCompletedEventChainCounterArgs
-): Trigger<"country"> {
-  const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
-  const id0 = refId(args.eventChain);
-  entries.push(kv("event_chain", id0));
-  refs.push({
-    targets: ["event_chain"],
-    id: id0,
-    field: "has_completed_event_chain_counter.event_chain",
-  });
-  entries.push(kv("counter", args.counter));
-  return trigger([block("has_completed_event_chain_counter", entries)], refs);
 }
 
 /**

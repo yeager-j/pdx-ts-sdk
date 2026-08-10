@@ -5,12 +5,16 @@ import { block, cmp, kv, type PdxEntry, type PdxOp, type PdxScalar } from "@pdx-
 import { EFFECT_META, type EffectFieldMeta } from "../../generated/effect-meta.ts";
 import type { ScopeObjOf } from "../../generated/effects.ts";
 import { EVENT_KINDS } from "../../generated/events.ts";
+import { refId } from "../../generated/refs.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefUse } from "../../references.ts";
 import { toScalar } from "../scalar.ts";
 import type { ScriptedEffectCall } from "../scripted.ts";
 import { trigger, type Trigger } from "../trigger-core.ts";
 import { modifierEntry } from "./modifiers.ts";
+
+import "./event-chains.ts";
+
 import { conditionalBlock, IfChainRecorder, type RecordingState } from "./structural.ts";
 import type {
   EventTarget,
@@ -269,6 +273,10 @@ const STRUCTURAL: Record<
     }
     sink.push(block("add_resource", entries));
   },
+
+  addEventChainCounter: eventChainCounterEffect("add_event_chain_counter", true),
+
+  resetEventChainCounter: eventChainCounterEffect("reset_event_chain_counter", false),
 };
 
 // The `target` scope link's landing scope varies per definition
@@ -306,6 +314,25 @@ interface FireCallArgs {
   readonly years?: number;
   readonly random?: number;
   readonly from?: { readonly path: string };
+}
+
+interface EventChainCounterCallArgs {
+  readonly eventChain: { readonly id: string } | string;
+  readonly counter: string;
+  readonly amount?: unknown;
+}
+
+function eventChainCounterEffect(key: string, needsAmount: boolean) {
+  return (sink: PdxEntry[], refs: ContentRefUse[]) =>
+    (args: EventChainCounterCallArgs): void => {
+      const id = String(refId(args.eventChain));
+      const entries = [kv("event_chain", id), kv("counter", args.counter)];
+      refs.push({ targets: ["event_chain"], id, field: `${key}.event_chain` });
+      if (needsAmount) {
+        entries.push(kv("amount", toScalar(args.amount!)));
+      }
+      sink.push(block(key, entries));
+    };
 }
 
 function fireEffect(key: string) {
