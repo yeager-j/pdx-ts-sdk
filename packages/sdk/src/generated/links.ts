@@ -5,12 +5,29 @@
 
 import { block } from "@pdx-ts/pdxscript";
 
+import { navigateScope } from "../script/effects/recorder.ts";
+import type { ScopeRef, ScopeValue } from "../script/effects/types.ts";
 import { trigger, type Trigger } from "../script/trigger-core.ts";
 import type { ScopeName } from "./scopes.ts";
 
 /** Scopes from a country to the federation it is a member of. */
-export function alliance(condition: Trigger<"federation">): Trigger<"country"> {
-  return trigger([block("alliance", [...condition.entries])]);
+export function alliance(condition: Trigger<"federation">): Trigger<"country">;
+/**
+ * The same link as a value, from an absolute base: `from.alliance`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function alliance(base: ScopeRef<"country">): ScopeRef<"federation">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `alliance`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function alliance(base: ScopeValue<"country">): ScopeValue<"federation">;
+export function alliance(
+  arg: Trigger<"federation"> | ScopeValue
+): Trigger<"country"> | ScopeValue<"federation"> {
+  return "path" in arg
+    ? navigateScope<"federation">(arg, "alliance")
+    : trigger([block("alliance", [...arg.entries])]);
 }
 
 /** Scopes from an object (e.g. planet) in star system view to the arc site in the same location. */
@@ -28,72 +45,317 @@ export function archaeologicalSite(
   | "ship"
   | "starbase"
   | "system"
-> {
-  return trigger([block("archaeological_site", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.archaeological_site`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function archaeologicalSite(
+  base: ScopeRef<
+    | "ambient_object"
+    | "archaeological_site"
+    | "carrier"
+    | "colony"
+    | "debris"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"archaeological_site">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `archaeological_site`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function archaeologicalSite(
+  base: ScopeValue<
+    | "ambient_object"
+    | "archaeological_site"
+    | "carrier"
+    | "colony"
+    | "debris"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"archaeological_site">;
+export function archaeologicalSite(
+  arg: Trigger<"archaeological_site"> | ScopeValue
+):
+  | Trigger<
+      | "ambient_object"
+      | "archaeological_site"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"archaeological_site"> {
+  return "path" in arg
+    ? navigateScope<"archaeological_site">(arg, "archaeological_site")
+    : trigger([block("archaeological_site", [...arg.entries])]);
 }
 
 /** Scopes from an object to its army leader, e.g. planet->general */
-export function armyLeader(condition: Trigger<"leader">): Trigger<"planet"> {
-  return trigger([block("army_leader", [...condition.entries])]);
+export function armyLeader(condition: Trigger<"leader">): Trigger<"planet">;
+/**
+ * The same link as a value, from an absolute base: `from.army_leader`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function armyLeader(base: ScopeRef<"planet">): ScopeRef<"leader">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `army_leader`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function armyLeader(base: ScopeValue<"planet">): ScopeValue<"leader">;
+export function armyLeader(
+  arg: Trigger<"leader"> | ScopeValue
+): Trigger<"planet"> | ScopeValue<"leader"> {
+  return "path" in arg
+    ? navigateScope<"leader">(arg, "army_leader")
+    : trigger([block("army_leader", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the species currently being assembled on it. */
 export function assemblingSpecies(
   condition: Trigger<"species">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("assembling_species", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.assembling_species`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function assemblingSpecies(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"species">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `assembling_species`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function assemblingSpecies(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"species">;
+export function assemblingSpecies(
+  arg: Trigger<"species"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"species"> {
+  return "path" in arg
+    ? navigateScope<"species">(arg, "assembling_species")
+    : trigger([block("assembling_species", [...arg.entries])]);
 }
 
 /** Scopes from a country to the federation it is an associate of. */
-export function associatedFederation(condition: Trigger<"federation">): Trigger<"country"> {
-  return trigger([block("associated_federation", [...condition.entries])]);
+export function associatedFederation(condition: Trigger<"federation">): Trigger<"country">;
+/**
+ * The same link as a value, from an absolute base: `from.associated_federation`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function associatedFederation(base: ScopeRef<"country">): ScopeRef<"federation">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `associated_federation`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function associatedFederation(base: ScopeValue<"country">): ScopeValue<"federation">;
+export function associatedFederation(
+  arg: Trigger<"federation"> | ScopeValue
+): Trigger<"country"> | ScopeValue<"federation"> {
+  return "path" in arg
+    ? navigateScope<"federation">(arg, "associated_federation")
+    : trigger([block("associated_federation", [...arg.entries])]);
 }
 
 /** Scopes to the astral rift in the same system. */
-export function astralRift(condition: Trigger<"astral_rift">): Trigger<"leader" | "system"> {
-  return trigger([block("astral_rift", [...condition.entries])]);
+export function astralRift(condition: Trigger<"astral_rift">): Trigger<"leader" | "system">;
+/**
+ * The same link as a value, from an absolute base: `from.astral_rift`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function astralRift(base: ScopeRef<"leader" | "system">): ScopeRef<"astral_rift">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `astral_rift`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function astralRift(base: ScopeValue<"leader" | "system">): ScopeValue<"astral_rift">;
+export function astralRift(
+  arg: Trigger<"astral_rift"> | ScopeValue
+): Trigger<"leader" | "system"> | ScopeValue<"astral_rift"> {
+  return "path" in arg
+    ? navigateScope<"astral_rift">(arg, "astral_rift")
+    : trigger([block("astral_rift", [...arg.entries])]);
 }
 
 /** Scopes from a war to its main attacker. */
-export function attacker(condition: Trigger<"country">): Trigger<"war"> {
-  return trigger([block("attacker", [...condition.entries])]);
+export function attacker(condition: Trigger<"country">): Trigger<"war">;
+/**
+ * The same link as a value, from an absolute base: `from.attacker`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function attacker(base: ScopeRef<"war">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `attacker`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function attacker(base: ScopeValue<"war">): ScopeValue<"country">;
+export function attacker(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"war"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "attacker")
+    : trigger([block("attacker", [...arg.entries])]);
 }
 
 /** If scoped system contains a Psionic Aura, scopes to the country who generated the aura (can be different from the system owner). */
-export function auraOwner(condition: Trigger<"country">): Trigger<"system"> {
-  return trigger([block("aura_owner", [...condition.entries])]);
+export function auraOwner(condition: Trigger<"country">): Trigger<"system">;
+/**
+ * The same link as a value, from an absolute base: `from.aura_owner`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function auraOwner(base: ScopeRef<"system">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `aura_owner`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function auraOwner(base: ScopeValue<"system">): ScopeValue<"country">;
+export function auraOwner(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"system"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "aura_owner")
+    : trigger([block("aura_owner", [...arg.entries])]);
 }
 
 /** Scopes from a leader to their background planet. */
-export function backgroundPlanet(condition: Trigger<"planet">): Trigger<"leader"> {
-  return trigger([block("background_planet", [...condition.entries])]);
+export function backgroundPlanet(condition: Trigger<"planet">): Trigger<"leader">;
+/**
+ * The same link as a value, from an absolute base: `from.background_planet`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function backgroundPlanet(base: ScopeRef<"leader">): ScopeRef<"planet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `background_planet`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function backgroundPlanet(base: ScopeValue<"leader">): ScopeValue<"planet">;
+export function backgroundPlanet(
+  arg: Trigger<"planet"> | ScopeValue
+): Trigger<"leader"> | ScopeValue<"planet"> {
+  return "path" in arg
+    ? navigateScope<"planet">(arg, "background_planet")
+    : trigger([block("background_planet", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the owner of a branch office. */
 export function branchOfficeOwner(
   condition: Trigger<"country">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("branch_office_owner", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.branch_office_owner`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function branchOfficeOwner(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `branch_office_owner`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function branchOfficeOwner(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"country">;
+export function branchOfficeOwner(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "branch_office_owner")
+    : trigger([block("branch_office_owner", [...arg.entries])]);
 }
 
 /** Scopes from a country to its built species. */
-export function builtSpecies(condition: Trigger<"species">): Trigger<"country"> {
-  return trigger([block("built_species", [...condition.entries])]);
+export function builtSpecies(condition: Trigger<"species">): Trigger<"country">;
+/**
+ * The same link as a value, from an absolute base: `from.built_species`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function builtSpecies(base: ScopeRef<"country">): ScopeRef<"species">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `built_species`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function builtSpecies(base: ScopeValue<"country">): ScopeValue<"species">;
+export function builtSpecies(
+  arg: Trigger<"species"> | ScopeValue
+): Trigger<"country"> | ScopeValue<"species"> {
+  return "path" in arg
+    ? navigateScope<"species">(arg, "built_species")
+    : trigger([block("built_species", [...arg.entries])]);
 }
 
 /** Scopes from an empire to its capital colony. */
-export function capitalScope(condition: Trigger<"colony">): Trigger<"country"> {
-  return trigger([block("capital_scope", [...condition.entries])]);
+export function capitalScope(condition: Trigger<"colony">): Trigger<"country">;
+/**
+ * The same link as a value, from an absolute base: `from.capital_scope`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function capitalScope(base: ScopeRef<"country">): ScopeRef<"colony">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `capital_scope`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function capitalScope(base: ScopeValue<"country">): ScopeValue<"colony">;
+export function capitalScope(
+  arg: Trigger<"colony"> | ScopeValue
+): Trigger<"country"> | ScopeValue<"colony"> {
+  return "path" in arg
+    ? navigateScope<"colony">(arg, "capital_scope")
+    : trigger([block("capital_scope", [...arg.entries])]);
 }
 
 /** Scopes from an empire to the primary star (planet scope) of its capital's system. */
-export function capitalStar(condition: Trigger<"planet">): Trigger<"country"> {
-  return trigger([block("capital_star", [...condition.entries])]);
+export function capitalStar(condition: Trigger<"planet">): Trigger<"country">;
+/**
+ * The same link as a value, from an absolute base: `from.capital_star`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function capitalStar(base: ScopeRef<"country">): ScopeRef<"planet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `capital_star`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function capitalStar(base: ScopeValue<"country">): ScopeValue<"planet">;
+export function capitalStar(
+  arg: Trigger<"planet"> | ScopeValue
+): Trigger<"country"> | ScopeValue<"planet"> {
+  return "path" in arg
+    ? navigateScope<"planet">(arg, "capital_star")
+    : trigger([block("capital_star", [...arg.entries])]);
 }
 
 /** Scopes from a colony to its carrier. */
-export function carrier(condition: Trigger<"carrier">): Trigger<"colony"> {
-  return trigger([block("carrier", [...condition.entries])]);
+export function carrier(condition: Trigger<"carrier">): Trigger<"colony">;
+/**
+ * The same link as a value, from an absolute base: `from.carrier`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function carrier(base: ScopeRef<"colony">): ScopeRef<"carrier">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `carrier`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function carrier(base: ScopeValue<"colony">): ScopeValue<"carrier">;
+export function carrier(
+  arg: Trigger<"carrier"> | ScopeValue
+): Trigger<"colony"> | ScopeValue<"carrier"> {
+  return "path" in arg
+    ? navigateScope<"carrier">(arg, "carrier")
+    : trigger([block("carrier", [...arg.entries])]);
 }
 
 /** Scopes from an object to its colony. */
@@ -112,101 +374,436 @@ export function colony(
   | "pop_job"
   | "ship"
   | "starbase"
-> {
-  return trigger([block("colony", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.colony`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function colony(
+  base: ScopeRef<
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "deposit"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "pop_job"
+    | "ship"
+    | "starbase"
+  >
+): ScopeRef<"colony">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `colony`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function colony(
+  base: ScopeValue<
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "deposit"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "pop_job"
+    | "ship"
+    | "starbase"
+  >
+): ScopeValue<"colony">;
+export function colony(
+  arg: Trigger<"colony"> | ScopeValue
+):
+  | Trigger<
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "colony"
+      | "deposit"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "pop_job"
+      | "ship"
+      | "starbase"
+    >
+  | ScopeValue<"colony"> {
+  return "path" in arg
+    ? navigateScope<"colony">(arg, "colony")
+    : trigger([block("colony", [...arg.entries])]);
 }
 
 /** Scopes from a first contact site to the country that the owner of the site is seeking to establish communications with. */
-export function contactCountry(condition: Trigger<"country">): Trigger<"first_contact"> {
-  return trigger([block("contact_country", [...condition.entries])]);
+export function contactCountry(condition: Trigger<"country">): Trigger<"first_contact">;
+/**
+ * The same link as a value, from an absolute base: `from.contact_country`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function contactCountry(base: ScopeRef<"first_contact">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `contact_country`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function contactCountry(base: ScopeValue<"first_contact">): ScopeValue<"country">;
+export function contactCountry(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"first_contact"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "contact_country")
+    : trigger([block("contact_country", [...arg.entries])]);
 }
 
 /** Scopes from an object to the empire controlling it (not necessarily the owner: a country occupying a planet is its controller). */
 export function controller(
   condition: Trigger<"country">
-): Trigger<"carrier" | "colony" | "debris" | "fleet" | "planet" | "ship" | "starbase"> {
-  return trigger([block("controller", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "debris" | "fleet" | "planet" | "ship" | "starbase">;
+/**
+ * The same link as a value, from an absolute base: `from.controller`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function controller(
+  base: ScopeRef<"carrier" | "colony" | "debris" | "fleet" | "planet" | "ship" | "starbase">
+): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `controller`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function controller(
+  base: ScopeValue<"carrier" | "colony" | "debris" | "fleet" | "planet" | "ship" | "starbase">
+): ScopeValue<"country">;
+export function controller(
+  arg: Trigger<"country"> | ScopeValue
+):
+  | Trigger<"carrier" | "colony" | "debris" | "fleet" | "planet" | "ship" | "starbase">
+  | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "controller")
+    : trigger([block("controller", [...arg.entries])]);
 }
 
 /** Scopes to the leader's country of origin */
-export function creator(condition: Trigger<"country">): Trigger<"leader"> {
-  return trigger([block("creator", [...condition.entries])]);
+export function creator(condition: Trigger<"country">): Trigger<"leader">;
+/**
+ * The same link as a value, from an absolute base: `from.creator`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function creator(base: ScopeRef<"leader">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `creator`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function creator(base: ScopeValue<"leader">): ScopeValue<"country">;
+export function creator(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"leader"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "creator")
+    : trigger([block("creator", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the species currently declining on it. */
 export function decliningSpecies(
   condition: Trigger<"species">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("declining_species", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.declining_species`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function decliningSpecies(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"species">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `declining_species`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function decliningSpecies(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"species">;
+export function decliningSpecies(
+  arg: Trigger<"species"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"species"> {
+  return "path" in arg
+    ? navigateScope<"species">(arg, "declining_species")
+    : trigger([block("declining_species", [...arg.entries])]);
 }
 
 /** Scopes from a war to its main defender. */
-export function defender(condition: Trigger<"country">): Trigger<"war"> {
-  return trigger([block("defender", [...condition.entries])]);
+export function defender(condition: Trigger<"country">): Trigger<"war">;
+/**
+ * The same link as a value, from an absolute base: `from.defender`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function defender(base: ScopeRef<"war">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `defender`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function defender(base: ScopeValue<"war">): ScopeValue<"country">;
+export function defender(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"war"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "defender")
+    : trigger([block("defender", [...arg.entries])]);
 }
 
 /** Scopes to the ship's design */
-export function design(condition: Trigger<"design">): Trigger<"ship"> {
-  return trigger([block("design", [...condition.entries])]);
+export function design(condition: Trigger<"design">): Trigger<"ship">;
+/**
+ * The same link as a value, from an absolute base: `from.design`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function design(base: ScopeRef<"ship">): ScopeRef<"design">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `design`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function design(base: ScopeValue<"ship">): ScopeValue<"design">;
+export function design(
+  arg: Trigger<"design"> | ScopeValue
+): Trigger<"ship"> | ScopeValue<"design"> {
+  return "path" in arg
+    ? navigateScope<"design">(arg, "design")
+    : trigger([block("design", [...arg.entries])]);
 }
 
 /** Scopes from an envoy to the empire it is appointed to. */
-export function envoyLocationCountry(condition: Trigger<"country">): Trigger<"leader"> {
-  return trigger([block("envoy_location_country", [...condition.entries])]);
+export function envoyLocationCountry(condition: Trigger<"country">): Trigger<"leader">;
+/**
+ * The same link as a value, from an absolute base: `from.envoy_location_country`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function envoyLocationCountry(base: ScopeRef<"leader">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `envoy_location_country`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function envoyLocationCountry(base: ScopeValue<"leader">): ScopeValue<"country">;
+export function envoyLocationCountry(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"leader"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "envoy_location_country")
+    : trigger([block("envoy_location_country", [...arg.entries])]);
 }
 
 /** Scopes from an arc site to the fleet whose leader is currently investigating it. */
-export function excavatorFleet(condition: Trigger<"fleet">): Trigger<"archaeological_site"> {
-  return trigger([block("excavator_fleet", [...condition.entries])]);
+export function excavatorFleet(condition: Trigger<"fleet">): Trigger<"archaeological_site">;
+/**
+ * The same link as a value, from an absolute base: `from.excavator_fleet`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function excavatorFleet(base: ScopeRef<"archaeological_site">): ScopeRef<"fleet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `excavator_fleet`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function excavatorFleet(base: ScopeValue<"archaeological_site">): ScopeValue<"fleet">;
+export function excavatorFleet(
+  arg: Trigger<"fleet"> | ScopeValue
+): Trigger<"archaeological_site"> | ScopeValue<"fleet"> {
+  return "path" in arg
+    ? navigateScope<"fleet">(arg, "excavator_fleet")
+    : trigger([block("excavator_fleet", [...arg.entries])]);
 }
 
 /** Scopes from an astral rift to the country whose leader is exploring, or has explored it. */
-export function explorer(condition: Trigger<"country">): Trigger<"astral_rift"> {
-  return trigger([block("explorer", [...condition.entries])]);
+export function explorer(condition: Trigger<"country">): Trigger<"astral_rift">;
+/**
+ * The same link as a value, from an absolute base: `from.explorer`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function explorer(base: ScopeRef<"astral_rift">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `explorer`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function explorer(base: ScopeValue<"astral_rift">): ScopeValue<"country">;
+export function explorer(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"astral_rift"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "explorer")
+    : trigger([block("explorer", [...arg.entries])]);
 }
 
 /** Scopes from a country to the federation it is a member of. */
-export function federation(condition: Trigger<"federation">): Trigger<"country"> {
-  return trigger([block("federation", [...condition.entries])]);
+export function federation(condition: Trigger<"federation">): Trigger<"country">;
+/**
+ * The same link as a value, from an absolute base: `from.federation`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function federation(base: ScopeRef<"country">): ScopeRef<"federation">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `federation`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function federation(base: ScopeValue<"country">): ScopeValue<"federation">;
+export function federation(
+  arg: Trigger<"federation"> | ScopeValue
+): Trigger<"country"> | ScopeValue<"federation"> {
+  return "path" in arg
+    ? navigateScope<"federation">(arg, "federation")
+    : trigger([block("federation", [...arg.entries])]);
 }
 
 /** Scopes from a federation to the empire leading it. */
-export function federationLeader(condition: Trigger<"country">): Trigger<"federation"> {
-  return trigger([block("federation_leader", [...condition.entries])]);
+export function federationLeader(condition: Trigger<"country">): Trigger<"federation">;
+/**
+ * The same link as a value, from an absolute base: `from.federation_leader`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function federationLeader(base: ScopeRef<"federation">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `federation_leader`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function federationLeader(base: ScopeValue<"federation">): ScopeValue<"country">;
+export function federationLeader(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"federation"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "federation_leader")
+    : trigger([block("federation_leader", [...arg.entries])]);
 }
 
 /** Scopes to the country that dealt the corresponding ranked damage to the fleet. Can be null. Use the record_damaging_country = yes setting to make the fleet record */
-export function firstDamagingCountry(condition: Trigger<"country">): Trigger<"fleet"> {
-  return trigger([block("first_damaging_country", [...condition.entries])]);
+export function firstDamagingCountry(condition: Trigger<"country">): Trigger<"fleet">;
+/**
+ * The same link as a value, from an absolute base: `from.first_damaging_country`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function firstDamagingCountry(base: ScopeRef<"fleet">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `first_damaging_country`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function firstDamagingCountry(base: ScopeValue<"fleet">): ScopeValue<"country">;
+export function firstDamagingCountry(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"fleet"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "first_damaging_country")
+    : trigger([block("first_damaging_country", [...arg.entries])]);
 }
 
 /** Scopes from a ship, starbase, astral rift or leader to its fleet, or from an army to the fleet its army transport is part of. */
 export function fleet(
   condition: Trigger<"fleet">
-): Trigger<"army" | "astral_rift" | "colony" | "fleet" | "leader" | "ship" | "starbase"> {
-  return trigger([block("fleet", [...condition.entries])]);
+): Trigger<"army" | "astral_rift" | "colony" | "fleet" | "leader" | "ship" | "starbase">;
+/**
+ * The same link as a value, from an absolute base: `from.fleet`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function fleet(
+  base: ScopeRef<"army" | "astral_rift" | "colony" | "fleet" | "leader" | "ship" | "starbase">
+): ScopeRef<"fleet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `fleet`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function fleet(
+  base: ScopeValue<"army" | "astral_rift" | "colony" | "fleet" | "leader" | "ship" | "starbase">
+): ScopeValue<"fleet">;
+export function fleet(
+  arg: Trigger<"fleet"> | ScopeValue
+):
+  | Trigger<"army" | "astral_rift" | "colony" | "fleet" | "leader" | "ship" | "starbase">
+  | ScopeValue<"fleet"> {
+  return "path" in arg
+    ? navigateScope<"fleet">(arg, "fleet")
+    : trigger([block("fleet", [...arg.entries])]);
 }
 
 /** Scopes from a country to its founding species. */
-export function founderSpecies(condition: Trigger<"species">): Trigger<"country"> {
-  return trigger([block("founder_species", [...condition.entries])]);
+export function founderSpecies(condition: Trigger<"species">): Trigger<"country">;
+/**
+ * The same link as a value, from an absolute base: `from.founder_species`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function founderSpecies(base: ScopeRef<"country">): ScopeRef<"species">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `founder_species`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function founderSpecies(base: ScopeValue<"country">): ScopeValue<"species">;
+export function founderSpecies(
+  arg: Trigger<"species"> | ScopeValue
+): Trigger<"country"> | ScopeValue<"species"> {
+  return "path" in arg
+    ? navigateScope<"species">(arg, "founder_species")
+    : trigger([block("founder_species", [...arg.entries])]);
 }
 
 /** Scopes to the Custodian empire of the Galactic Community. */
-export function galacticCustodian(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("galactic_custodian", [...condition.entries])]);
+export function galacticCustodian(condition: Trigger<"country">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.galactic_custodian`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function galacticCustodian(base: ScopeRef<ScopeName>): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `galactic_custodian`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function galacticCustodian(base: ScopeValue<ScopeName>): ScopeValue<"country">;
+export function galacticCustodian(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "galactic_custodian")
+    : trigger([block("galactic_custodian", [...arg.entries])]);
 }
 
 /** Scopes to the ruling empire of the Galactic Imperium. */
-export function galacticEmperor(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("galactic_emperor", [...condition.entries])]);
+export function galacticEmperor(condition: Trigger<"country">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.galactic_emperor`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function galacticEmperor(base: ScopeRef<ScopeName>): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `galactic_emperor`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function galacticEmperor(base: ScopeValue<ScopeName>): ScopeValue<"country">;
+export function galacticEmperor(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "galactic_emperor")
+    : trigger([block("galactic_emperor", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the species currently growing (not assembling) on it. */
 export function growingSpecies(
   condition: Trigger<"species">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("growing_species", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.growing_species`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function growingSpecies(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"species">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `growing_species`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function growingSpecies(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"species">;
+export function growingSpecies(
+  arg: Trigger<"species"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"species"> {
+  return "path" in arg
+    ? navigateScope<"species">(arg, "growing_species")
+    : trigger([block("growing_species", [...arg.entries])]);
 }
 
 /** Scopes to the heir of a country (or the heir of the object's owner). */
@@ -238,94 +835,448 @@ export function heir(
   | "spy_network"
   | "starbase"
   | "system"
-> {
-  return trigger([block("heir", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.heir`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function heir(
+  base: ScopeRef<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"leader">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `heir`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function heir(
+  base: ScopeValue<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"leader">;
+export function heir(
+  arg: Trigger<"leader"> | ScopeValue
+):
+  | Trigger<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "espionage_operation"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "mission"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"leader"> {
+  return "path" in arg
+    ? navigateScope<"leader">(arg, "heir")
+    : trigger([block("heir", [...arg.entries])]);
 }
 
 /** Scopes to a species' home planet. */
 export function homePlanet(
   condition: Trigger<"planet">
-): Trigger<"country" | "leader" | "pop_group" | "species"> {
-  return trigger([block("home_planet", [...condition.entries])]);
+): Trigger<"country" | "leader" | "pop_group" | "species">;
+/**
+ * The same link as a value, from an absolute base: `from.home_planet`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function homePlanet(
+  base: ScopeRef<"country" | "leader" | "pop_group" | "species">
+): ScopeRef<"planet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `home_planet`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function homePlanet(
+  base: ScopeValue<"country" | "leader" | "pop_group" | "species">
+): ScopeValue<"planet">;
+export function homePlanet(
+  arg: Trigger<"planet"> | ScopeValue
+): Trigger<"country" | "leader" | "pop_group" | "species"> | ScopeValue<"planet"> {
+  return "path" in arg
+    ? navigateScope<"planet">(arg, "home_planet")
+    : trigger([block("home_planet", [...arg.entries])]);
 }
 
 /** If scoped war was generated from a proxy war, scopes to the country who started the proxy war. */
-export function instigator(condition: Trigger<"country">): Trigger<"war"> {
-  return trigger([block("instigator", [...condition.entries])]);
+export function instigator(condition: Trigger<"country">): Trigger<"war">;
+/**
+ * The same link as a value, from an absolute base: `from.instigator`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function instigator(base: ScopeRef<"war">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `instigator`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function instigator(base: ScopeValue<"war">): ScopeValue<"country">;
+export function instigator(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"war"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "instigator")
+    : trigger([block("instigator", [...arg.entries])]);
 }
 
 /** Scopes from a mission to its issuer. */
-export function issuer(condition: Trigger<"country">): Trigger<"mission"> {
-  return trigger([block("issuer", [...condition.entries])]);
+export function issuer(condition: Trigger<"country">): Trigger<"mission">;
+/**
+ * The same link as a value, from an absolute base: `from.issuer`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function issuer(base: ScopeRef<"mission">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `issuer`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function issuer(base: ScopeValue<"mission">): ScopeValue<"country">;
+export function issuer(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"mission"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "issuer")
+    : trigger([block("issuer", [...arg.entries])]);
 }
 
 /** Scopes to the last deposit added to the current planet */
 export function lastAddedDeposit(
   condition: Trigger<"deposit">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("last_added_deposit", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.last_added_deposit`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastAddedDeposit(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"deposit">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_added_deposit`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastAddedDeposit(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"deposit">;
+export function lastAddedDeposit(
+  arg: Trigger<"deposit"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"deposit"> {
+  return "path" in arg
+    ? navigateScope<"deposit">(arg, "last_added_deposit")
+    : trigger([block("last_added_deposit", [...arg.entries])]);
 }
 
 /** Scopes to the last ambient object that was created anywhere in the game. */
-export function lastCreatedAmbientObject(condition: Trigger<"ambient_object">): Trigger<ScopeName> {
-  return trigger([block("last_created_ambient_object", [...condition.entries])]);
+export function lastCreatedAmbientObject(condition: Trigger<"ambient_object">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_ambient_object`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedAmbientObject(base: ScopeRef<ScopeName>): ScopeRef<"ambient_object">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_ambient_object`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedAmbientObject(base: ScopeValue<ScopeName>): ScopeValue<"ambient_object">;
+export function lastCreatedAmbientObject(
+  arg: Trigger<"ambient_object"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"ambient_object"> {
+  return "path" in arg
+    ? navigateScope<"ambient_object">(arg, "last_created_ambient_object")
+    : trigger([block("last_created_ambient_object", [...arg.entries])]);
 }
 
 /** Scopes to the last army that was created anywhere in the game. */
-export function lastCreatedArmy(condition: Trigger<"army">): Trigger<ScopeName> {
-  return trigger([block("last_created_army", [...condition.entries])]);
+export function lastCreatedArmy(condition: Trigger<"army">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_army`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedArmy(base: ScopeRef<ScopeName>): ScopeRef<"army">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_army`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedArmy(base: ScopeValue<ScopeName>): ScopeValue<"army">;
+export function lastCreatedArmy(
+  arg: Trigger<"army"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"army"> {
+  return "path" in arg
+    ? navigateScope<"army">(arg, "last_created_army")
+    : trigger([block("last_created_army", [...arg.entries])]);
 }
 
 /** Scopes to the last storm that was created anywhere in the game. */
-export function lastCreatedCosmicStorm(condition: Trigger<"storm">): Trigger<ScopeName> {
-  return trigger([block("last_created_cosmic_storm", [...condition.entries])]);
+export function lastCreatedCosmicStorm(condition: Trigger<"storm">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_cosmic_storm`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedCosmicStorm(base: ScopeRef<ScopeName>): ScopeRef<"storm">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_cosmic_storm`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedCosmicStorm(base: ScopeValue<ScopeName>): ScopeValue<"storm">;
+export function lastCreatedCosmicStorm(
+  arg: Trigger<"storm"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"storm"> {
+  return "path" in arg
+    ? navigateScope<"storm">(arg, "last_created_cosmic_storm")
+    : trigger([block("last_created_cosmic_storm", [...arg.entries])]);
 }
 
 /** Scopes to the last storm influence field that was created anywhere in the game. */
 export function lastCreatedCosmicStormInfluenceField(
   condition: Trigger<"cosmic_storm_influence_field">
-): Trigger<ScopeName> {
-  return trigger([block("last_created_cosmic_storm_influence_field", [...condition.entries])]);
+): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_cosmic_storm_influence_field`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedCosmicStormInfluenceField(
+  base: ScopeRef<ScopeName>
+): ScopeRef<"cosmic_storm_influence_field">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_cosmic_storm_influence_field`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedCosmicStormInfluenceField(
+  base: ScopeValue<ScopeName>
+): ScopeValue<"cosmic_storm_influence_field">;
+export function lastCreatedCosmicStormInfluenceField(
+  arg: Trigger<"cosmic_storm_influence_field"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"cosmic_storm_influence_field"> {
+  return "path" in arg
+    ? navigateScope<"cosmic_storm_influence_field">(
+        arg,
+        "last_created_cosmic_storm_influence_field"
+      )
+    : trigger([block("last_created_cosmic_storm_influence_field", [...arg.entries])]);
 }
 
 /** Scopes to the last country that was created anywhere in the game. */
-export function lastCreatedCountry(condition: Trigger<"country">): Trigger<ScopeName> {
-  return trigger([block("last_created_country", [...condition.entries])]);
+export function lastCreatedCountry(condition: Trigger<"country">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_country`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedCountry(base: ScopeRef<ScopeName>): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_country`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedCountry(base: ScopeValue<ScopeName>): ScopeValue<"country">;
+export function lastCreatedCountry(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "last_created_country")
+    : trigger([block("last_created_country", [...arg.entries])]);
 }
 
 /** Scopes to the last created ship design */
-export function lastCreatedDesign(condition: Trigger<"design">): Trigger<ScopeName> {
-  return trigger([block("last_created_design", [...condition.entries])]);
+export function lastCreatedDesign(condition: Trigger<"design">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_design`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedDesign(base: ScopeRef<ScopeName>): ScopeRef<"design">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_design`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedDesign(base: ScopeValue<ScopeName>): ScopeValue<"design">;
+export function lastCreatedDesign(
+  arg: Trigger<"design"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"design"> {
+  return "path" in arg
+    ? navigateScope<"design">(arg, "last_created_design")
+    : trigger([block("last_created_design", [...arg.entries])]);
 }
 
 /** Scopes to the last fleet that was created anywhere in the game. */
-export function lastCreatedFleet(condition: Trigger<"fleet">): Trigger<ScopeName> {
-  return trigger([block("last_created_fleet", [...condition.entries])]);
+export function lastCreatedFleet(condition: Trigger<"fleet">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_fleet`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedFleet(base: ScopeRef<ScopeName>): ScopeRef<"fleet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_fleet`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedFleet(base: ScopeValue<ScopeName>): ScopeValue<"fleet">;
+export function lastCreatedFleet(
+  arg: Trigger<"fleet"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"fleet"> {
+  return "path" in arg
+    ? navigateScope<"fleet">(arg, "last_created_fleet")
+    : trigger([block("last_created_fleet", [...arg.entries])]);
 }
 
 /** Scopes to the last leader that was created anywhere in the game. */
-export function lastCreatedLeader(condition: Trigger<"leader">): Trigger<ScopeName> {
-  return trigger([block("last_created_leader", [...condition.entries])]);
+export function lastCreatedLeader(condition: Trigger<"leader">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_leader`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedLeader(base: ScopeRef<ScopeName>): ScopeRef<"leader">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_leader`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedLeader(base: ScopeValue<ScopeName>): ScopeValue<"leader">;
+export function lastCreatedLeader(
+  arg: Trigger<"leader"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"leader"> {
+  return "path" in arg
+    ? navigateScope<"leader">(arg, "last_created_leader")
+    : trigger([block("last_created_leader", [...arg.entries])]);
 }
 
 /** Scopes to the last pop_group faction that was created anywhere in the game. */
-export function lastCreatedPopFaction(condition: Trigger<"pop_faction">): Trigger<ScopeName> {
-  return trigger([block("last_created_pop_faction", [...condition.entries])]);
+export function lastCreatedPopFaction(condition: Trigger<"pop_faction">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_pop_faction`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedPopFaction(base: ScopeRef<ScopeName>): ScopeRef<"pop_faction">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_pop_faction`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedPopFaction(base: ScopeValue<ScopeName>): ScopeValue<"pop_faction">;
+export function lastCreatedPopFaction(
+  arg: Trigger<"pop_faction"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"pop_faction"> {
+  return "path" in arg
+    ? navigateScope<"pop_faction">(arg, "last_created_pop_faction")
+    : trigger([block("last_created_pop_faction", [...arg.entries])]);
 }
 
 /** Scopes to the last ship that was created anywhere in the game. */
-export function lastCreatedShip(condition: Trigger<"ship">): Trigger<ScopeName> {
-  return trigger([block("last_created_ship", [...condition.entries])]);
+export function lastCreatedShip(condition: Trigger<"ship">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_ship`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedShip(base: ScopeRef<ScopeName>): ScopeRef<"ship">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_ship`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedShip(base: ScopeValue<ScopeName>): ScopeValue<"ship">;
+export function lastCreatedShip(
+  arg: Trigger<"ship"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"ship"> {
+  return "path" in arg
+    ? navigateScope<"ship">(arg, "last_created_ship")
+    : trigger([block("last_created_ship", [...arg.entries])]);
 }
 
 /** Scopes to the last species that was created anywhere in the game. */
-export function lastCreatedSpecies(condition: Trigger<"species">): Trigger<ScopeName> {
-  return trigger([block("last_created_species", [...condition.entries])]);
+export function lastCreatedSpecies(condition: Trigger<"species">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_species`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedSpecies(base: ScopeRef<ScopeName>): ScopeRef<"species">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_species`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedSpecies(base: ScopeValue<ScopeName>): ScopeValue<"species">;
+export function lastCreatedSpecies(
+  arg: Trigger<"species"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"species"> {
+  return "path" in arg
+    ? navigateScope<"species">(arg, "last_created_species")
+    : trigger([block("last_created_species", [...arg.entries])]);
 }
 
 /** Scopes to the last fleet that was created anywhere in the game. */
-export function lastCreatedSystem(condition: Trigger<"system">): Trigger<ScopeName> {
-  return trigger([block("last_created_system", [...condition.entries])]);
+export function lastCreatedSystem(condition: Trigger<"system">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.last_created_system`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lastCreatedSystem(base: ScopeRef<ScopeName>): ScopeRef<"system">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `last_created_system`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lastCreatedSystem(base: ScopeValue<ScopeName>): ScopeValue<"system">;
+export function lastCreatedSystem(
+  arg: Trigger<"system"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"system"> {
+  return "path" in arg
+    ? navigateScope<"system">(arg, "last_created_system")
+    : trigger([block("last_created_system", [...arg.entries])]);
 }
 
 /** Scopes from an object to its leader, e.g. country->ruler, fleet->admiral/scientist, sector->governor, army->general, arc site->scientist... */
@@ -347,65 +1298,295 @@ export function leader(
   | "pop_faction"
   | "ship"
   | "spy_network"
-> {
-  return trigger([block("leader", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.leader`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function leader(
+  base: ScopeRef<
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "espionage_operation"
+    | "federation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "planet"
+    | "pop_faction"
+    | "ship"
+    | "spy_network"
+  >
+): ScopeRef<"leader">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `leader`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function leader(
+  base: ScopeValue<
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "espionage_operation"
+    | "federation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "planet"
+    | "pop_faction"
+    | "ship"
+    | "spy_network"
+  >
+): ScopeValue<"leader">;
+export function leader(
+  arg: Trigger<"leader"> | ScopeValue
+):
+  | Trigger<
+      | "archaeological_site"
+      | "army"
+      | "astral_rift"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "espionage_operation"
+      | "federation"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "planet"
+      | "pop_faction"
+      | "ship"
+      | "spy_network"
+    >
+  | ScopeValue<"leader"> {
+  return "path" in arg
+    ? navigateScope<"leader">(arg, "leader")
+    : trigger([block("leader", [...arg.entries])]);
 }
 
 /** Scopes from a bypass to the country who locked it. */
-export function lockCountry(condition: Trigger<"country">): Trigger<"bypass"> {
-  return trigger([block("lock_country", [...condition.entries])]);
+export function lockCountry(condition: Trigger<"country">): Trigger<"bypass">;
+/**
+ * The same link as a value, from an absolute base: `from.lock_country`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function lockCountry(base: ScopeRef<"bypass">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `lock_country`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function lockCountry(base: ScopeValue<"bypass">): ScopeValue<"country">;
+export function lockCountry(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"bypass"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "lock_country")
+    : trigger([block("lock_country", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the mining station in orbit of it. */
 export function miningStation(
   condition: Trigger<"fleet">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("mining_station", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.mining_station`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function miningStation(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"fleet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `mining_station`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function miningStation(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"fleet">;
+export function miningStation(
+  arg: Trigger<"fleet"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
+  return "path" in arg
+    ? navigateScope<"fleet">(arg, "mining_station")
+    : trigger([block("mining_station", [...arg.entries])]);
 }
 
 /** Sets the scope to no scope (empty scope used for certain generalized behavior). */
-export function noScope(condition: Trigger<"no_scope">): Trigger<ScopeName> {
-  return trigger([block("no_scope", [...condition.entries])]);
+export function noScope(condition: Trigger<"no_scope">): Trigger<ScopeName>;
+/**
+ * The same link as a value, from an absolute base: `from.no_scope`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function noScope(base: ScopeRef<ScopeName>): ScopeRef<"no_scope">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `no_scope`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function noScope(base: ScopeValue<ScopeName>): ScopeValue<"no_scope">;
+export function noScope(
+  arg: Trigger<"no_scope"> | ScopeValue
+): Trigger<ScopeName> | ScopeValue<"no_scope"> {
+  return "path" in arg
+    ? navigateScope<"no_scope">(arg, "no_scope")
+    : trigger([block("no_scope", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the observation outpost in orbit of it. */
 export function observationOutpost(
   condition: Trigger<"fleet">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("observation_outpost", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.observation_outpost`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function observationOutpost(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"fleet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `observation_outpost`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function observationOutpost(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"fleet">;
+export function observationOutpost(
+  arg: Trigger<"fleet"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
+  return "path" in arg
+    ? navigateScope<"fleet">(arg, "observation_outpost")
+    : trigger([block("observation_outpost", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the owner of the observation outpost in orbit of it. */
 export function observationOutpostOwner(
   condition: Trigger<"country">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("observation_outpost_owner", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.observation_outpost_owner`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function observationOutpostOwner(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `observation_outpost_owner`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function observationOutpostOwner(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"country">;
+export function observationOutpostOwner(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "observation_outpost_owner")
+    : trigger([block("observation_outpost_owner", [...arg.entries])]);
 }
 
 /** Scopes to the planet the current object is in orbit of. */
 export function orbit(
   condition: Trigger<"planet">
-): Trigger<"army" | "carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase"> {
-  return trigger([block("orbit", [...condition.entries])]);
+): Trigger<"army" | "carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase">;
+/**
+ * The same link as a value, from an absolute base: `from.orbit`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function orbit(
+  base: ScopeRef<"army" | "carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase">
+): ScopeRef<"planet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `orbit`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function orbit(
+  base: ScopeValue<"army" | "carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase">
+): ScopeValue<"planet">;
+export function orbit(
+  arg: Trigger<"planet"> | ScopeValue
+):
+  | Trigger<"army" | "carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase">
+  | ScopeValue<"planet"> {
+  return "path" in arg
+    ? navigateScope<"planet">(arg, "orbit")
+    : trigger([block("orbit", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the orbital defence station (orbital ring, starbase) orbiting the planet */
 export function orbitalDefence(
   condition: Trigger<"fleet">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("orbital_defence", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.orbital_defence`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function orbitalDefence(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"fleet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `orbital_defence`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function orbitalDefence(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"fleet">;
+export function orbitalDefence(
+  arg: Trigger<"fleet"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
+  return "path" in arg
+    ? navigateScope<"fleet">(arg, "orbital_defence")
+    : trigger([block("orbital_defence", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the station (mining station, research station, observation outpost) orbiting it. */
 export function orbitalStation(
   condition: Trigger<"fleet">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("orbital_station", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.orbital_station`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function orbitalStation(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"fleet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `orbital_station`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function orbitalStation(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"fleet">;
+export function orbitalStation(
+  arg: Trigger<"fleet"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
+  return "path" in arg
+    ? navigateScope<"fleet">(arg, "orbital_station")
+    : trigger([block("orbital_station", [...arg.entries])]);
 }
 
 /** Scopes from a country to its overlord. */
-export function overlord(condition: Trigger<"country">): Trigger<"country"> {
-  return trigger([block("overlord", [...condition.entries])]);
+export function overlord(condition: Trigger<"country">): Trigger<"country">;
+/**
+ * The same link as a value, from an absolute base: `from.overlord`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function overlord(base: ScopeRef<"country">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `overlord`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function overlord(base: ScopeValue<"country">): ScopeValue<"country">;
+export function overlord(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"country"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "overlord")
+    : trigger([block("overlord", [...arg.entries])]);
 }
 
 /** Scopes to the owner of the current object. */
@@ -437,8 +1618,107 @@ export function owner(
   | "spy_network"
   | "starbase"
   | "system"
-> {
-  return trigger([block("owner", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.owner`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function owner(
+  base: ScopeRef<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `owner`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function owner(
+  base: ScopeValue<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"country">;
+export function owner(
+  arg: Trigger<"country"> | ScopeValue
+):
+  | Trigger<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "espionage_operation"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "mission"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "owner")
+    : trigger([block("owner", [...arg.entries])]);
 }
 
 /** Scopes to the main species of the owner of the current object. Works in every scope that 'owner' would work in. */
@@ -471,8 +1751,110 @@ export function ownerMainSpecies(
   | "spy_network"
   | "starbase"
   | "system"
-> {
-  return trigger([block("owner_main_species", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.owner_main_species`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function ownerMainSpecies(
+  base: ScopeRef<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "species"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"species">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `owner_main_species`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function ownerMainSpecies(
+  base: ScopeValue<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "species"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"species">;
+export function ownerMainSpecies(
+  arg: Trigger<"species"> | ScopeValue
+):
+  | Trigger<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "espionage_operation"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "mission"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "species"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"species"> {
+  return "path" in arg
+    ? navigateScope<"species">(arg, "owner_main_species")
+    : trigger([block("owner_main_species", [...arg.entries])]);
 }
 
 /** Scopes from an object to its owner if it exists, or to the owner of the space it is in otherwise. Works on all objects visible in star system view that can have an owner */
@@ -492,8 +1874,71 @@ export function ownerOrSpaceOwner(
   | "spy_network"
   | "starbase"
   | "system"
-> {
-  return trigger([block("owner_or_space_owner", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.owner_or_space_owner`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function ownerOrSpaceOwner(
+  base: ScopeRef<
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "ship"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `owner_or_space_owner`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function ownerOrSpaceOwner(
+  base: ScopeValue<
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "ship"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"country">;
+export function ownerOrSpaceOwner(
+  arg: Trigger<"country"> | ScopeValue
+):
+  | Trigger<
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "owner_or_space_owner")
+    : trigger([block("owner_or_space_owner", [...arg.entries])]);
 }
 
 /** Scopes to the main species of the owner of the current object. Works in every scope that 'owner' would work in. */
@@ -524,8 +1969,104 @@ export function ownerSpecies(
   | "spy_network"
   | "starbase"
   | "system"
-> {
-  return trigger([block("owner_species", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.owner_species`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function ownerSpecies(
+  base: ScopeRef<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "species"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"species">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `owner_species`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function ownerSpecies(
+  base: ScopeValue<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "species"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"species">;
+export function ownerSpecies(
+  arg: Trigger<"species"> | ScopeValue
+):
+  | Trigger<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "espionage_operation"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "mission"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "species"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"species"> {
+  return "path" in arg
+    ? navigateScope<"species">(arg, "owner_species")
+    : trigger([block("owner_species", [...arg.entries])]);
 }
 
 /** Scopes from an object to the planet it is on. */
@@ -544,8 +2085,68 @@ export function planet(
   | "pop_job"
   | "ship"
   | "starbase"
-> {
-  return trigger([block("planet", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.planet`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function planet(
+  base: ScopeRef<
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "deposit"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "pop_job"
+    | "ship"
+    | "starbase"
+  >
+): ScopeRef<"planet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `planet`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function planet(
+  base: ScopeValue<
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "deposit"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "pop_job"
+    | "ship"
+    | "starbase"
+  >
+): ScopeValue<"planet">;
+export function planet(
+  arg: Trigger<"planet"> | ScopeValue
+):
+  | Trigger<
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "colony"
+      | "deposit"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "pop_job"
+      | "ship"
+      | "starbase"
+    >
+  | ScopeValue<"planet"> {
+  return "path" in arg
+    ? navigateScope<"planet">(arg, "planet")
+    : trigger([block("planet", [...arg.entries])]);
 }
 
 /** Scopes from an object to the owner of the planet it is on. */
@@ -564,32 +2165,160 @@ export function planetOwner(
   | "pop_job"
   | "ship"
   | "starbase"
-> {
-  return trigger([block("planet_owner", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.planet_owner`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function planetOwner(
+  base: ScopeRef<
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "deposit"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "pop_job"
+    | "ship"
+    | "starbase"
+  >
+): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `planet_owner`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function planetOwner(
+  base: ScopeValue<
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "deposit"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "pop_job"
+    | "ship"
+    | "starbase"
+  >
+): ScopeValue<"country">;
+export function planetOwner(
+  arg: Trigger<"country"> | ScopeValue
+):
+  | Trigger<
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "colony"
+      | "deposit"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "pop_job"
+      | "ship"
+      | "starbase"
+    >
+  | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "planet_owner")
+    : trigger([block("planet_owner", [...arg.entries])]);
 }
 
 /** Scopes from an object to its pop faction. */
 export function popFaction(
   condition: Trigger<"pop_faction">
-): Trigger<"leader" | "pop_faction" | "pop_group"> {
-  return trigger([block("pop_faction", [...condition.entries])]);
+): Trigger<"leader" | "pop_faction" | "pop_group">;
+/**
+ * The same link as a value, from an absolute base: `from.pop_faction`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function popFaction(
+  base: ScopeRef<"leader" | "pop_faction" | "pop_group">
+): ScopeRef<"pop_faction">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `pop_faction`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function popFaction(
+  base: ScopeValue<"leader" | "pop_faction" | "pop_group">
+): ScopeValue<"pop_faction">;
+export function popFaction(
+  arg: Trigger<"pop_faction"> | ScopeValue
+): Trigger<"leader" | "pop_faction" | "pop_group"> | ScopeValue<"pop_faction"> {
+  return "path" in arg
+    ? navigateScope<"pop_faction">(arg, "pop_faction")
+    : trigger([block("pop_faction", [...arg.entries])]);
 }
 
 /** Scopes from an army to the pop_group that spawned it. */
-export function popGroup(condition: Trigger<"pop_group">): Trigger<"army" | "pop_group"> {
-  return trigger([block("pop_group", [...condition.entries])]);
+export function popGroup(condition: Trigger<"pop_group">): Trigger<"army" | "pop_group">;
+/**
+ * The same link as a value, from an absolute base: `from.pop_group`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function popGroup(base: ScopeRef<"army" | "pop_group">): ScopeRef<"pop_group">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `pop_group`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function popGroup(base: ScopeValue<"army" | "pop_group">): ScopeValue<"pop_group">;
+export function popGroup(
+  arg: Trigger<"pop_group"> | ScopeValue
+): Trigger<"army" | "pop_group"> | ScopeValue<"pop_group"> {
+  return "path" in arg
+    ? navigateScope<"pop_group">(arg, "pop_group")
+    : trigger([block("pop_group", [...arg.entries])]);
 }
 
 /** Scopes from a planet to the research station in orbit of it. */
 export function researchStation(
   condition: Trigger<"fleet">
-): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([block("research_station", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.research_station`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function researchStation(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship">
+): ScopeRef<"fleet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `research_station`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function researchStation(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship">
+): ScopeValue<"fleet">;
+export function researchStation(
+  arg: Trigger<"fleet"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship"> | ScopeValue<"fleet"> {
+  return "path" in arg
+    ? navigateScope<"fleet">(arg, "research_station")
+    : trigger([block("research_station", [...arg.entries])]);
 }
 
 /** Scopes from a first contact site to the equivalent one that the contact_country has on the site's owner. */
-export function reverseFirstContact(condition: Trigger<"first_contact">): Trigger<"first_contact"> {
-  return trigger([block("reverse_first_contact", [...condition.entries])]);
+export function reverseFirstContact(condition: Trigger<"first_contact">): Trigger<"first_contact">;
+/**
+ * The same link as a value, from an absolute base: `from.reverse_first_contact`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function reverseFirstContact(base: ScopeRef<"first_contact">): ScopeRef<"first_contact">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `reverse_first_contact`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function reverseFirstContact(base: ScopeValue<"first_contact">): ScopeValue<"first_contact">;
+export function reverseFirstContact(
+  arg: Trigger<"first_contact"> | ScopeValue
+): Trigger<"first_contact"> | ScopeValue<"first_contact"> {
+  return "path" in arg
+    ? navigateScope<"first_contact">(arg, "reverse_first_contact")
+    : trigger([block("reverse_first_contact", [...arg.entries])]);
 }
 
 /** Scopes to the ruler of a country (or the ruler of the object's owner). */
@@ -621,13 +2350,127 @@ export function ruler(
   | "spy_network"
   | "starbase"
   | "system"
-> {
-  return trigger([block("ruler", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.ruler`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function ruler(
+  base: ScopeRef<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"leader">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `ruler`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function ruler(
+  base: ScopeValue<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "espionage_operation"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "mission"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"leader">;
+export function ruler(
+  arg: Trigger<"leader"> | ScopeValue
+):
+  | Trigger<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "espionage_operation"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "mission"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"leader"> {
+  return "path" in arg
+    ? navigateScope<"leader">(arg, "ruler")
+    : trigger([block("ruler", [...arg.entries])]);
 }
 
 /** Scopes to the country that dealt the corresponding ranked damage to the fleet. Can be null. Use the record_damaging_country = yes setting to make the fleet record */
-export function secondDamagingCountry(condition: Trigger<"country">): Trigger<"fleet"> {
-  return trigger([block("second_damaging_country", [...condition.entries])]);
+export function secondDamagingCountry(condition: Trigger<"country">): Trigger<"fleet">;
+/**
+ * The same link as a value, from an absolute base: `from.second_damaging_country`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function secondDamagingCountry(base: ScopeRef<"fleet">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `second_damaging_country`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function secondDamagingCountry(base: ScopeValue<"fleet">): ScopeValue<"country">;
+export function secondDamagingCountry(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"fleet"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "second_damaging_country")
+    : trigger([block("second_damaging_country", [...arg.entries])]);
 }
 
 /** Scopes from an object to the sector it is in. For leaders, scopes to the sector the leader is currently located in, not necessarily the one they are assigned to as a governor. */
@@ -652,25 +2495,152 @@ export function sector(
   | "ship"
   | "starbase"
   | "system"
-> {
-  return trigger([block("sector", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.sector`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function sector(
+  base: ScopeRef<
+    | "ambient_object"
+    | "archaeological_site"
+    | "army"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "debris"
+    | "deposit"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"sector">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `sector`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function sector(
+  base: ScopeValue<
+    | "ambient_object"
+    | "archaeological_site"
+    | "army"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "debris"
+    | "deposit"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"sector">;
+export function sector(
+  arg: Trigger<"sector"> | ScopeValue
+):
+  | Trigger<
+      | "ambient_object"
+      | "archaeological_site"
+      | "army"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"sector"> {
+  return "path" in arg
+    ? navigateScope<"sector">(arg, "sector")
+    : trigger([block("sector", [...arg.entries])]);
 }
 
 /** Scopes from a sector to its capital colony. */
-export function sectorCapital(condition: Trigger<"colony">): Trigger<"sector"> {
-  return trigger([block("sector_capital", [...condition.entries])]);
+export function sectorCapital(condition: Trigger<"colony">): Trigger<"sector">;
+/**
+ * The same link as a value, from an absolute base: `from.sector_capital`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function sectorCapital(base: ScopeRef<"sector">): ScopeRef<"colony">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `sector_capital`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function sectorCapital(base: ScopeValue<"sector">): ScopeValue<"colony">;
+export function sectorCapital(
+  arg: Trigger<"colony"> | ScopeValue
+): Trigger<"sector"> | ScopeValue<"colony"> {
+  return "path" in arg
+    ? navigateScope<"colony">(arg, "sector_capital")
+    : trigger([block("sector_capital", [...arg.entries])]);
 }
 
 /** Scopes from a starbase to its station ship or from a colony to its carrier ship. */
 export function ship(
   condition: Trigger<"ship">
-): Trigger<"carrier" | "colony" | "planet" | "ship" | "starbase"> {
-  return trigger([block("ship", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "planet" | "ship" | "starbase">;
+/**
+ * The same link as a value, from an absolute base: `from.ship`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function ship(
+  base: ScopeRef<"carrier" | "colony" | "planet" | "ship" | "starbase">
+): ScopeRef<"ship">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `ship`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function ship(
+  base: ScopeValue<"carrier" | "colony" | "planet" | "ship" | "starbase">
+): ScopeValue<"ship">;
+export function ship(
+  arg: Trigger<"ship"> | ScopeValue
+): Trigger<"carrier" | "colony" | "planet" | "ship" | "starbase"> | ScopeValue<"ship"> {
+  return "path" in arg
+    ? navigateScope<"ship">(arg, "ship")
+    : trigger([block("ship", [...arg.entries])]);
 }
 
 /** Scopes to the ship's current growth stage inside the ship's design */
-export function shipGrowthStage(condition: Trigger<"ship_growth_stage">): Trigger<"ship"> {
-  return trigger([block("ship_growth_stage", [...condition.entries])]);
+export function shipGrowthStage(condition: Trigger<"ship_growth_stage">): Trigger<"ship">;
+/**
+ * The same link as a value, from an absolute base: `from.ship_growth_stage`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function shipGrowthStage(base: ScopeRef<"ship">): ScopeRef<"ship_growth_stage">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `ship_growth_stage`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function shipGrowthStage(base: ScopeValue<"ship">): ScopeValue<"ship_growth_stage">;
+export function shipGrowthStage(
+  arg: Trigger<"ship_growth_stage"> | ScopeValue
+): Trigger<"ship"> | ScopeValue<"ship_growth_stage"> {
+  return "path" in arg
+    ? navigateScope<"ship_growth_stage">(arg, "ship_growth_stage")
+    : trigger([block("ship_growth_stage", [...arg.entries])]);
 }
 
 /** Scopes from an object to the solar system it is in. */
@@ -696,8 +2666,89 @@ export function solarSystem(
   | "ship"
   | "starbase"
   | "system"
-> {
-  return trigger([block("solar_system", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.solar_system`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function solarSystem(
+  base: ScopeRef<
+    | "ambient_object"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"system">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `solar_system`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function solarSystem(
+  base: ScopeValue<
+    | "ambient_object"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"system">;
+export function solarSystem(
+  arg: Trigger<"system"> | ScopeValue
+):
+  | Trigger<
+      | "ambient_object"
+      | "archaeological_site"
+      | "army"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "ship"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"system"> {
+  return "path" in arg
+    ? navigateScope<"system">(arg, "solar_system")
+    : trigger([block("solar_system", [...arg.entries])]);
 }
 
 /** Scopes from an object to the owner of the space it is in. Works on all objects visible in star system view. */
@@ -718,27 +2769,148 @@ export function spaceOwner(
   | "spy_network"
   | "starbase"
   | "system"
-> {
-  return trigger([block("space_owner", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.space_owner`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function spaceOwner(
+  base: ScopeRef<
+    | "ambient_object"
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "ship"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `space_owner`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function spaceOwner(
+  base: ScopeValue<
+    | "ambient_object"
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "ship"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"country">;
+export function spaceOwner(
+  arg: Trigger<"country"> | ScopeValue
+):
+  | Trigger<
+      | "ambient_object"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "space_owner")
+    : trigger([block("space_owner", [...arg.entries])]);
 }
 
 /** Scopes from an army to the planet that spawned it. */
-export function spawnerPlanet(condition: Trigger<"planet">): Trigger<"army"> {
-  return trigger([block("spawner_planet", [...condition.entries])]);
+export function spawnerPlanet(condition: Trigger<"planet">): Trigger<"army">;
+/**
+ * The same link as a value, from an absolute base: `from.spawner_planet`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function spawnerPlanet(base: ScopeRef<"army">): ScopeRef<"planet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `spawner_planet`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function spawnerPlanet(base: ScopeValue<"army">): ScopeValue<"planet">;
+export function spawnerPlanet(
+  arg: Trigger<"planet"> | ScopeValue
+): Trigger<"army"> | ScopeValue<"planet"> {
+  return "path" in arg
+    ? navigateScope<"planet">(arg, "spawner_planet")
+    : trigger([block("spawner_planet", [...arg.entries])]);
 }
 
 /** Scopes from an object to its species. */
 export function species(
   condition: Trigger<"species">
-): Trigger<"army" | "country" | "leader" | "pop_group" | "ship" | "species"> {
-  return trigger([block("species", [...condition.entries])]);
+): Trigger<"army" | "country" | "leader" | "pop_group" | "ship" | "species">;
+/**
+ * The same link as a value, from an absolute base: `from.species`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function species(
+  base: ScopeRef<"army" | "country" | "leader" | "pop_group" | "ship" | "species">
+): ScopeRef<"species">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `species`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function species(
+  base: ScopeValue<"army" | "country" | "leader" | "pop_group" | "ship" | "species">
+): ScopeValue<"species">;
+export function species(
+  arg: Trigger<"species"> | ScopeValue
+):
+  | Trigger<"army" | "country" | "leader" | "pop_group" | "ship" | "species">
+  | ScopeValue<"species"> {
+  return "path" in arg
+    ? navigateScope<"species">(arg, "species")
+    : trigger([block("species", [...arg.entries])]);
 }
 
 /** Scopes from an espionage operation or spymaster envoy to its spy network. */
 export function spynetwork(
   condition: Trigger<"spy_network">
-): Trigger<"espionage_operation" | "leader"> {
-  return trigger([block("spynetwork", [...condition.entries])]);
+): Trigger<"espionage_operation" | "leader">;
+/**
+ * The same link as a value, from an absolute base: `from.spynetwork`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function spynetwork(
+  base: ScopeRef<"espionage_operation" | "leader">
+): ScopeRef<"spy_network">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `spynetwork`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function spynetwork(
+  base: ScopeValue<"espionage_operation" | "leader">
+): ScopeValue<"spy_network">;
+export function spynetwork(
+  arg: Trigger<"spy_network"> | ScopeValue
+): Trigger<"espionage_operation" | "leader"> | ScopeValue<"spy_network"> {
+  return "path" in arg
+    ? navigateScope<"spy_network">(arg, "spynetwork")
+    : trigger([block("spynetwork", [...arg.entries])]);
 }
 
 /** Scopes from an object to the primary star (planet scope) of the system it is in. */
@@ -759,22 +2931,128 @@ export function star(
   | "ship"
   | "starbase"
   | "system"
-> {
-  return trigger([block("star", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.star`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function star(
+  base: ScopeRef<
+    | "ambient_object"
+    | "archaeological_site"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "debris"
+    | "first_contact"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"planet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `star`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function star(
+  base: ScopeValue<
+    | "ambient_object"
+    | "archaeological_site"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "debris"
+    | "first_contact"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"planet">;
+export function star(
+  arg: Trigger<"planet"> | ScopeValue
+):
+  | Trigger<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "first_contact"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"planet"> {
+  return "path" in arg
+    ? navigateScope<"planet">(arg, "star")
+    : trigger([block("star", [...arg.entries])]);
 }
 
 /** Scopes from a solar system or planet to that system's starbase. Alternatively, scopes from a fleet or ship that is a starbase to its matching starbase scope. */
 export function starbase(
   condition: Trigger<"starbase">
-): Trigger<"carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase" | "system"> {
-  return trigger([block("starbase", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase" | "system">;
+/**
+ * The same link as a value, from an absolute base: `from.starbase`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function starbase(
+  base: ScopeRef<"carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase" | "system">
+): ScopeRef<"starbase">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `starbase`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function starbase(
+  base: ScopeValue<"carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase" | "system">
+): ScopeValue<"starbase">;
+export function starbase(
+  arg: Trigger<"starbase"> | ScopeValue
+):
+  | Trigger<"carrier" | "colony" | "fleet" | "planet" | "ship" | "starbase" | "system">
+  | ScopeValue<"starbase"> {
+  return "path" in arg
+    ? navigateScope<"starbase">(arg, "starbase")
+    : trigger([block("starbase", [...arg.entries])]);
 }
 
 /** Scopes from a galactic object to an influence field with the galactic object as center */
 export function stormInfluenceField(
   condition: Trigger<"cosmic_storm_influence_field">
-): Trigger<"system"> {
-  return trigger([block("storm_influence_field", [...condition.entries])]);
+): Trigger<"system">;
+/**
+ * The same link as a value, from an absolute base: `from.storm_influence_field`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function stormInfluenceField(
+  base: ScopeRef<"system">
+): ScopeRef<"cosmic_storm_influence_field">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `storm_influence_field`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function stormInfluenceField(
+  base: ScopeValue<"system">
+): ScopeValue<"cosmic_storm_influence_field">;
+export function stormInfluenceField(
+  arg: Trigger<"cosmic_storm_influence_field"> | ScopeValue
+): Trigger<"system"> | ScopeValue<"cosmic_storm_influence_field"> {
+  return "path" in arg
+    ? navigateScope<"cosmic_storm_influence_field">(arg, "storm_influence_field")
+    : trigger([block("storm_influence_field", [...arg.entries])]);
 }
 
 /** Scopes from an object to the primary star (planet scope) of the system it is in. */
@@ -800,23 +3078,153 @@ export function systemStar(
   | "ship"
   | "starbase"
   | "system"
-> {
-  return trigger([block("system_star", [...condition.entries])]);
+>;
+/**
+ * The same link as a value, from an absolute base: `from.system_star`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function systemStar(
+  base: ScopeRef<
+    | "ambient_object"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeRef<"planet">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `system_star`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function systemStar(
+  base: ScopeValue<
+    | "ambient_object"
+    | "archaeological_site"
+    | "army"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_group"
+    | "ship"
+    | "starbase"
+    | "system"
+  >
+): ScopeValue<"planet">;
+export function systemStar(
+  arg: Trigger<"planet"> | ScopeValue
+):
+  | Trigger<
+      | "ambient_object"
+      | "archaeological_site"
+      | "army"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "ship"
+      | "starbase"
+      | "system"
+    >
+  | ScopeValue<"planet"> {
+  return "path" in arg
+    ? navigateScope<"planet">(arg, "system_star")
+    : trigger([block("system_star", [...arg.entries])]);
 }
 
 /** Scopes from a cosmic storm to the galactic object that it is heading towards. */
-export function targetSystem(condition: Trigger<"system">): Trigger<"storm"> {
-  return trigger([block("target_system", [...condition.entries])]);
+export function targetSystem(condition: Trigger<"system">): Trigger<"storm">;
+/**
+ * The same link as a value, from an absolute base: `from.target_system`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function targetSystem(base: ScopeRef<"storm">): ScopeRef<"system">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `target_system`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function targetSystem(base: ScopeValue<"storm">): ScopeValue<"system">;
+export function targetSystem(
+  arg: Trigger<"system"> | ScopeValue
+): Trigger<"storm"> | ScopeValue<"system"> {
+  return "path" in arg
+    ? navigateScope<"system">(arg, "target_system")
+    : trigger([block("target_system", [...arg.entries])]);
 }
 
 /** Scopes to the country that dealt the corresponding ranked damage to the fleet. Can be null. Use the record_damaging_country = yes setting to make the fleet record */
-export function thirdDamagingCountry(condition: Trigger<"country">): Trigger<"fleet"> {
-  return trigger([block("third_damaging_country", [...condition.entries])]);
+export function thirdDamagingCountry(condition: Trigger<"country">): Trigger<"fleet">;
+/**
+ * The same link as a value, from an absolute base: `from.third_damaging_country`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function thirdDamagingCountry(base: ScopeRef<"fleet">): ScopeRef<"country">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `third_damaging_country`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function thirdDamagingCountry(base: ScopeValue<"fleet">): ScopeValue<"country">;
+export function thirdDamagingCountry(
+  arg: Trigger<"country"> | ScopeValue
+): Trigger<"fleet"> | ScopeValue<"country"> {
+  return "path" in arg
+    ? navigateScope<"country">(arg, "third_damaging_country")
+    : trigger([block("third_damaging_country", [...arg.entries])]);
 }
 
 /** Scopes from an object to its unhappiest pop group. */
 export function unhappiestPop(
   condition: Trigger<"pop_group">
-): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
-  return trigger([block("unhappiest_pop", [...condition.entries])]);
+): Trigger<"carrier" | "colony" | "country" | "planet" | "ship">;
+/**
+ * The same link as a value, from an absolute base: `from.unhappiest_pop`.
+ * Absolute in, absolute out — the result opens as a block too.
+ */
+export function unhappiestPop(
+  base: ScopeRef<"carrier" | "colony" | "country" | "planet" | "ship">
+): ScopeRef<"pop_group">;
+/**
+ * The same link from a relative base: `ctx.self` writes a bare `unhappiest_pop`.
+ * Relative in, relative out — a value, never a block.
+ */
+export function unhappiestPop(
+  base: ScopeValue<"carrier" | "colony" | "country" | "planet" | "ship">
+): ScopeValue<"pop_group">;
+export function unhappiestPop(
+  arg: Trigger<"pop_group"> | ScopeValue
+): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> | ScopeValue<"pop_group"> {
+  return "path" in arg
+    ? navigateScope<"pop_group">(arg, "unhappiest_pop")
+    : trigger([block("unhappiest_pop", [...arg.entries])]);
 }

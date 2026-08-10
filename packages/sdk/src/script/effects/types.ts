@@ -100,6 +100,19 @@ export interface ScriptCtx<Self extends ScopeName, From extends ScopeName | unde
    */
   readonly self: ScopeValue<Self>;
   /**
+   * ROOT — the scope the script's top level runs in, which at the point this
+   * context is handed over is the same scope `self` names.
+   *
+   * Openable where `self` is not, and for the reason {@link ScopeRef} draws
+   * the line on: `root` resolves to the same scope wherever it is written, so
+   * nesting inside `every_owned_planet = { ... }` leaves it naming the block's
+   * top-level scope while `this` has become the planet. Navigating from it is
+   * what the game script does constantly — `root.owner`, `root.capital_scope`
+   * — and that is a value form, not a block, which is why the generated links
+   * take a scope value as well as a condition.
+   */
+  readonly root: ScopeRef<Self>;
+  /**
    * FROM, where something declares what it holds — an event's `from:` field, a
    * content field's `replace_scopes` in the rules. Everywhere else this is an
    * inert sentinel, so touching an undeclared FROM is a compile error.
