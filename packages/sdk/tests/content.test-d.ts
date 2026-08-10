@@ -1378,6 +1378,46 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("authors technology's open single weight-group map (SDK-66)", () => {
+    expectTypeOf<TechnologyFields["modWeightIfGroupPicked"]>().toEqualTypeOf<
+      Readonly<Record<string, number>> | undefined
+    >();
+    expectTypeOf<TechnologyPatch["modWeightIfGroupPicked"]>().toEqualTypeOf<
+      PatchInput<Readonly<Record<string, number>>> | undefined
+    >();
+
+    contentMod.technology("mod_weight_if_group_picked", {
+      name: "Weight Group Test",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      // Keys remain open because value[tech_weight_group] is an engine value
+      // set, not a closed enum in the SDK surface.
+      modWeightIfGroupPicked: {
+        repeatable: 2,
+        deposit_blockers: 0.5,
+        third_party_group: 1.25,
+      },
+    });
+    contentMod.technology("mod_weight_if_group_picked_bad_value", {
+      name: "Weight Group Bad Value",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      // @ts-expect-error — scalarMap values are numbers, not nested blocks.
+      modWeightIfGroupPicked: { repeatable: { value: 2 } },
+    });
+    contentMod.technology("mod_weight_if_group_picked_bad_form", {
+      name: "Weight Group Bad Form",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      // @ts-expect-error — the outer member is one record, not an array of
+      // repeated maps; arity: "single" keeps its type and metadata aligned.
+      modWeightIfGroupPicked: [{ repeatable: 2 }],
+    });
+  });
+
   it("authors technology's modifier at both levels the rules declare it (SDK-63)", () => {
     // technologies_consolidated.cwt declares the same
     // `single_alias_right[modifier_clause]` twice — once on the definition

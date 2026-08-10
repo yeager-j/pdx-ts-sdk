@@ -1884,6 +1884,32 @@ describe("generated content registries", () => {
     expect(files.get("localisation/english/ss_test_l_english.yml")).not.toContain("mid");
   });
 
+  it("writes technology weight-group maps as one flat scalar block (SDK-66)", () => {
+    const cap = capabilityFor(configFor("Technology weight map test", "tw_test"));
+    const technology = cap.technology("weight_groups", {
+      name: "Weight Groups",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      modWeightIfGroupPicked: {
+        repeatable: 2,
+        deposit_blockers: 0.5,
+        third_party_group: 1.25,
+      },
+    });
+    const rendered = render(cap.compile([cap.feature(undefined, [technology])])).get(
+      "common/technology/tw_test_technology.txt"
+    );
+    expect(rendered).toContain(
+      "\tmod_weight_if_group_picked = {\n" +
+        "\t\trepeatable = 2\n" +
+        "\t\tdeposit_blockers = 0.5\n" +
+        "\t\tthird_party_group = 1.25\n" +
+        "\t}\n"
+    );
+    expect(rendered).not.toContain("mod_weight_if_group_picked = {\n\t\t{");
+  });
+
   it("takes the definition's scope for the clauses CWT leaves to it", () => {
     const cap = capabilityFor(configFor("Decision scope test", "sc_test"));
     // CWT annotates the decision body `this = any` and means it: the same

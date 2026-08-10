@@ -34,13 +34,6 @@ export interface AcknowledgedGap {
 
 export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
   {
-    registry: "technology",
-    field: "mod_weight_if_group_picked",
-    count: 34,
-    reason: "A map keyed by `value[tech_weight_group]`; needs value-set-keyed map machinery.",
-    issue: "SDK-66",
-  },
-  {
     registry: "building",
     field: "inline_script",
     count: 285,

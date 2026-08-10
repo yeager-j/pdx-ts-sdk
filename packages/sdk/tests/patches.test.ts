@@ -237,6 +237,29 @@ describe("patching end to end", () => {
     // it.
     expect(content).not.toContain("@tech_gene_forging_POINTS");
   });
+
+  it("serializes a technology weight-group map through patchTechnology (SDK-66)", () => {
+    const mod = createMod(makeConfig());
+    const patch = mod.patchTechnology(
+      vanilla.definition("technology", "tech_gene_forging"),
+      () => ({
+        modWeightIfGroupPicked: {
+          repeatable: 2,
+          deposit_blockers: 0.5,
+          third_party_group: 1.25,
+        },
+      })
+    );
+    const content = mod.compile([mod.feature(undefined, [patch])]).patchPlans[0]!.content;
+    expect(content).toContain(
+      "\tmod_weight_if_group_picked = {\n" +
+        "\t\trepeatable = 2\n" +
+        "\t\tdeposit_blockers = 0.5\n" +
+        "\t\tthird_party_group = 1.25\n" +
+        "\t}\n"
+    );
+    expect(content).not.toContain("mod_weight_if_group_picked = {\n\t\t{");
+  });
 });
 
 describe("the vanilla path guard without any patch", () => {

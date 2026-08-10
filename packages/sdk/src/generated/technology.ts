@@ -312,6 +312,7 @@ export interface TechnologyFields {
   costPerLevel?: number;
   /** a weight group increases the chances of a technology appearing - if another tech of a similar group is picked. */
   weightGroups?: TechWeightGroup[];
+  modWeightIfGroupPicked?: Readonly<Record<string, number>>;
   startTech?: boolean;
   isReverseEngineerable?: boolean;
   aiUpdateType?: TechAiType;
@@ -397,6 +398,7 @@ export interface TechnologyPatch {
   readonly costPerLevel?: PatchInput<number>;
   /** a weight group increases the chances of a technology appearing - if another tech of a similar group is picked. */
   readonly weightGroups?: PatchInput<TechWeightGroup[]>;
+  readonly modWeightIfGroupPicked?: PatchInput<Readonly<Record<string, number>>>;
   readonly startTech?: PatchInput<boolean>;
   readonly isReverseEngineerable?: PatchInput<boolean>;
   readonly aiUpdateType?: PatchInput<TechAiType>;
@@ -501,6 +503,12 @@ export const TECHNOLOGY_FIELDS: readonly ContentField[] = [
     shape: "valueList",
     form: "list",
     conversion: "identity",
+  },
+  {
+    key: "mod_weight_if_group_picked",
+    member: "modWeightIfGroupPicked",
+    shape: "scalarMap",
+    form: "block",
   },
   {
     key: "start_tech",

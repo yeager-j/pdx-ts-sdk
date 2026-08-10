@@ -777,7 +777,7 @@ describe("content-type codegen", () => {
     expect(emissions.get("situation_type")?.code).toContain('keying: "container"');
   });
 
-  it("lowers a ref-keyed scalar map, the shape two registries needed", () => {
+  it("lowers a ref-keyed scalar map, including technology's open weight groups", () => {
     // `{ <resource> = float }` and `{ <job> = int }` are computed keys, which
     // mergeByName drops — so nothing reached these fields at all.
     // leader_background_job_weight sat on the machinery backlog until
@@ -789,9 +789,16 @@ describe("content-type codegen", () => {
     );
     const civic = emissions.get("civic_or_origin");
     expect(civic?.code).toContain("leaderBackgroundJobWeight?: Readonly<Record<string, number>>;");
-    // Both registries now lower everything the rules declare.
+    const technology = emissions.get("technology")!;
+    expect(technology.code).toContain("modWeightIfGroupPicked?: Readonly<Record<string, number>>;");
+    expect(technology.code).toContain(
+      '{ key: "mod_weight_if_group_picked", member: "modWeightIfGroupPicked", shape: "scalarMap", form: "block" }'
+    );
+    expect(fieldNames(technology.emittedFields)).toContain("mod_weight_if_group_picked");
+    // All scalar-map consumers now lower everything their rules declare.
     expect(shipSize?.unsupported).toEqual([]);
     expect(civic?.unsupported).toEqual([]);
+    expect(technology.unsupported).not.toContain("mod_weight_if_group_picked");
   });
 
   it("carries ship_size's per-field modifier scopes", () => {

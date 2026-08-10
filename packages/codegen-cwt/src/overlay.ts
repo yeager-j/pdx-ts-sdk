@@ -1048,6 +1048,20 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "technology.mod_weight_if_group_picked",
+    {
+      shape: "scalarMap",
+      arity: "single",
+      reason:
+        "The rules declare the outer key 0..inf, but Stellaris 4.4.6 writes exactly one " +
+        "block in each of 34 definitions (no repeated outer blocks), with one empty block and " +
+        "33 inner rows. A single map is the sensible authoring contract and keeps the member " +
+        "type, metadata, and scalarMap writer aligned. Inner keys are open " +
+        "value[tech_weight_group] names (repeatable and deposit_blockers in this corpus), so " +
+        "the map stays keyed by string rather than a closed union.",
+    },
+  ],
+  [
     "technology.modifier",
     {
       shape: "modifierBlock",

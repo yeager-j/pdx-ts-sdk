@@ -481,6 +481,27 @@ describe("corpus conformance", () => {
     );
   });
 
+  it("measures technology.mod_weight_if_group_picked's single open map (SDK-66)", () => {
+    const technology = byRegistry.get("technology")!;
+    const observation = technology.corpus.occurrences.get("mod_weight_if_group_picked");
+    expect(observation).toMatchObject({
+      definitions: 34,
+      repeated: 0,
+      blocks: 34,
+      emptyBlocks: 1,
+    });
+    // One empty outer block leaves 33 blocks with inner rows; the fixture's
+    // block count includes that empty declaration.
+    expect(observation!.blocks - observation!.emptyBlocks).toBe(33);
+    expect(observation!.keys).toEqual(new Set(["deposit_blockers", "repeatable"]));
+    expect(technology.unexpressed).not.toContainEqual(
+      expect.objectContaining({ field: "mod_weight_if_group_picked" })
+    );
+    expect(technology.shape).not.toContainEqual(
+      expect.objectContaining({ field: "mod_weight_if_group_picked" })
+    );
+  });
+
   /**
    * The one thing the presence-floor gate structurally cannot see, pinned by
    * hand so it is not invisible.
