@@ -6,9 +6,54 @@
 
 import { describe, it } from "vitest";
 
-import { createMod, eventTarget } from "../src/index.ts";
+import {
+  createMod,
+  eventTarget,
+  hasPlanetFlag,
+  planetFlags,
+  vanilla,
+  type EventTriggeredDescription,
+  type TriggeredDescription,
+} from "../src/index.ts";
 
 describe("the FROM contract on the real event API", () => {
+  it("scope-checks conditional descriptions and their event-only media", () => {
+    const mod = createMod({
+      name: "Descriptions",
+      prefix: "event_desc",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const planetFlag = planetFlags("event_desc_planet_flag");
+    const shared: TriggeredDescription<"country"> = { text: ["One.", "Two."] };
+    const eventSpecific: EventTriggeredDescription<"country"> = {
+      ...shared,
+      showSound: vanilla.soundEffect("event_default"),
+    };
+
+    events.country(1, { conditionalDesc: [eventSpecific], isTriggeredOnly: true });
+    events.country(2, {
+      conditionalDesc: [
+        {
+          // @ts-expect-error — a planet-only trigger cannot gate a country event description
+          trigger: hasPlanetFlag(planetFlag),
+          text: "Wrong scope.",
+        },
+      ],
+      isTriggeredOnly: true,
+    });
+    events.country(3, {
+      conditionalDesc: [
+        {
+          text: "Wrong media kind.",
+          // @ts-expect-error — a sprite reference is not a sound-effect reference
+          showSound: vanilla.sprite("GFX_evt_ship_in_orbit"),
+        },
+      ],
+      isTriggeredOnly: true,
+    });
+  });
+
   it("requires a witness when the fired event declared from:", () => {
     const mod = createMod({ name: "A", prefix: "from_contract_a", supportedVersion: "4.4.*" });
     const events = mod.namespace();

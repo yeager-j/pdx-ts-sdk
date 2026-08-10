@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { countryFlags } from "../src/generated/value-sets.ts";
-import { createMod, render } from "../src/index.ts";
+import { createMod, hasAuthority, hasTechnology, not, or, render } from "../src/index.ts";
 import { eventTarget } from "../src/script/effects/recorder.ts";
 
 const flags = countryFlags("event_test_flag");
@@ -42,6 +42,112 @@ describe("event definitions in a namespace", () => {
     expect(loc).toContain(' event_test.2.desc:0 "A description."');
     expect(loc).toContain(' event_test.2.a:0 "First."');
     expect(loc).toContain(' event_test.2.b:0 "Second."');
+  });
+
+  it("writes DoA-style conditional descriptions in order with generated localization", () => {
+    const events = makeEvents();
+    const ascension = events.country(30, {
+      title: "Ascension",
+      conditionalDesc: [
+        {
+          trigger: not(
+            or(hasAuthority("auth_hive_mind"), hasAuthority("auth_machine_intelligence"))
+          ),
+          text: "The ascension belongs to ordinary empires.",
+        },
+        {
+          trigger: hasAuthority("auth_hive_mind"),
+          text: "The hive ascends as one.",
+        },
+        {
+          trigger: hasAuthority("auth_machine_intelligence"),
+          text: "The intelligence rewrites itself.",
+        },
+      ],
+      isTriggeredOnly: true,
+      options: [{ name: "Begin." }],
+    });
+
+    const files = render(mod.compile([mod.feature("events", [ascension])]));
+    const rendered = files.get("events/event_test_events.txt")!;
+    const loc = files.get("localisation/english/event_test_events_l_english.yml")!;
+
+    expect(rendered).toContain("text = event_test.30.desc");
+    expect(rendered).toContain("text = event_test.30.desc.1");
+    expect(rendered).toContain("text = event_test.30.desc.2");
+    expect(rendered.indexOf("text = event_test.30.desc")).toBeLessThan(
+      rendered.indexOf("text = event_test.30.desc.1")
+    );
+    expect(rendered.indexOf("text = event_test.30.desc.1")).toBeLessThan(
+      rendered.indexOf("text = event_test.30.desc.2")
+    );
+    expect(loc).toContain(' event_test.30.desc:0 "The ascension belongs to ordinary empires."');
+    expect(loc).toContain(' event_test.30.desc.1:0 "The hive ascends as one."');
+    expect(loc).toContain(' event_test.30.desc.2:0 "The intelligence rewrites itself."');
+  });
+
+  it("supports every conditional description field beside an ordinary description", () => {
+    const events = makeEvents();
+    const described = events.country(31, {
+      desc: "The ordinary fallback.",
+      conditionalDesc: [
+        {
+          exclusiveTrigger: hasAuthority("auth_hive_mind"),
+          text: ["First hive paragraph.", "Second hive paragraph."],
+          showSound: "event_default",
+        },
+        { trigger: hasAuthority("auth_machine_intelligence") },
+      ],
+      isTriggeredOnly: true,
+      options: [{ name: "Continue." }],
+    });
+
+    const files = render(mod.compile([mod.feature("events", [described])]));
+    const rendered = files.get("events/event_test_events.txt")!;
+    const loc = files.get("localisation/english/event_test_events_l_english.yml")!;
+
+    expect(rendered).toContain("desc = event_test.31.desc");
+    expect(rendered).toContain(
+      "desc = {\n\t\texclusive_trigger = {\n\t\t\thas_authority = auth_hive_mind\n\t\t}\n" +
+        "\t\ttext = event_test.31.desc.1\n\t\ttext = event_test.31.desc.2\n" +
+        "\t\tshow_sound = event_default\n\t}"
+    );
+    expect(rendered).toContain(
+      "desc = {\n\t\ttrigger = {\n\t\t\thas_authority = auth_machine_intelligence\n\t\t}\n\t}"
+    );
+    expect(loc).toContain(' event_test.31.desc:0 "The ordinary fallback."');
+    expect(loc).toContain(' event_test.31.desc.1:0 "First hive paragraph."');
+    expect(loc).toContain(' event_test.31.desc.2:0 "Second hive paragraph."');
+  });
+
+  it("guards content references written by conditional description triggers", () => {
+    const events = makeEvents();
+    const orphan = mod.technology("conditional_orphan", {
+      name: "Conditional orphan",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    const described = events.country(32, {
+      conditionalDesc: [
+        {
+          trigger: hasTechnology(orphan),
+          exclusiveTrigger: hasTechnology(orphan),
+          text: "Only with the orphan.",
+        },
+      ],
+      isTriggeredOnly: true,
+      options: [{ name: "Continue." }],
+    });
+
+    expect(described.refs.map((use) => use.field)).toEqual([
+      "desc[0].trigger.has_technology",
+      "desc[0].exclusive_trigger.has_technology",
+    ]);
+    expect(() => mod.compile([mod.feature("events", [described])])).toThrow(
+      'event "event_test.32" references technology "event_test_tech_conditional_orphan" in ' +
+        '"desc[0].trigger.has_technology"'
+    );
   });
 
   it("writes the namespace declaration first in the events file", () => {
