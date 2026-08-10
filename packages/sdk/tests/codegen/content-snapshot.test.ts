@@ -798,7 +798,7 @@ describe("content-type codegen", () => {
     // All scalar-map consumers now lower everything their rules declare.
     expect(shipSize?.unsupported).toEqual([]);
     expect(civic?.unsupported).toEqual([]);
-    expect(technology.unsupported).not.toContain("mod_weight_if_group_picked");
+    expect(technology.unsupported).toEqual([]);
   });
 
   it("carries ship_size's per-field modifier scopes", () => {
