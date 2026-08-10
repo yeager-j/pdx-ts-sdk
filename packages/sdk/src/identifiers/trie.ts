@@ -46,3 +46,33 @@ export function makeIdTrie(registry: string): any {
     });
   return node([]);
 }
+
+/** Runtime path builder for the install-typed `vanilla.event` namespace. */
+export function makeEventTrie(): any {
+  const eventId = (path: readonly string[]): string => {
+    if (path.length !== 2) {
+      return path.join(".");
+    }
+    const [namespace, navigationKey] = path as readonly [string, string];
+    // The generated type surface adds this otherwise-illegal event-id character
+    // only to numeric local ids, keeping the proxy data-free and reversible.
+    const localId = /^\$\d+$/.test(navigationKey) ? navigationKey.slice(1) : navigationKey;
+    return `${namespace}.${localId}`;
+  };
+  const node = (path: readonly string[]): unknown =>
+    new Proxy(() => undefined, {
+      get(_target, prop) {
+        if (typeof prop !== "string") {
+          return undefined;
+        }
+        if (prop === "id") {
+          return eventId(path);
+        }
+        if (prop === "kind") {
+          return "event-ref";
+        }
+        return node([...path, prop]);
+      },
+    });
+  return node([]);
+}

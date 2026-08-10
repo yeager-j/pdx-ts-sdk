@@ -1,11 +1,11 @@
 # @pdx-ts/stellaris-ids
 
 Every identifier a real, installed copy of Stellaris defines — content ids for
-39 registries, scripted trigger and effect names with their `$PARAM$` lists,
-sprite and sound names — shipped as TypeScript literal-union types,
-version-pinned to the game build. The package's npm version carries the game
-version: `4.4.6-r.1` carries the identifiers of Stellaris 4.4.6 and nothing
-else, where `-r.1` counts publishes of that one build.
+43 registries, event ids with their exact scope and kind, scripted trigger and
+effect names with their `$PARAM$` lists, sprite and sound names — shipped as
+TypeScript types, version-pinned to the game build. The package's npm version
+carries the game version: `4.4.6-r.1` carries the identifiers of Stellaris
+4.4.6 and nothing else, where `-r.1` counts publishes of that one build.
 
 Install a build by range rather than by version, so you get its newest
 revision:
@@ -48,7 +48,23 @@ vanilla.sprite.eventpictures.GFX_evt_ship_in_orbit;
 vanilla.staticModifier.deficit.food_deficit; // → "food_deficit"
 vanilla.soundEffect.toxoids.events.tox_events.event_first_contact_toxoid;
 vanilla.sprite("GFX_evt_ship_in_orbit"); // the checked call form, for copy-paste
+
+// Events navigate by namespace and local id. The leaf carries the full id,
+// exact event scope, and event kind, so only the matching fire effect accepts it:
+vanilla.event.story.$5; // EventRef<"country", undefined, "country">, id "story.5"
+vanilla.event.observer.$1; // country scope, distinct "observer" kind
 ```
+
+Numeric local ids gain a `$` navigation prefix because JavaScript property
+names cannot begin with a digit. `$` cannot occur in a Stellaris event id, so
+the mapping is collision-free; the leaf's `.id` always preserves the exact
+game id without the prefix. Nonnumeric local ids remain unchanged.
+
+Generic `event = {}` definitions are exposed as `EventScopelessRef` leaves.
+They cannot be passed to a scoped fire effect; use their raw id string only
+where the game accepts such an unchecked reference. The event trie remains
+types-only: the SDK reconstructs the full id from property access and this
+package ships no install-derived runtime table.
 
 ### Scripted triggers and effects
 
@@ -105,10 +121,11 @@ Two guards keep the pin honest:
 src/
 ├── index.ts             side-effect imports + type re-exports; zero runtime
 ├── augment.ts           the single `declare module "@pdx-ts/sdk"` augmentation
-├── registries/          one file per registry (39): literal-union id types;
+├── registries/          one file per registry (43): literal-union id types;
 │                        the four oversized registries are directories of
 │                        per-bucket trie files instead
 │                        (registries/sprite/eventpictures.ts, ...)
+├── events/              one types-only file per namespace plus the event trie
 ├── scripted-triggers.ts name → parameter-object tables (1,618 triggers)
 ├── scripted-effects.ts  same for effects (1,657)
 ├── triggers.ts          the bound scripted triggers, with inferred scopes

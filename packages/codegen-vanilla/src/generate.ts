@@ -14,6 +14,7 @@ import { basename } from "node:path";
 import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import { loadScopeFacts, type RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 
+import { emitEventTrie } from "./emit-events.ts";
 import {
   bindingsFile,
   compareIdentifiers,
@@ -33,6 +34,7 @@ import {
 } from "./emit.ts";
 import { inferScopes, type InferredScope, type ScriptedKind } from "./infer-scopes.ts";
 import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./manifest.ts";
+import { readVanillaEvents } from "./read-events.ts";
 import { readRegistryIds } from "./read-ids.ts";
 import { readScriptedDefinitions } from "./read-scripted.ts";
 import { resolveRegistries } from "./resolve.ts";
@@ -116,9 +118,21 @@ export interface ScriptedReport {
   readonly renamed: readonly string[];
 }
 
+export interface EventReport {
+  readonly definitions: number;
+  readonly scoped: number;
+  readonly scopeless: number;
+  readonly namespaces: number;
+  readonly files: number;
+  readonly diagnostics: number;
+  readonly missing: boolean;
+  readonly byKind: ReadonlyMap<string, number>;
+}
+
 export interface VanillaReport {
   readonly gameVersion: string;
   readonly registries: readonly RegistryReport[];
+  readonly events: EventReport;
   readonly scripted: readonly ScriptedReport[];
   readonly emittedFiles: number;
   /** Parser repairs across every file read. Reported, never fatal. */
@@ -192,6 +206,14 @@ export function generateVanillaPackage(options: GenerateOptions): {
     tries: { registry: string; file: string }[];
     scripted: { target: string; registry: string; file: string }[];
   } = { ids: [], tries: [], scripted: [] };
+
+  const eventRead = readVanillaEvents(options.installRoot, options.configRoot);
+  const eventTrie = emitEventTrie(eventRead.definitions, gate, gameVersion);
+  for (const [file, contents] of eventTrie.files) {
+    files.set(file, contents);
+  }
+  exports.push(eventTrie.export);
+  plan.tries.push({ registry: "event", file: eventTrie.export.file });
 
   for (const spec of resolveRegistries(options.configRoot, idRows)) {
     const read = readRegistryIds(options.installRoot, spec);
@@ -286,15 +308,35 @@ export function generateVanillaPackage(options: GenerateOptions): {
   files.set("augment.ts", emitAugment(plan satisfies AugmentPlan, gate, gameVersion));
   files.set("index.ts", emitIndex(exports, gameVersion));
 
+  const eventKinds = new Map<string, number>();
+  for (const definition of eventRead.definitions) {
+    eventKinds.set(definition.key, (eventKinds.get(definition.key) ?? 0) + 1);
+  }
+  const eventNamespaces = new Set(eventRead.definitions.map((definition) => definition.namespace));
+  const scopelessEvents = eventRead.definitions.filter(
+    (definition) => definition.scope === null
+  ).length;
+
   return {
     files,
     report: {
       gameVersion,
       registries,
+      events: {
+        definitions: eventRead.definitions.length,
+        scoped: eventRead.definitions.length - scopelessEvents,
+        scopeless: scopelessEvents,
+        namespaces: eventNamespaces.size,
+        files: eventRead.files,
+        diagnostics: eventRead.diagnostics,
+        missing: eventRead.missing,
+        byKind: new Map([...eventKinds].sort(([left], [right]) => compareIdentifiers(left, right))),
+      },
       scripted,
       emittedFiles: files.size,
       diagnostics:
         registries.reduce((total, one) => total + one.diagnostics, 0) +
+        eventRead.diagnostics +
         scripted.reduce((total, one) => total + one.diagnostics, 0),
       identifiersChecked: gate.checked(),
       rejections: 0,

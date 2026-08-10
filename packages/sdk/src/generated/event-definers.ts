@@ -270,6 +270,8 @@ export type CapabilityEventHandle<
   Kind extends string = S,
 > = EventRef<S, From, Kind> & {
   readonly id: MintedEventId<P, N, Id>;
+  readonly scope: S;
+  readonly from: From;
   define(def: Omit<EventDef<S, From>, "id" | "from">): CapabilityEventItem<P, N, Id, S, From, Kind>;
 };
 

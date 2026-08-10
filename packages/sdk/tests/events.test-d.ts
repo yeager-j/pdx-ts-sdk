@@ -17,6 +17,20 @@ import {
 } from "../src/index.ts";
 
 describe("the FROM contract on the real event API", () => {
+  it("accepts an unchecked third-party id", () => {
+    const mod = createMod({
+      name: "Third party",
+      prefix: "third_party",
+      supportedVersion: "4.4.*",
+    });
+    mod.namespace().country(1, {
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.countryEvent({ id: "another_mod.5" });
+      },
+    });
+  });
+
   it("scope-checks conditional descriptions and their event-only media", () => {
     const mod = createMod({
       name: "Descriptions",

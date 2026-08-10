@@ -16,7 +16,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { assertVanillaIdentifier, compareIdentifiers } from "../src/emit.ts";
+import { emitEventTrie } from "../src/emit-events.ts";
+import { assertVanillaIdentifier, compareIdentifiers, createChokepoint } from "../src/emit.ts";
 import { generateVanillaPackage } from "../src/generate.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */
@@ -92,6 +93,26 @@ describe("negative control", () => {
         installRoot: fileURLToPath(new URL("./fixtures/fake-install-poisoned", import.meta.url)),
       })
     ).toThrow(/sound id: refusing to emit "The Grand Herald has arrived\."/);
+  });
+
+  it("routes event namespace, local id, full id, scope, and kind through the chokepoint", () => {
+    expect(() =>
+      emitEventTrie(
+        [
+          {
+            key: "country_event",
+            subtype: "country",
+            scope: "country",
+            namespace: "safe",
+            localId: "The Grand Herald has arrived",
+            id: "safe.The Grand Herald has arrived",
+            source: "events.txt",
+          },
+        ],
+        createChokepoint(),
+        "4.4.6"
+      )
+    ).toThrow(/event local id: refusing to emit/);
   });
 });
 

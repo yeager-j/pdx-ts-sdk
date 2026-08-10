@@ -108,6 +108,7 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
   console.log(`Stellaris ${report.gameVersion} -> ${PACKAGE}`);
   console.log(
     `\n${report.registries.length} registries, ${ids} ids | ` +
+      `${report.events.definitions} events | ` +
       `${report.scripted.length} scripted tables, ${names} names | ` +
       `${report.emittedFiles} files emitted`
   );
@@ -121,6 +122,16 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
     report.registries.map(
       (one) => `${one.registry}: ${one.ids} ids from ${one.files} files` + suffix(one)
     )
+  );
+  reportSection("Events", [
+    `${report.events.definitions} definitions in ${report.events.namespaces} namespaces from ` +
+      `${report.events.files} files (${report.events.scoped} scoped, ` +
+      `${report.events.scopeless} scopeless, ${report.events.diagnostics} parser repairs)` +
+      (report.events.missing ? " — DIRECTORY MISSING" : ""),
+  ]);
+  reportSection(
+    "Event kinds",
+    [...report.events.byKind].map(([kind, count]) => `${kind}: ${count}`)
   );
   reportSection(
     "Tries",

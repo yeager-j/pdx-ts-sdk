@@ -495,7 +495,7 @@ async function main(): Promise<void> {
     "vanilla-refs.ts",
     header(commit, [...contentSources, "content-manifest.ts (VANILLA_REF_EXTRAS)"]) +
       'import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../identifiers/contracts.ts";\n' +
-      'import { makeIdTrie } from "../identifiers/trie.ts";\n' +
+      'import { makeEventTrie, makeIdTrie } from "../identifiers/trie.ts";\n' +
       importList(
         "./refs.ts",
         vanillaRefs.refs.map((name) => emitter.refTypeName(name))

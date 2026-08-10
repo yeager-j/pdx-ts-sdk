@@ -3,9 +3,9 @@
 The install-derived code generator. It reads a real Stellaris installation and
 emits [@pdx-ts/stellaris-ids](../stellaris-ids/README.md) — per-registry
 literal-union types of every identifier vanilla defines, scripted trigger and
-effect signatures, and navigable id tries — as committed, types-only
-TypeScript. Private workspace package; never published (its _output_ package
-is).
+effect signatures, exact event-reference types, and navigable id tries — as
+committed, types-only TypeScript. Private workspace package; never published
+(its _output_ package is).
 
 Its sibling [@pdx-ts/codegen-cwt](../codegen-cwt/README.md) is rules-derived:
 it knows what _fields_ exist. This package knows what _ids_ exist. This one
@@ -25,10 +25,11 @@ read from the install's `launcher-settings.json` and stamped as the output
 package's npm version — the pin is generator-written, never hand-edited, and
 generation aborts loudly if the version is missing or not `major.minor.patch`.
 
-Read the report: per-registry id counts, parameterized scripted-name tallies,
-trie bucket statistics, parser diagnostics, and the licensing gate's
-rejection count (which must be zero). Review the output diff as a public-API
-change and commit it with the change that produced it.
+Read the report: per-registry id counts, event totals by scope and kind,
+namespace and event-file counts, parameterized scripted-name tallies, trie
+bucket statistics, parser diagnostics, and the licensing gate's rejection
+count (which must be zero). Review the output diff as a public-API change and
+commit it with the change that produced it.
 
 Because CI has no game install, `codegen:vanilla:check` is a maintainer-local
 gate. The committed output is kept trustworthy by the install-gated
@@ -50,6 +51,15 @@ and extracts identifiers:
 - **Scripted triggers/effects**: definition names plus their `$PARAM$` lists,
   with optionality inferred from `$X|default$` defaults and `[[FLAG]]`
   blocks. Parameter names only — never default values.
+- **Events**: top-level event definitions, keyed by the namespace and local id
+  derived from each definition's full `id` field. The file's `namespace =`
+  declaration is not authoritative and may be absent or wrong. Missing,
+  malformed, and duplicate full ids stop generation. The event key selects its
+  subtype and canonical scope through the same `events.cwt` mapping used by the
+  SDK generator; generic `event = {}` definitions remain scopeless. Numeric
+  local ids gain the collision-free navigation key `$<id>` (`story.5` becomes
+  `vanilla.event.story.$5`); `$` is illegal in the source event id and is
+  removed only when the SDK proxy reconstructs the exact full id.
 - **Oversized registries** (more than ~2,000 ids) additionally get a
   navigable trie keyed by the vanilla file each id is defined in: bucket
   names come from file stems (static modifiers strip their `NN_` prefix and
@@ -73,8 +83,10 @@ src/
 ├── manifest.ts     registry rows (derived from codegen-cwt's manifest + extras)
 ├── resolve.ts      CWT-rule path resolution per registry
 ├── read-ids.ts     recursive id extraction with per-file provenance
+├── read-events.ts  strict full-id event extraction and namespace derivation
 ├── read-scripted.ts  scripted trigger/effect names and $PARAM$ lists
 ├── trie.ts         file-bucketed trie construction (BucketLayout per registry)
+├── emit-events.ts  one types-only leaf map per event namespace
 ├── emit.ts         emitters + the licensing chokepoint (assertVanillaIdentifier)
 └── format.ts       the one authority for on-disk bytes (programmatic Prettier)
 tests/              hermetic generator tests against fixtures/fake-install,
@@ -90,7 +102,8 @@ for future consumer-side generation, with no rewrite of the pipeline.
 Hermetic tests run everywhere against the shared `fixtures/fake-install/`
 tree (plus a poisoned fixture proving the licensing gate rejects): bucket
 derivation, dir-nesting, `$PARAM$` extraction cases, verbatim dotted leaf
-keys, emitted-file-set pinning, and byte-determinism across runs. The
+keys, exact scoped/observer/scopeless event types, strict malformed and
+duplicate event failures, emitted-file-set pinning, and byte-determinism across runs. The
 install-gated committed-output conformance test lives with the artifact it
 gates, in `packages/stellaris-ids/tests/`.
 

@@ -1,0 +1,13 @@
+namespace = declared_namespace_is_not_identity
+
+country_event = {
+	id = fake.1
+}
+
+observer_event = {
+	id = observer.notice
+}
+
+event = {
+	id = generic.start
+}
