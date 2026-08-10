@@ -464,6 +464,23 @@ describe("corpus conformance", () => {
     expect(reports.length).toBeGreaterThan(0);
   });
 
+  it("measures building.ai_resource_production and its colony trigger interior (SDK-65)", () => {
+    const building = byRegistry.get("building")!;
+    const operation = building.corpus.occurrences.get("ai_resource_production");
+    const trigger = building.corpus.occurrences.get("ai_resource_production.trigger");
+    expect(operation).toMatchObject({ definitions: 39, repeated: 12, blocks: 39 });
+    expect(trigger).toMatchObject({ definitions: 21, repeated: 0, blocks: 21 });
+    expect(building.unexpressed).not.toContainEqual(
+      expect.objectContaining({ field: "ai_resource_production" })
+    );
+    expect(building.shape).not.toContainEqual(
+      expect.objectContaining({ field: "ai_resource_production" })
+    );
+    expect(building.shape).not.toContainEqual(
+      expect.objectContaining({ field: "ai_resource_production.trigger" })
+    );
+  });
+
   /**
    * The one thing the presence-floor gate structurally cannot see, pinned by
    * hand so it is not invisible.

@@ -20,6 +20,7 @@ import { scriptValueScalar, type ScriptValue, type Trigger } from "../script/tri
 import {
   ECONOMIC_RESOURCE_OPERATIONS,
   ECONOMIC_RESOURCE_OPERATIONS_NO_PRODUCE,
+  economicOperation,
   economicResourceBlock,
   modifierBlock,
   modifierEntries,
@@ -38,6 +39,7 @@ import {
 import type {
   EconomicResourceBlock,
   EconomicResourceBlockNoProduce,
+  EconomicResourceOperation,
   EffectBlock,
   ModifierClosure,
   TriggeredModifier,
@@ -110,6 +112,7 @@ function acceptsFromClosure(field: ContentField): boolean {
     case "weightBlockWithLoc":
     case "economicResources":
     case "economicResourcesNoProduce":
+    case "economicResourceOperation":
     case "triggeredModifierBlock":
       return true;
     case "dual":
@@ -407,6 +410,13 @@ export function fieldEntries(
             )
           )
         );
+        break;
+      }
+      case "economicResourceOperation": {
+        const values = field.repeated
+          ? (value as readonly EconomicResourceOperation<ScopeName>[])
+          : [value as EconomicResourceOperation<ScopeName>];
+        entries.push(...values.map((item) => economicOperation(field.key, item, ctx)));
         break;
       }
       case "triggeredModifierBlock": {

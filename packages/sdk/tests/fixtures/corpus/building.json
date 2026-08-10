@@ -135,6 +135,82 @@
         ]
       ]
     },
+    "ai_resource_production.trigger": {
+      "definitions": 21,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 21,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "always",
+        "any_owned_pop_group",
+        "exists",
+        "has_any_agriculture_zone",
+        "has_any_factory_zone",
+        "has_any_foundry_zone",
+        "has_any_generator_zone",
+        "has_any_mining_zone",
+        "has_any_research_zone",
+        "has_zone",
+        "owner",
+        "owner_has_resolution",
+        "planet_resource_compare"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT",
+          "any_owned_pop_group",
+          "planet_resource_compare"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "always"
+        ],
+        [
+          "any_owned_pop_group",
+          "planet_resource_compare"
+        ],
+        [
+          "exists",
+          "has_any_foundry_zone",
+          "owner"
+        ],
+        [
+          "exists",
+          "has_any_research_zone",
+          "owner"
+        ],
+        [
+          "has_any_agriculture_zone"
+        ],
+        [
+          "has_any_factory_zone"
+        ],
+        [
+          "has_any_foundry_zone"
+        ],
+        [
+          "has_any_generator_zone"
+        ],
+        [
+          "has_any_mining_zone",
+          "has_zone"
+        ],
+        [
+          "owner_has_resolution"
+        ],
+        [
+          "planet_resource_compare"
+        ]
+      ]
+    },
     "ai_weight": {
       "definitions": 33,
       "repeated": 0,

@@ -32,5 +32,18 @@ content_test_building_lab_1 = {
 	}
 	upgrades = { building_research_lab_2 }
 	prerequisites = { tech_basic_science_lab_1 }
+	ai_resource_production = {
+		trigger = {
+			is_capital = yes
+		}
+		energy = 2
+		unity = 1
+		mult = 1
+		mult = 2
+	}
+	ai_resource_production = {
+		alloys = 1
+		multiplier = 0.5
+	}
 	convert_to = { building_ruined_lab }
 }

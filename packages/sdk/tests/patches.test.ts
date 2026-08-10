@@ -9,7 +9,14 @@
 import { describe, expect, it } from "vitest";
 
 import { StaleRuleTableError, VanillaPathCollisionError } from "../src/errors.ts";
-import { always, createMod, render, type ModConfig, type TechnologyItem } from "../src/index.ts";
+import {
+  always,
+  createMod,
+  render,
+  type EconomicResourceOperation,
+  type ModConfig,
+  type TechnologyItem,
+} from "../src/index.ts";
 import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 import {
   BUILDING_FILE,
@@ -299,12 +306,17 @@ describe("patching two registries in one mod", () => {
   function twoRegistryMod() {
     const mod = createMod(makeConfig());
     const carried = refinery.body.filter((entry) => entry.key === "triggered_planet_modifier");
+    const aiResourceProduction: readonly EconomicResourceOperation<"colony">[] = [
+      { amounts: { energy: 2 }, when: always(), mult: [1, 2] },
+      { amounts: { unity: 1 }, multiplier: 0.5 },
+    ];
     return mod.compile([
       mod.feature(undefined, [
         ...patchedTechnologies(mod),
         mod.patchBuilding(refinery, () => ({
           potential: always(),
           planetLimit: { base: 2, modifiers: [{ add: 1, when: always() }] },
+          aiResourceProduction,
           triggeredPlanetModifier: [
             ...carried,
             { when: always(), modifier: (m) => m.raw("planet_jobs_produces_mult", 0.3) },
@@ -332,6 +344,11 @@ describe("patching two registries in one mod", () => {
     ]);
     await expect(files.get("common/buildings/pp_buildings_pp_mod_patch.txt")).toMatchFileSnapshot(
       "__snapshots__/patches/common__buildings__pp_buildings_pp_mod_patch.txt"
+    );
+    expect(files.get("common/buildings/pp_buildings_pp_mod_patch.txt")).toContain(
+      "\tai_resource_production = {\n\t\ttrigger = {\n\t\t\talways = yes\n\t\t}\n" +
+        "\t\tenergy = 2\n\t\tmult = 1\n\t\tmult = 2\n\t}\n" +
+        "\tai_resource_production = {\n\t\tunity = 1\n\t\tmultiplier = 0.5\n\t}"
     );
     // The same golden the technology-only mod above is pinned against: adding a
     // building patch must not move a byte of the technology emission.

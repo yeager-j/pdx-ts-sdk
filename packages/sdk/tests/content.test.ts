@@ -179,6 +179,10 @@ function defineContentExample(): PureMod {
         produces: { amounts: { physics_research: 10 } },
       },
     ],
+    aiResourceProduction: [
+      { amounts: { energy: 2, unity: 1 }, when: isCapital(), mult: [1, 2] },
+      { amounts: { alloys: 1 }, multiplier: 0.5 },
+    ],
     planetModifier: (m) => m.planet.jobs.engineering.research.produces.mult(0.1),
     showInTech: ["tech_basic_science_lab_1"],
     // A vanilla building: nothing in this fixture defines a second lab, and an
@@ -1195,6 +1199,11 @@ describe("generated content registries", () => {
     expect(rendered).toContain(
       "\t\tupkeep = {\n\t\t\ttrigger = {\n\t\t\t\tis_capital = yes\n\t\t\t}\n" +
         "\t\t\tenergy = 5\n\t\t\tmultiplier = 1\n\t\t\tmultiplier = 2\n\t\t}"
+    );
+    expect(rendered).toContain(
+      "\tai_resource_production = {\n\t\ttrigger = {\n\t\t\tis_capital = yes\n\t\t}\n" +
+        "\t\tenergy = 2\n\t\tunity = 1\n\t\tmult = 1\n\t\tmult = 2\n\t}\n" +
+        "\tai_resource_production = {\n\t\talloys = 1\n\t\tmultiplier = 0.5\n\t}"
     );
   });
 

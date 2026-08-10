@@ -58,6 +58,24 @@ describe("content-type codegen", () => {
   it("carries a registry's body scope into trigger fields", () => {
     expect(emissions.get("building")?.code).toContain('allow?: Trigger<"colony">;');
     expect(emissions.get("building")?.code).toContain('potential?: Trigger<"colony">;');
+    expect(emissions.get("building")?.code).toContain(
+      'aiResourceProduction?: EconomicResourceOperation<"colony">[];'
+    );
+    expect(emissions.get("building")?.code).toContain(
+      '{ key: "ai_resource_production", member: "aiResourceProduction", shape: "economicResourceOperation", form: "block", repeated: true }'
+    );
+    expect(emissions.get("building")?.nestedEmittedFields).toContainEqual({
+      field: "building.ai_resource_production.trigger",
+      shape: "trigger",
+      repeated: false,
+      clause: "trigger",
+      scope: ["colony"],
+    });
+    expect(emissions.get("building")?.corpusDescents).toContainEqual({
+      field: "ai_resource_production",
+      mode: "economicResourceOperationTrigger",
+      children: [],
+    });
   });
 
   it("emits repeated-struct definitions as data-driven field tables", () => {
@@ -222,6 +240,40 @@ describe("content-type codegen", () => {
     expect(() =>
       emitContentType(isolated, rules.contentTypes.get("building")!, malformed, "building")
     ).toThrow("A triggered-modifier block must expand to exactly one named potential declaration");
+  });
+
+  it("refuses an economic operation shape that would drop a declared sibling", () => {
+    const body = rules.bodies.get("building")!;
+    const malformed = {
+      ...body,
+      fields: body.fields.map((field) =>
+        field.key.kind === "name" &&
+        field.key.name === "ai_resource_production" &&
+        field.type.kind === "block"
+          ? {
+              ...field,
+              type: {
+                ...field.type,
+                fields: field.type.fields.filter(
+                  (inner) =>
+                    !(
+                      inner.key.kind === "computed" &&
+                      inner.key.type.kind === "enum" &&
+                      inner.key.type.name === "complex_maths_enum"
+                    )
+                ),
+              },
+            }
+          : field
+      ),
+    };
+    const isolated = new Emitter(rules);
+    isolated.beginFile();
+    expect(() =>
+      emitContentType(isolated, rules.contentTypes.get("building")!, malformed, "building")
+    ).toThrow(
+      "An economic-resource operation field must declare exactly one open <resource> numeric arm, optional trigger clause, and complex_maths_enum value-field arm"
+    );
   });
 
   it("generates ascension perks and their swaps without registry-specific code", () => {

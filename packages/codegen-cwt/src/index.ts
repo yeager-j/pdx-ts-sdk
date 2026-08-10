@@ -427,6 +427,7 @@ async function main(): Promise<void> {
       "DefinedContent",
       "EconomicResourceBlock",
       "EconomicResourceBlockNoProduce",
+      "EconomicResourceOperation",
       "EffectBlock",
       "ModifierBlock",
       "ModifierClosure",

@@ -48,15 +48,6 @@ export const ACKNOWLEDGED_GAPS: readonly AcknowledgedGap[] = [
     issue: "SDK-17",
   },
   {
-    registry: "building",
-    field: "ai_resource_production",
-    count: 39,
-    reason:
-      "A map keyed by `<resource>` references with trigger and complex-maths siblings; needs " +
-      "reference-keyed map machinery.",
-    issue: "SDK-65",
-  },
-  {
     registry: "tradition",
     field: "inline_script",
     count: 27,

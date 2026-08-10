@@ -89,6 +89,11 @@ interface ContentEconomicResourcesField extends ContentFieldBase {
   readonly shape: "economicResources";
 }
 
+/** One directly-authored {@link EconomicResourceOperation}, rather than an economic template. */
+interface ContentEconomicResourceOperationField extends ContentFieldBase {
+  readonly shape: "economicResourceOperation";
+}
+
 /**
  * {@link ContentEconomicResourcesField} for a field CWT splices from
  * `economic_template_no_produce` rather than plain `economic_template` — the
@@ -270,6 +275,7 @@ export type ContentField =
   | ContentTriggerField
   | ContentEffectField
   | ContentEconomicResourcesField
+  | ContentEconomicResourceOperationField
   | ContentEconomicResourcesNoProduceField
   | ContentTriggeredModifierField
   | ContentModifierField

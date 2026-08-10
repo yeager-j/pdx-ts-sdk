@@ -6,6 +6,7 @@ import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
   EconomicResourceBlock,
+  EconomicResourceOperation,
   EffectBlock,
   ModifierClosure,
   TriggeredModifier,
@@ -136,6 +137,7 @@ export interface BuildingFields {
   prerequisites?: (TechnologyRef | string)[];
   /** not used anymore unless you overwrite economic_plans to not be used. */
   aiWeight?: WeightBlock<"colony">;
+  aiResourceProduction?: EconomicResourceOperation<"colony">[];
   /** lists candidates this can be converted to if destroy_trigger returns true (e.g. post-conquest) */
   convertTo?: (BuildingRef | string)[];
   /** Property on buildings which when added to the AI build queue will remove all non essential build tasks. */
@@ -252,6 +254,7 @@ export interface BuildingPatch {
   readonly prerequisites?: PatchInput<(TechnologyRef | string)[]>;
   /** not used anymore unless you overwrite economic_plans to not be used. */
   readonly aiWeight?: PatchInput<WeightBlock<"colony">>;
+  readonly aiResourceProduction?: PatchInput<EconomicResourceOperation<"colony">[]>;
   /** lists candidates this can be converted to if destroy_trigger returns true (e.g. post-conquest) */
   readonly convertTo?: PatchInput<(BuildingRef | string)[]>;
   /** Property on buildings which when added to the AI build queue will remove all non essential build tasks. */
@@ -536,6 +539,13 @@ export const BUILDING_FIELDS: readonly ContentField[] = [
     refTypes: ["technology"],
   },
   { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
+  {
+    key: "ai_resource_production",
+    member: "aiResourceProduction",
+    shape: "economicResourceOperation",
+    form: "block",
+    repeated: true,
+  },
   {
     key: "convert_to",
     member: "convertTo",

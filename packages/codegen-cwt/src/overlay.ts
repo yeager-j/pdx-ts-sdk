@@ -665,6 +665,17 @@ export type ContentFieldShape =
   | "effect"
   | "economicResources"
   /**
+   * A repeated resource-name operation with one condition sibling and the
+   * complex maths operations alongside it: `ai_resource_production = {
+   * <resource> = float trigger = { ... } mult = value }`.
+   *
+   * This is deliberately distinct from `economicResources`: the latter owns
+   * a named collection of cost/production/upkeep/logistics operations, while
+   * this shape is itself one such operation. Both use the shared
+   * `EconomicResourceOperation<S>` contract at runtime.
+   */
+  | "economicResourceOperation"
+  /**
    * The same `economicResources` shape, minus the `produces` arm — for a
    * field CWT splices from `economic_template_no_produce` rather than plain
    * `economic_template`. Lowers to `EconomicResourceBlockNoProduce<S>`
@@ -1118,6 +1129,18 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "reported stale the moment it is added rather than measured. " +
         "`corpus-conformance.test.ts` pins the fixture's observed sub-key set instead, so a new " +
         "inexpressible sub-key (or inline_script support landing) fails and forces a re-look.",
+    },
+  ],
+  [
+    "building.ai_resource_production",
+    {
+      shape: "economicResourceOperation",
+      reason:
+        "buildings.cwt:269-276 declares one repeated operation directly: an open <resource> " +
+        "numeric map, optional trigger_clause, and complex_maths_enum value fields. The 4.4.6 " +
+        "install writes 60 blocks across 39 buildings; 12 definitions repeat it (1x27, 2x6, " +
+        "3x3, 4x3), with no direct inner-key repeats. This is the reusable operation contract " +
+        "already used by economic_template, not a building-specific map.",
     },
   ],
   [

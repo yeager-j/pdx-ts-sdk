@@ -147,6 +147,9 @@ export interface RegistryCorpus {
  * - `triggeredModifierPotential` — a triggered-modifier block's `potential`
  *   condition, recorded under `<field>.potential`. Modifier keys are not
  *   conditions and remain intentionally opaque.
+ * - `economicResourceOperationTrigger` — an economic operation's direct
+ *   `trigger` condition, recorded under `<field>.trigger`. Resource and
+ *   complex-maths keys are operation data, not trigger clauses.
  */
 export interface DescentNode {
   /** The game's key at this level; the corpus path grows `<prefix>.<field>`. */
@@ -157,7 +160,8 @@ export interface DescentNode {
     | "structMap"
     | "repeatedStruct"
     | "weightModifiers"
-    | "triggeredModifierPotential";
+    | "triggeredModifierPotential"
+    | "economicResourceOperationTrigger";
   /** `repeatedStruct` only. */
   readonly keying?: "container" | "siblings";
   /** `repeatedStruct` with "siblings" keying only — the field carrying the id. */
@@ -259,6 +263,9 @@ function descend(
     case "triggeredModifierPotential":
       recordTriggeredModifierPotential(value, path, seen, blockArity);
       return;
+    case "economicResourceOperationTrigger":
+      recordEconomicResourceOperationTrigger(value, path, seen, blockArity);
+      return;
   }
 }
 
@@ -330,6 +337,25 @@ function recordTriggeredModifierPotential(
     blockArity.set(potentialPath, (blockArity.get(potentialPath) ?? false) || previous);
     previous = true;
     seen.set(potentialPath, [...(seen.get(potentialPath) ?? []), item.value]);
+  }
+}
+
+/** Records only direct trigger clauses from an economic resource operation. */
+function recordEconomicResourceOperationTrigger(
+  operation: PdxContainer,
+  path: string,
+  seen: Map<string, PdxValue[]>,
+  blockArity: Map<string, boolean>
+): void {
+  const triggerPath = `${path}.trigger`;
+  let previous = false;
+  for (const item of operation.items) {
+    if (item.kind !== "entry" || item.key !== "trigger") {
+      continue;
+    }
+    blockArity.set(triggerPath, (blockArity.get(triggerPath) ?? false) || previous);
+    previous = true;
+    seen.set(triggerPath, [...(seen.get(triggerPath) ?? []), item.value]);
   }
 }
 

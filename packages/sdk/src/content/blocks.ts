@@ -206,7 +206,7 @@ function repeatedNumbers(
   return (Array.isArray(value) ? value : [value]).map((item) => kv(key, scriptValueScalar(item)));
 }
 
-function economicOperation(
+export function economicOperation(
   key: string,
   value: EconomicResourceOperation<ScopeName>,
   ctx: LoweringContext

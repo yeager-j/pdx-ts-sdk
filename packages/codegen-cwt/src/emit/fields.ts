@@ -519,6 +519,83 @@ function triggeredModifierInterior(
   };
 }
 
+interface EconomicResourceOperationParts {
+  readonly trigger: RuleField;
+}
+
+/**
+ * Confirms the mixed CWT block the reusable economic-operation contract owns.
+ *
+ * A resource map alone is not this shape: `when` must correspond to exactly
+ * one direct trigger clause and every complex maths sibling must remain
+ * writable through `mult`/`multiplier`. Keeping this structural check beside
+ * the lowering means an overlay cannot accidentally apply the shape to a
+ * superficially similar block and silently discard one of its declared arms.
+ */
+function economicResourceOperationParts(field: RuleField): EconomicResourceOperationParts {
+  if (field.type.kind !== "block" || field.type.bare.length !== 0) {
+    throw new Error(
+      "An economic-resource operation field must be a named block with resource, trigger, and complex-maths declarations"
+    );
+  }
+  const resources = field.type.fields.filter(
+    (inner) =>
+      inner.key.kind === "computed" &&
+      inner.key.type.kind === "typeRef" &&
+      inner.key.type.name === "resource" &&
+      (inner.type.kind === "int" || inner.type.kind === "float") &&
+      inner.cardinality.min === 1 &&
+      inner.cardinality.max === null
+  );
+  const triggers = field.type.fields.filter(
+    (inner) =>
+      inner.key.kind === "name" &&
+      inner.key.name === "trigger" &&
+      inner.type.kind === "block" &&
+      isOptional(inner.cardinality)
+  );
+  const maths = field.type.fields.filter(
+    (inner) =>
+      inner.key.kind === "computed" &&
+      inner.key.type.kind === "enum" &&
+      inner.key.type.name === "complex_maths_enum" &&
+      inner.type.kind === "valueField" &&
+      inner.cardinality.min === 0 &&
+      inner.cardinality.max === null
+  );
+  if (
+    resources.length !== 1 ||
+    triggers.length !== 1 ||
+    maths.length !== 1 ||
+    field.type.fields.length !== 3
+  ) {
+    throw new Error(
+      "An economic-resource operation field must declare exactly one open <resource> numeric arm, optional trigger clause, and complex_maths_enum value-field arm"
+    );
+  }
+  return { trigger: triggers[0]! };
+}
+
+/** The direct trigger interior owned by `EconomicResourceOperation<S>`. */
+function economicResourceOperationInterior(
+  name: string,
+  path: string,
+  scope: FieldScope
+): Pick<LoweredField, "nested" | "descents"> {
+  return {
+    nested: [
+      {
+        field: `${path}.trigger`,
+        shape: "trigger",
+        repeated: false,
+        clause: "trigger",
+        scope: scope.scopes,
+      },
+    ],
+    descents: [{ field: name, mode: "economicResourceOperationTrigger", children: [] }],
+  };
+}
+
 /**
  * As {@link scopeType}, for shapes whose scope parameter reaches a
  * `Trigger<S>` contravariantly — a trigger field itself, and a weight block,
@@ -1305,6 +1382,26 @@ function lowerOrdinary(
       ),
       metadata: metadata(field, name, "economicResources"),
       admits: admitsBlock(field, "economicResources", scope),
+    };
+  }
+  if (requested === "economicResourceOperation") {
+    const parts = economicResourceOperationParts(field);
+    const scope = scopeType(emitter, field, ctx, override?.scope);
+    const triggerScope = scopeType(emitter, parts.trigger, containerContext(field, ctx));
+    if (triggerScope.type !== scope.type) {
+      throw new Error(
+        "An economic-resource operation's trigger clause must run in the operation field's scope"
+      );
+    }
+    const memberType = `EconomicResourceOperation<${scope.type}>`;
+    return {
+      memberType: withFrom(
+        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+        scope
+      ),
+      metadata: metadata(field, name, "economicResourceOperation"),
+      admits: admitsBlock(field, "economicResourceOperation", scope),
+      ...economicResourceOperationInterior(name, path, scope),
     };
   }
   if (requested === "economicResourcesNoProduce") {

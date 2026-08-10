@@ -36,6 +36,7 @@ import {
   type DecisionRef,
   type EconomicResourceBlock,
   type EconomicResourceBlockNoProduce,
+  type EconomicResourceOperation,
   type EdictRef,
   type EventChainRef,
   type EventFleetRef,
@@ -1572,6 +1573,46 @@ describe("generated content authoring types", () => {
           // @ts-expect-error — building's body is colony-scoped, so a
           // ship-scope condition is not a legal `when` here
           cost: { amounts: { alloys: 300 }, when: hasShipFlag("x") },
+        },
+      ],
+    });
+  });
+
+  it("authors repeated building.ai_resource_production operations (SDK-65)", () => {
+    expectTypeOf<BuildingFields["aiResourceProduction"]>().toEqualTypeOf<
+      EconomicResourceOperation<"colony">[] | undefined
+    >();
+    expectTypeOf<BuildingPatch["aiResourceProduction"]>().toEqualTypeOf<
+      PatchInput<EconomicResourceOperation<"colony">[]> | undefined
+    >();
+
+    contentMod.building("ai_resource_production", {
+      name: "X",
+      aiResourceProduction: [
+        { amounts: { energy: 2 }, when: isCapital(), mult: [1, 2] },
+        { amounts: { unity: 1 }, multiplier: 0.5 },
+      ],
+    });
+
+    contentMod.building("ai_resource_production_wrong_form", {
+      name: "X",
+      aiResourceProduction: [
+        {
+          // @ts-expect-error — the operation owns an `amounts` map; its
+          // resource ids are not direct object members.
+          energy: 2,
+        },
+      ],
+    });
+
+    contentMod.building("ai_resource_production_wrong_scope", {
+      name: "X",
+      aiResourceProduction: [
+        {
+          amounts: { energy: 2 },
+          // @ts-expect-error — this direct trigger runs in the building's
+          // colony scope, not ship scope.
+          when: hasShipFlag("x"),
         },
       ],
     });
