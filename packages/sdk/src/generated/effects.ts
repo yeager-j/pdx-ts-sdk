@@ -8,7 +8,7 @@
 
 import type { PdxOp } from "@pdx-ts/pdxscript";
 
-import type { Modifier, StructuralEffects } from "../script/effects/types.ts";
+import type { Modifier, ScopeValue, StructuralEffects } from "../script/effects/types.ts";
 import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 import type {
   AddDepositType,
@@ -270,7 +270,7 @@ export interface EffectsIn15Scopesee16 {
    * set_name = <string>/<target>
    * ```
    */
-  setName(value: "random" | string): void;
+  setName(value: "random" | ScopeValue | string): void;
 }
 
 /** Effects valid in: astral_rift, carrier, colony, cosmic_storm_influence_field, country, espionage_operation, federation, fleet, megastructure, planet, pop_faction, pop_group, ship, spy_network, starbase, system. */
@@ -519,7 +519,7 @@ export interface EffectsIn4Scopes2b24 {
    */
   addBlocker(args: {
     type: DepositBlockerRef | string;
-    blockedDeposit?: "random" | "none" | string;
+    blockedDeposit?: "random" | "none" | ScopeValue<"deposit">;
   }): void;
 
   /**
@@ -558,7 +558,28 @@ export interface EffectsIn4Scopes2b24 {
    */
   addHolding(args: {
     holding: BuildingCorporateRef | string | BuildingHoldingRef;
-    owner: string;
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
   }): void;
 
   /**
@@ -594,7 +615,24 @@ export interface EffectsIn4Scopes2b24 {
    * change_pc = { class = <class/random list> inherit_entity = yes }
    * ```
    */
-  changePc(value: PlanetClassRef | string | PlanetClassRandomListRef): void;
+  changePc(
+    value:
+      | PlanetClassRef
+      | string
+      | PlanetClassRandomListRef
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+  ): void;
 
   /**
    * Increases or reduces the size of the scoped planet by a specified amount
@@ -682,7 +720,30 @@ export interface EffectsIn4Scopes2b24 {
    * establish_branch_office = <target>
    * ```
    */
-  establishBranchOffice(value: string): void;
+  establishBranchOffice(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Iterate through each deposit on the planet - executes the enclosed effects on all of them for which the limit triggers return true
@@ -1012,7 +1073,28 @@ export interface EffectsIn4Scopes2b24 {
    */
   removeHolding(args: {
     holding: BuildingCorporateRef | string | BuildingHoldingRef;
-    owner: string;
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
   }): void;
 
   /**
@@ -1260,7 +1342,19 @@ export interface EffectsIn4Scopes4fbd {
    * unassign_leader = <target>
    * ```
    */
-  unassignLeader(value: string): void;
+  unassignLeader(
+    value: ScopeValue<
+      | "archaeological_site"
+      | "army"
+      | "country"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "pop_faction"
+      | "sector"
+      | "ship"
+    >
+  ): void;
 }
 
 /** Effects valid in: country, leader, pop_group, species. */
@@ -1432,7 +1526,20 @@ export interface EffectsIn5Scopes6c98 {
    * change_species = <target>
    * ```
    */
-  changeSpecies(value: string): void;
+  changeSpecies(
+    value: ScopeValue<
+      | "army"
+      | "carrier"
+      | "country"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "planet"
+      | "pop_group"
+      | "ship"
+      | "species"
+    >
+  ): void;
 }
 
 /** Effects valid in: astral_rift, carrier, colony, planet, ship. */
@@ -1455,7 +1562,7 @@ export interface EffectsIn5Scopes92b5 {
    * ```
    */
   createCosmicStormInfluenceField(args: {
-    center: string;
+    center: ScopeValue<"system">;
     radius: readonly Modifier<"carrier" | "colony" | "planet" | "ship" | "starbase">[];
     isTimedInfluenceField?: "yes";
   }): void;
@@ -1472,7 +1579,30 @@ export interface EffectsIn5Scopes9550 {
    * set_controller = <target>
    * ```
    */
-  setController(value: string): void;
+  setController(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 }
 
 /** Effects valid in: carrier, country, planet, pop_group, ship. */
@@ -1488,7 +1618,27 @@ export interface EffectsIn5Scopes979f {
     name: string;
     desc?: string;
     eventChain: EventChainRef | string;
-    location?: string;
+    location?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "army"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
     category?: string;
     picture?: SpriteRef | string;
   }): void;
@@ -1526,7 +1676,10 @@ export interface EffectsIn5Scopesb6d1 {
    * set_graphical_culture = <key>
    * ```
    */
-  setGraphicalCulture(value: GraphicalCultureRef | string): void;
+  setGraphicalCulture(
+    value:
+      GraphicalCultureRef | string | ScopeValue<"country" | "megastructure" | "ship" | "species">
+  ): void;
 }
 
 /** Effects valid in: astral_rift, carrier, planet, ship, system. */
@@ -1537,7 +1690,31 @@ export interface EffectsIn5Scopese102 {
    * set_surveyed = { surveyed = yes surveyor = <target> }
    * ```
    */
-  setSurveyed(args: { surveyed: boolean; surveyor?: string }): void;
+  setSurveyed(args: {
+    surveyed: boolean;
+    surveyor?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 }
 
 /** Effects valid in: carrier, colony, country, planet, ship, system. */
@@ -1548,7 +1725,31 @@ export interface EffectsIn6Scopes6eb9 {
    * add_threat = { who = <country> amount = 4/variable }
    * ```
    */
-  addThreat(args: { who: string; amount: ScriptValue }): void;
+  addThreat(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    amount: ScriptValue;
+  }): void;
 }
 
 /** Effects valid in: army, country, leader, pop_group, ship, species. */
@@ -1576,7 +1777,19 @@ export interface EffectsIn7Scopes04e0 {
    * assign_leader = <target>
    * ```
    */
-  assignLeader(value: string): void;
+  assignLeader(
+    value: ScopeValue<
+      | "archaeological_site"
+      | "army"
+      | "country"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "pop_faction"
+      | "sector"
+      | "ship"
+    >
+  ): void;
 }
 
 /** Effects valid in: carrier, colony, debris, fleet, planet, ship, starbase. */
@@ -1671,14 +1884,71 @@ export interface EffectsIn8Scopes39a9 {
    * ```
    */
   modifySpecies(args: {
-    species?: string;
-    base?: string | "auto" | "none";
+    species?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    base?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | "auto"
+      | "none";
     addTrait?: TraitRef | string;
     addTraitsAtStartOfList?: boolean;
     removeTrait?: TraitRef | string;
-    idealPlanetClass?: string | PlanetClassHabitablePlanetRef;
+    idealPlanetClass?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | PlanetClassHabitablePlanetRef
+      | string;
     changeScopedSpecies?: boolean;
-    portrait?: string | PortraitRef | PortraitGroupRef | "random";
+    portrait?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | PortraitRef
+      | string
+      | PortraitGroupRef
+      | "random";
     addRandomSpeciesTrait?: Trigger<
       "carrier" | "colony" | "country" | "leader" | "planet" | "pop_group" | "ship" | "species"
     >;
@@ -1810,7 +2080,30 @@ export interface EffectsIn9Scopesd3d6 {
    * set_owner = <target>
    * ```
    */
-  setOwner(value: string): void;
+  setOwner(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 }
 
 /** Effects valid in: agreement. */
@@ -1973,7 +2266,24 @@ export interface EffectsInAmbientObjectFleet {
    * }
    * ```
    */
-  setLocation(value: string): void;
+  setLocation(
+    value: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 }
 
 /** Effects valid in: archaeological_site. */
@@ -2157,7 +2467,22 @@ export interface EffectsInArmyCountryFleet {
    * set_leader = <key>/<key@scope>
    * ```
    */
-  setLeader(value: ExiledLeader | "last_created_leader" | string): void;
+  setLeader(
+    value:
+      | ExiledLeader
+      | "last_created_leader"
+      | ScopeValue<
+          | "archaeological_site"
+          | "army"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "pop_faction"
+          | "sector"
+          | "ship"
+        >
+  ): void;
 }
 
 /** Effects valid in: army, pop_group. */
@@ -2245,7 +2570,31 @@ export interface EffectsInAstralRiftPlanet {
    * create_mining_station = { owner = <target> }
    * ```
    */
-  createMiningStation(args: { owner: string; effect?: (scope: ShipScope) => void }): void;
+  createMiningStation(args: {
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    effect?: (scope: ShipScope) => void;
+  }): void;
 
   /**
    * Creates a research station in orbit of the scoped planet or astral rift
@@ -2253,7 +2602,31 @@ export interface EffectsInAstralRiftPlanet {
    * create_research_station = { owner = <target> }
    * ```
    */
-  createResearchStation(args: { owner: string; effect?: (scope: ShipScope) => void }): void;
+  createResearchStation(args: {
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    effect?: (scope: ShipScope) => void;
+  }): void;
 }
 
 /** Effects valid in: bypass. */
@@ -2264,7 +2637,7 @@ export interface EffectsInBypass {
    * lock_bypass = { country = owner duration = 360 }
    * ```
    */
-  lockBypass(args: { country: string; duration: ScriptValue }): void;
+  lockBypass(args: { country: ScopeValue<"country">; duration: ScriptValue }): void;
 
   /**
    * Renew a Bypass Lock's duration as if it was just built.
@@ -2286,7 +2659,7 @@ export interface EffectsInBypassSystem {
    * link_wormholes = from
    * ```
    */
-  linkWormholes(value: string): void;
+  linkWormholes(value: ScopeValue<"bypass" | "system">): void;
 }
 
 /** Effects valid in: carrier, planet, ship. */
@@ -2333,7 +2706,32 @@ export interface EffectsInCarrierPlanetShip {
    */
   setPlanetEntity(args: {
     entity?: ModelEntityRef | string;
-    graphicalCulture?: GraphicalCultureRef | string;
+    graphicalCulture?:
+      | GraphicalCultureRef
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "species"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >;
     picture?: string;
     atmosphereColor?: string;
     atmosphereIntensity?: number;
@@ -2418,7 +2816,25 @@ export interface EffectsInCountry {
    * abort_special_project = { type = <project key> location = <target> }
    * ```
    */
-  abortSpecialProject(args: { type: SpecialProjectRef | string; location?: string }): void;
+  abortSpecialProject(args: {
+    type: SpecialProjectRef | string;
+    location?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Accepts covenant proposition with Shroud Patron.
@@ -2482,7 +2898,32 @@ export interface EffectsInCountry {
    * add_casus_belli = { type = cb_subjugation who = <country> days = 10/variable }
    * ```
    */
-  addCasusBelli(args: { type: CasusBelliRef | string; who: string; days: ScriptValue }): void;
+  addCasusBelli(args: {
+    type: CasusBelliRef | string;
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    days: ScriptValue;
+  }): void;
 
   /**
    * Instantly adds council agenda progress
@@ -2517,7 +2958,31 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  addFavors(args: { target: string; value: ScriptValue }): void;
+  addFavors(args: {
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    value: ScriptValue;
+  }): void;
 
   /**
    * Adds the defined amount of focus progress in the defined focus category
@@ -2536,7 +3001,31 @@ export interface EffectsInCountry {
    * add_intel = { amount = <float>/<variable> who = <target> }
    * ```
    */
-  addIntel(args: { who: string; amount: ScriptValue }): void;
+  addIntel(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    amount: ScriptValue;
+  }): void;
 
   /**
    * Adds the intel level for the category selected. Default duration (0) is forever.
@@ -2548,7 +3037,28 @@ export interface EffectsInCountry {
     category: IntelCategoryRef | string;
     level: number;
     days?: number;
-    who: string;
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
   }): void;
 
   /**
@@ -2579,7 +3089,31 @@ export interface EffectsInCountry {
    * add_opinion_modifier = { modifier = <key> who = <target> }
    * ```
    */
-  addOpinionModifier(args: { who: string; modifier: OpinionModifierRef | string }): void;
+  addOpinionModifier(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    modifier: OpinionModifierRef | string;
+  }): void;
 
   /**
    * Increments (or decrements with negative values) a patron objective counter for the scoped country by a specific amount. Can multiply the attunement given by the patron objective (if it's a deed).
@@ -2655,7 +3189,24 @@ export interface EffectsInCountry {
    * add_seen_bypass = FROM
    * ```
    */
-  addSeenBypass(value: string): void;
+  addSeenBypass(
+    value: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Makes the scoped country remember that it has encountered the bypass type
@@ -2671,7 +3222,9 @@ export interface EffectsInCountry {
    * add_ship_design = <target/last_created_design>
    * ```
    */
-  addShipDesign(value: GlobalShipDesignRef | string | "last_created_design"): void;
+  addShipDesign(
+    value: GlobalShipDesignRef | string | ScopeValue<"design"> | "last_created_design"
+  ): void;
 
   /**
    * Adds static war exhaustion, scaled with value_for_planet_destruction, to owner of the battle location
@@ -2684,8 +3237,29 @@ export interface EffectsInCountry {
    * ```
    */
   addStaticWarExhaustion(args: {
-    attacker: string;
-    location: string;
+    attacker: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    location: ScopeValue<"planet">;
     valueForPlanetDestruction: ScriptValue;
   }): void;
 
@@ -2728,7 +3302,7 @@ export interface EffectsInCountry {
    * ```
    */
   addToVivarium(args: {
-    design?: GlobalShipDesignRef | string | "last_created_design";
+    design?: GlobalShipDesignRef | string | ScopeValue<"design"> | "last_created_design";
     rarity?: ShipRarity;
     amount?: ScriptValue;
   }): void;
@@ -2747,7 +3321,31 @@ export interface EffectsInCountry {
    * add_trust = { amount = <amount>/<variable> who = <target> }
    * ```
    */
-  addTrust(args: { amount: ScriptValue; who: string }): void;
+  addTrust(args: {
+    amount: ScriptValue;
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Adds victory score to a country
@@ -2799,7 +3397,23 @@ export interface EffectsInCountry {
    * change_dominant_species = { species = target change_all = yes }
    * ```
    */
-  changeDominantSpecies(args: { species: string; changeAll?: "yes" }): void;
+  changeDominantSpecies(args: {
+    species:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    changeAll?: "yes";
+  }): void;
 
   /**
    * Change the scoped country's government authority and/or civics
@@ -2825,7 +3439,31 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  checkCasusBelliValid(args: { target?: string; type?: CasusBelliRef | string }): void;
+  checkCasusBelliValid(args: {
+    target?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    type?: CasusBelliRef | string;
+  }): void;
 
   /**
    * Clears all custom ruler and heir titles from the country, resetting them to default values
@@ -2841,7 +3479,31 @@ export interface EffectsInCountry {
    * clear_intel_report = { category = <string> who = <target> }
    * ```
    */
-  clearIntelReport(args: { category: IntelCategoryRef | string; who: string }): void;
+  clearIntelReport(args: {
+    category: IntelCategoryRef | string;
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Clears resources of a country
@@ -2857,7 +3519,7 @@ export interface EffectsInCountry {
    * clear_uncharted_space = <target>
    * ```
    */
-  clearUnchartedSpace(value: string): void;
+  clearUnchartedSpace(value: ScopeValue<"country" | "system">): void;
 
   /**
    * Gives the player the reward for the specified crisis objective
@@ -2881,7 +3543,25 @@ export interface EffectsInCountry {
    * complete_special_project = { type = <project key> location = <target> }
    * ```
    */
-  completeSpecialProject(args: { type: SpecialProjectRef | string; location?: string }): void;
+  completeSpecialProject(args: {
+    type: SpecialProjectRef | string;
+    location?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Makes the scoped country copy the ethos and government authority of the target country.
@@ -2889,7 +3569,30 @@ export interface EffectsInCountry {
    * copy_ethos_and_authority = FROM
    * ```
    */
-  copyEthosAndAuthority(value: string): void;
+  copyEthosAndAuthority(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Adds a random tech from the target country within the given category and tech area constraints. The country must be able to research said tech (weight > 0, fulfils potential trigger)
@@ -2903,7 +3606,28 @@ export interface EffectsInCountry {
    * ```
    */
   copyRandomTechFrom(args: {
-    who: string;
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     category?: TechnologyCategoryRef | string;
     area?: ResearchArea;
     progress?: ScriptValue;
@@ -2970,7 +3694,7 @@ export interface EffectsInCountry {
    * ```
    */
   effectOnBlob(args: {
-    center: string;
+    center: ScopeValue<"system">;
     ownedPlanetsPercentage: ScriptValue;
     planetLimit: Trigger<"colony">;
     effect: (scope: SystemScope) => void;
@@ -3004,8 +3728,8 @@ export interface EffectsInCountry {
   enablePatronFirstContactProject(args: {
     name: SpecialProjectRef | string;
     patron: PatronTypeRef | string;
-    owner: string;
-    location?: "scope_field";
+    owner: ScopeValue<"country">;
+    location?: ScopeValue;
   }): void;
 
   /**
@@ -3014,7 +3738,30 @@ export interface EffectsInCountry {
    * end_all_treaties_with = <target>
    * ```
    */
-  endAllTreatiesWith(value: string): void;
+  endAllTreatiesWith(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Ends a specific situation log event chain for the scoped country
@@ -3030,7 +3777,30 @@ export interface EffectsInCountry {
    * end_rivalry = <target>
    * ```
    */
-  endRivalry(value: string): void;
+  endRivalry(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Force-end truce with target country
@@ -3038,7 +3808,30 @@ export interface EffectsInCountry {
    * end_truce = <target>
    * ```
    */
-  endTruce(value: string): void;
+  endTruce(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Establish communications between scoped country and target country
@@ -3046,7 +3839,30 @@ export interface EffectsInCountry {
    * establish_communications = <target>
    * ```
    */
-  establishCommunications(value: string): void;
+  establishCommunications(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Silently establish communications between scoped country and target country
@@ -3054,7 +3870,30 @@ export interface EffectsInCountry {
    * establish_communications_no_message = <target>
    * ```
    */
-  establishCommunicationsNoMessage(value: string): void;
+  establishCommunicationsNoMessage(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Establishes first contact between the scoped country and target country at the set location
@@ -3062,7 +3901,49 @@ export interface EffectsInCountry {
    * establish_contact = { who = <target> location = <target> }
    * ```
    */
-  establishContact(args: { who: string; location?: string }): void;
+  establishContact(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    location?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "ship"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Iterate through each active (non-completed) first contact that this country is engaging in - executes the enclosed effects on all of them for which the limit triggers return true
@@ -3462,7 +4343,7 @@ export interface EffectsInCountry {
    * force_show_diplomacy = <target country>
    * ```
    */
-  forceShowDiplomacy(value: string): void;
+  forceShowDiplomacy(value: ScopeValue<"country">): void;
 
   /**
    * Forces the diplomacy view to open for the scoped country targeted at the given country, on the espionage tab. Only works inside on_custom_diplomacy events, relic activation effects, or events triggered from those. Does nothing if communications are missing or if espionage is not actionable against the target.
@@ -3470,7 +4351,7 @@ export interface EffectsInCountry {
    * force_show_espionage = <target country>
    * ```
    */
-  forceShowEspionage(value: string): void;
+  forceShowEspionage(value: ScopeValue<"country">): void;
 
   /**
    * Passes special trade offer data from the target enclave country to the scoped country.
@@ -3479,7 +4360,30 @@ export interface EffectsInCountry {
    * get_trade_data = { target = <target> }
    * ```
    */
-  getTradeData(args: { target: string }): void;
+  getTradeData(args: {
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Gives associated culling rewards from a space fauna design to the target country.
@@ -3491,7 +4395,7 @@ export interface EffectsInCountry {
    * ```
    */
   giveCullingRewards(args: {
-    design?: GlobalShipDesignRef | string | "last_created_design";
+    design?: GlobalShipDesignRef | string | ScopeValue<"design"> | "last_created_design";
     mult?: ScriptValue;
   }): void;
 
@@ -3526,7 +4430,30 @@ export interface EffectsInCountry {
    * guarantee_country = { target = <target> }
    * ```
    */
-  guaranteeCountry(value: string): void;
+  guaranteeCountry(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Triggers the sub-species integration step for a country.
@@ -3547,7 +4474,26 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  issueContract(args: { contract: MissionRef | string; location: string; target?: string }): void;
+  issueContract(args: {
+    contract: MissionRef | string;
+    location: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+    target?: ScopeValue<"country">;
+  }): void;
 
   /**
    * Joins wars on the side of target country
@@ -3555,7 +4501,30 @@ export interface EffectsInCountry {
    * join_war = <target>
    * ```
    */
-  joinWar(value: string): void;
+  joinWar(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Joins the war on the specified side.
@@ -3563,7 +4532,33 @@ export interface EffectsInCountry {
    * join_war_on_side = { war = <target> side = attackers/defenders/<country> }
    * ```
    */
-  joinWarOnSide(args: { war: string; side: WarSide | string }): void;
+  joinWarOnSide(args: {
+    war: ScopeValue<"war">;
+    side:
+      | WarSide
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >;
+  }): void;
 
   /**
    * Kills the scoped leader saved with a custom name
@@ -3591,7 +4586,30 @@ export interface EffectsInCountry {
    * make_special_trade = { target = <target> }
    * ```
    */
-  makeSpecialTrade(args: { target: string }): void;
+  makeSpecialTrade(args: {
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Triggers the merge of similar sub-species for a country.
@@ -4247,7 +5265,31 @@ export interface EffectsInCountry {
    * pass_targeted_resolution = { resolution = <resolution type> target = <target>
    * ```
    */
-  passTargetedResolution(args: { resolution: ResolutionRef | string; target: string }): void;
+  passTargetedResolution(args: {
+    resolution: ResolutionRef | string;
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Unlocks Astral Actions that have become unlockable since the last time this effect was called.
@@ -4273,7 +5315,31 @@ export interface EffectsInCountry {
    * 	target = <event_target:country> (optional)}
    * ```
    */
-  proposeResolution(args: { resolution: ResolutionRef | string; target: string }): void;
+  proposeResolution(args: {
+    resolution: ResolutionRef | string;
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Iterate through each active (non-completed) first contact that this country is engaging in - executes the enclosed effects on one of them for which the limit triggers return true. Picks the specific object randomly.
@@ -4921,8 +5987,8 @@ export interface EffectsInCountry {
   /** Releases into the wild space fauna contained in the scoped country's Vivarium, from all or given ship category.	Resulting fleet owner can be specified.	Space Fauna can be culled for resources instead by specifying 'cull_vivarium_critter = yes'. */
   releaseVivariumFauna(args: {
     category: ShipCategoryRef | string | "all";
-    location?: "scope_field";
-    owner?: string;
+    location?: ScopeValue;
+    owner?: ScopeValue<"country">;
     cullVivariumCritter?: boolean;
   }): void;
 
@@ -4932,7 +5998,7 @@ export interface EffectsInCountry {
    * remove_communications = <target>
    * ```
    */
-  removeCommunications(value: string): void;
+  removeCommunications(value: ScopeValue<"country">): void;
 
   /**
    * Removes a flag from the scoped country
@@ -4948,7 +6014,7 @@ export interface EffectsInCountry {
    * remove_envoys_to = <country>
    * ```
    */
-  removeEnvoysTo(value: string): void;
+  removeEnvoysTo(value: ScopeValue<"country">): void;
 
   /**
    * Remove <value/all> favors that scoped country have on target country:
@@ -4958,7 +6024,31 @@ export interface EffectsInCountry {
    * value = <value/all/variable> }
    * ```
    */
-  removeFavors(args: { target: string; value: ScriptValue | "any" }): void;
+  removeFavors(args: {
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    value: ScriptValue | "any";
+  }): void;
 
   /**
    * The scoped country is removed from any federation its in
@@ -4998,7 +6088,31 @@ export interface EffectsInCountry {
    * remove_opinion_modifier = { modifier = <key> who = <target (optional)> }
    * ```
    */
-  removeOpinionModifier(args: { who: string; modifier: OpinionModifierRef | string }): void;
+  removeOpinionModifier(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    modifier: OpinionModifierRef | string;
+  }): void;
 
   /**
    * Remove a patron from the shroud plane.
@@ -5025,7 +6139,31 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  removeRelationFlag(args: { who: string; flag: RelationFlag }): void;
+  removeRelationFlag(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    flag: RelationFlag;
+  }): void;
 
   /**
    * Removes the specified relic from the scoped country. remove_relic = <relic_key>
@@ -5049,7 +6187,30 @@ export interface EffectsInCountry {
    * remove_secret_fealty = <target>
    * ```
    */
-  removeSecretFealty(value: string): void;
+  removeSecretFealty(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Removes a specific ship design from the scoped country
@@ -5057,7 +6218,9 @@ export interface EffectsInCountry {
    * remove_ship_design = <target/last_created_design>
    * ```
    */
-  removeShipDesign(value: GlobalShipDesignRef | string | "last_created_design"): void;
+  removeShipDesign(
+    value: GlobalShipDesignRef | string | ScopeValue<"design"> | "last_created_design"
+  ): void;
 
   /**
    * Removes specified specimen from the target country. This will destroy the specimen
@@ -5065,7 +6228,7 @@ export interface EffectsInCountry {
    * remove_specimen = <specimen_key/exhibit_target>
    * ```
    */
-  removeSpecimen(value: SpecimenRef | string): void;
+  removeSpecimen(value: SpecimenRef | string | ScopeValue<"exhibit">): void;
 
   /**
    * Replace a patron with another one, creating the patron relation if it does not yet exist, and setting the new patron to the replaced patron's position in the shroud plane.
@@ -5150,7 +6313,32 @@ export interface EffectsInCountry {
    * set_adjective = <string>
    * ```
    */
-  setAdjective(value: string): void;
+  setAdjective(
+    value:
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+  ): void;
 
   /**
    * Enables or disables the VIR window pop_group-in
@@ -5198,7 +6386,20 @@ export interface EffectsInCountry {
    * set_built_species = <target>
    * ```
    */
-  setBuiltSpecies(value: string): void;
+  setBuiltSpecies(
+    value: ScopeValue<
+      | "army"
+      | "carrier"
+      | "country"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "planet"
+      | "pop_group"
+      | "ship"
+      | "species"
+    >
+  ): void;
 
   /**
    * Sets the scoped country's city graphical culture
@@ -5218,7 +6419,32 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  setClosedBorders(args: { who: string; status: boolean; forced?: ScriptValue }): void;
+  setClosedBorders(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    status: boolean;
+    forced?: ScriptValue;
+  }): void;
 
   /**
    * Set the Country's council agenda
@@ -5274,7 +6500,24 @@ export interface EffectsInCountry {
    * set_custom_capital_location = <target>
    * ```
    */
-  setCustomCapitalLocation(value: string): void;
+  setCustomCapitalLocation(
+    value: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Sets the flag of the current Empire.
@@ -5299,7 +6542,28 @@ export interface EffectsInCountry {
    * ```
    */
   setFactionHostility(args: {
-    target?: string;
+    target?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     setHostile?: boolean;
     setNeutral?: boolean;
     setFriendly?: boolean;
@@ -5374,7 +6638,7 @@ export interface EffectsInCountry {
    * set_heir = <target>
    * ```
    */
-  setHeir(value: string): void;
+  setHeir(value: ScopeValue<"leader">): void;
 
   /**
    * Sets the target country as hostile. This will work on countries you don't have comms with, unlike set_faction_hostility.
@@ -5382,7 +6646,30 @@ export interface EffectsInCountry {
    * set_hostile = from
    * ```
    */
-  setHostile(value: string): void;
+  setHostile(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Sets the country's male heir title to a custom value
@@ -5448,7 +6735,30 @@ export interface EffectsInCountry {
    * event_target:new_country = { set_player = event_target:old_country }
    * ```
    */
-  setPlayer(value: string): void;
+  setPlayer(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Sets a policy to a specific option for the scoped country and specifies if policy cooldown should go into effect
@@ -5483,7 +6793,31 @@ export interface EffectsInCountry {
    * }
    * ```
    */
-  setRelationFlag(args: { who: string; flag: RelationFlag }): void;
+  setRelationFlag(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    flag: RelationFlag;
+  }): void;
 
   /**
    * Sets the specific resource to the stockpile for the country scope:
@@ -5526,7 +6860,32 @@ export interface EffectsInCountry {
    * set_ship_prefix = <string>
    * ```
    */
-  setShipPrefix(value: string): void;
+  setShipPrefix(
+    value:
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+  ): void;
 
   /**
    * Sets the scoped country to be a subject of target country. If use_demanded_terms is set to yes, then the subject agreement will use terms that have previously been demanded in a diplomatic action. If allow_instant_negotiation is set to yes, then the subject and overlord can re-negotiate their agreement right away without having to way for the cooldown. If preset is specified, then the agreement will start as that preset
@@ -5538,7 +6897,30 @@ export interface EffectsInCountry {
    * ```
    */
   setSubjectOf(args: {
-    who?: string | "none";
+    who?:
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | "none";
     useDemandedTerms?: boolean;
     allowInstantNegotiation?: boolean;
     preset?: AgreementPresetRef | string;
@@ -5571,7 +6953,28 @@ export interface EffectsInCountry {
    * ```
    */
   setTimedRelationFlag(args: {
-    who: string;
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     flag: RelationFlag;
     days?: ScriptValue;
     months?: ScriptValue;
@@ -5584,7 +6987,32 @@ export interface EffectsInCountry {
    * set_truce = { target = <country/war> type = war/liberation/alliance/guarantee/none }
    * ```
    */
-  setTruce(args: { target: string; type: TruceType }): void;
+  setTruce(args: {
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+      | "war"
+    >;
+    type: TruceType;
+  }): void;
 
   /**
    * Changes the scoped country's tutorial level (0 none, 1 limited, 2 full)
@@ -5600,7 +7028,7 @@ export interface EffectsInCountry {
    * set_visited = <target>
    * ```
    */
-  setVisited(value: string): void;
+  setVisited(value: ScopeValue<"system">): void;
 
   /**
    * Shifts an empire towards a specific ethic, adjusting afterwards to keep number of ethics points consistent
@@ -5626,7 +7054,7 @@ export interface EffectsInCountry {
    */
   startSituation(args: {
     type: SituationTypeRef | string;
-    target?: string;
+    target?: ScopeValue;
     effect?: (scope: SituationScope) => void;
   }): void;
 
@@ -5636,7 +7064,31 @@ export interface EffectsInCountry {
    * steal_relic = { target = <Target Country> relic = <relic_name/all/random>
    * ```
    */
-  stealRelic(args: { target: string; relic: RelicRef | string | "all" | "random" }): void;
+  stealRelic(args: {
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    relic: RelicRef | string | "all" | "random";
+  }): void;
 
   /**
    * Steals random specimens from given country.
@@ -5645,7 +7097,7 @@ export interface EffectsInCountry {
    * ```
    */
   stealSpecimens(args: {
-    who: string;
+    who: ScopeValue<"country">;
     category: ShipCategoriesRef | string | "all" | "any";
     count: ScriptValue;
     showNotification?: boolean;
@@ -5685,7 +7137,30 @@ export interface EffectsInCountry {
    * transfer_galactic_defense_force_fleets = <target>
    * ```
    */
-  transferGalacticDefenseForceFleets(value: string): void;
+  transferGalacticDefenseForceFleets(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Unlocks council selection
@@ -5752,7 +7227,7 @@ export interface EffectsInCountryFederation {
    * set_federation_leader = <target>
    * ```
    */
-  setFederationLeader(value: string): void;
+  setFederationLeader(value: ScopeValue<"country">): void;
 }
 
 /** Effects valid in: country, fleet. */
@@ -6376,7 +7851,53 @@ export interface EffectsInCountryWar {
    * set_war_goal = { type = <key> target = <target> enemy = <target> }
    * ```
    */
-  setWarGoal(args: { type: WarGoalRef | string; target: string; enemy: string }): void;
+  setWarGoal(args: {
+    type: WarGoalRef | string;
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    enemy: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 }
 
 /** Effects valid in: debris. */
@@ -6387,7 +7908,30 @@ export interface EffectsInDebris {
    * pass_debris_ownership = { owner = <target country> }
    * ```
    */
-  passDebrisOwnership(args: { owner: string }): void;
+  passDebrisOwnership(args: {
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 }
 
 /** Effects valid in: debris, ship. */
@@ -6400,7 +7944,7 @@ export interface EffectsInDebrisShip {
    * }
    * ```
    */
-  reanimateSpaceFauna(args: { fleet: string }): void;
+  reanimateSpaceFauna(args: { fleet: ScopeValue<"fleet"> }): void;
 }
 
 /** Effects valid in: deposit. */
@@ -6664,7 +8208,31 @@ export interface EffectsInFederation {
    * add_associate_member = { who = <target> override_requirements = yes/no }
    * ```
    */
-  addAssociateMember(args: { who: string; overrideRequirements: boolean }): void;
+  addAssociateMember(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    overrideRequirements: boolean;
+  }): void;
 
   /**
    * Add cohesion to the federation
@@ -6782,7 +8350,31 @@ export interface EffectsInFederation {
    * remove_associate_member = { who = <country> override_requirements = yes/no }
    * ```
    */
-  removeAssociateMember(args: { who: string; overrideRequirements: boolean }): void;
+  removeAssociateMember(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    overrideRequirements: boolean;
+  }): void;
 
   /**
    * Removes a flag from the scoped federation
@@ -6970,7 +8562,7 @@ export interface EffectsInFleet {
    * clear_fleet_actions = <target>
    * ```
    */
-  clearFleetActions(value: string): void;
+  clearFleetActions(value: ScopeValue<"fleet">): void;
 
   /**
    * Clears all fleet orders from the scoped fleet
@@ -6997,7 +8589,20 @@ export interface EffectsInFleet {
     armyType: ArmyRef | string;
     shipName?: string | "random";
     armyName?: string;
-    species?: string;
+    species?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
     effect?: (scope: ShipScope) => void;
   }): void;
 
@@ -7033,7 +8638,22 @@ export interface EffectsInFleet {
    */
   fleetActionResearchSpecialProject(args: {
     specialProject: SpecialProjectRef | string;
-    target: string;
+    target: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
   }): void;
 
   /**
@@ -7045,7 +8665,31 @@ export interface EffectsInFleet {
    * }
    * ```
    */
-  giveFleet(args: { controller: string; days: ScriptValue }): void;
+  giveFleet(args: {
+    controller: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    days: ScriptValue;
+  }): void;
 
   /**
    * Forces scoped fleet to retreat to friendly territory
@@ -7112,7 +8756,7 @@ export interface EffectsInFleet {
    * return_from_mia = <target>
    * ```
    */
-  returnFromMia(value: string): void;
+  returnFromMia(value: ScopeValue<"fleet">): void;
 
   /**
    * Sets current fleet's cloaking status
@@ -7187,7 +8831,7 @@ export interface EffectsInFleet {
    * set_home_base = event_target:cool_starbase
    * ```
    */
-  setHomeBase(value: string): void;
+  setHomeBase(value: ScopeValue<"starbase">): void;
 
   /**
    * Sets the current fleet to go missing in action with the MIA type defided by <key>
@@ -7257,7 +8901,28 @@ export interface EffectsInFleet {
    * ```
    */
   spawnCustomDebris(args: {
-    for: string;
+    for: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     shouldAddShipToDebris?: Trigger<"fleet">;
     mustScavenge?: boolean;
     mustResearch?: boolean;
@@ -7303,7 +8968,7 @@ export interface EffectsInFleetShip {
    * auto_follow_fleet = { target = <fleet> attack_fleet = yes }
    * ```
    */
-  autoFollowFleet(value: string): void;
+  autoFollowFleet(value: ScopeValue<"fleet">): void;
 
   /**
    * Makes a fleet or ship auto-move to target planet
@@ -7312,7 +8977,7 @@ export interface EffectsInFleetShip {
    * ```
    */
   autoMoveToPlanet(args: {
-    target: string;
+    target: ScopeValue<"planet" | "system">;
     clearAutoMoveOnArrival: boolean;
     destroyOnArrival?: boolean;
     arrivalEffect?: ScriptedEffectRef | string;
@@ -7334,7 +8999,30 @@ export interface EffectsInFleetShip {
    * destroy_and_spawn_debris_for = from
    * ```
    */
-  destroyAndSpawnDebrisFor(value: string): void;
+  destroyAndSpawnDebrisFor(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Locks the animation state of the scoped object. This will let it change states until it hits the given state, at which point it won't change states anymore. "none" clears this behavior.
@@ -7442,7 +9130,7 @@ export interface EffectsInFleetShip {
    * ```
    */
   setShipDesign(args: {
-    design?: GlobalShipDesignRef | string | "last_created_design";
+    design?: GlobalShipDesignRef | string | ScopeValue<"design"> | "last_created_design";
     randomExistingDesign?: ShipSizeRef | string;
   }): void;
 
@@ -7452,7 +9140,7 @@ export interface EffectsInFleetShip {
    * set_terrified_by = <attacker>
    * ```
    */
-  setTerrifiedBy(value: string): void;
+  setTerrifiedBy(value: ScopeValue<"ship">): void;
 }
 
 /** Effects valid in: leader. */
@@ -7538,7 +9226,24 @@ export interface EffectsInLeader {
    * change_leader_portrait = <key or species event target>
    * ```
    */
-  changeLeaderPortrait(value: string | PortraitRef | PortraitGroupRef): void;
+  changeLeaderPortrait(
+    value:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | PortraitRef
+      | string
+      | PortraitGroupRef
+  ): void;
 
   /**
    * Freezes the scoped leader's age. The 'no' case will disable the freeze granted by this effect.
@@ -7690,7 +9395,7 @@ export interface EffectsInLeader {
    * set_years_served = <target>
    * ```
    */
-  setYearsServed(value: string): void;
+  setYearsServed(value: ScopeValue<"leader">): void;
 
   /** Scopes from a leader to their background planet. */
   backgroundPlanet(body: (scope: PlanetScope) => void): void;
@@ -7825,7 +9530,28 @@ export interface EffectsInLeaderPopGroupSpecies {
    * ```
    */
   setCitizenshipType(args: {
-    country?: string;
+    country?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     type: CitizenshipTypeRef | string;
     cooldown?: boolean;
   }): void;
@@ -7837,7 +9563,28 @@ export interface EffectsInLeaderPopGroupSpecies {
    * ```
    */
   setColonizationControls(args: {
-    country?: string;
+    country?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     type: boolean | ColonizationControlRef | string;
     cooldown?: boolean;
   }): void;
@@ -7849,7 +9596,28 @@ export interface EffectsInLeaderPopGroupSpecies {
    * ```
    */
   setLivingStandard(args: {
-    country?: string;
+    country?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     type: LivingStandardRef | string;
     cooldown?: boolean;
   }): void;
@@ -7861,7 +9629,28 @@ export interface EffectsInLeaderPopGroupSpecies {
    * ```
    */
   setMigrationControls(args: {
-    country?: string;
+    country?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     type: boolean | MigrationControlRef | string;
     cooldown?: boolean;
   }): void;
@@ -7873,7 +9662,28 @@ export interface EffectsInLeaderPopGroupSpecies {
    * ```
    */
   setMilitaryServiceType(args: {
-    country?: string;
+    country?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     type: MilitaryServiceTypeRef | string;
     cooldown?: boolean;
   }): void;
@@ -7885,7 +9695,28 @@ export interface EffectsInLeaderPopGroupSpecies {
    * ```
    */
   setPopulationControls(args: {
-    country?: string;
+    country?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     type: boolean | PopulationControlRef | string;
     cooldown?: boolean;
   }): void;
@@ -7896,7 +9727,32 @@ export interface EffectsInLeaderPopGroupSpecies {
    * set_purge_type = { country = <target> type = purge_full cooldown = yes }
    * ```
    */
-  setPurgeType(args: { country?: string; type: PurgeTypeRef | string; cooldown?: boolean }): void;
+  setPurgeType(args: {
+    country?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    type: PurgeTypeRef | string;
+    cooldown?: boolean;
+  }): void;
 
   /**
    * Set slavery type for scoped species/pop_group/leader
@@ -7905,7 +9761,28 @@ export interface EffectsInLeaderPopGroupSpecies {
    * ```
    */
   setSlaveryType(args: {
-    country?: string;
+    country?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     type: SlaveryTypeRef | string;
     cooldown?: boolean;
   }): void;
@@ -7926,7 +9803,28 @@ export interface EffectsInMegastructure {
    * ```
    */
   createBypass(args: {
-    owner: string;
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     type: BypassRef | string;
     effect?: (scope: BypassScope) => void;
   }): void;
@@ -7945,7 +9843,7 @@ export interface EffectsInMegastructure {
    * set_linked_to = from
    * ```
    */
-  linkTo(value: string): void;
+  linkTo(value: ScopeValue<"megastructure">): void;
 
   /**
    * Removes a flag from the scoped mega structure
@@ -8070,7 +9968,30 @@ export interface EffectsInPlanet {
    * conquer = <target country>
    * ```
    */
-  conquer(value: string): void;
+  conquer(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Disables or enables anomaly generation for the scoped planet
@@ -8136,8 +10057,8 @@ export interface EffectsInPlanet {
    * ```
    */
   stealPlanetOutput(args: {
-    planet: string;
-    who: string;
+    planet: ScopeValue<"planet">;
+    who: ScopeValue<"country" | "ship">;
     resource?: ResourceRef | string | "all";
     maxAmount?: ScriptValue;
     percentage?: ScriptValue;
@@ -8161,7 +10082,7 @@ export interface EffectsInPlanetStarbase {
    *  center = <target>
    * ```
    */
-  destroyCosmicStormInfluenceField(args: { center: string }): void;
+  destroyCosmicStormInfluenceField(args: { center: ScopeValue<"system"> }): void;
 }
 
 /** Effects valid in: planet, system. */
@@ -8180,7 +10101,28 @@ export interface EffectsInPlanetSystem {
    * ```
    */
   createStarbase(args: {
-    owner?: string;
+    owner?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     size: ShipSizeStarbaseRef | string;
     design?: GlobalShipDesignRef | string;
     module?: StarbaseModuleRef | string;
@@ -8608,7 +10550,10 @@ export interface EffectsInShip {
    * }
    * ```
    */
-  transferResourceStockpile(args: { target: string; mult?: VariableRef | string }): void;
+  transferResourceStockpile(args: {
+    target: ScopeValue<"country" | "ship">;
+    mult?: VariableRef | string;
+  }): void;
 
   /** Scopes to the ship's design */
   design(body: (scope: DesignScope) => void): void;
@@ -8633,7 +10578,7 @@ export interface EffectsInSituation {
    * change_situation_target = none/scope
    * ```
    */
-  changeSituationTarget(value: "scope_field" | "none"): void;
+  changeSituationTarget(value: ScopeValue | "none"): void;
 
   /**
    * Removes a flag from the scoped situation
@@ -8712,12 +10657,45 @@ export interface EffectsInSpecies {
   changeSpeciesCharacteristics(args: {
     sapient?: boolean;
     immortal?: boolean;
-    canBeModified?: boolean | "scope_field";
-    portrait?: string | PortraitRef | PortraitGroupRef | "random";
+    canBeModified?: boolean | ScopeValue;
+    portrait?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | PortraitRef
+      | string
+      | PortraitGroupRef
+      | "random";
     addTrait?: TraitSpeciesTraitRef | string;
     addTraitsAtStartOfList?: boolean;
     removeTrait?: TraitSpeciesTraitRef | string;
-    gender?: GendersNotSet | "any" | string;
+    gender?:
+      | GendersNotSet
+      | "any"
+      | ScopeValue<
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "species"
+        >;
     canChangeLeader?: boolean;
   }): void;
 
@@ -8727,7 +10705,25 @@ export interface EffectsInSpecies {
    * change_species_portrait = <key or species event target>
    * ```
    */
-  changeSpeciesPortrait(value: string | PortraitRef | PortraitGroupRef | "random"): void;
+  changeSpeciesPortrait(
+    value:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | PortraitRef
+      | string
+      | PortraitGroupRef
+      | "random"
+  ): void;
 
   /**
    * Iterate through each pop_group that belongs to this species; warning: resource-intensive! - executes the enclosed effects on all of them for which the limit triggers return true
@@ -8808,7 +10804,28 @@ export interface EffectsInSpecies {
    * ```
    */
   renameSpecies(args: {
-    promptCountry?: string;
+    promptCountry?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     name?: string | "random";
     nameList?: SpeciesNamedListRef | string;
   }): void;
@@ -8835,7 +10852,19 @@ export interface EffectsInSpecies {
    * set_species_homeworld = <target planet>
    * ```
    */
-  setSpeciesHomeworld(value: string): void;
+  setSpeciesHomeworld(
+    value: ScopeValue<
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "deposit"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "ship"
+    >
+  ): void;
 
   /**
    * Sets the current species scopes identity to match the target scopes making them evaluate as the same species in is_same_species trigger.
@@ -8843,7 +10872,20 @@ export interface EffectsInSpecies {
    * set_species_identity = new/<target species>
    * ```
    */
-  setSpeciesIdentity(value: string): void;
+  setSpeciesIdentity(
+    value: ScopeValue<
+      | "army"
+      | "carrier"
+      | "country"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "planet"
+      | "pop_group"
+      | "ship"
+      | "species"
+    >
+  ): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped species for a set duration
@@ -9282,7 +11324,32 @@ export interface EffectsInSystem {
    * add_claims = { who = <country> num_of_claims = x show_notification = no }
    * ```
    */
-  addClaims(args: { who: string; numOfClaims?: number; showNotification?: boolean }): void;
+  addClaims(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    numOfClaims?: number;
+    showNotification?: boolean;
+  }): void;
 
   /**
    * Creates a new Nebula with a given radius centered around the current system.
@@ -9427,7 +11494,22 @@ export interface EffectsInSystem {
    * ```
    */
   moveSystem(args: {
-    target: string;
+    target: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
     minDistance?: ScriptValue;
     maxDistance?: ScriptValue;
     direction?: SystemDirection;
@@ -9838,7 +11920,31 @@ export interface EffectsInSystem {
    * remove_claims = { who = <country> num_of_claims = x }
    * ```
    */
-  removeClaims(args: { who: string; numOfClaims?: ScriptValue }): void;
+  removeClaims(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    numOfClaims?: ScriptValue;
+  }): void;
 
   /**
    * Removes a flag from the scoped system
@@ -9873,7 +11979,7 @@ export interface EffectsInSystem {
    *  cosmic_storm = <target>
    * ```
    */
-  setCosmicStorm(args: { cosmicStorm: string }): void;
+  setCosmicStorm(args: { cosmicStorm: ScopeValue<"storm"> }): void;
 
   /**
    * Sets the star's star class, affecting system and galactic map graphics and potentially modifiers. Also changes the planet class of the system's primary star.
@@ -9913,7 +12019,7 @@ export interface EffectsInSystem {
    * ```
    */
   spawnPsionicAura(args: {
-    owner: string;
+    owner: ScopeValue<"country">;
     type?: PsionicAuraRef | string;
     updateType?: boolean;
   }): void;
@@ -10076,7 +12182,30 @@ export interface EffectsInWar {
    * remove_war_participant = <target>
    * ```
    */
-  removeWarParticipant(value: string): void;
+  removeWarParticipant(
+    value: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >
+  ): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped war for a set duration
@@ -10120,7 +12249,7 @@ export interface UniversalEffects {
    * abort_situation = <event target>
    * ```
    */
-  abortSituation(value: string): void;
+  abortSituation(value: ScopeValue<"situation">): void;
 
   /**
    * Activates the gateway associated with a megastructure.
@@ -10128,7 +12257,7 @@ export interface UniversalEffects {
    * activate_gateway = <target>
    * ```
    */
-  activateGateway(value: string): void;
+  activateGateway(value: ScopeValue<"megastructure">): void;
 
   /**
    * Adds a specific anomaly category to the scoped planet
@@ -10139,7 +12268,31 @@ export interface UniversalEffects {
    * }
    * ```
    */
-  addAnomaly(args: { category: AnomalyCategoryRef | string; target?: string }): void;
+  addAnomaly(args: {
+    category: AnomalyCategoryRef | string;
+    target?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Increase the current Custodian term time
@@ -10163,7 +12316,7 @@ export interface UniversalEffects {
    * add_hyperlane = { from = <system> to = <system> }
    * ```
    */
-  addHyperlane(args: { from: string; to: string }): void;
+  addHyperlane(args: { from: ScopeValue<"system">; to: ScopeValue<"system"> }): void;
 
   /**
    * Add imperial_authority
@@ -10179,7 +12332,31 @@ export interface UniversalEffects {
    * begin_event_chain = { event_chain = <key> target = <target> }
    * ```
    */
-  beginEventChain(args: { eventChain: EventChainRef | string; target?: string }): void;
+  beginEventChain(args: {
+    eventChain: EventChainRef | string;
+    target?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Prevents execution of subsequent effects in the same effect block, used with if-statements
@@ -10244,7 +12421,7 @@ export interface UniversalEffects {
    * copy_flags_and_variables_from = event_target:them
    * ```
    */
-  copyFlagsAndVariablesFrom(value: "scope_field"): void;
+  copyFlagsAndVariablesFrom(value: ScopeValue): void;
 
   /**
    * Prints a list of the countries that match the limit triggers in a tooltip, each separated by a line break.
@@ -10264,7 +12441,7 @@ export interface UniversalEffects {
    * }
    * ```
    */
-  createCluster(args: { id: ClusterId; radius: number; center: string }): void;
+  createCluster(args: { id: ClusterId; radius: number; center: ScopeValue<"system"> }): void;
 
   /**
    * Creates a cosmic storm
@@ -10278,14 +12455,14 @@ export interface UniversalEffects {
    * ```
    */
   createCosmicStorm(args: {
-    stormStartPosition?: string;
-    stormEndPosition?: string;
+    stormStartPosition?: ScopeValue<"system">;
+    stormEndPosition?: ScopeValue<"system">;
     stormMinRadius?: ScriptValue;
     stormMaxRadius?: ScriptValue;
     stormMaxRange?: ScriptValue;
     type?: StormTypesRef | string;
     immediate?: boolean;
-    cosmicStormStartPosition?: string | "random";
+    cosmicStormStartPosition?: ScopeValue<"system"> | "random";
   }): void;
 
   /**
@@ -10295,7 +12472,28 @@ export interface UniversalEffects {
    * ```
    */
   createMilitaryFleet(args: {
-    owner: string;
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
     scaledSize: readonly Modifier<ScopeName>[];
     effect: (scope: ScopeObjOf<ScopeName>) => void;
   }): void;
@@ -10349,7 +12547,7 @@ export interface UniversalEffects {
    * }
    * ```
    */
-  deleteDimensionalFleet(value: "scope_field"): void;
+  deleteDimensionalFleet(value: ScopeValue): void;
 
   /**
    * Deletes the target fleet (no death graphics)
@@ -10362,7 +12560,7 @@ export interface UniversalEffects {
    * }
    * ```
    */
-  deleteFleet(value: string): void;
+  deleteFleet(value: ScopeValue<"fleet">): void;
 
   /**
    * Deletes up to naval_cap worth of ships in the target fleet (no death graphics)
@@ -10374,7 +12572,11 @@ export interface UniversalEffects {
    * }
    * ```
    */
-  deleteFleetNavalCap(args: { target: string; navalCap?: ScriptValue; killLeader?: boolean }): void;
+  deleteFleetNavalCap(args: {
+    target: ScopeValue<"fleet">;
+    navalCap?: ScriptValue;
+    killLeader?: boolean;
+  }): void;
 
   /**
    * Deletes the target mega structure (no death graphics)
@@ -10382,7 +12584,7 @@ export interface UniversalEffects {
    * delete_megastructure = <target>
    * ```
    */
-  deleteMegastructure(value: string): void;
+  deleteMegastructure(value: ScopeValue<"megastructure">): void;
 
   /**
    * Deletes the target ship (no death graphics)
@@ -10390,7 +12592,7 @@ export interface UniversalEffects {
    * delete_ship = <target>
    * ```
    */
-  deleteShip(value: string): void;
+  deleteShip(value: ScopeValue<"ship">): void;
 
   /**
    * Destroys target ambient object
@@ -10398,7 +12600,7 @@ export interface UniversalEffects {
    * destroy_ambient_object = <target>
    * ```
    */
-  destroyAmbientObject(value: string): void;
+  destroyAmbientObject(value: ScopeValue<"ambient_object">): void;
 
   /**
    * Destroys a archaeological site in right hand site event target
@@ -10406,7 +12608,7 @@ export interface UniversalEffects {
    * destroy_archaeological_site = <event target>
    * ```
    */
-  destroyArchaeologicalSite(value: string): void;
+  destroyArchaeologicalSite(value: ScopeValue<"archaeological_site">): void;
 
   /**
    * Destroys target Astral Rift
@@ -10414,7 +12616,7 @@ export interface UniversalEffects {
    * destroy_astral_rift = <target>
    * ```
    */
-  destroyAstralRift(value: string): void;
+  destroyAstralRift(value: ScopeValue<"astral_rift">): void;
 
   /**
    * Destroys a espionage operation site in right hand site event target
@@ -10422,7 +12624,7 @@ export interface UniversalEffects {
    * destroy_espionage_operation = <event target>
    * ```
    */
-  destroyEspionageOperation(value: string): void;
+  destroyEspionageOperation(value: ScopeValue<"espionage_operation">): void;
 
   /**
    * Destroys the target fleet (with death graphics)
@@ -10435,7 +12637,7 @@ export interface UniversalEffects {
    * }
    * ```
    */
-  destroyFleet(value: string): void;
+  destroyFleet(value: ScopeValue<"fleet">): void;
 
   /**
    * Destroys up to navel_cap worth of ships in the target fleet (with death graphics)
@@ -10448,7 +12650,7 @@ export interface UniversalEffects {
    * ```
    */
   destroyFleetNavalCap(args: {
-    target: string;
+    target: ScopeValue<"fleet">;
     navalCap?: ScriptValue;
     killLeader?: boolean;
   }): void;
@@ -10459,7 +12661,7 @@ export interface UniversalEffects {
    * destroy_ship = <target>
    * ```
    */
-  destroyShip(value: string): void;
+  destroyShip(value: ScopeValue<"ship">): void;
 
   /**
    * Destroys a situation in right hand side event target, use once situation is complete (on_fail/on_complete/on_abort is not called)
@@ -10467,7 +12669,7 @@ export interface UniversalEffects {
    * destroy_situation = <event target>
    * ```
    */
-  destroySituation(value: string): void;
+  destroySituation(value: ScopeValue<"situation">): void;
 
   /**
    * Enables a mission for target country
@@ -10475,7 +12677,7 @@ export interface UniversalEffects {
    *  enable_mission = { name = <mission key> }
    * ```
    */
-  enableMission(args: { name: MissionRef | string; location?: "scope_field" }): void;
+  enableMission(args: { name: MissionRef | string; location?: ScopeValue }): void;
 
   /**
    * Enables a resource on the Galactic Market
@@ -10493,8 +12695,44 @@ export interface UniversalEffects {
    */
   enableSpecialProject(args: {
     name: SpecialProjectRef | string;
-    owner?: string;
-    location?: string;
+    owner?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    location?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
   }): void;
 
   /**
@@ -10752,7 +12990,7 @@ export interface UniversalEffects {
    * ```
    */
   killPopGroup(args: {
-    popGroup: string;
+    popGroup: ScopeValue<"pop_group">;
     amount?: ScriptValue;
     percentage?: ScriptValue;
     random?: ScriptValue;
@@ -11576,7 +13814,7 @@ export interface UniversalEffects {
    * remove_hyperlane = { from = <system> to = <system> }
    * ```
    */
-  removeHyperlane(args: { from: string; to: string }): void;
+  removeHyperlane(args: { from: ScopeValue<"system">; to: ScopeValue<"system"> }): void;
 
   /**
    * Removes a mega structure.
@@ -11584,7 +13822,7 @@ export interface UniversalEffects {
    * remove_megastructure = <target mega structure>
    * ```
    */
-  removeMegastructure(value: string): void;
+  removeMegastructure(value: ScopeValue<"megastructure">): void;
 
   /**
    * Rerolls the random seed. Use if you want to have a second random_list return a different result. Do not use in tooltips that show random results, because the tooltip will be wrong!
@@ -11601,7 +13839,7 @@ export interface UniversalEffects {
    * ```
    */
   sacrificePopGroup(args: {
-    popGroup: string;
+    popGroup: ScopeValue<"pop_group">;
     amount?: ScriptValue;
     percentage?: ScriptValue;
   }): void;
@@ -11719,12 +13957,12 @@ export interface UniversalEffects {
    * }
    * ```
    */
-  spawnRandomAnomaly(args: { target: string }): void;
+  spawnRandomAnomaly(args: { target: ScopeValue<"country"> }): void;
 
   /** Spawn a random storm type with a random start and end position */
   spawnRandomStorm(args: {
     type?: StormTypesRef | string;
-    cosmicStormStartPosition?: string | "random";
+    cosmicStormStartPosition?: ScopeValue<"system"> | "random";
     immediate?: "yes";
   }): void;
 
@@ -11753,8 +13991,8 @@ export interface UniversalEffects {
    * ```
    */
   transferCarrier(args: {
-    source: string;
-    target: string;
+    source: ScopeValue<"carrier" | "colony" | "planet" | "ship">;
+    target: ScopeValue<"carrier" | "colony" | "planet" | "ship">;
     transferOwnership?: boolean;
     transferController?: boolean;
     mergePops?: boolean;
@@ -11774,8 +14012,8 @@ export interface UniversalEffects {
    * ```
    */
   transferPopAmount(args: {
-    source: string;
-    target: string;
+    source: ScopeValue<"pop_group">;
+    target: ScopeValue<"pop_group">;
     amount?: ScriptValue;
     percentage?: ScriptValue;
     random?: ScriptValue;

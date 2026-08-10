@@ -167,6 +167,11 @@ function classifyScalar(text: string): RuleType {
       return { kind: "valueField", integer: true };
     case "filepath":
       return { kind: "filepath", path: null };
+    // The unbracketed spelling of `scope[any]`: a scope named by any path the
+    // game can follow, with nothing said about which scope it lands in. Read
+    // as a literal it typed 7 fields as the useless string `"scope_field"`.
+    case "scope_field":
+      return { kind: "scope", name: "any" };
     default:
       break;
   }

@@ -2,9 +2,18 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { TechnologyDef } from "../src/generated/technology.ts";
-import { createMod, makeScope, scriptedEffect, scriptedTrigger } from "../src/index.ts";
+import {
+  createMod,
+  eventTarget,
+  makeScope,
+  scriptedEffect,
+  scriptedTrigger,
+} from "../src/index.ts";
+import type { ScopeValue } from "../src/script/effects/types.ts";
 import {
   and,
+  canAccessSystem,
+  hasCommunications,
   hasCountryFlag,
   hasGlobalFlag,
   hasPlanetFlag,
@@ -194,6 +203,48 @@ describe("content ids", () => {
     const mod = createMod({ name: "My Mod", prefix: "mymod", supportedVersion: "4.4.*" });
     const tech = mod.technology("foreign_name", techDef);
     expectTypeOf(tech.id).toEqualTypeOf<"mymod_tech_foreign_name">();
+  });
+});
+
+describe("scope-valued parameters", () => {
+  // SDK-93: `scope[X]`, `scope_group[G]` and the bare `scope_field` token all
+  // used to lower to `string`. They are `ScopeValue` now, so the compiler
+  // checks the scope a path lands in — and there is no `| string` arm, since a
+  // bare word here names a scope nothing can check.
+  const mod = createMod({ name: "Scopes", prefix: "sc_test", supportedVersion: "4.4.*" });
+  const events = mod.namespace();
+  const world = eventTarget<"planet">("sc_test_world");
+  const species = eventTarget<"species">("sc_test_species");
+
+  it("accepts the running scope where the group admits it", () => {
+    events.country(1, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country, ctx) => {
+        // `has_communications` is `scope_group[target_country]`, which lists
+        // country among the scopes the game coerces to a country.
+        country.if(hasCommunications(ctx.self), () => {});
+        // @ts-expect-error — species is not one of target_country's members
+        country.if(hasCommunications(species), () => {});
+        // @ts-expect-error — a scope is named by a typed path, never a bare word
+        country.if(hasCommunications("root"), () => {});
+      },
+    });
+  });
+
+  it("narrows a single-scope parameter to that one scope", () => {
+    // `can_access_system` is `scope[system]`.
+    expectTypeOf(canAccessSystem).parameter(0).toEqualTypeOf<ScopeValue<"system">>();
+    // @ts-expect-error — a planet target does not name a system
+    canAccessSystem(world);
+  });
+
+  it("leaves scope_field's parameter open to every scope", () => {
+    // `copy_flags_and_variables_from = scope_field`, the unbracketed spelling
+    // of `scope[any]`, so any path is legal and the default type argument says
+    // so.
+    expectTypeOf<ScopeValue<"planet">>().toExtend<ScopeValue>();
+    makeScope<"country">([]).copyFlagsAndVariablesFrom(world);
   });
 });
 

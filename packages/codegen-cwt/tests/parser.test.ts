@@ -1,6 +1,13 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { classify, supportedScopesOf } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt, type CwtAssignment } from "@pdx-ts/codegen-cwt/cwt/parser";
+import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { describe, expect, it } from "vitest";
+
+const CONFIG = fileURLToPath(
+  new URL("../../../vendor/cwtools-stellaris-config/config", import.meta.url)
+);
 
 function only(source: string): CwtAssignment {
   const { nodes } = parseCwt(source, "test.cwt");
@@ -111,6 +118,20 @@ describe("rule types", () => {
     expect(classify(only("who = country").value)).toEqual({ kind: "literal", text: "country" });
   });
 
+  it("classifies the scope forms, including the unbracketed one", () => {
+    expect(classify(only("who = scope_group[target_country]").value)).toEqual({
+      kind: "scopeGroup",
+      name: "target_country",
+    });
+    expect(classify(only("target = scope[planet]").value)).toEqual({
+      kind: "scope",
+      name: "planet",
+    });
+    // `scope_field` is the unbracketed spelling of `scope[any]`. Read as a
+    // literal it typed seven generated fields as the string `"scope_field"`.
+    expect(classify(only("location = scope_field").value)).toEqual({ kind: "scope", name: "any" });
+  });
+
   it("expands single_alias_right against the definitions it is given", () => {
     const clause = only(
       "single_alias[trigger_clause] = { alias_name[trigger] = alias_match_left[trigger] }"
@@ -130,6 +151,36 @@ describe("rule types", () => {
     ).toEqual(["country", "federation"]);
     expect(supportedScopesOf(only("## scopes = any\nfoo = bool").options)).toEqual(["any"]);
     expect(supportedScopesOf(only("foo = bool").options)).toBeNull();
+  });
+
+  it("reads the scope_groups table scopes.cwt declares", () => {
+    const { scopeGroups, scopes } = loadRules(CONFIG);
+    expect([...scopeGroups.keys()].sort()).toEqual([
+      "carrier",
+      "celestial_coordinate",
+      "spatial_object",
+      "target_country",
+      "target_graphical_culture",
+      "target_leader",
+      "target_planet",
+      "target_species",
+    ]);
+    // The vendored table writes `carrier` twice inside three of its groups.
+    expect(scopeGroups.get("target_species")).toEqual([
+      "country",
+      "pop_group",
+      "leader",
+      "planet",
+      "ship",
+      "carrier",
+      "fleet",
+      "army",
+      "species",
+      "first_contact",
+    ]);
+    // A group and a scope may share a name, so the two tables stay apart.
+    expect(scopeGroups.get("carrier")).toEqual(["planet", "ship", "carrier", "colony"]);
+    expect(scopes.has("Carrier")).toBe(true);
   });
 
   it("separates a negated subtype from a plain one", () => {

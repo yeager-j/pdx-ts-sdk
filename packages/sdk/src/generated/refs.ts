@@ -17,15 +17,20 @@ export interface TypedRef<T extends string> {
 }
 
 /**
- * Resolves a reference to the id the game expects, passing plain values through.
+ * Resolves an authored reference to the bare word the game expects, passing
+ * plain values through.
  * Some rules are overloaded between a reference and a literal — `has_building`
- * accepts both `<building>` and a bool — so this has to handle either.
+ * accepts both `<building>` and a bool — so this has to handle either. A scope
+ * value (`ctx.self`, an event target) is a reference too, and rules overload
+ * against those as freely: `is_planet_class` takes a `<planet_class>` or any
+ * scope the game coerces to a planet. It lowers to its path rather than an id,
+ * which is the only reason the two are told apart here at all.
  */
 export function refId<T extends string | number | boolean>(
-  value: TypedRef<string> | T
+  value: TypedRef<string> | { readonly path: string } | T
 ): string | T {
   if (typeof value === "object") {
-    return value.id;
+    return "path" in value ? value.path : value.id;
   }
   return value;
 }

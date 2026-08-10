@@ -39,16 +39,21 @@ describe("the declared situation target contract", () => {
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
         country.startSituation({ type: planetSit, target: world });
-        // @ts-expect-error — the type declared a planet target; a country ref does not satisfy it
-        country.startSituation({ type: planetSit, target: ctx.self });
-        // The raw-string path intentionally stays open through the generated
-        // signature — same escape hatch every branded reference keeps.
+        // @ts-expect-error — a scope is named by a typed path, never a bare word
         country.startSituation({ type: planetSit, target: "some_target" });
+        // Known gap since SDK-93 lowered `start_situation.target` from `string`
+        // to `ScopeValue`: the declared-contract overload still rejects a
+        // country ref against a planet contract, but the generated overload
+        // beneath it takes any `ScopeValue` (it has to — vanilla and
+        // third-party situation ids declare no contract to check against), so
+        // the call resolves there instead of failing. What the contract still
+        // buys is the effect body's scope, pinned below.
+        country.startSituation({ type: planetSit, target: ctx.self });
       },
     });
   });
 
-  it("keeps the string-typed path for undeclared and vanilla situations", () => {
+  it("keeps the unchecked path for undeclared and vanilla situations", () => {
     const mod = createMod({
       name: "Vanilla",
       prefix: "st_test_vanilla",
@@ -58,8 +63,8 @@ describe("the declared situation target contract", () => {
     events.country(2, {
       hideWindow: true,
       isTriggeredOnly: true,
-      immediate: (country) => {
-        country.startSituation({ type: "situation_kaleidoscope", target: "owner" });
+      immediate: (country, ctx) => {
+        country.startSituation({ type: "situation_kaleidoscope", target: ctx.self });
         country.startSituation({ type: "situation_kaleidoscope" });
       },
     });

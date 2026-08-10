@@ -116,11 +116,65 @@ describe("emitted trigger signatures", () => {
     `);
   });
 
+  it("scope[X]: one branded scope value, and no raw-string arm", () => {
+    expect(declaration("canAccessSystem")).toMatchInlineSnapshot(`
+      "export function canAccessSystem(value: ScopeValue<"system">): Trigger<"fleet"> {
+        return trigger([kv("can_access_system", value.path)]);
+      }"
+    `);
+  });
+
+  it("scope_group[G]: the group's members, canonicalised and sorted", () => {
+    // A group is a coercion: `target_species` lists the scopes the game reads
+    // a species *out of*, not scopes that are species.
+    expect(declaration("isSameSpecies")).toMatchInlineSnapshot(`
+      "export function isSameSpecies(
+        value: ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      ): Trigger<"army" | "country" | "leader" | "pop_group" | "ship" | "species"> {
+        return trigger([kv("is_same_species", value.path)]);
+      }"
+    `);
+  });
+
+  it("scope overloaded with a reference: one unwrapping call site serves both", () => {
+    expect(declaration("isPlanetClass")).toMatchInlineSnapshot(`
+      "export function isPlanetClass(
+        value:
+          | PlanetClassRef
+          | string
+          | ScopeValue<
+              | "archaeological_site"
+              | "army"
+              | "carrier"
+              | "deposit"
+              | "fleet"
+              | "megastructure"
+              | "planet"
+              | "pop_group"
+              | "ship"
+            >
+      ): Trigger<"carrier" | "colony" | "dlc_recommendation" | "planet" | "ship"> {
+        return trigger([kv("is_planet_class", refId(value))]);
+      }"
+    `);
+  });
+
   it("block: becomes one options object, optional where cardinality allows", () => {
     expect(declaration("relativePower")).toMatchInlineSnapshot(`
       "export function relativePower(args: RelativePowerArgs): Trigger<"country" | "federation"> {
         const entries: PdxEntry[] = [];
-        entries.push(kv("who", args.who));
+        entries.push(kv("who", args.who.path));
         if (args.category !== undefined) {
           entries.push(kv("category", args.category));
         }

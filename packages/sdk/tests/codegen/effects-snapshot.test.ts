@@ -37,6 +37,53 @@ describe("emitted effect signatures", () => {
     );
   });
 
+  it("scope_group[G]: the group's members, canonicalised and sorted", () => {
+    // A group is a coercion, so `target_country` lists every scope the game
+    // reads a country out of — not scopes that are countries.
+    expect(signature("setOwner")).toMatchInlineSnapshot(`
+      "setOwner(
+          value: ScopeValue<
+            | "agreement"
+            | "archaeological_site"
+            | "army"
+            | "carrier"
+            | "country"
+            | "debris"
+            | "deposit"
+            | "first_contact"
+            | "fleet"
+            | "leader"
+            | "megastructure"
+            | "planet"
+            | "pop_faction"
+            | "pop_group"
+            | "sector"
+            | "ship"
+            | "situation"
+            | "spy_network"
+            | "starbase"
+            | "system"
+          >
+        ): void;"
+    `);
+  });
+
+  it("bare scope_field: any scope, and no raw-string arm", () => {
+    // The unbracketed spelling of `scope[any]`. It used to lower to the
+    // useless literal type `"scope_field"`.
+    expect(signature("enableMission")).toMatchInlineSnapshot(
+      `"enableMission(args: { name: MissionRef | string; location?: ScopeValue }): void;"`
+    );
+  });
+
+  it("scope meta: the recorder unwraps a scope value through its shared lowering", () => {
+    // No `refTypes` — a scope names no registry — so `toScalar`'s `path`
+    // unwrapping in `src/script/scalar.ts` is the whole runtime contract.
+    expect(metaEntry("setOwner")).toMatchInlineSnapshot(
+      `"setOwner: { key: "set_owner", shape: { kind: "value" } },"`
+    );
+  });
+
   it("fields: enum-expanded keys become named optional fields", () => {
     // mult/multiplier/timeMultiplier are `effects.cwt`'s `value_field`, not
     // `float`, so they lower to the widened `ScriptValue` (widenedLowering)

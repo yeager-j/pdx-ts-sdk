@@ -4,6 +4,7 @@ import type { EdictRef, TechnologyRef } from "../src/generated/refs.ts";
 import type { ScopeName } from "../src/generated/scopes.ts";
 import type { TechnologyDef } from "../src/generated/technology.ts";
 import { countryFlags, planetFlags, type CountryFlag } from "../src/generated/value-sets.ts";
+import { eventTarget } from "../src/index.ts";
 import {
   anyTraitOfSpecies,
   hasCountryFlag,
@@ -22,6 +23,12 @@ const base = {
   tier: 1,
   category: "particles",
 } as const;
+
+/**
+ * `relative_power.who` is `scope_group[target_country]`, so it takes a scope
+ * the game will coerce to a country rather than a bare word.
+ */
+const rival = eventTarget<"country">("mymod_rival");
 
 describe("research areas", () => {
   it("accepts each of the three the game actually uses", () => {
@@ -54,14 +61,14 @@ describe("shapes the rules give a signature", () => {
   });
 
   it("closes the enum on a block trigger's field", () => {
-    relativePower({ who: "root", category: "fleet", value: "superior" });
+    relativePower({ who: rival, category: "fleet", value: "superior" });
     // @ts-expect-error — "typo" is not in enum[relative_power_categories]
-    relativePower({ who: "root", category: "typo", value: "superior" });
+    relativePower({ who: rival, category: "typo", value: "superior" });
   });
 
   it("keeps a block trigger's required fields required", () => {
     // @ts-expect-error — `value` has cardinality 1..1
-    relativePower({ who: "root" });
+    relativePower({ who: rival });
   });
 
   it("closes the enum on a scalar trigger", () => {
@@ -76,7 +83,7 @@ describe("scope brands from the game's documentation", () => {
   function federationSlot(_trigger: Trigger<"federation">): void {}
   function planetSlot(_trigger: Trigger<"planet">): void {}
 
-  const anywhere = relativePower({ who: "root", value: "superior" });
+  const anywhere = relativePower({ who: rival, value: "superior" });
 
   it("accepts a two-scope trigger in either of its scopes", () => {
     countrySlot(anywhere);

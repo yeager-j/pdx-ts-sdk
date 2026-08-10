@@ -508,6 +508,9 @@ async function main(): Promise<void> {
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
       'import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";\n' +
       'import type { ContentRefUse } from "../references.ts";\n' +
+      (referencesIdentifier(triggers.code, "ScopeValue")
+        ? 'import type { ScopeValue } from "../script/effects/types.ts";\n'
+        : "") +
       `import { trigger, type Trigger${referencesIdentifier(triggers.code, "ScriptValue") ? ", type ScriptValue" : ""}` +
       `${referencesIdentifier(triggers.code, "scriptValueScalar") ? ", scriptValueScalar" : ""} } ` +
       'from "../script/trigger-core.ts";\n' +
@@ -545,7 +548,7 @@ async function main(): Promise<void> {
       "script-docs/v4.4.1/scopes.log",
     ]) +
       'import type { PdxOp } from "@pdx-ts/pdxscript";\n' +
-      'import type { Modifier, StructuralEffects } from "../script/effects/types.ts";\n' +
+      `import type { Modifier, ${referencesIdentifier(effects.interfaces, "ScopeValue") ? "ScopeValue, " : ""}StructuralEffects } from "../script/effects/types.ts";\n` +
       `import type { Trigger${referencesIdentifier(effects.interfaces, "ScriptValue") ? ", ScriptValue" : ""} } ` +
       'from "../script/trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
@@ -598,6 +601,7 @@ async function main(): Promise<void> {
   console.log(`cwtools-stellaris-config @ ${commit.slice(0, 12)}`);
   console.log(
     `\nscopes: ${canonicalScopes(rules.scopes).length}` +
+      ` | scope groups: ${emitter.usedScopeGroups.size} lowered of ${rules.scopeGroups.size} parsed` +
       ` | enums emitted: ${emitter.usedEnums.size}` +
       ` | refs emitted: ${emitter.usedRefs.size}` +
       ` | value sets emitted: ${emitter.usedValueSets.size}`
@@ -671,6 +675,14 @@ async function main(): Promise<void> {
     events.skipped.map((entry) => `${entry.name} — ${entry.reason}`)
   );
   reportSection("Enums widened to string (rules declare no values)", valuelessEnums(emitter));
+  reportSection(
+    "Scope parameters widened to string (scopes.cwt declares no such scope)",
+    [...emitter.unknownScopes].sort()
+  );
+  reportSection(
+    "Scope parameters widened to string (scopes.cwt declares no such scope_group)",
+    [...emitter.unknownScopeGroups].sort()
+  );
   reportSection("Content definers taken from the hand-written grafts", definers.grafted);
   for (const content of contents) {
     const type = content.registry;

@@ -60,9 +60,12 @@ declare module "../../generated/effects.ts" {
   interface EffectsInCountry {
     /**
      * Starts a situation whose type declares `targetScope`, requiring a
-     * matching target ref — `ctx.self`, an event target — as proof. The
-     * generated string-typed signature remains for vanilla or third-party
-     * situation ids.
+     * matching target ref — `ctx.self`, an event target — as proof, and
+     * typing the effect body's scope from it. The generated signature remains
+     * beneath this one for vanilla or third-party situation ids, which declare
+     * no contract to check against; since SDK-93 its `target` is a
+     * `ScopeValue` rather than a `string`, so a mismatched ref resolves there
+     * rather than failing outright (`tests/situations.test-d.ts` pins it).
      */
     startSituation<T extends ScopeName>(args: {
       type: SituationTargetContract<T>;

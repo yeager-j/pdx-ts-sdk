@@ -1,9 +1,11 @@
 import { kv, serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import { eventTarget } from "../src/script/effects/recorder.ts";
 import {
   and,
   anyCountry,
+  canAccessSystem,
   currentSituationApproach,
   currentStage,
   hasCompletedEventChainCounter,
@@ -12,6 +14,7 @@ import {
   hasTechnology,
   hiddenTrigger,
   isAi,
+  isPlanetClass,
   nand,
   nor,
   not,
@@ -224,6 +227,22 @@ describe("trigger builders", () => {
     expect(serialize([...condition.entries])).toBe(
       "has_completed_event_chain_counter = {\n\tevent_chain = effects_test_chain\n\tcounter = insights\n}\n"
     );
+  });
+
+  it("writes a scope-valued argument as its path, whichever lowering it takes", () => {
+    // SDK-93. `can_access_system` is `scope[system]`, so its whole domain is
+    // scopes and the generated code reads `.path` directly. `is_planet_class`
+    // is overloaded between `<planet_class>` and `scope_group[target_planet]`,
+    // so the same call site has to unwrap either — `refId` is what does it.
+    const system = eventTarget<"system">("triggers_test_system");
+    expect(serialize([...canAccessSystem(system).entries])).toBe(
+      "can_access_system = event_target:triggers_test_system\n"
+    );
+    const world = eventTarget<"planet">("triggers_test_world");
+    expect(serialize([...isPlanetClass(world).entries])).toBe(
+      "is_planet_class = event_target:triggers_test_world\n"
+    );
+    expect(serialize([...isPlanetClass("pc_gaia").entries])).toBe("is_planet_class = pc_gaia\n");
   });
 
   it("throws an explanatory error when a trigger is called like a function", () => {
