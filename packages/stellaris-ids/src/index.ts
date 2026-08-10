@@ -18,6 +18,7 @@ export type { VanillaDecisionId } from "./registries/decision.ts";
 export type { VanillaEconomicCategoryId } from "./registries/economic-category.ts";
 export type { VanillaEdictId } from "./registries/edict.ts";
 export type { VanillaEventChainId } from "./registries/event-chain.ts";
+export type { VanillaEventTrie } from "./events/index.ts";
 export type { VanillaGlobalShipDesignId } from "./registries/global-ship-design.ts";
 export type { VanillaGraphicalCultureId } from "./registries/graphical-culture.ts";
 export type { VanillaJobId } from "./registries/job.ts";

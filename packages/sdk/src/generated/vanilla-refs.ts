@@ -34,7 +34,7 @@
 // From: content-manifest.ts (VANILLA_REF_EXTRAS)
 
 import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../identifiers/contracts.ts";
-import { makeIdTrie } from "../identifiers/trie.ts";
+import { makeEventTrie, makeIdTrie } from "../identifiers/trie.ts";
 import type {
   AgendaRef,
   AgreementPresetRef,
@@ -608,3 +608,9 @@ export function situationLogCategory<const Id extends VanillaId<"situation_log_c
 ): SituationLogCategoryRef & { readonly id: Id } {
   return { id };
 }
+
+/**
+ * Vanilla event ids, navigable by namespace and local id.
+ * The installed identifier package supplies exact EventRef scope and kind types.
+ */
+export const event: VanillaTrie<"event"> = makeEventTrie();

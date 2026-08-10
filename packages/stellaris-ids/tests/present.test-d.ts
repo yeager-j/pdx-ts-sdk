@@ -21,6 +21,8 @@ import {
   makeScope,
   scriptedTriggerModifier,
   vanilla,
+  type EventRef,
+  type EventScopelessRef,
   type ScopeName,
   type ScriptedEffectCall,
   type SituationLogCategoryRef,
@@ -82,6 +84,39 @@ describe("checked registry helpers", () => {
       tier: 1,
       category: "computing",
       prerequisites: ["tech_from_another_mod", vanilla.technology("tech_lasers_1")],
+    });
+  });
+});
+
+describe("vanilla events", () => {
+  it("preserves each event's scope, subtype, and full id", () => {
+    const storySiteFound = vanilla.event.story.$5;
+    expectTypeOf(storySiteFound.id).toEqualTypeOf<"story.5">();
+    expectTypeOf(storySiteFound).toExtend<EventRef<"country", undefined, "country">>();
+    // @ts-expect-error bare install-derived references carry scope only as a phantom brand.
+    storySiteFound.scope;
+    // @ts-expect-error vanilla references declare no runtime FROM metadata.
+    storySiteFound.from;
+
+    const observerDestroyed = vanilla.event.observer.$1;
+    expectTypeOf(observerDestroyed).toExtend<EventRef<"country", undefined, "observer">>();
+
+    const astralSpawn = vanilla.event.astral_planes.$1;
+    expectTypeOf(astralSpawn).toExtend<EventScopelessRef>();
+  });
+
+  it("rejects a typed vanilla event at the wrong fire effect", () => {
+    const mod = createMod({
+      name: "Event probe",
+      prefix: "event_probe",
+      supportedVersion: "4.4.*",
+    });
+    mod.namespace().ship(1, {
+      isTriggeredOnly: true,
+      immediate: (ship) => {
+        // @ts-expect-error story.5 is a country event, not a ship event.
+        ship.shipEvent({ id: vanilla.event.story.$5 });
+      },
     });
   });
 });
@@ -331,7 +366,7 @@ describe("the two sides' oversized thresholds agree", () => {
     // its navigation (or gains a 3,000-member union parameter) silently, and
     // this is what goes red instead.
     expectTypeOf<keyof VanillaTries>().toEqualTypeOf<
-      "static_modifier" | "sound" | "sound_effect" | "sprite"
+      "event" | "static_modifier" | "sound" | "sound_effect" | "sprite"
     >();
   });
 });

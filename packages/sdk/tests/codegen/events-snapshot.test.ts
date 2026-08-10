@@ -73,6 +73,8 @@ describe("generated event surface", () => {
     );
     expect(capability).toContain('minter.handle(id, "country_event", "country", "country"');
     expect(capability).toContain('CapabilityEventHandle<P, N, Id, "country", From, "observer">');
+    expect(definers).toContain("  readonly scope: S;");
+    expect(definers).toContain("  readonly from: From;");
     expect(capability).toContain(
       "Defines a country event with an id in this capability namespace."
     );

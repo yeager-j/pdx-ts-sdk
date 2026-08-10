@@ -82,6 +82,18 @@ describe("the oversized trie's two entry points", () => {
   });
 });
 
+describe("the event trie", () => {
+  it("reconstructs the full id from namespace and local-id navigation", () => {
+    const event = vanilla.event as unknown as Record<
+      string,
+      Record<string, { readonly id: string; readonly kind: string }>
+    >;
+    expect(event.story!.$5!.id).toBe("story.5");
+    expect(event.story!.$5!.kind).toBe("event-ref");
+    expect(event["federations"]!["type"]!.id).toBe("federations.type");
+  });
+});
+
 describe("event media fields", () => {
   it("serializes picture and show_sound from vanilla references", () => {
     const events = mod.namespace();

@@ -36,6 +36,7 @@ import type { Trigger } from "../script/trigger-core.ts";
 import "../generated/event-fires.ts";
 
 declare const eventFromBrand: unique symbol;
+declare const eventScopeBrand: unique symbol;
 
 /**
  * A defined event as finished compiler input. Its definition-side
@@ -96,12 +97,10 @@ export interface EventRef<
   Kind extends string = S,
 > extends TypedRef<`event.${Kind}`> {
   readonly kind: "event-ref";
-  /** The event's main scope. */
-  readonly scope: S;
   /** The full id, e.g. `hello_galaxy.2`. */
   readonly id: string;
-  /** Runtime copy of the declared FROM contract for registration and testing. */
-  readonly from: ScopeName | undefined;
+  /** Scope and FROM are compile-time contracts; bare references carry no runtime metadata. */
+  readonly [eventScopeBrand]?: S;
   readonly [eventFromBrand]?: From;
 }
 
@@ -351,6 +350,9 @@ export type DefinedEvent<
   From extends ScopeName | undefined,
   Kind extends string = S,
 > = EventRef<S, From, Kind> & {
+  /** Runtime metadata carried by an authored definition, not a bare reference. */
+  readonly scope: S;
+  readonly from: From;
   readonly entry: PdxEntry;
   /**
    * Content references the event's closures and option conditions wrote. The
@@ -408,7 +410,7 @@ export interface FireEventArgs<
    * `observer_event = { id = ... }` dispatches an observer event, and an
    * ordinary country event is not one however alike their scopes are.
    */
-  readonly id: EventRef<S, From, Kind>;
+  readonly id: EventRef<S, From, Kind> | string;
   readonly days?: number;
   readonly months?: number;
   readonly years?: number;

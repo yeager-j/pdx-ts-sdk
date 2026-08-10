@@ -393,7 +393,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     kind: "event-ref",
     scope,
     id,
-    from: def.from,
+    from: def.from as From,
     entry: block(kind, entries),
     refs,
     warnings,

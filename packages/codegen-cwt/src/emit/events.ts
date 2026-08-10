@@ -28,6 +28,7 @@
  *   scope is the kind's from this table.
  */
 
+import { eventKinds, type EventKindSpec } from "../event-kinds.ts";
 import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
 import type { SkippedRule } from "./shape.ts";
 import { Emitter } from "./types.ts";
@@ -42,11 +43,7 @@ export interface EventsEmission {
   readonly skipped: readonly SkippedRule[];
 }
 
-interface EmittedKind {
-  readonly key: string;
-  readonly subtype: string;
-  readonly scope: string | null;
-}
+type EmittedKind = EventKindSpec;
 
 function definerBinding(kind: EmittedKind & { scope: string }): string {
   return (
@@ -147,22 +144,8 @@ function fireOverloads(kind: EmittedKind & { scope: string }): string {
 }
 
 export function emitEvents(emitter: Emitter): EventsEmission {
-  const type = emitter.rules.contentTypes.get("event");
-  if (type === undefined) {
-    throw new Error("events/events.cwt no longer declares type[event]");
-  }
   const skipped: SkippedRule[] = [];
-  const kinds: EmittedKind[] = type.subtypes
-    .filter((subtype) => subtype.group === "event_type" && subtype.keyFilter !== null)
-    .map((subtype) => {
-      const pushed = subtype.pushScope;
-      const scope = pushed === null || pushed === "any" ? null : emitter.canonicalScope(pushed);
-      if (pushed !== null && pushed !== "any" && scope === null) {
-        throw new Error(`event subtype ${subtype.name} pushes unknown scope ${pushed}`);
-      }
-      return { key: subtype.keyFilter!, subtype: subtype.name, scope };
-    })
-    .sort((left, right) => left.key.localeCompare(right.key));
+  const kinds = eventKinds(emitter.rules);
 
   const entries = kinds
     .map(
@@ -285,6 +268,8 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     "  Kind extends string = S,\n" +
     "> = EventRef<S, From, Kind> & {\n" +
     "  readonly id: MintedEventId<P, N, Id>;\n" +
+    "  readonly scope: S;\n" +
+    "  readonly from: From;\n" +
     '  define(def: Omit<EventDef<S, From>, "id" | "from">): CapabilityEventItem<P, N, Id, S, From, Kind>;\n' +
     "};\n\n" +
     "export interface CapabilityEventMinter<P extends string, N extends string> {\n" +

@@ -60,8 +60,11 @@ that moved every run would fail it unconditionally. **Bump `-r.<n>` by hand as
 part of publishing**, which is the decision it records — a second publish of one
 game build.
 
-The 4.4.6 generation read 39 registries and 30,085 ids, plus 1,618 scripted
-triggers (86 parameterized) and 1,657 scripted effects (382 parameterized).
+The 4.4.6 generation read 43 registries and 31,180 ids, 9,995 events across
+114 namespaces, plus 1,618 scripted triggers (86 parameterized) and 1,657
+scripted effects (382 parameterized). Of those events, 9,856 have an exact
+scope and kind from `events.cwt`; the 139 generic `event = {}` definitions are
+scopeless.
 `sprite`, `sound`, `sound_effect`, and `static_modifier` are large enough to be
 emitted as navigable tries as well as flat unions. The first three nest by name
 (ids split on `_`); `static_modifier` nests by the vanilla file each id is
@@ -75,17 +78,20 @@ This is a licensing boundary the generator enforces, not merely a convention:
 
 - **Here:** ids, definition names, scripted trigger/effect names and their
   `$PARAM$` lists, event ids and namespaces, sprite and sound names, resource
-  keys, and the scope each scripted definition is legal in.
+  keys, event scope/kind contracts, and the scope each scripted definition is
+  legal in.
 - **Never here:** script bodies, localized text, descriptions, or asset data.
 
-The scopes are the one entry derived from a body rather than read off one, so it
-is worth being precise about what crosses. The generator parses each scripted
-definition, intersects the scopes cwtools' own rules declare for the keys it
-evaluates, and keeps the resulting scope name — `country`, from `scopes.cwt`,
-which is upstream rule data rather than anything Paradox ships. The body itself
-is discarded in the same function that read it and reaches no emitter. What
-ships is one enum-like word per definition, which answers "where may I call
-this" and still never "what does it do".
+Scripted-definition scopes are the one entry derived from a body rather than
+read off one, so it is worth being precise about what crosses. The generator
+parses each scripted definition, intersects the scopes cwtools' own rules
+declare for the keys it evaluates, and keeps the resulting scope name —
+`country`, from `scopes.cwt`, which is upstream rule data rather than anything
+Paradox ships. The body itself is discarded in the same function that read it
+and reaches no emitter. Event scope and kind do not inspect an event body:
+their top-level definition key is mapped through `events.cwt`, shared with the
+SDK generator. What ships is an enum-like contract per definition, which
+answers "where may I call this" and still never "what does it do".
 
 Nothing this package emits could substitute for owning the game. It answers
 "does this id exist and what does it need," never "what does it do" or "what
@@ -105,9 +111,10 @@ Regenerate against a clean, pinned-version install of Stellaris:
 npm run codegen:vanilla
 ```
 
-Read the report the run prints (per-registry id counts, parameterized
-scripted trigger/effect counts, diagnostics, and any licensing-chokepoint
-rejections — there should be zero of the last). Review the diff under
+Read the report the run prints (per-registry id counts, scoped/scopeless event
+and namespace counts, per-kind event counts, parameterized scripted
+trigger/effect counts, diagnostics, and any licensing-chokepoint rejections —
+there should be zero of the last). Review the diff under
 `packages/stellaris-ids/src` as a public-API change, then commit the
 generated output together with whatever prompted the regeneration (a game
 patch, a generator fix).

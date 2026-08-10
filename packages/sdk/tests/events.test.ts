@@ -185,6 +185,21 @@ describe("event definitions in a namespace", () => {
     expect(rendered).toContain("situation_event = {\n\t\t\tid = event_test.10\n\t\t\tdays = 30");
   });
 
+  it("fires a third-party event from its raw id", () => {
+    const events = makeEvents();
+    const firing = events.country(14, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.countryEvent({ id: "third_party.5", days: 30 });
+      },
+    });
+    const rendered = render(mod.compile([mod.feature("third_party", [firing])])).get(
+      "events/event_test_third_party.txt"
+    )!;
+    expect(rendered).toContain("country_event = {\n\t\t\tid = third_party.5\n\t\t\tdays = 30");
+  });
+
   it("exposes observer_event's fire method in every scope", () => {
     // The observer_event fire effect declares `## scopes = any`, so its typed
     // signature rides UniversalEffects rather than one scope interface.

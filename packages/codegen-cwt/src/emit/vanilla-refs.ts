@@ -61,13 +61,23 @@ export function emitVanillaRefs(
   ];
 
   const chunks = rows.map((row) => emitRow(emitter, row));
+  chunks.push(emitEventRow());
 
   return {
     code: chunks.join("\n"),
     refs: [...new Set(rows.map((row) => row.refSource))].sort(),
     checked: rows.filter((row) => !row.oversized).length,
-    tries: rows.filter((row) => row.oversized).length,
+    tries: rows.filter((row) => row.oversized).length + 1,
   };
+}
+
+function emitEventRow(): string {
+  return (
+    docComment([
+      "Vanilla event ids, navigable by namespace and local id.",
+      "The installed identifier package supplies exact EventRef scope and kind types.",
+    ]) + 'export const event: VanillaTrie<"event"> = makeEventTrie();\n'
+  );
 }
 
 function emitRow(emitter: Emitter, row: VanillaRefRow): string {

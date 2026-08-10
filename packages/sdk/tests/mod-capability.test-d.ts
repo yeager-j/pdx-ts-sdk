@@ -162,6 +162,9 @@ describe("mod capability types", () => {
     >();
     expectTypeOf(rootEvent.id).toEqualTypeOf<"event_types.1">();
     expectTypeOf(fromPlanet.id).toEqualTypeOf<"event_types_chain.2">();
+    expectTypeOf(rootEvent.scope).toEqualTypeOf<"country">();
+    expectTypeOf(rootEvent.from).toEqualTypeOf<undefined>();
+    expectTypeOf(fromPlanet.from).toEqualTypeOf<"planet">();
   });
 
   it("makes config, tags, and profile readonly", () => {

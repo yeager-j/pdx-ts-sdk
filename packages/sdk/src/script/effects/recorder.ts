@@ -308,7 +308,7 @@ declare module "../../generated/effects.ts" {
 // ---------------------------------------------------------------------------
 
 interface FireCallArgs {
-  readonly id: { readonly id: string };
+  readonly id: { readonly id: string } | string;
   readonly days?: number;
   readonly months?: number;
   readonly years?: number;
@@ -338,7 +338,7 @@ function eventChainCounterEffect(key: string, needsAmount: boolean) {
 function fireEffect(key: string) {
   return (sink: PdxEntry[]) =>
     (args: FireCallArgs): void => {
-      const entries: PdxEntry[] = [kv("id", args.id.id)];
+      const entries: PdxEntry[] = [kv("id", refId(args.id))];
       for (const field of ["days", "months", "years", "random"] as const) {
         const value = args[field];
         if (value !== undefined) {
