@@ -114,6 +114,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   const ctx = scriptCtx<S, From>();
   const flags = windowFlags(def);
   const warnings: ModWarning[] = [];
+  const refs: ContentRefUse[] = [];
 
   const entries: PdxEntry[] = [kv("id", id)];
   if (def.title !== undefined) {
@@ -124,6 +125,33 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     loc.register(`${id}.desc`, def.desc);
     entries.push(kv("desc", `${id}.desc`));
   }
+  let descriptionTextIndex = def.desc === undefined ? 0 : 1;
+  (def.conditionalDesc ?? []).forEach((description, index) => {
+    const descriptionEntries: PdxEntry[] = [];
+    const where = `desc[${index}]`;
+    if (description.trigger !== undefined) {
+      descriptionEntries.push(block("trigger", [...description.trigger.entries]));
+      refs.push(...underField(description.trigger.refs, `${where}.trigger`));
+    }
+    if (description.exclusiveTrigger !== undefined) {
+      descriptionEntries.push(
+        block("exclusive_trigger", [...description.exclusiveTrigger.entries])
+      );
+      refs.push(...underField(description.exclusiveTrigger.refs, `${where}.exclusive_trigger`));
+    }
+    const texts =
+      typeof description.text === "string" ? [description.text] : (description.text ?? []);
+    for (const text of texts) {
+      const key = descriptionTextIndex === 0 ? `${id}.desc` : `${id}.desc.${descriptionTextIndex}`;
+      descriptionTextIndex += 1;
+      loc.register(key, text);
+      descriptionEntries.push(kv("text", key));
+    }
+    if (description.showSound !== undefined) {
+      descriptionEntries.push(kv("show_sound", refId(description.showSound)));
+    }
+    entries.push(block("desc", descriptionEntries));
+  });
   if (def.diplomaticTitle !== undefined) {
     loc.register(`${id}.diplomatic_title`, def.diplomaticTitle);
     entries.push(kv("diplomatic_title", `${id}.diplomatic_title`));
@@ -212,7 +240,6 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   if (flags.difficulty !== undefined) {
     entries.push(kv("difficulty", flags.difficulty));
   }
-  const refs: ContentRefUse[] = [];
   if (def.trigger !== undefined) {
     entries.push(block("trigger", [...def.trigger.entries]));
     refs.push(...underField(def.trigger.refs, "trigger"));

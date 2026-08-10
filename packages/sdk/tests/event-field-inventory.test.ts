@@ -62,7 +62,7 @@ const SURFACED_EVENT_FIELDS: Readonly<Record<string, Acknowledgement>> = {
   title: ["scalar 0..1 | scalar 1..1", "EventDef.title (the 0..1 arm is subtype[hidden]'s)"],
   desc: [
     "block 0..inf {exclusive_trigger, show_sound, text, trigger} | scalar 0..1 | scalar 1..1",
-    "EventDef.desc — the scalar arm only; the repeated triggered-desc block is not surfaced",
+    "EventDef.desc writes one scalar and EventDef.conditionalDesc writes the complete repeated block; repeated scalars are not surfaced",
   ],
   diplomatic_title: ["scalar 0..1", "EventDef.diplomaticTitle"],
   message_desc: ["scalar 0..1", "EventDef.messageDesc"],

@@ -303,6 +303,18 @@ export type WithFrom<T, S extends ScopeName, From extends ScopeName | undefined 
   T | ((ctx: ScriptCtx<S, From>) => T);
 
 /**
+ * A conditionally selected description block shared by manually authored
+ * surfaces. The owning surface decides how the English text is registered as
+ * localisation and may extend the block with fields its grammar admits.
+ */
+export interface TriggeredDescription<S extends ScopeName> {
+  /** Condition under which this description is selected. */
+  readonly trigger?: Trigger<S>;
+  /** English text emitted as one or more repeated `text` entries. */
+  readonly text?: string | readonly string[];
+}
+
+/**
  * The common potential-plus-modifiers form behind `triggered_modifier_clause`.
  *
  * The modifier body and its `potential` can run in different scopes where a

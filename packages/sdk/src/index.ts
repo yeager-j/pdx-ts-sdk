@@ -216,6 +216,7 @@ export type {
   EventDef,
   EventOption,
   EventRef,
+  EventTriggeredDescription,
   FireEventArgs,
   WitnessedFireEventArgs,
 } from "./events/types.ts";
@@ -229,6 +230,7 @@ export type {
   ModifierClosure,
   ScaledModifier,
   ScaledModifierCalc,
+  TriggeredDescription,
   TriggeredModifier,
   WeightBlock,
   WeightBlockOperations,

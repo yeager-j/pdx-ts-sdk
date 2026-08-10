@@ -16,6 +16,7 @@
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { TriggeredDescription } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
 import {
@@ -127,6 +128,18 @@ export interface AiChance<S extends ScopeName> {
   readonly modifiers?: readonly Modifier<S>[];
 }
 
+/**
+ * One repeated `desc = { ... }` block on an event. The common trigger/text
+ * shape is shared with other manually authored fields; events additionally
+ * admit an exclusive trigger and a sound selected with this description.
+ */
+export interface EventTriggeredDescription<S extends ScopeName> extends TriggeredDescription<S> {
+  /** Replaces other description text when this condition passes. */
+  readonly exclusiveTrigger?: Trigger<S>;
+  /** Sound played when this description is selected. */
+  readonly showSound?: SoundEffectRef | string;
+}
+
 export interface EventOption<S extends ScopeName, From extends ScopeName | undefined> {
   /** English text; the localization key rides along on the definition. */
   readonly name: string;
@@ -236,6 +249,8 @@ export interface EventDef<S extends ScopeName, From extends ScopeName | undefine
   /** English title text; omit for hidden events. */
   readonly title?: string;
   readonly desc?: string;
+  /** Ordered conditional descriptions, each localized under this event's id. */
+  readonly conditionalDesc?: readonly EventTriggeredDescription<S>[];
   /** Localized title shown at the top of the diplomatic screen (`events.cwt:197`, `:474`). */
   readonly diplomaticTitle?: string;
   /** Localized text for the message-feed entry, distinct from `desc` (`events.cwt:402`). */
