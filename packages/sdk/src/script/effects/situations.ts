@@ -63,9 +63,11 @@ declare module "../../generated/effects.ts" {
      * matching target ref — `ctx.self`, an event target — as proof, and
      * typing the effect body's scope from it. The generated signature remains
      * beneath this one for vanilla or third-party situation ids, which declare
-     * no contract to check against; since SDK-93 its `target` is a
-     * `ScopeValue` rather than a `string`, so a mismatched ref resolves there
-     * rather than failing outright (`tests/situations.test-d.ts` pins it).
+     * no contract to check against; the overlay's
+     * `EFFECT_FIELD_TYPE_OVERRIDES` row for `start_situation.type` refuses a
+     * `targetScope`-bearing ref there, so a declared contract can only ever be
+     * accepted by this overload — which is what keeps a mismatched target a
+     * compile error rather than a fall-through.
      */
     startSituation<T extends ScopeName>(args: {
       type: SituationTargetContract<T>;

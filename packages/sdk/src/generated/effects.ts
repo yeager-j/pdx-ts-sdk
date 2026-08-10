@@ -7053,7 +7053,7 @@ export interface EffectsInCountry {
    * ```
    */
   startSituation(args: {
-    type: SituationTypeRef | string;
+    type: (SituationTypeRef & { targetScope?: never }) | string;
     target?: ScopeValue;
     effect?: (scope: SituationScope) => void;
   }): void;

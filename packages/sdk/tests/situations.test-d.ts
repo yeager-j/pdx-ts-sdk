@@ -6,6 +6,7 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
+import type { SituationTypeRef } from "../src/generated/refs.ts";
 import { createMod, eventTarget } from "../src/index.ts";
 
 describe("the declared situation target contract", () => {
@@ -41,13 +42,7 @@ describe("the declared situation target contract", () => {
         country.startSituation({ type: planetSit, target: world });
         // @ts-expect-error — a scope is named by a typed path, never a bare word
         country.startSituation({ type: planetSit, target: "some_target" });
-        // Known gap since SDK-93 lowered `start_situation.target` from `string`
-        // to `ScopeValue`: the declared-contract overload still rejects a
-        // country ref against a planet contract, but the generated overload
-        // beneath it takes any `ScopeValue` (it has to — vanilla and
-        // third-party situation ids declare no contract to check against), so
-        // the call resolves there instead of failing. What the contract still
-        // buys is the effect body's scope, pinned below.
+        // @ts-expect-error — the type declared a planet target; a country ref does not satisfy it
         country.startSituation({ type: planetSit, target: ctx.self });
       },
     });
@@ -60,12 +55,22 @@ describe("the declared situation target contract", () => {
       supportedVersion: "4.4.*",
     });
     const events = mod.namespace();
+    // Nothing declares a target scope here, so `type` carries no `targetScope`
+    // and the generated overload — narrowed by the overlay to refuse one —
+    // still takes it.
+    const undeclared = mod.situationType("sit_undeclared", {
+      name: "S",
+      monthlyProgress: { base: 1 },
+    });
+    const vanillaRef: SituationTypeRef = { id: "situation_kaleidoscope" };
     events.country(2, {
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
         country.startSituation({ type: "situation_kaleidoscope", target: ctx.self });
         country.startSituation({ type: "situation_kaleidoscope" });
+        country.startSituation({ type: vanillaRef, target: ctx.self });
+        country.startSituation({ type: undeclared, target: ctx.self });
       },
     });
   });
