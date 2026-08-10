@@ -166,6 +166,12 @@ export function resolveFromClosures(
     if (value === undefined) {
       continue;
     }
+    if (field.shape === "dual") {
+      const arm = dualArm(field, value);
+      const nested = resolveFromClosures({ [arm.member]: value }, [arm]);
+      resolved[field.member] = nested[arm.member];
+      continue;
+    }
     if (acceptsFromClosure(field)) {
       resolved[field.member] = resolveFromClosure(field, value);
       continue;

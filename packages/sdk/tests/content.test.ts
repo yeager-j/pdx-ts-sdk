@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { createFeature as createFeatureInternal, type ModItem } from "../src/authoring/feature.ts";
 import { buildMod as buildInternal } from "../src/compiler/compile.ts";
 import { ContentAuthoring } from "../src/content/authoring.ts";
+import { resolveFromClosures } from "../src/content/lower.ts";
 import {
   registerAliasStructFields,
   type ContentField,
@@ -63,6 +64,40 @@ function capabilityFor(config: ReturnType<typeof configFor>) {
     },
   });
 }
+
+describe("content closure resolution", () => {
+  it("resolves an inline trigger closure inside a dual trigger struct", () => {
+    const fields: readonly ContentField[] = [
+      {
+        key: "custom_tooltip",
+        member: "customTooltip",
+        shape: "dual",
+        arms: [
+          {
+            key: "custom_tooltip",
+            member: "customTooltip",
+            shape: "value",
+            form: "scalar",
+            conversion: "identity",
+          },
+          {
+            key: "custom_tooltip",
+            member: "customTooltip",
+            shape: "triggerStruct",
+            form: "block",
+            fields: [{ member: "when", shape: "inlineTrigger" }],
+          },
+        ],
+      },
+    ];
+    const trigger = always();
+    const resolved = resolveFromClosures({ customTooltip: { when: () => trigger } }, fields) as {
+      readonly customTooltip: { readonly when: unknown };
+    };
+
+    expect(resolved.customTooltip.when).toBe(trigger);
+  });
+});
 
 function localizationMap(mod: PureMod, language = "english"): ReadonlyMap<string, string> {
   return new Map(

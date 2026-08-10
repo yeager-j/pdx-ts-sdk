@@ -1944,6 +1944,13 @@ describe("generated content authoring types", () => {
         }
       | undefined
     >();
+    expectTypeOf<MegastructurePatch["placementRules"]>().toEqualTypeOf<
+      | PatchInput<{
+          planetPossible?: Trigger<"planet">;
+          when?: Trigger<never>;
+        }>
+      | undefined
+    >();
     contentMod.megastructure("scopes", {
       name: "X",
       entity: "x_entity",
