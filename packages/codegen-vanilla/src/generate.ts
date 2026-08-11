@@ -12,8 +12,9 @@
 
 import { basename } from "node:path";
 import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
-import { loadScopeFacts, type RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
+import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 
+import { buildVanillaFacts, type VanillaBuildFactsOptions } from "./build-facts.ts";
 import { emitEventTrie } from "./emit-events.ts";
 import {
   bindingsFile,
@@ -32,27 +33,11 @@ import {
   trieIndexFile,
   type AugmentPlan,
 } from "./emit.ts";
-import { inferScopes, type InferredScope, type ScriptedKind } from "./infer-scopes.ts";
-import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./manifest.ts";
-import { readVanillaEvents } from "./read-events.ts";
-import { readRegistryIds } from "./read-ids.ts";
-import { readScriptedDefinitions } from "./read-scripted.ts";
-import { resolveRegistries } from "./resolve.ts";
+import type { InferredScope, ScriptedKind } from "./infer-scopes.ts";
+import { VANILLA_MANIFEST, type VanillaScriptedRow } from "./manifest.ts";
 import { buildTrie, countLeaves, DEFAULT_TRIE_THRESHOLD } from "./trie.ts";
 
-export interface GenerateOptions {
-  /** Stellaris game root. */
-  readonly installRoot: string;
-  /** `major.minor.patch`, stamped into every generated header. */
-  readonly gameVersion: string;
-  /** The vendored cwtools config root. */
-  readonly configRoot: string;
-  /**
-   * The vendored script-docs root, holding `triggers.log`, `effects.log`, and
-   * `scopes.log`. Read for the scope facts the binding inference intersects —
-   * the same cross-check the CWT generator uses where the rules go quiet.
-   */
-  readonly docsRoot: string;
+export interface GenerateOptions extends VanillaBuildFactsOptions {
   /**
    * How many ids a registry needs before it gets a trie. Overridable so a
    * fixture can exercise the trie without shipping 2,000 fake sprites.
@@ -182,7 +167,7 @@ function attribute(inferred: readonly InferredScope[]): {
     unknownKeys: [...unknown]
       .sort((left, right) => right[1] - left[1] || compareIdentifiers(left[0], right[0]))
       .slice(0, REPORTED_UNKNOWN_KEYS),
-    emptied,
+    emptied: [...new Set(emptied)].sort(compareIdentifiers),
   };
 }
 
@@ -192,7 +177,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
 } {
   const threshold = options.trieThreshold ?? DEFAULT_TRIE_THRESHOLD;
   const { gameVersion } = options;
-  const idRows = VANILLA_MANIFEST.filter((row): row is VanillaIdRow => row.kind === "ids");
+  const facts = buildVanillaFacts(options);
   const scriptedRows = VANILLA_MANIFEST.filter(
     (row): row is VanillaScriptedRow => row.kind === "scripted"
   );
@@ -207,7 +192,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
     scripted: { target: string; registry: string; file: string }[];
   } = { ids: [], tries: [], scripted: [] };
 
-  const eventRead = readVanillaEvents(options.installRoot, options.configRoot);
+  const eventRead = facts.events;
   const eventTrie = emitEventTrie(eventRead.definitions, gate, gameVersion);
   for (const [file, contents] of eventTrie.files) {
     files.set(file, contents);
@@ -215,8 +200,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
   exports.push(eventTrie.export);
   plan.tries.push({ registry: "event", file: eventTrie.export.file });
 
-  for (const spec of resolveRegistries(options.configRoot, idRows)) {
-    const read = readRegistryIds(options.installRoot, spec);
+  for (const { spec, read } of facts.registries) {
     const file = registryFile(spec.registry);
     files.set(file, emitIdUnion(spec.registry, read.ids, gate, gameVersion));
     exports.push({ name: idTypeName(spec.registry), file });
@@ -249,25 +233,10 @@ export function generateVanillaPackage(options: GenerateOptions): {
     });
   }
 
-  // Bodies in, scopes out. The inference reads the CWT rules' own scope
-  // declarations and intersects them over each body; the bodies never leave
-  // this function, and what reaches an emitter is a scope name from
-  // `scopes.cwt`.
-  const reads = new Map(
-    scriptedRows.map((row) => [
-      row.registry,
-      readScriptedDefinitions(options.installRoot, row.registry, row.dir),
-    ])
-  );
-  const definitionsFor = (registry: string) => reads.get(registry)?.definitions ?? [];
-  const inferred = inferScopes(loadScopeFacts(options.configRoot, options.docsRoot), {
-    trigger: definitionsFor("scripted_trigger"),
-    effect: definitionsFor("scripted_effect"),
-  });
-
   const scripted: ScriptedReport[] = [];
   for (const row of scriptedRows) {
-    const read = reads.get(row.registry)!;
+    const kind: ScriptedKind = row.registry === "scripted_trigger" ? "trigger" : "effect";
+    const read = facts.scripted[kind];
     const file = scriptedFile(row.registry);
     files.set(file, emitScriptedParams(row.registry, read.definitions, gate, gameVersion));
     exports.push({ name: scriptedTypeName(row.registry), file });
@@ -279,9 +248,8 @@ export function generateVanillaPackage(options: GenerateOptions): {
       file,
     });
 
-    const kind: ScriptedKind = row.registry === "scripted_trigger" ? "trigger" : "effect";
     const scopes = new Map<string, RuleScopes>(
-      inferred[kind].map((one) => [one.name.toLowerCase(), one.scopes])
+      facts.inferredScopes[kind].map((one) => [one.name.toLowerCase(), one.scopes])
     );
     const bindings = emitScriptedBindings(
       row.registry,
@@ -300,7 +268,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
       diagnostics: read.diagnostics,
       missing: read.missing,
       scopeSizes: bindings.bySize,
-      ...attribute(inferred[kind]),
+      ...attribute(facts.inferredScopes[kind]),
       renamed: bindings.renamed,
     });
   }

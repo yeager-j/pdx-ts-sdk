@@ -13,7 +13,11 @@
  * from the rules rather than written down twice.
  */
 
-import { CONTENT_MANIFEST } from "@pdx-ts/codegen-cwt/content-manifest";
+import {
+  CONTENT_MANIFEST,
+  VANILLA_REF_EXTRAS,
+  type VanillaRefExtra,
+} from "@pdx-ts/codegen-cwt/content-manifest";
 
 import type { BucketLayout } from "./trie.ts";
 
@@ -75,39 +79,33 @@ const CONTENT_ROWS: readonly VanillaIdRow[] = CONTENT_MANIFEST.map((entry) => ({
  * These three are also the only registries whose files are laid out unlike
  * `common/`, so they are the only rows that state a {@link BucketLayout}.
  */
-const EXTRA_ROWS: readonly VanillaManifestRow[] = [
+const SCRIPTED_ROWS: readonly VanillaScriptedRow[] = [
   { kind: "scripted", registry: "scripted_trigger", dir: "common/scripted_triggers" },
   { kind: "scripted", registry: "scripted_effect", dir: "common/scripted_effects" },
-  {
-    kind: "ids",
-    type: "sound",
-    registry: "sound",
-    source: "sound/sound.cwt",
-    keyword: "sound",
-    bucket: "directory",
-  },
-  {
-    kind: "ids",
-    type: "sound_effect",
-    registry: "sound_effect",
-    source: "sound/sound.cwt",
-    keyword: "soundeffect",
-    bucket: "directory",
-  },
-  {
-    kind: "ids",
-    type: "sprite",
-    registry: "sprite",
-    source: "interface/sprites.cwt",
-    bucket: "file",
-  },
-  { kind: "ids", type: "resource", registry: "resource", source: "common/strategic_resources.cwt" },
-  {
-    kind: "ids",
-    type: "situation_log_category",
-    registry: "situation_log_category",
-    source: "common/situation_logs.cwt",
-  },
 ];
 
-export const VANILLA_MANIFEST: readonly VanillaManifestRow[] = [...CONTENT_ROWS, ...EXTRA_ROWS];
+const EXTRA_BUCKETS = {
+  sound: "directory",
+  sound_effect: "directory",
+  sprite: "file",
+} as const satisfies Partial<Record<(typeof VANILLA_REF_EXTRAS)[number]["type"], BucketLayout>>;
+
+const REF_ONLY_ROWS: readonly VanillaIdRow[] = VANILLA_REF_EXTRAS.map((row) => {
+  const entry: VanillaRefExtra = row;
+  return {
+    kind: "ids",
+    type: entry.type,
+    registry: entry.type,
+    source: entry.source,
+    ...(entry.keyword === undefined ? {} : { keyword: entry.keyword }),
+    ...(entry.type in EXTRA_BUCKETS
+      ? { bucket: EXTRA_BUCKETS[entry.type as keyof typeof EXTRA_BUCKETS] }
+      : {}),
+  };
+});
+
+export const VANILLA_MANIFEST: readonly VanillaManifestRow[] = [
+  ...CONTENT_ROWS,
+  ...SCRIPTED_ROWS,
+  ...REF_ONLY_ROWS,
+];

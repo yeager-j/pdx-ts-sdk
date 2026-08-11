@@ -5,11 +5,11 @@
  * The rest of the generator's evidence proves the inference agrees with the CWT
  * rules. Nothing there can prove the rules agree with the game. This can, in
  * the one direction that matters: an event declares its own scope in its key
- * (`country_event = { ... }` runs in country scope, from the SDK's generated
- * `EVENT_KINDS`), so anything called at the top of that event's condition and
- * effect blocks must admit country. A call site where the inference disagrees
- * is a **false narrowing** — a binding that would forbid at compile time
- * something the game ships.
+ * (`country_event = { ... }` runs in country scope, from the same canonical CWT
+ * event-kind facts the current build uses), so anything called at the top of
+ * that event's condition and effect blocks must admit country. A call site
+ * where the inference disagrees is a **false narrowing** — a binding that would
+ * forbid at compile time something the game ships.
  *
  * Only calls whose enclosing scope is certain are counted. `option` bodies and
  * a top-level `if`'s `limit` are still the event's scope; anything inside a
@@ -24,10 +24,11 @@
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import type { EventKindSpec } from "@pdx-ts/codegen-cwt/event-kinds";
 import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 import { parse, type PdxItem } from "@pdx-ts/pdxscript";
-import { EVENT_KINDS } from "@pdx-ts/sdk";
 
+import { compareIdentifiers } from "./emit.ts";
 import type { ScriptedKind } from "./infer-scopes.ts";
 
 /** Event body fields whose contents are conditions in the event's own scope. */
@@ -63,7 +64,7 @@ export type InferredScopes = Readonly<Record<ScriptedKind, ReadonlyMap<string, R
 function eventFiles(dir: string): string[] {
   let names: string[];
   try {
-    names = readdirSync(dir).sort();
+    names = readdirSync(dir).sort(compareIdentifiers);
   } catch {
     return [];
   }
@@ -72,11 +73,12 @@ function eventFiles(dir: string): string[] {
     .filter((full) => !statSync(full).isDirectory() && full.endsWith(".txt"));
 }
 
-const SCOPE_BY_EVENT_KEY = new Map(
-  Object.values(EVENT_KINDS).map((kind) => [kind.key as string, kind.scope])
-);
-
-export function checkCallSites(installRoot: string, inferred: InferredScopes): CallSiteReport {
+export function checkCallSites(
+  installRoot: string,
+  inferred: InferredScopes,
+  eventKinds: readonly EventKindSpec[]
+): CallSiteReport {
+  const scopeByEventKey = new Map(eventKinds.map((kind) => [kind.key, kind.scope]));
   const contradictions: ScopeContradiction[] = [];
   const covered = new Set<string>();
   let events = 0;
@@ -134,7 +136,7 @@ export function checkCallSites(installRoot: string, inferred: InferredScopes): C
       if (item.kind !== "entry" || item.value.kind !== "container") {
         continue;
       }
-      const scope = SCOPE_BY_EVENT_KEY.get(item.key);
+      const scope = scopeByEventKey.get(item.key);
       if (scope === undefined || scope === null) {
         continue;
       }
@@ -164,5 +166,12 @@ export function checkCallSites(installRoot: string, inferred: InferredScopes): C
     }
   }
 
+  contradictions.sort(
+    (left, right) =>
+      compareIdentifiers(left.file, right.file) ||
+      compareIdentifiers(left.name, right.name) ||
+      compareIdentifiers(left.kind, right.kind) ||
+      compareIdentifiers(left.scope, right.scope)
+  );
   return { events, checked, covered: covered.size, contradictions };
 }

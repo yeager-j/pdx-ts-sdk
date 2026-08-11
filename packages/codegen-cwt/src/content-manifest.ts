@@ -173,13 +173,22 @@ export const CONTENT_MANIFEST = [
  */
 export interface VanillaRefExtra {
   readonly type: string;
+  /** The CWT file that declares the referenced type. */
+  readonly source: string;
+  /** Top-level install keyword for types whose id lives in a name field. */
+  readonly keyword?: string;
   readonly oversized?: true;
 }
 
 export const VANILLA_REF_EXTRAS = [
-  { type: "sound", oversized: true },
-  { type: "sound_effect", oversized: true },
-  { type: "sprite", oversized: true },
-  { type: "resource" },
-  { type: "situation_log_category" },
+  { type: "sound", source: "sound/sound.cwt", keyword: "sound", oversized: true },
+  {
+    type: "sound_effect",
+    source: "sound/sound.cwt",
+    keyword: "soundeffect",
+    oversized: true,
+  },
+  { type: "sprite", source: "interface/sprites.cwt", oversized: true },
+  { type: "resource", source: "common/strategic_resources.cwt" },
+  { type: "situation_log_category", source: "common/situation_logs.cwt" },
 ] as const satisfies readonly VanillaRefExtra[];

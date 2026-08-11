@@ -1,7 +1,0 @@
-# A later-loading file redefining a trigger the first file already declared,
-# the way vanilla overrides one. Here $YEARS$ arrives with no default, so the
-# merged parameter is required: a caller who passes it satisfies either body.
-
-fake_defaulted = {
-	has_technology = $YEARS$
-}
