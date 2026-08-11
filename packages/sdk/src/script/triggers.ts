@@ -17,6 +17,8 @@ import type {
 } from "../content/event-chains.ts";
 import { refId } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
+import { scopeValue } from "./effects/recorder.ts";
+import type { ScopeValue } from "./effects/types.ts";
 import { conjoin, trigger, type Trigger } from "./trigger-core.ts";
 
 export type { ScopeName } from "../generated/scopes.ts";
@@ -262,6 +264,43 @@ export function hiddenTrigger<S extends ScopeName>(...triggers: Trigger<S>[]): T
  */
 export function target<S extends ScopeName>(
   condition: Trigger<S>
-): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network"> {
-  return trigger([block("target", [...condition.entries])], [...condition.refs]);
+): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network">;
+/**
+ * The same link as a value: the bare word `target`, which is what a situation
+ * event's header writes — `location = target` appears in 209 places across
+ * vanilla `events/`, about a quarter of all situation events — and what
+ * `exists = target` tests.
+ *
+ * Relative, so a plain {@link ScopeValue} and deliberately never a `ScopeRef`:
+ * `target` names whatever the *enclosing* situation (or spy network,
+ * espionage operation, agreement) targets, shifting with its block exactly the
+ * way `this` does, so there is no scope its type could promise a block's
+ * contents would run in.
+ *
+ * Unasserted, so it lands at the widest scope and stays there. This overload
+ * is non-generic on purpose: a single `<S = ScopeName>` value signature let
+ * TypeScript infer `S` from the *expected* type, so `const p:
+ * ScopeValue<"planet"> = target()` silently claimed a planet nobody had
+ * asserted — which is exactly what the covariant brand on {@link ScopeValue}
+ * exists to prevent. With no type parameter here there is nothing to infer,
+ * and a bare call is `ScopeValue<ScopeName>` in every context.
+ */
+export function target(): ScopeValue<ScopeName>;
+/**
+ * The value form with the landing scope asserted: `target<"country">()`.
+ *
+ * The assertion is the author's, for the same reason the condition form's is —
+ * `output_scope = any` is declared nowhere the SDK can read, which is also why
+ * `defineSituationType` takes an author-declared `targetScope` at all. Written
+ * explicitly or not at all: TypeScript skips the non-generic overload above
+ * whenever type arguments are supplied, so this arm is reachable only by
+ * writing the scope out.
+ */
+export function target<S extends ScopeName>(): ScopeValue<S>;
+export function target<S extends ScopeName>(
+  condition?: Trigger<S>
+): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network"> | ScopeValue<S> {
+  return condition === undefined
+    ? scopeValue<S>("target")
+    : trigger([block("target", [...condition.entries])], [...condition.refs]);
 }

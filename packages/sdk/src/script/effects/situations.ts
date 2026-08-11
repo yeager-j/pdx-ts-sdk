@@ -10,9 +10,10 @@
  * start sites are checked against the declaration.
  *
  * Navigation inside a trigger field (the `target(...)` combinator in
- * `../triggers.ts`) stays author-asserted, since a trigger is a
- * free-standing expression tree with no definition object to read a
- * declared scope from. Inside a `startSituation` effect body the type is
+ * `../triggers.ts`), and the bare-word value form on that same symbol
+ * (`target()`, what a situation event's `location = target` writes), both stay
+ * author-asserted, since neither has a definition object to read a declared
+ * scope from. Inside a `startSituation` effect body the type is
  * already known, though — `args.type: SituationTargetContract<T>` carries it
  * — so `SituationEffectScope` below narrows `.target(...)` to that same `T`,
  * closing the one restatement this contract *can* close.
