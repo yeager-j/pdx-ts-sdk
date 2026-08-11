@@ -85,6 +85,11 @@ export interface InferredScope {
   readonly diagnostics: readonly ScopeDiagnostic[];
 }
 
+interface ScopeResult {
+  readonly scopes: RuleScopes;
+  readonly diagnostics: readonly ScopeDiagnostic[];
+}
+
 // ---------------------------------------------------------------------------
 // Scope-set algebra. `"universal"` is the intersection identity and the union
 // absorber — the two properties that make "unknown" safe.
@@ -114,9 +119,8 @@ function itemsOf(value: PdxValue): readonly PdxItem[] | null {
 }
 
 class Walker {
-  private readonly memo = new Map<string, RuleScopes>();
+  private readonly memo = new Map<string, ScopeResult>();
   private readonly active = new Set<string>();
-  private diagnostics: ScopeDiagnostic[] = [];
   private cycles = 0;
 
   private readonly facts: ScopeFacts;
@@ -133,12 +137,11 @@ class Walker {
   }
 
   infer(definition: ScriptedDefinition, kind: ScriptedKind): InferredScope {
-    this.diagnostics = [];
-    const scopes = this.scopesOf(definition, kind);
-    return { name: definition.name, scopes, diagnostics: this.diagnostics };
+    const result = this.scopesOf(definition, kind);
+    return { name: definition.name, ...result };
   }
 
-  private scopesOf(definition: ScriptedDefinition, kind: ScriptedKind): RuleScopes {
+  private scopesOf(definition: ScriptedDefinition, kind: ScriptedKind): ScopeResult {
     const key = `${kind}:${definition.name.toLowerCase()}`;
     const cached = this.memo.get(key);
     if (cached !== undefined) {
@@ -149,28 +152,43 @@ class Walker {
       // being re-entered, and assuming anything would make the result depend on
       // which definition the walk happened to start from.
       this.cycles += 1;
-      return "universal";
+      return { scopes: "universal", diagnostics: [] };
     }
     this.active.add(key);
     const before = this.cycles;
-    const body = this.walkBody(definition.body, true, kind);
+    const diagnostics: ScopeDiagnostic[] = [];
+    const body = this.walkBody(definition.body, true, kind, diagnostics);
     this.active.delete(key);
     const emptied = body !== "universal" && body.length === 0;
     if (emptied) {
-      this.note("emptied", definition.name);
+      this.note(diagnostics, "emptied", definition.name);
     }
     const scopes = emptied ? "universal" : body;
+    const result = { scopes, diagnostics: this.canonicalDiagnostics(diagnostics) };
     // A result computed across a broken cycle depends on the entry point, so it
     // is answered but not remembered — otherwise the emitted scope would depend
     // on generation order, which nothing about this output may.
     if (this.cycles === before) {
-      this.memo.set(key, scopes);
+      this.memo.set(key, result);
     }
-    return scopes;
+    return result;
   }
 
-  private note(kind: ScopeDiagnostic["kind"], detail: string): void {
-    this.diagnostics.push({ kind, detail });
+  private note(
+    diagnostics: ScopeDiagnostic[],
+    kind: ScopeDiagnostic["kind"],
+    detail: string
+  ): void {
+    diagnostics.push({ kind, detail });
+  }
+
+  private canonicalDiagnostics(diagnostics: readonly ScopeDiagnostic[]): ScopeDiagnostic[] {
+    return [
+      ...new Map(diagnostics.map((one) => [`${one.kind}\0${one.detail}`, one])).values(),
+    ].sort((left, right) => {
+      const byKind = left.kind < right.kind ? -1 : left.kind > right.kind ? 1 : 0;
+      return byKind || (left.detail < right.detail ? -1 : left.detail > right.detail ? 1 : 0);
+    });
   }
 
   /**
@@ -178,24 +196,34 @@ class Walker {
    * statements run in a pushed scope — they are still walked, so their unknown
    * keys are reported, but they cannot constrain the caller.
    */
-  private walkBody(items: readonly PdxItem[], applies: boolean, kind: ScriptedKind): RuleScopes {
+  private walkBody(
+    items: readonly PdxItem[],
+    applies: boolean,
+    kind: ScriptedKind,
+    diagnostics: ScopeDiagnostic[]
+  ): RuleScopes {
     let scopes: RuleScopes = "universal";
     for (const item of items) {
-      scopes = intersectScopes(scopes, this.walkItem(item, applies, kind));
+      scopes = intersectScopes(scopes, this.walkItem(item, applies, kind, diagnostics));
     }
     return scopes;
   }
 
-  private walkItem(item: PdxItem, applies: boolean, kind: ScriptedKind): RuleScopes {
+  private walkItem(
+    item: PdxItem,
+    applies: boolean,
+    kind: ScriptedKind,
+    diagnostics: ScopeDiagnostic[]
+  ): RuleScopes {
     switch (item.kind) {
       case "entry":
-        return this.walkEntry(item.key, item.value, applies, kind);
+        return this.walkEntry(item.key, item.value, applies, kind, diagnostics);
       case "param":
         // `[[FLAG] ... ]` — present only when the caller defines FLAG, so its
         // conditions are the call site's, not the definition's. Walked for
         // diagnostics with `applies: false`, never for constraint.
-        this.note("param-block", item.name);
-        this.walkBody(item.items, false, kind);
+        this.note(diagnostics, "param-block", item.name);
+        this.walkBody(item.items, false, kind, diagnostics);
         return "universal";
       default:
         return "universal";
@@ -206,7 +234,8 @@ class Walker {
     rawKey: string,
     value: PdxValue,
     applies: boolean,
-    kind: ScriptedKind
+    kind: ScriptedKind,
+    diagnostics: ScopeDiagnostic[]
   ): RuleScopes {
     const key = rawKey.toLowerCase();
     const children = itemsOf(value);
@@ -214,11 +243,11 @@ class Walker {
     if (rawKey.includes("$")) {
       // A `$PARAM$` substitution in key position. Nothing is known about what
       // the key will be.
-      this.note("parameter-key", rawKey);
+      this.note(diagnostics, "parameter-key", rawKey);
       return "universal";
     }
     if (INTERSECTING.has(key)) {
-      return children === null ? "universal" : this.walkBody(children, applies, kind);
+      return children === null ? "universal" : this.walkBody(children, applies, kind, diagnostics);
     }
     if (UNIONING.has(key)) {
       if (children === null) {
@@ -229,7 +258,7 @@ class Walker {
       // that keeps deliberately dual-scope triggers from emptying.
       let arms: RuleScopes = [];
       for (const child of children) {
-        arms = unionScopes(arms, this.walkItem(child, applies, kind));
+        arms = unionScopes(arms, this.walkItem(child, applies, kind, diagnostics));
       }
       return arms;
     }
@@ -239,14 +268,14 @@ class Walker {
     // the chain lands is several scopes away and nothing inside is attributable.
     const first = key.split(".")[0]!.replace(/\?$/, "");
     if (CALLER_RELATIVE.has(first) || first.includes(":")) {
-      this.note("caller-relative", rawKey);
+      this.note(diagnostics, "caller-relative", rawKey);
       return "universal";
     }
 
     const link = this.facts.links.get(first);
     if (link !== undefined) {
       if (children !== null && first === key) {
-        this.walkBody(children, false, kind);
+        this.walkBody(children, false, kind, diagnostics);
       }
       return applies ? link.inputScopes : "universal";
     }
@@ -257,8 +286,8 @@ class Walker {
       // A scripted effect's body reaches scripted triggers through its `limit`
       // blocks, so the lookup crosses kinds — and the callee is walked
       // under ITS own kind, not the caller's.
-      const scopes = this.scopesOf(nested, own === undefined ? "trigger" : kind);
-      return applies ? scopes : "universal";
+      const nestedResult = this.scopesOf(nested, own === undefined ? "trigger" : kind);
+      return applies ? nestedResult.scopes : "universal";
     }
 
     const rule = this.ruleFor(key, kind);
@@ -266,10 +295,10 @@ class Walker {
       const declared = applies ? rule.scopes : "universal";
       return children === null
         ? declared
-        : intersectScopes(declared, this.walkRuleBody(rule, children, applies, kind));
+        : intersectScopes(declared, this.walkRuleBody(rule, children, applies, kind, diagnostics));
     }
 
-    this.note("unknown-key", rawKey);
+    this.note(diagnostics, "unknown-key", rawKey);
     return "universal";
   }
 
@@ -283,7 +312,8 @@ class Walker {
     rule: RuleFact,
     children: readonly PdxItem[],
     applies: boolean,
-    kind: ScriptedKind
+    kind: ScriptedKind,
+    diagnostics: ScopeDiagnostic[]
   ): RuleScopes {
     let scopes: RuleScopes = "universal";
     for (const child of children) {
@@ -292,7 +322,10 @@ class Walker {
       if (clause !== undefined) {
         const items = child.kind === "entry" ? itemsOf(child.value) : null;
         if (items !== null) {
-          scopes = intersectScopes(scopes, this.walkBody(items, applies && clause === null, kind));
+          scopes = intersectScopes(
+            scopes,
+            this.walkBody(items, applies && clause === null, kind, diagnostics)
+          );
         }
         continue;
       }
@@ -307,7 +340,7 @@ class Walker {
       }
       scopes = intersectScopes(
         scopes,
-        this.walkItem(child, applies && rule.splice.scope === null, kind)
+        this.walkItem(child, applies && rule.splice.scope === null, kind, diagnostics)
       );
     }
     return scopes;

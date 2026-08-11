@@ -13,11 +13,14 @@
  * optional too — and `FLAG` itself, the block's own condition, is the archetype
  * of an optional parameter.
  *
- * The parsed body is carried alongside, for `infer-scopes.ts` to measure. It is
- * in-memory only and no emitter may read it: what leaves this generator is a
- * name, a parameter list, and — since SDK-13 — a scope name from `scopes.cwt`.
- * The licensing chokepoint in `emit.ts` is what actually enforces that, and it
- * inspects every literal regardless of where the emitter thinks it came from.
+ * The parsed body, parameters, and provenance form one definition identity for
+ * `infer-scopes.ts` to measure. Ambiguous duplicate identities stop the build;
+ * combining one declaration's body with another declaration's parameter list
+ * would describe neither. The body is in-memory only and no emitter may read
+ * it: what leaves this generator is a name, a parameter list, and — since
+ * SDK-13 — a scope name from `scopes.cwt`. The licensing chokepoint in
+ * `emit.ts` is what actually enforces that, and it inspects every literal
+ * regardless of where the emitter thinks it came from.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -36,6 +39,10 @@ export interface ScriptedDefinition {
   readonly params: readonly ScriptedParam[];
   /** The parsed body. Read by the scope inference; never emitted. */
   readonly body: readonly PdxItem[];
+  /** Slash-normalized path relative to the scripted registry directory. */
+  readonly source: string;
+  /** Top-level declaration index within {@link source}. */
+  readonly ordinal: number;
 }
 
 export interface ScriptedRegistry {
@@ -118,36 +125,10 @@ function paramsOf(items: readonly PdxItem[]): ScriptedParam[] {
     .sort((left, right) => compareIdentifiers(left.name, right.name));
 }
 
-/**
- * Merges two declarations of the same name.
- *
- * Vanilla overrides a scripted trigger by redefining it in a later-loading
- * file, so the same name can appear twice with different bodies. Parameters are
- * unioned and required wins: a caller who satisfies the union satisfies either
- * definition, which is the only shape that stays true whichever one the game
- * ends up loading.
- */
-function merge(left: ScriptedDefinition, right: ScriptedDefinition): ScriptedDefinition {
-  const optional = new Map<string, boolean>();
-  for (const param of [...left.params, ...right.params]) {
-    optional.set(param.name, (optional.get(param.name) ?? true) && param.optional);
-  }
-  return {
-    name: left.name,
-    params: [...optional]
-      .map(([name, isOptional]) => ({ name, optional: isOptional }))
-      .sort((one, other) => compareIdentifiers(one.name, other.name)),
-    // Parameters union because a caller who satisfies the union satisfies
-    // either body; the body itself is last-wins, because exactly one of them is
-    // what the game loads (`packages/sdk/src/stellaris/vanilla/override-rules.ts`).
-    body: right.body,
-  };
-}
-
 function walkFiles(dir: string): string[] {
   let names: string[];
   try {
-    names = readdirSync(dir).sort();
+    names = readdirSync(dir).sort(compareIdentifiers);
   } catch {
     return [];
   }
@@ -175,19 +156,29 @@ export function readScriptedDefinitions(
   const byName = new Map<string, ScriptedDefinition>();
   let diagnostics = 0;
   for (const file of files) {
-    const parsed = parse(readFileSync(file, "utf8"), path.basename(file));
+    const source = path.relative(absolute, file).split(path.sep).join("/");
+    const parsed = parse(readFileSync(file, "utf8"), source);
     diagnostics += parsed.diagnostics.length;
-    for (const item of parsed.items) {
+    for (const [ordinal, item] of parsed.items.entries()) {
       if (item.kind !== "entry" || item.value.kind !== "container") {
         continue;
       }
-      const definition = {
+      const definition: ScriptedDefinition = {
         name: item.key,
         params: paramsOf(item.value.items),
         body: item.value.items,
+        source,
+        ordinal,
       };
-      const previous = byName.get(item.key);
-      byName.set(item.key, previous === undefined ? definition : merge(previous, definition));
+      const identity = item.key.toLowerCase();
+      const previous = byName.get(identity);
+      if (previous !== undefined) {
+        throw new Error(
+          `${registry}: ambiguous duplicate definition ${JSON.stringify(item.key)} in ` +
+            `${previous.source}#${previous.ordinal} and ${source}#${ordinal}`
+        );
+      }
+      byName.set(identity, definition);
     }
   }
   let missing = false;

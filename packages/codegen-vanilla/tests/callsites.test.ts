@@ -14,14 +14,13 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadScopeFacts, type RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
-import { locateInstall } from "@pdx-ts/sdk/stellaris";
+import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
+import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/stellaris";
 import { beforeAll, describe, expect, it } from "vitest";
 
+import { buildVanillaFacts } from "../src/build-facts.ts";
 import { checkCallSites } from "../src/callsites.ts";
-import { inferScopes, type ScriptedKind } from "../src/infer-scopes.ts";
-import { VANILLA_MANIFEST, type VanillaScriptedRow } from "../src/manifest.ts";
-import { readScriptedDefinitions } from "../src/read-scripted.ts";
+import type { ScriptedKind } from "../src/infer-scopes.ts";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
@@ -35,18 +34,19 @@ try {
 }
 
 function measure(root: string) {
-  const rows = VANILLA_MANIFEST.filter((row): row is VanillaScriptedRow => row.kind === "scripted");
-  const read = (registry: string) => {
-    const row = rows.find((one) => one.registry === registry)!;
-    return readScriptedDefinitions(root, row.registry, row.dir).definitions;
-  };
-  const inferred = inferScopes(loadScopeFacts(CONFIG, DOCS), {
-    trigger: read("scripted_trigger"),
-    effect: read("scripted_effect"),
+  const facts = buildVanillaFacts({
+    installRoot: root,
+    gameVersion: requireGameVersion(root),
+    configRoot: CONFIG,
+    docsRoot: DOCS,
   });
   const lowered = (registry: ScriptedKind): ReadonlyMap<string, RuleScopes> =>
-    new Map(inferred[registry].map((one) => [one.name.toLowerCase(), one.scopes]));
-  return checkCallSites(root, { trigger: lowered("trigger"), effect: lowered("effect") });
+    new Map(facts.inferredScopes[registry].map((one) => [one.name.toLowerCase(), one.scopes]));
+  return checkCallSites(
+    root,
+    { trigger: lowered("trigger"), effect: lowered("effect") },
+    facts.eventKinds
+  );
 }
 
 describe.skipIf(installRoot === undefined)(

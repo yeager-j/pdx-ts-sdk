@@ -60,7 +60,11 @@ function splitEventId(id: string, source: string): { namespace: string; localId:
   return { namespace, localId: id.slice(first + 1) };
 }
 
-export function readVanillaEvents(installRoot: string, configRoot: string): VanillaEventsRead {
+export function readVanillaEvents(
+  installRoot: string,
+  configRoot: string,
+  eventKindFacts?: readonly EventKindSpec[]
+): VanillaEventsRead {
   const rules = loadRules(configRoot);
   const type = rules.contentTypes.get("event");
   if (type?.path === null || type?.path === undefined || !type.path.startsWith("game/")) {
@@ -70,7 +74,7 @@ export function readVanillaEvents(installRoot: string, configRoot: string): Vani
   const dir = path.join(installRoot, type.path.slice("game/".length));
   const extension = type.pathExtension ?? ".txt";
   const files = walk(dir, extension);
-  const kinds = new Map(eventKinds(rules).map((kind) => [kind.key, kind]));
+  const kinds = new Map((eventKindFacts ?? eventKinds(rules)).map((kind) => [kind.key, kind]));
   const definitions = new Map<string, VanillaEventDefinition>();
   let diagnostics = 0;
 
