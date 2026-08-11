@@ -13,11 +13,34 @@ export interface Command {
   readonly args: readonly string[];
 }
 
-export function run(command: Command, cwd: string): Promise<number> {
+export interface CommandResult {
+  readonly code: number;
+  readonly output: string;
+}
+
+/** Keep the failure tail useful without retaining an unbounded dependency-install transcript. */
+const DIAGNOSTIC_LIMIT = 64 * 1024;
+
+export function run(command: Command, cwd: string): Promise<CommandResult> {
   return new Promise((resolve) => {
-    const child = spawn(command.command, [...command.args], { cwd, stdio: "inherit" });
-    child.on("error", () => resolve(-1));
-    child.on("close", (code) => resolve(code ?? -1));
+    const child = spawn(command.command, [...command.args], {
+      cwd,
+      stdio: ["inherit", "pipe", "pipe"],
+    });
+    let output = "";
+    const observe = (chunk: Buffer): string => {
+      const text = chunk.toString();
+      output = `${output}${text}`.slice(-DIAGNOSTIC_LIMIT);
+      return text;
+    };
+    child.stdout.on("data", (chunk: Buffer) => {
+      process.stdout.write(observe(chunk));
+    });
+    child.stderr.on("data", (chunk: Buffer) => {
+      process.stderr.write(observe(chunk));
+    });
+    child.on("error", () => resolve({ code: -1, output }));
+    child.on("close", (code) => resolve({ code: code ?? -1, output }));
   });
 }
 

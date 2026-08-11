@@ -9,7 +9,7 @@
  *
  * The curated values follow the conventions in the reviewed vanilla evidence and
  * in this repository's own example content: `physics`/`particles` as the
- * starting area and category, `tier: 1`, and a scalar `cost` rather than a
+ * starting area and category, `tier: 2`, and a scalar `cost` rather than a
  * weight block. `desc` is the only required author text with nothing to derive
  * it from, so it ships as a greppable `PLACEHOLDER:` value that still typechecks
  * and still builds.
@@ -48,6 +48,12 @@ const PREREQUISITE_EXAMPLE = "tech_basic_science_lab_1";
 export const VANILLA_EXAMPLE_IDS = {
   technology: [PREREQUISITE_EXAMPLE],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
+
+/** The paired vanilla values this recipe teaches, checked against the committed corpus. */
+export const VANILLA_CURATED_VALUES = {
+  tier: 2,
+  cost: 2000,
+} as const;
 
 export const technologyRecipe = defineRecipe({
   summary: {
@@ -103,8 +109,8 @@ function fields(names: DerivedNames): readonly string[] {
     `desc: ${quoteTs("PLACEHOLDER: what researching this unlocks, in a sentence or two.")},`,
     `area: "physics",`,
     `category: "particles",`,
-    `tier: 1,`,
-    `cost: 2000,`,
+    `tier: ${VANILLA_CURATED_VALUES.tier},`,
+    `cost: ${VANILLA_CURATED_VALUES.cost},`,
     "",
     "// Technologies that must be researched first. A vanilla technology is a plain",
     "// string, taken as given — nothing checks a bare literal;",

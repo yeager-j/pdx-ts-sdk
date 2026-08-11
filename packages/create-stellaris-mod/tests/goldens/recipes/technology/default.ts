@@ -18,7 +18,7 @@ export const resonanceTheory = mod.technology("resonance_theory", {
   desc: "PLACEHOLDER: what researching this unlocks, in a sentence or two.",
   area: "physics",
   category: "particles",
-  tier: 1,
+  tier: 2,
   cost: 2000,
 
   // Technologies that must be researched first. A vanilla technology is a plain

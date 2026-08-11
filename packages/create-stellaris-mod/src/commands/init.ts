@@ -92,8 +92,11 @@ export async function runInit(argv: readonly string[], io: CliIo): Promise<numbe
   // The other order leaves a freshly scaffolded repository immediately dirty,
   // with its first commit describing a dependency graph that was never resolved.
   let installed = false;
+  let installOutput = "";
   if (resolved.install) {
-    installed = (await run(installCommand(resolved.packageManager), targetDir)) === 0;
+    const result = await run(installCommand(resolved.packageManager), targetDir);
+    installed = result.code === 0;
+    installOutput = result.output;
   }
 
   if (resolved.git && !(await insideGitWorkTree(targetDir))) {
@@ -102,7 +105,7 @@ export async function runInit(argv: readonly string[], io: CliIo): Promise<numbe
     }
   }
 
-  io.stdout.write(nextSteps(resolved, targetDir, io.cwd, installed));
+  io.stdout.write(nextSteps(resolved, targetDir, io.cwd, installed, installOutput));
   return 0;
 }
 
@@ -156,14 +159,45 @@ function plannedCommands(resolved: Resolved): string[] {
   return commands;
 }
 
-function nextSteps(resolved: Resolved, targetDir: string, cwd: string, installed: boolean): string {
+function idsPackageUnavailable(output: string): boolean {
+  return (
+    output.includes("@pdx-ts/stellaris-ids") &&
+    /(?:\bETARGET\b|\bnotarget\b|no matching versions? found)/i.test(output)
+  );
+}
+
+export function installFailureSteps(
+  packageManager: string,
+  gameVersion: string | undefined,
+  output: string
+): string[] {
+  if (!idsPackageUnavailable(output)) {
+    return [`  ${packageManager} install        # the install did not complete; run it again`];
+  }
+  const build = gameVersion === undefined ? "the detected game build" : `game build ${gameVersion}`;
+  return [
+    `  No @pdx-ts/stellaris-ids release matches ${build} yet.`,
+    "  To install with unchecked vanilla ids until one is published:",
+    '    remove "@pdx-ts/stellaris-ids" from package.json',
+    '    remove import "@pdx-ts/stellaris-ids"; from src/mod.ts',
+    `    ${packageManager} install`,
+  ];
+}
+
+function nextSteps(
+  resolved: Resolved,
+  targetDir: string,
+  cwd: string,
+  installed: boolean,
+  installOutput: string
+): string {
   const pm = resolved.packageManager;
   const lines = ["", `Scaffolded ${resolved.name} in ${targetDir}`, ""];
 
   lines.push("Next:");
   lines.push(`  cd ${shortestPath(targetDir, cwd)}`);
   if (!installed && resolved.install) {
-    lines.push(`  ${pm} install        # the install did not complete; run it again`);
+    lines.push(...installFailureSteps(pm, resolved.gameVersion, installOutput));
   } else if (!resolved.install) {
     lines.push(`  ${pm} install`);
   }
