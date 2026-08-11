@@ -15,6 +15,7 @@ import {
   installedDescriptorRecord,
   rollbackMaterialization,
   stageMaterialization,
+  withMaterializationLock,
   type LauncherDescriptorRecord,
 } from "./write.ts";
 
@@ -67,6 +68,19 @@ export async function install(
   const nextDescriptor = descriptorRecord(path.basename(descriptorPath), descriptorContents);
 
   await mkdir(root, { recursive: true });
+  return withMaterializationLock(contentDir, () =>
+    installUnlocked(rendered, contentDir, descriptorPath, descriptorContents, nextDescriptor)
+  );
+}
+
+async function installUnlocked(
+  rendered: RenderedMod,
+  contentDir: string,
+  descriptorPath: string,
+  descriptorContents: string,
+  nextDescriptor: LauncherDescriptorRecord
+): Promise<InstallResult> {
+  const root = path.dirname(contentDir);
   const staged = await stageMaterialization(contentDir, rendered, "install", nextDescriptor);
   try {
     await validateCurrentDescriptor(contentDir, descriptorPath, staged.hadOwnedPrevious);

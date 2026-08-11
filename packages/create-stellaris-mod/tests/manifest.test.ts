@@ -210,6 +210,23 @@ const CORPUS: readonly Case[] = [
       valid: false,
     })
   ),
+  ...[
+    "src/content.",
+    "src/content ",
+    "src/ content",
+    "src/CON",
+    "src/con.txt",
+    "src/COM1",
+    "src/lpt9.log",
+    "src/foo:bar",
+    'src/foo"bar',
+    "src/foo|bar",
+    "src/foo*bar",
+  ].map((contentDirectory) => ({
+    name: `non-portable contentDirectory ${JSON.stringify(contentDirectory)}`,
+    bytes: json({ ...MINIMAL, contentDirectory }),
+    valid: false,
+  })),
 ];
 
 function accepts(bytes: string): boolean {

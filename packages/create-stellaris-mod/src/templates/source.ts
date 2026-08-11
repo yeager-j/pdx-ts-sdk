@@ -85,6 +85,7 @@ export const mod = createMod(config);
 // not look. The check is generated from the same ProjectLayout pattern used by
 // the manifest reader and schema, and path.join keeps URL metacharacters from
 // being reinterpreted.
+// eslint-disable-next-line no-control-regex -- NUL is intentionally rejected by the shared path rule.
 const contentDirectoryPattern = new RegExp(${quoteTs(PROJECT_CONTENT_DIRECTORY_PATTERN.source)});
 if (!contentDirectoryPattern.test(manifest.contentDirectory)) {
   throw new Error(

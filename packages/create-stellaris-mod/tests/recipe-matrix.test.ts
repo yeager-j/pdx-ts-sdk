@@ -38,6 +38,7 @@ const COMPILER_TIMEOUT = 180_000;
 const NAME = "Resonance Theory";
 const STEM = "resonance_theory";
 const PREFIX = "golden_mod";
+const MATERIALIZATION_MANIFEST = ".pdx-sdk-manifest.json";
 
 /** Every combination of every question's choices, in question order. */
 function variants(questions: readonly ChoiceQuestion[]): Record<string, string>[] {
@@ -148,7 +149,12 @@ describe("technology, with its only answer set", () => {
 
         const technology = `common/technology/${PREFIX}_${STEM}.txt`;
         const localization = `localisation/english/${PREFIX}_${STEM}_l_english.yml`;
-        expect(project.outFiles()).toEqual([technology, "descriptor.mod", localization]);
+        expect(project.outFiles()).toEqual([
+          MATERIALIZATION_MANIFEST,
+          technology,
+          "descriptor.mod",
+          localization,
+        ]);
         expect(project.readOut(technology)).toContain(`${PREFIX}_tech_${STEM}`);
         expect(project.readOut(localization)).toContain(NAME);
       },
@@ -192,7 +198,12 @@ describe("building, with its only answer set", () => {
 
         const building = `common/buildings/${PREFIX}_${STEM}.txt`;
         const localization = `localisation/english/${PREFIX}_${STEM}_l_english.yml`;
-        expect(project.outFiles()).toEqual([building, "descriptor.mod", localization]);
+        expect(project.outFiles()).toEqual([
+          MATERIALIZATION_MANIFEST,
+          building,
+          "descriptor.mod",
+          localization,
+        ]);
 
         const buildingOut = project.readOut(building);
         expect(buildingOut).toContain(`${PREFIX}_building_${STEM} = {`);
@@ -283,8 +294,8 @@ describe.each(EVENT_VARIANTS)(
           // than merely emitted empty.
           expect(project.outFiles()).toEqual(
             visibility === "visible"
-              ? ["descriptor.mod", events, localization]
-              : ["descriptor.mod", events]
+              ? [MATERIALIZATION_MANIFEST, "descriptor.mod", events, localization]
+              : [MATERIALIZATION_MANIFEST, "descriptor.mod", events]
           );
 
           const eventsOut = project.readOut(events);
@@ -359,6 +370,7 @@ describe.each([["one"], ["two"]] as const)("research-quest, answering projects=%
         const events = `events/${PREFIX}_${STEM}.txt`;
         const localization = `localisation/english/${PREFIX}_${STEM}_l_english.yml`;
         expect(project.outFiles()).toEqual([
+          MATERIALIZATION_MANIFEST,
           chain,
           onActions,
           specialProjects,

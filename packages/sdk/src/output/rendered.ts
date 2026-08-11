@@ -137,16 +137,14 @@ export function createRenderedMod(
   claims: readonly RenderedClaim[]
 ): RenderedMod {
   const conflicts: PathOwnershipConflict[] = [];
-  const normalized = claims.map((claim) => ({ claim, path: normalizeLogicalPath(claim.path) }));
-  for (const { claim, path } of normalized) {
-    if (path === MANIFEST_PATH) {
-      conflicts.push({
-        path,
-        owners: canonicalOwners(claim.owner, "materializer"),
-        reason: "reserved",
-      });
-    }
-  }
+  const normalized = [
+    ...claims.map((claim) => ({ claim, path: normalizeLogicalPath(claim.path), reserved: false })),
+    {
+      claim: { path: MANIFEST_PATH, owner: "materializer", text: "" },
+      path: normalizeLogicalPath(MANIFEST_PATH),
+      reserved: true,
+    },
+  ];
 
   for (let leftIndex = 0; leftIndex < normalized.length; leftIndex++) {
     const left = normalized[leftIndex]!;
@@ -167,19 +165,24 @@ export function createRenderedMod(
         conflicts.push({
           path: canonicalFirst(left.path, right.path),
           owners: canonicalOwners(left.claim.owner, right.claim.owner),
-          reason: left.path === right.path ? "duplicate" : "portable-alias",
+          reason:
+            left.reserved || right.reserved
+              ? "reserved"
+              : left.path === right.path
+                ? "duplicate"
+                : "portable-alias",
         });
       } else if (common === shared) {
         conflicts.push({
           path: canonicalFirst(left.path, right.path),
           owners: canonicalOwners(left.claim.owner, right.claim.owner),
-          reason: "file-directory",
+          reason: left.reserved || right.reserved ? "reserved" : "file-directory",
         });
       } else if (alias) {
         conflicts.push({
           path: canonicalFirst(left.path, right.path),
           owners: canonicalOwners(left.claim.owner, right.claim.owner),
-          reason: "portable-alias",
+          reason: left.reserved || right.reserved ? "reserved" : "portable-alias",
         });
       }
     }
@@ -196,6 +199,7 @@ export function createRenderedMod(
   }
 
   const files = normalized
+    .filter(({ reserved }) => !reserved)
     .map(({ claim, path }) => new ImmutableRenderedFile(path, claim))
     .sort((a, b) => compareLogicalPaths(a.path, b.path));
   return new ImmutableRenderedMod(prefix, descriptorHeader, files);

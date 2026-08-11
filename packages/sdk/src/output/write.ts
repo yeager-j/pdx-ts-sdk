@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { Stats } from "node:fs";
-import { lstat, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readdir, readFile, realpath, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -44,12 +44,41 @@ export interface StagedMaterialization {
   readonly hadOwnedPrevious: boolean;
 }
 
+const materializationTails = new Map<string, Promise<void>>();
+
+/** Serialize exact materializations that resolve to the same physical target. */
+export async function withMaterializationLock<T>(
+  target: string,
+  operation: () => Promise<T>
+): Promise<T> {
+  const parent = path.dirname(target);
+  await mkdir(parent, { recursive: true });
+  const key = path.join(await realpath(parent), path.basename(target));
+  const previous = materializationTails.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const tail = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  materializationTails.set(key, tail);
+  await previous;
+  try {
+    return await operation();
+  } finally {
+    release();
+    if (materializationTails.get(key) === tail) {
+      materializationTails.delete(key);
+    }
+  }
+}
+
 /** Replace an SDK-owned output tree with exactly one rendered snapshot. */
 export async function write(outDir: string | URL, rendered: RenderedMod): Promise<void> {
   const target = resolveTarget(outDir);
-  const staged = await stageMaterialization(target, rendered, "build");
-  await activateMaterialization(staged);
-  await discardPrevious(staged);
+  await withMaterializationLock(target, async () => {
+    const staged = await stageMaterialization(target, rendered, "build");
+    await activateMaterialization(staged);
+    await discardPrevious(staged);
+  });
 }
 
 /** Add or overwrite rendered files without deleting unrelated paths. */

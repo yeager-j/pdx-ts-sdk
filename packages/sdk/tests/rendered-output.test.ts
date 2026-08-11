@@ -41,6 +41,8 @@ describe("RenderedMod", () => {
     ["portable alias", "COMMON/technology/rendered_probe_probe.txt"],
     ["file-directory conflict", "common"],
     ["reserved manifest", ".pdx-sdk-manifest.json"],
+    ["reserved manifest child", ".pdx-sdk-manifest.json/child"],
+    ["reserved manifest portable alias", ".PDX-SDK-MANIFEST.JSON"],
   ])("rejects a %s before any sink sees it", (_label, relPath) => {
     const first = compiled.contentFiles[0]!;
     const forgedFile: ContentFile = { ...first, relPath };

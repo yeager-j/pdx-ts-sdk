@@ -90,6 +90,23 @@ function renderedWithOldFeature() {
   );
 }
 
+function renderedVariant(name: string) {
+  const variant = createMod({ ...config, name });
+  return render(
+    variant.compile([
+      variant.feature(undefined, [
+        variant.technology("marker", {
+          name: "Marker",
+          cost: 1000,
+          area: "physics",
+          tier: 1,
+          category: "particles",
+        }),
+      ]),
+    ])
+  );
+}
+
 const temps: string[] = [];
 function tempDir(): string {
   const dir = mkdtempSync(join(tmpdir(), "pdx-launcher-"));
@@ -223,6 +240,30 @@ describe("install", () => {
     const root = tempDir();
     await install(renderedMod, { modDir: root });
     await install(renderedMod, { modDir: root });
+    expect(readdirSync(root).sort()).toEqual(["lp_probe", "lp_probe.mod"]);
+  });
+
+  it("serializes concurrent installs targeting the same content directory", async () => {
+    const root = tempDir();
+    await install(renderedMod, { modDir: root });
+    const candidates = Array.from({ length: 6 }, (_, index) =>
+      renderedVariant(`Concurrent Probe ${index}`)
+    );
+
+    const results = await Promise.all(
+      candidates.map((candidate) => install(candidate, { modDir: root }))
+    );
+
+    const contentDir = results[0]!.contentDir;
+    const innerDescriptor = readFileSync(join(contentDir, "descriptor.mod"), "utf8");
+    const launcherDescriptor = readFileSync(results[0]!.descriptorPath, "utf8");
+    expect(
+      candidates.some(
+        (candidate) =>
+          candidate.get("descriptor.mod") === innerDescriptor &&
+          renderLauncherDescriptor(candidate, contentDir) === launcherDescriptor
+      )
+    ).toBe(true);
     expect(readdirSync(root).sort()).toEqual(["lp_probe", "lp_probe.mod"]);
   });
 

@@ -26,9 +26,9 @@ const files = render(await defineHelloGalaxy());
 describe("hello-galaxy example mod", () => {
   it("renders the expected file set", () => {
     expect([...files.keys()]).toEqual([
-      "descriptor.mod",
       "common/technology/hello_galaxy_amplifiers.txt",
       "common/technology/hello_galaxy_resonance.txt",
+      "descriptor.mod",
       "events/hello_galaxy_resonance.txt",
       "localisation/english/hello_galaxy_amplifiers_l_english.yml",
       "localisation/english/hello_galaxy_resonance_l_english.yml",
@@ -48,7 +48,7 @@ describe("hello-galaxy example mod", () => {
   it("starts the localization file with a UTF-8 BOM", () => {
     const localizationFiles = [...files]
       .filter(([path]) => path.startsWith("localisation/english/"))
-      .map(([, content]) => content);
+      .map(([path]) => files.get(path)!);
     expect(localizationFiles).toHaveLength(2);
     for (const localization of localizationFiles) {
       expect(localization.charCodeAt(0)).toBe(0xfeff);
@@ -56,9 +56,9 @@ describe("hello-galaxy example mod", () => {
     }
   });
 
-  for (const [relPath, content] of files) {
+  for (const relPath of files.keys()) {
     it(`matches the golden file for ${relPath}`, async () => {
-      await expect(content).toMatchFileSnapshot(
+      await expect(files.get(relPath)).toMatchFileSnapshot(
         `__snapshots__/hello-galaxy/${relPath.replaceAll("/", "__")}`
       );
     });
@@ -116,7 +116,7 @@ describe("hello-galaxy preserves its authored feature identity", () => {
   it("emits the same set of technologies, redistributed across two files", () => {
     const technologyFiles = [...files]
       .filter(([relPath]) => relPath.startsWith("common/technology/"))
-      .map(([, content]) => content);
+      .map(([relPath]) => files.get(relPath)!);
     expect(technologyFiles).toHaveLength(2);
     const keys = technologyFiles
       .flatMap((content) => [...content.matchAll(/^(\w+) = \{$/gm)])
