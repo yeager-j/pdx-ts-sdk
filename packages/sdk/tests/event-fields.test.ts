@@ -9,13 +9,17 @@
  * installed game) that sets `archaeology = yes` and `location = from` —
  * previously impossible to author without rebuilding the emitted entry
  * through the PDXScript AST by hand.
+ *
+ * The situation-event counterpart (SDK-129) sits beside it: `location =
+ * target`, vanilla's commonest `location` by a wide margin, reachable since
+ * the `target` link grew a value form.
  */
 
 import { describe, expect, it } from "vitest";
 
 import { createMod, render } from "../src/index.ts";
 import { eventTarget } from "../src/script/effects/recorder.ts";
-import { hasEventChain, hasGlobalFlag } from "../src/script/triggers.ts";
+import { exists, hasEventChain, hasGlobalFlag, target } from "../src/script/triggers.ts";
 
 const CONFIG = {
   name: "Event fields tests",
@@ -126,6 +130,52 @@ describe("the archaeology blocking case (SDK-46)", () => {
       "events/event_fields_events.txt"
     )!;
     expect(rendered).toContain("diplomatic = yes");
+  });
+});
+
+describe("the situation blocking case (SDK-129)", () => {
+  it("writes location = target from the value form of the target link, plain and through the FROM closure", () => {
+    const events = makeEvents();
+    const plain = events.situation(1003, {
+      title: "Storm Approaches",
+      desc: "The storm nears its target.",
+      isTriggeredOnly: true,
+      location: target<"planet">(),
+    });
+    const viaClosure = events.situation(1004, {
+      title: "Storm Passes",
+      desc: "The storm moves on.",
+      isTriggeredOnly: true,
+      location: () => target<"planet">(),
+    });
+
+    const rendered = render(mod.compile([mod.feature("events", [plain, viaClosure])])).get(
+      "events/event_fields_events.txt"
+    )!;
+
+    // Both spellings land on the bare word the game writes — `location =
+    // target` is a quarter of all vanilla situation events, and forging the
+    // internal ScopeValue shape was the only way to reach it before.
+    expect(rendered.match(/location = target\n/g)).toHaveLength(2);
+    expect(rendered).not.toContain("this.target");
+  });
+
+  it("serializes exists = target, the value form flowing into a trigger that takes a ScopeValue", () => {
+    const events = makeEvents();
+    const gated = events.situation(1005, {
+      title: "Target Still There",
+      desc: "The situation checks its target survives.",
+      isTriggeredOnly: true,
+      trigger: exists(target()),
+      location: target(),
+    });
+
+    const rendered = render(mod.compile([mod.feature("events", [gated])])).get(
+      "events/event_fields_events.txt"
+    )!;
+
+    expect(rendered).toContain("exists = target");
+    expect(rendered).toContain("location = target");
   });
 });
 

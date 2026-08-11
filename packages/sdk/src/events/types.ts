@@ -175,7 +175,9 @@ export interface EventOption<S extends ScopeName, From extends ScopeName | undef
  * declarative fields that can want FROM — `location: (ctx) => ctx.from` is
  * the dig-stage idiom (every vanilla archaeology-site event opens
  * `location = from`). A plain value covers the rest: a saved
- * `eventTarget`, or `ctx.self`.
+ * `eventTarget`, `ctx.self`, or — the situation-event idiom, and the
+ * commonest `location` in vanilla by a wide margin — `location: target()`,
+ * the value form of the `target` link (`script/triggers.ts`).
  */
 export type EventLocation<S extends ScopeName, From extends ScopeName | undefined> =
   ScopeValue<ScopeName> | ((ctx: ScriptCtx<S, From>) => ScopeValue<ScopeName>);

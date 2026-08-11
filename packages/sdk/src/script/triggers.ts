@@ -17,6 +17,8 @@ import type {
 } from "../content/event-chains.ts";
 import { refId } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
+import { scopeValue } from "./effects/recorder.ts";
+import type { ScopeValue } from "./effects/types.ts";
 import { conjoin, trigger, type Trigger } from "./trigger-core.ts";
 
 export type { ScopeName } from "../generated/scopes.ts";
@@ -262,6 +264,29 @@ export function hiddenTrigger<S extends ScopeName>(...triggers: Trigger<S>[]): T
  */
 export function target<S extends ScopeName>(
   condition: Trigger<S>
-): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network"> {
-  return trigger([block("target", [...condition.entries])], [...condition.refs]);
+): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network">;
+/**
+ * The same link as a value: the bare word `target`, which is what a situation
+ * event's header writes — `location = target` appears in 209 places across
+ * vanilla `events/`, about a quarter of all situation events — and what
+ * `exists = target` tests.
+ *
+ * Relative, so a plain {@link ScopeValue} and deliberately never a `ScopeRef`:
+ * `target` names whatever the *enclosing* situation (or spy network,
+ * espionage operation, agreement) targets, shifting with its block exactly the
+ * way `this` does, so there is no scope its type could promise a block's
+ * contents would run in.
+ *
+ * The scope is asserted by the author, for the same reason the condition
+ * form's is — `output_scope = any` is also why `defineSituationType` takes an
+ * author-declared `targetScope` at all. `target()` is `ScopeValue<ScopeName>`;
+ * `target<"country">()` claims the kind that situation type declares.
+ */
+export function target<S extends ScopeName = ScopeName>(): ScopeValue<S>;
+export function target<S extends ScopeName>(
+  condition?: Trigger<S>
+): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network"> | ScopeValue<S> {
+  return condition === undefined
+    ? scopeValue<S>("target")
+    : trigger([block("target", [...condition.entries])], [...condition.refs]);
 }

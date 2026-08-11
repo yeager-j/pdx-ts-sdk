@@ -2,7 +2,15 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import { scriptCtx } from "../src/script/effects/recorder.ts";
 import type { ScopeRef, ScopeValue } from "../src/script/effects/types.ts";
-import { capitalScope, hasCountryFlag, owner, type Trigger } from "../src/script/triggers.ts";
+import {
+  capitalScope,
+  exists,
+  hasCountryFlag,
+  owner,
+  target,
+  type ScopeName,
+  type Trigger,
+} from "../src/script/triggers.ts";
 
 const country = scriptCtx<"country", "country">();
 const planet = scriptCtx<"planet", undefined>();
@@ -35,5 +43,33 @@ describe("scope links in value position", () => {
   it("leaves the trigger form on the same symbol untouched", () => {
     expectTypeOf(owner(hasCountryFlag("ascended"))).toExtend<Trigger<"planet">>();
     expectTypeOf(owner(hasCountryFlag("ascended"))).toExtend<Trigger<"country">>();
+  });
+});
+
+/**
+ * `target` is the one link codegen declines (`output_scope = any`), so its
+ * value form is hand-written alongside its condition form and its scope is
+ * asserted rather than read — see `script/triggers.ts`.
+ */
+describe("the declined target link in value position (SDK-129)", () => {
+  it("takes the landing scope from the author's assertion", () => {
+    expectTypeOf(target<"country">()).toEqualTypeOf<ScopeValue<"country">>();
+    expectTypeOf(target()).toEqualTypeOf<ScopeValue<ScopeName>>();
+  });
+
+  it("stays relative, so there is no block to open", () => {
+    // @ts-expect-error — `target` means whatever the enclosing situation
+    // targets, so no ScopeRef: its type cannot promise a scope for a block
+    target<"country">().effects(() => {});
+    expectTypeOf(target<"country">()).not.toExtend<ScopeRef<"country">>();
+  });
+
+  it("keeps the condition overload resolving on the same symbol", () => {
+    expectTypeOf(target(hasCountryFlag("ascended"))).toExtend<Trigger<"situation">>();
+    expectTypeOf(target(hasCountryFlag("ascended"))).toExtend<Trigger<"spy_network">>();
+  });
+
+  it("flows into every trigger that takes a ScopeValue", () => {
+    expectTypeOf(exists(target())).toExtend<Trigger<"situation">>();
   });
 });
