@@ -64,6 +64,7 @@ import {
   type TraditionSwapFields,
   type Trigger,
   type TriggeredModifier,
+  type UndeclaredRoot,
   type UtilityComponentTemplateFields,
   type WarGoalRef,
   type WeaponComponentTemplateFields,
@@ -2102,6 +2103,51 @@ describe("generated content authoring types", () => {
           },
         },
       ],
+    });
+  });
+
+  it("types ROOT from the same annotation as THIS, not from THIS", () => {
+    contentMod.solarSystemInitializer("root_scopes", {
+      class: "sc_g",
+      planet: [
+        {
+          // `## replace_scopes = { this = planet root = country prev = system
+          // prevprev = system }` — the block runs in planet scope, but ROOT is
+          // the fallen empire, and vanilla's own initializers write
+          // `root = { ... }` against exactly that country.
+          initEffect: (planet, ctx) => {
+            planet.setCapital(true);
+            expectTypeOf(ctx.root).toEqualTypeOf<ScopeRef<"country">>();
+            ctx.root.effects((country) => country.setCountryFlag("content_types_root_flag"));
+            // @ts-expect-error — ROOT is a country here, not the planet the block runs in
+            ctx.root.effects((country) => country.setCapital(true));
+          },
+        },
+      ],
+      // The top-level clause's rules say `root = any`, which names no scope:
+      // ROOT stays an inert sentinel there rather than lowering to something
+      // an author could navigate, exactly as an undeclared FROM does.
+      initEffect: (system, ctx) => {
+        system.setStarFlag("content_types_flag");
+        // @ts-expect-error — `root = any` declares no ROOT scope to read
+        ctx.root.effects(() => {});
+      },
+    });
+  });
+
+  it("leaves ROOT unreadable where the rules never name one", () => {
+    contentMod.decision("root_sentinel", {
+      name: "X",
+      // A decision's effect declares FROM and no ROOT, so FROM is a ref and
+      // ROOT is the sentinel — the two are independent, and neither is
+      // inferred from the other or from the block's own scope.
+      effect: (planet, ctx) => {
+        planet.setPlanetFlag("content_types_planet_only");
+        expectTypeOf(ctx.from).toEqualTypeOf<ScopeRef<"country">>();
+        expectTypeOf(ctx.root).toEqualTypeOf<UndeclaredRoot>();
+        // @ts-expect-error — nothing declares what ROOT holds here
+        ctx.root.effects(() => {});
+      },
     });
   });
 });

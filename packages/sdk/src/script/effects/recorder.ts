@@ -49,6 +49,24 @@ export function scopeRef<S extends ScopeName>(path: string): ScopeRef<S> {
 }
 
 /**
+ * SDK-internal: the value form of one generated scope link — `root.owner`.
+ *
+ * The generated links call this with the base an author wrote and their own
+ * script key; the path composition and the ref-ness rule live here rather than
+ * in a few hundred identical generated bodies.
+ *
+ * Two rules, both read off what the game writes. A relative base contributes
+ * no prefix — vanilla writes `capital_scope`, never `this.capital_scope` — and
+ * navigation preserves absoluteness rather than conferring it: `from.owner`
+ * still names the same scope wherever it is written, so it stays openable,
+ * while `this.owner` does not and must not.
+ */
+export function navigateScope<S extends ScopeName>(base: ScopeValue, key: string): ScopeValue<S> {
+  const path = base.path === "this" ? key : `${base.path}.${key}`;
+  return "effects" in base && base.path !== "this" ? scopeRef<S>(path) : scopeValue<S>(path);
+}
+
+/**
  * The block effects are being recorded into, innermost first.
  *
  * A ref opens a block relative to wherever the author is writing — `from = { }`
@@ -112,11 +130,25 @@ function activeRecording(path: string): Recording {
   return recording;
 }
 
-export function scriptCtx<Self extends ScopeName, From extends ScopeName | undefined>(): ScriptCtx<
-  Self,
-  From
-> {
-  return { self: scopeValue("this"), from: scopeRef("from") } as ScriptCtx<Self, From>;
+/**
+ * The three ambient scopes, as the fixed script paths they always are.
+ *
+ * `Root` defaults to `Self` on {@link ScriptCtx}'s terms — an event's blocks
+ * are the top level, so ROOT is the event's own scope — and a caller whose
+ * rules say otherwise names it. Which of the three a given closure may *read*
+ * is the type argument's business; the object handed over carries all three
+ * either way, since they are the same three words in the output regardless.
+ */
+export function scriptCtx<
+  Self extends ScopeName,
+  From extends ScopeName | undefined,
+  Root extends ScopeName | undefined = Self,
+>(): ScriptCtx<Self, From, Root> {
+  return {
+    self: scopeValue("this"),
+    root: scopeRef("root"),
+    from: scopeRef("from"),
+  } as ScriptCtx<Self, From, Root>;
 }
 
 /**

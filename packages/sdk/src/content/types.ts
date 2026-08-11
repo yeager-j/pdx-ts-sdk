@@ -278,11 +278,20 @@ export interface WeightBlockWithLoc<S extends ScopeName> extends WeightBlockWith
  *
  * It defaults to undeclared, and `ctx.from` is then an inert sentinel rather
  * than a ref — a block whose FROM nothing describes must not be navigated.
+ *
+ * `Root` is the same arrangement for ROOT, and defaults to undeclared for the
+ * same reason rather than to `S`: `## replace_scopes` states the whole context
+ * and clears what it omits, and `## push_scope` never states ROOT at all, so
+ * an unstated ROOT here is unknown — not "the block's own scope". Where the
+ * rules do state it the two commonly differ, which is the point:
+ * `init_effect` on a solar system initializer runs in planet scope with a
+ * country as ROOT.
  */
-export type EffectBlock<S extends ScopeName, From extends ScopeName | undefined = undefined> = (
-  scope: ScopeObjOf<S>,
-  ctx: ScriptCtx<S, From>
-) => void;
+export type EffectBlock<
+  S extends ScopeName,
+  From extends ScopeName | undefined = undefined,
+  Root extends ScopeName | undefined = undefined,
+> = (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From, Root>) => void;
 
 /**
  * A declarative field whose rules give the block a FROM: the value itself, or
@@ -298,9 +307,18 @@ export type EffectBlock<S extends ScopeName, From extends ScopeName | undefined 
  * *is* the statement that FROM means something there. The closure runs once,
  * at definition time (see `ContentAuthoring.define`), so what the definition
  * carries from then on is the ordinary value.
+ *
+ * `Root` rides along on the same closure where the rules also name a ROOT, on
+ * {@link EffectBlock}'s terms. A field that declares ROOT but no FROM still
+ * gets no closure form: the wrapper is emitted on FROM alone, so ROOT is
+ * unreachable there — a pre-existing gap, not a statement about that field.
  */
-export type WithFrom<T, S extends ScopeName, From extends ScopeName | undefined = undefined> =
-  T | ((ctx: ScriptCtx<S, From>) => T);
+export type WithFrom<
+  T,
+  S extends ScopeName,
+  From extends ScopeName | undefined = undefined,
+  Root extends ScopeName | undefined = undefined,
+> = T | ((ctx: ScriptCtx<S, From, Root>) => T);
 
 /**
  * A conditionally selected description block shared by manually authored

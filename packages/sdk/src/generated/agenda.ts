@@ -22,10 +22,10 @@ export interface AgendaFields {
   potential?: Trigger<"country">;
   allow?: Trigger<"country">;
   initialEffectCustomLoc?: string;
-  initEffect?: EffectBlock<"country">;
+  initEffect?: EffectBlock<"country", undefined, "country">;
   modifier?: ModifierClosure<"country">;
   finishModifier?: StaticModifierRef | string;
-  effect?: EffectBlock<"country">;
+  effect?: EffectBlock<"country", undefined, "country">;
   aiWeight?: WeightBlock<"country">;
 }
 

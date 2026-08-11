@@ -22,7 +22,7 @@ import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
 import { structuralSpliceOf } from "./emit/fields.ts";
-import { classifyLinks, emitTriggerLinks } from "./emit/links.ts";
+import { classifyLinks, emitScopeLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
 import type { SkippedRule } from "./emit/shape.ts";
@@ -164,7 +164,7 @@ async function main(): Promise<void> {
   const classifiedLinks = classifyLinks(emitter, dumpLinks, index);
   // The hand exports of src/script/triggers.ts share the links file's export
   // namespace through its `export *`, so they count as taken names too.
-  const triggerLinks = emitTriggerLinks(
+  const scopeLinks = emitScopeLinks(
     classifiedLinks,
     index,
     new Set([...triggers.names, "trigger", "and", "or", "not", "nand", "nor", "target"])
@@ -534,9 +534,11 @@ async function main(): Promise<void> {
     "links.ts",
     header(commit, ["links.cwt", "script-docs/v4.4.1/scopes.log"]) +
       'import { block } from "@pdx-ts/pdxscript";\n' +
+      'import { navigateScope } from "../script/effects/recorder.ts";\n' +
+      'import type { ScopeRef, ScopeValue } from "../script/effects/types.ts";\n' +
       'import { trigger, type Trigger } from "../script/trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
-      triggerLinks.code
+      scopeLinks.code
   );
   await write(
     "effects.ts",
@@ -607,7 +609,7 @@ async function main(): Promise<void> {
       ` | value sets emitted: ${emitter.usedValueSets.size}`
   );
   console.log(
-    `scope links: ${triggerLinks.emitted} trigger fns, ${effects.linkEmitted} effect methods` +
+    `scope links: ${scopeLinks.emitted} trigger/value fns, ${effects.linkEmitted} effect methods` +
       ` emitted of ${rules.links.size} declared`
   );
   console.log(

@@ -112,7 +112,7 @@ export interface PlanetInitializerFields {
   depositBlockers?: "none";
   satelliteNamingPolicy?: SatelliteNamingPolicy;
   /** The scope will be a planet scope, with prev being the system. prevprev will be the system that triggered this system's initialization ( if any ). Root will be the fallen empire. */
-  initEffect?: EffectBlock<"planet">;
+  initEffect?: EffectBlock<"planet", undefined, "country">;
   planet?: PlanetInitializerFields[];
   moon?: MoonInitializerFields[];
 }

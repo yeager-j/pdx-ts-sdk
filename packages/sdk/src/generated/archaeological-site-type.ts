@@ -106,19 +106,19 @@ export interface ArchaeologicalSiteTypeFields {
   /** Should match number of defined stages below. */
   stages: number;
   /** Trigger checking if a scope with this=fleet,from=archaeological site is potential to excavate (this will add/remove this option without giving the player a reason). */
-  potential?: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site">;
+  potential?: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site", "fleet">;
   /** Trigger checking if a scope with this=fleet,from=archaeological site is allowed to excavate (this will toggle enable/disabled mode on buttons etc). */
-  allow: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site">;
+  allow: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site", "fleet">;
   /** Trigger that checks if a scope with this=country can see the from=archaeological site */
-  visible: WithFrom<Trigger<"country">, "country", "archaeological_site">;
+  visible: WithFrom<Trigger<"country">, "country", "archaeological_site", "country">;
   /** Stage definition, order dependent. */
   stage?: ArchaeologicalSiteTypeStage[];
   /** Effect to fire when a roll fails, with scope this=fleet, from=archaeological site. */
-  onRollFailed: EffectBlock<"fleet", "archaeological_site">;
+  onRollFailed: EffectBlock<"fleet", "archaeological_site", "fleet">;
   /** Effect to fire upon site creation, with scope this=archaeological site. */
-  onCreate?: EffectBlock<"archaeological_site">;
+  onCreate?: EffectBlock<"archaeological_site", undefined, "archaeological_site">;
   /** Effect to fire upon site visible, with scope this=country, from=archaeological site. */
-  onVisible?: EffectBlock<"country", "archaeological_site">;
+  onVisible?: EffectBlock<"country", "archaeological_site", "country">;
 }
 
 export interface ArchaeologicalSiteTypeDef<

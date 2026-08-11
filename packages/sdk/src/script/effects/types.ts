@@ -81,6 +81,11 @@ export interface UndeclaredFrom {
   readonly hint: "Nothing declares what FROM holds here; read it only where the rules name a FROM scope.";
 }
 
+export interface UndeclaredRoot {
+  readonly kind: "undeclared-root";
+  readonly hint: "Nothing declares what ROOT holds here; read it only where the rules name a ROOT scope.";
+}
+
 /**
  * The ambient scopes a script block runs in, handed to every closure that
  * records effects: an event's `immediate`/`after`/option effects, and a
@@ -91,14 +96,44 @@ export interface UndeclaredFrom {
  * `from` is the block's own FROM, which the game supplies and the rules name —
  * `on_roll_failed` runs in fleet scope with the archaeological site as FROM, so
  * `ctx.from.effects((site) => ...)` opens the site.
+ *
+ * `Root` defaults to `Self` because that is true wherever a script block *is*
+ * the top level — an event's `immediate` runs in the event's own scope, and
+ * ROOT is that scope. A content field is where the two come apart, so its
+ * generated type states ROOT explicitly and defaults it to undeclared instead;
+ * see {@link EffectBlock}.
  */
-export interface ScriptCtx<Self extends ScopeName, From extends ScopeName | undefined> {
+export interface ScriptCtx<
+  Self extends ScopeName,
+  From extends ScopeName | undefined,
+  Root extends ScopeName | undefined = Self,
+> {
   /**
    * The scope this block runs in, as a value — the FROM witness at a fire
    * site. Not openable: `this` is relative to the block it is written in, so
    * inside a scope transition it would name that scope rather than this one.
    */
   readonly self: ScopeValue<Self>;
+  /**
+   * ROOT — the scope the script's top level runs in, where something declares
+   * what that is. Everywhere else an inert sentinel, exactly like `from`.
+   *
+   * Openable where `self` is not, and for the reason {@link ScopeRef} draws
+   * the line on: `root` resolves to the same scope wherever it is written, so
+   * nesting inside `every_owned_planet = { ... }` leaves it naming the block's
+   * top-level scope while `this` has become the planet. Navigating from it is
+   * what the game script does constantly — `root.owner`, `root.capital_scope`
+   * — and that is a value form, not a block, which is why the generated links
+   * take a scope value as well as a condition.
+   *
+   * Not simply `Self`: a content field's `## replace_scopes` sets THIS and
+   * ROOT independently, and often to different scopes. A solar system
+   * initializer's `init_effect` runs in planet scope with the fallen empire's
+   * country as ROOT (`solar_system_initializers.cwt`), so typing ROOT as the
+   * block's own scope would both admit planet effects the game rejects and
+   * reject the country operations that are the whole point of reaching for it.
+   */
+  readonly root: [Root] extends [ScopeName] ? ScopeRef<Root> : UndeclaredRoot;
   /**
    * FROM, where something declares what it holds — an event's `from:` field, a
    * content field's `replace_scopes` in the rules. Everywhere else this is an
