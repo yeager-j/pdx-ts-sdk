@@ -220,6 +220,35 @@ describe("parity with the deleted class builder", () => {
     );
     expect(pure.warnings).toEqual([]);
   });
+
+  it("snapshots every later-consumed part of the compiled mod", () => {
+    expect(Object.isFrozen(pure)).toBe(true);
+    expect(Object.isFrozen(pure.warnings)).toBe(true);
+    expect(Object.isFrozen(pure.contentFiles)).toBe(true);
+    expect(Object.isFrozen(pure.contentFiles[0])).toBe(true);
+    expect(Object.isFrozen(pure.contentFiles[0]!.entries)).toBe(true);
+    expect(Object.isFrozen(pure.eventFiles)).toBe(true);
+    expect(Object.isFrozen(pure.eventFiles[0])).toBe(true);
+    expect(Object.isFrozen(pure.eventFiles[0]!.entries)).toBe(true);
+    expect(Object.isFrozen(pure.events)).toBe(true);
+    expect(Object.isFrozen(pure.events[0]!)).toBe(true);
+    expect(Object.isFrozen(pure.events[0]!.entry)).toBe(true);
+    expect(Object.isFrozen(pure.events[0]!.refs)).toBe(true);
+    expect(Object.isFrozen(pure.events[0]!.locEntries)).toBe(true);
+    expect(Object.isFrozen(pure.events[0]!.locEntries[0]!)).toBe(true);
+    expect(Object.isFrozen(pure.events[0]!.warnings)).toBe(true);
+    expect(Object.isFrozen(pure.onActions)).toBe(true);
+    expect(Object.isFrozen(pure.localizationFiles)).toBe(true);
+    expect(Object.isFrozen(pure.localizationFiles[0])).toBe(true);
+    expect(Object.isFrozen(pure.patchPlans)).toBe(true);
+    expect(Object.isFrozen(pure.patchPlans[0])).toBe(true);
+    expect(Object.isFrozen(pure.patchPlans[0]?.assertions)).toBe(true);
+    expect(Object.isFrozen(pure.patchPlans[0]?.assertions[0]?.beats)).toBe(true);
+    expect(() => (pure.shipOfSizeLimits as Set<string>).add("mutated_limit")).toThrow();
+    expect(() => (pure.vanillaPaths as Set<string>).add("mutated/path.txt")).toThrow();
+    expect([...pure.shipOfSizeLimits]).not.toContain("mutated_limit");
+    expect(pure.vanillaPaths?.has("mutated/path.txt")).toBe(false);
+  });
 });
 
 describe("composability", () => {
@@ -286,6 +315,27 @@ describe("assembly-time validation", () => {
 });
 
 describe("event namespaces", () => {
+  it("rejects event numbers outside the non-negative safe-integer range", () => {
+    for (const id of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 53]) {
+      expect(
+        () =>
+          namespaceInternal("pp_mod_invalid").defineCountryEvent({
+            id,
+            isTriggeredOnly: true,
+            hideWindow: true,
+          }),
+        String(id)
+      ).toThrow(/non-negative safe integer/);
+    }
+    expect(
+      namespaceInternal("pp_mod_valid").defineCountryEvent({
+        id: 0,
+        isTriggeredOnly: true,
+        hideWindow: true,
+      }).id
+    ).toBe("pp_mod_valid.0");
+  });
+
   it("rejects a duplicate id at the definition site, with its namespace", () => {
     const events = namespaceInternal("pp_mod_dup");
     events.defineCountryEvent({ id: 1, isTriggeredOnly: true, hideWindow: true });
@@ -831,9 +881,10 @@ describe("content reference integrity", () => {
       titan,
       addShipOfSizeLimitsInternal([titan, "third_party_limit"]),
     ]);
-    expect(buildInternal(CONFIG, [limits]).shipOfSizeLimits).toEqual(
-      new Set(["pp_mod_limit_titan", "third_party_limit"])
-    );
+    expect([...buildInternal(CONFIG, [limits]).shipOfSizeLimits]).toEqual([
+      "pp_mod_limit_titan",
+      "third_party_limit",
+    ]);
 
     const dangling = createFeatureInternal(undefined, [
       addShipOfSizeLimitsInternal(["pp_mod_limit_never_defined"]),

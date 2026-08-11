@@ -2,6 +2,7 @@
 import {
   block,
   container,
+  isScalar,
   kv,
   quoted,
   scalar,
@@ -249,16 +250,10 @@ function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segme
  */
 function isPassthrough(value: unknown): value is PdxItem {
   const kind = (value as { readonly kind?: unknown } | null)?.kind;
-  return (
-    kind === "entry" ||
-    kind === "container" ||
-    kind === "param" ||
-    kind === "str" ||
-    kind === "num" ||
-    kind === "bool" ||
-    kind === "var" ||
-    kind === "math"
-  );
+  if (kind === "entry" || kind === "container" || kind === "param") {
+    return true;
+  }
+  return typeof value === "object" && value !== null && isScalar(value as PdxItem);
 }
 
 function passthroughEntry(value: unknown): PdxEntry | undefined {

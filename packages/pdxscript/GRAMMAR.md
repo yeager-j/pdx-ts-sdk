@@ -85,8 +85,11 @@ the same — parse succeeds, and each repair is recorded as a diagnostic
 - **Unclosed containers at EOF** (Stellaris ships one:
   `scripted_loc_ruloc.txt` is missing its final `}`): auto-closed, reported
   with the opening line.
-- **Operator-less entry at top level** (Stellaris ships one:
-  `named_colors/01_trait_colors.txt` line 65, `trait_bg_active_glow {`):
+- **Operator-less entry on one line** (Stellaris ships these at top level and nested;
+  nested repair requires an entry-shaped body so `rgb { 1 2 3 }` stays a
+  bare scalar plus scalar container:
+  `named_colors/01_trait_colors.txt` line 65, `trait_bg_active_glow {`, and
+  `interface/dlc_icons.gfx` line 504, `spriteType {`):
   read as `foo = { ... }`.
 
 Hard errors (`PdxSyntaxError`, always `file:line`): unterminated quote,
@@ -124,7 +127,7 @@ inline; repaired input re-emits in repaired form.
   that cannot render bare throws at serialization rather than emit wrong
   output. Not observed in Stellaris `common/`.
 - **`?=` and `==`**: not Stellaris operators (CK3/Vic3/Imperator territory).
-  Both lex as errors today; adding them is a one-line lexer change when a
+  Both are hard errors today; adding them is a lexer and AST change when a
   sibling game is in scope.
 - **Save-file constructs** (`EU4txt` magic, container-as-key templates):
   out of scope — this package parses game-definition files. (Parameter

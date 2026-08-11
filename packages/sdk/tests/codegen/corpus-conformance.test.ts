@@ -1,6 +1,7 @@
 /**
- * The emitted interfaces, measured against what the game actually writes —
- * hermetically, against the committed fixture under `tests/fixtures/corpus/`.
+ * The emitted interfaces, measured against the committed vanilla-only fixture
+ * under `tests/fixtures/corpus/`. This is an observed lower bound, not proof of
+ * complete authorability.
  *
  * The install-gated version of this gate skipped entirely without a local
  * game, so CI never ran it, and it reported field-presence coverage instead of
@@ -13,10 +14,11 @@
  *
  * Three kinds of assertion:
  *
- * - **Presence floor.** A field the game writes in `PRESENCE_FLOOR`+
- *   definitions must be authorable, unless `CONTENT_DECLINED_FIELDS` declines
- *   it or `corpus-gaps.ts` acknowledges it. Near-floor fields are reported,
- *   not failed, so ratcheting the floor down is an informed move.
+ * - **Presence floor.** A field the vanilla fixture observes in
+ *   `PRESENCE_FLOOR`+ definitions must be authorable, unless
+ *   `CONTENT_DECLINED_FIELDS` declines it or `corpus-gaps.ts` acknowledges it.
+ *   Near-floor fields are reported, not failed, so the green gate makes no
+ *   completeness claim below the ratchet or behind an explicit waiver.
  * - **Shape conformance.** Every lowered type measured against the values
  *   behind it. `form` and `scope` mismatches are asserted against
  *   {@link ACKNOWLEDGED}, because they name a field the SDK emits and no
@@ -380,11 +382,10 @@ describe("corpus conformance", () => {
     expect(rows.length).toBeGreaterThan(0);
   });
 
-  it("keeps every heavily written field authorable", () => {
-    // The presence floor. Below it the corpus stays a lower bound that proves
-    // nothing about absence; at or above it, absence is a hole in the SDK's
-    // "a mod author does not run out of API" promise, and it fails by name
-    // instead of sitting in a report nobody is obliged to read.
+  it("keeps every heavily observed vanilla field authorable or acknowledged", () => {
+    // The presence floor is a ratchet over observed vanilla data. Below it the
+    // corpus proves nothing about absence; at or above it, an unauthorable
+    // field must fail by name or carry an explicit acknowledged-gap row.
     const acknowledged = new Set(ACKNOWLEDGED_GAPS.map((gap) => `${gap.registry}.${gap.field}`));
     const failures = reports.flatMap((report) =>
       unauthorable(report)

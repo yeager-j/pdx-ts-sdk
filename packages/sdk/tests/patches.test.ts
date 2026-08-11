@@ -528,10 +528,16 @@ describe("patching a registry whose replacement rule is assumed", () => {
   });
 
   it("states the judgment in the emitted header rather than laundering it", () => {
-    const content = megastructureMod().patchPlans[0]!.content;
+    const compiled = megastructureMod();
+    const content = compiled.patchPlans[0]!.content;
     expect(content).toContain("# ASSUMED field-replacement rule: Jackson, 2026-07-31");
     // The duplicate-winner cell *is* verified (r8), so only one header line.
     expect(content).not.toContain("# ASSUMED duplicate-winner rule");
+    expect(compiled.warnings).toContainEqual({
+      code: "assumed-patch-rule",
+      message: expect.stringContaining('"megastructure_pp_array_0"'),
+    });
+    expect(Object.isFrozen(compiled.warnings[0])).toBe(true);
   });
 
   it("re-declares the file-local variable the patched body still references", () => {

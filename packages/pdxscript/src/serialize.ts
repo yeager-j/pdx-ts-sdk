@@ -33,7 +33,7 @@ function hasUnescapedQuote(value: string): boolean {
   return false;
 }
 
-function scalarText(scalar: PdxScalar): string {
+export function scalarText(scalar: PdxScalar): string {
   switch (scalar.kind) {
     case "bool":
       return scalar.value ? "yes" : "no";
@@ -65,8 +65,14 @@ function scalarText(scalar: PdxScalar): string {
   }
 }
 
-function isScalar(item: PdxItem): item is PdxScalar {
-  return item.kind !== "entry" && item.kind !== "container" && item.kind !== "param";
+export function isScalar(item: PdxItem): item is PdxScalar {
+  return (
+    item.kind === "str" ||
+    item.kind === "num" ||
+    item.kind === "bool" ||
+    item.kind === "var" ||
+    item.kind === "math"
+  );
 }
 
 function containerText(container: PdxContainer, depth: number): string {

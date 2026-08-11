@@ -3,7 +3,7 @@
 // From: events/events.cwt
 
 import { assertNamespace } from "../authoring/feature.ts";
-import { buildEvent } from "../events/lower.ts";
+import { assertEventNumber, buildEvent } from "../events/lower.ts";
 import type { EventDef, EventItem, EventRef } from "../events/types.ts";
 import { EVENT_KINDS, type EventKindKey } from "./events.ts";
 import type { ScopeName } from "./scopes.ts";
@@ -204,6 +204,7 @@ export function namespace(ns: string): EventNamespace {
     <From extends ScopeName | undefined = undefined>(
       def: EventDef<S, From>
     ): EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]> => {
+      assertEventNumber(def.id);
       if (used.has(def.id)) {
         throw new Error(`Duplicate event id "${ns}.${def.id}"`);
       }

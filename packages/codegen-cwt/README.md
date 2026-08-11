@@ -78,7 +78,8 @@ vendored rules: the cwt parser, the two-source reconciliation, and individual
 emitters. The committed _output_ is gated elsewhere, with the artifact it
 belongs to: `packages/sdk/tests/codegen/` holds the generated-text snapshot
 tests and the corpus-conformance suite that measures every emitted interface
-against every definition a real installed game ships. `npm run codegen:check`
+against the committed vanilla-install fixture as an observed lower bound.
+`npm run codegen:check`
 is the CI-style drift gate for the whole pipeline.
 
 Adding a content registry has a documented procedure — manifest row, report

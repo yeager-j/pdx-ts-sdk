@@ -301,8 +301,10 @@ substitutes those into a block rather than the call site itself.
 `Trigger<"country">` because its body evaluates `is_country_type` and nothing
 else, and the rules say where that is legal. The inference only reads what the
 rules state; a body it cannot read widens to every scope rather than guessing.
-`packages/codegen-vanilla/tests/callsites.test.ts` measures the inference
-against every vanilla call site and fails on any contradiction.
+`packages/codegen-vanilla/tests/callsites.test.ts` checks 4,860 direct call
+sites across 9,856 known-scope events, reaching 894 of 3,275 scripted
+definitions (27%), and fails on any contradiction in that structural slice.
+Clause-bearing calls outside the event-body walk require manual review.
 
 Effects go through `scope.run(...)` rather than becoming scope methods: the
 recorder's sink is closed over, which prevents arbitrary entries reaching the
@@ -359,8 +361,9 @@ recorded judgment rather than a finding, so every win it backs reports
 `confidence: "assumed"` and the emitted patch file states the judgment in its
 own header.
 
-The patch's emitted filename is computed from the parsed load-order enumeration
-so it provably byte-sorts after every competing file. Compilation fails when no
+The patch's emitted filename is computed from the vanilla-plus-current-mod
+load-order enumeration, so it provably byte-sorts after every file in that
+bounded set; it makes no claim about third-party mods. Compilation fails when no
 winning name exists, the registry override rule is unverified, or the loaded
 install version does not match the identifier package pin. Numbers retain
 value-plus-provenance (`cost` may be `@tier3cost1`); untouched references
@@ -458,9 +461,9 @@ Evidence comes in four kinds, and a new registry should add all four:
   namespace, and localization bytes across restructures.
 - **Type-level tests** (`tests/*.test-d.ts`): literal-id preservation, scope
   safety, and cross-registry reference rejection.
-- **Corpus conformance** (`tests/codegen/corpus-conformance.test.ts`): measures
-  every generated interface against the definitions a local game installation
-  ships, for presence and shape.
+- **Corpus conformance** (`tests/codegen/corpus-conformance.test.ts`): records
+  a vanilla-only observed lower bound for presence and shape. Its floor catches
+  heavily written unauthorable fields; it does not prove complete authorability.
 - **Install-gated suites** use `describe.skipIf(installPath === undefined)`:
   hermetic gates run everywhere; corpus conformance, patch calibration, and id
   package drift run where a Stellaris install exists.

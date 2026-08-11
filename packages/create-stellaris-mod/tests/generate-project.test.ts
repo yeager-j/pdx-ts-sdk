@@ -69,7 +69,7 @@ function writeProject(dir: string, shape: ProjectShape = {}): string {
           private: true,
           type: "module",
           imports: { "#mod": "./src/mod.ts" },
-          devDependencies: { "@pdx-ts/sdk": shape.sdkSpecifier ?? "^0.2.0" },
+          devDependencies: { "@pdx-ts/sdk": shape.sdkSpecifier ?? "0.2.0" },
         };
   writeFileSync(path.join(dir, "package.json"), `${JSON.stringify(packageJson, null, 2)}\n`);
   return dir;

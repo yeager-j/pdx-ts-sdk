@@ -215,9 +215,9 @@ describe("the Project Manifest", () => {
 });
 
 describe("dependency resolution", () => {
-  it("uses registry ranges by default", () => {
+  it("uses the exact verified SDK version by default", () => {
     const { dependencies } = manifest(plan());
-    expect(dependencies!["@pdx-ts/sdk"]).toMatch(/^\^/);
+    expect(dependencies!["@pdx-ts/sdk"]).toBe("0.2.0");
     expect(dependencies!["@pdx-ts/pdxscript"]).toBeUndefined();
   });
 
@@ -231,8 +231,17 @@ describe("dependency resolution", () => {
   });
 
   it("pins the identifier package to the newest revision of the detected build", () => {
-    const { dependencies } = manifest(plan({ gameVersion: "4.4.6" }));
+    const files = plan({ gameVersion: "4.4.6" });
+    const { dependencies } = manifest(files);
     expect(dependencies!["@pdx-ts/stellaris-ids"]).toBe(">=4.4.6-0 <4.4.6");
+    expect(files.get("README.md")).toContain("`>=4.4.6-0 <4.4.6`");
+    expect(files.get("README.md")).toContain("`-r.<n>` revision");
+  });
+
+  it("shows the revision range form when no install was detected", () => {
+    expect(plan({ installPath: undefined, gameVersion: undefined }).get("README.md")).toContain(
+      'npm install "@pdx-ts/stellaris-ids@>=<your game version>-0 <<your game version>"'
+    );
   });
 
   it("resolves that range to the newest revision, and never to a bare build", () => {

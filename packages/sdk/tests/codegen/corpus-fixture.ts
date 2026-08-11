@@ -72,8 +72,9 @@ export const FIXTURE_DIR = path.join(ROOT, FIXTURE_PATH);
 export const META_FILE = "meta.json";
 
 /**
- * The presence floor: a field the game writes in at least this many
- * definitions must be authorable, or the hermetic gate fails naming it.
+ * The presence floor: once the vanilla fixture observes a field in at least
+ * this many definitions, the hermetic ratchet requires it to be authorable or
+ * explicitly acknowledged.
  *
  * 25 is an initial, deliberately conservative floor — high enough that every
  * field over it is unarguably load-bearing game surface, low enough to have

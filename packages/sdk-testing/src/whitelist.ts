@@ -11,7 +11,7 @@
  * iterators (fixture relations), and scope links (navigation).
  */
 
-import type { PdxEntry, PdxItem, PdxScalar } from "@pdx-ts/pdxscript";
+import { scalarText, type PdxEntry, type PdxItem, type PdxScalar } from "@pdx-ts/pdxscript";
 
 import {
   archaeologicalSiteState,
@@ -62,26 +62,11 @@ function scalarOf(entry: PdxEntry): PdxScalar {
   return entry.value;
 }
 
-function renderScalar(value: PdxScalar): string {
-  switch (value.kind) {
-    case "bool":
-      return value.value ? "yes" : "no";
-    case "num":
-      return String(value.value);
-    case "str":
-      return value.value;
-    case "var":
-      return value.name;
-    case "math":
-      return value.source;
-  }
-}
-
 function stringArg(entry: PdxEntry): string {
   const value = scalarOf(entry);
   if (value.kind !== "str") {
     throw new InterpreterError(
-      `${entry.key}: expected a name, got ${renderScalar(value)}. ${coverageSummary()}`
+      `${entry.key}: expected a name, got ${scalarText(value)}. ${coverageSummary()}`
     );
   }
   return value.value;
@@ -94,7 +79,7 @@ function stringArg(entry: PdxEntry): string {
 function numberArg(entry: PdxEntry): number {
   const value = scalarOf(entry);
   if (value.kind !== "num") {
-    const rendered = renderScalar(value);
+    const rendered = scalarText(value);
     throw new InterpreterError(
       `${entry.key} ${entry.op} ${rendered}: expected a number — the numeric v1 line evaluates ` +
         `literals and fixture-stored numbers only; script values and variables are out. ` +
@@ -108,7 +93,7 @@ function boolArg(entry: PdxEntry): boolean {
   const value = scalarOf(entry);
   if (value.kind !== "bool") {
     throw new InterpreterError(
-      `${entry.key}: expected yes/no, got ${renderScalar(value)}. ${coverageSummary()}`
+      `${entry.key}: expected yes/no, got ${scalarText(value)}. ${coverageSummary()}`
     );
   }
   return value.value;

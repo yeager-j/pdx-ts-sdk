@@ -11,7 +11,7 @@
  * because every generated leaf trigger records exactly one entry.
  */
 
-import type { PdxEntry, PdxScalar } from "@pdx-ts/pdxscript";
+import { scalarText, type PdxEntry } from "@pdx-ts/pdxscript";
 import {
   EVENT_KINDS,
   isEffectKey,
@@ -81,26 +81,11 @@ export type Explanation =
       readonly children: readonly Explanation[];
     };
 
-function renderScalar(scalar: PdxScalar): string {
-  switch (scalar.kind) {
-    case "bool":
-      return scalar.value ? "yes" : "no";
-    case "num":
-      return String(scalar.value);
-    case "str":
-      return scalar.value;
-    case "var":
-      return scalar.name;
-    case "math":
-      return scalar.source;
-  }
-}
-
 function renderCondition(entry: PdxEntry): string {
   if (entry.value.kind === "container") {
     return `${entry.key} ${entry.op} { ... }`;
   }
-  return `${entry.key} ${entry.op} ${renderScalar(entry.value)}`;
+  return `${entry.key} ${entry.op} ${scalarText(entry.value)}`;
 }
 
 /** Collects every key in a trigger tree the whitelist does not implement. */

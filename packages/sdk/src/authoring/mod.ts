@@ -14,7 +14,7 @@ import {
   situationTypeCapabilityMethods,
   type SituationTypeCapabilityMethods,
 } from "../content/situations.ts";
-import { buildEvent } from "../events/lower.ts";
+import { assertEventNumber, buildEvent } from "../events/lower.ts";
 import { on } from "../events/on-actions.ts";
 import type { EventDef } from "../events/types.ts";
 import {
@@ -199,6 +199,7 @@ function makeEventHandle<
   subtype: Kind,
   from: From
 ): CapabilityEventHandle<P, N, Id, S, From, Kind> {
+  assertEventNumber(id);
   const fullId = `${namespace}.${id}` as MintedEventId<P, N, Id>;
   const define = (
     def: Omit<EventDef<S, From>, "id" | "from">

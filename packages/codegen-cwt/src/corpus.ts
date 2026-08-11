@@ -1,5 +1,5 @@
 /**
- * What the shipped game and installed mods actually write, per registry.
+ * What the committed vanilla-game fixture observes, per registry.
  *
  * The curated field allowlists asked a reviewer to vouch for fields the
  * evidence already settles: `component_template.size` is `enum[weapon_slot_size]`,
@@ -11,9 +11,10 @@
  * the content emitter the same standard: parse every real definition and
  * measure the emitted interface against it.
  *
- * The corpus is a LOWER bound. A field vanilla never writes may still be legal,
- * so absence is reported, never failed. What it does prove is the converse — a
- * field the SDK emits that nothing in the corpus writes is a misreading.
+ * The corpus is an observed LOWER bound, not evidence of completeness. A field
+ * vanilla never writes may still be legal, so absence is reported, never
+ * failed. A field vanilla does write in a shape authors cannot express is
+ * concrete evidence of a lowering gap.
  *
  * Two questions, not one. {@link conformance} asks whether a field is *present*
  * in the emitted interface; {@link shapeConformance} asks whether its lowered
@@ -24,7 +25,13 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { parse, type PdxContainer, type PdxValue } from "@pdx-ts/pdxscript";
+import {
+  isScalar,
+  parse,
+  scalarText as renderScalarText,
+  type PdxContainer,
+  type PdxValue,
+} from "@pdx-ts/pdxscript";
 
 import type { EmittedField } from "./emit/fields.ts";
 import type { RuleScopes } from "./scope-facts.ts";
@@ -501,18 +508,10 @@ function sameKeys(left: ReadonlySet<string>, right: ReadonlySet<string>): boolea
 
 /** One scalar as the game spells it, so a `bool` reads back as `yes`/`no`. */
 function scalarText(value: PdxValue): string | null {
-  switch (value.kind) {
-    case "str":
-      return value.value;
-    case "num":
-      return String(value.value);
-    case "bool":
-      return value.value ? "yes" : "no";
-    // A `@variable` or an inline `@[a + b]` stands for a value the file never
-    // writes literally, so it says nothing about which scalars are legal.
-    default:
-      return null;
+  if (!isScalar(value) || value.kind === "var" || value.kind === "math") {
+    return null;
   }
+  return renderScalarText(value);
 }
 
 /**

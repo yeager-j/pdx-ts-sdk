@@ -5,6 +5,7 @@ export interface ModWarning {
     | "loc-quote-replaced"
     | "unstable-desc-key"
     | "loc-key-looks-like-text"
+    | "assumed-patch-rule"
     | "unchecked-vanilla-ids";
   readonly message: string;
 }
