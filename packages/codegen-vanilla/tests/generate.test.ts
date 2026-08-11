@@ -392,6 +392,28 @@ describe("versioned build facts", () => {
       "Stellaris 4.5.0 is incompatible with script docs 4.4.1"
     );
   });
+
+  it("changes the install identity when an ID registry input changes", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "pdx-build-facts-"));
+    const technologies = path.join(root, "common/technology");
+    const source = path.join(technologies, "technologies.txt");
+    try {
+      mkdirSync(technologies, { recursive: true });
+      writeFileSync(source, "tech_first = {}\n");
+      const first = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+
+      writeFileSync(source, "tech_second = {}\n");
+      const second = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+
+      const technologyIds = (facts: typeof first) =>
+        facts.registries.find(({ spec }) => spec.registry === "technology")?.read.ids;
+      expect(technologyIds(first)).toEqual(["tech_first"]);
+      expect(technologyIds(second)).toEqual(["tech_second"]);
+      expect(first.evidence.install.sha256).not.toBe(second.evidence.install.sha256);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("inferred scopes", () => {

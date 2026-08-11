@@ -7,9 +7,11 @@ import { loadScopeFacts } from "@pdx-ts/codegen-cwt/scope-facts";
 
 import { compareIdentifiers } from "./emit.ts";
 import { inferScopes, type InferredScope, type ScriptedKind } from "./infer-scopes.ts";
-import { VANILLA_MANIFEST, type VanillaScriptedRow } from "./manifest.ts";
+import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./manifest.ts";
 import { readVanillaEvents, type VanillaEventsRead } from "./read-events.ts";
+import { readRegistryIds, type RegistryIds } from "./read-ids.ts";
 import { readScriptedDefinitions, type ScriptedRegistry } from "./read-scripted.ts";
+import { resolveRegistries, type RegistrySpec } from "./resolve.ts";
 
 export interface VanillaBuildFactsOptions {
   readonly installRoot: string;
@@ -36,8 +38,14 @@ export interface VanillaBuildFacts {
   };
   readonly eventKinds: readonly EventKindSpec[];
   readonly events: VanillaEventsRead;
+  readonly registries: readonly RegistryBuildFacts[];
   readonly scripted: Readonly<Record<ScriptedKind, ScriptedRegistry>>;
   readonly inferredScopes: Readonly<Record<ScriptedKind, readonly InferredScope[]>>;
+}
+
+export interface RegistryBuildFacts {
+  readonly spec: RegistrySpec;
+  readonly read: RegistryIds;
 }
 
 function versionParts(version: string): readonly [string, string, string] | null {
@@ -69,7 +77,7 @@ function assertCompatible(gameVersion: string, evidenceVersion: string): void {
   }
 }
 
-function filesUnder(root: string): string[] {
+function filesUnder(root: string, recurse: boolean): string[] {
   try {
     if (!statSync(root).isDirectory()) {
       return [root];
@@ -80,23 +88,36 @@ function filesUnder(root: string): string[] {
   const names = readdirSync(root).sort(compareIdentifiers);
   return names.flatMap((name) => {
     const full = path.join(root, name);
-    return statSync(full).isDirectory() ? filesUnder(full) : [full];
+    return statSync(full).isDirectory() ? (recurse ? filesUnder(full, recurse) : []) : [full];
   });
 }
 
-function evidenceHash(
-  root: string,
-  relativeRoots: readonly string[],
-  includes: (relative: string) => boolean
-): string {
+interface EvidenceInput {
+  readonly root: string;
+  readonly extension?: string;
+  readonly recurse: boolean;
+}
+
+function evidenceHash(root: string, inputs: readonly EvidenceInput[]): string {
   const hash = createHash("sha256");
-  for (const relativeRoot of [...relativeRoots].sort(compareIdentifiers)) {
-    const absolute = path.join(root, relativeRoot);
-    const files = filesUnder(absolute).filter((file) =>
-      includes(path.relative(root, file).split(path.sep).join("/"))
+  const unique = new Map(
+    inputs.map((input) => [
+      `${input.root}\0${input.extension ?? ""}\0${input.recurse ? "1" : "0"}`,
+      input,
+    ])
+  );
+  for (const input of [...unique.values()].sort(
+    (left, right) =>
+      compareIdentifiers(left.root, right.root) ||
+      compareIdentifiers(left.extension ?? "", right.extension ?? "") ||
+      Number(left.recurse) - Number(right.recurse)
+  )) {
+    const absolute = path.join(root, input.root);
+    const files = filesUnder(absolute, input.recurse).filter(
+      (file) => input.extension === undefined || file.endsWith(input.extension)
     );
     if (files.length === 0) {
-      hash.update(`missing\0${relativeRoot}\0`);
+      hash.update(`missing\0${input.root}\0${input.extension ?? ""}\0`);
       continue;
     }
     for (const file of files) {
@@ -127,6 +148,7 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
   const scriptedRows = VANILLA_MANIFEST.filter(
     (row): row is VanillaScriptedRow => row.kind === "scripted"
   );
+  const idRows = VANILLA_MANIFEST.filter((row): row is VanillaIdRow => row.kind === "ids");
   const rowFor = (registry: string): VanillaScriptedRow => {
     const row = scriptedRows.find((one) => one.registry === registry);
     if (row === undefined) {
@@ -141,6 +163,10 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
 
   const kinds = eventKinds(loadRules(options.configRoot));
   const events = readVanillaEvents(options.installRoot, options.configRoot, kinds);
+  const registries = resolveRegistries(options.configRoot, idRows).map((spec) => ({
+    spec,
+    read: readRegistryIds(options.installRoot, spec),
+  }));
   const scripted = {
     trigger: read("scripted_trigger"),
     effect: read("scripted_effect"),
@@ -149,32 +175,39 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
     trigger: scripted.trigger.definitions,
     effect: scripted.effect.definitions,
   });
-  const installEvidenceRoots = ["events", ...scriptedRows.map((row) => row.dir)];
+  const installEvidenceInputs: EvidenceInput[] = [
+    { root: events.path, extension: events.extension, recurse: true },
+    ...scriptedRows.map((row) => ({ root: row.dir, extension: ".txt", recurse: true })),
+    ...registries.map(({ spec }) => ({
+      root: spec.path,
+      extension: spec.extension,
+      recurse: !spec.pathStrict,
+    })),
+  ];
 
   return {
     formatVersion: 1,
     gameVersion: options.gameVersion,
     evidence: {
       install: {
-        sha256: evidenceHash(options.installRoot, installEvidenceRoots, (file) =>
-          file.endsWith(".txt")
-        ),
+        sha256: evidenceHash(options.installRoot, installEvidenceInputs),
       },
       cwt: {
         version: cwtVersion(options.configRoot),
-        sha256: evidenceHash(options.configRoot, ["."], (file) => file.endsWith(".cwt")),
+        sha256: evidenceHash(options.configRoot, [{ root: ".", extension: ".cwt", recurse: true }]),
       },
       docs: {
         version: evidenceDocsVersion,
-        sha256: evidenceHash(
-          options.docsRoot,
-          ["triggers.log", "effects.log", "scopes.log"],
-          () => true
-        ),
+        sha256: evidenceHash(options.docsRoot, [
+          { root: "triggers.log", recurse: false },
+          { root: "effects.log", recurse: false },
+          { root: "scopes.log", recurse: false },
+        ]),
       },
     },
     eventKinds: kinds,
     events,
+    registries,
     scripted,
     inferredScopes,
   };

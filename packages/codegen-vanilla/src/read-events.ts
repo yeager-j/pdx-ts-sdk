@@ -15,6 +15,9 @@ export interface VanillaEventDefinition extends EventKindSpec {
 
 export interface VanillaEventsRead {
   readonly definitions: readonly VanillaEventDefinition[];
+  /** Directory under the install root that supplied the definitions. */
+  readonly path: string;
+  readonly extension: string;
   readonly files: number;
   readonly diagnostics: number;
   readonly missing: boolean;
@@ -117,6 +120,8 @@ export function readVanillaEvents(
         compareIdentifiers(left.namespace, right.namespace) ||
         compareIdentifiers(left.localId, right.localId)
     ),
+    path: type.path.slice("game/".length),
+    extension,
     files: files.length,
     diagnostics,
     missing: files.length === 0,

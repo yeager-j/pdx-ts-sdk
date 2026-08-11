@@ -95,11 +95,11 @@ tests/              hermetic generator tests against fixtures/fake-install,
 ```
 
 `build-facts.ts` resolves one versioned, in-memory `VanillaBuildFacts` value
-before emission: selected scripted-definition identities, inferred scopes and
-diagnostics, canonical CWT event kinds, evidence versions, and SHA-256 evidence
-hashes. Bodies remain inside that private build value and never reach an
-emitter. Generation rejects a game whose `major.minor` compatibility version
-does not match the selected script-docs snapshot.
+before emission: registry identifiers, selected scripted-definition identities,
+inferred scopes and diagnostics, canonical CWT event kinds, evidence versions,
+and SHA-256 evidence hashes. Bodies remain inside that private build value and
+never reach an emitter. Generation rejects a game whose `major.minor`
+compatibility version does not match the selected script-docs snapshot.
 
 `generate.ts` remains a pure function of its explicit roots and versions:
 pointing it at a different root (a user's install, mods included) is the

@@ -34,9 +34,7 @@ import {
   type AugmentPlan,
 } from "./emit.ts";
 import type { InferredScope, ScriptedKind } from "./infer-scopes.ts";
-import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./manifest.ts";
-import { readRegistryIds } from "./read-ids.ts";
-import { resolveRegistries } from "./resolve.ts";
+import { VANILLA_MANIFEST, type VanillaScriptedRow } from "./manifest.ts";
 import { buildTrie, countLeaves, DEFAULT_TRIE_THRESHOLD } from "./trie.ts";
 
 export interface GenerateOptions extends VanillaBuildFactsOptions {
@@ -180,7 +178,6 @@ export function generateVanillaPackage(options: GenerateOptions): {
   const threshold = options.trieThreshold ?? DEFAULT_TRIE_THRESHOLD;
   const { gameVersion } = options;
   const facts = buildVanillaFacts(options);
-  const idRows = VANILLA_MANIFEST.filter((row): row is VanillaIdRow => row.kind === "ids");
   const scriptedRows = VANILLA_MANIFEST.filter(
     (row): row is VanillaScriptedRow => row.kind === "scripted"
   );
@@ -203,8 +200,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
   exports.push(eventTrie.export);
   plan.tries.push({ registry: "event", file: eventTrie.export.file });
 
-  for (const spec of resolveRegistries(options.configRoot, idRows)) {
-    const read = readRegistryIds(options.installRoot, spec);
+  for (const { spec, read } of facts.registries) {
     const file = registryFile(spec.registry);
     files.set(file, emitIdUnion(spec.registry, read.ids, gate, gameVersion));
     exports.push({ name: idTypeName(spec.registry), file });
