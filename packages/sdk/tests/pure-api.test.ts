@@ -179,7 +179,7 @@ const FIXTURE_CHANNELS = [
   "localisation/replace/english/pp_mod_l_english.yml",
   "common/buildings/pp_buildings_pp_mod_patch.txt",
   "common/technology/pp_soc_tech_pp_mod_patch.txt",
-];
+].sort();
 
 /** Goldens mirror the emitted tree with `/` flattened, as the other suites do. */
 function goldenPath(relPath: string): string {
@@ -209,7 +209,7 @@ describe("parity with the deleted class builder", () => {
 
   for (const [relPath, content] of files) {
     it(`renders the builder's bytes for ${relPath}`, async () => {
-      await expect(content).toMatchFileSnapshot(goldenPath(relPath));
+      await expect(content.text).toMatchFileSnapshot(goldenPath(relPath));
     });
   }
 
@@ -867,12 +867,14 @@ describe("collections", () => {
       }),
     ]);
     const files = render(buildInternal(CONFIG, [amplifiers]));
-    expect([...files.keys()]).toEqual([
-      "descriptor.mod",
-      "common/technology/pp_mod_amplifiers.txt",
-      "events/pp_mod_amplifiers.txt",
-      "localisation/english/pp_mod_amplifiers_l_english.yml",
-    ]);
+    expect([...files.keys()]).toEqual(
+      [
+        "descriptor.mod",
+        "common/technology/pp_mod_amplifiers.txt",
+        "events/pp_mod_amplifiers.txt",
+        "localisation/english/pp_mod_amplifiers_l_english.yml",
+      ].sort()
+    );
     expect(files.get("common/technology/pp_mod_amplifiers.txt")).toContain(
       "pp_mod_tech_amplifier = {"
     );
@@ -1319,23 +1321,25 @@ tech_probe_zeta = {
     const backward = render(orderMod.compile(orderProbe(true), { vanilla: probeVanilla }));
     // The fixture has to actually exercise every channel, or the property is
     // asserted over nothing.
-    expect([...forward.keys()]).toEqual([
-      "descriptor.mod",
-      "common/technology/pp_mod_alpha_techs.txt",
-      "common/technology/pp_mod_beta_techs.txt",
-      "common/country_limits/ship_of_size_limits/pp_mod_ship_of_size_limits.txt",
-      "events/pp_mod_events.txt",
-      "events/pp_mod_zeta_events.txt",
-      "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
-      "common/on_actions/pp_mod_on_actions.txt",
-      "localisation/english/pp_mod_alpha_techs_l_english.yml",
-      "localisation/english/pp_mod_beta_techs_l_english.yml",
-      "localisation/english/pp_mod_events_l_english.yml",
-      "localisation/english/pp_mod_zeta_events_l_english.yml",
-      "localisation/replace/english/pp_mod_alpha_techs_l_english.yml",
-      "localisation/replace/english/pp_mod_beta_techs_l_english.yml",
-      "common/technology/00_probe_tech_pp_mod_patch.txt",
-    ]);
+    expect([...forward.keys()]).toEqual(
+      [
+        "descriptor.mod",
+        "common/technology/pp_mod_alpha_techs.txt",
+        "common/technology/pp_mod_beta_techs.txt",
+        "common/country_limits/ship_of_size_limits/pp_mod_ship_of_size_limits.txt",
+        "events/pp_mod_events.txt",
+        "events/pp_mod_zeta_events.txt",
+        "common/country_limits/ownership_limits/pp_mod_ownership_limits.txt",
+        "common/on_actions/pp_mod_on_actions.txt",
+        "localisation/english/pp_mod_alpha_techs_l_english.yml",
+        "localisation/english/pp_mod_beta_techs_l_english.yml",
+        "localisation/english/pp_mod_events_l_english.yml",
+        "localisation/english/pp_mod_zeta_events_l_english.yml",
+        "localisation/replace/english/pp_mod_alpha_techs_l_english.yml",
+        "localisation/replace/english/pp_mod_beta_techs_l_english.yml",
+        "common/technology/00_probe_tech_pp_mod_patch.txt",
+      ].sort()
+    );
     expect([...backward.entries()]).toEqual([...forward.entries()]);
   });
 });

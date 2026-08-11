@@ -30,18 +30,14 @@ import type { Stats } from "node:fs";
 import { link as fsLink, open as fsOpen, lstat, mkdir, realpath, unlink } from "node:fs/promises";
 import path from "node:path";
 
+import { parseProjectLayout } from "./project-layout.ts";
+
+export { ContentDirectoryError } from "./project-layout.ts";
+
 export class PublishError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "PublishError";
-  }
-}
-
-/** `contentDirectory` is not a usable project-relative path. */
-export class ContentDirectoryError extends PublishError {
-  constructor(message: string) {
-    super(message);
-    this.name = "ContentDirectoryError";
   }
 }
 
@@ -78,50 +74,7 @@ export class UnsupportedPublicationError extends PublishError {
  * author meant by a path that does not mean what it says.
  */
 export function validateContentDirectory(raw: string): readonly string[] {
-  const shown = JSON.stringify(raw);
-  const because = 'It is a project-relative logical path, such as "src/content".';
-
-  if (raw === "") {
-    throw new ContentDirectoryError(`contentDirectory is empty. ${because}`);
-  }
-  if (raw.includes("\0")) {
-    throw new ContentDirectoryError(`contentDirectory contains a NUL byte. ${because}`);
-  }
-  if (raw.includes("\\")) {
-    throw new ContentDirectoryError(
-      `contentDirectory ${shown} contains a backslash. Segments are separated by "/" on every ` +
-        `platform, so that a manifest committed on one machine means the same thing on the next.`
-    );
-  }
-  if (raw.startsWith("/") || /^[A-Za-z]:/.test(raw)) {
-    throw new ContentDirectoryError(
-      `contentDirectory ${shown} is an absolute path. ${because} An absolute one would write ` +
-        `outside the project it belongs to.`
-    );
-  }
-
-  const segments = raw.split("/");
-  for (const segment of segments) {
-    if (segment === "") {
-      throw new ContentDirectoryError(`contentDirectory ${shown} has an empty segment. ${because}`);
-    }
-    if (segment === "." || segment === "..") {
-      throw new ContentDirectoryError(
-        `contentDirectory ${shown} contains a ${JSON.stringify(segment)} segment. ${because} ` +
-          `Every segment names a directory.`
-      );
-    }
-  }
-  // The backstop: whatever survived the checks above has to be exactly what it
-  // says. A trailing slash, a repeated one, or anything else a normalizer would
-  // rewrite fails here rather than being quietly accepted as its rewrite.
-  if (segments.join("/") !== raw || path.posix.normalize(raw) !== raw) {
-    throw new ContentDirectoryError(
-      `contentDirectory ${shown} is not in normalized form, so the directories it names are not ` +
-        `the ones it appears to name. ${because}`
-    );
-  }
-  return segments;
+  return parseProjectLayout(raw).contentSegments;
 }
 
 /** What the target name currently is, as `lstat` sees it. */

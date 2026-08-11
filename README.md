@@ -116,8 +116,8 @@ export const feature = mod.feature("resonance", [
 `createMod` is the only authoring entry point. It mints each content id from
 the mod prefix (`hello_galaxy_tech_resonance_theory`), gives events their
 namespace and numeric ids (`hello_galaxy_resonance.1`), and compiles explicit
-features into the immutable mod value that `render`, `write`, and `install`
-consume.
+features into the immutable mod value that `render` consumes. Rendering snapshots immutable
+artifacts; `write` and `install` materialize that exact `RenderedMod`.
 
 It builds to `common/technology/hello_galaxy_resonance.txt`:
 

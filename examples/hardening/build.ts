@@ -11,7 +11,8 @@ const hardening = defineHardening(vanilla);
 // the move. `install` places content at <dir> and the launcher descriptor at
 // <dir>.mod, which is the layout this example has always produced.
 const outDir = resolve(process.argv[2] ?? new URL("./out/", import.meta.url).pathname);
-const { contentDir, descriptorPath } = await install(hardening.mod, {
+const rendered = render(hardening.mod);
+const { contentDir, descriptorPath } = await install(rendered, {
   modDir: dirname(outDir),
   dirName: basename(outDir),
 });
@@ -19,7 +20,7 @@ const { contentDir, descriptorPath } = await install(hardening.mod, {
 console.log(`Built PDX SDK Hardening for Stellaris ${vanilla.gameVersion ?? "unknown"}`);
 console.log(`Content directory: ${contentDir}`);
 console.log(`Launcher descriptor: ${descriptorPath}`);
-for (const relPath of render(hardening.mod).keys()) {
+for (const relPath of rendered.keys()) {
   console.log(`  wrote ${relPath}`);
 }
 console.log("");

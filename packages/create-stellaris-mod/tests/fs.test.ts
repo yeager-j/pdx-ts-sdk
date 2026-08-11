@@ -4,12 +4,20 @@
  * looks empty.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { preflight } from "../src/fs.ts";
+import { preflight, writeTree } from "../src/fs.ts";
 
 const temps: string[] = [];
 function tempRoot(): string {
@@ -22,6 +30,57 @@ afterEach(() => {
   for (const dir of temps.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+describe("writeTree", () => {
+  it("publishes a complete staged tree and leaves no staging directory", async () => {
+    const root = tempRoot();
+    const target = path.join(root, "new-mod");
+    await writeTree(
+      target,
+      new Map([
+        ["README.md", "hello"],
+        ["src/mod.ts", "export {}"],
+      ])
+    );
+
+    expect(existsSync(path.join(target, "README.md"))).toBe(true);
+    expect(existsSync(path.join(target, "src/mod.ts"))).toBe(true);
+    expect(readdirSync(root)).toEqual(["new-mod"]);
+  });
+
+  it("does not follow a target swapped to an outside symlink after preflight", async () => {
+    const root = tempRoot();
+    const outside = path.join(root, "outside");
+    const target = path.join(root, "new-mod");
+    mkdirSync(outside);
+    await preflight(target);
+    symlinkSync(outside, target, "dir");
+
+    await expect(writeTree(target, new Map([["README.md", "escaped"]]))).rejects.toThrow(
+      /appeared while the project was staged/
+    );
+
+    expect(readdirSync(outside)).toEqual([]);
+  });
+
+  it("removes a partial staging tree when a write fails", async () => {
+    const root = tempRoot();
+    const target = path.join(root, "new-mod");
+
+    await expect(
+      writeTree(
+        target,
+        new Map([
+          ["a", "file"],
+          ["a/b", "impossible child"],
+        ])
+      )
+    ).rejects.toThrow();
+
+    expect(existsSync(target)).toBe(false);
+    expect(readdirSync(root)).toEqual([]);
+  });
 });
 
 describe("preflight", () => {

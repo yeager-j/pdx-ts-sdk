@@ -198,6 +198,35 @@ const CORPUS: readonly Case[] = [
     bytes: json({ ...MINIMAL, contentDirectory: "" }),
     valid: false,
   },
+  {
+    name: "a content directory outside src",
+    bytes: json({ ...MINIMAL, contentDirectory: "content" }),
+    valid: false,
+  },
+  ...["src/content#fragment", "src/content?query", "src/%2e%2e/outside"].map(
+    (contentDirectory) => ({
+      name: `URL-reinterpreted contentDirectory ${JSON.stringify(contentDirectory)}`,
+      bytes: json({ ...MINIMAL, contentDirectory }),
+      valid: false,
+    })
+  ),
+  ...[
+    "src/content.",
+    "src/content ",
+    "src/ content",
+    "src/CON",
+    "src/con.txt",
+    "src/COM1",
+    "src/lpt9.log",
+    "src/foo:bar",
+    'src/foo"bar',
+    "src/foo|bar",
+    "src/foo*bar",
+  ].map((contentDirectory) => ({
+    name: `non-portable contentDirectory ${JSON.stringify(contentDirectory)}`,
+    bytes: json({ ...MINIMAL, contentDirectory }),
+    valid: false,
+  })),
 ];
 
 function accepts(bytes: string): boolean {

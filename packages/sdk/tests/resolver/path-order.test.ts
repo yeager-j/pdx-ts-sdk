@@ -17,8 +17,10 @@ const path = normalizeLogicalPath;
 /** Well-formed strings that survive component validation. */
 const component = fc
   .string({ unit: "binary", minLength: 1, maxLength: 8 })
-  .filter((s) => !s.includes("/") && !s.includes("\\") && !s.includes("\0"))
-  .filter((s) => s !== "." && s !== "..");
+  .filter((s) => !/[\/\\<>:"|?*\u0000-\u001f\u007f]/.test(s))
+  .filter((s) => s !== "." && s !== "..")
+  .filter((s) => !s.startsWith(" ") && !s.endsWith(" ") && !s.endsWith("."))
+  .filter((s) => !/^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i.test(s));
 
 const logicalPath = fc
   .array(component, { minLength: 1, maxLength: 3 })
@@ -95,7 +97,7 @@ describe("normalizeLogicalPath", () => {
   it.each([
     ["", /empty/],
     ["a\\b.txt", /backslash/],
-    ["a\0.txt", /NUL/],
+    ["a\0.txt", /control character/],
     ["\ud800.txt", /lone surrogate/],
     ["/absolute.txt", /absolute/],
     ["a//b.txt", /empty component/],

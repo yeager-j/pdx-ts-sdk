@@ -44,11 +44,12 @@ const compiled = mod.compile([mod.feature(undefined, [marker, geneTailoringPatch
 
 // `install` puts the content under the launcher's mod directory and writes the
 // sibling `pdx_calib.mod` beside it — the same descriptor plus a `path=` line.
-const { contentDir } = await install(compiled);
+const rendered = render(compiled);
+const { contentDir } = await install(rendered);
 
 const plan = compiled.patchPlans[0]!;
 console.log(`Installed to ${contentDir}`);
-for (const relPath of render(compiled).keys()) {
+for (const relPath of rendered.keys()) {
   console.log(`  wrote ${relPath}`);
 }
 console.log(

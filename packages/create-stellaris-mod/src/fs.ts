@@ -2,7 +2,8 @@
  * The filesystem shell: check the target is safe to write into, then write.
  */
 
-import { mkdir, readdir, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { lstat, mkdir, readdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /**
@@ -39,9 +40,28 @@ export async function writeTree(
   targetDir: string,
   files: ReadonlyMap<string, string>
 ): Promise<void> {
-  for (const [relPath, contents] of files) {
-    const target = path.join(targetDir, relPath);
-    await mkdir(path.dirname(target), { recursive: true });
-    await writeFile(target, contents, "utf8");
+  const target = path.resolve(targetDir);
+  const parent = path.dirname(target);
+  await mkdir(parent, { recursive: true });
+  const staging = path.join(parent, `.create-stellaris-mod-${randomUUID()}`);
+  try {
+    await mkdir(staging);
+    for (const [relPath, contents] of files) {
+      const stagedFile = path.join(staging, relPath);
+      await mkdir(path.dirname(stagedFile), { recursive: true });
+      await writeFile(stagedFile, contents, "utf8");
+    }
+    try {
+      await lstat(target);
+      throw new Error(`Cannot scaffold into ${target}: it appeared while the project was staged.`);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw error;
+      }
+    }
+    await rename(staging, target);
+  } catch (error) {
+    await rm(staging, { recursive: true, force: true });
+    throw error;
   }
 }

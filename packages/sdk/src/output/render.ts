@@ -9,39 +9,62 @@ import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 import type { PureMod } from "../compiler/model.ts";
 import { VanillaPathCollisionError } from "../errors.ts";
 import { normalizeLogicalPath } from "../ordering.ts";
+import {
+  createRenderedMod,
+  launcherDescriptor,
+  type RenderedClaim,
+  type RenderedMod,
+} from "./rendered.ts";
 
-export function render(mod: PureMod): Map<string, string> {
+export function render(mod: PureMod): RenderedMod {
   const { prefix } = mod.config;
-  const files = new Map<string, string>();
-  files.set("descriptor.mod", renderDescriptor(mod));
+  const files: RenderedClaim[] = [];
+  files.push({ path: "descriptor.mod", owner: "mod descriptor", text: renderDescriptor(mod) });
   for (const file of mod.contentFiles) {
-    files.set(file.relPath, serialize(file.entries));
+    files.push({
+      path: file.relPath,
+      owner: `content ${file.ids.join(", ")}`,
+      text: serialize(file.entries),
+    });
   }
   for (const file of mod.eventFiles) {
-    files.set(file.relPath, serialize(file.entries));
+    files.push({
+      path: file.relPath,
+      owner: `events ${file.relPath}`,
+      text: serialize(file.entries),
+    });
   }
   if (mod.shipOfSizeLimits.size > 0) {
-    files.set(
-      `common/country_limits/ownership_limits/${prefix}_ownership_limits.txt`,
-      serialize([
+    files.push({
+      path: `common/country_limits/ownership_limits/${prefix}_ownership_limits.txt`,
+      owner: "ship-of-size limits",
+      text: serialize([
         block("default", [
           list(
             "ship_of_size_limits",
             [...mod.shipOfSizeLimits].map((id) => scalar(id))
           ),
         ]),
-      ])
-    );
+      ]),
+    });
   }
   if (mod.onActions.length > 0) {
-    files.set(`common/on_actions/${prefix}_on_actions.txt`, serialize(mod.onActions));
+    files.push({
+      path: `common/on_actions/${prefix}_on_actions.txt`,
+      owner: "on-action hooks",
+      text: serialize(mod.onActions),
+    });
   }
   for (const file of mod.localizationFiles) {
-    files.set(file.relPath, renderLocalization(file.language, file.entries));
+    files.push({
+      path: file.relPath,
+      owner: `localization ${file.language}`,
+      text: renderLocalization(file.language, file.entries),
+    });
   }
 
   for (const plan of mod.patchPlans) {
-    files.set(plan.relPath, plan.content);
+    files.push({ path: plan.relPath, owner: `patch ${plan.relPath}`, text: plan.content });
   }
   // Runs whenever the build knew about a vanilla load, not only when it
   // patched one: emitting over a vanilla file replaces that file wholesale
@@ -50,7 +73,7 @@ export function render(mod: PureMod): Map<string, string> {
   // tree; the patch plan's own file is checked like any other, and is named to
   // beat vanilla's rather than to occupy it.
   if (mod.vanillaPaths !== undefined) {
-    for (const relPath of files.keys()) {
+    for (const { path: relPath } of files) {
       if (relPath !== "descriptor.mod" && mod.vanillaPaths.has(normalizeLogicalPath(relPath))) {
         throw new VanillaPathCollisionError(
           `this mod would emit ${relPath}, a path vanilla already occupies — a same-path ` +
@@ -59,7 +82,7 @@ export function render(mod: PureMod): Map<string, string> {
       }
     }
   }
-  return files;
+  return createRenderedMod(prefix, renderDescriptor(mod), files);
 }
 
 /**
@@ -95,8 +118,19 @@ function renderDescriptor(mod: PureMod): string {
  * Its content also depends on where the mod is being installed, which render
  * itself has no business knowing.
  */
-export function renderLauncherDescriptor(mod: PureMod, contentDir: string): string {
-  return [...descriptorLines(mod), `path="${contentDir}"`].join("\n") + "\n";
+export function renderLauncherDescriptor(rendered: RenderedMod, contentDir: string): string {
+  assertDescriptorPathSafe(contentDir);
+  return launcherDescriptor(rendered, contentDir);
+}
+
+function assertDescriptorPathSafe(contentDir: string): void {
+  if (!/["\u0000-\u001f]/.test(contentDir)) {
+    return;
+  }
+  throw new Error(
+    `Launcher content path ${JSON.stringify(contentDir)} contains a quote or control character. ` +
+      `The launcher descriptor format has no escaping for path values, so install cannot encode it safely.`
+  );
 }
 
 function renderLocalization(

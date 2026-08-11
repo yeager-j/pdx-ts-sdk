@@ -33,9 +33,6 @@ export function normalizeLogicalPath(raw: string): LogicalPath {
       `Logical path ${JSON.stringify(raw)} contains a backslash; logical paths use "/" separators`
     );
   }
-  if (raw.includes("\0")) {
-    throw new LogicalPathError(`Logical path ${JSON.stringify(raw)} contains a NUL byte`);
-  }
   if (!raw.isWellFormed()) {
     throw new LogicalPathError(
       `Logical path ${JSON.stringify(raw)} is not valid Unicode (lone surrogate); ` +
@@ -47,7 +44,8 @@ export function normalizeLogicalPath(raw: string): LogicalPath {
       `Logical path ${JSON.stringify(raw)} is absolute; only relative paths have logical identity`
     );
   }
-  for (const component of raw.split("/")) {
+  const normalized = raw.normalize("NFC");
+  for (const component of normalized.split("/")) {
     if (component === "") {
       throw new LogicalPathError(
         `Logical path ${JSON.stringify(raw)} has an empty component (trailing or doubled "/")`
@@ -59,8 +57,37 @@ export function normalizeLogicalPath(raw: string): LogicalPath {
           `dot components are rejected, not resolved`
       );
     }
+    if (/[\u0000-\u001f\u007f]/.test(component)) {
+      throw new LogicalPathError(
+        `Logical path ${JSON.stringify(raw)} contains a control character`
+      );
+    }
+    if (/[<>:"|?*]/.test(component)) {
+      throw new LogicalPathError(
+        `Logical path ${JSON.stringify(raw)} contains a character Windows cannot represent`
+      );
+    }
+    if (component.startsWith(" ") || component.endsWith(" ") || component.endsWith(".")) {
+      throw new LogicalPathError(
+        `Logical path ${JSON.stringify(raw)} has a component with a leading or trailing space, ` +
+          `or a trailing period`
+      );
+    }
+    const basename = component.split(".", 1)[0]!.toUpperCase();
+    if (/^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/.test(basename)) {
+      throw new LogicalPathError(
+        `Logical path ${JSON.stringify(raw)} uses reserved Windows device name ${JSON.stringify(
+          component
+        )}`
+      );
+    }
+    if (encoder.encode(component).byteLength > 255 || component.length > 255) {
+      throw new LogicalPathError(
+        `Logical path ${JSON.stringify(raw)} has a component longer than the portable 255-unit limit`
+      );
+    }
   }
-  return raw.normalize("NFC") as LogicalPath;
+  return normalized as LogicalPath;
 }
 
 /**

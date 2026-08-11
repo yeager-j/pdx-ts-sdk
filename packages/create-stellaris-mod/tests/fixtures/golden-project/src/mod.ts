@@ -9,6 +9,8 @@
  * source, not to demonstrate the scaffold.
  */
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { createMod, discoverFeatures, type PureMod } from "@pdx-ts/sdk";
 
 import manifest from "../stellaris-mod.json" with { type: "json" };
@@ -26,10 +28,15 @@ export const config = { ...manifest.mod[prefix], prefix };
 
 export const mod = createMod(config);
 
-// The manifest is the single placement authority: `generate` writes into
-// `contentDirectory` and discovery reads the same field, so a project that moves
-// it moves both. Project-relative, and this file is `src/mod.ts`, hence the `../`.
-const contentDir = new URL(`../${manifest.contentDirectory}/`, import.meta.url);
+const contentDirectoryPattern = /^src(?:\/(?!\.{1,2}(?:\/|$))[^\/#?%\\\u0000]+)+$/;
+if (!contentDirectoryPattern.test(manifest.contentDirectory)) {
+  throw new Error(
+    `stellaris-mod.json contentDirectory ${JSON.stringify(manifest.contentDirectory)} is not a ` +
+      `normalized directory below src.`
+  );
+}
+const projectRoot = fileURLToPath(new URL("../", import.meta.url));
+const contentDir = path.join(projectRoot, ...manifest.contentDirectory.split("/"));
 
 export async function buildTheMod(): Promise<PureMod> {
   const features = await discoverFeatures<typeof mod.config.prefix>(contentDir);
