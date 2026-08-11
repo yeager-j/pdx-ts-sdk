@@ -7,6 +7,13 @@
  * unwrap them the same way, so the unwrapping lives here rather than in
  * whichever module happened to need it first — the effect recorder and the
  * scripted trigger/effect bindings both do.
+ *
+ * The navigable `vanilla.*` tries (`src/identifiers/trie.ts`) are Proxies
+ * built over a bare function so the same value stays both callable and
+ * navigable — `typeof` on such a Proxy reflects the function target, so a
+ * gate on `typeof value === "object"` alone silently skips them. This module
+ * gates on `object` or `function` for that reason; `src/generated/refs.ts`'s
+ * `refId` gates the same way, from the same rule in the emitter.
  */
 
 import { varRef, type PdxScalar } from "@pdx-ts/pdxscript";
@@ -21,7 +28,7 @@ export function toScalar(
   value: unknown,
   booleanLiterals: readonly ("yes" | "no")[] = []
 ): string | number | boolean | PdxScalar {
-  if (typeof value === "object" && value !== null) {
+  if ((typeof value === "object" && value !== null) || typeof value === "function") {
     // On `ScopeValue`'s own discriminant rather than on whether a `path`
     // property happens to be there, matching generated `refId`: a branded
     // content reference is structurally open, so one that carries a `path` of
