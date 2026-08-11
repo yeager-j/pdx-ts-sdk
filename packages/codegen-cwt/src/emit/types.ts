@@ -64,12 +64,60 @@ export interface Usage {
   readonly valueSets: string[];
 }
 
+/**
+ * A `scope[X]`/`scope_group[G]` arm, spelled without spaces inside the type
+ * argument so {@link Emitter.unionFor}'s `" | "` split cannot cut a group's
+ * members apart. The output is written through Prettier, which puts the spaces
+ * back.
+ */
+const SCOPE_ARM = /^ScopeValue(?:<(.+)>)?$/;
+
+function scopeValueType(scopes: readonly string[]): string {
+  return `ScopeValue<${scopes.map((scope) => JSON.stringify(scope)).join("|")}>`;
+}
+
+/**
+ * Collapses several scope arms into one: `ScopeValue<"planet"> |
+ * ScopeValue<"ship">` becomes `ScopeValue<"planet"|"ship">`.
+ *
+ * Rules overload a scope-valued field by writing one declaration per scope
+ * (`create_species.gender` names two groups and two bare scopes), and the
+ * un-collapsed union is both unreadable and needlessly strict — a value whose
+ * own type is already a union of those scopes assigns to the collapsed form
+ * and to none of the arms. A bare `ScopeValue` arm says every scope is legal,
+ * so it swallows the rest.
+ */
+function mergeScopeArms(parts: readonly string[]): string[] {
+  const arms = parts.filter((part) => SCOPE_ARM.test(part));
+  if (arms.length <= 1) {
+    return [...parts];
+  }
+  const members = arms.map((arm) => SCOPE_ARM.exec(arm)![1]);
+  const merged = members.includes(undefined)
+    ? "ScopeValue"
+    : `ScopeValue<${[...new Set(members.flatMap((member) => member!.split("|")))].sort().join("|")}>`;
+  const first = parts.findIndex((part) => SCOPE_ARM.test(part));
+  return parts.flatMap((part, index) =>
+    !SCOPE_ARM.test(part) ? [part] : index === first ? [merged] : []
+  );
+}
+
 export class Emitter {
   readonly rules: RuleSet;
   /** Everything referenced anywhere, so `enums.ts` and `refs.ts` declare it. */
   readonly usedEnums = new Set<string>();
   readonly usedRefs = new Set<string>();
   readonly usedValueSets = new Set<string>();
+  /**
+   * `scope[X]` and `scope_group[G]` arguments the rules name and `scopes.cwt`
+   * does not declare. Each one keeps its field at `string` rather than
+   * guessing a scope, and the codegen report prints them so the widening is
+   * never silent.
+   */
+  readonly unknownScopes = new Set<string>();
+  readonly unknownScopeGroups = new Set<string>();
+  /** Scope groups actually lowered into a signature, for the report. */
+  readonly usedScopeGroups = new Set<string>();
   private scopedEnums = new Set<string>();
   private scopedRefs = new Set<string>();
   private scopedValueSets = new Set<string>();
@@ -145,9 +193,43 @@ export class Emitter {
         this.scopedValueSets.add(type.name);
         return { type: this.valueSetTypeName(type.name), toScalar: (e) => e };
       }
-      case "scope":
-      case "scopeGroup":
-        return { type: "string", toScalar: (e) => e };
+      // `scope[X]` and `scope_group[G]` both name a scope the author has to
+      // reach by a path the game can follow — `this`, `from`, an event target
+      // — which is exactly what a `ScopeValue` is. There is deliberately no
+      // `| string` arm: a bare word here is a scope name the compiler cannot
+      // check, and the SDK has typed spellings for every path it supports.
+      case "scope": {
+        const argument = type.name.toLowerCase();
+        if (argument === "any" || argument === "all") {
+          return { type: "ScopeValue", toScalar: (e) => `${e}.path` };
+        }
+        const canonical = this.canonicalScope(type.name);
+        if (canonical === null) {
+          this.unknownScopes.add(type.name);
+          return { type: "string", toScalar: (e) => e };
+        }
+        return { type: scopeValueType([canonical]), toScalar: (e) => `${e}.path` };
+      }
+      case "scopeGroup": {
+        const members = this.rules.scopeGroups.get(type.name);
+        if (members === undefined) {
+          this.unknownScopeGroups.add(type.name);
+          return { type: "string", toScalar: (e) => e };
+        }
+        const canonical = members.map((member) => this.canonicalScope(member));
+        if (canonical.includes(null)) {
+          for (const [index, member] of members.entries()) {
+            if (canonical[index] === null) {
+              this.unknownScopes.add(member);
+            }
+          }
+          this.unknownScopeGroups.add(type.name);
+          return { type: "string", toScalar: (e) => e };
+        }
+        this.usedScopeGroups.add(type.name);
+        const scopes = [...new Set(canonical as string[])].sort();
+        return { type: scopeValueType(scopes), toScalar: (e) => `${e}.path` };
+      }
       case "literal":
         return {
           type: JSON.stringify(type.text),
@@ -189,7 +271,7 @@ export class Emitter {
     }
     // Split compound members (`XRef | string`) so `string` dedupes across
     // arms instead of repeating in the joined union.
-    const parts = [...new Set(values.flatMap((value) => value!.type.split(" | ")))];
+    const parts = mergeScopeArms([...new Set(values.flatMap((value) => value!.type.split(" | ")))]);
     const converts = new Set(values.map((value) => value!.toScalar("x")));
     // Only an all-reference overload keeps its target types: one non-reference
     // arm makes an id-shaped value legal for reasons the registries cannot see.

@@ -6,6 +6,7 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
+import type { SituationTypeRef } from "../src/generated/refs.ts";
 import { createMod, eventTarget } from "../src/index.ts";
 
 describe("the declared situation target contract", () => {
@@ -39,28 +40,37 @@ describe("the declared situation target contract", () => {
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
         country.startSituation({ type: planetSit, target: world });
+        // @ts-expect-error — a scope is named by a typed path, never a bare word
+        country.startSituation({ type: planetSit, target: "some_target" });
         // @ts-expect-error — the type declared a planet target; a country ref does not satisfy it
         country.startSituation({ type: planetSit, target: ctx.self });
-        // The raw-string path intentionally stays open through the generated
-        // signature — same escape hatch every branded reference keeps.
-        country.startSituation({ type: planetSit, target: "some_target" });
       },
     });
   });
 
-  it("keeps the string-typed path for undeclared and vanilla situations", () => {
+  it("keeps the unchecked path for undeclared and vanilla situations", () => {
     const mod = createMod({
       name: "Vanilla",
       prefix: "st_test_vanilla",
       supportedVersion: "4.4.*",
     });
     const events = mod.namespace();
+    // Nothing declares a target scope here, so `type` carries no `targetScope`
+    // and the generated overload — narrowed by the overlay to refuse one —
+    // still takes it.
+    const undeclared = mod.situationType("sit_undeclared", {
+      name: "S",
+      monthlyProgress: { base: 1 },
+    });
+    const vanillaRef: SituationTypeRef = { id: "situation_kaleidoscope" };
     events.country(2, {
       hideWindow: true,
       isTriggeredOnly: true,
-      immediate: (country) => {
-        country.startSituation({ type: "situation_kaleidoscope", target: "owner" });
+      immediate: (country, ctx) => {
+        country.startSituation({ type: "situation_kaleidoscope", target: ctx.self });
         country.startSituation({ type: "situation_kaleidoscope" });
+        country.startSituation({ type: vanillaRef, target: ctx.self });
+        country.startSituation({ type: undeclared, target: ctx.self });
       },
     });
   });

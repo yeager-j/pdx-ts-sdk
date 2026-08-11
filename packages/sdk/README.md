@@ -241,7 +241,7 @@ from generated tooltips without changing scope, so `this`, `from`, and `root`
 inside are what they are outside:
 
 ```ts
-allow: and(isShipClass("shipclass_science_ship"), hiddenTrigger(exists("owner"))),
+allow: and(isShipClass("shipclass_science_ship"), hiddenTrigger(exists(stormWorld))),
 effect: (country) => {
   country.hiddenEffect((hidden) => hidden.setCountryFlag("mymod_quietly"));
 },

@@ -152,6 +152,16 @@ export interface RuleSet {
   readonly enums: ReadonlyMap<string, readonly string[]>;
   /** Canonical scope name -> every alias the game answers to. */
   readonly scopes: ReadonlyMap<string, readonly string[]>;
+  /**
+   * `scope_groups` from `scopes.cwt`: group name -> the scopes it admits, as
+   * the rules spell them.
+   *
+   * A group is a coercion, not an identity. `target_country` lists planet,
+   * ship and fleet because the game reads a country *out of* each of them —
+   * the members are the scopes it will coerce to a country, not scopes that
+   * are countries.
+   */
+  readonly scopeGroups: ReadonlyMap<string, readonly string[]>;
   readonly triggers: ReadonlyMap<string, readonly AliasDecl[]>;
   /** Loaded only so the drift gate covers effects too; nothing emits them yet. */
   readonly effects: ReadonlyMap<string, readonly AliasDecl[]>;
@@ -266,6 +276,32 @@ function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): voi
           : []
       );
       into.set(entry.key.text, aliases);
+    }
+  }
+}
+
+/**
+ * Reads `scope_groups = { celestial_coordinate = { planet ship ... } }`.
+ *
+ * Members are bare scalars in the group's block, and the vendored table
+ * repeats `carrier` inside three of its groups, so the list is deduped here
+ * rather than by every reader. Groups keep their own table because a group and
+ * a scope may share a name — `carrier` is both — and collapsing the two would
+ * silently answer one question with the other.
+ */
+function readScopeGroups(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
+  for (const outer of assignments(nodes)) {
+    if (outer.key.text !== "scope_groups" || outer.value.kind !== "block") {
+      continue;
+    }
+    for (const entry of assignments(outer.value.nodes)) {
+      if (entry.value.kind !== "block") {
+        continue;
+      }
+      const members = entry.value.nodes.flatMap((node) =>
+        node.kind === "value" && node.value.kind === "scalar" ? [node.value.text] : []
+      );
+      into.set(entry.key.text, [...new Set(members)]);
     }
   }
 }
@@ -572,6 +608,7 @@ export function loadContentTypesFrom(
 export function loadRules(root: string): RuleSet {
   const enums = new Map<string, string[]>();
   const scopes = new Map<string, string[]>();
+  const scopeGroups = new Map<string, string[]>();
   const triggers = new Map<string, AliasDecl[]>();
   const effects = new Map<string, AliasDecl[]>();
   const aliasCategories = new Map<string, Map<string, AliasDecl[]>>(
@@ -594,6 +631,7 @@ export function loadRules(root: string): RuleSet {
     readSingleAliases(parsed.nodes, singleAliases);
     readEnums(parsed.nodes, enums);
     readScopes(parsed.nodes, scopes);
+    readScopeGroups(parsed.nodes, scopeGroups);
     readLinks(parsed.nodes, relative, links);
     readAliases(parsed.nodes, relative, "trigger", singleAliases, triggers);
     readAliases(parsed.nodes, relative, "effect", singleAliases, effects);
@@ -610,6 +648,7 @@ export function loadRules(root: string): RuleSet {
   return {
     enums,
     scopes,
+    scopeGroups,
     triggers,
     effects,
     aliasCategories,

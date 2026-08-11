@@ -20,7 +20,12 @@ import type { RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
-import { FIRE_EFFECTS, HAND_WRITTEN_EFFECTS, STRUCTURAL_EFFECT_METHODS } from "../overlay.ts";
+import {
+  EFFECT_FIELD_TYPE_OVERRIDES,
+  FIRE_EFFECTS,
+  HAND_WRITTEN_EFFECTS,
+  STRUCTURAL_EFFECT_METHODS,
+} from "../overlay.ts";
 import type { ClassifiedLink } from "./links.ts";
 import {
   canonicalScopeSet,
@@ -45,6 +50,8 @@ export interface EffectEmission {
   readonly clusterCount: number;
   /** Rules overloaded between a block and a scalar, emitted scalar-only. */
   readonly scalarOnly: readonly string[];
+  /** `EFFECT_FIELD_TYPE_OVERRIDES` rows applied, with the reason each states. */
+  readonly fieldTypeOverrides: readonly string[];
   /** Scope-link methods folded into the clusters alongside the effects. */
   readonly linkEmitted: number;
 }
@@ -159,7 +166,17 @@ function shapeOf(
   return { kind: "fields", fields: merged };
 }
 
-function memberType(field: ArgField, outerScope: string): string {
+/**
+ * The type text one args member emits, after the overlay has had its say.
+ *
+ * `owner` is the effect key the field belongs to, so an override row can name
+ * one field of one effect rather than every field spelled that way.
+ */
+function memberType(field: ArgField, outerScope: string, owner: string): string {
+  const override = EFFECT_FIELD_TYPE_OVERRIDES.get(`${owner}.${field.name}`);
+  if (override !== undefined) {
+    return override.type;
+  }
   const value = field.value;
   switch (value.kind) {
     case "scalar":
@@ -189,16 +206,16 @@ function scopeInterfaceName(scope: string | null): string {
   return scope === null ? "this" : `${pascalCase(scope)}Scope`;
 }
 
-function argsType(fields: readonly ArgField[], outerScope: string): string {
+function argsType(fields: readonly ArgField[], outerScope: string, owner: string): string {
   const members = fields.map(
     (field) =>
-      `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(field, outerScope)}`
+      `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(field, outerScope, owner)}`
   );
   return `{ ${members.join("; ")} }`;
 }
 
 function methodSignature(effect: EmittedEffect, outerScope: string): string {
-  const { method, shape } = effect;
+  const { method, key, shape } = effect;
   const doc = docComment(effect.docs, "  ");
   switch (shape.kind) {
     case "bool":
@@ -206,12 +223,12 @@ function methodSignature(effect: EmittedEffect, outerScope: string): string {
     case "value":
       return `${doc}  ${method}(value: ${shape.value.type}): void;\n`;
     case "fields":
-      return `${doc}  ${method}(args: ${argsType(shape.fields, outerScope)}): void;\n`;
+      return `${doc}  ${method}(args: ${argsType(shape.fields, outerScope, key)}): void;\n`;
     case "wrapper": {
       const body = `body: (scope: ${scopeInterfaceName(shape.scope)}) => void`;
       return shape.fields === null
         ? `${doc}  ${method}(${body}): void;\n`
-        : `${doc}  ${method}(args: ${argsType(shape.fields, outerScope)}, ${body}): void;\n`;
+        : `${doc}  ${method}(args: ${argsType(shape.fields, outerScope, key)}, ${body}): void;\n`;
     }
   }
 }
@@ -355,6 +372,28 @@ export function emitEffects(
     byShape.set(resolved.kind, (byShape.get(resolved.kind) ?? 0) + 1);
   }
 
+  // An override row naming a field no emitted effect has is a lie the emitted
+  // types would not show: it would read as an audited departure while changing
+  // nothing. A rules bump that renames or drops the field has to be noticed
+  // here rather than quietly turning the row into decoration.
+  const fieldKeys = new Set(
+    [...clusters.values()].flatMap((cluster) =>
+      cluster.effects.flatMap((effect) =>
+        effect.shape.kind === "fields" || effect.shape.kind === "wrapper"
+          ? (effect.shape.fields ?? []).map((field) => `${effect.key}.${field.name}`)
+          : []
+      )
+    )
+  );
+  for (const key of EFFECT_FIELD_TYPE_OVERRIDES.keys()) {
+    if (!fieldKeys.has(key)) {
+      throw new Error(
+        `EFFECT_FIELD_TYPE_OVERRIDES names "${key}", which no emitted effect field matches — ` +
+          "retire the overlay row or fix its key"
+      );
+    }
+  }
+
   // Scope links join the same clusters as ordinary wrapper effects, so the
   // interfaces, ScopeMap, and EFFECT_META carry them with no special casing.
   // A name collision is a hard error, not a skip: the link method would merge
@@ -485,6 +524,9 @@ export function emitEffects(
     skipped,
     clusterCount: sortedClusters.length,
     scalarOnly,
+    fieldTypeOverrides: [...EFFECT_FIELD_TYPE_OVERRIDES].map(
+      ([key, override]) => `${key} → ${override.type} — ${override.reason}`
+    ),
     linkEmitted: links.length,
   };
 }

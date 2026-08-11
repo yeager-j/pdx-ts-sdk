@@ -336,6 +336,47 @@ export interface FieldWidening {
   readonly reason: string;
 }
 
+export interface EffectFieldTypeOverride {
+  /** Replaces the mechanically derived type outright. */
+  readonly type: string;
+  readonly reason: string;
+}
+
+/**
+ * Type text for one named field of one effect's args object, replacing what
+ * the rules lower to.
+ *
+ * The narrowest and most expensive table here, and deliberately so: unlike
+ * {@link FIELD_WIDENINGS}, which adds a form the rules did not name, a row
+ * here *removes* one the rules do name. It exists for the case where the
+ * mechanical type is right about the game and wrong about TypeScript —
+ * specifically, where a hand-written overload merged onto the same method
+ * needs the generated one to stop catching calls it was never meant to catch.
+ * Nothing else changes: `EFFECT_META`, `refTypes`, and the runtime recording
+ * all still come from the rules' own lowering, so a row cannot make the
+ * emitted script wrong, only the accepted inputs narrower.
+ *
+ * Keyed `<effect key>.<field key>`, both as the rules spell them.
+ */
+export const EFFECT_FIELD_TYPE_OVERRIDES = new Map<string, EffectFieldTypeOverride>([
+  [
+    "start_situation.type",
+    {
+      type: "(SituationTypeRef & { targetScope?: never }) | string",
+      reason:
+        "`SituationTargetContract` (src/script/effects/situations.ts) extends " +
+        '`TypedRef<"situation_type">` and is therefore structurally a `SituationTypeRef`, so a ' +
+        "contract-bearing ref matched this generated signature whenever the hand-written " +
+        "contract overload rejected its target — silently turning a wrong-scoped " +
+        "`startSituation` target into a legal call. Requiring `targetScope` to be absent makes a " +
+        "declared contract fail here too, so the only overload that can accept one is the " +
+        "hand-written one that checks it. Vanilla and third-party ids are unaffected: a plain " +
+        "`SituationTypeRef`, an id string, and a situation type defined without `targetScope` " +
+        "all carry no `targetScope` to conflict.",
+    },
+  ],
+]);
+
 /**
  * Ergonomic widenings on generated content-type fields.
  *
