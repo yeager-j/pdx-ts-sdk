@@ -220,10 +220,7 @@ export interface EffectsIn12Scopes3d16 {
    * export_modifier_to_variable = { modifier = logistic_growth_mult variable = <string> }
    * ```
    */
-  exportModifierToVariable(args: {
-    modifier: "alias_keys_field[modifier]";
-    variable: Variable;
-  }): void;
+  exportModifierToVariable(args: { modifier: string; variable: Variable }): void;
 }
 
 /** Effects valid in: archaeological_site, army, carrier, colony, deposit, leader, megastructure, planet, pop_group, pop_job, ship, starbase. */
@@ -400,7 +397,7 @@ export interface EffectsIn29Scopes878c {
    * ```
    */
   exportTriggerValueToVariable(args: {
-    trigger: "alias_keys_field[trigger]";
+    trigger: string;
     parameters?: "$any";
     variable: Variable;
     rounded?: "yes";

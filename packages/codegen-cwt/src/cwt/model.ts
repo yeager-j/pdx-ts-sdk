@@ -6,7 +6,7 @@
  * reference into a content type, and `enum[research_area]` names a closed set.
  */
 
-import type { CwtBlock, CwtNode, CwtOption, CwtValue } from "./parser.ts";
+import type { CwtBlock, CwtDiagnostic, CwtNode, CwtOption, CwtScalar, CwtValue } from "./parser.ts";
 
 export interface Range {
   readonly min: number | null;
@@ -40,8 +40,16 @@ export type RuleType =
       readonly fields: readonly RuleField[];
       readonly bare: readonly RuleType[];
     }
+  /** A bracketed CWT keyword the classifier does not understand. */
+  | { readonly kind: "unknownKeyword"; readonly text: string }
   /** Anything else: a bare word standing for itself, such as `yes` or `country`. */
   | { readonly kind: "literal"; readonly text: string };
+
+export interface ClassificationDiagnostic extends Omit<CwtDiagnostic, "file" | "kind"> {
+  readonly kind: "unknown-keyword";
+}
+
+export type ClassificationReporter = (diagnostic: ClassificationDiagnostic) => void;
 
 export type FieldKey =
   | { readonly kind: "name"; readonly name: string }
@@ -92,7 +100,7 @@ export interface RuleField {
   readonly comparison: boolean;
 }
 
-const BRACKETED = /^([a-z_]+)\[([^\]]*)\]$/;
+const BRACKETED = /^([^\[\]]+)\[([^\[\]]*)\]$/;
 const RANGE = /^(-?[\d.]+|-?inf)\.\.(-?[\d.]+|-?inf)$/;
 const CARDINALITY = /^~?(\d+)\.\.(\d+|inf)$/;
 
@@ -105,7 +113,13 @@ function parseRange(text: string): Range | null {
   return { min: bound(match[1]!), max: bound(match[2]!) };
 }
 
-function classifyBracketed(head: string, argument: string, raw: string): RuleType {
+function classifyBracketed(
+  head: string,
+  argument: string,
+  raw: string,
+  line: number,
+  report?: ClassificationReporter
+): RuleType {
   switch (head) {
     case "enum":
     case "complex_enum":
@@ -127,6 +141,8 @@ function classifyBracketed(head: string, argument: string, raw: string): RuleTyp
       return { kind: "aliasMatchLeft", category: argument };
     case "single_alias_right":
       return { kind: "singleAliasRight", name: argument };
+    case "alias_keys_field":
+      return { kind: "scalar" };
     case "int":
       return { kind: "int", range: parseRange(argument) };
     case "float":
@@ -135,12 +151,14 @@ function classifyBracketed(head: string, argument: string, raw: string): RuleTyp
       return { kind: "valueField", integer: false };
     case "int_value_field":
       return { kind: "valueField", integer: true };
-    default:
-      return { kind: "literal", text: raw };
+    default: {
+      report?.({ kind: "unknown-keyword", line, text: raw });
+      return { kind: "unknownKeyword", text: raw };
+    }
   }
 }
 
-function classifyScalar(text: string): RuleType {
+function classifyScalar(text: string, line: number, report?: ClassificationReporter): RuleType {
   switch (text) {
     case "bool":
       return { kind: "bool" };
@@ -180,46 +198,66 @@ function classifyScalar(text: string): RuleType {
   }
   const bracketed = BRACKETED.exec(text);
   if (bracketed !== null) {
-    return classifyBracketed(bracketed[1]!, bracketed[2]!, text);
+    return classifyBracketed(bracketed[1]!, bracketed[2]!, text, line, report);
   }
   return { kind: "literal", text };
 }
 
-/** Expands `single_alias_right[x]` to the block `aliases.cwt` defines for it. */
-export type SingleAliasResolver = (name: string) => CwtValue | undefined;
+/** A `single_alias_right[x]` target and the diagnostic destination of its declaration. */
+export interface SingleAliasTarget {
+  readonly value: CwtValue;
+  readonly report?: ClassificationReporter;
+}
 
-export function classify(value: CwtValue, resolve?: SingleAliasResolver): RuleType {
+/** Expands `single_alias_right[x]` to the block `aliases.cwt` defines for it. */
+export type SingleAliasResolver = (name: string) => SingleAliasTarget | undefined;
+
+export function classify(
+  value: CwtValue,
+  resolve?: SingleAliasResolver,
+  report?: ClassificationReporter
+): RuleType {
   if (value.kind === "block") {
-    return classifyBlock(value, resolve);
+    return classifyBlock(value, resolve, report);
   }
-  const type = classifyScalar(value.text);
+  const type: RuleType = value.quoted
+    ? { kind: "literal", text: value.text }
+    : classifyScalar(value.text, value.line, report);
   if (type.kind !== "singleAliasRight" || resolve === undefined) {
     return type;
   }
   const target = resolve(type.name);
-  return target === undefined ? type : classify(target, resolve);
+  return target === undefined ? type : classify(target.value, resolve, target.report ?? report);
 }
 
-export function classifyBlock(block: CwtBlock, resolve?: SingleAliasResolver): RuleType {
+export function classifyBlock(
+  block: CwtBlock,
+  resolve?: SingleAliasResolver,
+  report?: ClassificationReporter
+): RuleType {
   const fields: RuleField[] = [];
   const bare: RuleType[] = [];
   for (const node of block.nodes) {
     if (node.kind === "assignment") {
-      fields.push(toField(node.key.text, node, resolve));
+      fields.push(toField(node.key, node, resolve, report));
       continue;
     }
-    bare.push(classify(node.value, resolve));
+    bare.push(classify(node.value, resolve, report));
   }
   return { kind: "block", fields, bare };
 }
 
-function classifyKey(text: string): FieldKey {
+function classifyKey(key: CwtScalar, report?: ClassificationReporter): FieldKey {
+  const { text } = key;
+  if (key.quoted) {
+    return { kind: "name", name: text };
+  }
   const bracketed = BRACKETED.exec(text);
   if (bracketed === null) {
     // A key spelled `int`, `scalar`, or `<resource>` is a key FILTER — it
     // matches any key of that type (`random_list`'s weights are `int = {...}`).
     // Only words the classifier does not recognise are literal field names.
-    const type = classifyScalar(text);
+    const type = classifyScalar(text, key.line, report);
     return type.kind === "literal" ? { kind: "name", name: text } : { kind: "computed", type };
   }
   if (bracketed[1] === "alias_name") {
@@ -230,17 +268,18 @@ function classifyKey(text: string): FieldKey {
     const negated = argument.startsWith("!");
     return { kind: "subtype", name: negated ? argument.slice(1) : argument, negated };
   }
-  return { kind: "computed", type: classifyScalar(text) };
+  return { kind: "computed", type: classifyScalar(text, key.line, report) };
 }
 
 function toField(
-  key: string,
+  key: CwtScalar,
   node: CwtNode & { kind: "assignment" },
-  resolve?: SingleAliasResolver
+  resolve?: SingleAliasResolver,
+  report?: ClassificationReporter
 ): RuleField {
   return {
-    key: classifyKey(key),
-    type: classify(node.value, resolve),
+    key: classifyKey(key, report),
+    type: classify(node.value, resolve, report),
     cardinality: cardinalityOf(node.options),
     docs: node.docs,
     scope: scopeOf(node.options),

@@ -1994,7 +1994,7 @@ export function checkGalaxySetupValue(args: CheckGalaxySetupValueArgs): Trigger<
 }
 
 export interface CheckModifierValueArgs {
-  modifier: "alias_keys_field[modifier]";
+  modifier: string;
   value: number | readonly [PdxOp, number];
 }
 
