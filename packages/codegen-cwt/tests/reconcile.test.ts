@@ -6,7 +6,13 @@ import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/overlay";
-import { compareToBaseline, reconcile, type DriftReport } from "@pdx-ts/codegen-cwt/reconcile";
+import {
+  compareToBaseline,
+  reconcile,
+  updatedBaseline,
+  type DriftBaseline,
+  type ScopeConflict,
+} from "@pdx-ts/codegen-cwt/reconcile";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */
@@ -23,7 +29,7 @@ const modifierDocs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "ut
 const dumpLinks = parseScopeLinks(readFileSync(`${DOCS}/scopes.log`, "utf8"));
 const baseline = JSON.parse(
   readFileSync(new URL("../src/drift-baseline.json", import.meta.url), "utf8")
-) as DriftReport;
+) as DriftBaseline;
 
 describe("the two rule sources", () => {
   it("agree on all but a handful of names", () => {
@@ -98,7 +104,7 @@ describe("the drift gate", () => {
   });
 
   it("names a trigger that appeared in only one source", () => {
-    const injected: DriftReport = {
+    const injected: DriftBaseline = {
       ...baseline,
       triggers: {
         ...baseline.triggers,
@@ -111,7 +117,7 @@ describe("the drift gate", () => {
   });
 
   it("names a trigger that stopped drifting", () => {
-    const injected: DriftReport = {
+    const injected: DriftBaseline = {
       ...baseline,
       effects: { ...baseline.effects, rulesOnly: [] },
     };
@@ -121,7 +127,7 @@ describe("the drift gate", () => {
   });
 
   it("names a curated modifier the game's dump stopped listing", () => {
-    const injected: DriftReport = {
+    const injected: DriftBaseline = {
       ...baseline,
       modifiers: { rulesOnly: [...baseline.modifiers.rulesOnly, "has_new_modifier"] },
     };
@@ -137,13 +143,34 @@ describe("the drift gate", () => {
     ]);
   });
 
-  it("catches a rule whose scopes disagree with the game's dump", () => {
+  it("requires every accepted scope disagreement to carry a rationale", () => {
+    const [first, ...rest] = baseline.scopeResolutions;
     expect(
       compareToBaseline(report, {
         ...baseline,
-        scopeConflicts: [...baseline.scopeConflicts, "made_up: rules say [a], docs say [b]"],
+        scopeResolutions: [{ ...first!, reason: "" }, ...rest],
       })
-    ).toEqual(["  - scope conflict: made_up: rules say [a], docs say [b]"]);
+    ).toEqual([`  ! scope resolution ${first!.id} has no reason`]);
+  });
+
+  it("fails when one effect rule's scope changes", () => {
+    const effects = new Map(rules.effects);
+    effects.set(
+      "country_event",
+      rules.effects.get("country_event")!.map((declaration) => ({
+        ...declaration,
+        supportedScopes: ["planet"],
+      }))
+    );
+    const changed = reconcile({ ...rules, effects }, docs, modifierDocs, dumpLinks);
+    const differences = compareToBaseline(changed, baseline);
+
+    expect(differences).toContain(
+      "  + effect scope conflict: country_event: rules say [planet], docs say [country]"
+    );
+    expect(() => updatedBaseline(changed, baseline)).toThrowError(
+      "Scope drift cannot be rebaselined without an explicit resolution"
+    );
   });
 
   it("catches a CWT keyword the classifier does not understand", () => {
@@ -169,26 +196,53 @@ describe("the drift gate", () => {
 describe("where the fork and the game's dump disagree", () => {
   const report = reconcile(rules, docs, modifierDocs, dumpLinks);
 
-  it("is almost entirely the 4.x scope renames the dump has not caught up with", () => {
-    const parsed = report.scopeConflicts.map((line) => {
-      const match = /^\S+: rules say \[(.*)\], docs say \[(.*)\]$/.exec(line)!;
-      const fromRules = new Set(match[1]!.split(" "));
-      const fromDocs = new Set(match[2]!.split(" "));
-      return {
-        rulesAdd: [...fromRules].filter((scope) => !fromDocs.has(scope)),
-        docsAdd: [...fromDocs].filter((scope) => !fromRules.has(scope)),
-      };
-    });
+  const differencesOf = (conflict: ScopeConflict) => {
+    const fromRules = new Set(conflict.rules === "any" ? [] : conflict.rules);
+    const fromDocs = new Set(conflict.docs === "any" ? [] : conflict.docs);
+    return {
+      rulesAdd: [...fromRules].filter((scope) => !fromDocs.has(scope)),
+      docsAdd: [...fromDocs].filter((scope) => !fromRules.has(scope)),
+    };
+  };
+
+  it("audits effect scopes with the same machinery as triggers", () => {
+    expect(report.scopeConflicts.triggers).toHaveLength(232);
+    expect(report.scopeConflicts.effects).toHaveLength(161);
+    expect(report.unscopedRules.triggers).toEqual([
+      "cosmic_storm_influence_value",
+      "has_pop_flag",
+      "pop_has_ethic",
+    ]);
+    expect(report.unscopedRules.effects).toEqual([
+      "<scripted_effect>",
+      "cancel_contract",
+      "create_random_fleet",
+      "issue_contract",
+      "pop_event",
+      "remove_pop_flag",
+      "set_pop_flag",
+      "set_timed_pop_flag",
+    ]);
+  });
+
+  it("shows that most trigger and effect drift is the stale 4.x scope model", () => {
+    const parsed = [...report.scopeConflicts.triggers, ...report.scopeConflicts.effects].map(
+      (conflict) => {
+        const difference = differencesOf(conflict);
+        return {
+          ...difference,
+          explained: difference.rulesAdd.includes("carrier") || difference.docsAdd.includes("pop"),
+        };
+      }
+    );
     const count = (scope: string, key: "rulesAdd" | "docsAdd"): number =>
       parsed.filter((entry) => entry[key].includes(scope)).length;
 
     // `carrier` is a scope the fork tracks and the dump omits; `pop` is the
     // pre-4.0 name for what the fork calls `pop_group`.
-    expect(count("carrier", "rulesAdd")).toBe(164);
-    expect(count("pop", "docsAdd")).toBe(70);
-    const explained = parsed.filter(
-      (entry) => entry.rulesAdd.includes("carrier") || entry.docsAdd.includes("pop")
-    );
+    expect(count("carrier", "rulesAdd")).toBe(296);
+    expect(count("pop", "docsAdd")).toBe(117);
+    const explained = parsed.filter((entry) => entry.explained);
     expect(explained.length / parsed.length).toBeGreaterThan(0.95);
   });
 });
