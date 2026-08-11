@@ -162,7 +162,9 @@ function plannedCommands(resolved: Resolved): string[] {
 function idsPackageUnavailable(output: string): boolean {
   return (
     output.includes("@pdx-ts/stellaris-ids") &&
-    /(?:\bETARGET\b|\bnotarget\b|no matching versions? found)/i.test(output)
+    /(?:\bETARGET\b|\bnotarget\b|\bYN0082\b|no matching versions? found|no candidates found)/i.test(
+      output
+    )
   );
 }
 

@@ -43,7 +43,14 @@ function plan(overrides: Partial<Parameters<typeof planPatchEmission>[0]> = {}) 
 
 describe("the stem-append lemma", () => {
   it("appending to a stem always sorts after the stemmed file (property)", () => {
-    const stem = fc.stringMatching(/^[a-zA-Z0-9_!.-]{1,40}$/);
+    const stem = fc.stringMatching(/^[a-zA-Z0-9_!.-]{1,40}$/).filter((value) => {
+      try {
+        normalizeLogicalPath(`dir/${value}.txt`);
+        return true;
+      } catch {
+        return false;
+      }
+    });
     const suffix = fc.stringMatching(/^[a-z0-9_]{1,20}$/);
     fc.assert(
       fc.property(stem, suffix, (s, x) => {

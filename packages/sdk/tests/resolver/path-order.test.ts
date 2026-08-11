@@ -104,6 +104,7 @@ describe("normalizeLogicalPath", () => {
     ["a/", /empty component/],
     ["./a.txt", /"\." component/],
     ["a/../b.txt", /"\.\." component/],
+    ["dir/con.txt", /reserved Windows device name/],
   ])("rejects %j", (raw, message) => {
     expect(() => normalizeLogicalPath(raw)).toThrow(LogicalPathError);
     expect(() => normalizeLogicalPath(raw)).toThrow(message);

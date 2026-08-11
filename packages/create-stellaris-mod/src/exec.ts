@@ -7,6 +7,7 @@
  */
 
 import { spawn } from "node:child_process";
+import type { Readable, Writable } from "node:stream";
 
 export interface Command {
   readonly command: string;
@@ -21,6 +22,15 @@ export interface CommandResult {
 /** Keep the failure tail useful without retaining an unbounded dependency-install transcript. */
 const DIAGNOSTIC_LIMIT = 64 * 1024;
 
+export function teeCommandOutput(
+  source: Readable,
+  destination: Writable,
+  observe: (chunk: Buffer) => void
+): void {
+  source.on("data", observe);
+  source.pipe(destination, { end: false });
+}
+
 export function run(command: Command, cwd: string): Promise<CommandResult> {
   return new Promise((resolve) => {
     const child = spawn(command.command, [...command.args], {
@@ -28,17 +38,12 @@ export function run(command: Command, cwd: string): Promise<CommandResult> {
       stdio: ["inherit", "pipe", "pipe"],
     });
     let output = "";
-    const observe = (chunk: Buffer): string => {
+    const observe = (chunk: Buffer): void => {
       const text = chunk.toString();
       output = `${output}${text}`.slice(-DIAGNOSTIC_LIMIT);
-      return text;
     };
-    child.stdout.on("data", (chunk: Buffer) => {
-      process.stdout.write(observe(chunk));
-    });
-    child.stderr.on("data", (chunk: Buffer) => {
-      process.stderr.write(observe(chunk));
-    });
+    teeCommandOutput(child.stdout, process.stdout, observe);
+    teeCommandOutput(child.stderr, process.stderr, observe);
     child.on("error", () => resolve({ code: -1, output }));
     child.on("close", (code) => resolve({ code: code ?? -1, output }));
   });
