@@ -114,6 +114,11 @@ export function resolveNonInteractive(argv: ParsedArgv, targetDir: string): Reso
   }
   const explicitPath = flag(values, "stellaris-path");
   const detected = detectInstall(explicitPath);
+  if (explicitPath !== undefined && explicitPath !== "" && detected === undefined) {
+    throw new Error(
+      `--stellaris-path ${JSON.stringify(explicitPath)} is not a Stellaris install — no common/technology inside it.`
+    );
+  }
   const gameVersion = detected?.gameVersion;
   const supportedVersion =
     checkedSupportedVersionFlag(flag(values, "supported-version")) ??

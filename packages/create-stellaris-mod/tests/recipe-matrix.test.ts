@@ -25,7 +25,10 @@ import {
   VANILLA_EXAMPLE_IDS as EVENT_IDS,
   EVENT_KIND_CHOICES,
 } from "../src/catalog/recipes/event.ts";
-import { VANILLA_EXAMPLE_IDS as TECHNOLOGY_IDS } from "../src/catalog/recipes/technology.ts";
+import {
+  VANILLA_EXAMPLE_IDS as TECHNOLOGY_IDS,
+  VANILLA_CURATED_VALUES as TECHNOLOGY_VALUES,
+} from "../src/catalog/recipes/technology.ts";
 import type { ChoiceQuestion, GeneratedFeatureSource } from "../src/catalog/types.ts";
 import { main } from "../src/cli.ts";
 import { capture } from "./helpers/capture.ts";
@@ -626,6 +629,42 @@ describe("the vanilla ids the examples cite", () => {
         `it — the curated example in src/catalog/recipes/${recipeId}.ts needs re-reviewing ` +
         `against the current game, not silently repointing at whatever is nearby.`
     ).toContain(`"${id}"`);
+  });
+});
+
+describe("the vanilla scalar combinations the examples cite", () => {
+  const TECHNOLOGY_CORPUS = path.resolve(
+    import.meta.dirname,
+    "../../sdk/tests/fixtures/corpus/technology.json"
+  );
+
+  it("keeps the technology recipe's tier and cost paired in real definitions", () => {
+    const generated = CATALOG.generate({ recipeId: "technology", name: NAME, answers: {} });
+    for (const [field, value] of Object.entries(TECHNOLOGY_VALUES)) {
+      expect(generated.contents).toContain(`${field}: ${value},`);
+    }
+
+    const corpus = JSON.parse(readFileSync(TECHNOLOGY_CORPUS, "utf8")) as {
+      scalarTuples?: readonly {
+        fields: readonly string[];
+        values: readonly string[];
+        definitions: number;
+      }[];
+    };
+    const fields = Object.keys(TECHNOLOGY_VALUES);
+    const values = Object.values(TECHNOLOGY_VALUES).map(String);
+    const evidence = corpus.scalarTuples?.find(
+      (tuple) =>
+        tuple.fields.length === fields.length &&
+        tuple.fields.every((field, index) => field === fields[index]) &&
+        tuple.values.every((value, index) => value === values[index])
+    );
+    expect(
+      evidence?.definitions,
+      `tier ${TECHNOLOGY_VALUES.tier} and cost ${TECHNOLOGY_VALUES.cost} no longer co-occur in ` +
+        "the committed vanilla technology corpus; re-review the recipe rather than preserving " +
+        "its field marginals independently"
+    ).toBeGreaterThan(0);
   });
 });
 

@@ -50,6 +50,7 @@ import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { CONTENT_DECLINED_FIELDS } from "@pdx-ts/codegen-cwt/overlay";
+import { parse, scalarText, type PdxValue } from "@pdx-ts/pdxscript";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
 import { compareUtf8 } from "../../src/ordering.ts";
@@ -320,6 +321,14 @@ export interface RegistryFixture {
    */
   readonly fingerprint: string;
   readonly fields: Readonly<Record<string, SerializedObservation>>;
+  readonly scalarTuples?: readonly SerializedScalarTuple[];
+}
+
+/** One reviewed scalar co-occurrence, counted after resolving global scripted variables. */
+export interface SerializedScalarTuple {
+  readonly fields: readonly string[];
+  readonly values: readonly string[];
+  readonly definitions: number;
 }
 
 export interface CorpusMeta {
@@ -348,7 +357,8 @@ const sorted = (values: Iterable<string>): string[] => [...values].sort(compareU
 function serializeCorpus(
   registry: string,
   corpus: RegistryCorpus,
-  fingerprint: string
+  fingerprint: string,
+  scalarTuples: readonly SerializedScalarTuple[] = []
 ): RegistryFixture {
   const fields: Record<string, SerializedObservation> = {};
   for (const key of sorted(corpus.occurrences.keys())) {
@@ -381,7 +391,104 @@ function serializeCorpus(
         }),
     };
   }
-  return { registry, definitions: corpus.definitions, files: corpus.files, fingerprint, fields };
+  return {
+    registry,
+    definitions: corpus.definitions,
+    files: corpus.files,
+    fingerprint,
+    fields,
+    ...(scalarTuples.length === 0 ? {} : { scalarTuples }),
+  };
+}
+
+const SCALAR_TUPLE_QUERIES: Readonly<
+  Record<
+    string,
+    readonly { readonly fields: readonly string[]; readonly values: readonly string[] }[]
+  >
+> = {
+  technology: [{ fields: ["tier", "cost"], values: ["2", "2000"] }],
+};
+
+function globalVariables(installPath: string): ReadonlyMap<string, PdxValue> {
+  const variables = new Map<string, PdxValue>();
+  const dir = path.join(installPath, "common/scripted_variables");
+  for (const name of readdirSync(dir)
+    .filter((file) => file.endsWith(".txt"))
+    .sort(compareUtf8)) {
+    for (const item of parse(readFileSync(path.join(dir, name), "utf8")).items) {
+      if (item.kind === "entry" && item.key.startsWith("@") && item.value.kind !== "container") {
+        variables.set(item.key, item.value);
+      }
+    }
+  }
+  return variables;
+}
+
+function resolvedScalar(
+  value: PdxValue,
+  variables: ReadonlyMap<string, PdxValue>,
+  resolving: ReadonlySet<string> = new Set()
+): string | null {
+  if (value.kind === "container" || value.kind === "math") {
+    return null;
+  }
+  if (value.kind !== "var") {
+    return scalarText(value);
+  }
+  if (resolving.has(value.name)) {
+    return null;
+  }
+  const resolved = variables.get(value.name);
+  return resolved === undefined
+    ? null
+    : resolvedScalar(resolved, variables, new Set([...resolving, value.name]));
+}
+
+function scalarTuples(
+  installPath: string,
+  measurement: RegistryMeasurement,
+  variables: ReadonlyMap<string, PdxValue>
+): SerializedScalarTuple[] {
+  const queries = SCALAR_TUPLE_QUERIES[measurement.registry] ?? [];
+  if (queries.length === 0) {
+    return [];
+  }
+  const counts = queries.map(() => 0);
+  const dir = path.join(installPath, measurement.registryPath);
+  for (const name of readdirSync(dir)
+    .filter((file) => file.endsWith(".txt"))
+    .sort(compareUtf8)) {
+    for (const item of parse(readFileSync(path.join(dir, name), "utf8")).items) {
+      if (item.kind !== "entry" || item.value.kind !== "container") {
+        continue;
+      }
+      if (measurement.keyword !== null && item.key !== measurement.keyword) {
+        continue;
+      }
+      if (item.key === measurement.excludedKey) {
+        continue;
+      }
+      const values = new Map<string, string>();
+      for (const field of item.value.items) {
+        if (field.kind !== "entry" || field.key === measurement.nameField) {
+          continue;
+        }
+        const value = resolvedScalar(field.value, variables);
+        if (value !== null) {
+          values.set(field.key, value);
+        }
+      }
+      for (const [index, query] of queries.entries()) {
+        if (
+          query.fields.every((field, fieldIndex) => values.get(field) === query.values[fieldIndex])
+        ) {
+          counts[index]! += 1;
+        }
+      }
+    }
+  }
+  return queries.map((query, index) => ({ ...query, definitions: counts[index]! }));
 }
 
 /** The fixture read back into the shape `conformance`/`shapeConformance` take. */
@@ -445,6 +552,7 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
         "extracting."
     );
   }
+  const variables = globalVariables(installPath);
   const registries = MEASUREMENTS.map((measurement) =>
     serializeCorpus(
       measurement.registry,
@@ -457,7 +565,8 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
         measurement.spliceMembers,
         measurement.excludedKey
       ),
-      fingerprintRegistryDir(path.join(installPath, measurement.registryPath))
+      fingerprintRegistryDir(path.join(installPath, measurement.registryPath)),
+      scalarTuples(installPath, measurement, variables)
     )
   );
   return {

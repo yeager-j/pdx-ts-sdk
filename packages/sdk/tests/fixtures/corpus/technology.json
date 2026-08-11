@@ -3933,5 +3933,18 @@
         ]
       ]
     }
-  }
+  },
+  "scalarTuples": [
+    {
+      "fields": [
+        "tier",
+        "cost"
+      ],
+      "values": [
+        "2",
+        "2000"
+      ],
+      "definitions": 52
+    }
+  ]
 }

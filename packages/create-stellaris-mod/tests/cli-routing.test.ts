@@ -6,13 +6,17 @@
  * it exercises parsing, resolution and planning, and touches no disk.
  */
 
+import { once } from "node:events";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { PassThrough, Writable } from "node:stream";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { main } from "../src/cli.ts";
+import { installFailureSteps } from "../src/commands/init.ts";
 import { supportedVersionFor } from "../src/detect.ts";
+import { run, teeCommandOutput } from "../src/exec.ts";
 import { parseManifest } from "../src/manifest.ts";
 import { COMMANDS, splitCommand, type CommandName } from "../src/options.ts";
 import { FALLBACK_GAME_VERSION, supportedVersionProblem } from "../src/prompts.ts";
@@ -183,6 +187,101 @@ describe("init", () => {
     expect(err()).toContain("--nonsense");
     expect(err()).toContain("Options:");
     expect(out()).toBe("");
+  });
+
+  it("rejects an explicit invalid Stellaris path before writing in non-interactive mode", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-path-"));
+    try {
+      const invalid = path.join(root, "typoed-stellaris");
+      const { io, out, err } = capture(root);
+      expect(
+        await main(["--yes", "--no-git", "--no-install", "--stellaris-path", invalid, "my-mod"], io)
+      ).toBe(1);
+      expect(err()).toContain(`--stellaris-path ${JSON.stringify(invalid)}`);
+      expect(err()).toContain("no common/technology inside it");
+      expect(out()).toBe("");
+      expect(existsSync(path.join(root, "my-mod"))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("dependency install recovery", () => {
+  it("retains package-manager diagnostics written to stdout", async () => {
+    const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+    try {
+      const result = await run(
+        {
+          command: process.execPath,
+          args: [
+            "-e",
+            'process.stdout.write("ETARGET: @pdx-ts/stellaris-ids has no matching version\\n"); process.exitCode = 1;',
+          ],
+        },
+        process.cwd()
+      );
+      expect(result.code).toBe(1);
+      expect(result.output).toContain("ETARGET: @pdx-ts/stellaris-ids has no matching version");
+    } finally {
+      stdout.mockRestore();
+    }
+  });
+
+  it("preserves destination backpressure while retaining diagnostics", async () => {
+    const source = new PassThrough();
+    let releaseWrite: (() => void) | undefined;
+    const destination = new Writable({
+      highWaterMark: 1,
+      write(_chunk, _encoding, callback) {
+        releaseWrite = callback;
+      },
+    });
+    const observed: Buffer[] = [];
+    teeCommandOutput(source, destination, (chunk) => observed.push(chunk));
+
+    source.write(Buffer.from("diagnostic output"));
+    expect(source.isPaused()).toBe(true);
+    expect(releaseWrite).toBeTypeOf("function");
+
+    const drained = once(destination, "drain");
+    releaseWrite!();
+    await drained;
+    await vi.waitFor(() => expect(source.isPaused()).toBe(false));
+    expect(Buffer.concat(observed).toString()).toBe("diagnostic output");
+
+    source.destroy();
+    destination.destroy();
+  });
+
+  it("names the unchecked degradation path for a missing ids package release", () => {
+    const steps = installFailureSteps(
+      "npm",
+      "4.4.7",
+      "npm error code ETARGET\nnpm error notarget No matching version found for @pdx-ts/stellaris-ids@>=4.4.7-0 <4.4.7."
+    ).join("\n");
+    expect(steps).toContain("No @pdx-ts/stellaris-ids release matches game build 4.4.7 yet.");
+    expect(steps).toContain('remove "@pdx-ts/stellaris-ids" from package.json');
+    expect(steps).toContain('remove import "@pdx-ts/stellaris-ids"; from src/mod.ts');
+    expect(steps).toContain("npm install");
+    expect(steps).not.toContain("run it again");
+  });
+
+  it("recognizes Yarn's missing-version diagnostic", () => {
+    const steps = installFailureSteps(
+      "yarn",
+      "4.4.7",
+      "YN0082: @pdx-ts/stellaris-ids@npm:>=4.4.7-0 <4.4.7: No candidates found"
+    ).join("\n");
+    expect(steps).toContain("No @pdx-ts/stellaris-ids release matches game build 4.4.7 yet.");
+    expect(steps).toContain("yarn install");
+    expect(steps).not.toContain("run it again");
+  });
+
+  it("keeps the ordinary retry advice for unrelated install failures", () => {
+    expect(installFailureSteps("pnpm", "4.4.7", "network timeout")).toEqual([
+      "  pnpm install        # the install did not complete; run it again",
+    ]);
   });
 });
 

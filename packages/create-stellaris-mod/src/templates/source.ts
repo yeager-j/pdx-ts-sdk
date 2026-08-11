@@ -255,7 +255,7 @@ export const firstSteps = mod.technology("first_steps", {
   desc: "The first technology this mod adds.",
   cost: 2000,
   area: "physics",
-  tier: 1,
+  tier: 2,
   category: "particles",
   weight: 100,
 });

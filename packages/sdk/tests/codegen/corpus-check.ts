@@ -42,6 +42,9 @@ function registryDrift(committed: RegistryFixture, fresh: RegistryFixture): stri
   if (committed.fingerprint !== fresh.fingerprint) {
     lines.push("content fingerprint changed");
   }
+  if (JSON.stringify(committed.scalarTuples ?? []) !== JSON.stringify(fresh.scalarTuples ?? [])) {
+    lines.push("scalar co-occurrences changed");
+  }
   const before = new Map(Object.entries(committed.fields));
   const after = new Map(Object.entries(fresh.fields));
   const added = [...after.keys()].filter((key) => !before.has(key));
