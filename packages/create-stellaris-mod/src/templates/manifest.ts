@@ -21,6 +21,7 @@
 
 import { PREFIX_PATTERN, SUPPORTED_VERSION_PATTERN } from "../manifest.ts";
 import type { Resolved } from "../options.ts";
+import { PROJECT_CONTENT_DIRECTORY_PATTERN } from "../project-layout.ts";
 
 export const MANIFEST_FILE = "stellaris-mod.json";
 export const MANIFEST_SCHEMA_FILE = "stellaris-mod.schema.json";
@@ -67,9 +68,9 @@ export function manifestSchema(): string {
         additionalProperties: { $ref: "#/$defs/modConfig" },
       },
       contentDirectory: {
-        description: "Project-relative directory generated feature source is written into.",
+        description: "Normalized directory below src where generated feature source is written.",
         type: "string",
-        minLength: 1,
+        pattern: PROJECT_CONTENT_DIRECTORY_PATTERN.source,
       },
     },
     $defs: {

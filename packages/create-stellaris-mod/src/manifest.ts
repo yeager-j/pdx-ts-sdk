@@ -19,6 +19,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { parseProjectLayout, type ProjectLayout } from "./project-layout.ts";
+
 /** The one filename a project's manifest can have. */
 export const MANIFEST_BASENAME = "stellaris-mod.json";
 
@@ -70,6 +72,7 @@ export interface ProjectManifest {
   readonly config: ProjectModConfig;
   /** A project-relative logical path. Validated as a path when it is used. */
   readonly contentDirectory: string;
+  readonly layout: ProjectLayout;
   /** Where these bytes came from, for messages a later step needs to write. */
   readonly sourcePath: string;
 }
@@ -131,9 +134,11 @@ export function parseManifest(bytes: string, sourcePath: string): ProjectManifes
     }
   }
 
+  const layout = readProjectLayout(root["contentDirectory"], sourcePath);
   return {
     ...readMod(root["mod"], sourcePath),
-    contentDirectory: readContentDirectory(root["contentDirectory"], sourcePath),
+    contentDirectory: layout.contentDirectory,
+    layout,
     sourcePath,
   };
 }
@@ -269,17 +274,17 @@ export async function findManifest(startDir: string): Promise<FoundManifest | un
   }
 }
 
-function readContentDirectory(value: unknown, sourcePath: string): string {
+function readProjectLayout(value: unknown, sourcePath: string): ProjectLayout {
   if (typeof value !== "string") {
     throw new ManifestError(
       `${sourcePath}: "contentDirectory" must be a string, and is ${describe(value)}.`
     );
   }
-  if (value === "") {
+  try {
+    return parseProjectLayout(value);
+  } catch (error) {
     throw new ManifestError(
-      `${sourcePath}: "contentDirectory" is empty. It is the project-relative directory ` +
-        `generated feature source is written into, such as "src/content".`
+      `${sourcePath}: ${error instanceof Error ? error.message : String(error)}`
     );
   }
-  return value;
 }

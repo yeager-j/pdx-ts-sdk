@@ -190,7 +190,8 @@ describe("the Project Manifest", () => {
     // author who moved the directory would get generated files the build never
     // imports — present, correct, and silently absent from the mod.
     const mod = plan().get("src/mod.ts")!;
-    expect(mod).toContain("new URL(`../${manifest.contentDirectory}/`, import.meta.url)");
+    expect(mod).toContain('path.join(projectRoot, ...manifest.contentDirectory.split("/"))');
+    expect(mod).toContain("contentDirectoryPattern.test(manifest.contentDirectory)");
     expect(mod).not.toContain('new URL("./content/"');
     expect(manifest(plan())["imports"]).toBeDefined();
 

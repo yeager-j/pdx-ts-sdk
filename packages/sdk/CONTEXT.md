@@ -37,8 +37,23 @@ The deterministic pass from placed features to a `PureMod`. It is where
 duplicate ids, dangling references, and namespace collisions are caught.
 
 **PureMod**:
-The assembled mod as a value rather than a builder — the thing `render`,
-`write`, and `install` consume.
+The assembled mod as a value rather than a builder — the thing `render` consumes.
+
+**Rendered mod**:
+The immutable, canonically ordered snapshot `render(PureMod)` returns. It owns hash-identified text
+or byte artifacts and is the only input to materialization.
+
+**Rendered file**:
+One validated Logical path and its immutable exact bytes, with byte length and SHA-256 identity.
+
+**Materialization**:
+Failure-safe exact activation of one Rendered mod beneath a chosen directory. The ownership manifest
+lets a later build remove stale generated files while refusing added, modified, missing, type-changed,
+or symlinked paths.
+
+**Merge write**:
+The explicitly secondary sink that adds or overwrites the Rendered mod's files without deleting
+unrelated paths. It is not the scaffolded build default.
 
 **Contribution**:
 An item that adds to a shared, non-id-keyed object several features write into

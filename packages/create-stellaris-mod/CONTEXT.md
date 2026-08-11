@@ -15,6 +15,11 @@ The author-owned source of truth for one project's mod identity, launcher metada
 source location. It is project configuration, not scaffolder installation state.
 _Avoid_: scaffolding config, mod config file, installation record
 
+**Project Layout**:
+The parsed, normalized placement contract derived from the Project Manifest. Feature source lives
+below `src/`; recipe publication, generated discovery wiring, and TypeScript project coverage all
+consume that same interpretation.
+
 **Recipe Catalog**:
 The built-in, discoverable set of parameterized recipes available to the
 scaffolder.

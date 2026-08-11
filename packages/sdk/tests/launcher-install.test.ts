@@ -23,6 +23,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
@@ -32,6 +33,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   createMod,
   install,
+  MaterializationDriftError,
   render,
   renderLauncherDescriptor,
   stellaris,
@@ -62,6 +64,31 @@ const mod = capability.compile([
     }),
   ]),
 ]);
+const renderedMod = render(mod);
+
+function renderedWithOldFeature() {
+  const old = capability.technology("old_marker", {
+    name: "Old Marker",
+    cost: 1000,
+    area: "physics",
+    tier: 1,
+    category: "particles",
+  });
+  return render(
+    capability.compile([
+      capability.feature(undefined, [
+        capability.technology("marker", {
+          name: "Marker",
+          cost: 1000,
+          area: "physics",
+          tier: 1,
+          category: "particles",
+        }),
+      ]),
+      capability.feature("old_feature", [old]),
+    ])
+  );
+}
 
 const temps: string[] = [];
 function tempDir(): string {
@@ -128,7 +155,7 @@ describe("renderLauncherDescriptor", () => {
     // disagree about name, version, tags or supported_version, because only one
     // of them decides those.
     const inner = render(mod).get("descriptor.mod")!;
-    expect(renderLauncherDescriptor(mod, "/some/where/lp_probe")).toBe(
+    expect(renderLauncherDescriptor(renderedMod, "/some/where/lp_probe")).toBe(
       `${inner.trimEnd()}\npath="/some/where/lp_probe"\n`
     );
   });
@@ -137,7 +164,7 @@ describe("renderLauncherDescriptor", () => {
 describe("install", () => {
   it("writes the content and the sibling descriptor the launcher reads", async () => {
     const root = tempDir();
-    const result = await install(mod, { modDir: root });
+    const result = await install(renderedMod, { modDir: root });
 
     expect(result.contentDir).toBe(join(root, "lp_probe"));
     expect(result.descriptorPath).toBe(join(root, "lp_probe.mod"));
@@ -148,19 +175,19 @@ describe("install", () => {
       readFileSync(join(result.contentDir, "common/technology/lp_probe_technology.txt"), "utf8")
     ).toContain("lp_probe_tech_marker");
     expect(readFileSync(result.descriptorPath, "utf8")).toBe(
-      renderLauncherDescriptor(mod, result.contentDir)
+      renderLauncherDescriptor(renderedMod, result.contentDir)
     );
   });
 
   it("names the content folder after the prefix, so two mods cannot collide", async () => {
     const root = tempDir();
-    const { contentDir } = await install(mod, { modDir: root });
+    const { contentDir } = await install(renderedMod, { modDir: root });
     expect(contentDir.endsWith(mod.config.prefix)).toBe(true);
   });
 
   it("takes an explicit folder name for an author who wants one", async () => {
     const root = tempDir();
-    const result = await install(mod, { modDir: root, dirName: "custom_name" });
+    const result = await install(renderedMod, { modDir: root, dirName: "custom_name" });
     expect(result.contentDir).toBe(join(root, "custom_name"));
     expect(result.descriptorPath).toBe(join(root, "custom_name.mod"));
     expect(readFileSync(result.descriptorPath, "utf8")).toContain(
@@ -174,12 +201,10 @@ describe("install", () => {
     // ids twice. `write` only overwrites the paths it is handed, so the stale
     // one survives unless the directory is cleared.
     const root = tempDir();
-    const { contentDir } = await install(mod, { modDir: root });
+    const { contentDir } = await install(renderedWithOldFeature(), { modDir: root });
     const stale = join(contentDir, "common/technology/lp_probe_old_feature.txt");
-    mkdirSync(dirname(stale), { recursive: true });
-    writeFileSync(stale, "lp_probe_tech_marker = { }\n", "utf8");
 
-    await install(mod, { modDir: root });
+    await install(renderedMod, { modDir: root });
 
     expect(existsSync(stale)).toBe(false);
     expect(existsSync(join(contentDir, "common/technology/lp_probe_technology.txt"))).toBe(true);
@@ -189,17 +214,43 @@ describe("install", () => {
     // A fresh install legitimately has no mod directory — the launcher makes it
     // on first use — so this must not be the failure case.
     const root = join(tempDir(), "not", "yet");
-    const result = await install(mod, { modDir: root });
+    const result = await install(renderedMod, { modDir: root });
     expect(readFileSync(result.descriptorPath, "utf8")).toContain('name="Launcher Probe"');
   });
 
   it("leaves nothing behind but the content directory and its descriptor", async () => {
     // The swap stages into siblings; a completed install must not leave one.
     const root = tempDir();
-    await install(mod, { modDir: root });
-    await install(mod, { modDir: root });
+    await install(renderedMod, { modDir: root });
+    await install(renderedMod, { modDir: root });
     expect(readdirSync(root).sort()).toEqual(["lp_probe", "lp_probe.mod"]);
   });
+
+  it("refuses a launcher descriptor symlink without touching its target", async () => {
+    const root = tempDir();
+    const outside = join(tempDir(), "outside.mod");
+    writeFileSync(outside, "outside", "utf8");
+    await install(renderedMod, { modDir: root });
+    rmSync(join(root, "lp_probe.mod"));
+    symlinkSync(outside, join(root, "lp_probe.mod"));
+
+    await expect(install(renderedMod, { modDir: root })).rejects.toBeInstanceOf(
+      MaterializationDriftError
+    );
+
+    expect(readFileSync(outside, "utf8")).toBe("outside");
+  });
+
+  it.each(['quoted"root', "line\nbreak"])(
+    "refuses a mod directory path the launcher format cannot encode: %o",
+    async (basename) => {
+      const root = join(tempDir(), basename);
+      await expect(install(renderedMod, { modDir: root })).rejects.toThrow(
+        /descriptor format has no escaping/
+      );
+      expect(existsSync(root)).toBe(false);
+    }
+  );
 });
 
 describe("install refuses a folder name that is not a folder name", () => {
@@ -223,7 +274,7 @@ describe("install refuses a folder name that is not a folder name", () => {
     ["a carriage return", "carriage\rreturn", /cannot contain a line break/],
   ])("rejects %s", async (_label, dirName, expected) => {
     const root = tempDir();
-    await expect(install(mod, { modDir: root, dirName })).rejects.toThrow(expected);
+    await expect(install(renderedMod, { modDir: root, dirName })).rejects.toThrow();
     // Nothing was created, and nothing was deleted, before the refusal.
     expect(readdirSync(root)).toEqual([]);
   });
@@ -233,20 +284,18 @@ describe("install refuses a folder name that is not a folder name", () => {
     // would let the reported name forge lines in a build log the same way it
     // would in the descriptor.
     expect.assertions(1);
-    return install(mod, { modDir: tempDir(), dirName: 'a"\nb' }).catch((error: Error) => {
+    return install(renderedMod, { modDir: tempDir(), dirName: 'a"\nb' }).catch((error: Error) => {
       expect(error.message).not.toMatch(/[\r\n]\s*archive|path="[^"]*"[^"]*"/);
     });
   });
 
   it("checks the prefix default through the same gate, naming it as the default", async () => {
     // The compile validates its own prefix, so this is reachable only through a
-    // hand-built `PureMod` — but `install` takes a `PureMod`, not a build, and
-    // the value that decides a recursive delete is not one to take on trust.
+    // hand-built `PureMod` rendered into a snapshot. `install` rechecks the
+    // folder name because that value still decides which directory is replaced.
     const root = tempDir();
     const forged = { ...mod, config: { ...mod.config, prefix: ".." } } as PureMod;
-    await expect(install(forged, { modDir: root })).rejects.toThrow(
-      /The mod prefix "\.\." is the default folder name/
-    );
+    await expect(install(render(forged), { modDir: root })).rejects.toThrow(/Install folder/);
     expect(readdirSync(root)).toEqual([]);
   });
 });
@@ -280,7 +329,7 @@ describe("install is atomic in the ways that matter", () => {
     // malformed definition — took the user's working mod with it and left
     // nothing in its place.
     const root = tempDir();
-    const { contentDir } = await install(mod, { modDir: root });
+    const { contentDir } = await install(renderedMod, { modDir: root });
     const before = readdirSync(contentDir).sort();
     const marker = readFileSync(
       join(contentDir, "common/technology/lp_probe_technology.txt"),
@@ -288,9 +337,7 @@ describe("install is atomic in the ways that matter", () => {
     );
     const descriptorBefore = readFileSync(join(root, "lp_probe.mod"), "utf8");
 
-    await expect(install(collidingMod(), { modDir: root })).rejects.toThrow(
-      VanillaPathCollisionError
-    );
+    expect(() => render(collidingMod())).toThrow(VanillaPathCollisionError);
 
     expect(readdirSync(contentDir).sort()).toEqual(before);
     expect(
@@ -309,24 +356,22 @@ describe("install is atomic in the ways that matter", () => {
     // characters leaves room for the ".mod" descriptor beside it.
     const root = tempDir();
     const dirName = "l".repeat(240);
-    const result = await install(mod, { modDir: root, dirName });
+    const result = await install(renderedMod, { modDir: root, dirName });
     expect(result.contentDir).toBe(join(root, dirName));
     expect(readFileSync(join(result.contentDir, "descriptor.mod"), "utf8")).toContain(
       'name="Launcher Probe"'
     );
     // Re-installing exercises the set-aside rename as well as the staging one.
-    await install(mod, { modDir: root, dirName });
+    await install(renderedMod, { modDir: root, dirName });
     expect(readdirSync(root).sort()).toEqual([dirName, `${dirName}.mod`]);
   });
 
   it("replaces an existing install with exactly the new render", async () => {
     const root = tempDir();
-    const { contentDir } = await install(mod, { modDir: root });
+    const { contentDir } = await install(renderedWithOldFeature(), { modDir: root });
     const stale = join(contentDir, "common/technology/lp_probe_old_feature.txt");
-    mkdirSync(dirname(stale), { recursive: true });
-    writeFileSync(stale, "lp_probe_tech_marker = { }\n", "utf8");
 
-    await install(mod, { modDir: root });
+    await install(renderedMod, { modDir: root });
 
     const rendered = render(mod);
     const written = new Map(
@@ -335,57 +380,48 @@ describe("install is atomic in the ways that matter", () => {
         readFileSync(join(contentDir, relPath), "utf8"),
       ])
     );
-    expect([...written.entries()]).toEqual([...rendered.entries()]);
+    expect([...written.entries()]).toEqual(
+      [...rendered.entries()].map(([relPath, file]) => [relPath, file.text])
+    );
     expect(existsSync(stale)).toBe(false);
   });
 });
 
-describe("write stays inside the directory it was given", () => {
-  it.each([
-    ["a traversing relPath", "../escaped.txt"],
-    ["a deep traversal", "a/../../escaped.txt"],
-    ["an absolute relPath", "/tmp/pdx-write-escape-probe.txt"],
-    ["the output directory itself", "."],
-    ["the output directory, spelled empty", ""],
-  ])("rejects %s", async (_label, relPath) => {
-    const root = tempDir();
-    await expect(write(root, new Map([[relPath, "escaped"]]))).rejects.toThrow(
-      /not a file inside the output directory/
-    );
-    expect(readdirSync(root)).toEqual([]);
+describe("write materializes one exact rendered snapshot", () => {
+  it("removes a generated file that the next render no longer owns", async () => {
+    const out = join(tempDir(), "out");
+    await write(out, renderedWithOldFeature());
+    const stale = join(out, "common/technology/lp_probe_old_feature.txt");
+    expect(existsSync(stale)).toBe(true);
+
+    await write(out, renderedMod);
+
+    expect(existsSync(stale)).toBe(false);
+    expect(readFileSync(join(out, "descriptor.mod"), "utf8")).toContain("Launcher Probe");
+    expect(existsSync(join(out, ".pdx-sdk-manifest.json"))).toBe(true);
   });
 
-  it("still writes ordinary nested paths", async () => {
-    const root = tempDir();
-    await write(root, new Map([["common/technology/x.txt", "ok"]]));
-    expect(readFileSync(join(root, "common/technology/x.txt"), "utf8")).toBe("ok");
+  it("refuses to erase an added or modified path", async () => {
+    const out = join(tempDir(), "out");
+    await write(out, renderedMod);
+    writeFileSync(join(out, "notes.txt"), "mine", "utf8");
+
+    await expect(write(out, renderedMod)).rejects.toBeInstanceOf(MaterializationDriftError);
+
+    expect(readFileSync(join(out, "notes.txt"), "utf8")).toBe("mine");
   });
 
-  it.skipIf(process.platform === "win32")(
-    "does not mistake a child of a filesystem root for an escape",
-    async () => {
-      // `/` already ends in a separator, so a `root + sep` prefix test compares
-      // against `"//"` and rejects every legitimate child of it. The real
-      // function is driven here rather than a copy of its rule, and aimed at
-      // `/dev/null`: it exists everywhere POSIX, it is not a directory, so the
-      // `mkdir` behind the write fails immediately with ENOTDIR — no
-      // privileges, no waiting, and nothing created. Reaching that error at
-      // all is the assertion: containment let the path through.
-      await expect(
-        write("/", new Map([["dev/null/pdx-containment-probe.txt", "unwritable"]]))
-      ).rejects.toThrow(/ENOTDIR|EEXIST|EACCES|EPERM|EROFS/);
-      await expect(
-        write("/", new Map([["dev/null/pdx-containment-probe.txt", "unwritable"]]))
-      ).rejects.not.toThrow(/not a file inside the output directory/);
-    }
-  );
+  it("never follows a symlink already inside the old output tree", async () => {
+    const root = tempDir();
+    const out = join(root, "out");
+    const outside = join(root, "outside");
+    mkdirSync(outside);
+    await write(out, renderedMod);
+    rmSync(join(out, "common"), { recursive: true });
+    symlinkSync(outside, join(out, "common"), "dir");
 
-  it("still refuses an escape from a filesystem root", async () => {
-    // The other half: `/` has no parent, so `..` normalizes back to `/` and is
-    // the root itself rather than an escape — while an absolute key pointing
-    // somewhere else entirely is still refused.
-    await expect(write("/", new Map([["..", "x"]]))).rejects.toThrow(
-      /not a file inside the output directory/
-    );
+    await expect(write(out, renderedMod)).rejects.toBeInstanceOf(MaterializationDriftError);
+
+    expect(readdirSync(outside)).toEqual([]);
   });
 });

@@ -70,12 +70,14 @@ describe("patching end to end", () => {
 
   it("emits the patch into a file computed to sort after the definer", async () => {
     const files = render(patchedMod());
-    expect([...files.keys()]).toEqual([
-      "descriptor.mod",
-      "common/technology/pp_mod_technology.txt",
-      "localisation/english/pp_mod_l_english.yml",
-      "common/technology/pp_soc_tech_pp_mod_patch.txt",
-    ]);
+    expect([...files.keys()]).toEqual(
+      [
+        "descriptor.mod",
+        "common/technology/pp_mod_technology.txt",
+        "localisation/english/pp_mod_l_english.yml",
+        "common/technology/pp_soc_tech_pp_mod_patch.txt",
+      ].sort()
+    );
     await expect(files.get("common/technology/pp_soc_tech_pp_mod_patch.txt")).toMatchFileSnapshot(
       "__snapshots__/patches/common__technology__pp_soc_tech_pp_mod_patch.txt"
     );
@@ -350,21 +352,25 @@ describe("patching two registries in one mod", () => {
   }
 
   it("plans one emission per patched registry, ordered by emitted path", () => {
-    expect(twoRegistryMod().patchPlans.map((plan) => plan.relPath)).toEqual([
-      "common/buildings/pp_buildings_pp_mod_patch.txt",
-      "common/technology/pp_soc_tech_pp_mod_patch.txt",
-    ]);
+    expect(twoRegistryMod().patchPlans.map((plan) => plan.relPath)).toEqual(
+      [
+        "common/buildings/pp_buildings_pp_mod_patch.txt",
+        "common/technology/pp_soc_tech_pp_mod_patch.txt",
+      ].sort()
+    );
   });
 
   it("emits both patch files beside the mod's own content", async () => {
     const files = render(twoRegistryMod());
-    expect([...files.keys()]).toEqual([
-      "descriptor.mod",
-      "common/technology/pp_mod_technology.txt",
-      "localisation/english/pp_mod_l_english.yml",
-      "common/buildings/pp_buildings_pp_mod_patch.txt",
-      "common/technology/pp_soc_tech_pp_mod_patch.txt",
-    ]);
+    expect([...files.keys()]).toEqual(
+      [
+        "descriptor.mod",
+        "common/technology/pp_mod_technology.txt",
+        "localisation/english/pp_mod_l_english.yml",
+        "common/buildings/pp_buildings_pp_mod_patch.txt",
+        "common/technology/pp_soc_tech_pp_mod_patch.txt",
+      ].sort()
+    );
     await expect(files.get("common/buildings/pp_buildings_pp_mod_patch.txt")).toMatchFileSnapshot(
       "__snapshots__/patches/common__buildings__pp_buildings_pp_mod_patch.txt"
     );
@@ -498,10 +504,9 @@ describe("patching a registry whose replacement rule is assumed", () => {
 
   it("emits the patch into a file computed to sort after the definer", async () => {
     const files = render(megastructureMod());
-    expect([...files.keys()]).toEqual([
-      "descriptor.mod",
-      "common/megastructures/pp_megastructures_pp_mod_patch.txt",
-    ]);
+    expect([...files.keys()]).toEqual(
+      ["descriptor.mod", "common/megastructures/pp_megastructures_pp_mod_patch.txt"].sort()
+    );
     await expect(
       files.get("common/megastructures/pp_megastructures_pp_mod_patch.txt")
     ).toMatchFileSnapshot(
@@ -610,14 +615,16 @@ describe("patched localization end to end", () => {
 
   it("emits the replace layer beside the ordinary one", async () => {
     const files = render(localizedMod());
-    expect([...files.keys()]).toEqual([
-      "descriptor.mod",
-      "common/technology/pp_mod_localized.txt",
-      "localisation/english/pp_mod_localized_l_english.yml",
-      "localisation/replace/english/pp_mod_localized_l_english.yml",
-      "common/buildings/pp_buildings_pp_mod_patch.txt",
-      "common/technology/pp_soc_tech_pp_mod_patch.txt",
-    ]);
+    expect([...files.keys()]).toEqual(
+      [
+        "descriptor.mod",
+        "common/technology/pp_mod_localized.txt",
+        "localisation/english/pp_mod_localized_l_english.yml",
+        "localisation/replace/english/pp_mod_localized_l_english.yml",
+        "common/buildings/pp_buildings_pp_mod_patch.txt",
+        "common/technology/pp_soc_tech_pp_mod_patch.txt",
+      ].sort()
+    );
     // Full file: the BOM, the `l_english:` header, and vanilla's own keys in
     // sorted order — nothing about it depends on which patch was authored first.
     await expect(

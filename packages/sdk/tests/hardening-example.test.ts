@@ -16,19 +16,21 @@ const files = render(hardening.mod);
 describe("hardening example", () => {
   it("renders every implemented registry, on-actions, events, localization, and the patch", () => {
     const patchPath = hardening.mod.patchPlans[0]!.relPath;
-    expect([...files.keys()]).toEqual([
-      "descriptor.mod",
-      "common/technology/pdx_hardening_technology.txt",
-      "common/buildings/pdx_hardening_buildings.txt",
-      "common/traditions/pdx_hardening_traditions.txt",
-      "common/tradition_categories/pdx_hardening_tradition_categories.txt",
-      "common/council_agendas/pdx_hardening_council_agendas.txt",
-      "common/edicts/pdx_hardening_edicts.txt",
-      "events/pdx_hardening_events.txt",
-      "common/on_actions/pdx_hardening_on_actions.txt",
-      "localisation/english/pdx_hardening_l_english.yml",
-      patchPath,
-    ]);
+    expect([...files.keys()]).toEqual(
+      [
+        "descriptor.mod",
+        "common/technology/pdx_hardening_technology.txt",
+        "common/buildings/pdx_hardening_buildings.txt",
+        "common/traditions/pdx_hardening_traditions.txt",
+        "common/tradition_categories/pdx_hardening_tradition_categories.txt",
+        "common/council_agendas/pdx_hardening_council_agendas.txt",
+        "common/edicts/pdx_hardening_edicts.txt",
+        "events/pdx_hardening_events.txt",
+        "common/on_actions/pdx_hardening_on_actions.txt",
+        "localisation/english/pdx_hardening_l_english.yml",
+        patchPath,
+      ].sort()
+    );
     expect(
       new Set([...files.keys()].map((path) => path.split("/").slice(0, -1).join("/")))
     ).toEqual(
@@ -49,7 +51,7 @@ describe("hardening example", () => {
 
   for (const [relPath, content] of files) {
     it(`matches the hardening golden for ${relPath}`, async () => {
-      await expect(content).toMatchFileSnapshot(
+      await expect(content.text).toMatchFileSnapshot(
         `__snapshots__/hardening/${relPath.replaceAll("/", "__")}`
       );
     });

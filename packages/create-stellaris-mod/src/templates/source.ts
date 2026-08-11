@@ -6,6 +6,7 @@
  */
 
 import type { Resolved } from "../options.ts";
+import { PROJECT_CONTENT_DIRECTORY_PATTERN } from "../project-layout.ts";
 import { quoteTs } from "../quote.ts";
 import { canPinIds } from "./project.ts";
 
@@ -48,10 +49,13 @@ export function modTs(resolved: Resolved): string {
  * and imports each selected module — real disk reads, running your code — to
  * read its named \`feature\` export, and (when a vanilla install was found)
  * \`loadVanilla()\` parses the game and may write a cache under
- * \`node_modules/.cache\`. \`mod.compile\`, which folds capability-owned features
- * into the \`PureMod\` value \`render\`/\`write\`/\`install\` consume, is the pure part.
+ * \`node_modules/.cache\`. \`mod.compile\`, which folds capability-owned features into the
+ * \`PureMod\` value \`render\` consumes, is the pure part. \`write\` and \`install\` consume the
+ * resulting \`RenderedMod\`.
  */
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { createMod, discoverFeatures, type PureMod } from "@pdx-ts/sdk";
 import manifest from "../stellaris-mod.json" with { type: "json" };
 ${idsImport}${vanillaWiring}
@@ -78,9 +82,18 @@ export const mod = createMod(config);
 // \`create-stellaris-mod generate\` writes into \`contentDirectory\`, so this is the
 // same fact read back: changing it in the manifest moves both the writing and
 // the discovery, and a generated file can never land somewhere the build does
-// not look. The path is project-relative and this file is \`src/mod.ts\`, hence
-// the \`../\`.
-const contentDir = new URL(\`../\${manifest.contentDirectory}/\`, import.meta.url);
+// not look. The check is generated from the same ProjectLayout pattern used by
+// the manifest reader and schema, and path.join keeps URL metacharacters from
+// being reinterpreted.
+const contentDirectoryPattern = new RegExp(${quoteTs(PROJECT_CONTENT_DIRECTORY_PATTERN.source)});
+if (!contentDirectoryPattern.test(manifest.contentDirectory)) {
+  throw new Error(
+    \`stellaris-mod.json contentDirectory \${JSON.stringify(manifest.contentDirectory)} is not a \` +
+      \`normalized directory below src.\`
+  );
+}
+const projectRoot = fileURLToPath(new URL("../", import.meta.url));
+const contentDir = path.join(projectRoot, ...manifest.contentDirectory.split("/"));
 
 export async function buildTheMod(): Promise<PureMod> {
   const features = await discoverFeatures<typeof mod.config.prefix>(contentDir);
@@ -139,7 +152,7 @@ export function installTs(): string {
  * this directory on startup, so restart it if the mod does not appear.
  */
 
-import { install } from "@pdx-ts/sdk";
+import { install, render } from "@pdx-ts/sdk";
 
 import { buildTheMod, config } from "./mod.ts";
 
@@ -149,7 +162,7 @@ for (const warning of mod.warnings) {
   console.warn(\`warning (\${warning.code}): \${warning.message}\`);
 }
 
-const { contentDir, descriptorPath } = await install(mod);
+const { contentDir, descriptorPath } = await install(render(mod));
 
 console.log(\`Installed \${config.name} for the launcher:\`);
 console.log(\`  content:    \${contentDir}\`);

@@ -274,7 +274,8 @@ export {
 export { install, type InstallOptions, type InstallResult } from "./output/install.ts";
 export { render } from "./output/render.ts";
 export { renderLauncherDescriptor } from "./output/render.ts";
-export { write } from "./output/write.ts";
+export type { RenderedFile, RenderedMod } from "./output/rendered.ts";
+export { mergeWrite, write } from "./output/write.ts";
 export {
   DEFAULT_CONTENT_PATTERN,
   discoverFeatures,
@@ -296,13 +297,16 @@ export {
   GameVersionError,
   InstallNotFoundError,
   LogicalPathError,
+  MaterializationDriftError,
   NoWinningFilenameError,
+  PathOwnershipError,
   PdxSdkError,
   StaleRuleTableError,
   SwapPatchError,
   UnverifiedRegistryError,
   VanillaPackageMismatchError,
   VanillaPathCollisionError,
+  UnownedMaterializationError,
 } from "./errors.ts";
 export { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "./ordering.ts";
 export {

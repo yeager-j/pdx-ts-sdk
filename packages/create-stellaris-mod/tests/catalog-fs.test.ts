@@ -84,7 +84,11 @@ async function preflight(root: string, segments: readonly string[] = SEGMENTS) {
 describe("validateContentDirectory", () => {
   it("takes an ordinary project-relative path", () => {
     expect(validateContentDirectory("src/content")).toEqual(["src", "content"]);
-    expect(validateContentDirectory("content")).toEqual(["content"]);
+    expect(validateContentDirectory("src/features/content")).toEqual([
+      "src",
+      "features",
+      "content",
+    ]);
   });
 
   it.each([
@@ -101,6 +105,10 @@ describe("validateContentDirectory", () => {
     ["./src/content", "a leading dot"],
     ["src//content", "an empty segment"],
     ["src/content/", "a trailing slash"],
+    ["content", "outside the TypeScript source root"],
+    ["src/content#fragment", "a URL fragment"],
+    ["src/content?query", "a URL query"],
+    ["src/%2e%2e/outside", "a percent-encoded dot segment"],
   ])("refuses %o, which is %s", (raw) => {
     expect(() => validateContentDirectory(raw)).toThrow(ContentDirectoryError);
   });

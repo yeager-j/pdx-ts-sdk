@@ -41,13 +41,7 @@ import { formatWithProjectPrettier } from "../format-project.ts";
 import type { CliIo } from "../io.ts";
 import { findManifest, MANIFEST_BASENAME, ManifestError } from "../manifest.ts";
 import { helpText, OptionsError, parseGenerateArgv, parseRecipeFlags } from "../options.ts";
-import {
-  collisionMessage,
-  preflightTarget,
-  PublishError,
-  publishExclusive,
-  validateContentDirectory,
-} from "../publish.ts";
+import { collisionMessage, preflightTarget, PublishError, publishExclusive } from "../publish.ts";
 import { checkSdkCompatibility, SDK_PACKAGE } from "../sdk-range.ts";
 import { CancelledError, type Terminal } from "../terminal.ts";
 import { VERSION } from "../version.ts";
@@ -172,7 +166,7 @@ export async function runGenerate(
       );
     }
 
-    const segments = validateContentDirectory(found.manifest.contentDirectory);
+    const segments = found.manifest.layout.contentSegments;
 
     const compatibility = checkSdkCompatibility({
       declaredSpecifier: project.declaredSpecifier,

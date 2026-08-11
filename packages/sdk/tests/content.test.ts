@@ -1137,7 +1137,7 @@ describe("generated content registries", () => {
 
   for (const [relPath, content] of files) {
     it(`matches the content golden for ${relPath}`, async () => {
-      await expect(content).toMatchFileSnapshot(
+      await expect(content.text).toMatchFileSnapshot(
         `__snapshots__/content/${relPath.replaceAll("/", "__")}`
       );
     });
