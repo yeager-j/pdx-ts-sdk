@@ -159,6 +159,15 @@ function reusablePack<P extends string, I extends IdProfile>(capability: ModCapa
 }
 
 describe("mod capability composition", () => {
+  it("rejects an invalid id before minting a capability event handle", () => {
+    const events = createMod({
+      name: "Event numbers",
+      prefix: "event_numbers",
+      supportedVersion: "4.4.*",
+    }).namespace();
+    expect(() => events.countryHandle(Number.NaN)).toThrow(/non-negative safe integer/);
+  });
+
   it("authors a generic pack under two literal prefixes", () => {
     const alpha = createMod({ name: "Alpha", prefix: "alpha_mod", supportedVersion: "4.4.*" });
     const beta = createMod({ name: "Beta", prefix: "beta_mod", supportedVersion: "4.4.*" });

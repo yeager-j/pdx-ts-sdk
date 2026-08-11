@@ -52,6 +52,17 @@ function corpusOf(
   );
 }
 
+describe("scalar observations", () => {
+  it("compares quoted strings by semantic value while preserving other game spellings", () => {
+    const corpus = corpusOf(`
+      one = { mode = "foo" enabled = yes count = 2 }
+    `);
+    expect([...(corpus.occurrences.get("mode")?.values ?? [])]).toEqual(["foo"]);
+    expect([...(corpus.occurrences.get("enabled")?.values ?? [])]).toEqual(["yes"]);
+    expect([...(corpus.occurrences.get("count")?.values ?? [])]).toEqual(["2"]);
+  });
+});
+
 describe("splice arity", () => {
   it("counts repetition inside one block, not across a definition's blocks", () => {
     // Two planets, each writing `size` once. Accumulating them under one path

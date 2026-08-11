@@ -16,11 +16,18 @@ import { describe, expect, it } from "vitest";
 
 import { parse, serialize, withoutLines, type PdxDocument } from "../src/index.ts";
 
-const STELLARIS_DIR = join(
-  process.env["HOME"] ?? "",
-  "Library/Application Support/Steam/steamapps/common/Stellaris"
-);
+const STELLARIS_DIR =
+  process.env["STELLARIS_PATH"] ??
+  join(process.env["HOME"] ?? "", "Library/Application Support/Steam/steamapps/common/Stellaris");
 const COMMON = join(STELLARIS_DIR, "common");
+const HAS_INSTALL = existsSync(COMMON);
+
+if (!HAS_INSTALL) {
+  console.warn(
+    `[pdxscript] skipping the vanilla fixpoint: ${COMMON} does not exist; ` +
+      "set STELLARIS_PATH to the Stellaris install root"
+  );
+}
 
 function walk(dir: string): string[] {
   const files: string[] = [];
@@ -38,7 +45,7 @@ function walk(dir: string): string[] {
 // Files that are not PDXScript at all (modding documentation shipped as .txt).
 const NOT_PDXSCRIPT = new Set(["HOW_TO_MAKE_NEW_SHIPS.txt", "99_README_EDICTS.txt"]);
 
-describe.skipIf(!existsSync(COMMON))("vanilla corpus (non-gating)", () => {
+describe.skipIf(!HAS_INSTALL)("vanilla corpus (non-gating)", () => {
   it("parse → serialize → re-parse is a fixpoint over all of common/", () => {
     const files = walk(COMMON).filter(
       (path) => !NOT_PDXSCRIPT.has(relative(COMMON, path).split("/").pop()!)

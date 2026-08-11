@@ -51,6 +51,9 @@ export type VanillaSpriteTrieDlcIcons = {
   readonly GFX_black_bg_tile: SpriteRef & {
     readonly id: "GFX_black_bg_tile";
   };
+  readonly GFX_checkmark_icon: SpriteRef & {
+    readonly id: "GFX_checkmark_icon";
+  };
   readonly GFX_cosmicstorms: SpriteRef & {
     readonly id: "GFX_cosmicstorms";
   };

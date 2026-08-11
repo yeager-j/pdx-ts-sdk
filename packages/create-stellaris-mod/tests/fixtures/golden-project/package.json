@@ -6,6 +6,6 @@
     "#mod": "./src/mod.ts"
   },
   "devDependencies": {
-    "@pdx-ts/sdk": "^0.2.0"
+    "@pdx-ts/sdk": "0.2.0"
   }
 }

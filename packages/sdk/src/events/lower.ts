@@ -103,6 +103,12 @@ function windowFlags(def: object): {
   return def as never;
 }
 
+export function assertEventNumber(id: number): void {
+  if (!Number.isSafeInteger(id) || id < 0) {
+    throw new RangeError(`Event id ${String(id)} must be a non-negative safe integer`);
+  }
+}
+
 export function buildEvent<S extends ScopeName, From extends ScopeName | undefined>(
   kind: EventKindKey,
   scope: S,
@@ -110,6 +116,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   def: EventDef<S, From>,
   loc: LocSink
 ): DefinedEvent<S, From> {
+  assertEventNumber(def.id);
   const id = `${namespace}.${def.id}`;
   const ctx = scriptCtx<S, From>();
   const flags = windowFlags(def);

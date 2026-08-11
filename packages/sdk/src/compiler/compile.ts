@@ -28,7 +28,7 @@ import {
   type ModConfig,
   type ResolvedModConfig,
 } from "./config.ts";
-import { freezeItems } from "./freeze.ts";
+import { freezeItems, immutableSet } from "./freeze.ts";
 import { createLocalizationAccumulator } from "./localization.ts";
 import type { ContentFile, DefinedGroup, EmittedFile, PureMod } from "./model.ts";
 import { collectPatches, planPatches } from "./patches.ts";
@@ -297,7 +297,7 @@ export function buildMod(
       });
     }
   }
-  const shipOfSizeLimits = new Set<string>(contributedLimits.sort(compareUtf8));
+  const shipOfSizeLimits = immutableSet(contributedLimits.sort(compareUtf8));
 
   const patchesByRegistry = collectPatches(flat, options, refUses);
   const patches = [...patchesByRegistry.values()].flat();
@@ -353,10 +353,35 @@ export function buildMod(
     refUses,
   });
 
-  const patchPlans = planPatches(config, contentFiles, patchesByRegistry);
+  const patchPlans = Object.freeze(
+    planPatches(config, contentFiles, patchesByRegistry).map((plan) =>
+      Object.freeze({
+        ...plan,
+        assertions: Object.freeze(
+          plan.assertions.map((assertion) =>
+            Object.freeze({ ...assertion, beats: Object.freeze([...assertion.beats]) })
+          )
+        ),
+      })
+    )
+  );
+  for (const plan of patchPlans) {
+    const assumed = plan.assertions.filter((assertion) => assertion.confidence === "assumed");
+    if (assumed.length > 0) {
+      warnings.push({
+        code: "assumed-patch-rule",
+        message:
+          `Patch plan ${plan.relPath} relies on assumed override rules for ` +
+          `${assumed.map((assertion) => `"${assertion.key}"`).join(", ")}; ` +
+          "the emitted header records the unverified judgments.",
+      });
+    }
+  }
   const vanillaOrigin = options.vanilla ?? patches[0]?.source.origin;
   const vanillaPaths =
-    vanillaOrigin === undefined ? undefined : new Set(vanillaOrigin.files.map((file) => file.path));
+    vanillaOrigin === undefined
+      ? undefined
+      : immutableSet(vanillaOrigin.files.map((file) => file.path));
 
   if (options.vanilla !== undefined) {
     checkVanillaPackagePin(
@@ -386,12 +411,40 @@ export function buildMod(
 
   const localizationFiles = localization.finish(config.prefix);
 
+  const frozenWarnings = Object.freeze(warnings.map((warning) => Object.freeze({ ...warning })));
+  const frozenContentFiles = Object.freeze(
+    contentFiles.map((file) =>
+      Object.freeze({
+        ...file,
+        types: Object.freeze([...file.types]),
+        ids: Object.freeze([...file.ids]),
+      })
+    )
+  );
+  const frozenEventFiles = Object.freeze(eventFiles.map((file) => Object.freeze({ ...file })));
+  const frozenEvents = Object.freeze(
+    orderedEvents.map((event) =>
+      Object.freeze({
+        ...event,
+        refs: Object.freeze(
+          event.refs.map((ref) =>
+            Object.freeze({ ...ref, targets: Object.freeze([...ref.targets]) })
+          )
+        ),
+        locEntries: Object.freeze(
+          event.locEntries.map(([key, text]) => Object.freeze([key, text] as const))
+        ),
+        warnings: Object.freeze(event.warnings.map((warning) => Object.freeze({ ...warning }))),
+      })
+    )
+  );
+
   return Object.freeze({
     config,
-    warnings,
-    contentFiles,
-    eventFiles,
-    events: orderedEvents,
+    warnings: frozenWarnings,
+    contentFiles: frozenContentFiles,
+    eventFiles: frozenEventFiles,
+    events: frozenEvents,
     onActions,
     localizationFiles,
     shipOfSizeLimits,

@@ -2,8 +2,8 @@
  * The compatibility preflight, as algebra.
  *
  * The rule that needs the most evidence is subset-not-overlap. `>=0.2.0`
- * overlaps the verified `^0.2.0` and is refused, because a project asking for
- * it can resolve an SDK nobody proved these recipes against on any later
+ * overlaps the exact verified version and is refused, because a project asking
+ * for it can resolve an SDK nobody proved these recipes against on any later
  * install — including the one the author runs a minute after generating. Every
  * case below is written against `VERIFIED_SDK_RANGE` rather than a literal, so
  * moving the verified range moves the test with it.
@@ -24,12 +24,11 @@ describe("checkSdkCompatibility", () => {
     // range that is provably inside the verified one is evidence on its own.
     // Authors generate before installing all the time.
     expect(check(VERIFIED_SDK_RANGE).supported).toBe(true);
-    expect(check("0.2.1").supported).toBe(true);
-    expect(check("~0.2.3").supported).toBe(true);
+    expect(check("0.2.0").supported).toBe(true);
   });
 
   it("refuses a range that merely overlaps the verified one", () => {
-    for (const declared of [">=0.2.0", "*", "^0.2.0 || ^0.3.0", ">=0.1.0 <0.4.0"]) {
+    for (const declared of ["^0.2.0", ">=0.2.0", "*", "^0.2.0 || ^0.3.0", ">=0.1.0 <0.4.0"]) {
       const result = check(declared);
       expect(result.supported, declared).toBe(false);
       expect(result.supported === false && result.reason).toBe("range-not-subset");
@@ -63,17 +62,17 @@ describe("checkSdkCompatibility", () => {
   });
 
   it("checks an installed version against both ranges", () => {
-    expect(check("^0.2.0", "0.2.4").supported).toBe(true);
+    expect(check("0.2.0", "0.2.0").supported).toBe(true);
 
     // Installed, but not what the project declares.
-    const stale = check("~0.2.1", "0.2.0");
+    const stale = check("0.2.0", "0.2.1");
     expect(stale.supported).toBe(false);
     expect(stale.supported === false && stale.reason).toBe("installed-version-unsupported");
-    expect(stale.detail).toContain("0.2.0");
+    expect(stale.detail).toContain("0.2.1");
   });
 
   it("refuses an installed version that is not a version", () => {
-    const result = check("^0.2.0", "not-a-version");
+    const result = check("0.2.0", "not-a-version");
     expect(result.supported).toBe(false);
     expect(result.supported === false && result.reason).toBe("installed-version-unsupported");
   });

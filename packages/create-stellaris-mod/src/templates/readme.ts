@@ -1,4 +1,5 @@
 import type { Resolved } from "../options.ts";
+import { idsRange } from "./project.ts";
 
 export function readme(resolved: Resolved): string {
   const p = resolved.prefix;
@@ -88,7 +89,7 @@ export function readme(resolved: Resolved): string {
       "package matching your game build and import it once in `src/mod.ts`:",
       "",
       "```bash",
-      "npm install @pdx-ts/stellaris-ids@<your game version>",
+      `npm install "@pdx-ts/stellaris-ids@${idsRange("<your game version>")}"`,
       "```",
       "",
       "```ts",
@@ -98,8 +99,9 @@ export function readme(resolved: Resolved): string {
     );
   } else {
     lines.push(
-      `\`@pdx-ts/stellaris-ids\` is pinned to ${resolved.gameVersion} — the package's version`,
-      "*is* the game version — and imported once in `src/mod.ts` for its type-level",
+      `\`@pdx-ts/stellaris-ids\` is pinned to game build ${resolved.gameVersion} through`,
+      `\`${idsRange(resolved.gameVersion)}\`. Published versions append an \`-r.<n>\` revision`,
+      "to the game version and are imported once in `src/mod.ts` for their type-level",
       'side effect. That is what makes `vanilla.technology("tech_lasers_1")` compile',
       'and `vanilla.technology("tech_lazers_1")` an error. After a game update,',
       "install the matching version.",

@@ -27,9 +27,12 @@
  *   claim worth making.
  *
  * Measured against a real 4.4.6 install this narrows 90% of scripted triggers
- * and 63% of scripted effects and contradicts none of the 4,860 call sites
- * vanilla ships. `packages/codegen-vanilla/tests/callsites.test.ts` re-measures
- * both numbers on every run and fails on any contradiction.
+ * and 63% of scripted effects. The standing gate checks 4,860 direct call
+ * sites across 9,856 known-scope events, reaching 894 of 3,275 definitions
+ * (27%), and finds no contradiction in that structural slice. It leaves 81%
+ * of narrowed trigger claims and 66% of narrowed effect claims unfalsified;
+ * definitions using clause-bearing effect rules require manual review because
+ * the event-body walk cannot see those calls.
  */
 
 import type { RuleFact, RuleScopes, ScopeFacts } from "@pdx-ts/codegen-cwt/scope-facts";

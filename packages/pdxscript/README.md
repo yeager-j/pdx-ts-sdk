@@ -34,8 +34,9 @@ named deferrals.
   differential-tests the trees against
   [jomini](https://github.com/rakaly/jomini) (the differential found real
   jomini defects, pinned by name in the tests; this parser reads several
-  shipped vanilla files jomini cannot). Sibling games should mostly work —
-  `?=`/`==` are known, named gaps — but are unverified.
+  shipped vanilla files jomini cannot). Sibling games should mostly work, but
+  are unverified; unsupported `?=`/`==` operators fail loudly instead of
+  producing a wrong tree.
 - **The API takes decoded strings.** File reading and encoding are the
   caller's job; Stellaris is UTF-8 with optional BOM. The lexer itself is
   8-bit clean.

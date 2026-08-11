@@ -26,6 +26,7 @@ import {
   PdxSyntaxError,
   quoted,
   scalar,
+  scalarText,
   serialize,
   varRef,
   withoutLines,
@@ -135,6 +136,15 @@ describe("lexer", () => {
     for (const op of ["=", "<", ">", "<=", ">=", "!="] as const) {
       expect(first(`k ${op} 2`).op).toBe(op);
     }
+  });
+
+  it("rejects unsupported ?= without rejecting question marks inside keys", () => {
+    for (const source of ["owner ?= { x = 1 }", "owner?={ x = 1 }"]) {
+      expect(() => parse(source, "operators.txt")).toThrow(
+        new PdxSyntaxError("Unsupported operator '?='", "operators.txt", 1)
+      );
+    }
+    expect(keys(clean("$PLAYER_COUNTRY$? = { x = 1 }"))).toEqual(["$PLAYER_COUNTRY$?"]);
   });
 
   it("lexes @name as one token", () => {
@@ -411,7 +421,7 @@ describe("parser: containers", () => {
   });
 
   it("keeps scalar-then-container at item position as two bare items", () => {
-    const parsed = value("m = { foo { 1 2 } }");
+    const parsed = value("m = { foo\n{ 1 2 } }");
     expect(parsed.kind).toBe("container");
     if (parsed.kind === "container") {
       expect(parsed.items.map((item) => item.kind)).toEqual(["str", "container"]);
@@ -486,12 +496,29 @@ describe("parser: repair diagnostics", () => {
     ]);
   });
 
+  it("repairs a nested operator-less entry with the same diagnostic (corpus)", () => {
+    const document = parse("icons = { spriteType { name = GFX_checkmark_icon } }", "icons.gfx");
+    expect(withoutLines(document.items)).toEqual(
+      withoutLines(
+        parse("icons = { spriteType = { name = GFX_checkmark_icon } }", "icons.gfx").items
+      )
+    );
+    expect(document.diagnostics).toEqual([
+      { kind: "operator-less-entry", fileName: "icons.gfx", line: 1, text: "spriteType" },
+    ]);
+    expectFixpoint("icons = { spriteType { name = GFX_checkmark_icon } }");
+  });
+
   it("returns no diagnostics for well-formed input", () => {
     expect(parse("a = { b = 1 }", "ok.txt").diagnostics).toEqual([]);
   });
 });
 
 describe("serializer", () => {
+  it("exports the canonical scalar spelling", () => {
+    expect(scalarText(quoted("hello galaxy"))).toBe('"hello galaxy"');
+    expect(scalarText(varRef("@cost"))).toBe("@cost");
+  });
   it("renders an all-scalar container inline: { a b c }", () => {
     expect(serialize([list("category", [scalar("biology")])])).toBe("category = { biology }\n");
   });

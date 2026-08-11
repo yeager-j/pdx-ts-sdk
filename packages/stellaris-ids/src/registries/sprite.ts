@@ -695,6 +695,7 @@ export type VanillaSpriteId =
   | "GFX_chapter_progress_bar"
   | "GFX_chat_icon"
   | "GFX_checkbox_20_20_01"
+  | "GFX_checkmark_icon"
   | "GFX_city_culture_locked_overlay"
   | "GFX_city_frame"
   | "GFX_civilian"

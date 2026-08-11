@@ -142,6 +142,12 @@ describe("oversized registries: trie navigation", () => {
     expectTypeOf(leaf).toExtend<SpriteRef>();
   });
 
+  it("includes sprites recovered from nested operator-less entries", () => {
+    const leaf = vanilla.sprite.dlc_icons.GFX_checkmark_icon;
+    expectTypeOf(leaf.id).toEqualTypeOf<"GFX_checkmark_icon">();
+    expectTypeOf(leaf).toExtend<SpriteRef>();
+  });
+
   it("gives a file bucket no id of its own", () => {
     // `eventpictures` is a filename, not a sprite. Only the types decide what
     // is a leaf — the runtime proxy would happily hand back a `.id` here.

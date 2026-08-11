@@ -86,8 +86,10 @@ the **scope**: `isFallenEmpire()` is a `Trigger<"country">`, derived by
 intersecting the scopes cwtools' rules declare for the keys the definition's
 body evaluates. A body the analysis cannot read widens to every scope rather
 than guessing, so a binding may be less specific than it could be and is never
-wrong. `packages/codegen-vanilla/tests/callsites.test.ts` measures this
-against every vanilla call site and fails on any contradiction.
+wrong. `packages/codegen-vanilla/tests/callsites.test.ts` checks 4,860 direct
+call sites across 9,856 known-scope events, reaching 894 of 3,275 scripted
+definitions (27%), and fails on any contradiction in that structural slice.
+Clause-bearing calls outside the event-body walk require manual review.
 
 These two subpaths are the package's only runtime, one call per definition and
 `/*#__PURE__*/`-annotated so unused ones drop out of a bundle. Everything else

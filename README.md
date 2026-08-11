@@ -240,8 +240,9 @@ That ceiling is what a compiler raises:
 - **Nobody warns you that your vanilla override lost.** PDXScript overrides
   are whole-object, load-order-sensitive replacements, and the folklore
   answer is a `zz_` filename prefix and hope. The SDK parses the real install,
-  computes a filename that provably byte-sorts after every competitor, and
-  fails the build when no winning name exists.
+  computes a filename that provably byte-sorts after every vanilla or
+  current-mod competitor in its enumeration, and fails the build when no
+  winning name exists.
 - **The edit-test loop is "launch, console-fire, squint."** Recorded triggers
   and effects can be interpreted outside the game: event chains get unit
   tests that run in milliseconds, and `explain` answers "why doesn't my
@@ -352,8 +353,11 @@ The parameter lists are typed, and so is the scope: `isFallenEmpire()` is a
 `Trigger<"country">`, so using it where a planet condition belongs is a compile
 error. That scope is derived rather than asserted — the generator intersects
 the scopes the rules already declare for the keys each body evaluates, and a
-body it cannot read widens to every scope instead of guessing. It is checked
-against 4,860 of vanilla's own call sites, which it contradicts nowhere.
+body it cannot read widens to every scope instead of guessing. The standing
+gate checks 4,860 direct call sites across 9,856 known-scope events, reaching
+894 of 3,275 scripted definitions (27%); it finds no contradictions within
+that structural slice. Clause-bearing calls outside the event-body walk still
+require manual review.
 
 `examples/hello-galaxy/content/resonance.ts` uses all three forms, including a
 scripted effect whose `TECH` parameter is handed the mod's own technology.

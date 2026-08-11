@@ -583,7 +583,7 @@ async function main(): Promise<void> {
   await write(
     "event-definers.ts",
     header(commit, ["events/events.cwt"]) +
-      'import { buildEvent } from "../events/lower.ts";\n' +
+      'import { assertEventNumber, buildEvent } from "../events/lower.ts";\n' +
       'import type { EventDef, EventItem, EventRef } from "../events/types.ts";\n' +
       'import { assertNamespace } from "../authoring/feature.ts";\n' +
       'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +

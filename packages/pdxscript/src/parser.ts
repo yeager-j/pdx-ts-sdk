@@ -6,7 +6,7 @@
  * the file, `{ ... }` containers, and `[[NAME] ... ]` parameter blocks.
  *
  * Malformed-but-shipped input (stray `}`, unclosed containers at EOF,
- * top-level operator-less `foo{...}`) is repaired the way the game repairs
+ * same-line operator-less `foo{...}` entries) is repaired the way the game repairs
  * it, with a diagnostic per repair — never silently. Everything else that
  * cannot be read throws a `PdxSyntaxError` carrying `file:line`.
  */
@@ -136,10 +136,20 @@ class Parser {
         line: first.line,
       };
     }
-    // Same-line only: `foo {` on one line is the shipped missing-`=` defect;
-    // a `{` on a later line is a bare container item after a bare scalar
-    // (which is exactly what the serializer emits for that tree).
-    if (next.kind === "lbrace" && closer === "eof" && next.line === first.line) {
+    // Same-line only. At nested item position `rgb { 1 2 3 }` is a legitimate
+    // bare scalar plus scalar container, while `spriteType { name = ... }` is the shipped
+    // missing-`=` defect. The first entry-shaped child distinguishes them
+    // without a game-semantic list of header names. A `{` on a later line is
+    // the separate bare container item the serializer emits for that tree.
+    const nestedBodyStartsWithEntry =
+      closer !== "eof" &&
+      this.tokens[this.index + 1]?.kind === "identifier" &&
+      this.tokens[this.index + 2]?.kind === "op";
+    if (
+      next.kind === "lbrace" &&
+      next.line === first.line &&
+      (closer === "eof" || nestedBodyStartsWithEntry)
+    ) {
       this.repair("operator-less-entry", first.line, first.text);
       this.advance();
       return {

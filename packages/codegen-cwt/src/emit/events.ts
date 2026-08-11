@@ -231,6 +231,7 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     "    <From extends ScopeName | undefined = undefined>(\n" +
     "      def: EventDef<S, From>\n" +
     '    ): EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]> => {\n' +
+    "      assertEventNumber(def.id);\n" +
     "      if (used.has(def.id)) {\n" +
     '        throw new Error(`Duplicate event id "${ns}.${def.id}"`);\n' +
     "      }\n" +

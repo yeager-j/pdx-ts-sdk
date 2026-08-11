@@ -26,8 +26,8 @@ export const VERSIONS = {
   eslint: "^9.0.0",
   eslint_js: "^9.0.0",
   typescript_eslint: "^8.0.0",
-  sdk: "^0.2.0",
-  sdkTesting: "^0.2.0",
+  sdk: "0.2.0",
+  sdkTesting: "0.2.0",
 } as const;
 
 function json(value: unknown): string {

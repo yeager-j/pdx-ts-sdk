@@ -15,7 +15,7 @@ import semver from "semver";
  * prove" — and a test asserts the first stays a subset of the second, so the
  * day they need to differ, they can.
  */
-export const VERIFIED_SDK_RANGE = "^0.2.0";
+export const VERIFIED_SDK_RANGE = "0.2.0";
 
 /** The dependency every check here is about. */
 export const SDK_PACKAGE = "@pdx-ts/sdk";

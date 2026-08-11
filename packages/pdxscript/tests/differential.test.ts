@@ -24,11 +24,18 @@ import { describe, expect, it } from "vitest";
 import { parse } from "../src/index.ts";
 import { normJominiBody, normOurs, type Norm } from "./jomini-normalize.ts";
 
-const STELLARIS_DIR = join(
-  process.env["HOME"] ?? "",
-  "Library/Application Support/Steam/steamapps/common/Stellaris"
-);
+const STELLARIS_DIR =
+  process.env["STELLARIS_PATH"] ??
+  join(process.env["HOME"] ?? "", "Library/Application Support/Steam/steamapps/common/Stellaris");
 const COMMON = join(STELLARIS_DIR, "common");
+const HAS_INSTALL = existsSync(COMMON);
+
+if (!HAS_INSTALL) {
+  console.warn(
+    `[pdxscript] skipping the jomini differential: ${COMMON} does not exist; ` +
+      "set STELLARIS_PATH to the Stellaris install root"
+  );
+}
 
 const NOT_PDXSCRIPT = new Set(["HOW_TO_MAKE_NEW_SHIPS.txt", "99_README_EDICTS.txt"]);
 
@@ -102,7 +109,7 @@ function walk(dir: string): string[] {
   return files;
 }
 
-describe.skipIf(!existsSync(COMMON))("jomini differential (non-gating)", () => {
+describe.skipIf(!HAS_INSTALL)("jomini differential (non-gating)", () => {
   it("agrees with jomini on every vanilla common/ file", async () => {
     const { Jomini } = await import("jomini");
     const jomini = await Jomini.initialize();

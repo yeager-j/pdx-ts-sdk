@@ -191,6 +191,9 @@ export function tokenize(source: string, fileName: string): Token[] {
       index += 1;
       continue;
     }
+    if (char === "?" && text[index + 1] === "=") {
+      throw new PdxSyntaxError("Unsupported operator '?='", fileName, line);
+    }
     const operator = operatorAt(text, index);
     if (operator !== null) {
       tokens.push({ kind: "op", text: operator, quoted: false, line });
@@ -200,6 +203,9 @@ export function tokenize(source: string, fileName: string): Token[] {
 
     const start = index;
     while (index < text.length && !TERMINATORS.has(text[index]!)) {
+      if (text[index] === "?" && text[index + 1] === "=") {
+        throw new PdxSyntaxError("Unsupported operator '?='", fileName, line);
+      }
       index += 1;
     }
     if (index === start) {

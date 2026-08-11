@@ -47,6 +47,7 @@ describe("generated event surface", () => {
     expect(definers).toContain("  readonly namespace: string;");
     expect(definers).toContain("  assertNamespace(ns);");
     expect(definers).toContain("const used = new Set<number>();");
+    expect(definers).toContain("      assertEventNumber(def.id);");
     expect(definers).toContain('throw new Error(`Duplicate event id "${ns}.${def.id}"`);');
     expect(definers).toContain("const built = buildEvent(kind, scope, ns, def, {");
     expect(definers).toContain(
