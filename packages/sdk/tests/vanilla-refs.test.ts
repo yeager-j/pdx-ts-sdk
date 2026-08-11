@@ -11,7 +11,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import { refId } from "../src/generated/refs.ts";
 import { createMod, render, vanilla } from "../src/index.ts";
+import { toScalar } from "../src/script/scalar.ts";
 
 const CONFIG = {
   name: "Vanilla ref tests",
@@ -94,6 +96,46 @@ describe("the event trie", () => {
   });
 });
 
+describe("both lowering funnels see through the callable trie proxy", () => {
+  // Both tries build their proxy over a bare function so the same value stays
+  // callable *and* navigable (`vanilla.sprite("id")` vs `vanilla.sprite.a.b`).
+  // `typeof` on such a proxy reflects the function target, so `refId`
+  // (`src/generated/refs.ts`) and `toScalar` (`src/script/scalar.ts`) both
+  // have to gate on `object` *or* `function`, or a navigated reference falls
+  // through as an unusable non-scalar instead of lowering to its id/path.
+  const navigatedEvent = navigate(vanilla.event)["story"]!["$5"]!;
+  const navigatedSprite = navigate(vanilla.sprite)["eventpictures"]!["GFX_evt_ringworld"]!;
+
+  it("lowers a navigated event reference through refId", () => {
+    expect(refId(navigatedEvent)).toBe("story.5");
+  });
+
+  it("lowers a navigated event reference through toScalar", () => {
+    expect(toScalar(navigatedEvent)).toBe("story.5");
+  });
+
+  it("lowers a navigated sprite reference through refId", () => {
+    expect(refId(navigatedSprite)).toBe("GFX_evt_ringworld");
+  });
+
+  it("lowers a navigated sprite reference through toScalar", () => {
+    expect(toScalar(navigatedSprite)).toBe("GFX_evt_ringworld");
+  });
+
+  it("still lowers the call form through refId and toScalar (regression pin)", () => {
+    expect(refId(vanilla.sprite("GFX_evt_ringworld"))).toBe("GFX_evt_ringworld");
+    expect(toScalar(vanilla.sprite("GFX_evt_ringworld"))).toBe("GFX_evt_ringworld");
+  });
+
+  it("answers `in` truthfully for the property the get trap serves", () => {
+    // `toScalar` probes `"id" in value` before reading it; the proxy needs a
+    // `has` trap that agrees with what its `get` trap actually serves, or the
+    // probe silently reports the property missing.
+    expect("id" in navigatedEvent).toBe(true);
+    expect("id" in navigatedSprite).toBe(true);
+  });
+});
+
 describe("event media fields", () => {
   it("serializes picture and show_sound from vanilla references", () => {
     const events = mod.namespace();
@@ -108,6 +150,28 @@ describe("event media fields", () => {
     )!;
     expect(rendered).toContain("picture = GFX_evt_ship_in_orbit");
     expect(rendered).toContain("show_sound = event_alien_signal");
+  });
+});
+
+describe("firing a vanilla event by its navigable trie reference", () => {
+  it("renders id = story.5 end to end", () => {
+    const events = mod.namespace();
+    const firing = events.country(2, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        const eventRef = vanilla.event as unknown as {
+          readonly story: {
+            readonly $5: { readonly id: string; readonly kind: "event-ref" };
+          };
+        };
+        country.countryEvent({ id: eventRef.story.$5, days: 30 });
+      },
+    });
+    const rendered = render(mod.compile([mod.feature("events", [firing])])).get(
+      "events/vr_events.txt"
+    )!;
+    expect(rendered).toContain("country_event = {\n\t\t\tid = story.5\n\t\t\tdays = 30");
   });
 });
 

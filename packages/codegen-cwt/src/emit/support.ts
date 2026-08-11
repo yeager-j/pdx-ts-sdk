@@ -172,12 +172,19 @@ export function emitRefs(emitter: Emitter): string {
       "open, so an object that is genuinely a `<planet_class>` and happens to carry",
       "a `path` of its own would otherwise serialize that path in place of the id",
       "the game requires. `src/script/scalar.ts` reads the same discriminant.",
+      "",
+      "Checks `object` or `function` rather than `object` alone: the navigable",
+      "`vanilla.*` tries (`src/identifiers/trie.ts`) are Proxies built over a bare",
+      "function so they stay callable *and* navigable, and `typeof` on a Proxy",
+      'reflects its target — a function target makes `typeof proxy === "function"`',
+      "even though `in`/property access still goes through the traps like any",
+      "other proxy.",
     ]) +
     "export function refId<T extends string | number | boolean>(\n" +
     '  value: TypedRef<string> | { readonly kind: "scope-ref"; readonly path: string } | T\n' +
     "): string | T {\n" +
-    '  if (typeof value === "object") {\n' +
-    '    if ("kind" in value && value.kind === "scope-ref") {\n' +
+    '  if (typeof value === "object" || typeof value === "function") {\n' +
+    '    if (value !== null && "kind" in value && value.kind === "scope-ref") {\n' +
     "      return value.path;\n" +
     "    }\n" +
     "    // Everything else is a content reference: a `kind` this function does\n" +
