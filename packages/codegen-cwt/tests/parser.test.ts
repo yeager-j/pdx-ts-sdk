@@ -118,6 +118,35 @@ describe("rule types", () => {
     expect(classify(only("who = country").value)).toEqual({ kind: "literal", text: "country" });
   });
 
+  it("classifies an alias key as an open string", () => {
+    expect(classify(only("modifier = alias_keys_field[modifier]").value)).toEqual({
+      kind: "scalar",
+    });
+  });
+
+  it("reports an unknown bracketed keyword instead of treating it as a literal", () => {
+    const diagnostics: unknown[] = [];
+    expect(
+      classify(only("gateway = quantum_range[0..3]").value, undefined, (diagnostic) => {
+        diagnostics.push(diagnostic);
+      })
+    ).toEqual({ kind: "unknownKeyword", text: "quantum_range[0..3]" });
+    expect(diagnostics).toEqual([
+      {
+        kind: "unknown-keyword",
+        line: 1,
+        text: "quantum_range[0..3]",
+      },
+    ]);
+  });
+
+  it("keeps a quoted bracketed value literal", () => {
+    expect(classify(only('gateway = "quantum_range[0..3]"').value)).toEqual({
+      kind: "literal",
+      text: "quantum_range[0..3]",
+    });
+  });
+
   it("classifies the scope forms, including the unbracketed one", () => {
     expect(classify(only("who = scope_group[target_country]").value)).toEqual({
       kind: "scopeGroup",

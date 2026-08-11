@@ -76,6 +76,14 @@ describe("emitted effect signatures", () => {
     );
   });
 
+  it("alias_keys_field: an open alias-key name", () => {
+    expect(signature("exportModifierToVariable")).toMatchInlineSnapshot(
+      `"exportModifierToVariable(args: { modifier: string; variable: Variable }): void;"`
+    );
+    expect(signature("exportTriggerValueToVariable")).toContain("trigger: string;");
+    expect(signature("exportTriggerValueToVariable")).not.toContain("alias_keys_field");
+  });
+
   it("scope meta: the recorder unwraps a scope value through its shared lowering", () => {
     // No `refTypes` — a scope names no registry — so `toScalar`'s `path`
     // unwrapping in `src/script/scalar.ts` is the whole runtime contract.

@@ -55,10 +55,11 @@ export interface CwtBareValue {
 
 export type CwtNode = CwtAssignment | CwtBareValue;
 
-export type DiagnosticKind = "malformed-option" | "orphan-comment";
+export type DiagnosticKind = "malformed-option" | "orphan-comment" | "unknown-keyword";
 
 /**
- * Something the parser recognised as meaningful but could not interpret.
+ * Something in a CWT rule that parsing or classification recognised as
+ * meaningful but could not interpret.
  *
  * These are never dropped silently: codegen reports them and fails when their
  * count moves, so an upstream typo surfaces as a build failure rather than a

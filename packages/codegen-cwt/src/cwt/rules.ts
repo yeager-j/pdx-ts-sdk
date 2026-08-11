@@ -16,6 +16,7 @@ import {
   findOption,
   scopeOf,
   supportedScopesOf,
+  type ClassificationReporter,
   type RuleField,
   type RuleType,
   type ScopeContext,
@@ -402,7 +403,8 @@ export function readAliases(
   file: string,
   category: string,
   singleAliases: ReadonlyMap<string, CwtValue>,
-  into: Map<string, AliasDecl[]>
+  into: Map<string, AliasDecl[]>,
+  report?: ClassificationReporter
 ): void {
   for (const entry of assignments(nodes)) {
     const match = ALIAS_KEY.exec(entry.key.text);
@@ -413,7 +415,7 @@ export function readAliases(
     const declarations = into.get(name) ?? [];
     declarations.push({
       name,
-      type: classify(entry.value, resolverFor(singleAliases)),
+      type: classify(entry.value, resolverFor(singleAliases), report),
       docs: entry.docs,
       scope: scopeOf(entry.options),
       supportedScopes: supportedScopesOf(entry.options),
@@ -536,13 +538,14 @@ function readBodies(
   nodes: readonly CwtNode[],
   known: ReadonlyMap<string, ContentType>,
   singleAliases: ReadonlyMap<string, CwtValue>,
-  into: Map<string, ContentBody>
+  into: Map<string, ContentBody>,
+  report?: ClassificationReporter
 ): void {
   for (const entry of assignments(nodes)) {
     if (!known.has(entry.key.text) || entry.value.kind !== "block") {
       continue;
     }
-    const block = classifyBlock(entry.value, resolverFor(singleAliases));
+    const block = classifyBlock(entry.value, resolverFor(singleAliases), report);
     if (block.kind === "block") {
       into.set(entry.key.text, {
         fields: block.fields,
@@ -628,18 +631,21 @@ export function loadRules(root: string): RuleSet {
     const source = readFileSync(path.join(root, relative), "utf8");
     const parsed = parseCwt(source, relative);
     diagnostics.push(...parsed.diagnostics);
+    const report: ClassificationReporter = (diagnostic) => {
+      diagnostics.push({ ...diagnostic, file: relative });
+    };
     readSingleAliases(parsed.nodes, singleAliases);
     readEnums(parsed.nodes, enums);
     readScopes(parsed.nodes, scopes);
     readScopeGroups(parsed.nodes, scopeGroups);
     readLinks(parsed.nodes, relative, links);
-    readAliases(parsed.nodes, relative, "trigger", singleAliases, triggers);
-    readAliases(parsed.nodes, relative, "effect", singleAliases, effects);
+    readAliases(parsed.nodes, relative, "trigger", singleAliases, triggers, report);
+    readAliases(parsed.nodes, relative, "effect", singleAliases, effects, report);
     for (const [category, members] of aliasCategories) {
-      readAliases(parsed.nodes, relative, category, singleAliases, members);
+      readAliases(parsed.nodes, relative, category, singleAliases, members, report);
     }
     readContentTypes(parsed.nodes, contentTypes);
-    readBodies(parsed.nodes, contentTypes, singleAliases, bodies);
+    readBodies(parsed.nodes, contentTypes, singleAliases, bodies, report);
     readOnActions(parsed.nodes, relative, onActions);
     readModifierCategories(parsed.nodes, modifierCategories);
     readModifierDecls(parsed.nodes, modifierDecls, modifierTemplates);

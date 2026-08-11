@@ -46,6 +46,8 @@ export interface DriftReport {
   readonly unscopedModifierNames: readonly string[];
   /** `## …` annotations upstream wrote in a shape the parser cannot read. */
   readonly malformedOptions: readonly string[];
+  /** Bracketed CWT value keywords the classifier does not understand. */
+  readonly unknownKeywords: readonly string[];
   /** Scopes named by either source that `scopes.cwt` does not define. */
   readonly unknownScopes: readonly string[];
   /** Triggers whose `## scopes` disagree with the game's own dump. */
@@ -163,7 +165,14 @@ export function reconcile(
     },
     unknownModifierCategories: modifierJoin.unknownCategories,
     unscopedModifierNames: modifierJoin.unscoped,
-    malformedOptions: rules.diagnostics.map(describeDiagnostic).sort(),
+    malformedOptions: rules.diagnostics
+      .filter((diagnostic) => diagnostic.kind !== "unknown-keyword")
+      .map(describeDiagnostic)
+      .sort(),
+    unknownKeywords: rules.diagnostics
+      .filter((diagnostic) => diagnostic.kind === "unknown-keyword")
+      .map(describeDiagnostic)
+      .sort(),
     unknownScopes: [...unknown].sort(),
     scopeConflicts: conflicts.sort(),
     unscopedTriggers: unscoped.sort(),
@@ -208,6 +217,7 @@ export function compareToBaseline(report: DriftReport, baseline: DriftReport): s
       baseline.unscopedModifierNames
     ),
     ...compareList("malformed option", report.malformedOptions, baseline.malformedOptions),
+    ...compareList("unknown CWT keyword", report.unknownKeywords, baseline.unknownKeywords),
     ...compareList("unknown scope", report.unknownScopes, baseline.unknownScopes),
     ...compareList("scope conflict", report.scopeConflicts, baseline.scopeConflicts),
     ...compareList("unscoped trigger", report.unscopedTriggers, baseline.unscopedTriggers),

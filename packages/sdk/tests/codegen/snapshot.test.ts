@@ -124,6 +124,15 @@ describe("emitted trigger signatures", () => {
     `);
   });
 
+  it("alias_keys_field: an open alias-key name", () => {
+    expect(argsInterface("CheckModifierValueArgs")).toMatchInlineSnapshot(`
+      "export interface CheckModifierValueArgs {
+        modifier: string;
+        value: number | readonly [PdxOp, number];
+      }"
+    `);
+  });
+
   it("scope_group[G]: the group's members, canonicalised and sorted", () => {
     // A group is a coercion: `target_species` lists the scopes the game reads
     // a species *out of*, not scopes that are species.

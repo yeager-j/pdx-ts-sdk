@@ -93,6 +93,10 @@ describe("the scope-link join", () => {
 describe("the drift gate", () => {
   const report = reconcile(rules, docs, modifierDocs, dumpLinks);
 
+  it("records the vendored typo as an unknown keyword", () => {
+    expect(report.unknownKeywords).toEqual(["effects.cwt:2902 sceop[fleet]"]);
+  });
+
   it("names a trigger that appeared in only one source", () => {
     const injected: DriftReport = {
       ...baseline,
@@ -140,6 +144,25 @@ describe("the drift gate", () => {
         scopeConflicts: [...baseline.scopeConflicts, "made_up: rules say [a], docs say [b]"],
       })
     ).toEqual(["  - scope conflict: made_up: rules say [a], docs say [b]"]);
+  });
+
+  it("catches a CWT keyword the classifier does not understand", () => {
+    const injected = {
+      ...rules,
+      diagnostics: [
+        ...rules.diagnostics,
+        {
+          kind: "unknown-keyword" as const,
+          file: "test.cwt",
+          line: 1,
+          text: "quantum_range[0..3]",
+        },
+      ],
+    };
+    const changed = reconcile(injected, docs, modifierDocs, dumpLinks);
+    expect(compareToBaseline(changed, baseline)).toEqual([
+      "  + unknown CWT keyword: test.cwt:1 quantum_range[0..3]",
+    ]);
   });
 });
 
