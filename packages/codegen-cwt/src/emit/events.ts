@@ -6,9 +6,9 @@
  * event kind, each carrying `## type_key_filter = country_event` and
  * `## push_scope = country` — so which kinds exist and which scope each runs
  * in falls out of the rules rather than a hand-maintained table. The runtime
- * (`src/script/effects/recorder.ts`) registers a fire-effect encoder per kind from this
- * table, and `src/events/types.ts` plus `src/events/lower.ts` build the typed
- * definition surface over it.
+ * (`src/script/effects/recorder.ts`) registers fire-effect encoders from the
+ * effect policy's event-kind/effect-rule join, and `src/events/types.ts` plus
+ * `src/events/lower.ts` build the typed definition surface over this table.
  *
  * Three outputs:
  *
@@ -19,7 +19,7 @@
  *   `event` kind cannot type its closures, so it is skipped and reported.
  * - `event-fires.ts` — the witness-overload pair per fire effect, merged into
  *   the generated scope interfaces. The pair cannot be generated as ordinary
- *   effects (see `FIRE_EFFECTS` in the overlay): the `id` argument is an
+ *   effects (the `fire` rows in `EffectPolicy`): the `id` argument is an
  *   `EventRef` carrying the fired event's FROM contract, and the second
  *   overload's `NoInfer` witness is what makes firing a `from:`-declaring
  *   event without proof a compile error. The fire method's receiving scopes
@@ -28,6 +28,7 @@
  *   scope is the kind's from this table.
  */
 
+import type { EffectPolicy } from "../effect-policy.ts";
 import { eventKinds, type EventKindSpec } from "../event-kinds.ts";
 import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
 import type { SkippedRule } from "./shape.ts";
@@ -143,7 +144,7 @@ function fireOverloads(kind: EmittedKind & { scope: string }): string {
   );
 }
 
-export function emitEvents(emitter: Emitter): EventsEmission {
+export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmission {
   const skipped: SkippedRule[] = [];
   const kinds = eventKinds(emitter.rules);
 
@@ -177,6 +178,7 @@ export function emitEvents(emitter: Emitter): EventsEmission {
     skipped.push({ name: kind.key, reason: "scopeless event kind — closures cannot be typed" });
     return false;
   });
+  const fireKinds = scoped.filter((kind) => policy.fireKeys.has(kind.key));
   const capabilityNames = new Set<string>();
   for (const kind of scoped) {
     const method = capabilityMethod(kind);
@@ -305,7 +307,7 @@ export function emitEvents(emitter: Emitter): EventsEmission {
   // whose rule the effects file no longer declares gets no typed fire method
   // and is reported rather than guessed at.
   const byInterface = new Map<string, (EmittedKind & { scope: string })[]>();
-  for (const kind of scoped) {
+  for (const kind of fireKinds) {
     const declarations = emitter.rules.effects.get(kind.key);
     const supported = declarations?.flatMap((decl) => decl.supportedScopes ?? []) ?? [];
     if (supported.length === 0) {
@@ -334,8 +336,8 @@ export function emitEvents(emitter: Emitter): EventsEmission {
   const firesCode =
     docComment([
       "Typed fire methods for every event kind, merged into the generated",
-      "scope interfaces. The runtime encoder is registered for every kind in",
-      "`EVENT_KINDS` (src/script/effects/recorder.ts); these declarations are the typed",
+      "scope interfaces. The runtime encoder is registered from the same generated",
+      "fire-effect policy (src/script/effects/recorder.ts); these declarations are the typed",
       "surface over it.",
     ]) +
     'declare module "./effects.ts" {\n' +

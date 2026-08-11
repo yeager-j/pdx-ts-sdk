@@ -10,16 +10,10 @@
 import { isOptional } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
+import type { LoweredRule } from "../lowered-rule.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
 import { HAND_WRITTEN_TRIGGERS } from "../overlay.ts";
-import {
-  declaredScopes,
-  mergeFields,
-  scopeType,
-  type ArgField,
-  type ClauseCategory,
-  type SkippedRule,
-} from "./shape.ts";
+import { mergeFields, type ArgField, type ClauseCategory, type SkippedRule } from "./shape.ts";
 import { Emitter, type TsValue } from "./types.ts";
 
 const TRIGGER_CLAUSES = new Set<ClauseCategory>(["trigger"]);
@@ -41,34 +35,30 @@ type Shape =
   | { readonly kind: "wrapper"; readonly scope: string }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
 
-function shapeOf(emitter: Emitter, declarations: readonly AliasDecl[]): Shape | string {
-  if (declarations.some((declaration) => declaration.comparison)) {
+function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
+  if (rule.comparison) {
     return { kind: "comparison" };
   }
-  const blocks = declarations.filter((declaration) => declaration.type.kind === "block");
-  if (blocks.length === 0) {
-    const value = emitter.unionFor(declarations.map((declaration) => declaration.type));
+  if (rule.blocks.length === 0) {
+    const value = emitter.unionFor(rule.scalars.map((declaration) => declaration.type));
     if (value === null) {
-      return `unsupported value type (${declarations.map((d) => d.type.kind).join(", ")})`;
+      return `unsupported value type (${rule.scalars.map((d) => d.type.kind).join(", ")})`;
     }
-    return declarations.every((declaration) => declaration.type.kind === "bool")
+    return rule.scalars.every((declaration) => declaration.type.kind === "bool")
       ? { kind: "bool" }
       : { kind: "value", value };
   }
-  if (declarations.length > 1) {
+  if (rule.declarations.length > 1) {
     return "overloaded between a block and a scalar";
   }
-  const declaration = blocks[0]!;
-  const body = declaration.type;
-  if (body.kind !== "block") {
-    return "unreachable";
-  }
+  const block = rule.blocks[0]!;
+  const body = block.type;
   if (body.bare.length > 0) {
     return "block with bare values";
   }
-  const splices = body.fields.filter((field) => field.key.kind === "aliasName");
-  const named = body.fields.filter((field) => field.key.kind !== "aliasName");
-  const pushedRaw = declaration.scope?.this ?? null;
+  const splices = block.splices;
+  const named = block.named;
+  const pushedRaw = block.inheritedScope;
 
   if (splices.length > 0) {
     const categories = new Set(
@@ -304,7 +294,7 @@ function emitOne(key: string, shape: Shape, scope: string, docs: string[]): stri
 export function emitTriggers(
   emitter: Emitter,
   docs: ReadonlyMap<string, DocEntry>,
-  scopeIndex: ReadonlyMap<string, string>
+  rules: ReadonlyMap<string, LoweredRule>
 ): TriggerEmission {
   const skipped: SkippedRule[] = [];
   const byShape = new Map<string, number>();
@@ -312,8 +302,9 @@ export function emitTriggers(
   const names = new Set<string>();
   let emitted = 0;
 
-  for (const key of [...emitter.rules.triggers.keys()].sort()) {
-    const declarations = emitter.rules.triggers.get(key)!;
+  for (const key of [...rules.keys()].sort()) {
+    const rule = rules.get(key)!;
+    const declarations = rule.declarations;
     if (HAND_WRITTEN_TRIGGERS.has(key.toLowerCase())) {
       skipped.push({ name: key, reason: "hand-written combinator" });
       continue;
@@ -325,17 +316,16 @@ export function emitTriggers(
     const doc = docs.get(key);
     // The rules are authoritative where they carry `## scopes`; the dump is the
     // fallback for the handful of rules that do not, and stays the cross-check.
-    const supported = declaredScopes(declarations, doc);
-    if (supported.length === 0) {
+    if (rule.supportedScopes.length === 0) {
       skipped.push({ name: key, reason: "no scopes in either the rules or the game's dump" });
       continue;
     }
-    const scope = scopeType(supported, scopeIndex);
+    const scope = rule.scopeType;
     if (scope === null) {
-      skipped.push({ name: key, reason: `unknown scope in ${supported.join(" ")}` });
+      skipped.push({ name: key, reason: `unknown scope in ${rule.supportedScopes.join(" ")}` });
       continue;
     }
-    const shape = shapeOf(emitter, declarations);
+    const shape = shapeOf(emitter, rule);
     if (typeof shape === "string") {
       skipped.push({ name: key, reason: shape });
       continue;

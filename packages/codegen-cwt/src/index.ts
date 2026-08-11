@@ -15,7 +15,9 @@ import {
   VANILLA_REF_EXTRAS,
   type ContentManifestEntry,
 } from "./content-manifest.ts";
+import { emitContentShapeProtocol } from "./content-shape.ts";
 import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
+import { createEffectPolicy, emitEffectPolicyProtocol } from "./effect-policy.ts";
 import { emitAliasSplice, type AliasSpliceEmission } from "./emit/alias-splice.ts";
 import { emitAliasStruct } from "./emit/alias-struct.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
@@ -40,6 +42,7 @@ import { emitVanillaRefs } from "./emit/vanilla-refs.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
+import { lowerRuleTable } from "./lowered-rule.ts";
 import { camelCase, docComment, indefiniteArticle, referencesIdentifier } from "./naming.ts";
 import {
   CONTENT_CONTRIBUTION_SINKS,
@@ -166,8 +169,14 @@ async function main(): Promise<void> {
 
   const emitter = new Emitter(rules);
   const index = scopeIndex(rules);
+  const effectPolicy = createEffectPolicy(rules);
+  await write(
+    "content-shape.ts",
+    header(commit, ["codegen-cwt ContentShape protocol"]) + emitContentShapeProtocol()
+  );
   emitter.beginFile();
-  const triggers = emitTriggers(emitter, docs.triggers, index);
+  const loweredTriggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, index);
+  const triggers = emitTriggers(emitter, docs.triggers, loweredTriggers);
   const triggerUsage = emitter.endFile();
 
   const dumpLinks = new Map(links.map((link) => [link.name, link]));
@@ -181,7 +190,15 @@ async function main(): Promise<void> {
   );
 
   emitter.beginFile();
-  const effects = emitEffects(emitter, docs.effects, index, classifiedLinks.links);
+  const loweredEffects = lowerRuleTable(rules.effects, docs.effects, emitter, index);
+  const effects = emitEffects(
+    emitter,
+    docs.effects,
+    index,
+    loweredEffects,
+    effectPolicy,
+    classifiedLinks.links
+  );
   const effectUsage = emitter.endFile();
 
   const contents: Array<{
@@ -583,7 +600,11 @@ async function main(): Promise<void> {
     "effect-meta.ts",
     header(commit, ["effects.cwt", "aliases.cwt", "links.cwt"]) + effects.meta
   );
-  const events = emitEvents(emitter);
+  await write(
+    "effect-policy.ts",
+    header(commit, ["effects.cwt", "events/events.cwt"]) + emitEffectPolicyProtocol(effectPolicy)
+  );
+  const events = emitEvents(emitter, effectPolicy);
   await write(
     "events.ts",
     header(commit, ["events/events.cwt"]) +

@@ -8,8 +8,8 @@ import type { ScopeName } from "./scopes.ts";
 
 /**
  * Typed fire methods for every event kind, merged into the generated
- * scope interfaces. The runtime encoder is registered for every kind in
- * `EVENT_KINDS` (src/script/effects/recorder.ts); these declarations are the typed
+ * scope interfaces. The runtime encoder is registered from the same generated
+ * fire-effect policy (src/script/effects/recorder.ts); these declarations are the typed
  * surface over it.
  */
 declare module "./effects.ts" {

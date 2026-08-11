@@ -11,6 +11,7 @@
  * of growing parallel ones that disagree.
  */
 
+import { contentShape } from "../content-shape.ts";
 import type { DescentNode } from "../corpus.ts";
 import {
   isOptional,
@@ -906,7 +907,7 @@ export function metadata(
     `key: ${JSON.stringify(name)}`,
     `member: ${JSON.stringify(camelCase(name))}`,
     `shape: ${JSON.stringify(shape)}`,
-    `form: ${JSON.stringify(formOfShape({ shape, repeated }))}`,
+    `form: ${JSON.stringify(formOfShape({ shape: contentShape(shape), repeated }))}`,
     ...extras,
   ];
   if (repeated) {
@@ -1707,7 +1708,11 @@ function lowerDual(
   // what makes them collide rather than the shapes, an `arity` assertion fixes
   // it upstream of here.
   const forms = arms.map((arm) =>
-    formOfShape({ shape: arm.admits.shape, repeated: arm.admits.repeated, wrapped: arm.wrapped })
+    formOfShape({
+      shape: contentShape(arm.admits.shape),
+      repeated: arm.admits.repeated,
+      wrapped: arm.wrapped,
+    })
   );
   if (new Set(forms).size !== forms.length) {
     return null;

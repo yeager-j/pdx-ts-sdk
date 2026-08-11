@@ -12,6 +12,8 @@
  * reclassifies a shape into a form itself. See `ContentField.form` in
  * `@pdx-ts/sdk`'s `content/schema.ts` for the consuming side.
  */
+import type { ContentShape } from "../content-shape.ts";
+
 export type AuthoredForm = "scalar" | "list" | "trigger" | "closure" | "block";
 
 /**
@@ -21,7 +23,7 @@ export type AuthoredForm = "scalar" | "list" | "trigger" | "closure" | "block";
  * generated descriptor will carry, not a second copy of it.
  */
 export function formOfShape(field: {
-  readonly shape: string;
+  readonly shape: ContentShape;
   readonly repeated?: boolean;
   readonly wrapped?: boolean;
 }): AuthoredForm {
@@ -44,12 +46,19 @@ export function formOfShape(field: {
     case "triggeredModifierBlock":
     case "aliasStruct":
       return field.repeated === true ? "list" : field.shape === "value" ? "scalar" : "block";
+    case "economicResourceOperation":
+    case "weightBlock":
+    case "weightBlockWithLoc":
+    case "structMap":
+    case "scalarMap":
+    case "repeatedStruct":
+      return "block";
+    case "inlineTrigger":
+      return "trigger";
     case "dual":
       // A dual's arms are ordinary fields; nesting one inside another would
       // mean CWT declared the same key at three incompatible forms, and
       // `lowerDual` builds its arms from single declarations either way.
       throw new Error("A dual field cannot be another dual's arm");
-    default:
-      return "block";
   }
 }

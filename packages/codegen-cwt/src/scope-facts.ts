@@ -25,12 +25,13 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { loadRules, scopeIndex, type AliasDecl } from "./cwt/rules.ts";
+import { loadRules, scopeIndex } from "./cwt/rules.ts";
 import { classifyLinks } from "./emit/links.ts";
-import { canonicalScopeSet, clauseOf, declaredScopes } from "./emit/shape.ts";
+import { canonicalScopeSet } from "./emit/shape.ts";
 import { Emitter } from "./emit/types.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
-import { parseTriggerDocs, type DocEntry } from "./logs/trigger-docs.ts";
+import { parseTriggerDocs } from "./logs/trigger-docs.ts";
+import { lowerRuleTable, type LoweredRule } from "./lowered-rule.ts";
 
 /**
  * A scope set, or `"universal"` for a rule legal everywhere. `"universal"` is
@@ -75,17 +76,10 @@ export interface ScopeFacts {
   readonly links: ReadonlyMap<string, LinkFact>;
 }
 
-function factsOf(
-  table: ReadonlyMap<string, readonly AliasDecl[]>,
-  docs: ReadonlyMap<string, DocEntry>,
-  emitter: Emitter,
-  index: ReadonlyMap<string, string>
-): Map<string, RuleFact> {
+function factsOf(table: ReadonlyMap<string, LoweredRule>): Map<string, RuleFact> {
   const out = new Map<string, RuleFact>();
-  for (const [key, declarations] of table) {
-    const supported = declaredScopes(declarations, docs.get(key));
-    const scopes = supported.length === 0 ? null : canonicalScopeSet(supported, index);
-    if (scopes === null) {
+  for (const [key, rule] of table) {
+    if (rule.scopes === null) {
       // Neither source names a scope, or one of them names a scope the index
       // does not know. The rule is dropped WHOLE rather than narrowed to its
       // recognizable members: dropping members would manufacture a narrowing
@@ -93,55 +87,9 @@ function factsOf(
       // every consumer must already treat as unconstraining.
       continue;
     }
-    out.set(key.toLowerCase(), { scopes, ...bodyOf(declarations, emitter) });
+    out.set(key.toLowerCase(), { scopes: rule.scopes, ...rule.body });
   }
   return out;
-}
-
-/**
- * Where a block rule's nested clauses live and what scope each runs in,
- * resolved the way `emit/shape.ts`'s `clauseScope` resolves it: the field's own
- * `## push_scope`, else the declaration's, else the enclosing scope.
- */
-function bodyOf(
-  declarations: readonly AliasDecl[],
-  emitter: Emitter
-): {
-  splice: { scope: string | null } | null;
-  clauses: ReadonlyMap<string, string | null>;
-  args: ReadonlySet<string>;
-} {
-  let splice: { scope: string | null } | null = null;
-  const clauses = new Map<string, string | null>();
-  const args = new Set<string>();
-  for (const declaration of declarations) {
-    if (declaration.type.kind !== "block") {
-      continue;
-    }
-    const inherited = declaration.scope?.this ?? null;
-    const resolve = (own: string | null): string | null => {
-      const pushed = own ?? inherited;
-      return pushed === null ? null : emitter.canonicalScope(pushed);
-    };
-    for (const field of declaration.type.fields) {
-      const own = field.scope?.this ?? null;
-      if (field.key.kind === "aliasName") {
-        if (field.key.category === "trigger" || field.key.category === "effect") {
-          splice = { scope: resolve(own) };
-        }
-        continue;
-      }
-      if (field.key.kind !== "name") {
-        continue;
-      }
-      if (clauseOf(field.type) === null) {
-        args.add(field.key.name.toLowerCase());
-      } else {
-        clauses.set(field.key.name.toLowerCase(), resolve(own));
-      }
-    }
-  }
-  return { splice, clauses, args };
 }
 
 export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts {
@@ -152,6 +100,8 @@ export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts
     readFileSync(path.join(docsRoot, "triggers.log"), "utf8"),
     readFileSync(path.join(docsRoot, "effects.log"), "utf8")
   );
+  const triggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, index);
+  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, index);
   const dumpLinks = new Map(
     parseScopeLinks(readFileSync(path.join(docsRoot, "scopes.log"), "utf8")).map((link) => [
       link.name,
@@ -169,8 +119,8 @@ export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts
   }
 
   return {
-    triggers: factsOf(rules.triggers, docs.triggers, emitter, index),
-    effects: factsOf(rules.effects, docs.effects, emitter, index),
+    triggers: factsOf(triggers),
+    effects: factsOf(effects),
     links,
   };
 }
