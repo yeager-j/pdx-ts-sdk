@@ -277,12 +277,26 @@ export function target<S extends ScopeName>(
  * way `this` does, so there is no scope its type could promise a block's
  * contents would run in.
  *
- * The scope is asserted by the author, for the same reason the condition
- * form's is — `output_scope = any` is also why `defineSituationType` takes an
- * author-declared `targetScope` at all. `target()` is `ScopeValue<ScopeName>`;
- * `target<"country">()` claims the kind that situation type declares.
+ * Unasserted, so it lands at the widest scope and stays there. This overload
+ * is non-generic on purpose: a single `<S = ScopeName>` value signature let
+ * TypeScript infer `S` from the *expected* type, so `const p:
+ * ScopeValue<"planet"> = target()` silently claimed a planet nobody had
+ * asserted — which is exactly what the covariant brand on {@link ScopeValue}
+ * exists to prevent. With no type parameter here there is nothing to infer,
+ * and a bare call is `ScopeValue<ScopeName>` in every context.
  */
-export function target<S extends ScopeName = ScopeName>(): ScopeValue<S>;
+export function target(): ScopeValue<ScopeName>;
+/**
+ * The value form with the landing scope asserted: `target<"country">()`.
+ *
+ * The assertion is the author's, for the same reason the condition form's is —
+ * `output_scope = any` is declared nowhere the SDK can read, which is also why
+ * `defineSituationType` takes an author-declared `targetScope` at all. Written
+ * explicitly or not at all: TypeScript skips the non-generic overload above
+ * whenever type arguments are supplied, so this arm is reachable only by
+ * writing the scope out.
+ */
+export function target<S extends ScopeName>(): ScopeValue<S>;
 export function target<S extends ScopeName>(
   condition?: Trigger<S>
 ): Trigger<"agreement" | "espionage_operation" | "situation" | "spy_network"> | ScopeValue<S> {

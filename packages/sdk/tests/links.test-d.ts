@@ -57,6 +57,21 @@ describe("the declined target link in value position (SDK-129)", () => {
     expectTypeOf(target()).toEqualTypeOf<ScopeValue<ScopeName>>();
   });
 
+  it("never lets the expected type do the asserting for the author", () => {
+    // The regression the split value overloads exist to prevent: with one
+    // `<S = ScopeName>` signature, `S` inferred from the annotation here and a
+    // bare call silently claimed a planet nobody asserted.
+    // @ts-expect-error — an unasserted target is ScopeName-wide, and the brand
+    // is covariant, so it does not assign where a specific scope is required
+    const inferred: ScopeValue<"planet"> = target();
+    expectTypeOf(inferred).toEqualTypeOf<ScopeValue<"planet">>();
+    // Written out, the same assignment is exactly what the contract allows.
+    const asserted: ScopeValue<"planet"> = target<"planet">();
+    expectTypeOf(asserted).toEqualTypeOf<ScopeValue<"planet">>();
+    // Still wide in a context that would happily have narrowed it.
+    expectTypeOf<ScopeValue<ScopeName>>().toEqualTypeOf(target());
+  });
+
   it("stays relative, so there is no block to open", () => {
     // @ts-expect-error — `target` means whatever the enclosing situation
     // targets, so no ScopeRef: its type cannot promise a scope for a block
