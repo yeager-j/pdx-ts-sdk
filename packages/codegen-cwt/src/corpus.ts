@@ -506,10 +506,13 @@ function sameKeys(left: ReadonlySet<string>, right: ReadonlySet<string>): boolea
   return left.size === right.size && [...left].every((key) => right.has(key));
 }
 
-/** One scalar as the game spells it, so a `bool` reads back as `yes`/`no`. */
+/** One semantic scalar value, with game spellings for booleans and numbers. */
 function scalarText(value: PdxValue): string | null {
   if (!isScalar(value) || value.kind === "var" || value.kind === "math") {
     return null;
+  }
+  if (value.kind === "str") {
+    return value.value;
   }
   return renderScalarText(value);
 }
