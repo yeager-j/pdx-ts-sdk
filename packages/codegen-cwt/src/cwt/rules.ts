@@ -21,14 +21,9 @@ import {
   type RuleType,
   type ScopeContext,
   type SingleAliasResolver,
+  type SingleAliasTarget,
 } from "./model.ts";
-import {
-  parseCwt,
-  type CwtAssignment,
-  type CwtDiagnostic,
-  type CwtNode,
-  type CwtValue,
-} from "./parser.ts";
+import { parseCwt, type CwtAssignment, type CwtDiagnostic, type CwtNode } from "./parser.ts";
 
 /** One `alias[trigger:has_edict] = <edict>` declaration. A name may have several. */
 export interface AliasDecl {
@@ -225,16 +220,20 @@ const BRACKET_KEY = /^([a-z_]+)\[(.+)\]$/;
  * `alias[trigger:any_country] = single_alias_right[trigger_clause]` can be read
  * as the block it stands for.
  */
-function readSingleAliases(nodes: readonly CwtNode[], into: Map<string, CwtValue>): void {
+function readSingleAliases(
+  nodes: readonly CwtNode[],
+  report: ClassificationReporter,
+  into: Map<string, SingleAliasTarget>
+): void {
   for (const entry of assignments(nodes)) {
     const match = BRACKET_KEY.exec(entry.key.text);
     if (match !== null && match[1] === "single_alias") {
-      into.set(match[2]!, entry.value);
+      into.set(match[2]!, { value: entry.value, report });
     }
   }
 }
 
-function resolverFor(singleAliases: ReadonlyMap<string, CwtValue>): SingleAliasResolver {
+function resolverFor(singleAliases: ReadonlyMap<string, SingleAliasTarget>): SingleAliasResolver {
   return (name) => singleAliases.get(name);
 }
 
@@ -402,7 +401,7 @@ export function readAliases(
   nodes: readonly CwtNode[],
   file: string,
   category: string,
-  singleAliases: ReadonlyMap<string, CwtValue>,
+  singleAliases: ReadonlyMap<string, SingleAliasTarget>,
   into: Map<string, AliasDecl[]>,
   report?: ClassificationReporter
 ): void {
@@ -537,7 +536,7 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
 function readBodies(
   nodes: readonly CwtNode[],
   known: ReadonlyMap<string, ContentType>,
-  singleAliases: ReadonlyMap<string, CwtValue>,
+  singleAliases: ReadonlyMap<string, SingleAliasTarget>,
   into: Map<string, ContentBody>,
   report?: ClassificationReporter
 ): void {
@@ -624,17 +623,23 @@ export function loadRules(root: string): RuleSet {
   const modifierCategories = new Map<string, string[]>();
   const modifierDecls = new Map<string, string[]>();
   const modifierTemplates: string[] = [];
-  const singleAliases = new Map<string, CwtValue>();
+  const singleAliases = new Map<string, SingleAliasTarget>();
   const diagnostics: CwtDiagnostic[] = [];
+  const classificationDiagnostics = new Set<string>();
 
   for (const relative of RULE_FILES) {
     const source = readFileSync(path.join(root, relative), "utf8");
     const parsed = parseCwt(source, relative);
     diagnostics.push(...parsed.diagnostics);
     const report: ClassificationReporter = (diagnostic) => {
+      const key = `${relative}:${diagnostic.line}:${diagnostic.text}`;
+      if (classificationDiagnostics.has(key)) {
+        return;
+      }
+      classificationDiagnostics.add(key);
       diagnostics.push({ ...diagnostic, file: relative });
     };
-    readSingleAliases(parsed.nodes, singleAliases);
+    readSingleAliases(parsed.nodes, report, singleAliases);
     readEnums(parsed.nodes, enums);
     readScopes(parsed.nodes, scopes);
     readScopeGroups(parsed.nodes, scopeGroups);

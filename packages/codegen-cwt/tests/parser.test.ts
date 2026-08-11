@@ -124,21 +124,24 @@ describe("rule types", () => {
     });
   });
 
-  it("reports an unknown bracketed keyword instead of treating it as a literal", () => {
-    const diagnostics: unknown[] = [];
-    expect(
-      classify(only("gateway = quantum_range[0..3]").value, undefined, (diagnostic) => {
-        diagnostics.push(diagnostic);
-      })
-    ).toEqual({ kind: "unknownKeyword", text: "quantum_range[0..3]" });
-    expect(diagnostics).toEqual([
-      {
-        kind: "unknown-keyword",
-        line: 1,
-        text: "quantum_range[0..3]",
-      },
-    ]);
-  });
+  it.each(["quantum_range[0..3]", "scope2[fleet]", "Scope[fleet]"])(
+    "reports the unsupported bracketed keyword %s instead of treating it as a literal",
+    (text) => {
+      const diagnostics: unknown[] = [];
+      expect(
+        classify(only(`gateway = ${text}`).value, undefined, (diagnostic) => {
+          diagnostics.push(diagnostic);
+        })
+      ).toEqual({ kind: "unknownKeyword", text });
+      expect(diagnostics).toEqual([
+        {
+          kind: "unknown-keyword",
+          line: 1,
+          text,
+        },
+      ]);
+    }
+  );
 
   it("keeps a quoted bracketed value literal", () => {
     expect(classify(only('gateway = "quantum_range[0..3]"').value)).toEqual({
@@ -167,11 +170,32 @@ describe("rule types", () => {
     );
     const rule = only("alias[trigger:any_country] = single_alias_right[trigger_clause]");
     expect(classify(rule.value)).toEqual({ kind: "singleAliasRight", name: "trigger_clause" });
-    expect(classify(rule.value, () => clause.value)).toEqual({
+    expect(classify(rule.value, () => ({ value: clause.value }))).toEqual({
       kind: "block",
       bare: [],
       fields: [expect.objectContaining({ key: { kind: "aliasName", category: "trigger" } })],
     });
+  });
+
+  it("reports diagnostics from a resolved alias against its declaration", () => {
+    const clause = only("single_alias[trigger_clause] = { gateway = scope2[fleet] }");
+    const rule = only("alias[trigger:any_country] = single_alias_right[trigger_clause]");
+    const declarationDiagnostics: unknown[] = [];
+    const consumerDiagnostics: unknown[] = [];
+
+    classify(
+      rule.value,
+      () => ({
+        value: clause.value,
+        report: (diagnostic) => declarationDiagnostics.push(diagnostic),
+      }),
+      (diagnostic) => consumerDiagnostics.push(diagnostic)
+    );
+
+    expect(declarationDiagnostics).toEqual([
+      { kind: "unknown-keyword", line: 1, text: "scope2[fleet]" },
+    ]);
+    expect(consumerDiagnostics).toEqual([]);
   });
 
   it("reads the scope list a rule declares", () => {

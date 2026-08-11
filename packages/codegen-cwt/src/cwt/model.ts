@@ -100,7 +100,7 @@ export interface RuleField {
   readonly comparison: boolean;
 }
 
-const BRACKETED = /^([a-z_]+)\[([^\]]*)\]$/;
+const BRACKETED = /^([^\[\]]+)\[([^\[\]]*)\]$/;
 const RANGE = /^(-?[\d.]+|-?inf)\.\.(-?[\d.]+|-?inf)$/;
 const CARDINALITY = /^~?(\d+)\.\.(\d+|inf)$/;
 
@@ -203,8 +203,14 @@ function classifyScalar(text: string, line: number, report?: ClassificationRepor
   return { kind: "literal", text };
 }
 
+/** A `single_alias_right[x]` target and the diagnostic destination of its declaration. */
+export interface SingleAliasTarget {
+  readonly value: CwtValue;
+  readonly report?: ClassificationReporter;
+}
+
 /** Expands `single_alias_right[x]` to the block `aliases.cwt` defines for it. */
-export type SingleAliasResolver = (name: string) => CwtValue | undefined;
+export type SingleAliasResolver = (name: string) => SingleAliasTarget | undefined;
 
 export function classify(
   value: CwtValue,
@@ -221,7 +227,7 @@ export function classify(
     return type;
   }
   const target = resolve(type.name);
-  return target === undefined ? type : classify(target, resolve, report);
+  return target === undefined ? type : classify(target.value, resolve, target.report ?? report);
 }
 
 export function classifyBlock(
