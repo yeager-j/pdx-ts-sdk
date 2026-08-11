@@ -48,7 +48,13 @@ import {
   HAND_WRITTEN_CONTENT_DEFINERS,
   REPEATED_STRUCT_FIELD_OVERRIDES,
 } from "./overlay.ts";
-import { compareToBaseline, reconcile, type DriftReport } from "./reconcile.ts";
+import {
+  compareToBaseline,
+  reconcile,
+  updatedBaseline,
+  type DriftBaseline,
+  type DriftReport,
+} from "./reconcile.ts";
 
 /**
  * Every path this script touches is anchored to the module, not the process:
@@ -114,18 +120,22 @@ function reportSection(title: string, lines: readonly string[]): void {
 }
 
 function checkDrift(report: DriftReport, rebaseline: boolean): void {
-  if (rebaseline) {
-    writeFileSync(BASELINE, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-    console.log(`Rebaselined drift: ${BASELINE}`);
-    return;
-  }
   // A baseline written before a join existed reads as that join being empty,
   // so adding a join reports its entire current state as drift to review
   // instead of crashing on the missing field.
   const baseline = {
     links: { rulesOnly: [], docsOnly: [] },
-    ...(JSON.parse(readFileSync(BASELINE, "utf8")) as Partial<DriftReport>),
-  } as DriftReport;
+    ...(JSON.parse(readFileSync(BASELINE, "utf8")) as Partial<DriftBaseline>),
+  } as DriftBaseline;
+  if (rebaseline) {
+    writeFileSync(
+      BASELINE,
+      `${JSON.stringify(updatedBaseline(report, baseline), null, 2)}\n`,
+      "utf8"
+    );
+    console.log(`Rebaselined drift: ${BASELINE}`);
+    return;
+  }
   const differences = compareToBaseline(report, baseline);
   if (differences.length === 0) {
     return;

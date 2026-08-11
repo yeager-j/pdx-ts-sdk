@@ -25,6 +25,32 @@ export interface NameDrift {
   readonly docsOnly: readonly string[];
 }
 
+export type ScopeSet = readonly string[] | "any";
+
+export interface ScopeConflict {
+  readonly name: string;
+  readonly rules: ScopeSet;
+  readonly docs: ScopeSet;
+}
+
+export interface ScopeResolution {
+  readonly id: string;
+  readonly selectedAuthority: "rules" | "docs" | "mixed" | "none";
+  readonly reason: string;
+  readonly evidenceVersion: string;
+  readonly expectedLifetime: string;
+  readonly conflicts: {
+    /** Stable conflict identities, including both normalized scope sets. */
+    readonly triggers: readonly string[];
+    /** Stable conflict identities, including both normalized scope sets. */
+    readonly effects: readonly string[];
+  };
+  readonly unscopedRules: {
+    readonly triggers: readonly string[];
+    readonly effects: readonly string[];
+  };
+}
+
 export interface DriftReport {
   readonly triggers: NameDrift;
   readonly effects: NameDrift;
@@ -50,10 +76,21 @@ export interface DriftReport {
   readonly unknownKeywords: readonly string[];
   /** Scopes named by either source that `scopes.cwt` does not define. */
   readonly unknownScopes: readonly string[];
-  /** Triggers whose `## scopes` disagree with the game's own dump. */
-  readonly scopeConflicts: readonly string[];
-  /** Triggers the rules declare with no `## scopes` annotation at all. */
-  readonly unscopedTriggers: readonly string[];
+  /** Rules whose `## scopes` disagree with the game's own dump. */
+  readonly scopeConflicts: {
+    readonly triggers: readonly ScopeConflict[];
+    readonly effects: readonly ScopeConflict[];
+  };
+  /** Rules with no `## scopes` annotation, even when the dump supplies a fallback. */
+  readonly unscopedRules: {
+    readonly triggers: readonly string[];
+    readonly effects: readonly string[];
+  };
+}
+
+export interface DriftBaseline extends Omit<DriftReport, "scopeConflicts" | "unscopedRules"> {
+  /** Audited explanations for every accepted scope disagreement or missing annotation. */
+  readonly scopeResolutions: readonly ScopeResolution[];
 }
 
 function diff(left: Iterable<string>, right: ReadonlySet<string>): string[] {
@@ -88,8 +125,41 @@ function sameScopes(left: Set<string> | null, right: Set<string> | null): boolea
   return left.size === right.size && [...left].every((scope) => right.has(scope));
 }
 
-function describeScopes(scopes: Set<string> | null): string {
-  return scopes === null ? "any" : [...scopes].sort().join(" ");
+function scopeSet(scopes: Set<string> | null): ScopeSet {
+  return scopes === null ? "any" : [...scopes].sort();
+}
+
+function compareScopes(
+  table: ReadonlyMap<string, readonly { readonly supportedScopes: readonly string[] | null }[]>,
+  documented: ReadonlyMap<string, { readonly scopes: readonly string[] }>,
+  index: ReadonlyMap<string, string>,
+  note: (scopes: readonly string[]) => void
+): { conflicts: ScopeConflict[]; unscoped: string[] } {
+  const conflicts: ScopeConflict[] = [];
+  const unscoped: string[] = [];
+
+  for (const [name, declarations] of table) {
+    const declared = declarations.flatMap((declaration) => declaration.supportedScopes ?? []);
+    if (declarations.every((declaration) => declaration.supportedScopes === null)) {
+      unscoped.push(name);
+      continue;
+    }
+    note(declared);
+    const docs = documented.get(name);
+    if (docs === undefined) {
+      continue;
+    }
+    const fromRules = normaliseScopes(declared, index);
+    const fromDocs = normaliseScopes(docs.scopes, index);
+    if (!sameScopes(fromRules, fromDocs)) {
+      conflicts.push({ name, rules: scopeSet(fromRules), docs: scopeSet(fromDocs) });
+    }
+  }
+
+  return {
+    conflicts: conflicts.sort((left, right) => left.name.localeCompare(right.name)),
+    unscoped: unscoped.sort(),
+  };
 }
 
 export function reconcile(
@@ -100,8 +170,6 @@ export function reconcile(
 ): DriftReport {
   const index = scopeIndex(rules);
   const unknown = new Set<string>();
-  const conflicts: string[] = [];
-  const unscoped: string[] = [];
 
   const note = (scopes: readonly string[]): void => {
     for (const scope of scopes) {
@@ -133,25 +201,8 @@ export function reconcile(
     (token) => index.get(token.toLowerCase()) ?? null
   );
 
-  for (const [name, declarations] of rules.triggers) {
-    const declared = declarations.flatMap((d) => d.supportedScopes ?? []);
-    if (declarations.every((d) => d.supportedScopes === null)) {
-      unscoped.push(name);
-      continue;
-    }
-    note(declared);
-    const documented = docs.triggers.get(name);
-    if (documented === undefined) {
-      continue;
-    }
-    const fromRules = normaliseScopes(declared, index);
-    const fromDocs = normaliseScopes(documented.scopes, index);
-    if (!sameScopes(fromRules, fromDocs)) {
-      conflicts.push(
-        `${name}: rules say [${describeScopes(fromRules)}], docs say [${describeScopes(fromDocs)}]`
-      );
-    }
-  }
+  const triggerScopes = compareScopes(rules.triggers, docs.triggers, index, note);
+  const effectScopes = compareScopes(rules.effects, docs.effects, index, note);
 
   return {
     triggers: driftBetween(rules.triggers.keys(), docs.triggers.keys()),
@@ -174,8 +225,14 @@ export function reconcile(
       .map(describeDiagnostic)
       .sort(),
     unknownScopes: [...unknown].sort(),
-    scopeConflicts: conflicts.sort(),
-    unscopedTriggers: unscoped.sort(),
+    scopeConflicts: {
+      triggers: triggerScopes.conflicts,
+      effects: effectScopes.conflicts,
+    },
+    unscopedRules: {
+      triggers: triggerScopes.unscoped,
+      effects: effectScopes.unscoped,
+    },
   };
 }
 
@@ -192,8 +249,109 @@ function compareList(
   ];
 }
 
+function describeScopeSet(scopes: ScopeSet): string {
+  return scopes === "any" ? "any" : scopes.join(" ");
+}
+
+function describeScopeConflict(conflict: ScopeConflict): string {
+  return (
+    `${conflict.name}: rules say [${describeScopeSet(conflict.rules)}], ` +
+    `docs say [${describeScopeSet(conflict.docs)}]`
+  );
+}
+
+function scopeBaseline(baseline: DriftBaseline): {
+  conflicts: { triggers: string[]; effects: string[] };
+  unscopedRules: { triggers: string[]; effects: string[] };
+  errors: string[];
+} {
+  const conflicts = { triggers: [] as string[], effects: [] as string[] };
+  const unscopedRules = { triggers: [] as string[], effects: [] as string[] };
+  const errors: string[] = [];
+  const ids = new Set<string>();
+  const authorities = new Set(["rules", "docs", "mixed", "none"]);
+
+  for (const resolution of baseline.scopeResolutions) {
+    if (ids.has(resolution.id)) {
+      errors.push(`  ! duplicate scope resolution id: ${resolution.id}`);
+    }
+    ids.add(resolution.id);
+    if (!authorities.has(resolution.selectedAuthority)) {
+      errors.push(
+        `  ! scope resolution ${resolution.id || "<missing id>"} has invalid selectedAuthority`
+      );
+    }
+    for (const [field, value] of [
+      ["id", resolution.id],
+      ["reason", resolution.reason],
+      ["evidenceVersion", resolution.evidenceVersion],
+      ["expectedLifetime", resolution.expectedLifetime],
+    ] as const) {
+      if (value.trim() === "") {
+        errors.push(`  ! scope resolution ${resolution.id || "<missing id>"} has no ${field}`);
+      }
+    }
+    conflicts.triggers.push(...resolution.conflicts.triggers);
+    conflicts.effects.push(...resolution.conflicts.effects);
+    unscopedRules.triggers.push(...resolution.unscopedRules.triggers);
+    unscopedRules.effects.push(...resolution.unscopedRules.effects);
+    if (
+      resolution.conflicts.triggers.length === 0 &&
+      resolution.conflicts.effects.length === 0 &&
+      resolution.unscopedRules.triggers.length === 0 &&
+      resolution.unscopedRules.effects.length === 0
+    ) {
+      errors.push(`  ! scope resolution ${resolution.id} resolves no scope evidence`);
+    }
+  }
+
+  for (const [kind, entries] of [
+    ["trigger scope conflict", conflicts.triggers],
+    ["effect scope conflict", conflicts.effects],
+    ["unscoped trigger rule", unscopedRules.triggers],
+    ["unscoped effect rule", unscopedRules.effects],
+  ] as const) {
+    const seen = new Set<string>();
+    for (const entry of entries) {
+      if (seen.has(entry)) {
+        errors.push(`  ! duplicate accepted ${kind}: ${entry}`);
+      }
+      seen.add(entry);
+    }
+  }
+
+  return { conflicts, unscopedRules, errors };
+}
+
+function compareScopeEvidence(report: DriftReport, baseline: DriftBaseline): string[] {
+  const expected = scopeBaseline(baseline);
+  return [
+    ...expected.errors,
+    ...compareList(
+      "trigger scope conflict",
+      report.scopeConflicts.triggers.map(describeScopeConflict),
+      expected.conflicts.triggers
+    ),
+    ...compareList(
+      "effect scope conflict",
+      report.scopeConflicts.effects.map(describeScopeConflict),
+      expected.conflicts.effects
+    ),
+    ...compareList(
+      "unscoped trigger rule",
+      report.unscopedRules.triggers,
+      expected.unscopedRules.triggers
+    ),
+    ...compareList(
+      "unscoped effect rule",
+      report.unscopedRules.effects,
+      expected.unscopedRules.effects
+    ),
+  ];
+}
+
 /** Returns a human-readable line per difference; empty means the baseline holds. */
-export function compareToBaseline(report: DriftReport, baseline: DriftReport): string[] {
+export function compareToBaseline(report: DriftReport, baseline: DriftBaseline): string[] {
   return [
     ...compareList("trigger only in rules", report.triggers.rulesOnly, baseline.triggers.rulesOnly),
     ...compareList("trigger only in docs", report.triggers.docsOnly, baseline.triggers.docsOnly),
@@ -219,7 +377,21 @@ export function compareToBaseline(report: DriftReport, baseline: DriftReport): s
     ...compareList("malformed option", report.malformedOptions, baseline.malformedOptions),
     ...compareList("unknown CWT keyword", report.unknownKeywords, baseline.unknownKeywords),
     ...compareList("unknown scope", report.unknownScopes, baseline.unknownScopes),
-    ...compareList("scope conflict", report.scopeConflicts, baseline.scopeConflicts),
-    ...compareList("unscoped trigger", report.unscopedTriggers, baseline.unscopedTriggers),
+    ...compareScopeEvidence(report, baseline),
   ];
+}
+
+/**
+ * Accepts non-scope drift while preserving the reviewed rationale for scope drift.
+ * New scope evidence must first be assigned to an explicit resolution in the baseline.
+ */
+export function updatedBaseline(report: DriftReport, baseline: DriftBaseline): DriftBaseline {
+  const differences = compareScopeEvidence(report, baseline);
+  if (differences.length > 0) {
+    throw new Error(
+      "Scope drift cannot be rebaselined without an explicit resolution:\n" + differences.join("\n")
+    );
+  }
+  const { scopeConflicts: _scopeConflicts, unscopedRules: _unscopedRules, ...rest } = report;
+  return { ...rest, scopeResolutions: baseline.scopeResolutions };
 }
