@@ -1007,6 +1007,48 @@ describe("generated content authoring types", () => {
       name: "X",
       aiWeight: { factor: 5000 },
     });
+    contentMod.tradition("weight_operation_desc_key", {
+      name: "X",
+      aiWeight: {
+        factor: 5000,
+        // @ts-expect-error — descKey belongs to a modifier row; a top-level
+        // weight-block descKey has no emitted PDXScript representation.
+        descKey: "silently_dropped",
+      },
+    });
+    const aliasedWeightWithDescKey = { factor: 5000, descKey: "silently_dropped" };
+    contentMod.tradition("aliased_weight_operation_desc_key", {
+      name: "X",
+      // @ts-expect-error — structural authoring through an alias must not
+      // bypass the top-level descKey prohibition.
+      aiWeight: aliasedWeightWithDescKey,
+    });
+    function weightWithDescKey() {
+      return { factor: 5000, descKey: "silently_dropped" };
+    }
+    contentMod.tradition("returned_weight_operation_desc_key", {
+      name: "X",
+      // @ts-expect-error — nor may a helper return the silently dropped field.
+      aiWeight: weightWithDescKey(),
+    });
+    const aliasedWeightWithDesc = { factor: 5000, desc: "silently dropped" };
+    contentMod.tradition("aliased_weight_operation_desc", {
+      name: "X",
+      // @ts-expect-error — desc is row-only and must not pass through an alias.
+      aiWeight: aliasedWeightWithDesc,
+    });
+    const aliasedWeightWithWhen = { factor: 5000, when: always() };
+    contentMod.tradition("aliased_weight_operation_when", {
+      name: "X",
+      // @ts-expect-error — when is row-only and must not pass through an alias.
+      aiWeight: aliasedWeightWithWhen,
+    });
+    contentMod.tradition("modifier_row_desc_key", {
+      name: "X",
+      aiWeight: {
+        modifiers: [{ factor: 2, desc: "Still allowed.", descKey: "still_allowed" }],
+      },
+    });
     // SDK-36: a complex_trigger_modifier row (no `when`) sits in the same
     // `modifiers` array as an ordinary Modifier row (which has `when` but no
     // `trigger`/`mode`).
@@ -1121,6 +1163,12 @@ describe("generated content authoring types", () => {
         // @ts-expect-error — same for `subtract`.
         subtract: 4,
       },
+    });
+    const aliasedWideWeight = { base: 1, weight: 4 };
+    contentMod.situationType("aliased_weight_with_loc_operation", {
+      name: "X",
+      // @ts-expect-error — excluded with-loc operations stay forbidden through aliases.
+      monthlyProgress: aliasedWideWeight,
     });
     // A Modifier row's own members stay the full set either way —
     // modifier_rule_with_loc.cwt:59-66 still splices the whole
