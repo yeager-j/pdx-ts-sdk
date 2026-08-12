@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import { MODIFIER_OPERATIONS } from "../../generated/modifier-policy.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import { compareUtf8 } from "../../ordering.ts";
 import type { ContentRefUse } from "../../references.ts";
@@ -169,28 +170,14 @@ export type WeightOperations = Omit<Modifier<ScopeName>, "desc" | "descKey" | "w
  * the content rather than of the order an author's object literal declared
  * its members in.
  */
-const WEIGHT_OPERATIONS: readonly (readonly [keyof WeightOperations, string])[] = [
-  ["factor", "factor"],
-  ["add", "add"],
-  ["weight", "weight"],
-  ["subtract", "subtract"],
-  ["mult", "mult"],
-  // `multiply`/`min`/`max` are the game's spellings; the members are
-  // `multiplier`/`minValue`/`maxValue` — see {@link Modifier} for why.
-  ["multiplier", "multiply"],
-  ["divide", "divide"],
-  ["minValue", "min"],
-  ["maxValue", "max"],
-];
-
 /** SDK-internal: lowers a weight-shaped row's operations, in {@link
- * WEIGHT_OPERATIONS} order. */
+ * MODIFIER_OPERATIONS order. */
 export function weightOperationEntries(value: WeightOperations): PdxEntry[] {
   const entries: PdxEntry[] = [];
-  for (const [member, key] of WEIGHT_OPERATIONS) {
+  for (const { member, scriptKey } of MODIFIER_OPERATIONS) {
     const operand = value[member];
     if (operand !== undefined) {
-      entries.push(kv(key, scriptValueScalar(operand)));
+      entries.push(kv(scriptKey, scriptValueScalar(operand)));
     }
   }
   return entries;

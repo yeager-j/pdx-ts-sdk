@@ -1,6 +1,7 @@
 /** Public effect-surface types shared by the recorder and generated scope interfaces. */
 
 import type { ScopeObjOf } from "../../generated/effects.ts";
+import type { ModifierOperationFields } from "../../generated/modifier-policy.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ScriptedEffectCall, ScriptedParamValue } from "../scripted.ts";
 import type { ScriptValue, Trigger } from "../trigger-core.ts";
@@ -182,16 +183,7 @@ type SelfNaturalFromConstraint<Self extends ScopeName, Root extends ScopeName | 
  * `common/`, 12% are one of those non-literal forms, so `ScriptValue` (which
  * a plain number already widens into) rather than `number` alone.
  */
-export interface Modifier<S extends ScopeName> {
-  readonly factor?: ScriptValue;
-  readonly add?: ScriptValue;
-  readonly weight?: ScriptValue;
-  readonly subtract?: ScriptValue;
-  readonly mult?: ScriptValue;
-  readonly multiplier?: ScriptValue;
-  readonly divide?: ScriptValue;
-  readonly minValue?: ScriptValue;
-  readonly maxValue?: ScriptValue;
+export interface Modifier<S extends ScopeName> extends ModifierOperationFields<ScriptValue> {
   /**
    * Display text for this modifier row's tooltip (`desc = localisation` in
    * `modifier_rule.cwt`). Like every other definition-attached localization

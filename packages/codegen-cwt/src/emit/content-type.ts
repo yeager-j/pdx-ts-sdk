@@ -379,7 +379,14 @@ function repeatedStructEmission(
     // `nested` arrives already rooted at `fieldPath`, so the registry prefix
     // `ownerPath` carries appears exactly once — the same single prefix the
     // top-level loop's nested fields carry, which the reader strips once.
-    emittedFields.push({ field: fieldPath, ...lowering.admits }, ...(lowering.nested ?? []));
+    const member = camelCase(name);
+    emittedFields.push(
+      { field: fieldPath, authoredPath: [member], ...lowering.admits },
+      ...(lowering.nested ?? []).map((field) => ({
+        ...field,
+        authoredPath: [member, ...(field.authoredPath ?? [])],
+      }))
+    );
     children.push(...(lowering.descents ?? []));
   }
 
@@ -724,7 +731,11 @@ export function emitContentType(
       // A structural splice names a real key the corpus can be measured
       // against; `inlineModifiers` does not, since its rows carry no key.
       if (lowered.key !== undefined) {
-        emittedFields.push({ field: lowered.key, ...lowered.admits! });
+        emittedFields.push({
+          field: lowered.key,
+          authoredPath: [lowered.member],
+          ...lowered.admits!,
+        });
       }
       continue;
     }
@@ -772,11 +783,18 @@ export function emitContentType(
       fieldMetadata.push(nested.metadata);
       declinedFields.push(...nested.declinedFields);
       unsupported.push(...nested.unsupported);
-      nestedEmittedFields.push(...nested.emittedFields.map(parameterised));
+      const repeatedMember = camelCase(name);
+      nestedEmittedFields.push(
+        ...nested.emittedFields.map(parameterised).map((field) => ({
+          ...field,
+          authoredPath: [repeatedMember, ...(field.authoredPath ?? [])],
+        }))
+      );
       localisationAliases.push(...nested.localisationAliases);
       emittedMembers.add(camelCase(name));
       emittedFields.push({
         field: name,
+        authoredPath: [repeatedMember],
         shape: "repeatedStruct",
         repeated: repeatsSiblings(group[0]!, "repeatedStruct"),
       });
@@ -832,8 +850,17 @@ export function emitContentType(
       unsupported.push(...lowered.unsupported);
     }
     emittedMembers.add(member);
-    emittedFields.push({ field: name, ...underParameter(lowered.admits, parameter) });
-    nestedEmittedFields.push(...(lowered.nested ?? []).map(parameterised));
+    emittedFields.push({
+      field: name,
+      authoredPath: [member],
+      ...underParameter(lowered.admits, parameter),
+    });
+    nestedEmittedFields.push(
+      ...(lowered.nested ?? []).map(parameterised).map((field) => ({
+        ...field,
+        authoredPath: [member, ...(field.authoredPath ?? [])],
+      }))
+    );
     corpusDescents.push(...(lowered.descents ?? []));
   }
 

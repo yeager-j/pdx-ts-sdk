@@ -10,8 +10,8 @@
  * behind it at all.
  *
  * The situation definer is skip-listed in the codegen overlay
- * (`HAND_WRITTEN_CONTENT_DEFINERS`), the same arrangement `HAND_WRITTEN_TRIGGERS`
- * uses one level up, so `content-definers.ts` re-exports the definition below
+ * (`HAND_WRITTEN_CONTENT_DEFINERS`), the same arrangement the generator-owned
+ * trigger policy uses one level up, so `content-definers.ts` re-exports the definition below
  * instead of emitting a mechanical one beside it. The raw constructors remain
  * available to package internals; public authors use mod capability methods.
  */

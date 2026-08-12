@@ -19,15 +19,11 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { TriggeredDescription } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
-import type { ScopeObjOf } from "../generated/effects.ts";
-import {
-  type EventChainRef,
-  type MessageTypeRef,
-  type SoundEffectRef,
-  type SpecimenRef,
-  type SpriteRef,
-  type TypedRef,
-} from "../generated/refs.ts";
+import type {
+  GeneratedEventFields,
+  GeneratedEventOptionFields,
+} from "../generated/event-fields.ts";
+import { type SoundEffectRef, type SpriteRef, type TypedRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { ContentRefUse } from "../references.ts";
 import {
@@ -145,34 +141,10 @@ export interface EventTriggeredDescription<S extends ScopeName> extends Triggere
   readonly showSound?: SoundEffectRef | string;
 }
 
-export interface EventOption<S extends ScopeName, From extends ScopeName | undefined> {
-  /** English text; the localization key rides along on the definition. */
-  readonly name: string;
-  /** Display icon overriding the option row's default (`events.cwt:338`). */
-  readonly icon?: EventOptionIcon;
-  /** Raw sound key; declared `scalar` rather than `<sound_effect>` in the rules. */
-  readonly sound?: string;
-  /** Visibility gate for the option. */
-  readonly trigger?: Trigger<S>;
-  /** Availability gate — the option shows greyed out when this fails. */
-  readonly allow?: Trigger<S>;
-  /** A second gate alongside `trigger` (`events.cwt:356`); the rules do not narrow how it differs. */
-  readonly exclusiveTrigger?: Trigger<S>;
-  /** AI weighting for picking this option (`events.cwt:358`). */
-  readonly aiChance?: AiChance<S>;
-  /** Localized text shown as the AI's "response" to picking this option. */
-  readonly responseText?: string;
-  /** Marks the option as dialog-only, excluded from the normal option list. */
-  readonly isDialogOnly?: boolean;
-  readonly hideIfNotAllowed?: boolean;
-  /** Hides the option by default, distinct from `hideIfNotAllowed`'s allow-gated hiding. */
-  readonly defaultHideOption?: boolean;
-  /** Points at a `gui_type`; declared `scalar` in the rules (`events.cwt:383`). */
-  readonly customGui?: string;
-  /** A `value_set[event_option_tag]` entry (`events.cwt:386`), typed loosely since the set is corpus-defined. */
-  readonly tag?: string;
-  readonly effects?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
-}
+export interface EventOption<
+  S extends ScopeName,
+  From extends ScopeName | undefined,
+> extends GeneratedEventOptionFields<S, From> {}
 
 /**
  * A `location` value (`events.cwt:308`, `scope_field`): either a fixed
@@ -250,107 +222,15 @@ export interface WeightMultiplier<S extends ScopeName> {
 export type EventWindowType =
   "leader_recruit" | "leader_story" | "leader_conversation" | "crisis_leader_conversation";
 
-export interface EventDef<S extends ScopeName, From extends ScopeName | undefined> {
-  /** Numeric id within the mod's namespace; the full id is `namespace.id`. */
-  readonly id: number;
-  /** English title text; omit for hidden events. */
-  readonly title?: string;
-  readonly desc?: string;
-  /** Ordered conditional descriptions, each localized under this event's id. */
-  readonly conditionalDesc?: readonly EventTriggeredDescription<S>[];
-  /** Localized title shown at the top of the diplomatic screen (`events.cwt:197`, `:474`). */
-  readonly diplomaticTitle?: string;
-  /** Localized text for the message-feed entry, distinct from `desc` (`events.cwt:402`). */
-  readonly messageDesc?: string;
-  readonly picture?: SpriteRef | string;
-  readonly showSound?: SoundEffectRef | string;
-  /** The event window's background image (`events.cwt:289-290`). */
-  readonly eventPictureBackground?: SpriteRef | string;
-  /** The icon shown for this event's entry in the notification feed (`events.cwt:291-292`). */
-  readonly notificationEventIcon?: SpriteRef | string;
-  /** Which of the four leader-conversation window styles renders this event (`events.cwt:287-288`). */
-  readonly eventWindowType?: EventWindowType;
-  /** A `<message_type>` reference controlling the message-feed presentation (`events.cwt:393`). */
-  readonly eventMessageType?: MessageTypeRef | string;
-  /** The `<event_chain>` this event belongs to (`events.cwt:396`). */
-  readonly eventChain?: EventChainRef | string;
-  /** A `<specimen>` reference (`events.cwt:417`), used by xenology/zoo content. */
-  readonly specimen?: SpecimenRef | string;
-  /** Associates this event with a situation scope (`events.cwt:399`, `scope[situation]`); `(ctx) => ctx.from` writes `situation = from`. */
-  readonly situation?: EventSituation<S, From>;
-  /** Where the event's window renders relative to (`events.cwt:308`); dig-stage events set `(ctx) => ctx.from`. */
-  readonly location?: EventLocation<S, From>;
+export interface EventDef<
+  S extends ScopeName,
+  From extends ScopeName | undefined,
+> extends GeneratedEventFields<S, From> {
   /**
    * The scope this event expects FROM to be when fired. Emits nothing — it
    * is the compile-time contract every fire site is checked against.
    */
   readonly from?: From;
-  readonly isTriggeredOnly?: boolean;
-  readonly hideWindow?: boolean;
-  /** Renders the event in the diplomatic screen instead of the ordinary event window (`events.cwt:311`). */
-  readonly diplomatic?: boolean;
-  /** Forces a diplomatic event to be viewed rather than queued (`events.cwt:303-305`). */
-  readonly forceOpen?: boolean;
-  /** Shows the event to other countries (`events.cwt:421`). */
-  readonly major?: boolean;
-  /**
-   * Narrows which countries see a `major` event (`events.cwt:423-425`,
-   * `subtype[major]`). `subtype[major]` is an attribute subtype driven by
-   * `major`'s own value, not by the event's kind — the same class as
-   * `diplomatic`/`subtype[diplomatic]` — so this stays an unconditional
-   * field rather than a second `S`-conditioned parameter; it is simply
-   * inert unless `major: true` is also set, the same way
-   * `meanTimeToHappen` is inert alongside `isTriggeredOnly: true`.
-   *
-   * Typed `Trigger<"country">` rather than `Trigger<S>`: the CWT comment at
-   * `events.cwt:419-425` and its example (`has_ethic = ethic_materialist`)
-   * both describe this block filtering the *other countries* that should
-   * receive the event, evaluated once per candidate recipient — a fixed
-   * country scope independent of what `S` the major event itself runs in.
-   * `Trigger<S>` would reject a country-only predicate on a non-country
-   * major event and admit an `S`-scoped predicate the game never evaluates
-   * in that scope here.
-   */
-  readonly majorTrigger?: Trigger<"country">;
-  /** Whether the event is trackable from the outliner (`events.cwt:438`). */
-  readonly trackable?: boolean;
-  /** Marks the event as coming from an advisor (`events.cwt:441`). */
-  readonly isAdvisorEvent?: boolean;
-  /** Whether the game may auto-select an option for this event (`events.cwt:444`). */
-  readonly autoSelect?: boolean;
-  /** Forces the event to pop up even with pop-ups suppressed (`events.cwt:315`). */
-  readonly autoOpens?: boolean;
-  /** Marks the event as a developer test event (`events.cwt:318`, `events.cwt:414`). */
-  readonly isTestEvent?: boolean;
-  readonly fireOnlyOnce?: boolean;
-  /**
-   * The archaeology-window flag (`events.cwt:503`, `subtype[fleet]`): the
-   * blocking case this field set closes — every vanilla dig-stage event sets
-   * it, and without it a fleet event never renders in the excavation window.
-   * Legal only on `defineFleetEvent`, enforced by conditioning on `S`.
-   */
-  readonly archaeology?: S extends "fleet" ? boolean : never;
-  /** The first-contact window flag (`events.cwt:507`, `subtype[first_contact]`). */
-  readonly firstContact?: S extends "first_contact" ? boolean : never;
-  /** The espionage-operation window flag (`events.cwt:511`, `subtype[espionage_operation]`). */
-  readonly espionageOperation?: S extends "espionage_operation" ? boolean : never;
-  /** The astral-rift window flag (`events.cwt:515`, `subtype[astral_rift]`). */
-  readonly astralRift?: S extends "astral_rift" ? boolean : never;
-  /** Astral-rift difficulty (`events.cwt:517`, `subtype[astral_rift]`), alongside `astralRift`. */
-  readonly difficulty?: S extends "astral_rift" ? number : never;
-  /** Visibility gate for the whole event (`events.cwt:521`). */
-  readonly trigger?: Trigger<S>;
-  /** Cancels the event with no options run when this becomes true (`events.cwt:429`). */
-  readonly abortTrigger?: Trigger<S>;
-  /** Effects run when `abortTrigger` fires (`events.cwt:432`). */
-  readonly abortEffect?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
-  /** Scheduling weight for a non-triggered event (`events.cwt:456`). */
-  readonly meanTimeToHappen?: MeanTimeToHappen<S>;
-  /** AI scheduling weight for a triggered event (`events.cwt:448-452`, `subtype[triggered]`). */
-  readonly weightMultiplier?: WeightMultiplier<S>;
-  readonly immediate?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
-  readonly after?: (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;
-  readonly options?: ReadonlyArray<EventOption<S, From>>;
 }
 
 export type DefinedEvent<

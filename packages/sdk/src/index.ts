@@ -6,6 +6,12 @@ export * from "./generated/enums.ts";
 export { refId, type TypedRef } from "./generated/refs.ts";
 export * from "./generated/refs.ts";
 export * from "./generated/value-sets.ts";
+export {
+  MODIFIER_OPERATIONS,
+  MODIFIER_OPERATION_POLICY,
+  type ModifierOperationFields,
+  type ModifierOperationMember,
+} from "./generated/modifier-policy.ts";
 export * from "./script/triggers.ts";
 export {
   eventTarget,
@@ -33,6 +39,12 @@ export type {
 export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
 export type { SituationTargetContract } from "./script/effects/situations.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
+export {
+  EVENT_FIELD_SUPPORT,
+  EVENT_OPTION_FIELD_SUPPORT,
+  type GeneratedEventFields,
+  type GeneratedEventOptionFields,
+} from "./generated/event-fields.ts";
 export { onActions } from "./generated/on-actions.ts";
 export type { OnActionRef } from "./events/on-actions.ts";
 export type { AgendaDef, AgendaFields, DefinedAgenda } from "./generated/agenda.ts";

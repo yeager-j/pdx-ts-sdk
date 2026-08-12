@@ -55,6 +55,8 @@ export interface ContentSubtype {
 
 export interface ContentType {
   readonly name: string;
+  /** Another type this declaration swaps for, from CWT's `base_type`. */
+  readonly baseType?: string | null;
   readonly path: string | null;
   /**
    * The body field carrying the definition's id, when the top-level key is a
@@ -82,6 +84,8 @@ export interface ContentType {
    * this key rather than at the top level. Sprites sit inside `spriteTypes`.
    */
   readonly skipRootKey?: string | null;
+  /** Every scalar in `skip_root_key`, including its block form. */
+  readonly skipRootKeys?: readonly string[];
   /**
    * `path_strict = yes`: definitions live directly in `path`, never in a
    * subdirectory of it. `technology` declares it because
@@ -487,6 +491,7 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
       }
       const inner = assignments(entry.value.nodes);
       const pathNode = inner.find((node) => node.key.text === "path");
+      const baseTypeNode = inner.find((node) => node.key.text === "base_type");
       const localisation = inner.find((node) => node.key.text === "localisation");
       // Written both quoted and bare across the rule files: `name_field = "key"`
       // in components.cwt, `name_field = name` in global_ship_designs.cwt.
@@ -496,13 +501,23 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
       const pathStrictNode = inner.find((node) => node.key.text === "path_strict");
       const typeKeyFilter = findOption(entry.options, "type_key_filter");
       const nameField = nameFieldNode?.value.kind === "scalar" ? nameFieldNode.value.text : null;
+      const skipRootKeys =
+        skipRootKeyNode?.value.kind === "scalar"
+          ? [skipRootKeyNode.value.text]
+          : skipRootKeyNode?.value.kind === "block"
+            ? skipRootKeyNode.value.nodes.flatMap((node) =>
+                node.kind === "value" && node.value.kind === "scalar" ? [node.value.text] : []
+              )
+            : [];
       into.set(match[2]!, {
         name: match[2]!,
+        baseType: baseTypeNode?.value.kind === "scalar" ? baseTypeNode.value.text : null,
         path: pathNode?.value.kind === "scalar" ? pathNode.value.text : null,
         nameField,
         pathExtension:
           extensionNode?.value.kind === "scalar" ? dotted(extensionNode.value.text) : null,
-        skipRootKey: skipRootKeyNode?.value.kind === "scalar" ? skipRootKeyNode.value.text : null,
+        skipRootKey: skipRootKeys.length === 1 ? skipRootKeys[0]! : null,
+        skipRootKeys,
         pathStrict: pathStrictNode?.value.kind === "scalar" && pathStrictNode.value.text === "yes",
         keyFilter:
           typeKeyFilter?.value?.kind === "scalar"

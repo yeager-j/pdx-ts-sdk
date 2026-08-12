@@ -76,19 +76,6 @@ export const SPECIAL_SCOPE_PATHS = new Set([
  * `src/script/triggers.ts` from disagreeing about which one is the real export: only
  * the hand-written module ever supplies these three names now.
  */
-export const HAND_WRITTEN_TRIGGERS = new Set([
-  "and",
-  "or",
-  "not",
-  "nand",
-  "nor",
-  "hidden_trigger",
-  "current_situation_approach",
-  "current_stage",
-  "can_set_situation_approach",
-  "has_completed_event_chain_counter",
-]);
-
 export interface HandWrittenDefiner {
   readonly reason: string;
   /** Module exporting the definition-side lowering primitive. */
@@ -101,7 +88,7 @@ export interface HandWrittenDefiner {
  * Registries whose `defineX` is re-exported from `src/content/situations.ts` instead of
  * being the mechanical one the emitter would write.
  *
- * The `HAND_WRITTEN_TRIGGERS` arrangement, one level up: codegen skips the
+ * The hand-written trigger-export policy arrangement, one level up: codegen skips the
  * member and the hand-written module supplies it, so there is exactly one
  * definition of the graft and it is the reviewed one. A row here is expensive —
  * it removes a definer from generator ownership — and needs a contract the rules

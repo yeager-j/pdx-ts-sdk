@@ -433,6 +433,26 @@ export function emitEffects(
   );
 
   const interfaceChunks: string[] = [];
+  const startSituationCluster = sortedClusters.find((cluster) =>
+    cluster.effects.some((effect) => effect.key === "start_situation")
+  );
+  if (startSituationCluster === undefined) {
+    throw new Error("effects.cwt no longer emits start_situation");
+  }
+  const startSituation = startSituationCluster.effects.find(
+    (effect) => effect.key === "start_situation"
+  )!;
+  const startSituationScope =
+    startSituationCluster.scopes === "universal"
+      ? "ScopeName"
+      : startSituationCluster.scopes.map((scope) => JSON.stringify(scope)).join(" | ");
+  interfaceChunks.push(
+    docComment([
+      "Stable extension seam for the hand-written startSituation target-scope overload.",
+      "The generated cluster containing start_situation inherits this interface.",
+    ]) +
+      `export interface StartSituationEffectsExtension {\n${methodSignature(startSituation, startSituationScope)}}\n`
+  );
   for (const cluster of sortedClusters) {
     const name = clusterName(cluster.scopes);
     const outerScope =
@@ -443,8 +463,16 @@ export function emitEffects(
       cluster.scopes === "universal"
         ? ["Effects valid in every scope."]
         : [`Effects valid in: ${cluster.scopes.join(", ")}.`];
-    const methods = cluster.effects.map((effect) => methodSignature(effect, outerScope)).join("\n");
-    interfaceChunks.push(`${docComment(heading)}export interface ${name} {\n${methods}}\n`);
+    const methods = cluster.effects
+      .filter((effect) => effect.key !== "start_situation")
+      .map((effect) => methodSignature(effect, outerScope))
+      .join("\n");
+    const parents = cluster.effects.some((effect) => effect.key === "start_situation")
+      ? " extends StartSituationEffectsExtension"
+      : "";
+    interfaceChunks.push(
+      `${docComment(heading)}export interface ${name}${parents} {\n${methods}}\n`
+    );
   }
 
   const allScopes = canonicalScopes(emitter.rules.scopes);

@@ -15,6 +15,7 @@ import { scalarText, type PdxEntry } from "@pdx-ts/pdxscript";
 import {
   isEffectKey,
   isEventFireKey,
+  MODIFIER_OPERATIONS,
   recordEffects,
   type ComplexTriggerModifier,
   type Modifier,
@@ -606,46 +607,6 @@ export function handleFor(
 // Weight-block arithmetic — a situation's `monthlyProgress` and friends
 // ---------------------------------------------------------------------------
 
-const MODIFIER_OPS = [
-  "add",
-  "subtract",
-  "mult",
-  "multiplier",
-  "factor",
-  "divide",
-  "minValue",
-  "maxValue",
-  "weight",
-] as const;
-
-/**
- * Every numeric operation `Modifier<S>` (`packages/sdk/src/script/effects/types.ts`)
- * declares, minus the members that are not operations: `desc` and its
- * companion `descKey` (localisation, SDK-48) and `when` (the gating trigger).
- * `applyModifierRow`'s multi-operation guard is only as complete as
- * `MODIFIER_OPS` — a member present on `Modifier` but missing here would let
- * a row that combines it with a recognized operation silently evaluate only
- * the recognized one, exactly the guessing this guard exists to refuse.
- *
- * Adding a non-operation member to `Modifier` therefore means excluding it
- * here as well. The guard below is what makes that a build failure rather
- * than a silent gap — it is doing its job when it fires.
- */
-type ModifierOpKey = Exclude<keyof Modifier<never>, "desc" | "descKey" | "when">;
-
-/** `true` iff `A` and `B` contain exactly the same members, in either order. */
-type SameKeys<A extends string, B extends string> = [A] extends [B]
-  ? [B] extends [A]
-    ? true
-    : false
-  : false;
-
-// Compile-time drift guard: if `Modifier<S>` gains or loses an operation
-// field (PR #16 widens `WeightBlock`'s operations further), this line stops
-// compiling until MODIFIER_OPS is updated to match — turning a silent gap in
-// the multi-operation check into a build failure instead.
-const _modifierOpsMatchModifier: SameKeys<(typeof MODIFIER_OPS)[number], ModifierOpKey> = true;
-
 /**
  * The shape `evaluateWeightBlock` needs — `WeightBlock`/`WeightBlockWithLoc`
  * both satisfy it. `modifiers` is `WeightBlockRow<S, Modifier<S>>`
@@ -717,7 +678,9 @@ export function evaluateWeightBlock<S extends SimScopeName>(
 }
 
 function applyModifierRow<S extends SimScopeName>(modifier: Modifier<S>, value: number): number {
-  const present = MODIFIER_OPS.filter((op) => modifier[op] !== undefined);
+  const present = MODIFIER_OPERATIONS.map((operation) => operation.member).filter(
+    (member) => modifier[member] !== undefined
+  );
   if (present.length !== 1) {
     throw new InterpreterError(
       `A monthly-progress row${modifier.desc !== undefined ? ` ("${modifier.desc}")` : ""} sets ` +
@@ -758,7 +721,7 @@ function applyModifierRow<S extends SimScopeName>(modifier: Modifier<S>, value: 
       // `complex_maths_enum` (alongside `set`, which `Modifier` does not
       // even expose) — the vendored rules give it no descriptive comment,
       // so nothing here says whether it behaves like `set` (replace the
-      // running value) or something else. MODIFIER_OPS still has to detect
+      // running value) or something else. The generated protocol still has to detect
       // it (a row that combines `weight` with a recognized operation must
       // be refused as ambiguous, not silently read as the other operation),
       // but evaluating it on its own would be exactly the guessed semantic

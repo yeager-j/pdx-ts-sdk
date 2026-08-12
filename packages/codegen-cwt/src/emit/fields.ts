@@ -39,6 +39,8 @@ import { Emitter, type TsValue } from "./types.ts";
 export interface EmittedField {
   /** The game's own key, or a dotted path for one lowered inside a struct. */
   readonly field: string;
+  /** Authored member path owning this field, preserved through nested lowering. */
+  readonly authoredPath?: readonly string[];
   /** The runtime shape name, the same token the field metadata carries. */
   readonly shape: string;
   /** True when the authoring member lets the key repeat at the sibling level. */
@@ -1236,7 +1238,14 @@ function structShape(
     if (lowered.unsupported !== undefined) {
       unsupported.push(...lowered.unsupported);
     }
-    nested.push({ field: fieldPath, ...lowered.admits }, ...(lowered.nested ?? []));
+    const member = camelCase(fieldName);
+    nested.push(
+      { field: fieldPath, authoredPath: [member], ...lowered.admits },
+      ...(lowered.nested ?? []).map((field) => ({
+        ...field,
+        authoredPath: [member, ...(field.authoredPath ?? [])],
+      }))
+    );
     children.push(...(lowered.descents ?? []));
   }
   if (keyed !== null) {

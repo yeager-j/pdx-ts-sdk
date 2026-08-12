@@ -12,7 +12,7 @@ import type { AliasDecl } from "../cwt/rules.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import type { LoweredRule } from "../lowered-rule.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
-import { HAND_WRITTEN_TRIGGERS } from "../overlay.ts";
+import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../trigger-policy.ts";
 import { mergeFields, type ArgField, type ClauseCategory, type SkippedRule } from "./shape.ts";
 import { Emitter, type TsValue } from "./types.ts";
 
@@ -305,8 +305,12 @@ export function emitTriggers(
   for (const key of [...rules.keys()].sort()) {
     const rule = rules.get(key)!;
     const declarations = rule.declarations;
-    if (HAND_WRITTEN_TRIGGERS.has(key.toLowerCase())) {
-      skipped.push({ name: key, reason: "hand-written combinator" });
+    const handWritten = HAND_WRITTEN_TRIGGER_RULES_BY_KEY.get(key.toLowerCase());
+    if (handWritten !== undefined) {
+      skipped.push({
+        name: key,
+        reason: `hand-written ${handWritten.kind}: ${handWritten.reason}`,
+      });
       continue;
     }
     if (!isPlainName(key)) {
