@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import type { RuleField, RuleType } from "./cwt/model.ts";
 import type { RuleSet } from "./cwt/rules.ts";
 import { docComment } from "./naming.ts";
@@ -11,8 +13,11 @@ interface EventFieldMember {
 export interface EventFieldPolicyEntry {
   readonly scriptKey: string;
   readonly shape: string;
-  readonly disposition: "supported" | "unsupported";
+  readonly disposition: "supported" | "partial" | "unsupported";
   readonly reason: string;
+  readonly unsupportedForms?: readonly string[];
+  /** Complete canonical CWT arm signature, attached after validation. */
+  readonly ruleSignature?: string;
   readonly members?: readonly EventFieldMember[];
   /** An alias splice rather than a named field in the CWT block. */
   readonly synthetic?: true;
@@ -31,6 +36,20 @@ const supported = (
   disposition: "supported",
   reason,
   members: [{ member, type, ...(required ? { required: true as const } : {}) }],
+});
+
+const partial = (
+  scriptKey: string,
+  shape: string,
+  member: string,
+  type: string,
+  reason: string,
+  unsupportedForms: readonly string[],
+  required = false
+): EventFieldPolicyEntry => ({
+  ...supported(scriptKey, shape, member, type, reason, required),
+  disposition: "partial",
+  unsupportedForms,
 });
 
 const EVENT_FIELDS: readonly EventFieldPolicyEntry[] = [
@@ -57,19 +76,21 @@ const EVENT_FIELDS: readonly EventFieldPolicyEntry[] = [
     "diplomatic-screen title"
   ),
   supported("message_desc", "scalar 0..1", "messageDesc", "string", "message-feed description"),
-  supported(
+  partial(
     "picture",
     "block 0..inf {picture, trigger} | scalar 0..0 | scalar 0..inf | scalar 1..inf",
     "picture",
     "SpriteRef | string",
-    "one scalar picture arm"
+    "one scalar picture arm",
+    ["repeated scalar picture values", "triggered picture blocks"]
   ),
-  supported(
+  partial(
     "show_sound",
     "block 0..inf {sound, sound_is_advisor, trigger} | scalar 0..0 | scalar 0..inf",
     "showSound",
     "SoundEffectRef | string",
-    "one scalar sound arm"
+    "one scalar sound arm",
+    ["repeated scalar sound values", "triggered show_sound blocks"]
   ),
   supported(
     "event_picture_background",
@@ -136,6 +157,13 @@ const EVENT_FIELDS: readonly EventFieldPolicyEntry[] = [
   ].map(([key, member]) =>
     supported(key!, "scalar 0..1", member!, "boolean", "CWT boolean event field")
   ),
+  /**
+   * `subtype[major]` is an attribute subtype driven by `major`, not the event
+   * kind, so this is deliberately not conditioned on `S`. CWT's example
+   * filters the other countries that receive the event, once per candidate
+   * recipient. That makes the nested trigger country-scoped independently of
+   * the scope in which the major event itself runs.
+   */
   supported(
     "major_trigger",
     "block 0..1 {alias_name[trigger]}",
@@ -143,6 +171,11 @@ const EVENT_FIELDS: readonly EventFieldPolicyEntry[] = [
     'Trigger<"country">',
     "recipient-country visibility gate"
   ),
+  /**
+   * `archaeology` is declared only under `subtype[fleet]`; vanilla dig-stage
+   * events require it to render in the excavation window. Conditioning it on
+   * `S` preserves that event-kind restriction in the generated interface.
+   */
   supported(
     "archaeology",
     "scalar 0..1",
@@ -276,12 +309,13 @@ const EVENT_FIELDS: readonly EventFieldPolicyEntry[] = [
 ];
 
 const OPTION_FIELDS: readonly EventFieldPolicyEntry[] = [
-  supported(
+  partial(
     "name",
     "block 1..inf {exclusive_trigger, text} | block 1..inf {text, trigger} | scalar 1..inf",
     "name",
     "string",
     "one localized scalar name arm",
+    ["repeated scalar names", "triggered name blocks"],
     true
   ),
   supported(
@@ -342,6 +376,89 @@ const OPTION_FIELDS: readonly EventFieldPolicyEntry[] = [
   },
 ];
 
+function rangeSignature(range: {
+  readonly min: number | null;
+  readonly max: number | null;
+}): string {
+  return `${range.min ?? "-inf"}..${range.max ?? "inf"}`;
+}
+
+function scopeSignature(field: RuleField): string {
+  const scope = field.scope;
+  return scope === null
+    ? "inherited"
+    : [scope.this, scope.root, scope.from, scope.replaces ? "replace" : "push"]
+        .map((part) => part ?? "-")
+        .join("/");
+}
+
+function keySignature(field: RuleField): string {
+  const key = field.key;
+  switch (key.kind) {
+    case "name":
+      return key.name;
+    case "computed":
+      return `computed[${ruleTypeSignature(key.type)}]`;
+    case "aliasName":
+      return `alias_name[${key.category}]`;
+    case "subtype":
+      return `subtype[${key.negated ? "!" : ""}${key.name}]`;
+  }
+}
+
+function ruleTypeSignature(type: RuleType): string {
+  switch (type.kind) {
+    case "bool":
+    case "scalar":
+    case "localisation":
+      return type.kind;
+    case "int":
+    case "float":
+      return type.range === null ? type.kind : `${type.kind}[${rangeSignature(type.range)}]`;
+    case "valueField":
+      return type.integer ? "int_value_field" : "value_field";
+    case "enum":
+      return `enum[${type.name}]`;
+    case "typeRef":
+      return `<${type.name}>`;
+    case "valueSet":
+      return `value_set[${type.name}]`;
+    case "scope":
+      return `scope[${type.name}]`;
+    case "scopeGroup":
+      return `scope_group[${type.name}]`;
+    case "filepath":
+      return `filepath[${type.path ?? ""}]`;
+    case "icon":
+      return `icon[${type.path}]`;
+    case "colour":
+      return `colour[${type.format}]`;
+    case "aliasMatchLeft":
+      return `alias_match_left[${type.category}]`;
+    case "singleAliasRight":
+      return `single_alias_right[${type.name}]`;
+    case "unknownKeyword":
+      return `unknown[${type.text}]`;
+    case "literal":
+      return `literal[${JSON.stringify(type.text)}]`;
+    case "block": {
+      const fields = type.fields.map(fieldSignature).sort();
+      const bare = type.bare.map(ruleTypeSignature).sort();
+      return `block{fields=[${fields.join(";")}];bare=[${bare.join(";")}]}`;
+    }
+  }
+}
+
+function fieldSignature(field: RuleField): string {
+  const cardinality = `${field.cardinality.min}..${field.cardinality.max ?? "inf"}`;
+  return `${keySignature(field)}:${cardinality}:${field.comparison ? "comparison" : "assignment"}:${scopeSignature(field)}:${ruleTypeSignature(field.type)}`;
+}
+
+function armSignature(field: RuleField): string {
+  const cardinality = `${field.cardinality.min}..${field.cardinality.max ?? "inf"}`;
+  return `${cardinality}:${field.comparison ? "comparison" : "assignment"}:${scopeSignature(field)}:${ruleTypeSignature(field.type)}`;
+}
+
 function memberNames(type: RuleType): string[] {
   if (type.kind !== "block") return [];
   return type.fields.flatMap((field) =>
@@ -355,10 +472,10 @@ function memberNames(type: RuleType): string[] {
   );
 }
 
-function armOf(field: RuleField): string {
-  const range = `${field.cardinality.min}..${field.cardinality.max ?? "inf"}`;
-  if (field.type.kind !== "block") return `scalar ${range}`;
-  return `block ${range} {${[...new Set(memberNames(field.type))].sort().join(", ")}}`;
+function armShape(field: RuleField): string {
+  const cardinality = `${field.cardinality.min}..${field.cardinality.max ?? "inf"}`;
+  if (field.type.kind !== "block") return `scalar ${cardinality}`;
+  return `block ${cardinality} {${[...new Set(memberNames(field.type))].sort().join(", ")}}`;
 }
 
 function fieldShapes(fields: readonly RuleField[]): Map<string, string> {
@@ -368,12 +485,119 @@ function fieldShapes(fields: readonly RuleField[]): Map<string, string> {
       if (field.key.kind === "subtype") {
         if (field.type.kind === "block") visit(field.type.fields);
       } else if (field.key.kind === "name") {
-        arms.set(field.key.name, (arms.get(field.key.name) ?? new Set()).add(armOf(field)));
+        arms.set(field.key.name, (arms.get(field.key.name) ?? new Set()).add(armShape(field)));
       }
     }
   };
   visit(fields);
   return new Map([...arms].map(([key, values]) => [key, [...values].sort().join(" | ")]));
+}
+
+function fieldSignatures(fields: readonly RuleField[]): Map<string, string> {
+  const arms = new Map<string, Set<string>>();
+  const visit = (items: readonly RuleField[]): void => {
+    for (const field of items) {
+      if (field.key.kind === "subtype") {
+        if (field.type.kind === "block") visit(field.type.fields);
+      } else if (field.key.kind === "name") {
+        arms.set(field.key.name, (arms.get(field.key.name) ?? new Set()).add(armSignature(field)));
+      }
+    }
+  };
+  visit(fields);
+  return new Map([...arms].map(([key, values]) => [key, [...values].sort().join(" | ")]));
+}
+
+const OPTIONAL_BOOL = "7f458999f754f7024a8ca2dcab499c90d84c7380a56425a7eecdcf36573a817c";
+const OPTIONAL_SCALAR = "4991372805db6e602783d6cac77b45415a1b47c9c4cf5078a1701c89f2ed17e6";
+const OPTIONAL_LOCALISATION = "6df6f11a721885f478d9cb30bfe7daeda0ece00112f3616972f9a7b9f114aa49";
+const OPTIONAL_TRIGGER = "85a85116a45d7e296a08e84ab0cd03ccb282d96188a588d3bb8f52413e4948ed";
+const OPTIONAL_EFFECT = "08b78ef314d08ef49d64c0522831dd9cef5d533dfd56019b8ff1dc9929825e42";
+const OPTIONAL_YES = "a42175346a2df11d5251a341011a1809f99ee5874ac775f1ca6f16369e60bbfa";
+const OPTIONAL_SPRITE = "a816d16885a7f6b32c56472017e84070c48450cacd401afa6dbd5b7c5b897349";
+
+const EVENT_RULE_SIGNATURES: Readonly<Record<string, string>> = {
+  abort_effect: OPTIONAL_EFFECT,
+  abort_trigger: OPTIONAL_TRIGGER,
+  after: OPTIONAL_EFFECT,
+  archaeology: OPTIONAL_BOOL,
+  astral_rift: OPTIONAL_BOOL,
+  auto_opens: OPTIONAL_BOOL,
+  auto_select: OPTIONAL_BOOL,
+  base: "625fb7fd71a0750ab4029322684960c5a0e2c553e5b8a161fde971794f501796",
+  custom_gui: OPTIONAL_SCALAR,
+  custom_gui_option: OPTIONAL_SCALAR,
+  desc: "70a64946c9577294f4ee82d035b0862a11752e05c7930bbb9d48ce5c1de9075c",
+  desc_clear: OPTIONAL_YES,
+  difficulty: "d270f3c82d1fd020b719f009a2a6746bd601bbe4bec9b8ced04081612567f6cb",
+  diplomatic: OPTIONAL_BOOL,
+  diplomatic_title: OPTIONAL_LOCALISATION,
+  espionage_operation: OPTIONAL_BOOL,
+  event_chain: "3531081917d3ab7746ba9111f4d7fe00b1bbf1a2642a73b8e37cc097bcc5a90b",
+  event_message_type: "50b5e3b3b9c29b6ada7d70bc2b36643c12934b86e314f9dfca213c906e2f4f2a",
+  event_picture_background: OPTIONAL_SPRITE,
+  event_window_type: "31a81b7885e46e57b5cee011cc628f1c9feb2f64bd6186236bbfa1315650c1fd",
+  fire_only_once: OPTIONAL_BOOL,
+  first_contact: OPTIONAL_BOOL,
+  force_open: OPTIONAL_BOOL,
+  hide_window: OPTIONAL_BOOL,
+  id: "d19e2537e6205d1de23c0fff3684c636244fe35ca89fa6622b308a36a70cf598",
+  immediate: OPTIONAL_EFFECT,
+  is_advisor_event: OPTIONAL_BOOL,
+  is_test_event: OPTIONAL_BOOL,
+  is_triggered_only: OPTIONAL_BOOL,
+  location: "1c32758e1b7f75d7b0e3025dc9b5730c65c922d1a8c52207101e497b56eb0a32",
+  major: OPTIONAL_YES,
+  major_trigger: OPTIONAL_TRIGGER,
+  mean_time_to_happen: "bb352357506c1bbac0dd2a2500423cae5023c02f792c28422b8e093b8908c1ed",
+  message_desc: OPTIONAL_LOCALISATION,
+  notification_event_icon: OPTIONAL_SPRITE,
+  option: "8216fcb6b833b81ebb46fbea400f41a9108812f9c6fc7d7d18886321a56a4473",
+  option_clear: OPTIONAL_YES,
+  picture: "9e84775af84dbbc292a485770a079870da3c9e054c3e05bca62229e34526289a",
+  picture_clear: OPTIONAL_YES,
+  picture_event_data: "13946d2e077e06a8d171a2f8ba6e4d0113fbd860ba183c5dd36d849227339936",
+  pre_triggers: "5c162636aad8b0254fd57080060c20c6a85325cc805c08674dcbb865d042a18b",
+  show_sound: "654027284c63b1ad9c3893be7de770b5ad06e3ecaf76212d3e69298bf0e50eea",
+  show_sound_clear: OPTIONAL_YES,
+  situation: "fc2aae240525c0ca45874dd656f04651ef1b9855bb900e8ec451d318fe15903c",
+  specimen: "9f13cfd14b1e1506a6391a40d2f89c908554dcce2dcbb56b0b06ffb0d865b3cb",
+  title: "c04dff3e33ebbd7b52b6f82f7168a0c64c29788123a58ea09d3b4b23f36d0606",
+  trackable: OPTIONAL_BOOL,
+  trigger: OPTIONAL_TRIGGER,
+  trigger_clear: OPTIONAL_YES,
+  weight_multiplier: "b6493dbb3e6a1a80c5d27050ab7e5212702ecf88ef70f29e5a92e7bba2789a4a",
+};
+
+const OPTION_RULE_SIGNATURES: Readonly<Record<string, string>> = {
+  ai_chance: "045b9a1b5f1ea6a005b99230a12929da046ceb84b00684f209282ec2af2aaacb",
+  allow: OPTIONAL_TRIGGER,
+  custom_gui: OPTIONAL_SCALAR,
+  default_hide_option: OPTIONAL_BOOL,
+  exclusive_trigger: OPTIONAL_TRIGGER,
+  hide_option_if_not_allowed: OPTIONAL_BOOL,
+  icon: "720c2adb3f4b2b5655a7e101b53e27ed790b677d4336435cd35396a24740fe44",
+  is_dialog_only: OPTIONAL_BOOL,
+  name: "f159cd01d2afce4a0a1fd4d048947024da7671d24163d79c29c7b368cf0896f7",
+  response_text: OPTIONAL_LOCALISATION,
+  sound: OPTIONAL_SCALAR,
+  tag: "63bca1a915c4d5ca4461d0c254c30892427c8fa107d19e7072bfc929426f018e",
+  trigger: OPTIONAL_TRIGGER,
+};
+
+function signatureHash(signature: string): string {
+  return createHash("sha256").update(signature).digest("hex");
+}
+
+export function eventFieldRuleSignatures(rules: RuleSet): {
+  event: ReadonlyMap<string, string>;
+  option: ReadonlyMap<string, string>;
+} {
+  const body = rules.bodies.get("event");
+  if (body === undefined) throw new Error("events.cwt declares no event body");
+  const option = blockFields(body.fields, "option");
+  if (option.length === 0) throw new Error("events.cwt declares no option block");
+  return { event: fieldSignatures(body.fields), option: fieldSignatures(option) };
 }
 
 function blockFields(fields: readonly RuleField[], name: string): readonly RuleField[] {
@@ -394,23 +618,52 @@ function blockFields(fields: readonly RuleField[], name: string): readonly RuleF
 
 function validate(
   what: string,
-  declared: ReadonlyMap<string, string>,
-  policy: readonly EventFieldPolicyEntry[]
+  declaredSignatures: ReadonlyMap<string, string>,
+  declaredShapes: ReadonlyMap<string, string>,
+  policy: readonly EventFieldPolicyEntry[],
+  expectedSignatures: Readonly<Record<string, string>>
 ): void {
   const byKey = new Map(policy.map((entry) => [entry.scriptKey, entry]));
-  const missing = [...declared.keys()].filter((key) => !byKey.has(key));
+  const missing = [...declaredSignatures.keys()].filter((key) => !byKey.has(key));
   const stale = [...byKey]
     .filter(([, entry]) => !entry.synthetic)
     .map(([key]) => key)
-    .filter((key) => !declared.has(key));
-  const reshaped = [...declared].filter(([key, shape]) => byKey.get(key)?.shape !== shape);
-  if (missing.length || stale.length || reshaped.length) {
+    .filter((key) => !declaredSignatures.has(key));
+  const signatureKeys = Object.keys(expectedSignatures);
+  const missingSignatures = [...declaredSignatures.keys()].filter(
+    (key) => expectedSignatures[key] === undefined
+  );
+  const staleSignatures = signatureKeys.filter((key) => !declaredSignatures.has(key));
+  const reshaped = [...declaredSignatures].filter(
+    ([key, signature]) => expectedSignatures[key] !== signatureHash(signature)
+  );
+  const staleShapeDescriptions = [...declaredShapes].filter(
+    ([key, shape]) => byKey.get(key)?.shape !== shape
+  );
+  if (
+    missing.length ||
+    stale.length ||
+    missingSignatures.length ||
+    staleSignatures.length ||
+    reshaped.length ||
+    staleShapeDescriptions.length
+  ) {
     throw new Error(
       `${what} field policy disagrees with events.cwt` +
         (missing.length ? `; unowned: ${missing.join(", ")}` : "") +
         (stale.length ? `; stale: ${stale.join(", ")}` : "") +
+        (missingSignatures.length ? `; missing signatures: ${missingSignatures.join(", ")}` : "") +
+        (staleSignatures.length ? `; stale signatures: ${staleSignatures.join(", ")}` : "") +
         (reshaped.length
           ? `; reshaped: ${reshaped
+              .map(
+                ([key, signature]) =>
+                  `${key} (${signature}; actual hash ${signatureHash(signature)}; policy hash ${expectedSignatures[key]})`
+              )
+              .join(", ")}`
+          : "") +
+        (staleShapeDescriptions.length
+          ? `; stale shape descriptions: ${staleShapeDescriptions
               .map(([key, shape]) => `${key} (${shape}; policy ${byKey.get(key)!.shape})`)
               .join(", ")}`
           : "")
@@ -424,19 +677,42 @@ export function createEventFieldPolicy(rules: RuleSet): {
 } {
   const body = rules.bodies.get("event");
   if (body === undefined) throw new Error("events.cwt declares no event body");
-  validate("event", fieldShapes(body.fields), EVENT_FIELDS);
+  const signatures = eventFieldRuleSignatures(rules);
+  validate(
+    "event",
+    signatures.event,
+    fieldShapes(body.fields),
+    EVENT_FIELDS,
+    EVENT_RULE_SIGNATURES
+  );
   const option = blockFields(body.fields, "option");
   if (option.length === 0) throw new Error("events.cwt declares no option block");
   if (!option.some((field) => field.key.kind === "aliasName" && field.key.category === "effect")) {
     throw new Error("events.cwt option block no longer splices alias_name[effect]");
   }
-  validate("event option", fieldShapes(option), OPTION_FIELDS);
-  return { event: EVENT_FIELDS, option: OPTION_FIELDS };
+  validate(
+    "event option",
+    signatures.option,
+    fieldShapes(option),
+    OPTION_FIELDS,
+    OPTION_RULE_SIGNATURES
+  );
+  const attachSignature = (
+    entry: EventFieldPolicyEntry,
+    declared: ReadonlyMap<string, string>
+  ) => ({
+    ...entry,
+    ruleSignature: entry.synthetic ? entry.shape : declared.get(entry.scriptKey)!,
+  });
+  return {
+    event: EVENT_FIELDS.map((entry) => attachSignature(entry, signatures.event)),
+    option: OPTION_FIELDS.map((entry) => attachSignature(entry, signatures.option)),
+  };
 }
 
 function interfaceMembers(policy: readonly EventFieldPolicyEntry[]): string {
   return policy
-    .filter((entry) => entry.disposition === "supported")
+    .filter((entry) => entry.disposition !== "unsupported")
     .flatMap((entry) =>
       (entry.members ?? []).map(
         (member) =>
@@ -453,7 +729,7 @@ function ledger(name: string, policy: readonly EventFieldPolicyEntry[]): string 
     policy
       .map(
         (entry) =>
-          `  ${JSON.stringify({ scriptKey: entry.scriptKey, shape: entry.shape, disposition: entry.disposition, reason: entry.reason })},\n`
+          `  ${JSON.stringify({ scriptKey: entry.scriptKey, shape: entry.shape, ruleSignature: entry.ruleSignature, disposition: entry.disposition, reason: entry.reason, ...(entry.unsupportedForms === undefined ? {} : { unsupportedForms: entry.unsupportedForms }) })},\n`
       )
       .join("") +
     "] as const;\n"

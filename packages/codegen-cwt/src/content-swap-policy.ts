@@ -68,7 +68,7 @@ export function deriveContentSwapIdentities(
     const keying =
       emitted.shape === "repeatedStruct"
         ? "record-keys"
-        : emitted.shape === "struct"
+        : emitted.shape === "struct" && emitted.repeated
           ? "array-names"
           : null;
     if (keying === null) {
