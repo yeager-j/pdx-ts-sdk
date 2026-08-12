@@ -105,6 +105,12 @@ function idsDependency(resolved: Resolved): Record<string, string> {
  * a revision, and a bare `4.4.6` on the registry is by definition one that
  * predates this scheme. Highest-wins within the range then means newest
  * revision, which is the whole point.
+ *
+ * A deliberate copy of the SDK's `vanillaPackageInstallRange`, which owns this
+ * scheme: the scaffolder scaffolds projects that install `@pdx-ts/sdk` and so
+ * cannot depend on it at runtime. `plan.test.ts` holds the two equal through
+ * the devDependency, because a scaffolder writing a range the SDK's pin gate
+ * contradicts is a break neither suite would otherwise see.
  */
 export function idsRange(gameVersion: string): string {
   return `>=${gameVersion}-0 <${gameVersion}`;

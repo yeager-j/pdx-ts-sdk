@@ -14,6 +14,7 @@ import {
   installedVanillaPackageVersion,
   vanillaIdsCheckWarning,
 } from "../src/identifiers/package-pin.ts";
+import { vanillaPackageGameVersion } from "../src/identifiers/version-scheme.ts";
 import {
   createMod,
   render,
@@ -155,7 +156,7 @@ describe("installedVanillaPackageVersion", () => {
  * exist and the gate below fires on it.
  */
 function installedGameVersion(): string {
-  return installedVanillaPackageVersion()!.split(/[-+]/, 1)[0]!;
+  return vanillaPackageGameVersion(installedVanillaPackageVersion()!);
 }
 
 describe("the mod capability's version-pin hook", () => {
