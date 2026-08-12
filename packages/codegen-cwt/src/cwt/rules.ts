@@ -51,6 +51,21 @@ export interface ContentSubtype {
   readonly keyFilter: string | null;
   readonly pushScope: string | null;
   readonly displayName: string | null;
+  /**
+   * The body field whose *absence* selects this subtype, from the one
+   * discriminator shape this reader models: a body of exactly one
+   * `## cardinality = 0..0` field asserting `X = yes`. Zero-cardinality is
+   * CWT's way of writing "and this key must not appear", so
+   * `subtype[not_inheriting_name] = { ## cardinality = 0..0  inherit_name = yes }`
+   * says the subtype applies to every definition that does not write
+   * `inherit_name`.
+   *
+   * `null` for every other subtype body — the rest of a subtype's fields are
+   * still discarded, and a discriminator this reader cannot state is left
+   * unstated rather than approximated. Widening it means a predicate model,
+   * which nothing yet needs.
+   */
+  readonly absentUnless: string | null;
 }
 
 export interface ContentType {
@@ -109,7 +124,22 @@ export interface ContentType {
    */
   readonly keyFilter: { readonly key: string; readonly negated: boolean } | null;
   readonly subtypes: readonly ContentSubtype[];
-  readonly localisation: readonly { key: string; pattern: string; required: boolean }[];
+  /**
+   * The declared localisation slots, each keeping which `subtype[...]` block it
+   * was written inside.
+   *
+   * `required` and `optional` are two independent CWT annotations rather than
+   * complements: a slot may carry `## required`, carry `## optional`, or carry
+   * neither. Neither means "required exactly where its enclosing subtype
+   * applies" — which is only a statement at all for a slot with a `subtype`.
+   */
+  readonly localisation: readonly {
+    key: string;
+    pattern: string;
+    required: boolean;
+    optional: boolean;
+    subtype: string | null;
+  }[];
 }
 
 export interface ContentBody {
@@ -445,18 +475,26 @@ export function readAliases(
  * typed `localisation` and an author writes a foreign loc key into it
  * directly) is a different, still-unhandled shape — SDK-44 found it but left
  * it alone, since no exposed registry currently uses it.
+ *
+ * A `subtype[...]` block inside the localisation table is descended into, and
+ * `subtype` records which one each slot came from. Flattening the provenance
+ * away used to make a conditionally-required slot indistinguishable from an
+ * unconditionally-optional one — `swapped_tradition`'s `name` is required of
+ * every swap that does not inherit its name, and read flat it is just another
+ * unannotated slot.
  */
 function readLocalisation(
   block: CwtAssignment,
-  nameField: string | null
+  nameField: string | null,
+  subtype: string | null = null
 ): ContentType["localisation"] {
   if (block.value.kind !== "block") {
     return [];
   }
   return assignments(block.value.nodes).flatMap((entry) => {
-    const subtype = BRACKET_KEY.exec(entry.key.text);
-    if (subtype !== null && subtype[1] === "subtype") {
-      return readLocalisation(entry, nameField);
+    const nested = BRACKET_KEY.exec(entry.key.text);
+    if (nested !== null && nested[1] === "subtype") {
+      return readLocalisation(entry, nameField, nested[2]!);
     }
     const rawPattern = entry.value.kind === "scalar" ? entry.value.text : "";
     const pattern = nameField !== null && rawPattern === nameField ? "$" : rawPattern;
@@ -465,9 +503,34 @@ function readLocalisation(
         key: entry.key.text,
         pattern,
         required: entry.options.some((option) => option.name === "required"),
+        optional: entry.options.some((option) => option.name === "optional"),
+        subtype,
       },
     ];
   });
+}
+
+/**
+ * Reads {@link ContentSubtype.absentUnless} out of a `subtype[...]` body.
+ *
+ * Deliberately narrow: exactly one field, asserting `X = yes`, under
+ * `## cardinality = 0..0`. Anything else returns `null` — the body may still be
+ * a real discriminator, but stating it would take a predicate model, and an
+ * approximation here would silently mis-declare requiredness downstream.
+ */
+function absentUnlessOf(subtype: CwtAssignment): string | null {
+  if (subtype.value.kind !== "block" || subtype.value.nodes.length !== 1) {
+    return null;
+  }
+  const only = subtype.value.nodes[0]!;
+  if (only.kind !== "assignment" || only.value.kind !== "scalar" || only.value.text !== "yes") {
+    return null;
+  }
+  const cardinality = findOption(only.options, "cardinality");
+  if (cardinality?.value?.kind !== "scalar" || cardinality.value.text !== "0..0") {
+    return null;
+  }
+  return only.key.text;
 }
 
 /**
@@ -539,6 +602,7 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
               keyFilter: scalarOption("type_key_filter"),
               pushScope: scopeOf(node.options)?.this ?? null,
               displayName: scalarOption("display_name"),
+              absentUnless: absentUnlessOf(node),
             },
           ];
         }),

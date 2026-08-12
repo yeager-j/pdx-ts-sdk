@@ -11,7 +11,6 @@ import { isOptional, type RuleField } from "../cwt/model.ts";
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
 import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
 import {
-  CONDITIONALLY_REQUIRED_LOCALISATION,
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
@@ -125,10 +124,45 @@ function syntheticIdentityLocalisation(typeName: string): ContentType {
     keyFilter: null,
     subtypes: [],
     localisation: [
-      { key: "name", pattern: "$", required: true },
-      { key: "desc", pattern: "$_desc", required: false },
+      { key: "name", pattern: "$", required: true, optional: false, subtype: null },
+      { key: "desc", pattern: "$_desc", required: false, optional: true, subtype: null },
     ],
   };
+}
+
+/**
+ * The sibling boolean member that waives a localisation slot, for a slot the
+ * rules require only of the definitions one subtype covers.
+ *
+ * `swapped_tradition`'s `name = "$"` is declared inside
+ * `subtype[not_inheriting_name]`, whose own body — `## cardinality = 0..0
+ * inherit_name = yes` — says the subtype covers every swap that does *not*
+ * write `inherit_name`. So the slot is required unless `inheritName` is set,
+ * which is neither CWT's unconditional `## required` nor the plain optional a
+ * flattened reading of the same table produces. `readLocalisation` keeps the
+ * provenance and `absentUnless` states the discriminator; this joins them.
+ *
+ * A slot the rules explicitly mark `## optional` states its own requiredness
+ * and is left alone — `flavor` and `effects` sit in the same subtype blocks.
+ *
+ * The shipped data agrees with the reading: of 195 vanilla `tradition_swap`
+ * blocks, 131 write no `inherit_name` and all 131 carry a `name`; 6 of 9
+ * ascension-perk swaps likewise. Nothing shipped omits the slot while
+ * requiring it — the failure this closes is the SDK writing a raw key to the
+ * game with no warning when an author does.
+ */
+function conditionalRequirement(
+  type: ContentType,
+  entry: ContentType["localisation"][number]
+): string | null {
+  if (entry.subtype === null || entry.optional) {
+    return null;
+  }
+  const subtype = type.subtypes.find((candidate) => candidate.name === entry.subtype);
+  if (subtype?.absentUnless == null) {
+    return null;
+  }
+  return camelCase(subtype.absentUnless);
 }
 
 /**
@@ -194,7 +228,13 @@ function planLocalisation(type: ContentType): LocalisationPlan {
     if (typeName !== type.name || byMember.has(member!)) {
       continue;
     }
-    byMember.set(member!, { key: member!, pattern: synthetic.pattern, required: false });
+    byMember.set(member!, {
+      key: member!,
+      pattern: synthetic.pattern,
+      required: false,
+      optional: true,
+      subtype: null,
+    });
   }
   return { entries: [...byMember.values()], aliases };
 }
@@ -220,11 +260,9 @@ function localisationMetadata(type: ContentType, plan = planLocalisation(type)):
       .map((entry) => {
         const member = camelCase(entry.key);
         const required = entry.required || REQUIRED_LOCALISATION.has(`${type.name}.${member}`);
-        const conditional = CONDITIONALLY_REQUIRED_LOCALISATION.get(`${type.name}.${member}`);
+        const conditional = conditionalRequirement(type, entry);
         const requiredUnless =
-          conditional === undefined
-            ? ""
-            : `, requiredUnless: ${JSON.stringify(conditional.unless)}`;
+          conditional === null ? "" : `, requiredUnless: ${JSON.stringify(conditional)}`;
         const synthetic = SYNTHETIC_LOCALISATION.get(`${type.name}.${member}`);
         const pointerMember =
           synthetic === undefined

@@ -747,6 +747,28 @@ describe("content-type codegen", () => {
     expect(situation?.code).toContain("completeCategory?: SituationCategory;");
   });
 
+  it("derives a conditionally required localisation slot from its subtype", () => {
+    // type[swapped_tradition] declares `name = "$"` inside
+    // subtype[not_inheriting_name], whose body — `## cardinality = 0..0
+    // inherit_name = yes` — says the subtype covers every swap that does not
+    // write inherit_name. The two facts together are the requirement.
+    expect(emissions.get("tradition")?.code).toContain(
+      '{ member: "name", pattern: "$", required: false, requiredUnless: "inheritName" }'
+    );
+    expect(emissions.get("ascension_perk")?.code).toContain(
+      '{ member: "name", pattern: "$", required: false, requiredUnless: "inheritName" }'
+    );
+    // The `## optional` slots in the same subtype blocks state their own
+    // requiredness, so nothing is derived for them.
+    expect(emissions.get("tradition")?.code).toContain(
+      '{ member: "flavor", pattern: "$_delayed", required: false }'
+    );
+    // A slot declared outside any subtype has no discriminator to read.
+    expect(emissions.get("tradition")?.code).toContain(
+      '{ member: "name", pattern: "$", required: true }'
+    );
+  });
+
   it("renames a struct field that would collide with a localization member name", () => {
     // building.desc (`single_alias_right[triggered_desc_clause]`, a repeated
     // trigger+text struct) would otherwise duplicate the `desc` flavor-text
