@@ -7,7 +7,13 @@ export { refId, type TypedRef } from "./generated/refs.ts";
 export * from "./generated/refs.ts";
 export * from "./generated/value-sets.ts";
 export * from "./script/triggers.ts";
-export { eventTarget, isEffectKey, makeScope, recordEffects } from "./script/effects/recorder.ts";
+export {
+  eventTarget,
+  isEffectKey,
+  isEventFireKey,
+  makeScope,
+  recordEffects,
+} from "./script/effects/recorder.ts";
 export type {
   ComplexTriggerModifier,
   ComplexTriggerModifierMode,

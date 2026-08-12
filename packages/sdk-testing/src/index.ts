@@ -31,12 +31,4 @@ export {
   type SimScopeName,
   type SituationSpec,
 } from "./state.ts";
-export {
-  declareFrom,
-  fixture,
-  renderFired,
-  type EventRegistryEntry,
-  type FixtureOptions,
-  type SimEvent,
-  World,
-} from "./world.ts";
+export { fixture, renderFired, type FixtureOptions, type SimEvent, World } from "./world.ts";

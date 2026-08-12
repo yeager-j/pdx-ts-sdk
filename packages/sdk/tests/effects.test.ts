@@ -2,13 +2,26 @@ import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { countryFlags } from "../src/generated/value-sets.ts";
-import { eventTarget, makeScope, recordEffects, scopeRef } from "../src/script/effects/recorder.ts";
+import {
+  eventTarget,
+  isEventFireKey,
+  makeScope,
+  recordEffects,
+  scopeRef,
+} from "../src/script/effects/recorder.ts";
 import { hasOwner, isAtWar } from "../src/script/triggers.ts";
 
 const flags = countryFlags("effects_test_flag");
 const stormWorld = eventTarget<"planet">("effects_test_target");
 
 describe("the effect recorder over generated meta", () => {
+  it("identifies generated event-fire effects without inferring their legal caller scopes", () => {
+    expect(isEventFireKey("observer_event")).toBe(true);
+    expect(isEventFireKey("country_event")).toBe(true);
+    expect(isEventFireKey("event")).toBe(false);
+    expect(isEventFireKey("set_country_flag")).toBe(false);
+  });
+
   it("round-trips a closure through every meta shape", () => {
     const sink: PdxEntry[] = [];
     const country = makeScope<"country">(sink);

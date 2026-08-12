@@ -21,7 +21,7 @@ import {
 } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
-import { declareFrom, evaluateWeightBlock, fixture } from "../src/index.ts";
+import { evaluateWeightBlock, fixture } from "../src/index.ts";
 
 describe("fleet and archaeological_site scopes", () => {
   it("models a fleet event whose FROM is an archaeological site, and the site's own state", () => {
@@ -41,7 +41,7 @@ describe("fleet and archaeological_site scopes", () => {
         fleets: [{ name: "excavation fleet" }],
         archaeologicalSites: [{ name: "asteroid command center" }],
       },
-      { events: [declareFrom(drillEvent, "archaeological_site")] }
+      { events: [drillEvent] }
     );
 
     const fleet = world.fleet(0);

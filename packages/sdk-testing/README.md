@@ -13,10 +13,16 @@ import { fixture } from "@pdx-ts/sdk-testing";
 const world = fixture({ countries: [{ name: "player" }] }, { events: [welcome] });
 
 world.fire(welcome, world.country(0));
-world.advance(30); // delivers due scheduled fires
+world.advance(30); // delivers due scheduled fires; days are non-negative whole numbers
 
 expect(world.country(0).hasFlag(flags.welcomed)).toBe(true);
 ```
+
+Force `random_list` branches with zero-based arm indices:
+`world.fire(event, scope, { arms: [1, 0] })`. The plan is consumed in execution
+order, follows scheduled fires through the queue, and fails if any supplied
+choice remains unused when the chain ends. Weights are probabilities, not arm
+identities, so duplicate-weight lists remain selectable.
 
 For triggers, `explain` answers "why doesn't my `potential` pass":
 

@@ -13,8 +13,8 @@
 
 import { scalarText, type PdxEntry } from "@pdx-ts/pdxscript";
 import {
-  EVENT_KINDS,
   isEffectKey,
+  isEventFireKey,
   recordEffects,
   type ComplexTriggerModifier,
   type Modifier,
@@ -30,6 +30,7 @@ import {
   Fleet,
   Planet,
   Situation,
+  type ChoicePlanState,
   type EntityId,
   type HandleOf,
   type SimScope,
@@ -54,7 +55,7 @@ import {
 export { InterpreterError } from "./whitelist.ts";
 
 export interface ForcedArms {
-  /** random_list arms to take, by weight key, consumed in encounter order. */
+  /** Zero-based random_list arm indices, consumed in encounter order across the event chain. */
   readonly arms?: readonly number[];
 }
 
@@ -98,8 +99,7 @@ function unimplementedTriggerKeys(entries: readonly PdxEntry[], found: Set<strin
       }
       continue;
     }
-    const link = LINK_SEMANTICS[entry.key];
-    if (link !== undefined) {
+    if (isScopeLink(entry.key)) {
       if (entry.value.kind === "container") {
         unimplementedTriggerKeys(itemsAsEntries(entry.value.items, entry.key), found);
       }
@@ -148,12 +148,11 @@ function explainEntry(entry: PdxEntry, scope: EntityId, ex: ExecCtx): Explanatio
   // scope — the one thing COMBINATOR_SEMANTICS's same-scope recursion cannot
   // express, so this is a second, scope-changing arm rather than a special
   // case bolted onto the first.
-  const link = LINK_SEMANTICS[entry.key];
-  if (link !== undefined) {
+  if (isScopeLink(entry.key)) {
     if (entry.value.kind !== "container") {
       throw new InterpreterError(`${entry.key}: expected a block. ${coverageSummary()}`);
     }
-    const target = link.resolve(scope, ex);
+    const target = resolveScopePath(entry.key, scope, ex);
     const children = itemsAsEntries(entry.value.items, entry.key).map((child) =>
       explainEntry(child, target, ex)
     );
@@ -184,7 +183,7 @@ function execCtxFor(scope: SimScope<SimScopeName>): ExecCtx {
     state: scope.state,
     root: scope.id,
     from: undefined,
-    forcedArms: [],
+    choicePlan: { arms: [], next: 0 },
     targets: new Map(),
   };
 }
@@ -208,13 +207,15 @@ export function explain<S extends SimScopeName>(
   trigger: Trigger<S>,
   scope: SimScope<S>
 ): Explanation {
-  // Pre-scan so a test with several gaps reports them all at once — the
-  // error is the coverage report.
+  return explainChecked(trigger.entries, scope);
+}
+
+function explainChecked(entries: readonly PdxEntry[], scope: SimScope<SimScopeName>): Explanation {
   const missing = new Set<string>();
-  unimplementedTriggerKeys(trigger.entries, missing);
+  unimplementedTriggerKeys(entries, missing);
   if (missing.size > 0) {
     const evaluated = new Set<string>();
-    collectTriggerKeys(trigger.entries, evaluated);
+    collectTriggerKeys(entries, evaluated);
     throw new InterpreterError(
       `This trigger uses ${evaluated.size} condition${evaluated.size === 1 ? "" : "s"}; ` +
         `${missing.size} unimplemented: ${[...missing].join(", ")}. ` +
@@ -222,13 +223,13 @@ export function explain<S extends SimScopeName>(
         `${SCRIPTED_HINT} ${coverageSummary()}`
     );
   }
-  return explainEntries(trigger.entries, scope.id, execCtxFor(scope));
+  return explainEntries(entries, scope.id, execCtxFor(scope));
 }
 
 function collectTriggerKeys(entries: readonly PdxEntry[], found: Set<string>): void {
   for (const entry of entries) {
     const recurses =
-      (COMBINATOR_SEMANTICS[entry.key] !== undefined || LINK_SEMANTICS[entry.key] !== undefined) &&
+      (COMBINATOR_SEMANTICS[entry.key] !== undefined || isScopeLink(entry.key)) &&
       entry.value.kind === "container";
     if (recurses) {
       collectTriggerKeys(itemsAsEntries(entry.value.items, entry.key), found);
@@ -252,7 +253,7 @@ export function explainFor(
   trigger: { readonly entries: readonly PdxEntry[] },
   scope: SimScope<SimScopeName>
 ): Explanation {
-  return explainEntries(trigger.entries, scope.id, execCtxFor(scope));
+  return explainChecked(trigger.entries, scope);
 }
 
 export function renderExplanation(explanation: Explanation): string {
@@ -282,9 +283,13 @@ function evaluateLimit(entries: readonly PdxEntry[], scope: EntityId, ex: ExecCt
 // Effect application
 // ---------------------------------------------------------------------------
 
-const FIRE_KEYS = new Map<string, (typeof EVENT_KINDS)[keyof typeof EVENT_KINDS]>(
-  Object.values(EVENT_KINDS).map((kind) => [kind.key, kind])
-);
+function assertNonNegativeSafeInteger(value: number, field: string): void {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new InterpreterError(
+      `${field} must be a non-negative safe integer, got ${String(value)}. ${coverageSummary()}`
+    );
+  }
+}
 
 function requireBlock(entry: PdxEntry): readonly PdxEntry[] {
   if (entry.value.kind !== "container") {
@@ -296,14 +301,14 @@ function requireBlock(entry: PdxEntry): readonly PdxEntry[] {
 }
 
 function applyFire(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
-  const kind = FIRE_KEYS.get(entry.key);
-  if (kind === undefined) {
+  if (!isEventFireKey(entry.key)) {
     throw new InterpreterError("unreachable: applyFire called for a non-fire key");
   }
-  if (kind.scope !== scope.kind) {
+  if (entry.key === "observer_event" && scope.kind !== "country") {
     throw new InterpreterError(
-      `${entry.key} fired from ${scope.kind} scope — the game requires ${String(kind.scope)} ` +
-        `scope here. ${coverageSummary()}`
+      `observer_event is legal to fire from ${scope.kind} scope, but its body runs in country ` +
+        `scope and the testing interpreter cannot resolve that observer country. Assert against ` +
+        `the emitted fire instead of executing this event chain. ${coverageSummary()}`
     );
   }
   let id: string | undefined;
@@ -313,10 +318,13 @@ function applyFire(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
     if (field.key === "id" && field.value.kind === "str") {
       id = field.value.value;
     } else if (field.key === "days" && field.value.kind === "num") {
+      assertNonNegativeSafeInteger(field.value.value, `${entry.key} days`);
       delay += field.value.value;
     } else if (field.key === "months" && field.value.kind === "num") {
+      assertNonNegativeSafeInteger(field.value.value, `${entry.key} months`);
       delay += field.value.value * DAYS_PER_MONTH;
     } else if (field.key === "years" && field.value.kind === "num") {
+      assertNonNegativeSafeInteger(field.value.value, `${entry.key} years`);
       delay += field.value.value * DAYS_PER_YEAR;
     } else if (field.key === "random") {
       throw new InterpreterError(
@@ -342,19 +350,27 @@ function applyFire(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
   if (id === undefined) {
     throw new InterpreterError(`${entry.key} block has no id. ${coverageSummary()}`);
   }
+  assertNonNegativeSafeInteger(delay, `${entry.key} total delay`);
+  const dueDay = ex.state.day + delay;
+  assertNonNegativeSafeInteger(dueDay, `${entry.key} due day`);
   ex.state.queue.push({
     id,
-    dueDay: ex.state.day + delay,
+    dueDay,
     scope,
     // The natural FROM is the firing execution's root scope — verified by the
     // raw game probe in examples/from-oracle/calibration. `from: ctx.self`
     // records nothing only where the authoring contract knows SELF is ROOT.
     from: from ?? ex.root,
     seq: ex.state.seq++,
+    choicePlan: ex.choicePlan,
   });
 }
 
-/** Resolves a recorded scope path (`this`, `from`, `event_target:x`). */
+function isScopeLink(path: string): boolean {
+  return path.startsWith(EVENT_TARGET_PREFIX) || LINK_SEMANTICS[path] !== undefined;
+}
+
+/** Resolves a recorded scope path (`this`, `from`, `target`, `event_target:x`). */
 function resolveScopePath(path: string, scope: EntityId, ex: ExecCtx): EntityId {
   if (path === "this") {
     return scope;
@@ -371,23 +387,28 @@ function resolveScopePath(path: string, scope: EntityId, ex: ExecCtx): EntityId 
 
 function applyRandomList(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
   const arms = requireBlock(entry);
-  const forced = ex.forcedArms.shift();
+  const forced = ex.choicePlan.arms[ex.choicePlan.next];
   if (forced === undefined) {
     throw new InterpreterError(
       `random_list encountered without a forced arm — tests choose branches explicitly ` +
-        `(fire with { arms: [<weight>] }); forced branches make readable tests, seeds make ` +
+        `(fire with { arms: [<zero-based arm index>] }); forced branches make readable tests, seeds make ` +
         `flaky ones. Arms here: ${arms.map((arm) => arm.key).join(", ")}. ${coverageSummary()}`
     );
   }
-  const matching = arms.filter((arm) => arm.key === String(forced));
-  const chosen = matching[0];
-  if (chosen === undefined || matching.length > 1) {
+  if (!Number.isSafeInteger(forced) || forced < 0) {
     throw new InterpreterError(
-      `Forced arm ${forced} ${matching.length > 1 ? "is ambiguous" : "does not exist"} in this ` +
-        `random_list — arms are chosen by weight key; available: ` +
-        `${arms.map((arm) => arm.key).join(", ")}. ${coverageSummary()}`
+      `Forced random_list arm index must be a non-negative safe integer, got ${String(forced)}. ` +
+        coverageSummary()
     );
   }
+  const chosen = arms[forced];
+  if (chosen === undefined) {
+    throw new InterpreterError(
+      `Forced arm index ${forced} does not exist in this random_list — available indices: ` +
+        `${arms.map((_arm, index) => index).join(", ")}. ${coverageSummary()}`
+    );
+  }
+  ex.choicePlan.next += 1;
   // Weight modifiers (`modifier` blocks) are deliberately NOT evaluated under
   // forcing — the test chose the arm, so weights are irrelevant.
   const body = requireBlock(chosen).filter((child) => child.key !== "modifier");
@@ -476,7 +497,7 @@ export function applyEffectEntries(
       applyRandomList(entry, scope, ex);
       continue;
     }
-    if (FIRE_KEYS.has(entry.key)) {
+    if (isEventFireKey(entry.key)) {
       applyFire(entry, scope, ex);
       continue;
     }
@@ -538,10 +559,11 @@ export function run<S extends SimScopeName>(
     state: clone,
     root: scope.id,
     from: undefined,
-    forcedArms: [...(opts?.arms ?? [])],
+    choicePlan: { arms: [...(opts?.arms ?? [])], next: 0 },
     targets: new Map(),
   };
   applyEffectEntries(sink, scope.id, ex);
+  assertChoicePlanConsumed(ex.choicePlan);
 
   return {
     // The harness's one cast: HandleOf<S> cannot be narrowed structurally
@@ -550,6 +572,16 @@ export function run<S extends SimScopeName>(
     queued: clone.queue.slice(queueBase).map(({ id, dueDay }) => ({ id, dueDay })),
     log: clone.log.slice(logBase),
   };
+}
+
+export function assertChoicePlanConsumed(plan: ChoicePlanState): void {
+  if (plan.next !== plan.arms.length) {
+    throw new InterpreterError(
+      `Forced random-list choice plan has ${plan.arms.length - plan.next} unused ` +
+        `choice${plan.arms.length - plan.next === 1 ? "" : "s"}; every supplied arm index must ` +
+        `be consumed. ${coverageSummary()}`
+    );
+  }
 }
 
 export function handleFor(
