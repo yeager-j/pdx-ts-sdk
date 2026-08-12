@@ -145,7 +145,11 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
 export type WeightBlockOperations<S extends ScopeName> = Omit<
   Modifier<S>,
   "desc" | "descKey" | "when"
->;
+> & {
+  readonly desc?: never;
+  readonly descKey?: never;
+  readonly when?: never;
+};
 
 /** The calculation performed by a `scaled_modifier` row. */
 export type ScaledModifierCalc =
@@ -246,7 +250,9 @@ export interface WeightBlock<
 export type WeightBlockWithLocOperations<S extends ScopeName> = Pick<
   WeightBlockOperations<S>,
   "add" | "factor"
->;
+> & {
+  readonly [Key in keyof Omit<WeightBlockOperations<S>, "add" | "factor">]?: never;
+};
 
 /**
  * A {@link WeightBlock} for `modifier_rule_with_loc` consumers (e.g.
