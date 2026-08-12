@@ -39,6 +39,7 @@ import {
   type EmittedField,
   type FieldContext,
 } from "./fields.ts";
+import { partitionSubtypeFields } from "./subtype-partition.ts";
 import { Emitter } from "./types.ts";
 
 export interface ContentEmission {
@@ -593,6 +594,34 @@ function patchTypes(
   );
 }
 
+/**
+ * The body fields belonging to a registry that is one subtype of a shared CWT
+ * type, rather than a whole type of its own.
+ *
+ * Mirrors `referenceNameOf`'s guard in `index.ts`: an `as` rename that names no
+ * subtype has no rules behind it, and emitting the whole shared body under that
+ * name would silently hand the registry every other subtype's fields.
+ */
+function registryFields(
+  cwtType: ContentType,
+  registry: string,
+  fields: readonly RuleField[]
+): readonly RuleField[] {
+  if (registry === cwtType.name) {
+    return fields;
+  }
+  const self = cwtType.subtypes.find((candidate) => candidate.name === registry);
+  if (self === undefined) {
+    const declared = cwtType.subtypes.map((candidate) => candidate.name).join(", ");
+    throw new Error(
+      `The manifest renames type[${cwtType.name}] to "${registry}", but that names no subtype ` +
+        "of it, so there is no subtype whose fields the registry could be cut down to. " +
+        `Declared subtypes: ${declared}`
+    );
+  }
+  return partitionSubtypeFields(fields, self, cwtType.subtypes);
+}
+
 export function emitContentType(
   emitter: Emitter,
   cwtType: ContentType,
@@ -601,9 +630,12 @@ export function emitContentType(
 ): ContentEmission {
   // One CWT type can back several registries — three keywords share
   // `type[component_template]`. Renaming once here makes every downstream
-  // name, allowlist key, and overlay path follow the registry instead.
+  // name, allowlist key, and overlay path follow the registry instead, and
+  // partitioning here makes the body follow it too: the shared body carries
+  // every subtype's arm, and only this registry's are its own.
   const type: ContentType = registry === cwtType.name ? cwtType : { ...cwtType, name: registry };
-  const grouped = mergeByName(body.fields, type.name);
+  const fields = registryFields(cwtType, registry, body.fields);
+  const grouped = mergeByName(fields, type.name);
   // CWT lists the name field among the body's fields, but the writer emits it
   // from the definition's id. Dropping it here keeps it out of the authoring
   // interface, where it would be a second, contradictable way to set the id.
@@ -683,7 +715,7 @@ export function emitContentType(
   // member-name collision.
   const seenNames = new Set<string>();
   const seenCategories = new Set<string>();
-  for (const declaration of flatten(body.fields, type.name)) {
+  for (const declaration of flatten(fields, type.name)) {
     const key = declaration.key;
     if (key.kind === "aliasName") {
       const category = key.category;

@@ -19,7 +19,6 @@ import type {
   PointDefenceTarget,
   ShipClass,
   TargetFocus,
-  UtilitySlotSize,
   WeaponSlotSize,
   WeaponType2,
 } from "./enums.ts";
@@ -29,8 +28,6 @@ import type {
   ModelEntityRef,
   ModifierRef,
   ProjectileRef,
-  ScriptedActionRef,
-  ShipBehaviorRef,
   ShipSizeRef,
   SpriteRef,
   StaticModifierRef,
@@ -474,7 +471,6 @@ export interface WeaponComponentTemplateFields {
   upgradePath?: UpgradePath;
   tags?: ComponentTag[];
   aiTags?: ComponentTag[];
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   aiTagWeight?: number;
   shipLimit?: number;
   sizeRestriction?: (ShipSizeRef | string | "null")[];
@@ -483,227 +479,55 @@ export interface WeaponComponentTemplateFields {
   shouldAiUse?: boolean;
   validForCountry?: Trigger<"country">;
   aiWeight?: WeightBlock<"country">;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
   resources?: EconomicResourceBlockNoProduce<"ship">[];
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
   power?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
-  size?: WeaponSlotSize | UtilitySlotSize;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
+  size?: WeaponSlotSize;
   type?: WeaponType2;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   hideDamageValuesFromTooltip?: boolean;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   targetableShipSizes?: (ShipSizeRef | string | "null")[];
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
   modifier?: ModifierClosure<"ship">;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
   shipModifier?: ModifierClosure<"ship">;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
   shipDesignModifier?: ModifierClosure<"design">;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
   triggeredShipModifier?: TriggeredModifier<"ship">[];
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
   triggeredShipDesignModifier?: TriggeredModifier<"design">[];
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   projectileGfx?: ProjectileRef | string;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   color?: number[];
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   canDestroyStars?: boolean;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   entity?: ModelEntityRef | string;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   useShipMainTarget?: boolean;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * only valid if component_set has affects_target_type = yes. affects_target_type Default yes
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
   targetType?: TargetTypeRef | string;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * only valid if component_set has affects_target_focus = yes affects_target_focus Default = yes
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
   targetFocus?: TargetFocus;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   injectedModifier?: WeaponComponentTemplateInjectedModifier;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   firingArc?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   minRange?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   prioProjectile?: boolean;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   possible?: WithFrom<Trigger<"design">, "design", "country">;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   staticRotation?: boolean;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   planetDestructionGfx?: string;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   targetWeights?: Readonly<Record<string, number>>;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   damage?: WeaponComponentTemplateDamage;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   hullDamage?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   armorDamage?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   shieldDamage?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   armorPenetration?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   shieldPenetration?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   sizeDamageFactor?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   collateralDamage?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   collateralRange?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   windup?: WeaponComponentTemplateWindup;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   totalFireTime?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   range?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   accuracy?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   tracking?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   missileSpeed?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   missileEvasion?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   missileHealth?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   missileArmor?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   missileShield?: number;
-  /** Only when weapon_component_template subtype `weapon_component_template` applies. */
   missileRetargetRange?: number;
-  /**
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   */
   pointDefenceTargets?: PointDefenceTarget[];
-  /**
-   * apply effects to target on hit. Scope = ship (target), from = ship (shooter)
-   * Only when weapon_component_template subtype `weapon_component_template` applies.
-   */
+  /** apply effects to target on hit. Scope = ship (target), from = ship (shooter) */
   onHit?: EffectBlock<"ship", "ship">;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  weaponType?: WeaponType2;
-  /**
-   * Only when weapon_component_template subtype `strike_craft_component_template` applies.
-   * Only when weapon_component_template subtype `utility_component_template` applies.
-   */
-  shipBehavior?: ShipBehaviorRef | string;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  count?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  regenerationPerDay?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  launchTime?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  cooldown?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  engagementRange?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  health?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  armor?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  shield?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  evasion?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  speed?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  rotationSpeed?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  acceleration?: number;
-  /** Only when weapon_component_template subtype `strike_craft_component_template` applies. */
-  attackRange?: number;
-  /** Only when weapon_component_template subtype `utility_component_template` applies. */
-  isDefaultComponent?: boolean;
-  /** Only when weapon_component_template subtype `utility_component_template` applies. */
-  ftl?: boolean;
-  /** Only when weapon_component_template subtype `utility_component_template` applies. */
-  ftlInhibitor?: boolean;
-  /** Only when weapon_component_template subtype `utility_component_template` applies. */
-  jumpdrive?: boolean;
-  /** Only when weapon_component_template subtype `utility_component_template` applies. */
-  sensorRange?: number;
-  /** Only when weapon_component_template subtype `utility_component_template` applies. */
-  hyperlaneRange?: number;
-  /** Only when weapon_component_template subtype `utility_component_template` applies. */
-  scriptedAction?: (ScriptedActionRef | string)[];
   potential?: WithFrom<Trigger<"design">, "design", "country">;
   showTechUnlockIf?: WithFrom<Trigger<"country">, "country", "country">;
   friendlyAura?: WeaponComponentTemplateFriendlyAura[];
@@ -1092,108 +916,6 @@ export const WEAPON_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   { key: "on_hit", member: "onHit", shape: "effect", form: "closure", repeated: true },
-  {
-    key: "weapon_type",
-    member: "weaponType",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "ship_behavior",
-    member: "shipBehavior",
-    shape: "value",
-    form: "scalar",
-    conversion: "ref",
-    refTypes: ["ship_behavior"],
-  },
-  { key: "count", member: "count", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "regeneration_per_day",
-    member: "regenerationPerDay",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "launch_time",
-    member: "launchTime",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "cooldown", member: "cooldown", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "engagement_range",
-    member: "engagementRange",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "health", member: "health", shape: "value", form: "scalar", conversion: "identity" },
-  { key: "armor", member: "armor", shape: "value", form: "scalar", conversion: "identity" },
-  { key: "shield", member: "shield", shape: "value", form: "scalar", conversion: "identity" },
-  { key: "evasion", member: "evasion", shape: "value", form: "scalar", conversion: "identity" },
-  { key: "speed", member: "speed", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "rotation_speed",
-    member: "rotationSpeed",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "acceleration",
-    member: "acceleration",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "attack_range",
-    member: "attackRange",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "is_default_component",
-    member: "isDefaultComponent",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "ftl", member: "ftl", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "ftl_inhibitor",
-    member: "ftlInhibitor",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "jumpdrive", member: "jumpdrive", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "sensor_range",
-    member: "sensorRange",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "hyperlane_range",
-    member: "hyperlaneRange",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "scripted_action",
-    member: "scriptedAction",
-    shape: "valueList",
-    form: "list",
-    conversion: "ref",
-    refTypes: ["scripted_action"],
-  },
   { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
   { key: "show_tech_unlock_if", member: "showTechUnlockIf", shape: "trigger", form: "trigger" },
   {
