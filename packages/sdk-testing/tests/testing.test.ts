@@ -9,12 +9,14 @@ import {
   hiddenTrigger,
   nand,
   nor,
+  numOwnedColonies,
+  numOwnedPlanets,
   or,
   trigger,
 } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
-import { evaluate, explain, fixture } from "../src/index.ts";
+import { evaluate, explain, fixture, renderExplanation } from "../src/index.ts";
 
 const flags = countryFlags("testing_group_left", "testing_group_right");
 const globals = globalFlags("testing_group_middle");
@@ -200,5 +202,90 @@ describe("production testing module", () => {
         from: { kind: "country", country: 0 },
       },
     ]);
+  });
+});
+
+describe("resource storage", () => {
+  function payoutEvent(prefix: string) {
+    const mod = createMod({ name: prefix, prefix, supportedVersion: "4.4.*" });
+    return mod.namespace().country(1, {
+      isTriggeredOnly: true,
+      immediate: (country) => country.addResource({ resource: "energy", amount: 5000 }),
+    });
+  }
+
+  it("bounds a payout at the declared capacity", () => {
+    const event = payoutEvent("sdk140_capped");
+    const world = fixture(
+      { countries: [{ resources: { energy: 24_000 }, storage: { energy: 25_000 } }] },
+      { events: [event] }
+    );
+
+    world.fire(event, world.country(0));
+
+    expect(world.country(0).resource("energy")).toBe(25_000);
+  });
+
+  it("leaves a resource with no declared capacity unbounded", () => {
+    const event = payoutEvent("sdk140_uncapped");
+    const world = fixture(
+      { countries: [{ resources: { energy: 24_000 }, storage: { minerals: 25_000 } }] },
+      { events: [event] }
+    );
+
+    world.fire(event, world.country(0));
+
+    expect(world.country(0).resource("energy")).toBe(29_000);
+  });
+
+  it.each([
+    { value: Number.NaN, label: "NaN" },
+    { value: Number.POSITIVE_INFINITY, label: "Infinity" },
+    { value: -1, label: "a negative capacity" },
+  ])("refuses $label as a storage capacity", ({ value }) => {
+    // Left unchecked, Math.min(total, NaN) is NaN, and every later assertion
+    // about that stockpile compares against a number that means nothing.
+    expect(() =>
+      fixture({ countries: [{ name: "player", storage: { energy: value } }] }, { events: [] })
+    ).toThrow(/player's energy storage capacity must be a finite non-negative number/);
+  });
+
+  it("refuses a non-finite starting stockpile, but allows a deficit", () => {
+    expect(() =>
+      fixture(
+        { countries: [{ name: "player", resources: { energy: Number.NaN } }] },
+        { events: [] }
+      )
+    ).toThrow(/player's starting energy must be a finite number/);
+    expect(
+      fixture({ countries: [{ resources: { energy: -500 } }] }, { events: [] })
+        .country(0)
+        .resource("energy")
+    ).toBe(-500);
+  });
+
+  it("refuses a fixture that starts above its own declared capacity", () => {
+    expect(() =>
+      fixture(
+        { countries: [{ resources: { energy: 30_000 }, storage: { energy: 25_000 } }] },
+        {
+          events: [],
+        }
+      )
+    ).toThrow(/starts with 30000 energy but declares storage for 25000/);
+  });
+});
+
+describe("owned colony count", () => {
+  it("answers the deprecated and current spellings from the one relation", () => {
+    const world = fixture({ countries: [{ planets: [{}, {}] }] }, { events: [] });
+    const country = world.country(0);
+
+    expect(evaluate(numOwnedPlanets("=", 2), country)).toBe(true);
+    expect(evaluate(numOwnedColonies("=", 2), country)).toBe(true);
+    expect(explain(numOwnedColonies(">", 2), country).result).toBe(false);
+    expect(renderExplanation(explain(numOwnedColonies("=", 2), country))).toContain(
+      "2 owned colonies"
+    );
   });
 });

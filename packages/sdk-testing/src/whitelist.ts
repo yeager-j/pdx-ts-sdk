@@ -1,10 +1,11 @@
 /**
  * The interpreter's whitelist — one audited table;
  * adding an entry should feel expensive. Every entry carries a `note`
- * defending its semantics against the real game, because a wrong emulator is
- * worse than no emulator: every divergence is a green test for broken
- * behavior. Anything not listed here throws at evaluation time with the
- * coverage summary — nothing evaluates silently.
+ * defending its semantics against the real game and a `docs` pin naming the
+ * paragraph it was audited against, because a wrong emulator is worse than no
+ * emulator: every divergence is a green test for broken behavior. Anything not
+ * listed here throws at evaluation time with the coverage summary — nothing
+ * evaluates silently.
  *
  * Split, mirroring the handoff: leaf triggers, combinators, leaf effects,
  * structural effects (implemented in the walker, listed here for the audit),
@@ -39,6 +40,79 @@ export interface ExecCtx {
 }
 
 export class InterpreterError extends Error {}
+
+/**
+ * The vendored documentation dump every `docs` pin below was taken from.
+ *
+ * `packages/sdk-testing/tests/whitelist-audit.test.ts` fails when
+ * `vendor/cwtools-stellaris-config/script-docs/` holds a different version, so
+ * revendoring a newer dump is what forces the whole table to be re-read rather
+ * than assumed. The calibration was a one-shot manual record before that gate
+ * existed; this is what makes it repeat.
+ */
+export const AUDITED_DOC_DUMP = "v4.4.1";
+
+/**
+ * The build one specific claim was recorded on in a running game: that delayed
+ * delivery starts a new execution with no saved event targets. Nothing else
+ * rides here. A second live claim gets its own record and its own written
+ * evidence — sharing this constant would let one probe's rerun silently
+ * re-bless another claim nobody rechecked.
+ *
+ * It is not the dump's version and must never be quietly written as if it were:
+ * cwtools vendors Paradox's dumps per game version and has published none past
+ * {@link AUDITED_DOC_DUMP}, while the probe under
+ * `examples/from-oracle/calibration` ran on Pegasus 4.4.6.
+ *
+ * A hash cannot re-verify an observation of a running game, so the audit gate
+ * pins it from both sides instead: this literal must equal the repository's
+ * verified build (`SUPPORTED_STELLARIS_BUILD`) *and* the build the calibration
+ * record itself reports. Bumping it without re-running the probe leaves that
+ * record disagreeing, and the gate says so.
+ */
+export const LIVE_CALIBRATION_BUILD = "4.4.6";
+
+/**
+ * The install file the storage-capacity bound is read from — the game's own
+ * resource definitions, whose header calls `max` the resource's maximum storage
+ * capacity. Install-derived rather than dump-derived, so the gate that re-reads
+ * it is install-gated the way `codegen-vanilla`'s call-site falsification is:
+ * CI has no Stellaris, and a measurement of the game cannot be faked into
+ * existence.
+ */
+export const STORAGE_CAPACITY_SOURCE = "common/strategic_resources/00_strategic_resources.txt";
+
+/** The wording in that file that makes `max` a capacity rather than a starting figure. */
+export const STORAGE_CAPACITY_CLAIM = "maximum storage capacity of the resource";
+
+/**
+ * The paragraph in Paradox's own documentation dump that an entry's `note` was
+ * audited against, pinned by hash.
+ *
+ * The dump is the closest thing to a specification this interpreter has, and
+ * the notes are only as good as the reading they came from. Pinning the
+ * paragraph makes a revendor say which readings changed instead of leaving
+ * every note silently older than the game — the same shape as
+ * `packages/codegen-vanilla/tests/callsites.test.ts`, which falsifies inference
+ * against the game before a regeneration is accepted.
+ */
+export interface DocPin {
+  /**
+   * The dump's own name for this key, when it differs from the whitelist key:
+   * the combinators are the case, dumped lowercase (`AND` is `and` there).
+   */
+  readonly name?: string;
+  /** First 16 hex characters of the sha-256 the audit gate computes over the paragraph. */
+  readonly sha: string;
+  /**
+   * Required exactly when the pinned paragraph carries Paradox's deprecation
+   * marker: why the deprecated key is still modeled, and what modeling the
+   * replacement would actually cost. An unacknowledged deprecation fails the
+   * gate, and so does an acknowledgement of a paragraph that no longer carries
+   * one.
+   */
+  readonly deprecated?: string;
+}
 
 /**
  * Narrows container items to entries, loudly: authored SDK content never
@@ -180,6 +254,8 @@ function whichValueArgs(entry: PdxEntry): { readonly which: string; readonly val
 export interface TriggerImpl {
   /** One line defending this semantic against the real game. */
   readonly note: string;
+  /** The `triggers.log` paragraph the note was read from. */
+  readonly docs: DocPin;
   readonly eval: (
     entry: PdxEntry,
     scope: EntityId,
@@ -187,8 +263,25 @@ export interface TriggerImpl {
   ) => { result: boolean; detail: string };
 }
 
+/**
+ * The count the dump reads as owned colonies: planet and ship colonies both.
+ * The fixture's ownership relation is that count by construction — every
+ * nested planet is an owned colony, and no ship colonies are modeled — which
+ * is why one implementation answers both spellings of the trigger.
+ */
+const ownedColonyCount: TriggerImpl["eval"] = (entry, scope, ex) => {
+  countryState(ex.state, scope);
+  const expected = numberArg(entry);
+  const actual = scope.kind === "country" ? (ex.state.planets[scope.country]?.length ?? 0) : 0;
+  return {
+    result: compare(actual, entry.op, expected),
+    detail: `${actual} owned colon${actual === 1 ? "y" : "ies"}`,
+  };
+};
+
 export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
   has_country_flag: {
+    docs: { sha: "3b22b2f86ab05534" },
     note: "Country flags are a plain string set; set/unset with no expiry modeled.",
     eval: (entry, scope, ex) => {
       const flag = stringArg(entry);
@@ -198,6 +291,7 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
     },
   },
   has_global_flag: {
+    docs: { sha: "e62325d4f7e8df63" },
     note: "Global flags are one world-wide string set.",
     eval: (entry, _scope, ex) => {
       const flag = stringArg(entry);
@@ -206,6 +300,7 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
     },
   },
   has_owner: {
+    docs: { sha: "2029da3606d7b9e2" },
     note: "Every fixture planet is owned by its nesting country, so this is true by construction; kept because the real chain's limit uses it.",
     eval: (entry, scope, ex) => {
       planetState(ex.state, scope);
@@ -217,6 +312,7 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
     },
   },
   has_technology: {
+    docs: { sha: "08ee84cdf10fa64f" },
     note: "Researched techs are a string set of tech ids; give_technology adds to it.",
     eval: (entry, scope, ex) => {
       const tech = stringArg(entry);
@@ -225,18 +321,24 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
     },
   },
   num_owned_planets: {
-    note: "Compares against the fixture ownership relation's size (planets nested under the country).",
-    eval: (entry, scope, ex) => {
-      countryState(ex.state, scope);
-      const expected = numberArg(entry);
-      const actual = scope.kind === "country" ? (ex.state.planets[scope.country]?.length ?? 0) : 0;
-      return {
-        result: compare(actual, entry.op, expected),
-        detail: `${actual} owned planet${actual === 1 ? "" : "s"}`,
-      };
+    docs: {
+      sha: "128c271a54cce0c8",
+      deprecated:
+        "Superseded by num_owned_colonies, which is modeled below and shares this implementation " +
+        "— the dump gives the two the same summary word for word. Kept rather than dropped " +
+        "because the game still evaluates it and the SDK still emits it (`numOwnedPlanets`), so " +
+        "removing it here would throw on an authored chain the game runs fine.",
     },
+    note: "Compares against the fixture ownership relation's size. The dump counts owned colonies, planet and ship colonies both; every fixture planet is an owned colony and no ship colonies are modeled, so that relation's size is exactly that count.",
+    eval: ownedColonyCount,
+  },
+  num_owned_colonies: {
+    docs: { sha: "79effd6e97321080" },
+    note: "The undeprecated spelling of num_owned_planets, identical in the dump down to the summary line; one implementation answers both so the two can never drift apart here.",
+    eval: ownedColonyCount,
   },
   is_variable_set: {
+    docs: { sha: "b079be94a51e3fa4" },
     note: "Checks the scope's variable store (situation scope only — see variablesOf) for the name.",
     eval: (entry, scope, ex) => {
       const name = stringArg(entry);
@@ -245,6 +347,7 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
     },
   },
   check_variable: {
+    docs: { sha: "e7218970c3ee5af6" },
     note: "Compares a stored variable's value; reading an unset one throws rather than guessing a result, since `is_variable_set` is the game's own documented guard against exactly that (`is_variable_set`'s generated doc comment: \"Use to avoid unset variables errors\") — a fixture that quietly answered false would let a test take a branch the real game never reaches.",
     eval: (entry, scope, ex) => {
       const fields = blockEntries(entry);
@@ -262,6 +365,7 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
     },
   },
   situation_progress: {
+    docs: { sha: "db4de1af021a8428" },
     note: "Compares the situation's stored progress value.",
     eval: (entry, scope, ex) => {
       const progress = situationState(ex.state, scope).progress;
@@ -270,6 +374,7 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
     },
   },
   current_situation_approach: {
+    docs: { sha: "126697652452b3e4" },
     note: "Compares the id of the approach currently picked on the situation.",
     eval: (entry, scope, ex) => {
       const approach = situationState(ex.state, scope).approach;
@@ -289,20 +394,40 @@ export const TRIGGER_SEMANTICS: Readonly<Record<string, TriggerImpl>> = {
 
 export interface CombinatorImpl {
   readonly note: string;
+  /** The `triggers.log` paragraph the note was read from — lowercase there, hence the `name`. */
+  readonly docs: DocPin;
   /** all = every child true; any = some child true; none = every child false; notAll = some child false. */
   readonly mode: "all" | "any" | "none" | "notAll";
 }
 
 export const COMBINATOR_SEMANTICS: Readonly<Record<string, CombinatorImpl>> = {
-  AND: { note: "Every entry must hold — same as PDXScript's implicit sibling AND.", mode: "all" },
-  OR: { note: "At least one entry must hold.", mode: "any" },
+  AND: {
+    docs: { name: "and", sha: "5c4672fba6f727fb" },
+    note: "Every entry must hold — same as PDXScript's implicit sibling AND.",
+    mode: "all",
+  },
+  OR: {
+    docs: { name: "or", sha: "d842871d9cb68574" },
+    note: "At least one entry must hold.",
+    mode: "any",
+  },
   NOT: {
+    docs: { name: "not", sha: "3bc33b7fa1e95113" },
     note: "Paradox's NOT is actually NOR over its entries: true iff every entry is false.",
     mode: "none",
   },
-  NOR: { note: "No entry may hold.", mode: "none" },
-  NAND: { note: "At least one entry must not hold.", mode: "notAll" },
+  NOR: {
+    docs: { name: "nor", sha: "3110fb3e77a2855f" },
+    note: "No entry may hold.",
+    mode: "none",
+  },
+  NAND: {
+    docs: { name: "nand", sha: "2e50b38740210943" },
+    note: "At least one entry must not hold.",
+    mode: "notAll",
+  },
   hidden_trigger: {
+    docs: { sha: "5c9012ba9e9df0af" },
     note: "Transparent: every entry must hold, exactly as AND. Hiding is a tooltip concern with no bearing on whether the condition holds, and the block changes no scope.",
     mode: "all",
   },
@@ -314,6 +439,8 @@ export const COMBINATOR_SEMANTICS: Readonly<Record<string, CombinatorImpl>> = {
 
 export interface EffectImpl {
   readonly note: string;
+  /** The `effects.log` paragraph the note was read from. */
+  readonly docs: DocPin;
   readonly apply: (entry: PdxEntry, scope: EntityId, ex: ExecCtx) => void;
 }
 
@@ -328,13 +455,15 @@ function blockEntries(entry: PdxEntry): readonly PdxEntry[] {
 
 export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
   set_country_flag: {
+    docs: { sha: "3a748aaf3be2a4bb" },
     note: "Adds to the country's flag set; re-setting an existing flag is a no-op, as in game.",
     apply: (entry, scope, ex) => {
       countryState(ex.state, scope).flags.add(stringArg(entry));
     },
   },
   add_resource: {
-    note: "Adds to the stockpile; a missing stockpile starts at 0. `mult` is not modeled — loud error.",
+    docs: { sha: "cbfdf3b3b513e86a" },
+    note: "Adds to the stockpile, bounded above by the country's declared storage capacity for that resource. The bound is the claim and the whole claim: the game's own resource definitions call `max` the resource's maximum storage capacity (`common/strategic_resources/00_strategic_resources.txt`, which the audit gate re-reads against a real install), so a stockpile walking past it is a state no unmodified game holds and an unbounded add is a green test for a reward that was never paid out. What becomes of the excess — discarded, converted, refunded — is deliberately not modeled and not asserted anywhere. A missing stockpile starts at 0. A resource with no declared capacity is unbounded and says so: capacity is a base plus techs, buildings, modifiers and whatever the mod itself changes, and inventing a number would be the wrong emulator this harness exists to refuse — a test that cares declares one (CountrySpec.storage). `mult` is not modeled — loud error.",
     apply: (entry, scope, ex) => {
       const country = countryState(ex.state, scope);
       for (const field of blockEntries(entry)) {
@@ -343,18 +472,24 @@ export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
             `add_resource with mult is not modeled by the testing interpreter. ${coverageSummary()}`
           );
         }
-        const amount = numberArg(field);
-        country.resources.set(field.key, (country.resources.get(field.key) ?? 0) + amount);
+        const total = (country.resources.get(field.key) ?? 0) + numberArg(field);
+        const capacity = country.storage.get(field.key);
+        country.resources.set(
+          field.key,
+          capacity === undefined ? total : Math.min(total, capacity)
+        );
       }
     },
   },
   add_deposit: {
+    docs: { sha: "9117e309e424376c" },
     note: "Appends to the planet's deposit list; duplicates allowed, as in game.",
     apply: (entry, scope, ex) => {
       planetState(ex.state, scope).deposits.push(stringArg(entry));
     },
   },
   give_technology: {
+    docs: { sha: "036394cca1d797ab" },
     note: "Adds the tech id to the researched set. `message` is presentation-only and deliberately ignored.",
     apply: (entry, scope, ex) => {
       const country = countryState(ex.state, scope);
@@ -370,24 +505,28 @@ export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
     },
   },
   save_event_target_as: {
-    note: "Targets are a name -> entity map scoped to one event execution; a later save in that execution overwrites. Delayed delivery starts a new execution with no saved targets (Stellaris 4.4.6 calibration).",
+    docs: { sha: "ce26257ec62671fe" },
+    note: "Targets are a name -> entity map scoped to one event execution; a later save in that execution overwrites. Delayed delivery starts a new execution with no saved targets — an in-game record on Pegasus 4.4.6 (LIVE_CALIBRATION_BUILD, examples/from-oracle/calibration), not something the dump states, so it is pinned to the build rather than to the paragraph.",
     apply: (entry, scope, ex) => {
       ex.targets.set(stringArg(entry), scope);
     },
   },
   log: {
+    docs: { sha: "b0bba22387d3d394" },
     note: "Appends to a log the test can read; the game writes game.log.",
     apply: (entry, _scope, ex) => {
       ex.state.log.push(stringArg(entry));
     },
   },
   set_site_progress_locked: {
+    docs: { sha: "88e5769fbca6ab4f" },
     note: "Locks/unlocks the archaeological site's progress bar — plain boolean state on the site.",
     apply: (entry, scope, ex) => {
       archaeologicalSiteState(ex.state, scope).progressLocked = boolArg(entry);
     },
   },
   set_variable: {
+    docs: { sha: "776ba03a4ba84f00" },
     note: "Overwrites a stored variable (situation scope only — see variablesOf).",
     apply: (entry, scope, ex) => {
       const { which, value } = whichValueArgs(entry);
@@ -395,6 +534,7 @@ export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
     },
   },
   change_variable: {
+    docs: { sha: "0ac78f8fc94699d4" },
     note: "Increments a previously-set variable by an amount; throws on an unset one rather than guessing 0 — see requireVariable's doc comment for the effects.cwt citation.",
     apply: (entry, scope, ex) => {
       const { which, value } = whichValueArgs(entry);
@@ -404,6 +544,7 @@ export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
     },
   },
   multiply_variable: {
+    docs: { sha: "8984e0807e5d3ab6" },
     note: "Multiplies a previously-set variable by an amount; throws on an unset one rather than guessing 0 — see requireVariable's doc comment for the effects.cwt citation.",
     apply: (entry, scope, ex) => {
       const { which, value } = whichValueArgs(entry);
@@ -432,6 +573,12 @@ export interface StructuralImpl {
   readonly disposition: StructuralDisposition;
   /** One line defending the modeled behavior or deliberate refusal. */
   readonly note: string;
+  /**
+   * The `effects.log` paragraph the note was read from. A `leaf` entry reuses
+   * the pin its EFFECT_SEMANTICS entry already carries rather than restating
+   * the hash: one key, one paragraph, one place to re-read it.
+   */
+  readonly docs: DocPin;
 }
 
 function defineStructuralSemantics<const T extends Record<StructuralEffectKey, StructuralImpl>>(
@@ -451,62 +598,77 @@ function defineStructuralSemantics<const T extends Record<StructuralEffectKey, S
 export const STRUCTURAL_SEMANTICS = defineStructuralSemantics({
   add_resource: {
     disposition: "leaf",
+    docs: EFFECT_SEMANTICS.add_resource!.docs,
     note: "Delegates to EFFECT_SEMANTICS: the audited fixture stockpile mutation already owns this resource block.",
   },
   add_event_chain_counter: {
     disposition: "unimplemented",
+    docs: { sha: "21a62e7a143abd73" },
     note: "Event-chain counter lifetime and progression are absent from the fixture, so incrementing one would invent state semantics.",
   },
   else: {
     disposition: "conditional-fallback",
+    docs: { sha: "bbe0ad2447163b24" },
     note: "Runs iff no preceding if/else_if in the positional chain applied.",
   },
   else_if: {
     disposition: "conditional-continuation",
+    docs: { sha: "2e393aef256c351f" },
     note: "Associates with the preceding if by position, as the game does.",
   },
   hidden_effect: {
     disposition: "transparent",
+    docs: { sha: "0025c011ebab872b" },
     note: "Transparent: the entries run as they would unwrapped. Hiding is a tooltip concern and the block changes no scope.",
   },
   if: {
     disposition: "conditional-start",
+    docs: { sha: "0e8e6e3cfa6e1158" },
     note: "Evaluates limit via the trigger walker, then applies the body.",
   },
   inverted_switch: {
     disposition: "unimplemented",
+    docs: { sha: "382dd8d9c895102a" },
     note: "No branch-selection semantics have been verified for this control-flow form.",
   },
   locked_random_list: {
     disposition: "unimplemented",
+    docs: { sha: "7de8f1b01eac854e" },
     note: "Its locked tooltip and selection semantics have not been calibrated; forcing random_list does not establish them.",
   },
   random: {
     disposition: "unimplemented",
+    docs: { sha: "7c289fad55fa014f" },
     note: "Chance and modifier evaluation need a probability model; the fixture only forces random_list arms.",
   },
   random_list: {
     disposition: "forced-list",
+    docs: { sha: "7096b9ef05c77594" },
     note: "Takes the FORCED arm by zero-based occurrence index — weights are not identities. Forced branches, not seeds; weight modifiers are deliberately not evaluated under forcing.",
   },
   reset_event_chain_counter: {
     disposition: "unimplemented",
+    docs: { sha: "30208b30ec6e951a" },
     note: "Event-chain counter lifetime and progression are absent from the fixture, so resetting one would invent state semantics.",
   },
   save_event_target_as: {
     disposition: "leaf",
+    docs: EFFECT_SEMANTICS.save_event_target_as!.docs,
     note: "Delegates to EFFECT_SEMANTICS: the audited per-execution event-target map already owns this save.",
   },
   save_global_event_target_as: {
     disposition: "unimplemented",
+    docs: { sha: "45517b254cf222a1" },
     note: "Global target lifetime is not modeled: the fixture intentionally keeps targets local to one execution.",
   },
   switch: {
     disposition: "unimplemented",
+    docs: { sha: "df99c5125afb43cc" },
     note: "No branch-selection semantics have been verified for this control-flow form.",
   },
   while: {
     disposition: "unimplemented",
+    docs: { sha: "394815909b80736a" },
     note: "Count and limit iteration can change execution order and termination, neither of which the fixture has calibrated.",
   },
 });
@@ -525,12 +687,22 @@ export function structuralSemanticsFor(key: string): StructuralImpl | undefined 
 
 export interface IteratorImpl {
   readonly note: string;
+  /** The `effects.log` paragraph the note was read from. */
+  readonly docs: DocPin;
   /** The relation this iterator walks. The walker applies `limit` itself. */
   readonly targets: (scope: EntityId, ex: ExecCtx) => EntityId[];
 }
 
 export const ITERATOR_SEMANTICS: Readonly<Record<string, IteratorImpl>> = {
   every_owned_planet: {
+    docs: {
+      sha: "720c3b13e5e5f166",
+      deprecated:
+        "Superseded by every_owned_colony, which is not a rename here: that iterator enters " +
+        "colony scope, and the fixture models planet scope only (SimScopeName). Adopting it means " +
+        "widening the sim scope set with real colony state and real transitions, not aliasing " +
+        "this entry — until then the game still runs this spelling and the SDK still emits it.",
+    },
     note: "Walks the country -> planets nesting relation, in fixture order (the game iterates all owned planets; order is not observable to the whitelisted effects).",
     targets: (scope, ex) => {
       countryState(ex.state, scope);
@@ -552,6 +724,8 @@ export const ITERATOR_SEMANTICS: Readonly<Record<string, IteratorImpl>> = {
 
 export interface LinkImpl {
   readonly note: string;
+  /** The `scopes.log` paragraph the note was read from — links are dumped there, not with the triggers. */
+  readonly docs: DocPin;
   readonly resolve: (scope: EntityId, ex: ExecCtx) => EntityId;
 }
 
@@ -564,6 +738,7 @@ export interface LinkImpl {
  */
 export const LINK_SEMANTICS: Readonly<Record<string, LinkImpl>> = {
   from: {
+    docs: { sha: "8031e74b9daf40cd" },
     note: "Resolves to the FROM bound by the harness fire or the queued fire's contract; unbound FROM is a loud error, not an empty scope.",
     resolve: (_scope, ex) => {
       if (ex.from === undefined) {
@@ -576,7 +751,8 @@ export const LINK_SEMANTICS: Readonly<Record<string, LinkImpl>> = {
     },
   },
   target: {
-    note: "A situation's declared target (see SituationSpec.targetCountry) — the same link `target<S>()` and `situation.target<S>(body)` name in the authoring API. `links.cwt` gives it `output_scope = any`; the fixture resolves it through the situation's own declared target rather than reading anything from the trigger or effect body.",
+    docs: { sha: "03892ba5c618de8b" },
+    note: "A situation's declared target (see SituationSpec.targetCountry) — the same link `target<S>()` and `situation.target<S>(body)` name in the authoring API. `links.cwt` gives it `output_scope = any`; the fixture resolves it through the situation's own declared target rather than reading anything from the trigger or effect body. The pinned paragraph is worth reading before trusting it: the dump's prose describes only the spy-network and espionage-operation readings, and `situation` appears among this link's legal inputs in `links.cwt` rather than in the sentence.",
     resolve: (scope, ex) => situationState(ex.state, scope).targetId,
   },
 };

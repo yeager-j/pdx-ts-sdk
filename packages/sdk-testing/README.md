@@ -41,9 +41,27 @@ deliberately whitelist-based: everything it models carries a one-line defense of
 the real game's behavior, and anything unmodeled throws instead of guessing. A
 test can only pass through semantics somebody consciously verified.
 
+Verified once is not verified, though, so each entry also pins the paragraph of
+Paradox's own documentation dump it was read from, by hash. Revendoring a newer
+dump makes every changed or newly deprecated paragraph fail the audit gate until
+somebody re-reads it — which is how `num_owned_planets` was caught still being
+modeled as current after the game deprecated it.
+
 That is also why a passing test is a narrower claim than it looks. It says the
 logic you wrote does what you meant — not that the game agrees about everything
-surrounding it.
+surrounding it. Where the game's own limits are cheap to state, the fixture lets
+you state them: a country can declare `storage` per resource, and `add_resource`
+is then bounded by it, the way the game's resource definitions bound a stockpile
+by its maximum storage capacity.
+
+```ts
+fixture({ countries: [{ resources: { energy: 24_000 }, storage: { energy: 25_000 } }] }, { events });
+// a 5,000 energy reward lands as 25,000, not 29,000
+```
+
+Capacity is undeclared by default and then unbounded: a real capacity is a base
+plus techs, buildings, modifiers and whatever your mod changes, and inventing a
+number would be exactly the wrong emulator this package refuses to be.
 
 ## Matchers
 

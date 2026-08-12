@@ -99,6 +99,16 @@ fail the build against `packages/codegen-cwt/src/drift-baseline.json`. Review th
 rebaseline deliberately. That failure is the point: upstream renames and
 scope changes should not silently become wrong types.
 
+A new `script-docs` version also reopens the testing interpreter's whitelist.
+`packages/sdk-testing/tests/whitelist-audit.test.ts` pins each modeled key to
+the dump paragraph its audit note was read from, so the version bump and every
+paragraph that changed under it fail until somebody re-reads them and re-pins
+(`AUDITED_DOC_DUMP` and the `docs` entries in
+`packages/sdk-testing/src/whitelist.ts`). A newly deprecated key fails the same
+way, and is answered by modeling the replacement or recording why the entry
+stays. Re-pinning without reading defeats the whole point: a note that no
+longer matches the game is a green test for broken behavior.
+
 ## Why a snapshot rather than a submodule
 
 Hermetic builds and reviewable diffs while the codegen is still churning. Once it
