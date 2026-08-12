@@ -39,6 +39,14 @@ export type RuleType =
       readonly kind: "block";
       readonly fields: readonly RuleField[];
       readonly bare: readonly RuleType[];
+      /**
+       * The `single_alias` name this block expanded from, when it was written
+       * as `single_alias_right[x]` rather than spelled out inline. Expansion is
+       * otherwise lossy: `modifier = single_alias_right[modifier_clause]` and a
+       * block that happens to hold the same fields become indistinguishable,
+       * and the name is the only thing that says which clause the rules meant.
+       */
+      readonly via?: string;
     }
   /** A bracketed CWT keyword the classifier does not understand. */
   | { readonly kind: "unknownKeyword"; readonly text: string }
@@ -223,7 +231,14 @@ export function classify(
     return type;
   }
   const target = resolve(type.name);
-  return target === undefined ? type : classify(target.value, resolve, target.report ?? report);
+  if (target === undefined) {
+    return type;
+  }
+  const expanded = classify(target.value, resolve, target.report ?? report);
+  // A chain of aliases keeps the outermost name: the spread runs after the
+  // recursion, so an inner `via` is overwritten by the name the consumer
+  // actually wrote. Non-block expansions carry nothing to hang a name on.
+  return expanded.kind === "block" ? { ...expanded, via: type.name } : expanded;
 }
 
 export function classifyBlock(

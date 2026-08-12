@@ -1193,10 +1193,20 @@ describe("content-type codegen", () => {
     expect(fieldNames(weapon!.emittedFields)).toContain("resources");
     expect(fieldNames(weapon!.emittedFields)).toContain("modifier");
     expect(fieldNames(weapon!.emittedFields)).toContain("target_weights");
-    expect(weapon?.unsupported).toEqual([
-      "weapon_component_template.friendly_aura.modifier (no declaration the emitter can lower)",
-      "weapon_component_template.hostile_aura.modifier (no declaration the emitter can lower)",
-    ]);
+    // SDK-142: both aura clauses' `modifier` used to be the whole of weapon's
+    // unsupported list — `modifier = single_alias_right[modifier_clause]`
+    // (components.cwt:492, :529) with no overlay row to name its shape, where
+    // utility's identical pair had one. The clause name now carries the shape,
+    // so the list is empty and the two members exist, scoped by the clause's own
+    // `## replace_scopes = { this = ship root = ship }`.
+    expect(weapon?.unsupported).toEqual([]);
+    expect(weapon?.code).toContain("export interface WeaponComponentTemplateFriendlyAura {");
+    expect(interfaceMembers(weapon!.code, "WeaponComponentTemplateFriendlyAura")).toContain(
+      "modifier"
+    );
+    expect(interfaceMembers(weapon!.code, "WeaponComponentTemplateHostileAura")).toContain(
+      "modifier"
+    );
 
     // strike_craft_component_template only declares resources and
     // ship_modifier (components.cwt:333-343) — no modifier,
@@ -1225,9 +1235,23 @@ describe("content-type codegen", () => {
     // rather than silently picking up weapon's/utility's shapes — and gone from
     // the unsupported list too, which only ever reports a declaration that
     // reached the emitter.
-    for (const member of ["modifier?:", "targetWeights?:", "shipDesignModifier?:", "ftl?:"]) {
-      expect(strikeCraft?.code).not.toContain(member);
+    // Read off the Def interface rather than the whole file: since SDK-142 the
+    // aura structs one level down declare their own `modifier` member, which is
+    // strike_craft's aura clause, not the top-level component field this asserts
+    // is absent.
+    const strikeCraftMembers = interfaceMembers(
+      strikeCraft!.code,
+      "StrikeCraftComponentTemplateDef"
+    );
+    for (const member of ["modifier", "targetWeights", "shipDesignModifier", "ftl"]) {
+      expect(strikeCraftMembers).not.toContain(member);
     }
+    expect(
+      interfaceMembers(strikeCraft!.code, "StrikeCraftComponentTemplateFriendlyAura")
+    ).toContain("modifier");
+    expect(
+      interfaceMembers(strikeCraft!.code, "StrikeCraftComponentTemplateHostileAura")
+    ).toContain("modifier");
     for (const field of ["modifier", "target_weights", "ship_design_modifier"]) {
       expect(strikeCraft?.unsupported).not.toContain(
         `${field} (no declaration the emitter can lower)`

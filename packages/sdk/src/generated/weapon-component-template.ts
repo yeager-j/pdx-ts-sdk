@@ -217,6 +217,7 @@ export interface WeaponComponentTemplateFriendlyAura {
   radius?: number;
   applyOn?: AuraType;
   stackInfo: WeaponComponentTemplateFriendlyAuraStackInfo;
+  modifier?: ModifierClosure<"ship">;
   graphics?: WeaponComponentTemplateFriendlyAuraGraphics;
 }
 
@@ -239,6 +240,7 @@ export const WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly ContentFie
     form: "block",
     fields: WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_STACK_INFO_FIELDS,
   },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   {
     key: "graphics",
     member: "graphics",
@@ -413,6 +415,7 @@ export interface WeaponComponentTemplateHostileAura {
   radius?: number;
   applyOn?: AuraType;
   stackInfo: WeaponComponentTemplateHostileAuraStackInfo;
+  modifier?: ModifierClosure<"ship">;
   graphics?: WeaponComponentTemplateHostileAuraGraphics;
   damagePerDay?: WeaponComponentTemplateHostileAuraDamagePerDay;
 }
@@ -436,6 +439,7 @@ export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_FIELDS: readonly ContentFiel
     form: "block",
     fields: WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_STACK_INFO_FIELDS,
   },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   {
     key: "graphics",
     member: "graphics",
