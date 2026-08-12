@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { classify, supportedScopesOf } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt, type CwtAssignment } from "@pdx-ts/codegen-cwt/cwt/parser";
-import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { loadContentTypesFrom, loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { describe, expect, it } from "vitest";
 
 const CONFIG = fileURLToPath(
@@ -241,5 +241,64 @@ describe("rule types", () => {
     const block = classify(rule.value);
     const fields = block.kind === "block" ? block.fields : [];
     expect(fields[0]!.key).toEqual({ kind: "subtype", name: "repeatable", negated: true });
+  });
+});
+
+describe("content type declarations", () => {
+  const traditions = loadContentTypesFrom(CONFIG, ["common/traditions.cwt"]);
+  const traits = loadContentTypesFrom(CONFIG, ["common/traits.cwt"]);
+
+  it("keeps the subtype a localisation slot was declared inside", () => {
+    expect(traditions.get("swapped_tradition")?.localisation).toEqual([
+      {
+        key: "name",
+        pattern: "$",
+        required: false,
+        optional: false,
+        subtype: "not_inheriting_name",
+      },
+      {
+        key: "flavor",
+        pattern: "$_delayed",
+        required: false,
+        optional: true,
+        subtype: "not_inheriting_name",
+      },
+      {
+        key: "effects",
+        pattern: "$_desc",
+        required: false,
+        optional: true,
+        subtype: "not_inheriting_effects",
+      },
+    ]);
+  });
+
+  it("leaves a slot declared outside any subtype without provenance", () => {
+    expect(traditions.get("tradition")?.localisation).toEqual([
+      { key: "name", pattern: "$", required: false, optional: false, subtype: null },
+      { key: "flavor", pattern: "$_delayed", required: false, optional: true, subtype: null },
+      { key: "effects", pattern: "$_desc", required: false, optional: true, subtype: null },
+    ]);
+  });
+
+  it("reads the absent-key discriminator off a zero-cardinality subtype body", () => {
+    const swapped = traditions.get("swapped_tradition")?.subtypes ?? [];
+    expect(swapped.map((subtype) => [subtype.name, subtype.absentUnless])).toEqual([
+      ["not_inheriting_name", "inherit_name"],
+      ["not_inheriting_icon", "inherit_icon"],
+      ["not_inheriting_effects", "inherit_effects"],
+    ]);
+  });
+
+  it("states no discriminator for a subtype body outside that one shape", () => {
+    const subtypes = traits.get("trait")?.subtypes ?? [];
+    const absentUnless = new Map(subtypes.map((subtype) => [subtype.name, subtype.absentUnless]));
+    // `## cardinality = 0..0` but the field asserts `$any`, not `yes`.
+    expect(absentUnless.get("species_trait")).toBeNull();
+    // `auto_mod = yes` with no cardinality annotation: presence, not absence.
+    expect(absentUnless.get("auto_mod")).toBeNull();
+    // More than one field, so no single key's absence selects it.
+    expect(absentUnless.get("starting_ruler_trait")).toBeNull();
   });
 });

@@ -11,7 +11,6 @@ import { isOptional, type RuleField } from "../cwt/model.ts";
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
 import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
 import {
-  CONDITIONALLY_REQUIRED_LOCALISATION,
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
@@ -79,6 +78,11 @@ export interface ContentEmission {
   readonly unsupported: readonly string[];
   readonly localisationAliases: readonly string[];
   /**
+   * Body fields whose mechanical member name was already a localization slot,
+   * each with the `conditional<Name>` spelling it authors under instead.
+   */
+  readonly localisationRenames: readonly string[];
+  /**
    * Set when the registry's unpinned scopes are a parameter of the definition,
    * so the definer emitter can thread S and strip the `scope` member.
    */
@@ -125,10 +129,45 @@ function syntheticIdentityLocalisation(typeName: string): ContentType {
     keyFilter: null,
     subtypes: [],
     localisation: [
-      { key: "name", pattern: "$", required: true },
-      { key: "desc", pattern: "$_desc", required: false },
+      { key: "name", pattern: "$", required: true, optional: false, subtype: null },
+      { key: "desc", pattern: "$_desc", required: false, optional: true, subtype: null },
     ],
   };
+}
+
+/**
+ * The sibling boolean member that waives a localisation slot, for a slot the
+ * rules require only of the definitions one subtype covers.
+ *
+ * `swapped_tradition`'s `name = "$"` is declared inside
+ * `subtype[not_inheriting_name]`, whose own body — `## cardinality = 0..0
+ * inherit_name = yes` — says the subtype covers every swap that does *not*
+ * write `inherit_name`. So the slot is required unless `inheritName` is set,
+ * which is neither CWT's unconditional `## required` nor the plain optional a
+ * flattened reading of the same table produces. `readLocalisation` keeps the
+ * provenance and `absentUnless` states the discriminator; this joins them.
+ *
+ * A slot the rules explicitly mark `## optional` states its own requiredness
+ * and is left alone — `flavor` and `effects` sit in the same subtype blocks.
+ *
+ * The shipped data agrees with the reading: of 195 vanilla `tradition_swap`
+ * blocks, 131 write no `inherit_name` and all 131 carry a `name`; 6 of 9
+ * ascension-perk swaps likewise. Nothing shipped omits the slot while
+ * requiring it — the failure this closes is the SDK writing a raw key to the
+ * game with no warning when an author does.
+ */
+function conditionalRequirement(
+  type: ContentType,
+  entry: ContentType["localisation"][number]
+): string | null {
+  if (entry.subtype === null || entry.optional) {
+    return null;
+  }
+  const subtype = type.subtypes.find((candidate) => candidate.name === entry.subtype);
+  if (subtype?.absentUnless == null) {
+    return null;
+  }
+  return camelCase(subtype.absentUnless);
 }
 
 /**
@@ -194,7 +233,13 @@ function planLocalisation(type: ContentType): LocalisationPlan {
     if (typeName !== type.name || byMember.has(member!)) {
       continue;
     }
-    byMember.set(member!, { key: member!, pattern: synthetic.pattern, required: false });
+    byMember.set(member!, {
+      key: member!,
+      pattern: synthetic.pattern,
+      required: false,
+      optional: true,
+      subtype: null,
+    });
   }
   return { entries: [...byMember.values()], aliases };
 }
@@ -213,23 +258,30 @@ function localisationMembers(type: ContentType, plan = planLocalisation(type)): 
     .join("");
 }
 
-function localisationMetadata(type: ContentType, plan = planLocalisation(type)): string {
+/**
+ * `pointers` maps a localisation member to the body member the game actually
+ * reads its text through, for the synthetic slots that have one. Passed in
+ * rather than looked up, because it is a *result* of lowering the body: the
+ * pointer is the renamed body field, and the rename is only known once the
+ * field loop has run. See {@link renamedOffLocalisation}.
+ */
+function localisationMetadata(
+  type: ContentType,
+  plan = planLocalisation(type),
+  pointers: ReadonlyMap<string, string> = new Map()
+): string {
   return (
     "[\n" +
     plan.entries
       .map((entry) => {
         const member = camelCase(entry.key);
         const required = entry.required || REQUIRED_LOCALISATION.has(`${type.name}.${member}`);
-        const conditional = CONDITIONALLY_REQUIRED_LOCALISATION.get(`${type.name}.${member}`);
+        const conditional = conditionalRequirement(type, entry);
         const requiredUnless =
-          conditional === undefined
-            ? ""
-            : `, requiredUnless: ${JSON.stringify(conditional.unless)}`;
-        const synthetic = SYNTHETIC_LOCALISATION.get(`${type.name}.${member}`);
+          conditional === null ? "" : `, requiredUnless: ${JSON.stringify(conditional)}`;
+        const pointer = pointers.get(member);
         const pointerMember =
-          synthetic === undefined
-            ? ""
-            : `, pointerMember: ${JSON.stringify(synthetic.pointerMember)}`;
+          pointer === undefined ? "" : `, pointerMember: ${JSON.stringify(pointer)}`;
         return (
           `  { member: ${JSON.stringify(member)}, pattern: ${JSON.stringify(entry.pattern)}, ` +
           `required: ${required}${requiredUnless}${pointerMember} },\n`
@@ -281,31 +333,21 @@ function repeatedStructEmission(
   /** How the corpus reader reaches the interiors of the entry's own block fields. */
   readonly children: readonly DescentNode[];
   readonly localisationAliases: readonly string[];
+  /** Where the record key lives, read off the field's own declaration. */
+  readonly keying: "siblings" | "container";
+  /** The body field carrying the record key, for `"siblings"` keying. */
+  readonly identityKey: string | undefined;
 } | null {
   if (ownerField.type.kind !== "block") {
     return null;
   }
-  const keying = config.keying ?? "siblings";
-  if (keying === "siblings" && config.identityKey === undefined) {
-    return null;
-  }
-  // "container" (`stages = { stage_1 = { ... } }`) has no sibling fields of
-  // its own to merge — the record's per-entry shape lives one level further
-  // in, behind the wildcard key CWT uses to say "any key maps to this block".
-  const bodyType = keying === "container" ? wildcardBlockOf(ownerField.type) : ownerField.type;
-  if (bodyType === null) {
-    return null;
-  }
-  const grouped = mergeByName(bodyType.fields, config.typeName);
-  // The record key already carries the identity value — written into
-  // identityKey inside each sibling block, or (for "container") the block's
-  // own key — so it is not an ordinary member, the same reason the top level
-  // drops its nameField before iterating.
-  if (config.identityKey !== undefined) {
-    grouped.delete(config.identityKey);
-  }
-
-  const typeName = config.typeName;
+  // The declaration says which keying it is. "container"
+  // (`stages = { stage_1 = { ... } }`) is the wildcard-key shape: one computed
+  // key standing for "any key maps to this block", which is exactly the record
+  // the authoring type emits. "siblings" (`approach = { name = ... }` repeated)
+  // declares its entry's fields directly, so there is no wildcard to find.
+  const container = wildcardBlockOf(ownerField.type);
+  const keying = container === null ? "siblings" : "container";
   // Some repeated-struct fields have their own vendored `type[...]` carrying
   // the identity's localisation patterns (tradition_swap borrows
   // `type[swapped_tradition]`). Others — situations' `stages` and `approach`
@@ -315,16 +357,42 @@ function repeatedStructEmission(
   // types themselves use keeps this generic rather than situations-specific:
   // any future repeated-struct field lacking a dedicated type gets the same
   // convention `99_README_SITUATIONS.txt` documents for both of situations'.
-  const localisationType =
+  const declaredType =
     config.localisationType === undefined
-      ? syntheticIdentityLocalisation(typeName)
+      ? undefined
       : emitter.rules.contentTypes.get(config.localisationType);
+  // `name_field` is the same statement one level down that it is at the top
+  // level: the id is the value of that body field, not the block's key. A
+  // struct borrowing a vendored `type[...]` therefore already declares its own
+  // identity key, and the overlay only supplies one for a struct CWT gives no
+  // type at all (`situation_type.approach`).
+  const identityKey = declaredType?.nameField ?? config.identityKey;
+  if (keying === "siblings" && identityKey === undefined) {
+    return null;
+  }
+  const bodyType = container ?? ownerField.type;
+  const grouped = mergeByName(bodyType.fields, config.typeName);
+  // The record key already carries the identity value — written into
+  // identityKey inside each sibling block, or (for "container") the block's
+  // own key — so it is not an ordinary member, the same reason the top level
+  // drops its nameField before iterating.
+  if (identityKey !== undefined) {
+    grouped.delete(identityKey);
+  }
+
+  const typeName = config.typeName;
+  const localisationType =
+    config.localisationType === undefined ? syntheticIdentityLocalisation(typeName) : declaredType;
   const localisationPlan =
     localisationType === undefined ? null : planLocalisation(localisationType);
   // A struct field can share a name with the struct's own localisation slot
   // without meaning the same thing, exactly the collision the top level
   // guards against — the localisation member wins and the body field is
   // reported instead of silently duplicating a TS property.
+  //
+  // Deliberately still a report rather than the top level's `conditional<Name>`
+  // rename: no nested field collides today, so a rename here would name a
+  // member nothing has ever asked for. The report is what would say otherwise.
   const localisationMemberNames = new Set(
     (localisationPlan?.entries ?? []).map((entry) => camelCase(entry.key))
   );
@@ -421,7 +489,7 @@ function repeatedStructEmission(
     "repeatedStruct",
     [
       `keying: ${JSON.stringify(keying)}`,
-      ...(keying === "siblings" ? [`identityKey: ${JSON.stringify(config.identityKey)}`] : []),
+      ...(keying === "siblings" ? [`identityKey: ${JSON.stringify(identityKey)}`] : []),
       `fields: ${fieldsConstant}`,
       `localisation: ${localisationConstant}`,
     ]
@@ -437,6 +505,8 @@ function repeatedStructEmission(
     emittedFields,
     children,
     localisationAliases,
+    keying,
+    identityKey,
   };
 }
 
@@ -687,18 +757,51 @@ export function emitContentType(
   const patchExclusions: string[] = [];
   const patchWidenings: string[] = [];
   const patchLocMembers: string[] = [];
+  const localisationRenames: string[] = [];
+  const localisationPointers = new Map<string, string>();
   const localisationPlan = planLocalisation(type);
-  // A body field can share a name with a localization slot without meaning the
-  // same thing — `building.desc` (`single_alias_right[triggered_desc_clause]`,
-  // a repeated trigger+text struct) is unrelated to the `desc` flavor text the
-  // type's own localisation table already claims for the TS member `desc`. Both
-  // succeeding would emit the same interface property twice with different
-  // types, so the localization slot — already load-bearing everywhere it
-  // appears — wins, and the colliding body field is reported instead of
-  // silently overwritten.
   const localisationMemberNames = new Set(
     localisationPlan.entries.map((entry) => camelCase(entry.key))
   );
+  /**
+   * The authoring member for a body field, renamed when the mechanical one is
+   * already a localization slot.
+   *
+   * A body field can share a name with a localization slot without meaning the
+   * same thing — `building.desc` (`single_alias_right[triggered_desc_clause]`,
+   * a repeated trigger+text struct) is unrelated to the `desc` flavor text the
+   * type's own localisation table claims for the TS member `desc`. Both would
+   * emit the same interface property twice with different types, and both are
+   * real authoring paths, so the colliding body field takes the
+   * `conditional<Name>` spelling rather than either one losing.
+   *
+   * The slot set is `planLocalisation`'s, which includes the synthetic slots —
+   * so `archaeological_site_type.desc`, whose collision exists only because
+   * {@link SYNTHETIC_LOCALISATION} manufactured the slot, derives from the same
+   * rule as the four the rules collide on their own.
+   *
+   * A synthetic slot's text has no route into the definition body except that
+   * renamed field: the SDK invented the key, so it must also write the pointer
+   * the game reads it through. `pointerMember` is therefore recorded here, from
+   * the rename, rather than being a second hand-written spelling of it. A
+   * *declared* slot needs no pointer — `situation_type`'s `desc = "$_desc"` is
+   * the game's own key — so only synthetic slots take one.
+   */
+  const renamedOffLocalisation = (name: string): string => {
+    const declared = camelCase(name);
+    if (!localisationMemberNames.has(declared)) {
+      return declared;
+    }
+    const renamed = `conditional${pascalCase(name)}`;
+    localisationRenames.push(
+      `${type.name}.${name} — "${declared}" is a localization slot member, ` +
+        `so the body field authors as "${renamed}"`
+    );
+    if (SYNTHETIC_LOCALISATION.has(`${type.name}.${declared}`)) {
+      localisationPointers.set(declared, renamed);
+    }
+    return renamed;
+  };
 
   // Everything the emitter can lower is emitted, in the rules' own declaration
   // order. The SDK's promise is that a mod author does not run out of API, so a
@@ -792,11 +895,7 @@ export function emitContentType(
       continue;
     }
     const override = CONTENT_FIELD_OVERRIDES.get(path);
-    const member = override?.member ?? camelCase(name);
-    if (localisationMemberNames.has(member)) {
-      unsupported.push(`${name} (collides with the "${member}" localization slot)`);
-      continue;
-    }
+    const member = renamedOffLocalisation(name);
     if (override?.shape === "repeatedStruct") {
       const config = REPEATED_STRUCT_DEFINITIONS.get(path);
       const nested =
@@ -809,13 +908,13 @@ export function emitContentType(
       }
       const optional = memberOptional(group, override);
       const docs = docComment([...new Set(group.flatMap((field) => field.docs))], "  ");
-      members.push(`${docs}  ${camelCase(name)}${optional ? "?" : ""}: ${nested.memberType};\n`);
-      patchMembers.push({ member: camelCase(name), docs, memberType: nested.memberType });
+      members.push(`${docs}  ${member}${optional ? "?" : ""}: ${nested.memberType};\n`);
+      patchMembers.push({ member, docs, memberType: nested.memberType });
       extraCode.push(nested.code);
       fieldMetadata.push(nested.metadata);
       declinedFields.push(...nested.declinedFields);
       unsupported.push(...nested.unsupported);
-      const repeatedMember = camelCase(name);
+      const repeatedMember = member;
       nestedEmittedFields.push(
         ...nested.emittedFields.map(parameterised).map((field) => ({
           ...field,
@@ -823,20 +922,20 @@ export function emitContentType(
         }))
       );
       localisationAliases.push(...nested.localisationAliases);
-      emittedMembers.add(camelCase(name));
+      emittedMembers.add(member);
       emittedFields.push({
         field: name,
         authoredPath: [repeatedMember],
         shape: "repeatedStruct",
         repeated: repeatsSiblings(group[0]!, "repeatedStruct"),
       });
-      // The same overlay row the emission read, so the reader's keying and the
-      // authoring shape's cannot disagree about where the record key lives.
+      // The emission's own derived keying, so the reader's and the authoring
+      // shape's cannot disagree about where the record key lives.
       corpusDescents.push({
         field: name,
         mode: "repeatedStruct",
-        keying: config.keying ?? "siblings",
-        ...(config.identityKey === undefined ? {} : { identityKey: config.identityKey }),
+        keying: nested.keying,
+        ...(nested.identityKey === undefined ? {} : { identityKey: nested.identityKey }),
         children: nested.children,
       });
       continue;
@@ -866,7 +965,7 @@ export function emitContentType(
     members.push(`${docs}  ${member}${optional ? "?" : ""}: ${memberType};\n`);
     patchMembers.push({ member, docs, memberType });
     fieldMetadata.push(
-      override?.member === undefined
+      member === camelCase(name)
         ? lowered.metadata
         : // replaceAll, not replace: a dual repeats the member on each arm, and
           // the writer resolves an arm by its own member name.
@@ -986,7 +1085,7 @@ export function emitContentType(
     fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
     "];\n\n" +
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
-    `${localisationMetadata(type, localisationPlan)};\n`;
+    `${localisationMetadata(type, localisationPlan, localisationPointers)};\n`;
 
   return {
     code,
@@ -1001,6 +1100,7 @@ export function emitContentType(
     unsupported,
     scopeParameter: parameter,
     localisationAliases: [...localisationPlan.aliases, ...localisationAliases],
+    localisationRenames,
     patchExclusions: patchCode === "" ? [] : patchExclusions,
     patchWidenings: patchCode === "" ? [] : patchWidenings,
     patchLocMembers: patchCode === "" ? [] : patchLocMembers,

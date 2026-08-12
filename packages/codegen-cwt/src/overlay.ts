@@ -335,76 +335,9 @@ export const REQUIRED_LOCALISATION = new Set([
   "megastructure.name",
 ]);
 
-export interface ConditionalLocalisation {
-  /** The sibling boolean member that waives the slot when `true`. */
-  readonly unless: string;
-  readonly reason: string;
-}
-
-/**
- * Localisation slots the rules require *unless* the definition opts out —
- * distinct from {@link REQUIRED_LOCALISATION}'s always-on rows because a flat
- * `required: true` would reject every definition that legitimately omits the
- * slot.
- *
- * `swapped_tradition`/`swapped_ascension_perk` (traditions.cwt:14-46,
- * ascension_perks.cwt:15-...) declare `name = "$"` inside
- * `subtype[not_inheriting_name]`, which `cwt/rules.ts`'s `readLocalisation`
- * flattens away — it recurses into every `subtype[...]` and drops which one a
- * slot came from, the same way ordinary field flattening drops which subtype a
- * field came from (see `ship_size.modifier`'s overlay row). CWT's own
- * `## required` marker never applies here regardless, since the requirement
- * is conditional rather than unconditional. A real-install sweep of every
- * shipped `tradition_swap` found 131 of 195 blocks in the requiring subtype
- * (no `inherit_name = yes`), all 131 carrying a `name`; the same sweep found
- * 6 of 9 shipped ascension-perk swaps in the requiring subtype, all 6 naming
- * themselves. Nothing in the corpus omits the slot while requiring it, but
- * the SDK's own writer emits a raw key straight to the game with no warning
- * if an author does, which is the failure this row closes off.
- *
- * The key names the vendored localisation type carrying the slot
- * (`swapped_tradition`, `swapped_ascension_perk`) rather than the owning
- * registry, because that is what `content-type.ts`'s `localisationMembers`/
- * `localisationMetadata` are keyed on for a repeated-struct field's own
- * `type[...]`.
- */
-export const CONDITIONALLY_REQUIRED_LOCALISATION = new Map<string, ConditionalLocalisation>([
-  [
-    "swapped_tradition.name",
-    {
-      unless: "inheritName",
-      reason:
-        "traditions.cwt's type[swapped_tradition] requires name unless " +
-        "subtype[not_inheriting_name] does not apply, i.e. unless inherit_name = yes.",
-    },
-  ],
-  [
-    "swapped_ascension_perk.name",
-    {
-      unless: "inheritName",
-      reason:
-        "ascension_perks.cwt's type[swapped_ascension_perk] requires name unless " +
-        "subtype[not_inheriting_name] does not apply, i.e. unless inherit_name = yes — the same " +
-        "shape as swapped_tradition.name.",
-    },
-  ],
-]);
-
 export interface SyntheticLocalisation {
   /** The `$`-bearing pattern to synthesize, e.g. `"$_desc"`. */
   readonly pattern: string;
-  /**
-   * The renamed raw-key body member (a `CONTENT_FIELD_OVERRIDES` `member`)
-   * that the vendored rules' bare pointer (`desc = desc`) actually reads at
-   * runtime. A synthetic slot only gives an author a real text-authoring
-   * path; the game still resolves the display text through that pointer, so
-   * `ContentAuthoring.define` sets this member to the synthesized slot's
-   * computed key whenever the slot's text is present and the author has not
-   * already written the pointer themselves — otherwise the text lands in
-   * localisation with nothing in the definition body pointing at it, the
-   * same silent failure this whole table exists to close.
-   */
-  readonly pointerMember: string;
   readonly reason: string;
 }
 
@@ -420,9 +353,10 @@ export interface SyntheticLocalisation {
  * fix relies on) and the registry ends up with *no* slot where an author can
  * write real flavor text and get a generated key. The body's own `desc` field
  * (`archaeology.cwt:44`, dual with the `triggered_desc_clause` block form,
- * renamed to `conditionalDesc` by the `CONTENT_FIELD_OVERRIDES` row beside
- * this one) is `conversion: "identity"` either way its dual resolves — a raw
- * key, never auto-generated — so writing English into it is accepted and
+ * which `emit/content-type.ts` renames to `conditionalDesc` because the slot
+ * this row adds takes the `desc` member) is `conversion: "identity"` either
+ * way its dual resolves — a raw key, never auto-generated — so writing
+ * English into it is accepted and
  * silently wrong: no warning, no error, the game shows the literal string.
  * `situation_type`, by contrast, needs no such row: situations.cwt:17 already
  * declares `desc = "$_desc"` *alongside* the same bare `desc = desc` pointer
@@ -438,22 +372,22 @@ export interface SyntheticLocalisation {
  * of being the only route.
  *
  * A generated key is only half the fix: `type[archaeological_site_type]`
- * reads that text through the body's own `desc` pointer (renamed
- * `conditionalDesc`, per the `CONTENT_FIELD_OVERRIDES` row beside this one),
- * so a definition that sets only the synthetic `desc` member and never
- * touches `conditionalDesc` would populate the `.yml` with real text and
- * emit no `desc = <id>_desc` anywhere in its own body — reachable nowhere in
- * game, the identical silent failure this table exists to close, one step
- * removed. `pointerMember` is what closes that: `ContentAuthoring.define`
- * defaults it to the synthesized key whenever the text member is set and the
- * author has not written the pointer themselves.
+ * reads that text through the body's own `desc` pointer, so a definition that
+ * sets only the synthetic `desc` member and never touches `conditionalDesc`
+ * would populate the `.yml` with real text and emit no `desc = <id>_desc`
+ * anywhere in its own body — reachable nowhere in game, the identical silent
+ * failure this table exists to close, one step removed. The emitted
+ * `pointerMember` closes that: `ContentAuthoring.define` defaults it to the
+ * synthesized key whenever the text member is set and the author has not
+ * written the pointer themselves. It is not stated here — the collision this
+ * row manufactures is what renames the body field, so `emit/content-type.ts`
+ * records the pointer from that rename rather than repeating its spelling.
  */
 export const SYNTHETIC_LOCALISATION = new Map<string, SyntheticLocalisation>([
   [
     "archaeological_site_type.desc",
     {
       pattern: "$_desc",
-      pointerMember: "conditionalDesc",
       reason:
         "archaeology.cwt declares no `$`-bearing pattern for desc at all (only the excluded " +
         'bare pointer `desc = desc`), unlike situation_type\'s `desc = "$_desc"` sitting beside ' +
@@ -746,13 +680,6 @@ export interface ContentFieldOverride {
    * rather than each registry growing its own exception.
    */
   readonly optional?: true;
-  /**
-   * Authoring member name, when the mechanically derived one collides with a
-   * localisation slot: `desc = { trigger text }` (the repeated block form of
-   * the `desc` key) is a different thing from the `desc` flavor-text member
-   * the localisation table claims, and both must stay authorable.
-   */
-  readonly member?: string;
   /** Public name for a nested struct the mechanical path-derived name misstates. */
   readonly nestedTypeName?: string;
   readonly reason: string;
@@ -775,37 +702,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "decisions.cwt omits a cardinality annotation, but Stellaris 4.4.6 writes this block " +
         "in only 4 of 111 shipped decisions. It is an optional tooltip override, not a required " +
         "part of every decision (SDK-84 corpus evidence).",
-    },
-  ],
-  [
-    "archaeological_site_type.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The dual of the bare identity-conversion scalar and the desc key's repeated " +
-        "trigger+text block form (both raw-key arms, archaeology.cwt:44+48); renamed so it does " +
-        "not collide with the desc flavor-text localisation slot SYNTHETIC_LOCALISATION adds " +
-        "(SDK-50). Named like building.desc for consistency.",
-    },
-  ],
-  [
-    "building.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The `desc` key's repeated trigger+text block form; the derived member collides with " +
-        "the `desc` flavor-text localisation slot, and `triggeredDesc` is already the building's " +
-        "own distinct triggered_desc key.",
-    },
-  ],
-  [
-    "special_project.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The repeated trigger+text desc block is distinct from the desc flavour-text localisation " +
-        "slot. Six shipped projects use the block form; rename it exactly as building.desc does " +
-        "so both authoring paths remain available.",
     },
   ],
   [
@@ -952,27 +848,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "(traditions.cwt:70), the same shape ascension_perk.triggered_modifier already uses. Found " +
         "via SDK-39: the row was missing so the writer silently dropped the field even though 30 " +
         "shipped traditions/swaps write it.",
-    },
-  ],
-  [
-    "tradition_category.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The `desc` key's repeated trigger+text block form; the derived member collides with " +
-        "the `desc` flavor-text localisation slot. Named like building.desc for consistency.",
-    },
-  ],
-  [
-    "situation_type.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The `desc` key's repeated trigger+text block form; the derived member collides with " +
-        "the `desc` flavor-text localisation slot. Named like building.desc for consistency. " +
-        "Unlike building's, situations' `desc` is also declared as a bare localisation scalar, " +
-        "which shipped situations do write — so the field duals, and the row no longer pins the " +
-        "block form. It pinned it when first-wins picking could only keep one arm.",
     },
   ],
   [
@@ -1834,14 +1709,15 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
 export interface RepeatedStructDefinition {
   readonly typeName: string;
   /**
-   * "siblings" (shape 2 — `approach = { name = approach_a ... }` repeated):
-   * the record key is written into `identityKey` inside each sibling block.
-   * "container" (shape 1 — `stages = { stage_1 = { ... } }`): the record key
-   * IS the inner block's key, and `identityKey` is unused. Defaults to
-   * "siblings".
+   * The body field carrying the record key, for a struct whose entries are
+   * repeated sibling blocks (shape 2 — `approach = { name = approach_a ... }`).
+   *
+   * Only for a struct CWT gives no `type[...]` of its own. A struct that names
+   * a {@link localisationType} inherits that type's `name_field`, which is the
+   * same statement, and a container-keyed struct (shape 1 —
+   * `stages = { stage_1 = { ... } }`) has no such field at all: the emitter
+   * reads the keying off the declaration's own shape.
    */
-  readonly keying?: "siblings" | "container";
-  /** Required when `keying` is "siblings" (the default); unused for "container". */
   readonly identityKey?: string;
   /**
    * The vendored `type[...]` carrying the identity's localisation patterns
@@ -1857,34 +1733,22 @@ export interface RepeatedStructDefinition {
 export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinition>([
   [
     "tradition.tradition_swap",
-    {
-      typeName: "TraditionSwap",
-      identityKey: "name",
-      localisationType: "swapped_tradition",
-    },
+    { typeName: "TraditionSwap", localisationType: "swapped_tradition" },
   ],
   [
     "ascension_perk.tradition_swap",
-    {
-      typeName: "AscensionPerkSwap",
-      identityKey: "name",
-      localisationType: "swapped_ascension_perk",
-    },
+    { typeName: "AscensionPerkSwap", localisationType: "swapped_ascension_perk" },
   ],
-  [
-    "situation_type.stages",
-    {
-      typeName: "SituationStage",
-      keying: "container",
-    },
-  ],
-  [
-    "situation_type.approach",
-    {
-      typeName: "SituationApproach",
-      identityKey: "name",
-    },
-  ],
+  ["situation_type.stages", { typeName: "SituationStage" }],
+  // `approach` is the one row whose identity key stays hand-written.
+  // situations.cwt declares no `type[...]` for it, so there is no `name_field`
+  // to read it off the way tradition_swap reads its own off
+  // `type[swapped_tradition]`. The only upstream statement is
+  // `complex_enum[situation_approach]` (situations.cwt:284-291), whose `name`
+  // body — `approach = { name = enum_name }` — says where the enum harvests its
+  // values from, and `readEnums` keeps only an enum's scalar values and drops a
+  // complex_enum's body outright, so the parsed model does not carry it.
+  ["situation_type.approach", { typeName: "SituationApproach", identityKey: "name" }],
 ]);
 
 export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([

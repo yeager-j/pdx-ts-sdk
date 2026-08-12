@@ -13,7 +13,14 @@ import { partitionSubtypeFields } from "@pdx-ts/codegen-cwt/emit/subtype-partiti
 import { describe, expect, it } from "vitest";
 
 function subtype(name: string, keyFilter: string | null): ContentSubtype {
-  return { name, group: null, keyFilter, pushScope: null, displayName: null };
+  return {
+    name,
+    group: null,
+    keyFilter,
+    pushScope: null,
+    displayName: null,
+    absentUnless: null,
+  };
 }
 
 const UTILITY = subtype("utility_component_template", "utility_component_template");

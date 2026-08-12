@@ -150,10 +150,17 @@ describe("content-type codegen", () => {
     expect(tradition?.code).toContain("export interface TraditionSwapFields");
     expect(tradition?.code).toContain('shape: "repeatedStruct"');
     expect(tradition?.code).toContain('keying: "siblings"');
+    // Read off type[swapped_tradition]'s own `name_field = name`, the same
+    // statement the top level reads for an id-in-a-body-field registry.
+    expect(tradition?.code).toContain('identityKey: "name"');
     expect(tradition?.code).toContain("fields: TRADITION_SWAP_FIELDS");
     expect(tradition?.code).toContain(
       "traditionSwap?: Readonly<Record<string, TraditionSwapFields>>;"
     );
+    // The identity key is not also a body field: the record key carries it.
+    const swapFields = fieldNames(tradition?.nestedEmittedFields ?? []);
+    expect(swapFields).toContain("tradition.tradition_swap.modifier");
+    expect(swapFields).not.toContain("tradition.tradition_swap.name");
   });
 
   it("keys a repeated-struct record by string, not by the owner's id type", () => {
@@ -671,6 +678,10 @@ describe("content-type codegen", () => {
     // { stage_1 = { ... } } keys each entry by its own block key rather than a
     // body field, distinct from approach's siblings shape (tradition_swap's
     // shape) which carries its id in a body field ("name").
+    //
+    // The keying is read off the declaration, not configured: stages' block
+    // declares one wildcard key ("scalar = { ... }"), approach's declares its
+    // entry's own fields.
     const situation = emissions.get("situation_type");
     expect(situation?.code).toContain("export interface SituationStageFields");
     expect(situation?.code).toContain('shape: "repeatedStruct"');
@@ -747,10 +758,32 @@ describe("content-type codegen", () => {
     expect(situation?.code).toContain("completeCategory?: SituationCategory;");
   });
 
+  it("derives a conditionally required localisation slot from its subtype", () => {
+    // type[swapped_tradition] declares `name = "$"` inside
+    // subtype[not_inheriting_name], whose body — `## cardinality = 0..0
+    // inherit_name = yes` — says the subtype covers every swap that does not
+    // write inherit_name. The two facts together are the requirement.
+    expect(emissions.get("tradition")?.code).toContain(
+      '{ member: "name", pattern: "$", required: false, requiredUnless: "inheritName" }'
+    );
+    expect(emissions.get("ascension_perk")?.code).toContain(
+      '{ member: "name", pattern: "$", required: false, requiredUnless: "inheritName" }'
+    );
+    // The `## optional` slots in the same subtype blocks state their own
+    // requiredness, so nothing is derived for them.
+    expect(emissions.get("tradition")?.code).toContain(
+      '{ member: "flavor", pattern: "$_delayed", required: false }'
+    );
+    // A slot declared outside any subtype has no discriminator to read.
+    expect(emissions.get("tradition")?.code).toContain(
+      '{ member: "name", pattern: "$", required: true }'
+    );
+  });
+
   it("renames a struct field that would collide with a localization member name", () => {
     // building.desc (`single_alias_right[triggered_desc_clause]`, a repeated
     // trigger+text struct) would otherwise duplicate the `desc` flavor-text
-    // member the type's own localisation table already claims, so the overlay
+    // member the type's own localisation table already claims, so the collision
     // renames its authoring member while the emitted key stays `desc`.
     const building = emissions.get("building");
     expect(building?.code).toContain("conditionalDesc?: BuildingDesc[];");
@@ -767,6 +800,43 @@ describe("content-type codegen", () => {
     // The rename has to reach the arms too: the writer resolves an arm by its
     // own member name, so a single-shot replace would leave them as `desc`.
     expect(situation?.code).not.toContain('member: "desc", shape: "struct"');
+  });
+
+  it("derives every localization rename from the collision, and only those", () => {
+    // One rule over the slot set `planLocalisation` produces, so the four the
+    // rules collide on their own and the one SYNTHETIC_LOCALISATION
+    // manufactures come out of the same place.
+    const renamed = [...emissions].flatMap(([registry, emission]) =>
+      emission.localisationRenames.map(() => registry)
+    );
+    expect(renamed.sort()).toEqual([
+      "archaeological_site_type",
+      "building",
+      "situation_type",
+      "special_project",
+      "tradition_category",
+    ]);
+    for (const [, emission] of emissions) {
+      for (const line of emission.localisationRenames) {
+        expect(line).toContain('authors as "conditionalDesc"');
+      }
+      // A rename only ever happens where a collision does, so no registry is
+      // left reporting one as unlowerable.
+      expect(emission.unsupported.join("\n")).not.toContain("localization slot");
+    }
+  });
+
+  it("points a synthetic localisation slot at the body member the rename produced", () => {
+    // archaeology.cwt declares no `$`-bearing desc pattern, so the slot is
+    // synthetic — the game still reads its text through the body's own `desc`
+    // key, which the collision that slot creates renames to `conditionalDesc`.
+    // The pointer is that rename, not a second spelling of it.
+    expect(emissions.get("archaeological_site_type")?.code).toContain(
+      '{ member: "desc", pattern: "$_desc", required: false, pointerMember: "conditionalDesc" }'
+    );
+    // situation_type's `desc = "$_desc"` is the game's own declared key, so its
+    // slot needs no pointer even though its body field renames identically.
+    expect(emissions.get("situation_type")?.code).not.toContain("pointerMember");
   });
 
   it("expands an all-scalar alias splice into an ordinary struct", () => {
