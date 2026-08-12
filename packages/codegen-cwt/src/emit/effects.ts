@@ -18,20 +18,15 @@
 
 import type { RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
+import type { EffectPolicy } from "../effect-policy.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
+import type { LoweredRule } from "../lowered-rule.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
-import {
-  EFFECT_FIELD_TYPE_OVERRIDES,
-  FIRE_EFFECTS,
-  HAND_WRITTEN_EFFECTS,
-  STRUCTURAL_EFFECT_METHODS,
-} from "../overlay.ts";
+import { EFFECT_FIELD_TYPE_OVERRIDES } from "../overlay.ts";
 import type { ClassifiedLink } from "./links.ts";
 import {
   canonicalScopeSet,
-  declaredScopes,
   mergeFields,
-  scopeType,
   type ArgField,
   type ClauseCategory,
   type SkippedRule,
@@ -74,24 +69,15 @@ interface EmittedEffect {
   readonly docs: readonly string[];
 }
 
-function spliceCategories(body: RuleType & { kind: "block" }): Set<string> {
-  return new Set(
-    body.fields.flatMap((field) => (field.key.kind === "aliasName" ? [field.key.category] : []))
-  );
-}
-
 function shapeOf(
   emitter: Emitter,
-  declarations: readonly AliasDecl[]
+  rule: LoweredRule
 ): EffectShape | { readonly reason: string } | { readonly scalarOnly: EffectShape } {
-  if (declarations.some((declaration) => declaration.comparison)) {
+  if (rule.comparison) {
     return { reason: "declared with a comparison operator" };
   }
-  const blocks = declarations.filter(
-    (declaration): declaration is AliasDecl & { type: RuleType & { kind: "block" } } =>
-      declaration.type.kind === "block"
-  );
-  const scalars = declarations.filter((declaration) => declaration.type.kind !== "block");
+  const blocks = rule.blocks;
+  const scalars = rule.scalars;
 
   if (blocks.length === 0) {
     if (scalars.some((s) => s.type.kind === "literal" && s.type.text.startsWith("$"))) {
@@ -117,7 +103,12 @@ function shapeOf(
     // Overloaded between a block and a scalar (`log` is both an effect clause
     // and a message). Emit the scalar form so the common case survives; the
     // dropped block form is counted, not silent.
-    const fallback = shapeOf(emitter, scalars);
+    const fallback = shapeOf(emitter, {
+      ...rule,
+      declarations: scalars,
+      comparison: false,
+      blocks: [],
+    });
     if ("kind" in fallback) {
       return { scalarOnly: fallback };
     }
@@ -127,12 +118,14 @@ function shapeOf(
     return { reason: "multiple block declarations" };
   }
 
-  const declaration = blocks[0]!;
-  const body = declaration.type;
+  const block = blocks[0]!;
+  const body = block.type;
   if (body.bare.length > 0) {
     return { reason: "block with bare values" };
   }
-  const categories = spliceCategories(body);
+  const categories = new Set(
+    block.splices.flatMap((field) => (field.key.kind === "aliasName" ? [field.key.category] : []))
+  );
   if (categories.has("modifier_rule")) {
     return { reason: "contains a modifier_rule splice" };
   }
@@ -143,8 +136,8 @@ function shapeOf(
     return { reason: `splices a category the emitter cannot type (${[...categories].join(", ")})` };
   }
 
-  const named = body.fields.filter((field) => field.key.kind !== "aliasName");
-  const pushedRaw = declaration.scope?.this ?? null;
+  const named = block.named;
+  const pushedRaw = block.inheritedScope;
   const merged = named.length === 0 ? [] : mergeFields(emitter, named, pushedRaw, EFFECT_CLAUSES);
   if (typeof merged === "string") {
     return { reason: merged };
@@ -312,6 +305,8 @@ export function emitEffects(
   emitter: Emitter,
   docs: ReadonlyMap<string, DocEntry>,
   scopeIndex: ReadonlyMap<string, string>,
+  rules: ReadonlyMap<string, LoweredRule>,
+  policy: EffectPolicy,
   links: readonly ClassifiedLink[]
 ): EffectEmission {
   const skipped: SkippedRule[] = [];
@@ -323,14 +318,18 @@ export function emitEffects(
   }
   const clusters = new Map<string, Cluster>();
 
-  for (const key of [...emitter.rules.effects.keys()].sort()) {
-    const declarations = emitter.rules.effects.get(key)!;
-    if (HAND_WRITTEN_EFFECTS.has(key.toLowerCase())) {
-      skipped.push({ name: key, reason: "hand-written structural effect" });
-      continue;
-    }
-    if (FIRE_EFFECTS.has(key.toLowerCase())) {
-      skipped.push({ name: key, reason: "fire effect awaiting the event system" });
+  for (const key of [...rules.keys()].sort()) {
+    const rule = rules.get(key)!;
+    const declarations = rule.declarations;
+    const ownership = policy.byKey.get(key.toLowerCase());
+    if (ownership?.owner !== "generated") {
+      skipped.push({
+        name: key,
+        reason:
+          ownership?.owner === "fire"
+            ? "typed by the event-fire emitter"
+            : `hand-written structural effect${ownership?.reason === undefined ? "" : `: ${ownership.reason}`}`,
+      });
       continue;
     }
     if (!isPlainName(key)) {
@@ -338,18 +337,17 @@ export function emitEffects(
       continue;
     }
     const doc = docs.get(key);
-    const supported = declaredScopes(declarations, doc);
-    if (supported.length === 0) {
+    if (rule.supportedScopes.length === 0) {
       skipped.push({ name: key, reason: "no scopes in either the rules or the game's dump" });
       continue;
     }
-    const scopes = canonicalScopeSet(supported, scopeIndex);
-    const outerScope = scopeType(supported, scopeIndex);
+    const scopes = rule.scopes;
+    const outerScope = rule.scopeType;
     if (scopes === null || outerScope === null) {
-      skipped.push({ name: key, reason: `unknown scope in ${supported.join(" ")}` });
+      skipped.push({ name: key, reason: `unknown scope in ${rule.supportedScopes.join(" ")}` });
       continue;
     }
-    const shape = shapeOf(emitter, declarations);
+    const shape = shapeOf(emitter, rule);
     if ("reason" in shape) {
       skipped.push({ name: key, reason: shape.reason });
       continue;
@@ -404,8 +402,7 @@ export function emitEffects(
   );
 
   const takenMethods = new Set([
-    ...STRUCTURAL_EFFECT_METHODS,
-    ...[...FIRE_EFFECTS].map((key) => camelCase(key)),
+    ...policy.publicMethods,
     ...[...clusters.values()].flatMap((cluster) => cluster.effects.map((effect) => effect.method)),
   ]);
   for (const link of links) {

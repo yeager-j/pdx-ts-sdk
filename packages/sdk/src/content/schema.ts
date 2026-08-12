@@ -1,3 +1,5 @@
+import type { ContentShape } from "../generated/content-shape.ts";
+
 /**
  * Generated field metadata and registry descriptors consumed by the content lowerer.
  *
@@ -303,6 +305,14 @@ export type ContentField =
   | ContentStructMapField
   | ContentScalarMapField
   | ContentRepeatedStructField;
+
+type Equal<Left, Right> =
+  (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2
+    ? true
+    : false;
+
+const CONTENT_SHAPE_PROTOCOL_IS_EXACT: Equal<ContentField["shape"], ContentShape> = true;
+void CONTENT_SHAPE_PROTOCOL_IS_EXACT;
 
 /**
  * Every shape a dual field's arm can actually be lowered to — every

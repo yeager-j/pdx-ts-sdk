@@ -165,8 +165,8 @@ describe("effects", () => {
   it("does not shadow a generated effect", () => {
     // The recorder consults the hand-written `STRUCTURAL` table before the
     // generated one, so a name in both would silently take the wrong path.
-    // `packages/codegen-cwt/src/overlay.ts`'s `STRUCTURAL_EFFECT_METHODS` is
-    // what keeps codegen off the name; this is what would notice if it stopped.
+    // The generated ownership policy keeps codegen off the name; this notices
+    // if the generated meta table ever claims it too.
     expect(EFFECT_META["run"]).toBeUndefined();
   });
 });

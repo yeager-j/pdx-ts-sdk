@@ -3,8 +3,8 @@
 import { block, cmp, kv, type PdxEntry, type PdxOp, type PdxScalar } from "@pdx-ts/pdxscript";
 
 import { EFFECT_META, type EffectFieldMeta } from "../../generated/effect-meta.ts";
+import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/effect-policy.ts";
 import type { ScopeObjOf } from "../../generated/effects.ts";
-import { EVENT_KINDS } from "../../generated/events.ts";
 import { refId } from "../../generated/refs.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefUse } from "../../references.ts";
@@ -237,11 +237,13 @@ function weightedList(key: string, sink: PdxEntry[], refs: ContentRefUse[]) {
 // `recording` is the third parameter only `if` reads — the chain it returns
 // outlives the call that made it, so it has to carry the liveness the scope
 // object checks. Every other entry ignores it.
-const STRUCTURAL: Record<
-  string,
-  | ((sink: PdxEntry[], refs: ContentRefUse[], recording: Recording | undefined) => unknown)
-  | undefined
-> = {
+type StructuralFactory = (
+  sink: PdxEntry[],
+  refs: ContentRefUse[],
+  recording: Recording | undefined
+) => unknown;
+
+const STRUCTURAL_BASE = {
   if:
     (sink, refs, recording) => (condition: Trigger<ScopeName>, body: (scope: unknown) => void) => {
       sink.push(conditionalBlock("if", condition, body, refs, recordEffects));
@@ -309,7 +311,9 @@ const STRUCTURAL: Record<
   addEventChainCounter: eventChainCounterEffect("add_event_chain_counter", true),
 
   resetEventChainCounter: eventChainCounterEffect("reset_event_chain_counter", false),
-};
+} satisfies Record<StructuralEffectMethod, StructuralFactory>;
+
+const STRUCTURAL: Record<string, StructuralFactory | undefined> = { ...STRUCTURAL_BASE };
 
 // The `target` scope link's landing scope varies per definition
 // (`output_scope = any` in links.cwt) and is declared nowhere the SDK can
@@ -390,8 +394,8 @@ function methodName(key: string): string {
   return key.replace(/_([a-z0-9])/g, (_, letter: string) => letter.toUpperCase());
 }
 
-for (const kind of Object.values(EVENT_KINDS)) {
-  STRUCTURAL[methodName(kind.key)] = fireEffect(kind.key);
+for (const key of FIRE_EFFECT_KEYS) {
+  STRUCTURAL[methodName(key)] = fireEffect(key);
 }
 
 /**

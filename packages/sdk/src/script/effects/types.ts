@@ -341,9 +341,9 @@ export interface RandomListArm<S extends ScopeName> {
 }
 
 /**
- * Control flow and the few effects whose types the rules cannot express —
- * the audited `HAND_WRITTEN_EFFECTS` list in the codegen overlay. Every
- * generated scope interface extends this.
+ * Control flow and the few effects whose types the rules cannot express — the
+ * `structural` rows in the generated effect ownership policy. Every generated
+ * scope interface extends this.
  */
 export interface StructuralEffects<S extends ScopeName> {
   /**
