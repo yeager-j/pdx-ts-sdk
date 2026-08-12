@@ -42,13 +42,7 @@ edict = {
 
 	### a list of modifiers.
 	## cardinality = 0..1
-	modifier = {
-		## cardinality = 0..1
-		custom_tooltip = localisation
-		## cardinality = 0..1
-		show_only_custom_tooltip = bool
-		alias_name[modifier] = alias_match_left[modifier]
-	}
+	modifier = single_alias_right[modifier_clause]
 
 	## cardinality = 0..inf
 	## replace_scopes = { this = country root = country }

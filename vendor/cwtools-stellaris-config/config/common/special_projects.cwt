@@ -30,6 +30,7 @@ special_project = {
 	## cardinality = 0..1
 	cost = int
 	## cardinality = 0..1
+	## push_scope = country
 	cost = {
 		alias_name[modifier_rule] = alias_match_left[modifier_rule]
 	}
@@ -86,6 +87,7 @@ special_project = {
 	sound = bool
 
 	## cardinality = 0..1
+	## push_scope = country
 	AI_wait_days = {
 		alias_name[modifier_rule] = alias_match_left[modifier_rule]
 	}

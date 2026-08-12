@@ -176,6 +176,7 @@ component_template = {
 	## replace_scopes = { root = country this = country }
  	valid_for_country = single_alias_right[trigger_clause]
 	## cardinality = 0..1
+	## replace_scopes = { root = country this = country }
 	ai_weight = {
 		alias_name[modifier_rule] = alias_match_left[modifier_rule]
 	}

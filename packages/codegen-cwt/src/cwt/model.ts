@@ -178,10 +178,6 @@ function classifyScalar(text: string, line: number, report?: ClassificationRepor
       return { kind: "valueField", integer: false };
     case "int_value_field":
     case "int_variable_field":
-    // `value_int_field` is an upstream typo (situations.cwt total_progress)
-    // for int_value_field; reading it as a literal would type the field as
-    // the string "value_int_field".
-    case "value_int_field":
       return { kind: "valueField", integer: true };
     case "filepath":
       return { kind: "filepath", path: null };

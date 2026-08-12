@@ -351,11 +351,7 @@ citizenship_type = {
 
 	## cardinality = 0..1
 	## replace_scopes = { this = pop_group root = pop_group }
-	pop_group_modifier = {
-		alias_name[modifier] = alias_match_left[modifier]
-		## cardinality = 0..1
-		custom_tooltip = localisation
-	}
+	pop_group_modifier = single_alias_right[modifier_clause]
 
 	## cardinality = 0..1
 	### tooltip that appears on each Pop with this species right
@@ -408,11 +404,7 @@ colonization_control = {
 
 	## cardinality = 0..1
 	## replace_scopes = { this = pop_group root = pop_group }
-	pop_group_modifier = {
-		alias_name[modifier] = alias_match_left[modifier]
-		## cardinality = 0..1
-		custom_tooltip = localisation
-	}
+	pop_group_modifier = single_alias_right[modifier_clause]
 
 	## cardinality = 0..1
 	### tooltip that appears on each Pop with this species right
@@ -462,11 +454,7 @@ living_standard = {
 
 	## cardinality = 0..1
 	## replace_scopes = { this = pop_group root = pop_group }
-	pop_group_modifier = {
-		alias_name[modifier] = alias_match_left[modifier]
-		## cardinality = 0..1
-		custom_tooltip = localisation
-	}
+	pop_group_modifier = single_alias_right[modifier_clause]
 
 	## cardinality = 0..1
 	### tooltip that appears on each Pop with this species right
@@ -519,11 +507,7 @@ migration_control = {
 
 	## cardinality = 0..1
 	## replace_scopes = { this = pop_group root = pop_group }
-	pop_group_modifier = {
-		alias_name[modifier] = alias_match_left[modifier]
-		## cardinality = 0..1
-		custom_tooltip = localisation
-	}
+	pop_group_modifier = single_alias_right[modifier_clause]
 
 	## cardinality = 0..1
 	### tooltip that appears on each Pop with this species right
@@ -573,11 +557,7 @@ military_service_type = {
 
 	## cardinality = 0..1
 	## replace_scopes = { this = pop_group root = pop_group }
-	pop_group_modifier = {
-		alias_name[modifier] = alias_match_left[modifier]
-		## cardinality = 0..1
-		custom_tooltip = localisation
-	}
+	pop_group_modifier = single_alias_right[modifier_clause]
 
 	## cardinality = 0..1
 	### tooltip that appears on each Pop with this species right
@@ -630,11 +610,7 @@ population_control = {
 
 	## cardinality = 0..1
 	## replace_scopes = { this = pop_group root = pop_group }
-	pop_group_modifier = {
-		alias_name[modifier] = alias_match_left[modifier]
-		## cardinality = 0..1
-		custom_tooltip = localisation
-	}
+	pop_group_modifier = single_alias_right[modifier_clause]
 
 	## cardinality = 0..1
 	### tooltip that appears on each Pop with this species right
@@ -688,11 +664,7 @@ purge_type = {
 
 	## cardinality = 0..1
 	## replace_scopes = { this = pop_group root = pop_group }
-	pop_group_modifier = {
-		alias_name[modifier] = alias_match_left[modifier]
-		## cardinality = 0..1
-		custom_tooltip = localisation
-	}
+	pop_group_modifier = single_alias_right[modifier_clause]
 
 	## cardinality = 0..1
 	### tooltip that appears on each Pop with this species right
@@ -750,11 +722,7 @@ slavery_type = {
 
 	## cardinality = 0..1
 	## replace_scopes = { this = pop_group root = pop_group }
-	pop_group_modifier = {
-		alias_name[modifier] = alias_match_left[modifier]
-		## cardinality = 0..1
-		custom_tooltip = localisation
-	}
+	pop_group_modifier = single_alias_right[modifier_clause]
 
 	## cardinality = 0..1
 	### tooltip that appears on each Pop with this species right

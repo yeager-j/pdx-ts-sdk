@@ -180,7 +180,7 @@ situation_type = {
 	#### Setting this switches the Situation into SECTION WEIGHTS mode: every stage must then use
 	#### `section_weight` and none may use `end` (the game logs an error if you mix the two).
 	## cardinality = 0..1
-	total_progress = value_int_field
+	total_progress = int_value_field
 	#### Scriptable value (scope: situation). Total length of the bar from start_value to completion.
 	#### Setting this switches the Situation into SECTION WEIGHTS mode: every stage must then use
 	#### `section_weight` and none may use `end` (the game logs an error if you mix the two).

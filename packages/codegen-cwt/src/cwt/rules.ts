@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { CONTENT_MANIFEST } from "../content-manifest.ts";
-import { EXTRA_ALIAS_CATEGORIES, EXTRA_SCOPES } from "../overlay.ts";
+import { EXTRA_ALIAS_CATEGORIES } from "../overlay.ts";
 import {
   classify,
   classifyBlock,
@@ -695,9 +695,6 @@ export function loadRules(root: string): RuleSet {
  */
 export function scopeIndex(rules: RuleSet): Map<string, string> {
   const index = new Map<string, string>();
-  for (const scope of EXTRA_SCOPES) {
-    index.set(scope, scope);
-  }
   for (const [canonical, aliases] of rules.scopes) {
     const key = canonical.toLowerCase().replaceAll(" ", "_");
     index.set(key, key);

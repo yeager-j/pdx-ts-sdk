@@ -30,18 +30,10 @@ specialist_subject_perk = {
     }
     ## cardinality = 0..1
     ## replace_scopes = { this = country root = country }
-	subject_modifier = {
-        alias_name[modifier] = alias_match_left[modifier]
-        ## cardinality = 0..1
-        description = localisation
-	}
+	subject_modifier = single_alias_right[modifier_clause]
     ## cardinality = 0..1
     ## replace_scopes = { this = country root = country }
-    overlord_modifier = {
-        alias_name[modifier] = alias_match_left[modifier]
-        ## cardinality = 0..1
-        description = localisation
-	}
+    overlord_modifier = single_alias_right[modifier_clause]
     ## cardinality = 0..1
     ## replace_scopes = { this = agreement root = agreement  }
 	### Invoked when the perk is activated (target is the specialist subject)

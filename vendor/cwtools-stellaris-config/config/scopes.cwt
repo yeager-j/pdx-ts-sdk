@@ -117,11 +117,17 @@ scopes = {
     Exhibit = {
         aliases = { exhibit }
     }
+    "Galactic Community" = {
+        aliases = { galactic_community }
+    }
     "Ship Growth Stage" = {
         aliases = { ship_growth_stage }
     }
     Mission = {
         aliases = { mission }
+    }
+    "No Scope" = {
+        aliases = { no_scope }
     }
 }
 

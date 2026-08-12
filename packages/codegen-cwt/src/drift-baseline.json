@@ -32,6 +32,8 @@
   },
   "modifiers": {
     "rulesOnly": [
+      "biological_logistic_growth_mult",
+      "lithoid_logistic_growth_mult",
       "situation_nomad_economy_max_progress_add",
       "situation_nomad_economy_max_progress_mult",
       "starbase_collected_colony_resources_add"
@@ -44,7 +46,6 @@
     "effects.cwt:2902 sceop[fleet]"
   ],
   "unknownScopes": [
-    "galactic_community",
     "pop"
   ],
   "scopeResolutions": [
@@ -52,7 +53,7 @@
       "id": "stale-v4-scope-names",
       "selectedAuthority": "rules",
       "reason": "The rules carry the current 4.x scope model: carrier is absent from the dump and the dump still names the retired pop scope across related scope families.",
-      "evidenceVersion": "cwtools-stellaris-config 3378e418ed875789903a4d7786cb7b54a6f47d4d; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until a version-matched game documentation dump adopts carrier and pop_group.",
       "conflicts": {
         "triggers": [
@@ -392,6 +393,7 @@
           "round_variable_to_closest: rules say [agreement ambient_object archaeological_site army astral_rift bypass carrier colony country deposit espionage_asset espionage_operation federation first_contact fleet leader megastructure planet pop_faction pop_group sector ship ship_growth_stage situation species spy_network starbase system war], docs say [agreement ambient_object archaeological_site army astral_rift bypass colony country deposit espionage_asset espionage_operation federation first_contact fleet leader megastructure planet pop pop_faction pop_group sector ship ship_growth_stage situation species spy_network starbase system war]",
           "ruin_building: rules say [carrier colony planet ship], docs say [colony planet ship]",
           "sacrifice_assigned_pop_amount: rules say [pop_job], docs say [pop pop_job]",
+          "save_global_event_target_as: rules say [agreement ambient_object archaeological_site army astral_rift bypass carrier colony country debris deposit design espionage_asset espionage_operation exhibit federation first_contact fleet galactic_community leader megastructure mission planet pop_faction pop_group pop_job sector ship situation species spy_network starbase system war], docs say [agreement ambient_object archaeological_site army astral_rift bypass colony country debris deposit design espionage_asset espionage_operation exhibit federation first_contact fleet galactic_community leader megastructure mission planet pop pop_faction pop_group pop_job sector ship situation species spy_network starbase system war]",
           "select_decision: rules say [carrier colony planet ship], docs say [colony planet ship]",
           "set_capital: rules say [carrier colony planet ship], docs say [colony planet ship]",
           "set_carrier_flag: rules say [carrier colony planet ship], docs say [colony planet ship]",
@@ -444,7 +446,7 @@
       "id": "ship-design-scope",
       "selectedAuthority": "rules",
       "reason": "The rules expose these ship predicates on the design scope; the documentation dump omits that legal authoring context.",
-      "evidenceVersion": "cwtools-stellaris-config 3378e418ed875789903a4d7786cb7b54a6f47d4d; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until the game documentation dump includes design for these predicates.",
       "conflicts": {
         "triggers": [
@@ -466,7 +468,7 @@
       "id": "system-megastructure-iterators",
       "selectedAuthority": "rules",
       "reason": "These iterators operate from system scope; the documentation dumps them as universal even though their selected megastructures belong to a system.",
-      "evidenceVersion": "cwtools-stellaris-config 3378e418ed875789903a4d7786cb7b54a6f47d4d; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until the game documentation dump narrows these iterators to system.",
       "conflicts": {
         "triggers": [
@@ -484,7 +486,7 @@
       "id": "global-trait-iterators",
       "selectedAuthority": "rules",
       "reason": "The rules make the existing-trait iterators callable from any enclosing scope; the dump records no_scope for the same global traversal.",
-      "evidenceVersion": "cwtools-stellaris-config 3378e418ed875789903a4d7786cb7b54a6f47d4d; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until the rules and documentation use the same spelling for global trait iteration.",
       "conflicts": {
         "triggers": [
@@ -506,7 +508,7 @@
       "id": "tradition-removal-scopes",
       "selectedAuthority": "rules",
       "reason": "The curated rules explicitly narrow these removal effects while the documentation dump records them as universal; CWT remains the grammar authority and the broader dump claim stays visible as independent drift.",
-      "evidenceVersion": "cwtools-stellaris-config 3378e418ed875789903a4d7786cb7b54a6f47d4d; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until the game documentation dump lists the concrete callable scopes.",
       "conflicts": {
         "triggers": [],
@@ -522,27 +524,10 @@
       }
     },
     {
-      "id": "save-global-event-target-scopes",
-      "selectedAuthority": "mixed",
-      "reason": "The documentation is right that galactic_community is legal, while the rules are current for carrier and pop_group; the vendored snapshot records the missing galactic_community declaration as a known upstream defect.",
-      "evidenceVersion": "cwtools-stellaris-config 3378e418ed875789903a4d7786cb7b54a6f47d4d; Stellaris script docs v4.4.1",
-      "expectedLifetime": "Until the upstream CWT fix restores galactic_community and a current dump replaces pop with pop_group.",
-      "conflicts": {
-        "triggers": [],
-        "effects": [
-          "save_global_event_target_as: rules say [agreement ambient_object archaeological_site army astral_rift bypass carrier colony country debris deposit design espionage_asset espionage_operation exhibit federation first_contact fleet leader megastructure mission planet pop_faction pop_group pop_job sector ship situation species spy_network starbase system war], docs say [agreement ambient_object archaeological_site army astral_rift bypass colony country debris deposit design espionage_asset espionage_operation exhibit federation first_contact fleet galactic_community leader megastructure mission planet pop pop_faction pop_group pop_job sector ship situation species spy_network starbase system war]"
-        ]
-      },
-      "unscopedRules": {
-        "triggers": [],
-        "effects": []
-      }
-    },
-    {
       "id": "export-modifier-scope-family",
       "selectedAuthority": "mixed",
       "reason": "The rules carry carrier and pop_group while the dump additionally carries colony and the retired pop name; neither source alone captures the reconciled current set.",
-      "evidenceVersion": "cwtools-stellaris-config 3378e418ed875789903a4d7786cb7b54a6f47d4d; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until upstream CWT and a current documentation dump agree on the complete modifier-export scope family.",
       "conflicts": {
         "triggers": [],
@@ -559,7 +544,7 @@
       "id": "documentation-scope-fallback",
       "selectedAuthority": "docs",
       "reason": "These concrete rules have no CWT scopes annotation, so the game documentation is the only available scope evidence and remains an explicit fallback rather than being copied into CWT.",
-      "evidenceVersion": "cwtools-stellaris-config 3378e418ed875789903a4d7786cb7b54a6f47d4d; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until upstream CWT adds reviewed scopes annotations for these concrete rules.",
       "conflicts": {
         "triggers": [],
@@ -586,7 +571,7 @@
       "id": "abstract-scripted-effect-placeholder",
       "selectedAuthority": "none",
       "reason": "The abstract <scripted_effect> placeholder is not a public effect and has neither a scope annotation nor a documentation entry.",
-      "evidenceVersion": "cwtools-stellaris-config 3378e418ed875789903a4d7786cb7b54a6f47d4d; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "As long as the non-emitted placeholder remains in the vendored rule table.",
       "conflicts": {
         "triggers": [],
