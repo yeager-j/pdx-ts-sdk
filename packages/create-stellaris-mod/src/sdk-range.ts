@@ -1,5 +1,7 @@
 import semver from "semver";
 
+import { SDK_COMPATIBILITY_POLICY, type ReleaseCompatibilityPolicy } from "./release-manifest.ts";
+
 /**
  * The SDK range this release's baked recipes were verified against.
  *
@@ -9,16 +11,14 @@ import semver from "semver";
  * range rather than merely overlapping it: an overlapping range is one a later
  * `npm install` can resolve to an SDK nobody proved these recipes against.
  *
- * It is deliberately a separate constant from the dependency range
- * `templates/project.ts` writes into a scaffolded `package.json`. They answer
- * different questions — "what does a new project ask for" versus "what did we
- * prove" — and a test asserts the first stays a subset of the second, so the
- * day they need to differ, they can.
+ * Its coordinates live in the named release manifest with the template's SDK
+ * selection. The runtime SDK and test-only SDK-testing selections stay distinct
+ * there because only the former is this compatibility check's subject.
  */
-export const VERIFIED_SDK_RANGE = "0.2.0";
+export const VERIFIED_SDK_RANGE = SDK_COMPATIBILITY_POLICY.verifiedRange;
 
 /** The dependency every check here is about. */
-export const SDK_PACKAGE = "@pdx-ts/sdk";
+export const SDK_PACKAGE = SDK_COMPATIBILITY_POLICY.packageName;
 
 export interface SdkCompatibilityInput {
   /** What the project's package.json asks for, from either dependency block. */
@@ -52,17 +52,21 @@ export type SdkCompatibility =
  * the one the author runs five minutes after generating. Overlap is not
  * evidence, so it is refused.
  */
-export function checkSdkCompatibility(input: SdkCompatibilityInput): SdkCompatibility {
+export function checkSdkCompatibility(
+  input: SdkCompatibilityInput,
+  policy: ReleaseCompatibilityPolicy = SDK_COMPATIBILITY_POLICY
+): SdkCompatibility {
   const { declaredSpecifier, installedVersion } = input;
+  const { packageName: sdkPackage, verifiedRange } = policy;
 
   if (declaredSpecifier === undefined || declaredSpecifier.trim() === "") {
     return {
       supported: false,
       reason: "missing-dependency",
       detail:
-        `The project does not depend on ${SDK_PACKAGE}, so there is nothing to check the ` +
+        `The project does not depend on ${sdkPackage}, so there is nothing to check the ` +
         `generated source against. Add it: the recipes in this release are verified against ` +
-        `${VERIFIED_SDK_RANGE}.`,
+        `${verifiedRange}.`,
     };
   }
 
@@ -71,20 +75,20 @@ export function checkSdkCompatibility(input: SdkCompatibilityInput): SdkCompatib
       supported: false,
       reason: "unprovable-specifier",
       detail:
-        `The project depends on ${SDK_PACKAGE} as ${JSON.stringify(declaredSpecifier)}, which ` +
+        `The project depends on ${sdkPackage} as ${JSON.stringify(declaredSpecifier)}, which ` +
         `is not a semver range, so no version can be proved to be inside ` +
-        `${VERIFIED_SDK_RANGE}. A \`file:\`, \`link:\`, \`workspace:\` or git dependency can be ` +
+        `${verifiedRange}. A \`file:\`, \`link:\`, \`workspace:\` or git dependency can be ` +
         `anything at all.`,
     };
   }
 
-  if (!semver.subset(declaredSpecifier, VERIFIED_SDK_RANGE)) {
+  if (!semver.subset(declaredSpecifier, verifiedRange)) {
     return {
       supported: false,
       reason: "range-not-subset",
       detail:
-        `The project depends on ${SDK_PACKAGE} ${declaredSpecifier}, which is not inside the ` +
-        `${VERIFIED_SDK_RANGE} this release's recipes were verified against. Overlapping is ` +
+        `The project depends on ${sdkPackage} ${declaredSpecifier}, which is not inside the ` +
+        `${verifiedRange} this release's recipes were verified against. Overlapping is ` +
         `not enough: a later install could resolve a version nobody proved them against.`,
     };
   }
@@ -92,7 +96,7 @@ export function checkSdkCompatibility(input: SdkCompatibilityInput): SdkCompatib
   if (installedVersion === undefined) {
     return {
       supported: true,
-      detail: `${SDK_PACKAGE} ${declaredSpecifier} is inside ${VERIFIED_SDK_RANGE}.`,
+      detail: `${sdkPackage} ${declaredSpecifier} is inside ${verifiedRange}.`,
     };
   }
 
@@ -101,21 +105,21 @@ export function checkSdkCompatibility(input: SdkCompatibilityInput): SdkCompatib
       supported: false,
       reason: "installed-version-unsupported",
       detail:
-        `The installed ${SDK_PACKAGE} reports version ${JSON.stringify(installedVersion)}, ` +
+        `The installed ${sdkPackage} reports version ${JSON.stringify(installedVersion)}, ` +
         `which is not a semver version, so it cannot be checked against ` +
-        `${VERIFIED_SDK_RANGE}.`,
+        `${verifiedRange}.`,
     };
   }
   for (const [range, what] of [
     [declaredSpecifier, "the project asks for"],
-    [VERIFIED_SDK_RANGE, "this release verified against"],
+    [verifiedRange, "this release verified against"],
   ] as const) {
     if (!semver.satisfies(installedVersion, range)) {
       return {
         supported: false,
         reason: "installed-version-unsupported",
         detail:
-          `The installed ${SDK_PACKAGE} is ${installedVersion}, outside the ${range} ` +
+          `The installed ${sdkPackage} is ${installedVersion}, outside the ${range} ` +
           `${what}. Install what the project declares before generating against it.`,
       };
     }
@@ -124,7 +128,7 @@ export function checkSdkCompatibility(input: SdkCompatibilityInput): SdkCompatib
   return {
     supported: true,
     detail:
-      `${SDK_PACKAGE} ${declaredSpecifier} is inside ${VERIFIED_SDK_RANGE}, and ` +
+      `${sdkPackage} ${declaredSpecifier} is inside ${verifiedRange}, and ` +
       `${installedVersion} is installed.`,
   };
 }

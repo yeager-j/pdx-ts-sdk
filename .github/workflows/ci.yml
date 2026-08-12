@@ -22,6 +22,9 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # Must run before build: build refreshes the generated module, whereas
+      # this proves package.json's version was committed into the source tree.
+      - run: npm run codegen:scaffolder-version:check
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

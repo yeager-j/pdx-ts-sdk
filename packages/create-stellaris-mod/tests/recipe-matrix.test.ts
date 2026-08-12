@@ -134,6 +134,10 @@ describe("technology, with its only answer set", () => {
 
     afterAll(() => project?.dispose());
 
+    it("uses the source export condition only in the matrix harness", () => {
+      expect(project.usesSourceCondition()).toBe(true);
+    });
+
     it(
       "typechecks against the real SDK surface",
       () => {

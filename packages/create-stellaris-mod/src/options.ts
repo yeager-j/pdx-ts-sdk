@@ -63,6 +63,11 @@ export interface FlagSpec {
   readonly negatable?: boolean;
 }
 
+export interface GenerateFlagSpec extends FlagSpec {
+  /** A recipe question may not take over a command-owned flag name. */
+  readonly reservedForRecipe: boolean;
+}
+
 export const FLAGS = {
   name: { type: "string", value: "<string>", describe: "Display name, as the launcher shows it" },
   prefix: {
@@ -115,22 +120,24 @@ export const GENERATE_FLAGS = {
     type: "string",
     value: "<path>",
     describe: "Start the manifest search here, not in the current directory",
+    reservedForRecipe: true,
   },
-  yes: FLAGS.yes,
-  "dry-run": FLAGS["dry-run"],
+  yes: { ...FLAGS.yes, reservedForRecipe: true },
+  "dry-run": { ...FLAGS["dry-run"], reservedForRecipe: true },
   "allow-unsupported-sdk": {
     type: "boolean",
     describe: "Generate even when the SDK range cannot be proved supported",
+    reservedForRecipe: true,
   },
-  help: FLAGS.help,
-  version: FLAGS.version,
-} as const satisfies Record<string, FlagSpec>;
+  help: { ...FLAGS.help, reservedForRecipe: true },
+  version: { ...FLAGS.version, reservedForRecipe: true },
+} as const satisfies Record<string, GenerateFlagSpec>;
 
 export type GenerateFlagName = keyof typeof GENERATE_FLAGS;
 
 /**
- * The same table as a list of names, for the one consumer that needs the names
- * alone: a recipe's question key becomes `--<key>`, so a question called
+ * A derived projection of the command-owned names, for the one consumer that
+ * needs names alone: a recipe's question key becomes `--<key>`, so a question called
  * `dry-run` would silently shadow the flag that decides whether anything is
  * written. The catalog rejects that collision when it is constructed rather
  * than when somebody runs the recipe, and this is the list it checks against.
@@ -138,17 +145,13 @@ export type GenerateFlagName = keyof typeof GENERATE_FLAGS;
  * `help` and `version` are in it even though they are not generate-specific:
  * `--help` must keep meaning help under every command.
  *
- * `satisfies` catches a name here that the table does not carry; a test catches
- * the other direction, which no type can.
+ * The reserved policy is declared beside each canonical flag, so a new command
+ * flag cannot accidentally become a recipe question merely because somebody
+ * forgot a second handwritten list.
  */
-export const COMMON_GENERATE_FLAGS = [
-  "cwd",
-  "yes",
-  "dry-run",
-  "allow-unsupported-sdk",
-  "help",
-  "version",
-] as const satisfies readonly GenerateFlagName[];
+export const COMMON_GENERATE_FLAGS = Object.keys(GENERATE_FLAGS).filter(
+  (name): name is GenerateFlagName => GENERATE_FLAGS[name as GenerateFlagName].reservedForRecipe
+);
 
 /** A fault in what an author typed, as opposed to a fault in their project. */
 export class OptionsError extends Error {

@@ -12,6 +12,7 @@
 import semver from "semver";
 import { describe, expect, it } from "vitest";
 
+import type { ReleaseCompatibilityPolicy } from "../src/release-manifest.ts";
 import { checkSdkCompatibility, VERIFIED_SDK_RANGE } from "../src/sdk-range.ts";
 
 function check(declaredSpecifier: string | undefined, installedVersion?: string) {
@@ -19,6 +20,33 @@ function check(declaredSpecifier: string | undefined, installedVersion?: string)
 }
 
 describe("checkSdkCompatibility", () => {
+  const compatiblePolicy: ReleaseCompatibilityPolicy = {
+    packageName: "@pdx-ts/sdk",
+    verifiedRange: "^0.2.0",
+  };
+  const incompatiblePolicy: ReleaseCompatibilityPolicy = {
+    packageName: "@pdx-ts/sdk",
+    verifiedRange: "0.3.0",
+  };
+
+  it("accepts a custom release policy that proves the declared coordinate", () => {
+    expect(
+      checkSdkCompatibility(
+        { declaredSpecifier: "0.2.1", installedVersion: undefined },
+        compatiblePolicy
+      ).supported
+    ).toBe(true);
+  });
+
+  it("refuses a custom release policy that cannot prove the declared coordinate", () => {
+    const result = checkSdkCompatibility(
+      { declaredSpecifier: "0.2.1", installedVersion: undefined },
+      incompatiblePolicy
+    );
+    expect(result.supported).toBe(false);
+    expect(result.supported === false && result.reason).toBe("range-not-subset");
+  });
+
   it("takes a declared range inside the verified one, with nothing installed", () => {
     // Not an oversight: an absent install proves nothing either way, and a
     // range that is provably inside the verified one is evidence on its own.

@@ -1,8 +1,8 @@
 /**
  * The published version, as `--version` reports it.
  *
- * A hand-maintained copy of `package.json`'s: the compiled CLI cannot read its
- * own manifest without knowing where it landed, and `packaging.test.ts` is what
- * notices when a release bumps one and forgets the other.
+ * Generated from this package's manifest as part of every build, so both repo
+ * tests and packed CLI runtime consume the same compiled value without the
+ * executable having to discover where npm installed its package.json.
  */
-export const VERSION = "0.2.0";
+export { VERSION } from "./generated/package-version.ts";

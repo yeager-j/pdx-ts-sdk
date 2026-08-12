@@ -32,7 +32,8 @@
     "create"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "generate:version": "node scripts/generate-version.mjs",
+    "build": "npm run generate:version && tsc -p tsconfig.build.json",
     "prepack": "npm run build"
   },
   "dependencies": {

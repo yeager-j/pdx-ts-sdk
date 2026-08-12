@@ -1,15 +1,14 @@
 /**
- * The Project Manifest: what the adapter accepts, and the two other things that
- * have to agree with it.
+ * The Project Manifest: one field authority, and its parser and schema
+ * projections.
  *
- * There are three statements of the manifest's shape, and only one of them can
- * be the authority a reviewer reads. `parseManifest` is that one. The emitted
- * JSON schema is the editor's copy, so the corpus below runs through both and
- * the accept/reject verdicts must match exactly — a schema that is merely
- * *nearly* right shows up as an in-editor error on a manifest the CLI takes, or
- * worse, as silence on one it refuses. `ProjectModConfig` is the third, and the
- * type-level checks pin it to the SDK's real `ModConfig` in both directions, so
- * a field added there breaks a test here rather than a stranger's project.
+ * `PROJECT_MOD_FIELDS` owns the shape. `parseManifest` and the emitted JSON
+ * schema project it for runtime and editor use, so the corpus below runs
+ * through both and their accept/reject verdicts must match exactly — a schema
+ * that is merely *nearly* right shows an in-editor error on a manifest the CLI
+ * takes, or worse, stays silent on one it refuses. A parsed config then has a
+ * one-way, type-only adapter into the SDK's `ModConfig`; the scaffolder does not
+ * claim the reverse conversion or acquire a runtime SDK dependency.
  *
  * ajv is a devDependency and stays one: the runtime adapter is hand-rolled
  * because this package has no runtime dependency on the SDK and wants none on a
@@ -27,6 +26,9 @@ import {
   findManifest,
   ManifestError,
   parseManifest,
+  PROJECT_MOD_FIELDS,
+  projectModFieldSchema,
+  toSdkModConfig,
   type ProjectModConfig,
 } from "../src/manifest.ts";
 import type { Resolved } from "../src/options.ts";
@@ -302,6 +304,21 @@ describe("parseManifest", () => {
       expect(() => parseManifest(bytes, SOURCE)).toThrow(SOURCE);
     }
   });
+
+  it("projects the patterned descriptor into both parser and schema validation", () => {
+    const accepted = withMod({ name: "My Mod", supportedVersion: "v4.4.*" });
+    const rejected = withMod({ name: "My Mod", supportedVersion: "custom" });
+    const validate = new Ajv2020({ strict: true }).compile(
+      JSON.parse(manifestSchema()) as Record<string, unknown>
+    );
+    const schema = projectModFieldSchema(PROJECT_MOD_FIELDS.supportedVersion);
+
+    expect(schema["pattern"]).toBe(PROJECT_MOD_FIELDS.supportedVersion.pattern.source);
+    expect(accepts(accepted)).toBe(true);
+    expect(accepts(rejected)).toBe(false);
+    expect(validate(JSON.parse(accepted))).toBe(true);
+    expect(validate(JSON.parse(rejected))).toBe(false);
+  });
 });
 
 /**
@@ -496,36 +513,17 @@ describe("the manifest init writes", () => {
 });
 
 /**
- * `ProjectModConfig` restates the SDK's `ModConfig` minus `prefix`, because the
- * CLI must not take a runtime dependency on the SDK. Restating a type is only
- * safe when something checks the restatement, so these are compile-time
- * assertions against the real one — in both directions, plus key-set equality,
- * which is what catches an optional field going missing.
+ * A parsed Project Manifest has one type-only path into the SDK. The adapter is
+ * intentionally one-way: a Project Manifest is the scaffolder's author-owned
+ * shape, not a second attempt to model every SDK configuration.
  */
-type SdkConfig = Omit<ModConfig, "prefix">;
-type Assert<T extends true> = T;
-type Mutual<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
-
-type _KeysMatch = Assert<Mutual<keyof ProjectModConfig, keyof SdkConfig>>;
-
 describe("ProjectModConfig", () => {
-  it("is assignable to and from the SDK's ModConfig minus prefix", () => {
+  it("adapts a parsed config into the SDK's ModConfig", () => {
     const fromManifest: ProjectModConfig = { name: "My Mod", supportedVersion: "v4.4.*" };
-    const asSdkConfig: SdkConfig = fromManifest;
-    const backAgain: ProjectModConfig = asSdkConfig;
-    expect(backAgain).toBe(fromManifest);
-  });
-
-  it("carries every optional field the SDK's config has", () => {
-    const full: Required<ProjectModConfig> = {
-      name: "My Mod",
-      version: "0.1.0",
-      supportedVersion: "v4.4.*",
-      tags: [],
-      acceptGameVersion: "4.4.6",
-      uncheckedVanillaIds: false,
-    };
-    const asSdkConfig: Required<SdkConfig> = full;
-    expect(Object.keys(asSdkConfig).sort()).toEqual(Object.keys(full).sort());
+    const sdkConfig: ModConfig = toSdkModConfig({
+      prefix: "my_mod",
+      config: fromManifest,
+    });
+    expect(sdkConfig).toEqual({ ...fromManifest, prefix: "my_mod" });
   });
 });

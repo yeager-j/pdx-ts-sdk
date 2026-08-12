@@ -19,7 +19,7 @@
  * restatement here would be one more thing that can silently disagree.
  */
 
-import { PREFIX_PATTERN, SUPPORTED_VERSION_PATTERN } from "../manifest.ts";
+import { PREFIX_PATTERN, PROJECT_MOD_FIELDS, projectModFieldSchema } from "../manifest.ts";
 import type { Resolved } from "../options.ts";
 import { PROJECT_CONTENT_DIRECTORY_PATTERN } from "../project-layout.ts";
 
@@ -76,28 +76,16 @@ export function manifestSchema(): string {
     $defs: {
       modConfig: {
         type: "object",
-        required: ["name", "supportedVersion"],
+        required: Object.entries(PROJECT_MOD_FIELDS)
+          .filter(([, field]) => field.required)
+          .map(([name]) => name),
         additionalProperties: false,
-        properties: {
-          name: { description: "Display name shown in the launcher.", type: "string" },
-          version: { type: "string" },
-          supportedVersion: {
-            description:
-              'Launcher version pattern, e.g. "v4.4.*": one to three dot-separated parts, ' +
-              'each a number or "*".',
-            type: "string",
-            pattern: SUPPORTED_VERSION_PATTERN.source,
-          },
-          tags: { description: "Launcher tags.", type: "array", items: { type: "string" } },
-          acceptGameVersion: {
-            description: "Acknowledges a game build the SDK's rule table is not verified against.",
-            type: "string",
-          },
-          uncheckedVanillaIds: {
-            description: "Acknowledges authoring without compile-time vanilla id checking.",
-            type: "boolean",
-          },
-        },
+        properties: Object.fromEntries(
+          Object.entries(PROJECT_MOD_FIELDS).map(([name, field]) => [
+            name,
+            projectModFieldSchema(field),
+          ])
+        ),
       },
     },
   });
