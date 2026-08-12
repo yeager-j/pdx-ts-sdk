@@ -153,6 +153,7 @@ export interface StrikeCraftComponentTemplateFriendlyAura {
   radius?: number;
   applyOn?: AuraType;
   stackInfo: StrikeCraftComponentTemplateFriendlyAuraStackInfo;
+  modifier?: ModifierClosure<"ship">;
   graphics?: StrikeCraftComponentTemplateFriendlyAuraGraphics;
 }
 
@@ -175,6 +176,7 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_FIELDS: readonly Cont
     form: "block",
     fields: STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_STACK_INFO_FIELDS,
   },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   {
     key: "graphics",
     member: "graphics",
@@ -351,6 +353,7 @@ export interface StrikeCraftComponentTemplateHostileAura {
   radius?: number;
   applyOn?: AuraType;
   stackInfo: StrikeCraftComponentTemplateHostileAuraStackInfo;
+  modifier?: ModifierClosure<"ship">;
   graphics?: StrikeCraftComponentTemplateHostileAuraGraphics;
   damagePerDay?: StrikeCraftComponentTemplateHostileAuraDamagePerDay;
 }
@@ -374,6 +377,7 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_FIELDS: readonly Conte
     form: "block",
     fields: STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_STACK_INFO_FIELDS,
   },
+  { key: "modifier", member: "modifier", shape: "modifierBlock", form: "closure" },
   {
     key: "graphics",
     member: "graphics",

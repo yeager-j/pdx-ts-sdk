@@ -23,7 +23,12 @@ import {
 } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import { camelCase, docComment, indefiniteArticle, isPlainName, pascalCase } from "../naming.ts";
-import { CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS, type ContentFieldOverride } from "../overlay.ts";
+import {
+  CONTENT_FIELD_OVERRIDES,
+  FIELD_WIDENINGS,
+  type ContentFieldOverride,
+  type ContentFieldShape,
+} from "../overlay.ts";
 import { formOfShape } from "./authored-form.ts";
 import { Emitter, type TsValue } from "./types.ts";
 
@@ -213,6 +218,101 @@ function spliceCategory(type: RuleType): string | null {
   }
   const unique = new Set(categories);
   return unique.size === 1 ? [...unique][0]! : null;
+}
+
+/**
+ * The `single_alias` clauses whose expansion already names its runtime shape.
+ *
+ * A clause is a rule the vendored config writes once and splices everywhere; a
+ * field that splices one is not "a block that happens to look like a modifier
+ * map", it *is* the clause, and `RuleType.via` carries the name that says so.
+ * That is the whole content of the 85 overlay `shape` rows this table replaced:
+ * every one of them restated, per field, that `modifier`/`triggered_*_modifier`
+ * splices `modifier_clause`/`triggered_modifier*_clause` — an open
+ * modifier-name map (`alias_name[modifier]`) that the ordinary field model
+ * cannot see, because an alias splice has no named key to lower.
+ *
+ * The `by_*` variants differ from plain `triggered_modifier_clause` only in the
+ * scope their `potential` pushes (`## push_scope = pop_group|planet|starbase|
+ * situation|leader`, aliases.cwt) and, for by_pop_group, one extra
+ * `divide_over_pop_groups` key `TriggeredModifier` does not model. They share
+ * this shape because `lowerOrdinary` reads that push_scope off the expanded
+ * `potential` field rather than off the field's own container scope — the split
+ * a bug bash caught on the by_planet rows, where the field's
+ * `## replace_scopes = { this = country }` and the clause's planet-scoped
+ * `potential` disagree and collapsing them typed the trigger against the wrong
+ * scope. Deriving the shape does not derive that scope; `triggeredModifierPotential`
+ * still validates it and still fails loudly when the clause has no `potential`.
+ *
+ * Deliberately absent:
+ *
+ * - `trigger_clause` / `effect_clause` — pure single-category splices, which
+ *   `spliceCategory` already recognises structurally; adding them here would be
+ *   a second authority for the same decision.
+ * - `triggered_desc_clause` — `trigger` + `text`, ordinary named fields that
+ *   `triggerStructOf` lowers as a `triggerStruct`.
+ * - `leader_traits`, and any other clause `aliases.cwt` declares: no runtime
+ *   shape claims them, so they stay reported as unsupported rather than being
+ *   quietly bent into one that nearly fits.
+ */
+const CLAUSE_SHAPES = new Map<string, ContentFieldShape>([
+  ["modifier_clause", "modifierBlock"],
+  ["triggered_modifier_clause", "triggeredModifierBlock"],
+  ["triggered_modifier_by_pop_group_clause", "triggeredModifierBlock"],
+  ["triggered_modifier_by_planet_clause", "triggeredModifierBlock"],
+  ["triggered_modifier_by_starbase_clause", "triggeredModifierBlock"],
+  ["triggered_modifier_by_situation_clause", "triggeredModifierBlock"],
+  ["triggered_modifier_by_leader_clause", "triggeredModifierBlock"],
+]);
+
+/**
+ * The economic-template splice, which has no `single_alias` name to read.
+ *
+ * `resources = { category? alias_name[economic_template] }` is written out at
+ * every site rather than aliased, so the fingerprint is the body: exactly one
+ * `economic_template` or `economic_template_no_produce` splice, optionally a
+ * named `category`, and nothing else. Anything further — a bare value, another
+ * key — means the site is not the plain resource block the runtime shape models,
+ * so this declines rather than lowering a field whose extra keys would vanish.
+ *
+ * `economic_template_only_produces` (crisis.cwt) is deliberately unmapped:
+ * there is no `EconomicResourceBlockOnlyProduces` to lower it to, and mapping it
+ * onto either neighbour would admit `cost`/`upkeep` the category refuses.
+ */
+function economicSpliceShape(type: RuleType): ContentFieldShape | null {
+  if (type.kind !== "block" || type.bare.length > 0) {
+    return null;
+  }
+  const splices = type.fields.flatMap((field) =>
+    field.key.kind === "aliasName" ? [field.key.category] : []
+  );
+  const others = type.fields.filter(
+    (field) => field.key.kind === "name" && field.key.name === "category"
+  );
+  if (splices.length !== 1 || splices.length + others.length !== type.fields.length) {
+    return null;
+  }
+  switch (splices[0]!) {
+    case "economic_template":
+      return "economicResources";
+    case "economic_template_no_produce":
+      return "economicResourcesNoProduce";
+    default:
+      return null;
+  }
+}
+
+/**
+ * The runtime shape a field's own declaration names, or `null` when it names
+ * none. Read only where the overlay states nothing, so an explicit row still
+ * wins over the derivation.
+ */
+function derivedClauseShape(field: RuleField): ContentFieldShape | undefined {
+  if (field.type.kind !== "block") {
+    return undefined;
+  }
+  const clause = field.type.via === undefined ? undefined : CLAUSE_SHAPES.get(field.type.via);
+  return clause ?? economicSpliceShape(field.type) ?? undefined;
 }
 
 /**
@@ -1470,7 +1570,7 @@ function lowerOrdinary(
   widening: string | undefined,
   path: string
 ): LoweredField | null {
-  const requested = override?.shape;
+  const requested = override?.shape ?? derivedClauseShape(field);
   if (requested === "modifierBlock") {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
