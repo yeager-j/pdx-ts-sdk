@@ -1,12 +1,12 @@
 # cwtools-stellaris-config snapshot
 
-Upstream: https://github.com/DragonKnightOfBreeze/cwtools-stellaris-config
+Upstream: https://github.com/yeager-j/cwtools-stellaris-config
 
 | | |
 | --- | --- |
-| Commit | `3378e418ed875789903a4d7786cb7b54a6f47d4d` |
-| Committed | 2026-08-05 |
-| Fetched | 2026-08-05 |
+| Commit | `f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a` |
+| Committed | 2026-08-10 |
+| Fetched | 2026-08-12 |
 
 Licensed under the upstream MIT license, reproduced in `LICENSE`.
 
@@ -34,6 +34,12 @@ Structurally it also merges `scope_changes.cwt` into `triggers.cwt` and
 and `effects.log`, and expresses scope-changing rules as
 `single_alias_right[trigger_clause]` rather than an inline block.
 
+The vendored source is now our own fork of that fork,
+[yeager-j/cwtools-stellaris-config](https://github.com/yeager-j/cwtools-stellaris-config).
+Everything above still applies — it tracks DragonKnightOfBreeze's `master` —
+but rule fixes land there first and are contributed upstream from there, so
+this snapshot can carry a fix before upstream merges it.
+
 ## What is here, and what is not
 
 Only the inputs codegen reads:
@@ -57,43 +63,43 @@ game-version directories.
 
 ### Known upstream defects
 
-The defects this file previously listed are fixed upstream as of this snapshot,
-across PRs #17, #18 and #19: `common/leader_classes.cwt:13` closes its
+The defects this file previously listed are fixed as of this snapshot, across
+PRs #17, #18, #19 and #20: `common/leader_classes.cwt:13` closes its
 `desc = description"` quote and the file parses; `modifiers.cwt` files the two
 `situation_nomad_economy_*` rows under the `Countries` category that
-`modifier_categories.cwt` actually defines, drops two lowercase archetype
-modifier names the game only generates uppercase, and agrees with the game's
+`modifier_categories.cwt` actually defines, and agrees with the game's
 `modifiers.log` on every shared name's category; the ten `## default: …`
-annotations that should have been `###` doc comments are all corrected; and the
+annotations that should have been `###` doc comments are all corrected; the
 three exhibit iterators are declared once each, correctly scoped, rather than
-twice with a `## copes` typo. `malformedOptions` and
-`unknownModifierCategories` are both empty in `drift-baseline.json` as a result.
+twice with a `## copes` typo; and `scopes.cwt` declares `galactic_community`
+(7af3179), which restores `save_global_event_target_as`'s scope list and puts
+the name into the generated `ScopeName` union and `ScopeMap`. `malformedOptions`
+and `unknownModifierCategories` are both empty in `drift-baseline.json` as a
+result, and `unknownScopes` is down to one name.
 
-Three defects remain, none of them blocking:
+Two defects remain, neither of them blocking:
 
-- `save_global_event_target_as` no longer lists the `galactic_community` scope.
-  That removal was ours (PR #19) and it was wrong — the game's own `effects.log`
-  documents `galactic_community` as a supported scope for exactly that effect,
-  and `enums.cwt` lists it in `scope_type_token`. The removal was argued from
-  its absence in `script-docs/*/scopes.log`, but that file dumps scope *changes*
-  (links), not scope types: `exhibit` and `espionage_asset` are absent from it
-  too and are both declared scopes. The real defect is that `scopes.cwt` never
-  declared `galactic_community`. A follow-up PR restores the scope list and adds
-  the declaration; until it lands, `unknownScopes` keeps the name and the
-  generated `ScopeName` union is missing it. Nothing else in our output moves,
-  because codegen already dropped the undeclared scope.
 - The game's own `modifiers.log` does not list the two
   `situation_nomad_economy_*` names or `starbase_collected_colony_resources_add`,
   so those stay under `modifiers.rulesOnly`. The dump is the authority for
   generated names, so this is upstream-unfixable rather than a rules bug.
-- `unknownScopes` also keeps `pop`, which the v4.4.1 dumps still name even
-  though 4.0 replaced the scope with `pop_group`. That is dump staleness, not a
-  rules defect — the rules were updated.
+- `unknownScopes` keeps `pop`, which the v4.4.1 dumps still name even though
+  4.0 replaced the scope with `pop_group`. That is dump staleness, not a rules
+  defect — the rules were updated.
+
+`modifiers.rulesOnly` also carries `biological_logistic_growth_mult` and
+`lithoid_logistic_growth_mult`. Those two are a deliberate fork decision rather
+than a defect: the dump generates them only uppercase-prefixed
+(`BIOLOGICAL_logistic_growth_mult`, `LITHOID_logistic_growth_mult`), PR #19
+dropped the lowercase spellings for that reason, and PR #20 restored them under
+the `Pops` category. Because the dump is the authority for modifier names,
+restoring them changes no generated type — it only records them as rules-only.
 
 ## Updating
 
-Re-run the copy against a newer commit — and a newer `script-docs` version when
-the game updates — then update the table above and run `npm run codegen`. Drift
+Re-run the copy against a newer commit of the fork — and a newer `script-docs`
+version when the game updates — then update the table above and run
+`npm run codegen`. Drift
 in the name join, in the scope cross-check, or in the parser's diagnostics will
 fail the build against `packages/codegen-cwt/src/drift-baseline.json`. Review the diff, then
 rebaseline deliberately. That failure is the point: upstream renames and
