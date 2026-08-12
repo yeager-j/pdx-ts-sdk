@@ -20,16 +20,19 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import type { DefinedEvent, EventRef, ScopeName } from "@pdx-ts/sdk";
 
-import { applyEffectEntries, type ForcedArms } from "./interpret.ts";
+import { applyEffectEntries, assertChoicePlanConsumed, type ForcedArms } from "./interpret.ts";
 import {
   ArchaeologicalSite,
   assertSupportedSimScope,
   buildState,
+  cloneState,
+  commitState,
   Country,
   Fleet,
   renderEntity,
   sameEntity,
   Situation,
+  type ChoicePlanState,
   type FiredRecord,
   type FixtureSpec,
   type PendingFire,
@@ -45,56 +48,28 @@ export { DAYS_PER_MONTH, DAYS_PER_YEAR, type ForcedArms } from "./interpret.ts";
 export type SimEvent<
   S extends SimScopeName = SimScopeName,
   From extends SimScopeName | undefined = SimScopeName | undefined,
-> = DefinedEvent<S, From>;
+> = DefinedEvent<S, From, string>;
 
 /** The event's main scope, as the sim models it. */
 type EventScope<E> =
-  E extends EventRef<infer S, ScopeName | undefined> ? Extract<S, SimScopeName> : never;
+  E extends EventRef<infer S, ScopeName | undefined, string> ? Extract<S, SimScopeName> : never;
 
 /** The event's declared FROM kind; `undefined` when contract-less. */
-type EventFromKind<E> = E extends EventRef<ScopeName, infer F> ? F : undefined;
-
-export interface EventRegistryEntry {
-  /**
-   * Widened past `SimEvent` (any `ScopeName`, any declared FROM) rather than
-   * narrowed to what the fixture actually supports — see `FixtureOptions.events`'s
-   * doc comment for why. `assertSupportedSimScope` is what turns an
-   * unsupported scope caught here into a diagnosis instead of silent
-   * acceptance.
-   */
-  readonly event: DefinedEvent<ScopeName, ScopeName | undefined>;
-  /** The declared FROM kind, re-checked at delivery. */
-  readonly from: SimScopeName | undefined;
-}
-
-/**
- * Registers an event that declares a FROM contract. The phantom is erased at
- * runtime, so the fixture needs the kind restated — this helper type-checks
- * the restatement against the phantom, one line per event.
- */
-export function declareFrom<F extends SimScopeName>(
-  event: SimEvent<SimScopeName, F>,
-  from: F
-): EventRegistryEntry {
-  return { event, from };
-}
+type EventFromKind<E> = E extends EventRef<ScopeName, infer F, string> ? F : undefined;
 
 export interface FixtureOptions {
   /**
-   * Every event `advance` may deliver. Contract-less events register as bare
-   * handles; events with a `from:` declaration go through `declareFrom`.
+   * Every event `advance` may deliver. Runtime scope and FROM metadata come
+   * directly from the authored `DefinedEvent`.
    *
-   * The bare-handle arm accepts any `ScopeName`, not just `SimScopeName` —
-   * narrowing it to `SimEvent` here would mean an ordinary unsupported event
+   * The list accepts any `ScopeName`, not just `SimScopeName` — narrowing it
+   * to `SimEvent` here would mean an ordinary unsupported event
    * (`defineLeaderEvent`, say) never reaches `World`'s constructor at all,
    * so `assertSupportedSimScope`'s diagnosis would never run and every
    * author would keep seeing TypeScript's own bare assignability failure
-   * instead (SDK-49's second half). `From` stays pinned to `undefined` here
-   * regardless: an event that declares a FROM contract still has to go
-   * through `declareFrom`, supported scope or not, so that contract is
-   * re-checked rather than silently dropped.
+   * instead (SDK-49's second half).
    */
-  readonly events: ReadonlyArray<DefinedEvent<ScopeName, undefined> | EventRegistryEntry>;
+  readonly events: ReadonlyArray<DefinedEvent<ScopeName, ScopeName | undefined, string>>;
 }
 
 interface HarnessFireOpts extends ForcedArms {
@@ -102,7 +77,7 @@ interface HarnessFireOpts extends ForcedArms {
 }
 
 function immediateEntriesOf(
-  event: DefinedEvent<ScopeName, ScopeName | undefined>
+  event: DefinedEvent<ScopeName, ScopeName | undefined, string>
 ): readonly PdxEntry[] | undefined {
   if (event.entry.value.kind !== "container") {
     return undefined;
@@ -118,26 +93,29 @@ function immediateEntriesOf(
 
 export class World {
   private readonly state: WorldState;
-  private readonly registry: Map<string, EventRegistryEntry>;
+  private readonly registry: Map<string, DefinedEvent<ScopeName, ScopeName | undefined, string>>;
 
   constructor(state: WorldState, options: FixtureOptions) {
     this.state = state;
     this.registry = new Map();
-    for (const registration of options.events) {
-      const entry: EventRegistryEntry =
-        "event" in registration ? registration : { event: registration, from: undefined };
-      // The static types already require every registered event's scope (and
-      // declared FROM) to be a SimScopeName; this is the runtime backstop for
-      // events built from data rather than through the typed definers — see
-      // `assertSupportedSimScope`'s doc comment.
-      assertSupportedSimScope(entry.event.scope, `Registering event "${entry.event.id}"`);
-      if (entry.from !== undefined) {
+    for (const event of options.events) {
+      // FixtureOptions deliberately accepts every authored event kind so an
+      // unsupported scope reaches this targeted diagnosis instead of failing
+      // as an opaque assignability error at the call site.
+      assertSupportedSimScope(event.scope, `Registering event "${event.id}"`);
+      if (event.from !== undefined) {
         assertSupportedSimScope(
-          entry.from,
-          `Registering event "${entry.event.id}"'s declared FROM contract`
+          event.from,
+          `Registering event "${event.id}"'s declared FROM contract`
         );
       }
-      this.registry.set(entry.event.id, entry);
+      if (this.registry.has(event.id)) {
+        throw new InterpreterError(
+          `Event "${event.id}" is registered more than once; event IDs must be unique. ` +
+            coverageSummary()
+        );
+      }
+      this.registry.set(event.id, event);
     }
   }
 
@@ -199,26 +177,49 @@ export class World {
   fire(event: SimEvent, scope: SimScope<SimScopeName>, opts?: HarnessFireOpts): void {
     assertSupportedSimScope(event.scope, `Firing event "${event.id}"`);
     const registered = this.registry.get(event.id);
-    if (registered !== undefined && registered.from !== undefined) {
-      if (opts?.from === undefined || opts.from.id.kind !== registered.from) {
+    if (registered !== event) {
+      throw new InterpreterError(
+        `Event "${event.id}" is not registered with this fixture — pass this exact event via ` +
+          `fixture(spec, { events: [...] }) before firing it. ${coverageSummary()}`
+      );
+    }
+    if (event.scope !== scope.id.kind) {
+      throw new InterpreterError(
+        `Event "${event.id}" is ${event.scope}-scoped but was fired on a ${scope.id.kind} scope. ` +
+          coverageSummary()
+      );
+    }
+    if (event.from === undefined) {
+      if (opts?.from !== undefined) {
         throw new InterpreterError(
-          `Event "${event.id}" declares from: "${registered.from}" — fire it with a matching ` +
+          `Event "${event.id}" does not declare FROM, so fire it without a FROM witness. ` +
+            coverageSummary()
+        );
+      }
+    } else {
+      if (opts?.from === undefined || opts.from.id.kind !== event.from) {
+        throw new InterpreterError(
+          `Event "${event.id}" declares from: "${event.from}" — fire it with a matching ` +
             `FROM: world.fire(event, scope, { from }). ${coverageSummary()}`
         );
       }
     }
-    this.deliver(
-      {
-        id: event.id,
-        dueDay: this.state.day,
-        scope: scope.id,
-        from: opts?.from?.id,
-        seq: this.state.seq++,
-      },
-      event,
-      "harness",
-      [...(opts?.arms ?? [])]
-    );
+    this.transact((state) => {
+      const choicePlan: ChoicePlanState = { arms: [...(opts?.arms ?? [])], next: 0 };
+      this.deliver(
+        state,
+        {
+          id: event.id,
+          dueDay: state.day,
+          scope: scope.id,
+          from: opts?.from?.id,
+          seq: state.seq++,
+          choicePlan,
+        },
+        event,
+        "harness"
+      );
+    });
   }
 
   /**
@@ -227,7 +228,18 @@ export class World {
    * enqueue more, which also deliver if due. Ages nothing else.
    */
   advance(days: number): void {
+    if (!Number.isSafeInteger(days) || days < 0) {
+      throw new InterpreterError(
+        `advance days must be a non-negative safe integer, got ${String(days)}. ` +
+          coverageSummary()
+      );
+    }
     const end = this.state.day + days;
+    if (!Number.isSafeInteger(end)) {
+      throw new InterpreterError(
+        `advance would move the world to an unsafe day value (${String(end)}). ` + coverageSummary()
+      );
+    }
     for (;;) {
       const next = this.state.queue
         .filter((pending) => pending.dueDay <= end)
@@ -235,21 +247,12 @@ export class World {
       if (next === undefined) {
         break;
       }
-      this.state.queue.splice(this.state.queue.indexOf(next), 1);
-      this.state.day = Math.max(this.state.day, next.dueDay);
-
       const registered = this.registry.get(next.id);
       if (registered === undefined) {
         throw new InterpreterError(
           `Queued event "${next.id}" is not registered with this fixture — pass it via ` +
             `fixture(spec, { events: [...] }) so delivery can run its immediate. ` +
             coverageSummary()
-        );
-      }
-      if (registered.event.scope !== next.scope.kind) {
-        throw new InterpreterError(
-          `Queued event "${next.id}" is ${registered.event.scope}-scoped but was fired on a ` +
-            `${next.scope.kind} scope. ${coverageSummary()}`
         );
       }
       if (registered.from !== undefined && next.from?.kind !== registered.from) {
@@ -259,37 +262,54 @@ export class World {
             coverageSummary()
         );
       }
-      this.deliver(next, registered.event, "effect", []);
+      this.transact((state) => {
+        const draftNext = state.queue.find((pending) => pending.seq === next.seq);
+        if (draftNext === undefined) {
+          throw new Error(`unreachable: queued event ${next.seq} disappeared from cloned state`);
+        }
+        state.queue.splice(state.queue.indexOf(draftNext), 1);
+        state.day = Math.max(state.day, draftNext.dueDay);
+        this.deliver(state, draftNext, registered, "effect");
+      });
     }
     this.state.day = end;
   }
 
   private deliver(
+    state: WorldState,
     pending: PendingFire,
-    event: DefinedEvent<ScopeName, ScopeName | undefined>,
-    via: FiredRecord["via"],
-    forcedArms: number[]
+    event: DefinedEvent<ScopeName, ScopeName | undefined, string>,
+    via: FiredRecord["via"]
   ): void {
-    this.state.fired.push({
+    state.fired.push({
       id: pending.id,
-      day: this.state.day,
+      day: state.day,
       scope: pending.scope,
       from: pending.from,
       via,
-      scopeLabel: renderEntity(this.state, pending.scope),
-      fromLabel: pending.from === undefined ? undefined : renderEntity(this.state, pending.from),
+      scopeLabel: renderEntity(state, pending.scope),
+      fromLabel: pending.from === undefined ? undefined : renderEntity(state, pending.from),
     });
     const entries = immediateEntriesOf(event);
     if (entries !== undefined) {
       const ex: ExecCtx = {
-        state: this.state,
+        state,
         root: pending.scope,
         from: pending.from,
-        forcedArms,
+        choicePlan: pending.choicePlan,
         targets: new Map(),
       };
       applyEffectEntries(entries, pending.scope, ex);
     }
+    if (!state.queue.some((queued) => queued.choicePlan === pending.choicePlan)) {
+      assertChoicePlanConsumed(pending.choicePlan);
+    }
+  }
+
+  private transact(apply: (draft: WorldState) => void): void {
+    const draft = cloneState(this.state);
+    apply(draft);
+    commitState(this.state, draft);
   }
 }
 

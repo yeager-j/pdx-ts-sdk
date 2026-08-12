@@ -14,7 +14,7 @@ import {
 } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
-import { declareFrom, evaluate, explain, fixture } from "../src/index.ts";
+import { evaluate, explain, fixture } from "../src/index.ts";
 
 const flags = countryFlags("testing_group_left", "testing_group_right");
 const globals = globalFlags("testing_group_middle");
@@ -182,7 +182,7 @@ describe("production testing module", () => {
     });
     const world = fixture(
       { countries: [{ name: "player", planets: [{ name: "homeworld" }] }] },
-      { events: [declareFrom(entry, "planet"), declareFrom(followup, "country")] }
+      { events: [entry, followup] }
     );
 
     world.fire(entry, world.country(0), { from: world.country(0).planet(0) });

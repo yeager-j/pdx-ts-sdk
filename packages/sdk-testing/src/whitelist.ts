@@ -19,6 +19,7 @@ import {
   describeEntity,
   planetState,
   situationState,
+  type ChoicePlanState,
   type EntityId,
   type WorldState,
 } from "./state.ts";
@@ -30,8 +31,8 @@ export interface ExecCtx {
   readonly root: EntityId;
   /** FROM as bound by the harness or the fire that queued this run. */
   readonly from: EntityId | undefined;
-  /** Forced random_list arms (weight keys), consumed in encounter order. */
-  readonly forcedArms: number[];
+  /** Forced random_list arm indices, consumed in encounter order across an event chain. */
+  readonly choicePlan: ChoicePlanState;
   /** Saved targets visible during this event/effect execution. */
   readonly targets: Map<string, EntityId>;
 }
@@ -418,7 +419,7 @@ export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
 
 export const STRUCTURAL_SEMANTICS: Readonly<Record<string, { readonly note: string }>> = {
   random_list: {
-    note: "Takes the FORCED arm (by weight key) — forced branches, not seeds. Weight modifiers are deliberately not evaluated under forcing.",
+    note: "Takes the FORCED arm by zero-based occurrence index — weights are not identities. Forced branches, not seeds; weight modifiers are deliberately not evaluated under forcing.",
   },
   if: { note: "Evaluates `limit` via the trigger walker, then applies the body." },
   else_if: { note: "Associated with the preceding if by position, as the game does." },
@@ -429,7 +430,7 @@ export const STRUCTURAL_SEMANTICS: Readonly<Record<string, { readonly note: stri
 };
 
 // Fire effects (`planet_event = { id = ... }`) are recognized via the
-// generated EVENT_KINDS table and enqueue on the discrete-event queue; the
+// SDK's generated event-fire policy and enqueue on the discrete-event queue; the
 // walker owns that logic. Delay math: days + months*30 + years*360.
 
 // ---------------------------------------------------------------------------

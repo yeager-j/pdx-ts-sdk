@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { declareFrom, fixture, renderFired } from "@pdx-ts/sdk-testing";
+import { fixture, renderFired } from "@pdx-ts/sdk-testing";
 import { describe, expect, it } from "vitest";
 
 import { defineHardening } from "../../../examples/hardening/mod.ts";
@@ -65,7 +65,7 @@ describe("hardening example", () => {
       {
         events: [
           hardening.entryEvent,
-          declareFrom(hardening.delayedA, "planet"),
+          hardening.delayedA,
           hardening.delayedB,
           hardening.cascade,
           hardening.expiredTargetProbe,

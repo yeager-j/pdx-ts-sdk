@@ -527,6 +527,14 @@ export function isEffectKey(key: string): boolean {
   return effectKeys.has(key);
 }
 
+let eventFireKeys: ReadonlySet<string> | undefined;
+
+/** Is `key` one of the generated event-delivery effects? */
+export function isEventFireKey(key: string): boolean {
+  eventFireKeys ??= new Set(FIRE_EFFECT_KEYS);
+  return eventFireKeys.has(key);
+}
+
 /**
  * A scope object over a sink the caller already holds — no recording, so no
  * liveness to check: there is no closure for it to escape, and its owner can

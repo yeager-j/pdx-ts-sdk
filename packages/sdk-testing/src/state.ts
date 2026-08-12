@@ -204,6 +204,13 @@ export interface PendingFire {
   readonly from: EntityId | undefined;
   /** Enqueue order; ties on dueDay deliver last-queued-first. */
   readonly seq: number;
+  /** The execution chain's forced random-list choices and current cursor. */
+  readonly choicePlan: ChoicePlanState;
+}
+
+export interface ChoicePlanState {
+  readonly arms: readonly number[];
+  next: number;
 }
 
 export interface FiredRecord {
@@ -289,6 +296,16 @@ export function buildState(spec: FixtureSpec): WorldState {
 }
 
 export function cloneState(state: WorldState): WorldState {
+  const choicePlans = new Map<ChoicePlanState, ChoicePlanState>();
+  const cloneChoicePlan = (plan: ChoicePlanState): ChoicePlanState => {
+    const existing = choicePlans.get(plan);
+    if (existing !== undefined) {
+      return existing;
+    }
+    const clone = { arms: [...plan.arms], next: plan.next };
+    choicePlans.set(plan, clone);
+    return clone;
+  };
   return {
     day: state.day,
     seq: state.seq,
@@ -315,10 +332,17 @@ export function cloneState(state: WorldState): WorldState {
       variables: new Map(situation.variables),
       targetId: situation.targetId,
     })),
-    queue: [...state.queue],
+    queue: state.queue.map((pending) => ({
+      ...pending,
+      choicePlan: cloneChoicePlan(pending.choicePlan),
+    })),
     fired: [...state.fired],
     log: [...state.log],
   };
+}
+
+export function commitState(target: WorldState, source: WorldState): void {
+  Object.assign(target, source);
 }
 
 export function countryState(state: WorldState, id: EntityId): CountryState {
