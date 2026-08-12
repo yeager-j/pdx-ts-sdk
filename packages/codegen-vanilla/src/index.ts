@@ -14,11 +14,11 @@
 import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { stampedVanillaPackageVersion } from "@pdx-ts/sdk";
 import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/stellaris";
 
 import { formatEmitted } from "./format.ts";
 import { generateVanillaPackage, type VanillaReport } from "./generate.ts";
-import { stampedVersionFor } from "./version.ts";
 
 /**
  * Anchored to the module rather than the process, so the repo this writes into
@@ -82,11 +82,18 @@ function readGameVersion(installRoot: string): string {
   }
 }
 
+/**
+ * The stamp itself is the SDK's — `identifiers/version-scheme.ts` owns the
+ * whole `-r.<n>` scheme, because the range the SDK's mismatch message prints
+ * has to resolve what this writes, and two hand-written projections of one
+ * scheme drift silently (SDK-137). What is decided here is only *where* the
+ * version lives.
+ */
 function stampVersion(gameVersion: string): string {
   const file = path.join(PACKAGE_DIR, "package.json");
   const manifest = JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
   const current = typeof manifest["version"] === "string" ? manifest["version"] : "0.0.0";
-  const next = stampedVersionFor(gameVersion, current);
+  const next = stampedVanillaPackageVersion(gameVersion, current);
   manifest["version"] = next;
   writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   return next;

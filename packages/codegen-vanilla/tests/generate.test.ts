@@ -17,7 +17,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { VANILLA_REF_EXTRAS } from "@pdx-ts/codegen-cwt/content-manifest";
-import semver from "semver";
 import { describe, expect, it } from "vitest";
 
 import { buildVanillaFacts } from "../src/build-facts.ts";
@@ -28,7 +27,6 @@ import { readVanillaEvents } from "../src/read-events.ts";
 import { readRegistryIds } from "../src/read-ids.ts";
 import { readScriptedDefinitions } from "../src/read-scripted.ts";
 import { bucketPath, fileBucketKey } from "../src/trie.ts";
-import { stampedVersionFor } from "../src/version.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -696,40 +694,5 @@ describe("report", () => {
     expect(generated.report.identifiersChecked).toBeGreaterThan(50);
     expect(generated.report.diagnostics).toBe(0);
     expect(generated.report.emittedFiles).toBe(generated.files.size);
-  });
-});
-
-describe("stampedVersionFor", () => {
-  it("starts a new game build at revision 1", () => {
-    expect(stampedVersionFor("4.5.0", "4.4.6-r.3")).toBe("4.5.0-r.1");
-  });
-
-  it("leaves the revision alone when regenerating the build already stamped", () => {
-    // `codegen:vanilla:check` regenerates and then diffs package.json, so a
-    // version that moved on every run would fail that gate unconditionally.
-    // The revision is a release decision, bumped by hand when publishing.
-    expect(stampedVersionFor("4.4.6", "4.4.6-r.1")).toBe("4.4.6-r.1");
-    expect(stampedVersionFor("4.4.6", "4.4.6-r.11")).toBe("4.4.6-r.11");
-  });
-
-  it("takes over from a bare or unstamped version without reusing it", () => {
-    // npm can never reissue a version it has already consumed, so a package
-    // sitting on a bare game version has to move off it to publish at all.
-    expect(stampedVersionFor("4.4.6", "4.4.6")).toBe("4.4.6-r.1");
-    expect(stampedVersionFor("4.4.6", "0.0.0")).toBe("4.4.6-r.1");
-  });
-
-  it("orders revisions monotonically past nine", () => {
-    // `r.10` rather than `r10`: run together they are one alphanumeric
-    // identifier compared lexically, and the tenth revision would sort below
-    // the ninth — so npm would hand every install a stale one.
-    const versions = ["4.4.6-r.1", "4.4.6-r.2", "4.4.6-r.9", "4.4.6-r.10", "4.4.6-r.11"];
-    expect([...versions].sort(semver.compare)).toEqual(versions);
-  });
-
-  it("never stamps a bare game version, which is the whole point", () => {
-    for (const current of ["4.4.6", "4.4.6-r.1", "0.0.0", "4.5.0-r.2"]) {
-      expect(stampedVersionFor("4.4.6", current)).toMatch(/-r\.\d+$/);
-    }
   });
 });

@@ -3,6 +3,7 @@
  * filesystem — which is the point of keeping the plan pure.
  */
 
+import { vanillaPackageInstallRange } from "@pdx-ts/sdk";
 import semver from "semver";
 import { describe, expect, it } from "vitest";
 
@@ -10,6 +11,7 @@ import type { Resolved } from "../src/options.ts";
 import { planFiles } from "../src/plan.ts";
 import { SCAFFOLDER_RELEASE_MANIFEST } from "../src/release-manifest.ts";
 import { checkSdkCompatibility } from "../src/sdk-range.ts";
+import { idsRange } from "../src/templates/project.ts";
 
 const base: Resolved = {
   targetDir: "/tmp/my-mod",
@@ -269,6 +271,19 @@ describe("dependency resolution", () => {
     expect(semver.maxSatisfying(["4.4.6-r.9", "4.4.6-r.10"], range)).toBe("4.4.6-r.10");
     expect(semver.satisfies("4.4.6", range)).toBe(false);
     expect(semver.satisfies("4.4.7-r.1", range)).toBe(false);
+  });
+
+  it("writes the range the SDK's own gate tells an author to install", () => {
+    // The scaffolder cannot depend on the SDK at runtime — it scaffolds
+    // projects that install it — so `idsRange` is a copy of
+    // `vanillaPackageInstallRange` by necessity, and this is the only thing
+    // holding the two together (SDK-137). Without it the scaffolder can write
+    // a range the SDK's mismatch message contradicts, with both suites green:
+    // the scaffolded project installs one package and the pin gate demands
+    // another.
+    for (const version of ["4.4.6", "4.5.0", "5.0.0"]) {
+      expect(idsRange(version)).toBe(vanillaPackageInstallRange(version));
+    }
   });
 
   it("omits the identifier package when no build was detected", () => {

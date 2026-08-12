@@ -367,6 +367,11 @@ export type {
   VanillaTries,
 } from "./identifiers/contracts.ts";
 export {
+  stampedVanillaPackageVersion,
+  vanillaPackageGameVersion,
+  vanillaPackageInstallRange,
+} from "./identifiers/version-scheme.ts";
+export {
   scriptedEffect,
   scriptedTrigger,
   scriptedTriggerModifier,

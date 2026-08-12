@@ -11,6 +11,7 @@
 import { createRequire } from "node:module";
 
 import { VanillaPackageMismatchError } from "../errors.ts";
+import { vanillaPackageGameVersion, vanillaPackageInstallRange } from "./version-scheme.ts";
 
 /**
  * The version pinned by the installed `@pdx-ts/stellaris-ids` package,
@@ -45,30 +46,6 @@ export function installedVanillaPackageVersion(
 }
 
 /**
- * Strips a prerelease/build suffix from a semver string, e.g.
- * `"4.4.6-r.2+build"` -> `"4.4.6"`. The identifier package pins a game version
- * by its `major.minor.patch` alone, and every published version carries a
- * `-r.<n>` revision suffix counting publishes of that one build, so a
- * regen-fix release (`4.4.6-r.2`) still pins install `4.4.6`.
- */
-function corePatchVersion(version: string): string {
-  return version.split(/[-+]/, 1)[0]!;
-}
-
-/**
- * How to ask npm for the identifier package matching one game build.
- *
- * Not `@4.4.6`: every published version is a `-r.<n>` revision of a build, and
- * an ordinary range matches no prerelease, so naming the bare version finds
- * either nothing or — on a registry still carrying one — a build that predates
- * the revision scheme. Kept beside the check that prints it, since a wrong
- * install line is worse than none.
- */
-export function vanillaPackageInstallRange(gameVersion: string): string {
-  return `>=${gameVersion}-0 <${gameVersion}`;
-}
-
-/**
  * The pure check behind the gate: throws `VanillaPackageMismatchError` when
  * the installed `@pdx-ts/stellaris-ids` package is pinned to a game
  * version that differs from the install a `VanillaView` was built from,
@@ -100,7 +77,7 @@ export function checkVanillaPackagePin(
   ) {
     return;
   }
-  const pinned = corePatchVersion(packageVersion);
+  const pinned = vanillaPackageGameVersion(packageVersion);
   if (pinned === installGameVersion || acceptGameVersion === installGameVersion) {
     return;
   }
@@ -179,7 +156,7 @@ export function vanillaIdsCheckWarning(
   if (packageVersion === "0.0.0" || installGameVersion === undefined) {
     return undefined;
   }
-  const pinned = corePatchVersion(packageVersion);
+  const pinned = vanillaPackageGameVersion(packageVersion);
   if (pinned === installGameVersion) {
     return undefined;
   }
