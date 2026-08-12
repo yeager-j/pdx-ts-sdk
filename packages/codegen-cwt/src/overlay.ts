@@ -688,10 +688,17 @@ export interface ContentFieldOverride {
 /**
  * Lowerings that cannot be inferred solely from the CWT value type.
  *
- * Modifier and weight blocks contain alias splices rather than ordinary
- * fields. The quoted technology prerequisite list preserves the SDK's existing
- * byte contract. Tradition swaps are nested definitions with their own
- * localization identity.
+ * Weight blocks contain alias splices rather than ordinary fields. The quoted
+ * technology prerequisite list preserves the SDK's existing byte contract.
+ * Tradition swaps are nested definitions with their own localization identity.
+ *
+ * Modifier blocks used to be here too, 85 rows of them. They are not any more:
+ * a field that splices `modifier_clause`, a `triggered_modifier*_clause` or an
+ * `economic_template` carries the clause's name into the expanded block, and
+ * `emit/fields.ts`'s `CLAUSE_SHAPES` reads the shape off it (SDK-142). A row
+ * here still wins over that, so this table remains the place to say the
+ * derivation is wrong for one field — but restating what the clause already
+ * says is no longer one of its jobs.
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   [
@@ -705,22 +712,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "building.triggered_planet_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map " +
-        "(buildings.cwt:227). Found via the SDK-39 sweep: 672 shipped buildings write this key " +
-        "and the row was missing, so the writer silently dropped it. building's sibling triggered_* " +
-        "fields (triggered_planet_pop_group_modifier_for_species/_for_all, triggered_country_modifier, " +
-        "triggered_army_modifier) splice the by_pop_group/by_planet clause variants instead of plain " +
-        "triggered_modifier_clause; SDK-56 gives all four their own rows below, each against its " +
-        "own clause — SDK-56's initial evidence sweep missed for_species (it credited the row to " +
-        "job.triggered_planet_pop_group_modifier_for_species, a different registry with the same " +
-        "field name), caught in review and folded in rather than left for another follow-up.",
-    },
-  ],
-  [
     "event_chain.counter",
     {
       shape: "structMap",
@@ -730,124 +721,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "localisation.max block beneath it. CWT expresses that as an enum-keyed block, which is " +
         "the same engine-keyed map shape structMap already lowers for section_slots: counter " +
         "names are not content ids, take no mod prefix, and have no meaningful order.",
-    },
-  ],
-  [
-    "building.triggered_planet_pop_group_modifier_for_species",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_by_pop_group_clause (aliases.cwt:73) is the pop_group-scoped variant " +
-        "of triggered_modifier_clause — identical potential/modifier/description/mult/multiplier " +
-        "template, plus one field (divide_over_pop_groups) TriggeredModifier does not model — the " +
-        "same clause and the same shape job.triggered_planet_pop_group_modifier_for_species " +
-        "(SDK-39) already uses for that trade. SDK-56: 2 shipped buildings write this key " +
-        "(both in building_clone_army_clone_vat, common/buildings/01_pop_assembly_buildings.txt) " +
-        "and the row was missing, so the writer silently dropped it in full. Neither shipped use " +
-        "writes divide_over_pop_groups, so reusing triggeredModifierBlock here drops nothing real " +
-        "yet — same as the job row's own justification — but the field stays unauthorable if a " +
-        "future building ever does write it. Checked separately for the potential-vs-modifier " +
-        "scope split a bug bash caught on the sibling by_planet_clause rows below: this field's own " +
-        "`## replace_scopes = { this = pop_group root = pop_group }` (buildings.cwt:220-221) happens " +
-        "to equal by_pop_group_clause's own `potential` push_scope (pop_group, aliases.cwt:74) — so " +
-        'TriggeredModifier<"pop_group"> is correct for both halves here. That equality is not ' +
-        "structural to the clause: common/specimens.cwt:37 splices the same by_pop_group_clause " +
-        "under a field named triggered_country_modifier, which would NOT get a free pass the way " +
-        "this one does. Re-check this note if this field's own replace_scopes ever changes.",
-    },
-  ],
-  [
-    "building.country_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(buildings.cwt:212), the same shape building.planet_modifier already uses. SDK-56: 35 " +
-        "shipped buildings write this key and the row was missing, so the writer silently " +
-        "dropped it.",
-    },
-  ],
-  [
-    "building.army_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(buildings.cwt:215), the same shape building.planet_modifier/country_modifier already " +
-        "use. SDK-56: zero shipped buildings write this key, but the modifierBlock shape is " +
-        "already corpus-proven via those siblings on the same registry splicing the identical " +
-        "clause, and leaving a mechanically identical field silently unauthorable is the exact " +
-        "defect this ticket closes for its sibling fields — added for consistency rather than " +
-        "declined for lack of its own precedent.",
-    },
-  ],
-  [
-    "building.system_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(buildings.cwt:218), the same shape building.planet_modifier/country_modifier already " +
-        "use. SDK-56: 1 shipped building writes this key and the row was missing, so the writer " +
-        "silently dropped it.",
-    },
-  ],
-  [
-    "building.triggered_planet_pop_group_modifier_for_all",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_by_planet_clause (aliases.cwt:113) reuses building.triggered_planet_modifier's " +
-        "triggeredModifierBlock shape (buildings.cwt:224). SDK-56: 5 shipped buildings write this " +
-        "key and the row was missing, so the writer silently dropped it. By_planet_clause's own " +
-        "`potential` field carries " +
-        "`## push_scope = planet` (aliases.cwt:114-115), while this field's own " +
-        "`## replace_scopes = { this = pop_group root = pop_group }` (buildings.cwt:223-224) governs " +
-        "the modifier half. SDK-61 derives both declarations structurally and emits " +
-        'TriggeredModifier<"pop_group", "planet">, matching the planet the building sits on ' +
-        "and the pop_group the modifier targets.",
-    },
-  ],
-  [
-    "building.triggered_country_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_by_planet_clause (aliases.cwt:113) reuses building.triggered_planet_modifier's " +
-        "triggeredModifierBlock shape (buildings.cwt:230). SDK-56: 114 shipped buildings write this " +
-        "key — the largest single silently-dropped field the sweep found — and the row was missing, " +
-        "so the writer silently dropped it in full.\n\n" +
-        "triggered_modifier_by_planet_clause's own `potential` field carries `## push_scope = planet` " +
-        "(aliases.cwt:114-115), independent of whatever scope the splicing field itself declares. " +
-        "This field's own `## replace_scopes = { this = country root = country }` " +
-        "(buildings.cwt:229-230) governs the modifier half. SDK-61 derives those two scopes once " +
-        'from the expanded clause and emits `TriggeredModifier<"country", "planet">`, so ' +
-        "planet conditions are checked independently from country modifier names.",
-    },
-  ],
-  [
-    "building.triggered_army_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_by_planet_clause (aliases.cwt:113) reuses building.triggered_planet_modifier's " +
-        "triggeredModifierBlock shape (buildings.cwt:233). SDK-56: zero shipped buildings write this " +
-        "key, but the shape is already corpus-proven via its siblings splicing the identical " +
-        "by_planet clause on the same registry — added for consistency rather than declined for " +
-        "lack of its own precedent. Its `potential` pushes to planet while the modifier field " +
-        "replaces scope with army; SDK-61 therefore emits " +
-        '`TriggeredModifier<"army", "planet">` from those two declarations.',
-    },
-  ],
-  [
-    "tradition.triggered_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map " +
-        "(traditions.cwt:70), the same shape ascension_perk.triggered_modifier already uses. Found " +
-        "via SDK-39: the row was missing so the writer silently dropped the field even though 30 " +
-        "shipped traditions/swaps write it.",
     },
   ],
   [
@@ -870,34 +743,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "type, metadata, and scalarMap writer aligned. Inner keys are open " +
         "value[tech_weight_group] names (repeatable and deposit_blockers in this corpus), so " +
         "the map stays keyed by string rather than a closed union.",
-    },
-  ],
-  [
-    "technology.modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(technologies_consolidated.cwt:237-238), the same declaration every other registry's " +
-        "modifierBlock row splices. 243 shipped technologies write it — the single largest " +
-        "unlowered field on the registry — and without the row the writer drops it silently " +
-        "(SDK-63). The field's own `## replace_scopes = { this = country root = country }` " +
-        "supplies the country scope; no `scope` row is needed. The clause's ancillary fields " +
-        "(description/description_parameters/show_only_custom_tooltip/custom_tooltip) stay " +
-        "unmodeled, the same trade every modifierBlock row already makes: 24 of the 243 write " +
-        "one, all but two of those custom_tooltip.",
-    },
-  ],
-  [
-    "technology.technology_swap.modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "The same modifier_clause one level down inside the technology_swap struct " +
-        "(technologies_consolidated.cwt:162-163), carrying its own identical " +
-        "`## replace_scopes = { this = country root = country }`. 55 shipped technologies write " +
-        "it; invisible until the corpus gate started descending plain structs, and closed by " +
-        "the same row shape as its parent (SDK-63).",
     },
   ],
   [
@@ -924,39 +769,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "building.planet_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "building.resources",
-    {
-      shape: "economicResources",
-      reason:
-        "buildings.cwt:242-246 declares the byte-identical `category`-beside-`economic_template`-" +
-        "splice that decision.resources, job.resources and megastructure.resources already lower " +
-        "this way, repeated 0..inf. The splice is plain economic_template, so cost/upkeep/" +
-        "produces are all game-legal. 458 shipped buildings write it (corpus gap SDK-62, whose " +
-        "acknowledgment claimed the `category` sibling made this lowering unusable — the " +
-        "megastructure rows falsified that). " +
-        "RESIDUE, stated here because no gate can state it: 332 of those 458 nest an " +
-        "`inline_script` INSIDE the resources block (Stellaris 4.4.6), and " +
-        "EconomicResourceBlock has no member for it, so that subset stays unauthorable — one " +
-        "building (building_order_keep) writes category+inline_script and nothing else, making " +
-        "its whole block inexpressible; the rest pair it with cost/upkeep/produces arms that do " +
-        "author. It is the same macro[inline_script] machinery SDK-17 tracks for the top-level " +
-        "building.inline_script gap, one level down, and closed by the same fix. corpus-gaps.ts " +
-        "cannot carry this: an acknowledged gap is matched against a corpus path, and paths " +
-        "inside a block exist only where the emitter emits a DescentNode — economicResources is " +
-        "a hand-written block shape and emits none, so a `resources.inline_script` row is " +
-        "reported stale the moment it is added rather than measured. " +
-        "`corpus-conformance.test.ts` pins the fixture's observed sub-key set instead, so a new " +
-        "inexpressible sub-key (or inline_script support landing) fails and forces a re-look.",
-    },
-  ],
-  [
     "building.ai_resource_production",
     {
       shape: "economicResourceOperation",
@@ -969,13 +781,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "tradition.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
     "tradition.tradition_swap",
     {
       shape: "repeatedStruct",
@@ -985,87 +790,12 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "ascension_perk.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "ascension_perk.triggered_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
-    },
-  ],
-  [
     "ascension_perk.tradition_swap",
     {
       shape: "repeatedStruct",
       reason:
         "An ascension perk swap is a repeated-struct field: a named, ordered collection whose " +
         "name (name_field, one level down) is both identity and localization key.",
-    },
-  ],
-  [
-    "agenda.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "edict.resources",
-    {
-      shape: "economicResources",
-      reason:
-        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
-    },
-  ],
-  [
-    "edict.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "edict.triggered_country_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
-    },
-  ],
-  [
-    "edict.relay_network_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "councilor.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "councilor.triggered_country_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
-    },
-  ],
-  [
-    "decision.resources",
-    {
-      shape: "economicResources",
-      reason:
-        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
     },
   ],
   [
@@ -1081,103 +811,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "job.resources",
-    {
-      shape: "economicResources",
-      reason:
-        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
-    },
-  ],
-  [
-    "job.overlord_resources",
-    {
-      shape: "economicResources",
-      reason:
-        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
-    },
-  ],
-  [
-    "job.pop_group_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "job.country_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "job.planet_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "job.system_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "job.triggered_planet_pop_group_modifier_for_species",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_by_pop_group_clause (pop_jobs.cwt:205) is the pop_group-scoped " +
-        "variant of triggered_modifier_clause: identical potential/modifier/description/mult/" +
-        "multiplier template, plus one field (divide_over_pop_groups) TriggeredModifier does not " +
-        "model. Found via the SDK-39 sweep: 7 shipped jobs write this key and the row was missing, " +
-        "so it was silently dropped in full. Reusing the plain triggeredModifierBlock shape drops " +
-        "only divide_over_pop_groups, which zero shipped jobs write.",
-    },
-  ],
-  [
-    "job.triggered_planet_pop_group_modifier_for_all",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
-    },
-  ],
-  [
-    "job.triggered_country_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
-    },
-  ],
-  [
-    "job.triggered_planet_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
-    },
-  ],
-  [
-    "job.triggered_system_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map.",
-    },
-  ],
-  [
-    "casus_belli.proxy_war_resources",
-    {
-      shape: "economicResources",
-      reason:
-        "Same category-plus-economic_template-splice shape as job.resources, repeated 0..inf.",
-    },
-  ],
-  [
     "situation_type.on_monthly.random_events",
     {
       shape: "weightedEvents",
@@ -1185,38 +818,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "`int = <event.scopeless>` / `int = <event.situation>` computed keys: each row is a " +
         "weight keyed to the event it fires, `0` the nothing-happens arm — the shape situations " +
         "drive their monthly narrative with.",
-    },
-  ],
-  [
-    "situation_type.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "situation_type.target_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "situation_type.triggered_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_by_situation_clause combines a potential trigger with an open " +
-        "modifier-name map, the same shape as the ordinary triggered_modifier_clause.",
-    },
-  ],
-  [
-    "situation_type.triggered_target_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_by_situation_clause combines a potential trigger with an open " +
-        "modifier-name map, the same shape as the ordinary triggered_modifier_clause.",
     },
   ],
   [
@@ -1235,27 +836,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "Repeated siblings carrying a name field (`approach = { name = approach_a ... }`), the " +
         "same shape tradition_swap already exercises.",
-    },
-  ],
-  [
-    "civic_or_origin.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "civic_or_origin.multiply_by_habitability_effect_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "civic_or_origin.swap_type.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
     },
   ],
   [
@@ -1288,52 +868,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "`{ <job> = int }` — a job-keyed weight map. Left on the machinery backlog when the " +
         "registry landed; ship_size.min_upgrade_cost is the same shape, so the second consumer " +
         "is what made a generic scalarMap worth building.",
-    },
-  ],
-  [
-    "ship_size.modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields. Lowers to " +
-        'ModifierClosure<"starbase">, the scope of the first-declared arm (ship_sizes.cwt:107-116 ' +
-        "declares this field twice, once per mutually exclusive subtype, this=starbase and " +
-        "this=ship) — first-declared-wins is a codegen artifact (flatten/mergeByName/pickOrdinary), " +
-        "not a claim that starbase is the intended scope. SDK-45 investigated pinning `scope: " +
-        '"ship"` instead (the more common case: 278 of 319 shipped ship sizes are !starbase) and ' +
-        "found the opposite fix is also wrong by corpus evidence: all 41 starbase-subtype ship " +
-        "sizes write starbase-only modifier names (starbase_building_capacity_add and siblings) " +
-        'that ModifierClosure<"ship"> cannot express, so `scope: "ship"` would newly break real ' +
-        "vanilla content. Neither fixed scope is correct — the field genuinely needs two, selected " +
-        "by which subtype the definition declares — and no `CONTENT_FIELD_OVERRIDES.scope` row can " +
-        "express that; it needs a subtype-conditional lowering (a `lowerScopeUnion` beside " +
-        "`lowerDual`/`lowerScalarUnion` in emit/fields.ts) that does not exist yet. Left unchanged " +
-        "pending that work. Also: corpus-conformance's scope-mismatch check only gates fields whose " +
-        "`field.clause` is set (trigger/effect shapes), so this mispin is invisible to that gate " +
-        "regardless of which scope is pinned here.",
-    },
-  ],
-  [
-    "ship_size.ship_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "ship_size.resources",
-    {
-      shape: "economicResources",
-      reason: "Same category-plus-economic_template-splice shape as job.resources.",
-    },
-  ],
-  [
-    "ship_size.space_fauna_values.culling_value",
-    {
-      shape: "economicResources",
-      reason:
-        "The same economic block one level down, inside the space_fauna_values struct — " +
-        "repeated 0..inf rather than singular.",
     },
   ],
   [
@@ -1376,47 +910,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "section_template.resources",
-    {
-      shape: "economicResources",
-      reason:
-        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
-    },
-  ],
-  [
-    "section_template.modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields. Vanilla " +
-        "never writes this field, but the rules declare it authorable.",
-    },
-  ],
-  [
-    "section_template.ship_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields. Vanilla " +
-        "never writes this field, but the rules declare it authorable.",
-    },
-  ],
-  [
-    "species_class.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "species_class.resources",
-    {
-      shape: "economicResources",
-      reason:
-        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics.",
-    },
-  ],
-  [
     "species_class.possible",
     {
       shape: "aliasStruct",
@@ -1439,46 +932,17 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "other government_trigger consumer species_consolidated.cwt declares alongside it.",
     },
   ],
-  // component_template (SDK-31): none of the three subtypes had a single field
-  // override before this cluster landed, so a ported SMALL_SHIELD_1 occupied a
-  // slot, cost nothing, and granted nothing — resources and modifier were
-  // present in components.cwt but absent from CONTENT_FIELD_OVERRIDES, so the
-  // writer, which only emits declared ContentField[] members, silently dropped
-  // both. 1,193 of 1,500 vanilla component templates write a top-level
-  // resources, 355 write modifier.
-  //
-  // Each row below is keyed to the registry that declares the field, and since
-  // SDK-85 that is also all it can reach: `emit/subtype-partition.ts` cuts the
-  // one shared `type[component_template]` body down to the arm belonging to the
-  // registry being emitted, before flatten and mergeByName erase which arm a
-  // field came from. Until then all three registries saw all three arms, so a
-  // group was led by whichever subtype declared the name first and every row
-  // here was asserting a shape onto a field group it had not inspected — the
-  // reason `size` came out `WeaponSlotSize | UtilitySlotSize` everywhere.
-  //
-  // What survives is a real per-registry difference rather than an artifact:
-  // weapon_component_template and strike_craft_component_template splice
-  // economic_template_no_produce (components.cwt:189, :338) rather than plain
-  // economic_template (components.cwt:405) — `produces` is not game-legal there
-  // — so their `resources` rows below use `economicResourcesNoProduce`
-  // (`EconomicResourceBlockNoProduce<S>`) rather than `economicResources`:
-  // `produces` does not type-check on either row, and the writer's
-  // `economicResourceBlock` iterates a `produces`-free operation list for
-  // this shape regardless of what a cast forces past the type, so it is
-  // unemittable there even so. utility_component_template splices plain
-  // economic_template (components.cwt:405), where `produces` is genuinely
-  // legal, so its own `resources` row below keeps `economicResources`.
-  [
-    "weapon_component_template.resources",
-    {
-      shape: "economicResourcesNoProduce",
-      reason:
-        "Same category-plus-economic_template_no_produce-splice shape as " +
-        "espionage_operation.resources (espionage.cwt:113), repeated 0..inf " +
-        "(components.cwt:184-190) — `produces` is not game-legal on this splice, unlike " +
-        "job.resources' plain economic_template.",
-    },
-  ],
+  // The last surviving component_template row. SDK-31 gave the three registries
+  // a cluster of fourteen — `resources`, `modifier` and their siblings, absent
+  // here and therefore silently dropped by the writer, which is why a ported
+  // SMALL_SHIELD_1 occupied a slot, cost nothing and granted nothing. Every one
+  // of those fourteen was naming the clause its declaration already splices, so
+  // SDK-142 derives them and they are gone, the per-registry
+  // economic_template vs economic_template_no_produce split included: the
+  // splice's own category picks `economicResources` or
+  // `economicResourcesNoProduce`, over the arm SDK-85's subtype partition
+  // leaves in this registry's body rather than over a group led by whichever
+  // subtype declared the name first.
   [
     "weapon_component_template.target_weights",
     {
@@ -1494,207 +958,10 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "weapon_component_template.modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(components.cwt:205-207).",
-    },
-  ],
-  [
-    "weapon_component_template.ship_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(components.cwt:208-210).",
-    },
-  ],
-  [
-    "weapon_component_template.ship_design_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(components.cwt:211-213).",
-    },
-  ],
-  [
-    "weapon_component_template.triggered_ship_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map, " +
-        "repeated 0..inf (components.cwt:215-217).",
-    },
-  ],
-  [
-    "weapon_component_template.triggered_ship_design_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map, " +
-        "repeated 0..inf (components.cwt:218-220).",
-    },
-  ],
-  [
-    "strike_craft_component_template.resources",
-    {
-      shape: "economicResourcesNoProduce",
-      reason:
-        "Same category-plus-economic_template_no_produce-splice shape as " +
-        "weapon_component_template.resources above, repeated 0..inf (components.cwt:333-339) " +
-        "— `produces` is not game-legal on this splice.",
-    },
-  ],
-  [
-    "strike_craft_component_template.ship_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(components.cwt:341-343). This subtype declares no modifier, ship_design_modifier, " +
-        "triggered_ship_modifier, or triggered_ship_design_modifier — only ship_modifier.",
-    },
-  ],
-  [
-    "utility_component_template.resources",
-    {
-      shape: "economicResources",
-      reason:
-        "Same category-plus-economic_template-splice shape as job.resources, repeated 0..inf " +
-        "(components.cwt:400-406). Spliced category is plain economic_template, so `produces` " +
-        "is genuinely authorable here — no caveat, unlike the weapon/strike-craft rows above. " +
-        "Since SDK-85 the field group this row types holds only that declaration: the " +
-        "subtype partition drops weapon's and strike craft's economic_template_no_produce " +
-        "arms before the merge, so `economicResources` is now read off the utility splice " +
-        "rather than asserted over a group led by weapon's.",
-    },
-  ],
-  [
-    "utility_component_template.modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(components.cwt:420-422).",
-    },
-  ],
-  [
-    "utility_component_template.friendly_aura.modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(components.cwt:490-491), the same declaration as utility_component_template.modifier " +
-        "one level up. 30 shipped definitions write it; without the row the aura struct lowers " +
-        "with the field reported unsupported.",
-    },
-  ],
-  [
-    "utility_component_template.hostile_aura.modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "The hostile twin of the friendly_aura row above, declared identically " +
-        "(components.cwt:527-528). 22 shipped definitions write it — below the presence floor, " +
-        "but the same fix and the same declaration.",
-    },
-  ],
-  [
-    "utility_component_template.ship_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(components.cwt:423-425).",
-    },
-  ],
-  [
-    "utility_component_template.ship_design_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields " +
-        "(components.cwt:426-428).",
-    },
-  ],
-  [
-    "utility_component_template.triggered_ship_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map, " +
-        "repeated 0..inf (components.cwt:430-432).",
-    },
-  ],
-  [
-    "utility_component_template.triggered_ship_design_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map, " +
-        "repeated 0..inf (components.cwt:433-435).",
-    },
-  ],
-  [
-    "megastructure.resources",
-    {
-      shape: "economicResources",
-      reason:
-        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics, " +
-        "the same declaration (a `category` sibling beside the splice) job.resources and " +
-        "decision.resources already lower this way. 111 shipped occurrences.",
-    },
-  ],
-  [
-    "megastructure.dismantle_cost",
-    {
-      shape: "economicResources",
-      reason:
-        "The same economic_template splice as megastructure.resources, declared again for the " +
-        "refund paid when the megastructure is taken down (megastructures.cwt:293-297).",
-    },
-  ],
-  [
-    "megastructure.country_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "megastructures.cwt:212-219 spells modifier_clause out inline — an open modifier-name map " +
-        "(`alias_name[modifier]`) beside optional custom_tooltip/show_only_custom_tooltip — so it " +
-        "lowers the same way building.country_modifier's spliced clause does. 57 of the 58 " +
-        "shipped megastructures that write it write a plain map of country modifier names " +
-        "(`all_technology_research_speed`, `country_naval_cap_add`); the one exception writes " +
-        "`custom_tooltip` alone, the ancillary key no ModifierClosure field anywhere in the SDK " +
-        "authors yet — one definition, far below the corpus presence floor.",
-    },
-  ],
-  [
-    "megastructure.ship_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "modifier_clause is an open modifier-name map with optional ancillary fields.",
-    },
-  ],
-  [
-    "megastructure.station_modifier",
-    {
-      shape: "modifierBlock",
-      reason:
-        "modifier_clause is an open modifier-name map with optional ancillary fields; all 14 " +
-        "shipped occurrences are plain maps in megastructure scope " +
-        "(`starbase_shipyard_capacity_add`, `catapult_range_base`).",
-    },
-  ],
-  [
     "megastructure.triggered_country_modifier",
     {
-      shape: "triggeredModifierBlock",
       arity: "repeated",
       reason:
-        "triggered_modifier_clause combines a potential trigger with an open modifier-name map. " +
         "megastructures.cwt:221-223 declares the key `## cardinality = 0..1`, and the shipped " +
         "data says otherwise: the corpus fixture records `repeated: 1` of the 1 definition that " +
         "writes it (packages/sdk/tests/fixtures/corpus/megastructure.json), which is " +
@@ -1751,97 +1018,23 @@ export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinit
   ["situation_type.approach", { typeName: "SituationApproach", identityKey: "name" }],
 ]);
 
-export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
-  [
-    "tradition.tradition_swap.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "Nested modifier_clause is the same open modifier-name map as its parent.",
-    },
-  ],
-  [
-    "tradition.tradition_swap.triggered_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason:
-        "Nested triggered_modifier_clause (traditions.cwt:126) is the same shape as the top " +
-        "level's tradition.triggered_modifier — combines a potential trigger with an open " +
-        "modifier-name map. Found via the SDK-39 sweep alongside its top-level sibling.",
-    },
-  ],
-  [
-    "ascension_perk.tradition_swap.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "Nested modifier_clause is the same open modifier-name map as its parent.",
-    },
-  ],
-  [
-    "situation_type.stages.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "Nested modifier_clause is the same open modifier-name map as the top level's.",
-    },
-  ],
-  [
-    "situation_type.stages.target_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "Nested modifier_clause is the same open modifier-name map as the top level's.",
-    },
-  ],
-  [
-    "situation_type.stages.triggered_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason: "Nested triggered_modifier_by_situation_clause is the same shape as the top level's.",
-    },
-  ],
-  [
-    "situation_type.stages.triggered_target_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason: "Nested triggered_modifier_by_situation_clause is the same shape as the top level's.",
-    },
-  ],
-  [
-    "situation_type.approach.modifier",
-    {
-      shape: "modifierBlock",
-      reason: "Nested modifier_clause is the same open modifier-name map as the top level's.",
-    },
-  ],
-  [
-    "situation_type.approach.target_modifier",
-    {
-      shape: "modifierBlock",
-      reason: "Nested modifier_clause is the same open modifier-name map as the top level's.",
-    },
-  ],
-  [
-    "situation_type.approach.triggered_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason: "Nested triggered_modifier_by_situation_clause is the same shape as the top level's.",
-    },
-  ],
-  [
-    "situation_type.approach.triggered_target_modifier",
-    {
-      shape: "triggeredModifierBlock",
-      reason: "Nested triggered_modifier_by_situation_clause is the same shape as the top level's.",
-    },
-  ],
-  [
-    "situation_type.approach.resources",
-    {
-      shape: "economicResources",
-      reason:
-        "economic_template is an open resource-name map nested under cost/produces/upkeep/logistics, " +
-        "the same shape as job.resources.",
-    },
-  ],
-]);
+/**
+ * The same overrides, for a field one level down inside a repeated struct —
+ * `situation_type.approach.modifier` rather than `situation_type.modifier`.
+ *
+ * Empty, and kept rather than deleted. All twelve rows it held were clause
+ * shapes, and every one of them said the same thing its top-level sibling said:
+ * this nested field splices `modifier_clause`, or a `triggered_modifier*_clause`,
+ * or `economic_template`. `emit/fields.ts` derives that from the clause name now
+ * (SDK-142), and nesting changes nothing about it — `lowerOrdinary` is the same
+ * function at both depths.
+ *
+ * A future row here would have to be something the *nesting* makes true: a
+ * scope, arity or optionality that differs from the same field's top-level
+ * declaration, with the corpus evidence any `scope`/`arity` row needs. Naming a
+ * shape a nested field's own declaration already names is not that.
+ */
+export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([]);
 
 /**
  * Bool triggers take `(value = true)` rather than a required argument.
