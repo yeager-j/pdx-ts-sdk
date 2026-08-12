@@ -2135,6 +2135,34 @@ describe("generated content authoring types", () => {
     });
   });
 
+  it("does not let split-root self witness natural event FROM", () => {
+    const events = contentMod.namespace("split_root_witness");
+    const needsPlanetFrom = events.planet(40, {
+      from: "planet",
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+    const needsCountryFrom = events.planet(41, {
+      from: "country",
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+
+    contentMod.solarSystemInitializer("split_root_witness", {
+      class: "sc_g",
+      planet: [
+        {
+          initEffect: (planet, ctx) => {
+            // @ts-expect-error — natural event FROM is ROOT, which is country
+            // here; ctx.self is the planet this initializer block runs in.
+            planet.planetEvent({ id: needsPlanetFrom, from: ctx.self });
+            planet.planetEvent({ id: needsCountryFrom, from: ctx.root });
+          },
+        },
+      ],
+    });
+  });
+
   it("leaves ROOT unreadable where the rules never name one", () => {
     contentMod.decision("root_sentinel", {
       name: "X",

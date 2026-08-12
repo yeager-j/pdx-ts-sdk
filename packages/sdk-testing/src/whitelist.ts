@@ -26,7 +26,7 @@ import {
 /** The execution context an interpretation runs under. */
 export interface ExecCtx {
   readonly state: WorldState;
-  /** The scope the event/effect run started in — the natural FROM for fires. */
+  /** The scope the event/effect run started in — the live-oracle-verified natural FROM for fires. */
   readonly root: EntityId;
   /** FROM as bound by the harness or the fire that queued this run. */
   readonly from: EntityId | undefined;

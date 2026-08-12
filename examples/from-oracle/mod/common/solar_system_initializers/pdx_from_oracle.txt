@@ -1,0 +1,37 @@
+pdx_from_oracle_split_root = {
+	class = "sc_g"
+	usage = misc_system_init
+	usage_odds = 0
+
+	planet = {
+		class = star
+		orbit_distance = 0
+		orbit_angle = 1
+		size = 20
+	}
+
+	planet = {
+		class = "pc_barren"
+		orbit_distance = 30
+		orbit_angle = 90
+		size = 10
+
+		init_effect = {
+			if = {
+				limit = { is_scope_type = planet }
+				log = "PDX_FROM_ORACLE_SPLIT_THIS_PLANET"
+			}
+			root = {
+				if = {
+					limit = { is_scope_type = country }
+					log = "PDX_FROM_ORACLE_SPLIT_ROOT_COUNTRY"
+				}
+				if = {
+					limit = { is_scope_type = planet }
+					log = "PDX_FROM_ORACLE_SPLIT_ROOT_PLANET"
+				}
+			}
+			planet_event = { id = pdx_from_oracle.4 }
+		}
+	}
+}

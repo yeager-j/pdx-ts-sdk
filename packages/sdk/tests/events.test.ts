@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { countryFlags } from "../src/generated/value-sets.ts";
-import { createMod, hasAuthority, hasTechnology, not, or, render } from "../src/index.ts";
+import {
+  createMod,
+  hasAuthority,
+  hasTechnology,
+  not,
+  or,
+  render,
+  type ScopeValue,
+} from "../src/index.ts";
 import { eventTarget } from "../src/script/effects/recorder.ts";
 
 const flags = countryFlags("event_test_flag");
@@ -18,6 +26,69 @@ function makeEvents() {
 }
 
 describe("event definitions in a namespace", () => {
+  it("refuses a split-root self witness even when its type is bypassed", () => {
+    const runtimeMod = createMod({
+      name: "Split-root witness",
+      prefix: "split_root_witness",
+      supportedVersion: "4.4.*",
+    });
+    const events = runtimeMod.namespace();
+    const needsPlanetFrom = events.planet(1, {
+      from: "planet",
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+
+    expect(() => {
+      const initializer = runtimeMod.solarSystemInitializer("runtime_backstop", {
+        class: "sc_g",
+        planet: [
+          {
+            initEffect: (planet, ctx) => {
+              planet.planetEvent({
+                id: needsPlanetFrom,
+                from: ctx.self as unknown as ScopeValue<"planet">,
+              });
+            },
+          },
+        ],
+      });
+      runtimeMod.compile([runtimeMod.feature("runtime_backstop", [initializer, needsPlanetFrom])]);
+    }).toThrow(/split-root.*natural FROM.*ROOT/i);
+  });
+
+  it("writes an explicit ROOT witness at a split-root fire site", () => {
+    const runtimeMod = createMod({
+      name: "Split-root ROOT witness",
+      prefix: "split_root_root",
+      supportedVersion: "4.4.*",
+    });
+    const events = runtimeMod.namespace();
+    const needsCountryFrom = events.planet(2, {
+      from: "country",
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+    const initializer = runtimeMod.solarSystemInitializer("root_witness", {
+      class: "sc_g",
+      planet: [
+        {
+          initEffect: (planet, ctx) => {
+            planet.planetEvent({ id: needsCountryFrom, from: ctx.root });
+          },
+        },
+      ],
+    });
+
+    const rendered = render(
+      runtimeMod.compile([runtimeMod.feature("root_witness", [initializer, needsCountryFrom])])
+    ).get("common/solar_system_initializers/split_root_root_root_witness.txt")!;
+
+    expect(rendered).toContain("planet_event = {");
+    expect(rendered).toContain("scopes = {");
+    expect(rendered).toContain("from = root");
+  });
+
   it("rejects duplicate event ids within the namespace", () => {
     const events = makeEvents();
     const country = events.country(1, { hideWindow: true, isTriggeredOnly: true });

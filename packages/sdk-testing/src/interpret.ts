@@ -346,8 +346,9 @@ function applyFire(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
     id,
     dueDay: ex.state.day + delay,
     scope,
-    // The natural FROM is the firing execution's root scope — `from:
-    // ctx.self` records nothing (the effect recorder), which is exactly this.
+    // The natural FROM is the firing execution's root scope — verified by the
+    // raw game probe in examples/from-oracle/calibration. `from: ctx.self`
+    // records nothing only where the authoring contract knows SELF is ROOT.
     from: from ?? ex.root,
     seq: ex.state.seq++,
   });

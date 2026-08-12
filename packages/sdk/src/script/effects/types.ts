@@ -6,6 +6,7 @@ import type { ScriptedEffectCall, ScriptedParamValue } from "../scripted.ts";
 import type { ScriptValue, Trigger } from "../trigger-core.ts";
 
 declare const refScopeBrand: unique symbol;
+declare const cannotWitnessNaturalFromBrand: unique symbol;
 
 /**
  * A reference to a scope reachable by name from inside script: an event
@@ -33,6 +34,11 @@ export interface ScopeValue<S extends ScopeName = ScopeName> {
   readonly path: string;
   readonly [refScopeBrand]?: S;
 }
+
+/** A scope value that may satisfy an event fire by omission or explicit override. */
+export type FireFromWitness<S extends ScopeName> = ScopeValue<S> & {
+  readonly [cannotWitnessNaturalFromBrand]?: never;
+};
 
 /**
  * A {@link ScopeValue} whose path means the same thing wherever it is written,
@@ -91,9 +97,10 @@ export interface UndeclaredRoot {
  * records effects: an event's `immediate`/`after`/option effects, and a
  * content definition's effect fields.
  *
- * `self` doubles as the FROM witness at fire sites: passing `from: ctx.self`
- * proves the fired event's declared FROM matches the scope this block runs in.
- * `from` is the block's own FROM, which the game supplies and the rules name —
+ * `self` doubles as the natural FROM witness at fire sites where SELF and ROOT
+ * are the same. The game supplies the firing execution's ROOT as natural FROM,
+ * so a known split-root content block must use `root` or an explicit absolute
+ * ref instead. `from` is the block's own FROM, which the game supplies and the rules name —
  * `on_roll_failed` runs in fleet scope with the archaeological site as FROM, so
  * `ctx.from.effects((site) => ...)` opens the site.
  *
@@ -110,10 +117,13 @@ export interface ScriptCtx<
 > {
   /**
    * The scope this block runs in, as a value — the FROM witness at a fire
-   * site. Not openable: `this` is relative to the block it is written in, so
+   * site only when this block's ROOT is not known to differ. Natural event
+   * FROM is ROOT, so a split-root content block cannot use `self` as its
+   * witness even though both serialize relative paths. Not openable: `this`
+   * is relative to the block it is written in, so
    * inside a scope transition it would name that scope rather than this one.
    */
-  readonly self: ScopeValue<Self>;
+  readonly self: ScopeValue<Self> & SelfNaturalFromConstraint<Self, Root>;
   /**
    * ROOT — the scope the script's top level runs in, where something declares
    * what that is. Everywhere else an inert sentinel, exactly like `from`.
@@ -141,6 +151,16 @@ export interface ScriptCtx<
    */
   readonly from: [From] extends [ScopeName] ? ScopeRef<From> : UndeclaredFrom;
 }
+
+type SelfNaturalFromConstraint<Self extends ScopeName, Root extends ScopeName | undefined> = [
+  Root,
+] extends [ScopeName]
+  ? [Root] extends [Self]
+    ? [Self] extends [Root]
+      ? object
+      : { readonly [cannotWitnessNaturalFromBrand]: true }
+    : { readonly [cannotWitnessNaturalFromBrand]: true }
+  : object;
 
 /**
  * One `modifier = { ... }` rule: a numeric change gated by a trigger.

@@ -85,6 +85,8 @@ interface ContentTriggerField extends ContentFieldBase {
 
 interface ContentEffectField extends ContentFieldBase {
   readonly shape: "effect";
+  /** THIS and ROOT are both known and differ, so `ctx.self` cannot witness natural event FROM. */
+  readonly splitRoot?: true;
 }
 
 interface ContentEconomicResourcesField extends ContentFieldBase {

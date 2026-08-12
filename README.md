@@ -399,7 +399,11 @@ the SDK sorts.
 
 The scopes follow the nesting too. The initializer's own `initEffect` runs in
 system scope and a planet's runs in planet scope, so `setCapital` is available
-on the inner one and not the outer.
+on the inner one and not the outer. A planet or moon initializer is also a
+split-root block: THIS is the planet while ROOT is country. Because the game's
+natural event FROM is ROOT, `ctx.self` cannot witness a planet-FROM event there;
+the generated type rejects that mismatch instead of letting the recorder omit
+an override that would deliver the country.
 
 **There is no `changeOrbit` field.** The rules' `change_orbit` key is sugar —
 written between two `planet` (or two `moon`) blocks, it advances an orbit

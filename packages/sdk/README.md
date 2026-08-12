@@ -194,7 +194,11 @@ const humReturns = events.country(1, {
 ```
 
 Every effect closure gets a second argument, `ctx`, holding the ambient scopes.
-`ctx.self` is the block's own scope — the FROM witness at fire sites above.
+`ctx.self` is the block's own scope. Natural event FROM is the firing
+execution's ROOT, so it is also the FROM witness at fire sites like the one
+above where SELF and ROOT are the same. In a generated split-root block the
+type rejects `ctx.self` as that witness; use `ctx.root` when the target expects
+ROOT, or an absolute scope reference for an explicit override.
 `ctx.from` is FROM, typed at whatever scope the rules say the game hands the
 block. A scope reference is both a bare word and the key of a block that opens
 it, so `.effects(...)` writes that block:

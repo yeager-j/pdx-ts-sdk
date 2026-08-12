@@ -588,6 +588,12 @@ describe("content-type codegen", () => {
     expect(emitAliasSplice(emitter, "planet_initializer")?.code).toContain(
       'initEffect?: EffectBlock<"planet", undefined, "country">;'
     );
+    expect(emitAliasSplice(emitter, "planet_initializer")?.code).toContain(
+      'shape: "effect", form: "closure", splitRoot: true'
+    );
+    expect(emitAliasSplice(emitter, "moon_initializer")?.code).toContain(
+      'shape: "effect", form: "closure", splitRoot: true'
+    );
     // `root = any` names no scope, so it stays unreadable rather than lowering
     // to something an author could navigate — the same rule `from = any`
     // already follows. The top-level init_effect is that case.
@@ -597,6 +603,7 @@ describe("content-type codegen", () => {
     // A `push_scope` states only THIS, and an unannotated field states
     // nothing, so neither invents a ROOT.
     expect(emissions.get("building")?.code).not.toContain("EffectBlock<NoInfer<S>, undefined,");
+    expect(emissions.get("agenda")?.code).not.toContain("splitRoot: true");
   });
 
   it("gives a declarative field with a FROM the closure form too", () => {

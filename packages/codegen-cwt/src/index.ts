@@ -949,9 +949,9 @@ function contentDefiners(
           : scoped.selector === undefined
             ? `  const { scope, ...rest } = def;\n` +
               `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-              `def: rest as ${name}Def<Id, never> };\n`
+              `def: rest as unknown as ${name}Def<Id, never> };\n`
             : `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-              `def: def as ${name}Def<Id, never> };\n`;
+              `def: def as unknown as ${name}Def<Id, never> };\n`;
       definitions.push(
         docComment([
           `Internal lowering primitive for ${article} ${spoken}. Public authors call`,

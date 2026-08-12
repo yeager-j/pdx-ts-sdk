@@ -3,9 +3,10 @@
  *
  * An event declares the scope it expects FROM to be (`from: "country"`) as a
  * phantom type; every fire site is then checked against it by passing a
- * witness value — usually `ctx.self`, proving the firing event's own scope is
- * the FROM the target expects. A witness that is any other ref emits the
- * game's own `scopes = { from = ... }` override block. The witness needs
+ * witness value. Natural event FROM is the firing execution's ROOT, so
+ * `ctx.self` is the usual witness where SELF and ROOT are the same; a known
+ * split-root block cannot make that claim. A witness that names another ref
+ * emits the game's own `scopes = { from = ... }` override block. The witness needs
  * `NoInfer` so it cannot widen the inferred FROM, and an undeclared FROM is a
  * sentinel rather than `never` so the overload stays selectable.
  *
@@ -29,7 +30,12 @@ import {
 } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { ContentRefUse } from "../references.ts";
-import { type Modifier, type ScopeValue, type ScriptCtx } from "../script/effects/types.ts";
+import {
+  type FireFromWitness,
+  type Modifier,
+  type ScopeValue,
+  type ScriptCtx,
+} from "../script/effects/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 // The typed fire signatures for every event kind are generated into the
 // scope interfaces — this side-effect import is what loads the augmentation.
@@ -431,5 +437,5 @@ export interface WitnessedFireEventArgs<
    * `NoInfer` keeps the event ref the single inference source, so a
    * wrong-scope witness fails instead of unifying.
    */
-  readonly from: ScopeValue<NoInfer<F>>;
+  readonly from: FireFromWitness<NoInfer<F>>;
 }

@@ -14,7 +14,7 @@ import {
 } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
-import { evaluate, explain, fixture } from "../src/index.ts";
+import { declareFrom, evaluate, explain, fixture } from "../src/index.ts";
 
 const flags = countryFlags("testing_group_left", "testing_group_right");
 const globals = globalFlags("testing_group_middle");
@@ -156,5 +156,49 @@ describe("production testing module", () => {
     world.fire(entry, world.country(0));
 
     expect(() => world.advance(1)).toThrow(/event target "target_lifetime_planet" was never saved/);
+  });
+
+  it("uses the firing execution ROOT as natural FROM inside a nested scope", () => {
+    const mod = createMod({
+      name: "Natural FROM",
+      prefix: "natural_from",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const followup = events.planet(2, {
+      from: "country",
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+    const entry = events.country(1, {
+      from: "planet",
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country, ctx) => {
+        ctx.from.effects((planet) => {
+          planet.planetEvent({ id: followup, from: ctx.self });
+        });
+      },
+    });
+    const world = fixture(
+      { countries: [{ name: "player", planets: [{ name: "homeworld" }] }] },
+      { events: [declareFrom(entry, "planet"), declareFrom(followup, "country")] }
+    );
+
+    world.fire(entry, world.country(0), { from: world.country(0).planet(0) });
+    world.advance(0);
+
+    expect(world.fired).toMatchObject([
+      {
+        id: entry.id,
+        scope: { kind: "country", country: 0 },
+        from: { kind: "planet", country: 0, planet: 0 },
+      },
+      {
+        id: followup.id,
+        scope: { kind: "planet", country: 0, planet: 0 },
+        from: { kind: "country", country: 0 },
+      },
+    ]);
   });
 });

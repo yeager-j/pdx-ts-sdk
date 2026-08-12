@@ -1,0 +1,1 @@
+spawn_system/move_system: Failed to find position at minimum distance SPAWN_SYSTEM_BUFFER_DISTANCE = 10 from other systems; retrying without checking SPAWN_SYSTEM_BUFFER_DISTANCE

@@ -269,7 +269,14 @@ export const MOON_INITIALIZER_FIELDS: readonly ContentField[] = [
     repeated: true,
   },
   { key: "anomaly", member: "anomaly", shape: "value", form: "scalar", conversion: "ref" },
-  { key: "init_effect", member: "initEffect", shape: "effect", form: "closure", repeated: true },
+  {
+    key: "init_effect",
+    member: "initEffect",
+    shape: "effect",
+    form: "closure",
+    splitRoot: true,
+    repeated: true,
+  },
   {
     key: "deposit_blockers",
     member: "depositBlockers",

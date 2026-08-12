@@ -282,7 +282,14 @@ export const PLANET_INITIALIZER_FIELDS: readonly ContentField[] = [
     form: "scalar",
     conversion: "identity",
   },
-  { key: "init_effect", member: "initEffect", shape: "effect", form: "closure", repeated: true },
+  {
+    key: "init_effect",
+    member: "initEffect",
+    shape: "effect",
+    form: "closure",
+    splitRoot: true,
+    repeated: true,
+  },
   {
     key: "planet",
     member: "planet",
