@@ -96,7 +96,7 @@ function nameFieldValue(items: readonly PdxItem[], nameField: string): string | 
       return item.value.value;
     }
     if (item.value.kind === "num") {
-      return String(item.value.value);
+      return item.value.lexeme;
     }
   }
   return null;

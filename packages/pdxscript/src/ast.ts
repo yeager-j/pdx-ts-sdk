@@ -14,15 +14,36 @@
  * variables is game knowledge), and `math` is an `@[ ... ]` expression
  * carried verbatim. Both re-serialize exactly; neither is interpreted.
  *
+ * A number is its lexeme, not a JS `number`: doubles cannot hold every
+ * numeral a game file may contain, and going through one is where digits
+ * are lost (`9007199254740993`) or where a value stops having a spelling at
+ * all (`1e21`). `numberValue()` is the checked projection for consumers
+ * doing arithmetic.
+ *
+ * Every constructor here rejects what the parser could not have produced,
+ * so a hand-built tree is in the same language as a parsed one — see
+ * `representable.ts`, which the lexer and serializer share.
+ *
  * Entries carry an optional source line — the parser always sets it,
  * hand-built trees omit it, and tree comparisons ignore it.
  */
+
+import {
+  canonicalNumeral,
+  decimalLexeme,
+  isBareToken,
+  isMathSource,
+  isNumeral,
+  isQuotableContent,
+  isVarName,
+  isWritableText,
+} from "./representable.ts";
 
 export type PdxOp = "=" | ">" | "<" | ">=" | "<=" | "!=";
 
 export type PdxScalar =
   | { kind: "str"; value: string; quoted: boolean }
-  | { kind: "num"; value: number }
+  | { kind: "num"; lexeme: string }
   | { kind: "bool"; value: boolean }
   | { kind: "var"; name: string }
   | { kind: "math"; source: string };
@@ -104,36 +125,72 @@ export interface PdxDocument {
   readonly diagnostics: readonly PdxDiagnostic[];
 }
 
+function reject(what: string, value: string): never {
+  throw new Error(`Cannot represent ${JSON.stringify(value)} as a PDXScript ${what}`);
+}
+
 export function scalar(value: string | number | boolean): PdxScalar {
   switch (typeof value) {
     case "string":
+      if (!isWritableText(value)) {
+        reject("string", value);
+      }
       return { kind: "str", value, quoted: false };
     case "number":
-      return { kind: "num", value };
+      return { kind: "num", lexeme: decimalLexeme(value) };
     case "boolean":
       return { kind: "bool", value };
   }
 }
 
+/**
+ * A number written out, for the values a JS `number` cannot carry: an
+ * integer past 2^53, or more decimals than a double keeps. The lexeme is
+ * kept as given, minus the spellings that say nothing.
+ */
+export function numeral(lexeme: string): PdxScalar {
+  if (!isNumeral(lexeme)) {
+    reject("number", lexeme);
+  }
+  return { kind: "num", lexeme: canonicalNumeral(lexeme) };
+}
+
 export function quoted(value: string): PdxScalar {
+  if (!isQuotableContent(value)) {
+    reject("quoted string", value);
+  }
   return { kind: "str", value, quoted: true };
 }
 
 /** An `@name` reference. Emits bare; resolving it is the caller's business. */
 export function varRef(name: string): PdxScalar {
+  if (!isVarName(name)) {
+    reject("variable reference", name);
+  }
   return { kind: "var", name };
 }
 
 /** An `@[ ... ]` expression, carried verbatim. */
 export function inlineMath(source: string): PdxScalar {
+  if (!isMathSource(source)) {
+    reject("inline math expression", source);
+  }
   return { kind: "math", source };
 }
 
 export function container(items: readonly PdxItem[], header?: string): PdxContainer {
+  if (header !== undefined && !isBareToken(header)) {
+    reject("container header", header);
+  }
   return { kind: "container", header, items };
 }
 
 export function entry(key: string, op: PdxOp, value: PdxValue): PdxEntry {
+  // A key is not classified, so `yes` and `123` are legal keys: only the
+  // character class, and quotability where that fails, decide.
+  if (!isBareToken(key) && !isQuotableContent(key)) {
+    reject("key", key);
+  }
   return { kind: "entry", key, op, value };
 }
 

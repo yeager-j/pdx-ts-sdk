@@ -18,15 +18,24 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import {
+  canonicalNumeral,
   classifyUnquoted,
+  decimalLexeme,
+  entry,
+  inlineMath,
   kv,
+  numeral,
   parse,
   PdxSyntaxError,
+  quoted,
   scalar,
   serialize,
+  tryNumberValue,
+  varRef,
   withoutLines,
   type PdxItem,
   type PdxScalar,
+  type PdxValue,
 } from "../src/index.ts";
 
 // --- generators -----------------------------------------------------------
@@ -46,17 +55,21 @@ const quotableText = fc
   .string({ maxLength: 20 })
   .filter((s) => !/(^|[^\\])(\\\\)*"/.test(s) && !s.endsWith("\\"));
 
-/** Numbers the serializer can render (no exponent notation either way). */
-const pdxNumber = fc
+/**
+ * Numerals as the AST carries them. The big-integer branch is the point:
+ * those have no double, so a model that stored one would fail this suite.
+ */
+const pdxNumeral = fc
   .oneof(
-    fc.integer({ min: -1_000_000, max: 1_000_000 }),
-    fc.integer({ min: -1_000_000, max: 1_000_000 }).map((n) => n / 1000)
+    fc.integer({ min: -1_000_000, max: 1_000_000 }).map(String),
+    fc.integer({ min: -1_000_000, max: 1_000_000 }).map((n) => decimalLexeme(n / 1000)),
+    fc.bigInt({ min: -(10n ** 30n), max: 10n ** 30n }).map(String)
   )
-  .map((n) => (n === 0 ? 0 : n));
+  .map(canonicalNumeral);
 
 const pdxScalar: fc.Arbitrary<PdxScalar> = fc.oneof(
   fc.boolean().map((value): PdxScalar => ({ kind: "bool", value })),
-  pdxNumber.map((value): PdxScalar => ({ kind: "num", value })),
+  pdxNumeral.map((lexeme): PdxScalar => ({ kind: "num", lexeme })),
   quotableText.map((value): PdxScalar => ({ kind: "str", value, quoted: true })),
   unquotedStrText.map((value): PdxScalar => scalar(value)),
   bareText.map((name): PdxScalar => ({ kind: "var", name: `@${name}` })),
@@ -103,6 +116,16 @@ const pdxItem: fc.Arbitrary<PdxItem> = fc.letrec<{ item: PdxItem; items: PdxItem
 
 /** Top-level trees: any items. */
 const pdxTree = fc.array(pdxItem, { maxLength: 6 });
+
+/**
+ * A scalar minus `quoted`, which is a rendering hint rather than part of the
+ * value: the serializer promotes a bare `str` to quoted whenever bare would
+ * read back as something else (`""`, `"123"`, `"yes"`). It never demotes one,
+ * which the properties below assert separately.
+ */
+function asRead(value: PdxValue | undefined): unknown {
+  return value?.kind === "str" ? { kind: "str", value: value.value } : value;
+}
 
 // --- properties -----------------------------------------------------------
 
@@ -170,6 +193,95 @@ describe("properties", () => {
         } catch (error) {
           expect(error).toBeInstanceOf(PdxSyntaxError);
         }
+      }),
+      { numRuns: 2000 }
+    );
+  });
+
+  /**
+   * Closure: the values the constructors can build, the values the
+   * serializer can write, and the values the parser can read are one set.
+   * Each property below is a way the three used to disagree — a constructed
+   * value that emitted something reading back as a different node, or text
+   * that parsed and then could not be written again.
+   */
+  it("closure: a constructed scalar reparses as itself, or was refused up front", () => {
+    const construct = (kind: string, text: string): PdxScalar => {
+      switch (kind) {
+        case "quoted":
+          return quoted(text);
+        case "var":
+          return varRef(`@${text}`);
+        case "math":
+          return inlineMath(`@[ ${text} ]`);
+        default:
+          return scalar(text);
+      }
+    };
+    fc.assert(
+      fc.property(
+        fc.constantFrom("quoted", "bare", "var", "math"),
+        fc.string({ maxLength: 20 }),
+        (kind, text) => {
+          let value: PdxScalar;
+          try {
+            value = construct(kind, text);
+          } catch {
+            return; // outside the language, and said so before emitting
+          }
+          const document = parse(serialize([kv("k", value)]), "prop.txt");
+          const item = document.items[0]!;
+          const seen = item.kind === "entry" ? item.value : undefined;
+          expect(asRead(seen)).toEqual(asRead(value));
+          if (value.kind === "str" && value.quoted) {
+            expect(seen?.kind === "str" && seen.quoted).toBe(true);
+          }
+        }
+      ),
+      { numRuns: 3000 }
+    );
+  });
+
+  it("closure: every finite JS number has a lexeme that reads back as it", () => {
+    fc.assert(
+      fc.property(fc.double({ noNaN: true, noDefaultInfinity: true }), (value) => {
+        const lexeme = decimalLexeme(value);
+        expect(lexeme).not.toMatch(/[eE]/);
+        expect(tryNumberValue(lexeme)).toBe(value === 0 ? 0 : value);
+      }),
+      { numRuns: 2000 }
+    );
+  });
+
+  it("closure: every numeral keeps every digit through the round trip", () => {
+    fc.assert(
+      fc.property(pdxNumeral, (lexeme) => {
+        const document = parse(serialize([kv("k", numeral(lexeme))]), "prop.txt");
+        const item = document.items[0]!;
+        if (item.kind !== "entry" || item.value.kind !== "num") {
+          throw new Error("expected a numeric entry");
+        }
+        expect(item.value.lexeme).toBe(lexeme);
+        // And the JS projection is offered only when it is the same number.
+        const projected = tryNumberValue(lexeme);
+        expect(projected === null || decimalLexeme(projected) === lexeme).toBe(true);
+      }),
+      { numRuns: 1000 }
+    );
+  });
+
+  it("closure: a key survives as itself, bare or quoted", () => {
+    fc.assert(
+      fc.property(fc.string({ maxLength: 20 }), (text) => {
+        let built;
+        try {
+          built = entry(text, "=", scalar(1));
+        } catch {
+          return; // outside the language, and said so before emitting
+        }
+        const document = parse(serialize([built]), "prop.txt");
+        const item = document.items[0]!;
+        expect(item.kind === "entry" && item.key).toBe(text);
       }),
       { numRuns: 2000 }
     );

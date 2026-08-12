@@ -28,6 +28,7 @@ import { createHash } from "node:crypto";
 import {
   parse,
   regionItems,
+  tryNumberValue,
   type PdxContainer,
   type PdxEntry,
   type PdxItem,
@@ -500,10 +501,14 @@ function fileVariables(source: ParsedSource): ReadonlyMap<string, number> {
     if (item.kind !== "entry" || !item.key.startsWith("@")) {
       continue;
     }
-    if (item.value.kind !== "num") {
-      throw new Error(`${source.path}:${item.line ?? "?"}: variable ${item.key} must be a number`);
+    const value = item.value.kind === "num" ? tryNumberValue(item.value.lexeme) : null;
+    if (value === null) {
+      throw new Error(
+        `${source.path}:${item.line ?? "?"}: variable ${item.key} must be a number this SDK ` +
+          "can evaluate"
+      );
     }
-    variables.set(item.key, item.value.value);
+    variables.set(item.key, value);
   }
   return variables;
 }
@@ -550,7 +555,14 @@ function entryLine(entry: PdxEntry): number | undefined {
  */
 function numericField(entry: PdxEntry, file: string, vars: VarTable): ParsedNumber | undefined {
   if (entry.value.kind === "num") {
-    return { value: entry.value.value };
+    const value = tryNumberValue(entry.value.lexeme);
+    if (value === null) {
+      throw new Error(
+        `${file}:${entryLine(entry) ?? "?"}: ${entry.key} is ${entry.value.lexeme}, which no ` +
+          "JavaScript number holds exactly"
+      );
+    }
+    return { value };
   }
   if (entry.value.kind === "var") {
     return {

@@ -1,5 +1,20 @@
 export * from "./ast.ts";
-export { classifyUnquoted, isBareToken, PdxSyntaxError } from "./lexer.ts";
+export { PdxSyntaxError } from "./lexer.ts";
+export {
+  canonicalNumeral,
+  classifyUnquoted,
+  decimalLexeme,
+  isBareString,
+  isBareToken,
+  isMathSource,
+  isNumeral,
+  isParamName,
+  isQuotableContent,
+  isVarName,
+  isWritableText,
+  numberValue,
+  tryNumberValue,
+} from "./representable.ts";
 export { withoutLines } from "./normalize.ts";
 export { parse, regionItems } from "./parser.ts";
 export { isScalar, scalarText, serialize } from "./serialize.ts";

@@ -315,7 +315,23 @@ describe("time boundaries", () => {
     });
   }
 
-  for (const days of [-1, Number.NaN]) {
+  // NaN never reaches here: it has no PDXScript spelling, so the effect
+  // recorder refuses it when the event is defined rather than emitting a
+  // `days = NaN` no game would read.
+  it("rejects a fire delay with no numeric spelling when the event is defined", () => {
+    const mod = makeMod("sdk149_delay_nan");
+    const events = mod.namespace();
+    const followup = events.country(2, { isTriggeredOnly: true });
+
+    expect(() =>
+      events.country(1, {
+        isTriggeredOnly: true,
+        immediate: (country) => country.countryEvent({ id: followup, days: Number.NaN }),
+      })
+    ).toThrow(/Cannot represent NaN/);
+  });
+
+  for (const days of [-1]) {
     it(`rejects invalid fire delay ${String(days)} transactionally`, () => {
       const mod = makeMod(
         `sdk149_delay_${String(days)

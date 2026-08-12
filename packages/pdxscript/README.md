@@ -49,6 +49,11 @@ named deferrals.
   8-bit clean.
 - **Comments are dropped** (the round-trip claim is semantic, not textual),
   and serialization is canonical — one rendering style, tabs.
+- **Closed under its own syntax.** What the parser reads, the serializer can
+  write, and the constructors build the same set — so a `load() → patch →
+emit` pipeline over shipped files cannot die on a value it just read. A
+  number is carried as its lexeme for this reason: a JS `number` silently
+  rounds `9007199254740993` and has no spelling for `1e21`.
 - **No game semantics.** Variable resolution, math evaluation, and override
   rules are consumer concerns; this package is syntax only. Keep it that way:
   anything that knows what a technology _is_ belongs in a consumer.
@@ -59,6 +64,7 @@ named deferrals.
 src/
 ├── index.ts      the public surface: parse, serialize, classification helpers
 ├── ast.ts        the item-sequence AST (scalar | entry | container | param | param-text)
+├── representable.ts  what is a legal numeral, quoted content, name, token — once
 ├── lexer.ts      tokenization; quoting/classification symmetric with serialize
 ├── parser.ts     items + same-line-only repair rules, diagnostics
 ├── serialize.ts  the one serializer; @refs pass bare

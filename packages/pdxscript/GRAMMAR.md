@@ -16,6 +16,7 @@ region     = "[[" "!"? NAME "]" REGION-TEXT "]"   (conditional text; see below)
 item       = entry | container | region | SCALAR | MATH
 
 KEY        = unquoted token (`@name` keys define variables) | quoted string
+             (kept as its text; re-emitted quoted when it cannot be bare)
 SCALAR     = quoted string | unquoted token
 MATH       = ("@[" | "@\[") any characters "]"   (verbatim, single token —
              the escaped form defers evaluation until after $PARAM$
@@ -55,20 +56,28 @@ quoted string, a `#` comment, or `@[ ... ]` math does not close it, a nested
 
 An unquoted token becomes, in order of precedence:
 
-| Test | Kind |
-| --- | --- |
-| `yes` / `no` | `bool` |
-| `[+-]?(\d+(\.\d+)?|\.\d+)` | `num` (vanilla writes `+0.10`) |
-| leading `@` | `var` (an `@name` reference) |
-| anything else | `str` |
+| Test                        | Kind                           |
+| --------------------------- | ------------------------------ |
+| `yes` / `no`                | `bool`                         |
+| `[+-]?(\d+(\.\d+)?\|\.\d+)` | `num` (vanilla writes `+0.10`) |
+| leading `@`                 | `var` (an `@name` reference)   |
+| anything else               | `str`                          |
 
 A quoted token is always `str` (so `"yes"` is a string, not a bool).
 Date-like tokens (`2200.01.01`) are strings — date semantics are the game's,
 not the syntax's. `|`, `:`, `.`, `-`, `$`, and non-ASCII bytes stay inside
 unquoted tokens (Stellaris script values:
-`value:job_weights_research_modifier|JOB|head_researcher|`). `-0` (vanilla
-writes it) normalizes to `0` at parse — `String(-0)` is `"0"`, and negative
-zero is semantically zero here.
+`value:job_weights_research_modifier|JOB|head_researcher|`).
+
+A `num` carries its **lexeme**, not a JS `number`. A double cannot hold every
+numeral a game file may contain — `9007199254740993` becomes `…992`, a
+400-digit integer becomes `Infinity` — and a JS number has no PDXScript
+spelling above `1e21` or below `1e-7`. So the digits are kept as written,
+minus the spellings that say nothing: a leading `+`, leading and trailing
+zeros, and `-0` are canonicalized away *textually*, never by round-tripping
+through `Number`. `+0.10` and `0.100` are both `0.1`; `9007199254740993`
+is itself. `numberValue()` / `tryNumberValue()` are the projection for
+consumers doing arithmetic, and they refuse rather than round.
 
 Quoted strings: no escape *processing*, but `\` skips the next character when
 scanning for the closing quote, so `"Joe \"Captain\" Rogers"` is one token.
@@ -132,16 +141,18 @@ not textual (identical bytes).
   renders one item per line, tab-indented; empty renders `{}`. Headers render
   before the brace. Empty anonymous containers are preserved (jomini drops
   them — a documented differential divergence).
-- Scalars: bools as `yes`/`no`; numbers via `String()` (exponent notation is
-  an error — PDXScript has none; `2.0` renders `2`, `+0.10` renders `0.1`);
-  `var` as the bare `@name`; `math` verbatim.
+- Scalars: bools as `yes`/`no`; numbers as their lexeme (`2.0` renders `2`,
+  `+0.10` renders `0.1` — the canonicalization happened at parse, and every
+  other digit is the file's); `var` as the bare `@name`; `math` verbatim.
 - **Bare-vs-quoted is symmetric with the lexer**: a `str` renders bare only
   if re-lexing it yields that same single `str` token — one negative
   character class (no whitespace or `" # ; < = > { } ! [ ]`), and never text
   that would reclassify as bool/num/var/math (`"yes"`, `"123"`, `"@x"` render
   quoted). Explicitly quoted strings stay quoted.
 - Top-level entries are blank-line separated, with a trailing newline.
-- Keys render raw; a key that is not bare-safe throws (see deferrals).
+- Keys render bare where the character class allows and quoted otherwise
+  (`"two words" = 1`). A key is never *classified*, so `yes` and `123` are
+  keys like any other.
 - A `param` region renders like a container, one item per line with the
   closing `]` at parent indent. A `param-text` region renders its body
   byte-for-byte between the opener and `]`, with nothing added — comments
@@ -152,11 +163,30 @@ Consequences, all fixpoint-stable: comments, blank lines, and semicolons
 drop; `2.0` renders `2`; `.5` renders `0.5`; multi-line scalar lists render
 inline; repaired input re-emits in repaired form.
 
+## Representability, and being closed under it
+
+One rule per question — is this a legal numeral, quoted content, parameter
+name, `@name`, inline-math token, bare token? — shared by the lexer, the
+parser, the public constructors and the serializer, so that the three sets
+below are the same set:
+
+- what the parser can produce,
+- what the constructors can build,
+- what the serializer can write.
+
+The consequence worth stating: a value that cannot be written is refused
+where it is *built*, not where it is emitted. `scalar('say "hi"')`,
+`quoted("ends in a backslash \\")`, `inlineMath("hello")` and
+`varRef("no_at_sign")` all throw at construction, because each would
+otherwise emit text that reads back as a different node — or as a syntax
+error in the middle of the next file. A serializer throw is the backstop for
+a tree assembled as a bare object literal, not the primary check.
+
+The property suite tests exactly this closure, over generated trees and over
+generated constructor arguments.
+
 ## Deferred, by name
 
-- **Quoted keys** (`"key" = value`): accepted, kept as their text; a key
-  that cannot render bare throws at serialization rather than emit wrong
-  output. Not observed in Stellaris `common/`.
 - **`?=` and `==`**: not Stellaris operators (CK3/Vic3/Imperator territory).
   Both are hard errors today; adding them is a lexer and AST change when a
   sibling game is in scope.

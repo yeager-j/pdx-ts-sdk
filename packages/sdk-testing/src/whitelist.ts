@@ -12,7 +12,13 @@
  * iterators (fixture relations), and scope links (navigation).
  */
 
-import { scalarText, type PdxEntry, type PdxItem, type PdxScalar } from "@pdx-ts/pdxscript";
+import {
+  scalarText,
+  tryNumberValue,
+  type PdxEntry,
+  type PdxItem,
+  type PdxScalar,
+} from "@pdx-ts/pdxscript";
 import {
   EVENT_FIELD_SUPPORT,
   EVENT_OPTION_FIELD_SUPPORT,
@@ -158,7 +164,11 @@ function stringArg(entry: PdxEntry): string {
  */
 function numberArg(entry: PdxEntry): number {
   const value = scalarOf(entry);
-  if (value.kind !== "num") {
+  // A numeral no double holds exactly (`9007199254740993`) is out for the
+  // same reason a script value is: this line evaluates, and evaluating it
+  // would mean answering with a different number than the file says.
+  const number = value.kind === "num" ? tryNumberValue(value.lexeme) : null;
+  if (number === null) {
     const rendered = scalarText(value);
     throw new InterpreterError(
       `${entry.key} ${entry.op} ${rendered}: expected a number — the numeric v1 line evaluates ` +
@@ -166,7 +176,7 @@ function numberArg(entry: PdxEntry): number {
         coverageSummary()
     );
   }
-  return value.value;
+  return number;
 }
 
 function boolArg(entry: PdxEntry): boolean {

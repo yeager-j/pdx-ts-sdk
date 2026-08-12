@@ -42,6 +42,18 @@ silent correction.
 One reported repair or observation about the source. Data returned to the
 caller, never console output.
 
+**Lexeme**:
+The source spelling of a token, kept as the value itself. Numbers are the
+case that matters: the AST carries `9007199254740993` as those digits, not as
+the double that would round them. A *projection* to a JS number is a separate,
+refusable step, not what the node is.
+
+**Representable**:
+Writable in this syntax and readable back as itself. The property is
+load-bearing rather than decorative: the parser, the constructors and the
+serializer must accept the same set, or the package is not closed under its
+own language and a parse can produce a value nothing can emit.
+
 **Semantic round trip**:
 The guarantee this package actually makes: `serialize(parse(x))` means the same
 as `x`, not that it is byte-identical to it.
