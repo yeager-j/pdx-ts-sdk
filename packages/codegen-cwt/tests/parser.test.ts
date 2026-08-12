@@ -174,7 +174,40 @@ describe("rule types", () => {
       kind: "block",
       bare: [],
       fields: [expect.objectContaining({ key: { kind: "aliasName", category: "trigger" } })],
+      via: "trigger_clause",
     });
+  });
+
+  it("keeps the outermost alias name when one clause expands into another", () => {
+    const clauses = new Map([
+      ["trigger_clause", only("single_alias[trigger_clause] = { alias_name[trigger] = bool }")],
+      [
+        "triggered_modifier_clause",
+        only(
+          "single_alias[triggered_modifier_clause] = { potential = single_alias_right[trigger_clause] }"
+        ),
+      ],
+    ]);
+    const rule = only("triggered_desc = single_alias_right[triggered_modifier_clause]");
+    const outer = classify(rule.value, (name) => {
+      const clause = clauses.get(name);
+      return clause === undefined ? undefined : { value: clause.value };
+    });
+
+    expect(outer.kind === "block" ? outer.via : null).toBe("triggered_modifier_clause");
+    const nested = outer.kind === "block" ? outer.fields[0]!.type : null;
+    expect(nested?.kind === "block" ? nested.via : null).toBe("trigger_clause");
+  });
+
+  it("leaves a non-block alias expansion unnamed", () => {
+    const clause = only("single_alias[some_scalar] = scalar");
+    const rule = only("thing = single_alias_right[some_scalar]");
+    expect(classify(rule.value, () => ({ value: clause.value }))).toEqual({ kind: "scalar" });
+  });
+
+  it("names nothing when the block was spelled out inline", () => {
+    const inline = classify(only("modifier = { description = localisation }").value);
+    expect(inline.kind === "block" ? inline.via : "missing").toBeUndefined();
   });
 
   it("reports diagnostics from a resolved alias against its declaration", () => {
