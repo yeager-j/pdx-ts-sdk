@@ -27,11 +27,14 @@
  * every patch and a sample that truncates at six — it is `(registry, field,
  * kind)` plus the structured `evidence`, compared as a set.
  *
- * A caveat the evidence itself cannot state: the corpus reader keeps at most
- * `VALUE_SAMPLE` (64) distinct scalars per field, so a `literal` row's evidence
- * is a sample rather than a census. It is a *stable* sample — the extractor
- * reads files in sorted order for exactly this reason — so the gate does not
- * flap, but a row saying "these three spellings" is saying it about the sample.
+ * One caveat the evidence cannot state about itself: the corpus reader keeps at
+ * most `VALUE_SAMPLE` (64) distinct scalars per field, and a field that filled
+ * that sample before an out-of-union spelling appeared would never record the
+ * spelling — the stray would go unreported and a row would stay green over a
+ * value nobody reviewed. Below the cap there is no sample at all: the set is
+ * everything the corpus wrote. That is what "keeps every closed literal union
+ * under the value-sample cap" in `corpus-conformance.test.ts` asserts, so the
+ * cap stays a memory bound rather than becoming a silent filter.
  */
 
 import type { ConformanceMismatchKind } from "@pdx-ts/codegen-cwt/corpus";
@@ -125,22 +128,22 @@ const MODIFIER_ROW =
   "which bounds nothing";
 
 /** The reason every `alias[modifier_rule:modifier]` row carries, holder aside. */
-function weightRows(holder: string, definitions: number): string {
+function weightRows(holder: string): string {
   return (
     `A weight block's rows are an alias splice, so the list is how the category is spliced ` +
-    `rather than a cardinality anyone wrote: ${holder}. Vanilla gates this one on a single ` +
-    `condition in each of its ${definitions} definitions, and a second row is the ordinary way ` +
-    `to write a second condition — the breadth is the feature.`
+    `rather than a cardinality anyone wrote: ${holder}. Every shipped definition that writes ` +
+    `this block gates it on a single condition, and a second row is the ordinary way to write ` +
+    `a second condition — the breadth is the feature.`
   );
 }
 
 /** The reason every economic-resources row carries. */
-function resourceRows(definitions: number): string {
+function resourceRows(): string {
   return (
-    `An economic resources block is declared repeatable because the game merges repeats, and ` +
-    `${definitions} shipped definitions each write exactly one. Writing one is the natural ` +
-    `authoring either way; narrowing would reject a mod that splits its costs and upkeep across ` +
-    `two blocks, which the rules permit.`
+    "An economic resources block is declared repeatable because the game merges repeats, and " +
+    "every shipped definition writes exactly one. Writing one is the natural authoring either " +
+    "way; narrowing would reject a mod that splits its costs and upkeep across two blocks, " +
+    "which the rules permit."
   );
 }
 
@@ -150,7 +153,7 @@ function resourceRows(definitions: number): string {
  * Every `arity` row today is `rules-wider-than-vanilla`, which is what a corpus
  * that is a lower bound looks like: the game writing a key once proves nothing
  * about whether writing it twice is legal, and CWT is the authority that says it
- * is. The three `literal` rows are the same finding in the other direction —
+ * is. The `literal` rows are the same finding in the other direction —
  * `Yes`, `LARGE` and `extra_Large` are the engine's case-insensitivity showing
  * through vanilla's own files.
  */
@@ -163,7 +166,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     classification: "rules-wider-than-vanilla",
     declaration: "common/ascension_perks.cwt:95 — ## cardinality = 0..inf",
     rationale:
-      "A tooltip line per swap, and both shipped swaps write one. The perk's own custom_tooltip " +
+      "A tooltip line per swap, and every shipped swap writes one. The perk's own custom_tooltip " +
       "is 0..1 (ascension_perks.cwt:79) and the swap's is not, so the rules mean the swap to be " +
       "able to say several things.",
   },
@@ -174,7 +177,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: MODIFIER_ROW,
-    rationale: weightRows("holder at common/bombardment_stances.cwt:39", 1),
+    rationale: weightRows("holder at common/bombardment_stances.cwt:39"),
   },
   {
     registry: "building",
@@ -183,7 +186,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: MODIFIER_ROW,
-    rationale: weightRows("holder at common/buildings.cwt:93", 6),
+    rationale: weightRows("holder at common/buildings.cwt:93"),
   },
   {
     registry: "building",
@@ -192,7 +195,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/buildings.cwt:241 — ## cardinality = 0..inf",
-    rationale: resourceRows(458),
+    rationale: resourceRows(),
   },
   {
     registry: "building",
@@ -202,7 +205,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     classification: "rules-wider-than-vanilla",
     declaration: "common/buildings.cwt:180 — ## cardinality = 0..inf",
     rationale:
-      "A building can be shown under several technologies and 38 shipped ones pick a single " +
+      "A building can be shown under several technologies and shipped buildings pick a single " +
       "technology each. The starbase copy of this key is 0..1 " +
       "(starbases_consolidated.cwt:239) while the building copy is not, so the difference is " +
       "one the rules state rather than one vanilla's usage implies.",
@@ -214,7 +217,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/casus_belli_and_war_goals.cwt:58 — ## cardinality = 0..inf",
-    rationale: resourceRows(41),
+    rationale: resourceRows(),
   },
   {
     registry: "civic_or_origin",
@@ -224,7 +227,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     classification: "rules-wider-than-vanilla",
     declaration: "common/governments.cwt:395 — ## cardinality = 0..inf",
     rationale:
-      "Sits beside custom_tooltip under the same 0..inf, and the 14 civics and origins that " +
+      "Sits beside custom_tooltip under the same 0..inf, and the civics and origins that " +
       "write it write one line. A civic with two modifier tooltips is exactly what the " +
       "repetition is for.",
   },
@@ -237,7 +240,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/governments.cwt:460 — ## cardinality = 1..5",
     rationale:
       "The one row here whose declaration is a bounded range rather than an open one: a " +
-      "secondary species may require up to five traits, and the 3 shipped origins require one. " +
+      "secondary species may require up to five traits, and the shipped origins require one. " +
       "Narrowing to a single trait would make four fifths of the declared range unwritable.",
   },
   {
@@ -249,7 +252,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/governments.cwt:497 — ## cardinality = 0..inf",
     rationale:
       "The unbounded sibling of the row above — a preference rather than a requirement, so the " +
-      "rules put no ceiling on it. Both shipped definitions name one trait.",
+      "rules put no ceiling on it. Every shipped definition names one trait.",
   },
   {
     registry: "edict",
@@ -258,7 +261,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/edicts.cwt:32 — ## cardinality = 0..inf",
-    rationale: resourceRows(171),
+    rationale: resourceRows(),
   },
   {
     registry: "global_ship_design",
@@ -269,7 +272,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/global_ship_designs.cwt:37 — ## cardinality = 0..inf",
     rationale:
       "A design's own sections are 0..inf too (global_ship_designs.cwt:76) and shipped designs " +
-      "do write several; the growth-stage copy is the same key and the same rule, and the 2 " +
+      "do write several; the growth-stage copy is the same key and the same rule, and the " +
       "definitions that grow through stages happen to fit each stage in one section.",
   },
   {
@@ -279,7 +282,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: MODIFIER_ROW,
-    rationale: weightRows("holder at common/graphical_cultures.cwt:71", 20),
+    rationale: weightRows("holder at common/graphical_cultures.cwt:71"),
   },
   {
     registry: "job",
@@ -288,7 +291,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/pop_jobs.cwt:183 — ## cardinality = 0..inf",
-    rationale: resourceRows(62),
+    rationale: resourceRows(),
   },
   {
     registry: "job",
@@ -297,7 +300,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/pop_jobs.cwt:176 — ## cardinality = 0..inf",
-    rationale: resourceRows(265),
+    rationale: resourceRows(),
   },
   {
     registry: "job",
@@ -308,7 +311,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/pop_jobs.cwt:206 — ## cardinality = 0..inf",
     rationale:
       "A triggered modifier is one condition and one modifier set, so several of them is how a " +
-      "job expresses several cases; the 2 shipped jobs using it have one case each. Its " +
+      "job expresses several cases; the shipped jobs using it have one case each. Its " +
       "unconditional siblings on the same type are 0..1, which is the shape of a rule that " +
       "means the repetition.",
   },
@@ -319,7 +322,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/megastructures.cwt:191 — ## cardinality = 0..inf",
-    rationale: resourceRows(111),
+    rationale: resourceRows(),
   },
   {
     registry: "scripted_loc",
@@ -328,7 +331,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: MODIFIER_ROW,
-    rationale: weightRows("holder at common/scripted_loc.cwt:18", 5),
+    rationale: weightRows("holder at common/scripted_loc.cwt:18"),
   },
   {
     registry: "section_template",
@@ -337,7 +340,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/section_templates.cwt:48 — ## cardinality = 0..inf",
-    rationale: resourceRows(133),
+    rationale: resourceRows(),
   },
   {
     registry: "ship_size",
@@ -346,7 +349,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/ship_sizes.cwt:306 — ## cardinality = 0..inf",
-    rationale: resourceRows(240),
+    rationale: resourceRows(),
   },
   {
     registry: "ship_size",
@@ -357,7 +360,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/ship_sizes.cwt:252 — ## cardinality = 0..inf",
     rationale:
       "A culling value is a resource-shaped block, and the rules let a fauna size declare " +
-      "several; the 38 that declare any declare one. Same reading as the resources rows, one " +
+      "several; the sizes that declare any declare one. Same reading as the resources rows, one " +
       "level in.",
   },
   {
@@ -367,7 +370,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/situations.cwt:156 — ## cardinality = 0..inf",
-    rationale: resourceRows(29),
+    rationale: resourceRows(),
   },
   {
     registry: "situation_type",
@@ -376,7 +379,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: MODIFIER_ROW,
-    rationale: weightRows("holder at common/situations.cwt:241", 1),
+    rationale: weightRows("holder at common/situations.cwt:241"),
   },
   {
     registry: "situation_type",
@@ -388,7 +391,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     rationale:
       "The stage copy of a key the situation type also declares 0..inf twice over " +
       "(situations.cwt:99 and :149), and shipped situations do write several at those other " +
-      "levels. One stage writing one is the corpus being thin here, not the rule being wide.",
+      "levels. A stage writing one is the corpus being thin here, not the rule being wide.",
   },
   {
     registry: "solar_system_initializer",
@@ -401,7 +404,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
       "alias_match_left[moon_initializer], which bounds nothing",
     rationale:
       "A moon may itself carry moons, and the recursion is an alias splice with no cardinality " +
-      "to narrow. The one shipped nesting has a single inner moon; a planet's moons at the " +
+      "to narrow. The shipped nesting has a single inner moon; a planet's moons at the " +
       "level above (:237) are the same splice and vanilla does repeat those.",
   },
   {
@@ -413,8 +416,8 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/solar_system_initializers.cwt:211 — ## cardinality = 0..inf",
     rationale:
       "A `<planet_modifier>` reference, and a planet may carry several — the rules say so in " +
-      "the same breath as `modifiers = none` on the line above, which is the opt-out. One " +
-      "shipped initializer names one modifier.",
+      "the same breath as `modifiers = none` on the line above, which is the opt-out. The " +
+      "shipped initializers name one modifier each.",
   },
   {
     registry: "solar_system_initializer",
@@ -424,8 +427,8 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     classification: "rules-wider-than-vanilla",
     declaration: "common/solar_system_initializers.cwt:35 — ## cardinality = 0..inf",
     rationale:
-      "An initializer can be offered for several usages, and 239 shipped ones pick exactly one " +
-      "of the enum. The repetition is how a system says it serves both, and no vanilla system " +
+      "An initializer can be offered for several usages, and shipped initializers pick exactly " +
+      "one of the enum. The repetition is how a system says it serves both, and no vanilla system " +
       "happens to.",
   },
   {
@@ -435,7 +438,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: ["Yes"],
     classification: "engine-lenient-spelling",
     rationale:
-      "A boolean written `Yes` in one of 180 shipped projects. Stellaris reads yes/no without " +
+      "A boolean written `Yes` where the union declares `yes`. Stellaris reads yes/no without " +
       "regard to case, so the file is legal and the emitted `boolean` is the right authoring " +
       "surface — an SDK author writes `true` and the writer lowers it to `yes`. Nothing here " +
       "says CWT's `bool` is wrong.",
@@ -447,7 +450,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/species_consolidated.cwt:264 — ## cardinality = 0..inf",
-    rationale: resourceRows(16),
+    rationale: resourceRows(),
   },
   {
     registry: "strike_craft_component_template",
@@ -456,7 +459,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/components.cwt:333 — ## cardinality = 0..inf",
-    rationale: resourceRows(60),
+    rationale: resourceRows(),
   },
   {
     registry: "strike_craft_component_template",
@@ -479,8 +482,8 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/technologies_consolidated.cwt:244 — ## cardinality = 0..4",
     rationale:
       "The prereq-for categories are declared as one `enum[prereq_for_category]` key repeated " +
-      "up to four times, so every category inherits the same list arity. Ten technologies " +
-      "describe a component and each describes one.",
+      "up to four times, so every category inherits the same list arity. A technology that " +
+      "describes a component describes one.",
   },
   {
     registry: "technology",
@@ -491,7 +494,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/technologies_consolidated.cwt:244 — ## cardinality = 0..4",
     rationale:
       "Same declaration as prereqfor_desc.component: one repeatable enum key covering every " +
-      "category. Three technologies describe a diplomatic action.",
+      "category. A technology that describes a diplomatic action describes one.",
   },
   {
     registry: "technology",
@@ -501,7 +504,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     classification: "rules-wider-than-vanilla",
     declaration: "common/technologies_consolidated.cwt:242 — ## cardinality = 0..4",
     rationale:
-      "A technology may hide the prereq-for line of up to four categories, and the 38 that hide " +
+      "A technology may hide the prereq-for line of up to four categories, and the ones that hide " +
       "any hide one. Four is the count of categories, so the bound is the rules being precise " +
       "rather than generous.",
   },
@@ -513,8 +516,8 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     classification: "rules-wider-than-vanilla",
     declaration: "common/technologies_consolidated.cwt:244 — ## cardinality = 0..4",
     rationale:
-      "Same declaration as its sibling categories. Forty-seven technologies describe a ship and " +
-      "each describes one.",
+      "Same declaration as its sibling categories. A technology that describes a ship " +
+      "describes one.",
   },
   {
     registry: "tradition",
@@ -523,7 +526,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: MODIFIER_ROW,
-    rationale: weightRows("holder at common/traditions.cwt:133", 6),
+    rationale: weightRows("holder at common/traditions.cwt:133"),
   },
   {
     registry: "tradition",
@@ -533,7 +536,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     classification: "rules-wider-than-vanilla",
     declaration: "common/traditions.cwt:81 — ## cardinality = 0..inf",
     rationale:
-      "Fifty-one traditions write one modifier tooltip. The key sits under the same 0..inf as " +
+      "A tradition that writes a modifier tooltip writes one. The key sits under the same 0..inf as " +
       "the plain custom_tooltip beside it, which shipped traditions also write once — a pair of " +
       "lines is what the rules leave room for.",
   },
@@ -546,7 +549,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/traditions.cwt:100 — ## cardinality = 0..inf",
     rationale:
       "The swap's copy of the tradition-level key, declared the same way and written once by " +
-      "each of 45 swaps.",
+      "each swap that writes it.",
   },
   {
     registry: "tradition",
@@ -557,7 +560,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/traditions.cwt:102 — ## cardinality = 0..inf",
     rationale:
       "The swap's copy of tradition.custom_tooltip_with_modifiers above, same rule and same " +
-      "reading; 14 swaps write one.",
+      "reading; the swaps that write it write one.",
   },
   {
     registry: "tradition",
@@ -568,7 +571,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/traditions.cwt:125 — ## cardinality = 0..inf",
     rationale:
       "One condition and one modifier set per entry, so several entries is how a swap expresses " +
-      "several cases. Two swaps use it, with one case each; the tradition-level copy " +
+      "several cases. The swaps that use it have one case each; the tradition-level copy " +
       "(traditions.cwt:69) carries the same declaration.",
   },
   {
@@ -580,7 +583,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/components.cwt:467 — ## cardinality = 0..inf",
     rationale:
       "An aura is a self-contained single_alias block, and a component projecting two is what " +
-      "the rules leave open. Twenty-two shipped utility components project one.",
+      "the rules leave open. Shipped utility components project one each.",
   },
   {
     registry: "utility_component_template",
@@ -589,7 +592,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: [],
     classification: "rules-wider-than-vanilla",
     declaration: "common/components.cwt:400 — ## cardinality = 0..inf",
-    rationale: resourceRows(630),
+    rationale: resourceRows(),
   },
   {
     registry: "utility_component_template",
@@ -599,7 +602,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     classification: "rules-wider-than-vanilla",
     declaration: "common/components.cwt:433 — ## cardinality = 0..inf",
     rationale:
-      "A triggered modifier clause per case, and the 20 components using it have one case each. " +
+      "A triggered modifier clause per case, and the components using it have one case each. " +
       "The weapon subtype declares the identical key at components.cwt:220.",
   },
   {
@@ -611,7 +614,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     declaration: "common/components.cwt:430 — ## cardinality = 0..inf",
     rationale:
       "The sibling of triggered_ship_design_modifier above, same declaration and same reading; " +
-      "22 components write one case.",
+      "the components that write it have one case each.",
   },
   {
     registry: "weapon_component_template",
@@ -621,8 +624,8 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     classification: "rules-wider-than-vanilla",
     declaration: "common/components.cwt:328 — ## cardinality = 0..inf",
     rationale:
-      "An effect clause per hit reaction, so a weapon with two reactions writes two. Sixteen " +
-      "shipped weapons write one, which says nothing about whether a mod may write two.",
+      "An effect clause per hit reaction, so a weapon with two reactions writes two. Shipped " +
+      "weapons write one, which says nothing about whether a mod may write two.",
   },
   {
     registry: "weapon_component_template",
@@ -631,7 +634,7 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     evidence: ["extra_Large"],
     classification: "engine-lenient-spelling",
     rationale:
-      "`extra_Large` for the `extra_large` the union declares, in one shipped weapon. Same " +
+      "`extra_Large` for the `extra_large` the union declares. Same " +
       "engine leniency as strike_craft_component_template.size's `LARGE`, and the same answer: " +
       "the union is right and the file is legal.",
   },

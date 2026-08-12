@@ -101,8 +101,16 @@ export interface FieldObservation {
  * How many distinct scalars to remember per field. Enough to catch a value
  * outside a closed union, few enough that an open `<technology>` field does not
  * carry a thousand ids around.
+ *
+ * Exported because the cap is a hole in the `literal` verdict as well as a
+ * memory bound: a field that reaches it before a later out-of-union spelling
+ * never records that spelling, so the stray would go unreported and the
+ * baseline would stay green over a value nobody reviewed. Below the cap the
+ * sample is the whole set and the verdict is complete, so the corpus gate
+ * asserts every field with a closed union stays under it — the one way this
+ * stays a bound rather than a silent filter.
  */
-const VALUE_SAMPLE = 64;
+export const VALUE_SAMPLE = 64;
 
 export interface RegistryCorpus {
   /** Definitions found, across every file at the registry's path. */
@@ -775,11 +783,15 @@ export interface ShapeMismatch {
    */
   readonly detail: string;
   /**
-   * The values that produced the verdict, complete and untruncated — every
-   * stray for `literal`, and empty for the kinds whose verdict is its own
-   * evidence. This is the half a baseline compares, as a set: a seventh stray
-   * the prose does not show still has to be reviewed, and a definition count
-   * that moved is not a new observation.
+   * The values that produced the verdict — every stray for `literal`, and empty
+   * for the kinds whose verdict is its own evidence. This is the half a
+   * baseline compares, as a set: a seventh stray the prose does not show still
+   * has to be reviewed, and a definition count that moved is not a new
+   * observation.
+   *
+   * Untruncated, unlike {@link detail} — but drawn from a value set the reader
+   * caps at {@link VALUE_SAMPLE}, so "every stray" holds only while the field
+   * stays under that cap. The corpus gate asserts it does.
    */
   readonly evidence: readonly string[];
 }

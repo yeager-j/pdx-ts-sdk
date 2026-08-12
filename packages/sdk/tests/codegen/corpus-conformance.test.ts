@@ -42,6 +42,7 @@
 import {
   conformance,
   shapeConformance,
+  VALUE_SAMPLE,
   type DescentNode,
   type RuleScopes,
 } from "@pdx-ts/codegen-cwt/corpus";
@@ -408,6 +409,42 @@ describe("corpus conformance", () => {
     // leaving it would quietly re-acknowledge the defect if it came back.
     const live = new Set(mismatchesOfKind(["form", "scope"]).map((mismatch) => mismatch.key));
     expect([...ACKNOWLEDGED.keys()].filter((key) => !live.has(key))).toEqual([]);
+  });
+
+  it("keeps every closed literal union under the value-sample cap", () => {
+    // What makes the `literal` half of the baseline honest, and the one thing
+    // the evidence cannot say about itself.
+    //
+    // The reader remembers at most VALUE_SAMPLE distinct scalars per field. A
+    // field that fills the sample before an out-of-union spelling appears never
+    // records that spelling, so `shapeConformance` reports no stray for it and
+    // the baseline stays green over a value nobody reviewed — a new unsupported
+    // game value passing a gate whose whole claim is that it would not. Below
+    // the cap there is no sample: the set is everything the corpus wrote, and
+    // the verdict is complete.
+    //
+    // So the claim is asserted rather than assumed. Vanilla's widest closed
+    // union sits well under the cap today, and if one ever reaches it this
+    // fails by name — the remedy is to raise VALUE_SAMPLE or to record the
+    // overflow, not to accept a filtered verdict. A field that happens to hold
+    // exactly VALUE_SAMPLE values with nothing dropped fails here too; the
+    // remedy is the same, so the conservative reading costs nothing.
+    const saturated = reports.flatMap((report) =>
+      report.measurement.emitted
+        .filter((field) => field.literals !== undefined)
+        .flatMap((field) => {
+          const observation = report.corpus.occurrences.get(field.field);
+          return observation === undefined || observation.values.size < VALUE_SAMPLE
+            ? []
+            : [
+                `${report.registry}.${field.field}: ${observation.values.size} distinct values ` +
+                  `reaches the ${VALUE_SAMPLE}-value sample cap, so a stray outside its ` +
+                  `${field.literals!.length}-member union could be dropped unreported — raise ` +
+                  "VALUE_SAMPLE or record the overflow",
+              ];
+        })
+    );
+    expect(saturated).toEqual([]);
   });
 
   it("holds the classified arity and literal observation baseline", () => {
