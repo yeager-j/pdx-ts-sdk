@@ -42,7 +42,6 @@ import { isComplexTriggerModifier } from "../../content/blocks.ts";
 import { fieldEntries } from "../../content/lower.ts";
 import type { ContentField, ContentLocalisation } from "../../content/schema.ts";
 import type { ModWarning } from "../../diagnostics.ts";
-import { refId } from "../../generated/refs.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefSink, ContentRefUse } from "../../references.ts";
 import {
@@ -51,6 +50,7 @@ import {
   registerModifierDescKey,
 } from "../../script/effects/modifiers.ts";
 import type { ModifierWithLoc } from "../../script/effects/types.ts";
+import { refId } from "../../script/scalar.ts";
 import type { AnyOf, ParsedDefinition, ParsedNumber } from "./view.ts";
 
 /** What the shared lowering reads; the same shape `fieldEntries` is handed. */

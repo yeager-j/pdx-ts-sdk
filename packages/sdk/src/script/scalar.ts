@@ -5,21 +5,63 @@
  * reference (`eventTarget<"planet">("colony")`) are objects at authoring time
  * and one bare word in the output. Every place that takes an argument has to
  * unwrap them the same way, so the unwrapping lives here rather than in
- * whichever module happened to need it first — the effect recorder and the
- * scripted trigger/effect bindings both do.
+ * whichever module happened to need it first — the content writer, effect
+ * recorder, and scripted trigger/effect bindings all do.
  *
  * The navigable `vanilla.*` tries (`src/identifiers/trie.ts`) are Proxies
  * built over a bare function so the same value stays both callable and
  * navigable — `typeof` on such a Proxy reflects the function target, so a
- * gate on `typeof value === "object"` alone silently skips them. This module
- * gates on `object` or `function` for that reason; `src/generated/refs.ts`'s
- * `refId` gates the same way, from the same rule in the emitter.
+ * gate on `typeof value === "object"` alone silently skips them. `refId` is
+ * the one place that owns that representation and gate.
  */
 
-import { varRef, type PdxScalar } from "@pdx-ts/pdxscript";
+import type { PdxScalar } from "@pdx-ts/pdxscript";
 
-import type { TypedRef } from "../generated/refs.ts";
 import type { ScopeValue } from "./effects/types.ts";
+import { scriptValueScalar } from "./trigger-core.ts";
+
+declare const refBrand: unique symbol;
+
+/**
+ * A reference to a key defined by some content type.
+ *
+ * The rules say a field holds a `<technology>`, but which technologies exist
+ * is decided by the game install, not by the rules — so the brand is optional
+ * and a raw id string still assigns. When the parser slice lands it can narrow
+ * these to real unions without breaking a single caller.
+ */
+export interface TypedRef<T extends string> {
+  readonly id: string;
+  readonly [refBrand]?: T;
+}
+
+/**
+ * Resolves an authored reference to the bare word the game expects, passing
+ * plain values through.
+ *
+ * Some rules are overloaded between a reference and a literal —
+ * `has_building` accepts both `<building>` and a bool — so this has to handle
+ * either. A scope value (`ctx.self`, an event target) is a reference too, and
+ * rules overload against those as freely: `is_planet_class` takes a
+ * `<planet_class>` or any scope the game coerces to a planet. It lowers to its
+ * path rather than an id, which is the only reason the two are told apart.
+ *
+ * `ScopeValue`'s `kind` discriminant settles that distinction rather than the
+ * presence of a `path` property. A content reference is structurally open, so
+ * an object that is genuinely a `<planet_class>` may carry a path of its own
+ * and must still serialize the id the game requires.
+ */
+export function refId<T extends string | number | boolean>(
+  value: TypedRef<string> | ScopeValue | T
+): string | T {
+  if ((typeof value === "object" && value !== null) || typeof value === "function") {
+    if ("kind" in value && value.kind === "scope-ref") {
+      return value.path;
+    }
+    return (value as TypedRef<string>).id;
+  }
+  return value;
+}
 
 /** Anything that lowers to one PDXScript scalar. */
 export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValue;
@@ -29,33 +71,19 @@ export function toScalar(
   booleanLiterals: readonly ("yes" | "no")[] = []
 ): string | number | boolean | PdxScalar {
   if ((typeof value === "object" && value !== null) || typeof value === "function") {
-    // On `ScopeValue`'s own discriminant rather than on whether a `path`
-    // property happens to be there, matching generated `refId`: a branded
-    // content reference is structurally open, so one that carries a `path` of
-    // its own must still serialize the id the game requires.
-    if ("kind" in value && (value as ScopeValue).kind === "scope-ref") {
-      return (value as ScopeValue).path;
-    }
-    if ("id" in value) {
-      return (value as { id: string }).id;
+    const lowered = refId(value as TypedRef<string> | ScopeValue);
+    if (typeof lowered === "string") {
+      return lowered;
     }
     throw new Error(`Cannot serialize ${JSON.stringify(value)} as an effect argument`);
   }
-  // A `@name` scripted-variable reference (a `ScriptValue` argument, e.g.
-  // `changeVariable`'s `value`) has to become a `var` node to write bare — see
-  // `scriptValueScalar` in `trigger-core.ts`. Effect arguments funnel through
-  // this one lowering regardless of which effect they belong to, and no
-  // non-`ScriptValue` argument's real domain admits a leading `@`, so the
-  // check is safe to apply unconditionally here too.
-  if (typeof value === "string" && value.startsWith("@")) {
-    return varRef(value);
-  }
+  const lowered = typeof value === "string" ? scriptValueScalar(value) : value;
   if (
-    typeof value === "string" &&
-    (value === "yes" || value === "no") &&
-    booleanLiterals.includes(value)
+    typeof lowered === "string" &&
+    (lowered === "yes" || lowered === "no") &&
+    booleanLiterals.includes(lowered)
   ) {
-    return value === "yes";
+    return lowered === "yes";
   }
-  return value as string | number | boolean;
+  return lowered as string | number | boolean | PdxScalar;
 }

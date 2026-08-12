@@ -6,17 +6,16 @@ import {
   kv,
   quoted,
   scalar,
-  varRef,
   type PdxEntry,
   type PdxItem,
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
-import { refId, type TypedRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { underField, type ContentRefSink, type ContentRefUse } from "../references.ts";
 import { recordEffects, scriptCtx } from "../script/effects/recorder.ts";
 import type { ScriptCtx } from "../script/effects/types.ts";
+import { refId, type TypedRef } from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue, type Trigger } from "../script/trigger-core.ts";
 import {
   ECONOMIC_RESOURCE_OPERATIONS,
@@ -284,17 +283,11 @@ function contentScalar(
   if (quote) {
     return quoted(String(converted));
   }
-  // A `@name` scripted-variable reference has to become a `var` node to write
-  // bare (`base = @name`) — passed through as a plain string, pdxscript's
-  // serializer quotes it defensively, and the game reads a literal instead of
-  // evaluating the variable. Every `value_field`-typed field (a `ScriptValue`)
-  // can carry this form, and no other field's real vanilla domain admits a
-  // leading `@`, so the check is safe unconditionally rather than gated on
-  // which field this is.
-  if (typeof converted === "string" && converted.startsWith("@")) {
-    return varRef(converted);
+  if (typeof converted === "string") {
+    const lowered = scriptValueScalar(converted);
+    return typeof lowered === "object" ? lowered : scalar(lowered);
   }
-  return scalar(converted as string | number | boolean);
+  return scalar(converted as number | boolean);
 }
 
 /**

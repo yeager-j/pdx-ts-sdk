@@ -40,13 +40,9 @@ export function makeIdTrie(registry: string): any {
         }
         return prop === "id" ? (path[path.length - 1] ?? "") : node([...path, prop]);
       },
-      // `toScalar` (`src/script/scalar.ts`) probes `"id" in value` before
-      // reading it, and every `get`-served string prop below answers `true` to
-      // an `in` check on a plain object — so the trap has to say the same
-      // thing, or a proxy read only through `in` (never a direct `.prop`
-      // access) would look empty. `id` is always servable (the empty string at
-      // the root, same as `get` returns); anything else names another
-      // navigation step, which `get` always serves too.
+      // Every string property is served by `get`, so reflection through `in`
+      // reports the same shape. `id` is always servable (the empty string at
+      // the root); anything else names another navigation step.
       has(_target, prop) {
         return typeof prop === "string";
       },
@@ -83,11 +79,9 @@ export function makeEventTrie(): any {
         }
         return node([...path, prop]);
       },
-      // Same reasoning as `makeIdTrie`'s `has` trap: `toScalar` and `refId`
-      // both probe `"id" in value` before reading it, and this trie's `get`
-      // additionally serves `kind` (its `event-ref` discriminant) and any
-      // other string as a deeper navigation step — so `has` answers `true`
-      // for every string prop, matching `get` exactly.
+      // Same reasoning as `makeIdTrie`'s `has` trap: this trie's `get` serves
+      // `id`, `kind`, and every deeper string navigation step, so `has`
+      // reports every string property consistently.
       has(_target, prop) {
         return typeof prop === "string";
       },

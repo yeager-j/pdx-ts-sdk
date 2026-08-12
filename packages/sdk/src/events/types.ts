@@ -23,7 +23,7 @@ import type {
   GeneratedEventFields,
   GeneratedEventOptionFields,
 } from "../generated/event-fields.ts";
-import { type SoundEffectRef, type SpriteRef, type TypedRef } from "../generated/refs.ts";
+import type { SoundEffectRef, SpriteRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { ContentRefUse } from "../references.ts";
 import {
@@ -32,6 +32,7 @@ import {
   type ScopeValue,
   type ScriptCtx,
 } from "../script/effects/types.ts";
+import type { TypedRef } from "../script/scalar.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 // The typed fire signatures for every event kind are generated into the
 // scope interfaces — this side-effect import is what loads the augmentation.

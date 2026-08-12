@@ -557,6 +557,7 @@ async function main(): Promise<void> {
       `import { trigger, type Trigger${referencesIdentifier(triggers.code, "ScriptValue") ? ", type ScriptValue" : ""}` +
       `${referencesIdentifier(triggers.code, "scriptValueScalar") ? ", scriptValueScalar" : ""} } ` +
       'from "../script/trigger-core.ts";\n' +
+      'import { refId } from "../script/scalar.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(
         "./enums.ts",
@@ -570,7 +571,7 @@ async function main(): Promise<void> {
         "./value-sets.ts",
         triggerUsage.valueSets.map((name) => emitter.valueSetTypeName(name))
       ) +
-      'import { refId } from "./refs.ts";\n\n' +
+      "\n" +
       triggers.code
   );
   await write(
@@ -1073,7 +1074,7 @@ function contentDefiners(
   const contentItemTypes = [...runtimeItemTypes].filter((name) => !name.endsWith("PatchItem"));
   const imports =
     importList("../content/types.ts", contentItemTypes) +
-    (refImports ? 'import { refId, type TypedRef } from "./refs.ts";\n' : "") +
+    (refImports ? 'import { refId, type TypedRef } from "../script/scalar.ts";\n' : "") +
     // One generic transform, called with the registry's own field descriptors:
     // the patch surface is descriptor-derived the whole way down, so nothing
     // per-registry is imported from a hand-written module.

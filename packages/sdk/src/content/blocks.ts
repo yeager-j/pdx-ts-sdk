@@ -1,7 +1,6 @@
 /** Reusable PDXScript encoders for content block shapes. */
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import { refId } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { underField, type ContentRefSink, type ContentRefUse } from "../references.ts";
 import {
@@ -11,6 +10,7 @@ import {
 } from "../script/effects/modifiers.ts";
 import { assertSynchronousClosure } from "../script/effects/recorder.ts";
 import type { ComplexTriggerModifier, Modifier } from "../script/effects/types.ts";
+import { refId } from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue } from "../script/trigger-core.ts";
 import type {
   EconomicResourceBlock,

@@ -1,7 +1,6 @@
 /** Content definition identity, localization, and authoring registration. */
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { TypedRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { ContentRefSink } from "../references.ts";
 import {
@@ -10,6 +9,7 @@ import {
   registerModifierDescKey,
 } from "../script/effects/modifiers.ts";
 import type { ModifierWithLoc } from "../script/effects/types.ts";
+import type { TypedRef } from "../script/scalar.ts";
 import { isComplexTriggerModifier } from "./blocks.ts";
 import { dualArm, fieldEntries, resolveFromClosures } from "./lower.ts";
 import type { ContentField, ContentLocalisation, ContentRegistryDescriptor } from "./schema.ts";

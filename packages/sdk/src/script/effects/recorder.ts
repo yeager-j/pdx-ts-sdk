@@ -5,10 +5,9 @@ import { block, cmp, kv, type PdxEntry, type PdxOp, type PdxScalar } from "@pdx-
 import { EFFECT_META, type EffectFieldMeta } from "../../generated/effect-meta.ts";
 import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/effect-policy.ts";
 import type { ScopeObjOf } from "../../generated/effects.ts";
-import { refId } from "../../generated/refs.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefUse } from "../../references.ts";
-import { toScalar } from "../scalar.ts";
+import { refId, toScalar } from "../scalar.ts";
 import type { ScriptedEffectCall } from "../scripted.ts";
 import { trigger, type Trigger } from "../trigger-core.ts";
 import { modifierEntry } from "./modifiers.ts";

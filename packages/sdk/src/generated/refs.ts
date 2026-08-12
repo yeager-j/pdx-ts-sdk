@@ -2,54 +2,7 @@
 // Source: cwtools-stellaris-config @ 3378e418ed87
 // From: type references across the rule files
 
-declare const refBrand: unique symbol;
-
-/**
- * A reference to a key defined by some content type.
- * The rules say a field holds a `<technology>`, but which technologies exist is
- * decided by the game install, not by the rules — so the brand is optional and a
- * raw id string still assigns. When the parser slice lands it can narrow these to
- * real unions without breaking a single caller.
- */
-export interface TypedRef<T extends string> {
-  readonly id: string;
-  readonly [refBrand]?: T;
-}
-
-/**
- * Resolves an authored reference to the bare word the game expects, passing
- * plain values through.
- * Some rules are overloaded between a reference and a literal — `has_building`
- * accepts both `<building>` and a bool — so this has to handle either. A scope
- * value (`ctx.self`, an event target) is a reference too, and rules overload
- * against those as freely: `is_planet_class` takes a `<planet_class>` or any
- * scope the game coerces to a planet. It lowers to its path rather than an id,
- * which is the only reason the two are told apart here at all.
- * Told apart by `ScopeValue`'s `kind` discriminant rather than by whether a
- * `path` property is present: a content reference is branded but structurally
- * open, so an object that is genuinely a `<planet_class>` and happens to carry
- * a `path` of its own would otherwise serialize that path in place of the id
- * the game requires. `src/script/scalar.ts` reads the same discriminant.
- * Checks `object` or `function` rather than `object` alone: the navigable
- * `vanilla.*` tries (`src/identifiers/trie.ts`) are Proxies built over a bare
- * function so they stay callable *and* navigable, and `typeof` on a Proxy
- * reflects its target — a function target makes `typeof proxy === "function"`
- * even though `in`/property access still goes through the traps like any
- * other proxy.
- */
-export function refId<T extends string | number | boolean>(
-  value: TypedRef<string> | { readonly kind: "scope-ref"; readonly path: string } | T
-): string | T {
-  if (typeof value === "object" || typeof value === "function") {
-    if (value !== null && "kind" in value && value.kind === "scope-ref") {
-      return value.path;
-    }
-    // Everything else is a content reference: a `kind` this function does
-    // not know belongs to the referenced object, not to the reference.
-    return (value as TypedRef<string>).id;
-  }
-  return value;
-}
+import type { TypedRef } from "../script/scalar.ts";
 
 /** A reference to a `<agenda>`. */
 export type AgendaRef = TypedRef<"agenda" | `agenda.${string}`>;
