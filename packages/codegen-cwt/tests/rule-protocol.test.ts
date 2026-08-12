@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { createEffectPolicy } from "@pdx-ts/codegen-cwt/effect-policy";
+import { emitEvents } from "@pdx-ts/codegen-cwt/emit/events";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lowered-rule";
@@ -50,6 +51,20 @@ describe("the effect ownership policy", () => {
     expect(policy.fireKeys.has("country_event")).toBe(true);
     expect(policy.fireKeys.has("pop_event")).toBe(false);
     expect(policy.byKey.get("pop_event")).toMatchObject({ owner: "generated" });
+  });
+
+  it("reports a scoped event kind whose fire-effect rule disappears", () => {
+    const effects = new Map(rules.effects);
+    effects.delete("country_event");
+    const changedRules = { ...rules, effects };
+    const changedPolicy = createEffectPolicy(changedRules);
+    const events = emitEvents(new Emitter(changedRules), changedPolicy);
+
+    expect(events.skipped).toContainEqual({
+      name: "country_event",
+      reason: "no fire-effect rule with `## scopes`",
+    });
+    expect(events.fireMethods).toBe(22);
   });
 
   it("accounts explicitly for CWT-owned and SDK-synthetic methods", () => {

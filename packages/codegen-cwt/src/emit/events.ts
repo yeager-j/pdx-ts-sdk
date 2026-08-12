@@ -178,7 +178,6 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     skipped.push({ name: kind.key, reason: "scopeless event kind — closures cannot be typed" });
     return false;
   });
-  const fireKinds = scoped.filter((kind) => policy.fireKeys.has(kind.key));
   const capabilityNames = new Set<string>();
   for (const kind of scoped) {
     const method = capabilityMethod(kind);
@@ -307,11 +306,15 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
   // whose rule the effects file no longer declares gets no typed fire method
   // and is reported rather than guessed at.
   const byInterface = new Map<string, (EmittedKind & { scope: string })[]>();
-  for (const kind of fireKinds) {
+  for (const kind of scoped) {
     const declarations = emitter.rules.effects.get(kind.key);
     const supported = declarations?.flatMap((decl) => decl.supportedScopes ?? []) ?? [];
     if (supported.length === 0) {
       skipped.push({ name: kind.key, reason: "no fire-effect rule with `## scopes`" });
+      continue;
+    }
+    if (!policy.fireKeys.has(kind.key)) {
+      skipped.push({ name: kind.key, reason: "fire-effect rule rejected by the ownership policy" });
       continue;
     }
     const targets = supported.some((scope) => scope === "any" || scope === "all")
