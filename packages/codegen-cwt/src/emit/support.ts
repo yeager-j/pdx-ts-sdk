@@ -1,12 +1,11 @@
 /** Emitters for the small supporting modules: scopes, enums, and references. */
 
 import { camelCase, docComment, pascalCase, pluralize } from "../naming.ts";
-import { EXTRA_SCOPES } from "../overlay.ts";
 import type { Emitter } from "./types.ts";
 
 export function canonicalScopes(scopes: ReadonlyMap<string, readonly string[]>): string[] {
   const names = [...scopes.keys()].map((name) => name.toLowerCase().replaceAll(" ", "_"));
-  return [...new Set([...names, ...EXTRA_SCOPES])].sort();
+  return [...new Set(names)].sort();
 }
 
 export function emitScopes(names: readonly string[]): string {

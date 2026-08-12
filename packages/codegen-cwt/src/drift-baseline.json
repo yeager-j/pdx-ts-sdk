@@ -53,7 +53,7 @@
       "id": "stale-v4-scope-names",
       "selectedAuthority": "rules",
       "reason": "The rules carry the current 4.x scope model: carrier is absent from the dump and the dump still names the retired pop scope across related scope families.",
-      "evidenceVersion": "cwtools-stellaris-config f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until a version-matched game documentation dump adopts carrier and pop_group.",
       "conflicts": {
         "triggers": [
@@ -446,7 +446,7 @@
       "id": "ship-design-scope",
       "selectedAuthority": "rules",
       "reason": "The rules expose these ship predicates on the design scope; the documentation dump omits that legal authoring context.",
-      "evidenceVersion": "cwtools-stellaris-config f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until the game documentation dump includes design for these predicates.",
       "conflicts": {
         "triggers": [
@@ -468,7 +468,7 @@
       "id": "system-megastructure-iterators",
       "selectedAuthority": "rules",
       "reason": "These iterators operate from system scope; the documentation dumps them as universal even though their selected megastructures belong to a system.",
-      "evidenceVersion": "cwtools-stellaris-config f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until the game documentation dump narrows these iterators to system.",
       "conflicts": {
         "triggers": [
@@ -486,7 +486,7 @@
       "id": "global-trait-iterators",
       "selectedAuthority": "rules",
       "reason": "The rules make the existing-trait iterators callable from any enclosing scope; the dump records no_scope for the same global traversal.",
-      "evidenceVersion": "cwtools-stellaris-config f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until the rules and documentation use the same spelling for global trait iteration.",
       "conflicts": {
         "triggers": [
@@ -508,7 +508,7 @@
       "id": "tradition-removal-scopes",
       "selectedAuthority": "rules",
       "reason": "The curated rules explicitly narrow these removal effects while the documentation dump records them as universal; CWT remains the grammar authority and the broader dump claim stays visible as independent drift.",
-      "evidenceVersion": "cwtools-stellaris-config f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until the game documentation dump lists the concrete callable scopes.",
       "conflicts": {
         "triggers": [],
@@ -527,7 +527,7 @@
       "id": "export-modifier-scope-family",
       "selectedAuthority": "mixed",
       "reason": "The rules carry carrier and pop_group while the dump additionally carries colony and the retired pop name; neither source alone captures the reconciled current set.",
-      "evidenceVersion": "cwtools-stellaris-config f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until upstream CWT and a current documentation dump agree on the complete modifier-export scope family.",
       "conflicts": {
         "triggers": [],
@@ -544,7 +544,7 @@
       "id": "documentation-scope-fallback",
       "selectedAuthority": "docs",
       "reason": "These concrete rules have no CWT scopes annotation, so the game documentation is the only available scope evidence and remains an explicit fallback rather than being copied into CWT.",
-      "evidenceVersion": "cwtools-stellaris-config f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "Until upstream CWT adds reviewed scopes annotations for these concrete rules.",
       "conflicts": {
         "triggers": [],
@@ -571,7 +571,7 @@
       "id": "abstract-scripted-effect-placeholder",
       "selectedAuthority": "none",
       "reason": "The abstract <scripted_effect> placeholder is not a public effect and has neither a scope annotation nor a documentation entry.",
-      "evidenceVersion": "cwtools-stellaris-config f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a; Stellaris script docs v4.4.1",
+      "evidenceVersion": "cwtools-stellaris-config 5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f; Stellaris script docs v4.4.1",
       "expectedLifetime": "As long as the non-emitted placeholder remains in the vendored rule table.",
       "conflicts": {
         "triggers": [],

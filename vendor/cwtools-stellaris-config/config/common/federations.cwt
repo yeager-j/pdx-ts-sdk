@@ -73,11 +73,7 @@ federation_law = {
 	potential = single_alias_right[trigger_clause]
 	## cardinality = 0..1
 	## replace_scopes = { this = federation root = federation }
-	modifier = {
-		## cardinality = 0..1
-		description = localisation
-		alias_name[modifier] = alias_match_left[modifier]
-	}
+	modifier = single_alias_right[modifier_clause]
 	## cardinality = 0..1
 	## replace_scopes = { this = federation root = federation }
 	on_enact = single_alias_right[effect_clause]

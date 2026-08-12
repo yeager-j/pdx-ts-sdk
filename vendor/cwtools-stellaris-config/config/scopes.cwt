@@ -126,6 +126,9 @@ scopes = {
     Mission = {
         aliases = { mission }
     }
+    "No Scope" = {
+        aliases = { no_scope }
+    }
 }
 
 scope_groups = {

@@ -176,10 +176,7 @@ planet_class = {
 	tile_set = <planet_class>
 	## cardinality = 0..1
 	## replace_scopes = { this = planet root = planet }
-	modifier = {
-		## cardinality = 0..inf
-		alias_name[modifier] = alias_match_left[modifier]
-	}
+	modifier = single_alias_right[modifier_clause]
 	## cardinality = 0..1
 	allowed_archetypes = {
 		## cardinality = 0..100

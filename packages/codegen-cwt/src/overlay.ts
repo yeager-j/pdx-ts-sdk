@@ -18,15 +18,6 @@ import type { ContentShape } from "./content-shape.ts";
 export const UNIVERSAL_SCOPES = new Set(["all", "any"]);
 
 /**
- * Scopes the game's doc dump names that `scopes.cwt` does not define.
- *
- * 27 triggers are documented as `no_scope` — evaluated with nothing scoped —
- * and dropping them because upstream's scope list omits the entry would lose
- * real triggers to a bookkeeping gap.
- */
-export const EXTRA_SCOPES = ["no_scope"];
-
-/**
  * Structural triggers the SDK models by hand rather than generating.
  *
  * These are not conditions, they are the shape of the condition tree, and the
@@ -818,24 +809,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "special_project.cost",
-    {
-      scope: "country",
-      reason:
-        "special_projects.cwt evaluates conditional cost modifiers against the project owner " +
-        "(country), regardless of event_scope; event-dependent callbacks are separately derived.",
-    },
-  ],
-  [
-    "special_project.AI_wait_days",
-    {
-      scope: "country",
-      reason:
-        "special_projects.cwt evaluates AI wait weights against the project owner (country), " +
-        "regardless of event_scope.",
-    },
-  ],
-  [
     "building.triggered_planet_modifier",
     {
       shape: "triggeredModifierBlock",
@@ -1233,16 +1206,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "job.auto_generate_description",
-    {
-      arity: "single",
-      reason:
-        "CWT declares `cardinality = 0..inf` on a bare bool, which lowers to a nonsensical " +
-        "`boolean[]`. All three shipped jobs that set it write one scalar `no`, and a repeated " +
-        "flag would mean nothing to the game — an upstream authoring quirk, not a list field.",
-    },
-  ],
-  [
     "job.resources",
     {
       shape: "economicResources",
@@ -1421,21 +1384,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "civic_or_origin.swap_type.trigger",
-    {
-      scope: "country",
-      reason:
-        "CWT annotates no scope, so the clause lowered to `Trigger<ScopeName>` — legal in every " +
-        "scope, therefore writable in none. The rules state the scope in prose instead: " +
-        'governments.cwt:403-404 says "In empire creation / galaxy setup, this has no scope. ' +
-        'During the game ... it is set to country scope." The corpus agrees — every key the ' +
-        "unscoped type rejected (has_civic, has_country_flag, has_origin, has_trait, " +
-        "has_valid_civic, is_nomadic) is country-scope. The setup phase's empty scope is not a " +
-        "second scope to express: `is_scope_valid` guards it from inside the clause, as " +
-        "civic_devouring_swarm does.",
-    },
-  ],
-  [
     "civic_or_origin.potential",
     {
       shape: "aliasStruct",
@@ -1537,86 +1485,10 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "shipped entries write a country condition there (`has_technology`, `has_origin`), none " +
         "of which satisfies that type, and the field controls the country's naval-capacity " +
         "tooltip on a registry named country_ship_of_size_limit. Without this the field is " +
-        "emitted but can hold nothing any real definition writes.",
-    },
-  ],
-  [
-    "solar_system_initializer.usage_odds",
-    {
-      scope: "system",
-      reason:
-        "CWT annotates no scope on this `alias_name[modifier_rule]` splice, so an unannotated " +
-        "reading leaves its `when` rows unchecked. 155 of the 360 shipped `solar_system_initializer` " +
-        "definitions write a weighted `usage_odds` with a real condition, every one of them " +
-        "system-scoped (`has_star_flag`, `is_fe_cluster`, `is_bottleneck_system`, `has_distar`, " +
-        "`is_in_cluster`, `has_leviathans`, plus system-scope iterators like `any_system` and " +
-        "`any_neighbor_system`), and the game's own " +
-        "common/solar_system_initializers/example.txt:32 comments its own `usage_odds` example " +
-        "`# this = galactic_object (star) scope`. `solar_system_initializer` itself has no " +
-        "body-level push_scope, unlike sibling registries that splice the same weight-block " +
-        "grammar with one, which is why this field alone needs the assertion.",
-    },
-  ],
-  [
-    "tradition_category.desc.trigger",
-    {
-      scope: "country",
-      reason:
-        "`desc`'s `triggered_desc_clause` splice (aliases.cwt) annotates no scope for its nested " +
-        "`trigger` field, and `tradition_category` itself has no body-level push_scope to fall " +
-        "back on — unlike `building`, which push_scopes `colony` before splicing the same clause " +
-        "for its own `desc`. All 25 shipped tradition categories that write a `desc.trigger` " +
-        "condition write a country one (`is_machine_empire`, `is_regular_empire`, " +
-        "`is_hive_empire`, `is_gestalt`, `is_nomadic`, `has_void_dweller_origin`), matching the " +
-        "sibling `potential` field's explicit `## replace_scopes = { this = country }` two fields " +
-        "down in the same type body.",
-    },
-  ],
-  // The four rows below are all one defect, twice per alias category. CWT
-  // declares each of these keys as a scalar and as a `{ min max }` block and
-  // annotates *both* `cardinality = 0..inf`, so both arms author as arrays,
-  // `lowerDual` cannot tell them apart, and the field collapses to whichever
-  // arm is declared first. The corpus contradicts that collapse outright, and
-  // the repetition CWT claims is one upstream copy-paste per ~2,000 blocks.
-  [
-    "planet_initializer.orbit_angle",
-    {
-      arity: "single",
-      reason:
-        'Collapses to `"random"[]` against 805 of the 1,803 shipped planets that write the ' +
-        "`{ min max }` block. Exactly one planet block in 2,031 repeats the key, and it is a " +
-        "quirk rather than a list: fallen_empire_initializers.txt's The Preserve writes " +
-        "`orbit_angle = { min = 90 max = 270 }` and then `orbit_angle = 60`, contradicting " +
-        "itself for the game to resolve last-wins. Same shape as job.auto_generate_description.",
-    },
-  ],
-  [
-    "planet_initializer.size",
-    {
-      arity: "single",
-      reason:
-        "Collapses to `number[]` against 470 of the 1,337 shipped planets that write " +
-        "`{ min max }`. The one block in 2,031 that repeats it — special_system_initializers' " +
-        "Hillos B, `size = 15` then `size = { min = 5 max = 10 }` — is the same self-" +
-        "contradicting copy-paste, not a planet with two sizes.",
-    },
-  ],
-  [
-    "moon_initializer.orbit_angle",
-    {
-      arity: "single",
-      reason:
-        "The same declaration one level down, and the corpus leans harder: 417 of the 604 " +
-        "shipped moons that set it write the block form. No moon block repeats the key.",
-    },
-  ],
-  [
-    "moon_initializer.size",
-    {
-      arity: "single",
-      reason:
-        "As planet_initializer.size: 79 of the 358 shipped moons that set it write " +
-        "`{ min max }`, and no moon block repeats the key.",
+        "emitted but can hold nothing any real definition writes. Left here rather than pushed " +
+        "upstream with SDK-85's other scope annotations: the evidence is the corpus alone — " +
+        "neither the rules nor the game's documentation says which scope this trigger runs in — " +
+        "which is a weaker footing than a sibling field already carrying the annotation.",
     },
   ],
   [
@@ -1652,48 +1524,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "modifier_clause is an open modifier-name map with optional ancillary fields. Vanilla " +
         "never writes this field, but the rules declare it authorable.",
-    },
-  ],
-  // The three rows below are one finding, once per registry that splices the
-  // AI's design-weight grammar. CWT annotates no scope on `ai_weight`, so its
-  // `modifier` rows lowered to `Trigger<never>` — writable but unchecked, and
-  // measured by the corpus gate as admitting only universally legal
-  // conditions. That the silence is an omission rather than a claim is visible
-  // in the rules themselves: components.cwt:176-181 carries
-  // `## replace_scopes = { root = country this = country }` on
-  // `valid_for_country` and nothing at all on the `ai_weight` declared three
-  // lines below it. Which scope it omitted is what the corpus settles — across
-  // all three registries, every per-definition condition set that any rule
-  // constrains intersects to exactly `country`, and no definition mixes
-  // scopes; what is left over is combinators and scope links (`OR`, `NOT`,
-  // `NOR`, `owner`, `from`), which constrain nothing either way.
-  [
-    "section_template.ai_weight",
-    {
-      scope: "country",
-      reason:
-        "64 of 482 shipped section templates gate their design weight, on country conditions " +
-        "throughout (`is_ai`, `has_technology`, `is_preferred_weapons`). See the note above for " +
-        "why the rules' silence here is an omission rather than a contrary claim.",
-    },
-  ],
-  [
-    "utility_component_template.ai_weight",
-    {
-      scope: "country",
-      reason:
-        "253 of 848 shipped utility components gate their design weight, on country conditions " +
-        "throughout (`has_country_resource`, `has_monthly_income`, `has_policy_flag`, `is_ai`, " +
-        "`is_country_type`, `is_preferred_weapons`). See the note above.",
-    },
-  ],
-  [
-    "weapon_component_template.ai_weight",
-    {
-      scope: "country",
-      reason:
-        "324 of 591 shipped weapon components gate their design weight, on country conditions " +
-        "throughout (`has_ascension_perk`, `has_country_flag`, `is_ai`). See the note above.",
     },
   ],
   [

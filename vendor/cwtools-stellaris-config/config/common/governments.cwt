@@ -401,12 +401,12 @@ civic_or_origin = {
 		name = localisation # may not be (from vanilla)
 		## cardinality = 0..1
 		name = scalar
-		### In empire creation / galaxy setup, this has no scope. During the game, when there are actual countries existing, it is set to country scope.
-		### If you want to use country scope here, you must always check is_scope_valid first (see civic_devouring_swarm), or you will get errors or it won't work as intended.
 		## cardinality = 0..1
 		description = localisation
 		## cardinality = 0..1
 		negative_description = localisation
+		### In empire creation / galaxy setup this has no scope; during the game, when countries actually exist, it is country scope. Always guard country-scope conditions with is_scope_valid first (see civic_devouring_swarm), or you will get errors or it won't work as intended.
+		## replace_scopes = { root = country this = country }
 		trigger = single_alias_right[trigger_clause]
 		### modifier that is applied to the country when triggers are evaluated as true
 		## cardinality = 0..1

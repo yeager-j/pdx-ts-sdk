@@ -28,13 +28,7 @@ agenda = {
 	## cardinality = 0..1
 	init_effect = single_alias_right[effect_clause]
 	## cardinality = 0..1
-	modifier = {
-		## cardinality = 0..1
-		custom_tooltip = localisation
-		## cardinality = 0..1
-		show_only_custom_tooltip = bool
-		alias_name[modifier] = alias_match_left[modifier]
-	}
+	modifier = single_alias_right[modifier_clause]
 	## cardinality = 0..1
 	finish_modifier = <static_modifier>
 	## cardinality = 0..1

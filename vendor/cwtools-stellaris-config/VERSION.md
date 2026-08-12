@@ -4,8 +4,8 @@ Upstream: https://github.com/yeager-j/cwtools-stellaris-config
 
 | | |
 | --- | --- |
-| Commit | `f9e9a1900b6a1a01bcb623dbe56f2937c289ff3a` |
-| Committed | 2026-08-10 |
+| Commit | `5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f` |
+| Committed | 2026-08-12 |
 | Fetched | 2026-08-12 |
 
 Licensed under the upstream MIT license, reproduced in `LICENSE`.
@@ -39,6 +39,40 @@ The vendored source is now our own fork of that fork,
 Everything above still applies — it tracks DragonKnightOfBreeze's `master` —
 but rule fixes land there first and are contributed upstream from there, so
 this snapshot can carry a fix before upstream merges it.
+
+### Fixes this snapshot carries ahead of upstream
+
+Seven commits, each written to become one upstream PR, and each one deletes
+a row from `packages/codegen-cwt/src/overlay.ts` or a special case in the
+loader rather than adding one:
+
+- `2b960cc` `situations.cwt` `total_progress` declared `value_int_field`, a
+  typo for `int_value_field`. Retires the loader's special case in
+  `cwt/model.ts`.
+- `4146b40` `## cardinality = 0..inf` on three single-valued keys —
+  `pop_jobs.cwt` `auto_generate_description`, and both arms of `orbit_angle`
+  and `size` in `solar_system_initializers.cwt`'s planet and moon aliases.
+  Retires five `arity: "single"` overlay rows.
+- `4e72e3a` `## replace_scopes = { root = country this = country }` on
+  `components.cwt` and `section_templates.cwt` `ai_weight`. Retires three
+  scope rows and additionally fixes `strike_craft_component_template`, which
+  no row covered.
+- `c4966f4` `governments.cwt` stated the civic/origin swap trigger's scope in
+  prose, attached to the wrong field; it is now an annotation on `trigger`.
+- `6af61f0` four more spliced clause fields whose scope the rules omitted:
+  `special_projects.cwt` `cost` and `AI_wait_days`,
+  `solar_system_initializers.cwt` `usage_odds`, `traditions.cwt`
+  `tradition_category.desc`.
+- `a2463b9` seventeen fields that hand-inlined a subset of
+  `single_alias[modifier_clause]`'s body now splice the alias.
+- `5b5109d` `scopes.cwt` declares `no_scope`, which the rest of the config,
+  the game's `scopes.log` and 27 documented triggers already treat as a
+  scope. Retires the overlay's `EXTRA_SCOPES`.
+
+`country_ship_of_size_limit.show` deliberately stays an overlay row rather
+than becoming a sixth annotation: its scope is inferred from the corpus
+alone, with nothing in the rules or the game's documentation to corroborate
+it, which is a weaker footing than the four above.
 
 ## What is here, and what is not
 
