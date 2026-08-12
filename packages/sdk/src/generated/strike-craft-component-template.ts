@@ -6,7 +6,6 @@ import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
   EconomicResourceBlockNoProduce,
-  EffectBlock,
   ModifierClosure,
   WeightBlock,
   WithFrom,
@@ -17,8 +16,6 @@ import type {
   ComponentTag,
   PointDefenceTarget,
   ShipClass,
-  TargetFocus,
-  UtilitySlotSize,
   WeaponSlotSize,
   WeaponType2,
 } from "./enums.ts";
@@ -26,14 +23,10 @@ import type {
   ComponentSetRef,
   ComponentTemplateRef,
   ModelEntityRef,
-  ModifierRef,
   ProjectileRef,
-  ScriptedActionRef,
   ShipBehaviorRef,
   ShipSizeRef,
   SpriteRef,
-  StaticModifierRef,
-  TargetTypeRef,
   TechnologyRef,
 } from "./refs.ts";
 import type { UpgradePath } from "./value-sets.ts";
@@ -59,73 +52,12 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS: readonly Con
   { member: "when", shape: "inlineTrigger" },
 ];
 
-export interface StrikeCraftComponentTemplateInjectedModifierModifier {
-  modifier: ModifierRef | string | StaticModifierRef;
-  days?: number;
-}
-
-export const STRIKE_CRAFT_COMPONENT_TEMPLATE_INJECTED_MODIFIER_MODIFIER_FIELDS: readonly ContentField[] =
-  [
-    {
-      key: "modifier",
-      member: "modifier",
-      shape: "value",
-      form: "scalar",
-      conversion: "ref",
-      refTypes: ["modifier", "static_modifier"],
-    },
-    { key: "days", member: "days", shape: "value", form: "scalar", conversion: "identity" },
-  ];
-
-export interface StrikeCraftComponentTemplateInjectedModifierStackInfo {
-  id: string;
-  priority: number;
-}
-
-export const STRIKE_CRAFT_COMPONENT_TEMPLATE_INJECTED_MODIFIER_STACK_INFO_FIELDS: readonly ContentField[] =
-  [
-    { key: "id", member: "id", shape: "value", form: "scalar", conversion: "identity" },
-    { key: "priority", member: "priority", shape: "value", form: "scalar", conversion: "identity" },
-  ];
-
-export interface StrikeCraftComponentTemplateInjectedModifier {
-  modifier: StrikeCraftComponentTemplateInjectedModifierModifier;
-  stackInfo?: StrikeCraftComponentTemplateInjectedModifierStackInfo;
-}
-
-export const STRIKE_CRAFT_COMPONENT_TEMPLATE_INJECTED_MODIFIER_FIELDS: readonly ContentField[] = [
-  {
-    key: "modifier",
-    member: "modifier",
-    shape: "struct",
-    form: "block",
-    fields: STRIKE_CRAFT_COMPONENT_TEMPLATE_INJECTED_MODIFIER_MODIFIER_FIELDS,
-  },
-  {
-    key: "stack_info",
-    member: "stackInfo",
-    shape: "struct",
-    form: "block",
-    fields: STRIKE_CRAFT_COMPONENT_TEMPLATE_INJECTED_MODIFIER_STACK_INFO_FIELDS,
-  },
-];
-
 export interface StrikeCraftComponentTemplateDamage {
   min: number;
   max: number;
 }
 
 export const STRIKE_CRAFT_COMPONENT_TEMPLATE_DAMAGE_FIELDS: readonly ContentField[] = [
-  { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
-  { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
-];
-
-export interface StrikeCraftComponentTemplateWindup {
-  min: number;
-  max: number;
-}
-
-export const STRIKE_CRAFT_COMPONENT_TEMPLATE_WINDUP_FIELDS: readonly ContentField[] = [
   { key: "min", member: "min", shape: "value", form: "scalar", conversion: "identity" },
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
@@ -477,7 +409,6 @@ export interface StrikeCraftComponentTemplateFields {
   upgradePath?: UpgradePath;
   tags?: ComponentTag[];
   aiTags?: ComponentTag[];
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
   aiTagWeight?: number;
   shipLimit?: number;
   sizeRestriction?: (ShipSizeRef | string | "null")[];
@@ -486,205 +417,38 @@ export interface StrikeCraftComponentTemplateFields {
   shouldAiUse?: boolean;
   validForCountry?: Trigger<"country">;
   aiWeight?: WeightBlock<"country">;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   * Only when strike_craft_component_template subtype `utility_component_template` applies.
-   */
   resources?: EconomicResourceBlockNoProduce<"ship">[];
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   * Only when strike_craft_component_template subtype `utility_component_template` applies.
-   */
-  power?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   * Only when strike_craft_component_template subtype `utility_component_template` applies.
-   */
-  size?: WeaponSlotSize | UtilitySlotSize;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  type?: WeaponType2;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  hideDamageValuesFromTooltip?: boolean;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  targetableShipSizes?: (ShipSizeRef | string | "null")[];
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   * Only when strike_craft_component_template subtype `utility_component_template` applies.
-   */
   shipModifier?: ModifierClosure<"ship">;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  projectileGfx?: ProjectileRef | string;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  color?: number[];
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  canDestroyStars?: boolean;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
   entity?: ModelEntityRef | string;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  useShipMainTarget?: boolean;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * only valid if component_set has affects_target_type = yes. affects_target_type Default yes
-   * Only when strike_craft_component_template subtype `utility_component_template` applies.
-   */
-  targetType?: TargetTypeRef | string;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * only valid if component_set has affects_target_focus = yes affects_target_focus Default = yes
-   * Only when strike_craft_component_template subtype `utility_component_template` applies.
-   */
-  targetFocus?: TargetFocus;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  injectedModifier?: StrikeCraftComponentTemplateInjectedModifier;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  firingArc?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  minRange?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  prioProjectile?: boolean;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  possible?: WithFrom<Trigger<"design">, "design", "country">;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  staticRotation?: boolean;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  planetDestructionGfx?: string;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  damage?: StrikeCraftComponentTemplateDamage;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  hullDamage?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  armorDamage?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  shieldDamage?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  armorPenetration?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  shieldPenetration?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  sizeDamageFactor?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  collateralDamage?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  collateralRange?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  windup?: StrikeCraftComponentTemplateWindup;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  totalFireTime?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  range?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  accuracy?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  tracking?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  missileSpeed?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  missileEvasion?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  missileHealth?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  missileArmor?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  missileShield?: number;
-  /** Only when strike_craft_component_template subtype `weapon_component_template` applies. */
-  missileRetargetRange?: number;
-  /**
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   */
-  pointDefenceTargets?: PointDefenceTarget[];
-  /**
-   * apply effects to target on hit. Scope = ship (target), from = ship (shooter)
-   * Only when strike_craft_component_template subtype `weapon_component_template` applies.
-   */
-  onHit?: EffectBlock<"ship", "ship">;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
+  size?: WeaponSlotSize;
   weaponType?: WeaponType2;
-  /**
-   * Only when strike_craft_component_template subtype `strike_craft_component_template` applies.
-   * Only when strike_craft_component_template subtype `utility_component_template` applies.
-   */
   shipBehavior?: ShipBehaviorRef | string;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
+  projectileGfx?: ProjectileRef | string;
+  power?: number;
   count?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   regenerationPerDay?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   launchTime?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
+  damage?: StrikeCraftComponentTemplateDamage;
+  hullDamage?: number;
+  armorDamage?: number;
+  shieldDamage?: number;
+  armorPenetration?: number;
+  shieldPenetration?: number;
+  sizeDamageFactor?: number;
+  range?: number;
+  accuracy?: number;
+  tracking?: number;
   cooldown?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   engagementRange?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   health?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   armor?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   shield?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   evasion?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   speed?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   rotationSpeed?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   acceleration?: number;
-  /** Only when strike_craft_component_template subtype `strike_craft_component_template` applies. */
   attackRange?: number;
-  /** Only when strike_craft_component_template subtype `utility_component_template` applies. */
-  isDefaultComponent?: boolean;
-  /** Only when strike_craft_component_template subtype `utility_component_template` applies. */
-  ftl?: boolean;
-  /** Only when strike_craft_component_template subtype `utility_component_template` applies. */
-  ftlInhibitor?: boolean;
-  /** Only when strike_craft_component_template subtype `utility_component_template` applies. */
-  jumpdrive?: boolean;
-  /** Only when strike_craft_component_template subtype `utility_component_template` applies. */
-  sensorRange?: number;
-  /** Only when strike_craft_component_template subtype `utility_component_template` applies. */
-  hyperlaneRange?: number;
-  /** Only when strike_craft_component_template subtype `utility_component_template` applies. */
-  scriptedAction?: (ScriptedActionRef | string)[];
+  pointDefenceTargets?: PointDefenceTarget[];
   potential?: WithFrom<Trigger<"design">, "design", "country">;
   showTechUnlockIf?: WithFrom<Trigger<"country">, "country", "country">;
   friendlyAura?: StrikeCraftComponentTemplateFriendlyAura[];
@@ -827,24 +591,24 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     form: "list",
     repeated: true,
   },
-  { key: "power", member: "power", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "ship_modifier", member: "shipModifier", shape: "modifierBlock", form: "closure" },
+  { key: "entity", member: "entity", shape: "value", form: "scalar", conversion: "ref" },
   { key: "size", member: "size", shape: "value", form: "scalar", conversion: "identity" },
-  { key: "type", member: "type", shape: "value", form: "scalar", conversion: "identity" },
   {
-    key: "hide_damage_values_from_tooltip",
-    member: "hideDamageValuesFromTooltip",
+    key: "weapon_type",
+    member: "weaponType",
     shape: "value",
     form: "scalar",
     conversion: "identity",
   },
   {
-    key: "targetable_ship_sizes",
-    member: "targetableShipSizes",
-    shape: "valueList",
-    form: "list",
+    key: "ship_behavior",
+    member: "shipBehavior",
+    shape: "value",
+    form: "scalar",
     conversion: "ref",
+    refTypes: ["ship_behavior"],
   },
-  { key: "ship_modifier", member: "shipModifier", shape: "modifierBlock", form: "closure" },
   {
     key: "projectile_gfx",
     member: "projectileGfx",
@@ -853,70 +617,18 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     conversion: "ref",
     refTypes: ["projectile"],
   },
-  { key: "color", member: "color", shape: "valueList", form: "list", conversion: "identity" },
+  { key: "power", member: "power", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "count", member: "count", shape: "value", form: "scalar", conversion: "identity" },
   {
-    key: "can_destroy_stars",
-    member: "canDestroyStars",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "entity", member: "entity", shape: "value", form: "scalar", conversion: "ref" },
-  {
-    key: "use_ship_main_target",
-    member: "useShipMainTarget",
+    key: "regeneration_per_day",
+    member: "regenerationPerDay",
     shape: "value",
     form: "scalar",
     conversion: "identity",
   },
   {
-    key: "target_type",
-    member: "targetType",
-    shape: "value",
-    form: "scalar",
-    conversion: "ref",
-    refTypes: ["target_type"],
-  },
-  {
-    key: "target_focus",
-    member: "targetFocus",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "injected_modifier",
-    member: "injectedModifier",
-    shape: "struct",
-    form: "block",
-    fields: STRIKE_CRAFT_COMPONENT_TEMPLATE_INJECTED_MODIFIER_FIELDS,
-  },
-  {
-    key: "firing_arc",
-    member: "firingArc",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "min_range", member: "minRange", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "prio_projectile",
-    member: "prioProjectile",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "possible", member: "possible", shape: "trigger", form: "trigger" },
-  {
-    key: "static_rotation",
-    member: "staticRotation",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "planet_destruction_gfx",
-    member: "planetDestructionGfx",
+    key: "launch_time",
+    member: "launchTime",
     shape: "value",
     form: "scalar",
     conversion: "identity",
@@ -970,117 +682,9 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     form: "scalar",
     conversion: "identity",
   },
-  {
-    key: "collateral_damage",
-    member: "collateralDamage",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "collateral_range",
-    member: "collateralRange",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "windup",
-    member: "windup",
-    shape: "struct",
-    form: "block",
-    fields: STRIKE_CRAFT_COMPONENT_TEMPLATE_WINDUP_FIELDS,
-  },
-  {
-    key: "total_fire_time",
-    member: "totalFireTime",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
   { key: "range", member: "range", shape: "value", form: "scalar", conversion: "identity" },
   { key: "accuracy", member: "accuracy", shape: "value", form: "scalar", conversion: "identity" },
   { key: "tracking", member: "tracking", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "missile_speed",
-    member: "missileSpeed",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "missile_evasion",
-    member: "missileEvasion",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "missile_health",
-    member: "missileHealth",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "missile_armor",
-    member: "missileArmor",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "missile_shield",
-    member: "missileShield",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "missile_retarget_range",
-    member: "missileRetargetRange",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "point_defence_targets",
-    member: "pointDefenceTargets",
-    shape: "valueList",
-    form: "list",
-    conversion: "identity",
-  },
-  { key: "on_hit", member: "onHit", shape: "effect", form: "closure", repeated: true },
-  {
-    key: "weapon_type",
-    member: "weaponType",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "ship_behavior",
-    member: "shipBehavior",
-    shape: "value",
-    form: "scalar",
-    conversion: "ref",
-    refTypes: ["ship_behavior"],
-  },
-  { key: "count", member: "count", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "regeneration_per_day",
-    member: "regenerationPerDay",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "launch_time",
-    member: "launchTime",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
   { key: "cooldown", member: "cooldown", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "engagement_range",
@@ -1116,42 +720,11 @@ export const STRIKE_CRAFT_COMPONENT_TEMPLATE_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
   {
-    key: "is_default_component",
-    member: "isDefaultComponent",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "ftl", member: "ftl", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "ftl_inhibitor",
-    member: "ftlInhibitor",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "jumpdrive", member: "jumpdrive", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "sensor_range",
-    member: "sensorRange",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "hyperlane_range",
-    member: "hyperlaneRange",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "scripted_action",
-    member: "scriptedAction",
+    key: "point_defence_targets",
+    member: "pointDefenceTargets",
     shape: "valueList",
     form: "list",
-    conversion: "ref",
-    refTypes: ["scripted_action"],
+    conversion: "identity",
   },
   { key: "potential", member: "potential", shape: "trigger", form: "trigger" },
   { key: "show_tech_unlock_if", member: "showTechUnlockIf", shape: "trigger", form: "trigger" },

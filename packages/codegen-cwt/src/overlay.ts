@@ -1570,11 +1570,22 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   // present in components.cwt but absent from CONTENT_FIELD_OVERRIDES, so the
   // writer, which only emits declared ContentField[] members, silently dropped
   // both. 1,193 of 1,500 vanilla component templates write a top-level
-  // resources, 355 write modifier. weapon_component_template and
-  // strike_craft_component_template splice economic_template_no_produce
-  // (components.cwt:189, :338) rather than plain economic_template
-  // (components.cwt:405) — `produces` is not game-legal there — so their
-  // `resources` rows below use `economicResourcesNoProduce`
+  // resources, 355 write modifier.
+  //
+  // Each row below is keyed to the registry that declares the field, and since
+  // SDK-85 that is also all it can reach: `emit/subtype-partition.ts` cuts the
+  // one shared `type[component_template]` body down to the arm belonging to the
+  // registry being emitted, before flatten and mergeByName erase which arm a
+  // field came from. Until then all three registries saw all three arms, so a
+  // group was led by whichever subtype declared the name first and every row
+  // here was asserting a shape onto a field group it had not inspected — the
+  // reason `size` came out `WeaponSlotSize | UtilitySlotSize` everywhere.
+  //
+  // What survives is a real per-registry difference rather than an artifact:
+  // weapon_component_template and strike_craft_component_template splice
+  // economic_template_no_produce (components.cwt:189, :338) rather than plain
+  // economic_template (components.cwt:405) — `produces` is not game-legal there
+  // — so their `resources` rows below use `economicResourcesNoProduce`
   // (`EconomicResourceBlockNoProduce<S>`) rather than `economicResources`:
   // `produces` does not type-check on either row, and the writer's
   // `economicResourceBlock` iterates a `produces`-free operation list for
@@ -1679,7 +1690,11 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "Same category-plus-economic_template-splice shape as job.resources, repeated 0..inf " +
         "(components.cwt:400-406). Spliced category is plain economic_template, so `produces` " +
-        "is genuinely authorable here — no caveat, unlike the weapon/strike-craft rows above.",
+        "is genuinely authorable here — no caveat, unlike the weapon/strike-craft rows above. " +
+        "Since SDK-85 the field group this row types holds only that declaration: the " +
+        "subtype partition drops weapon's and strike craft's economic_template_no_produce " +
+        "arms before the merge, so `economicResources` is now read off the utility splice " +
+        "rather than asserted over a group led by weapon's.",
     },
   ],
   [

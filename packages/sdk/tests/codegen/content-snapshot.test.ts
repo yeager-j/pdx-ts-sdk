@@ -1086,13 +1086,24 @@ describe("content-type codegen", () => {
     expect(utility?.code).toContain('triggeredShipDesignModifier?: TriggeredModifier<"design">[];');
     expect(fieldNames(utility!.emittedFields)).toContain("resources");
     expect(fieldNames(utility!.emittedFields)).toContain("modifier");
-    // target_weights is a weapon-only scalar map in SDK-67. Utility and
-    // strike-craft target_weights remain unsupported because their declarations
-    // are not present on those subtype bodies; exact membership keeps this
-    // ticket from borrowing a shape across registries.
     expect(utility?.unsupported).not.toContain("resources (no declaration the emitter can lower)");
     expect(utility?.unsupported).not.toContain("modifier (no declaration the emitter can lower)");
-    expect(utility?.unsupported).toContain("target_weights (no declaration the emitter can lower)");
+    // SDK-85: weapon's arm is not utility's. target_weights, ai_tag_weight's
+    // weapon redeclaration, can_destroy_stars and on_hit are declared inside
+    // subtype[weapon_component_template] (components.cwt:184-332) and never
+    // reach utility now that the body is partitioned per registry — neither as
+    // an emitted member nor as an unsupported line, because there is no utility
+    // declaration for either to come from.
+    for (const member of ["targetWeights", "canDestroyStars", "onHit", "missileSpeed"]) {
+      expect(utility?.code).not.toContain(`${member}?:`);
+    }
+    expect(utility?.unsupported).not.toContain(
+      "target_weights (no declaration the emitter can lower)"
+    );
+    // ai_tag_weight survives because component_template declares it at the type
+    // level too (components.cwt:140-141), above every subtype — the weapon arm
+    // redeclares a field all three registries have.
+    expect(utility?.code).toContain("aiTagWeight?: number;");
 
     const weapon = emissions.get("weapon_component_template");
     expect(weapon?.code).toContain("export interface WeaponComponentTemplateDef");
@@ -1118,13 +1129,12 @@ describe("content-type codegen", () => {
     ]);
 
     // strike_craft_component_template only declares resources and
-    // ship_modifier (components.cwt:332-343) — no modifier,
+    // ship_modifier (components.cwt:333-343) — no modifier,
     // ship_design_modifier, or either triggered variant, unlike weapon and
-    // utility above. Those four remain unsupported here because the same
-    // CWT body backs all three registries and mergeByName folds weapon's and
-    // utility's declarations of those names into strike_craft's field group
-    // too; with no strike_craft-specific override they correctly stay
-    // unlowered rather than borrowing a shape strike craft never declares.
+    // utility above. Since SDK-85 those four are absent outright rather than
+    // reported unsupported: the shared CWT body is partitioned per registry
+    // before flatten/mergeByName run, so weapon's and utility's declarations of
+    // those names no longer fold into strike_craft's field groups at all.
     const strikeCraft = emissions.get("strike_craft_component_template");
     expect(strikeCraft?.code).toContain("export interface StrikeCraftComponentTemplateDef");
     // Same economic_template_no_produce splice as weapon's above
@@ -1141,15 +1151,33 @@ describe("content-type codegen", () => {
     expect(strikeCraft?.unsupported).not.toContain(
       "ship_modifier (no declaration the emitter can lower)"
     );
-    // Confirms the four fields strike_craft genuinely does not declare stay
-    // unsupported rather than silently picking up weapon's/utility's shapes.
-    expect(strikeCraft?.unsupported).toContain("modifier (no declaration the emitter can lower)");
-    expect(strikeCraft?.unsupported).toContain(
-      "target_weights (no declaration the emitter can lower)"
-    );
-    expect(strikeCraft?.unsupported).toContain(
-      "ship_design_modifier (no declaration the emitter can lower)"
-    );
+    // Confirms the fields strike_craft genuinely does not declare are gone
+    // rather than silently picking up weapon's/utility's shapes — and gone from
+    // the unsupported list too, which only ever reports a declaration that
+    // reached the emitter.
+    for (const member of ["modifier?:", "targetWeights?:", "shipDesignModifier?:", "ftl?:"]) {
+      expect(strikeCraft?.code).not.toContain(member);
+    }
+    for (const field of ["modifier", "target_weights", "ship_design_modifier"]) {
+      expect(strikeCraft?.unsupported).not.toContain(
+        `${field} (no declaration the emitter can lower)`
+      );
+    }
+
+    // SDK-85: `size` is the clearest reading of the contamination. Weapon
+    // declares it first in components.cwt, so before partitioning every
+    // registry's member typed as `WeaponSlotSize | UtilitySlotSize` — including
+    // utility, whose own declaration is `enum[utility_slot_size]`.
+    expect(utility?.code).toContain("size?: UtilitySlotSize;");
+    expect(weapon?.code).toContain("size?: WeaponSlotSize;");
+    expect(strikeCraft?.code).toContain("size?: WeaponSlotSize;");
+
+    // And nothing on these three is subtype-conditional any more: every arm
+    // that survives partitioning is one this registry always has, so the
+    // "Only when …" doc line flatten writes has no occasion to appear.
+    for (const emission of [utility, weapon, strikeCraft]) {
+      expect(emission?.code).not.toContain("Only when");
+    }
   });
 
   it("generates ambient_object as a name_field registry keyed by name", () => {
