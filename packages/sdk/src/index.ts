@@ -14,6 +14,7 @@ export {
 } from "./generated/modifier-policy.ts";
 export { STRUCTURAL_EFFECT_KEYS, type StructuralEffectKey } from "./generated/effect-policy.ts";
 export * from "./script/triggers.ts";
+export { scopeLinkOutput } from "./script/links.ts";
 export {
   eventTarget,
   isEffectKey,

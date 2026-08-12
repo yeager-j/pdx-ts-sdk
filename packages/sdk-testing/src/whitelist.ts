@@ -13,7 +13,11 @@
  */
 
 import { scalarText, type PdxEntry, type PdxItem, type PdxScalar } from "@pdx-ts/pdxscript";
-import type { StructuralEffectKey } from "@pdx-ts/sdk";
+import {
+  EVENT_FIELD_SUPPORT,
+  EVENT_OPTION_FIELD_SUPPORT,
+  type StructuralEffectKey,
+} from "@pdx-ts/sdk";
 
 import {
   archaeologicalSiteState,
@@ -750,6 +754,20 @@ export const LINK_SEMANTICS: Readonly<Record<string, LinkImpl>> = {
       return ex.from;
     },
   },
+  owner: {
+    docs: { sha: "ce9ca820b0c3e72a" },
+    note: "The fixture's ownership relation, read in the one direction it is stored: a planet's owner is the country it is nested under, which is what makes it owned in the first place. The dump lists two dozen input scopes and this models one — the others are refused by name rather than approximated, because the fixture holds no ownership edge for them: a fleet is deliberately unowned here (FleetSpec), a site is reached as a fleet event's FROM, and a situation carries a declared target, which is a different relation the game also gives it separately.",
+    resolve: (scope, ex) => {
+      if (scope.kind !== "planet") {
+        throw new InterpreterError(
+          `owner is a scope link the fixture resolves from planet scope only — it reads the ` +
+            `country a planet is nested under. ${describeEntity(ex.state, scope)} carries no ` +
+            `modeled ownership edge, so resolving one would be a guess. ${coverageSummary()}`
+        );
+      }
+      return { kind: "country", country: scope.country };
+    },
+  },
   target: {
     docs: { sha: "03892ba5c618de8b" },
     note: "A situation's declared target (see SituationSpec.targetCountry) — the same link `target<S>()` and `situation.target<S>(body)` name in the authoring API. `links.cwt` gives it `output_scope = any`; the fixture resolves it through the situation's own declared target rather than reading anything from the trigger or effect body. The pinned paragraph is worth reading before trusting it: the dump's prose describes only the spy-network and espionage-operation readings, and `situation` appears among this link's legal inputs in `links.cwt` rather than in the sentence.",
@@ -768,6 +786,196 @@ export function resolveEventTarget(name: string, ex: ExecCtx): EntityId {
     );
   }
   return target;
+}
+
+// ---------------------------------------------------------------------------
+// Event delivery — what a registered event may carry
+// ---------------------------------------------------------------------------
+
+/**
+ * What delivery does with one top-level field of an event body.
+ *
+ * The tables above keep the promise one key at a time: an unknown trigger or
+ * effect throws where it is evaluated. Delivery is a level up from there, and
+ * the promise was not kept at that level — `World.deliver` runs the `immediate`
+ * block and nothing else, so an event whose payoff lived in an option "fired"
+ * successfully with its payoff never run, and a `trigger` block the game would
+ * have checked was dropped without a word. A fired record for an event the game
+ * would not have fired, or would not have finished, is a green test for broken
+ * behavior in exactly the way this package exists to prevent.
+ *
+ * So registration reads the whole event body against this table and refuses the
+ * events it cannot deliver honestly, rather than delivering part of one.
+ */
+export type EventFieldDisposition =
+  /** Delivery runs it. `immediate`, and only `immediate`. */
+  | "delivered"
+  /** Nothing to run: identity, presentation, or a mechanic no delivery path reaches. */
+  | "inert"
+  /** Real script delivery will never run — registration refuses the event. */
+  | "refused"
+  /**
+   * The option list, which is neither: an option is inert while it carries only
+   * presentation (a name, an icon, a gate on a choice nothing here makes), and
+   * refused the moment it carries effects, because those effects are the payoff
+   * and no option is ever selected here. One key, two answers, decided by the
+   * option's own contents — see {@link optionCarriesEffects}.
+   */
+  | "options";
+
+export interface EventFieldImpl {
+  readonly disposition: EventFieldDisposition;
+  /** One line defending the disposition — what the game does with it, and what delivery does. */
+  readonly note: string;
+}
+
+/**
+ * The event fields the SDK can actually emit, straight from its generated
+ * support policy: anything the SDK declines to write can never appear in a
+ * recorded event body, and pinning a disposition on it would be pinning one on
+ * a shape nothing produces.
+ */
+type EmittableEventField = Extract<
+  (typeof EVENT_FIELD_SUPPORT)[number],
+  { readonly disposition: "supported" | "partial" }
+>["scriptKey"];
+
+/**
+ * Exhaustive over {@link EmittableEventField} at compile time, the same way
+ * `defineStructuralSemantics` is over `StructuralEffectKey`: a new event field
+ * reaching the SDK's authoring surface fails to build here until somebody says
+ * what delivery does with it. The runtime side of the same claim is in
+ * `tests/whitelist-audit.test.ts`.
+ */
+function defineEventFieldDelivery<const T extends Record<EmittableEventField, EventFieldImpl>>(
+  fields: T & Record<Exclude<keyof T, EmittableEventField>, never>
+): Readonly<T> {
+  return fields;
+}
+
+const WINDOW_PRESENTATION =
+  "Event-window presentation: it decides how the event is shown to a player, and delivery shows " +
+  "nothing. No script rides on it.";
+
+const NOT_SCHEDULED_HERE =
+  "Scheduling, and this harness never schedules: the test says what fires, `advance` only drains " +
+  "the queue those fires build. Nothing is skipped at delivery — an event the game would have " +
+  "raised on its own simply never appears, which fails an assertion rather than passing one.";
+
+export const EVENT_FIELD_DELIVERY = defineEventFieldDelivery({
+  id: { disposition: "inert", note: "The event's identity, which the registry keys on." },
+  title: { disposition: "inert", note: WINDOW_PRESENTATION },
+  desc: { disposition: "inert", note: WINDOW_PRESENTATION },
+  diplomatic_title: { disposition: "inert", note: WINDOW_PRESENTATION },
+  message_desc: { disposition: "inert", note: WINDOW_PRESENTATION },
+  picture: { disposition: "inert", note: WINDOW_PRESENTATION },
+  show_sound: { disposition: "inert", note: WINDOW_PRESENTATION },
+  event_picture_background: { disposition: "inert", note: WINDOW_PRESENTATION },
+  notification_event_icon: { disposition: "inert", note: WINDOW_PRESENTATION },
+  event_window_type: { disposition: "inert", note: WINDOW_PRESENTATION },
+  event_message_type: { disposition: "inert", note: WINDOW_PRESENTATION },
+  hide_window: { disposition: "inert", note: WINDOW_PRESENTATION },
+  diplomatic: { disposition: "inert", note: WINDOW_PRESENTATION },
+  force_open: { disposition: "inert", note: WINDOW_PRESENTATION },
+  auto_opens: { disposition: "inert", note: WINDOW_PRESENTATION },
+  trackable: { disposition: "inert", note: WINDOW_PRESENTATION },
+  is_advisor_event: { disposition: "inert", note: WINDOW_PRESENTATION },
+  is_test_event: { disposition: "inert", note: WINDOW_PRESENTATION },
+  archaeology: { disposition: "inert", note: WINDOW_PRESENTATION },
+  first_contact: { disposition: "inert", note: WINDOW_PRESENTATION },
+  espionage_operation: { disposition: "inert", note: WINDOW_PRESENTATION },
+  astral_rift: { disposition: "inert", note: WINDOW_PRESENTATION },
+  difficulty: { disposition: "inert", note: WINDOW_PRESENTATION },
+  major: {
+    disposition: "inert",
+    note: 'Whether other countries see the event too (events.cwt: "Event will show for other countries"). A second audience for a window nobody opens here; the body still runs once, in the scope it was fired on.',
+  },
+  major_trigger: {
+    disposition: "inert",
+    note: 'Narrows that second audience (events.cwt: "Triggers for other countries on whether a major event should show for them"). It gates who sees the window, never whether the body runs, so dropping it costs delivery nothing.',
+  },
+  event_chain: {
+    disposition: "inert",
+    note: "Names the event chain this event belongs to. Chain counters are separately refused (STRUCTURAL_SEMANTICS's add/reset_event_chain_counter), so membership alone carries no state the fixture pretends to hold.",
+  },
+  specimen: {
+    disposition: "inert",
+    note: "The specimen the window displays — a reference read by presentation, with no script attached.",
+  },
+  situation: {
+    disposition: "inert",
+    note: "Binds the window to a situation for display. It does not change the scope the body runs in: the event's own scope is what the immediate is applied to, here as in game.",
+  },
+  location: {
+    disposition: "inert",
+    note: "Where the window points on the map (events.cwt: `scope[any]`). It is a display anchor, not a scope change for the body.",
+  },
+  is_triggered_only: {
+    disposition: "inert",
+    note: "Says the game raises this event only when something fires it — which is the only way anything fires here at all. Nothing to skip.",
+  },
+  auto_select: {
+    disposition: "inert",
+    note: "A window-side automation flag the rules give no comment. Whatever it selects, it selects an option, and an option carrying effects is already refused below — so this flag can never be the reason a payoff goes silently unrun.",
+  },
+  fire_only_once: {
+    disposition: "inert",
+    note:
+      NOT_SCHEDULED_HERE +
+      " A test that fires such an event twice is describing a repeat the flag would prevent, and the fired log shows both deliveries rather than hiding one.",
+  },
+  mean_time_to_happen: { disposition: "inert", note: NOT_SCHEDULED_HERE },
+  weight_multiplier: { disposition: "inert", note: NOT_SCHEDULED_HERE },
+  immediate: {
+    disposition: "delivered",
+    note: "The one block delivery runs, through the same walker every effect goes through.",
+  },
+  trigger: {
+    disposition: "refused",
+    note: "The game's own gate on whether this event fires. Delivery does not evaluate it, so a fired record here would claim a firing the game may well have refused — and the immediate's effects would land on a world the condition was written to keep them off. Hold the condition in a named Trigger the test can `evaluate` on its own, and fire the event from a fixture that satisfies it.",
+  },
+  abort_trigger: {
+    disposition: "refused",
+    note: 'events.cwt: "Event will cancel (disappear without executing any of the effects in the options) if these triggers return true." A queued fire this harness never re-checks would deliver where the game cancelled it, and the days between queueing and delivery are exactly when the condition changes.',
+  },
+  abort_effect: {
+    disposition: "refused",
+    note: 'events.cwt: "Effects executed when abort_trigger returns true." Real script with a real path to running that delivery has no path to.',
+  },
+  after: {
+    disposition: "refused",
+    note: "Effects the game runs once the window closes. Delivery runs the immediate and stops, so these are recorded, never run, and their absence is invisible in the fired log — the same hole options had.",
+  },
+  option: {
+    disposition: "options",
+    note: "No option is ever selected here (`advance` runs no option auto-selection), so an option's effects never run. Presentation-only options stay deliverable — nothing is skipped when there is nothing to skip — and an option carrying effects is refused.",
+  },
+});
+
+export function eventFieldDeliveryFor(key: string): EventFieldImpl | undefined {
+  return EVENT_FIELD_DELIVERY[key as EmittableEventField];
+}
+
+/**
+ * The option's own declared fields, from the SDK's generated policy. The effect
+ * splice (`alias_name[effect]`) is not one of them: option effects are lowered
+ * straight into the option block, so every entry that is not one of these names
+ * is script somebody wrote to run when the option is chosen.
+ */
+const OPTION_FIELD_KEYS: ReadonlySet<string> = new Set(
+  EVENT_OPTION_FIELD_SUPPORT.map(({ scriptKey }) => scriptKey).filter(
+    (scriptKey) => !scriptKey.startsWith("alias_name[")
+  )
+);
+
+/** The keys inside one `option = { ... }` block that are effects rather than option fields. */
+export function optionCarriesEffects(option: PdxEntry): readonly string[] {
+  if (option.value.kind !== "container") {
+    return [];
+  }
+  return itemsAsEntries(option.value.items, "option")
+    .map((field) => field.key)
+    .filter((key) => !OPTION_FIELD_KEYS.has(key));
 }
 
 // ---------------------------------------------------------------------------

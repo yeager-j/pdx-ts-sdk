@@ -46,5 +46,13 @@ rather than approximated.
 The structured account of why a trigger evaluated as it did, down to the
 subcondition. The reason this context exists rather than a plain boolean.
 
+**Delivery**:
+Running one event on the world: the fired record plus its `immediate` block,
+and nothing else. What delivery does with each field of an event body is
+itself an audited table (`EVENT_FIELD_DELIVERY`), because an event carrying
+script delivery never runs — an option's effects, a `trigger` the game checks
+before firing, an `after` block — is refused at registration rather than
+half-delivered.
+
 **Fired record**:
 One event the run actually fired, in order — what a test asserts against.

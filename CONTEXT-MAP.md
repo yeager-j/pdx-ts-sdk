@@ -72,7 +72,11 @@ direction is stated in passing; the translation is the point.
   covers every scope the game has, `SimScopeName` covers only the subset the
   interpreter implements, and anything outside it throws rather than being
   guessed — a wrong emulator is worse than no emulator, because every
-  divergence is a green test for broken behavior.
+  divergence is a green test for broken behavior. **An event narrows the same
+  way**: an authored event crosses as a _deliverable_ one or not at all, since
+  delivery runs the `immediate` block and nothing else — a body carrying
+  options with effects, a firing gate, or an `after` block is refused at
+  registration rather than delivered in part.
 
 - **Within Vanilla Extraction**, `registry` names a content registry
   (`"technology"`, `"sprite"`) while **`ScriptedKind`** is the kind of scripted

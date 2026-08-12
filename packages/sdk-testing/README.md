@@ -34,6 +34,31 @@ For triggers, `explain` answers "why doesn't my `potential` pass":
     ✓ has_country_flag = pacifist_path — set on country "player"
 ```
 
+## What a fixture refuses to deliver
+
+The same refusal applies to whole events, not only to the keys inside them.
+Delivery runs an event's `immediate` and nothing else — no option is ever
+selected, no `trigger` is re-checked, no `after` block runs — so registering an
+event that carries any of that would produce a fired record for a firing the
+game may never have made, or a payoff it never paid. `fixture(spec, { events })`
+refuses those events by name instead:
+
+```
+Event "adv.1" carries "option", which delivery will not run: No option is ever
+selected here … This one carries set_country_flag.
+```
+
+Options that carry only a name, an icon, or a gate stay deliverable, because
+nothing is skipped when there is nothing to skip.
+
+Situations get the same treatment in the time dimension. A situation is a
+monthly mechanic — progress, `on_monthly`, stages, completion — and `advance`
+ticks none of it, so an advance that crosses a month boundary while the fixture
+holds a situation is refused rather than freezing progress behind a moving
+clock. Compute the arithmetic directly with `evaluateWeightBlock`, keep the
+advance inside the month, or declare `staticProgress: true` on the situation to
+say this chain does not depend on its progress moving.
+
 ## Whitelist-only, on purpose
 
 The interpreter is a **second implementation of the game's semantics**, so it is
@@ -55,7 +80,10 @@ is then bounded by it, the way the game's resource definitions bound a stockpile
 by its maximum storage capacity.
 
 ```ts
-fixture({ countries: [{ resources: { energy: 24_000 }, storage: { energy: 25_000 } }] }, { events });
+fixture(
+  { countries: [{ resources: { energy: 24_000 }, storage: { energy: 25_000 } }] },
+  { events }
+);
 // a 5,000 energy reward lands as 25,000, not 29,000
 ```
 
@@ -92,7 +120,10 @@ And a package boundary forces these helpers to consume the SDK through its
 found exactly one place where they had been reaching past it: the interpreter
 imported the generated `EFFECT_META` table to answer a yes/no question about a
 key. That is now `isEffectKey` on the SDK's public API, and the generated
-table's shape stayed private where it belongs.
+table's shape stayed private where it belongs. `scopeLinkOutput` is the second
+of the same kind: the interpreter has to tell a scope link it has not modeled
+from a scripted binding it never can, and it asks the SDK that question rather
+than keeping its own list of link names.
 
 ## Vocabulary
 

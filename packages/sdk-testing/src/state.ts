@@ -164,6 +164,20 @@ export interface SituationSpec {
   /** The id of the currently-picked approach, if any. */
   readonly approach?: string;
   readonly variables?: Readonly<Record<string, number>>;
+  /**
+   * Says this situation's progress standing still is fine for the chain under
+   * test, which lets `advance` cross a month boundary while it exists.
+   *
+   * The harness ticks no situation clock at all (see `World`'s
+   * `assertSituationClock`), so without this an advance across a month is
+   * refused rather than silently freezing a mechanic that is monthly by
+   * definition. Declared rather than defaulted, and per situation, for the
+   * same reason `CountrySpec.storage` is: the harness has no honest number to
+   * invent, and the author does know whether the test's assertions depend on
+   * progress moving. It is an acknowledgement, never an implementation — a
+   * situation declared static still never progresses.
+   */
+  readonly staticProgress?: boolean;
 }
 
 export interface FixtureSpec {
@@ -212,6 +226,8 @@ export interface SituationState {
   readonly variables: Map<string, number>;
   /** The situation's declared target — see {@link SituationSpec}. */
   readonly targetId: EntityId;
+  /** The author's acknowledgement that progress standing still is fine here — see {@link SituationSpec.staticProgress}. */
+  readonly staticProgress: boolean;
 }
 
 export interface PendingFire {
@@ -335,6 +351,7 @@ export function buildState(spec: FixtureSpec): WorldState {
       approach: situationSpec.approach,
       variables: new Map(Object.entries(situationSpec.variables ?? {})),
       targetId: { kind: "country", country: situationSpec.targetCountry },
+      staticProgress: situationSpec.staticProgress ?? false,
     };
   });
   return {
@@ -389,6 +406,7 @@ export function cloneState(state: WorldState): WorldState {
       approach: situation.approach,
       variables: new Map(situation.variables),
       targetId: situation.targetId,
+      staticProgress: situation.staticProgress,
     })),
     queue: state.queue.map((pending) => ({
       ...pending,

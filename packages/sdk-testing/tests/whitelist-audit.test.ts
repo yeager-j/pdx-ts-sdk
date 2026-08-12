@@ -18,7 +18,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "@pdx-ts/pdxscript";
-import { SUPPORTED_STELLARIS_BUILD } from "@pdx-ts/sdk";
+import { EVENT_FIELD_SUPPORT, scopeLinkOutput, SUPPORTED_STELLARIS_BUILD } from "@pdx-ts/sdk";
 import { locateInstall } from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
@@ -26,6 +26,7 @@ import {
   AUDITED_DOC_DUMP,
   COMBINATOR_SEMANTICS,
   EFFECT_SEMANTICS,
+  EVENT_FIELD_DELIVERY,
   ITERATOR_SEMANTICS,
   LINK_SEMANTICS,
   LIVE_CALIBRATION_BUILD,
@@ -163,6 +164,64 @@ describe("whitelist audit", () => {
     it("defends itself in a note", () => {
       expect(note.trim()).not.toBe("");
     });
+  });
+});
+
+describe("the link table names real links", () => {
+  // The dump pins say each note was read from the paragraph it claims. This
+  // says the key it claims is navigation at all — read from the SDK's own link
+  // vocabulary, which is generated from `links.cwt`, so a whitelist entry
+  // cannot quietly model a link the rules do not declare.
+  it("models no navigation the rules do not declare, bar the one keyword that is not a link", () => {
+    // `from` is a scope keyword the SDK writes itself (`ctx.from`), not a row
+    // in `links.cwt` — so it is the one entry with no link vocabulary behind
+    // it, and naming it here keeps that an exception rather than a hole.
+    expect(Object.keys(LINK_SEMANTICS).filter((key) => scopeLinkOutput(key) === undefined)).toEqual(
+      ["from"]
+    );
+  });
+
+  it("resolves owner to the scope the rules say it lands in", () => {
+    expect(scopeLinkOutput("owner")).toBe("country");
+  });
+});
+
+describe("event delivery covers every field the SDK can emit", () => {
+  // The compile-time half of this claim is `defineEventFieldDelivery`'s
+  // exhaustiveness over the same policy. This is the runtime half: a table
+  // built from a widened `EVENT_FIELD_SUPPORT` would still have to answer for
+  // every key, and a key the SDK stopped emitting would have to leave.
+  const emittable = EVENT_FIELD_SUPPORT.filter(
+    ({ disposition }) => disposition !== "unsupported"
+  ).map(({ scriptKey }) => scriptKey);
+
+  it("says what delivery does with each of them, and with nothing else", () => {
+    expect(new Set(Object.keys(EVENT_FIELD_DELIVERY))).toEqual(new Set(emittable));
+  });
+
+  it("defends every disposition in a note", () => {
+    expect(
+      Object.entries(EVENT_FIELD_DELIVERY)
+        .filter(([, { note }]) => note.trim() === "")
+        .map(([key]) => key)
+    ).toEqual([]);
+  });
+
+  it("delivers exactly one field, so `immediate` cannot lose that status quietly", () => {
+    expect(
+      Object.entries(EVENT_FIELD_DELIVERY)
+        .filter(([, { disposition }]) => disposition === "delivered")
+        .map(([key]) => key)
+    ).toEqual(["immediate"]);
+  });
+
+  it("refuses the blocks that carry script delivery never reaches", () => {
+    expect(
+      Object.entries(EVENT_FIELD_DELIVERY)
+        .filter(([, { disposition }]) => disposition === "refused")
+        .map(([key]) => key)
+        .sort()
+    ).toEqual(["abort_effect", "abort_trigger", "after", "trigger"]);
   });
 });
 
