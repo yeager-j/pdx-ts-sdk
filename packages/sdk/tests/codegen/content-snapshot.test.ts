@@ -150,10 +150,17 @@ describe("content-type codegen", () => {
     expect(tradition?.code).toContain("export interface TraditionSwapFields");
     expect(tradition?.code).toContain('shape: "repeatedStruct"');
     expect(tradition?.code).toContain('keying: "siblings"');
+    // Read off type[swapped_tradition]'s own `name_field = name`, the same
+    // statement the top level reads for an id-in-a-body-field registry.
+    expect(tradition?.code).toContain('identityKey: "name"');
     expect(tradition?.code).toContain("fields: TRADITION_SWAP_FIELDS");
     expect(tradition?.code).toContain(
       "traditionSwap?: Readonly<Record<string, TraditionSwapFields>>;"
     );
+    // The identity key is not also a body field: the record key carries it.
+    const swapFields = fieldNames(tradition?.nestedEmittedFields ?? []);
+    expect(swapFields).toContain("tradition.tradition_swap.modifier");
+    expect(swapFields).not.toContain("tradition.tradition_swap.name");
   });
 
   it("keys a repeated-struct record by string, not by the owner's id type", () => {
@@ -671,6 +678,10 @@ describe("content-type codegen", () => {
     // { stage_1 = { ... } } keys each entry by its own block key rather than a
     // body field, distinct from approach's siblings shape (tradition_swap's
     // shape) which carries its id in a body field ("name").
+    //
+    // The keying is read off the declaration, not configured: stages' block
+    // declares one wildcard key ("scalar = { ... }"), approach's declares its
+    // entry's own fields.
     const situation = emissions.get("situation_type");
     expect(situation?.code).toContain("export interface SituationStageFields");
     expect(situation?.code).toContain('shape: "repeatedStruct"');

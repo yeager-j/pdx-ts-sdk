@@ -147,11 +147,10 @@ export interface RegistryCorpus {
  * - `structMap` — its items are engine-keyed blocks:
  *   `section_slots = { mid = { locator = ... } }`. The engine key stays out of
  *   the path, since the emitter has one field table for every key.
- * - `repeatedStruct` — `keying` decides, mirroring `REPEATED_STRUCT_DEFINITIONS`
- *   exactly rather than redefining the split: "container" holds one id-keyed
- *   block per entry, "siblings" holds the entry's own fields directly and
- *   carries the id in `identityKey`, skipped for the same reason the top level
- *   drops `nameField`.
+ * - `repeatedStruct` — `keying` decides, taken from the emission rather than
+ *   re-derived: "container" holds one id-keyed block per entry, "siblings"
+ *   holds the entry's own fields directly and carries the id in `identityKey`,
+ *   skipped for the same reason the top level drops `nameField`.
  * - `weightModifiers` — a weight block's `modifier` rows, recorded under
  *   `<field>.modifier` with `strippedKeys` (the maths operations and `desc`)
  *   removed, so what remains is the row's gating trigger. The one mode that

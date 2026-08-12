@@ -1779,14 +1779,15 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
 export interface RepeatedStructDefinition {
   readonly typeName: string;
   /**
-   * "siblings" (shape 2 — `approach = { name = approach_a ... }` repeated):
-   * the record key is written into `identityKey` inside each sibling block.
-   * "container" (shape 1 — `stages = { stage_1 = { ... } }`): the record key
-   * IS the inner block's key, and `identityKey` is unused. Defaults to
-   * "siblings".
+   * The body field carrying the record key, for a struct whose entries are
+   * repeated sibling blocks (shape 2 — `approach = { name = approach_a ... }`).
+   *
+   * Only for a struct CWT gives no `type[...]` of its own. A struct that names
+   * a {@link localisationType} inherits that type's `name_field`, which is the
+   * same statement, and a container-keyed struct (shape 1 —
+   * `stages = { stage_1 = { ... } }`) has no such field at all: the emitter
+   * reads the keying off the declaration's own shape.
    */
-  readonly keying?: "siblings" | "container";
-  /** Required when `keying` is "siblings" (the default); unused for "container". */
   readonly identityKey?: string;
   /**
    * The vendored `type[...]` carrying the identity's localisation patterns
@@ -1802,34 +1803,22 @@ export interface RepeatedStructDefinition {
 export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinition>([
   [
     "tradition.tradition_swap",
-    {
-      typeName: "TraditionSwap",
-      identityKey: "name",
-      localisationType: "swapped_tradition",
-    },
+    { typeName: "TraditionSwap", localisationType: "swapped_tradition" },
   ],
   [
     "ascension_perk.tradition_swap",
-    {
-      typeName: "AscensionPerkSwap",
-      identityKey: "name",
-      localisationType: "swapped_ascension_perk",
-    },
+    { typeName: "AscensionPerkSwap", localisationType: "swapped_ascension_perk" },
   ],
-  [
-    "situation_type.stages",
-    {
-      typeName: "SituationStage",
-      keying: "container",
-    },
-  ],
-  [
-    "situation_type.approach",
-    {
-      typeName: "SituationApproach",
-      identityKey: "name",
-    },
-  ],
+  ["situation_type.stages", { typeName: "SituationStage" }],
+  // `approach` is the one row whose identity key stays hand-written.
+  // situations.cwt declares no `type[...]` for it, so there is no `name_field`
+  // to read it off the way tradition_swap reads its own off
+  // `type[swapped_tradition]`. The only upstream statement is
+  // `complex_enum[situation_approach]` (situations.cwt:284-291), whose `name`
+  // body — `approach = { name = enum_name }` — says where the enum harvests its
+  // values from, and `readEnums` keeps only an enum's scalar values and drops a
+  // complex_enum's body outright, so the parsed model does not carry it.
+  ["situation_type.approach", { typeName: "SituationApproach", identityKey: "name" }],
 ]);
 
 export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([

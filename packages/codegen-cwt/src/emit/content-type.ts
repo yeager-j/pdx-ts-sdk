@@ -319,31 +319,21 @@ function repeatedStructEmission(
   /** How the corpus reader reaches the interiors of the entry's own block fields. */
   readonly children: readonly DescentNode[];
   readonly localisationAliases: readonly string[];
+  /** Where the record key lives, read off the field's own declaration. */
+  readonly keying: "siblings" | "container";
+  /** The body field carrying the record key, for `"siblings"` keying. */
+  readonly identityKey: string | undefined;
 } | null {
   if (ownerField.type.kind !== "block") {
     return null;
   }
-  const keying = config.keying ?? "siblings";
-  if (keying === "siblings" && config.identityKey === undefined) {
-    return null;
-  }
-  // "container" (`stages = { stage_1 = { ... } }`) has no sibling fields of
-  // its own to merge — the record's per-entry shape lives one level further
-  // in, behind the wildcard key CWT uses to say "any key maps to this block".
-  const bodyType = keying === "container" ? wildcardBlockOf(ownerField.type) : ownerField.type;
-  if (bodyType === null) {
-    return null;
-  }
-  const grouped = mergeByName(bodyType.fields, config.typeName);
-  // The record key already carries the identity value — written into
-  // identityKey inside each sibling block, or (for "container") the block's
-  // own key — so it is not an ordinary member, the same reason the top level
-  // drops its nameField before iterating.
-  if (config.identityKey !== undefined) {
-    grouped.delete(config.identityKey);
-  }
-
-  const typeName = config.typeName;
+  // The declaration says which keying it is. "container"
+  // (`stages = { stage_1 = { ... } }`) is the wildcard-key shape: one computed
+  // key standing for "any key maps to this block", which is exactly the record
+  // the authoring type emits. "siblings" (`approach = { name = ... }` repeated)
+  // declares its entry's fields directly, so there is no wildcard to find.
+  const container = wildcardBlockOf(ownerField.type);
+  const keying = container === null ? "siblings" : "container";
   // Some repeated-struct fields have their own vendored `type[...]` carrying
   // the identity's localisation patterns (tradition_swap borrows
   // `type[swapped_tradition]`). Others — situations' `stages` and `approach`
@@ -353,10 +343,32 @@ function repeatedStructEmission(
   // types themselves use keeps this generic rather than situations-specific:
   // any future repeated-struct field lacking a dedicated type gets the same
   // convention `99_README_SITUATIONS.txt` documents for both of situations'.
-  const localisationType =
+  const declaredType =
     config.localisationType === undefined
-      ? syntheticIdentityLocalisation(typeName)
+      ? undefined
       : emitter.rules.contentTypes.get(config.localisationType);
+  // `name_field` is the same statement one level down that it is at the top
+  // level: the id is the value of that body field, not the block's key. A
+  // struct borrowing a vendored `type[...]` therefore already declares its own
+  // identity key, and the overlay only supplies one for a struct CWT gives no
+  // type at all (`situation_type.approach`).
+  const identityKey = declaredType?.nameField ?? config.identityKey;
+  if (keying === "siblings" && identityKey === undefined) {
+    return null;
+  }
+  const bodyType = container ?? ownerField.type;
+  const grouped = mergeByName(bodyType.fields, config.typeName);
+  // The record key already carries the identity value — written into
+  // identityKey inside each sibling block, or (for "container") the block's
+  // own key — so it is not an ordinary member, the same reason the top level
+  // drops its nameField before iterating.
+  if (identityKey !== undefined) {
+    grouped.delete(identityKey);
+  }
+
+  const typeName = config.typeName;
+  const localisationType =
+    config.localisationType === undefined ? syntheticIdentityLocalisation(typeName) : declaredType;
   const localisationPlan =
     localisationType === undefined ? null : planLocalisation(localisationType);
   // A struct field can share a name with the struct's own localisation slot
@@ -459,7 +471,7 @@ function repeatedStructEmission(
     "repeatedStruct",
     [
       `keying: ${JSON.stringify(keying)}`,
-      ...(keying === "siblings" ? [`identityKey: ${JSON.stringify(config.identityKey)}`] : []),
+      ...(keying === "siblings" ? [`identityKey: ${JSON.stringify(identityKey)}`] : []),
       `fields: ${fieldsConstant}`,
       `localisation: ${localisationConstant}`,
     ]
@@ -475,6 +487,8 @@ function repeatedStructEmission(
     emittedFields,
     children,
     localisationAliases,
+    keying,
+    identityKey,
   };
 }
 
@@ -868,13 +882,13 @@ export function emitContentType(
         shape: "repeatedStruct",
         repeated: repeatsSiblings(group[0]!, "repeatedStruct"),
       });
-      // The same overlay row the emission read, so the reader's keying and the
-      // authoring shape's cannot disagree about where the record key lives.
+      // The emission's own derived keying, so the reader's and the authoring
+      // shape's cannot disagree about where the record key lives.
       corpusDescents.push({
         field: name,
         mode: "repeatedStruct",
-        keying: config.keying ?? "siblings",
-        ...(config.identityKey === undefined ? {} : { identityKey: config.identityKey }),
+        keying: nested.keying,
+        ...(nested.identityKey === undefined ? {} : { identityKey: nested.identityKey }),
         children: nested.children,
       });
       continue;
