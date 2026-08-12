@@ -12,6 +12,7 @@
  */
 
 import { scalarText, type PdxEntry, type PdxItem, type PdxScalar } from "@pdx-ts/pdxscript";
+import type { StructuralEffectKey } from "@pdx-ts/sdk";
 
 import {
   archaeologicalSiteState,
@@ -414,20 +415,105 @@ export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
 };
 
 // ---------------------------------------------------------------------------
-// Structural effects — implemented in the walker, audited here
+// Structural effects — one audited dispatcher contract for the walker
 // ---------------------------------------------------------------------------
 
-export const STRUCTURAL_SEMANTICS: Readonly<Record<string, { readonly note: string }>> = {
+export type StructuralDisposition =
+  | "conditional-start"
+  | "conditional-continuation"
+  | "conditional-fallback"
+  | "transparent"
+  | "forced-list"
+  | "leaf"
+  | "unimplemented";
+
+export interface StructuralImpl {
+  /** The walker's closed dispatch/disposition for this structural key. */
+  readonly disposition: StructuralDisposition;
+  /** One line defending the modeled behavior or deliberate refusal. */
+  readonly note: string;
+}
+
+function defineStructuralSemantics<const T extends Record<StructuralEffectKey, StructuralImpl>>(
+  semantics: T & Record<Exclude<keyof T, StructuralEffectKey>, never>
+): Readonly<T> {
+  return semantics;
+}
+
+/**
+ * Every structural effect key the SDK records has one interpreter disposition
+ * here. The walker dispatches this table directly; coverage derives from it.
+ * `leaf` preserves the existing EFFECT_SEMANTICS authority for structures
+ * whose mechanics are ordinary leaf mutations, while `unimplemented` makes a
+ * real but unverified structural effect a deliberate refusal rather than a
+ * generic generated-key fallback.
+ */
+export const STRUCTURAL_SEMANTICS = defineStructuralSemantics({
+  add_resource: {
+    disposition: "leaf",
+    note: "Delegates to EFFECT_SEMANTICS: the audited fixture stockpile mutation already owns this resource block.",
+  },
+  add_event_chain_counter: {
+    disposition: "unimplemented",
+    note: "Event-chain counter lifetime and progression are absent from the fixture, so incrementing one would invent state semantics.",
+  },
+  else: {
+    disposition: "conditional-fallback",
+    note: "Runs iff no preceding if/else_if in the positional chain applied.",
+  },
+  else_if: {
+    disposition: "conditional-continuation",
+    note: "Associates with the preceding if by position, as the game does.",
+  },
+  hidden_effect: {
+    disposition: "transparent",
+    note: "Transparent: the entries run as they would unwrapped. Hiding is a tooltip concern and the block changes no scope.",
+  },
+  if: {
+    disposition: "conditional-start",
+    note: "Evaluates limit via the trigger walker, then applies the body.",
+  },
+  inverted_switch: {
+    disposition: "unimplemented",
+    note: "No branch-selection semantics have been verified for this control-flow form.",
+  },
+  locked_random_list: {
+    disposition: "unimplemented",
+    note: "Its locked tooltip and selection semantics have not been calibrated; forcing random_list does not establish them.",
+  },
+  random: {
+    disposition: "unimplemented",
+    note: "Chance and modifier evaluation need a probability model; the fixture only forces random_list arms.",
+  },
   random_list: {
+    disposition: "forced-list",
     note: "Takes the FORCED arm by zero-based occurrence index — weights are not identities. Forced branches, not seeds; weight modifiers are deliberately not evaluated under forcing.",
   },
-  if: { note: "Evaluates `limit` via the trigger walker, then applies the body." },
-  else_if: { note: "Associated with the preceding if by position, as the game does." },
-  else: { note: "Runs iff no preceding if/else_if in the chain applied." },
-  hidden_effect: {
-    note: "Transparent: the entries run as they would unwrapped. Hiding is a tooltip concern and the block changes no scope, so there is nothing to simulate.",
+  reset_event_chain_counter: {
+    disposition: "unimplemented",
+    note: "Event-chain counter lifetime and progression are absent from the fixture, so resetting one would invent state semantics.",
   },
-};
+  save_event_target_as: {
+    disposition: "leaf",
+    note: "Delegates to EFFECT_SEMANTICS: the audited per-execution event-target map already owns this save.",
+  },
+  save_global_event_target_as: {
+    disposition: "unimplemented",
+    note: "Global target lifetime is not modeled: the fixture intentionally keeps targets local to one execution.",
+  },
+  switch: {
+    disposition: "unimplemented",
+    note: "No branch-selection semantics have been verified for this control-flow form.",
+  },
+  while: {
+    disposition: "unimplemented",
+    note: "Count and limit iteration can change execution order and termination, neither of which the fixture has calibrated.",
+  },
+});
+
+export function structuralSemanticsFor(key: string): StructuralImpl | undefined {
+  return STRUCTURAL_SEMANTICS[key as StructuralEffectKey];
+}
 
 // Fire effects (`planet_event = { id = ... }`) are recognized via the
 // SDK's generated event-fire policy and enqueue on the discrete-event queue; the
@@ -516,13 +602,22 @@ export function coverageSummary(): string {
   const triggers = Object.keys(TRIGGER_SEMANTICS).length;
   const combinators = Object.keys(COMBINATOR_SEMANTICS).length;
   const effects = Object.keys(EFFECT_SEMANTICS).length;
-  const structural = Object.keys(STRUCTURAL_SEMANTICS).length;
+  const structural = Object.values(STRUCTURAL_SEMANTICS);
+  const structuralWalker = structural.filter(
+    ({ disposition }) => disposition !== "leaf" && disposition !== "unimplemented"
+  ).length;
+  const structuralLeaf = structural.filter(({ disposition }) => disposition === "leaf").length;
+  const structuralRefused = structural.filter(
+    ({ disposition }) => disposition === "unimplemented"
+  ).length;
   const iterators = Object.keys(ITERATOR_SEMANTICS).length;
   const links = Object.keys(LINK_SEMANTICS).length + 1; // + the event_target: prefix rule
   const count = (n: number, noun: string): string => `${n} ${noun}${n === 1 ? "" : "s"}`;
   return (
     `(coverage: ${count(triggers, "trigger")} + ${count(combinators, "combinator")}, ` +
-    `${count(effects, "effect")} + ${structural} structural, ` +
+    `${count(effects, "effect")} + ${count(structuralWalker, "walker-modeled structural")} + ` +
+    `${count(structuralLeaf, "leaf-delegated structural")} + ` +
+    `${count(structuralRefused, "explicitly refused structural")}, ` +
     `${count(iterators, "iterator")}, ${count(links, "link")})`
   );
 }

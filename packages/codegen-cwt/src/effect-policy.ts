@@ -93,6 +93,9 @@ export function createEffectPolicy(rules: RuleSet): EffectPolicy {
 
 export function emitEffectPolicyProtocol(policy: EffectPolicy): string {
   const structural = [...policy.structuralMethods].sort();
+  const structuralKeys = [...policy.byKey.values()]
+    .flatMap((entry) => (entry.owner === "structural" ? [entry.key] : []))
+    .sort();
   const fireKeys = [...policy.fireKeys].sort();
   const owned = [...policy.byKey.values()]
     .filter((entry) => entry.owner !== "generated")
@@ -100,7 +103,9 @@ export function emitEffectPolicyProtocol(policy: EffectPolicy): string {
   return (
     `export const EFFECT_OWNERSHIP = ${JSON.stringify(owned)} as const;\n\n` +
     `export const STRUCTURAL_EFFECT_METHODS = ${JSON.stringify(structural)} as const;\n\n` +
+    `export const STRUCTURAL_EFFECT_KEYS = ${JSON.stringify(structuralKeys)} as const;\n\n` +
     `export const FIRE_EFFECT_KEYS = ${JSON.stringify(fireKeys)} as const;\n\n` +
-    "export type StructuralEffectMethod = (typeof STRUCTURAL_EFFECT_METHODS)[number];\n"
+    "export type StructuralEffectMethod = (typeof STRUCTURAL_EFFECT_METHODS)[number];\n" +
+    "export type StructuralEffectKey = (typeof STRUCTURAL_EFFECT_KEYS)[number];\n"
   );
 }

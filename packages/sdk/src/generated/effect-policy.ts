@@ -111,6 +111,24 @@ export const STRUCTURAL_EFFECT_METHODS = [
   "whileLoop",
 ] as const;
 
+export const STRUCTURAL_EFFECT_KEYS = [
+  "add_event_chain_counter",
+  "add_resource",
+  "else",
+  "else_if",
+  "hidden_effect",
+  "if",
+  "inverted_switch",
+  "locked_random_list",
+  "random",
+  "random_list",
+  "reset_event_chain_counter",
+  "save_event_target_as",
+  "save_global_event_target_as",
+  "switch",
+  "while",
+] as const;
+
 export const FIRE_EFFECT_KEYS = [
   "agreement_event",
   "astral_rift_event",
@@ -135,3 +153,4 @@ export const FIRE_EFFECT_KEYS = [
 ] as const;
 
 export type StructuralEffectMethod = (typeof STRUCTURAL_EFFECT_METHODS)[number];
+export type StructuralEffectKey = (typeof STRUCTURAL_EFFECT_KEYS)[number];
