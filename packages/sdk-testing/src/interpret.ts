@@ -304,6 +304,13 @@ function applyFire(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
   if (!isEventFireKey(entry.key)) {
     throw new InterpreterError("unreachable: applyFire called for a non-fire key");
   }
+  if (entry.key === "observer_event" && scope.kind !== "country") {
+    throw new InterpreterError(
+      `observer_event is legal to fire from ${scope.kind} scope, but its body runs in country ` +
+        `scope and the testing interpreter cannot resolve that observer country. Assert against ` +
+        `the emitted fire instead of executing this event chain. ${coverageSummary()}`
+    );
+  }
   let id: string | undefined;
   let delay = 0;
   let from: EntityId | undefined;

@@ -342,7 +342,70 @@ export function cloneState(state: WorldState): WorldState {
 }
 
 export function commitState(target: WorldState, source: WorldState): void {
-  Object.assign(target, source);
+  target.day = source.day;
+  target.seq = source.seq;
+  replaceSet(target.globalFlags, source.globalFlags);
+  replaceArray(target.countries, source.countries, commitCountryState);
+  replaceArray(target.planets, source.planets, (targetRow, sourceRow) => {
+    replaceArray(targetRow, sourceRow, commitPlanetState);
+  });
+  replaceArray(target.fleets, source.fleets, (targetFleet, sourceFleet) => {
+    targetFleet.name = sourceFleet.name;
+  });
+  replaceArray(target.sites, source.sites, (targetSite, sourceSite) => {
+    targetSite.name = sourceSite.name;
+    targetSite.progressLocked = sourceSite.progressLocked;
+  });
+  replaceArray(target.situations, source.situations, commitSituationState);
+  target.queue.splice(0, target.queue.length, ...source.queue);
+  target.fired.splice(0, target.fired.length, ...source.fired);
+  target.log.splice(0, target.log.length, ...source.log);
+}
+
+function replaceArray<T>(
+  target: T[],
+  source: readonly T[],
+  commitItem: (target: T, source: T) => void
+): void {
+  const sharedLength = Math.min(target.length, source.length);
+  for (let index = 0; index < sharedLength; index += 1) {
+    commitItem(target[index]!, source[index]!);
+  }
+  target.splice(sharedLength, target.length - sharedLength, ...source.slice(sharedLength));
+}
+
+function replaceSet<T>(target: Set<T>, source: ReadonlySet<T>): void {
+  target.clear();
+  for (const value of source) {
+    target.add(value);
+  }
+}
+
+function replaceMap<K, V>(target: Map<K, V>, source: ReadonlyMap<K, V>): void {
+  target.clear();
+  for (const [key, value] of source) {
+    target.set(key, value);
+  }
+}
+
+function commitCountryState(target: CountryState, source: CountryState): void {
+  target.name = source.name;
+  replaceSet(target.flags, source.flags);
+  replaceSet(target.technologies, source.technologies);
+  replaceMap(target.resources, source.resources);
+}
+
+function commitPlanetState(target: PlanetState, source: PlanetState): void {
+  target.name = source.name;
+  replaceSet(target.flags, source.flags);
+  target.deposits.splice(0, target.deposits.length, ...source.deposits);
+}
+
+function commitSituationState(target: SituationState, source: SituationState): void {
+  target.name = source.name;
+  target.progress = source.progress;
+  target.approach = source.approach;
+  replaceMap(target.variables, source.variables);
 }
 
 export function countryState(state: WorldState, id: EntityId): CountryState {

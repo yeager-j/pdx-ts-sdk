@@ -54,6 +54,36 @@ describe("transactional event delivery", () => {
     expect(world.fired.map(({ id }) => id)).toEqual([entry.id]);
     expect(() => world.advance(1)).toThrow(/add_modifier.*unimplemented/);
   });
+
+  it("commits into existing public collection references", () => {
+    const mod = makeMod("sdk149_live_references");
+    const event = mod.namespace().country(1, {
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.setCountryFlag(flags.sdk149_first);
+        country.addResource({ resource: "influence", amount: 10 });
+        country.log("committed");
+        country.everyOwnedPlanet({}, (planet) => planet.addDeposit("d_minerals_1"));
+      },
+    });
+    const world = fixture({ countries: [{ planets: [{}] }] }, { events: [event] });
+    const country = world.country(0);
+    const planet = country.planet(0);
+    const fired = world.fired;
+    const log = world.log;
+    const deposits = planet.deposits;
+    const countryState = country.state.countries[0]!;
+    const countryFlags = countryState.flags;
+    const resources = countryState.resources;
+
+    world.fire(event, country);
+
+    expect(fired.map(({ id }) => id)).toEqual([event.id]);
+    expect(log).toEqual(["committed"]);
+    expect(deposits).toEqual(["d_minerals_1"]);
+    expect(countryFlags.has(flags.sdk149_first)).toBe(true);
+    expect(resources.get("influence")).toBe(10);
+  });
 });
 
 describe("event registration integrity", () => {
@@ -146,7 +176,7 @@ describe("random-list choice identity", () => {
 });
 
 describe("event and link semantics", () => {
-  it("allows a typed universal observer-event fire from planet scope", () => {
+  it("refuses to execute an observer-event body when the observer country is unresolved", () => {
     const mod = makeMod("sdk149_observer");
     const events = mod.namespace();
     const observed = events.observer(2, { hideWindow: true, isTriggeredOnly: true });
@@ -160,10 +190,10 @@ describe("event and link semantics", () => {
       { events: [entry, observed] }
     );
 
-    world.fire(entry, world.country(0).planet(0));
-    world.advance(0);
-
-    expect(world.fired.map(({ id }) => id)).toEqual([entry.id, observed.id]);
+    expect(() => world.fire(entry, world.country(0).planet(0))).toThrow(
+      /observer_event is legal to fire from planet scope.*cannot resolve that observer country/
+    );
+    expect(world.fired).toEqual([]);
   });
 
   it("resolves saved event-target links while traversing triggers", () => {
