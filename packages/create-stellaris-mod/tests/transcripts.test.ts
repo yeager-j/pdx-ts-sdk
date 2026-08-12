@@ -519,8 +519,13 @@ describe("generate", () => {
 function declareSdk(target: TempProject, specifier: string): void {
   const file = path.join(target.dir, "package.json");
   const manifest = JSON.parse(readFileSync(file, "utf8")) as {
-    devDependencies: Record<string, string>;
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
   };
-  manifest.devDependencies["@pdx-ts/sdk"] = specifier;
+  const block =
+    manifest.dependencies?.["@pdx-ts/sdk"] === undefined
+      ? (manifest.devDependencies ?? (manifest.devDependencies = {}))
+      : manifest.dependencies;
+  block["@pdx-ts/sdk"] = specifier;
   writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`);
 }

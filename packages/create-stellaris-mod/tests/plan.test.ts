@@ -8,6 +8,8 @@ import { describe, expect, it } from "vitest";
 
 import type { Resolved } from "../src/options.ts";
 import { planFiles } from "../src/plan.ts";
+import { SCAFFOLDER_RELEASE_MANIFEST } from "../src/release-manifest.ts";
+import { checkSdkCompatibility } from "../src/sdk-range.ts";
 
 const base: Resolved = {
   targetDir: "/tmp/my-mod",
@@ -100,6 +102,10 @@ describe("the scaffolded tree", () => {
       .get("tsconfig.json")!
       .replace(/^\s*\/\/.*$/gm, "");
     expect(() => JSON.parse(stripped)).not.toThrow();
+  });
+
+  it("leaves the workspace source condition out of a production project", () => {
+    expect(plan().get("tsconfig.json")).not.toContain("customConditions");
   });
 
   it("leaves no unsubstituted interpolation behind", () => {
@@ -215,9 +221,18 @@ describe("the Project Manifest", () => {
 });
 
 describe("dependency resolution", () => {
-  it("uses the exact verified SDK version by default", () => {
+  it("scaffolds a runtime SDK dependency the release can prove, and a separate test dependency", () => {
     const { dependencies } = manifest(plan());
-    expect(dependencies!["@pdx-ts/sdk"]).toBe("0.2.0");
+    const { devDependencies } = manifest(plan()) as unknown as {
+      devDependencies: Record<string, string>;
+    };
+    const sdk = dependencies![SCAFFOLDER_RELEASE_MANIFEST.sdk.packageName];
+    expect(
+      checkSdkCompatibility({ declaredSpecifier: sdk, installedVersion: undefined }).supported
+    ).toBe(true);
+    expect(devDependencies[SCAFFOLDER_RELEASE_MANIFEST.sdkTesting.packageName]).toBeDefined();
+    expect(dependencies![SCAFFOLDER_RELEASE_MANIFEST.sdkTesting.packageName]).toBeUndefined();
+    expect(devDependencies[SCAFFOLDER_RELEASE_MANIFEST.sdk.packageName]).toBeUndefined();
     expect(dependencies!["@pdx-ts/pdxscript"]).toBeUndefined();
   });
 

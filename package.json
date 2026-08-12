@@ -15,6 +15,7 @@
     "codegen:vanilla:check": "node --conditions=pdx-source packages/codegen-vanilla/src/index.ts && git diff --exit-code packages/stellaris-ids/src packages/stellaris-ids/package.json",
     "codegen:verified-build": "node --conditions=pdx-source packages/codegen-vanilla/src/verified-build-projection.ts",
     "codegen:verified-build:check": "git ls-files --error-unmatch packages/sdk/src/generated/verified-build.ts packages/create-stellaris-mod/src/generated/verified-build.ts > /dev/null && node --conditions=pdx-source packages/codegen-vanilla/src/verified-build-projection.ts && git diff --exit-code packages/sdk/src/generated/verified-build.ts packages/create-stellaris-mod/src/generated/verified-build.ts",
+    "codegen:scaffolder-version:check": "git ls-files --error-unmatch packages/create-stellaris-mod/src/generated/package-version.ts > /dev/null && node packages/create-stellaris-mod/scripts/generate-version.mjs --check",
     "corpus:extract": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-extract.ts",
     "corpus:check": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-check.ts",
     "typecheck": "tsc --noEmit",

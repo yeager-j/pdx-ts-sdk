@@ -18,6 +18,7 @@
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import type { ModConfig } from "@pdx-ts/sdk";
 
 import { SUPPORTED_VERSION_PATTERN } from "./generated/verified-build.ts";
 import { parseProjectLayout, type ProjectLayout } from "./project-layout.ts";
@@ -43,29 +44,109 @@ export { SUPPORTED_VERSION_PATTERN } from "./generated/verified-build.ts";
 const TOP_LEVEL_KEYS = ["$schema", "mod", "contentDirectory"] as const;
 
 /**
- * The SDK's `ModConfig` minus `prefix`, restated structurally. `manifest.test.ts`
- * asserts assignability in both directions against the real type, so a change
- * to the SDK's config breaks a test here rather than a stranger's project.
+ * The one declarative description of the configuration under a manifest's
+ * prefix. It projects into the parsed TypeScript shape, the runtime validator,
+ * and the schema an editor reads; none of those consumers gets to maintain an
+ * independent field list.
  */
-export interface ProjectModConfig {
-  name: string;
-  version?: string;
-  supportedVersion: string;
-  tags?: string[];
-  acceptGameVersion?: string;
-  uncheckedVanillaIds?: boolean;
+type ProjectModFieldKind = "string" | "string[]" | "boolean";
+
+type ProjectModFieldDescriptor<Kind extends ProjectModFieldKind> = {
+  readonly kind: Kind;
+  readonly required: boolean;
+  readonly description?: string;
+} & (Kind extends "string"
+  ? {
+      readonly pattern?: RegExp;
+      readonly patternError?: (at: string, value: string) => string;
+    }
+  : { readonly pattern?: never; readonly patternError?: never });
+
+type AnyProjectModFieldDescriptor = {
+  [Kind in ProjectModFieldKind]: ProjectModFieldDescriptor<Kind>;
+}[ProjectModFieldKind];
+
+export const PROJECT_MOD_FIELDS = {
+  name: {
+    kind: "string",
+    required: true,
+    description: "Display name shown in the launcher.",
+  },
+  version: { kind: "string", required: false },
+  supportedVersion: {
+    kind: "string",
+    required: true,
+    description:
+      'Launcher version pattern, e.g. "v4.4.*": one to three dot-separated parts, ' +
+      'each a number or "*".',
+    pattern: SUPPORTED_VERSION_PATTERN,
+    patternError: (at, value) =>
+      `${at}.supportedVersion ${JSON.stringify(value)} is not a launcher version pattern ` +
+      `(e.g. "v4.4.*", "v4.*", "v4.4.6"): one to three dot-separated parts, each a ` +
+      `number or "*". It is written verbatim into descriptor.mod, and the launcher answers an ` +
+      `unreadable one by silently refusing the mod.`,
+  },
+  tags: {
+    kind: "string[]",
+    required: false,
+    description: "Launcher tags.",
+  },
+  acceptGameVersion: {
+    kind: "string",
+    required: false,
+    description: "Acknowledges a game build the SDK's rule table is not verified against.",
+  },
+  uncheckedVanillaIds: {
+    kind: "boolean",
+    required: false,
+    description: "Acknowledges authoring without compile-time vanilla id checking.",
+  },
+} as const satisfies Record<string, AnyProjectModFieldDescriptor>;
+
+type ProjectModField = AnyProjectModFieldDescriptor;
+type FieldValue<Field extends ProjectModField> = Field["kind"] extends "string[]"
+  ? string[]
+  : Field["kind"] extends "boolean"
+    ? boolean
+    : string;
+
+export type ProjectModConfig = {
+  [
+    Key in keyof typeof PROJECT_MOD_FIELDS as (typeof PROJECT_MOD_FIELDS)[Key]["required"] extends true
+      ? Key
+      : never
+  ]: FieldValue<(typeof PROJECT_MOD_FIELDS)[Key]>;
+} & {
+  [
+    Key in keyof typeof PROJECT_MOD_FIELDS as (typeof PROJECT_MOD_FIELDS)[Key]["required"] extends true
+      ? never
+      : Key
+  ]?: FieldValue<(typeof PROJECT_MOD_FIELDS)[Key]>;
+};
+
+/**
+ * The adapter's one-way compatibility claim. `Pick` requires every Project
+ * Manifest key to be an SDK key and preserves the SDK's value type for it;
+ * adding a manifest-only field or widening a value therefore fails here.
+ */
+type SdkProjectModConfig = Pick<ModConfig, keyof ProjectModConfig>;
+
+/** The JSON-schema view of one canonical Project Manifest field. */
+export function projectModFieldSchema(field: ProjectModField): Record<string, unknown> {
+  const description = field.description === undefined ? {} : { description: field.description };
+  switch (field.kind) {
+    case "string":
+      return {
+        ...description,
+        type: "string",
+        ...(field.pattern === undefined ? {} : { pattern: field.pattern.source }),
+      };
+    case "string[]":
+      return { ...description, type: "array", items: { type: "string" } };
+    case "boolean":
+      return { ...description, type: "boolean" };
+  }
 }
-
-const MOD_FIELDS = {
-  name: "string",
-  version: "string",
-  supportedVersion: "string",
-  tags: "string[]",
-  acceptGameVersion: "string",
-  uncheckedVanillaIds: "boolean",
-} as const satisfies Record<keyof ProjectModConfig, string>;
-
-const REQUIRED_MOD_FIELDS = ["name", "supportedVersion"] as const;
 
 export interface ProjectManifest {
   /** The sole key under `mod`, which is the mod prefix. */
@@ -175,57 +256,69 @@ function readModConfig(value: unknown, prefix: string, sourcePath: string): Proj
     throw new ManifestError(`${at} must be a JSON object, and is ${describe(value)}.`);
   }
 
-  const unknownKeys = Object.keys(value).filter((key) => !Object.hasOwn(MOD_FIELDS, key));
+  const unknownKeys = Object.keys(value).filter((key) => !Object.hasOwn(PROJECT_MOD_FIELDS, key));
   if (unknownKeys.length > 0) {
     throw new ManifestError(
       `${at} has ${unknownKeys.length === 1 ? "an unknown field" : "unknown fields"} ` +
         `${quoteList(unknownKeys)}. It carries the mod configuration other than the prefix: ` +
-        `${quoteList(Object.keys(MOD_FIELDS))}.`
+        `${quoteList(Object.keys(PROJECT_MOD_FIELDS))}.`
     );
   }
-  for (const required of REQUIRED_MOD_FIELDS) {
-    if (!Object.hasOwn(value, required)) {
-      throw new ManifestError(`${at} has no "${required}" field, which is required.`);
-    }
-  }
 
-  for (const [field, kind] of Object.entries(MOD_FIELDS)) {
-    if (!Object.hasOwn(value, field)) {
+  const config: Record<string, unknown> = {};
+  for (const [field, descriptor] of Object.entries(PROJECT_MOD_FIELDS) as [
+    string,
+    ProjectModField,
+  ][]) {
+    const present = Object.hasOwn(value, field);
+    if (descriptor.required && !present) {
+      throw new ManifestError(`${at} has no "${field}" field, which is required.`);
+    }
+    if (!present) {
       continue;
     }
     const actual = value[field];
-    if (kind === "string[]") {
+    if (descriptor.kind === "string[]") {
       if (!Array.isArray(actual) || actual.some((item) => typeof item !== "string")) {
         throw new ManifestError(
           `${at}.${field} must be an array of strings, and is ${describe(actual)}.`
         );
       }
-    } else if (typeof actual !== kind) {
-      throw new ManifestError(`${at}.${field} must be a ${kind}, and is ${describe(actual)}.`);
+      config[field] = [...actual];
+      continue;
     }
+    if (descriptor.kind === "string") {
+      if (typeof actual !== "string") {
+        throw new ManifestError(`${at}.${field} must be a string, and is ${describe(actual)}.`);
+      }
+      if (descriptor.pattern !== undefined && !descriptor.pattern.test(actual)) {
+        throw new ManifestError(
+          descriptor.patternError?.(at, actual) ??
+            `${at}.${field} ${JSON.stringify(actual)} does not match its required pattern.`
+        );
+      }
+      config[field] = actual;
+      continue;
+    }
+    if (typeof actual !== descriptor.kind) {
+      throw new ManifestError(
+        `${at}.${field} must be a ${descriptor.kind}, and is ${describe(actual)}.`
+      );
+    }
+    config[field] = actual;
   }
+  return config as ProjectModConfig;
+}
 
-  const config = value as ProjectModConfig & Record<string, unknown>;
-  if (!SUPPORTED_VERSION_PATTERN.test(config.supportedVersion)) {
-    throw new ManifestError(
-      `${at}.supportedVersion ${JSON.stringify(config.supportedVersion)} is not a launcher ` +
-        `version pattern (e.g. "v4.4.*", "v4.*", "v4.4.6"): one to three dot-separated parts, ` +
-        `each a number or "*". It is written verbatim into descriptor.mod, and the launcher ` +
-        `answers an unreadable one by silently refusing the mod.`
-    );
-  }
-  return {
-    name: config.name,
-    ...(config.version === undefined ? {} : { version: config.version }),
-    supportedVersion: config.supportedVersion,
-    ...(config.tags === undefined ? {} : { tags: [...config.tags] }),
-    ...(config.acceptGameVersion === undefined
-      ? {}
-      : { acceptGameVersion: config.acceptGameVersion }),
-    ...(config.uncheckedVanillaIds === undefined
-      ? {}
-      : { uncheckedVanillaIds: config.uncheckedVanillaIds }),
-  };
+/**
+ * The one-way bridge from a parsed Project Manifest to the SDK's authoring
+ * config. This is type-only: the scaffolder still has no runtime SDK dependency
+ * and deliberately does not claim that every SDK config can be represented by
+ * a Project Manifest.
+ */
+export function toSdkModConfig(manifest: Pick<ProjectManifest, "prefix" | "config">): ModConfig {
+  const config: SdkProjectModConfig = manifest.config;
+  return { ...config, prefix: manifest.prefix };
 }
 
 export interface FoundManifest {

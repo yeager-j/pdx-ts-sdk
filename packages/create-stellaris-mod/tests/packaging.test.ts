@@ -15,15 +15,13 @@ import { CATALOG } from "../src/catalog/index.ts";
 import { main } from "../src/cli.ts";
 import {
   COMMANDS,
-  COMMON_GENERATE_FLAGS,
   FLAGS,
   GENERATE_FLAGS,
   helpText,
   type CommandName,
   type FlagName,
 } from "../src/options.ts";
-import { VERIFIED_SDK_RANGE } from "../src/sdk-range.ts";
-import { VERSIONS } from "../src/templates/project.ts";
+import { SCAFFOLDER_RELEASE_MANIFEST } from "../src/release-manifest.ts";
 import { capture } from "./helpers/capture.ts";
 
 const PACKAGE = path.resolve(import.meta.dirname, "..");
@@ -37,6 +35,16 @@ const manifest = JSON.parse(readFileSync(path.join(PACKAGE, "package.json"), "ut
   devDependencies: Record<string, string>;
   scripts: Record<string, string>;
 };
+
+function workspaceVersion(packageDirectory: string): string {
+  const packageJson = JSON.parse(
+    readFileSync(path.resolve(PACKAGE, "..", packageDirectory, "package.json"), "utf8")
+  ) as { version?: unknown };
+  if (typeof packageJson.version !== "string") {
+    throw new Error(`${packageDirectory}/package.json has no string version`);
+  }
+  return packageJson.version;
+}
 
 describe("the published package", () => {
   it("ships compiled JavaScript, not the TypeScript sources", () => {
@@ -57,11 +65,24 @@ describe("the published package", () => {
   });
 
   it("keeps the SDK a devDependency, so the CLI's release is not coupled to it", () => {
-    // `detect.ts` and `manifest.ts` deliberately duplicate a little of the SDK
-    // rather than depending on it: a runtime dependency would pin this CLI to
-    // one SDK version, when its whole job is to scaffold against a range.
+    // Verified build protocol is generated into this package, and the manifest
+    // adapter's SDK reference is type-only. Neither introduces a runtime SDK
+    // dependency that would pin this CLI to one SDK version when it scaffolds
+    // projects against a release policy range.
     expect(manifest.dependencies["@pdx-ts/sdk"]).toBeUndefined();
     expect(manifest.devDependencies["@pdx-ts/sdk"]).toBeDefined();
+  });
+
+  it("anchors scaffolded SDK ranges to the workspace packages this repository verifies", () => {
+    expect(semver.satisfies(workspaceVersion("sdk"), SCAFFOLDER_RELEASE_MANIFEST.sdk.range)).toBe(
+      true
+    );
+    expect(
+      semver.satisfies(
+        workspaceVersion("sdk-testing"),
+        SCAFFOLDER_RELEASE_MANIFEST.sdkTesting.range
+      )
+    ).toBe(true);
   });
 
   it("declares the range algebra it actually runs", () => {
@@ -74,11 +95,7 @@ describe("the published package", () => {
     expect(manifest.devDependencies["ajv"]).toBeDefined();
   });
 
-  it("reports the version it was published as", async () => {
-    // `--version` reads a constant in version.ts, which is a hand-maintained
-    // copy of the manifest's. Nothing at runtime notices when a release bumps
-    // one and forgets the other, so the drift is silent and ships — this is the
-    // only thing that catches it.
+  it("reports the package version through the public command", async () => {
     const written: string[] = [];
     const spy = vi
       .spyOn(process.stdout, "write")
@@ -118,14 +135,6 @@ describe("--help", () => {
     for (const name of Object.keys(GENERATE_FLAGS)) {
       expect(help, `--${name} is parsed but undocumented`).toContain(`--${name}`);
     }
-  });
-
-  it("keeps the flag table and the collision list saying the same thing", () => {
-    // `COMMON_GENERATE_FLAGS` is what the catalog checks a question key
-    // against, and a name missing from it is a flag a recipe could quietly take
-    // over. `satisfies` catches a name in the list that the table lacks; only
-    // this catches the other direction.
-    expect([...COMMON_GENERATE_FLAGS].sort()).toEqual(Object.keys(GENERATE_FLAGS).sort());
   });
 
   it("lists every command, so a reserved name is discoverable", () => {
@@ -178,25 +187,4 @@ describe("view", () => {
       }
     }
   );
-});
-
-/**
- * The range this release's recipes were verified against, and the two things
- * that must stay inside it. Both checks are drift alarms: nothing at runtime
- * notices when the scaffolded dependency range moves past what was proved.
- */
-describe("the verified SDK range", () => {
-  it("contains the range a scaffolded project asks for", () => {
-    // Subset, not overlap. An overlapping range is one a later `npm install`
-    // can resolve to an SDK version nobody proved these recipes against.
-    expect(semver.subset(VERSIONS.sdk, VERIFIED_SDK_RANGE)).toBe(true);
-    expect(semver.subset(VERSIONS.sdkTesting, VERIFIED_SDK_RANGE)).toBe(true);
-  });
-
-  it("contains the SDK version in this repository", () => {
-    const sdk = JSON.parse(readFileSync(path.join(PACKAGE, "../sdk/package.json"), "utf8")) as {
-      version: string;
-    };
-    expect(semver.satisfies(sdk.version, VERIFIED_SDK_RANGE)).toBe(true);
-  });
 });

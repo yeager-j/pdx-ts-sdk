@@ -1,23 +1,22 @@
 /**
  * The real project a generated file has to survive.
  *
- * `tests/fixtures/golden-project/` is a committed mod project: its own
- * `package.json#imports`, its own Project Manifest, its own `src/mod.ts`. A test
- * copies it to a temporary directory, symlinks this repository's packages in as
- * `node_modules`, drops generated source into the content directory, and then
- * runs two child processes over it — `tsc -p` and the project's own build.
+ * A production project plan materialized into a temporary directory. The helper
+ * symlinks this repository's packages in as `node_modules`, drops generated
+ * source into the content directory, and then runs two child processes over it
+ * — `tsc -p` and the project's own build.
  *
  * Child processes, not in-process imports, and for a specific reason: `#mod` is
  * resolved by Node's own resolver reading a real `package.json`, and
- * `--conditions=pdx-source` is what points the SDK at its sources instead of a
- * `dist/` this repository never builds. Vitest's resolver would answer both
- * questions its own way, and then the gate would be proving something other
- * than what a mod author runs.
+ * The source-linked matrix deliberately adds `pdx-source` to its materialized
+ * tsconfig after planning, while a production scaffold correctly consumes
+ * published `dist/`. Vitest's resolver would answer both questions its own way,
+ * and then the gate would be proving something other than what a mod author
+ * runs.
  */
 
 import { spawnSync } from "node:child_process";
 import {
-  cpSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -29,10 +28,30 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import ts from "typescript";
+
+import type { Resolved } from "../../src/options.ts";
+import { planFiles } from "../../src/plan.ts";
 
 const PACKAGE = path.resolve(import.meta.dirname, "../..");
 const REPO = path.resolve(PACKAGE, "../..");
-const FIXTURE = path.join(PACKAGE, "tests/fixtures/golden-project");
+
+const GOLDEN_PROJECT: Resolved = {
+  targetDir: "/tmp/golden-project",
+  name: "Golden Fixture",
+  prefix: "golden_mod",
+  supportedVersion: "v4.4.*",
+  tags: ["Technologies"],
+  installPath: undefined,
+  installPathIsExplicit: false,
+  gameVersion: undefined,
+  localSdk: undefined,
+  prettier: false,
+  eslint: false,
+  git: false,
+  install: false,
+  packageManager: "npm",
+};
 
 /**
  * The packages the fixture resolves through `node_modules`. `@pdx-ts/pdxscript`
@@ -44,6 +63,7 @@ const LINKS: readonly (readonly [string, string])[] = [
   ["@pdx-ts/sdk", "packages/sdk"],
   ["@pdx-ts/pdxscript", "packages/pdxscript"],
   ["@types", "node_modules/@types"],
+  ["vitest", "node_modules/vitest"],
 ];
 
 export interface CommandResult {
@@ -56,6 +76,8 @@ export interface GoldenProject {
   readonly dir: string;
   readonly contentDir: string;
   readonly outDir: string;
+  /** Whether this source-linked test harness added its compiler condition. */
+  usesSourceCondition(): boolean;
   /** Writes one generated feature source into the project's content directory. */
   place(basename: string, contents: string): void;
   typecheck(): CommandResult;
@@ -75,7 +97,7 @@ export interface TempProject {
 }
 
 /**
- * The same fixture project, copied *without* the `node_modules` symlinks.
+ * The production plan, materialized *without* the `node_modules` symlinks.
  *
  * That absence is the point rather than an economy: `generate` never loads the
  * SDK, so a project it can generate into is one that has not been installed
@@ -84,7 +106,7 @@ export interface TempProject {
  */
 export function createTempProject(): TempProject {
   const dir = mkdtempSync(path.join(tmpdir(), "pdx-generate-project-"));
-  cpSync(FIXTURE, dir, { recursive: true });
+  materializeGoldenProject(dir);
   return {
     dir,
     // macOS puts temporary directories under a symlinked /var, so the path the
@@ -96,7 +118,8 @@ export function createTempProject(): TempProject {
 
 export function createGoldenProject(): GoldenProject {
   const dir = mkdtempSync(path.join(tmpdir(), "pdx-golden-project-"));
-  cpSync(FIXTURE, dir, { recursive: true });
+  materializeGoldenProject(dir);
+  addSourceLinkedCompilerCondition(dir);
 
   for (const [specifier, target] of LINKS) {
     const link = path.join(dir, "node_modules", specifier);
@@ -111,6 +134,8 @@ export function createGoldenProject(): GoldenProject {
     dir,
     contentDir,
     outDir,
+
+    usesSourceCondition: () => hasSourceCompilerCondition(dir),
 
     place(basename, contents) {
       writeFileSync(path.join(contentDir, basename), contents);
@@ -133,6 +158,74 @@ export function createGoldenProject(): GoldenProject {
     dispose: () => rmSync(dir, { recursive: true, force: true }),
   };
 }
+
+/**
+ * Materialize the production scaffold, then make the two test-only changes the
+ * matrix needs: an empty content directory and a build harness whose output
+ * directory is supplied by the test. `createGoldenProject` adds its source-link
+ * compiler condition afterwards; it is intentionally not production plan data.
+ * No committed mirror can silently drift from `planFiles`.
+ */
+function materializeGoldenProject(dir: string): void {
+  for (const [relPath, contents] of planFiles(GOLDEN_PROJECT, "golden-fixture")) {
+    const target = path.join(dir, relPath);
+    mkdirSync(path.dirname(target), { recursive: true });
+    writeFileSync(target, contents);
+  }
+
+  rmSync(path.join(dir, "src/content/example.ts"));
+  rmSync(path.join(dir, "src/content/example.test.ts"));
+  writeFileSync(path.join(dir, "src/build-check.ts"), BUILD_CHECK);
+}
+
+/**
+ * The matrix links unbuilt workspace packages, so TypeScript must resolve their
+ * source export condition. This is test harness state after materialization,
+ * never a generated project's compiler policy: a real scaffold consumes the
+ * packages' default `dist/` exports.
+ */
+function addSourceLinkedCompilerCondition(dir: string): void {
+  const configPath = path.join(dir, "tsconfig.json");
+  const parsed = ts.parseConfigFileTextToJson(configPath, readFileSync(configPath, "utf8"));
+  if (parsed.error !== undefined) {
+    throw new Error(ts.flattenDiagnosticMessageText(parsed.error.messageText, "\n"));
+  }
+  const config = parsed.config as { compilerOptions?: Record<string, unknown> };
+  config.compilerOptions = { ...config.compilerOptions, customConditions: ["pdx-source"] };
+  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+}
+
+function hasSourceCompilerCondition(dir: string): boolean {
+  const config = JSON.parse(readFileSync(path.join(dir, "tsconfig.json"), "utf8")) as {
+    compilerOptions?: { customConditions?: unknown };
+  };
+  return (
+    Array.isArray(config.compilerOptions?.customConditions) &&
+    config.compilerOptions.customConditions.includes("pdx-source")
+  );
+}
+
+const BUILD_CHECK = `/** The matrix harness's parameterized production build. */
+import { render, write } from "@pdx-ts/sdk";
+
+import { buildTheMod } from "./mod.ts";
+
+const outDir = process.argv[2];
+if (outDir === undefined) {
+  throw new Error("usage: node --conditions=pdx-source src/build-check.ts <outDir>");
+}
+
+const mod = await buildTheMod();
+const files = render(mod);
+await write(outDir, files);
+
+for (const warning of mod.warnings) {
+  console.warn(\`warning (\${warning.code}): \${warning.message}\`);
+}
+for (const relPath of files.keys()) {
+  console.log(\`wrote \${relPath}\`);
+}
+`;
 
 function run(command: string, args: readonly string[], cwd: string): CommandResult {
   const result = spawnSync(command, [...args], { cwd, encoding: "utf8" });

@@ -12,11 +12,12 @@
  */
 
 import type { Resolved } from "../options.ts";
+import { SCAFFOLDER_RELEASE_MANIFEST } from "../release-manifest.ts";
 
 /**
- * Pinned so a scaffold is reproducible, and matching what the SDK develops
- * against. Exported because `sdk` is one half of a drift check: a scaffolded
- * project's SDK range has to stay a subset of `VERIFIED_SDK_RANGE`.
+ * Pinned so a scaffold is reproducible. The SDK coordinates themselves live in
+ * `release-manifest.ts`, where their separate runtime and test-only product
+ * policies are recorded.
  */
 export const VERSIONS = {
   types_node: "^26.1.2",
@@ -26,8 +27,6 @@ export const VERSIONS = {
   eslint: "^9.0.0",
   eslint_js: "^9.0.0",
   typescript_eslint: "^8.0.0",
-  sdk: "0.2.0",
-  sdkTesting: "0.2.0",
 } as const;
 
 function json(value: unknown): string {
@@ -42,10 +41,12 @@ function json(value: unknown): string {
  */
 function sdkDependencies(resolved: Resolved): Record<string, string> {
   if (resolved.localSdk === undefined) {
-    return { "@pdx-ts/sdk": VERSIONS.sdk };
+    return {
+      [SCAFFOLDER_RELEASE_MANIFEST.sdk.packageName]: SCAFFOLDER_RELEASE_MANIFEST.sdk.range,
+    };
   }
   return {
-    "@pdx-ts/sdk": `file:${resolved.localSdk}/packages/sdk`,
+    [SCAFFOLDER_RELEASE_MANIFEST.sdk.packageName]: `file:${resolved.localSdk}/packages/sdk`,
     "@pdx-ts/pdxscript": `file:${resolved.localSdk}/packages/pdxscript`,
   };
 }
@@ -57,9 +58,9 @@ function sdkDependencies(resolved: Resolved): Record<string, string> {
  */
 function testingDependency(resolved: Resolved): Record<string, string> {
   return {
-    "@pdx-ts/sdk-testing":
+    [SCAFFOLDER_RELEASE_MANIFEST.sdkTesting.packageName]:
       resolved.localSdk === undefined
-        ? VERSIONS.sdkTesting
+        ? SCAFFOLDER_RELEASE_MANIFEST.sdkTesting.range
         : `file:${resolved.localSdk}/packages/sdk-testing`,
   };
 }

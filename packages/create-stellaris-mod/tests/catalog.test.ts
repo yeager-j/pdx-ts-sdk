@@ -121,10 +121,16 @@ describe("constructing a catalog", () => {
     }
   );
 
-  it.each(COMMON_GENERATE_FLAGS)("refuses a question called %o, which generate owns", (key) => {
-    expect(() => createCatalog([recipe({ questions: [question({ key })] })])).toThrow(
-      new RegExp(`--${key}`)
+  it("refuses a reserved command flag as a recipe question", () => {
+    expect(() => createCatalog([recipe({ questions: [question({ key: "cwd" })] })])).toThrow(
+      /--cwd/
     );
+  });
+
+  it("accepts a deliberately non-common recipe flag", () => {
+    expect(() =>
+      createCatalog([recipe({ questions: [question({ key: "terrain-choice" })] })])
+    ).not.toThrow();
   });
 
   it("refuses an empty choice set", () => {
