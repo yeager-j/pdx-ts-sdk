@@ -11,8 +11,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { refId } from "../src/generated/refs.ts";
-import { createMod, render, vanilla } from "../src/index.ts";
+import { createMod, refId, render, vanilla } from "../src/index.ts";
 import { toScalar } from "../src/script/scalar.ts";
 
 const CONFIG = {
@@ -99,10 +98,10 @@ describe("the event trie", () => {
 describe("both lowering funnels see through the callable trie proxy", () => {
   // Both tries build their proxy over a bare function so the same value stays
   // callable *and* navigable (`vanilla.sprite("id")` vs `vanilla.sprite.a.b`).
-  // `typeof` on such a proxy reflects the function target, so `refId`
-  // (`src/generated/refs.ts`) and `toScalar` (`src/script/scalar.ts`) both
-  // have to gate on `object` *or* `function`, or a navigated reference falls
-  // through as an unusable non-scalar instead of lowering to its id/path.
+  // `typeof` on such a proxy reflects the function target, so the shared
+  // `refId` authority has to gate on `object` *or* `function`, or a navigated
+  // reference falls through as an unusable non-scalar instead of lowering to
+  // its id/path.
   const navigatedEvent = navigate(vanilla.event)["story"]!["$5"]!;
   const navigatedSprite = navigate(vanilla.sprite)["eventpictures"]!["GFX_evt_ringworld"]!;
 
@@ -127,10 +126,15 @@ describe("both lowering funnels see through the callable trie proxy", () => {
     expect(toScalar(vanilla.sprite("GFX_evt_ringworld"))).toBe("GFX_evt_ringworld");
   });
 
+  it("keeps toScalar's explanatory error for unsupported objects", () => {
+    expect(() => toScalar({ nope: true })).toThrow(
+      'Cannot serialize {"nope":true} as an effect argument'
+    );
+  });
+
   it("answers `in` truthfully for the property the get trap serves", () => {
-    // `toScalar` probes `"id" in value` before reading it; the proxy needs a
-    // `has` trap that agrees with what its `get` trap actually serves, or the
-    // probe silently reports the property missing.
+    // The proxy's reflection contract agrees with the properties its `get`
+    // trap serves, independently of how a scalar consumer reads the id.
     expect("id" in navigatedEvent).toBe(true);
     expect("id" in navigatedSprite).toBe(true);
   });

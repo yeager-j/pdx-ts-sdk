@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const source = readFileSync("packages/sdk/src/generated/triggers.ts", "utf8");
+const refs = readFileSync("packages/sdk/src/generated/refs.ts", "utf8");
+const contentDefiners = readFileSync("packages/sdk/src/generated/content-definers.ts", "utf8");
 
 /** Slices one generated declaration out so signature changes show up in the diff. */
 function declaration(name: string): string {
@@ -191,5 +193,16 @@ describe("emitted trigger signatures", () => {
         return trigger([block("relative_power", entries)]);
       }"
     `);
+  });
+});
+
+describe("scalar lowering ownership", () => {
+  it("keeps generated refs rules-derived and imports the handwritten runtime", () => {
+    expect(refs).toContain('import type { TypedRef } from "../script/scalar.ts";');
+    expect(refs).not.toContain("function refId");
+    expect(source).toContain('import { refId } from "../script/scalar.ts";');
+    expect(contentDefiners).toContain(
+      'import { refId, type TypedRef } from "../script/scalar.ts";'
+    );
   });
 });

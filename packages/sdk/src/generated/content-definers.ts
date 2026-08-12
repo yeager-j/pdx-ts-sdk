@@ -33,6 +33,7 @@
 // From: common/megastructures.cwt
 
 import type { ContentItem, ContributionItem } from "../content/types.ts";
+import { refId, type TypedRef } from "../script/scalar.ts";
 import { patchContent } from "../stellaris/vanilla/patch.ts";
 import type {
   ParsedBuilding,
@@ -73,7 +74,6 @@ import {
   type MegastructurePatchItem,
 } from "./megastructure.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
-import { refId, type TypedRef } from "./refs.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
 import type { SectionTemplateDef } from "./section-template.ts";

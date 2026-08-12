@@ -3,7 +3,7 @@ export { block, cmp, kv, list, quoted, scalar } from "@pdx-ts/pdxscript";
 export { serialize } from "@pdx-ts/pdxscript";
 export type { ScopeName } from "./generated/scopes.ts";
 export * from "./generated/enums.ts";
-export { refId, type TypedRef } from "./generated/refs.ts";
+export { refId, type TypedRef } from "./script/scalar.ts";
 export * from "./generated/refs.ts";
 export * from "./generated/value-sets.ts";
 export {

@@ -20,8 +20,8 @@
  */
 
 import type { ScopeObjOf, SituationScope } from "../../generated/effects.ts";
-import type { TypedRef } from "../../generated/refs.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
+import type { TypedRef } from "../scalar.ts";
 import type { ScopeValue } from "./types.ts";
 
 /** A defined situation type carrying its author-declared target scope. */

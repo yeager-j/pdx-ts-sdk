@@ -35,12 +35,11 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import type { TypedRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { VanillaScriptedEffects, VanillaScriptedTriggers } from "../identifiers/contracts.ts";
 import { compareUtf8 } from "../ordering.ts";
 import type { ScopeValue } from "./effects/types.ts";
-import { toScalar, type ScalarArg } from "./scalar.ts";
+import { toScalar, type ScalarArg, type TypedRef } from "./scalar.ts";
 import { trigger, type Trigger } from "./trigger-core.ts";
 
 // ---------------------------------------------------------------------------

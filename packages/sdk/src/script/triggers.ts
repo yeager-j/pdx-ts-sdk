@@ -15,10 +15,10 @@ import type {
   EventChainItem,
   ExternalEventChainRef,
 } from "../content/event-chains.ts";
-import { refId } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { scopeValue } from "./effects/recorder.ts";
 import type { ScopeValue } from "./effects/types.ts";
+import { refId } from "./scalar.ts";
 import { conjoin, trigger, type Trigger } from "./trigger-core.ts";
 
 export type { ScopeName } from "../generated/scopes.ts";

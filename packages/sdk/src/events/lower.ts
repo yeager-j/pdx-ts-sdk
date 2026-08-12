@@ -4,7 +4,6 @@ import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ModWarning } from "../diagnostics.ts";
 import type { EventKindKey } from "../generated/events.ts";
-import { refId } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { underField, type ContentRefUse } from "../references.ts";
 import {
@@ -14,6 +13,7 @@ import {
 } from "../script/effects/modifiers.ts";
 import { recordEffects, scriptCtx } from "../script/effects/recorder.ts";
 import type { Modifier, ModifierWithLoc, ScriptCtx } from "../script/effects/types.ts";
+import { refId } from "../script/scalar.ts";
 import type { DefinedEvent, EventDef, LocSink } from "./types.ts";
 
 const OPTION_KEYS = "abcdefghijklmnopqrstuvwxyz";

@@ -4,7 +4,7 @@
 import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/modifiers.ts";
-import type { EconomicCategoryRef, TypedRef } from "../generated/refs.ts";
+import type { EconomicCategoryRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type {
   ComplexTriggerModifier,
@@ -13,6 +13,7 @@ import type {
   ModifierWithLoc,
   ScriptCtx,
 } from "../script/effects/types.ts";
+import type { TypedRef } from "../script/scalar.ts";
 import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 
 /**
