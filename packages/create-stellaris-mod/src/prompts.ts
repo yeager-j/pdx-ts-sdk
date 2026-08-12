@@ -12,13 +12,17 @@ import { confirm, intro, isCancel, log, note, text } from "@clack/prompts";
 import { isValidPrefix, toDisplayName, toPrefix, toTags } from "./derive.ts";
 import { detectInstall, isInstall, readGameVersion, supportedVersionFor } from "./detect.ts";
 import { detectPackageManager } from "./exec.ts";
+import {
+  INSTALL_SENTINEL_PATH_SEGMENTS,
+  VERIFIED_STELLARIS_BUILD,
+  VERIFIED_SUPPORTED_VERSION,
+} from "./generated/verified-build.ts";
 import type { CliIo } from "./io.ts";
 import { SUPPORTED_VERSION_PATTERN } from "./manifest.ts";
 import type { ParsedArgv, Resolved } from "./options.ts";
 import { CancelledError } from "./terminal.ts";
 
-/** The build the SDK's rule table is verified against — the no-install fallback. */
-export const FALLBACK_GAME_VERSION = "4.4.6";
+const INSTALL_SENTINEL = INSTALL_SENTINEL_PATH_SEGMENTS.join("/");
 
 /**
  * Why a name may not contain a double quote: it is written verbatim into
@@ -116,14 +120,14 @@ export function resolveNonInteractive(argv: ParsedArgv, targetDir: string): Reso
   const detected = detectInstall(explicitPath);
   if (explicitPath !== undefined && explicitPath !== "" && detected === undefined) {
     throw new Error(
-      `--stellaris-path ${JSON.stringify(explicitPath)} is not a Stellaris install — no common/technology inside it.`
+      `--stellaris-path ${JSON.stringify(explicitPath)} is not a Stellaris install — no ${INSTALL_SENTINEL} inside it.`
     );
   }
   const gameVersion = detected?.gameVersion;
   const supportedVersion =
     checkedSupportedVersionFlag(flag(values, "supported-version")) ??
-    supportedVersionFor(gameVersion ?? FALLBACK_GAME_VERSION) ??
-    "v4.4.*";
+    supportedVersionFor(gameVersion ?? VERIFIED_STELLARIS_BUILD) ??
+    VERIFIED_SUPPORTED_VERSION;
 
   return {
     targetDir,
@@ -198,9 +202,10 @@ export async function resolveInteractive(argv: ParsedArgv, io: CliIo): Promise<R
       await text({
         ...streams,
         message: "Which game versions does it support?",
-        placeholder: supportedVersionFor(install?.gameVersion ?? FALLBACK_GAME_VERSION),
+        placeholder: supportedVersionFor(install?.gameVersion ?? VERIFIED_STELLARIS_BUILD),
         defaultValue:
-          supportedVersionFor(install?.gameVersion ?? FALLBACK_GAME_VERSION) ?? "v4.4.*",
+          supportedVersionFor(install?.gameVersion ?? VERIFIED_STELLARIS_BUILD) ??
+          VERIFIED_SUPPORTED_VERSION,
         // An empty submit means "take the offered default", which clack
         // substitutes after validation runs — and the default is derived, so it
         // is already a legal pattern. Only what the author types is checked.
@@ -289,6 +294,6 @@ async function askInstall(
       // Typed by hand, so detection in the generated project would not find it.
       return { installPath: typed, gameVersion: readGameVersion(typed), isExplicit: true };
     }
-    log.error(`${typed} is not a Stellaris install — no common/technology inside it.`, streams);
+    log.error(`${typed} is not a Stellaris install — no ${INSTALL_SENTINEL} inside it.`, streams);
   }
 }

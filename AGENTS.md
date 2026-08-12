@@ -40,8 +40,9 @@ the record, so a doc describing shipped behavior is deleted rather than updated.
 
 ## Code generation
 
-`packages/sdk/src/generated/` is committed output from `packages/codegen-cwt/` (`@pdx-ts/codegen-cwt`).
-Never edit it by hand.
+`packages/sdk/src/generated/` is committed generator output. Most files come from
+`packages/codegen-cwt/` (`@pdx-ts/codegen-cwt`); `verified-build.ts` comes from the hermetic
+`@pdx-ts/codegen-vanilla` verified-build projection. Never edit generated files by hand.
 
 The main inputs are:
 

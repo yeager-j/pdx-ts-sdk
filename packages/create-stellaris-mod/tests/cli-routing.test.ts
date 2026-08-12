@@ -17,9 +17,10 @@ import { main } from "../src/cli.ts";
 import { installFailureSteps } from "../src/commands/init.ts";
 import { supportedVersionFor } from "../src/detect.ts";
 import { run, teeCommandOutput } from "../src/exec.ts";
+import { VERIFIED_STELLARIS_BUILD } from "../src/generated/verified-build.ts";
 import { parseManifest } from "../src/manifest.ts";
 import { COMMANDS, splitCommand, type CommandName } from "../src/options.ts";
-import { FALLBACK_GAME_VERSION, supportedVersionProblem } from "../src/prompts.ts";
+import { supportedVersionProblem } from "../src/prompts.ts";
 import { VERSION } from "../src/version.ts";
 import { capture } from "./helpers/capture.ts";
 
@@ -335,9 +336,9 @@ describe("the launcher version init writes", () => {
 
   it("leaves the derived and fallback values alone, because they are already legal", () => {
     // The check guards what an author supplies. Detection derives `v<major>.<minor>.*`
-    // and the no-install fallback is a literal — if either stopped matching, every
-    // ordinary scaffold would fail rather than one bad flag.
-    expect(supportedVersionProblem(supportedVersionFor(FALLBACK_GAME_VERSION)!)).toBeUndefined();
+    // and the no-install fallback is the generated verified build — if either stopped matching,
+    // every ordinary scaffold would fail rather than one bad flag.
+    expect(supportedVersionProblem(supportedVersionFor(VERIFIED_STELLARIS_BUILD)!)).toBeUndefined();
     expect(supportedVersionProblem("v4.4.*")).toBeUndefined();
     for (const build of ["4.4.6", "4.4.6.1", "v5.0.0"]) {
       const derived = supportedVersionFor(build);

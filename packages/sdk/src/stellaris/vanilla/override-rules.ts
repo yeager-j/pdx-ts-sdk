@@ -23,9 +23,10 @@
 
 import { UnverifiedRegistryError } from "../../errors.ts";
 import { CONTENT_REGISTRIES, type ContentTypeName } from "../../generated/content-registry.ts";
+import { VERIFIED_STELLARIS_BUILD } from "../../generated/verified-build.ts";
 
 /** The build every verdict below was captured against (Pegasus). */
-export const SUPPORTED_STELLARIS_BUILD = "4.4.6";
+export const SUPPORTED_STELLARIS_BUILD = VERIFIED_STELLARIS_BUILD;
 
 export type RepeatRule = "last-wins" | "first-wins";
 

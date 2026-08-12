@@ -36,6 +36,7 @@
  */
 
 import type { RuleFact, RuleScopes, ScopeFacts } from "@pdx-ts/codegen-cwt/scope-facts";
+import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/special-scope-paths";
 import type { PdxItem, PdxValue } from "@pdx-ts/pdxscript";
 
 import type { ScriptedDefinition } from "./read-scripted.ts";
@@ -51,25 +52,6 @@ import type { ScriptedDefinition } from "./read-scripted.ts";
  */
 const INTERSECTING = new Set(["and", "nand", "not", "nor", "hidden_trigger", "hidden_effect"]);
 const UNIONING = new Set(["or"]);
-
-/**
- * Keys whose scope depends on the call site rather than the definition:
- * `prev` is the caller's previous scope, `root`/`from` its entry points,
- * `event_target:`/`this` are saved or ambient. A body that navigates through
- * one of these says nothing about where the definition itself is legal.
- */
-const CALLER_RELATIVE = new Set([
-  "this",
-  "root",
-  "prev",
-  "prevprev",
-  "prevprevprev",
-  "prevprevprevprev",
-  "from",
-  "fromfrom",
-  "fromfromfrom",
-  "fromfromfromfrom",
-]);
 
 export type ScriptedKind = "trigger" | "effect";
 
@@ -267,7 +249,7 @@ class Walker {
     // hops written as one key. Only the first hop constrains the caller; where
     // the chain lands is several scopes away and nothing inside is attributable.
     const first = key.split(".")[0]!.replace(/\?$/, "");
-    if (CALLER_RELATIVE.has(first) || first.includes(":")) {
+    if (SPECIAL_SCOPE_PATHS.has(first) || first.includes(":")) {
       this.note(diagnostics, "caller-relative", rawKey);
       return "universal";
     }
