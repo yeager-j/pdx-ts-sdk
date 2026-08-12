@@ -51,7 +51,8 @@ That is also why a passing test is a narrower claim than it looks. It says the
 logic you wrote does what you meant — not that the game agrees about everything
 surrounding it. Where the game's own limits are cheap to state, the fixture lets
 you state them: a country can declare `storage` per resource, and `add_resource`
-then discards what will not fit, exactly as the game does.
+is then bounded by it, the way the game's resource definitions bound a stockpile
+by its maximum storage capacity.
 
 ```ts
 fixture({ countries: [{ resources: { energy: 24_000 }, storage: { energy: 25_000 } }] }, { events });

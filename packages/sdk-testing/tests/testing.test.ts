@@ -214,7 +214,7 @@ describe("resource storage", () => {
     });
   }
 
-  it("discards the part of a payout the declared capacity cannot hold", () => {
+  it("bounds a payout at the declared capacity", () => {
     const event = payoutEvent("sdk140_capped");
     const world = fixture(
       { countries: [{ resources: { energy: 24_000 }, storage: { energy: 25_000 } }] },
@@ -236,6 +236,32 @@ describe("resource storage", () => {
     world.fire(event, world.country(0));
 
     expect(world.country(0).resource("energy")).toBe(29_000);
+  });
+
+  it.each([
+    { value: Number.NaN, label: "NaN" },
+    { value: Number.POSITIVE_INFINITY, label: "Infinity" },
+    { value: -1, label: "a negative capacity" },
+  ])("refuses $label as a storage capacity", ({ value }) => {
+    // Left unchecked, Math.min(total, NaN) is NaN, and every later assertion
+    // about that stockpile compares against a number that means nothing.
+    expect(() =>
+      fixture({ countries: [{ name: "player", storage: { energy: value } }] }, { events: [] })
+    ).toThrow(/player's energy storage capacity must be a finite non-negative number/);
+  });
+
+  it("refuses a non-finite starting stockpile, but allows a deficit", () => {
+    expect(() =>
+      fixture(
+        { countries: [{ name: "player", resources: { energy: Number.NaN } }] },
+        { events: [] }
+      )
+    ).toThrow(/player's starting energy must be a finite number/);
+    expect(
+      fixture({ countries: [{ resources: { energy: -500 } }] }, { events: [] })
+        .country(0)
+        .resource("energy")
+    ).toBe(-500);
   });
 
   it("refuses a fixture that starts above its own declared capacity", () => {

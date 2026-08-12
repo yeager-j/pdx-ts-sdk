@@ -53,19 +53,37 @@ export class InterpreterError extends Error {}
 export const AUDITED_DOC_DUMP = "v4.4.1";
 
 /**
- * The game build the notes' *live* claims were recorded on, which is not the
- * dump's version and must never be quietly written as if it were: cwtools
- * vendors Paradox's dumps per game version and has published none past
- * {@link AUDITED_DOC_DUMP}, while the in-game probe under
+ * The build one specific claim was recorded on in a running game: that delayed
+ * delivery starts a new execution with no saved event targets. Nothing else
+ * rides here. A second live claim gets its own record and its own written
+ * evidence — sharing this constant would let one probe's rerun silently
+ * re-bless another claim nobody rechecked.
+ *
+ * It is not the dump's version and must never be quietly written as if it were:
+ * cwtools vendors Paradox's dumps per game version and has published none past
+ * {@link AUDITED_DOC_DUMP}, while the probe under
  * `examples/from-oracle/calibration` ran on Pegasus 4.4.6.
  *
- * A hash cannot re-verify an observation nobody wrote down in a file, so the
- * audit gate pins it the only way it can: this literal must equal the
- * repository's verified build (`SUPPORTED_STELLARIS_BUILD`). Verifying against
- * a newer build turns the gate red until somebody re-runs the probe — an
- * independent literal precisely so it cannot follow the build silently.
+ * A hash cannot re-verify an observation of a running game, so the audit gate
+ * pins it from both sides instead: this literal must equal the repository's
+ * verified build (`SUPPORTED_STELLARIS_BUILD`) *and* the build the calibration
+ * record itself reports. Bumping it without re-running the probe leaves that
+ * record disagreeing, and the gate says so.
  */
 export const LIVE_CALIBRATION_BUILD = "4.4.6";
+
+/**
+ * The install file the storage-capacity bound is read from — the game's own
+ * resource definitions, whose header calls `max` the resource's maximum storage
+ * capacity. Install-derived rather than dump-derived, so the gate that re-reads
+ * it is install-gated the way `codegen-vanilla`'s call-site falsification is:
+ * CI has no Stellaris, and a measurement of the game cannot be faked into
+ * existence.
+ */
+export const STORAGE_CAPACITY_SOURCE = "common/strategic_resources/00_strategic_resources.txt";
+
+/** The wording in that file that makes `max` a capacity rather than a starting figure. */
+export const STORAGE_CAPACITY_CLAIM = "maximum storage capacity of the resource";
 
 /**
  * The paragraph in Paradox's own documentation dump that an entry's `note` was
@@ -445,7 +463,7 @@ export const EFFECT_SEMANTICS: Readonly<Record<string, EffectImpl>> = {
   },
   add_resource: {
     docs: { sha: "cbfdf3b3b513e86a" },
-    note: "Adds to the stockpile, clamped at the country's declared storage capacity for that resource — the game discards what will not fit rather than banking it, so an unclamped add is a green test for a reward the game never actually paid out. A missing stockpile starts at 0. A resource with no declared capacity is unbounded and says so: capacity is a base plus techs, buildings, modifiers and whatever the mod itself changes, and inventing a number would be the wrong emulator this harness exists to refuse — a test that cares declares one (CountrySpec.storage). `mult` is not modeled — loud error.",
+    note: "Adds to the stockpile, bounded above by the country's declared storage capacity for that resource. The bound is the claim and the whole claim: the game's own resource definitions call `max` the resource's maximum storage capacity (`common/strategic_resources/00_strategic_resources.txt`, which the audit gate re-reads against a real install), so a stockpile walking past it is a state no unmodified game holds and an unbounded add is a green test for a reward that was never paid out. What becomes of the excess — discarded, converted, refunded — is deliberately not modeled and not asserted anywhere. A missing stockpile starts at 0. A resource with no declared capacity is unbounded and says so: capacity is a base plus techs, buildings, modifiers and whatever the mod itself changes, and inventing a number would be the wrong emulator this harness exists to refuse — a test that cares declares one (CountrySpec.storage). `mult` is not modeled — loud error.",
     apply: (entry, scope, ex) => {
       const country = countryState(ex.state, scope);
       for (const field of blockEntries(entry)) {

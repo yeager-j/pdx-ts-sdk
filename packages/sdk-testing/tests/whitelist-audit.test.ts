@@ -14,7 +14,12 @@
  * make sure nobody gets to skip the reading.
  */
 
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { parse } from "@pdx-ts/pdxscript";
 import { SUPPORTED_STELLARIS_BUILD } from "@pdx-ts/sdk";
+import { locateInstall } from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -24,11 +29,15 @@ import {
   ITERATOR_SEMANTICS,
   LINK_SEMANTICS,
   LIVE_CALIBRATION_BUILD,
+  STORAGE_CAPACITY_CLAIM,
+  STORAGE_CAPACITY_SOURCE,
   STRUCTURAL_SEMANTICS,
   TRIGGER_SEMANTICS,
   type DocPin,
 } from "../src/whitelist.ts";
 import { readVendoredDocDump, type DumpName } from "./doc-dump.ts";
+
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 
 interface Pinned {
   readonly category: string;
@@ -75,12 +84,30 @@ describe("whitelist audit", () => {
     expect(dump.version).toBe(AUDITED_DOC_DUMP);
   });
 
-  it("keeps the live in-game records level with the verified build", () => {
+  it("keeps the live in-game record level with the verified build", () => {
     // No hash can re-verify an observation that lives in a game log, so the
     // one claim the dumps cannot settle is pinned to the build instead:
     // verifying against a newer Stellaris reopens `examples/from-oracle/
     // calibration` rather than letting the note age out of sight.
     expect(LIVE_CALIBRATION_BUILD).toBe(SUPPORTED_STELLARIS_BUILD);
+  });
+
+  it("hears that from the calibration record itself, not only from the constant", () => {
+    // Pinned from both sides on purpose: bumping the constant is one edit, and
+    // an edit is not a rerun. The probe's own record has to report the same
+    // build, so re-blessing the claim means going back to the game.
+    const record = fs.readFileSync(
+      path.join(ROOT, "examples/from-oracle/calibration/README.md"),
+      "utf8"
+    );
+    const reported = /Status: complete on Stellaris \w+ (\d+\.\d+\.\d+)/.exec(record)?.[1];
+
+    expect(
+      reported,
+      `examples/from-oracle/calibration reports ${reported ?? "no build"}, but the whitelist ` +
+        `claims its observation holds on ${LIVE_CALIBRATION_BUILD}. Re-run the probe and update ` +
+        `its record, or put the constant back.`
+    ).toBe(LIVE_CALIBRATION_BUILD);
   });
 
   it("measures every category, so a green run is not an empty one", () => {
@@ -136,5 +163,54 @@ describe("whitelist audit", () => {
     it("defends itself in a note", () => {
       expect(note.trim()).not.toBe("");
     });
+  });
+});
+
+/**
+ * `add_resource`'s bound is the one modeled semantic the dumps do not settle
+ * and no game log records: the paragraph says only that the effect adds to a
+ * stockpile. Its evidence is the game's own resource definitions, so that is
+ * where the gate goes looking — install-gated like
+ * `packages/codegen-vanilla/tests/callsites.test.ts`, for the same reason: CI
+ * has no Stellaris, and a measurement of the game cannot be faked into
+ * existence. Maintainer-local, and run before accepting a new game build.
+ */
+let installRoot: string | undefined;
+try {
+  installRoot = locateInstall();
+} catch {
+  installRoot = undefined;
+}
+
+describe.skipIf(installRoot === undefined)("storage capacity, against the install", () => {
+  const source = (): string =>
+    fs.readFileSync(path.join(installRoot!, STORAGE_CAPACITY_SOURCE), "utf8");
+
+  it("still calls `max` the resource's maximum storage capacity", () => {
+    // The whole of what add_resource's clamp asserts: a stockpile is bounded
+    // above, and `max` is the bound. Reword this upstream and the note needs
+    // re-reading — which is exactly when this should go red.
+    expect(
+      source(),
+      `${STORAGE_CAPACITY_SOURCE} no longer describes max as the "${STORAGE_CAPACITY_CLAIM}". ` +
+        `add_resource's note defends its clamp on that wording; re-read the file before trusting it.`
+    ).toContain(STORAGE_CAPACITY_CLAIM);
+  });
+
+  it("still declares a capacity on the basic resources", () => {
+    // Guards the wording check above from passing on a file where `max` has
+    // become a comment nothing uses.
+    const declared = parse(source()).items.flatMap((item) => {
+      if (item.kind !== "entry" || item.value.kind !== "container") {
+        return [];
+      }
+      const hasMax = item.value.items.some(
+        (field) => field.kind === "entry" && field.key === "max"
+      );
+      return hasMax ? [item.key] : [];
+    });
+
+    expect(declared).toContain("energy");
+    expect(declared).toContain("minerals");
   });
 });
