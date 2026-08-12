@@ -1,21 +1,31 @@
 /**
  * Finding the game, and reading what build it is.
  *
- * This duplicates `stellaris.describeInstall()` rather than importing it, and
- * the duplication is deliberate: taking `@pdx-ts/sdk` as a runtime dependency
- * would couple this CLI's release to the SDK's, so `npx create-stellaris-mod`
- * would resolve an SDK version before knowing which one the scaffold should
- * pin. The SDK remains the authority — `packages/sdk/src/stellaris/`
- * is where these rules live, this is a copy, and `detect.test.ts` asserts the
- * two agree, since the SDK *is* available as a devDependency.
+ * The CLI has no runtime dependency on the SDK, so it owns its best-effort
+ * policy while consuming the same generated install protocol facts.
  */
 
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-/** "This is really a game root", not just a directory that exists. */
-const SENTINEL = join("common", "technology");
+import {
+  CORE_GAME_VERSION_PATTERN,
+  INSTALL_SENTINEL_PATH_SEGMENTS,
+  LAUNCHER_SETTINGS_FILENAME,
+  LAUNCHER_VERSION_FIELD,
+  LAUNCHER_VERSION_PREFIX,
+  PLATFORM_INSTALL_DEFAULTS,
+  SUPPORTED_VERSION_FROM_GAME_PATTERN,
+} from "./generated/verified-build.ts";
+
+const SENTINEL = join(...INSTALL_SENTINEL_PATH_SEGMENTS);
+
+function withoutLauncherPrefix(version: string): string {
+  return version.startsWith(LAUNCHER_VERSION_PREFIX)
+    ? version.slice(LAUNCHER_VERSION_PREFIX.length)
+    : version;
+}
 
 export interface Detection {
   readonly installPath: string;
@@ -23,17 +33,15 @@ export interface Detection {
 }
 
 export function platformDefaults(platform: NodeJS.Platform, home: string): string[] {
-  switch (platform) {
-    case "darwin":
-      return [join(home, "Library/Application Support/Steam/steamapps/common/Stellaris")];
-    case "win32":
-      return ["C:\\Program Files (x86)\\Steam\\steamapps\\common\\Stellaris"];
-    default:
-      return [
-        join(home, ".local/share/Steam/steamapps/common/Stellaris"),
-        join(home, ".steam/steam/steamapps/common/Stellaris"),
-      ];
-  }
+  const defaults =
+    platform === "darwin"
+      ? PLATFORM_INSTALL_DEFAULTS.darwin
+      : platform === "win32"
+        ? PLATFORM_INSTALL_DEFAULTS.win32
+        : PLATFORM_INSTALL_DEFAULTS.other;
+  return defaults.map((candidate) =>
+    candidate.kind === "home" ? join(home, ...candidate.segments) : candidate.path
+  );
 }
 
 export function isInstall(root: string): boolean {
@@ -43,12 +51,13 @@ export function isInstall(root: string): boolean {
 /** The install's build, `v` stripped, or `undefined` when it does not say. */
 export function readGameVersion(installPath: string): string | undefined {
   try {
-    const raw = readFileSync(join(installPath, "launcher-settings.json"), "utf8");
-    const settings = JSON.parse(raw) as { rawVersion?: unknown };
-    if (typeof settings.rawVersion !== "string") {
+    const raw = readFileSync(join(installPath, LAUNCHER_SETTINGS_FILENAME), "utf8");
+    const settings = JSON.parse(raw) as Record<string, unknown>;
+    const rawVersion = settings[LAUNCHER_VERSION_FIELD];
+    if (typeof rawVersion !== "string") {
       return undefined;
     }
-    return settings.rawVersion.replace(/^v/, "");
+    return withoutLauncherPrefix(rawVersion);
   } catch {
     return undefined;
   }
@@ -56,8 +65,10 @@ export function readGameVersion(installPath: string): string | undefined {
 
 /** `4.4.6` -> `v4.4.*`, the form every shipped mod's descriptor uses. */
 export function supportedVersionFor(gameVersion: string): string | undefined {
-  const match = /^v?(\d+)\.(\d+)\./.exec(gameVersion);
-  return match === null ? undefined : `v${match[1]}.${match[2]}.*`;
+  const version = withoutLauncherPrefix(gameVersion);
+  if (!CORE_GAME_VERSION_PATTERN.test(version)) return undefined;
+  const match = SUPPORTED_VERSION_FROM_GAME_PATTERN.exec(version);
+  return match === null ? undefined : `${LAUNCHER_VERSION_PREFIX}${match[1]}.${match[2]}.*`;
 }
 
 /**

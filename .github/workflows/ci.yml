@@ -25,6 +25,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npm run codegen:verified-build:check
       # The CI-style codegen drift gate: regenerates from vendored inputs and
       # fails on any diff against the committed packages/sdk/src/generated.
       - run: npm run codegen:check

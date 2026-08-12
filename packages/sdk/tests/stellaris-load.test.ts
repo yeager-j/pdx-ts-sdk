@@ -11,9 +11,13 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { GameVersionError, InstallNotFoundError } from "../src/errors.ts";
+import {
+  VERIFIED_STELLARIS_BUILD,
+  VERIFIED_SUPPORTED_VERSION,
+} from "../src/generated/verified-build.ts";
 import { createMod } from "../src/index.ts";
 import { describeInstall } from "../src/stellaris/installation/describe.ts";
-import { locateInstall } from "../src/stellaris/installation/locate.ts";
+import { locateInstall, platformDefaultsFor } from "../src/stellaris/installation/locate.ts";
 import {
   readGameVersion,
   requireGameVersion,
@@ -37,6 +41,16 @@ afterEach(() => {
 });
 
 describe("locateInstall", () => {
+  it("interprets the generated platform defaults without drift", () => {
+    expect(platformDefaultsFor("darwin", "/home/u")).toEqual([
+      "/home/u/Library/Application Support/Steam/steamapps/common/Stellaris",
+    ]);
+    expect(platformDefaultsFor("linux", "/home/u")).toEqual([
+      "/home/u/.local/share/Steam/steamapps/common/Stellaris",
+      "/home/u/.steam/steam/steamapps/common/Stellaris",
+    ]);
+  });
+
   it("accepts an explicit path that passes the sentinel", () => {
     expect(locateInstall(FIXTURE)).toBe(FIXTURE);
   });
@@ -242,6 +256,10 @@ describe("supportedVersionFor", () => {
     expect(supportedVersionFor(gameVersion)).toBe(expected);
   });
 
+  it("interprets the generated verified-build projection without drift", () => {
+    expect(supportedVersionFor(VERIFIED_STELLARIS_BUILD)).toBe(VERIFIED_SUPPORTED_VERSION);
+  });
+
   it("produces something a capability accepts", () => {
     // The two halves of the same convention: what the SDK derives must be what
     // the SDK is willing to emit.
@@ -254,7 +272,10 @@ describe("supportedVersionFor", () => {
     ).not.toThrow();
   });
 
-  it.each(["4.4", "", "sometime", "v4"])("refuses %o rather than guessing", (input) => {
-    expect(() => supportedVersionFor(input)).toThrow(GameVersionError);
-  });
+  it.each(["4.4", "", "sometime", "v4", "vv4.4.6", "4.4.6.1"])(
+    "refuses %o rather than guessing",
+    (input) => {
+      expect(() => supportedVersionFor(input)).toThrow(GameVersionError);
+    }
+  );
 });

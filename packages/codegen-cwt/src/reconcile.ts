@@ -16,7 +16,8 @@ import { joinModifierScopes } from "./emit/modifiers.ts";
 import type { ModifierDocs } from "./logs/modifier-docs.ts";
 import type { ScopeLink } from "./logs/scopes.ts";
 import type { DocDump } from "./logs/trigger-docs.ts";
-import { SPECIAL_SCOPE_PATHS, UNIVERSAL_SCOPES } from "./overlay.ts";
+import { UNIVERSAL_SCOPES } from "./overlay.ts";
+import { SPECIAL_SCOPE_PATHS } from "./special-scope-paths.ts";
 
 export interface NameDrift {
   /** Declared in the `.cwt` rules but absent from the game's doc dump. */

@@ -19,14 +19,22 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { GameVersionError } from "../../errors.ts";
-
-const SETTINGS = "launcher-settings.json";
-
-/** `major.minor.patch` — what npm can express and what the pin compares. */
-const CORE_VERSION = /^\d+\.\d+\.\d+$/;
+import {
+  CORE_GAME_VERSION_PATTERN,
+  LAUNCHER_SETTINGS_FILENAME,
+  LAUNCHER_VERSION_FIELD,
+  LAUNCHER_VERSION_PREFIX,
+  SUPPORTED_VERSION_FROM_GAME_PATTERN,
+} from "../../generated/verified-build.ts";
 
 function settingsPath(installPath: string): string {
-  return join(installPath, SETTINGS);
+  return join(installPath, LAUNCHER_SETTINGS_FILENAME);
+}
+
+function withoutLauncherPrefix(version: string): string {
+  return version.startsWith(LAUNCHER_VERSION_PREFIX)
+    ? version.slice(LAUNCHER_VERSION_PREFIX.length)
+    : version;
 }
 
 /**
@@ -48,16 +56,17 @@ export function readGameVersion(installPath: string): string | undefined {
   } catch {
     return undefined;
   }
-  let settings: { rawVersion?: unknown };
+  let settings: Record<string, unknown>;
   try {
-    settings = JSON.parse(raw) as { rawVersion?: unknown };
+    settings = JSON.parse(raw) as Record<string, unknown>;
   } catch {
     return undefined;
   }
-  if (typeof settings.rawVersion !== "string") {
+  const rawVersion = settings[LAUNCHER_VERSION_FIELD];
+  if (typeof rawVersion !== "string") {
     return undefined;
   }
-  return settings.rawVersion.replace(/^v/, "");
+  return withoutLauncherPrefix(rawVersion);
 }
 
 /**
@@ -75,19 +84,20 @@ export function requireGameVersion(installPath: string): string {
   } catch {
     throw new GameVersionError(`${file} is missing, so the install states no version`);
   }
-  let settings: { rawVersion?: unknown };
+  let settings: Record<string, unknown>;
   try {
-    settings = JSON.parse(raw) as { rawVersion?: unknown };
+    settings = JSON.parse(raw) as Record<string, unknown>;
   } catch {
     throw new GameVersionError(`${file} is not valid JSON, so the install states no version`);
   }
-  if (typeof settings.rawVersion !== "string" || settings.rawVersion === "") {
-    throw new GameVersionError(`${file} has no rawVersion string`);
+  const rawVersion = settings[LAUNCHER_VERSION_FIELD];
+  if (typeof rawVersion !== "string" || rawVersion === "") {
+    throw new GameVersionError(`${file} has no ${LAUNCHER_VERSION_FIELD} string`);
   }
-  const version = settings.rawVersion.replace(/^v/, "");
-  if (!CORE_VERSION.test(version)) {
+  const version = withoutLauncherPrefix(rawVersion);
+  if (!CORE_GAME_VERSION_PATTERN.test(version)) {
     throw new GameVersionError(
-      `${file} states rawVersion ${settings.rawVersion}, which is not major.minor.patch`
+      `${file} states ${LAUNCHER_VERSION_FIELD} ${rawVersion}, which is not major.minor.patch`
     );
   }
   return version;
@@ -106,12 +116,17 @@ export function requireGameVersion(installPath: string): string {
  * 4.4, not about 4.x, and the author can always widen it by hand.
  */
 export function supportedVersionFor(gameVersion: string): string {
-  const version = gameVersion.replace(/^v/, "");
-  const match = /^(\d+)\.(\d+)\./.exec(version);
+  const version = withoutLauncherPrefix(gameVersion);
+  if (!CORE_GAME_VERSION_PATTERN.test(version)) {
+    throw new GameVersionError(
+      `Cannot derive a supported_version from "${gameVersion}": expected major.minor.patch`
+    );
+  }
+  const match = SUPPORTED_VERSION_FROM_GAME_PATTERN.exec(version);
   if (match === null) {
     throw new GameVersionError(
       `Cannot derive a supported_version from "${gameVersion}": expected major.minor.patch`
     );
   }
-  return `v${match[1]}.${match[2]}.*`;
+  return `${LAUNCHER_VERSION_PREFIX}${match[1]}.${match[2]}.*`;
 }

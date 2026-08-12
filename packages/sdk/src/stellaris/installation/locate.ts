@@ -13,8 +13,12 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 import { InstallNotFoundError } from "../../errors.ts";
+import {
+  INSTALL_SENTINEL_PATH_SEGMENTS,
+  PLATFORM_INSTALL_DEFAULTS,
+} from "../../generated/verified-build.ts";
 
-const SENTINEL = join("common", "technology");
+const SENTINEL = join(...INSTALL_SENTINEL_PATH_SEGMENTS);
 
 /**
  * The candidates for a platform, home injected — the same seam `modDirFor`
@@ -22,17 +26,15 @@ const SENTINEL = join("common", "technology");
  * two of the three branches uncheckable on any given machine.
  */
 export function platformDefaultsFor(platform: NodeJS.Platform, home: string): string[] {
-  switch (platform) {
-    case "darwin":
-      return [join(home, "Library/Application Support/Steam/steamapps/common/Stellaris")];
-    case "win32":
-      return ["C:\\Program Files (x86)\\Steam\\steamapps\\common\\Stellaris"];
-    default:
-      return [
-        join(home, ".local/share/Steam/steamapps/common/Stellaris"),
-        join(home, ".steam/steam/steamapps/common/Stellaris"),
-      ];
-  }
+  const defaults =
+    platform === "darwin"
+      ? PLATFORM_INSTALL_DEFAULTS.darwin
+      : platform === "win32"
+        ? PLATFORM_INSTALL_DEFAULTS.win32
+        : PLATFORM_INSTALL_DEFAULTS.other;
+  return defaults.map((candidate) =>
+    candidate.kind === "home" ? join(home, ...candidate.segments) : candidate.path
+  );
 }
 
 function platformDefaults(): string[] {

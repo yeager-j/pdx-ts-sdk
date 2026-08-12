@@ -19,6 +19,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { SUPPORTED_VERSION_PATTERN } from "./generated/verified-build.ts";
 import { parseProjectLayout, type ProjectLayout } from "./project-layout.ts";
 
 /** The one filename a project's manifest can have. */
@@ -29,15 +30,15 @@ export const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 /**
  * The launcher's `supported_version` grammar — one to three dot-separated parts,
- * each a number or `*`. The SDK's rule, restated only so this module needs no
- * runtime dependency, and enforced here rather than left to the project's own
- * build: a manifest the SDK will refuse is one no later command should accept.
+ * each a number or `*`. Generated from the repository's verified-build
+ * projection, and enforced here rather than left to the project's own build:
+ * a manifest the SDK will refuse is one no later command should accept.
  *
  * `manifest.test.ts` runs a sample table through this and through the SDK's real
  * `resolveConfig`, so a change to the SDK's grammar breaks a test here rather
  * than a stranger's project.
  */
-export const SUPPORTED_VERSION_PATTERN = /^v?(\d+|\*)(\.(\d+|\*)){0,2}$/;
+export { SUPPORTED_VERSION_PATTERN } from "./generated/verified-build.ts";
 
 const TOP_LEVEL_KEYS = ["$schema", "mod", "contentDirectory"] as const;
 

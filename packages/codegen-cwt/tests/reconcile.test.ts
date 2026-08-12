@@ -5,7 +5,6 @@ import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/overlay";
 import {
   compareToBaseline,
   reconcile,
@@ -13,6 +12,7 @@ import {
   type DriftBaseline,
   type ScopeConflict,
 } from "@pdx-ts/codegen-cwt/reconcile";
+import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/special-scope-paths";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */

@@ -1,9 +1,7 @@
+import { SUPPORTED_VERSION_PATTERN } from "../generated/verified-build.ts";
 import type { VanillaView } from "../stellaris/vanilla/view.ts";
 
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
-
-/** A launcher `supported_version`: one to three dot-separated parts. */
-const SUPPORTED_VERSION_PATTERN = /^v?(\d+|\*)(\.(\d+|\*)){0,2}$/;
 
 /** The mod's identity and launcher metadata. */
 export interface ModConfig<P extends string = string> {

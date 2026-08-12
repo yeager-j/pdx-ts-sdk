@@ -51,3 +51,17 @@ describe("scope diagnostic attribution", () => {
     });
   });
 });
+
+describe("caller-relative scope paths", () => {
+  it("leaves a special path unconstrained while naming the path in its diagnostic", () => {
+    const throughCaller = definition("through_caller", "fromfrom.owner = { never_declared = yes }");
+
+    expect(inferScopes(EMPTY_FACTS, { trigger: [throughCaller], effect: [] }).trigger).toEqual([
+      {
+        name: "through_caller",
+        scopes: "universal",
+        diagnostics: [{ kind: "caller-relative", detail: "fromfrom.owner" }],
+      },
+    ]);
+  });
+});
