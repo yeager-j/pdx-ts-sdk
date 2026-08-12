@@ -1007,6 +1007,15 @@ describe("generated content authoring types", () => {
       name: "X",
       aiWeight: { factor: 5000 },
     });
+    contentMod.tradition("weight_operation_desc_key", {
+      name: "X",
+      aiWeight: {
+        factor: 5000,
+        // @ts-expect-error — descKey belongs to a modifier row; a top-level
+        // weight-block descKey has no emitted PDXScript representation.
+        descKey: "silently_dropped",
+      },
+    });
     // SDK-36: a complex_trigger_modifier row (no `when`) sits in the same
     // `modifiers` array as an ordinary Modifier row (which has `when` but no
     // `trigger`/`mode`).

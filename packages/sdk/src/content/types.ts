@@ -132,17 +132,20 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
  * The `complex_maths_enum` operations `modifier_rule.cwt:1-3` allows directly
  * alongside `base`, sibling to the `modifier`/`complex_trigger_modifier` rows
  * rather than inside one of them — the same measured member set {@link
- * Modifier} carries at row level, minus `desc`/`when` which only make sense
- * on a gated row. `Omit` rather than a hand-kept duplicate, so a future
- * change to `Modifier`'s numeric arms flows through here automatically, the
- * same reasoning as {@link EconomicResourceBlockNoProduce}.
+ * Modifier} carries at row level, minus `desc`/`descKey`/`when` which only
+ * make sense on a gated row. `Omit` rather than a hand-kept duplicate, so a
+ * future change to `Modifier`'s numeric arms flows through here automatically,
+ * the same reasoning as {@link EconomicResourceBlockNoProduce}.
  *
  * Vanilla favors this top-level spelling for a block's own always-applied
  * weight: in `common/traditions/`, 292 of 293 `weight`/`ai_weight` blocks set
  * a top-level `factor` rather than `base`, and across all `ai_weight` blocks
  * under `common/`, top-level `weight` (2,255) outnumbers `base` (848).
  */
-export type WeightBlockOperations<S extends ScopeName> = Omit<Modifier<S>, "desc" | "when">;
+export type WeightBlockOperations<S extends ScopeName> = Omit<
+  Modifier<S>,
+  "desc" | "descKey" | "when"
+>;
 
 /** The calculation performed by a `scaled_modifier` row. */
 export type ScaledModifierCalc =
