@@ -107,14 +107,12 @@ describe("generated event surface", () => {
     );
   });
 
-  it("keeps startSituation on the EffectsInCountry cluster", () => {
-    // src/script/effects/situations.ts merges the declared-target overload into this exact
-    // interface; if clustering ever moves the generated signature, the
-    // augmentation would silently detach instead of overloading.
+  it("attaches the stable startSituation extension to its generated cluster", () => {
     const effects = readFileSync("packages/sdk/src/generated/effects.ts", "utf8");
-    const start = effects.indexOf("export interface EffectsInCountry {");
-    expect(start).toBeGreaterThan(-1);
-    const cluster = effects.slice(start, effects.indexOf("\n}\n", start));
-    expect(cluster).toContain("startSituation(args: {");
+    expect(effects).toContain("export interface StartSituationEffectsExtension {");
+    expect(effects).toMatch(
+      /export interface StartSituationEffectsExtension \{[\s\S]*?startSituation\(args: \{[\s\S]*?\n\}/
+    );
+    expect(effects).toMatch(/export interface \w+ extends StartSituationEffectsExtension \{/);
   });
 });

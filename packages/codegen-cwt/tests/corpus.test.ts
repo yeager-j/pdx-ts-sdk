@@ -678,6 +678,7 @@ describe("the emitter's descent channel", () => {
     );
     expect(row).toEqual({
       field: "tradition.ai_weight.modifier",
+      authoredPath: ["aiWeight"],
       shape: "weightModifier",
       repeated: true,
       clause: "trigger",
@@ -696,6 +697,7 @@ describe("the emitter's descent channel", () => {
     });
     expect(emitted.nestedEmittedFields).toContainEqual({
       field: "building.triggered_country_modifier.potential",
+      authoredPath: ["triggeredCountryModifier"],
       shape: "trigger",
       repeated: false,
       clause: "trigger",

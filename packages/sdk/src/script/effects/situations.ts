@@ -51,14 +51,11 @@ export type SituationEffectScope<T extends ScopeName> = Omit<SituationScope, "ta
   target(body: (scope: ScopeObjOf<T>) => void): void;
 };
 
-// The overload must merge into the interface that declares the generated
-// signature — the cluster for `## scopes = { country }`, not `CountryScope`
-// (a member redeclared on an extending interface must narrow, and this is an
-// overload, not a narrowing). tests/codegen/events-snapshot.test.ts pins
-// `startSituation` to this cluster so a clustering change fails loudly
-// instead of silently detaching the overload.
+// Codegen attaches this stable extension seam to whichever generated cluster
+// owns start_situation. The hand-written overload therefore follows the CWT
+// scope contract without naming a cluster whose identity may change.
 declare module "../../generated/effects.ts" {
-  interface EffectsInCountry {
+  interface StartSituationEffectsExtension {
     /**
      * Starts a situation whose type declares `targetScope`, requiring a
      * matching target ref — `ctx.self`, an event target — as proof, and

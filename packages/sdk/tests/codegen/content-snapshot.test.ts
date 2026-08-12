@@ -132,6 +132,7 @@ describe("content-type codegen", () => {
     );
     expect(emissions.get("building")?.nestedEmittedFields).toContainEqual({
       field: "building.ai_resource_production.trigger",
+      authoredPath: ["aiResourceProduction"],
       shape: "trigger",
       repeated: false,
       clause: "trigger",
@@ -1361,6 +1362,7 @@ describe("content-type codegen", () => {
     );
     expect(decision?.nestedEmittedFields).toContainEqual({
       field: "decision.custom_tooltip.when",
+      authoredPath: ["customTooltip"],
       shape: "trigger",
       repeated: false,
       clause: "trigger",

@@ -16,6 +16,7 @@ import {
   type ContentManifestEntry,
 } from "./content-manifest.ts";
 import { emitContentShapeProtocol } from "./content-shape.ts";
+import { deriveContentSwapIdentities, emitContentSwapProtocol } from "./content-swap-policy.ts";
 import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
 import { createEffectPolicy, emitEffectPolicyProtocol } from "./effect-policy.ts";
 import { emitAliasSplice, type AliasSpliceEmission } from "./emit/alias-splice.ts";
@@ -39,10 +40,12 @@ import {
 import { emitTriggers } from "./emit/triggers.ts";
 import { Emitter, type Usage } from "./emit/types.ts";
 import { emitVanillaRefs } from "./emit/vanilla-refs.ts";
+import { createEventFieldPolicy, emitEventFieldProtocol } from "./event-field-policy.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
 import { lowerRuleTable } from "./lowered-rule.ts";
+import { createModifierOperationPolicy, emitModifierOperationProtocol } from "./modifier-policy.ts";
 import { camelCase, docComment, indefiniteArticle, referencesIdentifier } from "./naming.ts";
 import {
   CONTENT_CONTRIBUTION_SINKS,
@@ -58,6 +61,7 @@ import {
   type DriftBaseline,
   type DriftReport,
 } from "./reconcile.ts";
+import { RESERVED_TRIGGER_EXPORT_NAMES } from "./trigger-policy.ts";
 
 /**
  * Every path this script touches is anchored to the module, not the process:
@@ -170,6 +174,8 @@ async function main(): Promise<void> {
   const emitter = new Emitter(rules);
   const index = scopeIndex(rules);
   const effectPolicy = createEffectPolicy(rules);
+  const modifierOperationPolicy = createModifierOperationPolicy(rules);
+  const eventFieldPolicy = createEventFieldPolicy(rules);
   await write(
     "content-shape.ts",
     header(commit, ["codegen-cwt ContentShape protocol"]) + emitContentShapeProtocol()
@@ -186,7 +192,7 @@ async function main(): Promise<void> {
   const scopeLinks = emitScopeLinks(
     classifiedLinks,
     index,
-    new Set([...triggers.names, "trigger", "and", "or", "not", "nand", "nor", "target"])
+    new Set([...triggers.names, ...RESERVED_TRIGGER_EXPORT_NAMES])
   );
 
   emitter.beginFile();
@@ -371,6 +377,10 @@ async function main(): Promise<void> {
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       modifiers.code
   );
+  await write(
+    "modifier-policy.ts",
+    header(commit, ["modifier_rule.cwt"]) + emitModifierOperationProtocol(modifierOperationPolicy)
+  );
   // `Trigger` and `ScriptValue` both live in `trigger-core.ts`, so one clause
   // covers both — `Trigger<` stays a substring match (already precise; see
   // `GovernmentTriggerBlock`, which a bare "Trigger" match would false-hit),
@@ -512,6 +522,12 @@ async function main(): Promise<void> {
     (source, index, sources) => sources.indexOf(source) === index
   );
   await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));
+  const contentSwaps = deriveContentSwapIdentities(rules, contents);
+  await write(
+    "content-swaps.ts",
+    header(commit, [...contentSources, "CWT base_type declarations"]) +
+      emitContentSwapProtocol(contentSwaps)
+  );
   const definers = contentDefiners(contents);
   await write("content-definers.ts", header(commit, contentSources) + definers.code);
   await write(
@@ -627,6 +643,11 @@ async function main(): Promise<void> {
       'import type { FireEventArgs, WitnessedFireEventArgs } from "../events/types.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.firesCode
+  );
+  await write(
+    "event-fields.ts",
+    header(commit, ["events/events.cwt", "codegen-cwt event field support policy"]) +
+      emitEventFieldProtocol(eventFieldPolicy)
   );
   const onActions = emitOnActions(rules);
   await write("on-actions.ts", header(commit, ["on_actions.cwt"]) + onActions.code);

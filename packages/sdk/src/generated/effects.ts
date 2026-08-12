@@ -195,6 +195,24 @@ import type {
   WarFlag,
 } from "./value-sets.ts";
 
+/**
+ * Stable extension seam for the hand-written startSituation target-scope overload.
+ * The generated cluster containing start_situation inherits this interface.
+ */
+export interface StartSituationEffectsExtension {
+  /**
+   * Begins a situation.
+   * ```
+   * start_situation = { type = <situation_type> target = <scope> }
+   * ```
+   */
+  startSituation(args: {
+    type: (SituationTypeRef & { targetScope?: never }) | string;
+    target?: ScopeValue;
+    effect?: (scope: SituationScope) => void;
+  }): void;
+}
+
 /** Effects valid in: ambient_object, archaeological_site, carrier, colony, debris, fleet, megastructure, planet, ship, starbase, system. */
 export interface EffectsIn11Scopes2089 {
   /** Scopes from an object (e.g. planet) in star system view to the arc site in the same location. */
@@ -2806,7 +2824,7 @@ export interface EffectsInCosmicStormInfluenceField {
 }
 
 /** Effects valid in: country. */
-export interface EffectsInCountry {
+export interface EffectsInCountry extends StartSituationEffectsExtension {
   /**
    * Aborts a specific special project for the country, removing it from the situation log
    * ```
@@ -7042,18 +7060,6 @@ export interface EffectsInCountry {
    * ```
    */
   startAstralActionCooldown(value: AstralActionUsesCustomCooldownRef | string): void;
-
-  /**
-   * Begins a situation.
-   * ```
-   * start_situation = { type = <situation_type> target = <scope> }
-   * ```
-   */
-  startSituation(args: {
-    type: (SituationTypeRef & { targetScope?: never }) | string;
-    target?: ScopeValue;
-    effect?: (scope: SituationScope) => void;
-  }): void;
 
   /**
    * Steal all/a random/a specific relic from a target country
