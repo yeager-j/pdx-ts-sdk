@@ -21,9 +21,12 @@
  *   completeness claim below the ratchet or behind an explicit waiver.
  * - **Shape conformance.** Every lowered type measured against the values
  *   behind it. `form` and `scope` mismatches are asserted against
- *   {@link ACKNOWLEDGED}, because they name a field the SDK emits and no
- *   author can fill; `arity` and `literal` are reported, because a list the
- *   game never repeats and an oddly spelled scalar are both legal.
+ *   `ACKNOWLEDGED_MISMATCHES`, because they name a field the SDK emits and no
+ *   author can fill. `arity` and `literal` are legal — a list the game never
+ *   repeats and an oddly spelled scalar are both things CWT permits — so they
+ *   are held against the classified baseline in `corpus-observations.ts`
+ *   instead: not a legality failure, but a *new or changed* one fails until
+ *   somebody says which kind of legal it is.
  * - **Fixture integrity.** Every manifested registry has a fixture with a
  *   nonzero definition count, no stale fixture lingers, and no fixture
  *   predates a descent the emitter now produces — the one staleness the
@@ -39,6 +42,7 @@
 import {
   conformance,
   shapeConformance,
+  VALUE_SAMPLE,
   type DescentNode,
   type RuleScopes,
 } from "@pdx-ts/codegen-cwt/corpus";
@@ -59,118 +63,18 @@ import {
   versionCanary,
 } from "./corpus-fixture.ts";
 import { ACKNOWLEDGED_GAPS } from "./corpus-gaps.ts";
+import {
+  ACKNOWLEDGED_MISMATCHES,
+  compareObservations,
+  observationStub,
+  shapeKey,
+  type ClassifiedObservation,
+  type ObservationKind,
+  type ObservedShape,
+} from "./corpus-observations.ts";
 
-/**
- * Shape mismatches that are real, understood, and not this gate's to fix, each
- * with the reason. Anything else fails.
- *
- * Every entry here is a field the SDK emits whose type and the shipped values
- * disagree: an author cannot write what vanilla writes, or — where an unpinned
- * trigger clause widened to `Trigger<never>` — can write it with nothing
- * checking it. Four families remain, none of them a misreading the emitter
- * could fix on its own:
- *
- * - **The corpus writes a form CWT does not declare.** Inventing an arm the
- *   rules deny would be guessing at game semantics from one shipped file.
- * - **Two declarations whose arms are indistinguishable.** A dual dispatches on
- *   what the author passed, so two arms that both author as arrays cannot be
- *   told apart. See `lowerDual`.
- * - **A scope the rules pin and the corpus contradicts, on evidence too thin
- *   to overrule them.** Asserting over a stated scope is a stronger claim than
- *   filling in an omitted one, and needs more than a couple of definitions.
- * - **A field CWT scopes `any` whose legal set is not settled.** The fix is a
- *   scope the definition supplies (`CONTENT_SCOPE_PARAMETERS`, which `decision`
- *   now uses), and a row there needs the same evidence any assertion does. Once
- *   one exists the gate stops acknowledging and starts checking: it asks
- *   whether the declared set covers what the corpus writes.
- */
-const ACKNOWLEDGED = new Map<string, string>([
-  [
-    "global_ship_design.upgrades_to form",
-    "CWT declares the scalar form only; one space-whale design writes a two-element block anyway. " +
-      "An upstream rules gap rather than a misreading — the SDK should not invent an arm the " +
-      "rules do not declare.",
-  ],
-  [
-    "situation_type.picture form",
-    "Declared twice, as a bare <sprite> and as a trigger+picture block — but both declarations " +
-      "carry `cardinality = 0..inf`, so both arms author as arrays and the writer could not tell " +
-      "which one a value belongs to. `title` and `desc` dual cleanly because their scalar arm is " +
-      "`0..1`. An `arity` assertion cannot help: it would narrow the block arm too, and the block " +
-      "form really does repeat.",
-  ],
-  [
-    "bombardment_stance.planet_damage.modifier scope",
-    "The one row here where the rules do state a scope and the corpus disagrees. " +
-      "bombardment_stances.cwt:50 pins the block `## replace_scopes = { root = fleet " +
-      "this = fleet from = planet }`, and 2 of the 13 shipped stances gate a weight row on " +
-      "`planet_devastation`, which cwtools scopes to the planet family (carrier/colony/planet/" +
-      "ship). Two readings fit: cwtools' trigger list is missing fleet, or the rows really do " +
-      "evaluate planet-side and the game resolves it through the declared FROM. Two definitions " +
-      "cannot settle which, and an overlay assertion overruling a scope the rules state — as " +
-      "opposed to filling in one they omit, which is what the three ai_weight rows do — needs " +
-      "more than that.",
-  ],
-  [
-    "economic_category.triggered_cost_modifier.trigger scope",
-    "CWT annotates no scope, so the clause lowers to `Trigger<never>` — writable but unchecked. " +
-      "The category's modifiers are evaluated against whatever is paying, and the corpus shows " +
-      "the game itself branching on that: `is_scope_valid` appears in all four definitions " +
-      "writing this clause, guarding ship conditions (is_ship_class, is_ship_size, " +
-      "is_space_fauna, has_ship_owner_type) against a scope that may not be one. That is the " +
-      "SDK-24 narrowing case, not a declaration — the same finding as " +
-      "ship_size.potential_construction below.",
-  ],
-  [
-    "economic_category.triggered_produces_modifier.trigger scope",
-    "Same declaration and same finding as triggered_cost_modifier above " +
-      "(single_alias[economic_category_triggered_modifier], economic_categories.cwt:76-87). " +
-      "Its 13 definitions spread wider still — ship category, specimen category, planet, and " +
-      "species traits — which is what an unannotated clause evaluated per consumer looks like.",
-  ],
-  [
-    "economic_category.triggered_upkeep_modifier.trigger scope",
-    "Same declaration and same finding as its two siblings above. Its 10 definitions divide by " +
-      "consumer rather than mixing: one writes only ship conditions, another only pop " +
-      "(has_trait, is_robot_pop_group, is_unemployed), a third only `exists = planet`.",
-  ],
-  [
-    "scripted_loc.text.trigger scope",
-    "A scripted localization is rendered wherever its key is referenced, so its condition runs " +
-      "in whatever scope did the referencing — genuinely any, and CWT is right to annotate " +
-      "none. The corpus is the same shape: 1072 definitions across 206 distinct condition sets, " +
-      "spanning country, species, planet and variable scopes. Nothing to declare; SDK-24's " +
-      "narrowing inside the clause is the only remedy.",
-  ],
-  [
-    "scripted_loc.text.weight.modifier scope",
-    "The weight sibling of the row above, and the same finding one field over: a scripted " +
-      "localization is rendered wherever its key is referenced, so the conditions gating its " +
-      "weight rows run in whatever scope did the referencing. The 5 definitions that gate a " +
-      "weight row are the same shape as the 1072 that gate the text — country and species " +
-      "conditions (`has_ethic`, `has_trait`) in separate definitions, no single scope to " +
-      "declare. SDK-24's narrowing inside the clause is the remedy for both.",
-  ],
-  [
-    "ship_size.potential_construction scope",
-    "The widened `Trigger<never>` is the right type and the clause needs narrowing inside it, " +
-      "not a declaration: one ship size's construction clause is evaluated against several scope " +
-      "types and vanilla branches on which, testing `is_scope_type` 13 times across these " +
-      "clauses " +
-      "(zero shipped decisions do, which is why a scope parameter fit there and not here). " +
-      "SDK-24 tracks the `inScope` combinator; it waits on SDK-13, since most bodies here " +
-      "delegate to vanilla scripted triggers the SDK cannot name yet.",
-  ],
-  [
-    "ship_size.triggered_ship_roles.trigger scope",
-    "The wrapped struct one level inside the field above, and the same registry's finding: a " +
-      "scope parameter does not fit ship_size. Its 43 definitions do write one coherent " +
-      "country-scope set (OR, has_technology, has_battleship_cloaking_tech), so a `scope` " +
-      "assertion is not ruled out the way the sibling clauses' are — but which country the " +
-      "role is evaluated for is exactly what the rules decline to state, and an assertion here " +
-      "would be read off the corpus alone. SDK-24.",
-  ],
-]);
+/** The `form`/`scope` acknowledgements, by the key {@link mismatchesOfKind} builds. */
+const ACKNOWLEDGED = new Map(ACKNOWLEDGED_MISMATCHES.map((row) => [shapeKey(row), row.rationale]));
 
 const REMEDY = "run npm run corpus:extract and review the fixture diff";
 
@@ -236,8 +140,30 @@ function mismatchesOfKind(kinds: readonly string[]): { key: string; detail: stri
     report.shape
       .filter((mismatch) => kinds.includes(mismatch.kind))
       .map((mismatch) => ({
-        key: `${report.registry}.${mismatch.field} ${mismatch.kind}`,
+        key: shapeKey({ registry: report.registry, field: mismatch.field, kind: mismatch.kind }),
         detail: mismatch.detail,
+      }))
+  );
+}
+
+/**
+ * The `arity` and `literal` mismatches as structured rows, which is the half the
+ * baseline compares. The `detail` prose stays behind: it carries a definition
+ * count that moves with every patch and a stray sample that truncates at six,
+ * and a baseline keyed on either would fail for a reason nobody has to answer
+ * for while missing one somebody does.
+ */
+function observedShapes(): ObservedShape[] {
+  return reports.flatMap((report) =>
+    report.shape
+      .filter((mismatch): mismatch is typeof mismatch & { kind: ObservationKind } =>
+        ["arity", "literal"].includes(mismatch.kind)
+      )
+      .map((mismatch) => ({
+        registry: report.registry,
+        field: mismatch.field,
+        kind: mismatch.kind,
+        evidence: mismatch.evidence,
       }))
   );
 }
@@ -485,18 +411,64 @@ describe("corpus conformance", () => {
     expect([...ACKNOWLEDGED.keys()].filter((key) => !live.has(key))).toEqual([]);
   });
 
-  it("reports arity and literal mismatches", () => {
-    // Reported, not asserted, in both directions. A list CWT declares and the
-    // game never repeats is still legal, and asserting it would demand an
+  it("keeps every closed literal union under the value-sample cap", () => {
+    // What makes the `literal` half of the baseline honest, and the one thing
+    // the evidence cannot say about itself.
+    //
+    // The reader remembers at most VALUE_SAMPLE distinct scalars per field. A
+    // field that fills the sample before an out-of-union spelling appears never
+    // records that spelling, so `shapeConformance` reports no stray for it and
+    // the baseline stays green over a value nobody reviewed — a new unsupported
+    // game value passing a gate whose whole claim is that it would not. Below
+    // the cap there is no sample: the set is everything the corpus wrote, and
+    // the verdict is complete.
+    //
+    // So the claim is asserted rather than assumed. Vanilla's widest closed
+    // union sits well under the cap today, and if one ever reaches it this
+    // fails by name — the remedy is to raise VALUE_SAMPLE or to record the
+    // overflow, not to accept a filtered verdict. A field that happens to hold
+    // exactly VALUE_SAMPLE values with nothing dropped fails here too; the
+    // remedy is the same, so the conservative reading costs nothing.
+    const saturated = reports.flatMap((report) =>
+      report.measurement.emitted
+        .filter((field) => field.literals !== undefined)
+        .flatMap((field) => {
+          const observation = report.corpus.occurrences.get(field.field);
+          return observation === undefined || observation.values.size < VALUE_SAMPLE
+            ? []
+            : [
+                `${report.registry}.${field.field}: ${observation.values.size} distinct values ` +
+                  `reaches the ${VALUE_SAMPLE}-value sample cap, so a stray outside its ` +
+                  `${field.literals!.length}-member union could be dropped unreported — raise ` +
+                  "VALUE_SAMPLE or record the overflow",
+              ];
+        })
+    );
+    expect(saturated).toEqual([]);
+  });
+
+  it("holds the classified arity and literal observation baseline", () => {
+    // NOT a legality assertion, in either direction. A list CWT declares and
+    // the game never repeats is still legal, and asserting it would demand an
     // overlay row per registry for a shape that is merely wider than it needs
     // to be. A stray scalar is usually an upstream spelling (`LARGE` for
     // `large`), which the game reads case-insensitively and the SDK does not
     // need to.
-    const rows = mismatchesOfKind(["arity", "literal"])
-      .map((mismatch) => `  ${mismatch.key}: ${mismatch.detail}`)
-      .sort();
-    console.log("\nshape observations (reported, not failed):\n" + rows.join("\n"));
-    expect(reports.length).toBeGreaterThan(0);
+    //
+    // What fails is *movement*. Printing these to the console instead — which
+    // is what this replaced — meant a new observation scrolled past beside the
+    // forty already there, and the next game patch's scrolled past beside
+    // those. So each one carries a classification and the reason for it in
+    // `corpus-observations.ts`, and an observation that is new, gone, or
+    // holding different values than its row records fails until somebody looks.
+    const differences = compareObservations(observedShapes());
+    const stubs = observedShapes()
+      .filter((one) => differences.some((line) => line.startsWith(`  + ${shapeKey(one)}:`)))
+      .map((one) => observationStub(one));
+    if (stubs.length > 0) {
+      console.log("\nrows to classify in corpus-observations.ts:\n" + stubs.join("\n"));
+    }
+    expect(differences).toEqual([]);
   });
 
   it("measures building.ai_resource_production and its colony trigger interior (SDK-65)", () => {
@@ -1093,5 +1065,332 @@ describe("shape conformance, triggered-modifier potential", () => {
     const mismatches = shapeConformance(scalar, [field(["planet"])], scopesOf);
     expect(mismatches.map((one) => one.kind)).toEqual(["form"]);
     expect(mismatches[0]?.detail).toContain("write a scalar (yes)");
+  });
+});
+
+/** One observation, with only the fields a given check reads set to anything. */
+function observationOf(observed: {
+  definitions?: number;
+  repeated?: number;
+  scalars?: number;
+  blocks?: number;
+  bareValues?: number;
+  values?: readonly string[];
+}) {
+  const definitions = observed.definitions ?? 1;
+  return {
+    definitions,
+    files: 1,
+    occurrences: new Map([
+      [
+        "field",
+        {
+          definitions,
+          repeated: observed.repeated ?? 0,
+          scalars: observed.scalars ?? definitions,
+          blocks: observed.blocks ?? 0,
+          bareValues: observed.bareValues ?? 0,
+          bareBlocks: 0,
+          emptyBlocks: 0,
+          values: new Set(observed.values ?? []),
+          keys: new Set<string>(),
+          keysByDefinition: [] as ReadonlySet<string>[],
+        },
+      ],
+    ]),
+  };
+}
+
+const noScopesOf = (): null => null;
+
+/**
+ * The arity branch, which had no control of its own until the baseline started
+ * failing on it.
+ *
+ * The interesting assertion is the last one. The verdict says a list is never
+ * repeated; the prose says how many definitions were looked at. Only the first
+ * is the finding — the count moves with every game patch — so the evidence the
+ * baseline compares has to be empty here, and a test is the only thing that
+ * keeps the two from drifting back together.
+ */
+describe("shape conformance, list arity", () => {
+  const list = { field: "field", shape: "value", repeated: true } as const;
+  const single = { field: "field", shape: "value", repeated: false } as const;
+
+  it("reports a list lowering the corpus never repeats", () => {
+    const mismatches = shapeConformance(observationOf({ definitions: 3 }), [list], noScopesOf);
+    expect(mismatches.map((one) => one.kind)).toEqual(["arity"]);
+    expect(mismatches[0]?.detail).toContain("no definition writes it twice");
+  });
+
+  it("stays silent where one definition writes the key twice", () => {
+    // One repetition anywhere is the whole question answered: the list is used.
+    const observed = observationOf({ definitions: 3, repeated: 1 });
+    expect(shapeConformance(observed, [list], noScopesOf)).toEqual([]);
+  });
+
+  it("stays silent for a single-valued lowering", () => {
+    // The check is one-directional by construction — a field CWT declares
+    // `0..1` and the game writes twice is unauthorable, and `corpus.ts` cannot
+    // see it. `CONTENT_FIELD_OVERRIDES`' `arity: "repeated"` is that fix, read
+    // off the fixture's own `repeated` count.
+    expect(shapeConformance(observationOf({ definitions: 3 }), [single], noScopesOf)).toEqual([]);
+  });
+
+  it("keeps the definition count in the prose and out of the evidence", () => {
+    // The identity split, asserted rather than assumed: two runs a patch apart
+    // see different counts and the same finding, and the baseline must not read
+    // that as a changed observation.
+    const [mismatch] = shapeConformance(observationOf({ definitions: 3 }), [list], noScopesOf);
+    expect(mismatch?.detail).toContain("3 defs");
+    expect(mismatch?.evidence).toEqual([]);
+  });
+});
+
+/**
+ * The literal branch, likewise uncontrolled until now — and the reason the
+ * baseline compares `evidence` rather than `detail`: the prose stops at six
+ * strays, so a seventh would have ridden along under a row written for the
+ * first six.
+ */
+describe("shape conformance, closed literal unions", () => {
+  const sized = {
+    field: "field",
+    shape: "value",
+    repeated: false,
+    literals: ["large", "small"],
+  } as const;
+
+  it("accepts values inside the emitted union", () => {
+    const observed = observationOf({ definitions: 2, values: ["large", "small"] });
+    expect(shapeConformance(observed, [sized], noScopesOf)).toEqual([]);
+  });
+
+  it("reports every stray as evidence, past the six the prose shows", () => {
+    const strays = ["a", "b", "c", "d", "e", "f", "g"];
+    const observed = observationOf({ definitions: 8, values: ["large", ...strays] });
+    const [mismatch] = shapeConformance(observed, [sized], noScopesOf);
+    expect(mismatch?.kind).toBe("literal");
+    expect(mismatch?.detail).toContain("a b c d e f");
+    expect(mismatch?.detail).not.toContain(" g");
+    expect(mismatch?.evidence).toEqual(strays);
+  });
+
+  it("stays silent where the lowering closed no set", () => {
+    // An open `<technology>` field admits whatever the registry defines, so
+    // there is no union for a value to be outside of.
+    const open = { field: "field", shape: "value", repeated: false };
+    expect(shapeConformance(observationOf({ values: ["anything"] }), [open], noScopesOf)).toEqual(
+      []
+    );
+  });
+
+  it("reads strays out of a value list's bare elements", () => {
+    // A list's elements land in `values` the same way a scalar write does, and
+    // the union constrains each element — so the check is right to see them.
+    const list = {
+      field: "field",
+      shape: "valueList",
+      repeated: false,
+      literals: ["large"],
+    } as const;
+    const observed = observationOf({
+      scalars: 0,
+      blocks: 1,
+      bareValues: 2,
+      values: ["large", "LARGE"],
+    });
+    const [mismatch] = shapeConformance(observed, [list], noScopesOf);
+    expect(mismatch?.kind).toBe("literal");
+    expect(mismatch?.evidence).toEqual(["LARGE"]);
+  });
+
+  it("gives no verdict for a dual whose arms cannot be told apart", () => {
+    // `ship_size.graphical_culture` is `bool` beside `{ <graphical_culture> }`,
+    // and a dual carries only its scalar arm's literals. The observation merges
+    // both positions' scalars, so judging them against `yes`/`no` measured one
+    // arm against the other and reported 25 culture ids as strays. Absence of
+    // attribution, not evidence of a defect — the same reading as the interior
+    // form check's dual exemption.
+    const dual = {
+      field: "field",
+      shape: "dual",
+      repeated: false,
+      literals: ["yes", "no"],
+    } as const;
+    const mixed = observationOf({
+      definitions: 2,
+      scalars: 1,
+      blocks: 1,
+      bareValues: 1,
+      values: ["yes", "ancient"],
+    });
+    expect(shapeConformance(mixed, [dual], noScopesOf)).toEqual([]);
+    // A dual nobody wrote a block for has nothing to attribute, so the scalar
+    // arm's union is judged as usual — the exemption must not become blanket.
+    const scalarOnly = observationOf({ definitions: 1, scalars: 1, values: ["Yes"] });
+    expect(shapeConformance(scalarOnly, [dual], noScopesOf).map((one) => one.kind)).toEqual([
+      "literal",
+    ]);
+  });
+});
+
+/**
+ * The baseline comparison itself, over synthetic rows.
+ *
+ * Every direction is asserted because the gate is green against the committed
+ * table and would stay green if the comparison did nothing at all. The
+ * validation half matters just as much: "rationale-bearing" is a property
+ * something has to check, or a row with an empty string satisfies it.
+ */
+describe("corpus observation baseline", () => {
+  const observed = (
+    field: string,
+    kind: ObservationKind,
+    evidence: readonly string[] = []
+  ): ObservedShape => ({ registry: "building", field, kind, evidence });
+
+  const row = (
+    field: string,
+    kind: ObservationKind,
+    evidence: readonly string[] = [],
+    extra: Partial<ClassifiedObservation> = {}
+  ): ClassifiedObservation => ({
+    registry: "building",
+    field,
+    kind,
+    evidence,
+    classification: kind === "arity" ? "rules-wider-than-vanilla" : "engine-lenient-spelling",
+    rationale: "because",
+    ...(kind === "arity" ? { declaration: "buildings.cwt:1 — ## cardinality = 0..inf" } : {}),
+    ...extra,
+  });
+
+  it("holds when every observation has a live row", () => {
+    const baseline = [row("resources", "arity"), row("size", "literal", ["LARGE"])];
+    const measured = [observed("resources", "arity"), observed("size", "literal", ["LARGE"])];
+    expect(compareObservations(measured, baseline)).toEqual([]);
+  });
+
+  it("fails an observation with no row", () => {
+    expect(compareObservations([observed("resources", "arity")], [])).toEqual([
+      "  + building.resources arity: new observation — classify it in corpus-observations.ts",
+    ]);
+  });
+
+  it("fails a row whose observation is gone", () => {
+    const lines = compareObservations([], [row("resources", "arity")]);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain("- building.resources arity: no longer observed");
+    // The one benign way a row can vanish, named in the remedy so nobody
+    // deletes forty rows because one fixture failed to load.
+    expect(lines[0]).toContain("fixture failed to load");
+  });
+
+  it("fails a row whose literal evidence changed", () => {
+    const lines = compareObservations(
+      [observed("size", "literal", ["LARGE", "SMALL"])],
+      [row("size", "literal", ["LARGE"])]
+    );
+    expect(lines).toEqual([
+      "  ~ building.size literal: evidence [LARGE] -> [LARGE SMALL] — re-review the row and " +
+        "update it",
+    ]);
+  });
+
+  it("compares evidence as a set, not a sequence", () => {
+    // The corpus reader's `values` is a Set, and the order it happens to
+    // enumerate in is not a fact about the game.
+    const lines = compareObservations(
+      [observed("size", "literal", ["b", "a"])],
+      [row("size", "literal", ["a", "b"])]
+    );
+    expect(lines).toEqual([]);
+  });
+
+  it("rejects a row with no rationale", () => {
+    const lines = compareObservations(
+      [observed("resources", "arity")],
+      [row("resources", "arity", [], { rationale: "   " })]
+    );
+    expect(lines).toEqual(["  ! building.resources arity: no rationale"]);
+  });
+
+  it("rejects a deferred narrowing with no issue", () => {
+    const lines = compareObservations(
+      [observed("resources", "arity")],
+      [row("resources", "arity", [], { classification: "narrowing-deferred" })]
+    );
+    expect(lines).toEqual([
+      "  ! building.resources arity: narrowing-deferred names work, so it needs the Linear " +
+        "issue that will do it",
+    ]);
+    const owned = compareObservations(
+      [observed("resources", "arity")],
+      [row("resources", "arity", [], { classification: "narrowing-deferred", issue: "SDK-1" })]
+    );
+    expect(owned).toEqual([]);
+  });
+
+  it("rejects a classification the kind cannot carry", () => {
+    const lines = compareObservations(
+      [observed("size", "literal", [])],
+      [row("size", "literal", [], { classification: "rules-wider-than-vanilla" })]
+    );
+    expect(lines).toEqual([
+      "  ! building.size literal: rules-wider-than-vanilla classifies a arity observation, " +
+        "not a literal one",
+    ]);
+  });
+
+  it("rejects an arity row that cites no declaration", () => {
+    const lines = compareObservations(
+      [observed("resources", "arity")],
+      [row("resources", "arity", [], { declaration: "" })]
+    );
+    expect(lines).toEqual([
+      "  ! building.resources arity: rules-wider-than-vanilla cites no CWT declaration",
+    ]);
+  });
+
+  it("rejects a duplicate row", () => {
+    const lines = compareObservations(
+      [observed("resources", "arity")],
+      [row("resources", "arity"), row("resources", "arity")]
+    );
+    expect(lines).toContain("  ! building.resources arity: duplicate row");
+  });
+
+  it("rejects rows out of order", () => {
+    // A forty-row table is only reviewable if its diff is, and an append-anywhere
+    // table drifts into one where a related row is impossible to find.
+    const lines = compareObservations(
+      [observed("resources", "arity"), observed("empire_limit.modifier", "arity")],
+      [row("resources", "arity"), row("empire_limit.modifier", "arity")]
+    );
+    expect(lines).toEqual([
+      "  ! building.empire_limit.modifier arity: out of order — sort rows by registry, field, kind",
+    ]);
+  });
+
+  it("reports two emitted fields sharing one path rather than deduplicating", () => {
+    const lines = compareObservations(
+      [observed("resources", "arity"), observed("resources", "arity")],
+      [row("resources", "arity")]
+    );
+    expect(lines).toEqual([
+      "  ! building.resources arity: duplicate observation — two emitted fields share this path",
+    ]);
+  });
+
+  it("prints a stub whose classification does not typecheck", () => {
+    // The forcing function: paste the stub, and `npm run typecheck` fails until
+    // a human picks a classification the union actually has.
+    const stub = observationStub(observed("size", "literal", ["b", "a"]));
+    expect(stub).toContain('classification: "TODO-classify"');
+    expect(stub).toContain('evidence: ["a", "b"]');
+    expect(stub).toContain('rationale: ""');
+    expect(stub).not.toContain("declaration");
+    expect(observationStub(observed("resources", "arity"))).toContain("declaration");
   });
 });
