@@ -114,6 +114,8 @@ export const humReturns = events.country(1, {
           { factor: 3, when: hasActualDeficit({ RESOURCE: vanilla.resource("minerals") }) },
         ],
         do: (c) => {
+          // Natural event FROM is the execution ROOT, so the country witness
+          // remains true even after THIS transitions to each owned planet.
           c.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
             planet.saveEventTargetAs(stormWorld);
             planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });

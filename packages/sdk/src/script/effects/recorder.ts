@@ -25,13 +25,25 @@ import type {
   ScriptCtx,
 } from "./types.ts";
 
+const cannotWitnessNaturalFrom = Symbol("cannotWitnessNaturalFrom");
+interface RuntimeScopeValue {
+  readonly [cannotWitnessNaturalFrom]?: true;
+}
+
 export function eventTarget<S extends ScopeName>(name: string): EventTarget<S> {
   return { ...scopeRef<S>(`event_target:${name}`), name };
 }
 
 /** SDK-internal: an unchecked value for a well-known path (`this`). */
-export function scopeValue<S extends ScopeName>(path: string): ScopeValue<S> {
-  return { kind: "scope-ref", path };
+export function scopeValue<S extends ScopeName>(
+  path: string,
+  canWitnessNaturalFrom = true
+): ScopeValue<S> {
+  return {
+    kind: "scope-ref",
+    path,
+    ...(canWitnessNaturalFrom ? {} : { [cannotWitnessNaturalFrom]: true as const }),
+  };
 }
 
 /** SDK-internal: an unchecked openable ref for absolute paths (`from`). */
@@ -143,9 +155,9 @@ export function scriptCtx<
   Self extends ScopeName,
   From extends ScopeName | undefined,
   Root extends ScopeName | undefined = Self,
->(): ScriptCtx<Self, From, Root> {
+>(options: { readonly splitRoot?: boolean } = {}): ScriptCtx<Self, From, Root> {
   return {
-    self: scopeValue("this"),
+    self: scopeValue("this", options.splitRoot !== true),
     root: scopeRef("root"),
     from: scopeRef("from"),
   } as ScriptCtx<Self, From, Root>;
@@ -349,7 +361,7 @@ interface FireCallArgs {
   readonly months?: number;
   readonly years?: number;
   readonly random?: number;
-  readonly from?: { readonly path: string };
+  readonly from?: { readonly path: string } & RuntimeScopeValue;
 }
 
 interface EventChainCounterCallArgs {
@@ -381,8 +393,16 @@ function fireEffect(key: string) {
           entries.push(kv(field, value));
         }
       }
-      // `from: ctx.self` is the natural FROM (the firing event's own scope) —
-      // nothing to emit. Any other ref is the game's own override mechanism.
+      if (args.from?.[cannotWitnessNaturalFrom] === true) {
+        throw new Error(
+          "A split-root effect block cannot use `from: ctx.self` as an event's natural FROM: " +
+            "the game supplies ROOT, which differs from this block's THIS scope. Pass `ctx.root` " +
+            "when the event expects ROOT, or an absolute scope reference for an explicit override."
+        );
+      }
+      // Natural FROM is the firing execution's ROOT. `ctx.self` can witness
+      // that omission only where SELF and ROOT are not known to differ; any
+      // other ref uses the game's explicit override mechanism.
       if (args.from !== undefined && args.from.path !== "this") {
         entries.push(block("scopes", [kv("from", args.from.path)]));
       }

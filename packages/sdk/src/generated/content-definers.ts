@@ -266,7 +266,12 @@ export function defineDecision<const Id extends string, S extends DecisionScope 
   def: DecisionDef<Id, S>
 ): ContentItem<"decision", DecisionDef<Id, never>> {
   const { scope, ...rest } = def;
-  return { itemKind: "content", type: "decision", id: def.id, def: rest as DecisionDef<Id, never> };
+  return {
+    itemKind: "content",
+    type: "decision",
+    id: def.id,
+    def: rest as unknown as DecisionDef<Id, never>,
+  };
 }
 
 /** What a job feature can contain. */
@@ -697,7 +702,7 @@ export function defineSpecialProject<
     itemKind: "content",
     type: "special_project",
     id: def.id,
-    def: def as SpecialProjectDef<Id, never>,
+    def: def as unknown as SpecialProjectDef<Id, never>,
   };
 }
 

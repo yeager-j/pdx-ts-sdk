@@ -384,7 +384,7 @@ export function fieldEntries(
         const child = recordEffects(recorded, (scope) =>
           (value as EffectBlock<ScopeName, ScopeName, ScopeName>)(
             scope,
-            scriptCtx<ScopeName, ScopeName, ScopeName>()
+            scriptCtx<ScopeName, ScopeName, ScopeName>({ splitRoot: field.splitRoot === true })
           )
         );
         entries.push(block(field.key, child));

@@ -405,6 +405,14 @@ function effectBlockArgs(scope: FieldScope): string {
   return scope.from === null ? scope.type : `${scope.type}, ${scope.from}`;
 }
 
+/** Runtime evidence that natural event FROM cannot be witnessed by this block's `this`. */
+function splitRootMetadata(scope: FieldScope): readonly string[] {
+  if (scope.root === null || scope.scopes === "any" || scope.scopes.length !== 1) {
+    return [];
+  }
+  return JSON.stringify(scope.scopes[0]) === scope.root ? [] : ["splitRoot: true"];
+}
+
 /**
  * Wraps a declarative member type in `WithFrom` where the rules give the block
  * a FROM, adding the closure form that can reach it.
@@ -1511,7 +1519,7 @@ function lowerOrdinary(
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
       memberType: `EffectBlock<${effectBlockArgs(scope)}>`,
-      metadata: metadata(field, name, "effect"),
+      metadata: metadata(field, name, "effect", splitRootMetadata(scope)),
       admits: admitsBlock(field, "effect", scope, "effect"),
     };
   }
