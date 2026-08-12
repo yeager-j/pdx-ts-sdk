@@ -740,6 +740,10 @@ async function main(): Promise<void> {
     [...emitter.unknownScopeGroups].sort()
   );
   reportSection("Content definers taken from the hand-written grafts", definers.grafted);
+  reportSection(
+    "Body fields renamed off a colliding localization slot",
+    contents.flatMap((content) => content.emission.localisationRenames)
+  );
   for (const content of contents) {
     const type = content.registry;
     console.log(`\n${type}: ${fieldCount(content.emission)}`);

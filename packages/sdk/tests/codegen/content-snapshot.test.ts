@@ -783,7 +783,7 @@ describe("content-type codegen", () => {
   it("renames a struct field that would collide with a localization member name", () => {
     // building.desc (`single_alias_right[triggered_desc_clause]`, a repeated
     // trigger+text struct) would otherwise duplicate the `desc` flavor-text
-    // member the type's own localisation table already claims, so the overlay
+    // member the type's own localisation table already claims, so the collision
     // renames its authoring member while the emitted key stays `desc`.
     const building = emissions.get("building");
     expect(building?.code).toContain("conditionalDesc?: BuildingDesc[];");
@@ -800,6 +800,43 @@ describe("content-type codegen", () => {
     // The rename has to reach the arms too: the writer resolves an arm by its
     // own member name, so a single-shot replace would leave them as `desc`.
     expect(situation?.code).not.toContain('member: "desc", shape: "struct"');
+  });
+
+  it("derives every localization rename from the collision, and only those", () => {
+    // One rule over the slot set `planLocalisation` produces, so the four the
+    // rules collide on their own and the one SYNTHETIC_LOCALISATION
+    // manufactures come out of the same place.
+    const renamed = [...emissions].flatMap(([registry, emission]) =>
+      emission.localisationRenames.map(() => registry)
+    );
+    expect(renamed.sort()).toEqual([
+      "archaeological_site_type",
+      "building",
+      "situation_type",
+      "special_project",
+      "tradition_category",
+    ]);
+    for (const [, emission] of emissions) {
+      for (const line of emission.localisationRenames) {
+        expect(line).toContain('authors as "conditionalDesc"');
+      }
+      // A rename only ever happens where a collision does, so no registry is
+      // left reporting one as unlowerable.
+      expect(emission.unsupported.join("\n")).not.toContain("localization slot");
+    }
+  });
+
+  it("points a synthetic localisation slot at the body member the rename produced", () => {
+    // archaeology.cwt declares no `$`-bearing desc pattern, so the slot is
+    // synthetic — the game still reads its text through the body's own `desc`
+    // key, which the collision that slot creates renames to `conditionalDesc`.
+    // The pointer is that rename, not a second spelling of it.
+    expect(emissions.get("archaeological_site_type")?.code).toContain(
+      '{ member: "desc", pattern: "$_desc", required: false, pointerMember: "conditionalDesc" }'
+    );
+    // situation_type's `desc = "$_desc"` is the game's own declared key, so its
+    // slot needs no pointer even though its body field renames identically.
+    expect(emissions.get("situation_type")?.code).not.toContain("pointerMember");
   });
 
   it("expands an all-scalar alias splice into an ordinary struct", () => {

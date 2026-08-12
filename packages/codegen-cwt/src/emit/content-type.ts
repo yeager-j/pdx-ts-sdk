@@ -78,6 +78,11 @@ export interface ContentEmission {
   readonly unsupported: readonly string[];
   readonly localisationAliases: readonly string[];
   /**
+   * Body fields whose mechanical member name was already a localization slot,
+   * each with the `conditional<Name>` spelling it authors under instead.
+   */
+  readonly localisationRenames: readonly string[];
+  /**
    * Set when the registry's unpinned scopes are a parameter of the definition,
    * so the definer emitter can thread S and strip the `scope` member.
    */
@@ -253,7 +258,18 @@ function localisationMembers(type: ContentType, plan = planLocalisation(type)): 
     .join("");
 }
 
-function localisationMetadata(type: ContentType, plan = planLocalisation(type)): string {
+/**
+ * `pointers` maps a localisation member to the body member the game actually
+ * reads its text through, for the synthetic slots that have one. Passed in
+ * rather than looked up, because it is a *result* of lowering the body: the
+ * pointer is the renamed body field, and the rename is only known once the
+ * field loop has run. See {@link renamedOffLocalisation}.
+ */
+function localisationMetadata(
+  type: ContentType,
+  plan = planLocalisation(type),
+  pointers: ReadonlyMap<string, string> = new Map()
+): string {
   return (
     "[\n" +
     plan.entries
@@ -263,11 +279,9 @@ function localisationMetadata(type: ContentType, plan = planLocalisation(type)):
         const conditional = conditionalRequirement(type, entry);
         const requiredUnless =
           conditional === null ? "" : `, requiredUnless: ${JSON.stringify(conditional)}`;
-        const synthetic = SYNTHETIC_LOCALISATION.get(`${type.name}.${member}`);
+        const pointer = pointers.get(member);
         const pointerMember =
-          synthetic === undefined
-            ? ""
-            : `, pointerMember: ${JSON.stringify(synthetic.pointerMember)}`;
+          pointer === undefined ? "" : `, pointerMember: ${JSON.stringify(pointer)}`;
         return (
           `  { member: ${JSON.stringify(member)}, pattern: ${JSON.stringify(entry.pattern)}, ` +
           `required: ${required}${requiredUnless}${pointerMember} },\n`
@@ -375,6 +389,10 @@ function repeatedStructEmission(
   // without meaning the same thing, exactly the collision the top level
   // guards against — the localisation member wins and the body field is
   // reported instead of silently duplicating a TS property.
+  //
+  // Deliberately still a report rather than the top level's `conditional<Name>`
+  // rename: no nested field collides today, so a rename here would name a
+  // member nothing has ever asked for. The report is what would say otherwise.
   const localisationMemberNames = new Set(
     (localisationPlan?.entries ?? []).map((entry) => camelCase(entry.key))
   );
@@ -739,18 +757,51 @@ export function emitContentType(
   const patchExclusions: string[] = [];
   const patchWidenings: string[] = [];
   const patchLocMembers: string[] = [];
+  const localisationRenames: string[] = [];
+  const localisationPointers = new Map<string, string>();
   const localisationPlan = planLocalisation(type);
-  // A body field can share a name with a localization slot without meaning the
-  // same thing — `building.desc` (`single_alias_right[triggered_desc_clause]`,
-  // a repeated trigger+text struct) is unrelated to the `desc` flavor text the
-  // type's own localisation table already claims for the TS member `desc`. Both
-  // succeeding would emit the same interface property twice with different
-  // types, so the localization slot — already load-bearing everywhere it
-  // appears — wins, and the colliding body field is reported instead of
-  // silently overwritten.
   const localisationMemberNames = new Set(
     localisationPlan.entries.map((entry) => camelCase(entry.key))
   );
+  /**
+   * The authoring member for a body field, renamed when the mechanical one is
+   * already a localization slot.
+   *
+   * A body field can share a name with a localization slot without meaning the
+   * same thing — `building.desc` (`single_alias_right[triggered_desc_clause]`,
+   * a repeated trigger+text struct) is unrelated to the `desc` flavor text the
+   * type's own localisation table claims for the TS member `desc`. Both would
+   * emit the same interface property twice with different types, and both are
+   * real authoring paths, so the colliding body field takes the
+   * `conditional<Name>` spelling rather than either one losing.
+   *
+   * The slot set is `planLocalisation`'s, which includes the synthetic slots —
+   * so `archaeological_site_type.desc`, whose collision exists only because
+   * {@link SYNTHETIC_LOCALISATION} manufactured the slot, derives from the same
+   * rule as the four the rules collide on their own.
+   *
+   * A synthetic slot's text has no route into the definition body except that
+   * renamed field: the SDK invented the key, so it must also write the pointer
+   * the game reads it through. `pointerMember` is therefore recorded here, from
+   * the rename, rather than being a second hand-written spelling of it. A
+   * *declared* slot needs no pointer — `situation_type`'s `desc = "$_desc"` is
+   * the game's own key — so only synthetic slots take one.
+   */
+  const renamedOffLocalisation = (name: string): string => {
+    const declared = camelCase(name);
+    if (!localisationMemberNames.has(declared)) {
+      return declared;
+    }
+    const renamed = `conditional${pascalCase(name)}`;
+    localisationRenames.push(
+      `${type.name}.${name} — "${declared}" is a localization slot member, ` +
+        `so the body field authors as "${renamed}"`
+    );
+    if (SYNTHETIC_LOCALISATION.has(`${type.name}.${declared}`)) {
+      localisationPointers.set(declared, renamed);
+    }
+    return renamed;
+  };
 
   // Everything the emitter can lower is emitted, in the rules' own declaration
   // order. The SDK's promise is that a mod author does not run out of API, so a
@@ -844,11 +895,7 @@ export function emitContentType(
       continue;
     }
     const override = CONTENT_FIELD_OVERRIDES.get(path);
-    const member = override?.member ?? camelCase(name);
-    if (localisationMemberNames.has(member)) {
-      unsupported.push(`${name} (collides with the "${member}" localization slot)`);
-      continue;
-    }
+    const member = renamedOffLocalisation(name);
     if (override?.shape === "repeatedStruct") {
       const config = REPEATED_STRUCT_DEFINITIONS.get(path);
       const nested =
@@ -861,13 +908,13 @@ export function emitContentType(
       }
       const optional = memberOptional(group, override);
       const docs = docComment([...new Set(group.flatMap((field) => field.docs))], "  ");
-      members.push(`${docs}  ${camelCase(name)}${optional ? "?" : ""}: ${nested.memberType};\n`);
-      patchMembers.push({ member: camelCase(name), docs, memberType: nested.memberType });
+      members.push(`${docs}  ${member}${optional ? "?" : ""}: ${nested.memberType};\n`);
+      patchMembers.push({ member, docs, memberType: nested.memberType });
       extraCode.push(nested.code);
       fieldMetadata.push(nested.metadata);
       declinedFields.push(...nested.declinedFields);
       unsupported.push(...nested.unsupported);
-      const repeatedMember = camelCase(name);
+      const repeatedMember = member;
       nestedEmittedFields.push(
         ...nested.emittedFields.map(parameterised).map((field) => ({
           ...field,
@@ -875,7 +922,7 @@ export function emitContentType(
         }))
       );
       localisationAliases.push(...nested.localisationAliases);
-      emittedMembers.add(camelCase(name));
+      emittedMembers.add(member);
       emittedFields.push({
         field: name,
         authoredPath: [repeatedMember],
@@ -918,7 +965,7 @@ export function emitContentType(
     members.push(`${docs}  ${member}${optional ? "?" : ""}: ${memberType};\n`);
     patchMembers.push({ member, docs, memberType });
     fieldMetadata.push(
-      override?.member === undefined
+      member === camelCase(name)
         ? lowered.metadata
         : // replaceAll, not replace: a dual repeats the member on each arm, and
           // the writer resolves an arm by its own member name.
@@ -1038,7 +1085,7 @@ export function emitContentType(
     fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
     "];\n\n" +
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
-    `${localisationMetadata(type, localisationPlan)};\n`;
+    `${localisationMetadata(type, localisationPlan, localisationPointers)};\n`;
 
   return {
     code,
@@ -1053,6 +1100,7 @@ export function emitContentType(
     unsupported,
     scopeParameter: parameter,
     localisationAliases: [...localisationPlan.aliases, ...localisationAliases],
+    localisationRenames,
     patchExclusions: patchCode === "" ? [] : patchExclusions,
     patchWidenings: patchCode === "" ? [] : patchWidenings,
     patchLocMembers: patchCode === "" ? [] : patchLocMembers,

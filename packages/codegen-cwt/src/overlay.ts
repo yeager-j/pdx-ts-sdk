@@ -338,18 +338,6 @@ export const REQUIRED_LOCALISATION = new Set([
 export interface SyntheticLocalisation {
   /** The `$`-bearing pattern to synthesize, e.g. `"$_desc"`. */
   readonly pattern: string;
-  /**
-   * The renamed raw-key body member (a `CONTENT_FIELD_OVERRIDES` `member`)
-   * that the vendored rules' bare pointer (`desc = desc`) actually reads at
-   * runtime. A synthetic slot only gives an author a real text-authoring
-   * path; the game still resolves the display text through that pointer, so
-   * `ContentAuthoring.define` sets this member to the synthesized slot's
-   * computed key whenever the slot's text is present and the author has not
-   * already written the pointer themselves — otherwise the text lands in
-   * localisation with nothing in the definition body pointing at it, the
-   * same silent failure this whole table exists to close.
-   */
-  readonly pointerMember: string;
   readonly reason: string;
 }
 
@@ -365,9 +353,10 @@ export interface SyntheticLocalisation {
  * fix relies on) and the registry ends up with *no* slot where an author can
  * write real flavor text and get a generated key. The body's own `desc` field
  * (`archaeology.cwt:44`, dual with the `triggered_desc_clause` block form,
- * renamed to `conditionalDesc` by the `CONTENT_FIELD_OVERRIDES` row beside
- * this one) is `conversion: "identity"` either way its dual resolves — a raw
- * key, never auto-generated — so writing English into it is accepted and
+ * which `emit/content-type.ts` renames to `conditionalDesc` because the slot
+ * this row adds takes the `desc` member) is `conversion: "identity"` either
+ * way its dual resolves — a raw key, never auto-generated — so writing
+ * English into it is accepted and
  * silently wrong: no warning, no error, the game shows the literal string.
  * `situation_type`, by contrast, needs no such row: situations.cwt:17 already
  * declares `desc = "$_desc"` *alongside* the same bare `desc = desc` pointer
@@ -383,22 +372,22 @@ export interface SyntheticLocalisation {
  * of being the only route.
  *
  * A generated key is only half the fix: `type[archaeological_site_type]`
- * reads that text through the body's own `desc` pointer (renamed
- * `conditionalDesc`, per the `CONTENT_FIELD_OVERRIDES` row beside this one),
- * so a definition that sets only the synthetic `desc` member and never
- * touches `conditionalDesc` would populate the `.yml` with real text and
- * emit no `desc = <id>_desc` anywhere in its own body — reachable nowhere in
- * game, the identical silent failure this table exists to close, one step
- * removed. `pointerMember` is what closes that: `ContentAuthoring.define`
- * defaults it to the synthesized key whenever the text member is set and the
- * author has not written the pointer themselves.
+ * reads that text through the body's own `desc` pointer, so a definition that
+ * sets only the synthetic `desc` member and never touches `conditionalDesc`
+ * would populate the `.yml` with real text and emit no `desc = <id>_desc`
+ * anywhere in its own body — reachable nowhere in game, the identical silent
+ * failure this table exists to close, one step removed. The emitted
+ * `pointerMember` closes that: `ContentAuthoring.define` defaults it to the
+ * synthesized key whenever the text member is set and the author has not
+ * written the pointer themselves. It is not stated here — the collision this
+ * row manufactures is what renames the body field, so `emit/content-type.ts`
+ * records the pointer from that rename rather than repeating its spelling.
  */
 export const SYNTHETIC_LOCALISATION = new Map<string, SyntheticLocalisation>([
   [
     "archaeological_site_type.desc",
     {
       pattern: "$_desc",
-      pointerMember: "conditionalDesc",
       reason:
         "archaeology.cwt declares no `$`-bearing pattern for desc at all (only the excluded " +
         'bare pointer `desc = desc`), unlike situation_type\'s `desc = "$_desc"` sitting beside ' +
@@ -691,13 +680,6 @@ export interface ContentFieldOverride {
    * rather than each registry growing its own exception.
    */
   readonly optional?: true;
-  /**
-   * Authoring member name, when the mechanically derived one collides with a
-   * localisation slot: `desc = { trigger text }` (the repeated block form of
-   * the `desc` key) is a different thing from the `desc` flavor-text member
-   * the localisation table claims, and both must stay authorable.
-   */
-  readonly member?: string;
   /** Public name for a nested struct the mechanical path-derived name misstates. */
   readonly nestedTypeName?: string;
   readonly reason: string;
@@ -720,37 +702,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "decisions.cwt omits a cardinality annotation, but Stellaris 4.4.6 writes this block " +
         "in only 4 of 111 shipped decisions. It is an optional tooltip override, not a required " +
         "part of every decision (SDK-84 corpus evidence).",
-    },
-  ],
-  [
-    "archaeological_site_type.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The dual of the bare identity-conversion scalar and the desc key's repeated " +
-        "trigger+text block form (both raw-key arms, archaeology.cwt:44+48); renamed so it does " +
-        "not collide with the desc flavor-text localisation slot SYNTHETIC_LOCALISATION adds " +
-        "(SDK-50). Named like building.desc for consistency.",
-    },
-  ],
-  [
-    "building.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The `desc` key's repeated trigger+text block form; the derived member collides with " +
-        "the `desc` flavor-text localisation slot, and `triggeredDesc` is already the building's " +
-        "own distinct triggered_desc key.",
-    },
-  ],
-  [
-    "special_project.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The repeated trigger+text desc block is distinct from the desc flavour-text localisation " +
-        "slot. Six shipped projects use the block form; rename it exactly as building.desc does " +
-        "so both authoring paths remain available.",
     },
   ],
   [
@@ -897,27 +848,6 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "(traditions.cwt:70), the same shape ascension_perk.triggered_modifier already uses. Found " +
         "via SDK-39: the row was missing so the writer silently dropped the field even though 30 " +
         "shipped traditions/swaps write it.",
-    },
-  ],
-  [
-    "tradition_category.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The `desc` key's repeated trigger+text block form; the derived member collides with " +
-        "the `desc` flavor-text localisation slot. Named like building.desc for consistency.",
-    },
-  ],
-  [
-    "situation_type.desc",
-    {
-      member: "conditionalDesc",
-      reason:
-        "The `desc` key's repeated trigger+text block form; the derived member collides with " +
-        "the `desc` flavor-text localisation slot. Named like building.desc for consistency. " +
-        "Unlike building's, situations' `desc` is also declared as a bare localisation scalar, " +
-        "which shipped situations do write — so the field duals, and the row no longer pins the " +
-        "block form. It pinned it when first-wins picking could only keep one arm.",
     },
   ],
   [
