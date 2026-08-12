@@ -1,7 +1,10 @@
-import { countryFlags, createMod, eventTarget, hasOwner } from "@pdx-ts/sdk";
+import { block, countryFlags, createMod, eventTarget, hasOwner, kv } from "@pdx-ts/sdk";
 import { describe, expect, it } from "vitest";
 
 import { fixture } from "../src/index.ts";
+import { applyEffectEntries } from "../src/interpret.ts";
+import { buildState } from "../src/state.ts";
+import { coverageSummary, EFFECT_SEMANTICS, STRUCTURAL_SEMANTICS } from "../src/whitelist.ts";
 
 const flags = countryFlags("sdk149_first", "sdk149_second", "sdk149_target_seen");
 
@@ -172,6 +175,92 @@ describe("random-list choice identity", () => {
 
     expect(world.country(0).hasFlag(flags.sdk149_first)).toBe(false);
     expect(world.country(0).hasFlag(flags.sdk149_second)).toBe(true);
+  });
+});
+
+describe("structural semantics audit", () => {
+  it("keeps structural dispatch and coverage in one non-vacuous audited descriptor", () => {
+    const entries = Object.values(STRUCTURAL_SEMANTICS);
+
+    expect(entries).not.toHaveLength(0);
+    expect(entries.every(({ note }) => note.trim().length > 0)).toBe(true);
+    expect(STRUCTURAL_SEMANTICS.random_list?.disposition).toBe("forced-list");
+    expect(STRUCTURAL_SEMANTICS.while?.disposition).toBe("unimplemented");
+    expect(
+      Object.entries(STRUCTURAL_SEMANTICS)
+        .filter(([, { disposition }]) => disposition === "leaf")
+        .map(([key]) => key)
+        .filter((key) => EFFECT_SEMANTICS[key] === undefined)
+    ).toEqual([]);
+    expect(coverageSummary()).toContain("5 walker-modeled structurals");
+    expect(coverageSummary()).toContain("2 leaf-delegated structurals");
+    expect(coverageSummary()).toContain("8 explicitly refused structurals");
+  });
+
+  it("breaks an if chain across a transparent structural statement", () => {
+    const state = buildState({ countries: [{}] });
+    const scope = { kind: "country", country: 0 } as const;
+
+    expect(() =>
+      applyEffectEntries(
+        [
+          block("if", [block("limit", [kv("has_country_flag", flags.sdk149_first)])]),
+          block("hidden_effect", [kv("log", "between")]),
+          block("else", [kv("set_country_flag", flags.sdk149_second)]),
+        ],
+        scope,
+        {
+          state,
+          root: scope,
+          from: undefined,
+          choicePlan: { arms: [], next: 0 },
+          targets: new Map(),
+        }
+      )
+    ).toThrow(/else without a preceding if/);
+
+    expect(state.log).toEqual(["between"]);
+    expect(state.countries[0]?.flags.has(flags.sdk149_second)).toBe(false);
+  });
+
+  it("refuses structural forms whose game semantics have not been verified", () => {
+    const mod = makeMod("sdk167_refused_structures");
+    const events = mod.namespace();
+    const random = events.country(1, {
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.random({ chance: 100 }, (chosen) => chosen.setCountryFlag(flags.sdk149_first));
+      },
+    });
+    const lockedList = events.country(2, {
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.lockedRandomList([
+          { weight: 1, do: (chosen) => chosen.setCountryFlag(flags.sdk149_first) },
+        ]);
+      },
+    });
+    const loop = events.country(3, {
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.whileLoop({ count: 1 }, (iteration) => {
+          iteration.setCountryFlag(flags.sdk149_first);
+        });
+      },
+    });
+    const world = fixture({ countries: [{}] }, { events: [random, lockedList, loop] });
+    const country = world.country(0);
+
+    expect(() => world.fire(random, country)).toThrow(
+      /Structural effect "random" is deliberately unimplemented/
+    );
+    expect(() => world.fire(lockedList, country)).toThrow(
+      /Structural effect "locked_random_list" is deliberately unimplemented/
+    );
+    expect(() => world.fire(loop, country)).toThrow(
+      /Structural effect "while" is deliberately unimplemented/
+    );
+    expect(country.hasFlag(flags.sdk149_first)).toBe(false);
   });
 });
 

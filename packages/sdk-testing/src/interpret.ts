@@ -48,7 +48,7 @@ import {
   ITERATOR_SEMANTICS,
   LINK_SEMANTICS,
   resolveEventTarget,
-  STRUCTURAL_SEMANTICS,
+  structuralSemanticsFor,
   TRIGGER_SEMANTICS,
   type ExecCtx,
 } from "./whitelist.ts";
@@ -441,63 +441,76 @@ export function applyEffectEntries(
   // current chain has already applied a branch.
   let chain: { taken: boolean } | undefined;
   for (const entry of entries) {
-    if (entry.key === "if") {
-      chain = { taken: false };
-      const body = requireBlock(entry);
-      const limit = body.find((child) => child.key === "limit");
-      if (limit === undefined) {
-        throw new InterpreterError(`if without a limit block. ${coverageSummary()}`);
-      }
-      if (evaluateLimit(requireBlock(limit), scope, ex)) {
-        chain.taken = true;
-        applyEffectEntries(
-          body.filter((child) => child.key !== "limit"),
-          scope,
-          ex
-        );
-      }
-      continue;
-    }
-    if (entry.key === "else_if" || entry.key === "else") {
-      if (chain === undefined) {
-        throw new InterpreterError(
-          `${entry.key} without a preceding if — the game associates chains by position. ` +
-            coverageSummary()
-        );
-      }
-      if (!chain.taken) {
-        const body = requireBlock(entry);
-        const limit = body.find((child) => child.key === "limit");
-        const applies =
-          entry.key === "else" ||
-          (limit !== undefined && evaluateLimit(requireBlock(limit), scope, ex));
-        if (applies) {
-          chain.taken = true;
-          applyEffectEntries(
-            body.filter((child) => child.key !== "limit"),
-            scope,
-            ex
-          );
+    const structural = structuralSemanticsFor(entry.key);
+    if (structural !== undefined) {
+      switch (structural.disposition) {
+        case "conditional-start": {
+          chain = { taken: false };
+          const body = requireBlock(entry);
+          const limit = body.find((child) => child.key === "limit");
+          if (limit === undefined) {
+            throw new InterpreterError(`${entry.key} without a limit block. ${coverageSummary()}`);
+          }
+          if (evaluateLimit(requireBlock(limit), scope, ex)) {
+            chain.taken = true;
+            applyEffectEntries(
+              body.filter((child) => child.key !== "limit"),
+              scope,
+              ex
+            );
+          }
+          continue;
         }
+        case "conditional-continuation":
+        case "conditional-fallback": {
+          if (chain === undefined) {
+            throw new InterpreterError(
+              `${entry.key} without a preceding if — the game associates chains by position. ` +
+                coverageSummary()
+            );
+          }
+          if (!chain.taken) {
+            const body = requireBlock(entry);
+            const limit = body.find((child) => child.key === "limit");
+            const applies =
+              structural.disposition === "conditional-fallback" ||
+              (limit !== undefined && evaluateLimit(requireBlock(limit), scope, ex));
+            if (applies) {
+              chain.taken = true;
+              applyEffectEntries(
+                body.filter((child) => child.key !== "limit"),
+                scope,
+                ex
+              );
+            }
+          }
+          if (structural.disposition === "conditional-fallback") {
+            chain = undefined;
+          }
+          continue;
+        }
+        case "transparent":
+          chain = undefined;
+          applyEffectEntries(requireBlock(entry), scope, ex);
+          continue;
+        case "forced-list":
+          chain = undefined;
+          applyRandomList(entry, scope, ex);
+          continue;
+        case "unimplemented":
+          throw new InterpreterError(
+            `Structural effect "${entry.key}" is deliberately unimplemented: ${structural.note} ` +
+              coverageSummary()
+          );
+        case "leaf":
+          break;
+        default:
+          structural.disposition satisfies never;
+          throw new InterpreterError(`Unknown structural disposition for "${entry.key}"`);
       }
-      if (entry.key === "else") {
-        chain = undefined;
-      }
-      continue;
     }
     chain = undefined;
 
-    if (entry.key === "hidden_effect") {
-      // Transparent: hiding is a tooltip concern, and the block changes no
-      // scope. Its entries run exactly as they would unwrapped, which is what
-      // the game does — nothing here is a guess about semantics.
-      applyEffectEntries(requireBlock(entry), scope, ex);
-      continue;
-    }
-    if (entry.key === "random_list") {
-      applyRandomList(entry, scope, ex);
-      continue;
-    }
     if (isEventFireKey(entry.key)) {
       applyFire(entry, scope, ex);
       continue;
@@ -516,7 +529,7 @@ export function applyEffectEntries(
       effect.apply(entry, scope, ex);
       continue;
     }
-    const known = isEffectKey(entry.key) || STRUCTURAL_SEMANTICS[entry.key] !== undefined;
+    const known = isEffectKey(entry.key);
     throw new InterpreterError(
       known
         ? `Effect "${entry.key}" is real but unimplemented in the testing interpreter. ` +
