@@ -81,12 +81,17 @@ generated diff as public API, commit generated output with its source change).
    compares against the git baseline, so it correctly fails while the generated
    diff is unstaged).
 
-5. **Read the report rows the change added.** `arity`, `literal`, and
-   `invented` are reported rather than failed, so a new one is a prompt: is a
-   list the game never repeats legal breadth, is an emitted key with no
-   precedent one the rules genuinely declare? `form` and `scope` fail instead —
-   fix the lowering. Done when every row the change introduced is named and
-   answered in the summary you hand back, or gone.
+5. **Classify the shape rows the change added.** `invented` is reported rather
+   than failed, so a new one is a prompt: is an emitted key with no precedent
+   one the rules genuinely declare? `arity` and `literal` are not failures
+   either — a list the game never repeats is legal breadth — but they are no
+   longer free: each one needs a row in
+   `packages/sdk/tests/codegen/corpus-observations.ts` naming its
+   classification, the CWT declaration it is wider than, and why. The gate
+   prints a paste-ready stub whose `classification` deliberately fails
+   `typecheck` until you choose one. `form` and `scope` fail outright — fix the
+   lowering, or acknowledge it in `ACKNOWLEDGED_MISMATCHES` in the same file.
+   Done when every row the change introduced is classified, or gone.
 
 6. **Retire every row the change closed.** Not only the one you started from:
    a mechanism carries rows across registries, and `inline_script` alone has
@@ -121,7 +126,10 @@ rather than a reading of the declaration:
   reports an over-wide list and stays silent on a too-narrow one: a second
   block the game writes is not awkward to author, it is unwritable.
 - `arity: "single"` — the reverse, for a `0..inf` on a field whose only
-  sensible authoring is one value.
+  sensible authoring is one value. This is what the `narrowing-deferred`
+  classification in `corpus-observations.ts` promises: a row classified that
+  way names the issue that will add this override, rather than accepting the
+  list as legal breadth.
 - `scope` — CWT annotates no scope and the mechanical fallback is wrong.
   Shape conformance's `scope` mismatch is the check that keeps it honest.
 - `FIELD_WIDENINGS` — an input form the rules deny that vanilla writes anyway.

@@ -44,8 +44,9 @@ source change).
    (reference below). Done when: every kind is present, the corpus gate
    records a non-zero definition count for the registry, every presence gap is
    either fixed or acknowledged in `corpus-gaps.ts` with a reason and a Linear
-   issue, and every `form` or `scope` mismatch is fixed — acknowledgment
-   covers presence gaps only; the gate rejects a shape mismatch regardless.
+   issue, every `form` or `scope` mismatch is fixed, and every `arity` or
+   `literal` observation the registry introduces is classified in
+   `corpus-observations.ts`.
 8. Add or update a README example only when the registry introduces an
    authoring pattern users would not infer from existing registries.
 
@@ -96,8 +97,12 @@ That is the `add-patch-registry` skill.
   the presence floor that no author can produce fails — fix the lowering, or
   acknowledge it in `corpus-gaps.ts` with a reason and a "Corpus Gap" Linear
   issue (measurement for review, not acceptance). A `form` or `scope` mismatch
-  fails the same way: fix the lowering. A field the emitter invents with zero
-  real precedent is worth verifying by hand against the vendored rules.
+  fails the same way: fix the lowering, or acknowledge it in
+  `ACKNOWLEDGED_MISMATCHES` (`corpus-observations.ts`). An `arity` or `literal`
+  mismatch is legal rather than broken, but a new registry's are still new: each
+  needs a classified row in the `OBSERVATIONS` baseline in that same file,
+  citing the CWT declaration it is wider than. A field the emitter invents with
+  zero real precedent is worth verifying by hand against the vendored rules.
   `npm run corpus:check` re-extracts and diffs (maintainer-local,
   install-gated); the version canary warns, never fails, when the local
   install has patched past the fixture.

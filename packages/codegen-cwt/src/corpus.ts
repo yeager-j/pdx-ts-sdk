@@ -759,14 +759,29 @@ export type { RuleScopes };
  * carries no claim, not that an author is stuck; both are reported, and the
  * detail says which. `arity` and `literal` are softer — a list where the game
  * happens never to repeat is legal, and a value outside a closed union may be
- * an upstream spelling quirk.
+ * an upstream spelling quirk. Softer is not unreviewed: the gate holds the two
+ * of them against a committed baseline of classified rows, so a *new or
+ * changed* observation fails until somebody says which kind of legal it is.
  */
 export type ConformanceMismatchKind = "form" | "arity" | "literal" | "scope";
 
 export interface ShapeMismatch {
   readonly field: string;
   readonly kind: ConformanceMismatchKind;
+  /**
+   * The finding in prose, for a human reading a failure. Deliberately volatile:
+   * it carries definition counts that move with every game patch and samples
+   * that truncate, so nothing may treat it as an identity.
+   */
   readonly detail: string;
+  /**
+   * The values that produced the verdict, complete and untruncated — every
+   * stray for `literal`, and empty for the kinds whose verdict is its own
+   * evidence. This is the half a baseline compares, as a set: a seventh stray
+   * the prose does not show still has to be reviewed, and a definition count
+   * that moved is not a new observation.
+   */
+  readonly evidence: readonly string[];
 }
 
 /**
@@ -881,8 +896,12 @@ export function shapeConformance(
     if (observation === undefined) {
       continue;
     }
-    const report = (kind: ConformanceMismatchKind, detail: string): void => {
-      mismatches.push({ field: field.field, kind, detail });
+    const report = (
+      kind: ConformanceMismatchKind,
+      detail: string,
+      evidence: readonly string[] = []
+    ): void => {
+      mismatches.push({ field: field.field, kind, detail, evidence });
     };
     const form = WRITTEN_FORM.get(field.shape);
     const seen = `${observation.definitions} defs`;
@@ -945,13 +964,28 @@ export function shapeConformance(
       }
     }
     if (field.repeated && observation.repeated === 0) {
+      // No evidence beyond the verdict: the definition count is context a reader
+      // wants and a baseline must not key on, since it moves with every patch
+      // while the finding — this list is never repeated — does not.
       report("arity", `lowered as a list, but no definition writes it twice (${seen})`);
     }
-    if (field.literals !== undefined) {
+    // A dual carries its *scalar* arm's literals (see `lowerDual`), while
+    // `values` merges every scalar the field wrote — the scalar arm's, and the
+    // bare values inside the block arm's blocks. Nothing in the observation says
+    // which position a value came from, so a closed scalar union cannot judge
+    // them: `ship_size.graphical_culture` is `bool` beside
+    // `{ <graphical_culture> }`, and reading its 25 culture ids as strays
+    // outside `yes`/`no` measured one arm against the other. Same exemption, and
+    // the same reason, as the interior form check's.
+    const unattributable = field.shape === "dual" && observation.bareValues > 0;
+    if (field.literals !== undefined && !unattributable) {
       const closed = new Set(field.literals);
       const stray = [...observation.values].filter((value) => !closed.has(value));
       if (stray.length > 0) {
-        report("literal", `outside the emitted union: ${stray.slice(0, 6).join(" ")}`);
+        // The prose truncates and the evidence does not: a seventh stray is a
+        // value nobody has classified, and hiding it behind the sample would let
+        // it ride along under a row written for the first six.
+        report("literal", `outside the emitted union: ${stray.slice(0, 6).join(" ")}`, stray);
       }
     }
     if (field.clause !== undefined && field.scope !== undefined) {
