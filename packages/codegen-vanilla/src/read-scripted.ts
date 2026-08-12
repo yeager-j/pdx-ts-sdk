@@ -73,6 +73,10 @@ function scan(text: string, conditional: boolean, into: Map<string, Occurrence[]
   }
 }
 
+function recordCondition(name: string, into: Map<string, Occurrence[]>): void {
+  into.set(name, [...(into.get(name) ?? []), { defaulted: false, conditional: true }]);
+}
+
 function walkItems(
   items: readonly PdxItem[],
   conditional: boolean,
@@ -93,11 +97,15 @@ function walkItems(
       case "param":
         // The block's own condition is a parameter, and one whose whole purpose
         // is to be omissible.
-        into.set(item.name, [
-          ...(into.get(item.name) ?? []),
-          { defaulted: false, conditional: true },
-        ]);
+        recordCondition(item.name, into);
         walkItems(item.items, true, into);
+        break;
+      case "param-text":
+        // The same construct without a tree. The parameter list is read off
+        // the text either way — a `$NAME$` is a lexeme, not a node — so a
+        // brace-crossing region costs nothing here.
+        recordCondition(item.name, into);
+        scan(item.text, true, into);
         break;
       case "str":
         scan(item.value, conditional, into);

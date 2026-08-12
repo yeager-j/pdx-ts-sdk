@@ -207,6 +207,11 @@ class Walker {
         this.note(diagnostics, "param-block", item.name);
         this.walkBody(item.items, false, kind, diagnostics);
         return "universal";
+      case "param-text":
+        // The same construct with no tree to walk. It constrains nothing
+        // either way, so only the diagnostic changes.
+        this.note(diagnostics, "param-block", item.name);
+        return "universal";
       default:
         return "universal";
     }

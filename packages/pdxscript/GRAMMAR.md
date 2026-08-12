@@ -12,8 +12,8 @@ op         = "=" | ">" | "<" | ">=" | "<=" | "!="
 value      = SCALAR container        (header form: hsv { 0.63 0.13 0.5 })
            | SCALAR | MATH | container
 container  = "{" item* "}"
-param      = "[[" "!"? NAME "]" item* "]"
-item       = entry | container | param | SCALAR | MATH
+region     = "[[" "!"? NAME "]" REGION-TEXT "]"   (conditional text; see below)
+item       = entry | container | region | SCALAR | MATH
 
 KEY        = unquoted token (`@name` keys define variables) | quoted string
 SCALAR     = quoted string | unquoted token
@@ -24,10 +24,32 @@ MATH       = ("@[" | "@\[") any characters "]"   (verbatim, single token —
 
 The top level really is `item*`, not `entry*`: vanilla ships all-scalar files
 (`job_tags/00_tags.txt` is a bare word list) and anonymous top-level
-containers (`gamesetup_settings.txt`). Parameter blocks (`[[POP_GROUP] ... ]`,
-negated `[[!POP_GROUP] ... ]`) appear throughout Stellaris
-`common/scripted_effects`; the `$NAME$` substitution tokens inside them are
-ordinary unquoted scalars.
+containers (`gamesetup_settings.txt`).
+
+## Conditional regions
+
+`[[POP_GROUP] ... ]` (negated `[[!POP_GROUP] ... ]`) appears throughout
+Stellaris `common/scripted_effects`. It is not a block: the engine splices the
+region's **text** into the call site when the parameter is defined, and parses
+afterwards. Brace balance therefore need only hold *after* substitution, and
+mods rely on that — Gigastructural Engineering opens `set_name = {` inside one
+region and closes it inside another, so every define/undefine combination
+balances and none of the three regions does on its own.
+
+So a region's body is text, and it is read as a tree only when the text is
+already a balanced item sequence:
+
+- balanced (all 50 vanilla occurrences, 638 of Gigastructural's 650) — a
+  `param` node, its body parsed like any other, `$NAME$` substitution tokens
+  inside it ordinary unquoted scalars;
+- not balanced, or readable only by repairing brace balance — a `param-text`
+  node holding the body verbatim. `regionScalars()` reads such a body flat
+  (the sanctioned way to ask what it names); there is nothing else to say
+  about it, because the engine has not decided either.
+
+Finding the region's closing `]` is textual for the same reason: `]` inside a
+quoted string, a `#` comment, or `@[ ... ]` math does not close it, a nested
+`[[NAME]` opener raises the depth, and braces are not counted at all.
 
 ## Token classification
 
@@ -93,9 +115,13 @@ the same — parse succeeds, and each repair is recorded as a diagnostic
   read as `foo = { ... }`.
 
 Hard errors (`PdxSyntaxError`, always `file:line`): unterminated quote,
-unterminated `@[`, an operator with no key or no value, and nesting beyond
-the depth guard (fuzz-proofing — 100k open braces must error, not blow the
-stack).
+unterminated `@[`, unterminated `[[` region, a `]` with no opener, an
+operator with no key or no value, and nesting beyond the depth guard
+(fuzz-proofing — 100k open braces must error, not blow the stack).
+
+An unreadable region body is *not* an error — it is what `param-text` is
+for. The distinction is that the region's own delimiters are the file's
+structure, while what sits between them is the call site's.
 
 ## Serialization
 
@@ -116,6 +142,11 @@ not textual (identical bytes).
   quoted). Explicitly quoted strings stay quoted.
 - Top-level entries are blank-line separated, with a trailing newline.
 - Keys render raw; a key that is not bare-safe throws (see deferrals).
+- A `param` region renders like a container, one item per line with the
+  closing `]` at parent indent. A `param-text` region renders its body
+  byte-for-byte between the opener and `]`, with nothing added — comments
+  and all, since re-indenting text this package did not read would be an
+  edit, and anything inserted would change what the next parse captures.
 
 Consequences, all fixpoint-stable: comments, blank lines, and semicolons
 drop; `2.0` renders `2`; `.5` renders `0.5`; multi-line scalar lists render
@@ -130,9 +161,13 @@ inline; repaired input re-emits in repaired form.
   Both are hard errors today; adding them is a lexer and AST change when a
   sibling game is in scope.
 - **Save-file constructs** (`EU4txt` magic, container-as-key templates):
-  out of scope — this package parses game-definition files. (Parameter
-  blocks were originally scoped out as EU4-only; the vanilla sweep found
+  out of scope — this package parses game-definition files. (Conditional
+  regions were originally scoped out as EU4-only; the vanilla sweep found
   them all over Stellaris `common/scripted_effects`, so they are in.)
+- **Substitution**: `$NAME$` tokens and the regions guarded by them are
+  represented, never applied. This package cannot tell you what a scripted
+  effect looks like at a given call site, which is why an unbalanced region
+  body stays text rather than being reassembled into a tree.
 - **Comment preservation**: out of scope for 0.x; the AST leaves room
   (trivia would attach to entries) but no API pretends it exists.
 - **Encodings**: the API takes a decoded string; callers own file reading.

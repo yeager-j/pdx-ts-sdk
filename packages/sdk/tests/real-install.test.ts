@@ -175,6 +175,9 @@ function normalizeItem(item: PdxItem): unknown {
   if (item.kind === "param") {
     return { name: item.name, negated: item.negated, items: item.items.map(normalizeItem) };
   }
+  if (item.kind === "param-text") {
+    return { name: item.name, negated: item.negated, text: item.text };
+  }
   return normalize(item);
 }
 

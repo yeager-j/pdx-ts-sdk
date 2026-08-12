@@ -48,10 +48,11 @@ export interface PdxEntry {
 }
 
 /**
- * A `[[NAME] ... ]` parameter block: its items apply only when the scripted
- * effect/trigger is invoked with NAME defined (`[[!NAME]` when undefined).
- * Stellaris `common/scripted_effects` uses these; the `$NAME$` substitution
- * tokens inside are ordinary `str` scalars.
+ * A `[[NAME] ... ]` conditional region whose body is a balanced item
+ * sequence: those items apply only when the scripted effect/trigger is
+ * invoked with NAME defined (`[[!NAME]` when undefined). Stellaris
+ * `common/scripted_effects` uses these; the `$NAME$` substitution tokens
+ * inside are ordinary `str` scalars.
  */
 export interface PdxParamBlock {
   readonly kind: "param";
@@ -60,7 +61,23 @@ export interface PdxParamBlock {
   readonly items: readonly PdxItem[];
 }
 
-export type PdxItem = PdxEntry | PdxScalar | PdxContainer | PdxParamBlock;
+/**
+ * The same region when its body is *not* a balanced item sequence, so there
+ * is no tree to give: the engine splices these regions as text before it
+ * parses, and a mod may open a brace in one region and close it in another
+ * (Gigastructural Engineering's fleet naming does). The body is kept
+ * verbatim and re-emitted verbatim — comments included, since dropping them
+ * would edit text this package did not read.
+ */
+export interface PdxParamText {
+  readonly kind: "param-text";
+  readonly name: string;
+  readonly negated: boolean;
+  /** The region's source between the opener and its closing `]`. */
+  readonly text: string;
+}
+
+export type PdxItem = PdxEntry | PdxScalar | PdxContainer | PdxParamBlock | PdxParamText;
 
 export type PdxValue = PdxScalar | PdxContainer;
 

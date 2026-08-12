@@ -66,6 +66,14 @@ export function normOurs(items: readonly PdxItem[]): Norm[] {
       result.push(["p", `${item.negated ? "!" : ""}${item.name}`, normOurs(item.items)]);
       continue;
     }
+    if (item.kind === "param-text") {
+      // jomini has no counterpart: a region we could not tree is one it
+      // rejects the whole file over. Normalizing the raw body to a scalar
+      // keeps the comparison total and makes a vanilla file that grows one
+      // surface as a mismatch instead of as agreement.
+      result.push(["p", `${item.negated ? "!" : ""}${item.name}`, [["s", item.text]]]);
+      continue;
+    }
     result.push(["s", normOurScalar(item)]);
   }
   return result;

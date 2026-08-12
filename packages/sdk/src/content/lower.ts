@@ -249,7 +249,7 @@ function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segme
  */
 function isPassthrough(value: unknown): value is PdxItem {
   const kind = (value as { readonly kind?: unknown } | null)?.kind;
-  if (kind === "entry" || kind === "container" || kind === "param") {
+  if (kind === "entry" || kind === "container" || kind === "param" || kind === "param-text") {
     return true;
   }
   return typeof value === "object" && value !== null && isScalar(value as PdxItem);

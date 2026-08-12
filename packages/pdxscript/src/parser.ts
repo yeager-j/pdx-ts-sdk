@@ -3,7 +3,7 @@
  * the disambiguation rules, and the repair policy.
  *
  * The top level is a container body without braces — one item loop serves
- * the file, `{ ... }` containers, and `[[NAME] ... ]` parameter blocks.
+ * the file, `{ ... }` containers, and the body of a `[[NAME] ... ]` region.
  *
  * Malformed-but-shipped input (stray `}`, unclosed containers at EOF,
  * same-line operator-less `foo{...}` entries) is repaired the way the game repairs
@@ -11,13 +11,30 @@
  * cannot be read throws a `PdxSyntaxError` carrying `file:line`.
  */
 
-import type { PdxContainer, PdxDiagnostic, PdxDocument, PdxItem, PdxOp, PdxValue } from "./ast.ts";
+import type {
+  PdxContainer,
+  PdxDiagnostic,
+  PdxDocument,
+  PdxItem,
+  PdxOp,
+  PdxParamBlock,
+  PdxParamText,
+  PdxScalar,
+  PdxValue,
+} from "./ast.ts";
 import { classifyUnquoted, PdxSyntaxError, tokenize, type Token } from "./lexer.ts";
 
 /** Fuzz-proofing: error on absurd nesting instead of overflowing the stack. */
 const MAX_DEPTH = 1000;
 
-type Closer = "rbrace" | "rbracket" | "eof";
+/**
+ * Which body the item loop is reading. It decides where the body ends and
+ * how a defect there is handled: `file` and `region` run to EOF (the lexer
+ * has already cut the region out of the source), `container` ends at `}`.
+ * Only `file` gets the top-level operator-less rule — inside a body,
+ * `rgb { 1 2 3 }` is a bare scalar plus a container, not a missing `=`.
+ */
+type Body = "file" | "container" | "region";
 
 function classify(token: Token): PdxItem & PdxValue {
   if (token.quoted) {
@@ -56,16 +73,11 @@ class Parser {
   }
 
   parseTopLevel(): PdxItem[] {
-    return this.parseItems("eof", 1, 0);
+    return this.parseItems("file", 1, 0);
   }
 
-  /**
-   * The shared item loop. `closer` distinguishes the three body kinds: a
-   * container ends at `}` (EOF is repaired), a parameter block ends at `]`
-   * (EOF is a hard error), the top level ends at EOF (a stray `}` is
-   * repaired and skipped).
-   */
-  private parseItems(closer: Closer, openLine: number, depth: number): PdxItem[] {
+  /** The shared item loop; `body` decides where it ends and how it repairs. */
+  private parseItems(body: Body, openLine: number, depth: number): PdxItem[] {
     if (depth > MAX_DEPTH) {
       this.fail(`Nesting exceeds ${MAX_DEPTH} levels`, openLine);
     }
@@ -73,41 +85,35 @@ class Parser {
     for (;;) {
       const next = this.peek();
       if (next.kind === "eof") {
-        if (closer === "rbrace") {
+        if (body === "container") {
           this.repair("unclosed-at-eof", openLine, "{");
         }
-        if (closer === "rbracket") {
-          this.fail("Unterminated [[ parameter block", openLine);
-        }
-        return items;
-      }
-      if (next.kind === closer) {
-        this.advance();
         return items;
       }
       if (next.kind === "rbrace") {
-        // Only reachable at top level (containers consume their own `}`).
+        if (body === "container") {
+          this.advance();
+          return items;
+        }
         this.repair("stray-closing-brace", next.line, "}");
         this.advance();
         continue;
       }
       if (next.kind === "rbracket") {
+        // The lexer closes every region it opens, so a `]` here has no opener.
         this.fail("Unexpected ']'", next.line);
       }
       if (next.kind === "lbrace") {
         this.advance();
-        items.push({ kind: "container", items: this.parseItems("rbrace", next.line, depth + 1) });
+        items.push({
+          kind: "container",
+          items: this.parseItems("container", next.line, depth + 1),
+        });
         continue;
       }
-      if (next.kind === "param-open") {
+      if (next.kind === "param") {
         this.advance();
-        const negated = next.text.startsWith("!");
-        items.push({
-          kind: "param",
-          name: negated ? next.text.slice(1) : next.text,
-          negated,
-          items: this.parseItems("rbracket", next.line, depth + 1),
-        });
+        items.push(this.parseRegion(next, depth));
         continue;
       }
       if (next.kind === "math") {
@@ -118,12 +124,37 @@ class Parser {
       if (next.kind === "op") {
         this.fail(`Expected a key or value but found '${next.text}'`, next.line);
       }
-      items.push(this.parseScalarLed(closer, depth));
+      items.push(this.parseScalarLed(body, depth));
     }
   }
 
+  /**
+   * A `[[NAME] ... ]` region. The engine splices these as text before it
+   * parses, so a body is only a tree when it happens to be one on its own:
+   * whatever fails to read, or reads only by repairing brace balance, is
+   * kept verbatim as `param-text` instead of being rejected. A repair the
+   * body does not depend on (a missing `=`) is reported and the tree kept.
+   */
+  private parseRegion(token: Token, depth: number): PdxParamBlock | PdxParamText {
+    const negated = token.text.startsWith("!");
+    const name = negated ? token.text.slice(1) : token.text;
+    const body = token.body ?? "";
+    const inner = new Parser(tokenize(body, this.fileName, token.line), this.fileName);
+    let items: PdxItem[];
+    try {
+      items = inner.parseItems("region", token.line, depth + 1);
+    } catch {
+      return { kind: "param-text", name, negated, text: body };
+    }
+    if (inner.diagnostics.some((diagnostic) => diagnostic.kind !== "operator-less-entry")) {
+      return { kind: "param-text", name, negated, text: body };
+    }
+    this.diagnostics.push(...inner.diagnostics);
+    return { kind: "param", name, negated, items };
+  }
+
   /** An identifier was peeked: entry, operator-less repair, or bare scalar. */
-  private parseScalarLed(closer: Closer, depth: number): PdxItem {
+  private parseScalarLed(body: Body, depth: number): PdxItem {
     const first = this.advance();
     const next = this.peek();
     if (next.kind === "op") {
@@ -142,13 +173,13 @@ class Parser {
     // without a game-semantic list of header names. A `{` on a later line is
     // the separate bare container item the serializer emits for that tree.
     const nestedBodyStartsWithEntry =
-      closer !== "eof" &&
+      body !== "file" &&
       this.tokens[this.index + 1]?.kind === "identifier" &&
       this.tokens[this.index + 2]?.kind === "op";
     if (
       next.kind === "lbrace" &&
       next.line === first.line &&
-      (closer === "eof" || nestedBodyStartsWithEntry)
+      (body === "file" || nestedBodyStartsWithEntry)
     ) {
       this.repair("operator-less-entry", first.line, first.text);
       this.advance();
@@ -156,7 +187,7 @@ class Parser {
         kind: "entry",
         key: first.text,
         op: "=",
-        value: { kind: "container", items: this.parseItems("rbrace", next.line, depth + 1) },
+        value: { kind: "container", items: this.parseItems("container", next.line, depth + 1) },
         line: first.line,
       };
     }
@@ -173,7 +204,7 @@ class Parser {
         return {
           kind: "container",
           header: token.text,
-          items: this.parseItems("rbrace", open.line, depth + 1),
+          items: this.parseItems("container", open.line, depth + 1),
         };
       }
       return classify(token);
@@ -186,13 +217,44 @@ class Parser {
     }
     return {
       kind: "container",
-      items: this.parseItems("rbrace", token.line, depth + 1),
+      items: this.parseItems("container", token.line, depth + 1),
     } satisfies PdxContainer;
   }
 }
 
 function describe(token: Token): string {
   return token.kind === "eof" ? "end of file" : `'${token.text}'`;
+}
+
+/**
+ * The scalars a `param-text` region's body mentions, in source order and
+ * flat — there is no structure to report, or it would have been a tree.
+ *
+ * This is the sanctioned reading of a body with no tree: a consumer that
+ * needs to know what a region names (an `@variable` a patch must re-declare,
+ * an `@[ ]` expression) asks here rather than re-deriving the lexer's rules
+ * over raw text. Bodies that are not lexable PDXScript throw, exactly as a
+ * file of the same text would.
+ */
+export function regionScalars(region: PdxParamText, fileName = "<region>"): PdxScalar[] {
+  const scalars: PdxScalar[] = [];
+  const visit = (text: string): void => {
+    for (const token of tokenize(text, fileName)) {
+      if (token.kind === "identifier") {
+        scalars.push(
+          token.quoted
+            ? { kind: "str", value: token.text, quoted: true }
+            : classifyUnquoted(token.text)
+        );
+      } else if (token.kind === "math") {
+        scalars.push({ kind: "math", source: token.text });
+      } else if (token.kind === "param") {
+        visit(token.body ?? "");
+      }
+    }
+  };
+  visit(region.text);
+  return scalars;
 }
 
 export function parse(source: string, fileName = "<input>"): PdxDocument {
