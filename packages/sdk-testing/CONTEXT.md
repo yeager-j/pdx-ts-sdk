@@ -29,6 +29,14 @@ Every entry carries a note defending its semantics against the real game.
 Anything absent throws at evaluation time with a coverage summary; nothing
 evaluates silently.
 
+**Doc pin**:
+The paragraph of Paradox's vendored documentation dump a whitelist entry's note
+was read from, recorded by hash. Turns the audit from a one-time reading into a
+standing one: `tests/whitelist-audit.test.ts` fails on a changed paragraph, on
+an unacknowledged deprecation marker, and on a dump revendored at a version the
+table was never read against. The one claim no paragraph settles — event-target
+lifetime, recorded live in-game — is pinned to the verified game build instead.
+
 **Sim scope**:
 The subset of the game's scopes this interpreter models. Narrower than
 Authoring's `ScopeName` by design — a scope outside the subset is refused

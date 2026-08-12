@@ -41,6 +41,9 @@
   "dependencies": {
     "@pdx-ts/pdxscript": "^0.2.0"
   },
+  "devDependencies": {
+    "@pdx-ts/codegen-cwt": "*"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yeager-j/pdx-ts-sdk.git",

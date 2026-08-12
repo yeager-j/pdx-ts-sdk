@@ -33,8 +33,9 @@ import {
  * exactly what is modeled rather than repeating the list by hand.
  *
  * Widening this is SDK-49's first half: add a scope only once its state and
- * legal transitions are modeled, per AGENTS.md's testing-helpers section —
- * a scope that is present but wrong is worse than one that is absent.
+ * legal transitions are modeled, on the terms `packages/sdk-testing/CONTEXT.md`
+ * sets out for this context — a scope that is present but wrong is worse than
+ * one that is absent.
  */
 export type SimScopeName = (typeof SIM_SCOPE_NAMES)[number];
 
@@ -69,9 +70,9 @@ export function describeUnsupportedSimScope(scope: string): string {
     `The testing harness models ${SIM_SCOPE_NAMES.length} of Stellaris's ` +
     `~${TOTAL_STELLARIS_SCOPE_COUNT} scopes today: ${SIM_SCOPE_NAMES.join(", ")}. "${scope}" is ` +
     `not one of them. If it genuinely needs modeling, widen SimScopeName in ` +
-    `packages/sdk-testing/src/state.ts (see AGENTS.md's testing-helpers section) with real state ` +
-    `and real transitions — never a guess. If this was a typo, check the scope name against the ` +
-    `SDK's generated ScopeName union.`
+    `packages/sdk-testing/src/state.ts with real state and real transitions — never a guess; ` +
+    `packages/sdk-testing/CONTEXT.md states the bar. If this was a typo, check the scope name ` +
+    `against the SDK's generated ScopeName union.`
   );
 }
 
@@ -102,6 +103,19 @@ export interface CountrySpec {
   readonly flags?: readonly CountryFlag[];
   readonly technologies?: ReadonlyArray<TypedRef<"technology"> | string>;
   readonly resources?: Readonly<Record<string, number>>;
+  /**
+   * Storage capacity per resource — what the country can actually hold.
+   * `add_resource` clamps at it, because the game discards the overflow
+   * instead of banking it, and a test that asserts a stockpile the game would
+   * have thrown away is green for a reward that never arrived.
+   *
+   * Declared rather than defaulted, and per resource: capacity is a base plus
+   * techs, buildings, modifiers and whatever the mod itself changes, so there
+   * is no number this harness could invent that would be true of a real
+   * playthrough. An undeclared resource is uncapped — the gap is disclosed
+   * (see `add_resource`'s whitelist note) rather than guessed at.
+   */
+  readonly storage?: Readonly<Record<string, number>>;
   /** Ownership is nesting: these planets belong to this country. */
   readonly planets?: readonly PlanetSpec[];
 }
@@ -171,6 +185,8 @@ export interface CountryState {
   readonly flags: Set<string>;
   readonly technologies: Set<string>;
   readonly resources: Map<string, number>;
+  /** Declared storage capacity per resource; an absent entry is uncapped. */
+  readonly storage: Map<string, number>;
 }
 
 export interface PlanetState {
@@ -244,11 +260,25 @@ export function buildState(spec: FixtureSpec): WorldState {
   const countries: CountryState[] = [];
   const planets: PlanetState[][] = [];
   (spec.countries ?? []).forEach((countrySpec, c) => {
+    const name = countrySpec.name ?? `country${c}`;
+    const resources = new Map(Object.entries(countrySpec.resources ?? {}));
+    const storage = new Map(Object.entries(countrySpec.storage ?? {}));
+    for (const [resource, capacity] of storage) {
+      const stockpile = resources.get(resource) ?? 0;
+      if (stockpile > capacity) {
+        throw new Error(
+          `${name} starts with ${stockpile} ${resource} but declares storage for ${capacity}. ` +
+            `A starting stockpile above its own capacity is a state the game cannot be in, and ` +
+            `add_resource would silently clamp back down to ${capacity} on the first gain.`
+        );
+      }
+    }
     countries.push({
-      name: countrySpec.name ?? `country${c}`,
+      name,
       flags: new Set(countrySpec.flags ?? []),
       technologies: new Set((countrySpec.technologies ?? []).map((t) => String(refId(t)))),
-      resources: new Map(Object.entries(countrySpec.resources ?? {})),
+      resources,
+      storage,
     });
     planets.push(
       (countrySpec.planets ?? []).map((planetSpec, p) => ({
@@ -315,6 +345,7 @@ export function cloneState(state: WorldState): WorldState {
       flags: new Set(country.flags),
       technologies: new Set(country.technologies),
       resources: new Map(country.resources),
+      storage: new Map(country.storage),
     })),
     planets: state.planets.map((row) =>
       row.map((planet) => ({
@@ -393,6 +424,7 @@ function commitCountryState(target: CountryState, source: CountryState): void {
   replaceSet(target.flags, source.flags);
   replaceSet(target.technologies, source.technologies);
   replaceMap(target.resources, source.resources);
+  replaceMap(target.storage, source.storage);
 }
 
 function commitPlanetState(target: PlanetState, source: PlanetState): void {
