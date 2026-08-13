@@ -8,6 +8,7 @@ import {
 import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { createEffectPolicy } from "@pdx-ts/codegen-cwt/effect-policy";
+import { emitEffects } from "@pdx-ts/codegen-cwt/emit/effects";
 import { emitEvents } from "@pdx-ts/codegen-cwt/emit/events";
 import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/links";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
@@ -139,6 +140,21 @@ describe("the effect ownership policy", () => {
         "run",
       ])
     );
+  });
+
+  it("reserves the effect-path terminal against generated scope links", () => {
+    const lowered = lowerRuleTable(rules.effects, docs.effects, emitter, scopes);
+    expect(() =>
+      emitEffects(emitter, docs.effects, scopes, lowered, policy, [
+        {
+          key: "effects",
+          method: "effects",
+          inputScopes: ["country"],
+          outputScope: "country",
+          docs: [],
+        },
+      ])
+    ).toThrow(/scope link "effects" would emit property "effects"/);
   });
 });
 

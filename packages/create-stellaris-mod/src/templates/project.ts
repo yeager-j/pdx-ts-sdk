@@ -345,6 +345,12 @@ export default tseslint.config(
       },
     },
     rules: {
+      // Reusing a closure parameter name across nested PDXScript blocks mirrors
+      // the game's implicit THIS and keeps scope shifts readable. The outer
+      // scope object is not usable inside the inner game block; ambient ctx
+      // references remain available under their own name.
+      "no-shadow": "off",
+      "@typescript-eslint/no-shadow": "off",
       "pdx/one-definition-per-event-handle": "error",
       "pdx/one-namespace-per-file": "error",
     },

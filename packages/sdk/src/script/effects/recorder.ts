@@ -265,9 +265,7 @@ const STRUCTURAL_BASE = {
     sink.push(block("target", recordEffects(refs, body)));
   },
 
-  hiddenEffect: (sink, refs) => (body: (scope: unknown) => void) => {
-    sink.push(block("hidden_effect", recordEffects(refs, body)));
-  },
+  hiddenEffect: (sink, refs, recording) => makeEffectPath(sink, refs, recording, ["hidden_effect"]),
 
   randomList: (sink, refs) => weightedList("random_list", sink, refs),
   lockedRandomList: (sink, refs) => weightedList("locked_random_list", sink, refs),
@@ -437,6 +435,63 @@ function guarded(recording: Recording | undefined, member: string, dispatch: unk
   };
 }
 
+/**
+ * Builds one lazy effect-block path.
+ *
+ * Property reads only extend `keys`; the path writes nothing until `effects`
+ * records its one leaf closure. Wrapping from the leaf outward keeps the
+ * authoring order and PDXScript nesting identical without one recorder per
+ * hop. The generated meta table is the runtime authority for which properties
+ * are scope navigation rather than ordinary effect methods.
+ */
+function makeEffectPath(
+  sink: PdxEntry[],
+  refs: ContentRefUse[],
+  recording: Recording | undefined,
+  keys: readonly string[]
+): unknown {
+  const label = keys.join(".");
+  const dispatch = (prop: string): unknown => {
+    if (prop === "effects") {
+      return (body: (scope: unknown) => void): void => {
+        let nested = recordEffects(refs, body);
+        for (let index = keys.length - 1; index >= 0; index -= 1) {
+          nested = [block(keys[index]!, nested)];
+        }
+        sink.push(...nested);
+      };
+    }
+    if (prop === "hiddenEffect") {
+      return makeEffectPath(sink, refs, recording, [...keys, "hidden_effect"]);
+    }
+    const meta = EFFECT_META[prop];
+    if (meta?.shape.kind !== "scope-link") {
+      throw new Error(
+        `Unknown effect path "${label}.${prop}" — "${prop}" is not a generated scope link. ` +
+          "Only hiddenEffect, generated scope links, and the effects() terminal compose."
+      );
+    }
+    return makeEffectPath(sink, refs, recording, [...keys, meta.key]);
+  };
+
+  return new Proxy(Object.create(null) as object, {
+    get(_target, prop) {
+      if (typeof prop !== "string") {
+        return undefined;
+      }
+      // `recordEffects` checks a closure's returned value for a callable
+      // `then`. A concise closure may return an unterminated path expression;
+      // it is still an unused lazy node, not a promise or a late recording.
+      if (prop === "then") {
+        return undefined;
+      }
+      const member = `${label}.${prop}`;
+      assertLive(recording, member);
+      return guarded(recording, member, dispatch(prop));
+    },
+  });
+}
+
 function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recording): unknown {
   const dispatch = (prop: string): unknown => {
     const structural = STRUCTURAL[prop];
@@ -474,6 +529,8 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
           recordEffects(refs, body, child);
           sink.push(block(meta.key, child));
         };
+      case "scope-link":
+        return makeEffectPath(sink, refs, recording, [meta.key]);
     }
   };
 

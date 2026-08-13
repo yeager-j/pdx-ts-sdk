@@ -26,6 +26,7 @@ export type {
   ComplexTriggerModifier,
   ComplexTriggerModifierMode,
   ComplexTriggerModifierWithLoc,
+  EffectPath,
   IfChain,
   Modifier,
   ModifierWithLoc,
@@ -38,7 +39,7 @@ export type {
   UndeclaredFrom,
   UndeclaredRoot,
 } from "./script/effects/types.ts";
-export type { ScopeMap, ScopeObjOf } from "./generated/effects.ts";
+export type { EffectPathMap, EffectPathOf, ScopeMap, ScopeObjOf } from "./generated/effects.ts";
 export type { SituationTargetContract } from "./script/effects/situations.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
 export {

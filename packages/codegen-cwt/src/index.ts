@@ -605,7 +605,7 @@ async function main(): Promise<void> {
       "script-docs/v4.4.1/scopes.log",
     ]) +
       'import type { PdxOp } from "@pdx-ts/pdxscript";\n' +
-      `import type { Modifier, ${referencesIdentifier(effects.interfaces, "ScopeValue") ? "ScopeValue, " : ""}StructuralEffects } from "../script/effects/types.ts";\n` +
+      `import type { EffectPath, Modifier, ${referencesIdentifier(effects.interfaces, "ScopeValue") ? "ScopeValue, " : ""}StructuralEffects } from "../script/effects/types.ts";\n` +
       `import type { Trigger${referencesIdentifier(effects.interfaces, "ScriptValue") ? ", ScriptValue" : ""} } ` +
       'from "../script/trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n' +
@@ -673,7 +673,7 @@ async function main(): Promise<void> {
       ` | value sets emitted: ${emitter.usedValueSets.size}`
   );
   console.log(
-    `scope links: ${scopeLinks.emitted} trigger/value fns, ${effects.linkEmitted} effect methods` +
+    `scope links: ${scopeLinks.emitted} trigger/value fns, ${effects.linkEmitted} effect paths` +
       ` emitted of ${rules.links.size} declared`
   );
   console.log(

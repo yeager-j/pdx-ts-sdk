@@ -247,6 +247,8 @@ describe("a scaffolded project", () => {
       'const mod = createMod({ name: "Lint probe", prefix: "lint_probe", supportedVersion: "4.4.*" });',
       "const events = mod.namespace();",
       "const handle = events.countryHandle(1);",
+      "const shadow = (s: number) => [s].map((s) => s + 1);",
+      "void shadow(1);",
       "handle.define({ isTriggeredOnly: true });",
       "const plain = { define() {} };",
       "plain.define();",

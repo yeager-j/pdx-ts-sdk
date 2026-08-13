@@ -3,11 +3,11 @@
  *
  * A static scope link navigates from any of its input scopes to its output
  * scope and is legal in both trigger and effect position (`owner = { ... }`).
- * Both positions become one overloaded free function per link here — a
- * condition in, a condition out; a scope value in, the navigated scope value
- * out. Effect position rides the effect emitter as well, which folds the same
- * classified links into its scope-set clusters so the generated interfaces and
- * `EFFECT_META` carry them like any other wrapper.
+ * Trigger and value positions become one overloaded free function per link
+ * here — a condition in, a condition out; a scope value in, the navigated
+ * scope value out. Effect position rides the effect emitter as well, which
+ * folds the same classified links into recursive path-property clusters and
+ * marks them distinctly in `EFFECT_META`.
  *
  * The scopes come from `links.cwt`, the prose summaries fall back to the
  * game's `scopes.log` dump — the same authoritative/cross-check split

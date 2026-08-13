@@ -3,10 +3,10 @@
  *
  * Two outputs, one design:
  *
- * - `effects.ts` — TYPES only. Effects cluster by the exact set of scopes
- *   they are valid in; each distinct set becomes one interface carrying its
- *   method signatures once, and the per-scope interfaces (`CountryScope`)
- *   are `extends` compositions. ~1000 signatures total instead of 38 × 560.
+ * - `effects.ts` — TYPES only. Effects and scope-link paths independently
+ *   cluster by the exact set of scopes they are valid in; each distinct set
+ *   becomes one interface carrying its members once, and the per-scope
+ *   interfaces are `extends` compositions.
  * - `effect-meta.ts` — DATA. One entry per method telling the runtime
  *   recorder (`src/script/effects/recorder.ts`, a single scope-agnostic Proxy) how to
  *   serialize the call. The Proxy throws on names missing from this table.
@@ -47,7 +47,7 @@ export interface EffectEmission {
   readonly scalarOnly: readonly string[];
   /** `EFFECT_FIELD_TYPE_OVERRIDES` rows applied, with the reason each states. */
   readonly fieldTypeOverrides: readonly string[];
-  /** Scope-link methods folded into the clusters alongside the effects. */
+  /** Scope-link path properties emitted from the shared link table. */
   readonly linkEmitted: number;
 }
 
@@ -66,6 +66,13 @@ interface EmittedEffect {
   readonly method: string;
   readonly key: string;
   readonly shape: EffectShape;
+  readonly docs: readonly string[];
+}
+
+interface EmittedScopeLink {
+  readonly method: string;
+  readonly key: string;
+  readonly outputScope: string;
   readonly docs: readonly string[];
 }
 
@@ -273,6 +280,10 @@ function metaEntry(effect: EmittedEffect): string {
   }
 }
 
+function scopeLinkMetaEntry(link: EmittedScopeLink): string {
+  return `  ${link.method}: { key: ${JSON.stringify(link.key)}, shape: { kind: "scope-link" } },\n`;
+}
+
 /** Deterministic short tag for long scope sets, stable across runs. */
 function hashTag(text: string): string {
   let hash = 5381;
@@ -290,6 +301,17 @@ function clusterName(scopes: readonly string[] | "universal"): string {
     return `EffectsIn${scopes.map(pascalCase).join("")}`;
   }
   return `EffectsIn${scopes.length}Scopes${hashTag(scopes.join("|"))}`;
+}
+
+function pathClusterName(scopes: readonly string[] | "universal"): string {
+  return clusterName(scopes).replace("Effects", "EffectPaths");
+}
+
+function pathProperty(link: EmittedScopeLink): string {
+  return (
+    docComment(link.docs, "  ") +
+    `  readonly ${link.method}: EffectPathOf<${JSON.stringify(link.outputScope)}>;\n`
+  );
 }
 
 function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefined): string[] {
@@ -316,7 +338,12 @@ export function emitEffects(
     readonly scopes: readonly string[] | "universal";
     readonly effects: EmittedEffect[];
   }
+  interface LinkCluster {
+    readonly scopes: readonly string[] | "universal";
+    readonly links: EmittedScopeLink[];
+  }
   const clusters = new Map<string, Cluster>();
+  const linkClusters = new Map<string, LinkCluster>();
 
   for (const key of [...rules.keys()].sort()) {
     const rule = rules.get(key)!;
@@ -392,23 +419,24 @@ export function emitEffects(
     }
   }
 
-  // Scope links join the same clusters as ordinary wrapper effects, so the
-  // interfaces, ScopeMap, and EFFECT_META carry them with no special casing.
-  // A name collision is a hard error, not a skip: the link method would merge
-  // with an existing interface member and the Proxy would dispatch wrongly.
+  // Scope links use their own recursive property clusters. A name collision is
+  // a hard error, not a skip: the property would merge with an effect method,
+  // and the Proxy would have no unambiguous dispatch for that authoring name.
   const effectCount = [...clusters.values()].reduce(
     (sum, cluster) => sum + cluster.effects.length,
     0
   );
 
   const takenMethods = new Set([
+    "effects",
+    "then",
     ...policy.publicMethods,
     ...[...clusters.values()].flatMap((cluster) => cluster.effects.map((effect) => effect.method)),
   ]);
   for (const link of links) {
     if (takenMethods.has(link.method)) {
       throw new Error(
-        `scope link "${link.key}" would emit method "${link.method}", which the effect ` +
+        `scope link "${link.key}" would emit property "${link.method}", which the effect ` +
           "surface already carries — rename via the overlay before generating"
       );
     }
@@ -416,20 +444,23 @@ export function emitEffects(
     if (scopes === null) {
       throw new Error(`scope link "${link.key}" passed classification with an unknown scope`);
     }
-    const effect: EmittedEffect = {
+    const emitted: EmittedScopeLink = {
       method: link.method,
       key: link.key,
-      shape: { kind: "wrapper", scope: link.outputScope, fields: null },
+      outputScope: link.outputScope,
       docs: link.docs,
     };
     const clusterKey = scopes === "universal" ? "universal" : scopes.join("|");
-    const cluster = clusters.get(clusterKey) ?? { scopes, effects: [] };
-    cluster.effects.push(effect);
-    clusters.set(clusterKey, cluster);
+    const cluster = linkClusters.get(clusterKey) ?? { scopes, links: [] };
+    cluster.links.push(emitted);
+    linkClusters.set(clusterKey, cluster);
   }
 
   const sortedClusters = [...clusters.values()].sort((left, right) =>
     clusterName(left.scopes).localeCompare(clusterName(right.scopes))
+  );
+  const sortedLinkClusters = [...linkClusters.values()].sort((left, right) =>
+    pathClusterName(left.scopes).localeCompare(pathClusterName(right.scopes))
   );
 
   const interfaceChunks: string[] = [];
@@ -475,6 +506,17 @@ export function emitEffects(
     );
   }
 
+  for (const cluster of sortedLinkClusters) {
+    const name = pathClusterName(cluster.scopes);
+    const heading =
+      cluster.scopes === "universal"
+        ? ["Effect scope paths valid in every scope."]
+        : [`Effect scope paths valid in: ${cluster.scopes.join(", ")}.`];
+    interfaceChunks.push(
+      `${docComment(heading)}export interface ${name} {\n${cluster.links.map(pathProperty).join("\n")}}\n`
+    );
+  }
+
   const allScopes = canonicalScopes(emitter.rules.scopes);
   const scopeChunks = allScopes.map((scope) => {
     const parents = [
@@ -482,10 +524,26 @@ export function emitEffects(
       ...sortedClusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
         .map((cluster) => clusterName(cluster.scopes)),
+      ...sortedLinkClusters
+        .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
+        .map((cluster) => pathClusterName(cluster.scopes)),
     ];
     return (
       docComment([`The effects recordable in ${scope} scope.`]) +
       `export interface ${pascalCase(scope)}Scope extends ${parents.join(", ")} {}\n`
+    );
+  });
+
+  const pathChunks = allScopes.map((scope) => {
+    const parents = [
+      `EffectPath<${JSON.stringify(scope)}>`,
+      ...sortedLinkClusters
+        .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
+        .map((cluster) => pathClusterName(cluster.scopes)),
+    ];
+    return (
+      docComment([`An effect-block path whose current scope is ${scope}.`]) +
+      `export interface ${pascalCase(scope)}EffectPath extends ${parents.join(", ")} {}\n`
     );
   });
 
@@ -494,14 +552,34 @@ export function emitEffects(
     `export interface ScopeMap {\n` +
     allScopes.map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}Scope;\n`).join("") +
     `}\n\n` +
-    `export type ScopeObjOf<S extends ScopeName> = ScopeMap[S];\n`;
+    `export type ScopeObjOf<S extends ScopeName> = ScopeMap[S];\n\n` +
+    docComment(["Scope name -> a composable effect-block path at that scope."]) +
+    `export interface EffectPathMap {\n` +
+    allScopes
+      .map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}EffectPath;\n`)
+      .join("") +
+    `}\n\n` +
+    `export type EffectPathOf<S extends ScopeName> = EffectPathMap[S];\n`;
 
-  const interfaces = interfaceChunks.join("\n") + "\n" + scopeChunks.join("\n") + "\n" + scopeMap;
+  const interfaces =
+    interfaceChunks.join("\n") +
+    "\n" +
+    scopeChunks.join("\n") +
+    "\n" +
+    pathChunks.join("\n") +
+    "\n" +
+    scopeMap;
 
-  const metaEntries = sortedClusters
-    .flatMap((cluster) => cluster.effects)
+  const metaEntries = [
+    ...sortedClusters
+      .flatMap((cluster) => cluster.effects)
+      .map((effect) => ({ method: effect.method, entry: metaEntry(effect) })),
+    ...sortedLinkClusters
+      .flatMap((cluster) => cluster.links)
+      .map((link) => ({ method: link.method, entry: scopeLinkMetaEntry(link) })),
+  ]
     .sort((left, right) => left.method.localeCompare(right.method))
-    .map(metaEntry)
+    .map(({ entry }) => entry)
     .join("");
   const meta =
     "export type EffectFieldKind = " +
@@ -527,7 +605,8 @@ export function emitEffects(
     '  | { readonly kind: "bool" }\n' +
     '  | { readonly kind: "value"; readonly refTypes?: readonly string[]; readonly booleanLiterals?: readonly ("yes" | "no")[] }\n' +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
-    '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null };\n\n' +
+    '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
+    '  | { readonly kind: "scope-link" };\n\n' +
     "export interface EffectMeta {\n" +
     "  readonly key: string;\n" +
     "  readonly shape: EffectShapeMeta;\n" +

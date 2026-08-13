@@ -5,9 +5,10 @@
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
-import { describe, it } from "vitest";
+import { describe, expectTypeOf, it } from "vitest";
 
 import { planetFlags } from "../src/generated/value-sets.ts";
+import type { EffectPath, EffectPathOf } from "../src/index.ts";
 import { eventTarget, makeScope } from "../src/script/effects/recorder.ts";
 import { isAtWar } from "../src/script/triggers.ts";
 
@@ -49,25 +50,39 @@ describe("generated effect scope safety", () => {
     });
   });
 
-  it("types a scope link's body to the link's output scope", () => {
+  it("types a scope path's terminal body to the final link's output scope", () => {
     const planet = makeScope<"planet">(sink);
-    planet.owner((country) => {
+    expectTypeOf(planet.owner).toExtend<EffectPath<"country">>();
+    expectTypeOf(planet.owner).toExtend<EffectPathOf<"country">>();
+    expectTypeOf(planet.hiddenEffect).toExtend<EffectPath<"planet">>();
+    planet.owner.effects((country) => {
       country.everyOwnedPlanet({}, (owned) => owned.destroyColony());
     });
   });
 
-  it("rejects an out-of-scope effect inside a link's body", () => {
+  it("rejects an out-of-scope effect inside a path's terminal body", () => {
     const planet = makeScope<"planet">(sink);
-    planet.owner((country) => {
+    planet.owner.effects((country) => {
       // @ts-expect-error — the link lands in country scope; destroy_colony is not valid there
       country.destroyColony();
     });
   });
 
-  it("rejects a scope link outside its input scopes", () => {
+  it("rejects a scope link outside its input scopes at any hop", () => {
     const planet = makeScope<"planet">(sink);
     // @ts-expect-error — overlord only navigates from country scope
-    planet.overlord(() => {});
+    planet.overlord.effects(() => {});
+
+    // @ts-expect-error — owner lands in country scope; army_leader starts from an army
+    planet.owner.armyLeader.effects(() => {});
+  });
+
+  it("rejects the legacy callable spelling", () => {
+    const planet = makeScope<"planet">(sink);
+    // @ts-expect-error — scope navigation is a property path terminated by effects()
+    planet.owner(() => {});
+    // @ts-expect-error — hiddenEffect is the same kind of composable path node
+    planet.hiddenEffect(() => {});
   });
 
   it("exposes the asserted target link only where the game allows it", () => {

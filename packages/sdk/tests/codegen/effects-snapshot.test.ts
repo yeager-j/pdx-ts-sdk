@@ -14,6 +14,16 @@ function signature(name: string): string {
   return interfaces.slice(start, end + 8).trim();
 }
 
+/** Slices one generated effect-path property out of effects.ts. */
+function pathProperty(name: string): string {
+  const start = interfaces.indexOf(`  readonly ${name}:`);
+  if (start === -1) {
+    throw new Error(`${name} is not in the generated effect-path interfaces`);
+  }
+  const end = interfaces.indexOf(";", start);
+  return interfaces.slice(start, end + 1).trim();
+}
+
 /** Slices one meta entry out of effect-meta.ts. */
 function metaEntry(name: string): string {
   const start = meta.indexOf(`  ${name}: {`);
@@ -133,18 +143,22 @@ describe("emitted effect signatures", () => {
     `);
   });
 
-  it("scope link: a body-only closure typed to the link's output scope", () => {
-    expect(signature("owner")).toMatchInlineSnapshot(
-      `"owner(body: (scope: CountryScope) => void): void;"`
+  it("scope links: readonly paths typed to each link's output scope", () => {
+    expect(pathProperty("owner")).toMatchInlineSnapshot(
+      `"readonly owner: EffectPathOf<\"country\">;"`
     );
-    expect(signature("capitalScope")).toMatchInlineSnapshot(
-      `"capitalScope(body: (scope: ColonyScope) => void): void;"`
+    expect(pathProperty("capitalScope")).toMatchInlineSnapshot(
+      `"readonly capitalScope: EffectPathOf<\"colony\">;"`
     );
+    expect(interfaces).toMatch(
+      /export interface CountryEffectPath\s+extends\s+EffectPath<"country">/
+    );
+    expect(interfaces).toContain("export interface EffectPathMap {");
   });
 
-  it("scope link meta: a field-less wrapper the runtime already dispatches", () => {
+  it("scope link meta: a distinct lazy path node", () => {
     expect(metaEntry("owner")).toMatchInlineSnapshot(
-      `"owner: { key: "owner", shape: { kind: "wrapper", fields: null } },"`
+      `"owner: { key: "owner", shape: { kind: "scope-link" } },"`
     );
   });
 });
