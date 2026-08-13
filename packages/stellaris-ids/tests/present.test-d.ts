@@ -21,6 +21,7 @@ import {
   makeScope,
   scriptedTriggerModifier,
   vanilla,
+  type ComponentSlot,
   type EventRef,
   type EventScopelessRef,
   type ScopeName,
@@ -108,6 +109,13 @@ describe("complex enum members", () => {
     // @ts-expect-error
     const typo: VanillaEnumMember<"section_slot"> = "bwo";
     void typo;
+  });
+
+  it("keeps known literals visible alongside third-party members", () => {
+    type HasKnownSlot = "SMALL_GUN_01" extends ComponentSlot ? true : false;
+    expectTypeOf<HasKnownSlot>().toEqualTypeOf<true>();
+    const custom = "A_MOD_COMPONENT_SLOT" as const satisfies ComponentSlot;
+    expectTypeOf(custom).toEqualTypeOf<"A_MOD_COMPONENT_SLOT">();
   });
 });
 
@@ -387,15 +395,17 @@ describe("scriptedTriggerModifier with the package (bug bash #16 finding 5)", ()
 
 describe("the two sides' oversized thresholds agree", () => {
   it("gives a trie to exactly the registries the SDK emits as oversized", () => {
-    // The generator decides by measured id count
-    // (`packages/codegen-vanilla/src/trie.ts`); the SDK decides by the
-    // `oversized` flags in `packages/codegen/src/content-manifest.ts`. Nothing
-    // links them but
-    // this assertion — if either side's threshold moves, an SDK export loses
-    // its navigation (or gains a 3,000-member union parameter) silently, and
-    // this is what goes red instead.
+    // A manifest's explicit oversized declaration overrides the measured
+    // threshold, so a known large vocabulary does not lose navigation merely
+    // because its current install happens to be below it.
     expectTypeOf<keyof VanillaTries>().toEqualTypeOf<
-      "event" | "static_modifier" | "sound" | "sound_effect" | "sprite"
+      | "event"
+      | "static_modifier"
+      | "sound"
+      | "sound_effect"
+      | "sprite"
+      | "deposit"
+      | "anomaly_category"
     >();
   });
 });

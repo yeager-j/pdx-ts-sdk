@@ -2,6 +2,7 @@
 
 export type VanillaEventChainCounterMember =
   | "active_machine_worlds"
+  | "admiral_assigned"
   | "ambition_level_reached"
   | "amoebas_slaughtered"
   | "ancient_ward_upgraded"
@@ -74,6 +75,7 @@ export type VanillaEventChainCounterMember =
   | "map_toggled"
   | "massex_analyzed"
   | "military_presence_maintained"
+  | "mineral_income"
   | "mining_station_built"
   | "mining_stations_built"
   | "no_engagements"

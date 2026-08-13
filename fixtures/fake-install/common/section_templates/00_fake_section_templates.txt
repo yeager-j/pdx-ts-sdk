@@ -3,4 +3,7 @@ ship_section_template = {
 	component_slot = {
 		name = fake_component_slot
 	}
+	component_slot = {
+		name = fake_component_slot_two
+	}
 }

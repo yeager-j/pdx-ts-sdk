@@ -40,7 +40,7 @@ export function emitEnums(emitter: Emitter): string {
             : "The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.",
         ]) +
           `export type ${pascalCase(name)} = ${
-            complex ? `VanillaEnumMember<${JSON.stringify(name)}> | string` : "string"
+            complex ? `VanillaEnumMember<${JSON.stringify(name)}> | (string & {})` : "string"
           };\n`
       );
       continue;

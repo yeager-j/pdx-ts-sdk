@@ -35,18 +35,20 @@ function walk(dir: string, extension: string): string[] {
 }
 
 function entriesAt(items: readonly PdxItem[], pathToItems: readonly string[]): readonly PdxItem[] {
-  let current = items;
+  let current: readonly (readonly PdxItem[])[] = [items];
   for (const key of pathToItems) {
-    const entry = current.find(
-      (item): item is ContainerEntry =>
+    current = current.flatMap((siblings) =>
+      siblings.flatMap((item) =>
         item.kind === "entry" && item.key === key && item.value.kind === "container"
+          ? [item.value.items]
+          : []
+      )
     );
-    if (entry === undefined || entry.value.kind !== "container") {
+    if (current.length === 0) {
       return [];
     }
-    current = entry.value.items;
   }
-  return current;
+  return current.flat();
 }
 
 function collect(items: readonly PdxItem[], spec: ComplexEnum, add: (name: string) => void): void {
@@ -84,7 +86,13 @@ export function readComplexEnumMembers(root: string, spec: ComplexEnum): Complex
   const members = new Set<string>();
   let diagnostics = 0;
   for (const file of files) {
-    const parsed = parse(readFileSync(file, "utf8"), path.basename(file));
+    let parsed: ReturnType<typeof parse>;
+    try {
+      parsed = parse(readFileSync(file, "utf8"), path.basename(file));
+    } catch {
+      diagnostics += 1;
+      continue;
+    }
     diagnostics += parsed.diagnostics.length;
     collect(parsed.items, spec, (member) => members.add(member));
   }

@@ -74,6 +74,14 @@ export interface RegistryReport {
   readonly trie: TrieReport | null;
 }
 
+export interface ComplexEnumReport {
+  readonly name: string;
+  readonly members: number;
+  readonly files: number;
+  readonly diagnostics: number;
+  readonly missing: boolean;
+}
+
 export interface ScriptedReport {
   readonly registry: string;
   readonly definitions: number;
@@ -120,6 +128,7 @@ export interface EventReport {
 export interface VanillaReport {
   readonly gameVersion: string;
   readonly registries: readonly RegistryReport[];
+  readonly complexEnums: readonly ComplexEnumReport[];
   readonly events: EventReport;
   readonly scripted: readonly ScriptedReport[];
   readonly emittedFiles: number;
@@ -211,7 +220,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
     plan.ids.push({ registry: spec.registry, file });
 
     let trieReport: TrieReport | null = null;
-    if (read.ids.length > threshold) {
+    if (read.ids.length > threshold || spec.oversized === true) {
       const buckets = buildTrie(read.ids, read.sourcePaths, spec.bucket, basename(spec.path));
       const emission = emitTrie(spec.registry, buckets, gate, gameVersion);
       for (const [path, text] of emission.files) {
@@ -237,11 +246,19 @@ export function generateVanillaPackage(options: GenerateOptions): {
     });
   }
 
+  const complexEnums: ComplexEnumReport[] = [];
   for (const complex of facts.complexEnums) {
     const file = enumFile(complex.name);
     files.set(file, emitEnumUnion(complex.name, complex.members, gate, gameVersion));
     exports.push({ name: enumTypeName(complex.name), file });
     plan.enums.push({ name: complex.name, file });
+    complexEnums.push({
+      name: complex.name,
+      members: complex.members.length,
+      files: complex.files,
+      diagnostics: complex.diagnostics,
+      missing: complex.missing,
+    });
   }
 
   const scripted: ScriptedReport[] = [];
@@ -301,6 +318,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
     report: {
       gameVersion,
       registries,
+      complexEnums,
       events: {
         definitions: eventRead.definitions.length,
         scoped: eventRead.definitions.length - scopelessEvents,
@@ -315,6 +333,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
       emittedFiles: files.size,
       diagnostics:
         registries.reduce((total, one) => total + one.diagnostics, 0) +
+        complexEnums.reduce((total, one) => total + one.diagnostics, 0) +
         eventRead.diagnostics +
         scripted.reduce((total, one) => total + one.diagnostics, 0),
       identifiersChecked: gate.checked(),

@@ -5,7 +5,7 @@
  * the explicit public-interface manifest.
  */
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { CONTENT_MANIFEST } from "../content-manifest.ts";
@@ -324,6 +324,28 @@ function readEnums(
   }
 }
 
+function readComplexEnums(
+  nodes: readonly CwtNode[],
+  file: string,
+  into: Map<string, ComplexEnum>
+): void {
+  for (const outer of assignments(nodes)) {
+    if (outer.key.text !== "enums" || outer.value.kind !== "block") {
+      continue;
+    }
+    for (const entry of assignments(outer.value.nodes)) {
+      const match = BRACKET_KEY.exec(entry.key.text);
+      if (match?.[1] !== "complex_enum" || entry.value.kind !== "block") {
+        continue;
+      }
+      const complex = readComplexEnum(match[2]!, file, entry.value);
+      if (complex !== null) {
+        into.set(complex.name, complex);
+      }
+    }
+  }
+}
+
 function scalar(block: CwtBlock, key: string): string | null {
   const entry = assignments(block.nodes).find((node) => node.key.text === key);
   return entry?.value.kind === "scalar" ? entry.value.text : null;
@@ -371,6 +393,21 @@ function readComplexEnum(name: string, source: string, block: CwtBlock): Complex
     startFromRoot: scalar(block, "start_from_root") === "yes",
     selector,
   };
+}
+
+function cwtFiles(root: string, relative = ""): string[] {
+  const directory = path.join(root, relative);
+  return readdirSync(directory)
+    .sort()
+    .flatMap((name) => {
+      const file = path.join(directory, name);
+      const child = path.join(relative, name);
+      return statSync(file).isDirectory()
+        ? cwtFiles(root, child)
+        : name.endsWith(".cwt")
+          ? [child]
+          : [];
+    });
 }
 
 function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
@@ -814,6 +851,15 @@ export function loadRules(root: string): RuleSet {
     readOnActions(parsed.nodes, relative, onActions);
     readModifierCategories(parsed.nodes, modifierCategories);
     readModifierDecls(parsed.nodes, modifierDecls, modifierTemplates);
+  }
+
+  const loaded = new Set(RULE_FILES);
+  for (const relative of cwtFiles(root)) {
+    if (loaded.has(relative)) {
+      continue;
+    }
+    const parsed = parseCwt(readFileSync(path.join(root, relative), "utf8"), relative);
+    readComplexEnums(parsed.nodes, relative, complexEnums);
   }
 
   return {

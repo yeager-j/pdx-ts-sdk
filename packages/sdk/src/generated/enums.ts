@@ -60,13 +60,13 @@ export type ColossusStatu = "charging" | "firing";
  * `enum[component_slot]`.
  * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type ComponentSlot = VanillaEnumMember<"component_slot"> | string;
+export type ComponentSlot = VanillaEnumMember<"component_slot"> | (string & {});
 
 /**
  * `enum[component_tag]`.
  * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type ComponentTag = VanillaEnumMember<"component_tag"> | string;
+export type ComponentTag = VanillaEnumMember<"component_tag"> | (string & {});
 
 /** `enum[crisis_type]`. */
 export type CrisisType = "prethoryn" | "unbidden" | "contingency" | "synth_queen" | "all" | "any";
@@ -355,13 +355,13 @@ export type ScriptedModifierCategory =
  * `enum[section_slot]`.
  * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type SectionSlot = VanillaEnumMember<"section_slot"> | string;
+export type SectionSlot = VanillaEnumMember<"section_slot"> | (string & {});
 
 /**
  * `enum[ship_class]`.
  * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type ShipClass = VanillaEnumMember<"ship_class"> | string;
+export type ShipClass = VanillaEnumMember<"ship_class"> | (string & {});
 
 /** `enum[ship_owner_type]`. */
 export type ShipOwnerType = "country" | "federation" | "galactic_community" | "global_ship_design";
@@ -373,7 +373,7 @@ export type ShipRarity = "common" | "rare" | "epic" | "exceptional" | "highest";
  * `enum[situation_approach]`.
  * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type SituationApproach = VanillaEnumMember<"situation_approach"> | string;
+export type SituationApproach = VanillaEnumMember<"situation_approach"> | (string & {});
 
 /** `enum[situation_category]`. */
 export type SituationCategory = "positive" | "negative" | "neutral";
