@@ -455,7 +455,20 @@ export interface ContentScopeParameter {
   /** A game field that selects the scope instead of a synthetic `scope` member. */
   readonly selector?: {
     readonly member: string;
+    /** Members the selected scope is the `this` of. */
     readonly scopedMembers: readonly string[];
+    /**
+     * Members the selected scope is the FROM of, their `this` being the
+     * registry's own fallback. The same selector read the other way round: a
+     * callback the game runs one scope out from the object it is about still
+     * hands that object over, and FROM is the slot it arrives in.
+     *
+     * Needs the evidence a {@link ContentFieldOverride.scope} row needs, and
+     * from the same distance: the corpus can show a FROM being navigated but
+     * never contradicts an over-narrow one, so a row states which shipped
+     * definitions read FROM and as what.
+     */
+    readonly fromMembers?: readonly string[];
     readonly typeName: string;
     readonly fallback: string;
     readonly scopes: Readonly<Record<string, string>>;
@@ -505,6 +518,7 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
       selector: {
         member: "eventScope",
         scopedMembers: ["onSuccess", "onProgress25", "onProgress50", "onProgress75", "onStart"],
+        fromMembers: ["failTrigger", "abortTrigger", "onFail", "onCancel"],
         typeName: "SpEventScope",
         fallback: "country_event",
         scopes: {
@@ -519,7 +533,26 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
         "against country, planet, ship, or carrier event scope. The corpus records all four " +
         "across on_success/on_progress/on_start, while its AI and cost weights are country " +
         "conditions. event_scope is the engine's authoritative selector for the callback context, " +
-        "so the generated callback scope is derived from it rather than author-declared.",
+        "so the generated callback scope is derived from it rather than author-declared. " +
+        "The four country-scoped callbacks read the same selector as FROM: the game's own " +
+        "common/special_projects/documentation.txt states, for on_fail/on_cancel/abort_trigger/" +
+        "fail_trigger alike, THIS = country, FROM = project scope (matching event_scope, and " +
+        "'might not exist'), FROMFROM = location — and special_projects.cwt says the same for " +
+        "fail_trigger and abort_trigger. The corpus writes that two-level shape: the ship_event " +
+        "projects trojan_asteroid_project and molluscoid_miners_project_1 " +
+        "(00_projects_distant_stars.txt) reach the location through FROMFROM " +
+        "(`fromfrom.solar_system`) in abort_trigger while FROM stays the project's own scope, and " +
+        "OPEN_SEED_PODS_PROJECT (00_projects_plantoids.txt, planet_event) navigates " +
+        "`from = { colonizable_planet has_modifier }` in abort_trigger and its location through " +
+        "FROMFROM in on_cancel. One shipped block disagrees — SHIELD_PRIMITIVE_PLANET_PROJECT " +
+        "(00_projects_first_contact_dlc.txt) is country_event and writes planet conditions under " +
+        "FROM in abort_trigger — which is the degenerate case the documentation flags: with the " +
+        "project scope a country it is already THIS, and that block is malformed anyway (an OR " +
+        "of a single NOT of two members). FROMFROM has no slot in the emitted contract, so the " +
+        "location stays unreachable in these four; on_success's own FROM is the location and is " +
+        "not assertable at all, since enable_special_project takes it as any of fourteen " +
+        "scope_group[spatial_object] scopes and vanilla's 660 call sites that set it range over " +
+        "planets, ships, fleets, systems, starbases and ambient objects.",
     },
   ],
 ]);

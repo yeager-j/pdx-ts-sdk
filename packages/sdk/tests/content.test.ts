@@ -1074,6 +1074,11 @@ function defineContentExample(): PureMod {
     },
     conditionalDesc: [{ text: "content_test_crystal_survey_condition", trigger: always() }],
     onStart: () => {},
+    onFail: (country, ctx) => {
+      country.setCountryFlag("content_test_crystal_survey_failed");
+      ctx.from.effects((planet) => planet.setPlanetFlag("content_test_crystal_survey_lost"));
+    },
+    abortTrigger: (ctx) => ctx.from.trigger(hasPlanetFlag("content_test_crystal_survey_abort")),
   });
 
   const recoveryProject = mod.specialProject("crystal_recovery", {
@@ -1219,6 +1224,15 @@ describe("generated content registries", () => {
       "same_option_group_as = { content_test_special_project_crystal_survey }"
     );
     expect(projects).toContain("cost = {\n\t\tbase = 100");
+    // The country-scoped callbacks run one scope out from the project's own
+    // object and reach it through FROM, in both the effect and trigger forms.
+    expect(projects).toContain(
+      "on_fail = {\n\t\tset_country_flag = content_test_crystal_survey_failed\n" +
+        "\t\tfrom = {\n\t\t\tset_planet_flag = content_test_crystal_survey_lost"
+    );
+    expect(projects).toContain(
+      "abort_trigger = {\n\t\tfrom = {\n\t\t\thas_planet_flag = content_test_crystal_survey_abort"
+    );
 
     const localisation = files.get("localisation/english/content_test_l_english.yml")!;
     expect(localisation).toContain(

@@ -572,6 +572,31 @@ function underParameter(
   return { ...admits, scope: { parameter: parameter.scopes } };
 }
 
+/**
+ * The context one member of a selector-parameterised registry lowers against.
+ *
+ * `fieldContext.unpinned` carries the selected scope, so which member is being
+ * lowered decides where that type lands: the member the selector scopes gets it
+ * as its own scope, a member the selector supplies as FROM gets it there and
+ * runs in the registry's fallback scope instead, and everything else is the
+ * fallback with no FROM. A registry with no selector lowers every member the
+ * same way and passes through untouched.
+ */
+function selectedContext(
+  fieldContext: FieldContext,
+  parameter: ScopeParameter | null,
+  member: string
+): FieldContext {
+  const selector = parameter === null ? undefined : parameter.selector;
+  if (parameter === null || selector === undefined || selector.scopedMembers.includes(member)) {
+    return fieldContext;
+  }
+  const fallback = JSON.stringify(parameter.fallback);
+  return selector.fromMembers?.includes(member) === true
+    ? { ...fieldContext, unpinned: fallback, assertedFrom: fieldContext.unpinned }
+    : { ...fieldContext, unpinned: fallback };
+}
+
 interface ScopeParameter {
   readonly typeName: string;
   readonly scopes: readonly string[];
@@ -941,10 +966,7 @@ export function emitContentType(
       continue;
     }
     const widening = FIELD_WIDENINGS.get(path);
-    const loweredContext =
-      parameter?.selector !== undefined && !parameter.selector.scopedMembers.includes(member)
-        ? { ...fieldContext, unpinned: '"country"' }
-        : fieldContext;
+    const loweredContext = selectedContext(fieldContext, parameter, member);
     const lowered = pickOrdinary(
       emitter,
       group,
