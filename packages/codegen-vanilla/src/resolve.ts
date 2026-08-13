@@ -49,6 +49,8 @@ export interface RegistrySpec {
   readonly pathStrict: boolean;
   /** How much of a file's path names its bucket, if the registry gets a trie. */
   readonly bucket: BucketLayout;
+  /** An explicitly oversized public registry gets a trie regardless of current count. */
+  readonly oversized: boolean;
 }
 
 /** The extension the game assumes when the rules declare none. */
@@ -121,5 +123,6 @@ function resolveRow(row: VanillaIdRow, type: ContentType | undefined): RegistryS
     excludedKey: type.keyFilter?.negated === true ? type.keyFilter.key : null,
     pathStrict: type.pathStrict ?? false,
     bucket: row.bucket ?? "stripped-file",
+    oversized: row.oversized === true,
   };
 }

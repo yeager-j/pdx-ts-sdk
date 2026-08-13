@@ -35,6 +35,8 @@ export interface VanillaIdRow {
   readonly source: string;
   /** Top-level keyword, for types the rules mark with `name_field`. */
   readonly keyword?: string;
+  /** Emit a trie even when the current install is below the measured threshold. */
+  readonly oversized?: true;
   /**
    * How this registry's files name their buckets *if* it turns out to be
    * oversized. Whether it gets a trie at all is measured, not declared — the id
@@ -65,6 +67,7 @@ const CONTENT_ROWS: readonly VanillaIdRow[] = CONTENT_MANIFEST.map((entry) => ({
   registry: "as" in entry ? entry.as : entry.type,
   source: entry.source,
   ...("keyword" in entry ? { keyword: entry.keyword } : {}),
+  ...("oversized" in entry ? { oversized: entry.oversized } : {}),
 }));
 
 /**
@@ -98,6 +101,7 @@ const REF_ONLY_ROWS: readonly VanillaIdRow[] = VANILLA_REF_EXTRAS.map((row) => {
     registry: entry.type,
     source: entry.source,
     ...(entry.keyword === undefined ? {} : { keyword: entry.keyword }),
+    ...(entry.oversized === undefined ? {} : { oversized: entry.oversized }),
     ...(entry.type in EXTRA_BUCKETS
       ? { bucket: EXTRA_BUCKETS[entry.type as keyof typeof EXTRA_BUCKETS] }
       : {}),

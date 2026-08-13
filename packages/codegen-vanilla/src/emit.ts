@@ -113,6 +113,10 @@ export function idTypeName(registry: string): string {
   return `Vanilla${pascalCase(registry)}Id`;
 }
 
+export function enumTypeName(name: string): string {
+  return `Vanilla${pascalCase(name)}Member`;
+}
+
 export function trieTypeName(registry: string): string {
   return `Vanilla${pascalCase(registry)}Trie`;
 }
@@ -128,6 +132,10 @@ export function refTypeName(registry: string): string {
 
 export function registryFile(registry: string): string {
   return `registries/${kebabCase(registry)}.ts`;
+}
+
+export function enumFile(name: string): string {
+  return `enums/${kebabCase(name)}.ts`;
 }
 
 export function trieIndexFile(registry: string): string {
@@ -151,6 +159,19 @@ export function emitIdUnion(
   const context = `${registry} id`;
   const union = ids.length === 0 ? "never" : ids.map((id) => gate.literal(id, context)).join(" | ");
   return `${header(gameVersion)}export type ${idTypeName(registry)} = ${union};\n`;
+}
+
+export function emitEnumUnion(
+  name: string,
+  members: readonly string[],
+  gate: Chokepoint,
+  gameVersion: string
+): string {
+  const union =
+    members.length === 0
+      ? "never"
+      : members.map((member) => gate.literal(member, `${name} member`)).join(" | ");
+  return `${header(gameVersion)}export type ${enumTypeName(name)} = ${union};\n`;
 }
 
 export interface TrieEmission {
@@ -360,6 +381,7 @@ export interface AugmentPlan {
   readonly ids: readonly { readonly registry: string; readonly file: string }[];
   /** Registry name -> its trie root type and file, for oversized registries. */
   readonly tries: readonly { readonly registry: string; readonly file: string }[];
+  readonly enums: readonly { readonly name: string; readonly file: string }[];
   /** SDK merge target -> the emitted params interface, e.g. scripted triggers. */
   readonly scripted: readonly {
     readonly target: string;
@@ -380,6 +402,7 @@ export function emitAugment(plan: AugmentPlan, gate: Chokepoint, gameVersion: st
   const imports = [
     ...plan.ids.map(({ registry, file }) => ({ name: idTypeName(registry), file })),
     ...plan.tries.map(({ registry, file }) => ({ name: trieTypeName(registry), file })),
+    ...plan.enums.map(({ name, file }) => ({ name: enumTypeName(name), file })),
     ...plan.scripted.map(({ registry, file }) => ({ name: scriptedTypeName(registry), file })),
   ]
     .map(({ name, file }) => `import type { ${name} } from "./${file}";\n`)
@@ -397,6 +420,9 @@ export function emitAugment(plan: AugmentPlan, gate: Chokepoint, gameVersion: st
         `readonly ${gate.literal(registry, "registry name")}: ${trieTypeName(registry)};`
     )
     .join("\n");
+  const enumMembers = plan.enums
+    .map(({ name }) => `readonly ${gate.literal(name, "enum name")}: ${enumTypeName(name)};`)
+    .join("\n");
   const scriptedMembers = plan.scripted
     .map(({ target, registry }) => `interface ${target} extends ${scriptedTypeName(registry)} {}`)
     .join("\n");
@@ -406,6 +432,7 @@ export function emitAugment(plan: AugmentPlan, gate: Chokepoint, gameVersion: st
     imports +
     '\ndeclare module "@pdx-ts/sdk" {\n' +
     `interface VanillaIds {\n${idMembers}\n}\n` +
+    (enumMembers === "" ? "" : `interface VanillaEnums {\n${enumMembers}\n}\n`) +
     (scriptedMembers === "" ? "" : `${scriptedMembers}\n`) +
     (plan.tries.length === 0 ? "" : `interface VanillaTries {\n${trieMembers}\n}\n`) +
     "}\n"

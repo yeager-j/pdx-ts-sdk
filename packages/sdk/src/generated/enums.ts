@@ -2,6 +2,8 @@
 // Source: cwtools-stellaris-config @ ec350bdb4f9a
 // From: enums.cwt
 
+import type { VanillaEnumMember } from "../identifiers/contracts.ts";
+
 /** `enum[add_deposit_type]`. */
 export type AddDepositType = "random" | "random_blocker" | "random_nonblocker";
 
@@ -56,15 +58,15 @@ export type ColossusStatu = "charging" | "firing";
 
 /**
  * `enum[component_slot]`.
- * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type ComponentSlot = string;
+export type ComponentSlot = VanillaEnumMember<"component_slot"> | (string & {});
 
 /**
  * `enum[component_tag]`.
- * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type ComponentTag = string;
+export type ComponentTag = VanillaEnumMember<"component_tag"> | (string & {});
 
 /** `enum[crisis_type]`. */
 export type CrisisType = "prethoryn" | "unbidden" | "contingency" | "synth_queen" | "all" | "any";
@@ -351,15 +353,15 @@ export type ScriptedModifierCategory =
 
 /**
  * `enum[section_slot]`.
- * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type SectionSlot = string;
+export type SectionSlot = VanillaEnumMember<"section_slot"> | (string & {});
 
 /**
  * `enum[ship_class]`.
- * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type ShipClass = string;
+export type ShipClass = VanillaEnumMember<"ship_class"> | (string & {});
 
 /** `enum[ship_owner_type]`. */
 export type ShipOwnerType = "country" | "federation" | "galactic_community" | "global_ship_design";
@@ -369,9 +371,9 @@ export type ShipRarity = "common" | "rare" | "epic" | "exceptional" | "highest";
 
 /**
  * `enum[situation_approach]`.
- * The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.
+ * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type SituationApproach = string;
+export type SituationApproach = VanillaEnumMember<"situation_approach"> | (string & {});
 
 /** `enum[situation_category]`. */
 export type SituationCategory = "positive" | "negative" | "neutral";

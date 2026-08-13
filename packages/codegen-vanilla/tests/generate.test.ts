@@ -17,6 +17,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { VANILLA_REF_EXTRAS } from "@pdx-ts/codegen-cwt/content-manifest";
+import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { describe, expect, it } from "vitest";
 
 import { buildVanillaFacts } from "../src/build-facts.ts";
@@ -82,6 +83,7 @@ describe("emitted file set", () => {
       "interface VanillaScriptedEffects extends VanillaScriptedEffectParams {}"
     );
     expect(augment).toContain("readonly event: VanillaEventTrie;");
+    expect(augment).toContain("readonly ship_class: VanillaShipClassMember;");
   });
 
   it("re-exports every public type from the barrel with no runtime exports", () => {
@@ -276,6 +278,7 @@ describe("registry readers", () => {
       excludedKey: null,
       pathStrict: false,
       bucket: "stripped-file",
+      oversized: false,
     });
     expect(ids.ids).toEqual(["fake_uppercase_project"]);
   });
@@ -286,6 +289,34 @@ describe("registry readers", () => {
     const missing = registryReport("tradition");
     expect(missing).toMatchObject({ ids: 0, files: 0, missing: true });
     expect(file("registries/tradition.ts")).toContain("= never;");
+  });
+});
+
+describe("complex enum readers", () => {
+  it("extracts install-defined members from each CWT selector shape", () => {
+    expect(file("enums/ship-class.ts")).toContain('= "fake_ship_class";');
+    expect(file("enums/section-slot.ts")).toContain('= "fake_section_slot";');
+    expect(file("enums/component-tag.ts")).toContain('= "fake_component_tag";');
+    expect(file("enums/component-slot.ts")).toContain('"fake_component_slot"');
+    expect(file("enums/component-slot.ts")).toContain('"fake_component_slot_two"');
+    expect(file("enums/situation-approach.ts")).toContain('"fake_approach"');
+    expect(file("enums/situation-approach.ts")).toContain('"fake_approach_two"');
+    expect(file("enums/situation-stage.ts")).toContain('= "fake_stage";');
+  });
+
+  it("discovers complex enums outside the writable content manifest", () => {
+    const rules = loadRules(OPTIONS.configRoot);
+    expect(rules.complexEnums.has("policy_option")).toBe(true);
+    expect(rules.complexEnums.has("district_set")).toBe(true);
+  });
+
+  it("reports every complex enum input and its read outcome", () => {
+    expect(generated.report.complexEnums).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "component_slot", files: 1, members: 2, missing: false }),
+        expect.objectContaining({ name: "policy_option", files: 0, members: 0, missing: true }),
+      ])
+    );
   });
 });
 
@@ -674,6 +705,11 @@ describe("trie", () => {
   it("leaves registries under the threshold flat", () => {
     expect(registryReport("technology").trie).toBeNull();
     expect(files.has("registries/technology/index.ts")).toBe(false);
+  });
+
+  it("honours a manifest's explicit oversized declaration below the threshold", () => {
+    expect(registryReport("deposit").trie).not.toBeNull();
+    expect(files.has("registries/deposit/index.ts")).toBe(true);
   });
 });
 

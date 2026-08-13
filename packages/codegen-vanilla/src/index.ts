@@ -130,6 +130,18 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
       (one) => `${one.registry}: ${one.ids} ids from ${one.files} files` + suffix(one)
     )
   );
+  reportSection(
+    "Complex enums",
+    report.complexEnums.map(
+      (one) =>
+        `${one.name}: ${one.members} members from ${one.files} files` +
+        (one.missing
+          ? " — DIRECTORY MISSING"
+          : one.diagnostics === 0
+            ? ""
+            : ` (${one.diagnostics} parser repairs)`)
+    )
+  );
   reportSection("Events", [
     `${report.events.definitions} definitions in ${report.events.namespaces} namespaces from ` +
       `${report.events.files} files (${report.events.scoped} scoped, ` +

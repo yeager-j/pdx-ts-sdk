@@ -1,0 +1,9 @@
+ship_section_template = {
+	key = fake_section
+	component_slot = {
+		name = fake_component_slot
+	}
+	component_slot = {
+		name = fake_component_slot_two
+	}
+}

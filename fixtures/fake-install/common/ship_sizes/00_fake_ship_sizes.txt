@@ -1,0 +1,6 @@
+fake_size = {
+	class = fake_ship_class
+	section_slots = {
+		fake_section_slot = {}
+	}
+}

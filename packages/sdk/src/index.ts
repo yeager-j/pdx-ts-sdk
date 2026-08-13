@@ -360,6 +360,8 @@ export type { PatchedTechnology, TechnologyPatch } from "./generated/technology.
 export type {
   CheckedVanillaId,
   InvalidVanillaId,
+  VanillaEnumMember,
+  VanillaEnums,
   VanillaId,
   VanillaIds,
   VanillaScriptedEffects,

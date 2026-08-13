@@ -1,0 +1,11 @@
+fake_situation = {
+	approach = {
+		name = fake_approach
+	}
+	approach = {
+		name = fake_approach_two
+	}
+	stages = {
+		fake_stage = {}
+	}
+}
