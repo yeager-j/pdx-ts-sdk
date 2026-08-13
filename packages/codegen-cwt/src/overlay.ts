@@ -51,6 +51,17 @@ export interface HandWrittenDefiner {
   readonly module: string;
   /** Exported lowering function name. */
   readonly definer: string;
+  /**
+   * The declared contract the hand-written definer returns beside the def,
+   * where it returns one: the property and the type it is parameterised by.
+   *
+   * Codegen still owns the registry's item type, so it has to be told — an
+   * item type that dropped the property would be a supertype an author reaches
+   * by annotating, leaving the effect that consumes the definition nothing to
+   * check (SDK-181). The generated definers learn the same thing from
+   * `ContentScopeParameter.declaredFrom`.
+   */
+  readonly witness?: { readonly member: string; readonly type: string };
 }
 
 /**
@@ -75,6 +86,7 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
         "can produce it.",
       module: "../content/situations.ts",
       definer: "defineSituationType",
+      witness: { member: "targetScope", type: "ScopeName | undefined" },
     },
   ],
   [

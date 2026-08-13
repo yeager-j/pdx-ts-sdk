@@ -7,6 +7,7 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
+import type { SpecialProjectItem } from "../src/generated/content-definers.ts";
 import type { SpecialProjectRef } from "../src/generated/refs.ts";
 import {
   createMod,
@@ -96,6 +97,88 @@ describe("the declared special-project location contract", () => {
         country.enableSpecialProject({ name: project });
         // The rules' other arguments are untouched by the contract.
         country.enableSpecialProject({ name: project, location: world, owner: ctx.self });
+      },
+    });
+  });
+
+  it("rejects a project value that could be either of two declarations", () => {
+    // A phantom witness is covariant, so a ternary over two differently
+    // declared projects carries `"planet" | "fleet"` and a planet location
+    // satisfies it — while the project that actually runs may be the fleet
+    // one. There is no single declaration to check, so the call site is
+    // rejected rather than checked against the arm that happens to match.
+    const mod = createMod(CONFIG);
+    const events = mod.namespace();
+    const planetProject = mod.specialProject("planet_located", {
+      eventScope: "ship_event",
+      locationScope: "planet",
+    });
+    const fleetProject = mod.specialProject("fleet_located", {
+      eventScope: "ship_event",
+      locationScope: "fleet",
+    });
+    const world = eventTarget<"planet">("sp_test_either_world");
+    const either = (0 as number) > 1 ? planetProject : fleetProject;
+    events.country(3, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        // @ts-expect-error — either project could run here, and they declare different locations
+        country.enableSpecialProject({ name: either, location: world });
+        // Narrowing to one restores the ordinary checked call.
+        country.enableSpecialProject({ name: planetProject, location: world });
+      },
+    });
+    // A union of projects that agree is not ambiguous: the declaration is
+    // still one scope, so nothing about this needs narrowing.
+    const agreeing =
+      (0 as number) > 1
+        ? planetProject
+        : mod.specialProject("also_planet", {
+            eventScope: "ship_event",
+            locationScope: "planet",
+          });
+    events.country(4, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.enableSpecialProject({ name: agreeing, location: world });
+      },
+    });
+  });
+
+  it("keeps the declaration through the registry's own item type", () => {
+    // `SpecialProjectItem` is the vocabulary a feature's contents are named
+    // with, so it is the likeliest place for a declaration to be dropped on
+    // the way to an enable site. It carries the witness instead: named with
+    // the scope it holds the contract survives, and named bare it widens to
+    // every scope the registry admits — which is checkable as none of them,
+    // and says so rather than accepting any location at all.
+    const mod = createMod({ ...CONFIG, prefix: "sp_test_item" });
+    const events = mod.namespace();
+    const declared = mod.specialProject("declared", {
+      eventScope: "ship_event",
+      locationScope: "planet",
+    });
+    const kept: SpecialProjectItem<"planet"> = declared;
+    const widened: SpecialProjectItem = declared;
+    const world = eventTarget<"planet">("sp_test_item_world");
+    const fleet = eventTarget<"fleet">("sp_test_item_fleet");
+    events.country(5, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        country.enableSpecialProject({ name: kept, location: world });
+        // @ts-expect-error — the declaration survived the annotation; a fleet does not satisfy it
+        country.enableSpecialProject({ name: kept, location: fleet });
+        // @ts-expect-error — widened to every location scope at once, so there is no one scope to check
+        country.enableSpecialProject({ name: widened, location: fleet });
+        // An undeclared project names the same type with `undefined`, and
+        // stays on the unchecked path through it.
+        const undeclared: SpecialProjectItem<undefined> = mod.specialProject("plain", {
+          eventScope: "ship_event",
+        });
+        country.enableSpecialProject({ name: undeclared, location: fleet });
       },
     });
   });

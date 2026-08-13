@@ -53,6 +53,7 @@ import {
   CONTENT_PATCH_REGISTRIES,
   HAND_WRITTEN_CONTENT_DEFINERS,
   REPEATED_STRUCT_FIELD_OVERRIDES,
+  type HandWrittenDefiner,
 } from "./overlay.ts";
 import {
   compareToBaseline,
@@ -863,7 +864,19 @@ function contentDefiners(
     // scoped variant satisfies, while `Def<Id, "planet">` would both exclude a
     // ship definition from this union and misreport its clauses as planet ones.
     const erased = emission.scopeParameter === null ? "" : "<string, never>";
-    const itemArms = [`ContentItem<${key}, ${name}Def${erased}>`];
+    // The declared witness is not erased with it. It rides beside the def
+    // precisely because it is not part of it, and an item type that dropped it
+    // would be a supertype an author reaches by annotating — at which point the
+    // effect consuming the definition has nothing left to check (SDK-181). The
+    // parameter defaults to every declaration the registry admits, so a list of
+    // items still holds declared and undeclared definitions together, and a
+    // value widened to that union is ambiguous at the call site rather than
+    // unchecked.
+    const witness = declaredWitness(content, graft);
+    const itemArms = [
+      `ContentItem<${key}, ${name}Def${erased}>` +
+        (witness === null ? "" : ` & { readonly ${witness.member}: W }`),
+    ];
     if (patchable !== undefined) {
       itemArms.push(`${name}PatchItem`);
       runtimeItemTypes.add(`${name}PatchItem`);
@@ -1119,8 +1132,20 @@ function contentDefiners(
     }
 
     chunks.push(
-      docComment([`What ${article} ${spoken} feature can contain.`]) +
-        `export type ${name}Item = ${itemArms.join(" | ")};\n\n` +
+      docComment([
+        `What ${article} ${spoken} feature can contain.`,
+        ...(witness === null
+          ? []
+          : [
+              `Parameterised by the declared \`${witness.member}\`, which the item carries`,
+              "and the effect consuming it is checked against: naming this type without",
+              "the parameter widens the declaration to every scope the registry admits,",
+              "which is checkable as none of them.",
+            ]),
+      ]) +
+        `export type ${name}Item${
+          witness === null ? "" : `<W extends ${witness.type} = ${witness.type}>`
+        } = ${itemArms.join(" | ")};\n\n` +
         definitions.join("\n")
     );
   }
@@ -1130,8 +1155,16 @@ function contentDefiners(
   );
   const refImports = contents.some((content) => CONTENT_CONTRIBUTION_SINKS.has(content.registry));
   const contentItemTypes = [...runtimeItemTypes].filter((name) => !name.endsWith("PatchItem"));
+  // A hand-written definer's declared witness is spelled in the overlay, so
+  // the type it names has to be imported on its word rather than derived —
+  // `ScopeName` is the only one so far, and it is the only scope type this
+  // module could need.
+  const witnessScopeName = contents.some((content) =>
+    HAND_WRITTEN_CONTENT_DEFINERS.get(content.registry)?.witness?.type.includes("ScopeName")
+  );
   const imports =
     importList("../content/types.ts", contentItemTypes) +
+    (witnessScopeName ? 'import type { ScopeName } from "./scopes.ts";\n' : "") +
     (refImports ? 'import { refId, type TypedRef } from "../script/scalar.ts";\n' : "") +
     // One generic transform, called with the registry's own field descriptors:
     // the patch surface is descriptor-derived the whole way down, so nothing
@@ -1293,6 +1326,28 @@ function contentDefiners(
     definers: contents.length,
     grafted,
   };
+}
+
+/**
+ * The declared contract a registry's item carries beside its def, from
+ * whichever side owns the definer.
+ *
+ * Generated definers learn it from the overlay's `declaredFrom` row; a
+ * hand-written one has to say so itself, since nothing in the rules mentions
+ * the property it returns. Either way the item type has to match what the
+ * definer actually returns, which is what this keeps in one place.
+ */
+function declaredWitness(
+  content: { readonly emission: ContentEmission },
+  graft: HandWrittenDefiner | undefined
+): { readonly member: string; readonly type: string } | null {
+  if (graft?.witness !== undefined) {
+    return graft.witness;
+  }
+  const declaredFrom = content.emission.scopeParameter?.declaredFrom;
+  return declaredFrom === undefined
+    ? null
+    : { member: declaredFrom.member, type: `${declaredFrom.typeName} | undefined` };
 }
 
 function capabilityBinding(

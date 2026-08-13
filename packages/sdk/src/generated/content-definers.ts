@@ -74,6 +74,7 @@ import {
   type MegastructurePatchItem,
 } from "./megastructure.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
+import type { ScopeName } from "./scopes.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
 import type { SectionTemplateDef } from "./section-template.ts";
@@ -486,8 +487,15 @@ export function defineArchaeologicalSiteType<const Id extends string>(
   return { itemKind: "content", type: "archaeological_site_type", id: def.id, def };
 }
 
-/** What a situation type feature can contain. */
-export type SituationTypeItem = ContentItem<"situation_type", SituationTypeDef>;
+/**
+ * What a situation type feature can contain.
+ * Parameterised by the declared `targetScope`, which the item carries
+ * and the effect consuming it is checked against: naming this type without
+ * the parameter widens the declaration to every scope the registry admits,
+ * which is checkable as none of them.
+ */
+export type SituationTypeItem<W extends ScopeName | undefined = ScopeName | undefined> =
+  ContentItem<"situation_type", SituationTypeDef> & { readonly targetScope: W };
 
 // defineSituationType is hand-written; re-exported here so every definer this
 // SDK has comes from one module.
@@ -689,8 +697,18 @@ export type EventChainItem = ContentItem<"event_chain", EventChainDef>;
 // SDK has comes from one module.
 export { defineEventChain } from "../content/event-chains.ts";
 
-/** What a special project feature can contain. */
-export type SpecialProjectItem = ContentItem<"special_project", SpecialProjectDef<string, never>>;
+/**
+ * What a special project feature can contain.
+ * Parameterised by the declared `locationScope`, which the item carries
+ * and the effect consuming it is checked against: naming this type without
+ * the parameter widens the declaration to every scope the registry admits,
+ * which is checkable as none of them.
+ */
+export type SpecialProjectItem<
+  W extends SpecialProjectLocationScope | undefined = SpecialProjectLocationScope | undefined,
+> = ContentItem<"special_project", SpecialProjectDef<string, never>> & {
+  readonly locationScope: W;
+};
 
 /**
  * Internal lowering primitive for a special project. Public authors call
