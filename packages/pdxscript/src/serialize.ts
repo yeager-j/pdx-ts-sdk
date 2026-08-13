@@ -13,9 +13,11 @@
 
 import type { PdxContainer, PdxItem, PdxParamBlock, PdxParamText, PdxScalar } from "./ast.ts";
 import {
+  canonicalNumeral,
   isBareString,
   isBareToken,
   isMathSource,
+  isNumeral,
   isParamName,
   isQuotableContent,
   isVarName,
@@ -37,6 +39,15 @@ export function scalarText(scalar: PdxScalar): string {
     case "bool":
       return scalar.value ? "yes" : "no";
     case "num":
+      // A lexeme is emitted raw, so it has to be one: `"1 # injected"` would
+      // read back as `1`, and `+01.0` as a different node than the literal
+      // that was written. Same backstop the other kinds get.
+      if (!isNumeral(scalar.lexeme) || canonicalNumeral(scalar.lexeme) !== scalar.lexeme) {
+        throw new Error(
+          `Cannot serialize number ${JSON.stringify(scalar.lexeme)}: it is not a canonical ` +
+            "numeral (build numbers with scalar() or numeral())"
+        );
+      }
       return scalar.lexeme;
     case "str":
       return scalar.quoted || !isBareString(scalar.value)

@@ -322,6 +322,14 @@ describe("parser: scalars", () => {
     expect(() => numberValue("9007199254740993")).toThrow(/no double has that value/);
   });
 
+  it("compares an integer as an integer, not as a formatted spelling", () => {
+    // `String(1000000000000000128)` is "1000000000000000100": past 2^53 the
+    // shortest spelling that reparses is not the value the double holds.
+    expect(tryNumberValue("1000000000000000128")).toBe(1000000000000000128);
+    expect(tryNumberValue("1000000000000000100")).toBeNull();
+    expect(scalarText(scalar(1000000000000000128))).toBe("1000000000000000128");
+  });
+
   it("classifies date-like tokens (2200.01.01) as str", () => {
     expect(value("a = 2200.01.01")).toEqual({ kind: "str", value: "2200.01.01", quoted: false });
   });
@@ -676,6 +684,12 @@ describe("serializer", () => {
   it("refuses a number no spelling can carry, at construction", () => {
     expect(() => scalar(Number.POSITIVE_INFINITY)).toThrow(/finite/);
     expect(() => scalar(Number.NaN)).toThrow(/finite/);
+  });
+
+  it("refuses a hand-assembled lexeme that is not a canonical numeral", () => {
+    for (const lexeme of ["1 # injected", "+01.0", "1e21", ""]) {
+      expect(() => serialize([kv("a", { kind: "num", lexeme })])).toThrow(/canonical numeral/);
+    }
   });
 
   it("keeps explicit quoting; quotes strings that are not bare-safe", () => {

@@ -81,13 +81,24 @@ export function canonicalNumeral(text: string): string {
 }
 
 /**
- * A JS number as a numeral. `String()` alone is not it: doubles outside
- * `1e-7 .. 1e21` come back in exponent notation, which PDXScript has no
- * reading for, so the exponent is expanded into the digits it stands for.
+ * A JS number as a numeral. `String()` alone is not it, for two reasons.
+ *
+ * Doubles outside `1e-7 .. 1e21` come back in exponent notation, which
+ * PDXScript has no reading for, so the exponent is expanded into the digits
+ * it stands for. And above 2^53 `String()` prints the *shortest* decimal
+ * that reparses to the same double, not the value it holds:
+ * `String(1000000000000000128)` is `"1000000000000000100"`. An integral
+ * double is therefore written from its exact integer, so a lexeme always
+ * means what it says. Fractions keep the shortest spelling — the exact
+ * decimal of `0.1` is 55 digits of noise no file should carry, and shortest
+ * still reparses to the same double.
  */
 export function decimalLexeme(value: number): string {
   if (!Number.isFinite(value)) {
     throw new Error(`Cannot represent ${value} as a PDXScript number: it is not finite`);
+  }
+  if (Number.isInteger(value)) {
+    return canonicalNumeral(BigInt(value).toString());
   }
   const text = String(value);
   const match = /^(-?)(\d+)(?:\.(\d+))?e([+-]\d+)$/.exec(text);
@@ -111,13 +122,26 @@ export function decimalLexeme(value: number): string {
  * `9007199254740992` is the corruption this exists to stop. The lexeme is
  * unharmed either way — a caller that only moves the value around never
  * needs to ask.
+ *
+ * An integer is compared as an integer. Comparing formatted spellings
+ * instead would answer this question with a different one — whether the
+ * lexeme is the shortest decimal for that double — and get both directions
+ * wrong past 2^53: `1000000000000000100` would pass while the double holds
+ * `…128`, and the exactly-held `1000000000000000128` would be refused. A
+ * fraction is a different question, because almost none are held exactly
+ * (`0.1` is not); there, reparsing to the same double is the guarantee, and
+ * shortest-spelling equality is exactly that test.
  */
 export function tryNumberValue(lexeme: string): number | null {
   const value = Number(lexeme);
-  if (!Number.isFinite(value) || decimalLexeme(value) !== canonicalNumeral(lexeme)) {
+  if (!Number.isFinite(value)) {
     return null;
   }
-  return value;
+  const canonical = canonicalNumeral(lexeme);
+  if (!canonical.includes(".")) {
+    return Number.isInteger(value) && BigInt(value) === BigInt(canonical) ? value : null;
+  }
+  return decimalLexeme(value) === canonical ? value : null;
 }
 
 /** {@link tryNumberValue}, for callers with no better answer than to stop. */

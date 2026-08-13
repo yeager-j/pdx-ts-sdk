@@ -263,8 +263,16 @@ describe("properties", () => {
         }
         expect(item.value.lexeme).toBe(lexeme);
         // And the JS projection is offered only when it is the same number.
+        // For an integer that is an integer comparison, not a comparison of
+        // spellings: past 2^53 the two stop agreeing in both directions.
         const projected = tryNumberValue(lexeme);
-        expect(projected === null || decimalLexeme(projected) === lexeme).toBe(true);
+        if (lexeme.includes(".")) {
+          expect(projected === null || decimalLexeme(projected) === lexeme).toBe(true);
+        } else {
+          const exact =
+            Number.isInteger(Number(lexeme)) && BigInt(Number(lexeme)) === BigInt(lexeme);
+          expect(projected === null).toBe(!exact);
+        }
       }),
       { numRuns: 1000 }
     );
