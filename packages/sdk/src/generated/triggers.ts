@@ -6063,6 +6063,51 @@ export function customProgress(args: CustomProgressArgs): Trigger<ScopeName> {
   return trigger([block("custom_progress", entries)], refs);
 }
 
+export interface CustomTooltipArgs<S extends ScopeName = ScopeName> {
+  text?: "" | string;
+  failText?: "default" | string;
+  successText?: string;
+  conditions: Trigger<S>;
+}
+
+/**
+ * Replaces the tooltips for the enclosed triggers with a custom text
+ * ```
+ * custom_tooltip = {
+ * 	text = <text used as fallback for both fails and successes>
+ * 	fail_text = <text used for fails["string"/default/none]>
+ * 	success_text = <text used for successes["string"/default/none]>
+ * 	<triggers>
+ * }
+ * ```
+ */
+export function customTooltip(value: string): Trigger<ScopeName>;
+export function customTooltip<S extends ScopeName = ScopeName>(
+  args: CustomTooltipArgs<S>
+): Trigger<S>;
+export function customTooltip<S extends ScopeName>(
+  value: string | CustomTooltipArgs<S>
+): Trigger<ScopeName> {
+  if (typeof value === "string") {
+    return trigger([kv("custom_tooltip", value)]);
+  }
+  const args = value;
+  const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
+  if (args.text !== undefined) {
+    entries.push(kv("text", args.text));
+  }
+  if (args.failText !== undefined) {
+    entries.push(kv("fail_text", args.failText));
+  }
+  if (args.successText !== undefined) {
+    entries.push(kv("success_text", args.successText));
+  }
+  entries.push(...args.conditions.entries);
+  refs.push(...args.conditions.refs);
+  return trigger([block("custom_tooltip", entries)], refs);
+}
+
 export interface CustomTooltipFailArgs {
   text: string;
   conditions: Trigger<ScopeName>;
@@ -6580,6 +6625,35 @@ export function exploitablePlanets(op: PdxOp, value: number): Trigger<"country">
  */
 export function factionApproval(op: PdxOp, value: number): Trigger<"pop_faction"> {
   return trigger([cmp("faction_approval", op, value)]);
+}
+
+export interface FailTextArgs<S extends ScopeName = ScopeName> {
+  text: string;
+  conditions: Trigger<S>;
+}
+
+/**
+ * For 'desc={trigger={' use. Shows custom text when the associated trigger fails.
+ * ```
+ * fail_text = {
+ * 	text = <text>
+ * 	<triggers>
+ * }
+ * ```
+ */
+export function failText(value: string): Trigger<ScopeName>;
+export function failText<S extends ScopeName = ScopeName>(args: FailTextArgs<S>): Trigger<S>;
+export function failText<S extends ScopeName>(value: string | FailTextArgs<S>): Trigger<ScopeName> {
+  if (typeof value === "string") {
+    return trigger([kv("fail_text", value)]);
+  }
+  const args = value;
+  const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
+  entries.push(kv("text", args.text));
+  entries.push(...args.conditions.entries);
+  refs.push(...args.conditions.refs);
+  return trigger([block("fail_text", entries)], refs);
 }
 
 /** Checks Fallen / Awakened Empire strength scaling in game setup */
@@ -17880,6 +17954,39 @@ export function subjectCanDiplomacy(
  */
 export function subjects(op: PdxOp, value: number): Trigger<"country"> {
   return trigger([cmp("subjects", op, value)]);
+}
+
+export interface SuccessTextArgs<S extends ScopeName = ScopeName> {
+  text: string;
+  conditions?: Trigger<S>;
+}
+
+/**
+ * For 'desc={trigger={' use. Shows custom text when the associated trigger passes.
+ * ```
+ * success_text = {
+ * 	text = <text>
+ * 	<triggers>
+ * }
+ * ```
+ */
+export function successText(value: string): Trigger<ScopeName>;
+export function successText<S extends ScopeName = ScopeName>(args: SuccessTextArgs<S>): Trigger<S>;
+export function successText<S extends ScopeName>(
+  value: string | SuccessTextArgs<S>
+): Trigger<ScopeName> {
+  if (typeof value === "string") {
+    return trigger([kv("success_text", value)]);
+  }
+  const args = value;
+  const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
+  entries.push(kv("text", args.text));
+  if (args.conditions !== undefined) {
+    entries.push(...args.conditions.entries);
+    refs.push(...args.conditions.refs);
+  }
+  return trigger([block("success_text", entries)], refs);
 }
 
 /**

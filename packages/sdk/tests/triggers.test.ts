@@ -10,6 +10,7 @@ import {
   canAccessSystem,
   currentSituationApproach,
   currentStage,
+  customTooltip,
   hasCompletedEventChainCounter,
   hasCountryFlag,
   hasGlobalFlag,
@@ -174,6 +175,27 @@ describe("trigger builders", () => {
       }
       "
     `);
+  });
+
+  it("writes a custom tooltip as either its localisation scalar or its gated block", () => {
+    expect(serialize([...customTooltip("requires_ascension_theory").entries])).toBe(
+      "custom_tooltip = requires_ascension_theory\n"
+    );
+    expect(
+      serialize([
+        ...customTooltip({
+          failText: "default",
+          successText: "ascension_theory_ready",
+          conditions: hasTechnology("tech_ascension_theory"),
+        }).entries,
+      ])
+    ).toBe(
+      "custom_tooltip = {\n" +
+        "\tfail_text = default\n" +
+        "\tsuccess_text = ascension_theory_ready\n" +
+        "\thas_technology = tech_ascension_theory\n" +
+        "}\n"
+    );
   });
 
   it("preserves a multi-entry operand as an AND group inside OR", () => {

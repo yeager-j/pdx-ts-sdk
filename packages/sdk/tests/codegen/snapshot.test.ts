@@ -16,7 +16,7 @@ function declaration(name: string): string {
 }
 
 function argsInterface(name: string): string {
-  const start = source.indexOf(`export interface ${name} {`);
+  const start = source.indexOf(`export interface ${name}`);
   if (start === -1) {
     throw new Error(`${name} is not in the generated triggers`);
   }
@@ -191,6 +191,45 @@ describe("emitted trigger signatures", () => {
         }
         entries.push(kv("value", args.value));
         return trigger([block("relative_power", entries)]);
+      }"
+    `);
+  });
+
+  it("scalar plus block: preserves both custom_tooltip forms as overloads", () => {
+    expect(argsInterface("CustomTooltipArgs")).toMatchInlineSnapshot(`
+      "export interface CustomTooltipArgs<S extends ScopeName = ScopeName> {
+        text?: \"\" | string;
+        failText?: \"default\" | string;
+        successText?: string;
+        conditions: Trigger<S>;
+      }"
+    `);
+    expect(declaration("customTooltip")).toMatchInlineSnapshot(`
+      "export function customTooltip(value: string): Trigger<ScopeName>;
+      export function customTooltip<S extends ScopeName = ScopeName>(
+        args: CustomTooltipArgs<S>
+      ): Trigger<S>;
+      export function customTooltip<S extends ScopeName>(
+        value: string | CustomTooltipArgs<S>
+      ): Trigger<ScopeName> {
+        if (typeof value === \"string\") {
+          return trigger([kv(\"custom_tooltip\", value)]);
+        }
+        const args = value;
+        const entries: PdxEntry[] = [];
+        const refs: ContentRefUse[] = [];
+        if (args.text !== undefined) {
+          entries.push(kv(\"text\", args.text));
+        }
+        if (args.failText !== undefined) {
+          entries.push(kv(\"fail_text\", args.failText));
+        }
+        if (args.successText !== undefined) {
+          entries.push(kv(\"success_text\", args.successText));
+        }
+        entries.push(...args.conditions.entries);
+        refs.push(...args.conditions.refs);
+        return trigger([block(\"custom_tooltip\", entries)], refs);
       }"
     `);
   });
