@@ -24,7 +24,12 @@ import type { ScopeName } from "../generated/scopes.ts";
  * Narrow on purpose, for the same reason `isEffectKey` is: the generated
  * table is codegen's shape to change, and exporting it would freeze that shape
  * into the public API to answer one lookup.
+ *
+ * `Object.hasOwn` guards the lookup because the caller's key is arbitrary text
+ * read back out of script, not a symbol: a bare index answers `constructor` or
+ * `toString` with an `Object.prototype` member, which is neither a scope name
+ * nor `undefined`, and a consumer would read that as "yes, navigation".
  */
 export function scopeLinkOutput(key: string): ScopeName | "any" | undefined {
-  return SCOPE_LINK_NAVIGATION[key];
+  return Object.hasOwn(SCOPE_LINK_NAVIGATION, key) ? SCOPE_LINK_NAVIGATION[key] : undefined;
 }

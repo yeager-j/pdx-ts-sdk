@@ -149,6 +149,73 @@ describe("registration refuses events delivery cannot run", () => {
   });
 });
 
+describe("fire_only_once is enforced by refusing the repeat", () => {
+  const payingEvent = (prefix: string, fireOnlyOnce: boolean) => {
+    const mod = makeMod(prefix);
+    return mod.namespace().country(1, {
+      isTriggeredOnly: true,
+      fireOnlyOnce,
+      immediate: (country) => country.addResource({ resource: "influence", amount: 50 }),
+    });
+  };
+
+  it("refuses a second harness fire, and pays out exactly once", () => {
+    const event = payingEvent("sdk145_once", true);
+    const world = fixture({ countries: [{ name: "player" }] }, { events: [event] });
+
+    world.fire(event, world.country(0));
+
+    expect(() => world.fire(event, world.country(0))).toThrow(
+      /declares fire_only_once and was already delivered in this world \(day 0/
+    );
+    expect(world.country(0).resource("influence")).toBe(50);
+    expect(world.fired).toHaveLength(1);
+  });
+
+  it("refuses a repeat that arrives through the queue, rolling the delivery back", () => {
+    const mod = makeMod("sdk145_once_queued");
+    const events = mod.namespace();
+    const once = events.country(2, {
+      isTriggeredOnly: true,
+      fireOnlyOnce: true,
+      immediate: (country) => country.addResource({ resource: "influence", amount: 50 }),
+    });
+    const entry = events.country(1, {
+      isTriggeredOnly: true,
+      immediate: (country) => country.countryEvent({ id: once, days: 5 }),
+    });
+    const world = fixture({ countries: [{ name: "player" }] }, { events: [entry, once] });
+
+    world.fire(entry, world.country(0));
+    world.fire(once, world.country(0));
+
+    expect(() => world.advance(5)).toThrow(/declares fire_only_once/);
+    expect(world.country(0).resource("influence")).toBe(50);
+    expect(world.day).toBe(0);
+  });
+
+  it("says nothing about an event that never made the claim", () => {
+    const event = payingEvent("sdk145_repeatable", false);
+    const world = fixture({ countries: [{ name: "player" }] }, { events: [event] });
+
+    world.fire(event, world.country(0));
+    world.fire(event, world.country(0));
+
+    expect(world.country(0).resource("influence")).toBe(100);
+  });
+
+  it("counts per world, so a second fixture is the way to fire it again", () => {
+    const event = payingEvent("sdk145_once_second_world", true);
+    const first = fixture({ countries: [{ name: "player" }] }, { events: [event] });
+    const second = fixture({ countries: [{ name: "player" }] }, { events: [event] });
+
+    first.fire(event, first.country(0));
+    second.fire(event, second.country(0));
+
+    expect(second.country(0).resource("influence")).toBe(50);
+  });
+});
+
 describe("the situation clock", () => {
   const situationWorld = (staticProgress?: boolean) =>
     fixture(

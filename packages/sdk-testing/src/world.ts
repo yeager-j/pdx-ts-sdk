@@ -136,6 +136,26 @@ function assertDeliverable(event: DefinedEvent<ScopeName, ScopeName | undefined,
   }
 }
 
+/**
+ * Whether the event's body says the game fires it only once, read through the
+ * same table the rest of delivery reads — the `once` disposition is the flag's
+ * whole definition here, so a second field earning it needs no code change.
+ *
+ * `= no` is not that claim, so it says nothing: a field that spells the flag
+ * out as false leaves the event as repeatable as one that never wrote it.
+ */
+function firesOnlyOnce(event: DefinedEvent<ScopeName, ScopeName | undefined, string>): boolean {
+  if (event.entry.value.kind !== "container") {
+    return false;
+  }
+  return itemsAsEntries(event.entry.value.items, `Event "${event.id}"`).some(
+    (field) =>
+      eventFieldDeliveryFor(field.key)?.disposition === "once" &&
+      field.value.kind === "bool" &&
+      field.value.value
+  );
+}
+
 /** Why this field makes its event undeliverable, or `undefined` when it does not. */
 function deliveryRefusal(field: PdxEntry): string | undefined {
   const delivery = eventFieldDeliveryFor(field.key);
@@ -395,6 +415,19 @@ export class World {
     event: DefinedEvent<ScopeName, ScopeName | undefined, string>,
     via: FiredRecord["via"]
   ): void {
+    // The fired log is the ledger — a second delivery of a fire-only-once
+    // event is a firing the game would not have made, and running its
+    // immediate again would apply its effects to a world no game ever held.
+    // Read rather than stored: `fired` already records every delivery, and it
+    // is already rolled back with everything else when one fails.
+    const delivered = state.fired.find((record) => record.id === pending.id);
+    if (delivered !== undefined && firesOnlyOnce(event)) {
+      throw new InterpreterError(
+        `Event "${pending.id}" declares fire_only_once and was already delivered in this world ` +
+          `(day ${delivered.day}, ${delivered.scopeLabel}), so the game would not fire it again. ` +
+          `${eventFieldDeliveryFor("fire_only_once")?.note ?? ""} ${coverageSummary()}`
+      );
+    }
     state.fired.push({
       id: pending.id,
       day: state.day,

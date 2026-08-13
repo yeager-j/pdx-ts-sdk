@@ -27,6 +27,7 @@ import {
   COMBINATOR_SEMANTICS,
   EFFECT_SEMANTICS,
   EVENT_FIELD_DELIVERY,
+  eventFieldDeliveryFor,
   ITERATOR_SEMANTICS,
   LINK_SEMANTICS,
   LIVE_CALIBRATION_BUILD,
@@ -213,6 +214,23 @@ describe("event delivery covers every field the SDK can emit", () => {
         .filter(([, { disposition }]) => disposition === "delivered")
         .map(([key]) => key)
     ).toEqual(["immediate"]);
+  });
+
+  it("enforces the one flag whose repeat delivery refuses", () => {
+    expect(
+      Object.entries(EVENT_FIELD_DELIVERY)
+        .filter(([, { disposition }]) => disposition === "once")
+        .map(([key]) => key)
+    ).toEqual(["fire_only_once"]);
+  });
+
+  it("answers an Object.prototype member with 'no disposition', not with the member", () => {
+    // The lookup takes a key read out of recorded script, and the branch that
+    // consumes `undefined` is the one that refuses unknown fields — a bare
+    // index would turn that refusal into an acceptance.
+    for (const key of ["constructor", "toString", "hasOwnProperty", "__proto__"]) {
+      expect(eventFieldDeliveryFor(key)).toBeUndefined();
+    }
   });
 
   it("refuses the blocks that carry script delivery never reaches", () => {

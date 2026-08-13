@@ -52,7 +52,8 @@ and nothing else. What delivery does with each field of an event body is
 itself an audited table (`EVENT_FIELD_DELIVERY`), because an event carrying
 script delivery never runs — an option's effects, a `trigger` the game checks
 before firing, an `after` block — is refused at registration rather than
-half-delivered.
+half-delivered, and a `fire_only_once` event is refused a second delivery
+rather than run twice.
 
 **Fired record**:
 One event the run actually fired, in order — what a test asserts against.

@@ -14,6 +14,7 @@ import {
   createMod,
   hasCountryFlag,
   owner,
+  scopeLinkOutput,
   scriptedTrigger,
   spaceOwner,
 } from "@pdx-ts/sdk";
@@ -107,6 +108,15 @@ describe("the unmodeled-key diagnosis", () => {
     expect(message).toContain("LINK_SEMANTICS");
     expect(message).toContain("Modeled links: from, owner, target, event_target:*");
     expect(message).not.toContain("never reads their bodies");
+  });
+
+  it("answers a key that is only an Object.prototype member with 'not a link'", () => {
+    // The key comes out of recorded script, so it is arbitrary text: a bare
+    // index would hand back `Object.prototype.constructor` and the diagnosis
+    // would read that as navigation.
+    for (const key of ["constructor", "toString", "hasOwnProperty", "__proto__"]) {
+      expect(scopeLinkOutput(key)).toBeUndefined();
+    }
   });
 
   it("keeps the scripted-binding answer for a key that really is one", () => {

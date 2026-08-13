@@ -51,6 +51,12 @@ selected here … This one carries set_country_flag.
 Options that carry only a name, an icon, or a gate stay deliverable, because
 nothing is skipped when there is nothing to skip.
 
+`fireOnlyOnce` is the one flag delivery enforces rather than reads past: the
+first delivery runs and a second is refused, since running the immediate again
+would apply its effects to a world no game ever held. What the flag counts by
+is undocumented, so the harness models only the part that is not in doubt — a
+chain that genuinely needs a second firing gets a second fixture.
+
 Situations get the same treatment in the time dimension. A situation is a
 monthly mechanic — progress, `on_monthly`, stages, completion — and `advance`
 ticks none of it, so an advance that crosses a month boundary while the fixture

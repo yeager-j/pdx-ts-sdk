@@ -821,7 +821,15 @@ export type EventFieldDisposition =
    * and no option is ever selected here. One key, two answers, decided by the
    * option's own contents — see {@link optionCarriesEffects}.
    */
-  | "options";
+  | "options"
+  /**
+   * A flag delivery enforces by refusing a repeat: the first delivery runs, a
+   * second is a firing the game would not have made. Refusing the repeat is the
+   * only honest way to model it — the rules say nothing about what the flag
+   * counts by, so this harness declines to guess a granularity and declines to
+   * ignore the flag, which is what left an event's effects applied twice.
+   */
+  | "once";
 
 export interface EventFieldImpl {
   readonly disposition: EventFieldDisposition;
@@ -919,10 +927,8 @@ export const EVENT_FIELD_DELIVERY = defineEventFieldDelivery({
     note: "A window-side automation flag the rules give no comment. Whatever it selects, it selects an option, and an option carrying effects is already refused below — so this flag can never be the reason a payoff goes silently unrun.",
   },
   fire_only_once: {
-    disposition: "inert",
-    note:
-      NOT_SCHEDULED_HERE +
-      " A test that fires such an event twice is describing a repeat the flag would prevent, and the fired log shows both deliveries rather than hiding one.",
+    disposition: "once",
+    note: "The game fires such an event once; delivering it twice would apply its effects to a world no game ever held, and the second fired record would read as ordinary. The flag's counting granularity is undocumented, so delivery models the part that is not in doubt — there is a first firing and no second — and refuses the repeat instead of inventing a per-scope or per-game ledger. A chain that genuinely needs a second firing needs a second fixture.",
   },
   mean_time_to_happen: { disposition: "inert", note: NOT_SCHEDULED_HERE },
   weight_multiplier: { disposition: "inert", note: NOT_SCHEDULED_HERE },
@@ -952,8 +958,17 @@ export const EVENT_FIELD_DELIVERY = defineEventFieldDelivery({
   },
 });
 
+/**
+ * `Object.hasOwn` rather than a bare index: a key read out of recorded script
+ * is arbitrary text, and `Object.prototype`'s own members (`constructor`,
+ * `toString`) would otherwise come back as though the table had answered —
+ * turning the one branch that exists to refuse unknown fields into one that
+ * accepts them.
+ */
 export function eventFieldDeliveryFor(key: string): EventFieldImpl | undefined {
-  return EVENT_FIELD_DELIVERY[key as EmittableEventField];
+  return Object.hasOwn(EVENT_FIELD_DELIVERY, key)
+    ? EVENT_FIELD_DELIVERY[key as EmittableEventField]
+    : undefined;
 }
 
 /**
