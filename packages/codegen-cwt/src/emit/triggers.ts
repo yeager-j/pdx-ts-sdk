@@ -31,6 +31,8 @@ type Shape =
   | { readonly kind: "bool" }
   | { readonly kind: "comparison" }
   | { readonly kind: "value"; readonly value: TsValue }
+  /** A localisation scalar or a typed trigger block, dispatched by `typeof`. */
+  | { readonly kind: "stringOrFields"; readonly fields: readonly ArgField[] }
   /** A block whose entire content is a nested trigger, i.e. a scope change. */
   | { readonly kind: "wrapper"; readonly scope: string }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
@@ -48,8 +50,14 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
       ? { kind: "bool" }
       : { kind: "value", value };
   }
-  if (rule.declarations.length > 1) {
-    return "overloaded between a block and a scalar";
+  if (rule.blocks.length > 1) {
+    return "overloaded between multiple block forms";
+  }
+  if (
+    rule.scalars.length > 0 &&
+    !rule.scalars.every((declaration) => declaration.type.kind === "localisation")
+  ) {
+    return "overloaded between a block and a non-localisation scalar";
   }
   const block = rule.blocks[0]!;
   const body = block.type;
@@ -92,7 +100,7 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
         return `push_scope names no known scope (${pushedRaw})`;
       }
     }
-    return {
+    const shape: Shape = {
       kind: "fields",
       fields: [
         ...fields,
@@ -104,6 +112,7 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
         },
       ],
     };
+    return stringOrFields(rule, shape);
   }
 
   const fields = mergeFields(emitter, named, pushedRaw, TRIGGER_CLAUSES);
@@ -113,7 +122,22 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
   if (fields.length === 0) {
     return "block with no typeable fields";
   }
-  return { kind: "fields", fields };
+  return stringOrFields(rule, { kind: "fields", fields });
+}
+
+/**
+ * Localisation scalars and blocks can share one export because `typeof`
+ * separates their authored forms at runtime. Other scalar/block combinations
+ * remain visible skips rather than receiving an unsound object dispatch.
+ */
+function stringOrFields(
+  rule: LoweredRule,
+  shape: Extract<Shape, { readonly kind: "fields" }>
+): Shape | string {
+  if (rule.scalars.length === 0) {
+    return shape;
+  }
+  return { kind: "stringOrFields", fields: shape.fields };
 }
 
 function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefined): string[] {
@@ -275,6 +299,52 @@ function emitFields(
   );
 }
 
+function emitStringOrFields(
+  fn: string,
+  key: string,
+  scope: string,
+  docs: string[],
+  fields: readonly ArgField[]
+): string {
+  const name = `${pascalCase(key)}Args`;
+  const preservesEnclosingScope = fields.some(
+    (field) => field.value.kind === "clause" && field.value.splice && field.value.scope === null
+  );
+  const typeParameter = preservesEnclosingScope ? `<S extends ${scope} = ${scope}>` : "";
+  const argsType = `${name}${preservesEnclosingScope ? "<S>" : ""}`;
+  const returnScope = preservesEnclosingScope ? "S" : scope;
+  const members = fields
+    .map(
+      (field) =>
+        docComment(field.docs, "  ") +
+        `  ${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(field, returnScope)};\n`
+    )
+    .join("");
+  const pushes = fields
+    .map((field, index) => {
+      const access = `args.${camelCase(field.name)}`;
+      const push = `    ${pushCode(field, access, key, index)}\n`;
+      return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
+    })
+    .join("");
+  const withRefs = fields.some(contributesRefs);
+  return (
+    `export interface ${name}${typeParameter} {\n${members}}\n\n` +
+    docComment(docs) +
+    `export function ${fn}(value: string): Trigger<${scope}>;\n` +
+    `export function ${fn}${typeParameter}(args: ${argsType}): Trigger<${returnScope}>;\n` +
+    `export function ${fn}${preservesEnclosingScope ? `<S extends ${scope}>` : ""}(value: string | ${argsType}): Trigger<${scope}> {\n` +
+    `  if (typeof value === "string") {\n` +
+    `    return trigger([kv(${JSON.stringify(key)}, value)]);\n` +
+    `  }\n` +
+    `  const args = value;\n` +
+    `  const entries: PdxEntry[] = [];\n` +
+    (withRefs ? `  const refs: ContentRefUse[] = [];\n` : "") +
+    pushes +
+    `  return trigger([block(${JSON.stringify(key)}, entries)]${withRefs ? ", refs" : ""});\n}\n`
+  );
+}
+
 function emitOne(key: string, shape: Shape, scope: string, docs: string[]): string {
   const fn = safeIdentifier(camelCase(key));
   switch (shape.kind) {
@@ -284,6 +354,8 @@ function emitOne(key: string, shape: Shape, scope: string, docs: string[]): stri
       return emitComparison(fn, key, scope, docs);
     case "value":
       return emitValue(fn, key, scope, docs, shape.value);
+    case "stringOrFields":
+      return emitStringOrFields(fn, key, scope, docs, shape.fields);
     case "wrapper":
       return emitWrapper(fn, key, scope, docs, shape.scope);
     case "fields":

@@ -7,6 +7,7 @@ import { countryFlags, planetFlags, type CountryFlag } from "../src/generated/va
 import { eventTarget } from "../src/index.ts";
 import {
   anyTraitOfSpecies,
+  customTooltip,
   hasCountryFlag,
   hasEdict,
   hasElectionType,
@@ -54,6 +55,17 @@ describe("research areas", () => {
 });
 
 describe("shapes the rules give a signature", () => {
+  it("accepts custom tooltip's scalar and gated-block forms", () => {
+    customTooltip("requires_ascension_theory");
+    customTooltip({
+      failText: "default",
+      successText: "ascension_theory_ready",
+      conditions: hasCountryFlag("ascension_ready"),
+    });
+    // @ts-expect-error — the block form must still carry the conditions it explains
+    customTooltip({ failText: "requires_ascension_theory" });
+  });
+
   it("requires an operator on a comparison trigger", () => {
     numMoons("<", 4);
     // @ts-expect-error — num_moons is written `num_moons < 4`, so the operator is not optional
