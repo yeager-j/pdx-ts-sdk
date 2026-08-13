@@ -1,0 +1,1355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SDK-123 · GFX and Asset authoring prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17211c;
+        --muted: #637068;
+        --paper: #f5f5ef;
+        --panel: #fffefa;
+        --line: #d9ddd5;
+        --accent: #166b50;
+        --accent-soft: #e3f0e9;
+        --warn: #8a4f08;
+        --warn-soft: #fff1d9;
+        --error: #9b2c2c;
+        --error-soft: #fbe5e3;
+        --code: #14221c;
+        --code-ink: #eaf4ed;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .page {
+        width: min(1480px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0 64px;
+      }
+
+      .masthead {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 24px;
+        align-items: start;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 900px;
+        margin-bottom: 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(34px, 4.2vw, 58px);
+        font-weight: 500;
+        letter-spacing: -0.035em;
+        line-height: 1.02;
+      }
+
+      h2 {
+        margin-bottom: 16px;
+        font-size: 20px;
+      }
+
+      h3 {
+        margin-bottom: 8px;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+      }
+
+      .lede {
+        max-width: 940px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.6;
+      }
+
+      .prototype-mark {
+        padding: 8px 12px;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .question {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 0.55fr);
+        gap: 20px;
+        margin: 24px 0;
+      }
+
+      .card {
+        min-width: 0;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+      }
+
+      .card p:last-child,
+      .card ul:last-child {
+        margin-bottom: 0;
+      }
+
+      .question-copy {
+        font-size: 18px;
+        line-height: 1.55;
+      }
+
+      .assumption {
+        border-color: #b8d1c5;
+        background: var(--accent-soft);
+      }
+
+      .assumption p {
+        color: #315244;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.7fr);
+        gap: 20px;
+        align-items: start;
+      }
+
+      .controls {
+        position: sticky;
+        top: 16px;
+      }
+
+      .button-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .action {
+        min-height: 44px;
+        padding: 9px 11px;
+        border: 1px solid #b9c2bb;
+        border-radius: 9px;
+        background: white;
+        color: var(--ink);
+        cursor: pointer;
+        text-align: left;
+        line-height: 1.25;
+      }
+
+      .action:hover {
+        border-color: var(--accent);
+        background: #f5fbf7;
+      }
+
+      .action.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+      }
+
+      .action.reset {
+        grid-column: 1 / -1;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .divider {
+        height: 1px;
+        margin: 20px 0;
+        background: var(--line);
+      }
+
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      .tab {
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: white;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .tab[aria-selected="true"] {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .walkthrough-copy {
+        min-height: 68px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .steps {
+        display: grid;
+        gap: 7px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        gap: 8px;
+        align-items: center;
+        width: 100%;
+        padding: 9px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: white;
+        color: var(--muted);
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .step.current {
+        border-color: var(--accent);
+        color: var(--ink);
+      }
+
+      .step.done {
+        border-color: #c7dacd;
+        background: #f3faf5;
+        color: var(--accent);
+      }
+
+      .step:disabled {
+        cursor: default;
+        opacity: 0.58;
+      }
+
+      .step-number {
+        display: grid;
+        width: 22px;
+        height: 22px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--paper);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .state-stack {
+        display: grid;
+        gap: 20px;
+      }
+
+      .change {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 12px 16px;
+        border: 1px solid #c4d6ca;
+        border-radius: 11px;
+        background: var(--accent-soft);
+        color: #244a39;
+        font-size: 14px;
+      }
+
+      .change strong {
+        flex: 0 0 auto;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .summary {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fbfbf7;
+      }
+
+      .summary-label {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .summary-value {
+        font-size: 20px;
+        font-weight: 760;
+      }
+
+      .inventory {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .inventory-block {
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+
+      .inventory-list,
+      .tree,
+      .diagnostics {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .inventory-item {
+        min-width: 0;
+        padding-top: 8px;
+        border-top: 1px solid #e6e8e3;
+      }
+
+      .inventory-item:first-child {
+        padding-top: 0;
+        border-top: 0;
+      }
+
+      .item-name {
+        display: block;
+        overflow: hidden;
+        font-size: 12px;
+        font-weight: 740;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .item-meta {
+        display: block;
+        overflow: hidden;
+        margin-top: 3px;
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .empty {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .code-card {
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .code-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: center;
+        padding: 16px 18px;
+        border-bottom: 1px solid #2b3c34;
+        background: var(--code);
+        color: var(--code-ink);
+      }
+
+      .code-heading h2 {
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .code-heading span {
+        color: #a9bcb0;
+        font-size: 11px;
+      }
+
+      pre {
+        margin: 0;
+        overflow: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.62;
+        tab-size: 2;
+      }
+
+      .author-code {
+        min-height: 230px;
+        max-height: 590px;
+        padding: 18px;
+        background: var(--code);
+        color: var(--code-ink);
+      }
+
+      .fold-grid {
+        display: grid;
+        grid-template-columns: minmax(240px, 0.68fr) minmax(0, 1.32fr);
+        gap: 16px;
+      }
+
+      .fold-status {
+        padding: 14px;
+        border-radius: 10px;
+        background: #f0f2ee;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .fold-status.success {
+        background: var(--accent-soft);
+        color: #244a39;
+      }
+
+      .fold-status.error {
+        background: var(--error-soft);
+        color: var(--error);
+      }
+
+      .tree-item {
+        padding: 9px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfbf8;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        word-break: break-all;
+      }
+
+      .tree-item strong {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--ink);
+      }
+
+      .tree-item span {
+        color: var(--muted);
+      }
+
+      .diagnostic {
+        padding: 10px;
+        border-radius: 8px;
+        background: var(--warn-soft);
+        color: var(--warn);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .diagnostic.error {
+        background: var(--error-soft);
+        color: var(--error);
+      }
+
+      details {
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fbfbf8;
+      }
+
+      details + details {
+        margin-top: 8px;
+      }
+
+      summary {
+        padding: 10px 12px;
+        cursor: pointer;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        font-weight: 740;
+        word-break: break-all;
+      }
+
+      details pre {
+        max-height: 360px;
+        padding: 14px;
+        border-top: 1px solid var(--line);
+        background: #f3f3ed;
+        color: #24312a;
+      }
+
+      .reaction-list {
+        margin: 0;
+        padding-left: 20px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.92em;
+      }
+
+      @media (max-width: 1050px) {
+        .workspace,
+        .question,
+        .fold-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .controls {
+          position: static;
+        }
+
+        .summary-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 700px) {
+        .page {
+          width: min(100% - 20px, 1480px);
+          padding-top: 18px;
+        }
+
+        .masthead {
+          grid-template-columns: 1fr;
+        }
+
+        .prototype-mark {
+          justify-self: start;
+        }
+
+        .button-grid,
+        .summary-grid,
+        .inventory {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">SDK-123 · Authoring feel</p>
+          <h1>Can Asset files and typed GFX feel like one coherent Feature?</h1>
+          <p class="lede">
+            Drive a real Dawn of Ascension slice from filesystem capture through Feature placement
+            and canonical <code>.gfx</code> output. The question is whether the public calls make
+            the ownership, references, minted names, and file grouping feel obvious before any
+            production implementation is fixed.
+          </p>
+        </div>
+        <div class="prototype-mark">Throwaway prototype</div>
+      </header>
+
+      <section class="question" aria-label="Prototype question and assumption">
+        <article class="card question-copy">
+          <h2>The slice</h2>
+          <p>
+            Two sensor sprites from Dawn’s <code>interface/doa_required_components.gfx</code>, plus
+            the tier-6 mesh and three particles from the mixed
+            <code>gfx/particles/doa_kinetic_artillery_particles.gfx</code>. Six real dependency
+            files are represented with their observed byte lengths and SHA-256 identities.
+          </p>
+        </article>
+        <aside class="card assumption">
+          <h2>Revised after the first reaction</h2>
+          <p>
+            Ordinary projects set <code>"assetsDirectory": "assets"</code> once. Generated wiring
+            captures and places the whole mirrored tree; authored content keeps today’s
+            <code>textureFile: "gfx/…"</code> spelling. The Fold validates that one string against
+            captured and vanilla paths. Explicit <code>assetFile</code> remains only for standalone
+            use or a source that cannot mirror its destination.
+          </p>
+        </aside>
+      </section>
+
+      <section class="workspace">
+        <aside class="card controls">
+          <h2>Free play</h2>
+          <div class="button-grid" id="free-play"></div>
+          <div class="divider"></div>
+          <h2>Guided walkthroughs</h2>
+          <div class="tabs" id="scenario-tabs" role="tablist"></div>
+          <p class="walkthrough-copy" id="scenario-copy"></p>
+          <div class="steps" id="scenario-steps"></div>
+        </aside>
+
+        <div class="state-stack">
+          <div class="change" aria-live="polite">
+            <strong>Just changed</strong>
+            <span id="last-change"></span>
+          </div>
+
+          <section class="card">
+            <h2>Current authoring state</h2>
+            <div class="summary-grid" id="summary"></div>
+            <div class="inventory" id="inventory"></div>
+          </section>
+
+          <section class="card code-card">
+            <div class="code-heading">
+              <h2>Proposed author source</h2>
+              <span>src/content/visuals.ts</span>
+            </div>
+            <pre class="author-code"><code id="author-code"></code></pre>
+          </section>
+
+          <section class="card">
+            <h2>Fold result</h2>
+            <div class="fold-grid">
+              <div>
+                <div class="fold-status" id="fold-status"></div>
+                <h3 style="margin-top: 16px">Owned output paths</h3>
+                <ul class="tree" id="output-tree"></ul>
+                <h3 style="margin-top: 16px">Diagnostics</h3>
+                <ul class="diagnostics" id="diagnostics"></ul>
+              </div>
+              <div>
+                <h3>Lowered GFX envelopes</h3>
+                <div id="lowered-files"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>Questions for the reaction</h2>
+            <ul class="reaction-list">
+              <li>
+                Does preserving today’s plain <code>textureFile: "gfx/…"</code> spelling remove the
+                DX regression?
+              </li>
+              <li>
+                When that string is absent from both the Asset tree and vanilla inventory, should
+                the Fold warn—as currently decided—or fail unless it is explicitly marked external?
+              </li>
+              <li>
+                Does a single manifest <code>assetsDirectory</code> plus invisible generated Feature
+                placement feel like the right amount of machinery?
+              </li>
+              <li>
+                Does one <code>kinetic_artillery</code> Feature fanning out into canonical model and
+                particle files feel helpful, or does it hide too much?
+              </li>
+              <li>
+                Are minted outputs such as <code>GFX_doa_sensor_6</code> and
+                <code>doa_kinetic_artillery_6_hit_effect</code> predictable from the logical names?
+              </li>
+              <li>
+                Does the unchecked raw <code>pdxparticle.type</code> string feel appropriately sharp
+                when its target lives inside an opaque <code>.asset</code> file?
+              </li>
+            </ul>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const PrototypeModel = (() => {
+        const assets = Object.freeze({
+          sensor6: {
+            variable: "sensor6Texture",
+            path: "gfx/interface/icons/ship_parts/dds/doa_dark_matter_sensor_6.dds",
+            bytes: 13584,
+            hash: "0d17580323d08685551b9092a0e881d500c3eeaf646c5e1800d39d33df5de88a",
+            group: "sensors",
+          },
+          sensor7: {
+            variable: "sensor7Texture",
+            path: "gfx/interface/icons/ship_parts/dds/doa_dark_matter_sensor_7.dds",
+            bytes: 13584,
+            hash: "f97a1f909ba740e0bed802191c5a483b1ce68e343aec7d18744519d525cd51de",
+            group: "sensors",
+          },
+          hitAsset: {
+            variable: "kineticHitAsset",
+            path: "gfx/particles/combat/doa_kinetic_artillery_6_hit_effect.asset",
+            bytes: 7768,
+            hash: "f95414cb67e8d7882e7cf1a8ccd3f86d968b73182c9263e99c236ada6b30d56b",
+            group: "kinetics",
+          },
+          shieldAsset: {
+            variable: "kineticShieldAsset",
+            path: "gfx/particles/combat/doa_kinetic_artillery_6_shield_hit_effect.asset",
+            bytes: 4694,
+            hash: "1a55a35dbcff89998d93df57a26c83e4dcdc0e944b6f4596b453191d4e96fe3e",
+            group: "kinetics",
+          },
+          muzzleAsset: {
+            variable: "kineticMuzzleAsset",
+            path: "gfx/particles/combat/doa_kinetic_artillery_6_muzzle.asset",
+            bytes: 2276,
+            hash: "3ac723b04214f565e8affe85dd80c7d0cacd4087032cd8dbd77884eee2bfffae",
+            group: "kinetics",
+          },
+          tracerTexture: {
+            variable: "tracerTexture",
+            path: "gfx/models/combat_items/tracer_round_doa_artillery_6.dds",
+            bytes: 16512,
+            hash: "2e4c33e30353609695f5d76ba9c9f854284b8a5d39fdf26cf473f85d08edba12",
+            group: "kinetics",
+          },
+        });
+
+        const gfxItems = Object.freeze({
+          sensor6Sprite: {
+            variable: "sensor6Sprite",
+            kind: "sprite",
+            logicalName: "sensor_6",
+            mintedName: "GFX_doa_sensor_6",
+            feature: "interface",
+          },
+          sensor7Sprite: {
+            variable: "sensor7Sprite",
+            kind: "sprite",
+            logicalName: "sensor_7",
+            mintedName: "GFX_doa_sensor_7",
+            feature: "interface",
+          },
+          tracerMesh: {
+            variable: "tracerMesh",
+            kind: "mesh",
+            logicalName: "kinetic_artillery_6_tracer_round_mesh",
+            mintedName: "doa_kinetic_artillery_6_tracer_round_mesh",
+            feature: "kinetics",
+          },
+          shieldParticle: {
+            variable: "shieldParticle",
+            kind: "particle",
+            logicalName: "kinetic_artillery_6_shield_hit_effect",
+            mintedName: "doa_kinetic_artillery_6_shield_hit_effect",
+            feature: "kinetics",
+          },
+          hitParticle: {
+            variable: "hitParticle",
+            kind: "particle",
+            logicalName: "kinetic_artillery_6_hit_effect",
+            mintedName: "doa_kinetic_artillery_6_hit_effect",
+            feature: "kinetics",
+          },
+          muzzleParticle: {
+            variable: "muzzleParticle",
+            kind: "particle",
+            logicalName: "kinetic_artillery_6_muzzle_particle",
+            mintedName: "doa_kinetic_artillery_6_muzzle_particle",
+            feature: "kinetics",
+          },
+        });
+
+        const initialState = () => ({
+          captured: {},
+          declaredGfx: [],
+          placed: { assets: false, interface: false, kinetics: false },
+          sourceRevision: 1,
+          folded: false,
+          lastChange: "A blank authoring module: no Items exist and no Features are placed.",
+        });
+
+        const dirty = (state, change) => ({ ...state, folded: false, lastChange: change });
+
+        const captureTree = (state) => {
+          const captured = {};
+          for (const [id, asset] of Object.entries(assets)) {
+            captured[id] = {
+              revision: state.sourceRevision,
+              hash:
+                state.sourceRevision === 1
+                  ? asset.hash
+                  : `edited-r${state.sourceRevision}-${asset.hash.slice(0, 48)}`,
+            };
+          }
+          return dirty(
+            { ...state, captured, placed: { ...state.placed, assets: true } },
+            `Generated project wiring mirrored assetsDirectory, captured all six files at source revision ${state.sourceRevision}, and placed their Feature.`
+          );
+        };
+
+        const declareGfx = (state, group) => {
+          const ids = Object.entries(gfxItems)
+            .filter(([, item]) => item.feature === group)
+            .map(([id]) => id);
+          const declaredGfx = [...new Set([...state.declaredGfx, ...ids])];
+          const label =
+            group === "interface"
+              ? "two spriteType Items"
+              : "one pdxmesh and three pdxparticle Items";
+          return dirty(
+            { ...state, declaredGfx },
+            `Declared ${label}. They remain inert until Feature placement.`
+          );
+        };
+
+        const place = (state, feature) => {
+          const names = {
+            assets: "assets",
+            interface: "required_components",
+            kinetics: "kinetic_artillery",
+          };
+          return dirty(
+            { ...state, placed: { ...state.placed, [feature]: true } },
+            `Placed the ${names[feature]} Feature. Its stem controls generated GFX filenames, never Asset paths.`
+          );
+        };
+
+        const reduce = (state, action) => {
+          switch (action.type) {
+            case "RESET":
+              return initialState();
+            case "CAPTURE_TREE":
+              return captureTree(state);
+            case "DECLARE_SPRITES":
+              return declareGfx(state, "interface");
+            case "DECLARE_KINETICS":
+              return declareGfx(state, "kinetics");
+            case "PLACE_INTERFACE":
+              return place(state, "interface");
+            case "PLACE_KINETICS":
+              return place(state, "kinetics");
+            case "EDIT_SOURCE":
+              return dirty(
+                { ...state, sourceRevision: state.sourceRevision + 1 },
+                "The source tree changed on disk. Existing Asset Items still hold the exact bytes they captured."
+              );
+            case "RECAPTURE": {
+              const next = captureTree({ ...state, captured: {} });
+              return {
+                ...next,
+                lastChange: `Ran fresh generated project wiring. The mirrored Asset tree now snapshots source revision ${state.sourceRevision}.`,
+              };
+            }
+            case "FOLD":
+              return {
+                ...state,
+                folded: true,
+                lastChange:
+                  "Folded the currently placed Features and adjudicated every output path.",
+              };
+            default:
+              return state;
+          }
+        };
+
+        const capturedIds = (state) => Object.keys(state.captured);
+        const declaredIds = (state, feature) =>
+          state.declaredGfx.filter((id) => gfxItems[id].feature === feature);
+
+        const spriteDeclaration = (id) => {
+          const item = gfxItems[id];
+          const texture = id === "sensor6Sprite" ? assets.sensor6.path : assets.sensor7.path;
+          return `const ${item.variable} = mod.spriteType(\"${item.logicalName}\", {\n  textureFile: \"${texture}\",\n});`;
+        };
+
+        const meshDeclaration = () =>
+          `const tracerMesh = mod.pdxmesh(\n  \"kinetic_artillery_6_tracer_round_mesh\",\n  {\n    file: \"gfx/models/combat_items/kinetic_artillery_tracer_round.mesh\",\n    scale: 1,\n    meshsettings: [{ textureDiffuse: \"tracer_round_doa_artillery_6.dds\" }],\n  }\n);`;
+
+        const particleDeclaration = (id) => {
+          const item = gfxItems[id];
+          const values = {
+            shieldParticle: ["doa_kinetic_artillery_6_shield_hit_effect", "1"],
+            hitParticle: ["doa_kinetic_artillery_6_hit_effect", "1.5"],
+            muzzleParticle: ["doa_kinetic_artillery_6_muzzle_file", "2"],
+          };
+          const [type, scale] = values[id];
+          return `const ${item.variable} = mod.pdxparticle(\"${item.logicalName}\", {\n  type: \"${type}\",\n  scale: ${scale},\n});`;
+        };
+
+        const featureDeclaration = (state, feature) => {
+          const stem = feature === "interface" ? "required_components" : "kinetic_artillery";
+          const exported = feature === "interface" ? "requiredComponents" : "kineticArtillery";
+          const variables = declaredIds(state, feature).map((id) => gfxItems[id].variable);
+          return `export const ${exported} = mod.feature(\"${stem}\", [\n${variables.map((name) => `  ${name},`).join("\n")}\n]);`;
+        };
+
+        const authorCode = (state) => {
+          const sections = ['import { mod } from "../mod.ts";'];
+          for (const id of declaredIds(state, "interface")) sections.push(spriteDeclaration(id));
+          for (const id of declaredIds(state, "kinetics")) {
+            sections.push(id === "tracerMesh" ? meshDeclaration() : particleDeclaration(id));
+          }
+          for (const feature of ["interface", "kinetics"]) {
+            if (state.placed[feature]) sections.push(featureDeclaration(state, feature));
+          }
+          return sections.join("\n\n");
+        };
+
+        const diagnostics = (state) => {
+          const findings = [];
+          const captured = new Set(capturedIds(state));
+          const interfacePlaced =
+            state.placed.interface && declaredIds(state, "interface").length > 0;
+          const kineticsPlaced = state.placed.kinetics && declaredIds(state, "kinetics").length > 0;
+
+          if (state.placed.assets && captured.size === 0) {
+            findings.push({ severity: "error", text: "The assets Feature is empty." });
+          }
+          if (interfacePlaced && !state.placed.assets) {
+            findings.push({
+              severity: "error",
+              text: "Placed sprite Items reference Asset Items that are not placed in this build.",
+            });
+          }
+          if (interfacePlaced && !["sensor6", "sensor7"].every((id) => captured.has(id))) {
+            findings.push({
+              severity: "error",
+              text: "The sensor sprite slice is missing one or more captured texture Asset Items.",
+            });
+          }
+          if (kineticsPlaced && !state.placed.assets) {
+            findings.push({
+              severity: "error",
+              text: "The kinetic GFX slice has dependencies, but its Asset Items are not placed.",
+            });
+          }
+          if (
+            kineticsPlaced &&
+            !["hitAsset", "shieldAsset", "muzzleAsset", "tracerTexture"].every((id) =>
+              captured.has(id)
+            )
+          ) {
+            findings.push({
+              severity: "error",
+              text: "The kinetic slice is missing one or more captured dependency files.",
+            });
+          }
+          if (kineticsPlaced) {
+            findings.push({
+              severity: "warning",
+              text: "pdxparticle.type remains an intentional unchecked string because its target is inside an opaque .asset file.",
+            });
+            findings.push({
+              severity: "warning",
+              text: "The mesh file is a raw known-vanilla path; a plain string is allowed and checked against available path inventories.",
+            });
+          }
+          return findings;
+        };
+
+        const spriteFile = (state) => {
+          const ids = declaredIds(state, "interface");
+          if (!state.placed.interface || ids.length === 0) return null;
+          const blocks = ids
+            .map((id) => {
+              const item = gfxItems[id];
+              const texture = id === "sensor6Sprite" ? assets.sensor6.path : assets.sensor7.path;
+              return `\tspriteType = {\n\t\tname = \"${item.mintedName}\"\n\t\ttextureFile = \"${texture}\"\n\t}`;
+            })
+            .join("\n");
+          return {
+            path: "interface/doa_required_components.gfx",
+            content: `spriteTypes = {\n${blocks}\n}\n`,
+          };
+        };
+
+        const modelFile = (state) => {
+          if (!state.placed.kinetics || !state.declaredGfx.includes("tracerMesh")) return null;
+          return {
+            path: "gfx/models/doa_kinetic_artillery.gfx",
+            content: `objectTypes = {\n\tpdxmesh = {\n\t\tname = \"doa_kinetic_artillery_6_tracer_round_mesh\"\n\t\tfile = \"gfx/models/combat_items/kinetic_artillery_tracer_round.mesh\"\n\t\tscale = 1\n\t\tmeshsettings = {\n\t\t\ttexture_diffuse = \"tracer_round_doa_artillery_6.dds\"\n\t\t}\n\t}\n}\n`,
+          };
+        };
+
+        const particleFile = (state) => {
+          const ids = declaredIds(state, "kinetics").filter(
+            (id) => gfxItems[id].kind === "particle"
+          );
+          if (!state.placed.kinetics || ids.length === 0) return null;
+          const values = {
+            shieldParticle: ["doa_kinetic_artillery_6_shield_hit_effect", "1"],
+            hitParticle: ["doa_kinetic_artillery_6_hit_effect", "1.5"],
+            muzzleParticle: ["doa_kinetic_artillery_6_muzzle_file", "2"],
+          };
+          const blocks = ids
+            .sort((a, b) => gfxItems[a].mintedName.localeCompare(gfxItems[b].mintedName))
+            .map((id) => {
+              const item = gfxItems[id];
+              const [type, scale] = values[id];
+              return `\tpdxparticle = {\n\t\tname = \"${item.mintedName}\"\n\t\ttype = \"${type}\"\n\t\tscale = ${scale}\n\t}`;
+            })
+            .join("\n");
+          return {
+            path: "gfx/particles/doa_kinetic_artillery.gfx",
+            content: `objectTypes = {\n${blocks}\n}\n`,
+          };
+        };
+
+        const fold = (state) => {
+          const findings = diagnostics(state);
+          const hasErrors = findings.some((finding) => finding.severity === "error");
+          const gfxFiles = [spriteFile(state), modelFile(state), particleFile(state)].filter(
+            Boolean
+          );
+          const assetFiles = state.placed.assets
+            ? capturedIds(state).map((id) => ({
+                path: assets[id].path,
+                bytes: assets[id].bytes,
+                hash: state.captured[id].hash,
+              }))
+            : [];
+          return {
+            attempted: state.folded,
+            ok: state.folded && !hasErrors,
+            findings,
+            gfxFiles: state.folded && !hasErrors ? gfxFiles : [],
+            assetFiles: state.folded && !hasErrors ? assetFiles : [],
+          };
+        };
+
+        const view = (state) => {
+          const result = fold(state);
+          const stale = capturedIds(state).filter(
+            (id) => state.captured[id].revision !== state.sourceRevision
+          );
+          return {
+            authorCode: authorCode(state),
+            capturedAssets: capturedIds(state).map((id) => ({
+              id,
+              ...assets[id],
+              captured: state.captured[id],
+              stale: state.captured[id].revision !== state.sourceRevision,
+            })),
+            gfx: state.declaredGfx.map((id) => ({ id, ...gfxItems[id] })),
+            features: Object.entries(state.placed)
+              .filter(([, placed]) => placed)
+              .map(([name]) => name),
+            staleCount: stale.length,
+            sourceRevision: state.sourceRevision,
+            lastChange: state.lastChange,
+            fold: result,
+          };
+        };
+
+        return { initialState, reduce, view };
+      })();
+
+      const actions = [
+        ["CAPTURE_TREE", "Capture project Asset tree"],
+        ["DECLARE_SPRITES", "Define 2 spriteTypes"],
+        ["DECLARE_KINETICS", "Define mesh + particles"],
+        ["PLACE_INTERFACE", "Place interface Feature"],
+        ["PLACE_KINETICS", "Place kinetics Feature"],
+        ["EDIT_SOURCE", "Edit source on disk"],
+        ["RECAPTURE", "Rebuild project Asset tree"],
+        ["FOLD", "Fold placed Features"],
+      ];
+
+      const scenarios = [
+        {
+          name: "Complete slice",
+          description:
+            "Author the representative Dawn slice end to end. The Project Manifest captures and places one mirrored Asset tree; authored GFX names each needed path only at its reference site.",
+          steps: [
+            ["CAPTURE_TREE", "Capture the manifest Asset tree"],
+            ["DECLARE_SPRITES", "Declare the sensor sprites"],
+            ["DECLARE_KINETICS", "Declare the mesh and particles"],
+            ["PLACE_INTERFACE", "Place the interface graphics"],
+            ["PLACE_KINETICS", "Place the kinetic graphics"],
+            ["FOLD", "Fold to immutable output"],
+          ],
+        },
+        {
+          name: "Mixed file",
+          description:
+            "Start from Dawn’s mixed objectTypes source. The SDK preserves the definitions but canonical placement splits meshes and particles into separate files with one envelope each.",
+          steps: [
+            ["CAPTURE_TREE", "Capture the manifest Asset tree"],
+            ["DECLARE_KINETICS", "Declare the mixed source definitions"],
+            ["PLACE_KINETICS", "Place one kinetic_artillery Feature"],
+            ["FOLD", "Observe two canonical GFX files"],
+          ],
+        },
+        {
+          name: "Byte snapshot",
+          description:
+            "Feel the declaration-time snapshot. Editing a source after declaration does not mutate the Item; only a fresh build declaration captures the new bytes.",
+          steps: [
+            ["CAPTURE_TREE", "Capture source revision 1"],
+            ["EDIT_SOURCE", "Change the source tree on disk"],
+            ["RECAPTURE", "Rebuild the Asset tree for revision 2"],
+          ],
+        },
+        {
+          name: "Feature ownership",
+          description:
+            "Definitions are inert until placed, and an Asset lookup cannot resolve before generated project wiring captures the tree. First provoke that failure, then let assetsDirectory make the build whole.",
+          steps: [
+            ["DECLARE_SPRITES", "Declare the sprite Items"],
+            ["PLACE_INTERFACE", "Place only the sprite Feature"],
+            ["FOLD", "See the missing Asset tree failure"],
+            ["CAPTURE_TREE", "Run generated assetsDirectory wiring"],
+            ["FOLD", "Fold the complete ownership graph"],
+          ],
+        },
+      ];
+
+      let state = PrototypeModel.initialState();
+      let activeScenario = 0;
+      let scenarioStep = 0;
+
+      const escapeHtml = (value) =>
+        String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+
+      const dispatch = (type) => {
+        state = PrototypeModel.reduce(state, { type });
+        render();
+      };
+
+      const formatBytes = (bytes) => `${(bytes / 1024).toFixed(1)} KiB`;
+
+      const renderFreePlay = () => {
+        const root = document.querySelector("#free-play");
+        root.innerHTML = actions
+          .map(
+            ([type, label]) =>
+              `<button class="action ${type === "FOLD" ? "primary" : ""}" data-action="${type}">${escapeHtml(label)}</button>`
+          )
+          .join("");
+        root.insertAdjacentHTML(
+          "beforeend",
+          '<button class="action reset" data-action="RESET">Reset everything</button>'
+        );
+        root.querySelectorAll("[data-action]").forEach((button) => {
+          button.addEventListener("click", () => dispatch(button.dataset.action));
+        });
+      };
+
+      const startScenario = (index) => {
+        activeScenario = index;
+        scenarioStep = 0;
+        state = PrototypeModel.initialState();
+        state.lastChange = `Started “${scenarios[index].name}” from a known blank module.`;
+        render();
+      };
+
+      const runScenarioStep = (index) => {
+        if (index !== scenarioStep) return;
+        const [action] = scenarios[activeScenario].steps[index];
+        state = PrototypeModel.reduce(state, { type: action });
+        scenarioStep += 1;
+        render();
+      };
+
+      const renderScenarios = () => {
+        const tabs = document.querySelector("#scenario-tabs");
+        tabs.innerHTML = scenarios
+          .map(
+            (scenario, index) =>
+              `<button class="tab" role="tab" aria-selected="${index === activeScenario}" data-scenario="${index}">${escapeHtml(scenario.name)}</button>`
+          )
+          .join("");
+        tabs.querySelectorAll("[data-scenario]").forEach((tab) => {
+          tab.addEventListener("click", () => startScenario(Number(tab.dataset.scenario)));
+        });
+
+        const scenario = scenarios[activeScenario];
+        document.querySelector("#scenario-copy").textContent = scenario.description;
+        const steps = document.querySelector("#scenario-steps");
+        steps.innerHTML = scenario.steps
+          .map(([, label], index) => {
+            const status = index < scenarioStep ? "done" : index === scenarioStep ? "current" : "";
+            const marker = index < scenarioStep ? "✓" : index + 1;
+            return `<button class="step ${status}" data-step="${index}" ${index !== scenarioStep ? "disabled" : ""}><span class="step-number">${marker}</span><span>${escapeHtml(label)}</span></button>`;
+          })
+          .join("");
+        steps.querySelectorAll("[data-step]").forEach((step) => {
+          step.addEventListener("click", () => runScenarioStep(Number(step.dataset.step)));
+        });
+      };
+
+      const renderSummary = (view) => {
+        const values = [
+          ["Source revision", view.sourceRevision],
+          ["Captured Asset Items", view.capturedAssets.length],
+          ["Declared GFX Items", view.gfx.length],
+          ["Placed Features", view.features.length],
+        ];
+        document.querySelector("#summary").innerHTML = values
+          .map(
+            ([label, value]) =>
+              `<div class="summary"><span class="summary-label">${escapeHtml(label)}</span><span class="summary-value">${value}</span></div>`
+          )
+          .join("");
+      };
+
+      const empty = (text) => `<li class="empty">${escapeHtml(text)}</li>`;
+
+      const renderInventory = (view) => {
+        const assetItems =
+          view.capturedAssets.length === 0
+            ? empty("The manifest Asset tree has not been captured yet.")
+            : view.capturedAssets
+                .map(
+                  (asset) =>
+                    `<li class="inventory-item"><span class="item-name">${escapeHtml(asset.path.split("/").at(-1))}</span><span class="item-meta">${formatBytes(asset.bytes)} · ${escapeHtml(asset.captured.hash.slice(0, 12))}… · r${asset.captured.revision}${asset.stale ? " · source has changed" : ""}</span></li>`
+                )
+                .join("");
+
+        const gfx =
+          view.gfx.length === 0
+            ? empty("No typed graphics declared yet.")
+            : view.gfx
+                .map(
+                  (item) =>
+                    `<li class="inventory-item"><span class="item-name">${escapeHtml(item.variable)}</span><span class="item-meta">${escapeHtml(item.kind)} · ${escapeHtml(item.mintedName)}</span></li>`
+                )
+                .join("");
+
+        const features =
+          view.features.length === 0
+            ? empty("No Items are real in the build yet.")
+            : view.features
+                .map((feature) => {
+                  const names = {
+                    assets: "assets",
+                    interface: "required_components",
+                    kinetics: "kinetic_artillery",
+                  };
+                  const effects = {
+                    assets: "generated from assetsDirectory; paths mirror the tree",
+                    interface: "interface/doa_required_components.gfx",
+                    kinetics: "fans out to models + particles",
+                  };
+                  return `<li class="inventory-item"><span class="item-name">${names[feature]}</span><span class="item-meta">${effects[feature]}</span></li>`;
+                })
+                .join("");
+
+        document.querySelector("#inventory").innerHTML = [
+          ["Captured bytes", assetItems],
+          ["Typed GFX", gfx],
+          ["Feature placement", features],
+        ]
+          .map(
+            ([title, body]) =>
+              `<section class="inventory-block"><h3>${title}</h3><ul class="inventory-list">${body}</ul></section>`
+          )
+          .join("");
+      };
+
+      const renderFold = (view) => {
+        const result = view.fold;
+        const status = document.querySelector("#fold-status");
+        if (!result.attempted) {
+          status.className = "fold-status";
+          status.textContent =
+            "Not folded. The source panel is an authoring draft; press “Fold placed Features” to ask the compiler for output.";
+        } else if (result.ok) {
+          status.className = "fold-status success";
+          status.textContent = `Fold succeeded. ${result.assetFiles.length + result.gfxFiles.length} collision-free paths belong to this immutable mod snapshot.`;
+        } else {
+          status.className = "fold-status error";
+          status.textContent =
+            "Fold refused the draft. No PureMod exists until the ownership errors below are fixed.";
+        }
+
+        const tree = document.querySelector("#output-tree");
+        if (!result.attempted || !result.ok) {
+          tree.innerHTML = empty("No output snapshot.");
+        } else {
+          const rows = [
+            ...result.gfxFiles.map((file) => ({ path: file.path, meta: "generated UTF-8 GFX" })),
+            ...result.assetFiles.map((file) => ({
+              path: file.path,
+              meta: `${formatBytes(file.bytes)} opaque bytes · ${file.hash.slice(0, 12)}…`,
+            })),
+          ].sort((a, b) => a.path.localeCompare(b.path));
+          tree.innerHTML = rows
+            .map(
+              (row) =>
+                `<li class="tree-item"><strong>${escapeHtml(row.path)}</strong><span>${escapeHtml(row.meta)}</span></li>`
+            )
+            .join("");
+        }
+
+        const diagnostics = document.querySelector("#diagnostics");
+        if (result.findings.length === 0) {
+          diagnostics.innerHTML = empty(
+            result.attempted ? "No findings." : "Diagnostics appear after a fold."
+          );
+        } else {
+          diagnostics.innerHTML = result.findings
+            .map(
+              (finding) =>
+                `<li class="diagnostic ${finding.severity === "error" ? "error" : ""}">${escapeHtml(finding.text)}</li>`
+            )
+            .join("");
+        }
+
+        const files = document.querySelector("#lowered-files");
+        if (result.gfxFiles.length === 0) {
+          files.innerHTML = '<p class="empty">Successful generated GFX appears here.</p>';
+        } else {
+          files.innerHTML = result.gfxFiles
+            .map(
+              (file, index) =>
+                `<details ${index === 0 ? "open" : ""}><summary>${escapeHtml(file.path)}</summary><pre>${escapeHtml(file.content)}</pre></details>`
+            )
+            .join("");
+        }
+      };
+
+      const render = () => {
+        const view = PrototypeModel.view(state);
+        document.querySelector("#last-change").textContent = view.lastChange;
+        document.querySelector("#author-code").textContent = view.authorCode;
+        renderFreePlay();
+        renderScenarios();
+        renderSummary(view);
+        renderInventory(view);
+        renderFold(view);
+      };
+
+      render();
+    </script>
+  </body>
+</html>
