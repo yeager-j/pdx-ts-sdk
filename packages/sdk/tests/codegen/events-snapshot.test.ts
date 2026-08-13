@@ -107,12 +107,28 @@ describe("generated event surface", () => {
     );
   });
 
-  it("attaches the stable startSituation extension to its generated cluster", () => {
+  it("attaches every stable extension seam to its generated cluster", () => {
     const effects = readFileSync("packages/sdk/src/generated/effects.ts", "utf8");
-    expect(effects).toContain("export interface StartSituationEffectsExtension {");
-    expect(effects).toMatch(
-      /export interface StartSituationEffectsExtension \{[\s\S]*?startSituation\(args: \{[\s\S]*?\n\}/
-    );
-    expect(effects).toMatch(/export interface \w+ extends StartSituationEffectsExtension \{/);
+    // Each seam is its own interface, its args are a named type the
+    // hand-written overload narrows rather than restates, and the cluster
+    // owning the effect inherits it.
+    for (const [seam, method] of [
+      ["StartSituation", "startSituation"],
+      ["EnableSpecialProject", "enableSpecialProject"],
+    ] as const) {
+      expect(effects).toContain(`export type ${seam}Args = {`);
+      expect(effects).toContain(
+        `export interface ${seam}EffectsExtension {\n` + `  /**` // the effect's own docs, then the one signature below
+      );
+      expect(effects).toMatch(
+        new RegExp(
+          `export interface ${seam}EffectsExtension \\{[\\s\\S]*?` +
+            `${method}\\(args: ${seam}Args\\): void;\\n\\}`
+        )
+      );
+      expect(effects).toMatch(
+        new RegExp(`export interface \\w+ extends [\\w, ]*${seam}EffectsExtension`)
+      );
+    }
   });
 });

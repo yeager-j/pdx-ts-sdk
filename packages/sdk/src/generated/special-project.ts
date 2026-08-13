@@ -241,10 +241,45 @@ export type SpecialProjectScopeOf<E extends SpEventScope> = E extends "country_e
         : never;
 
 /**
+ * The scopes a special_project may declare as its
+ * location — the rules' own `scope_group` for the argument, so the
+ * declaration and the effect that takes it cannot drift apart.
+ */
+export type SpecialProjectLocationScope =
+  | "ambient_object"
+  | "archaeological_site"
+  | "astral_rift"
+  | "bypass"
+  | "carrier"
+  | "colony"
+  | "debris"
+  | "fleet"
+  | "megastructure"
+  | "planet"
+  | "ship"
+  | "situation"
+  | "starbase"
+  | "system";
+
+/**
  * A special_project, as the game's rules describe it.
  * Generated from `type[special_project]` at `game/common/special_projects`.
  */
-export interface SpecialProjectFieldsBase<E extends SpEventScope = "country_event"> {
+export interface SpecialProjectFieldsBase<
+  E extends SpEventScope = "country_event",
+  L extends SpecialProjectLocationScope | undefined = undefined,
+> {
+  /**
+   * The scope `enable_special_project` is handed as this definition's
+   * location, and the FROM its callbacks are given.
+   * Emits nothing — the game learns it from the call site, not from the
+   * definition. Declaring it types `ctx.from` in
+   * `onSuccess`, `onProgress25`, `onProgress50`, `onProgress75` and `onStart`, and holds every
+   * `enableSpecialProject` call for this definition to a
+   * location of the same scope. Omitted, FROM stays unreadable and the
+   * call sites stay unchecked.
+   */
+  locationScope?: L;
   /** English text emitted to localization under `<id>`. */
   name?: string;
   /** English text emitted to localization under `<id>_DESC`. */
@@ -278,25 +313,27 @@ export interface SpecialProjectFieldsBase<E extends SpEventScope = "country_even
   /** this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location) */
   abortTrigger?: WithFrom<Trigger<"country">, "country", NoInfer<SpecialProjectScopeOf<E>>>;
   /** this = event scope (ship or planet); from = project creation scope (usually equals location) */
-  onSuccess?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
-  onProgress25?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
-  onProgress50?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
-  onProgress75?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
-  onStart?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
+  onSuccess?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
+  onProgress25?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
+  onProgress50?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
+  onProgress75?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
+  onStart?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
   /** this = country (project owner); from = project creation scope (usually equals location) */
   onFail?: EffectBlock<"country", NoInfer<SpecialProjectScopeOf<E>>>;
   /** new thing from 2.1.3 patch, have it from? */
   onCancel?: EffectBlock<"country", NoInfer<SpecialProjectScopeOf<E>>>;
 }
 
-export type SpecialProjectFields<E extends SpEventScope = SpEventScope> = E extends SpEventScope
-  ? SpecialProjectFieldsBase<E>
-  : never;
+export type SpecialProjectFields<
+  E extends SpEventScope = SpEventScope,
+  L extends SpecialProjectLocationScope | undefined = undefined,
+> = E extends SpEventScope ? SpecialProjectFieldsBase<E, L> : never;
 
 export interface SpecialProjectDef<
   Id extends string = string,
   E extends SpEventScope = "country_event",
-> extends SpecialProjectFieldsBase<E> {
+  L extends SpecialProjectLocationScope | undefined = undefined,
+> extends SpecialProjectFieldsBase<E, L> {
   /** Full content id, including the mod prefix. */
   id: Id;
 }

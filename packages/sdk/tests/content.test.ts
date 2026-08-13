@@ -1083,6 +1083,11 @@ function defineContentExample(): PureMod {
 
   const recoveryProject = mod.specialProject("crystal_recovery", {
     name: "Recover the Crystal",
+    locationScope: "planet",
+    onSuccess: (ship, ctx) => {
+      ship.setShipFlag("content_test_crystal_recovered");
+      ctx.from.effects((planet) => planet.setPlanetFlag("content_test_crystal_site"));
+    },
     eventChain: chain,
     cost: {
       base: 100,
@@ -1232,6 +1237,14 @@ describe("generated content registries", () => {
     );
     expect(projects).toContain(
       "abort_trigger = {\n\t\tfrom = {\n\t\t\thas_planet_flag = content_test_crystal_survey_abort"
+    );
+    // The declared location scope is a type-level contract: it types the FROM
+    // the success callbacks read and every enable site's location, and emits
+    // no key of its own.
+    expect(projects).not.toContain("location_scope");
+    expect(projects).toContain(
+      "on_success = {\n\t\tset_ship_flag = content_test_crystal_recovered\n" +
+        "\t\tfrom = {\n\t\t\tset_planet_flag = content_test_crystal_site"
     );
 
     const localisation = files.get("localisation/english/content_test_l_english.yml")!;

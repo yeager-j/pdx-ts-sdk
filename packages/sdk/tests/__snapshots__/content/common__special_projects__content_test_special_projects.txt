@@ -15,6 +15,12 @@ special_project = {
 	}
 	event_scope = ship_event
 	same_option_group_as = { content_test_special_project_crystal_survey }
+	on_success = {
+		set_ship_flag = content_test_crystal_recovered
+		from = {
+			set_planet_flag = content_test_crystal_site
+		}
+	}
 }
 
 special_project = {

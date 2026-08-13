@@ -875,30 +875,47 @@ function contentDefiners(
 
     if (graft === undefined) {
       const scoped = emission.scopeParameter;
+      // A declared FROM stays a live parameter where S is erased: it is the
+      // contract the starting effect's call sites are checked against, so it
+      // rides on the item beside the erased def rather than inside it.
+      const declaredFrom = scoped?.declaredFrom;
+      const declaredFromParameter =
+        declaredFrom === undefined
+          ? ""
+          : `\n    L extends ${declaredFrom.typeName} | undefined = undefined,`;
+      const declaration =
+        declaredFrom === undefined ? "" : ` & { readonly ${declaredFrom.member}: L }`;
       const parameters =
         scoped === null
           ? "<const Name extends string>"
           : `<\n    const Name extends string,\n    ${scoped.parameterName} extends ` +
-            `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},\n  >`;
-      const def = `${name}Def<${minted}${scoped === null ? "" : `, ${scoped.parameterName}`}>`;
+            `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},` +
+            `${declaredFromParameter}\n  >`;
+      const def =
+        `${name}Def<${minted}${scoped === null ? "" : `, ${scoped.parameterName}`}` +
+        `${declaredFrom === undefined ? "" : ", L"}>`;
       const input =
         scoped?.selector === undefined
           ? `Omit<${def}, "id">`
-          : `${name}Fields<${scoped.parameterName}>`;
+          : `${name}Fields<${scoped.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
       const result = `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
       const signatures =
         scoped?.selector === undefined
           ? `  ${method}${parameters}(\n` +
             `    name: Name,\n` +
             `    def: ${input}\n` +
-            `  ): ContentItem<${key}, ${result}>;`
-          : `  ${method}<const Name extends string>(\n` +
+            `  ): ContentItem<${key}, ${result}>${declaration};`
+          : `  ${method}<\n    const Name extends string,${declaredFromParameter}\n  >(\n` +
             `    name: Name,\n` +
             `    def: ` +
             Object.keys(scoped.selector.scopes)
-              .map((eventScope) => `${name}Fields<${JSON.stringify(eventScope)}>`)
+              .map(
+                (eventScope) =>
+                  `${name}Fields<${JSON.stringify(eventScope)}` +
+                  `${declaredFrom === undefined ? "" : ", L"}>`
+              )
               .join(" | ") +
-            `\n  ): ContentItem<${key}, ${name}Def<${minted}, never>>;`;
+            `\n  ): ContentItem<${key}, ${name}Def<${minted}, never>>${declaration};`;
       capabilityMembers.push(
         docComment(
           [
@@ -975,20 +992,37 @@ function contentDefiners(
       // erases S so a `"ship"` definition still belongs to this registry's item
       // union — `Trigger<S>` is contravariant, so a leaked S would make it not.
       const scoped = emission.scopeParameter;
+      // A declared FROM is stripped like `scope` and, unlike it, kept: the
+      // starting effect's call sites are checked against the declaration, so
+      // the item carries it beside the def whose own parameter is erased.
+      const declaredFrom = scoped?.declaredFrom;
+      const declaredFromParameter =
+        declaredFrom === undefined
+          ? ""
+          : `  L extends ${declaredFrom.typeName} | undefined = undefined,\n`;
+      const declaration =
+        declaredFrom === undefined ? "" : ` & { readonly ${declaredFrom.member}: L }`;
+      const carried =
+        declaredFrom === undefined ? "" : `, ${declaredFrom.member}: ${declaredFrom.member} as L`;
       const parameters =
         scoped === null
           ? "<const Id extends string>"
           : `<\n  const Id extends string,\n  ${scoped.parameterName} extends ` +
-            `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},\n>`;
+            `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},\n` +
+            `${declaredFromParameter}>`;
+      const stripped = [
+        ...(scoped !== null && scoped.selector === undefined ? ["scope"] : []),
+        ...(declaredFrom === undefined ? [] : [declaredFrom.member]),
+      ];
       const body =
         scoped === null
           ? `  return { itemKind: "content", type: ${key}, id: def.id, def };\n`
-          : scoped.selector === undefined
-            ? `  const { scope, ...rest } = def;\n` +
+          : stripped.length === 0
+            ? `  return { itemKind: "content", type: ${key}, id: def.id, ` +
+              `def: def as unknown as ${name}Def<Id, never> };\n`
+            : `  const { ${stripped.join(", ")}, ...rest } = def;\n` +
               `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-              `def: rest as unknown as ${name}Def<Id, never> };\n`
-            : `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-              `def: def as unknown as ${name}Def<Id, never> };\n`;
+              `def: rest as unknown as ${name}Def<Id, never>${carried} };\n`;
       definitions.push(
         docComment([
           `Internal lowering primitive for ${article} ${spoken}. Public authors call`,
@@ -1006,11 +1040,20 @@ function contentDefiners(
                   : [
                       `\`${scoped.selector.member}\` selects which scope this definition's callbacks run in.`,
                     ]),
+                ...(declaredFrom === undefined
+                  ? []
+                  : [
+                      `\`${declaredFrom.member}\` declares the location scope \`${declaredFrom.effect}\``,
+                      "hands the callbacks as FROM; it emits nothing and rides on the item,",
+                      "where the effect's own call sites are checked against it.",
+                    ]),
               ]),
         ]) +
           `export function define${name}${parameters}(\n` +
-          `  def: ${name}Def<Id${scoped === null ? "" : `, ${scoped.parameterName}`}>\n` +
-          `): ContentItem<${key}, ${name}Def<Id${scoped === null ? "" : ", never"}>> {\n` +
+          `  def: ${name}Def<Id${scoped === null ? "" : `, ${scoped.parameterName}`}` +
+          `${declaredFrom === undefined ? "" : ", L"}>\n` +
+          `): ContentItem<${key}, ${name}Def<Id${scoped === null ? "" : ", never"}>>` +
+          `${declaration} {\n` +
           body +
           "}\n"
       );
@@ -1113,6 +1156,9 @@ function contentDefiners(
           ...(content.emission.scopeParameter === null
             ? []
             : [content.emission.scopeParameter.typeName]),
+          ...(content.emission.scopeParameter?.declaredFrom === undefined
+            ? []
+            : [content.emission.scopeParameter.declaredFrom.typeName]),
         ];
         if (!CONTENT_PATCH_REGISTRIES.has(content.registry)) {
           return importList(from, types);
@@ -1165,6 +1211,9 @@ function contentDefiners(
           ...(content.emission.scopeParameter === null
             ? []
             : [content.emission.scopeParameter.typeName]),
+          ...(content.emission.scopeParameter?.declaredFrom === undefined
+            ? []
+            : [content.emission.scopeParameter.declaredFrom.typeName]),
           ...(CONTENT_PATCH_REGISTRIES.has(content.registry)
             ? [`${content.emission.typeName}Patch`, `${content.emission.typeName}PatchItem`]
             : []),

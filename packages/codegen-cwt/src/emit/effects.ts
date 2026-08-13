@@ -22,7 +22,7 @@ import type { EffectPolicy } from "../effect-policy.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import type { LoweredRule } from "../lowered-rule.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
-import { EFFECT_FIELD_TYPE_OVERRIDES } from "../overlay.ts";
+import { EFFECT_EXTENSION_SEAMS, EFFECT_FIELD_TYPE_OVERRIDES } from "../overlay.ts";
 import type { ClassifiedLink } from "./links.ts";
 import {
   canonicalScopeSet,
@@ -464,43 +464,63 @@ export function emitEffects(
   );
 
   const interfaceChunks: string[] = [];
-  const startSituationCluster = sortedClusters.find((cluster) =>
-    cluster.effects.some((effect) => effect.key === "start_situation")
-  );
-  if (startSituationCluster === undefined) {
-    throw new Error("effects.cwt no longer emits start_situation");
-  }
-  const startSituation = startSituationCluster.effects.find(
-    (effect) => effect.key === "start_situation"
-  )!;
-  const startSituationScope =
-    startSituationCluster.scopes === "universal"
+  const clusterScope = (cluster: Cluster): string =>
+    cluster.scopes === "universal"
       ? "ScopeName"
-      : startSituationCluster.scopes.map((scope) => JSON.stringify(scope)).join(" | ");
-  interfaceChunks.push(
-    docComment([
-      "Stable extension seam for the hand-written startSituation target-scope overload.",
-      "The generated cluster containing start_situation inherits this interface.",
-    ]) +
-      `export interface StartSituationEffectsExtension {\n${methodSignature(startSituation, startSituationScope)}}\n`
-  );
+      : cluster.scopes.map((scope) => JSON.stringify(scope)).join(" | ");
+  // Each seam is emitted as its own interface before the cluster that owns the
+  // effect, so the hand-written overload merges onto a name the rules cannot
+  // rename. An effect that leaves the rules fails here rather than silently
+  // detaching its overload.
+  for (const [key, seam] of EFFECT_EXTENSION_SEAMS) {
+    const owner = sortedClusters.find((cluster) =>
+      cluster.effects.some((effect) => effect.key === key)
+    );
+    const effect = owner?.effects.find((candidate) => candidate.key === key);
+    if (owner === undefined || effect === undefined) {
+      throw new Error(`effects.cwt no longer emits ${key}`);
+    }
+    // The args go out under their own name as well: the hand-written overload
+    // narrows two members of this object and has no business restating the
+    // rest, which are the rules' to change.
+    const argsName = `${pascalCase(camelCase(key))}Args`;
+    const args =
+      effect.shape.kind === "fields"
+        ? docComment([`The arguments \`${camelCase(key)}\` takes, as the rules declare them.`]) +
+          `export type ${argsName} = ${argsType(effect.shape.fields, clusterScope(owner), key)};\n`
+        : "";
+    const signature =
+      effect.shape.kind === "fields"
+        ? `${docComment(effect.docs, "  ")}  ${effect.method}(args: ${argsName}): void;\n`
+        : methodSignature(effect, clusterScope(owner));
+    interfaceChunks.push(
+      args +
+        docComment([
+          `Stable extension seam for the hand-written ${camelCase(key)} overload.`,
+          `The generated cluster containing ${key} inherits this interface.`,
+          seam.reason,
+        ]) +
+        `export interface ${seam.interfaceName} {\n${signature}}\n`
+    );
+  }
   for (const cluster of sortedClusters) {
     const name = clusterName(cluster.scopes);
-    const outerScope =
-      cluster.scopes === "universal"
-        ? "ScopeName"
-        : cluster.scopes.map((scope) => JSON.stringify(scope)).join(" | ");
+    const outerScope = clusterScope(cluster);
     const heading =
       cluster.scopes === "universal"
         ? ["Effects valid in every scope."]
         : [`Effects valid in: ${cluster.scopes.join(", ")}.`];
     const methods = cluster.effects
-      .filter((effect) => effect.key !== "start_situation")
+      .filter((effect) => !EFFECT_EXTENSION_SEAMS.has(effect.key))
       .map((effect) => methodSignature(effect, outerScope))
       .join("\n");
-    const parents = cluster.effects.some((effect) => effect.key === "start_situation")
-      ? " extends StartSituationEffectsExtension"
-      : "";
+    const seams = cluster.effects
+      .flatMap((effect) => {
+        const seam = EFFECT_EXTENSION_SEAMS.get(effect.key);
+        return seam === undefined ? [] : [seam.interfaceName];
+      })
+      .sort();
+    const parents = seams.length === 0 ? "" : ` extends ${seams.join(", ")}`;
     interfaceChunks.push(
       `${docComment(heading)}export interface ${name}${parents} {\n${methods}}\n`
     );

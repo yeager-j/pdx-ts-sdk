@@ -200,9 +200,16 @@ import type {
   WarFlag,
 } from "./value-sets.ts";
 
+/** The arguments `startSituation` takes, as the rules declare them. */
+export type StartSituationArgs = {
+  type: (SituationTypeRef & { targetScope?: never }) | string;
+  target?: ScopeValue;
+  effect?: (scope: SituationScope) => void;
+};
 /**
- * Stable extension seam for the hand-written startSituation target-scope overload.
+ * Stable extension seam for the hand-written startSituation overload.
  * The generated cluster containing start_situation inherits this interface.
+ * `startSituation` takes the situation's author-declared `targetScope` as proof of the target it is passed (src/script/effects/situations.ts).
  */
 export interface StartSituationEffectsExtension {
   /**
@@ -211,11 +218,64 @@ export interface StartSituationEffectsExtension {
    * start_situation = { type = <situation_type> target = <scope> }
    * ```
    */
-  startSituation(args: {
-    type: (SituationTypeRef & { targetScope?: never }) | string;
-    target?: ScopeValue;
-    effect?: (scope: SituationScope) => void;
-  }): void;
+  startSituation(args: StartSituationArgs): void;
+}
+
+/** The arguments `enableSpecialProject` takes, as the rules declare them. */
+export type EnableSpecialProjectArgs = {
+  name: (SpecialProjectRef & { locationScope?: never }) | string;
+  owner?: ScopeValue<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >;
+  location?: ScopeValue<
+    | "ambient_object"
+    | "archaeological_site"
+    | "astral_rift"
+    | "bypass"
+    | "carrier"
+    | "colony"
+    | "debris"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "ship"
+    | "situation"
+    | "starbase"
+    | "system"
+  >;
+};
+/**
+ * Stable extension seam for the hand-written enableSpecialProject overload.
+ * The generated cluster containing enable_special_project inherits this interface.
+ * `enableSpecialProject` checks its `location` against the project's author-declared `locationScope`, which is also the FROM its success callbacks read (src/script/effects/special-projects.ts).
+ */
+export interface EnableSpecialProjectEffectsExtension {
+  /**
+   * Enables a specific special research project for target country at a specific location (should be same as the current scope where possible)
+   * ```
+   * enable_special_project = { name = <project key> owner = <target, default = root> location = <target, ideally THIS (that is default)> }
+   * ```
+   */
+  enableSpecialProject(args: EnableSpecialProjectArgs): void;
 }
 
 /** Effects valid in: ambient_object, astral_rift, carrier, colony, debris, fleet, megastructure, planet, ship, starbase, system. */
@@ -11968,7 +12028,7 @@ export interface EffectsInWar {
 }
 
 /** Effects valid in every scope. */
-export interface UniversalEffects {
+export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
   /**
    * Destroys a situation in right hand side event target, firing on_abort (use to cancel and fire that effect)
    * ```
@@ -12412,54 +12472,6 @@ export interface UniversalEffects {
    * ```
    */
   enableOnMarket(value: ResourceRef | string): void;
-
-  /**
-   * Enables a specific special research project for target country at a specific location (should be same as the current scope where possible)
-   * ```
-   * enable_special_project = { name = <project key> owner = <target, default = root> location = <target, ideally THIS (that is default)> }
-   * ```
-   */
-  enableSpecialProject(args: {
-    name: SpecialProjectRef | string;
-    owner?: ScopeValue<
-      | "agreement"
-      | "archaeological_site"
-      | "army"
-      | "carrier"
-      | "country"
-      | "debris"
-      | "deposit"
-      | "first_contact"
-      | "fleet"
-      | "leader"
-      | "megastructure"
-      | "planet"
-      | "pop_faction"
-      | "pop_group"
-      | "sector"
-      | "ship"
-      | "situation"
-      | "spy_network"
-      | "starbase"
-      | "system"
-    >;
-    location?: ScopeValue<
-      | "ambient_object"
-      | "archaeological_site"
-      | "astral_rift"
-      | "bypass"
-      | "carrier"
-      | "colony"
-      | "debris"
-      | "fleet"
-      | "megastructure"
-      | "planet"
-      | "ship"
-      | "situation"
-      | "starbase"
-      | "system"
-    >;
-  }): void;
 
   /**
    * Send endgame telemetry event

@@ -245,6 +245,63 @@ export const EFFECT_FIELD_TYPE_OVERRIDES = new Map<string, EffectFieldTypeOverri
         "all carry no `targetScope` to conflict.",
     },
   ],
+  [
+    "enable_special_project.name",
+    {
+      type: "(SpecialProjectRef & { locationScope?: never }) | string",
+      reason:
+        "The same arrangement as `start_situation.type` above, for the same reason: " +
+        "`SpecialProjectLocationContract` (src/script/effects/special-projects.ts) is " +
+        "structurally a `SpecialProjectRef`, so a project that declares `locationScope` would " +
+        "match this generated signature exactly when the hand-written overload rejected its " +
+        "`location` — turning a contradicted declaration into a legal call. A project defined " +
+        "without `locationScope`, a vanilla id string and a plain ref all carry no " +
+        "`locationScope` to conflict.",
+    },
+  ],
+]);
+
+export interface EffectExtensionSeam {
+  /** The emitted interface the hand-written overload augments. */
+  readonly interfaceName: string;
+  readonly reason: string;
+}
+
+/**
+ * Effects whose generated signature is emitted into its own interface, which
+ * the cluster owning the effect then extends.
+ *
+ * A hand-written overload has to be merged onto *something* stable. The
+ * generated cluster is not: it is named for the scopes its effects share, so
+ * adding an effect elsewhere in the rules can rename it and silently detach the
+ * augmentation. A seam gives the overload a name that only changes when this
+ * table does.
+ *
+ * A row is only worth it where a hand-written overload exists, which in
+ * practice means a contract the definition declares and the rules cannot state
+ * — the row and the overload are written together, and codegen fails loudly if
+ * the effect leaves the rules.
+ */
+export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
+  [
+    "start_situation",
+    {
+      interfaceName: "StartSituationEffectsExtension",
+      reason:
+        "`startSituation` takes the situation's author-declared `targetScope` as proof of the " +
+        "target it is passed (src/script/effects/situations.ts).",
+    },
+  ],
+  [
+    "enable_special_project",
+    {
+      interfaceName: "EnableSpecialProjectEffectsExtension",
+      reason:
+        "`enableSpecialProject` checks its `location` against the project's author-declared " +
+        "`locationScope`, which is also the FROM its success callbacks read " +
+        "(src/script/effects/special-projects.ts).",
+    },
+  ],
 ]);
 
 /**
@@ -473,6 +530,48 @@ export interface ContentScopeParameter {
     readonly fallback: string;
     readonly scopes: Readonly<Record<string, string>>;
   };
+  /**
+   * A FROM the *call site* chooses, declared once on the definition.
+   *
+   * The selector above reads a FROM off a field the definition already has.
+   * This is the case where nothing on the definition decides it: the scope
+   * arrives as an argument of the effect that starts the thing, so the rules
+   * can only say which scopes are admissible — the `scopes.cwt` group named
+   * here — and never which one a given definition gets.
+   *
+   * A row emits one synthetic member (naming the scope, emitting nothing, on
+   * `scope`'s terms), types FROM in the listed members from it, and carries the
+   * declaration on the returned item so the call site can be checked against
+   * it. That last part is what keeps this from being a comment the author
+   * writes and nothing verifies, and it is why a row needs a hand-written
+   * overload on the starting effect (see {@link EFFECT_EXTENSION_SEAMS}) rather
+   * than being free.
+   *
+   * Undeclared stays the default: the member is optional, and a definition that
+   * omits it reads no FROM and has its call sites unchecked, exactly as before
+   * the row existed. That is also the only shape available to a definition
+   * whose starting effect is called *without* the argument — the scope then
+   * defaults to the caller's, which no signature on a universally-valid effect
+   * can see. Like `<Registry>Scope` above, the emitted union has to be
+   * re-exported from `src/index.ts` by hand for a consumer to name it.
+   */
+  readonly declaredFrom?: {
+    /** The synthetic authoring member that names the scope. */
+    readonly member: string;
+    /**
+     * The `scopes.cwt` scope group the declaration may name. Checked against
+     * the group `effect`.`argument` is actually declared with, so a rules bump
+     * that retypes the argument fails codegen rather than leaving the
+     * declaration and the signature it is checked against disagreeing.
+     */
+    readonly scopeGroup: string;
+    /** Members whose FROM the declaration becomes. */
+    readonly members: readonly string[];
+    /** The effect whose argument the scope actually is, and that argument. */
+    readonly effect: string;
+    readonly argument: string;
+    readonly reason: string;
+  };
   readonly reason: string;
 }
 
@@ -527,6 +626,26 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
           ship_event: "ship",
           carrier_event: "carrier",
         },
+      },
+      declaredFrom: {
+        member: "locationScope",
+        scopeGroup: "spatial_object",
+        members: ["onSuccess", "onProgress25", "onProgress50", "onProgress75", "onStart"],
+        effect: "enable_special_project",
+        argument: "location",
+        reason:
+          "The success callbacks run with FROM = the `location` handed to " +
+          "enable_special_project, which the game's own documentation.txt calls 'location " +
+          "scope, if set (usually a planet)'. Nothing on the definition decides it: " +
+          "effects.cwt types the argument `scope_group[spatial_object]`, and of vanilla's 735 " +
+          "enable_special_project calls the 660 that set `location` pass `this` (395), " +
+          "`capital_scope` (40), `from` (33), `root` (17), `this.star`, `solar_system.star`, " +
+          "`capital_scope.solar_system.starbase` and ~90 distinct event targets — planets, " +
+          "ships, fleets, stars and ambient objects. The corpus reads FROM as each of those in " +
+          "on_success: `is_colony` on VULTAUM_HOMEWORLD_PROJECT (planet), `set_fleet_flag` on " +
+          "HIDDEN_CUTHOLOID_ATTACK_PROJECT (fleet), `country_event` on the PROSPECTORIUM " +
+          "projects (country). No constant covers that, so the definition declares which one " +
+          "it is written for and enableSpecialProject is checked against the declaration.",
       },
       reason:
         "special_projects.cwt leaves the event-dependent clauses unpinned: a project may run " +

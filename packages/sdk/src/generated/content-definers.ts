@@ -80,7 +80,11 @@ import type { SectionTemplateDef } from "./section-template.ts";
 import type { ShipSizeDef } from "./ship-size.ts";
 import type { SituationTypeDef } from "./situation-type.ts";
 import type { SolarSystemInitializerDef } from "./solar-system-initializer.ts";
-import type { SpecialProjectDef, SpecialProjectScope } from "./special-project.ts";
+import type {
+  SpecialProjectDef,
+  SpecialProjectLocationScope,
+  SpecialProjectScope,
+} from "./special-project.ts";
 import type { SpeciesClassDef } from "./species-class.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
 import type { StaticModifierDef } from "./static-modifier.ts";
@@ -693,16 +697,24 @@ export type SpecialProjectItem = ContentItem<"special_project", SpecialProjectDe
  * `mod.specialProject(name, def)`, then place the returned item with
  * `mod.feature(...)` before compiling the same capability.
  * `eventScope` selects which scope this definition's callbacks run in.
+ * `locationScope` declares the location scope `enable_special_project`
+ * hands the callbacks as FROM; it emits nothing and rides on the item,
+ * where the effect's own call sites are checked against it.
  */
 export function defineSpecialProject<
   const Id extends string,
   E extends SpEventScope = "country_event",
->(def: SpecialProjectDef<Id, E>): ContentItem<"special_project", SpecialProjectDef<Id, never>> {
+  L extends SpecialProjectLocationScope | undefined = undefined,
+>(
+  def: SpecialProjectDef<Id, E, L>
+): ContentItem<"special_project", SpecialProjectDef<Id, never>> & { readonly locationScope: L } {
+  const { locationScope, ...rest } = def;
   return {
     itemKind: "content",
     type: "special_project",
     id: def.id,
-    def: def as unknown as SpecialProjectDef<Id, never>,
+    def: rest as unknown as SpecialProjectDef<Id, never>,
+    locationScope: locationScope as L,
   };
 }
 
