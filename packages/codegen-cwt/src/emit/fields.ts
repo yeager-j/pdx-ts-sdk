@@ -392,6 +392,13 @@ function aliasScalarFields(emitter: Emitter, category: string): RuleField[] | nu
 export interface FieldContext {
   readonly scope: ScopeContext | null;
   readonly unpinned: string;
+  /**
+   * The type FROM lowers to in this field's block, where the overlay asserts a
+   * FROM the rules leave unstated (`ContentScopeParameter.selector.fromMembers`).
+   * A TS type rather than a scope name, because the scope it names is the
+   * definition's own parameter and not a constant any rule could state.
+   */
+  readonly assertedFrom?: string;
   /** The enclosing registry's authoring parameter, for nested typed blocks. */
   readonly nestedTypeParameter?: { readonly declaration: string; readonly argument: string };
 }
@@ -471,7 +478,10 @@ function scopeType(
   ctx: FieldContext,
   asserted?: string
 ): FieldScope {
-  const from = fromType(emitter, field, ctx);
+  // An asserted FROM wins over the rules, on `ContentFieldOverride.scope`'s
+  // terms: it is there because the rules state no FROM at all, and a rule that
+  // later states one is a disagreement to review rather than to average.
+  const from = ctx.assertedFrom ?? fromType(emitter, field, ctx);
   const root = rootType(emitter, field, ctx);
   if (asserted !== undefined) {
     const canonical = emitter.canonicalScope(asserted);

@@ -1929,6 +1929,44 @@ describe("generated content authoring types", () => {
     const _wrongProject: SpecialProjectRef = chain;
   });
 
+  it("hands the country-scoped callbacks the project's own scope as FROM", () => {
+    // The four callbacks the game runs on the owner country still receive the
+    // project's object, and `event_scope` names it: THIS = country,
+    // FROM = the project scope. One selector, read the other way round.
+    contentMod.specialProject("failure_from", {
+      eventScope: "planet_event",
+      onFail: (country, ctx) => {
+        expectTypeOf(ctx.from).toEqualTypeOf<ScopeRef<"planet">>();
+        country.setCountryFlag("content_types_failure_from");
+        ctx.from.effects((planet) => planet.setPlanetFlag("content_types_failure_from_planet"));
+      },
+      onCancel: (_country, ctx) => {
+        ctx.from.effects((planet) => planet.setPlanetFlag("content_types_cancel_planet"));
+      },
+      // A trigger is a value, so the FROM arrives through the closure form.
+      abortTrigger: (ctx) => ctx.from.trigger(hasPlanetFlag("content_types_abort")),
+      failTrigger: hasCountryFlag("content_types_fail_plain"),
+    });
+    contentMod.specialProject("failure_from_ship", {
+      eventScope: "ship_event",
+      onFail: (_country, ctx) => {
+        expectTypeOf(ctx.from).toEqualTypeOf<ScopeRef<"ship">>();
+      },
+      // @ts-expect-error — this project's FROM is its ship, not a planet.
+      abortTrigger: (ctx) => ctx.from.trigger(hasPlanetFlag("content_types_wrong_from")),
+    });
+    contentMod.specialProject("success_from", {
+      eventScope: "planet_event",
+      onSuccess: (_planet, ctx) => {
+        // The success family's FROM is the location handed to
+        // `enable_special_project`, which is any of fourteen scopes chosen at
+        // the call site — nothing the definition knows, so it stays unreadable.
+        // @ts-expect-error — on_success declares no FROM the SDK can name
+        ctx.from.effects(() => {});
+      },
+    });
+  });
+
   it("connects an event chain's declared counters to every counter consumer", () => {
     const insightChain = contentMod.eventChain("insights", {
       counter: { insights: { max: 6 } },

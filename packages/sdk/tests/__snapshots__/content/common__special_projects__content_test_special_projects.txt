@@ -40,5 +40,16 @@ special_project = {
 			always = yes
 		}
 	}
+	abort_trigger = {
+		from = {
+			has_planet_flag = content_test_crystal_survey_abort
+		}
+	}
 	on_start = {}
+	on_fail = {
+		set_country_flag = content_test_crystal_survey_failed
+		from = {
+			set_planet_flag = content_test_crystal_survey_lost
+		}
+	}
 }

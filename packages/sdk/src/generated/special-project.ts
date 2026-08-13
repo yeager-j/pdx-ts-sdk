@@ -4,7 +4,7 @@
 
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
-import type { EffectBlock, WeightBlock } from "../content/types.ts";
+import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { SpEventScope, TechDepartment } from "./enums.ts";
 import type {
@@ -266,7 +266,7 @@ export interface SpecialProjectFieldsBase<E extends SpEventScope = "country_even
   projectType?: string;
   eventScope: E;
   /** this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location) */
-  failTrigger?: Trigger<"country">;
+  failTrigger?: WithFrom<Trigger<"country">, "country", NoInfer<SpecialProjectScopeOf<E>>>;
   timelimit?: number;
   daysToResearch?: number;
   conditionalDesc?: SpecialProjectDesc[];
@@ -276,7 +276,7 @@ export interface SpecialProjectFieldsBase<E extends SpEventScope = "country_even
   requirements?: SpecialProjectRequirements;
   triggeredRequirement?: SpecialProjectTriggeredRequirement;
   /** this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location) */
-  abortTrigger?: Trigger<"country">;
+  abortTrigger?: WithFrom<Trigger<"country">, "country", NoInfer<SpecialProjectScopeOf<E>>>;
   /** this = event scope (ship or planet); from = project creation scope (usually equals location) */
   onSuccess?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
   onProgress25?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
@@ -284,9 +284,9 @@ export interface SpecialProjectFieldsBase<E extends SpEventScope = "country_even
   onProgress75?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
   onStart?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>>;
   /** this = country (project owner); from = project creation scope (usually equals location) */
-  onFail?: EffectBlock<"country">;
+  onFail?: EffectBlock<"country", NoInfer<SpecialProjectScopeOf<E>>>;
   /** new thing from 2.1.3 patch, have it from? */
-  onCancel?: EffectBlock<"country">;
+  onCancel?: EffectBlock<"country", NoInfer<SpecialProjectScopeOf<E>>>;
 }
 
 export type SpecialProjectFields<E extends SpEventScope = SpEventScope> = E extends SpEventScope
