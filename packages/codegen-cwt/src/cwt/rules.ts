@@ -23,7 +23,13 @@ import {
   type SingleAliasResolver,
   type SingleAliasTarget,
 } from "./model.ts";
-import { parseCwt, type CwtAssignment, type CwtDiagnostic, type CwtNode } from "./parser.ts";
+import {
+  parseCwt,
+  type CwtAssignment,
+  type CwtBlock,
+  type CwtDiagnostic,
+  type CwtNode,
+} from "./parser.ts";
 
 /** One `alias[trigger:has_edict] = <edict>` declaration. A name may have several. */
 export interface AliasDecl {
@@ -180,6 +186,7 @@ export interface OnActionDecl {
 
 export interface RuleSet {
   readonly enums: ReadonlyMap<string, readonly string[]>;
+  readonly complexEnums: ReadonlyMap<string, ComplexEnum>;
   /** Canonical scope name -> every alias the game answers to. */
   readonly scopes: ReadonlyMap<string, readonly string[]>;
   /**
@@ -217,6 +224,19 @@ export interface RuleSet {
   /** Templated `modifiers.cwt` rows (`<ship_size>_…`) the game expands from content. */
   readonly modifierTemplates: readonly string[];
   readonly diagnostics: readonly CwtDiagnostic[];
+}
+
+export interface ComplexEnum {
+  readonly name: string;
+  readonly source: string;
+  readonly path: string;
+  readonly extension: string;
+  readonly startFromRoot: boolean;
+  readonly selector: {
+    readonly path: readonly string[];
+    readonly kind: "key" | "scalar";
+    readonly key?: string;
+  };
 }
 
 const RULE_FILES = [
@@ -275,7 +295,12 @@ function assignments(nodes: readonly CwtNode[]): CwtAssignment[] {
   return nodes.filter((node): node is CwtAssignment => node.kind === "assignment");
 }
 
-function readEnums(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
+function readEnums(
+  nodes: readonly CwtNode[],
+  file: string,
+  into: Map<string, string[]>,
+  complexInto: Map<string, ComplexEnum>
+): void {
   for (const outer of assignments(nodes)) {
     if (outer.key.text !== "enums" || outer.value.kind !== "block") {
       continue;
@@ -285,12 +310,67 @@ function readEnums(nodes: readonly CwtNode[], into: Map<string, string[]>): void
       if (match === null || entry.value.kind !== "block") {
         continue;
       }
+      if (match[1] === "complex_enum") {
+        const complex = readComplexEnum(match[2]!, file, entry.value);
+        if (complex !== null) {
+          complexInto.set(complex.name, complex);
+        }
+      }
       const values = entry.value.nodes.flatMap((node) =>
         node.kind === "value" && node.value.kind === "scalar" ? [node.value.text] : []
       );
       into.set(match[2]!, values);
     }
   }
+}
+
+function scalar(block: CwtBlock, key: string): string | null {
+  const entry = assignments(block.nodes).find((node) => node.key.text === key);
+  return entry?.value.kind === "scalar" ? entry.value.text : null;
+}
+
+function selectorOf(block: CwtBlock, path: readonly string[] = []): ComplexEnum["selector"] | null {
+  for (const node of block.nodes) {
+    if (node.kind === "value" && node.value.kind === "scalar" && node.value.text === "enum_name") {
+      return { path, kind: "key" };
+    }
+    if (node.kind !== "assignment") {
+      continue;
+    }
+    if (node.key.text === "enum_name") {
+      return { path, kind: "key" };
+    }
+    if (node.value.kind === "scalar" && node.value.text === "enum_name") {
+      return { path, kind: "scalar", key: node.key.text };
+    }
+    if (node.value.kind === "block") {
+      const found = selectorOf(node.value, [...path, node.key.text]);
+      if (found !== null) {
+        return found;
+      }
+    }
+  }
+  return null;
+}
+
+function readComplexEnum(name: string, source: string, block: CwtBlock): ComplexEnum | null {
+  const path = scalar(block, "path");
+  const nameEntry = assignments(block.nodes).find((entry) => entry.key.text === "name");
+  if (path === null || nameEntry?.value.kind !== "block") {
+    return null;
+  }
+  const selector = selectorOf(nameEntry.value);
+  if (selector === null) {
+    return null;
+  }
+  return {
+    name,
+    source,
+    path,
+    extension: scalar(block, "path_extension") ?? ".txt",
+    startFromRoot: scalar(block, "start_from_root") === "yes",
+    selector,
+  };
 }
 
 function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
@@ -688,6 +768,7 @@ export function loadContentTypesFrom(
 
 export function loadRules(root: string): RuleSet {
   const enums = new Map<string, string[]>();
+  const complexEnums = new Map<string, ComplexEnum>();
   const scopes = new Map<string, string[]>();
   const scopeGroups = new Map<string, string[]>();
   const triggers = new Map<string, AliasDecl[]>();
@@ -719,7 +800,7 @@ export function loadRules(root: string): RuleSet {
       diagnostics.push({ ...diagnostic, file: relative });
     };
     readSingleAliases(parsed.nodes, report, singleAliases);
-    readEnums(parsed.nodes, enums);
+    readEnums(parsed.nodes, relative, enums, complexEnums);
     readScopes(parsed.nodes, scopes);
     readScopeGroups(parsed.nodes, scopeGroups);
     readLinks(parsed.nodes, relative, links);
@@ -737,6 +818,7 @@ export function loadRules(root: string): RuleSet {
 
   return {
     enums,
+    complexEnums,
     scopes,
     scopeGroups,
     triggers,

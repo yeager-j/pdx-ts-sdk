@@ -21,11 +21,14 @@ import {
   compareIdentifiers,
   createChokepoint,
   emitAugment,
+  emitEnumUnion,
   emitIdUnion,
   emitIndex,
   emitScriptedBindings,
   emitScriptedParams,
   emitTrie,
+  enumFile,
+  enumTypeName,
   idTypeName,
   registryFile,
   scriptedFile,
@@ -189,8 +192,9 @@ export function generateVanillaPackage(options: GenerateOptions): {
   const plan: {
     ids: { registry: string; file: string }[];
     tries: { registry: string; file: string }[];
+    enums: { name: string; file: string }[];
     scripted: { target: string; registry: string; file: string }[];
-  } = { ids: [], tries: [], scripted: [] };
+  } = { ids: [], tries: [], enums: [], scripted: [] };
 
   const eventRead = facts.events;
   const eventTrie = emitEventTrie(eventRead.definitions, gate, gameVersion);
@@ -231,6 +235,13 @@ export function generateVanillaPackage(options: GenerateOptions): {
       missing: read.missing,
       trie: trieReport,
     });
+  }
+
+  for (const complex of facts.complexEnums) {
+    const file = enumFile(complex.name);
+    files.set(file, emitEnumUnion(complex.name, complex.members, gate, gameVersion));
+    exports.push({ name: enumTypeName(complex.name), file });
+    plan.enums.push({ name: complex.name, file });
   }
 
   const scripted: ScriptedReport[] = [];

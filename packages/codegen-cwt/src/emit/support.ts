@@ -25,6 +25,7 @@ export function emitEnums(emitter: Emitter): string {
   for (const name of [...emitter.usedEnums].sort()) {
     const values = emitter.rules.enums.get(name) ?? [];
     if (values.length === 0) {
+      const complex = emitter.rules.complexEnums.has(name);
       // `enum[component_tag]` is declared with no members: the values come from
       // the game's own content files, not the rules. A union of nothing is
       // `never`, which would make every field of this type unsatisfiable, and
@@ -34,10 +35,13 @@ export function emitEnums(emitter: Emitter): string {
         docComment([
           `\`enum[${name}]\`.`,
           "",
-          "The rules declare this enum with no values — its members come from " +
-            "content files rather than from `enums.cwt` — so it cannot narrow " +
-            "beyond `string`.",
-        ]) + `export type ${pascalCase(name)} = string;\n`
+          complex
+            ? "Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids."
+            : "The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.",
+        ]) +
+          `export type ${pascalCase(name)} = ${
+            complex ? `VanillaEnumMember<${JSON.stringify(name)}> | string` : "string"
+          };\n`
       );
       continue;
     }
@@ -52,7 +56,10 @@ export function emitEnums(emitter: Emitter): string {
 /** Enums referenced by generated types that the rules declare with no values. */
 export function valuelessEnums(emitter: Emitter): readonly string[] {
   return [...emitter.usedEnums]
-    .filter((name) => (emitter.rules.enums.get(name) ?? []).length === 0)
+    .filter(
+      (name) =>
+        (emitter.rules.enums.get(name) ?? []).length === 0 && !emitter.rules.complexEnums.has(name)
+    )
     .sort();
 }
 

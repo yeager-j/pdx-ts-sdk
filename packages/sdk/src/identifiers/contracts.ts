@@ -2,7 +2,7 @@
  * Merge targets and resolvers for the optional `@pdx-ts/stellaris-ids`
  * package (SDK-12).
  *
- * `VanillaIds`, `VanillaScriptedTriggers`, `VanillaScriptedEffects`, and
+ * `VanillaIds`, `VanillaEnums`, `VanillaScriptedTriggers`, `VanillaScriptedEffects`, and
  * `VanillaTries` are declared empty here, on purpose. TypeScript's declaration
  * merging can only ADD members to an interface — it cannot narrow or replace
  * one — so an empty interface is the only shape a later
@@ -26,6 +26,9 @@
 // `VANILLA_REF_EXTRAS` registries.
 export interface VanillaIds {}
 
+/** Install-derived members of CWT `complex_enum`s. */
+export interface VanillaEnums {}
+
 // Deliberately empty — extended via
 // `interface VanillaScriptedTriggers extends VanillaScriptedTriggerParams {}`
 // inside the package's augmentation.
@@ -43,6 +46,15 @@ export interface VanillaScriptedEffects {}
  */
 export type VanillaId<K extends string> = K extends keyof VanillaIds
   ? VanillaIds[K] & string
+  : string;
+
+/**
+ * A CWT complex-enum member. The identifier package augments this table from
+ * the matching install; a missing package or enum keeps the field open for
+ * third-party definitions.
+ */
+export type VanillaEnumMember<K extends string> = K extends keyof VanillaEnums
+  ? VanillaEnums[K] & string
   : string;
 
 declare const invalidVanillaId: unique symbol;

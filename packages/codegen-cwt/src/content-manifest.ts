@@ -191,4 +191,10 @@ export const VANILLA_REF_EXTRAS = [
   { type: "sprite", source: "interface/sprites.cwt", oversized: true },
   { type: "resource", source: "common/strategic_resources.cwt" },
   { type: "situation_log_category", source: "common/situation_logs.cwt" },
+  { type: "star_class", source: "common/star_classes.cwt" },
+  { type: "planet_class", source: "common/planet_classes.cwt" },
+  { type: "deposit", source: "common/deposits_and_planetary_features.cwt", oversized: true },
+  { type: "anomaly_category", source: "common/anomalies.cwt", oversized: true },
+  { type: "planet_modifier", source: "common/modifiers.cwt" },
+  { type: "asteroid_belt_type", source: "common/asteroid_belts.cwt" },
 ] as const satisfies readonly VanillaRefExtra[];

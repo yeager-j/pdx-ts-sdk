@@ -39,8 +39,10 @@ import type {
   AgendaRef,
   AgreementPresetRef,
   AmbientObjectRef,
+  AnomalyCategoryRef,
   ArchaeologicalSiteTypeRef,
   AscensionPerkRef,
+  AsteroidBeltTypeRef,
   BombardmentStanceRef,
   BuildingRef,
   CasusBelliRef,
@@ -52,6 +54,7 @@ import type {
   CouncilorRef,
   CountryShipOfSizeLimitRef,
   DecisionRef,
+  DepositRef,
   EconomicCategoryRef,
   EdictRef,
   EventChainRef,
@@ -60,6 +63,8 @@ import type {
   JobRef,
   MegastructureRef,
   OpinionModifierRef,
+  PlanetClassRef,
+  PlanetModifierRef,
   ResourceRef,
   ScriptedLocRef,
   ScriptedModifierRef,
@@ -74,6 +79,7 @@ import type {
   SpeciesClassRef,
   SpriteRef,
   StarbaseLevelRef,
+  StarClassRef,
   StaticModifierRef,
   TechnologyRef,
   TraditionCategoryRef,
@@ -606,6 +612,86 @@ export function resource<const Id extends VanillaId<"resource">>(
 export function situationLogCategory<const Id extends VanillaId<"situation_log_category">>(
   id: Id
 ): SituationLogCategoryRef & { readonly id: Id } {
+  return { id };
+}
+
+/**
+ * A checked reference to a vanilla star class id.
+ * Checked against @pdx-ts/stellaris-ids when it is installed; any
+ * string otherwise. Zero runtime validation either way — this only
+ * constructs the branded reference the rest of the SDK already accepts.
+ */
+export function starClass<const Id extends VanillaId<"star_class">>(
+  id: Id
+): StarClassRef & { readonly id: Id } {
+  return { id };
+}
+
+/**
+ * A checked reference to a vanilla planet class id.
+ * Checked against @pdx-ts/stellaris-ids when it is installed; any
+ * string otherwise. Zero runtime validation either way — this only
+ * constructs the branded reference the rest of the SDK already accepts.
+ */
+export function planetClass<const Id extends VanillaId<"planet_class">>(
+  id: Id
+): PlanetClassRef & { readonly id: Id } {
+  return { id };
+}
+
+/**
+ * Vanilla deposit ids, both navigable and checked.
+ * `deposit.<file>...<id>` descends buckets named after the vanilla
+ * files and directories these ids are defined in, to a leaf spelling the
+ * id verbatim — the buckets are navigation only and no part of the id.
+ * `deposit(id)` accepts a string copied straight from a game file,
+ * checked against the same id set with no completion menu ever built.
+ * Checked against @pdx-ts/stellaris-ids when it is installed; any
+ * string otherwise, with no navigation. Zero runtime validation either
+ * way.
+ */
+export const deposit: VanillaTrie<"deposit"> &
+  (<const Id extends string>(
+    id: Id & CheckedVanillaId<"deposit", Id>
+  ) => DepositRef & { readonly id: Id }) = makeIdTrie("deposit");
+
+/**
+ * Vanilla anomaly category ids, both navigable and checked.
+ * `anomalyCategory.<file>...<id>` descends buckets named after the vanilla
+ * files and directories these ids are defined in, to a leaf spelling the
+ * id verbatim — the buckets are navigation only and no part of the id.
+ * `anomalyCategory(id)` accepts a string copied straight from a game file,
+ * checked against the same id set with no completion menu ever built.
+ * Checked against @pdx-ts/stellaris-ids when it is installed; any
+ * string otherwise, with no navigation. Zero runtime validation either
+ * way.
+ */
+export const anomalyCategory: VanillaTrie<"anomaly_category"> &
+  (<const Id extends string>(
+    id: Id & CheckedVanillaId<"anomaly_category", Id>
+  ) => AnomalyCategoryRef & { readonly id: Id }) = makeIdTrie("anomaly_category");
+
+/**
+ * A checked reference to a vanilla planet modifier id.
+ * Checked against @pdx-ts/stellaris-ids when it is installed; any
+ * string otherwise. Zero runtime validation either way — this only
+ * constructs the branded reference the rest of the SDK already accepts.
+ */
+export function planetModifier<const Id extends VanillaId<"planet_modifier">>(
+  id: Id
+): PlanetModifierRef & { readonly id: Id } {
+  return { id };
+}
+
+/**
+ * A checked reference to a vanilla asteroid belt type id.
+ * Checked against @pdx-ts/stellaris-ids when it is installed; any
+ * string otherwise. Zero runtime validation either way — this only
+ * constructs the branded reference the rest of the SDK already accepts.
+ */
+export function asteroidBeltType<const Id extends VanillaId<"asteroid_belt_type">>(
+  id: Id
+): AsteroidBeltTypeRef & { readonly id: Id } {
   return { id };
 }
 

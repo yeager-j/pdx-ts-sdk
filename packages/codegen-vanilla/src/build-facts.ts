@@ -8,6 +8,7 @@ import { loadScopeFacts } from "@pdx-ts/codegen-cwt/scope-facts";
 import { compareIdentifiers } from "./emit.ts";
 import { inferScopes, type InferredScope, type ScriptedKind } from "./infer-scopes.ts";
 import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./manifest.ts";
+import { readComplexEnumMembers, type ComplexEnumMembers } from "./read-complex-enums.ts";
 import { readVanillaEvents, type VanillaEventsRead } from "./read-events.ts";
 import { readRegistryIds, type RegistryIds } from "./read-ids.ts";
 import { readScriptedDefinitions, type ScriptedRegistry } from "./read-scripted.ts";
@@ -39,6 +40,7 @@ export interface VanillaBuildFacts {
   readonly eventKinds: readonly EventKindSpec[];
   readonly events: VanillaEventsRead;
   readonly registries: readonly RegistryBuildFacts[];
+  readonly complexEnums: readonly ComplexEnumMembers[];
   readonly scripted: Readonly<Record<ScriptedKind, ScriptedRegistry>>;
   readonly inferredScopes: Readonly<Record<ScriptedKind, readonly InferredScope[]>>;
 }
@@ -161,12 +163,16 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
     return readScriptedDefinitions(options.installRoot, row.registry, row.dir);
   };
 
-  const kinds = eventKinds(loadRules(options.configRoot));
+  const rules = loadRules(options.configRoot);
+  const kinds = eventKinds(rules);
   const events = readVanillaEvents(options.installRoot, options.configRoot, kinds);
   const registries = resolveRegistries(options.configRoot, idRows).map((spec) => ({
     spec,
     read: readRegistryIds(options.installRoot, spec),
   }));
+  const complexEnums = [...rules.complexEnums.values()].map((spec) =>
+    readComplexEnumMembers(options.installRoot, spec)
+  );
   const scripted = {
     trigger: read("scripted_trigger"),
     effect: read("scripted_effect"),
@@ -182,6 +188,11 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
       root: spec.path,
       extension: spec.extension,
       recurse: !spec.pathStrict,
+    })),
+    ...[...rules.complexEnums.values()].map((spec) => ({
+      root: spec.path.replace(/^game\//, ""),
+      extension: spec.extension,
+      recurse: true,
     })),
   ];
 
@@ -208,6 +219,7 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
     eventKinds: kinds,
     events,
     registries,
+    complexEnums,
     scripted,
     inferredScopes,
   };

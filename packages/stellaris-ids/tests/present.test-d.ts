@@ -30,6 +30,7 @@ import {
   type StaticModifierRef,
   type TechnologyRef,
   type Trigger,
+  type VanillaEnumMember,
   type VanillaId,
   type VanillaScriptedTriggers,
   type VanillaTries,
@@ -74,6 +75,18 @@ describe("checked registry helpers", () => {
     vanilla.situationLogCategory("definitely_not_a_category");
   });
 
+  it("checks the solar-system initializer vocabularies", () => {
+    vanilla.starClass("sc_neutron_star");
+    vanilla.planetClass("pc_barren");
+    vanilla.deposit("d_physics_5");
+    // @ts-expect-error
+    vanilla.starClass("sc_neutron_starrr");
+    // @ts-expect-error
+    vanilla.planetClass("pc_barrenn");
+    // @ts-expect-error
+    vanilla.deposit("d_physics_55555");
+  });
+
   it("still accepts a plain string in a ref field, for other mods' content", () => {
     // The escape hatch SDK-12 deliberately keeps: `XRef | string` everywhere,
     // so a reference to content this install has never heard of stays legal.
@@ -85,6 +98,16 @@ describe("checked registry helpers", () => {
       category: "computing",
       prerequisites: ["tech_from_another_mod", vanilla.technology("tech_lasers_1")],
     });
+  });
+});
+
+describe("complex enum members", () => {
+  it("exposes the install vocabulary while leaving fields open to mod-defined members", () => {
+    const slot: VanillaEnumMember<"section_slot"> = "bow";
+    expectTypeOf(slot).toEqualTypeOf<"bow">();
+    // @ts-expect-error
+    const typo: VanillaEnumMember<"section_slot"> = "bwo";
+    void typo;
   });
 });
 

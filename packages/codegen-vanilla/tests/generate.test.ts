@@ -82,6 +82,7 @@ describe("emitted file set", () => {
       "interface VanillaScriptedEffects extends VanillaScriptedEffectParams {}"
     );
     expect(augment).toContain("readonly event: VanillaEventTrie;");
+    expect(augment).toContain("readonly ship_class: VanillaShipClassMember;");
   });
 
   it("re-exports every public type from the barrel with no runtime exports", () => {
@@ -286,6 +287,17 @@ describe("registry readers", () => {
     const missing = registryReport("tradition");
     expect(missing).toMatchObject({ ids: 0, files: 0, missing: true });
     expect(file("registries/tradition.ts")).toContain("= never;");
+  });
+});
+
+describe("complex enum readers", () => {
+  it("extracts install-defined members from each CWT selector shape", () => {
+    expect(file("enums/ship-class.ts")).toContain('= "fake_ship_class";');
+    expect(file("enums/section-slot.ts")).toContain('= "fake_section_slot";');
+    expect(file("enums/component-tag.ts")).toContain('= "fake_component_tag";');
+    expect(file("enums/component-slot.ts")).toContain('= "fake_component_slot";');
+    expect(file("enums/situation-approach.ts")).toContain('= "fake_approach";');
+    expect(file("enums/situation-stage.ts")).toContain('= "fake_stage";');
   });
 });
 

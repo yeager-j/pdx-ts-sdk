@@ -362,7 +362,12 @@ async function main(): Promise<void> {
     "refs.ts",
     header(commit, ["type references across the rule files"]) + emitRefs(emitter)
   );
-  await write("enums.ts", header(commit, ["enums.cwt"]) + emitEnums(emitter));
+  await write(
+    "enums.ts",
+    header(commit, ["enums.cwt"]) +
+      'import type { VanillaEnumMember } from "../identifiers/contracts.ts";\n\n' +
+      emitEnums(emitter)
+  );
   await write(
     "value-sets.ts",
     header(commit, ["value sets referenced across the rule files"]) + emitValueSets(emitter)
