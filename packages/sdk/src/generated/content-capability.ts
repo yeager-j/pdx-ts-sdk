@@ -116,6 +116,7 @@ import type { SolarSystemInitializerDef } from "./solar-system-initializer.ts";
 import type {
   SpecialProjectDef,
   SpecialProjectFields,
+  SpecialProjectLocationScope,
   SpecialProjectScope,
 } from "./special-project.ts";
 import type { SpeciesClassDef } from "./species-class.ts";
@@ -812,17 +813,20 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
    */
-  specialProject<const Name extends string>(
+  specialProject<
+    const Name extends string,
+    L extends SpecialProjectLocationScope | undefined = undefined,
+  >(
     name: Name,
     def:
-      | SpecialProjectFields<"country_event">
-      | SpecialProjectFields<"planet_event">
-      | SpecialProjectFields<"ship_event">
-      | SpecialProjectFields<"carrier_event">
+      | SpecialProjectFields<"country_event", L>
+      | SpecialProjectFields<"planet_event", L>
+      | SpecialProjectFields<"ship_event", L>
+      | SpecialProjectFields<"carrier_event", L>
   ): ContentItem<
     "special_project",
     SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>, never>
-  >;
+  > & { readonly locationScope: L };
   /**
    * Defines a megastructure from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1130,13 +1134,18 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         ...def,
         id: mint("solarSystemInitializer", name),
       } as SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>),
-    specialProject: <const Name extends string, E extends SpEventScope = "country_event">(
+    specialProject: <
+      const Name extends string,
+      E extends SpEventScope = "country_event",
+      L extends SpecialProjectLocationScope | undefined = undefined,
+    >(
       name: Name,
-      def: SpecialProjectFields<E>
+      def: SpecialProjectFields<E, L>
     ) =>
       defineSpecialProject({ ...def, id: mint("specialProject", name) } as SpecialProjectDef<
         MintedContentId<P, I, "specialProject", Name>,
-        E
+        E,
+        L
       >),
     megastructure: <const Name extends string>(
       name: Name,

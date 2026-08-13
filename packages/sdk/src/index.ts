@@ -41,6 +41,7 @@ export type {
 } from "./script/effects/types.ts";
 export type { EffectPathMap, EffectPathOf, ScopeMap, ScopeObjOf } from "./generated/effects.ts";
 export type { SituationTargetContract } from "./script/effects/situations.ts";
+export type { SpecialProjectLocationContract } from "./script/effects/special-projects.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
 export {
   EVENT_FIELD_SUPPORT,

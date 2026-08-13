@@ -510,6 +510,40 @@ function repeatedStructEmission(
   };
 }
 
+/**
+ * The declared-FROM parameter, with the admissible scopes read off the rules'
+ * own scope group rather than restated in the overlay — the group is what the
+ * starting effect's argument is typed as, so the two cannot drift apart.
+ */
+function declaredFromOf(
+  emitter: Emitter,
+  registry: string,
+  row: NonNullable<ContentScopeParameter["declaredFrom"]>
+): DeclaredFrom {
+  const members = emitter.rules.scopeGroups.get(row.scopeGroup);
+  if (members === undefined) {
+    throw new Error(
+      `Overlay declared FROM for ${registry} names unknown scope group "${row.scopeGroup}"`
+    );
+  }
+  const scopes = members.map((member) => {
+    const scope = emitter.canonicalScope(member);
+    if (scope === null) {
+      throw new Error(
+        `Scope group "${row.scopeGroup}" names unknown scope "${member}" for ${registry}`
+      );
+    }
+    return scope;
+  });
+  return {
+    member: row.member,
+    typeName: `${pascalCase(registry)}${pascalCase(row.member)}`,
+    scopes: [...new Set(scopes)].sort(),
+    members: row.members,
+    effect: row.effect,
+  };
+}
+
 /** The scope parameter this registry declares, with its scopes canonicalised. */
 function scopeParameterOf(emitter: Emitter, registry: string): ScopeParameter | null {
   const row = CONTENT_SCOPE_PARAMETERS.get(registry);
@@ -544,6 +578,9 @@ function scopeParameterOf(emitter: Emitter, registry: string): ScopeParameter | 
       parameterType: selector.typeName,
       parameterFallback: selector.fallback,
       selector,
+      ...(row.declaredFrom === undefined
+        ? {}
+        : { declaredFrom: declaredFromOf(emitter, registry, row.declaredFrom) }),
     };
   }
   return {
@@ -577,10 +614,11 @@ function underParameter(
  *
  * `fieldContext.unpinned` carries the selected scope, so which member is being
  * lowered decides where that type lands: the member the selector scopes gets it
- * as its own scope, a member the selector supplies as FROM gets it there and
- * runs in the registry's fallback scope instead, and everything else is the
- * fallback with no FROM. A registry with no selector lowers every member the
- * same way and passes through untouched.
+ * as its own scope — plus the declared FROM, where the registry has one — a
+ * member the selector supplies as FROM gets it there and runs in the registry's
+ * fallback scope instead, and everything else is the fallback with no FROM. A
+ * registry with no selector lowers every member the same way and passes through
+ * untouched.
  */
 function selectedContext(
   fieldContext: FieldContext,
@@ -588,13 +626,37 @@ function selectedContext(
   member: string
 ): FieldContext {
   const selector = parameter === null ? undefined : parameter.selector;
-  if (parameter === null || selector === undefined || selector.scopedMembers.includes(member)) {
+  if (parameter === null || selector === undefined) {
     return fieldContext;
+  }
+  const declaredFrom = parameter.declaredFrom;
+  if (selector.scopedMembers.includes(member)) {
+    return declaredFrom?.members.includes(member) === true
+      ? { ...fieldContext, assertedFrom: "NoInfer<L>" }
+      : fieldContext;
   }
   const fallback = JSON.stringify(parameter.fallback);
   return selector.fromMembers?.includes(member) === true
     ? { ...fieldContext, unpinned: fallback, assertedFrom: fieldContext.unpinned }
     : { ...fieldContext, unpinned: fallback };
+}
+
+/** `a`, `b` and `c` — a prose list of member names for a doc comment. */
+function listed(members: readonly string[]): string {
+  const quoted = members.map((member) => `\`${member}\``);
+  return quoted.length < 2
+    ? (quoted[0] ?? "")
+    : `${quoted.slice(0, -1).join(", ")} and ${quoted.at(-1)}`;
+}
+
+/** A {@link ContentScopeParameter.declaredFrom} row, resolved against the rules. */
+export interface DeclaredFrom {
+  readonly member: string;
+  /** The emitted union of scopes the declaration may name. */
+  readonly typeName: string;
+  readonly scopes: readonly string[];
+  readonly members: readonly string[];
+  readonly effect: string;
 }
 
 interface ScopeParameter {
@@ -605,6 +667,7 @@ interface ScopeParameter {
   readonly parameterType: string;
   readonly parameterFallback: string;
   readonly selector?: NonNullable<ContentScopeParameter["selector"]>;
+  readonly declaredFrom?: DeclaredFrom;
 }
 
 /**
@@ -1027,11 +1090,20 @@ export function emitContentType(
   // item a definer returns is a reference brand, and `Trigger<S>` is
   // contravariant, so letting S leak there would make a `"ship"` definition
   // unassignable to the registry's own item union.
+  // A declared FROM rides along as a second parameter, defaulting to
+  // `undefined` — the sentinel `EffectBlock` already reads as "no FROM here" —
+  // so a definition that declares none is typed exactly as it was before the
+  // registry grew the declaration.
+  const declaredFrom = parameter?.declaredFrom;
+  const declaredFromParameter =
+    declaredFrom === undefined
+      ? ""
+      : `, L extends ${declaredFrom.typeName} | undefined = undefined`;
   const generic =
     parameter === null
       ? ""
       : `<${parameter.parameterName} extends ${parameter.parameterType} = ` +
-        `${JSON.stringify(parameter.parameterFallback)}>`;
+        `${JSON.stringify(parameter.parameterFallback)}${declaredFromParameter}>`;
   const scopeMember =
     parameter === null || parameter.selector !== undefined
       ? ""
@@ -1044,6 +1116,22 @@ export function emitContentType(
           ],
           "  "
         ) + "  scope?: S;\n";
+  const declaredFromMember =
+    declaredFrom === undefined
+      ? ""
+      : docComment(
+          [
+            `The scope \`${declaredFrom.effect}\` is handed as this definition's`,
+            "location, and the FROM its callbacks are given.",
+            "Emits nothing — the game learns it from the call site, not from the",
+            "definition. Declaring it types `ctx.from` in",
+            `${listed(declaredFrom.members)}, and holds every`,
+            `\`${camelCase(declaredFrom.effect)}\` call for this definition to a`,
+            "location of the same scope. Omitted, FROM stays unreadable and the",
+            "call sites stay unchecked.",
+          ],
+          "  "
+        ) + `  ${declaredFrom.member}?: L;\n`;
   const scopeType_ =
     parameter === null
       ? ""
@@ -1059,7 +1147,16 @@ export function emitContentType(
                   `  E extends ${JSON.stringify(eventScope)} ? ${JSON.stringify(scope)} :`
               )
               .join("\n") +
-            `\n  never;\n\n`);
+            `\n  never;\n\n`) +
+        (declaredFrom === undefined
+          ? ""
+          : docComment([
+              `The scopes ${indefiniteArticle(type.name)} ${type.name} may declare as its`,
+              "location — the rules' own `scope_group` for the argument, so the",
+              "declaration and the effect that takes it cannot drift apart.",
+            ]) +
+            `export type ${declaredFrom.typeName} = ` +
+            `${declaredFrom.scopes.map((scope) => JSON.stringify(scope)).join(" | ")};\n\n`);
   const patchCode = CONTENT_PATCH_REGISTRIES.has(type.name)
     ? patchTypes(
         type,
@@ -1081,20 +1178,26 @@ export function emitContentType(
     ]) +
     `export interface ${fieldsName}${generic} {\n` +
     scopeMember +
+    declaredFromMember +
     localisationMembers(type, localisationPlan) +
     members.join("") +
     "}\n\n" +
     (parameter?.selector === undefined
       ? ""
       : `export type ${typeName}Fields<E extends ${parameter.parameterType} = ` +
-        `${parameter.parameterType}> = E extends ${parameter.parameterType} ? ` +
-        `${fieldsName}<E> : never;\n\n`) +
+        `${parameter.parameterType}${declaredFromParameter}> = ` +
+        `E extends ${parameter.parameterType} ? ` +
+        `${fieldsName}<E${declaredFrom === undefined ? "" : ", L"}> : never;\n\n`) +
     (parameter === null
       ? `export interface ${typeName}Def<Id extends string = string> extends ${typeName}Fields {\n`
       : `export interface ${typeName}Def<\n  Id extends string = string,\n` +
         `  ${parameter.parameterName} extends ${parameter.parameterType} = ` +
         `${JSON.stringify(parameter.parameterFallback)},\n` +
-        `> extends ${fieldsName}<${parameter.parameterName}> {\n`) +
+        (declaredFrom === undefined
+          ? ""
+          : `  L extends ${declaredFrom.typeName} | undefined = undefined,\n`) +
+        `> extends ${fieldsName}<${parameter.parameterName}` +
+        `${declaredFrom === undefined ? "" : ", L"}> {\n`) +
     "  /** Full content id, including the mod prefix. */\n" +
     "  id: Id;\n" +
     "}\n\n" +
