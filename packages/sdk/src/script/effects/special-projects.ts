@@ -19,6 +19,7 @@
 import type { EnableSpecialProjectArgs } from "../../generated/effects.ts";
 import type { SpecialProjectLocationScope } from "../../generated/special-project.ts";
 import type { TypedRef } from "../scalar.ts";
+import type { Unambiguous } from "./contracts.ts";
 import type { ScopeValue } from "./types.ts";
 
 /** A defined special project carrying its author-declared location scope. */
@@ -50,6 +51,11 @@ declare module "../../generated/effects.ts" {
      * at all. A project enabled the defaulting way declares no
      * `locationScope` and keeps the generated signature.
      *
+     * A value that could be more than one project — the two arms of a ternary,
+     * say — carries the union of their declarations and no single fact to
+     * check, so `Unambiguous` rejects it here rather than accepting the arm
+     * that happens to match the location passed.
+     *
      * The generated signature remains beneath this one for vanilla or
      * third-party project ids and for projects that declare no location, none
      * of which carry a contract to check. The overlay's
@@ -60,7 +66,7 @@ declare module "../../generated/effects.ts" {
      */
     enableSpecialProject<L extends SpecialProjectLocationScope>(
       args: Omit<EnableSpecialProjectArgs, "name" | "location"> & {
-        name: SpecialProjectLocationContract<L>;
+        name: Unambiguous<L, SpecialProjectLocationContract<L>>;
         location: ScopeValue<NoInfer<L>>;
       }
     ): void;

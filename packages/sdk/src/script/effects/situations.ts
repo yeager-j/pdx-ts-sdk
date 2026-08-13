@@ -22,6 +22,7 @@
 import type { ScopeObjOf, SituationScope } from "../../generated/effects.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { TypedRef } from "../scalar.ts";
+import type { Unambiguous } from "./contracts.ts";
 import type { ScopeValue } from "./types.ts";
 
 /** A defined situation type carrying its author-declared target scope. */
@@ -68,7 +69,7 @@ declare module "../../generated/effects.ts" {
      * compile error rather than a fall-through.
      */
     startSituation<T extends ScopeName>(args: {
-      type: SituationTargetContract<T>;
+      type: Unambiguous<T, SituationTargetContract<T>>;
       target: ScopeValue<NoInfer<T>>;
       effect?: (scope: SituationEffectScope<T>) => void;
     }): void;

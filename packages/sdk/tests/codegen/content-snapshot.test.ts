@@ -1599,7 +1599,9 @@ describe("generated content definers", () => {
     for (const manifest of CONTENT_MANIFEST) {
       const entry = manifest as ContentManifestEntry;
       const name = pascalCase(entry.as ?? entry.type);
-      expect(definers, entry.type).toContain(`export type ${name}Item =`);
+      // A registry carrying a declared contract parameterises its item type by
+      // the witness; the rest take no parameter.
+      expect(definers, entry.type).toMatch(new RegExp(`export type ${name}Item(<| =)`));
       expect(definers, entry.type).toMatch(new RegExp(`\\bdefine${name}\\b`));
     }
     // 35 mechanical `export function defineX` plus the graft's re-export.
@@ -1613,6 +1615,18 @@ describe("generated content definers", () => {
     expect(definers).toContain('export { defineSituationType } from "../content/situations.ts";');
     expect(definers).not.toContain("export function defineSituationType");
     expect(definers).not.toContain("defineSituationType<const Id");
+    // The item type an author names has to carry the declared contract, or
+    // annotating with it is how the contract gets dropped on the way to the
+    // effect that checks it (SDK-181). The witness comes from the graft row
+    // for a hand-written definer and from `declaredFrom` for a generated one.
+    expect(definers).toContain(
+      "export type SituationTypeItem<W extends ScopeName | undefined = ScopeName | undefined> ="
+    );
+    expect(definers).toMatch(/SituationTypeItem<[^>]*> =[\s\S]*?readonly targetScope: W/);
+    expect(definers).toMatch(
+      /export type SpecialProjectItem<\s*W extends SpecialProjectLocationScope \| undefined/
+    );
+    expect(definers).toMatch(/SpecialProjectItem<[\s\S]*?readonly locationScope: W/);
   });
 
   it("preserves a definition's literal id, and registers nothing", () => {

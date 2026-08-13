@@ -6,6 +6,7 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
+import type { SituationTypeItem } from "../src/generated/content-definers.ts";
 import type { SituationTypeRef } from "../src/generated/refs.ts";
 import { createMod, eventTarget } from "../src/index.ts";
 
@@ -48,6 +49,40 @@ describe("the declared situation target contract", () => {
     });
   });
 
+  it("rejects a situation value that could be either of two declarations", () => {
+    // The witness is a phantom property and therefore covariant: a ternary
+    // over two differently targeted situation types carries both scopes at
+    // once, and a planet target satisfies the union while the type that
+    // actually starts may be the country one (SDK-181).
+    const mod = createMod({
+      name: "Situations",
+      prefix: "st_test_either",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const planetSit = mod.situationType("planet_sit", {
+      name: "S",
+      monthlyProgress: { base: 1 },
+      targetScope: "planet",
+    });
+    const countrySit = mod.situationType("country_sit", {
+      name: "S",
+      monthlyProgress: { base: 1 },
+      targetScope: "country",
+    });
+    const world = eventTarget<"planet">("st_test_either_world");
+    const either = (0 as number) > 1 ? planetSit : countrySit;
+    events.country(4, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country) => {
+        // @ts-expect-error — either type could start here, and they declare different targets
+        country.startSituation({ type: either, target: world });
+        country.startSituation({ type: planetSit, target: world });
+      },
+    });
+  });
+
   it("keeps the unchecked path for undeclared and vanilla situations", () => {
     const mod = createMod({
       name: "Vanilla",
@@ -71,6 +106,37 @@ describe("the declared situation target contract", () => {
         country.startSituation({ type: "situation_kaleidoscope" });
         country.startSituation({ type: vanillaRef, target: ctx.self });
         country.startSituation({ type: undeclared, target: ctx.self });
+      },
+    });
+  });
+
+  it("keeps the declaration through the registry's own item type", () => {
+    // The same hole one level up from the ternary: `SituationTypeItem` is how
+    // a feature's contents are named, and it used to drop `targetScope` on the
+    // way to a start site (SDK-181).
+    const mod = createMod({
+      name: "Situations",
+      prefix: "st_test_item",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const planetSit = mod.situationType("sit_item", {
+      name: "S",
+      monthlyProgress: { base: 1 },
+      targetScope: "planet",
+    });
+    const kept: SituationTypeItem<"planet"> = planetSit;
+    const widened: SituationTypeItem = planetSit;
+    const world = eventTarget<"planet">("st_test_item_world");
+    events.country(5, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country, ctx) => {
+        country.startSituation({ type: kept, target: world });
+        // @ts-expect-error — the declaration survived the annotation; a country does not satisfy it
+        country.startSituation({ type: kept, target: ctx.self });
+        // @ts-expect-error — widened to every scope at once, so there is no one scope to check
+        country.startSituation({ type: widened, target: ctx.self });
       },
     });
   });
