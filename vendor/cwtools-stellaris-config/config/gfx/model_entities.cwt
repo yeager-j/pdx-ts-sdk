@@ -2,7 +2,7 @@ types = {
 	## type_key_filter = entity
 	type[model_entity] = {
 		name_field = name
-		path = "gfx"
+		path = "game/gfx"
 		path_extension = .asset
 		severity = warning
 	}
@@ -10,14 +10,14 @@ types = {
 	type[model_mesh] = {
 		name_field = name
 		skip_root_key = objectTypes
-		path = "gfx/models"
+		path = "game/gfx/models"
 		path_extension = .gfx
 		severity = warning
 	}
 	## type_key_filter = animation
 	type[model_animation] = {
 		name_field = name
-		path = "gfx/models"
+		path = "game/gfx/models"
 		path_extension = .asset
 		severity = warning
 	}

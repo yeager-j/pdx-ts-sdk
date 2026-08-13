@@ -4,7 +4,7 @@ Upstream: https://github.com/yeager-j/cwtools-stellaris-config
 
 | | |
 | --- | --- |
-| Commit | `5b5109d24ce2d7b8bcd64648fc448f2f9bc87a8f` |
+| Commit | `ec350bdb4f9aa790e45ec88493b03046d5252439` |
 | Committed | 2026-08-12 |
 | Fetched | 2026-08-12 |
 
@@ -42,9 +42,11 @@ this snapshot can carry a fix before upstream merges it.
 
 ### Fixes this snapshot carries ahead of upstream
 
-Seven commits, each written to become one upstream PR, and each one deletes
-a row from `packages/codegen-cwt/src/overlay.ts` or a special case in the
-loader rather than adding one:
+Eight commits carried on our fork ahead of DragonKnightOfBreeze's `master`.
+The earlier rule corrections each delete a row from
+`packages/codegen-cwt/src/overlay.ts` or a special case in the loader rather
+than adding one; the GFX correction supplies the upstream-true rules needed by
+the upcoming GFX codegen work:
 
 - `2b960cc` `situations.cwt` `total_progress` declared `value_int_field`, a
   typo for `int_value_field`. Retires the loader's special case in
@@ -68,6 +70,8 @@ loader rather than adding one:
 - `5b5109d` `scopes.cwt` declares `no_scope`, which the rest of the config,
   the game's `scopes.log` and 27 documented triggers already treat as a
   scope. Retires the overlay's `EXTRA_SCOPES`.
+- `ec350bd` GFX type paths include the required `game/` root, and
+  `type[particle]` filters on the game's `pdxparticle` definition key.
 
 `country_ship_of_size_limit.show` deliberately stays an overlay row rather
 than becoming a sixth annotation: its scope is inferred from the corpus
