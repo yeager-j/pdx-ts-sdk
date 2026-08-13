@@ -103,7 +103,11 @@ Remaining work over `packages/sdk/src/output/`:
   serialize together; the lock name derives from the same basename string as
   the target, never a transformed identity, so filesystem case/NFC aliasing
   converges aliases onto one lock inode) held through inspection, staging,
-  activation, and cleanup; a second writer fails immediately. The lock holds a
+  activation, and cleanup; a second writer fails immediately. `install()`
+  locks both of its activation paths — content directory and launcher
+  descriptor — in canonical order, so two installs whose paths overlap (one's
+  descriptor path is the other's content path) serialize instead of racing
+  live. The lock holds a
   transaction journal covering both activation sites — content and
   launcher-descriptor paths, staged/previous identities with hashes, and a
   per-rename phase — so a crash between `install()`'s two renames is
@@ -174,7 +178,11 @@ slice 1).
   interfaces in `packages/sdk/src/identifiers/contracts.ts` and the
   unchecked-`string` degraded mode; import the package's types directly. The
   project-supplied game-version range stays as `create-stellaris-mod` emits
-  it.
+  it. The scaffolder converts too: its no-install and no-detected-build paths
+  always emit the dependency pin, and the ETARGET recovery guidance
+  (`packages/create-stellaris-mod/src/commands/init.ts`) stops advising
+  continue-unchecked — when no package version matches the detected game
+  version, scaffolding refuses explicitly instead.
 - The inventory is the package's second runtime surface (after the
   trigger/effect bindings): amend PROVENANCE.md, the licensing shape test that
   pins the bindings as the only runtime, and the package exports map for the
@@ -244,6 +252,14 @@ Lowering (SDK-120):
   row states `keyword: "pdxparticle"` explicitly. Teach the corpus reader
   `path_extension` so `.gfx` files are corpus (vanilla evidence: 8,539
   `spriteType`, 3,232 `pdxmesh`, 1,720 `pdxparticle`).
+- The same manifest rows flow into `@pdx-ts/codegen-vanilla`'s
+  `VANILLA_MANIFEST` (`packages/codegen-vanilla/src/manifest.ts` derives its
+  id rows from `CONTENT_MANIFEST`), so this slice also regenerates
+  `@pdx-ts/stellaris-ids`: vanilla `pdxmesh`/`pdxparticle` id sets appear, the
+  sprite row migrates from ref-only to authorable, and the vanilla-name
+  collision refusal gains the evidence it acts on. Run the install-gated
+  `codegen:vanilla` gates before committing; review the package diff as a
+  public API.
 - Casing: emission is canonical lowercase only; recognition is an audited
   exact list of observed variants (vanilla's 77 `SpriteType`, CWT subtype
   spellings); an unlisted casing fails loudly.
@@ -266,9 +282,14 @@ Identity, references, placement (SDK-121):
   with a vanilla definition is refused (shadow-override is out of scope).
 - Authored sprites carry `referenceName: "sprite"` — `SpriteRef`-branded,
   joining the existing `vanilla.sprite` registry by brand. Dangling-reference
-  checking generalizes to **containment**: a sprite reference containing
-  `${prefix}` as a `_`-delimited segment must resolve in this build; others
-  fall under the existing assumed-vanilla warning. Sprite `textureFile` and
+  checking generalizes to **containment**, applied after an exact-match
+  exemption (amended on SDK-121, 2026-08-13): a reference equal to a known
+  vanilla name — always known under ADR-0006 — is valid as-is; otherwise a
+  sprite reference containing `${prefix}` as a `_`-delimited segment must
+  resolve in this build, and the rest are assumed third-party. Without the
+  exemption, a short prefix occurring inside a vanilla name (prefix `ui` vs
+  vanilla `GFX_astral_rift_ui_icon`) would reject a legitimate vanilla
+  reference. Sprite `textureFile` and
   pdxmesh `file` accept `AssetFileItem | string` — an Item lowers to its
   declared logical path; plain strings get a fold-time existence warning
   (never an error) against captured paths ∪ the vanilla path inventory.
@@ -282,9 +303,12 @@ Identity, references, placement (SDK-121):
 
 **Exit gate:** `npm run codegen`, complete `packages/sdk/src/generated/` diff
 reviewed as a public-API change, codegen report read, `npm run codegen:check`;
-evidence pipeline green (four kinds of evidence, corpus gates, presence
-floors); fixtures for minted collisions, unlisted casing, containment dangling
-references, generated ordering, and repeated members. Standard three gates.
+`codegen:vanilla` regeneration with its install-gated, licensing, and
+committed-output checks, the `packages/stellaris-ids/src` diff reviewed as a
+public-API change; evidence pipeline green (four kinds of evidence, corpus
+gates, presence floors); fixtures for minted collisions, unlisted casing,
+vanilla-exact-match acceptance, containment dangling references, generated
+ordering, and repeated members. Standard three gates.
 
 ## Slice 5 — Project Manifest `assetsDirectory`
 
