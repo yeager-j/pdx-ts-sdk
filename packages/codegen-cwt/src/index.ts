@@ -25,7 +25,7 @@ import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
 import { structuralSpliceOf } from "./emit/fields.ts";
-import { classifyLinks, emitScopeLinks } from "./emit/links.ts";
+import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
 import type { SkippedRule } from "./emit/shape.ts";
@@ -583,6 +583,12 @@ async function main(): Promise<void> {
       'import { trigger, type Trigger } from "../script/trigger-core.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       scopeLinks.code
+  );
+  await write(
+    "link-meta.ts",
+    header(commit, ["links.cwt"]) +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      emitScopeLinkNavigation(classifiedLinks.navigation)
   );
   await write(
     "effects.ts",

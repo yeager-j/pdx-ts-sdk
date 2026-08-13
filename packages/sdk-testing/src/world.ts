@@ -10,6 +10,14 @@
  * pull-event evaluation, and no option auto-selection (delivery runs the
  * `immediate` block only).
  *
+ * Both halves of that are refusals rather than notes now. Registration reads
+ * the whole event body and refuses an event carrying script delivery would
+ * skip (`assertDeliverable`), and `advance` refuses to cross a month boundary
+ * while a situation's monthly progress would silently stand still
+ * (`assertSituationClock`) — the same discipline the whitelist keys have,
+ * applied one level up, where a fired record for an event the game would not
+ * have fired is the green test.
+ *
  * `fire` carries the FROM contract: the type-level witness pair mirrors the
  * SDK's fire effects (`from` is required iff the event declares `from:`,
  * forbidden otherwise), and `advance` re-checks the contract at delivery
@@ -20,7 +28,12 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import type { DefinedEvent, EventRef, ScopeName } from "@pdx-ts/sdk";
 
-import { applyEffectEntries, assertChoicePlanConsumed, type ForcedArms } from "./interpret.ts";
+import {
+  applyEffectEntries,
+  assertChoicePlanConsumed,
+  DAYS_PER_MONTH,
+  type ForcedArms,
+} from "./interpret.ts";
 import {
   ArchaeologicalSite,
   assertSupportedSimScope,
@@ -40,7 +53,14 @@ import {
   type SimScopeName,
   type WorldState,
 } from "./state.ts";
-import { coverageSummary, InterpreterError, itemsAsEntries, type ExecCtx } from "./whitelist.ts";
+import {
+  coverageSummary,
+  eventFieldDeliveryFor,
+  InterpreterError,
+  itemsAsEntries,
+  optionCarriesEffects,
+  type ExecCtx,
+} from "./whitelist.ts";
 
 export { DAYS_PER_MONTH, DAYS_PER_YEAR, type ForcedArms } from "./interpret.ts";
 
@@ -91,6 +111,72 @@ function immediateEntriesOf(
   return itemsAsEntries(immediate.value.items, "immediate");
 }
 
+/**
+ * Refuses an event whose body carries structure delivery will never run.
+ *
+ * Registration rather than delivery, because the fixture's event list is where
+ * an author says what this world is made of: an event that cannot be delivered
+ * honestly should never become deliverable, and finding that out at the fire
+ * that happens to reach it — or worse, at a queued delivery days later — is the
+ * same surprise arriving later. The disposition and the reason both come from
+ * `EVENT_FIELD_DELIVERY`, so this reads the table and never restates it.
+ */
+function assertDeliverable(event: DefinedEvent<ScopeName, ScopeName | undefined, string>): void {
+  if (event.entry.value.kind !== "container") {
+    return;
+  }
+  for (const field of itemsAsEntries(event.entry.value.items, `Event "${event.id}"`)) {
+    const why = deliveryRefusal(field);
+    if (why !== undefined) {
+      throw new InterpreterError(
+        `Event "${event.id}" carries "${field.key}", which delivery will not run: ${why} ` +
+          coverageSummary()
+      );
+    }
+  }
+}
+
+/**
+ * Whether the event's body says the game fires it only once, read through the
+ * same table the rest of delivery reads — the `once` disposition is the flag's
+ * whole definition here, so a second field earning it needs no code change.
+ *
+ * `= no` is not that claim, so it says nothing: a field that spells the flag
+ * out as false leaves the event as repeatable as one that never wrote it.
+ */
+function firesOnlyOnce(event: DefinedEvent<ScopeName, ScopeName | undefined, string>): boolean {
+  if (event.entry.value.kind !== "container") {
+    return false;
+  }
+  return itemsAsEntries(event.entry.value.items, `Event "${event.id}"`).some(
+    (field) =>
+      eventFieldDeliveryFor(field.key)?.disposition === "once" &&
+      field.value.kind === "bool" &&
+      field.value.value
+  );
+}
+
+/** Why this field makes its event undeliverable, or `undefined` when it does not. */
+function deliveryRefusal(field: PdxEntry): string | undefined {
+  const delivery = eventFieldDeliveryFor(field.key);
+  if (delivery === undefined) {
+    return (
+      `it is not a field the SDK's own event policy declares, so nothing here knows whether ` +
+      `delivering this event would skip it.`
+    );
+  }
+  if (delivery.disposition === "refused") {
+    return delivery.note;
+  }
+  if (delivery.disposition !== "options") {
+    return undefined;
+  }
+  const effects = optionCarriesEffects(field);
+  return effects.length === 0
+    ? undefined
+    : `${delivery.note} This one carries ${effects.join(", ")}.`;
+}
+
 export class World {
   private readonly state: WorldState;
   private readonly registry: Map<string, DefinedEvent<ScopeName, ScopeName | undefined, string>>;
@@ -115,6 +201,7 @@ export class World {
             coverageSummary()
         );
       }
+      assertDeliverable(event);
       this.registry.set(event.id, event);
     }
   }
@@ -240,6 +327,7 @@ export class World {
         `advance would move the world to an unsafe day value (${String(end)}). ` + coverageSummary()
       );
     }
+    this.assertSituationClock(end);
     for (;;) {
       const next = this.state.queue
         .filter((pending) => pending.dueDay <= end)
@@ -275,12 +363,71 @@ export class World {
     this.state.day = end;
   }
 
+  /**
+   * The situation clock, decided: this harness does not have one, and says so
+   * at the moment the difference starts to matter.
+   *
+   * A situation is a monthly mechanic — the game ticks `monthly_progress`,
+   * runs `on_monthly`, moves between stages and finishes at `total_progress`,
+   * every month, and that ticking is the whole reason situations exist. None
+   * of it is modeled: `advance` is a queue drain, so progress stays exactly
+   * where the fixture put it however far the clock moves. Modeling the
+   * arithmetic alone would be worse than modeling none of it — progress would
+   * sail past the completion the game ends the situation at, and every
+   * assertion after that point would be green for a world the game was never
+   * in.
+   *
+   * So a crossed month boundary with a situation in the fixture is refused
+   * rather than quietly frozen, on the same terms as every unimplemented key
+   * here. Months are the 30-day months this harness already commits to in its
+   * own delay arithmetic (`DAYS_PER_MONTH`), not the calendar's.
+   *
+   * `SituationSpec.staticProgress` is the way through: it is the author saying
+   * the chain under test does not depend on this situation's progress moving,
+   * which is a claim a reader can check. What it never becomes is a default.
+   */
+  private assertSituationClock(end: number): void {
+    const crossed = Math.floor(end / DAYS_PER_MONTH) > Math.floor(this.state.day / DAYS_PER_MONTH);
+    if (!crossed) {
+      return;
+    }
+    const ticking = this.state.situations.filter((situation) => !situation.staticProgress);
+    if (ticking.length === 0) {
+      return;
+    }
+    throw new InterpreterError(
+      `advance would move the world from day ${this.state.day} to day ${end}, crossing a month ` +
+        `boundary while the fixture holds ${ticking.length} situation` +
+        `${ticking.length === 1 ? "" : "s"} whose progress this harness does not tick ` +
+        `(${ticking.map((situation) => `"${situation.name}"`).join(", ")}). Situations advance ` +
+        `monthly in game — monthly_progress, on_monthly, stage transitions, completion — and none ` +
+        `of that is modeled, so every month crossed here is a month the real situation moved and ` +
+        `this one did not. Compute the arithmetic directly instead ` +
+        `(evaluateWeightBlock(type.def.monthlyProgress, world.situation(n))), keep the advance ` +
+        `inside the month, or declare staticProgress: true on the situation to state that this ` +
+        `chain does not depend on its progress. ${coverageSummary()}`
+    );
+  }
+
   private deliver(
     state: WorldState,
     pending: PendingFire,
     event: DefinedEvent<ScopeName, ScopeName | undefined, string>,
     via: FiredRecord["via"]
   ): void {
+    // The fired log is the ledger — a second delivery of a fire-only-once
+    // event is a firing the game would not have made, and running its
+    // immediate again would apply its effects to a world no game ever held.
+    // Read rather than stored: `fired` already records every delivery, and it
+    // is already rolled back with everything else when one fails.
+    const delivered = state.fired.find((record) => record.id === pending.id);
+    if (delivered !== undefined && firesOnlyOnce(event)) {
+      throw new InterpreterError(
+        `Event "${pending.id}" declares fire_only_once and was already delivered in this world ` +
+          `(day ${delivered.day}, ${delivered.scopeLabel}), so the game would not fire it again. ` +
+          `${eventFieldDeliveryFor("fire_only_once")?.note ?? ""} ${coverageSummary()}`
+      );
+    }
     state.fired.push({
       id: pending.id,
       day: state.day,

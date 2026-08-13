@@ -243,7 +243,6 @@ describe("generator-owned SDK protocols", () => {
               docs: [],
             },
           ],
-          skipped: [],
         },
         scopes,
         RESERVED_TRIGGER_EXPORT_NAMES

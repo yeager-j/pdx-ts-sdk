@@ -36,6 +36,21 @@ export interface ClassifiedLink {
 export interface LinkClassification {
   readonly links: readonly ClassifiedLink[];
   readonly skipped: readonly SkippedRule[];
+  /**
+   * Every link that is scope navigation at all, mapped to where it lands —
+   * `"any"` for the ones the rules leave runtime-polymorphic. Wider than
+   * {@link LinkClassification.links}, which carries only what the wrappers can
+   * be typed from: a consumer asking "is this key a scope link" has to hear
+   * yes for `target` too, or it will read a navigation the SDK cannot type as
+   * a scripted binding nothing will ever interpret.
+   *
+   * Value links (`trigger`, `variable`, `script_value`, `modifier`) are out
+   * because they produce a number rather than a scope, and `from_data` links
+   * are out because their key is a prefix rather than a name. A link that
+   * declares no `output_scope` at all is out too — the rules say nothing about
+   * where it goes, and the skip report already names it.
+   */
+  readonly navigation: ReadonlyMap<string, string>;
 }
 
 export function classifyLinks(
@@ -45,6 +60,7 @@ export function classifyLinks(
 ): LinkClassification {
   const links: ClassifiedLink[] = [];
   const skipped: SkippedRule[] = [];
+  const navigation = new Map<string, string>();
   for (const name of [...emitter.rules.links.keys()].sort()) {
     const link = emitter.rules.links.get(name)!;
     if (link.type === "value") {
@@ -60,6 +76,7 @@ export function classifyLinks(
       continue;
     }
     if (link.outputScope.toLowerCase() === "any") {
+      navigation.set(name, "any");
       skipped.push({
         name,
         reason: "output scope is runtime-polymorphic (any) — gated on situations, see roadmap",
@@ -75,6 +92,7 @@ export function classifyLinks(
       skipped.push({ name, reason: `unknown scope in ${link.inputScopes.join(" ")}` });
       continue;
     }
+    navigation.set(name, outputScope);
     links.push({
       key: name,
       method: safeIdentifier(camelCase(name)),
@@ -83,12 +101,47 @@ export function classifyLinks(
       docs: [link.docs[0] ?? dumpLinks.get(name)?.summary ?? ""],
     });
   }
-  return { links, skipped };
+  return { links, skipped, navigation };
 }
 
 export interface ScopeLinkEmission {
   readonly code: string;
   readonly emitted: number;
+}
+
+/**
+ * The link vocabulary as data, for the one question the wrapper functions
+ * cannot answer: given a key read back out of recorded script, is it scope
+ * navigation, and where does it navigate to?
+ *
+ * A table rather than more functions because the asker has a string, not a
+ * symbol — a tool interpreting recorded entries (`@pdx-ts/sdk-testing`) needs
+ * to tell `owner` (a link it has not modeled) from a scripted trigger it can
+ * never model, and those want opposite responses from the reader. It lands in
+ * its own generated file so `src/script/triggers.ts`'s `export *` keeps
+ * exporting link functions and nothing else; the SDK's narrow accessor over it
+ * is the public surface, the same split `EFFECT_META`/`isEffectKey` already
+ * uses.
+ */
+export function emitScopeLinkNavigation(navigation: ReadonlyMap<string, string>): string {
+  const rows = [...navigation]
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([key, output]) => `  ${JSON.stringify(key)}: ${JSON.stringify(output)},\n`)
+    .join("");
+  return (
+    "/**\n" +
+    " * Every static scope link the rules declare, mapped to the scope it\n" +
+    " * navigates to. `any` is the rules' own answer where the output scope is\n" +
+    " * runtime-polymorphic, not a widening this table invents.\n" +
+    " *\n" +
+    " * Value links (which produce a number rather than a scope) and `from_data`\n" +
+    " * links (whose key is a prefix rather than a name) are not navigation and\n" +
+    " * are absent.\n" +
+    " */\n" +
+    'export const SCOPE_LINK_NAVIGATION: Readonly<Record<string, ScopeName | "any" | undefined>> = {\n' +
+    rows +
+    "};\n"
+  );
 }
 
 /**
@@ -112,7 +165,7 @@ export interface ScopeLinkEmission {
  * `export *` sources sharing a name silently drop the symbol for consumers.
  */
 export function emitScopeLinks(
-  classified: LinkClassification,
+  classified: Pick<LinkClassification, "links">,
   scopeIndex: ReadonlyMap<string, string>,
   takenNames: ReadonlySet<string>
 ): ScopeLinkEmission {

@@ -17,6 +17,7 @@ import {
   isEventFireKey,
   MODIFIER_OPERATIONS,
   recordEffects,
+  scopeLinkOutput,
   type ComplexTriggerModifier,
   type Modifier,
   type ScopeObjOf,
@@ -204,6 +205,41 @@ const SCRIPTED_HINT =
   "the SDK binds them by name and never reads their bodies, so the interpreter " +
   "has nothing to evaluate. Assert against the emitted script instead.";
 
+/** The navigation this interpreter does resolve, named for a reader who just hit one it does not. */
+function modeledLinks(): string {
+  return [...Object.keys(LINK_SEMANTICS), `${EVENT_TARGET_PREFIX}*`].join(", ");
+}
+
+/**
+ * Why unmodeled keys are unmodeled — the part of the message that decides what
+ * the reader does next.
+ *
+ * A scope link and a scripted binding both arrive here as "a key with no
+ * whitelist entry", and telling them apart is the whole point: a link is
+ * navigation somebody can model in `LINK_SEMANTICS` once the fixture holds the
+ * relation, while a scripted trigger's body is something the SDK never reads
+ * and never will. The SDK's link vocabulary answers which is which, so this
+ * never guesses from the spelling.
+ */
+function unmodeledKeyHint(keys: readonly string[]): string {
+  const links = keys.filter((key) => scopeLinkOutput(key) !== undefined);
+  const sentences: string[] = [];
+  if (links.length > 0) {
+    const named = links
+      .map((key) => `"${key}" (to ${String(scopeLinkOutput(key))} scope)`)
+      .join(", ");
+    sentences.push(
+      `${named} ${links.length === 1 ? "is a scope link" : "are scope links"} this interpreter ` +
+        `does not model — navigation, not a scripted binding: the fixture needs the relation the ` +
+        `link walks, then a LINK_SEMANTICS entry. Modeled links: ${modeledLinks()}.`
+    );
+  }
+  if (links.length < keys.length) {
+    sentences.push(SCRIPTED_HINT);
+  }
+  return sentences.join(" ");
+}
+
 export function explain<S extends SimScopeName>(
   trigger: Trigger<S>,
   scope: SimScope<S>
@@ -221,7 +257,7 @@ function explainChecked(entries: readonly PdxEntry[], scope: SimScope<SimScopeNa
       `This trigger uses ${evaluated.size} condition${evaluated.size === 1 ? "" : "s"}; ` +
         `${missing.size} unimplemented: ${[...missing].join(", ")}. ` +
         `The interpreter whitelists semantics deliberately; nothing evaluates silently. ` +
-        `${SCRIPTED_HINT} ${coverageSummary()}`
+        `${unmodeledKeyHint([...missing])} ${coverageSummary()}`
     );
   }
   return explainEntries(entries, scope.id, execCtxFor(scope));
@@ -529,9 +565,15 @@ export function applyEffectEntries(
       effect.apply(entry, scope, ex);
       continue;
     }
-    const known = isEffectKey(entry.key);
+    // A scope link is checked before the effect table on purpose: links ride
+    // EFFECT_META too (they are legal in effect position), so asking that table
+    // first would call every unmodeled navigation an "effect" and send the
+    // reader looking for the wrong kind of gap.
+    if (scopeLinkOutput(entry.key) !== undefined) {
+      throw new InterpreterError(`${unmodeledKeyHint([entry.key])} ${coverageSummary()}`);
+    }
     throw new InterpreterError(
-      known
+      isEffectKey(entry.key)
         ? `Effect "${entry.key}" is real but unimplemented in the testing interpreter. ` +
             coverageSummary()
         : `Unknown key "${entry.key}" — not a whitelisted semantic and not in the SDK's ` +
