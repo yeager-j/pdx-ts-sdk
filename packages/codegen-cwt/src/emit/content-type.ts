@@ -512,14 +512,28 @@ function repeatedStructEmission(
 
 /**
  * The declared-FROM parameter, with the admissible scopes read off the rules'
- * own scope group rather than restated in the overlay — the group is what the
- * starting effect's argument is typed as, so the two cannot drift apart.
+ * own scope group rather than restated in the overlay.
+ *
+ * The group the row names is checked against the one the starting effect's own
+ * argument is declared with, so "cannot drift apart" is enforced rather than
+ * asserted: a rules bump that retypes the argument fails codegen here instead
+ * of emitting a declaration union and a hand-written overload that quietly
+ * disagree with the generated signature beneath them.
  */
 function declaredFromOf(
   emitter: Emitter,
   registry: string,
   row: NonNullable<ContentScopeParameter["declaredFrom"]>
 ): DeclaredFrom {
+  const declared = effectArgumentScopeGroup(emitter, row.effect, row.argument);
+  if (declared !== row.scopeGroup) {
+    throw new Error(
+      `Overlay declared FROM for ${registry} names scope group "${row.scopeGroup}", but ` +
+        `${row.effect}.${row.argument} is declared ` +
+        `${declared === null ? "with no scope group" : `"${declared}"`} — ` +
+        "the declaration must be typed by the argument that supplies it"
+    );
+  }
   const members = emitter.rules.scopeGroups.get(row.scopeGroup);
   if (members === undefined) {
     throw new Error(
@@ -639,6 +653,33 @@ function selectedContext(
   return selector.fromMembers?.includes(member) === true
     ? { ...fieldContext, unpinned: fallback, assertedFrom: fieldContext.unpinned }
     : { ...fieldContext, unpinned: fallback };
+}
+
+/**
+ * The `scope_group` one named argument of one effect is declared with, or
+ * `null` where the effect, the argument, or a group on it is absent — each of
+ * which is a reason for the caller to fail rather than a shape to work around.
+ */
+function effectArgumentScopeGroup(
+  emitter: Emitter,
+  effect: string,
+  argument: string
+): string | null {
+  const declarations = emitter.rules.effects.get(effect) ?? [];
+  for (const declaration of declarations) {
+    if (declaration.type.kind !== "block") {
+      continue;
+    }
+    for (const field of declaration.type.fields) {
+      if (field.key.kind !== "name" || field.key.name !== argument) {
+        continue;
+      }
+      if (field.type.kind === "scopeGroup") {
+        return field.type.name;
+      }
+    }
+  }
+  return null;
 }
 
 /** `a`, `b` and `c` — a prose list of member names for a doc comment. */

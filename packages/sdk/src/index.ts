@@ -187,6 +187,7 @@ export type {
   DefinedSpecialProject,
   SpecialProjectDef,
   SpecialProjectFields,
+  SpecialProjectLocationScope,
   SpecialProjectRequirements,
   SpecialProjectScope,
   SpecialProjectTriggeredRequirement,

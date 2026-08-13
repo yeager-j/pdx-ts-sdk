@@ -8,7 +8,13 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { SpecialProjectRef } from "../src/generated/refs.ts";
-import { createMod, eventTarget, type ScopeRef } from "../src/index.ts";
+import {
+  createMod,
+  eventTarget,
+  type ScopeRef,
+  type SpecialProjectLocationContract,
+  type SpecialProjectLocationScope,
+} from "../src/index.ts";
 
 const CONFIG = { name: "Projects", prefix: "sp_test", supportedVersion: "4.4.*" } as const;
 
@@ -52,6 +58,21 @@ describe("the declared special-project location contract", () => {
         ctx.from.effects(() => {});
       },
     });
+  });
+
+  it("names the declaration's own constraint through the package", () => {
+    // The contract type is exported and constrained by this union, so a
+    // consumer writing a reusable helper can name both without reaching into
+    // a generated module the package does not expose.
+    const helper = <L extends SpecialProjectLocationScope>(
+      project: SpecialProjectLocationContract<L>
+    ): L => project.locationScope;
+    const mod = createMod(CONFIG);
+    const project = mod.specialProject("helper", {
+      eventScope: "ship_event",
+      locationScope: "starbase",
+    });
+    expectTypeOf(helper(project)).toEqualTypeOf<"starbase">();
   });
 
   it("requires a matching location at enable sites", () => {

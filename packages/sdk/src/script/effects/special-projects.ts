@@ -36,9 +36,19 @@ declare module "../../generated/effects.ts" {
     /**
      * Enables a special project that declares `locationScope`, requiring a
      * location of the declared scope — the scope its success callbacks then
-     * read as `ctx.from`. `location` is required here where the generated
-     * signature leaves it optional: a declared FROM that the call site never
-     * passes is a FROM the callbacks read and the game does not supply.
+     * read as `ctx.from`.
+     *
+     * `location` is required here where the generated signature leaves it
+     * optional, and that is a deliberate restriction rather than a reading of
+     * the rules: an omitted `location` defaults to the calling scope
+     * (`effects.log`: "ideally THIS (that is default)", and vanilla's
+     * `from.planet.orbit = { enable_special_project = { name =
+     * SHIELD_PRIMITIVE_PLANET_PROJECT } }` relies on it), which this seam
+     * cannot see — `enable_special_project` is valid in every scope, so the
+     * interface carrying this overload knows nothing about where the call
+     * stands. Writing the location out is what makes the declaration checkable
+     * at all. A project enabled the defaulting way declares no
+     * `locationScope` and keeps the generated signature.
      *
      * The generated signature remains beneath this one for vanilla or
      * third-party project ids and for projects that declare no location, none

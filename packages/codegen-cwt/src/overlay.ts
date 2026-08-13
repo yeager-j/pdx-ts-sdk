@@ -549,17 +549,27 @@ export interface ContentScopeParameter {
    *
    * Undeclared stays the default: the member is optional, and a definition that
    * omits it reads no FROM and has its call sites unchecked, exactly as before
-   * the row existed.
+   * the row existed. That is also the only shape available to a definition
+   * whose starting effect is called *without* the argument — the scope then
+   * defaults to the caller's, which no signature on a universally-valid effect
+   * can see. Like `<Registry>Scope` above, the emitted union has to be
+   * re-exported from `src/index.ts` by hand for a consumer to name it.
    */
   readonly declaredFrom?: {
     /** The synthetic authoring member that names the scope. */
     readonly member: string;
-    /** The `scopes.cwt` scope group the declaration may name. */
+    /**
+     * The `scopes.cwt` scope group the declaration may name. Checked against
+     * the group `effect`.`argument` is actually declared with, so a rules bump
+     * that retypes the argument fails codegen rather than leaving the
+     * declaration and the signature it is checked against disagreeing.
+     */
     readonly scopeGroup: string;
     /** Members whose FROM the declaration becomes. */
     readonly members: readonly string[];
-    /** The effect whose argument the scope actually is. */
+    /** The effect whose argument the scope actually is, and that argument. */
     readonly effect: string;
+    readonly argument: string;
     readonly reason: string;
   };
   readonly reason: string;
@@ -622,6 +632,7 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
         scopeGroup: "spatial_object",
         members: ["onSuccess", "onProgress25", "onProgress50", "onProgress75", "onStart"],
         effect: "enable_special_project",
+        argument: "location",
         reason:
           "The success callbacks run with FROM = the `location` handed to " +
           "enable_special_project, which the game's own documentation.txt calls 'location " +
