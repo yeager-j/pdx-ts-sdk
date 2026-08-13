@@ -25,6 +25,7 @@ import {
   parse,
   PdxSyntaxError,
   quoted,
+  regionItems,
   scalar,
   scalarText,
   serialize,
@@ -466,6 +467,104 @@ describe("parser: parameter blocks (corpus — Stellaris scripted_effects)", () 
   it("throws on an unterminated parameter block, with file:line", () => {
     expect(() => parse("e = { [[X] a = 1", "claims.txt")).toThrow(/parameter block/);
     expect(() => parse("e = { [[X", "claims.txt")).toThrow(/claims\.txt:1/);
+  });
+
+  it("does not end a region at a `]` inside a quote, a comment, or inline math", () => {
+    for (const body of ['"a]b"', "# a]b\n", "@[ x ]"]) {
+      const parsed = value(`e = { [[X] k = ${body} ] }`);
+      expect(parsed.kind === "container" && parsed.items).toHaveLength(1);
+    }
+  });
+
+  it("nests regions: an inner opener's own `]` does not close the outer one", () => {
+    const parsed = value("e = { [[X] [[Y] a = 1 ] b = 2 ] }");
+    if (parsed.kind === "container" && parsed.items[0]!.kind === "param") {
+      expect(parsed.items[0]!.items.map((item) => item.kind)).toEqual(["param", "entry"]);
+    } else {
+      expect.unreachable();
+    }
+  });
+
+  it("numbers lines inside a region from the file, not from the region", () => {
+    const document = clean("a = 1\ne = {\n\t[[X]\n\t\tb = 2\n\t]\n}");
+    const region = (document.items[1] as PdxEntry).value;
+    if (region.kind === "container" && region.items[0]!.kind === "param") {
+      expect((region.items[0]!.items[0] as PdxEntry).line).toBe(4);
+    } else {
+      expect.unreachable();
+    }
+  });
+});
+
+/**
+ * The construct is a preprocessor-level conditional *text* region: brace
+ * balance need only hold after substitution, so a region whose body is not a
+ * balanced item sequence has no tree and is kept as source. Gigastructural
+ * Engineering ships this — a `{` opened in one region, closed in another —
+ * and the game reads it.
+ */
+describe("parser: conditional text regions (corpus — Gigastructural Engineering)", () => {
+  const BRACE_CROSSING =
+    "e = {\n\t[[N]\n\t\tset_name = {\n\t\t\tkey = $N$\n\t\t]\n\t\t[[N]\n\t\t}\n\t]\n}";
+
+  it("keeps a brace-crossing region as text instead of rejecting the file", () => {
+    const parsed = value(BRACE_CROSSING);
+    if (parsed.kind !== "container") {
+      expect.unreachable();
+      return;
+    }
+    expect(parsed.items.map((item) => item.kind)).toEqual(["param-text", "param-text"]);
+    const open = parsed.items[0]!;
+    const close = parsed.items[1]!;
+    if (open.kind === "param-text" && close.kind === "param-text") {
+      expect(open.name).toBe("N");
+      expect(open.text).toContain("set_name = {");
+      expect(close.text.trim()).toBe("}");
+    } else {
+      expect.unreachable();
+    }
+  });
+
+  it("re-emits a region with no tree verbatim, and re-reads it identically", () => {
+    expectFixpoint(BRACE_CROSSING);
+    const once = emitted(BRACE_CROSSING);
+    expect(serialize(parse(once, "claims.txt").items)).toBe(once);
+  });
+
+  it("keeps a body that only reads by repairing brace balance as text", () => {
+    // `[[X] a = { ]` splices to a balanced `a = { ... }` only at the call
+    // site; reading it here would need the unclosed-at-EOF repair.
+    const parsed = value("e = { [[X] a = { ] }");
+    expect(parsed.kind === "container" && parsed.items[0]!.kind).toBe("param-text");
+  });
+
+  it("reads a region with no tree flat, for consumers that need its names", () => {
+    const parsed = value("e = { [[X] a = @dist { ] }");
+    if (parsed.kind === "container" && parsed.items[0]!.kind === "param-text") {
+      expect(regionItems(parsed.items[0]!)).toEqual([
+        { kind: "str", value: "a", quoted: false },
+        { kind: "var", name: "@dist" },
+      ]);
+    } else {
+      expect.unreachable();
+    }
+  });
+
+  it("reads that body through the lexer: comments are trivia, nested regions are regions", () => {
+    const parsed = value("e = { [[X] a # @not_a_ref\n[[Y] b ] { ] }");
+    if (parsed.kind === "container" && parsed.items[0]!.kind === "param-text") {
+      expect(regionItems(parsed.items[0]!)).toEqual([
+        { kind: "str", value: "a", quoted: false },
+        { kind: "param-text", name: "Y", negated: false, text: " b " },
+      ]);
+    } else {
+      expect.unreachable();
+    }
+  });
+
+  it("still refuses absurd region nesting rather than falling back to text", () => {
+    const nested = `${"[[X] ".repeat(1200)}a${" ]".repeat(1200)}`;
+    expect(() => parse(nested, "claims.txt")).toThrow(/Nesting exceeds/);
   });
 });
 

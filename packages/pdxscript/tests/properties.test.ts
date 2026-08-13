@@ -63,6 +63,15 @@ const pdxScalar: fc.Arbitrary<PdxScalar> = fc.oneof(
   bareText.map((source): PdxScalar => ({ kind: "math", source: `@[ ${source} ]` }))
 );
 
+/**
+ * Bodies a conditional region keeps as text: each is unbalanced on its own,
+ * which is the whole reason it has no tree. Balanced text would come back as
+ * a `param` node and fail the round trip for the right reason.
+ */
+const unbalancedRegionText = bareText.chain((text) =>
+  fc.constantFrom(`\n\t${text} = {\n`, `\n\t}\n`, `\n\t{ ${text}\n`)
+);
+
 const key = fc.stringMatching(/^[a-z0-9_.@$-]{1,10}$/);
 const op = fc.constantFrom("=", ">", "<", ">=", "<=", "!=" as const);
 
@@ -84,7 +93,10 @@ const pdxItem: fc.Arbitrary<PdxItem> = fc.letrec<{ item: PdxItem; items: PdxItem
     fc.record({ items: tie("items") }).map(({ items }): PdxItem => ({ kind: "container", items })),
     fc
       .record({ name: bareText, negated: fc.boolean(), items: tie("items") })
-      .map(({ name, negated, items }): PdxItem => ({ kind: "param", name, negated, items }))
+      .map(({ name, negated, items }): PdxItem => ({ kind: "param", name, negated, items })),
+    fc
+      .record({ name: bareText, negated: fc.boolean(), text: unbalancedRegionText })
+      .map(({ name, negated, text }): PdxItem => ({ kind: "param-text", name, negated, text }))
   ),
   items: fc.array(tie("item"), { maxLength: 5 }),
 })).item;

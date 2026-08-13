@@ -584,7 +584,7 @@ function observe(
           content = true;
           continue;
         }
-        if (item.kind === "param") {
+        if (item.kind === "param" || item.kind === "param-text") {
           continue;
         }
         // An anonymous sub-block is where a wrapped struct's entries live; a

@@ -16,7 +16,7 @@
  * that claim needs playset enumeration, not a bigger filename.
  */
 
-import { kv, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
+import { kv, regionItems, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { NoWinningFilenameError, PdxSdkError, VanillaPathCollisionError } from "../../errors.ts";
 import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../../ordering.ts";
@@ -40,7 +40,13 @@ export interface PatchInput {
   readonly locals: ReadonlyMap<string, number>;
 }
 
-/** Every `@name` reference anywhere in the item tree. */
+/**
+ * Every `@name` reference anywhere in the item tree.
+ *
+ * A region with no tree is read flat: over-reporting is free here (the caller
+ * keeps only the names that are file-local variables) while missing one is
+ * silent corruption in the emitted patch.
+ */
 export function collectVarRefs(item: PdxItem): string[] {
   switch (item.kind) {
     case "var":
@@ -50,6 +56,8 @@ export function collectVarRefs(item: PdxItem): string[] {
     case "container":
     case "param":
       return item.items.flatMap(collectVarRefs);
+    case "param-text":
+      return regionItems(item).flatMap(collectVarRefs);
     default:
       return [];
   }
@@ -65,6 +73,8 @@ export function containsInlineMath(item: PdxItem): boolean {
     case "container":
     case "param":
       return item.items.some(containsInlineMath);
+    case "param-text":
+      return regionItems(item).some(containsInlineMath);
     default:
       return false;
   }

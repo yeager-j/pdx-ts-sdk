@@ -1,4 +1,4 @@
-import type { PdxItem } from "@pdx-ts/pdxscript";
+import { regionItems, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { SWAP_IDENTITIES, type SwapIdentity } from "../content/swaps.ts";
 import { CONTENT_REGISTRIES } from "../generated/content-registry.ts";
@@ -70,6 +70,9 @@ export function validateReferences(args: {
         case "container":
         case "param":
           scan(node.items);
+          break;
+        case "param-text":
+          scan(regionItems(node));
           break;
         default:
           break;

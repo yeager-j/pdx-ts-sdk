@@ -2,7 +2,8 @@
  * Tokenizer for PDXScript. See GRAMMAR.md for the language; this file owns
  * trivia (whitespace, `\r`, `\v`, `\f`, semicolons, `#` comments), quoted
  * strings (raw content, `\` skips the next character when scanning for the
- * closing quote), `@[ ... ]` inline-math tokens, and the operator set.
+ * closing quote), `@[ ... ]` inline-math tokens, `[[NAME] ... ]` conditional
+ * regions, and the operator set.
  *
  * `classifyUnquoted` also lives here because the serializer needs the same
  * answer the lexer would give: a string may render bare only if re-lexing it
@@ -12,16 +13,18 @@
 import type { PdxScalar } from "./ast.ts";
 
 export type TokenKind =
-  "identifier" | "op" | "lbrace" | "rbrace" | "math" | "param-open" | "rbracket" | "eof";
+  "identifier" | "op" | "lbrace" | "rbrace" | "math" | "param" | "rbracket" | "eof";
 
 export interface Token {
   readonly kind: TokenKind;
   /**
    * Identifiers: the raw text. Operators: the operator. Math: the `@[ ... ]`
-   * source verbatim. Param-open: the text between `[[` and `]`, negation
+   * source verbatim. Param: the opener text between `[[` and `]`, negation
    * bang included.
    */
   readonly text: string;
+  /** Param tokens only: the region's source between the opener and its `]`. */
+  readonly body?: string;
   readonly quoted: boolean;
   readonly line: number;
 }
@@ -105,11 +108,105 @@ function operatorAt(text: string, index: number): string | null {
   return null;
 }
 
-export function tokenize(source: string, fileName: string): Token[] {
+function countNewlines(text: string, from: number, to: number): number {
+  let count = 0;
+  for (let index = from; index < to; index += 1) {
+    if (text[index] === "\n") {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+/** Index of the quote closing the one at `open`, or -1. `\` skips one character. */
+function scanQuoted(text: string, open: number): number {
+  let index = open + 1;
+  while (index < text.length) {
+    if (text[index] === "\\") {
+      index += 2;
+      continue;
+    }
+    if (text[index] === '"') {
+      return index;
+    }
+    index += 1;
+  }
+  return -1;
+}
+
+/** True when `@` at `index` opens inline math: `@[` or the deferred `@\[`. */
+function opensMath(text: string, index: number): boolean {
+  return (
+    text[index] === "@" &&
+    (text[index + 1] === "[" || (text[index + 1] === "\\" && text[index + 2] === "["))
+  );
+}
+
+/**
+ * Index of the `]` closing the region whose body starts at `start`, or -1.
+ *
+ * The scan is textual because the construct is (see GRAMMAR.md): a region is
+ * conditional *text*, so braces are not counted at all — its body need only
+ * balance after substitution. Quotes, comments, and `@[ ]` math are skipped
+ * whole so a `]` inside one does not close the region, and a nested `[[NAME]`
+ * raises the depth (its opener's own `]` is not a closer).
+ */
+function scanRegion(text: string, start: number): number {
+  let index = start;
+  let depth = 1;
+  while (index < text.length) {
+    const char = text[index]!;
+    if (char === "#") {
+      const end = text.indexOf("\n", index);
+      index = end === -1 ? text.length : end;
+      continue;
+    }
+    if (char === '"') {
+      const end = scanQuoted(text, index);
+      if (end === -1) {
+        return -1;
+      }
+      index = end + 1;
+      continue;
+    }
+    if (opensMath(text, index)) {
+      const end = text.indexOf("]", index);
+      if (end === -1) {
+        return -1;
+      }
+      index = end + 1;
+      continue;
+    }
+    if (char === "[" && text[index + 1] === "[") {
+      const opener = text.indexOf("]", index);
+      if (opener === -1) {
+        return -1;
+      }
+      depth += 1;
+      index = opener + 1;
+      continue;
+    }
+    if (char === "]") {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+    index += 1;
+  }
+  return -1;
+}
+
+/**
+ * `startLine` numbers the first line of `source`; the parser passes the
+ * opener's line when it re-tokenizes a conditional region's body, so lines
+ * stay absolute inside one.
+ */
+export function tokenize(source: string, fileName: string, startLine = 1): Token[] {
   const text = source.charCodeAt(0) === 0xfeff ? source.slice(1) : source;
   const tokens: Token[] = [];
   let index = 0;
-  let line = 1;
+  let line = startLine;
 
   while (index < text.length) {
     const char = text[index]!;
@@ -140,49 +237,52 @@ export function tokenize(source: string, fileName: string): Token[] {
     }
     if (char === '"') {
       const openLine = line;
-      let cursor = index + 1;
-      while (cursor < text.length && text[cursor] !== '"') {
-        if (text[cursor] === "\\") {
-          cursor += 2;
-          continue;
-        }
-        if (text[cursor] === "\n") {
-          line += 1;
-        }
-        cursor += 1;
-      }
-      if (cursor >= text.length) {
+      const end = scanQuoted(text, index);
+      if (end === -1) {
         throw new PdxSyntaxError("Unterminated quoted string", fileName, openLine);
       }
       tokens.push({
         kind: "identifier",
-        text: text.slice(index + 1, cursor),
+        text: text.slice(index + 1, end),
         quoted: true,
         line: openLine,
       });
-      index = cursor + 1;
+      line += countNewlines(text, index, end);
+      index = end + 1;
       continue;
     }
     // Inline math: `@[ ... ]`, or `@\[ ... ]` — the escaped form defers
     // evaluation until after $PARAM$ substitution in scripted effects.
-    if (
-      char === "@" &&
-      (text[index + 1] === "[" || (text[index + 1] === "\\" && text[index + 2] === "["))
-    ) {
+    if (opensMath(text, index)) {
       const end = text.indexOf("]", index);
       if (end === -1) {
         throw new PdxSyntaxError("Unterminated @[ inline math", fileName, line);
       }
       tokens.push({ kind: "math", text: text.slice(index, end + 1), quoted: false, line });
+      line += countNewlines(text, index, end);
       index = end + 1;
       continue;
     }
+    // A `[[NAME] ... ]` region is captured whole: its body is conditional
+    // text, not necessarily a balanced item sequence (GRAMMAR.md).
     if (char === "[" && text[index + 1] === "[") {
-      const end = text.indexOf("]", index);
-      if (end === -1) {
-        throw new PdxSyntaxError("Unterminated [[ parameter block", fileName, line);
+      const openLine = line;
+      const opener = text.indexOf("]", index);
+      if (opener === -1) {
+        throw new PdxSyntaxError("Unterminated [[ parameter block", fileName, openLine);
       }
-      tokens.push({ kind: "param-open", text: text.slice(index + 2, end), quoted: false, line });
+      const end = scanRegion(text, opener + 1);
+      if (end === -1) {
+        throw new PdxSyntaxError("Unterminated [[ parameter block", fileName, openLine);
+      }
+      tokens.push({
+        kind: "param",
+        text: text.slice(index + 2, opener),
+        body: text.slice(opener + 1, end),
+        quoted: false,
+        line: openLine,
+      });
+      line += countNewlines(text, index, end);
       index = end + 1;
       continue;
     }

@@ -12,8 +12,8 @@ implies game meaning does not belong in this one. See the
 ## Language
 
 **Item**:
-A node in the parsed tree — an entry, a scalar, a container, or a parameter
-block. Unrelated to Authoring's `ModItem`, which is an authored value; these
+A node in the parsed tree — an entry, a scalar, a container, or a conditional
+region. Unrelated to Authoring's `ModItem`, which is an authored value; these
 two meanings meet in several modules.
 
 **Entry**:
@@ -23,6 +23,14 @@ the game is sensitive to both.
 **Container**:
 A braced list of items. Deliberately not called an object or a map — it may
 hold entries, bare scalars, or both, and its keys may repeat.
+
+**Conditional region**:
+A `[[NAME] ... ]` span, whose body the engine splices as text when NAME is
+defined. Called a region rather than a block because its body is delimited
+text, not a container: brace balance holds only after substitution. A body
+that happens to balance on its own is also read as a tree (`param`); one that
+does not is kept verbatim (`param-text`), which is the honest answer, not a
+degraded one.
 
 **Repair**:
 A recorded fix for malformed input that the game itself tolerates. Paradox

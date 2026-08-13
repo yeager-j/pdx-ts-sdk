@@ -20,7 +20,9 @@ duplicated in order, `prerequisites = { tech_a OR = { ... } }` mixed
 containers are ordinary data, comparison operators (`< > <= >= !=`) survive,
 `@variable` references and `@[ inline math ]` are first-class nodes carried
 verbatim, `hsv { }`-style headers are kept, and every entry records its
-source line for diagnostics. [GRAMMAR.md](GRAMMAR.md) is the grammar of
+source line for diagnostics. `[[PARAM] ... ]` is the one construct that is
+not a tree by nature — the engine splices it as text before parsing, so a
+body that does not balance on its own is kept verbatim rather than rejected. [GRAMMAR.md](GRAMMAR.md) is the grammar of
 record — the whole language in a page, including the repair policy for
 defects Paradox actually ships (a missing `=`, a missing final brace) and the
 named deferrals.
@@ -37,6 +39,11 @@ named deferrals.
   shipped vanilla files jomini cannot). Sibling games should mostly work, but
   are unverified; unsupported `?=`/`==` operators fail loudly instead of
   producing a wrong tree.
+- **What the engine accepts, not what vanilla happens to ship.** Vanilla is
+  the corpus, not the specification: constructs the engine tolerates and
+  Paradox never writes are still in scope, and a large mod is where they
+  turn up. Gigastructural Engineering's brace-crossing conditional regions
+  are the worked example (SDK-147).
 - **The API takes decoded strings.** File reading and encoding are the
   caller's job; Stellaris is UTF-8 with optional BOM. The lexer itself is
   8-bit clean.
@@ -51,7 +58,7 @@ named deferrals.
 ```
 src/
 ├── index.ts      the public surface: parse, serialize, classification helpers
-├── ast.ts        the unified item-sequence AST (scalar | entry | container | param)
+├── ast.ts        the item-sequence AST (scalar | entry | container | param | param-text)
 ├── lexer.ts      tokenization; quoting/classification symmetric with serialize
 ├── parser.ts     items + same-line-only repair rules, diagnostics
 ├── serialize.ts  the one serializer; @refs pass bare

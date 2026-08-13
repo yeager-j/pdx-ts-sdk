@@ -25,7 +25,7 @@
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { parse, type PdxItem } from "@pdx-ts/pdxscript";
+import { parse, regionItems, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { compareIdentifiers } from "./emit.ts";
 
@@ -73,6 +73,10 @@ function scan(text: string, conditional: boolean, into: Map<string, Occurrence[]
   }
 }
 
+function recordCondition(name: string, into: Map<string, Occurrence[]>): void {
+  into.set(name, [...(into.get(name) ?? []), { defaulted: false, conditional: true }]);
+}
+
 function walkItems(
   items: readonly PdxItem[],
   conditional: boolean,
@@ -93,11 +97,17 @@ function walkItems(
       case "param":
         // The block's own condition is a parameter, and one whose whole purpose
         // is to be omissible.
-        into.set(item.name, [
-          ...(into.get(item.name) ?? []),
-          { defaulted: false, conditional: true },
-        ]);
+        recordCondition(item.name, into);
         walkItems(item.items, true, into);
+        break;
+      case "param-text":
+        // The same construct without a tree. Its body is read through the
+        // lexer rather than scanned as raw text, so trivia stays trivia: a
+        // commented-out `# $OLD$` must not enter the parameter contract this
+        // package publishes, and a region nested inside comes back as a
+        // region — its name is a parameter too.
+        recordCondition(item.name, into);
+        walkItems(regionItems(item), true, into);
         break;
       case "str":
         scan(item.value, conditional, into);

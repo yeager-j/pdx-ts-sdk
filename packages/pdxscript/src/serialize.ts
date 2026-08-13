@@ -10,7 +10,7 @@
  * than emitting output that reads back differently.
  */
 
-import type { PdxContainer, PdxItem, PdxParamBlock, PdxScalar } from "./ast.ts";
+import type { PdxContainer, PdxItem, PdxParamBlock, PdxParamText, PdxScalar } from "./ast.ts";
 import { classifyUnquoted, isBareToken } from "./lexer.ts";
 
 function isBareString(value: string): boolean {
@@ -94,17 +94,31 @@ function containerText(container: PdxContainer, depth: number): string {
   return `${head}{\n${body}\n${indent}}`;
 }
 
-function paramText(param: PdxParamBlock, depth: number): string {
+function regionOpener(param: PdxParamBlock | PdxParamText): string {
   if (!isBareToken(param.name)) {
     throw new Error(`Cannot serialize parameter name ${JSON.stringify(param.name)}`);
   }
+  return `[[${param.negated ? "!" : ""}${param.name}]`;
+}
+
+function paramText(param: PdxParamBlock, depth: number): string {
   const indent = "\t".repeat(depth);
-  const open = `[[${param.negated ? "!" : ""}${param.name}]`;
+  const open = regionOpener(param);
   if (param.items.length === 0) {
     return `${open}\n${indent}]`;
   }
   const body = param.items.map((item) => serializeItem(item, depth + 1)).join("\n");
   return `${open}\n${body}\n${indent}]`;
+}
+
+/**
+ * A region with no tree re-emits byte-for-byte, with nothing added around
+ * the body: the parser's region scan is deterministic, so what it captured
+ * it captures again — but only if no indentation creeps in between the
+ * opener and the closing `]`.
+ */
+function paramTextRegion(param: PdxParamText): string {
+  return `${regionOpener(param)}${param.text}]`;
 }
 
 function serializeItem(item: PdxItem, depth: number): string {
@@ -124,6 +138,9 @@ function serializeItem(item: PdxItem, depth: number): string {
   }
   if (item.kind === "param") {
     return `${indent}${paramText(item, depth)}`;
+  }
+  if (item.kind === "param-text") {
+    return `${indent}${paramTextRegion(item)}`;
   }
   return `${indent}${scalarText(item)}`;
 }
