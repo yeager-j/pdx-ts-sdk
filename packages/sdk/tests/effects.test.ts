@@ -1,6 +1,7 @@
 import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import type { EffectPathOf } from "../src/generated/effects.ts";
 import { countryFlags } from "../src/generated/value-sets.ts";
 import {
   eventTarget,
@@ -102,10 +103,10 @@ reset_event_chain_counter = {
 `);
   });
 
-  it("records a scope link as a body-only block", () => {
+  it("records a one-hop scope path", () => {
     const sink: PdxEntry[] = [];
     const planet = makeScope<"planet">(sink);
-    planet.owner((country) => {
+    planet.owner.effects((country) => {
       country.setCountryFlag(flags.effects_test_flag);
       country.addResource({ resource: "influence", amount: 10 });
     });
@@ -117,6 +118,65 @@ reset_event_chain_counter = {
 	}
 }
 `);
+  });
+
+  it("records a multi-hop path with one leaf closure", () => {
+    const sink = recordEffects<"planet">([], (planet) => {
+      planet.owner.capitalScope.effects((colony) => colony.destroyColony());
+    });
+
+    expect(serialize(sink)).toBe(`owner = {
+	capital_scope = {
+		destroy_colony = yes
+	}
+}
+`);
+  });
+
+  it("composes hiddenEffect with scope links", () => {
+    const sink = recordEffects<"planet">([], (planet) => {
+      planet.hiddenEffect.owner.effects((country) => {
+        country.setCountryFlag(flags.effects_test_flag);
+      });
+    });
+
+    expect(serialize(sink)).toBe(`hidden_effect = {
+	owner = {
+		set_country_flag = effects_test_flag
+	}
+}
+`);
+  });
+
+  it("opens an intermediate block for sibling effects before continuing a path", () => {
+    const sink = recordEffects<"planet">([], (planet) => {
+      planet.hiddenEffect.effects((planet) => {
+        planet.log("also hidden");
+        planet.owner.effects((country) => {
+          country.setCountryFlag(flags.effects_test_flag);
+        });
+      });
+    });
+
+    expect(serialize(sink)).toBe(`hidden_effect = {
+	log = "also hidden"
+	owner = {
+		set_country_flag = effects_test_flag
+	}
+}
+`);
+  });
+
+  it("records nothing for an unterminated path", () => {
+    const sink = recordEffects<"planet">([], (planet) => {
+      void planet.hiddenEffect.owner;
+      planet.log("shown");
+    });
+
+    expect(serialize(sink)).toBe("log = shown\n");
+
+    const returned = recordEffects<"planet">([], (planet) => planet.owner);
+    expect(returned).toEqual([]);
   });
 
   it("records weighted arms with modifiers through randomList", () => {
@@ -154,8 +214,8 @@ reset_event_chain_counter = {
     const from = scopeRef<"planet">("from");
     const sink = recordEffects<"country">([], (country) => {
       country.log("shown");
-      country.hiddenEffect((hidden) => {
-        hidden.log("not shown");
+      country.hiddenEffect.effects((country) => {
+        country.log("not shown");
         from.effects((planet) => planet.log("nested"));
       });
     });
@@ -206,6 +266,34 @@ every_owned_planet = {
     expect(() => stormWorld.effects((planet) => planet.destroyColony())).toThrow(
       /outside any effect closure/
     );
+  });
+
+  it("throws when an effect path outlives its recording", () => {
+    let escaped: EffectPathOf<"country"> | undefined;
+    recordEffects<"planet">([], (planet) => {
+      escaped = planet.owner;
+    });
+
+    expect(() => escaped!.effects((country) => country.log("too late"))).toThrow(
+      /already returned/
+    );
+  });
+
+  it("refuses an async effect-path terminal closure", async () => {
+    let continued = false;
+    expect(() =>
+      recordEffects<"planet">([], (planet) => {
+        planet.owner.effects(async (country) => {
+          country.log("before the await");
+          await Promise.resolve();
+          continued = true;
+        });
+      })
+    ).toThrow(/returned a promise/);
+
+    expect(continued).toBe(false);
+    await Promise.resolve();
+    expect(continued).toBe(true);
   });
 
   it("opens a ref as a condition without any recording at all", () => {

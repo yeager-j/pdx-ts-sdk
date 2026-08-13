@@ -1,6 +1,6 @@
 /** Public effect-surface types shared by the recorder and generated scope interfaces. */
 
-import type { ScopeObjOf } from "../../generated/effects.ts";
+import type { EffectPathOf, ScopeObjOf } from "../../generated/effects.ts";
 import type { ModifierOperationFields } from "../../generated/modifier-policy.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ScriptedEffectCall, ScriptedParamValue } from "../scripted.ts";
@@ -71,6 +71,20 @@ export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S>
    * to run it against.
    */
   trigger(condition: Trigger<S>): Trigger<ScopeName>;
+}
+
+/**
+ * A composable sequence of effect blocks whose innermost block runs in `S`.
+ *
+ * Reading a generated scope-link property adds one nested block without
+ * recording anything. {@link effects} terminates the path, records one leaf
+ * closure, and writes the complete nested structure. `hiddenEffect` is the
+ * same-scope structural node, so it composes with generated navigation while
+ * still allowing sibling effects when terminated on its own.
+ */
+export interface EffectPath<S extends ScopeName> {
+  readonly hiddenEffect: EffectPathOf<S>;
+  effects(body: (scope: ScopeObjOf<S>) => void): void;
 }
 
 /**
@@ -366,13 +380,10 @@ export interface StructuralEffects<S extends ScopeName> {
   if(condition: Trigger<S>, body: (scope: ScopeObjOf<S>) => void): IfChain<S>;
 
   /**
-   * Keeps the enclosed effects out of generated tooltips:
-   * `hidden_effect = { ... }`. They still run; the player is just not shown
-   * them. The block changes no scope, so the closure gets the same scope back
-   * — it takes one at all because the entries have to land inside the hidden
-   * block rather than beside it.
+   * Begins a same-scope `hidden_effect = { ... }` path. Terminate it with
+   * `.effects(...)`, or continue through generated scope-link properties.
    */
-  hiddenEffect(body: (scope: ScopeObjOf<S>) => void): void;
+  readonly hiddenEffect: EffectPathOf<S>;
 
   /** Picks one arm at random, weighted; modifiers adjust weights in-game. */
   randomList(arms: ReadonlyArray<RandomListArm<S>>): void;

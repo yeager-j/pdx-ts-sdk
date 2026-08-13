@@ -51,7 +51,7 @@ describe("the archaeology blocking case (SDK-46)", () => {
         {
           name: "DIG",
           effects: (fleet) => {
-            fleet.owner((country) => {
+            fleet.owner.effects((country) => {
               country.addMonthlyResourceMult({
                 resource: "engineering_research",
                 value: 5,
@@ -66,7 +66,7 @@ describe("the archaeology blocking case (SDK-46)", () => {
           trigger: hasGlobalFlag("tech_massive_glacier_known"),
           allow: hasGlobalFlag("energy_stockpile_400"),
           effects: (fleet) => {
-            fleet.owner((country) => {
+            fleet.owner.effects((country) => {
               country.addResearchOption("tech_massive_glacier");
             });
           },

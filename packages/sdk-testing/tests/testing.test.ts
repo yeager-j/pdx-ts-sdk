@@ -106,7 +106,7 @@ describe("production testing module", () => {
     const entry = mod.namespace().country(1, {
       isTriggeredOnly: true,
       immediate: (country) => {
-        country.hiddenEffect((hidden) => hidden.setCountryFlag(flags.testing_group_left));
+        country.hiddenEffect.effects((country) => country.setCountryFlag(flags.testing_group_left));
       },
     });
     const world = fixture({ countries: [{ name: "player" }] }, { events: [entry] });

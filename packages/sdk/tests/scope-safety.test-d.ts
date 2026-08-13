@@ -138,7 +138,7 @@ describe("scope safety", () => {
     countrySlot(hiddenTrigger(hasPlanetFlag("y")));
 
     const planet = makeScope<"planet">([]);
-    planet.hiddenEffect((scope) => {
+    planet.hiddenEffect.effects((scope) => {
       scope.setPlanetFlag("still_a_planet");
       // @ts-expect-error — hiding an effect does not move it to country scope
       scope.setCountryFlag("country_only");

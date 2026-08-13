@@ -247,8 +247,29 @@ inside are what they are outside:
 ```ts
 allow: and(isShipClass("shipclass_science_ship"), hiddenTrigger(exists(stormWorld))),
 effect: (country) => {
-  country.hiddenEffect((hidden) => hidden.setCountryFlag("mymod_quietly"));
+  country.hiddenEffect.effects((country) => country.setCountryFlag("mymod_quietly"));
 },
+```
+
+Effect scope links compose the same way. Only the innermost block needs a
+closure when intermediate blocks contain nothing else:
+
+```ts
+planet.hiddenEffect.owner.effects((country) => {
+  country.setCountryFlag("mymod_quietly");
+});
+```
+
+Terminate an intermediate path when its block also needs sibling effects,
+then begin further paths inside the closure. Reusing the parameter name is
+intentional: indentation carries the scope transition, while `ctx` remains
+available for explicit `self`, `root`, and `from` references.
+
+```ts
+planet.hiddenEffect.effects((planet) => {
+  planet.log("also inside hidden_effect");
+  planet.owner.effects((country) => country.setCountryFlag("mymod_quietly"));
+});
 ```
 
 In-game branching inside effects is

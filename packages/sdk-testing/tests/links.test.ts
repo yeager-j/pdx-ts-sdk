@@ -65,7 +65,7 @@ describe("the owner link", () => {
     const event = mod.namespace().planet(1, {
       isTriggeredOnly: true,
       immediate: (planet) => {
-        planet.owner((country) => country.giveTechnology({ tech: "tech_lasers_1" }));
+        planet.owner.effects((country) => country.giveTechnology({ tech: "tech_lasers_1" }));
       },
     });
     const fixtureWorld = fixture(
@@ -131,7 +131,9 @@ describe("the unmodeled-key diagnosis", () => {
     const event = mod.namespace().planet(1, {
       isTriggeredOnly: true,
       immediate: (planet) => {
-        planet.branchOfficeOwner((country) => country.giveTechnology({ tech: "tech_lasers_1" }));
+        planet.branchOfficeOwner.effects((country) =>
+          country.giveTechnology({ tech: "tech_lasers_1" })
+        );
       },
     });
     const world = fixture(

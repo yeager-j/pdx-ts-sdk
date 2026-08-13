@@ -358,6 +358,12 @@ describe("the generated sources", () => {
     expect(config).toContain("mutually exclusive");
   });
 
+  it("allows nested effect closures to reuse the current-scope parameter name", () => {
+    const config = plan().get("eslint.config.js")!;
+    expect(config).toContain('"no-shadow": "off"');
+    expect(config).toContain('"@typescript-eslint/no-shadow": "off"');
+  });
+
   it("imports the matchers nowhere, so the vitest peer dep stays optional", () => {
     // The matcher pack is the only part of the SDK that imports vitest. Keeping
     // it out of the default scaffold means SDK-28's eventual package split is a

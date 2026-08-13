@@ -43,7 +43,12 @@ export const EFFECT_OWNERSHIP = [
   { key: "espionage_operation_event", method: "espionageOperationEvent", owner: "fire" },
   { key: "first_contact_event", method: "firstContactEvent", owner: "fire" },
   { key: "fleet_event", method: "fleetEvent", owner: "fire" },
-  { key: "hidden_effect", method: "hiddenEffect", owner: "structural", reason: "effect closure" },
+  {
+    key: "hidden_effect",
+    method: "hiddenEffect",
+    owner: "structural",
+    reason: "composable effect path",
+  },
   { key: "if", method: "if", owner: "structural", reason: "control flow" },
   {
     key: "inverted_switch",

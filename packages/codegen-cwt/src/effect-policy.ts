@@ -27,7 +27,7 @@ const STRUCTURAL_EFFECTS = {
     reason: "scope-branded target",
   },
   add_resource: { method: "addResource", reason: "resource-keyed block" },
-  hidden_effect: { method: "hiddenEffect", reason: "effect closure" },
+  hidden_effect: { method: "hiddenEffect", reason: "composable effect path" },
   add_event_chain_counter: {
     method: "addEventChainCounter",
     reason: "event-chain reference contract",
