@@ -22,7 +22,8 @@ import type {
   PdxScalar,
   PdxValue,
 } from "./ast.ts";
-import { classifyUnquoted, PdxSyntaxError, tokenize, type Token } from "./lexer.ts";
+import { PdxSyntaxError, tokenize, type Token } from "./lexer.ts";
+import { classifyUnquoted } from "./representable.ts";
 
 /** Fuzz-proofing: error on absurd nesting instead of overflowing the stack. */
 const MAX_DEPTH = 1000;

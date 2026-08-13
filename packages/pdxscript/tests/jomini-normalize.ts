@@ -34,7 +34,9 @@ function normOurScalar(scalar: PdxScalar): string {
     case "bool":
       return scalar.value ? "yes" : "no";
     case "num":
-      return String(scalar.value);
+      // Through the same narrowing as a numeric-looking string: jomini hands
+      // back JS numbers, so both sides have to meet in that form.
+      return canonicalScalar(scalar.lexeme);
     case "str":
       return canonicalScalar(unescape(scalar.value));
     case "var":

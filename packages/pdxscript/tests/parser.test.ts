@@ -22,6 +22,8 @@ import {
   inlineMath,
   kv,
   list,
+  numberValue,
+  numeral,
   parse,
   PdxSyntaxError,
   quoted,
@@ -29,6 +31,7 @@ import {
   scalar,
   scalarText,
   serialize,
+  tryNumberValue,
   varRef,
   withoutLines,
   type PdxDocument,
@@ -101,8 +104,8 @@ describe("lexer", () => {
   it("treats semicolons as trivia: a = 1;; b = 2; (jomini — vanilla gfx files)", () => {
     const document = clean("a = 1;; b = 2;");
     expect(document.items.map((item) => (item.kind === "entry" ? item.value : null))).toEqual([
-      { kind: "num", value: 1 },
-      { kind: "num", value: 2 },
+      { kind: "num", lexeme: "1" },
+      { kind: "num", lexeme: "2" },
     ]);
   });
 
@@ -228,9 +231,9 @@ describe("parser: top level", () => {
   it("preserves duplicate keys in order", () => {
     const document = clean("m = 1\nm = 2\nm = 3");
     expect(document.items.map((item) => (item.kind === "entry" ? item.value : null))).toEqual([
-      { kind: "num", value: 1 },
-      { kind: "num", value: 2 },
-      { kind: "num", value: 3 },
+      { kind: "num", lexeme: "1" },
+      { kind: "num", lexeme: "2" },
+      { kind: "num", lexeme: "3" },
     ]);
   });
 
@@ -248,7 +251,7 @@ describe("parser: top level", () => {
   it("accepts @name keys (variable definitions)", () => {
     const entry = first("@tier3cost1 = 4000");
     expect(entry.key).toBe("@tier3cost1");
-    expect(entry.value).toEqual({ kind: "num", value: 4000 });
+    expect(entry.value).toEqual({ kind: "num", lexeme: "4000" });
   });
 
   it("accepts quoted keys as their text (deferral documented) (jomini)", () => {
@@ -288,18 +291,43 @@ describe("parser: scalars", () => {
   });
 
   it("classifies integers, decimals, negatives, and leading-dot as num", () => {
-    expect(value("a = 3")).toEqual({ kind: "num", value: 3 });
-    expect(value("a = 0.25")).toEqual({ kind: "num", value: 0.25 });
-    expect(value("a = -1.5")).toEqual({ kind: "num", value: -1.5 });
-    expect(value("a = .5")).toEqual({ kind: "num", value: 0.5 });
+    expect(value("a = 3")).toEqual({ kind: "num", lexeme: "3" });
+    expect(value("a = 0.25")).toEqual({ kind: "num", lexeme: "0.25" });
+    expect(value("a = -1.5")).toEqual({ kind: "num", lexeme: "-1.5" });
+    expect(value("a = .5")).toEqual({ kind: "num", lexeme: "0.5" });
   });
 
   it("classifies plus-signed numbers as num: +0.10 (jomini — Stellaris)", () => {
-    expect(value("pop_happiness = +0.10")).toEqual({ kind: "num", value: 0.1 });
+    expect(value("pop_happiness = +0.10")).toEqual({ kind: "num", lexeme: "0.1" });
   });
 
   it("normalizes -0 to 0 (corpus — vanilla writes it; String(-0) would break the fixpoint)", () => {
-    expect(value("min = -0")).toEqual({ kind: "num", value: 0 });
+    expect(value("min = -0")).toEqual({ kind: "num", lexeme: "0" });
+  });
+
+  it("keeps every digit of a numeral no double holds (SDK-150)", () => {
+    expect(value("x = 9007199254740993")).toEqual({ kind: "num", lexeme: "9007199254740993" });
+    expectFixpoint("x = 9007199254740993");
+    expect(emitted("x = 1000000000000000000000")).toBe("x = 1000000000000000000000\n");
+    expect(emitted("x = 0.0000001")).toBe("x = 0.0000001\n");
+    expect(emitted(`x = 1${"0".repeat(400)}`)).toBe(`x = 1${"0".repeat(400)}\n`);
+    // And one written by hand, for a value no JS literal could carry either.
+    expect(serialize([kv("x", numeral("9007199254740993"))])).toBe("x = 9007199254740993\n");
+    expect(() => numeral("1e21")).toThrow(/Cannot represent/);
+  });
+
+  it("offers the JS reading of a numeral only when it is the same number", () => {
+    expect(numberValue("0.1")).toBe(0.1);
+    expect(tryNumberValue("9007199254740993")).toBeNull();
+    expect(() => numberValue("9007199254740993")).toThrow(/no double has that value/);
+  });
+
+  it("compares an integer as an integer, not as a formatted spelling", () => {
+    // `String(1000000000000000128)` is "1000000000000000100": past 2^53 the
+    // shortest spelling that reparses is not the value the double holds.
+    expect(tryNumberValue("1000000000000000128")).toBe(1000000000000000128);
+    expect(tryNumberValue("1000000000000000100")).toBeNull();
+    expect(scalarText(scalar(1000000000000000128))).toBe("1000000000000000128");
   });
 
   it("classifies date-like tokens (2200.01.01) as str", () => {
@@ -380,15 +408,15 @@ describe("parser: containers", () => {
         {
           kind: "container",
           items: [
-            { kind: "num", value: 0 },
-            { kind: "num", value: 1 },
+            { kind: "num", lexeme: "0" },
+            { kind: "num", lexeme: "1" },
           ],
         },
         {
           kind: "container",
           items: [
-            { kind: "num", value: 2 },
-            { kind: "num", value: 3 },
+            { kind: "num", lexeme: "2" },
+            { kind: "num", lexeme: "3" },
           ],
         },
       ],
@@ -462,6 +490,12 @@ describe("parser: parameter blocks (corpus — Stellaris scripted_effects)", () 
 
   it("serializes param blocks multiline with the closing bracket at parent indent", () => {
     expect(emitted("e = { [[X] a = 1 ] }")).toBe("e = {\n\t[[X]\n\t\ta = 1\n\t]\n}\n");
+  });
+
+  it("rejects a parameter name the serializer could not write back", () => {
+    expect(() => parse("e = { [[two words] a = 1 ] }", "claims.txt")).toThrow(
+      /Invalid parameter name/
+    );
   });
 
   it("throws on an unterminated parameter block, with file:line", () => {
@@ -642,8 +676,20 @@ describe("serializer", () => {
     expect(serialize([kv("a", true), kv("b", false)])).toBe("a = yes\n\nb = no\n");
   });
 
-  it("throws on exponent-notation numbers", () => {
-    expect(() => serialize([kv("a", 1e21)])).toThrow(/exponent/);
+  it("writes out a number with no exponent spelling: 1e21, 1e-7", () => {
+    expect(serialize([kv("a", 1e21)])).toBe("a = 1000000000000000000000\n");
+    expect(serialize([kv("a", 1e-7)])).toBe("a = 0.0000001\n");
+  });
+
+  it("refuses a number no spelling can carry, at construction", () => {
+    expect(() => scalar(Number.POSITIVE_INFINITY)).toThrow(/finite/);
+    expect(() => scalar(Number.NaN)).toThrow(/finite/);
+  });
+
+  it("refuses a hand-assembled lexeme that is not a canonical numeral", () => {
+    for (const lexeme of ["1 # injected", "+01.0", "1e21", ""]) {
+      expect(() => serialize([kv("a", { kind: "num", lexeme })])).toThrow(/canonical numeral/);
+    }
   });
 
   it("keeps explicit quoting; quotes strings that are not bare-safe", () => {
@@ -670,8 +716,12 @@ describe("serializer", () => {
     expect(emitted(source)).toBe(source);
   });
 
-  it("throws on a string whose raw content would terminate its own quotes", () => {
-    expect(() => serialize([kv("a", scalar('say "hi"'))])).toThrow(/unescaped quote/);
+  it("refuses a string whose raw content would terminate its own quotes", () => {
+    expect(() => scalar('say "hi"')).toThrow(/Cannot represent/);
+    expect(() => quoted("trailing backslash \\")).toThrow(/Cannot represent/);
+    expect(() => serialize([kv("a", { kind: "str", value: '"', quoted: true })])).toThrow(
+      /read back as itself/
+    );
   });
 
   it("renders var scalars as the bare @name", () => {
@@ -682,12 +732,23 @@ describe("serializer", () => {
     expect(serialize([kv("pos", inlineMath("@[ 1 - x ]"))])).toBe("pos = @[ 1 - x ]\n");
   });
 
+  it("refuses inline math that would read back as something else", () => {
+    expect(() => inlineMath("hello")).toThrow(/Cannot represent/);
+    expect(() => inlineMath("@[ a ] b")).toThrow(/Cannot represent/);
+    expect(() => varRef("no_at_sign")).toThrow(/Cannot represent/);
+  });
+
+  it("counts the lines a multi-line inline math token spans", () => {
+    expect(entryAt(clean("a = @[\n x\n]\nb = 1"), 1).line).toBe(4);
+  });
+
   it("renders header containers as header { ... }", () => {
     expect(emitted("color = hsv { 0.63 0.13 0.5 }")).toBe("color = hsv { 0.63 0.13 0.5 }\n");
   });
 
-  it("throws on a key that would need quoting (deferred by name)", () => {
-    expect(() => serialize([kv("two words", 1)])).toThrow(/key/);
+  it("quotes a key that cannot be written bare, instead of refusing it", () => {
+    expect(serialize([kv("two words", 1)])).toBe('"two words" = 1\n');
+    expectFixpoint('"two words" = 1');
   });
 });
 

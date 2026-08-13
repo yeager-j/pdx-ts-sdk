@@ -11,7 +11,7 @@
  * because every generated leaf trigger records exactly one entry.
  */
 
-import { scalarText, type PdxEntry } from "@pdx-ts/pdxscript";
+import { scalarText, tryNumberValue, type PdxEntry } from "@pdx-ts/pdxscript";
 import {
   isEffectKey,
   isEventFireKey,
@@ -320,6 +320,21 @@ function evaluateLimit(entries: readonly PdxEntry[], scope: EntityId, ex: ExecCt
 // Effect application
 // ---------------------------------------------------------------------------
 
+/**
+ * A `days`/`months`/`years` count as a JS number. A numeral too large for a
+ * double is not a safe integer either, so the one message covers both.
+ */
+function unitCount(lexeme: string, field: string): number {
+  const value = tryNumberValue(lexeme);
+  if (value === null) {
+    throw new InterpreterError(
+      `${field} must be a non-negative safe integer, got ${lexeme}. ${coverageSummary()}`
+    );
+  }
+  assertNonNegativeSafeInteger(value, field);
+  return value;
+}
+
 function assertNonNegativeSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new InterpreterError(
@@ -355,14 +370,11 @@ function applyFire(entry: PdxEntry, scope: EntityId, ex: ExecCtx): void {
     if (field.key === "id" && field.value.kind === "str") {
       id = field.value.value;
     } else if (field.key === "days" && field.value.kind === "num") {
-      assertNonNegativeSafeInteger(field.value.value, `${entry.key} days`);
-      delay += field.value.value;
+      delay += unitCount(field.value.lexeme, `${entry.key} days`);
     } else if (field.key === "months" && field.value.kind === "num") {
-      assertNonNegativeSafeInteger(field.value.value, `${entry.key} months`);
-      delay += field.value.value * DAYS_PER_MONTH;
+      delay += unitCount(field.value.lexeme, `${entry.key} months`) * DAYS_PER_MONTH;
     } else if (field.key === "years" && field.value.kind === "num") {
-      assertNonNegativeSafeInteger(field.value.value, `${entry.key} years`);
-      delay += field.value.value * DAYS_PER_YEAR;
+      delay += unitCount(field.value.lexeme, `${entry.key} years`) * DAYS_PER_YEAR;
     } else if (field.key === "random") {
       throw new InterpreterError(
         `${entry.key} has a random delay component — forced branches, not rolls: the ` +

@@ -70,7 +70,7 @@ describe("serialize", () => {
     expect(serialize([block("potential", [])])).toBe("potential = {}\n");
   });
 
-  it("rejects numbers that would need exponent notation", () => {
-    expect(() => serialize([kv("cost", 1e21)])).toThrow(/exponent notation/);
+  it("writes a number too large for `String()` out in full, not in exponent notation", () => {
+    expect(serialize([kv("cost", 1e21)])).toBe("cost = 1000000000000000000000\n");
   });
 });

@@ -4,63 +4,64 @@
  * The bare-vs-quoted decision is symmetric with the lexer: a `str` renders
  * bare only if re-lexing it would yield the same single `str` token
  * (`isBareToken` for the character class, `classifyUnquoted` to reject text
- * that would come back as a bool, num, or var). Anything unrepresentable —
- * a key or header that cannot render bare, an exponent-notation number, a
- * string whose raw content would terminate its own quotes — throws rather
- * than emitting output that reads back differently.
+ * that would come back as a bool, num, or var); otherwise it renders quoted,
+ * keys included. What cannot be written either way throws instead of
+ * emitting output that reads back differently — but the constructors reject
+ * those values on the way in, so a throw here means a tree assembled as a
+ * bare object literal.
  */
 
 import type { PdxContainer, PdxItem, PdxParamBlock, PdxParamText, PdxScalar } from "./ast.ts";
-import { classifyUnquoted, isBareToken } from "./lexer.ts";
+import {
+  canonicalNumeral,
+  isBareString,
+  isBareToken,
+  isMathSource,
+  isNumeral,
+  isParamName,
+  isQuotableContent,
+  isVarName,
+} from "./representable.ts";
 
-function isBareString(value: string): boolean {
-  return isBareToken(value) && classifyUnquoted(value).kind === "str";
-}
-
-/** True when emitting `value` between quotes would terminate the string early. */
-function hasUnescapedQuote(value: string): boolean {
-  let index = 0;
-  while (index < value.length) {
-    if (value[index] === "\\") {
-      index += 2;
-      continue;
-    }
-    if (value[index] === '"') {
-      return true;
-    }
-    index += 1;
+/** Between quotes, and readable back as the same content. */
+function quotedText(content: string, what: string): string {
+  if (!isQuotableContent(content)) {
+    throw new Error(
+      `Cannot serialize ${what} ${JSON.stringify(content)}: content is emitted raw, and this ` +
+        "would not read back as itself (see GRAMMAR.md)"
+    );
   }
-  return false;
+  return `"${content}"`;
 }
 
 export function scalarText(scalar: PdxScalar): string {
   switch (scalar.kind) {
     case "bool":
       return scalar.value ? "yes" : "no";
-    case "num": {
-      const text = String(scalar.value);
-      if (text.includes("e") || text.includes("E")) {
-        throw new Error(`Cannot serialize ${scalar.value}: PDXScript has no exponent notation`);
+    case "num":
+      // A lexeme is emitted raw, so it has to be one: `"1 # injected"` would
+      // read back as `1`, and `+01.0` as a different node than the literal
+      // that was written. Same backstop the other kinds get.
+      if (!isNumeral(scalar.lexeme) || canonicalNumeral(scalar.lexeme) !== scalar.lexeme) {
+        throw new Error(
+          `Cannot serialize number ${JSON.stringify(scalar.lexeme)}: it is not a canonical ` +
+            "numeral (build numbers with scalar() or numeral())"
+        );
       }
-      return text;
-    }
+      return scalar.lexeme;
     case "str":
-      if (scalar.quoted || !isBareString(scalar.value)) {
-        if (hasUnescapedQuote(scalar.value)) {
-          throw new Error(
-            `Cannot serialize string ${JSON.stringify(scalar.value)}: ` +
-              "it contains an unescaped quote (content is emitted raw; see GRAMMAR.md)"
-          );
-        }
-        return `"${scalar.value}"`;
-      }
-      return scalar.value;
+      return scalar.quoted || !isBareString(scalar.value)
+        ? quotedText(scalar.value, "string")
+        : scalar.value;
     case "var":
-      if (!scalar.name.startsWith("@") || !isBareToken(scalar.name)) {
+      if (!isVarName(scalar.name)) {
         throw new Error(`Cannot serialize variable reference ${JSON.stringify(scalar.name)}`);
       }
       return scalar.name;
     case "math":
+      if (!isMathSource(scalar.source)) {
+        throw new Error(`Cannot serialize inline math ${JSON.stringify(scalar.source)}`);
+      }
       return scalar.source;
   }
 }
@@ -95,7 +96,7 @@ function containerText(container: PdxContainer, depth: number): string {
 }
 
 function regionOpener(param: PdxParamBlock | PdxParamText): string {
-  if (!isBareToken(param.name)) {
+  if (!isParamName(param.name)) {
     throw new Error(`Cannot serialize parameter name ${JSON.stringify(param.name)}`);
   }
   return `[[${param.negated ? "!" : ""}${param.name}]`;
@@ -124,14 +125,14 @@ function paramTextRegion(param: PdxParamText): string {
 function serializeItem(item: PdxItem, depth: number): string {
   const indent = "\t".repeat(depth);
   if (item.kind === "entry") {
-    if (!isBareToken(item.key)) {
-      throw new Error(
-        `Cannot serialize key ${JSON.stringify(item.key)}: quoted keys are deferred (GRAMMAR.md)`
-      );
-    }
+    // A key is raw text, never classified: `yes` and `123` are keys as
+    // readily as `foo`. Only the character class decides, and a key outside
+    // it is quoted rather than refused — the parser accepts quoted keys, so
+    // refusing to write one is what made the language not closed.
+    const key = isBareToken(item.key) ? item.key : quotedText(item.key, "key");
     const value =
       item.value.kind === "container" ? containerText(item.value, depth) : scalarText(item.value);
-    return `${indent}${item.key} ${item.op} ${value}`;
+    return `${indent}${key} ${item.op} ${value}`;
   }
   if (item.kind === "container") {
     return `${indent}${containerText(item, depth)}`;

@@ -5,12 +5,12 @@
  * closing quote), `@[ ... ]` inline-math tokens, `[[NAME] ... ]` conditional
  * regions, and the operator set.
  *
- * `classifyUnquoted` also lives here because the serializer needs the same
- * answer the lexer would give: a string may render bare only if re-lexing it
- * yields one identifier token that classifies back to `str`.
+ * What counts as a legal token of each kind, and what an unquoted one means,
+ * is `representable.ts` — shared with the parser, the constructors and the
+ * serializer, so that no two of them can disagree.
  */
 
-import type { PdxScalar } from "./ast.ts";
+import { isParamName } from "./representable.ts";
 
 export type TokenKind =
   "identifier" | "op" | "lbrace" | "rbrace" | "math" | "param" | "rbracket" | "eof";
@@ -61,38 +61,6 @@ const TERMINATORS = new Set([
   "#",
   '"',
 ]);
-
-/** True when `text` would lex back as a single unquoted identifier token. */
-export function isBareToken(text: string): boolean {
-  if (text.length === 0) {
-    return false;
-  }
-  for (const char of text) {
-    if (TERMINATORS.has(char)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-const NUMBER = /^[+-]?(\d+(\.\d+)?|\.\d+)$/;
-
-/** How an unquoted token reads as a value. Shared by the parser and the serializer. */
-export function classifyUnquoted(text: string): PdxScalar {
-  if (text === "yes" || text === "no") {
-    return { kind: "bool", value: text === "yes" };
-  }
-  if (NUMBER.test(text)) {
-    const value = Number(text);
-    // Vanilla writes `-0`; String(-0) is "0", so normalize at parse to keep
-    // the round trip a fixpoint. Negative zero is semantically zero here.
-    return { kind: "num", value: value === 0 ? 0 : value };
-  }
-  if (text.startsWith("@")) {
-    return { kind: "var", name: text };
-  }
-  return { kind: "str", value: text, quoted: false };
-}
 
 function operatorAt(text: string, index: number): string | null {
   const char = text[index];
@@ -275,9 +243,17 @@ export function tokenize(source: string, fileName: string, startLine = 1): Token
       if (end === -1) {
         throw new PdxSyntaxError("Unterminated [[ parameter block", fileName, openLine);
       }
+      const opened = text.slice(index + 2, opener);
+      if (!isParamName(opened.startsWith("!") ? opened.slice(1) : opened)) {
+        throw new PdxSyntaxError(
+          `Invalid parameter name ${JSON.stringify(opened)}`,
+          fileName,
+          openLine
+        );
+      }
       tokens.push({
         kind: "param",
-        text: text.slice(index + 2, opener),
+        text: opened,
         body: text.slice(opener + 1, end),
         quoted: false,
         line: openLine,

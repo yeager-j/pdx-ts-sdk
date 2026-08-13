@@ -46,7 +46,7 @@ function scalar(value: PdxValue): string | null {
     return value.value;
   }
   if (value.kind === "num") {
-    return String(value.value);
+    return value.lexeme;
   }
   return null;
 }
