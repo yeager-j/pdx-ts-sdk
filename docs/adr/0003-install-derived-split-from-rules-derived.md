@@ -16,6 +16,10 @@ by a chokepoint in the generator rather than by convention, because "we only
 emit identifiers" is a claim that has to survive contributors who did not read
 this file.
 
+The optional-dependency half of this consequence is reversed by
+[ADR-0006](0006-stellaris-ids-is-a-hard-dependency.md); the split and the
+chokepoint stand.
+
 Evidence: `packages/stellaris-ids/PROVENANCE.md` for the licensing boundary;
 `packages/codegen-vanilla/tests/callsites.test.ts` for the scope inference the
 install-derived half rests on; `packages/sdk/tests/vanilla-refs.test-d.ts` for
