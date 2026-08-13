@@ -16,7 +16,7 @@
  * that claim needs playset enumeration, not a bigger filename.
  */
 
-import { kv, regionScalars, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
+import { kv, regionItems, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { NoWinningFilenameError, PdxSdkError, VanillaPathCollisionError } from "../../errors.ts";
 import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../../ordering.ts";
@@ -57,7 +57,7 @@ export function collectVarRefs(item: PdxItem): string[] {
     case "param":
       return item.items.flatMap(collectVarRefs);
     case "param-text":
-      return regionScalars(item).flatMap(collectVarRefs);
+      return regionItems(item).flatMap(collectVarRefs);
     default:
       return [];
   }
@@ -74,7 +74,7 @@ export function containsInlineMath(item: PdxItem): boolean {
     case "param":
       return item.items.some(containsInlineMath);
     case "param-text":
-      return regionScalars(item).some(containsInlineMath);
+      return regionItems(item).some(containsInlineMath);
     default:
       return false;
   }

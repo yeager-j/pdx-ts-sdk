@@ -25,7 +25,7 @@
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { parse, type PdxItem } from "@pdx-ts/pdxscript";
+import { parse, regionItems, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { compareIdentifiers } from "./emit.ts";
 
@@ -101,11 +101,13 @@ function walkItems(
         walkItems(item.items, true, into);
         break;
       case "param-text":
-        // The same construct without a tree. The parameter list is read off
-        // the text either way — a `$NAME$` is a lexeme, not a node — so a
-        // brace-crossing region costs nothing here.
+        // The same construct without a tree. Its body is read through the
+        // lexer rather than scanned as raw text, so trivia stays trivia: a
+        // commented-out `# $OLD$` must not enter the parameter contract this
+        // package publishes, and a region nested inside comes back as a
+        // region — its name is a parameter too.
         recordCondition(item.name, into);
-        scan(item.text, true, into);
+        walkItems(regionItems(item), true, into);
         break;
       case "str":
         scan(item.value, conditional, into);

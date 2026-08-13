@@ -184,9 +184,17 @@ class Walker {
     kind: ScriptedKind,
     diagnostics: ScopeDiagnostic[]
   ): RuleScopes {
+    // A region with no tree is one that opens or closes a brace — that is why
+    // it has no tree — so which scope its neighbours run in depends on the
+    // call site. `[[FLAG] owner = { ] is_country_type = default [[FLAG] } ]`
+    // reads here as a country condition on the definition, and is nothing of
+    // the kind when FLAG is supplied. Unreadable widens: the whole body is
+    // walked for diagnostics and constrains nothing, which is exactly what
+    // `applies: false` already means.
+    const opaque = items.some((item) => item.kind === "param-text");
     let scopes: RuleScopes = "universal";
     for (const item of items) {
-      scopes = intersectScopes(scopes, this.walkItem(item, applies, kind, diagnostics));
+      scopes = intersectScopes(scopes, this.walkItem(item, applies && !opaque, kind, diagnostics));
     }
     return scopes;
   }

@@ -27,7 +27,7 @@
 import { createHash } from "node:crypto";
 import {
   parse,
-  regionScalars,
+  regionItems,
   type PdxContainer,
   type PdxEntry,
   type PdxItem,
@@ -524,7 +524,7 @@ function validateVariables(
         validateVariables(item.items, file, line, vars);
         break;
       case "param-text":
-        validateVariables(regionScalars(item, file), file, line, vars);
+        validateVariables(regionItems(item, file), file, line, vars);
         break;
       case "var":
         vars.resolve(item.name, file, line);

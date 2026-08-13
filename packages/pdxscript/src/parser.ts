@@ -28,6 +28,13 @@ import { classifyUnquoted, PdxSyntaxError, tokenize, type Token } from "./lexer.
 const MAX_DEPTH = 1000;
 
 /**
+ * The depth guard, as an error the textual fallback must not absorb. A
+ * region's body is re-scanned per level, so swallowing this would turn deep
+ * nesting into a slow success instead of a refusal.
+ */
+class NestingLimitError extends PdxSyntaxError {}
+
+/**
  * Which body the item loop is reading. It decides where the body ends and
  * how a defect there is handled: `file` and `region` run to EOF (the lexer
  * has already cut the region out of the source), `container` ends at `}`.
@@ -139,11 +146,17 @@ class Parser {
     const negated = token.text.startsWith("!");
     const name = negated ? token.text.slice(1) : token.text;
     const body = token.body ?? "";
+    if (depth + 1 > MAX_DEPTH) {
+      throw new NestingLimitError(`Nesting exceeds ${MAX_DEPTH} levels`, this.fileName, token.line);
+    }
     const inner = new Parser(tokenize(body, this.fileName, token.line), this.fileName);
     let items: PdxItem[];
     try {
       items = inner.parseItems("region", token.line, depth + 1);
-    } catch {
+    } catch (error) {
+      if (error instanceof NestingLimitError) {
+        throw error;
+      }
       return { kind: "param-text", name, negated, text: body };
     }
     if (inner.diagnostics.some((diagnostic) => diagnostic.kind !== "operator-less-entry")) {
@@ -227,34 +240,40 @@ function describe(token: Token): string {
 }
 
 /**
- * The scalars a `param-text` region's body mentions, in source order and
- * flat — there is no structure to report, or it would have been a tree.
+ * A `param-text` region's body, read flat: its scalars in source order, and
+ * any region nested inside it as a region of its own. Braces and operators
+ * are gone, because the structure they would describe belongs to the call
+ * site — which is what made the body untreeable to begin with.
  *
  * This is the sanctioned reading of a body with no tree: a consumer that
  * needs to know what a region names (an `@variable` a patch must re-declare,
- * an `@[ ]` expression) asks here rather than re-deriving the lexer's rules
- * over raw text. Bodies that are not lexable PDXScript throw, exactly as a
- * file of the same text would.
+ * a nested region's parameter) asks here rather than re-deriving the lexer's
+ * rules over raw text — which would also read a commented-out `# $OLD$` as a
+ * live token. Bodies that are not lexable PDXScript throw, exactly as a file
+ * of the same text would.
  */
-export function regionScalars(region: PdxParamText, fileName = "<region>"): PdxScalar[] {
-  const scalars: PdxScalar[] = [];
-  const visit = (text: string): void => {
-    for (const token of tokenize(text, fileName)) {
-      if (token.kind === "identifier") {
-        scalars.push(
-          token.quoted
-            ? { kind: "str", value: token.text, quoted: true }
-            : classifyUnquoted(token.text)
-        );
-      } else if (token.kind === "math") {
-        scalars.push({ kind: "math", source: token.text });
-      } else if (token.kind === "param") {
-        visit(token.body ?? "");
-      }
+export function regionItems(region: PdxParamText, fileName = "<region>"): PdxItem[] {
+  const items: PdxItem[] = [];
+  for (const token of tokenize(region.text, fileName)) {
+    if (token.kind === "identifier") {
+      items.push(
+        token.quoted
+          ? ({ kind: "str", value: token.text, quoted: true } satisfies PdxScalar)
+          : classifyUnquoted(token.text)
+      );
+    } else if (token.kind === "math") {
+      items.push({ kind: "math", source: token.text });
+    } else if (token.kind === "param") {
+      const negated = token.text.startsWith("!");
+      items.push({
+        kind: "param-text",
+        name: negated ? token.text.slice(1) : token.text,
+        negated,
+        text: token.body ?? "",
+      });
     }
-  };
-  visit(region.text);
-  return scalars;
+  }
+  return items;
 }
 
 export function parse(source: string, fileName = "<input>"): PdxDocument {

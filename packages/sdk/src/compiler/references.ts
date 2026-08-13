@@ -1,4 +1,4 @@
-import { regionScalars, type PdxItem } from "@pdx-ts/pdxscript";
+import { regionItems, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { SWAP_IDENTITIES, type SwapIdentity } from "../content/swaps.ts";
 import { CONTENT_REGISTRIES } from "../generated/content-registry.ts";
@@ -72,7 +72,7 @@ export function validateReferences(args: {
           scan(node.items);
           break;
         case "param-text":
-          scan(regionScalars(node));
+          scan(regionItems(node));
           break;
         default:
           break;

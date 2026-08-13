@@ -25,7 +25,7 @@ import {
   parse,
   PdxSyntaxError,
   quoted,
-  regionScalars,
+  regionItems,
   scalar,
   scalarText,
   serialize,
@@ -541,13 +541,30 @@ describe("parser: conditional text regions (corpus — Gigastructural Engineerin
   it("reads a region with no tree flat, for consumers that need its names", () => {
     const parsed = value("e = { [[X] a = @dist { ] }");
     if (parsed.kind === "container" && parsed.items[0]!.kind === "param-text") {
-      expect(regionScalars(parsed.items[0]!)).toEqual([
+      expect(regionItems(parsed.items[0]!)).toEqual([
         { kind: "str", value: "a", quoted: false },
         { kind: "var", name: "@dist" },
       ]);
     } else {
       expect.unreachable();
     }
+  });
+
+  it("reads that body through the lexer: comments are trivia, nested regions are regions", () => {
+    const parsed = value("e = { [[X] a # @not_a_ref\n[[Y] b ] { ] }");
+    if (parsed.kind === "container" && parsed.items[0]!.kind === "param-text") {
+      expect(regionItems(parsed.items[0]!)).toEqual([
+        { kind: "str", value: "a", quoted: false },
+        { kind: "param-text", name: "Y", negated: false, text: " b " },
+      ]);
+    } else {
+      expect.unreachable();
+    }
+  });
+
+  it("still refuses absurd region nesting rather than falling back to text", () => {
+    const nested = `${"[[X] ".repeat(1200)}a${" ]".repeat(1200)}`;
+    expect(() => parse(nested, "claims.txt")).toThrow(/Nesting exceeds/);
   });
 });
 
