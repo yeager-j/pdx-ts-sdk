@@ -415,9 +415,7 @@ describe("a rendered claim never lands on a foreign entry", () => {
     const decomposed = "assets/cafe\u0301.txt";
     mkdirSync(join(out, "assets"));
     writeFileSync(join(out, decomposed), "author's own", "utf8");
-    const claiming = createRenderedMod("mz_probe", "", [
-      { path: composed, owner: "test", text: "rendered\n" },
-    ]);
+    const claiming = createRenderedMod("mz_probe", "", [{ path: composed, text: "rendered\n" }]);
 
     const error = await refusal(write(out, claiming));
 
@@ -460,9 +458,7 @@ describe("a rendered claim never lands on a foreign entry", () => {
     const foreign = "assets/ςigma.txt";
     mkdirSync(join(out, "assets"));
     writeFileSync(join(out, foreign), "author's own", "utf8");
-    const claiming = createRenderedMod("mz_probe", "", [
-      { path: claimed, owner: "test", text: "rendered\n" },
-    ]);
+    const claiming = createRenderedMod("mz_probe", "", [{ path: claimed, text: "rendered\n" }]);
 
     const error = await refusal(write(out, claiming));
 

@@ -343,7 +343,12 @@ export {
   type MaterializationDrift,
   type MaterializationDriftKind,
   type MaterializationFailure,
+  type PathClaimant,
+  type PathConflictReason,
+  type PathOwnershipConflict,
+  type PathProducerKind,
 } from "./errors.ts";
+export type { PathClaim, PathProducer } from "./compiler/paths.ts";
 export { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "./ordering.ts";
 export {
   REGISTRY_RULES,

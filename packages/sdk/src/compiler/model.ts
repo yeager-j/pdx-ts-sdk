@@ -8,6 +8,7 @@ import type { ContentTypeName } from "../generated/content-registry.ts";
 import type { LogicalPath } from "../ordering.ts";
 import type { PatchPlan } from "../stellaris/vanilla/override-plan.ts";
 import type { ResolvedModConfig } from "./config.ts";
+import type { PathClaim } from "./paths.ts";
 
 /** One emitted file: path plus the entries serialized into it, in order. */
 export interface EmittedFile {
@@ -36,6 +37,12 @@ export interface LocalizationFile {
   readonly relPath: LogicalPath;
   /** The language used by both the directory/filename and file header. */
   readonly language: LocalizationLanguage;
+  /**
+   * Every Feature stem whose entries landed here, sorted. Plural because one
+   * key registered under two stems resolves to the byte-lowest of their paths,
+   * so a file can carry entries several Features contributed.
+   */
+  readonly stems: readonly string[];
   /** Entries sorted by localization key. */
   readonly entries: readonly (readonly [key: string, text: string])[];
 }
@@ -58,8 +65,16 @@ export interface PureMod {
   readonly localizationFiles: readonly LocalizationFile[];
   /** Shared ship-size-limit contribution ids. */
   readonly shipOfSizeLimits: ReadonlySet<string>;
+  /** Where the shared on-action file goes; `undefined` when there are none. */
+  readonly onActionsPath: LogicalPath | undefined;
+  /** Where the shared ship-size-limit file goes; `undefined` when there are none. */
+  readonly shipOfSizeLimitsPath: LogicalPath | undefined;
   /** The planned vanilla overrides, one per patched registry, in path order. */
   readonly patchPlans: readonly PatchPlan[];
-  /** Vanilla paths known to the build, used by `render` for collision checks. */
-  readonly vanillaPaths: ReadonlySet<string> | undefined;
+  /**
+   * Every path this mod occupies, adjudicated and in enumeration order. A
+   * `PureMod` that exists is collision-free; this is the ledger that says so,
+   * and `render` serializes exactly these paths and no others.
+   */
+  readonly paths: readonly PathClaim[];
 }

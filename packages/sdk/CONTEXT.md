@@ -89,6 +89,22 @@ _Avoid_: file, basename, name
 A normalized, `/`-separated path relative to the mod root, in the form the game
 resolves overrides by.
 
+**Portability identity**:
+The second, weaker identity of a logical path: what a case-insensitive
+filesystem may collapse. Game identity is the exact path; two paths sharing a
+portability identity are a collision rather than one winning.
+
+**Path claim**:
+One output file's final logical path, submitted to the Fold before a `PureMod`
+exists. Every channel claims — descriptor, content, events, on-actions,
+localization, patch plans. A `PureMod` that exists is collision-free.
+_Avoid_: reservation (a reserved path is one nobody may claim)
+
+**Producer**:
+The output channel a Path claim came from, with the Feature stems that fed it.
+One producer per final path; a file several Features write into is still one
+producer with several stems.
+
 **Enumeration order**:
 The byte-sorted file list the patch plan reasons against — the order the game
 loads files in.

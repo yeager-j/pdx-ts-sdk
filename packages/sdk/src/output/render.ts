@@ -7,9 +7,9 @@
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 
 import type { PureMod } from "../compiler/model.ts";
-import { DESCRIPTOR_PATH, onActionsPath, shipOfSizeLimitsPath } from "../compiler/paths.ts";
-import { VanillaPathCollisionError } from "../errors.ts";
-import { normalizeLogicalPath } from "../ordering.ts";
+import { DESCRIPTOR_PATH } from "../compiler/paths.ts";
+import { PdxSdkError } from "../errors.ts";
+import { compareUtf8 } from "../ordering.ts";
 import {
   createRenderedMod,
   launcherDescriptor,
@@ -20,25 +20,22 @@ import {
 export function render(mod: PureMod): RenderedMod {
   const { prefix } = mod.config;
   const files: RenderedClaim[] = [];
-  files.push({ path: DESCRIPTOR_PATH, owner: "mod descriptor", text: renderDescriptor(mod) });
+  files.push({ path: DESCRIPTOR_PATH, text: renderDescriptor(mod) });
   for (const file of mod.contentFiles) {
     files.push({
       path: file.relPath,
-      owner: `content ${file.ids.join(", ")}`,
       text: serialize(file.entries),
     });
   }
   for (const file of mod.eventFiles) {
     files.push({
       path: file.relPath,
-      owner: `events ${file.relPath}`,
       text: serialize(file.entries),
     });
   }
-  if (mod.shipOfSizeLimits.size > 0) {
+  if (mod.shipOfSizeLimitsPath !== undefined) {
     files.push({
-      path: shipOfSizeLimitsPath(prefix),
-      owner: "ship-of-size limits",
+      path: mod.shipOfSizeLimitsPath,
       text: serialize([
         block("default", [
           list(
@@ -49,41 +46,49 @@ export function render(mod: PureMod): RenderedMod {
       ]),
     });
   }
-  if (mod.onActions.length > 0) {
+  if (mod.onActionsPath !== undefined) {
     files.push({
-      path: onActionsPath(prefix),
-      owner: "on-action hooks",
+      path: mod.onActionsPath,
       text: serialize(mod.onActions),
     });
   }
   for (const file of mod.localizationFiles) {
     files.push({
       path: file.relPath,
-      owner: `localization ${file.language}`,
       text: renderLocalization(file.language, file.entries),
     });
   }
 
   for (const plan of mod.patchPlans) {
-    files.push({ path: plan.relPath, owner: `patch ${plan.relPath}`, text: plan.content });
+    files.push({ path: plan.relPath, text: plan.content });
   }
-  // Runs whenever the build knew about a vanilla load, not only when it
-  // patched one: emitting over a vanilla file replaces that file wholesale
-  // regardless of whether this mod happens to patch anything. `descriptor.mod`
-  // is exempt because every mod has one and it never lands in the game's own
-  // tree; the patch plan's own file is checked like any other, and is named to
-  // beat vanilla's rather than to occupy it.
-  if (mod.vanillaPaths !== undefined) {
-    for (const { path: relPath } of files) {
-      if (relPath !== DESCRIPTOR_PATH && mod.vanillaPaths.has(normalizeLogicalPath(relPath))) {
-        throw new VanillaPathCollisionError(
-          `this mod would emit ${relPath}, a path vanilla already occupies — a same-path ` +
-            `collision silently replaces the entire vanilla file`
-        );
-      }
-    }
-  }
+  assertSerializesTheLedger(mod, files);
   return createRenderedMod(prefix, renderDescriptor(mod), files);
+}
+
+/**
+ * Every path serialized here was adjudicated, and every adjudicated path is
+ * serialized here.
+ *
+ * Path ownership is settled in the fold, which is only worth anything if
+ * rendering cannot then invent a path or drop one. Without this check a channel
+ * added later could quietly emit an unadjudicated file — exactly the hole the
+ * ledger exists to close — and the mismatch would surface as a stale mod
+ * directory rather than as an error.
+ */
+function assertSerializesTheLedger(mod: PureMod, files: readonly RenderedClaim[]): void {
+  const adjudicated = new Set<string>(mod.paths.map((claim) => claim.path));
+  const serialized = new Set<string>(files.map((file) => file.path));
+  const unadjudicated = [...serialized].filter((path) => !adjudicated.has(path)).sort(compareUtf8);
+  const unserialized = [...adjudicated].filter((path) => !serialized.has(path)).sort(compareUtf8);
+  if (unadjudicated.length === 0 && unserialized.length === 0) {
+    return;
+  }
+  throw new PdxSdkError(
+    `render() and the path ledger disagree` +
+      (unadjudicated.length > 0 ? `; not adjudicated: ${unadjudicated.join(", ")}` : "") +
+      (unserialized.length > 0 ? `; not serialized: ${unserialized.join(", ")}` : "")
+  );
 }
 
 /**

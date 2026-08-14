@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { StaleRuleTableError, VanillaPathCollisionError } from "../src/errors.ts";
+import { PathOwnershipError, StaleRuleTableError } from "../src/errors.ts";
 import {
   always,
   createMod,
@@ -196,7 +196,7 @@ describe("patching end to end", () => {
         tier: 4,
       })),
     ]);
-    expect(() => render(mod.compile([technologies]))).toThrow(VanillaPathCollisionError);
+    expect(() => mod.compile([technologies])).toThrow(PathOwnershipError);
   });
 
   it("there are no patch plans when nothing is patched", () => {
@@ -288,20 +288,31 @@ describe("the vanilla path guard without any patch", () => {
       ...FILES,
       [squattedPath]: "tech_squatter = {\n\tarea = physics\n}\n",
     });
-    expect(() => render(mod.compile([techs(mod)], { vanilla: clashing }))).toThrow(
-      VanillaPathCollisionError
-    );
+    expect(() => mod.compile([techs(mod)], { vanilla: clashing })).toThrow(PathOwnershipError);
   });
 
-  it("names the colliding path", () => {
+  it("names the colliding path and the producer that claimed it", () => {
     const mod = createMod(makeConfig());
     const clashing = viewFromFiles({
       ...FILES,
       [squattedPath]: "tech_squatter = {\n\tarea = physics\n}\n",
     });
-    expect(() => render(mod.compile([techs(mod)], { vanilla: clashing }))).toThrow(
-      new RegExp(squattedPath.replace(/[.]/g, "\\."))
-    );
+
+    let thrown: unknown;
+    try {
+      mod.compile([techs(mod)], { vanilla: clashing });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(PathOwnershipError);
+    const conflicts = (thrown as PathOwnershipError).conflicts;
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0]!.path).toBe(squattedPath);
+    expect(conflicts[0]!.reason).toBe("vanilla");
+    expect(conflicts[0]!.claimants.map((claimant) => claimant.kind)).toEqual([
+      "content",
+      "vanilla",
+    ]);
   });
 
   it("still renders when the view occupies no path this mod emits", () => {
@@ -313,7 +324,9 @@ describe("the vanilla path guard without any patch", () => {
   it("does not check at all without a vanilla view", () => {
     const mod = createMod(makeConfig());
     // Unchanged behavior: nothing was loaded, so nothing is known to collide.
-    expect(mod.compile([techs(mod)]).vanillaPaths).toBeUndefined();
+    // The path this build emits is the one the clashing view above squats on,
+    // so a build that checked without evidence would refuse here.
+    expect(mod.compile([techs(mod)]).paths.map((claim) => claim.path)).toContain(squattedPath);
     expect(render(mod.compile([techs(mod)])).size).toBeGreaterThan(0);
   });
 });

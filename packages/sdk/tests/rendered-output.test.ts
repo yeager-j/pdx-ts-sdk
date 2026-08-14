@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ContentFile } from "../src/compiler/model.ts";
-import {
-  createMod,
-  normalizeLogicalPath,
-  PathOwnershipError,
-  render,
-  type PureMod,
-} from "../src/index.ts";
+import { createMod, PdxSdkError, render, type PureMod } from "../src/index.ts";
 import {
   CapturedBytes,
   createRenderedMod,
@@ -48,63 +41,34 @@ describe("RenderedMod", () => {
     expect(file.bytes()[0]).not.toBe(0);
   });
 
-  it.each([
-    ["duplicate", "common/technology/rendered_probe_probe.txt"],
-    ["portable alias", "COMMON/technology/rendered_probe_probe.txt"],
-    ["file-directory conflict", "common"],
-    ["reserved manifest", ".pdx-sdk-manifest.json"],
-    ["reserved manifest child", ".pdx-sdk-manifest.json/child"],
-    ["reserved manifest portable alias", ".PDX-SDK-MANIFEST.JSON"],
-  ])("rejects a %s before any sink sees it", (_label, relPath) => {
-    const first = compiled.contentFiles[0]!;
-    const forgedFile: ContentFile = { ...first, relPath: normalizeLogicalPath(relPath) };
-    const forged = { ...compiled, contentFiles: [...compiled.contentFiles, forgedFile] } as PureMod;
-    expect(() => render(forged)).toThrow(PathOwnershipError);
-  });
-
-  it("rejects two claims only an uppercasing filesystem would collapse", () => {
-    // Greek medial and final sigma: distinct under lowercasing, one name under
-    // NTFS's uppercase table. Adjudicating by lowercase alone accepted both,
-    // and materializing on Windows then wrote two claims to one entry and lost
-    // a file's bytes. Claim versus claim, not claim versus a foreign entry —
-    // the sink's check is a separate gate and cannot stand in for this one.
+  it("refuses to build two files for one path", () => {
+    // Path ownership is adjudicated in the fold; what survives here is the one
+    // invariant this object cannot hold without. A duplicate would leave `size`
+    // over-counting, the hash folding the path twice, and the tree writer
+    // writing it twice with the second silently winning.
     expect(() =>
       createRenderedMod("rendered_probe", "", [
-        { path: "assets/σigma.txt", owner: "medial", text: "one" },
-        { path: "assets/ςigma.txt", owner: "final", text: "two" },
+        { path: "gfx/blob.bin", text: "a" },
+        { path: "gfx/blob.bin", text: "b" },
       ])
-    ).toThrow(PathOwnershipError);
+    ).toThrow(TypeError);
   });
 
-  it("reports ownership conflicts independently of claim order", () => {
-    const first = compiled.contentFiles[0]!;
-    const alias: ContentFile = {
-      ...first,
-      relPath: normalizeLogicalPath(first.relPath.toUpperCase()),
-    };
-    const forward = { ...compiled, contentFiles: [first, alias] } as PureMod;
-    const backward = { ...compiled, contentFiles: [alias, first] } as PureMod;
-
-    const conflicts = (candidate: PureMod) => {
-      try {
-        render(candidate);
-      } catch (error) {
-        return (error as PathOwnershipError).conflicts;
-      }
-      throw new Error("expected a path ownership conflict");
-    };
-
-    expect(conflicts(backward)).toEqual(conflicts(forward));
+  it("refuses to serialize a path the ledger never adjudicated", () => {
+    // The other half of moving adjudication into the fold: a channel that
+    // emitted an unadjudicated file would reopen exactly the hole the ledger
+    // closes, and the damage would show up as a stale mod directory rather
+    // than as an error.
+    const forged = { ...compiled, paths: compiled.paths.slice(1) } as PureMod;
+    expect(() => render(forged)).toThrow(PdxSdkError);
   });
 });
 
 describe("a rendered file's bytes", () => {
   const BLOB = "gfx/blob.bin";
 
-  function withClaim(claim: Omit<RenderedClaim, "path" | "owner">) {
-    return createRenderedMod("rendered_probe", "", [{ path: BLOB, owner: "test", ...claim }]).file(
-      BLOB
-    )!;
+  function withClaim(claim: Omit<RenderedClaim, "path">) {
+    return createRenderedMod("rendered_probe", "", [{ path: BLOB, ...claim }]).file(BLOB)!;
   }
 
   it("copies a plain byte claim, so a later mutation cannot rewrite content", () => {

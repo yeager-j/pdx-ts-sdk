@@ -104,6 +104,27 @@ describe("the public authoring surface", () => {
     }>();
   });
 
+  it("reports a path conflict as data, not as a message to parse", () => {
+    // A caller deciding what to do about a collision — a scaffolder, a build
+    // wrapper — needs the reason and the producers as values. `owners` was a
+    // list of prose strings and could only be printed.
+    expectTypeOf<sdk.PathOwnershipError["conflicts"]>().toEqualTypeOf<
+      readonly sdk.PathOwnershipConflict[]
+    >();
+    expectTypeOf<sdk.PathOwnershipConflict["reason"]>().toEqualTypeOf<sdk.PathConflictReason>();
+    expectTypeOf<sdk.PathOwnershipConflict["claimants"]>().toEqualTypeOf<
+      readonly sdk.PathClaimant[]
+    >();
+    expectTypeOf<sdk.PathClaimant["kind"]>().toEqualTypeOf<sdk.PathProducerKind>();
+    expectTypeOf<sdk.PathClaimant["stems"]>().toEqualTypeOf<readonly string[]>();
+    expectTypeOf<sdk.PathClaimant["role"]>().toEqualTypeOf<"file" | "directory">();
+    expectTypeOf<sdk.PureMod["paths"]>().toEqualTypeOf<readonly sdk.PathClaim[]>();
+    expectTypeOf<sdk.PathClaim["producer"]>().toEqualTypeOf<sdk.PathProducer>();
+    expectTypeOf<sdk.PathClaim["path"]>().toEqualTypeOf<sdk.LogicalPath>();
+    // @ts-expect-error — the fold adjudicates, so a PureMod has no raw evidence set.
+    expectTypeOf<sdk.PureMod["vanillaPaths"]>();
+  });
+
   it("takes no receipt a caller could have written themselves", () => {
     // The brand is required, not optional. An optional one lets `{}` satisfy
     // the parameter, which turns a forged review into a runtime error at the

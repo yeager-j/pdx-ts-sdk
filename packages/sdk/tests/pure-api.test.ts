@@ -244,10 +244,12 @@ describe("parity with the deleted class builder", () => {
     expect(Object.isFrozen(pure.patchPlans[0])).toBe(true);
     expect(Object.isFrozen(pure.patchPlans[0]?.assertions)).toBe(true);
     expect(Object.isFrozen(pure.patchPlans[0]?.assertions[0]?.beats)).toBe(true);
+    expect(Object.isFrozen(pure.paths)).toBe(true);
+    expect(Object.isFrozen(pure.paths[0])).toBe(true);
+    expect(Object.isFrozen(pure.paths[0]?.producer)).toBe(true);
+    expect(Object.isFrozen(pure.paths[0]?.producer.stems)).toBe(true);
     expect(() => (pure.shipOfSizeLimits as Set<string>).add("mutated_limit")).toThrow();
-    expect(() => (pure.vanillaPaths as Set<string>).add("mutated/path.txt")).toThrow();
     expect([...pure.shipOfSizeLimits]).not.toContain("mutated_limit");
-    expect(pure.vanillaPaths?.has("mutated/path.txt")).toBe(false);
   });
 });
 

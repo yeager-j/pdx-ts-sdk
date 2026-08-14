@@ -101,7 +101,7 @@ export function createLocalizationAccumulator(warnings: ModWarning[]): Localizat
 
       const grouped = new Map<
         LogicalPath,
-        { language: LocalizationLanguage; entries: LocalisationEntry[] }
+        { language: LocalizationLanguage; stems: Set<string>; entries: LocalisationEntry[] }
       >();
       for (const entry of placed) {
         let text = entry.source;
@@ -116,8 +116,14 @@ export function createLocalizationAccumulator(warnings: ModWarning[]): Localizat
         }
         const file = grouped.get(entry.relPath) ?? {
           language: entry.language,
+          stems: new Set<string>(),
           entries: [],
         };
+        for (const stem of entry.stems) {
+          if (stem !== undefined) {
+            file.stems.add(stem);
+          }
+        }
         file.entries.push(Object.freeze([entry.key, text]));
         grouped.set(entry.relPath, file);
       }
@@ -127,6 +133,7 @@ export function createLocalizationAccumulator(warnings: ModWarning[]): Localizat
           Object.freeze({
             relPath,
             language: file.language,
+            stems: Object.freeze([...file.stems].sort(compareUtf8)),
             entries: Object.freeze([...file.entries]),
           })
         )
