@@ -1,11 +1,12 @@
 import { createHash, randomUUID } from "node:crypto";
-import { constants, type Stats } from "node:fs";
+import { constants, type Dir, type Stats } from "node:fs";
 import {
   chmod,
   copyFile,
   link,
   lstat,
   mkdir,
+  opendir,
   readdir,
   readFile,
   realpath,
@@ -37,6 +38,7 @@ import {
   type OwnedSnapshotEntry,
 } from "./receipt.ts";
 import { renderedFileBytes, type RenderedMod } from "./rendered.ts";
+import { _materializationTestPoint } from "./test-hooks.ts";
 import {
   acquireTransaction,
   lockPathFor,
@@ -76,6 +78,12 @@ export interface MaterializationManifest {
     readonly sha256: string;
   }[];
   readonly launcherDescriptor?: LauncherDescriptorRecord;
+}
+
+/** The two numbers that say a directory is still the one that was read. */
+interface DirectoryIdentity {
+  readonly dev: number;
+  readonly ino: number;
 }
 
 /** What a fresh `lstat` must still say about a preserved entry at commit time. */
@@ -495,6 +503,9 @@ export async function activateMaterialization(
         { cause: error }
       );
     }
+    // Outside the catch on purpose: a fault injected here is a failure of what
+    // comes next, and must not be reported as the rename that already landed.
+    await _materializationTestPoint("rename:content-deactivate");
   }
   await journal?.record("content-activating");
   try {
@@ -519,6 +530,7 @@ export async function activateMaterialization(
       { cause: error }
     );
   }
+  await _materializationTestPoint("rename:content-activate");
 }
 
 export async function rollbackMaterialization(staged: StagedMaterialization): Promise<void> {
@@ -592,7 +604,7 @@ export async function validateExistingMaterialization(
   }
 
   if (entries.every((name) => OS_METADATA_BASENAMES.has(name))) {
-    const classified = await classifyTarget(target, new Map(), descriptor);
+    const classified = await classifyTarget(target, targetStats, new Map(), descriptor);
     const verdict = refuse(target, mode, rendered.prefix, rendered, classified, options.receipt);
     return {
       kind: "empty",
@@ -626,6 +638,7 @@ export async function validateExistingMaterialization(
 
   const classified = await classifyTarget(
     target,
+    targetStats,
     new Map(manifest.files.map((file) => [file.path, file])),
     descriptor
   );
@@ -690,6 +703,7 @@ interface ClassifiedTarget {
  */
 async function classifyTarget(
   target: string,
+  rootIdentity: DirectoryIdentity,
   ownedFiles: ReadonlyMap<string, { readonly byteLength: number; readonly sha256: string }>,
   descriptor?: DescriptorSnapshot
 ): Promise<ClassifiedTarget> {
@@ -714,22 +728,25 @@ async function classifyTarget(
    * matters to anyone reviewing it: without the subtree, every possible set
    * of contents under it digests the same.
    */
-  const record = async (relative: string): Promise<void> => {
+  const record = async (relative: string, identity: DirectoryIdentity): Promise<void> => {
     const dir = path.join(target, ...relative.split("/"));
-    for (const name of await readdir(dir)) {
+    for await (const entry of await openVerifiedDir(target, dir, identity)) {
+      const name = entry.name;
       const relPath = `${relative}/${name}`;
       const stats = await lstat(path.join(dir, name));
       known.add(relPath);
       foreignSnapshot.push({ path: relPath, kind: observedKind(stats), ...identityOf(stats) });
       if (stats.isDirectory()) {
-        await record(relPath);
+        await _materializationTestPoint(`traversal:descend:${relPath}`);
+        await record(relPath, stats);
       }
     }
   };
 
-  const walk = async (relative: string): Promise<void> => {
+  const walk = async (relative: string, identity: DirectoryIdentity): Promise<void> => {
     const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
-    for (const name of await readdir(dir)) {
+    for await (const entry of await openVerifiedDir(target, dir, identity)) {
+      const name = entry.name;
       const relPath = relative === "" ? name : `${relative}/${name}`;
       if (relPath === MATERIALIZATION_MANIFEST_PATH) {
         continue;
@@ -754,7 +771,8 @@ async function classifyTarget(
         } else if (stats.isDirectory()) {
           drift.push({ path: relPath, kind: "type-changed" });
           owned.push({ path: relPath, kind: "directory", byteLength: 0, sha256: "" });
-          await record(relPath);
+          await _materializationTestPoint(`traversal:descend:${relPath}`);
+          await record(relPath, stats);
         } else {
           drift.push({ path: relPath, kind: "type-changed" });
           owned.push({ path: relPath, kind: "other", byteLength: 0, sha256: "" });
@@ -767,7 +785,8 @@ async function classifyTarget(
           drift.push({ path: relPath, kind: "symlink" });
           owned.push({ path: relPath, kind: "symlink", byteLength: 0, sha256: "" });
         } else if (stats.isDirectory()) {
-          await walk(relPath);
+          await _materializationTestPoint(`traversal:descend:${relPath}`);
+          await walk(relPath, stats);
         } else {
           drift.push({ path: relPath, kind: "type-changed" });
           owned.push({ path: relPath, kind: "other", byteLength: 0, sha256: "" });
@@ -783,14 +802,15 @@ async function classifyTarget(
         foreign.push({ path: relPath, kind, identity, permissions: stats.mode & 0o7777 });
         foreignSnapshot.push({ path: relPath, kind, ...identity });
         if (kind === "directory") {
-          await walk(relPath);
+          await _materializationTestPoint(`traversal:descend:${relPath}`);
+          await walk(relPath, stats);
         }
       } else {
         refused.push({ path: relPath, kind: specialKind(stats) });
       }
     }
   };
-  await walk("");
+  await walk("", rootIdentity);
 
   for (const relPath of ownedFiles.keys()) {
     if (!seen.has(relPath)) {
@@ -811,6 +831,68 @@ async function classifyTarget(
       ...(descriptor === undefined ? {} : { descriptor }),
     },
   };
+}
+
+/**
+ * Open a directory, then prove it is the one that was classified.
+ *
+ * `readdir` takes a path, and a path is re-resolved every time it is used. A
+ * foreign directory swapped for a symlink between the `lstat` that classified
+ * it and the read that descends into it is followed, and the walk leaves the
+ * target — with `preserveForeign` then hardlinking somebody else's files into
+ * the staged tree. Opening first and verifying after closes that: the handle
+ * reads one directory whatever happens to the name, and a name that a moment
+ * later points at a symlink, or at a different inode, is refused rather than
+ * read.
+ *
+ * It is not a full closure. Node exposes no `openat`, and no `fstat` on an open
+ * `Dir`, so identity can only be checked through the path — which leaves a
+ * window in which a swap put back before the `lstat` reads the substitute
+ * through the handle. What remains is a double swap inside microseconds
+ * instead of a single swap at leisure, and `revalidateTarget` is still the
+ * commit-time backstop: a target whose membership or preserved entries moved
+ * during the build refuses at the activation point regardless.
+ */
+async function openVerifiedDir(
+  target: string,
+  absolute: string,
+  expected: DirectoryIdentity
+): Promise<Dir> {
+  let dir: Dir;
+  try {
+    dir = await opendir(absolute);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "ENOENT" || code === "ENOTDIR" || code === "ELOOP") {
+      throw entryMoved(target, absolute, "it is no longer the directory that was read");
+    }
+    throw error;
+  }
+  const stats = await lstatOrUndefined(absolute);
+  if (stats === undefined || stats.isSymbolicLink() || !sameInode(stats, expected)) {
+    await dir.close();
+    throw entryMoved(
+      target,
+      absolute,
+      stats?.isSymbolicLink() === true
+        ? "it is now a symlink, which a materialization never follows"
+        : "it is not the directory that was read a moment earlier"
+    );
+  }
+  return dir;
+}
+
+/** Something under the target changed identity while it was being read. */
+function entryMoved(target: string, absolute: string, detail: string): MaterializationError {
+  return new MaterializationError(target, {
+    reason: "busy",
+    detail: `${absolute} changed while the target was being read: ${detail}.`,
+  });
+}
+
+/** One inode, by the only two numbers that name one: device and number. */
+function sameInode(observed: DirectoryIdentity, expected: DirectoryIdentity): boolean {
+  return observed.dev === expected.dev && observed.ino === expected.ino;
 }
 
 /** What a pass through `refuse` leaves the inspection to carry. */
@@ -971,7 +1053,8 @@ async function preserveForeign(
       await mkdir(destination, { recursive: true });
     } else {
       await mkdir(path.dirname(destination), { recursive: true });
-      await linkOrCopy(source, destination);
+      await _materializationTestPoint(`preserve:${entry.path}`);
+      await carryFile(target, entry, source, destination);
     }
     preserved.push({ path: entry.path, source, identity: entry.identity });
   }
@@ -983,15 +1066,52 @@ async function preserveForeign(
   return preserved;
 }
 
-async function linkOrCopy(source: string, destination: string): Promise<void> {
+/**
+ * Carry one foreign file into the staged tree, having proved on both sides
+ * that it is the file that was classified.
+ *
+ * `link` takes paths too, so a directory on the way to the source swapped for
+ * a symlink after classification would publish a link to somebody else's file
+ * — and `link` itself follows a symlinked source on some platforms, which is
+ * why the destination is checked as well as the source. A mismatch either way
+ * refuses; the staged tree is removed by `stageMaterialization`'s own failure
+ * path, which is what owns it.
+ */
+async function carryFile(
+  target: string,
+  entry: ForeignEntry,
+  source: string,
+  destination: string
+): Promise<void> {
+  const before = await lstatOrUndefined(source);
+  if (
+    before === undefined ||
+    before.isSymbolicLink() ||
+    !sameIdentity(identityOf(before), entry.identity)
+  ) {
+    throw entryMoved(target, source, "it is not the file that was classified");
+  }
+  if (!(await linkOrCopy(source, destination))) {
+    return;
+  }
+  const after = await lstatOrUndefined(destination);
+  if (after === undefined || !sameInode(after, before)) {
+    throw entryMoved(target, source, "the hardlink published a different file");
+  }
+}
+
+/** Whether the destination is a hardlink to the source rather than a copy. */
+async function linkOrCopy(source: string, destination: string): Promise<boolean> {
   try {
     await link(source, destination);
+    return true;
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
     if (code === undefined || !LINK_FALLBACK_CODES.has(code)) {
       throw error;
     }
     await copyFile(source, destination, constants.COPYFILE_FICLONE);
+    return false;
   }
 }
 
@@ -1029,32 +1149,33 @@ async function revalidateTarget(staged: StagedMaterialization): Promise<void> {
 }
 
 /**
- * Every target-relative path present right now, by kind only — no hashing and
- * no `lstat` per entry, since this runs on the way into every activation.
+ * Every target-relative path present right now, by kind only — no hashing,
+ * since this runs on the way into every activation. Each directory is opened
+ * against the identity its own `lstat` just gave, for the same reason
+ * classification is: this walk decides what is inside the target, and a
+ * substitute directory would answer for one that is not.
  */
 async function membership(target: string): Promise<string[]> {
   const found: string[] = [];
-  const walk = async (relative: string): Promise<void> => {
+  const walk = async (relative: string, identity: DirectoryIdentity): Promise<void> => {
     const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
-    let entries;
-    try {
-      entries = await readdir(dir, { withFileTypes: true });
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        return;
-      }
-      throw error;
-    }
-    for (const entry of entries) {
+    for await (const entry of await openVerifiedDir(target, dir, identity)) {
       const relPath = relative === "" ? entry.name : `${relative}/${entry.name}`;
       found.push(relPath);
       // `readdir` never follows, so a symlink to a directory is not one here.
       if (entry.isDirectory()) {
-        await walk(relPath);
+        const stats = await lstatOrUndefined(path.join(dir, entry.name));
+        if (stats !== undefined && stats.isDirectory() && !stats.isSymbolicLink()) {
+          await walk(relPath, stats);
+        }
       }
     }
   };
-  await walk("");
+  const root = await lstatOrUndefined(target);
+  if (root === undefined) {
+    return found;
+  }
+  await walk("", root);
   return found;
 }
 

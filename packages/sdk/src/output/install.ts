@@ -15,6 +15,7 @@ import {
 } from "./receipt.ts";
 import { renderLauncherDescriptor } from "./render.ts";
 import type { RenderedMod } from "./rendered.ts";
+import { _materializationTestPoint } from "./test-hooks.ts";
 import { acquireTransaction, type MaterializationTransaction } from "./transaction.ts";
 import {
   activateMaterialization,
@@ -260,9 +261,11 @@ async function installJournaled(
       await transaction.record("descriptor-deactivating");
       await rename(descriptorPath, descriptorPrevious);
       descriptorMovedAside = true;
+      await _materializationTestPoint("rename:descriptor-deactivate");
     }
     await transaction.record("descriptor-activating");
     await rename(descriptorStaging, descriptorPath);
+    await _materializationTestPoint("rename:descriptor-activate");
   } catch (error) {
     await transaction.record("rolling-back");
     if (descriptorMovedAside) {
