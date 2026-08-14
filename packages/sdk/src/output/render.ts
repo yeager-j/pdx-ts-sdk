@@ -18,7 +18,15 @@ import {
   type RenderedMod,
 } from "./rendered.ts";
 
+const renderedAssets = new WeakMap<PureMod, RenderedMod>();
+
 export function render(mod: PureMod): RenderedMod {
+  if (mod.assets.length > 0) {
+    const cached = renderedAssets.get(mod);
+    if (cached !== undefined) {
+      return cached;
+    }
+  }
   const { prefix } = mod.config;
   const files: RenderedClaim[] = [];
   files.push({ path: DESCRIPTOR_PATH, text: renderDescriptor(mod) });
@@ -67,7 +75,11 @@ export function render(mod: PureMod): RenderedMod {
     files.push({ path: plan.relPath, text: plan.content });
   }
   assertSerializesTheLedger(mod, files);
-  return createRenderedMod(prefix, renderDescriptor(mod), files);
+  const rendered = createRenderedMod(prefix, renderDescriptor(mod), files);
+  if (mod.assets.length > 0) {
+    renderedAssets.set(mod, rendered);
+  }
+  return rendered;
 }
 
 /**

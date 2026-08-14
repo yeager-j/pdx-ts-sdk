@@ -147,6 +147,28 @@ describe("Asset capture", () => {
     expect(reads.map((source) => source.slice(directory.length + 1))).toEqual(["a.bin", "z.bin"]);
   });
 
+  it("refuses a queued nested directory swapped for a symlink before reading outside it", () => {
+    const directory = tempDir();
+    const nested = join(directory, "nested");
+    const outside = tempDir();
+    mkdirSync(nested);
+    writeFileSync(join(nested, "inside.bin"), "inside");
+    writeFileSync(join(outside, "outside.bin"), "outside");
+    const reads: string[] = [];
+    _assetCaptureTestHook.current = {
+      beforeDirectoryRead: (source) => {
+        if (source === nested) {
+          rmSync(nested, { recursive: true });
+          symlinkSync(outside, nested, "dir");
+        }
+      },
+      beforeRead: (source) => reads.push(source),
+    };
+
+    expect(() => mod().assetTree({ source: directory })).toThrow("Asset tree directory");
+    expect(reads).toEqual([]);
+  });
+
   it("fails all-or-nothing when a planned entry disappears or changes type", () => {
     const directory = tempDir();
     const first = join(directory, "a.bin");
@@ -268,6 +290,24 @@ describe("Asset capture", () => {
     expect(Buffer.from(rendered.file("gfx/blob.bin")!.bytes()).toString()).toBe("before");
     expect(Buffer.from(rendered.file("gfx/after.bin")!.bytes()).toString()).toBe("after");
     expect(before.sha256).not.toBe(after.sha256);
+  });
+
+  it("returns a cached immutable rendered snapshot for repeated Asset renders", () => {
+    const directory = tempDir();
+    const source = join(directory, "blob.bin");
+    writeFileSync(source, Buffer.from([1, 2, 3]));
+    const capability = mod();
+    const compiled = capability.compile([
+      capability.feature("assets", [capability.assetFile({ source, path: "gfx/blob.bin" })]),
+    ]);
+
+    const first = render(compiled);
+    const second = render(compiled);
+
+    expect(Object.isFrozen(compiled)).toBe(true);
+    expect(second).toBe(first);
+    expect(second.sha256).toBe(first.sha256);
+    expect(second.file("gfx/blob.bin")!.bytes()).toEqual(first.file("gfx/blob.bin")!.bytes());
   });
 
   it("keeps unplaced items inert and feature stems as claim provenance only", () => {

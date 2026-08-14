@@ -50,6 +50,11 @@ interface PlannedTree {
   readonly files: readonly PlannedFile[];
 }
 
+interface PlannedDirectory {
+  readonly source: string;
+  readonly identity: Identity;
+}
+
 const records = new WeakMap<AssetFileItem, AssetRecord>();
 
 /** Test-only seam. This module is deliberately not exported from the package. */
@@ -58,6 +63,7 @@ export const _assetCaptureTestHook: {
     | {
         readonly beforeRead?: (source: string) => void;
         readonly afterRead?: (source: string) => void;
+        readonly beforeDirectoryRead?: (source: string) => void;
       }
     | undefined;
 } = { current: undefined };
@@ -127,14 +133,16 @@ function planTree(source: string, into: string | undefined): PlannedTree {
     throw new Error(`Asset tree source ${JSON.stringify(source)} must be a directory`);
   }
   const files: PlannedFile[] = [];
-  const pending = [source];
+  const pending: PlannedDirectory[] = [{ source, identity: identityOf(root) }];
   const rawDestinations = new Map<LogicalPath, string>();
 
   while (pending.length > 0) {
     const directory = pending.pop()!;
-    const entries = readdirSync(directory, { withFileTypes: true });
+    _assetCaptureTestHook.current?.beforeDirectoryRead?.(directory.source);
+    assertSameIdentity(directory.source, directory.identity, "directory", "Asset tree directory");
+    const entries = readdirSync(directory.source, { withFileTypes: true });
     for (const entry of entries) {
-      const entrySource = path.join(directory, entry.name);
+      const entrySource = path.join(directory.source, entry.name);
       const stat = lstatRequired(entrySource, "Asset tree entry");
       if (stat.isSymbolicLink()) {
         throw new Error(
@@ -142,7 +150,7 @@ function planTree(source: string, into: string | undefined): PlannedTree {
         );
       }
       if (stat.isDirectory()) {
-        pending.push(entrySource);
+        pending.push({ source: entrySource, identity: identityOf(stat) });
         continue;
       }
       if (!stat.isFile()) {
