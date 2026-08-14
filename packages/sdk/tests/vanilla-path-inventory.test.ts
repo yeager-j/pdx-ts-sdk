@@ -20,6 +20,8 @@ import {
 import { createMod, PathOwnershipError } from "../src/index.ts";
 import { isOsMetadataPath } from "../src/stellaris/installation/scan-paths.ts";
 import { load } from "../src/stellaris/vanilla/load.ts";
+import { viewFromFiles, type VanillaView } from "../src/stellaris/vanilla/view.ts";
+import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -172,5 +174,101 @@ describe("invalid live inventory is never treated as absent", () => {
     expect(() => load({ installPath: installRoot, cache: false })).toThrow(
       VanillaPathInventoryError
     );
+  });
+});
+
+describe("vanilla evidence unions every accepted origin, not just one (SDK-119)", () => {
+  // `collectPatches` only enforces that every origin shares one
+  // `manifestKey`, not that every origin is the same object — so two views
+  // built from identical sources can share a `manifestKey` while carrying
+  // different `pathInventory`s. `manifestKey` is a hash over the parsed-file
+  // manifest alone, so building both from the same FILES object makes it
+  // equal regardless of `pathInventory`.
+  const FILES = {
+    "common/technology/pp_soc_tech.txt": TECH_FILE,
+    "common/scripted_variables/pp_vars.txt": VARS_FILE,
+  };
+  const MARKER = "events/sdk119union_events.txt";
+
+  // Returns bare items rather than an already-built `mod.feature(...)`: the
+  // branded mod-prefix type in `mod.feature`'s return only matches the exact
+  // `mod` instance's literal prefix, and this helper's `mod` parameter has
+  // to be typed with the widened `ReturnType<typeof createMod>` to accept
+  // either test's `mod`. Callers place the items with their own `mod`.
+  function patchFrom(origin: VanillaView, mod: ReturnType<typeof createMod>, techId: string) {
+    const myNewTech = mod.technology(techId, {
+      name: "Marker Tech",
+      area: "society",
+      tier: 3,
+      category: "biology",
+    });
+    const patch = mod.patchTechnology(
+      origin.definition("technology", "tech_gene_forging").require("cost", "prerequisites"),
+      (t) => ({ cost: t.cost.value * 2, prerequisites: [...t.prerequisites, myNewTech] })
+    );
+    return [myNewTech, patch];
+  }
+
+  it("refuses a path only the patch's own origin carries, though options.vanilla shares its manifest", () => {
+    const hermetic = viewFromFiles(FILES, { gameVersion: "4.4.6" });
+    const live = viewFromFiles(FILES, { gameVersion: "4.4.6", pathInventory: [MARKER] });
+    // Same load, by the one thing `collectPatches` checks — proving the
+    // patch is legal on its own terms before the union is what's on trial.
+    expect(live.manifestKey).toBe(hermetic.manifestKey);
+
+    const mod = createMod({
+      name: "SDK-119 union probe",
+      prefix: "sdk119union",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const pulse = events.country(1, { hideWindow: true, isTriggeredOnly: true });
+
+    let thrown: unknown;
+    try {
+      // `options.vanilla` is the hermetic view; the patch's own origin is the
+      // live one. Picking only one origin (the old
+      // `options.vanilla ?? patches[0]?.source.origin`) would silently drop
+      // `live.pathInventory`, and this build would pass.
+      mod.compile(
+        [mod.feature(undefined, patchFrom(live, mod, "marker")), mod.feature("events", [pulse])],
+        { vanilla: hermetic }
+      );
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(PathOwnershipError);
+    const conflicts = (thrown as PathOwnershipError).conflicts;
+    const atPath = conflicts.filter((conflict) => conflict.path === MARKER);
+    expect(atPath).toHaveLength(1);
+    expect(atPath[0]!.reason).toBe("vanilla");
+  });
+
+  it("control: with no origin carrying the marker, the identical build was clean", () => {
+    const hermetic = viewFromFiles(FILES, { gameVersion: "4.4.6" });
+    // Same shape as above, but the patch's own origin carries no live
+    // evidence either — the only variable that changed is whether *any*
+    // accepted origin knows about `MARKER`, which is exactly what the union
+    // fix is responsible for.
+    const alsoHermetic = viewFromFiles(FILES, { gameVersion: "4.4.6" });
+    expect(alsoHermetic.manifestKey).toBe(hermetic.manifestKey);
+
+    const mod = createMod({
+      name: "SDK-119 union control",
+      prefix: "sdk119union",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const pulse = events.country(1, { hideWindow: true, isTriggeredOnly: true });
+
+    expect(() =>
+      mod.compile(
+        [
+          mod.feature(undefined, patchFrom(alsoHermetic, mod, "marker")),
+          mod.feature("events", [pulse]),
+        ],
+        { vanilla: hermetic }
+      )
+    ).not.toThrow();
   });
 });
