@@ -225,6 +225,38 @@ export async function canonicalTarget(target: string | URL): Promise<string> {
 }
 
 /**
+ * The physical form as far as it can be known without creating anything: the
+ * nearest ancestor that exists, resolved, with the components that do not
+ * exist yet joined back on lexically.
+ *
+ * The representability check has to run before the parent directories are
+ * made, or a refused materialization leaves a directory chain behind that the
+ * caller never asked for and nothing will clean up. Resolving what exists is
+ * enough for that check, because the components still to be created cannot be
+ * symlinks — nothing has created them.
+ */
+export async function nearestPhysicalForm(target: string | URL): Promise<string> {
+  const resolved = resolveTarget(target);
+  const pending: string[] = [];
+  let ancestor = resolved;
+  for (;;) {
+    const parent = path.dirname(ancestor);
+    pending.unshift(path.basename(ancestor));
+    if (parent === ancestor) {
+      return resolved;
+    }
+    try {
+      return path.join(await realpath(parent), ...pending);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw error;
+      }
+      ancestor = parent;
+    }
+  }
+}
+
+/**
  * Which lock disposition a failed transaction earns. Residue the journal
  * named and that is still on disk is the whole reason to keep a journal: the
  * next writer reads it and refuses with `"recovery-required"` instead of
@@ -288,6 +320,10 @@ async function materialize(
   rendered: RenderedMod,
   receipt: OpenedReceipt | undefined
 ): Promise<WriteReport> {
+  // Checked against the deepest physical form available before anything is
+  // created, so a refusal leaves no directory chain behind, then again on the
+  // canonical form once the parent exists — the same assertion, and cheap.
+  assertRepresentableMaterialization(await nearestPhysicalForm(outDir), rendered);
   const target = await canonicalTarget(outDir);
   assertRepresentableMaterialization(target, rendered);
   return withMaterializationLocks([target], async () => {

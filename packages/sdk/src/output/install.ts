@@ -25,6 +25,7 @@ import {
   discardStaging,
   disposeAfterFailure,
   freezeReport,
+  nearestPhysicalForm,
   observeDescriptor,
   ownedSetMatches,
   reportForeign,
@@ -107,6 +108,14 @@ async function installWith(
   // a mod directory the descriptor format cannot encode must refuse without
   // making the directory it refused to install into.
   renderLauncherDescriptor(rendered, path.join(requested, dirName));
+  // And representability before the mod directory is created, for the same
+  // reason: a refusal must not leave the directory chain it refused to fill.
+  const lexical = await nearestPhysicalForm(path.join(requested, dirName));
+  assertRepresentableMaterialization(
+    lexical,
+    rendered,
+    path.join(path.dirname(lexical), `${dirName}.mod`)
+  );
 
   const contentDir = await canonicalTarget(path.join(requested, dirName));
   const root = path.dirname(contentDir);

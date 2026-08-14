@@ -19,7 +19,9 @@
  * is no age heuristic anywhere: an old transaction is not a dead one.
  */
 
-import { lstat, readdir, readFile, realpath, rename, rm, unlink } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import type { Stats } from "node:fs";
+import { lstat, readdir, readFile, readlink, realpath, rename, rm, unlink } from "node:fs/promises";
 import { hostname } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,10 +33,12 @@ import { assertInstallDirName } from "./install.ts";
 import type { DescriptorSnapshot } from "./receipt.ts";
 import {
   claimRecovery,
+  describeReadFailure,
+  LOCK_BASENAME_PREFIX,
   lockPathFor,
   processIsAlive,
-  readJournal,
   recoveryRequired,
+  tryReadJournal,
   type Journal,
   type JournalHeader,
   type JournalStaging,
@@ -44,11 +48,23 @@ import {
   observeDescriptor,
   withMaterializationLocks,
   type CleanupWarning,
+  type MaterializationManifest,
   type MaterializationMode,
 } from "./write.ts";
 
 /** Sibling basename prefixes a materialization mints and then journals. */
 const SIBLING_PREFIXES = [".pdx-staging-", ".pdx-previous-", ".pdx-descriptor-"];
+
+/** The UUID a sibling name ends in, so a name cannot be anything at all. */
+const UUID_SUFFIX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Basenames the operating system writes on its own. They are foreign entries
+ * like any other, and the one place recovery has to name them is here: a
+ * `.DS_Store` a Finder window dropped into a half-activated tree must not be
+ * what makes that tree unaccountable.
+ */
+const OS_METADATA_BASENAMES = new Set([".DS_Store", "Thumbs.db", "desktop.ini"]);
 
 export interface RecoveryAction {
   readonly kind: "removed" | "renamed" | "released-lock";
@@ -160,6 +176,7 @@ async function recoverUnlocked(
     );
   }
   const lastPhase = journal.lastPhase ?? "inspecting";
+  assertJournalDescribes(target, journal, header);
   assertNotHeld(target, journal, header, lastPhase);
   const claim = await claimRecovery(journal.path, {
     pid: header.pid,
@@ -183,7 +200,11 @@ async function recoverUnlocked(
     });
   }
 
-  const outcome = await performRecovery(journal, header, actions);
+  // Decided in full before any of it happens, so a refusal is always about
+  // the tree as it was found rather than one this recovery half-changed.
+  const plan = await planRecovery(journal, header);
+  const warnings: CleanupWarning[] = [];
+  const outcome = await executePlan(plan, actions, warnings);
   for (const lockPath of [header.secondaryLockPath, found.markerPath, journal.path]) {
     if (lockPath !== undefined && (await removeIfPresent(lockPath))) {
       actions.push({ kind: "released-lock", path: lockPath });
@@ -194,7 +215,10 @@ async function recoverUnlocked(
     outcome,
     phase: lastPhase,
     actions,
-    warnings: await orphanWarnings(header.target, journaledPaths(journal.staging)),
+    warnings: [
+      ...warnings,
+      ...(await orphanWarnings(header.target, journaledPaths(journal.staging))),
+    ],
   });
 }
 
@@ -211,20 +235,109 @@ async function findJournal(
   alternates: readonly string[]
 ): Promise<FoundJournal | undefined> {
   for (const candidate of [lockPathFor(target), ...alternates]) {
-    const journal = await readJournal(candidate);
-    if (journal === undefined) {
+    const found = await readOrRefuse(target, candidate);
+    if (found === undefined) {
       continue;
     }
-    if (journal.header !== undefined || journal.marker === undefined) {
-      return { journal, lockPath: candidate };
+    if (found.header !== undefined || found.marker === undefined) {
+      return { journal: found, lockPath: candidate };
     }
-    const primary = await readJournal(journal.marker.primary);
+    const primary = await readOrRefuse(target, found.marker.primary);
     if (primary === undefined) {
       return { journal: undefined, lockPath: candidate };
     }
     return { journal: primary, lockPath: primary.path, markerPath: candidate };
   }
   return undefined;
+}
+
+/**
+ * A lock that exists and cannot be read is evidence, not an errno. Recovery
+ * is the operation somebody reaches for when a target is already wrong, so
+ * "EISDIR" with no path in it is the least useful thing it could say.
+ */
+async function readOrRefuse(target: string, lockPath: string): Promise<Journal | undefined> {
+  const read = await tryReadJournal(lockPath);
+  if (read.ok) {
+    return read.journal;
+  }
+  throw recoveryRequired(
+    target,
+    lockPath,
+    `${lockPath} exists and could not be read (${describeReadFailure(read.error)}).`,
+    undefined
+  );
+}
+
+/**
+ * Whether the journal describes the target the caller asked about, and names
+ * only paths a materialization of that target could have minted.
+ *
+ * The journal is a file in the directory it protects, so it is only as
+ * trustworthy as that directory: anyone who can write there can write a
+ * journal too. What keeps that from turning recovery into a delete-anything
+ * primitive is that a journal may only name its own siblings — the target
+ * itself, and names of the exact shapes materialization mints beside it. A
+ * journal pointing somewhere else is not a transaction this operation can
+ * finish; it is refused whole, and nothing on either side is touched.
+ */
+function assertJournalDescribes(target: string, journal: Journal, header: JournalHeader): void {
+  const evidence: MaterializationEvidence[] = [];
+  if (header.target !== target) {
+    evidence.push({
+      path: header.target,
+      expected: `a transaction against ${target}`,
+      observed: `a journal against ${header.target}`,
+    });
+  }
+  const parent = path.dirname(target);
+  const sibling = (candidate: string | undefined, prefix: string, uuid: boolean): void => {
+    if (candidate === undefined) {
+      return;
+    }
+    const basename = path.basename(candidate);
+    const suffix = basename.slice(prefix.length);
+    const legal =
+      path.dirname(candidate) === parent &&
+      basename.startsWith(prefix) &&
+      (!uuid || UUID_SUFFIX.test(suffix));
+    if (!legal) {
+      evidence.push({
+        path: candidate,
+        expected: `${parent}/${prefix}${uuid ? "<uuid>" : "…"}`,
+        observed: candidate,
+      });
+    }
+  };
+
+  sibling(journal.path, LOCK_BASENAME_PREFIX, false);
+  sibling(header.secondaryLockPath, LOCK_BASENAME_PREFIX, false);
+  if (header.descriptorPath !== undefined && path.dirname(header.descriptorPath) !== parent) {
+    evidence.push({
+      path: header.descriptorPath,
+      expected: `a launcher descriptor beside ${target}`,
+      observed: header.descriptorPath,
+    });
+  }
+  const staging = journal.staging;
+  if (staging !== undefined) {
+    sibling(staging.staging, ".pdx-staging-", true);
+    sibling(staging.previous, ".pdx-previous-", true);
+    sibling(staging.descriptorStaging, ".pdx-descriptor-staging-", true);
+    sibling(staging.descriptorPrevious, ".pdx-descriptor-previous-", true);
+  }
+
+  if (evidence.length > 0) {
+    throw recoveryRequired(
+      target,
+      journal.path,
+      `${journal.path} names ${evidence.length} path${evidence.length === 1 ? "" : "s"} that no ` +
+        `materialization of ${target} could have created, so it is not a transaction this ` +
+        `recovery may act on.`,
+      journal.lastPhase,
+      evidence
+    );
+  }
 }
 
 /**
@@ -312,114 +425,172 @@ function goalFor(
   }
 }
 
-async function performRecovery(
-  journal: Journal,
-  header: JournalHeader,
-  actions: RecoveryAction[]
-): Promise<RecoveryReport["outcome"]> {
+/**
+ * What recovery intends to do, decided before it does any of it.
+ *
+ * `required` marks a removal something later in the list depends on — the new
+ * target that has to go before the set-aside copy can be renamed back into
+ * its place. Everything else is cleanup, where a removal that fails is a
+ * warning rather than the end of the recovery.
+ */
+type PlannedAction =
+  | { readonly kind: "remove"; readonly path: string; readonly required: boolean }
+  | { readonly kind: "rename"; readonly path: string; readonly to: string };
+
+interface RecoveryPlan {
+  readonly outcome: RecoveryReport["outcome"];
+  readonly actions: readonly PlannedAction[];
+}
+
+/**
+ * Both halves are planned before either is touched.
+ *
+ * An install is one materialization in two renames, so its recovery is one
+ * decision about a pair. Deciding the content half, acting on it, and only
+ * then discovering the descriptor half is unaccountable would leave a target
+ * that is neither what recovery found nor what it meant to produce — and the
+ * refusal would be reporting a state it had itself half-changed. Planning
+ * dry means a refusal is always about the tree exactly as it was found.
+ */
+async function planRecovery(journal: Journal, header: JournalHeader): Promise<RecoveryPlan> {
   const phase = progressPhase(journal);
   const staging = journal.staging;
-  const remove = async (target: string): Promise<boolean> => {
-    if (!(await removeIfPresent(target))) {
-      return false;
-    }
-    actions.push({ kind: "removed", path: target });
-    return true;
-  };
-  const move = async (from: string, to: string): Promise<void> => {
-    await rename(from, to);
-    actions.push({ kind: "renamed", path: from, to });
-  };
-
   const goal = goalFor(phase, header.mode, {
     targetIsNew: (await manifestSha256(header.target)) === header.renderedSha256,
     descriptorIsNew: await descriptorIsNew(header),
     staging: staging !== undefined && (await present(staging.staging)),
   });
-  if (goal === "none") {
-    return "cleaned";
-  }
   if (staging === undefined) {
     // Nothing was ever named, so nothing may be deleted; the lock goes and
     // the target is exactly as the interrupted writer found it.
-    return "cleaned";
+    return { outcome: "cleaned", actions: [] };
+  }
+  const leftovers = [
+    staging.staging,
+    staging.previous,
+    staging.descriptorStaging,
+    staging.descriptorPrevious,
+  ].filter((candidate): candidate is string => candidate !== undefined);
+
+  if (goal === "none") {
+    // The transaction committed and finished; only its own residue can still
+    // be here, and it is journal-named, so removing it needs no other proof.
+    return { outcome: "cleaned", actions: await plannedRemovals(leftovers) };
   }
 
   if (goal === "clean") {
-    for (const leftover of [staging.previous, staging.descriptorPrevious]) {
-      if (leftover !== undefined && (await present(leftover))) {
+    for (const setAside of [staging.previous, staging.descriptorPrevious]) {
+      if (setAside !== undefined && (await present(setAside))) {
         throw refuse(
           journal,
           phase,
-          `${leftover} exists, and at phase "${phase}" nothing had been set aside yet.`,
-          [{ path: leftover, expected: "nothing set aside yet", observed: "a set-aside tree" }]
+          `${setAside} exists, and at phase "${phase}" nothing had been set aside yet.`,
+          [{ path: setAside, expected: "nothing set aside yet", observed: "a set-aside tree" }]
         );
       }
     }
-    await remove(staging.staging);
-    if (staging.descriptorStaging !== undefined) {
-      await remove(staging.descriptorStaging);
-    }
-    return "cleaned";
+    return {
+      outcome: "cleaned",
+      actions: await plannedRemovals([staging.staging, staging.descriptorStaging]),
+    };
   }
 
   if (goal === "complete") {
     await assertLanded(journal, header, phase);
-    await remove(staging.staging);
-    await remove(staging.previous);
-    if (staging.descriptorStaging !== undefined) {
-      await remove(staging.descriptorStaging);
-    }
-    if (staging.descriptorPrevious !== undefined) {
-      await remove(staging.descriptorPrevious);
-    }
-    return "completed-activation";
+    return { outcome: "completed-activation", actions: await plannedRemovals(leftovers) };
   }
 
-  const restoredContent = await restoreContent(journal, header, staging, phase, remove, move);
-  const restoredDescriptor = await restoreDescriptor(journal, header, staging, phase, remove, move);
-  await remove(staging.staging);
-  if (staging.descriptorStaging !== undefined) {
-    await remove(staging.descriptorStaging);
+  const content = await planContentRestore(journal, header, staging, phase);
+  const descriptor = await planDescriptorRestore(journal, header, staging, phase);
+  return {
+    outcome: content.restored || descriptor.restored ? "restored-previous" : "cleaned",
+    actions: [
+      ...content.actions,
+      ...descriptor.actions,
+      ...(await plannedRemovals([staging.staging, staging.descriptorStaging])),
+    ],
+  };
+}
+
+/** Cleanup removals, for the journal-named paths that are actually there. */
+async function plannedRemovals(
+  candidates: readonly (string | undefined)[]
+): Promise<PlannedAction[]> {
+  const actions: PlannedAction[] = [];
+  for (const candidate of candidates) {
+    if (candidate !== undefined && (await present(candidate))) {
+      actions.push({ kind: "remove", path: candidate, required: false });
+    }
   }
-  return restoredContent || restoredDescriptor ? "restored-previous" : "cleaned";
+  return actions;
+}
+
+async function executePlan(
+  plan: RecoveryPlan,
+  actions: RecoveryAction[],
+  warnings: CleanupWarning[]
+): Promise<RecoveryReport["outcome"]> {
+  for (const action of plan.actions) {
+    if (action.kind === "rename") {
+      await rename(action.path, action.to);
+      actions.push({ kind: "renamed", path: action.path, to: action.to });
+      continue;
+    }
+    try {
+      if (await removeIfPresent(action.path)) {
+        actions.push({ kind: "removed", path: action.path });
+      }
+    } catch (error) {
+      if (action.required) {
+        throw error;
+      }
+      // Cleanup only. The tree is already back to a state somebody can use,
+      // and a leftover nobody could remove is news rather than a failure.
+      warnings.push({
+        path: action.path,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return plan.outcome;
+}
+
+/** What one half of a restore intends to do, and whether it undoes anything. */
+interface PlannedHalf {
+  readonly actions: readonly PlannedAction[];
+  readonly restored: boolean;
 }
 
 /** Put the content directory back the way the transaction found it. */
-async function restoreContent(
+async function planContentRestore(
   journal: Journal,
   header: JournalHeader,
   staging: JournalStaging,
-  phase: MaterializationPhase,
-  remove: (target: string) => Promise<boolean>,
-  move: (from: string, to: string) => Promise<void>
-): Promise<boolean> {
+  phase: MaterializationPhase
+): Promise<PlannedHalf> {
   const target = header.target;
   const targetPresent = await present(target);
   const previousPresent = await present(staging.previous);
   const targetSha = targetPresent ? await manifestSha256(target) : undefined;
   const targetIsNew = targetSha === header.renderedSha256;
+  const notStaged = (): MaterializationError =>
+    refuse(journal, phase, `${target} is not the tree this transaction staged.`, [
+      {
+        path: target,
+        expected: `ownership manifest sha256 ${header.renderedSha256}`,
+        observed: targetSha ?? "no readable ownership manifest",
+      },
+    ]);
 
   if (!staging.hadPrevious) {
     if (!targetPresent) {
-      return false;
+      return { actions: [], restored: false };
     }
     if (!targetIsNew) {
-      throw refuse(
-        journal,
-        phase,
-        `${target} exists, and the transaction that made it is not the one this journal describes.`,
-        [
-          {
-            path: target,
-            expected: `ownership manifest sha256 ${header.renderedSha256}`,
-            observed: targetSha ?? "no readable ownership manifest",
-          },
-        ]
-      );
+      throw notStaged();
     }
-    await remove(target);
-    return true;
+    await assertOnlyStagedContent(journal, header, phase, undefined);
+    return { actions: [{ kind: "remove", path: target, required: true }], restored: true };
   }
 
   if (!targetPresent) {
@@ -429,28 +600,23 @@ async function restoreContent(
         { path: staging.previous, expected: "the set-aside previous output", observed: "nothing" },
       ]);
     }
-    await move(staging.previous, target);
-    return true;
+    return {
+      actions: [{ kind: "rename", path: staging.previous, to: target }],
+      restored: true,
+    };
   }
   if (previousPresent) {
     if (!targetIsNew) {
-      throw refuse(
-        journal,
-        phase,
-        `${target} and its set-aside copy both exist, and ${target} is not the tree this ` +
-          `transaction staged.`,
-        [
-          {
-            path: target,
-            expected: `ownership manifest sha256 ${header.renderedSha256}`,
-            observed: targetSha ?? "no readable ownership manifest",
-          },
-        ]
-      );
+      throw notStaged();
     }
-    await remove(target);
-    await move(staging.previous, target);
-    return true;
+    await assertOnlyStagedContent(journal, header, phase, staging.previous);
+    return {
+      actions: [
+        { kind: "remove", path: target, required: true },
+        { kind: "rename", path: staging.previous, to: target },
+      ],
+      restored: true,
+    };
   }
   if (targetIsNew && staging.previousManifestSha256 !== header.renderedSha256) {
     throw refuse(
@@ -466,45 +632,119 @@ async function restoreContent(
       ]
     );
   }
-  return false;
+  return { actions: [], restored: false };
+}
+
+/**
+ * Whether the tree about to be deleted is only what the transaction put there.
+ *
+ * The ownership manifest's own hash says which render was staged; it says
+ * nothing about what happened to the tree afterwards. Between the crash and
+ * the recovery somebody may have opened the half-published output and changed
+ * it, and that edit exists nowhere else. So every owned file is compared byte
+ * for byte before the delete, and anything the manifest does not list has to
+ * account for itself: OS metadata, or an entry preserved from the previous
+ * generation, which is the same inode as its counterpart there and so loses
+ * nothing when this link goes. Anything else refuses.
+ */
+async function assertOnlyStagedContent(
+  journal: Journal,
+  header: JournalHeader,
+  phase: MaterializationPhase,
+  previous: string | undefined
+): Promise<void> {
+  const target = header.target;
+  const manifest = await readOwnershipManifest(target);
+  if (manifest === undefined) {
+    throw refuse(journal, phase, `${target} has no readable ownership manifest to check against.`, [
+      {
+        path: path.join(target, MATERIALIZATION_MANIFEST_PATH),
+        expected: "the ownership manifest this transaction wrote",
+        observed: "nothing readable",
+      },
+    ]);
+  }
+
+  const evidence: MaterializationEvidence[] = [];
+  const owned = new Map(manifest.files.map((file) => [file.path, file]));
+  for (const [relPath, file] of owned) {
+    const absolute = path.join(target, ...relPath.split("/"));
+    const found = await fileSha256(absolute);
+    if (found !== file.sha256) {
+      evidence.push({
+        path: absolute,
+        expected: `sha256 ${file.sha256}`,
+        observed: found ?? "missing, or not a readable regular file",
+      });
+    }
+  }
+
+  for (const entry of await walkTree(target)) {
+    if (entry.relPath === MATERIALIZATION_MANIFEST_PATH || owned.has(entry.relPath)) {
+      continue;
+    }
+    if (OS_METADATA_BASENAMES.has(entry.relPath.slice(entry.relPath.lastIndexOf("/") + 1))) {
+      continue;
+    }
+    if (
+      entry.directory &&
+      [...owned.keys()].some((relPath) => relPath.startsWith(`${entry.relPath}/`))
+    ) {
+      continue;
+    }
+    if (previous !== undefined && (await isPreservedCounterpart(entry, previous))) {
+      continue;
+    }
+    evidence.push({
+      path: path.join(target, ...entry.relPath.split("/")),
+      expected: "an entry this transaction staged, or one preserved from the previous output",
+      observed: "an entry that exists nowhere else, so deleting it would lose it",
+    });
+  }
+
+  if (evidence.length > 0) {
+    throw refuse(
+      journal,
+      phase,
+      `${target} holds ${evidence.length} entr${evidence.length === 1 ? "y" : "ies"} that this ` +
+        `transaction did not put there, so it cannot be removed to put the previous output back.`,
+      evidence
+    );
+  }
+}
+
+/** Whether an entry is the same file as its counterpart in the previous tree. */
+async function isPreservedCounterpart(entry: TreeEntry, previous: string): Promise<boolean> {
+  const counterpart = path.join(previous, ...entry.relPath.split("/"));
+  const stats = await lstatOrUndefined(counterpart);
+  if (stats === undefined) {
+    return false;
+  }
+  if (entry.directory) {
+    // Directories are recreated in staging rather than linked, so identity
+    // cannot be the test; that the previous tree has one here is.
+    return stats.isDirectory();
+  }
+  return stats.dev === entry.dev && stats.ino === entry.ino;
 }
 
 /** Put the launcher descriptor back the way the transaction found it. */
-async function restoreDescriptor(
+async function planDescriptorRestore(
   journal: Journal,
   header: JournalHeader,
   staging: JournalStaging,
-  phase: MaterializationPhase,
-  remove: (target: string) => Promise<boolean>,
-  move: (from: string, to: string) => Promise<void>
-): Promise<boolean> {
+  phase: MaterializationPhase
+): Promise<PlannedHalf> {
   const descriptorPath = header.descriptorPath;
   const descriptorPrevious = staging.descriptorPrevious;
   if (descriptorPath === undefined || descriptorPrevious === undefined) {
-    return false;
+    return { actions: [], restored: false };
   }
   const observed: DescriptorSnapshot = staging.descriptorObserved ?? { state: "absent" };
   const current = await observeDescriptor(descriptorPath);
-  const isObserved = sameDescriptorState(current, observed);
   const isNew = current.state === "file" && current.sha256 === header.descriptorSha256;
-
-  if (await present(descriptorPrevious)) {
-    if (current.state === "absent") {
-      await move(descriptorPrevious, descriptorPath);
-      return true;
-    }
-    if (isObserved) {
-      // Already restored by an earlier recovery; the set-aside copy is a
-      // journaled duplicate of a state that is back where it belongs.
-      await remove(descriptorPrevious);
-      return true;
-    }
-    if (isNew) {
-      await remove(descriptorPath);
-      await move(descriptorPrevious, descriptorPath);
-      return true;
-    }
-    throw refuse(
+  const mismatch = (): MaterializationError =>
+    refuse(
       journal,
       phase,
       `${descriptorPath} is neither the descriptor this install observed nor the one it wrote.`,
@@ -516,14 +756,44 @@ async function restoreDescriptor(
         },
       ]
     );
+
+  if (await present(descriptorPrevious)) {
+    if (current.state === "absent") {
+      return {
+        actions: [{ kind: "rename", path: descriptorPrevious, to: descriptorPath }],
+        restored: true,
+      };
+    }
+    // The set-aside copy is about to be discarded, so "the same state" has to
+    // mean the same descriptor and not merely the same word for its kind.
+    if (await isRestoredCopy(current, observed, descriptorPath, descriptorPrevious)) {
+      return {
+        actions: [{ kind: "remove", path: descriptorPrevious, required: false }],
+        restored: true,
+      };
+    }
+    if (isNew) {
+      return {
+        actions: [
+          { kind: "remove", path: descriptorPath, required: true },
+          { kind: "rename", path: descriptorPrevious, to: descriptorPath },
+        ],
+        restored: true,
+      };
+    }
+    throw mismatch();
   }
 
-  if (isObserved) {
-    return false;
+  // Nothing is discarded on this side, so a state-only match is enough: the
+  // descriptor that is there is left exactly as it is.
+  if (sameDescriptorState(current, observed)) {
+    return { actions: [], restored: false };
   }
   if (isNew && observed.state === "absent") {
-    await remove(descriptorPath);
-    return true;
+    return {
+      actions: [{ kind: "remove", path: descriptorPath, required: true }],
+      restored: true,
+    };
   }
   throw refuse(
     journal,
@@ -538,6 +808,39 @@ async function restoreDescriptor(
       },
     ]
   );
+}
+
+/**
+ * Whether the descriptor in place is already the one that was set aside, to
+ * the point that the set-aside copy can be thrown away.
+ *
+ * A file answers by its hash. A symlink does not: two symlinks are both "a
+ * symlink" and may point at completely different things, and discarding the
+ * set-aside copy on that basis would destroy the only record of where the
+ * author's link pointed. So symlinks are compared by referent, and `other` —
+ * a directory, a device, whatever the snapshot could not describe — can never
+ * be compared at all, and never authorizes the discard.
+ */
+async function isRestoredCopy(
+  current: DescriptorSnapshot,
+  observed: DescriptorSnapshot,
+  descriptorPath: string,
+  descriptorPrevious: string
+): Promise<boolean> {
+  if (current.state !== observed.state) {
+    return false;
+  }
+  if (current.state === "file") {
+    return sameDescriptorState(current, observed);
+  }
+  if (current.state !== "symlink") {
+    return false;
+  }
+  try {
+    return (await readlink(descriptorPath)) === (await readlink(descriptorPrevious));
+  } catch {
+    return false;
+  }
 }
 
 /** Both halves verifiably hold what the journal says was published. */
@@ -619,11 +922,87 @@ function refuse(
 
 /** The ownership manifest's own hash, or nothing readable at all. */
 async function manifestSha256(target: string): Promise<string | undefined> {
+  return (await readOwnershipManifest(target))?.sha256;
+}
+
+/** One target's ownership manifest, if it has a well-formed one. */
+async function readOwnershipManifest(target: string): Promise<MaterializationManifest | undefined> {
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(
-      await readFile(path.join(target, MATERIALIZATION_MANIFEST_PATH), "utf8")
-    ) as Record<string, unknown>;
-    return typeof parsed["sha256"] === "string" ? parsed["sha256"] : undefined;
+    parsed = JSON.parse(await readFile(path.join(target, MATERIALIZATION_MANIFEST_PATH), "utf8"));
+  } catch {
+    return undefined;
+  }
+  if (typeof parsed !== "object" || parsed === null) {
+    return undefined;
+  }
+  const manifest = parsed as Record<string, unknown>;
+  if (typeof manifest["sha256"] !== "string" || !Array.isArray(manifest["files"])) {
+    return undefined;
+  }
+  const wellFormed = manifest["files"].every(
+    (file) =>
+      typeof file === "object" &&
+      file !== null &&
+      typeof (file as Record<string, unknown>)["path"] === "string" &&
+      typeof (file as Record<string, unknown>)["sha256"] === "string"
+  );
+  return wellFormed ? (parsed as MaterializationManifest) : undefined;
+}
+
+async function fileSha256(target: string): Promise<string | undefined> {
+  try {
+    const stats = await lstat(target);
+    if (!stats.isFile() || stats.isSymbolicLink()) {
+      return undefined;
+    }
+    return createHash("sha256")
+      .update(await readFile(target))
+      .digest("hex");
+  } catch {
+    return undefined;
+  }
+}
+
+/** One entry of a target tree, by relative path and stat identity. */
+interface TreeEntry {
+  readonly relPath: string;
+  readonly directory: boolean;
+  readonly dev: number;
+  readonly ino: number;
+}
+
+/** Every entry under `target`, no-follow, ordered parents before children. */
+async function walkTree(target: string): Promise<TreeEntry[]> {
+  const found: TreeEntry[] = [];
+  const walk = async (relative: string): Promise<void> => {
+    const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const relPath = relative === "" ? entry.name : `${relative}/${entry.name}`;
+      const stats = await lstatOrUndefined(path.join(dir, entry.name));
+      if (stats === undefined) {
+        continue;
+      }
+      const directory = stats.isDirectory();
+      found.push({ relPath, directory, dev: stats.dev, ino: stats.ino });
+      if (directory) {
+        await walk(relPath);
+      }
+    }
+  };
+  await walk("");
+  return found;
+}
+
+async function lstatOrUndefined(target: string): Promise<Stats | undefined> {
+  try {
+    return await lstat(target);
   } catch {
     return undefined;
   }

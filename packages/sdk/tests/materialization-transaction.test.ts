@@ -27,6 +27,7 @@ import {
   realpathSync,
   renameSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { open } from "node:fs/promises";
@@ -246,6 +247,32 @@ function targetOfLength(total: number): string {
   }
   parts.push("d".repeat(Math.max(1, total - used - 1)));
   return "/" + parts.join("/");
+}
+
+/** Generation two of an install, staged and journaled but not committed. */
+async function stageInstall(root: string) {
+  const contentDir = join(root, "tx_probe");
+  const descriptorPath = join(root, "tx_probe.mod");
+  const contents = renderLauncherDescriptor(genTwo, contentDir);
+  const record = descriptorRecord(basename(descriptorPath), contents);
+  const observed = await observeDescriptor(descriptorPath);
+  const inspection = await validateExistingMaterialization(contentDir, genTwo, "install", {
+    descriptor: observed,
+  });
+  const paths = stagingPaths(contentDir);
+  const descriptor = {
+    path: descriptorPath,
+    record,
+    staging: join(root, `.pdx-descriptor-staging-${randomUUID()}`),
+    previous: join(root, `.pdx-descriptor-previous-${randomUUID()}`),
+    observed: observed as unknown,
+  };
+  await stageMaterialization(contentDir, genTwo, "install", inspection, {
+    launcherDescriptor: record,
+    paths,
+  });
+  writeFileSync(descriptor.staging, contents, "utf8");
+  return { contentDir, descriptorPath, paths, descriptor, contents };
 }
 
 function siblings(parent: string): string[] {
@@ -846,32 +873,6 @@ describe("recovery reads the journal and nothing else", () => {
 });
 
 describe("recovering an install recovers both halves", () => {
-  /** Generation two of an install, staged and journaled but not committed. */
-  async function stageInstall(root: string) {
-    const contentDir = join(root, "tx_probe");
-    const descriptorPath = join(root, "tx_probe.mod");
-    const contents = renderLauncherDescriptor(genTwo, contentDir);
-    const record = descriptorRecord(basename(descriptorPath), contents);
-    const observed = await observeDescriptor(descriptorPath);
-    const inspection = await validateExistingMaterialization(contentDir, genTwo, "install", {
-      descriptor: observed,
-    });
-    const paths = stagingPaths(contentDir);
-    const descriptor = {
-      path: descriptorPath,
-      record,
-      staging: join(root, `.pdx-descriptor-staging-${randomUUID()}`),
-      previous: join(root, `.pdx-descriptor-previous-${randomUUID()}`),
-      observed: observed as unknown,
-    };
-    await stageMaterialization(contentDir, genTwo, "install", inspection, {
-      launcherDescriptor: record,
-      paths,
-    });
-    writeFileSync(descriptor.staging, contents, "utf8");
-    return { contentDir, descriptorPath, paths, descriptor, contents };
-  }
-
   it("restores the pair when the content moved and the descriptor did not", async () => {
     // The install is not committed until the descriptor follows the content,
     // so a half-swapped pair is put back rather than finished: the rename that
@@ -1115,5 +1116,311 @@ describe("dirname is not part of the contract", () => {
 
     expect(report.outDir).toBe(join(parent, "out"));
     expect(dirname(report.outDir)).toBe(realpathSync(parent));
+  });
+});
+
+describe("a journal only has authority over its own siblings", () => {
+  it("refuses a journal naming a staging path somewhere else entirely", async () => {
+    // The journal lives in the directory it protects, so anyone who can write
+    // there can write one. What keeps that from being a delete-anything
+    // primitive is that recovery only acts on names a materialization of this
+    // target could have minted.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    await write(out, genOne);
+    const victim = join(tempDir(), "someone-elses-work");
+    mkdirSync(victim);
+    writeFileSync(join(victim, "keep.txt"), "not ours", "utf8");
+    writeJournal({
+      target: out,
+      rendered: genTwo,
+      paths: { staging: victim, previous: join(parent, `.pdx-previous-${randomUUID()}`) },
+      previousManifestSha256: manifestSha(out),
+      phases: ["staged"],
+    });
+
+    const error = await refusal(recoverMaterialization(out));
+
+    expect(error.reason).toBe("recovery-required");
+    if (error.failure.reason !== "recovery-required") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.evidence?.map((row) => row.path)).toContain(victim);
+    expect(readFileSync(join(victim, "keep.txt"), "utf8")).toBe("not ours");
+    expect(existsSync(victim)).toBe(true);
+  });
+
+  it("refuses a sibling name that is not one materialization mints", async () => {
+    // Right directory, wrong shape: without the UUID check, "any name in the
+    // parent" would be deletable by planting a journal that claims it.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    await write(out, genOne);
+    const neighbour = join(parent, ".pdx-staging-not-a-uuid");
+    mkdirSync(neighbour);
+    writeJournal({
+      target: out,
+      rendered: genTwo,
+      paths: { staging: neighbour, previous: join(parent, `.pdx-previous-${randomUUID()}`) },
+      phases: ["staged"],
+    });
+
+    const error = await refusal(recoverMaterialization(out));
+
+    expect(error.reason).toBe("recovery-required");
+    expect(existsSync(neighbour)).toBe(true);
+  });
+
+  it("refuses a journal written against a different target", async () => {
+    const parent = tempDir();
+    const out = join(parent, "out");
+    const other = join(parent, "other");
+    await write(out, genOne);
+    const lockPath = lockPathFor(out);
+    const stray = writeJournal({ target: other, rendered: genTwo });
+    renameSync(stray, lockPath);
+
+    const error = await refusal(recoverMaterialization(out));
+
+    expect(error.reason).toBe("recovery-required");
+    if (error.failure.reason !== "recovery-required") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.evidence?.[0]?.path).toBe(other);
+  });
+});
+
+describe("recovery never deletes what it cannot account for", () => {
+  /** An install crash with the content swapped and the descriptor not yet. */
+  async function halfSwappedInstall(root: string) {
+    const first = await install(genOne, { modDir: root });
+    const previousSha = manifestSha(first.contentDir);
+    const staged = await stageInstall(root);
+    writeJournal({
+      target: staged.contentDir,
+      rendered: genTwo,
+      paths: staged.paths,
+      previousManifestSha256: previousSha,
+      descriptor: staged.descriptor,
+      phases: ["staged", "content-deactivating", "content-activating"],
+    });
+    renameSync(staged.contentDir, staged.paths.previous);
+    renameSync(staged.paths.staging, staged.contentDir);
+    return { ...staged, previousSha };
+  }
+
+  it("refuses to delete a new target somebody edited after the crash", async () => {
+    // The manifest's own hash says which render was staged; it says nothing
+    // about what happened to the tree afterwards. An edit made to the
+    // half-published output exists nowhere else, so it is not ours to delete.
+    const root = tempDir();
+    const staged = await halfSwappedInstall(root);
+    const edited = join(staged.contentDir, "common/technology/tx_probe_technology.txt");
+    writeFileSync(edited, "hand edited after the crash", "utf8");
+
+    const error = await refusal(recoverInstallation({ modDir: root, dirName: "tx_probe" }));
+
+    expect(error.reason).toBe("recovery-required");
+    if (error.failure.reason !== "recovery-required") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.evidence?.map((row) => row.path)).toContain(edited);
+    expect(readFileSync(edited, "utf8")).toBe("hand edited after the crash");
+    expect(existsSync(staged.paths.previous)).toBe(true);
+  });
+
+  it("refuses to delete a new target somebody added a file to after the crash", async () => {
+    const root = tempDir();
+    const staged = await halfSwappedInstall(root);
+    const added = join(staged.contentDir, "notes-written-after-the-crash.txt");
+    writeFileSync(added, "mine", "utf8");
+
+    const error = await refusal(recoverInstallation({ modDir: root, dirName: "tx_probe" }));
+
+    expect(error.reason).toBe("recovery-required");
+    expect(readFileSync(added, "utf8")).toBe("mine");
+  });
+
+  it("still restores when the target carries entries preserved from the previous output", async () => {
+    // The mirror of the two above: an author's file that was already there is
+    // carried into the new tree as the same inode, so removing this link
+    // loses nothing — and refusing here would make an ordinary install
+    // unrecoverable.
+    const root = tempDir();
+    const first = await install(genOne, { modDir: root });
+    writeFileSync(join(first.contentDir, "notes.txt"), "mine\n", "utf8");
+    const staged = await halfSwappedInstall(root);
+
+    const report = await recoverInstallation({ modDir: root, dirName: "tx_probe" });
+
+    expect(report.outcome).toBe("restored-previous");
+    expect(readFileSync(join(first.contentDir, "notes.txt"), "utf8")).toBe("mine\n");
+    expect(existsSync(join(first.contentDir, GEN_TWO_ONLY))).toBe(false);
+    expect(readdirSync(root).sort()).toEqual(["tx_probe", "tx_probe.mod"]);
+  });
+});
+
+describe("both halves of an install are decided before either is touched", () => {
+  it("leaves the content half untouched when the descriptor half is unaccountable", async () => {
+    // A refusal that had already acted on the content half would report a
+    // state it created itself, and leave a pair that is neither generation.
+    const root = tempDir();
+    const first = await install(genOne, { modDir: root });
+    const previousSha = manifestSha(first.contentDir);
+    const staged = await stageInstall(root);
+    writeJournal({
+      target: staged.contentDir,
+      rendered: genTwo,
+      paths: staged.paths,
+      previousManifestSha256: previousSha,
+      descriptor: staged.descriptor,
+      phases: ["staged", "content-deactivating", "content-activating"],
+    });
+    renameSync(staged.contentDir, staged.paths.previous);
+    renameSync(staged.paths.staging, staged.contentDir);
+    // Neither the descriptor this install observed nor the one it wrote.
+    writeFileSync(staged.descriptorPath, "something else entirely\n", "utf8");
+    const contentBefore = manifestSha(staged.contentDir);
+    const previousBefore = manifestSha(staged.paths.previous);
+
+    const error = await refusal(recoverInstallation({ modDir: root, dirName: "tx_probe" }));
+
+    expect(error.reason).toBe("recovery-required");
+    // The content half is exactly as the refusal found it: still swapped.
+    expect(manifestSha(staged.contentDir)).toBe(contentBefore);
+    expect(manifestSha(staged.paths.previous)).toBe(previousBefore);
+    expect(existsSync(join(staged.contentDir, GEN_TWO_ONLY))).toBe(true);
+    expect(readFileSync(staged.descriptorPath, "utf8")).toBe("something else entirely\n");
+  });
+});
+
+describe("a finished transaction's residue is still its own", () => {
+  it("removes journal-named leftovers at the done phase", async () => {
+    // "done" means the commit and the cleanup both happened, so anything the
+    // journal names that is still here is residue a cleanup could not remove.
+    // It is journal-named, so recovery has the authority to finish the job.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    await write(out, genOne);
+    const paths = stagingPaths(out);
+    mkdirSync(paths.previous);
+    writeFileSync(join(paths.previous, "leftover.txt"), "old", "utf8");
+    writeJournal({
+      target: out,
+      rendered: genTwo,
+      paths,
+      previousManifestSha256: manifestSha(out),
+      phases: ["staged", "content-activating", "committed", "done"],
+    });
+
+    const report = await recoverMaterialization(out);
+
+    expect(report.outcome).toBe("cleaned");
+    expect(report.actions).toContainEqual({ kind: "removed", path: paths.previous });
+    expect(readdirSync(parent)).toEqual(["out"]);
+  });
+});
+
+describe("a lock that cannot be read is a refusal with a path in it", () => {
+  it.each([
+    ["a build", async (out: string) => write(out, genOne)],
+    ["a recovery", async (out: string) => recoverMaterialization(out)],
+  ])("reports an unreadable lock to %s as recovery-required", async (_label, operation) => {
+    // A directory where the lock goes is exactly the kind of thing somebody
+    // has to look at, and a bare EISDIR says neither which file nor why.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    await write(out, genOne);
+    mkdirSync(lockPathFor(out));
+
+    const error = await refusal(operation(out));
+
+    expect(error.reason).toBe("recovery-required");
+    if (error.failure.reason !== "recovery-required") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.journalPath).toBe(lockPathFor(out));
+    expect(error.message).toContain("EISDIR");
+  });
+});
+
+describe("a descriptor symlink is compared by what it points at", () => {
+  /** An install stopped with its descriptor set aside, both sides symlinks. */
+  async function symlinkedDescriptor(root: string, previousTo: string, currentTo: string) {
+    await install(genOne, { modDir: root });
+    const staged = await stageInstall(root);
+    rmSync(staged.descriptorPath);
+    symlinkSync(previousTo, staged.descriptor.previous);
+    symlinkSync(currentTo, staged.descriptorPath);
+    writeJournal({
+      target: staged.contentDir,
+      rendered: genTwo,
+      paths: staged.paths,
+      descriptor: { ...staged.descriptor, observed: { state: "symlink" } },
+      phases: ["staged", "descriptor-deactivating"],
+    });
+    return staged;
+  }
+
+  it.skipIf(process.platform === "win32")(
+    "refuses to discard a set-aside copy that points somewhere else",
+    async () => {
+      // Two symlinks are both "a symlink". Discarding the set-aside one on
+      // that basis would destroy the only record of where the author's link
+      // pointed, which is the whole content of a symlink.
+      const root = tempDir();
+      const here = join(root, "here.mod");
+      const there = join(root, "there.mod");
+      writeFileSync(here, "here", "utf8");
+      writeFileSync(there, "there", "utf8");
+      const staged = await symlinkedDescriptor(root, here, there);
+
+      const error = await refusal(recoverInstallation({ modDir: root, dirName: "tx_probe" }));
+
+      expect(error.reason).toBe("recovery-required");
+      expect(existsSync(staged.descriptor.previous)).toBe(true);
+      expect(readFileSync(staged.descriptorPath, "utf8")).toBe("there");
+    }
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "discards a set-aside copy that points at the same file",
+    async () => {
+      const root = tempDir();
+      const here = join(root, "here.mod");
+      writeFileSync(here, "here", "utf8");
+      const staged = await symlinkedDescriptor(root, here, here);
+
+      const report = await recoverInstallation({ modDir: root, dirName: "tx_probe" });
+
+      expect(report.outcome).toBe("restored-previous");
+      expect(existsSync(staged.descriptor.previous)).toBe(false);
+      expect(readFileSync(staged.descriptorPath, "utf8")).toBe("here");
+    }
+  );
+});
+
+describe("a refusal creates nothing on the way to refusing", () => {
+  it("refuses an unrepresentable target before making its parent directories", async () => {
+    // The representability check used to run after the parent chain had been
+    // created, so a build that refused still left directories behind that the
+    // author never asked for and nothing would clean up.
+    const parent = tempDir();
+    const out = join(parent, "not", "yet", "made", "l".repeat(250));
+
+    const error = await refusal(write(out, genOne));
+
+    expect(error.reason).toBe("unrepresentable");
+    expect(readdirSync(parent)).toEqual([]);
+  });
+
+  it("refuses an unrepresentable install before making the mod directory", async () => {
+    const parent = tempDir();
+    const root = join(parent, "not", "yet");
+
+    const error = await refusal(install(genOne, { modDir: root, dirName: "l".repeat(250) }));
+
+    expect(error.reason).toBe("unrepresentable");
+    expect(readdirSync(parent)).toEqual([]);
   });
 });

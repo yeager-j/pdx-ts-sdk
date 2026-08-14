@@ -153,16 +153,40 @@ export function processIsAlive(pid: number): boolean {
 }
 
 export async function readJournal(lockPath: string): Promise<Journal | undefined> {
-  let text: string;
-  try {
-    text = await readFile(lockPath, "utf8");
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return undefined;
-    }
-    throw error;
+  const read = await tryReadJournal(lockPath);
+  if (!read.ok) {
+    throw read.error;
   }
-  return parseJournal(lockPath, text);
+  return read.journal;
+}
+
+/**
+ * A journal read that reports why it failed instead of throwing.
+ *
+ * A lock that cannot be read at all is a refusal with a path in it, not a
+ * stray errno: a directory or a root-owned file sitting where the lock goes
+ * is exactly the kind of thing somebody has to look at, and `EISDIR` on its
+ * own does not say which file, or what the caller was trying to do.
+ */
+export type JournalRead =
+  | { readonly ok: true; readonly journal: Journal | undefined }
+  | { readonly ok: false; readonly error: NodeJS.ErrnoException };
+
+export async function tryReadJournal(lockPath: string): Promise<JournalRead> {
+  try {
+    return { ok: true, journal: parseJournal(lockPath, await readFile(lockPath, "utf8")) };
+  } catch (error) {
+    const failure = error as NodeJS.ErrnoException;
+    if (failure.code === "ENOENT") {
+      return { ok: true, journal: undefined };
+    }
+    return { ok: false, error: failure };
+  }
+}
+
+/** Why a lock file could not be read, for a refusal message. */
+export function describeReadFailure(error: NodeJS.ErrnoException): string {
+  return error.code ?? error.message;
 }
 
 export function parseJournal(lockPath: string, text: string): Journal {
@@ -325,9 +349,32 @@ export class MaterializationTransaction {
         `Materialization journal ${this.journalPath} is already closed; nothing may be appended to it.`
       );
     }
-    await handle.write(`${JSON.stringify(record)}\n`);
-    await handle.sync();
+    await appendRecord(handle, record);
   }
+}
+
+/**
+ * One record, all of it, then fsync.
+ *
+ * `write` is allowed to write fewer bytes than it was given, and a journal is
+ * only evidence if a record is either wholly there or recognizably torn. A
+ * short write left unlooped would produce a record that parses as valid JSON
+ * up to the cut — or worse, splices the next record onto the remainder — so
+ * the loop runs to completion before anything is synced or announced.
+ */
+async function appendRecord(handle: FileHandle, record: JournalRecord): Promise<void> {
+  const bytes = Buffer.from(`${JSON.stringify(record)}\n`, "utf8");
+  let written = 0;
+  while (written < bytes.byteLength) {
+    const { bytesWritten } = await handle.write(bytes, written, bytes.byteLength - written);
+    if (bytesWritten <= 0) {
+      throw new Error(
+        `Materialization journal write stalled after ${written} of ${bytes.byteLength} bytes.`
+      );
+    }
+    written += bytesWritten;
+  }
+  await handle.sync();
 }
 
 /**
@@ -415,8 +462,7 @@ async function createLockFile(
     throw error;
   }
   try {
-    await handle.write(`${JSON.stringify(first)}\n`);
-    await handle.sync();
+    await appendRecord(handle, first);
   } catch (error) {
     await closeAndUnlink(handle, lockPath);
     throw error;
@@ -432,7 +478,17 @@ async function createLockFile(
  * call rather than being cleared automatically.
  */
 async function refuseHeldLock(target: string, lockPath: string): Promise<MaterializationError> {
-  const journal = await readJournal(lockPath);
+  const read = await tryReadJournal(lockPath);
+  if (!read.ok) {
+    return recoveryRequired(
+      target,
+      lockPath,
+      `${lockPath} exists and could not be read (${describeReadFailure(read.error)}), so whether ` +
+        `a materialization is in progress cannot be told.`,
+      undefined
+    );
+  }
+  const journal = read.journal;
   if (journal === undefined) {
     // Released between the failed create and the read: the caller retries by
     // running again, which is a decision for them rather than a loop here.
@@ -447,6 +503,14 @@ async function refuseHeldLock(target: string, lockPath: string): Promise<Materia
       target,
       lockPath,
       `${lockPath} exists but holds no readable transaction journal.`,
+      undefined
+    );
+  }
+  if ("unreadable" in holder) {
+    return recoveryRequired(
+      target,
+      holder.unreadable,
+      `${lockPath} points at ${holder.unreadable}, which could not be read (${holder.cause}).`,
       undefined
     );
   }
@@ -489,8 +553,16 @@ interface HolderDescription extends MaterializationLockHolder {
   readonly journalPath: string;
 }
 
+/** A journal that exists and cannot be read, which decides nothing. */
+interface UnreadableJournal {
+  readonly unreadable: string;
+  readonly cause: string;
+}
+
 /** Who a journal — or the marker pointing at one — says is transacting. */
-async function describeHolder(journal: Journal): Promise<HolderDescription | undefined> {
+async function describeHolder(
+  journal: Journal
+): Promise<HolderDescription | UnreadableJournal | undefined> {
   if (journal.header !== undefined) {
     return {
       pid: journal.header.pid,
@@ -503,7 +575,12 @@ async function describeHolder(journal: Journal): Promise<HolderDescription | und
   if (journal.marker === undefined) {
     return undefined;
   }
-  const primary = await readJournal(journal.marker.primary);
+  const followed = await tryReadJournal(journal.marker.primary);
+  if (!followed.ok) {
+    // Unreadable is not absent, and only absent proves the transaction ended.
+    return { unreadable: journal.marker.primary, cause: describeReadFailure(followed.error) };
+  }
+  const primary = followed.journal;
   if (primary?.header === undefined) {
     // A marker whose primary is gone was written before anything moved: the
     // primary is unlinked last, so its absence proves the transaction ended.
@@ -599,8 +676,7 @@ export async function claimRecovery(
       hostname: hostname(),
       token,
     };
-    await handle.write(`${JSON.stringify(claim)}\n`);
-    await handle.sync();
+    await appendRecord(handle, claim);
 
     const journal = parseJournal(lockPath, await readWholeFile(handle));
     if (!isTransaction(journal, expected) || !(await pathStillNames(handle, lockPath))) {
