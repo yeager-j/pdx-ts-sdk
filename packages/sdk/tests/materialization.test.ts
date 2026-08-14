@@ -1,0 +1,439 @@
+/**
+ * The materialization contract: what the SDK owns, what it refuses, and what
+ * it must carry across the swap untouched.
+ *
+ * The failure this suite prevents is the destructive one. An output folder is
+ * a place a person also works — they drop a texture in, the OS drops a
+ * `.DS_Store` in — and an earlier contract called every one of those files
+ * "drift" and made the next build refuse. Narrowing drift to the manifest-owned
+ * set is only safe if the entries the SDK does not own are provably preserved
+ * instead of deleted, and if every kind it cannot preserve is refused rather
+ * than guessed at. Each test below names the concrete way that can go wrong.
+ *
+ * The receipt tests are the other half: a refusal hands back evidence, and
+ * evidence nobody can forge or silently alter is what makes reviewing one
+ * safe.
+ */
+
+import { execFileSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+
+import { createMod, install, MaterializationError, render, write } from "../src/index.ts";
+import { issueReceipt, openReceipt, type MaterializationSnapshot } from "../src/output/receipt.ts";
+import { activateMaterialization, stageMaterialization } from "../src/output/write.ts";
+
+const capability = createMod({
+  name: "Materialization Probe",
+  prefix: "mz_probe",
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+  tags: ["Technologies"],
+});
+
+function technology(id: string, name: string) {
+  return capability.technology(id, {
+    name,
+    cost: 1000,
+    area: "physics",
+    tier: 1,
+    category: "particles",
+  });
+}
+
+/** The baseline snapshot: one technology, its localization, its descriptor. */
+const renderedMod = render(
+  capability.compile([capability.feature(undefined, [technology("marker", "Marker")])])
+);
+
+/** The same mod plus a second feature, so a rebuild has something to remove. */
+const renderedWithExtra = render(
+  capability.compile([
+    capability.feature(undefined, [technology("marker", "Marker")]),
+    capability.feature("extra", [technology("second", "Second")]),
+  ])
+);
+
+/** A mod that owns nothing but its descriptor, so every other path is foreign. */
+const renderedBare = render(capability.compile([capability.feature(undefined, [])]));
+
+const OWNED_FILE = "common/technology/mz_probe_technology.txt";
+const EXTRA_FILE = "common/technology/mz_probe_extra.txt";
+
+const temps: string[] = [];
+function tempDir(): string {
+  const dir = mkdtempSync(join(tmpdir(), "pdx-materialize-"));
+  temps.push(dir);
+  return dir;
+}
+
+afterEach(() => {
+  for (const dir of temps.splice(0)) {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+/** The refusal itself, so a test can assert the reason and its evidence. */
+async function refusal(operation: Promise<unknown>): Promise<MaterializationError> {
+  const thrown = await operation.then(
+    () => undefined,
+    (error: unknown) => error
+  );
+  expect(thrown).toBeInstanceOf(MaterializationError);
+  return thrown as MaterializationError;
+}
+
+/** A target already materialized once, ready for the second build to refuse. */
+async function materialized(): Promise<string> {
+  const out = join(tempDir(), "out");
+  await write(out, renderedMod);
+  return out;
+}
+
+describe("drift is the owned set and nothing else", () => {
+  it("refuses a modified owned file and hands back a receipt", async () => {
+    // Rebuilding over a hand-edited owned file destroys the edit. The receipt
+    // is what a later reviewed replacement is checked against, so a drift
+    // refusal without one cannot be resolved except by deleting the tree.
+    const out = await materialized();
+    writeFileSync(join(out, OWNED_FILE), "hand edited", "utf8");
+    const before = readdirSync(out).sort();
+
+    const error = await refusal(write(out, renderedMod));
+
+    expect(error.reason).toBe("drift");
+    if (error.failure.reason !== "drift") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.drift).toEqual([{ path: OWNED_FILE, kind: "modified" }]);
+    expect(error.failure.receipt).toBeDefined();
+    // Nothing was staged over or removed before the refusal.
+    expect(readFileSync(join(out, OWNED_FILE), "utf8")).toBe("hand edited");
+    expect(readdirSync(out).sort()).toEqual(before);
+    expect(readdirSync(dirname(out))).toEqual(["out"]);
+  });
+
+  it.each([
+    [
+      "deleted",
+      "missing" as const,
+      (out: string) => {
+        rmSync(join(out, OWNED_FILE));
+      },
+    ],
+    [
+      "replaced by a directory",
+      "type-changed" as const,
+      (out: string) => {
+        rmSync(join(out, OWNED_FILE));
+        mkdirSync(join(out, OWNED_FILE));
+      },
+    ],
+    [
+      "swapped for a symlink",
+      "symlink" as const,
+      (out: string) => {
+        rmSync(join(out, OWNED_FILE));
+        symlinkSync(join(out, "descriptor.mod"), join(out, OWNED_FILE));
+      },
+    ],
+  ])("refuses an owned file %s", async (_label, kind, damage) => {
+    // Each of these is a way the author's tree stopped matching what the SDK
+    // last wrote. Rebuilding regardless would paper over a state they may have
+    // arrived at deliberately.
+    const out = await materialized();
+    damage(out);
+
+    const error = await refusal(write(out, renderedMod));
+
+    expect(error.reason).toBe("drift");
+    if (error.failure.reason !== "drift") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.drift).toEqual([{ path: OWNED_FILE, kind }]);
+  });
+});
+
+describe("foreign entries survive the swap", () => {
+  it("preserves an added file while still removing stale owned output", async () => {
+    // The swap replaces the whole directory, so anything not carried into
+    // staging is destroyed by it. The added file must survive exactly the
+    // rebuild that removes the owned file the new render dropped.
+    const out = join(tempDir(), "out");
+    await write(out, renderedWithExtra);
+    writeFileSync(join(out, "notes.txt"), "mine\n", "utf8");
+
+    await write(out, renderedMod);
+
+    expect(readFileSync(join(out, "notes.txt"), "utf8")).toBe("mine\n");
+    expect(existsSync(join(out, EXTRA_FILE))).toBe(false);
+    expect(existsSync(join(out, OWNED_FILE))).toBe(true);
+  });
+
+  it("preserves a nested foreign directory through write, by link not copy", async () => {
+    // Copying would work but would duplicate whatever an author parks in the
+    // output — asset folders are large. The inode identity is the proof the
+    // preserved file is the same file, not a second one.
+    const out = await materialized();
+    mkdirSync(join(out, "extras/deep"), { recursive: true });
+    writeFileSync(join(out, "extras/deep/keep.bin"), "payload", "utf8");
+    const before = statSync(join(out, "extras/deep/keep.bin")).ino;
+
+    await write(out, renderedMod);
+
+    expect(readFileSync(join(out, "extras/deep/keep.bin"), "utf8")).toBe("payload");
+    expect(statSync(join(out, "extras/deep/keep.bin")).ino).toBe(before);
+  });
+
+  it("preserves a nested foreign directory through install too", async () => {
+    // `install` stages through the same seam but commits two renames; a
+    // preservation step that only ran on the `write` path would lose the
+    // author's files exactly when the mod goes into the launcher.
+    const root = tempDir();
+    const { contentDir } = await install(renderedMod, { modDir: root });
+    mkdirSync(join(contentDir, "extras/deep"), { recursive: true });
+    writeFileSync(join(contentDir, "extras/deep/keep.bin"), "payload", "utf8");
+    const before = statSync(join(contentDir, "extras/deep/keep.bin")).ino;
+
+    await install(renderedMod, { modDir: root });
+
+    expect(readFileSync(join(contentDir, "extras/deep/keep.bin"), "utf8")).toBe("payload");
+    expect(statSync(join(contentDir, "extras/deep/keep.bin")).ino).toBe(before);
+    expect(readdirSync(root).sort()).toEqual(["mz_probe", "mz_probe.mod"]);
+  });
+});
+
+describe("foreign kinds materialization cannot carry", () => {
+  it("refuses a foreign symlink without following or touching it", async () => {
+    // A symlink cannot be preserved without deciding whether to copy the link
+    // or its referent, and either choice can write outside the tree. The
+    // referent assertion is the one that matters: the refusal must happen
+    // before anything walks through it.
+    const root = tempDir();
+    const out = join(root, "out");
+    const outside = join(root, "outside");
+    mkdirSync(outside);
+    writeFileSync(join(outside, "untouched.txt"), "outside", "utf8");
+    await write(out, renderedMod);
+    symlinkSync(outside, join(out, "linked"), "dir");
+    const before = readdirSync(out).sort();
+
+    const error = await refusal(write(out, renderedMod));
+
+    expect(error.reason).toBe("foreign-unpreservable");
+    if (error.failure.reason !== "foreign-unpreservable") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.entries).toEqual([{ path: "linked", kind: "symlink" }]);
+    expect(readdirSync(out).sort()).toEqual(before);
+    expect(readdirSync(outside)).toEqual(["untouched.txt"]);
+  });
+
+  it.skipIf(process.platform === "win32")("refuses a foreign FIFO by its own kind", async () => {
+    // A FIFO cannot be hardlinked into staging and blocks anything that opens
+    // it, so a preservation pass that treated "not a directory" as "file"
+    // would hang the build instead of refusing it.
+    const out = await materialized();
+    execFileSync("mkfifo", [join(out, "pipe")]);
+
+    const error = await refusal(write(out, renderedMod));
+
+    expect(error.reason).toBe("foreign-unpreservable");
+    if (error.failure.reason !== "foreign-unpreservable") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.entries).toEqual([{ path: "pipe", kind: "fifo" }]);
+  });
+});
+
+describe("a rendered claim never lands on a foreign entry", () => {
+  /** A target owning only its descriptor, so any other path is foreign. */
+  async function bare(): Promise<string> {
+    const out = join(tempDir(), "out");
+    await write(out, renderedBare);
+    return out;
+  }
+
+  async function conflicts(out: string) {
+    const error = await refusal(write(out, renderedMod));
+    expect(error.reason).toBe("foreign-conflict");
+    if (error.failure.reason !== "foreign-conflict") {
+      throw new Error("unreachable");
+    }
+    return error.failure.conflicts;
+  }
+
+  it("refuses a foreign file sitting on a path the render claims", async () => {
+    // Writing the render over it would destroy the author's file silently,
+    // which is the exact loss the whole foreign-entry contract exists to stop.
+    const out = await bare();
+    mkdirSync(join(out, "common/technology"), { recursive: true });
+    writeFileSync(join(out, OWNED_FILE), "author's own", "utf8");
+
+    expect(await conflicts(out)).toEqual([
+      { claimPath: OWNED_FILE, foreignPath: OWNED_FILE, kind: "occupied" },
+    ]);
+    expect(readFileSync(join(out, OWNED_FILE), "utf8")).toBe("author's own");
+  });
+
+  it("refuses a foreign directory where the render claims a file", async () => {
+    // The staging write would fail with EISDIR halfway through instead, after
+    // the tree was already half built.
+    const out = await bare();
+    mkdirSync(join(out, OWNED_FILE), { recursive: true });
+
+    expect(await conflicts(out)).toEqual([
+      { claimPath: OWNED_FILE, foreignPath: OWNED_FILE, kind: "file-directory" },
+    ]);
+  });
+
+  it("refuses a foreign file the render would have to descend through", async () => {
+    // `common` as a regular file makes `common/technology/...` unwritable, and
+    // preserving the file while creating the directory is not possible at all.
+    const out = await bare();
+    writeFileSync(join(out, "common"), "not a directory", "utf8");
+
+    expect(await conflicts(out)).toEqual([
+      { claimPath: OWNED_FILE, foreignPath: "common", kind: "file-directory" },
+    ]);
+  });
+
+  it("refuses a foreign path that differs from a claim only by case", async () => {
+    // A case-insensitive filesystem collapses the two, so the swap would
+    // overwrite the author's file even though the names are not equal.
+    const out = await bare();
+    mkdirSync(join(out, "Common/Technology"), { recursive: true });
+    writeFileSync(join(out, "Common/Technology/MZ_PROBE_TECHNOLOGY.TXT"), "aliased", "utf8");
+
+    expect(await conflicts(out)).toEqual([
+      {
+        claimPath: OWNED_FILE,
+        foreignPath: "Common/Technology/MZ_PROBE_TECHNOLOGY.TXT",
+        kind: "occupied",
+      },
+    ]);
+  });
+});
+
+describe("OS metadata is an ordinary foreign entry", () => {
+  it("preserves a .DS_Store in an owned target", async () => {
+    const out = await materialized();
+    writeFileSync(join(out, ".DS_Store"), "finder", "utf8");
+
+    await write(out, renderedMod);
+
+    expect(readFileSync(join(out, ".DS_Store"), "utf8")).toBe("finder");
+  });
+
+  it("treats a directory holding only OS metadata as a first materialization", async () => {
+    // A Finder visit to an empty output folder must not be what makes the
+    // first build refuse, and the metadata file must still survive it.
+    const out = join(tempDir(), "out");
+    mkdirSync(out, { recursive: true });
+    writeFileSync(join(out, ".DS_Store"), "finder", "utf8");
+
+    await write(out, renderedMod);
+
+    expect(readFileSync(join(out, ".DS_Store"), "utf8")).toBe("finder");
+    expect(existsSync(join(out, OWNED_FILE))).toBe(true);
+  });
+});
+
+describe("an unowned target is never replaced", () => {
+  it("refuses a nonempty directory with no ownership manifest", async () => {
+    const out = join(tempDir(), "out");
+    mkdirSync(out, { recursive: true });
+    writeFileSync(join(out, "someone-elses.txt"), "not ours", "utf8");
+
+    const error = await refusal(write(out, renderedMod));
+
+    expect(error.reason).toBe("unowned");
+    expect(readFileSync(join(out, "someone-elses.txt"), "utf8")).toBe("not ours");
+  });
+
+  it.each([
+    ["another mod's prefix", { prefix: "other_prefix" }],
+    ["another materialization mode", { mode: "install" }],
+  ])("refuses a manifest belonging to %s", async (_label, patch) => {
+    // The manifest is the ownership claim. A manifest for a different mod, or
+    // for the launcher-install half of the contract, does not authorize this
+    // build to delete anything.
+    const out = await materialized();
+    const manifestPath = join(out, ".pdx-sdk-manifest.json");
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
+    writeFileSync(manifestPath, JSON.stringify({ ...manifest, ...patch }, null, 2), "utf8");
+
+    expect((await refusal(write(out, renderedMod))).reason).toBe("unowned");
+  });
+});
+
+describe("preserved identities are rechecked at the commit point", () => {
+  it("refuses to activate when a preserved file changed while staging", async () => {
+    // Staging links the foreign file, then the activation rename publishes it.
+    // A file rewritten in between would be published as whatever staging
+    // happened to capture, so the swap is refused instead.
+    const out = await materialized();
+    const notes = join(out, "notes.txt");
+    writeFileSync(notes, "mine", "utf8");
+    const staged = await stageMaterialization(out, renderedMod, "build");
+
+    writeFileSync(notes, "changed during staging", "utf8");
+
+    const error = await refusal(activateMaterialization(staged));
+    expect(error.reason).toBe("busy");
+    if (error.failure.reason !== "busy") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.detail).toContain("notes.txt");
+    // The staged tree was cleaned up, and the target was never renamed aside.
+    expect(readdirSync(dirname(out))).toEqual(["out"]);
+    expect(existsSync(join(out, OWNED_FILE))).toBe(true);
+  });
+});
+
+describe("receipts", () => {
+  const snapshot: MaterializationSnapshot = {
+    owned: [{ path: OWNED_FILE, kind: "file", byteLength: 3, sha256: "abc" }],
+    foreign: [{ path: "notes.txt", kind: "file", dev: 1, ino: 2, size: 3, mtimeMs: 4.5 }],
+    descriptor: { state: "file", basename: "mz_probe.mod", byteLength: 10, sha256: "def" },
+  };
+
+  function digestOf(next: MaterializationSnapshot): string {
+    return openReceipt(issueReceipt("/target", "install", "mz_probe", next)).digest;
+  }
+
+  it("refuses to open anything it did not issue", () => {
+    // A receipt is a review of a state someone actually looked at. A plain
+    // object would let a caller assert a review that never happened.
+    expect(() => openReceipt({} as never)).toThrow(TypeError);
+  });
+
+  it("digests one snapshot to one value", () => {
+    expect(digestOf(snapshot)).toBe(digestOf(snapshot));
+  });
+
+  it.each([
+    ["an owned hash", { ...snapshot, owned: [{ ...snapshot.owned[0]!, sha256: "abd" }] }] as const,
+    [
+      "a foreign mtime",
+      { ...snapshot, foreign: [{ ...snapshot.foreign[0]!, mtimeMs: 4.6 }] },
+    ] as const,
+    ["the descriptor state", { ...snapshot, descriptor: { state: "absent" } }] as const,
+  ])("digests a change to %s differently", (_label, changed) => {
+    // Replay compares digests. A field the digest ignores is a change a
+    // reviewed replacement would silently accept.
+    expect(digestOf(changed)).not.toBe(digestOf(snapshot));
+  });
+});

@@ -33,7 +33,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   createMod,
   install,
-  MaterializationDriftError,
+  MaterializationError,
   render,
   renderLauncherDescriptor,
   stellaris,
@@ -105,6 +105,16 @@ function renderedVariant(name: string) {
       ]),
     ])
   );
+}
+
+/** The refusal itself, so a test can assert which reason it carries. */
+async function refusal(operation: Promise<unknown>): Promise<MaterializationError> {
+  const thrown = await operation.then(
+    () => undefined,
+    (error: unknown) => error
+  );
+  expect(thrown).toBeInstanceOf(MaterializationError);
+  return thrown as MaterializationError;
 }
 
 const temps: string[] = [];
@@ -275,9 +285,9 @@ describe("install", () => {
     rmSync(join(root, "lp_probe.mod"));
     symlinkSync(outside, join(root, "lp_probe.mod"));
 
-    await expect(install(renderedMod, { modDir: root })).rejects.toBeInstanceOf(
-      MaterializationDriftError
-    );
+    // The descriptor is owned output, so a symlink in its place is drift on
+    // the owned set — not a foreign entry the install may preserve.
+    expect((await refusal(install(renderedMod, { modDir: root }))).reason).toBe("drift");
 
     expect(readFileSync(outside, "utf8")).toBe("outside");
   });
@@ -301,21 +311,23 @@ describe("install refuses a folder name that is not a folder name", () => {
   // decides what the launcher descriptor *says*, since `install` writes it
   // into `path="..."` — the same unescaped format the config gate gaurds, one
   // door over.
+  const notOneSegment = /must be one plain path segment/;
+  const notEncodable = /cannot contain a quote or control character/;
   it.each([
-    ["empty", "", /not a single folder name/],
-    ["this directory", ".", /not a single folder name/],
-    ["the parent directory", "..", /not a single folder name/],
-    ["a nested path", "custom/nested", /not a single folder name/],
-    ["a backslash path", "custom\\nested", /not a single folder name/],
-    ["an absolute path", "/tmp/pdx-escape-probe", /not a single folder name/],
-    ["a NUL byte", "custom\0name", /cannot contain a control character/],
-    ["a double quote", 'quoted"name', /cannot contain a double quote/],
-    ["a forged descriptor field", 'safe"\narchive="x', /cannot contain a double quote/],
-    ["a line break", "line\nbreak", /cannot contain a line break/],
-    ["a carriage return", "carriage\rreturn", /cannot contain a line break/],
+    ["empty", "", notOneSegment],
+    ["this directory", ".", notOneSegment],
+    ["the parent directory", "..", notOneSegment],
+    ["a nested path", "custom/nested", notOneSegment],
+    ["a backslash path", "custom\\nested", notOneSegment],
+    ["an absolute path", "/tmp/pdx-escape-probe", notOneSegment],
+    ["a NUL byte", "custom\0name", notEncodable],
+    ["a double quote", 'quoted"name', notEncodable],
+    ["a forged descriptor field", 'safe"\narchive="x', notEncodable],
+    ["a line break", "line\nbreak", notEncodable],
+    ["a carriage return", "carriage\rreturn", notEncodable],
   ])("rejects %s", async (_label, dirName, expected) => {
     const root = tempDir();
-    await expect(install(renderedMod, { modDir: root, dirName })).rejects.toThrow();
+    await expect(install(renderedMod, { modDir: root, dirName })).rejects.toThrow(expected);
     // Nothing was created, and nothing was deleted, before the refusal.
     expect(readdirSync(root)).toEqual([]);
   });
@@ -442,14 +454,30 @@ describe("write materializes one exact rendered snapshot", () => {
     expect(existsSync(join(out, ".pdx-sdk-manifest.json"))).toBe(true);
   });
 
-  it("refuses to erase an added or modified path", async () => {
+  it("keeps a file the author added and the manifest never owned", async () => {
+    // The game loads whatever is in the folder, so an added file is the
+    // author's, not drift: a rebuild must carry it across the swap untouched.
     const out = join(tempDir(), "out");
     await write(out, renderedMod);
     writeFileSync(join(out, "notes.txt"), "mine", "utf8");
 
-    await expect(write(out, renderedMod)).rejects.toBeInstanceOf(MaterializationDriftError);
+    await write(out, renderedMod);
 
     expect(readFileSync(join(out, "notes.txt"), "utf8")).toBe("mine");
+  });
+
+  it("refuses to erase a modified owned path", async () => {
+    // The mirror case: an owned file the author edited is drift, and rebuilding
+    // over it would destroy the edit without ever showing it to them.
+    const out = join(tempDir(), "out");
+    await write(out, renderedMod);
+    const owned = join(out, "common/technology/lp_probe_technology.txt");
+    writeFileSync(owned, "hand edited", "utf8");
+
+    const error = await refusal(write(out, renderedMod));
+
+    expect(error.reason).toBe("drift");
+    expect(readFileSync(owned, "utf8")).toBe("hand edited");
   });
 
   it("never follows a symlink already inside the old output tree", async () => {
@@ -461,7 +489,9 @@ describe("write materializes one exact rendered snapshot", () => {
     rmSync(join(out, "common"), { recursive: true });
     symlinkSync(outside, join(out, "common"), "dir");
 
-    await expect(write(out, renderedMod)).rejects.toBeInstanceOf(MaterializationDriftError);
+    // `common/` is a directory the manifest's own paths imply, so swapping it
+    // for a symlink is drift on an owned path, not a foreign entry.
+    expect((await refusal(write(out, renderedMod))).reason).toBe("drift");
 
     expect(readdirSync(outside)).toEqual([]);
   });
