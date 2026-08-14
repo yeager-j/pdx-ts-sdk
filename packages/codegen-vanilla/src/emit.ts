@@ -13,6 +13,11 @@
  * localisation sentence, a line of script, a fragment of a body. A name has no
  * braces, no `=`, no `$`, no quotes, no newlines, at most a couple of spaces,
  * and is short.
+ *
+ * {@link assertVanillaPath} is the same gate for the one emitted string that
+ * is a path rather than a name — the install's path inventory. Two doors, one
+ * counter: {@link Chokepoint} is still the only way a string reaches emitted
+ * text, and the report's "identifiers checked" counts what went through both.
  */
 
 import { camelCase, pascalCase, safeIdentifier } from "@pdx-ts/codegen-cwt/naming";
@@ -74,6 +79,76 @@ export function assertVanillaIdentifier(candidate: string, context: string): str
 }
 
 /**
+ * Characters no path contains, spelled out rather than borrowed.
+ *
+ * Nearly the identifier list, and the one difference is the reason this is its
+ * own array: `$` is legal in a path. Vanilla ships inline-script template
+ * filenames that use it —
+ * `common/inline_scripts/trait/icon_element/council_no_$CLASS$.txt` is the
+ * only one in 4.4.6, and a patch may add more — so forbidding it would refuse
+ * a real file rather than catch a leak. Braces, `=`, quotes, and the newline
+ * characters are what actually separate a path from prose or a line of script,
+ * and they all stay.
+ */
+const FORBIDDEN_IN_PATH = ["\n", "\r", "\t", "{", "}", "=", '"', "#", "\\"];
+
+/** The longest a single path component gets on any filesystem the game runs on. */
+const MAX_COMPONENT_BYTES = 255;
+
+/** A leading drive letter — `C:/gfx` is a machine's path, not the game's. */
+const DRIVE_SHAPE = /^[A-Za-z]:/;
+
+const UTF8 = new TextEncoder();
+
+/**
+ * Passes a path through, or throws naming what it was and where it came from.
+ *
+ * The same gate as {@link assertVanillaIdentifier} and a different shape,
+ * because a path is not an identifier: it has `/` separators, it can be long,
+ * it may carry a `$` ({@link FORBIDDEN_IN_PATH}), and vanilla is full of names
+ * like `flags/backgrounds/00 solid.dds` that spend more spaces than any id
+ * would. What stays is the part that separates a name from content — no
+ * braces, no `=`, no quotes, no newlines — plus what separates a *relative*
+ * path inside the game from anything else: no absolute root, no drive letter,
+ * no `.` or `..` to resolve, no empty component. Backslashes are refused
+ * rather than rewritten to `/`, for the reason the identifier gate never
+ * repairs either: a silently corrected path is a wrong path emitted as a
+ * right-looking one.
+ */
+export function assertVanillaPath(candidate: string, context: string): string {
+  const reject = (reason: string): never => {
+    throw new Error(
+      `${context}: refusing to emit ${JSON.stringify(candidate.slice(0, 120))} — ${reason}. ` +
+        "The vanilla package carries path names only; this looks like game content."
+    );
+  };
+  if (candidate === "") {
+    reject("empty");
+  }
+  for (const character of FORBIDDEN_IN_PATH) {
+    if (candidate.includes(character)) {
+      reject(`contains ${JSON.stringify(character)}`);
+    }
+  }
+  if (candidate.startsWith("/") || DRIVE_SHAPE.test(candidate)) {
+    reject("is absolute; the inventory carries install-relative paths");
+  }
+  for (const component of candidate.split("/")) {
+    if (component === "") {
+      reject('has an empty component (a leading, trailing, or doubled "/")');
+    }
+    if (component === "." || component === "..") {
+      reject(`contains a ${JSON.stringify(component)} component`);
+    }
+    const bytes = UTF8.encode(component).length;
+    if (bytes > MAX_COMPONENT_BYTES) {
+      reject(`has a ${bytes}-byte component, over the ${MAX_COMPONENT_BYTES} a filename takes`);
+    }
+  }
+  return candidate;
+}
+
+/**
  * Byte order, not locale order. Emission has to be reproducible on every
  * machine, and `localeCompare` is not: it treats `_` and case differently
  * depending on the environment's collation.
@@ -86,15 +161,24 @@ export function compareIdentifiers(left: string, right: string): number {
 export interface Chokepoint {
   /** Asserts, then quotes. The only way a string reaches emitted text. */
   literal(candidate: string, context: string): string;
+  /** The same, for the one kind of string that is a path rather than a name. */
+  pathLiteral(candidate: string, context: string): string;
   readonly checked: () => number;
 }
 
 export function createChokepoint(): Chokepoint {
+  // One counter for both doors. The report's number answers "how many strings
+  // did the gate inspect", and a path inspected by the other assertion is
+  // still a string the gate inspected.
   let seen = 0;
   return {
     literal(candidate, context) {
       seen += 1;
       return JSON.stringify(assertVanillaIdentifier(candidate, context));
+    },
+    pathLiteral(candidate, context) {
+      seen += 1;
+      return JSON.stringify(assertVanillaPath(candidate, context));
     },
     checked: () => seen,
   };
@@ -369,6 +453,34 @@ export function emitScriptedBindings(
     renamed,
     bySize,
   };
+}
+
+/**
+ * The install's path inventory as one frozen array.
+ *
+ * Data rather than a type, and that is the point: the SDK asks "does vanilla
+ * occupy this path" at build time, which is a lookup over tens of thousands of
+ * strings, not a union a compiler should be asked to hold. It ships behind its
+ * own `./paths` subpath so that nothing but a caller that wants the inventory
+ * ever loads it.
+ *
+ * Only names cross. The scan that produced these read directory entries and
+ * zip central directories — never a file's contents, its size, or its hash —
+ * and every string here passes {@link assertVanillaPath} on the way in.
+ */
+export function emitVanillaPaths(
+  paths: readonly string[],
+  gate: Chokepoint,
+  gameVersion: string
+): string {
+  const unique = [...new Set(paths)].sort(compareIdentifiers);
+  const lines = unique.map((one) => `  ${gate.pathLiteral(one, "vanilla path")},\n`).join("");
+  return (
+    header(gameVersion) +
+    `export const VANILLA_PATH_GAME_VERSION = ${gate.literal(gameVersion, "game version")};\n\n` +
+    "export const VANILLA_PATHS: readonly string[] = /*#__PURE__*/ Object.freeze([\n" +
+    `${lines}]);\n`
+  );
 }
 
 export interface TablesPlan {

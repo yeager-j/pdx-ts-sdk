@@ -4,6 +4,7 @@ import path from "node:path";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { eventKinds, type EventKindSpec } from "@pdx-ts/codegen-cwt/event-kinds";
 import { loadScopeFacts } from "@pdx-ts/codegen-cwt/scope-facts";
+import { scanInstallPaths, type VanillaPathScan } from "@pdx-ts/sdk/stellaris";
 
 import { compareIdentifiers } from "./emit.ts";
 import { inferScopes, type InferredScope, type ScriptedKind } from "./infer-scopes.ts";
@@ -43,6 +44,13 @@ export interface VanillaBuildFacts {
   readonly complexEnums: readonly ComplexEnumMembers[];
   readonly scripted: Readonly<Record<ScriptedKind, ScriptedRegistry>>;
   readonly inferredScopes: Readonly<Record<ScriptedKind, readonly InferredScope[]>>;
+  /**
+   * Which paths the install occupies — the loose files plus the DLC archives'
+   * entry names. Read through the SDK's own scanner rather than a second walk
+   * here, because the SDK checks a mod's paths against a live install with the
+   * same code that produced the packaged inventory.
+   */
+  readonly paths: VanillaPathScan;
 }
 
 export interface RegistryBuildFacts {
@@ -181,6 +189,10 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
     trigger: scripted.trigger.definitions,
     effect: scripted.effect.definitions,
   });
+  // After the id readers on purpose. Those are what a poisoned install fails
+  // on, and a whole-install walk that ran first would decide the failure of a
+  // run whose real complaint is a name that must not be emitted.
+  const paths = scanInstallPaths(options.installRoot);
   const installEvidenceInputs: EvidenceInput[] = [
     { root: events.path, extension: events.extension, recurse: true },
     ...scriptedRows.map((row) => ({ root: row.dir, extension: ".txt", recurse: true })),
@@ -222,5 +234,6 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
     complexEnums,
     scripted,
     inferredScopes,
+    paths,
   };
 }

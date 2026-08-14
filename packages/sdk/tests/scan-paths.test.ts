@@ -1,0 +1,209 @@
+/**
+ * The install path scanner, measured against the fixture install and against
+ * archives built here byte by byte.
+ *
+ * The archives are built in memory rather than committed, because what needs
+ * proving is mostly the *refusals* — a truncated directory, a ZIP64 marker, a
+ * backslash in an entry name — and a repository is a poor place to keep five
+ * deliberately broken zip files. One well-formed archive is committed inside
+ * `fixtures/fake-install`, since the walk has to find a real file on disk to
+ * prove that the two sources merge.
+ */
+
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+
+import { VanillaPathInventoryError } from "../src/errors.ts";
+import {
+  isOsMetadataPath,
+  readZipEntryNames,
+  scanInstallPaths,
+} from "../src/stellaris/installation/scan-paths.ts";
+
+/** The repo root, from this module — never the directory vitest was started in. */
+const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+const FIXTURE = path.join(ROOT, "fixtures/fake-install");
+
+/** Stored (uncompressed) entries with empty payloads: names and nothing else. */
+function buildZip(names: readonly string[], comment = ""): Uint8Array {
+  const encoder = new TextEncoder();
+  const locals: Uint8Array[] = [];
+  const centrals: Uint8Array[] = [];
+  let offset = 0;
+  for (const name of names) {
+    const raw = encoder.encode(name);
+    const local = new Uint8Array(30 + raw.length);
+    const localView = new DataView(local.buffer);
+    localView.setUint32(0, 0x04034b50, true);
+    localView.setUint16(4, 20, true);
+    localView.setUint16(26, raw.length, true);
+    local.set(raw, 30);
+    locals.push(local);
+
+    const central = new Uint8Array(46 + raw.length);
+    const centralView = new DataView(central.buffer);
+    centralView.setUint32(0, 0x02014b50, true);
+    centralView.setUint16(4, 20, true);
+    centralView.setUint16(6, 20, true);
+    centralView.setUint16(28, raw.length, true);
+    centralView.setUint32(42, offset, true);
+    central.set(raw, 46);
+    centrals.push(central);
+    offset += local.length;
+  }
+
+  const directorySize = centrals.reduce((total, one) => total + one.length, 0);
+  const commentBytes = encoder.encode(comment);
+  const eocd = new Uint8Array(22 + commentBytes.length);
+  const eocdView = new DataView(eocd.buffer);
+  eocdView.setUint32(0, 0x06054b50, true);
+  eocdView.setUint16(8, names.length, true);
+  eocdView.setUint16(10, names.length, true);
+  eocdView.setUint32(12, directorySize, true);
+  eocdView.setUint32(16, offset, true);
+  eocdView.setUint16(20, commentBytes.length, true);
+  eocd.set(commentBytes, 22);
+
+  return concat([...locals, ...centrals, eocd]);
+}
+
+function concat(parts: readonly Uint8Array[]): Uint8Array {
+  const bytes = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+  let at = 0;
+  for (const part of parts) {
+    bytes.set(part, at);
+    at += part.length;
+  }
+  return bytes;
+}
+
+/** Where the end-of-central-directory record starts, given the comment length. */
+function eocdAt(bytes: Uint8Array, commentLength = 0): DataView {
+  return new DataView(bytes.buffer, bytes.byteLength - 22 - commentLength);
+}
+
+describe("isOsMetadataPath", () => {
+  it("names what the machine wrote rather than what the game ships", () => {
+    for (const junk of [
+      ".DS_Store",
+      "gfx/.DS_Store",
+      "Thumbs.db",
+      "gfx/models/Thumbs.db",
+      "desktop.ini",
+      "._junk",
+      "music/._track.ogg",
+      "__MACOSX/music/track.ogg",
+    ]) {
+      expect(isOsMetadataPath(junk), junk).toBe(true);
+    }
+    for (const real of [
+      "common/technology/00_tech.txt",
+      "music/track.ogg",
+      "gfx/models/ship.mesh",
+      "flags/backgrounds/00 solid.dds",
+    ]) {
+      expect(isOsMetadataPath(real), real).toBe(false);
+    }
+  });
+});
+
+describe("scanInstallPaths", () => {
+  const scan = scanInstallPaths(FIXTURE);
+
+  it("walks the install as relative, forward-slashed, byte-sorted paths", () => {
+    expect(scan.paths).toContain("common/technology/00_fake_soc_tech.txt");
+    expect(scan.paths).toContain("launcher-settings.json");
+    expect(scan.installFiles).toBeGreaterThan(20);
+    for (const one of scan.paths) {
+      expect(one.startsWith("/"), one).toBe(false);
+      expect(one.includes("\\"), one).toBe(false);
+    }
+    expect([...scan.paths]).toEqual([...scan.paths].sort());
+    expect(new Set(scan.paths).size).toBe(scan.paths.length);
+  });
+
+  it("carries what the DLC archives claim, alongside the archive file itself", () => {
+    expect(scan.paths).toContain("dlc/fake_dlc01/fake_dlc01.zip");
+    expect(scan.paths).toContain("music/fake_dlc_track.ogg");
+    expect(scan.archives).toBe(1);
+    expect(scan.archiveEntries).toBe(4);
+  });
+
+  it("excludes operating-system metadata from both sources, and counts it", () => {
+    for (const junk of scan.paths.filter(isOsMetadataPath)) {
+      expect.unreachable(`${junk} is metadata and should not be in the inventory`);
+    }
+    // `.DS_Store`, `._junk`, and the `__MACOSX/` entry inside the fixture zip.
+    expect(scan.junkExcluded).toBe(3);
+  });
+
+  it("treats a root with no dlc directory as an install with no archives", () => {
+    const noDlc = scanInstallPaths(path.join(FIXTURE, "common"));
+    expect(noDlc.archives).toBe(0);
+    expect(noDlc.archiveEntries).toBe(0);
+    expect(noDlc.paths.length).toBeGreaterThan(0);
+  });
+});
+
+describe("readZipEntryNames", () => {
+  it("reads the central directory's names, comment and all", () => {
+    const bytes = buildZip(["music/track.ogg", "gfx/ship.mesh"], "packed by a tool");
+    expect(readZipEntryNames(bytes, "test.zip")).toEqual(["music/track.ogg", "gfx/ship.mesh"]);
+  });
+
+  it("drops directory entries, which name a container rather than a file", () => {
+    const bytes = buildZip(["music/", "music/track.ogg"]);
+    expect(readZipEntryNames(bytes, "test.zip")).toEqual(["music/track.ogg"]);
+  });
+
+  it("refuses a file with no end-of-central-directory record", () => {
+    const bytes = new Uint8Array(200).fill(0x41);
+    expect(() => readZipEntryNames(bytes, "broken.zip")).toThrow(VanillaPathInventoryError);
+    expect(() => readZipEntryNames(bytes, "broken.zip")).toThrow(
+      /^broken\.zip: no zip end-of-central-directory record/
+    );
+  });
+
+  it("refuses a central directory that does not fit in the file", () => {
+    const bytes = buildZip(["music/track.ogg"]);
+    eocdAt(bytes).setUint32(12, 4096, true);
+    expect(() => readZipEntryNames(bytes, "truncated.zip")).toThrow(VanillaPathInventoryError);
+    expect(() => readZipEntryNames(bytes, "truncated.zip")).toThrow(
+      /^truncated\.zip: central directory runs to \d+ bytes/
+    );
+  });
+
+  it("refuses an entry whose name overruns the central directory", () => {
+    const bytes = buildZip(["music/track.ogg"]);
+    const directoryOffset = eocdAt(bytes).getUint32(16, true);
+    new DataView(bytes.buffer, directoryOffset).setUint16(28, 4096, true);
+    expect(() => readZipEntryNames(bytes, "short.zip")).toThrow(
+      /^short\.zip: entry name at \d+ overruns/
+    );
+  });
+
+  it("refuses a record that is not a central directory record", () => {
+    const bytes = buildZip(["music/track.ogg"]);
+    const directoryOffset = eocdAt(bytes).getUint32(16, true);
+    new DataView(bytes.buffer, directoryOffset).setUint32(0, 0x02014b51, true);
+    expect(() => readZipEntryNames(bytes, "odd.zip")).toThrow(
+      /^odd\.zip: no central directory record signature/
+    );
+  });
+
+  it("refuses ZIP64 rather than guessing at what it cannot read", () => {
+    const bytes = buildZip(["music/track.ogg"]);
+    eocdAt(bytes).setUint16(10, 0xffff, true);
+    expect(() => readZipEntryNames(bytes, "big.zip")).toThrow(VanillaPathInventoryError);
+    expect(() => readZipEntryNames(bytes, "big.zip")).toThrow(/^big\.zip: states a ZIP64 entry/);
+  });
+
+  it("refuses a backslash in an entry name rather than rewriting it", () => {
+    const bytes = buildZip(["music\\track.ogg"]);
+    expect(() => readZipEntryNames(bytes, "windows.zip")).toThrow(VanillaPathInventoryError);
+    expect(() => readZipEntryNames(bytes, "windows.zip")).toThrow(
+      /^windows\.zip: entry name "music\\\\track\.ogg" contains a backslash/
+    );
+  });
+});

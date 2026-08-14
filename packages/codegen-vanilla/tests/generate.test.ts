@@ -72,6 +72,13 @@ describe("emitted file set", () => {
     expect(files.has("events/index.ts")).toBe(true);
   });
 
+  it("emits the path inventory beside the barrel without re-exporting it", () => {
+    // `./paths` is its own subpath so that importing the package's root never
+    // loads tens of thousands of strings a caller did not ask for.
+    expect(files.has("paths.ts")).toBe(true);
+    expect(file("index.ts")).not.toContain("./paths.ts");
+  });
+
   it("names every emitted registry in the tables", () => {
     const tables = file("tables.ts");
     for (const row of generated.report.registries) {
@@ -740,6 +747,19 @@ describe("determinism", () => {
 });
 
 describe("report", () => {
+  it("counts the path inventory and both sources it came from", () => {
+    // The fixture's one DLC archive carries five entries: a directory, three
+    // pieces of operating-system metadata, and one real path. Only the last
+    // reaches the inventory, and the archive file itself is a walked path too.
+    expect(generated.report.paths).toEqual({
+      total: 30,
+      installFiles: 29,
+      archives: 1,
+      archiveEntries: 4,
+      junkExcluded: 3,
+    });
+  });
+
   it("counts what it read and what the licensing gate saw", () => {
     expect(generated.report.rejections).toBe(0);
     expect(generated.report.identifiersChecked).toBeGreaterThan(50);

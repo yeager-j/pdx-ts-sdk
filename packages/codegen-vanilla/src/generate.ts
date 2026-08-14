@@ -27,6 +27,7 @@ import {
   emitScriptedParams,
   emitTables,
   emitTrie,
+  emitVanillaPaths,
   enumFile,
   enumTypeName,
   idTypeName,
@@ -131,6 +132,18 @@ export interface VanillaReport {
   readonly complexEnums: readonly ComplexEnumReport[];
   readonly events: EventReport;
   readonly scripted: readonly ScriptedReport[];
+  /**
+   * The path inventory: how many paths shipped, and what they were read from.
+   * `total` is below `installFiles + archiveEntries - junkExcluded` whenever a
+   * DLC archive carries a path a loose file already claims.
+   */
+  readonly paths: {
+    readonly total: number;
+    readonly installFiles: number;
+    readonly archives: number;
+    readonly archiveEntries: number;
+    readonly junkExcluded: number;
+  };
   readonly emittedFiles: number;
   /** Parser repairs across every file read. Reported, never fatal. */
   readonly diagnostics: number;
@@ -302,6 +315,10 @@ export function generateVanillaPackage(options: GenerateOptions): {
   }
 
   files.set("tables.ts", emitTables(plan satisfies TablesPlan, gate, gameVersion));
+  // Not re-exported from the barrel. The inventory is tens of thousands of
+  // strings behind its own `./paths` subpath, and the root must stay something
+  // a project can import without loading it.
+  files.set("paths.ts", emitVanillaPaths(facts.paths.paths, gate, gameVersion));
   files.set("index.ts", emitIndex(exports, gameVersion));
 
   const eventKinds = new Map<string, number>();
@@ -330,6 +347,13 @@ export function generateVanillaPackage(options: GenerateOptions): {
         byKind: new Map([...eventKinds].sort(([left], [right]) => compareIdentifiers(left, right))),
       },
       scripted,
+      paths: {
+        total: facts.paths.paths.length,
+        installFiles: facts.paths.installFiles,
+        archives: facts.paths.archives,
+        archiveEntries: facts.paths.archiveEntries,
+        junkExcluded: facts.paths.junkExcluded,
+      },
       emittedFiles: files.size,
       diagnostics:
         registries.reduce((total, one) => total + one.diagnostics, 0) +

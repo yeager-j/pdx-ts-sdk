@@ -8,8 +8,10 @@
  * install that must fail to generate rather than emit.
  *
  * The third leg measures the fixture output itself: every string literal that
- * is not a module specifier passes the same imported gate, and no generated
- * module carries runtime code. One authority, applied twice.
+ * is not a module specifier passes the same imported gate its emitter used —
+ * the path gate for `paths.ts`, the identifier gate for everything else — and
+ * no generated module carries runtime code beyond the three that must. One
+ * authority, applied twice.
  */
 
 import path from "node:path";
@@ -17,7 +19,13 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { emitEventTrie } from "../src/emit-events.ts";
-import { assertVanillaIdentifier, compareIdentifiers, createChokepoint } from "../src/emit.ts";
+import {
+  assertVanillaIdentifier,
+  assertVanillaPath,
+  compareIdentifiers,
+  createChokepoint,
+  emitVanillaPaths,
+} from "../src/emit.ts";
 import { generateVanillaPackage } from "../src/generate.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */
@@ -34,11 +42,15 @@ const OPTIONS = {
 const generated = generateVanillaPackage(OPTIONS);
 
 /**
- * The two files that carry runtime, and the only two. Everything else the
- * generator emits is types with zero payload; these hold one bound call per
- * scripted definition (SDK-13).
+ * The three files that carry runtime, and the only three. Everything else the
+ * generator emits is types with zero payload. `triggers.ts` and `effects.ts`
+ * hold one bound call per scripted definition (SDK-13); `paths.ts` holds the
+ * install's path inventory, which is data because the SDK looks paths up at
+ * build time rather than asking a compiler to hold a union of tens of
+ * thousands of strings (SDK-173).
  */
 const BINDING_FILES = new Set(["triggers.ts", "effects.ts"]);
+const RUNTIME_FILES = new Set([...BINDING_FILES, "paths.ts"]);
 
 describe("assertVanillaIdentifier", () => {
   it("passes the names the game actually defines", () => {
@@ -85,7 +97,62 @@ describe("assertVanillaIdentifier", () => {
   });
 });
 
+describe("assertVanillaPath", () => {
+  it("passes the paths an install actually contains", () => {
+    for (const one of [
+      "music/fake_dlc_track.ogg",
+      "common/technology/00_soc_tech.txt",
+      "flags/backgrounds/00 solid.dds",
+      `gfx/models/${"deep/".repeat(30)}ship.mesh`,
+    ]) {
+      expect(assertVanillaPath(one, "test")).toBe(one);
+    }
+  });
+
+  it("passes the inline-script template filename that forced the `$` rule", () => {
+    // The real 4.4.6 file, and the only path in the whole install carrying a
+    // `$`. Refusing it would refuse the inventory; a refactor that folded the
+    // path rules back into the identifier list would do exactly that.
+    const measured = "common/inline_scripts/trait/icon_element/council_no_$CLASS$.txt";
+    expect(assertVanillaPath(measured, "vanilla path")).toBe(measured);
+    expect(() => assertVanillaIdentifier(measured, "test")).toThrow(/contains "\$"/);
+  });
+
+  it("refuses anything that is not an install-relative path", () => {
+    expect(() => assertVanillaPath("gfx/../etc/passwd", "test")).toThrow(
+      /contains a ".." component/
+    );
+    expect(() => assertVanillaPath("gfx/./ship.mesh", "test")).toThrow(/contains a "." component/);
+    expect(() => assertVanillaPath("/usr/share/stellaris/x", "test")).toThrow(/is absolute/);
+    expect(() => assertVanillaPath("C:/Stellaris/x", "test")).toThrow(/is absolute/);
+    expect(() => assertVanillaPath("gfx\\ship.mesh", "test")).toThrow(/contains "\\\\"/);
+    expect(() => assertVanillaPath("gfx//ship.mesh", "test")).toThrow(/empty component/);
+    expect(() => assertVanillaPath("gfx/ship.mesh/", "test")).toThrow(/empty component/);
+    expect(() => assertVanillaPath("", "test")).toThrow(/empty/);
+  });
+
+  it("refuses the shapes that mean a body leaked in", () => {
+    expect(() => assertVanillaPath("has_country_flag = x", "test")).toThrow(/contains "="/);
+    expect(() => assertVanillaPath("limit = { x }", "test")).toThrow(/refusing to emit/);
+    expect(() => assertVanillaPath('say_"hi"/x', "test")).toThrow(/contains "\\""/);
+    expect(() => assertVanillaPath("gfx/a\nb", "test")).toThrow(/refusing to emit/);
+    expect(() => assertVanillaPath(`gfx/${"x".repeat(256)}.dds`, "test")).toThrow(
+      /260-byte component, over the 255/
+    );
+  });
+
+  it("names the context and quotes the candidate, so a failure is actionable", () => {
+    expect(() => assertVanillaPath("a = b", "vanilla path")).toThrow(/^vanilla path: refusing/);
+  });
+});
+
 describe("negative control", () => {
+  it("refuses to emit an inventory carrying anything but a path", () => {
+    expect(() =>
+      emitVanillaPaths(["sound/ok.asset", "a = b"], createChokepoint(), "4.4.6")
+    ).toThrow(/vanilla path: refusing to emit/);
+  });
+
   it("fails to generate against an install whose names are localised text", () => {
     expect(() =>
       generateVanillaPackage({
@@ -128,11 +195,19 @@ function identifierLiterals(text: string): string[] {
 }
 
 describe("generated output", () => {
+  /**
+   * Two assertions, split by file on purpose. `paths.ts` carries paths, which
+   * are the one emitted string a name-shaped gate would reject out of hand —
+   * they have `/` separators and vanilla spends spaces in them. Every other
+   * file carries identifiers, and applying the path gate to those would let a
+   * localised sentence through. Each file gets the gate its own emitter used.
+   */
   it("contains nothing the gate would not have let through", () => {
     let checked = 0;
     for (const [name, text] of generated.files) {
+      const assert = name === "paths.ts" ? assertVanillaPath : assertVanillaIdentifier;
       for (const literal of identifierLiterals(text)) {
-        expect(() => assertVanillaIdentifier(literal, name)).not.toThrow();
+        expect(() => assert(literal, name)).not.toThrow();
         checked += 1;
       }
     }
@@ -141,7 +216,7 @@ describe("generated output", () => {
 
   it("keeps every id and parameter table types-only", () => {
     for (const [name, text] of generated.files) {
-      if (BINDING_FILES.has(name)) {
+      if (RUNTIME_FILES.has(name)) {
         continue;
       }
       expect(text, name).not.toMatch(/\bexport\s+(const|let|var|function|class|default|enum)\b/);
@@ -175,6 +250,40 @@ describe("generated output", () => {
         );
       }
     }
+  });
+
+  /**
+   * The inventory is the package's third runtime file, and this pins that it
+   * is a list of names and nothing more: two exported constants, one quoted
+   * path per line, and the array's close. No sizes, no hashes, no contents —
+   * a generator change that started carrying any of those would land here.
+   */
+  it("keeps the path inventory to one quoted path per line", () => {
+    const text = generated.files.get("paths.ts");
+    expect(text, "paths.ts was not emitted").toBeDefined();
+    const body = text!.split("\n").filter((line) => line !== "" && !line.startsWith("//"));
+    expect(body.length).toBeGreaterThan(3);
+    expect(body[0]).toMatch(/^export const VANILLA_PATH_GAME_VERSION = "4\.4\.6";$/);
+    expect(body[1]).toBe(
+      "export const VANILLA_PATHS: readonly string[] = /*#__PURE__*/ Object.freeze(["
+    );
+    expect(body[body.length - 1]).toBe("]);");
+    for (const line of body.slice(2, -1)) {
+      expect(line).toMatch(/^ {2}"[^"\\]+",$/);
+    }
+  });
+
+  it("carries the fixture's walked files and archive entries, and none of its junk", () => {
+    const text = generated.files.get("paths.ts")!;
+    const paths = [...text.matchAll(/^ {2}"([^"]+)",$/gm)].map((match) => match[1]!);
+    expect(paths).toContain("common/technology/00_fake_soc_tech.txt");
+    expect(paths).toContain("dlc/fake_dlc01/fake_dlc01.zip");
+    expect(paths).toContain("music/fake_dlc_track.ogg");
+    expect(paths).not.toContain(".DS_Store");
+    expect(paths).not.toContain("._junk");
+    expect(paths).not.toContain("__MACOSX/music/._fake_dlc_track.ogg");
+    expect(paths).toEqual([...paths].sort(compareIdentifiers));
+    expect(new Set(paths).size).toBe(paths.length);
   });
 });
 

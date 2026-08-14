@@ -338,6 +338,7 @@ export {
   UnverifiedRegistryError,
   VanillaPackageMismatchError,
   VanillaPathCollisionError,
+  VanillaPathInventoryError,
   type ForeignClaimConflict,
   type ForeignRefusedEntry,
   type MaterializationDrift,

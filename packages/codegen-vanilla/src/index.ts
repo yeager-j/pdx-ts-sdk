@@ -174,6 +174,11 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
         (one.missing ? " — DIRECTORY MISSING" : "")
     )
   );
+  reportSection("Vanilla paths", [
+    `${report.paths.total} paths from ${report.paths.installFiles} install files and ` +
+      `${report.paths.archiveEntries} entries in ${report.paths.archives} DLC archives ` +
+      `(${report.paths.junkExcluded} operating-system metadata entries excluded)`,
+  ]);
   reportSection("Inferred scopes", report.scripted.map(scopeLine));
   reportSection(
     "Keys the rules do not cover, by bindings they cost a narrowing",

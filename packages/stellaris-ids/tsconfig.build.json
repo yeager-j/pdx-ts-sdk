@@ -1,9 +1,9 @@
 {
   // The `.d.ts` files are the whole point — the id unions, the parameter
   // tables, and the five lookup tables `@pdx-ts/sdk` imports. The emitted JS
-  // beside them is empty modules apart from `triggers.js`/`effects.js`, which
-  // are the package's only runtime, and it still has to be emitted: raw `.ts`
-  // under node_modules is not something Node will load.
+  // beside them is empty modules apart from `triggers.js`, `effects.js`, and
+  // `paths.js`, which are the package's only runtime, and it still has to be
+  // emitted: raw `.ts` under node_modules is not something Node will load.
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
