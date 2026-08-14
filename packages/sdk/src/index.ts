@@ -377,13 +377,9 @@ export type {
   CheckedVanillaId,
   InvalidVanillaId,
   VanillaEnumMember,
-  VanillaEnums,
   VanillaId,
-  VanillaIds,
-  VanillaScriptedEffects,
-  VanillaScriptedTriggers,
+  VanillaRegistry,
   VanillaTrie,
-  VanillaTries,
 } from "./identifiers/contracts.ts";
 export {
   stampedVanillaPackageVersion,

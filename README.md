@@ -542,7 +542,6 @@ npm workspace; every command runs from the repository root.
 ```bash
 npm test                     # all suites, all packages (vitest)
 npm run typecheck            # tsc --noEmit
-npm run typecheck:ids        # the stellaris-ids-present type program
 npm run build                # emit each package's dist/
 npm run example              # build examples/hello-galaxy/out/
 npm run codegen              # regenerate the SDK's types from the cwt rules

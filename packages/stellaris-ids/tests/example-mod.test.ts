@@ -1,11 +1,9 @@
 /**
  * The showcase example, rendered and frozen.
  *
- * It lives in this package's project rather than the SDK's because the example
- * imports `@pdx-ts/stellaris-ids/triggers` — the setup a real mod author has —
- * and a module augmentation is global to a TypeScript program. The root program
- * has to stay package-absent so `packages/sdk/tests/vanilla-refs.test-d.ts` can
- * assert the unchecked degradation, so the example compiles here instead.
+ * It lives beside this package because the example imports
+ * `@pdx-ts/stellaris-ids/triggers`, so a break in the generated bindings shows
+ * up here as a failing example rather than as a type error nobody runs.
  *
  * What it pins is identity, not just bytes: hello-galaxy's content ids,
  * explicitly authored event namespace, and localization keys are frozen with

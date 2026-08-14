@@ -11,6 +11,10 @@
  * the interpolated result.
  */
 
+import {
+  CORE_GAME_VERSION_PATTERN,
+  VERIFIED_STELLARIS_BUILD,
+} from "../generated/verified-build.ts";
 import type { Resolved } from "../options.ts";
 import { SCAFFOLDER_RELEASE_MANIFEST } from "../release-manifest.ts";
 
@@ -66,28 +70,32 @@ function testingDependency(resolved: Resolved): Record<string, string> {
 }
 
 /**
- * Whether the identifier package can be pinned at all.
+ * The game build the identifier package is pinned to.
  *
- * Its npm version carries the game version, so only a plain `major.minor.patch`
- * has a counterpart to install — a four-part Paradox build has none. Exported
- * because the source templates must ask the same question: emitting the
- * `import "@pdx-ts/stellaris-ids"` side effect for a dependency this declined
- * to add produces a scaffold that fails on a missing package, instead of
- * degrading to unchecked strings the way a no-install scaffold does.
+ * The detected install when it names a plain `major.minor.patch` build, and
+ * the build this scaffolder release was verified against otherwise — no
+ * install found, or a four-part Paradox build, neither of which has a
+ * counterpart on the registry to install.
+ *
+ * Every scaffold is pinned to something. `@pdx-ts/sdk` imports
+ * `@pdx-ts/stellaris-ids` for the id tables it resolves every vanilla
+ * reference through (ADR-0006), so a project without the dependency does not
+ * typecheck at all — there is no unpinned scaffold that merely checks less. A
+ * fallback pin the author's own game has outrun is an install that fails
+ * saying which version to install; no pin is a project that never builds.
  */
-export function canPinIds(resolved: Resolved): boolean {
-  return resolved.gameVersion !== undefined && /^\d+\.\d+\.\d+$/.test(resolved.gameVersion);
+export function idsGameVersion(resolved: Resolved): string {
+  const detected = resolved.gameVersion;
+  return detected !== undefined && CORE_GAME_VERSION_PATTERN.test(detected)
+    ? detected
+    : VERIFIED_STELLARIS_BUILD;
 }
 
 function idsDependency(resolved: Resolved): Record<string, string> {
-  const gameVersion = resolved.gameVersion;
-  if (!canPinIds(resolved) || gameVersion === undefined) {
-    return {};
-  }
   if (resolved.localSdk !== undefined) {
     return { "@pdx-ts/stellaris-ids": `file:${resolved.localSdk}/packages/stellaris-ids` };
   }
-  return { "@pdx-ts/stellaris-ids": idsRange(gameVersion) };
+  return { "@pdx-ts/stellaris-ids": idsRange(idsGameVersion(resolved)) };
 }
 
 /**

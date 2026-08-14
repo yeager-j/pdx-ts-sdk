@@ -7,6 +7,7 @@ import { vanillaPackageInstallRange } from "@pdx-ts/sdk";
 import semver from "semver";
 import { describe, expect, it } from "vitest";
 
+import { VERIFIED_STELLARIS_BUILD } from "../src/generated/verified-build.ts";
 import type { Resolved } from "../src/options.ts";
 import { planFiles } from "../src/plan.ts";
 import { SCAFFOLDER_RELEASE_MANIFEST } from "../src/release-manifest.ts";
@@ -286,28 +287,27 @@ describe("dependency resolution", () => {
     }
   });
 
-  it("omits the identifier package when no build was detected", () => {
+  it("pins the identifier package even when no build was detected", () => {
+    // There is no unpinned scaffold. `@pdx-ts/sdk` reads the package's id
+    // tables (ADR-0006), so a project without the dependency does not
+    // typecheck — a fallback pin is a wrong game build at worst, and no pin is
+    // a project that never builds.
     const { dependencies } = manifest(plan({ installPath: undefined, gameVersion: undefined }));
-    expect(dependencies!["@pdx-ts/stellaris-ids"]).toBeUndefined();
-    expect(
-      plan({ installPath: undefined, gameVersion: undefined }).get("src/mod.ts")
-    ).not.toContain("@pdx-ts/stellaris-ids");
+    expect(dependencies!["@pdx-ts/stellaris-ids"]).toBe(idsRange(VERIFIED_STELLARIS_BUILD));
   });
 
-  it("omits it for a build npm cannot express, rather than pinning nonsense", () => {
+  it("falls back to the verified build for one npm cannot express", () => {
+    // A four-part Paradox version has no npm counterpart to install.
     const { dependencies } = manifest(plan({ gameVersion: "4.4.6.1" }));
-    expect(dependencies!["@pdx-ts/stellaris-ids"]).toBeUndefined();
+    expect(dependencies!["@pdx-ts/stellaris-ids"]).toBe(idsRange(VERIFIED_STELLARIS_BUILD));
   });
 
-  it("does not import a package it declined to add", () => {
-    // A four-part Paradox version has no npm counterpart, so the dependency is
-    // omitted — and the side-effect import has to be omitted with it, or the
-    // scaffold fails on a missing package instead of degrading to unchecked
-    // strings the way a no-install scaffold does.
-    for (const gameVersion of [undefined, "4.4.6.1"]) {
+  it("needs no side-effect import for the package to check anything", () => {
+    // The SDK imports the tables itself, so a scaffolded project never has to
+    // remember to import the package — the state where it is installed and
+    // silently checking nothing does not exist.
+    for (const gameVersion of [undefined, "4.4.6.1", "4.4.6"]) {
       const files = plan({ gameVersion });
-      const { dependencies } = manifest(files);
-      expect(dependencies!["@pdx-ts/stellaris-ids"], String(gameVersion)).toBeUndefined();
       expect(files.get("src/mod.ts"), String(gameVersion)).not.toContain("@pdx-ts/stellaris-ids");
     }
   });

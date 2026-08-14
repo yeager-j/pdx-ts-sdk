@@ -96,11 +96,6 @@ export const PROJECT_MOD_FIELDS = {
     required: false,
     description: "Acknowledges a game build the SDK's rule table is not verified against.",
   },
-  uncheckedVanillaIds: {
-    kind: "boolean",
-    required: false,
-    description: "Acknowledges authoring without compile-time vanilla id checking.",
-  },
 } as const satisfies Record<string, AnyProjectModFieldDescriptor>;
 
 type ProjectModField = AnyProjectModFieldDescriptor;

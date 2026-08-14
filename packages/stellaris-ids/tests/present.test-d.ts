@@ -1,19 +1,13 @@
 /**
- * The package-present world (SDK-12 seam D).
+ * What this package makes the SDK say (SDK-12 seam D).
  *
- * This file's whole point is the side-effect import below: it is the standing
- * proof that `src/augment.ts` merges into `@pdx-ts/sdk`'s empty
- * `VanillaIds`/`VanillaTries`/`VanillaScriptedTriggers` targets through the
- * barrel's named re-export (experiment E1), resolved via this package's own
- * tsconfig `paths` (E2). Its mirror image is
- * `packages/sdk/tests/vanilla-refs.test-d.ts`, which the root program compiles
- * with this package excluded and therefore models the package-absent world.
- * Every assertion here should have an opposite there.
+ * `@pdx-ts/sdk` imports the tables in `src/tables.ts` and resolves every
+ * vanilla reference through them (ADR-0006), so these assertions are the
+ * standing proof that the generated tables land where the SDK reads them: a
+ * real id set per registry, a parameter list per scripted definition, a trie
+ * per oversized registry. There is no package-absent counterpart to this file,
+ * because there is no package-absent world.
  */
-
-import { describe, expectTypeOf, it } from "vitest";
-
-import "../src/index.ts";
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import {
@@ -33,9 +27,9 @@ import {
   type Trigger,
   type VanillaEnumMember,
   type VanillaId,
-  type VanillaScriptedTriggers,
-  type VanillaTries,
 } from "@pdx-ts/sdk";
+import type { VanillaScriptedTriggers, VanillaTries } from "@pdx-ts/stellaris-ids";
+import { describe, expectTypeOf, it } from "vitest";
 
 import { giveTechNoErrorEffect, setMerchantGovernmentEffect } from "../src/effects.ts";
 import {
@@ -235,10 +229,12 @@ describe("VanillaId resolution", () => {
     expectTypeOf<"tech_gene_tailoring">().toExtend<VanillaId<"technology">>();
   });
 
-  it("degrades to string for a registry the package does not carry", () => {
-    // Per-registry degradation, not all-or-nothing: a package that predates a
-    // registry the SDK later asks about leaves only that registry unchecked.
-    expectTypeOf<VanillaId<"registry_that_never_existed">>().toEqualTypeOf<string>();
+  it("refuses a registry this package does not carry", () => {
+    // The SDK's generated registries come from the CWT rules and these id sets
+    // come from an install, so the two can drift. A registry with no id set is
+    // a compile error where the drift is, not a quietly unchecked field.
+    // @ts-expect-error "registry_that_never_existed" is not a `VanillaRegistry`.
+    expectTypeOf<VanillaId<"registry_that_never_existed">>().toEqualTypeOf<never>();
   });
 });
 

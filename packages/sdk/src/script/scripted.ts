@@ -34,9 +34,9 @@
  */
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
+import type { VanillaScriptedEffects, VanillaScriptedTriggers } from "@pdx-ts/stellaris-ids";
 
 import type { ScopeName } from "../generated/scopes.ts";
-import type { VanillaScriptedEffects, VanillaScriptedTriggers } from "../identifiers/contracts.ts";
 import { compareUtf8 } from "../ordering.ts";
 import type { ScopeValue } from "./effects/types.ts";
 import { toScalar, type ScalarArg, type TypedRef } from "./scalar.ts";
@@ -103,12 +103,9 @@ type Widened<P> = { readonly [K in keyof P]: P[K] | boolean | TypedRef<string> |
 /**
  * The argument list a binding takes, resolved once where the name is known.
  *
- * Three cases, and the middle one is what keeps a single source compiling with
- * and without `@pdx-ts/stellaris-ids` installed. Absent, the parameter type is
- * `ScriptedParams`, whose `keyof` is `string` and which `{}` extends — so it
- * lands on the optional arm and both call forms stay legal. Putting the arity
- * in the return type instead would flip a binding between a value and a
- * function depending on whether the package is there.
+ * Three cases: no `$PARAM$`s at all takes no argument, every parameter
+ * optional makes the bag optional, and one required parameter makes it
+ * required.
  */
 export type ScriptedArgs<P> = [keyof P] extends [never]
   ? []
@@ -132,41 +129,24 @@ export type ScriptedArgs<P> = [keyof P] extends [never]
  * the vanilla install turned up negation only for triggers, and only ever
  * bare (never alongside a parameter block) — so a `boolean` is not a
  * meaningful call form there and the object-args branches are unchanged.
- *
- * `string extends keyof P` is what still widens despite a nonempty `keyof`:
- * it is true only for the unchecked fallback (`ScriptedParams`'s index
- * signature), used both when `@pdx-ts/stellaris-ids` is absent and for a
- * name the installed package does not recognize. Either way the real arity
- * is unknown, so the boolean form has to stay legal alongside the object
- * form rather than falling to a known trigger's object-only branch.
  */
 export type ScriptedTriggerArgs<P> = [keyof P] extends [never]
   ? [value?: boolean]
-  : string extends keyof P
-    ? [args?: Widened<P> | boolean]
-    : {} extends P
-      ? [args?: Widened<P>]
-      : [args: Widened<P>];
+  : {} extends P
+    ? [args?: Widened<P>]
+    : [args: Widened<P>];
 
 // ---------------------------------------------------------------------------
 // Names
 // ---------------------------------------------------------------------------
 
-export type ScriptedTriggerName = [keyof VanillaScriptedTriggers] extends [never]
-  ? string
-  : keyof VanillaScriptedTriggers & string;
+export type ScriptedTriggerName = keyof VanillaScriptedTriggers & string;
 
-export type ScriptedEffectName = [keyof VanillaScriptedEffects] extends [never]
-  ? string
-  : keyof VanillaScriptedEffects & string;
+export type ScriptedEffectName = keyof VanillaScriptedEffects & string;
 
-type TriggerParams<N> = [N] extends [keyof VanillaScriptedTriggers]
-  ? VanillaScriptedTriggers[N]
-  : ScriptedParams;
+type TriggerParams<N extends ScriptedTriggerName> = VanillaScriptedTriggers[N];
 
-type EffectParams<N> = [N] extends [keyof VanillaScriptedEffects]
-  ? VanillaScriptedEffects[N]
-  : ScriptedParams;
+type EffectParams<N extends ScriptedEffectName> = VanillaScriptedEffects[N];
 
 /**
  * Distributive on purpose. A union-valued name would otherwise resolve to
@@ -175,11 +155,17 @@ type EffectParams<N> = [N] extends [keyof VanillaScriptedEffects]
  * arguments. Distributing yields a union of signatures instead, which fails at
  * the call.
  */
-export type ScriptedTriggerBinding<N extends string, S extends ScopeName> = N extends unknown
+export type ScriptedTriggerBinding<
+  N extends ScriptedTriggerName,
+  S extends ScopeName,
+> = N extends ScriptedTriggerName
   ? (...args: ScriptedTriggerArgs<TriggerParams<N>>) => Trigger<S>
   : never;
 
-export type ScriptedEffectBinding<N extends string, S extends ScopeName> = N extends unknown
+export type ScriptedEffectBinding<
+  N extends ScriptedEffectName,
+  S extends ScopeName,
+> = N extends ScriptedEffectName
   ? (...args: ScriptedArgs<EffectParams<N>>) => ScriptedEffectCall<S>
   : never;
 
@@ -234,12 +220,9 @@ function scriptedEntry(name: string, args: ScriptedParams | undefined): PdxEntry
  * Builds a checked `{ trigger, parameters }` pair for a
  * `ComplexTriggerModifier` row (`content/types.ts`, `script/effects/modifiers.ts`): the name and
  * its parameter bag are checked against `@pdx-ts/stellaris-ids`'s scripted
- * triggers when it is installed — the same conditional machinery {@link
- * scriptedTrigger} uses — and degrade to unchecked `string`/{@link
- * ScriptedParams} when it is absent, so a typo (`check_galaxy_setup_vaule`),
- * an unknown parameter, or a missing required one is a compile error in the
- * checked configuration and compiles either way when the package is not
- * installed.
+ * triggers — the same machinery {@link scriptedTrigger} uses — so a typo
+ * (`check_galaxy_setup_vaule`), an unknown parameter, or a missing required
+ * one is a compile error.
  *
  * `complex_trigger_modifier`'s own `trigger` field draws from CWT's whole
  * `alias_keys_field[trigger]` namespace (`modifier_rule.cwt:33`), which spans
@@ -290,15 +273,15 @@ function effectBinding(name: string) {
 /**
  * Binds a vanilla or third-party scripted trigger under an asserted scope.
  *
- * The name and its `$PARAM$` list are checked against `@pdx-ts/stellaris-ids`
- * when it is installed; **only the scope is an assertion**. Prefer the
- * pre-bound `@pdx-ts/stellaris-ids/triggers` exports, whose scope is inferred
- * from the rules rather than claimed.
+ * The name and its `$PARAM$` list are checked against `@pdx-ts/stellaris-ids`;
+ * **only the scope is an assertion**. Prefer the pre-bound
+ * `@pdx-ts/stellaris-ids/triggers` exports, whose scope is inferred from the
+ * rules rather than claimed.
  *
  * `scriptedTrigger.unchecked` takes any *name* — another mod's trigger, or one
- * newer than the pinned package. The scope is an assertion either way, and
- * the real arity is always unknown, so — like the package-absent fallback —
- * the parameterless boolean call form stays legal alongside the object form.
+ * newer than the pinned package. The scope is an assertion either way, and the
+ * real arity is unknown there, so the parameterless boolean call form stays
+ * legal alongside the object form.
  */
 export const scriptedTrigger: {
   <const N extends ScriptedTriggerName, const A extends ScopeClaim>(

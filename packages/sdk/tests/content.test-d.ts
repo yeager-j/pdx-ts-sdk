@@ -624,7 +624,7 @@ describe("generated content authoring types", () => {
 
     // A vanilla id is the same kind of thing, so it wears the same brand.
     const fromVanilla: ComponentTemplateUtilityComponentTemplateRef =
-      vanilla.utilityComponentTemplate("SHIELD_1");
+      vanilla.utilityComponentTemplate("SHIELD_BOOSTER");
     void fromVanilla;
 
     contentMod.globalShipDesign("components", {
@@ -1987,7 +1987,7 @@ describe("generated content authoring types", () => {
       amount: 1,
     });
     country.resetEventChainCounter({
-      eventChain: vanilla.eventChain("vanilla_chain"),
+      eventChain: vanilla.eventChain("MSI_chain"),
       counter: "vanilla_counter",
     });
 

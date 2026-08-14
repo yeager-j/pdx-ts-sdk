@@ -174,15 +174,9 @@ slice 1).
   `VanillaPathInventoryError`; explicit game-version acceptance governs
   intentional mismatch. Ordinary claims never replace a vanilla path;
   whole-file replacement stays outside this effort.
-- Hard-dependency conversion rides this slice: delete the empty merge-target
-  interfaces in `packages/sdk/src/identifiers/contracts.ts` and the
-  unchecked-`string` degraded mode; import the package's types directly. The
-  project-supplied game-version range stays as `create-stellaris-mod` emits
-  it. The scaffolder converts too: its no-install and no-detected-build paths
-  always emit the dependency pin, and the ETARGET recovery guidance
-  (`packages/create-stellaris-mod/src/commands/init.ts`) stops advising
-  continue-unchecked — when no package version matches the detected game
-  version, scaffolding refuses explicitly instead.
+- The hard-dependency conversion half of this slice has shipped (SDK-171): the
+  SDK imports the package's tables, the degraded mode is gone, and the
+  scaffolder always pins. The code is the record for it.
 - The inventory is the package's second runtime surface (after the
   trigger/effect bindings): amend PROVENANCE.md, the licensing shape test that
   pins the bindings as the only runtime, and the package exports map for the

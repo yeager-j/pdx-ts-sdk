@@ -342,10 +342,9 @@ describe.skipIf(installPath === undefined)(
       // Same field, same values, ported into a mod-prefixed id.
       // has_infertile_clone_soldier_trait is a scripted trigger
       // (common/scripted_triggers/05_scripted_triggers_traits.txt), bound
-      // the same way any mod author would: scriptedTrigger(name, scope) —
-      // not a pre-bound @pdx-ts/stellaris-ids/triggers import, which this
-      // program's tsconfig excludes the same way every other sdk test does
-      // (tsconfig.json's package-absent world).
+      // through scriptedTrigger(name, scope) rather than the pre-bound
+      // @pdx-ts/stellaris-ids/triggers import, because the scope claim is the
+      // thing this port is porting.
       const hasInfertileCloneSoldierTrait = scriptedTrigger(
         "has_infertile_clone_soldier_trait",
         "pop_group"

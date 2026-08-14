@@ -283,22 +283,21 @@ hatch.
 
 ### Referencing and patching vanilla content
 
-Install the version-pinned [@pdx-ts/stellaris-ids](../stellaris-ids/README.md)
-package and import it once to narrow `vanilla.*` helpers to compile-checked
-literals. Raw strings remain available for intentional third-party references.
+The `vanilla.*` helpers are compile-checked against the real game's id sets,
+which this package reads from the version-pinned
+[@pdx-ts/stellaris-ids](../stellaris-ids/README.md) peer dependency. Nothing to
+import and nothing to switch on: a misspelled id is a type error. Raw strings
+remain available for intentional third-party references.
 
 ```ts
-import "@pdx-ts/stellaris-ids";
-
 const prerequisite = vanilla.technology("tech_lasers_1");
 ```
 
 Oversized id sets (sprites, sounds, and static modifiers) are also navigable
 by the vanilla file that defines them: `vanilla.sprite.eventpictures.GFX_…`
-and `vanilla.staticModifier.deficit.food_deficit`. Without the package,
-every helper accepts any string — the unchecked status quo. `mod.compile()`
-refuses a loaded vanilla view whose install version disagrees with the package
-pin unless `acceptGameVersion` accepts it.
+and `vanilla.staticModifier.deficit.food_deficit`. `mod.compile()` refuses a
+loaded vanilla view whose install version disagrees with the package pin unless
+`acceptGameVersion` accepts it.
 
 ### Vanilla scripted triggers and effects
 
@@ -440,7 +439,7 @@ src/
 ├── diagnostics.ts     shared warning contract
 ├── ordering.ts        canonical logical-path and UTF-8 ordering
 ├── references.ts      recorded content-reference vocabulary
-├── identifiers/       optional vanilla identifier contracts and package pin
+├── identifiers/       vanilla identifier resolvers and the package pin
 ├── stellaris/         installed-game integration and vanilla content
 │   ├── installation/  install discovery and game-version metadata
 │   ├── launcher/      launcher-owned mod directory discovery

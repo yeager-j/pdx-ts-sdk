@@ -24,16 +24,9 @@ boundary, and the regeneration procedure.
 
 ## Usage
 
-Install it next to `@pdx-ts/sdk` and import it once, anywhere in the mod's
-build entry, for its type-level side effect:
-
-```ts
-import "@pdx-ts/stellaris-ids";
-```
-
-That one line declaration-merges this package's id unions into the SDK's
-merge targets. From then on every `vanilla.*` helper the SDK exports checks
-its argument against the real id set:
+Install it next to `@pdx-ts/sdk`, which requires it as a peer dependency. There
+is nothing to import: the SDK reads this package's id tables directly, so every
+`vanilla.*` helper it exports checks its argument against the real id set:
 
 ```ts
 import { vanilla } from "@pdx-ts/sdk";
@@ -95,12 +88,16 @@ These two subpaths are the package's only runtime, one call per definition and
 `/*#__PURE__*/`-annotated so unused ones drop out of a bundle. Everything else
 here is types with no payload.
 
-### Without the package
+### How the SDK reads it
 
-Nothing breaks and nothing is checked. The `vanilla.*` helpers live in
-`@pdx-ts/sdk` itself and accept any string when this package is absent (or
-present but predating a registry): `VanillaId<K>` degrades to `string`
-per-registry. This package supplies only the data the checks run against.
+`src/tables.ts` exports five interfaces — `VanillaIds`, `VanillaEnums`,
+`VanillaScriptedTriggers`, `VanillaScriptedEffects`, `VanillaTries` — and
+`@pdx-ts/sdk` imports them
+([ADR-0006](../../docs/adr/0006-stellaris-ids-is-a-hard-dependency.md)). The
+`vanilla.*` helpers live in the SDK; this package supplies the data they check
+against, and nothing has to be imported in a project for that to take effect.
+A registry the SDK asks about and this package does not carry is a compile
+error rather than a quietly unchecked field.
 
 ## Version pinning
 
@@ -112,17 +109,16 @@ Two guards keep the pin honest:
   with `VanillaPackageMismatchError` unless `acceptGameVersion` explicitly
   accepts that install version. A regeneration-fix release (`4.4.6-r2`) still
   pins install `4.4.6` — only `major.minor.patch` is compared.
-- **In the type system**, module augmentation is global to a TypeScript
-  program: two versions of this package in one program both extend the same
-  merge targets and will not typecheck. That is what "pinned to one game
+- **In the type system**, a package resolves once per program: the tables
+  `@pdx-ts/sdk` imports are one version's. That is what "pinned to one game
   build" means — two pins coexist across separate projects, never within one.
 
 ## What's inside
 
 ```
 src/
-├── index.ts             side-effect imports + type re-exports; zero runtime
-├── augment.ts           the single `declare module "@pdx-ts/sdk"` augmentation
+├── index.ts             type re-exports; zero runtime
+├── tables.ts            the five lookup tables `@pdx-ts/sdk` imports
 ├── registries/          one file per registry (43): literal-union id types;
 │                        the four oversized registries are directories of
 │                        per-bucket trie files instead

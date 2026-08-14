@@ -255,16 +255,19 @@ describe("dependency install recovery", () => {
     destination.destroy();
   });
 
-  it("names the unchecked degradation path for a missing ids package release", () => {
+  it("refuses rather than offering to drop the ids package", () => {
+    // The package is a hard dependency (ADR-0006): removing it leaves a
+    // project that does not typecheck, so advising the author to remove it
+    // would be advice to break their own scaffold.
     const steps = installFailureSteps(
       "npm",
       "4.4.7",
       "npm error code ETARGET\nnpm error notarget No matching version found for @pdx-ts/stellaris-ids@>=4.4.7-0 <4.4.7."
     ).join("\n");
-    expect(steps).toContain("No @pdx-ts/stellaris-ids release matches game build 4.4.7 yet.");
-    expect(steps).toContain('remove "@pdx-ts/stellaris-ids" from package.json');
-    expect(steps).toContain('remove import "@pdx-ts/stellaris-ids"; from src/mod.ts');
-    expect(steps).toContain("npm install");
+    expect(steps).toContain("No @pdx-ts/stellaris-ids release matches game build 4.4.7");
+    expect(steps).toContain("does not typecheck");
+    expect(steps).toContain("package.json to a build that has one");
+    expect(steps).not.toMatch(/remove .*@pdx-ts\/stellaris-ids/);
     expect(steps).not.toContain("run it again");
   });
 
@@ -274,7 +277,7 @@ describe("dependency install recovery", () => {
       "4.4.7",
       "YN0082: @pdx-ts/stellaris-ids@npm:>=4.4.7-0 <4.4.7: No candidates found"
     ).join("\n");
-    expect(steps).toContain("No @pdx-ts/stellaris-ids release matches game build 4.4.7 yet.");
+    expect(steps).toContain("No @pdx-ts/stellaris-ids release matches game build 4.4.7");
     expect(steps).toContain("yarn install");
     expect(steps).not.toContain("run it again");
   });

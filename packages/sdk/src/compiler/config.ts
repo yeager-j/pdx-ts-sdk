@@ -18,12 +18,6 @@ export interface ModConfig<P extends string = string> {
    * emission refuses a mismatched load unless this names that exact build.
    */
   acceptGameVersion?: string;
-  /**
-   * Acknowledges authoring without compile-time vanilla id checking. Without
-   * this, compilation warns when the optional identifier package is absent or
-   * does not match the supplied vanilla view.
-   */
-  uncheckedVanillaIds?: boolean;
 }
 
 /** The validated, copied configuration carried by a compiled mod. */
@@ -87,7 +81,6 @@ export function resolveConfig<P extends string>(
     supportedVersion: config.supportedVersion,
     tags: config.tags === undefined ? undefined : Object.freeze([...config.tags]),
     acceptGameVersion: config.acceptGameVersion,
-    uncheckedVanillaIds: config.uncheckedVanillaIds,
   });
 }
 

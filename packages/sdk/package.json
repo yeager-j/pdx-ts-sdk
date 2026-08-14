@@ -18,6 +18,9 @@
   "dependencies": {
     "@pdx-ts/pdxscript": "^0.2.0"
   },
+  "peerDependencies": {
+    "@pdx-ts/stellaris-ids": "*"
+  },
   "devDependencies": {
     "@pdx-ts/codegen-cwt": "*"
   },
