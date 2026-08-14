@@ -283,22 +283,21 @@ hatch.
 
 ### Referencing and patching vanilla content
 
-Install the version-pinned [@pdx-ts/stellaris-ids](../stellaris-ids/README.md)
-package and import it once to narrow `vanilla.*` helpers to compile-checked
-literals. Raw strings remain available for intentional third-party references.
+The `vanilla.*` helpers are compile-checked against the real game's id sets,
+which this package reads from the version-pinned
+[@pdx-ts/stellaris-ids](../stellaris-ids/README.md) peer dependency. Nothing to
+import and nothing to switch on: a misspelled id is a type error. Raw strings
+remain available for intentional third-party references.
 
 ```ts
-import "@pdx-ts/stellaris-ids";
-
 const prerequisite = vanilla.technology("tech_lasers_1");
 ```
 
 Oversized id sets (sprites, sounds, and static modifiers) are also navigable
 by the vanilla file that defines them: `vanilla.sprite.eventpictures.GFX_…`
-and `vanilla.staticModifier.deficit.food_deficit`. Without the package,
-every helper accepts any string — the unchecked status quo. `mod.compile()`
-refuses a loaded vanilla view whose install version disagrees with the package
-pin unless `acceptGameVersion` accepts it.
+and `vanilla.staticModifier.deficit.food_deficit`. `mod.compile()` refuses a
+loaded vanilla view whose install version disagrees with the package pin unless
+`acceptGameVersion` accepts it.
 
 ### Vanilla scripted triggers and effects
 
@@ -338,14 +337,16 @@ or one newer than the pin — bind it by hand. There the scope is your assertion
 and only name and parameters go unchecked with `.unchecked`:
 
 ```ts
-const pdHabitable = scriptedTrigger("pd_habitability_check", "planet");
-const modTrigger = scriptedTrigger.unchecked("othermod_check", ["country", "sector"]);
+const hasStage = scriptedTrigger("has_crisis_stage", "country");
+const pdHabitable = scriptedTrigger.unchecked("pd_habitability_check", "planet");
 ```
 
-`"any"` is the deliberate opt-out and yields a trigger that fits everywhere.
-Without the package installed, both binding forms still compile and every name
-is accepted. The mod-testing evaluator still refuses scripted triggers: the
-package carries names and scopes, never bodies to evaluate.
+`scriptedTrigger` takes a name the pinned package knows and checks its
+`$PARAM$` list; `.unchecked` takes any name and gives up only that check, which
+is what a third-party or newer-than-the-pin definition needs. `"any"` is the
+deliberate opt-out and yields a trigger that fits everywhere. The mod-testing
+evaluator still refuses scripted triggers: the package carries names and
+scopes, never bodies to evaluate.
 
 Patching is whole-object replacement and requires the real game files. Load a
 version-pinned install, create the patch through the capability, and compile it
@@ -440,7 +441,7 @@ src/
 ├── diagnostics.ts     shared warning contract
 ├── ordering.ts        canonical logical-path and UTF-8 ordering
 ├── references.ts      recorded content-reference vocabulary
-├── identifiers/       optional vanilla identifier contracts and package pin
+├── identifiers/       vanilla identifier resolvers and the package pin
 ├── stellaris/         installed-game integration and vanilla content
 │   ├── installation/  install discovery and game-version metadata
 │   ├── launcher/      launcher-owned mod directory discovery

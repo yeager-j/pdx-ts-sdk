@@ -78,7 +78,6 @@ const CORPUS: readonly Case[] = [
           supportedVersion: "v4.4.*",
           tags: ["Technologies", "Events"],
           acceptGameVersion: "4.4.7",
-          uncheckedVanillaIds: true,
         },
       },
       contentDirectory: "src/content",
@@ -155,11 +154,6 @@ const CORPUS: readonly Case[] = [
   {
     name: "a tag that is not a string",
     bytes: withMod({ ...MINIMAL.mod.my_mod, tags: ["Technologies", 7] }),
-    valid: false,
-  },
-  {
-    name: "uncheckedVanillaIds as a string",
-    bytes: withMod({ ...MINIMAL.mod.my_mod, uncheckedVanillaIds: "yes" }),
     valid: false,
   },
   {
@@ -257,7 +251,6 @@ describe("parseManifest", () => {
       supportedVersion: "v4.4.*",
       tags: ["Technologies", "Events"],
       acceptGameVersion: "4.4.7",
-      uncheckedVanillaIds: true,
     });
   });
 

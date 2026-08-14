@@ -20,12 +20,12 @@ import {
   bindingsFile,
   compareIdentifiers,
   createChokepoint,
-  emitAugment,
   emitEnumUnion,
   emitIdUnion,
   emitIndex,
   emitScriptedBindings,
   emitScriptedParams,
+  emitTables,
   emitTrie,
   enumFile,
   enumTypeName,
@@ -34,7 +34,7 @@ import {
   scriptedFile,
   scriptedTypeName,
   trieIndexFile,
-  type AugmentPlan,
+  type TablesPlan,
 } from "./emit.ts";
 import type { InferredScope, ScriptedKind } from "./infer-scopes.ts";
 import { VANILLA_MANIFEST, type VanillaScriptedRow } from "./manifest.ts";
@@ -269,8 +269,8 @@ export function generateVanillaPackage(options: GenerateOptions): {
     files.set(file, emitScriptedParams(row.registry, read.definitions, gate, gameVersion));
     exports.push({ name: scriptedTypeName(row.registry), file });
     plan.scripted.push({
-      // `scripted_trigger` defines many scripted triggers; the SDK's merge
-      // target is the table, so the target name is the plural.
+      // `scripted_trigger` defines many scripted triggers; the SDK reads the
+      // table, so the table name is the plural.
       target: `Vanilla${pascalCase(row.registry)}s`,
       registry: row.registry,
       file,
@@ -301,7 +301,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
     });
   }
 
-  files.set("augment.ts", emitAugment(plan satisfies AugmentPlan, gate, gameVersion));
+  files.set("tables.ts", emitTables(plan satisfies TablesPlan, gate, gameVersion));
   files.set("index.ts", emitIndex(exports, gameVersion));
 
   const eventKinds = new Map<string, number>();

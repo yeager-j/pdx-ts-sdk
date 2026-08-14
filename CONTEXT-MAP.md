@@ -59,12 +59,12 @@ direction is stated in passing; the translation is the point.
   corpus extracted from a real install. The dependency runs one way only, and
   carries no rules with it: the parser cannot tell a technology from a trigger.
 
-- **Vanilla Extraction → Authoring.** Identifiers cross as declaration-merged
-  interfaces (`VanillaIds`, `VanillaScriptedTriggers`, `VanillaScriptedEffects`,
-  `VanillaTries`), never as a hard dependency — with `@pdx-ts/stellaris-ids`
-  absent the merge targets stay empty and vanilla references degrade to
-  unchecked `string` per registry. **A scope changes epistemic status across
-  this edge**: what Vanilla Extraction _inferred_ from a definition's body
+- **Vanilla Extraction → Authoring.** Identifiers cross as five exported
+  lookup tables (`VanillaIds`, `VanillaEnums`, `VanillaScriptedTriggers`,
+  `VanillaScriptedEffects`, `VanillaTries`) that Authoring imports from
+  `@pdx-ts/stellaris-ids` and resolves every vanilla reference through
+  ([ADR-0006](docs/adr/0006-stellaris-ids-is-a-hard-dependency.md)). **A scope
+  changes epistemic status across this edge**: what Vanilla Extraction _inferred_ from a definition's body
   arrives in Authoring as a _declared_ constraint the compiler enforces.
 
 - **Authoring → Simulation.** A recorded trigger tree and a list of effect

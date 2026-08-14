@@ -79,16 +79,17 @@ on a prompt nobody will see.
 --no-prettier  --no-eslint  --no-git  --no-install
 ```
 
-A missing Stellaris install is not fatal: the scaffold drops `src/vanilla.ts`
-and the identifier-package pin, and the mod still builds — it just builds with
-vanilla ids as unchecked strings.
+A missing Stellaris install is not fatal: the scaffold drops `src/vanilla.ts`,
+and the mod still builds. It still pins `@pdx-ts/stellaris-ids` — to the game
+build this scaffolder was verified against, since the SDK reads that package's
+id tables and a project without it does not typecheck.
 
 An explicit `--stellaris-path` is different: if it is not a game root, init
 fails before writing instead of treating a typo as permission to drop checking.
 Immediately after a game patch, the matching `@pdx-ts/stellaris-ids` release may
-not exist yet. If dependency installation reports that case, init names the two
-generated lines to remove so the project can install with unchecked ids until
-the matching package is published.
+not exist yet. If dependency installation reports that case, init says so and
+names the two ways forward — wait for the release, or repin the project to a
+build that has one.
 
 ## Generating a feature
 

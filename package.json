@@ -19,7 +19,6 @@
     "corpus:extract": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-extract.ts",
     "corpus:check": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-check.ts",
     "typecheck": "tsc --noEmit",
-    "typecheck:ids": "tsc -p packages/stellaris-ids",
     "test": "vitest run",
     "test:watch": "vitest",
     "example": "node --conditions=pdx-source examples/hello-galaxy/build.ts",

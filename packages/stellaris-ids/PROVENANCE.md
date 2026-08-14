@@ -5,9 +5,8 @@
 Every identifier vanilla Stellaris defines — content ids, scripted trigger and
 effect names with their `$PARAM$` lists, event ids and namespaces, sprite and
 sound names, resource keys — read out of a real, installed copy of the game
-and shipped as TypeScript types. `@pdx-ts/sdk` declaration-merges against it
-(`import "@pdx-ts/stellaris-ids";`) so a vanilla reference is checked at
-compile time instead of degrading to an unchecked string.
+and shipped as TypeScript types. `@pdx-ts/sdk` imports its lookup tables
+(ADR-0006) so every vanilla reference is checked at compile time.
 
 The identifier surface is types with zero runtime payload. Two subpaths are the
 exception: `./triggers` and `./effects` carry one bound call per scripted

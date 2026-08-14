@@ -73,9 +73,11 @@ export function supportedVersionFor(gameVersion: string): string | undefined {
 
 /**
  * Where Stellaris is, if it can be found. Unlike the SDK's `locateInstall`,
- * this answers `undefined` rather than throwing: a mod that neither patches
- * vanilla nor uses the identifier package builds fine without an install, so a
- * missing one degrades the scaffold instead of blocking it.
+ * this answers `undefined` rather than throwing: a mod that does not patch
+ * vanilla builds fine without an install, so a missing one drops
+ * `src/vanilla.ts` from the scaffold instead of blocking it. The identifier
+ * package is pinned either way — see `templates/project.ts`'s
+ * `idsGameVersion`.
  */
 export function detectInstall(explicit?: string): Detection | undefined {
   const candidates =

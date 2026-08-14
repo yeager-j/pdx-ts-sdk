@@ -2,8 +2,6 @@
 
 import { scriptedTrigger } from "@pdx-ts/sdk";
 
-import "./augment.ts";
-
 export const advancedTraitsHaveReducedCost = /*#__PURE__*/ scriptedTrigger(
   "advanced_traits_have_reduced_cost",
   "country"

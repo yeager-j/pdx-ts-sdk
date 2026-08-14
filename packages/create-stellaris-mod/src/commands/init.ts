@@ -13,6 +13,7 @@ import path from "node:path";
 import { toPackageName } from "../derive.ts";
 import { gitInitCommands, insideGitWorkTree, installCommand, run } from "../exec.ts";
 import { preflight, writeTree } from "../fs.ts";
+import { VERIFIED_STELLARIS_BUILD } from "../generated/verified-build.ts";
 import type { CliIo } from "../io.ts";
 import { helpText, parseArgv, type Resolved } from "../options.ts";
 import { planFiles } from "../plan.ts";
@@ -136,7 +137,7 @@ function checkLocalCheckout(localSdk: string | undefined): void {
   if (localSdk === undefined) {
     return;
   }
-  const missing = ["sdk", "sdk-testing", "pdxscript"].filter(
+  const missing = ["sdk", "sdk-testing", "pdxscript", "stellaris-ids"].filter(
     (pkg) => !existsSync(path.join(localSdk, "packages", pkg, "dist"))
   );
   if (missing.length > 0) {
@@ -168,6 +169,17 @@ function idsPackageUnavailable(output: string): boolean {
   );
 }
 
+/**
+ * What to tell an author whose install did not complete.
+ *
+ * The identifier package having no release for their build is a refusal, not a
+ * detour. `@pdx-ts/sdk` reads that package's id tables (ADR-0006), so a project
+ * without it does not typecheck — there is no shorter route to a working
+ * project that skips it, and offering one would hand the author a scaffold that
+ * cannot build. What is left is the two real ways forward: publish the
+ * identifier package for that build, or pin the project to a build that has
+ * one.
+ */
 export function installFailureSteps(
   packageManager: string,
   gameVersion: string | undefined,
@@ -178,11 +190,14 @@ export function installFailureSteps(
   }
   const build = gameVersion === undefined ? "the detected game build" : `game build ${gameVersion}`;
   return [
-    `  No @pdx-ts/stellaris-ids release matches ${build} yet.`,
-    "  To install with unchecked vanilla ids until one is published:",
-    '    remove "@pdx-ts/stellaris-ids" from package.json',
-    '    remove import "@pdx-ts/stellaris-ids"; from src/mod.ts',
-    `    ${packageManager} install`,
+    `  No @pdx-ts/stellaris-ids release matches ${build}, so this project cannot`,
+    "  be installed as scaffolded. @pdx-ts/sdk reads that package's id tables, and",
+    "  removing it leaves a project that does not typecheck.",
+    "",
+    "  Either wait for the release for that build, or edit the",
+    '  "@pdx-ts/stellaris-ids" range in package.json to a build that has one and',
+    `  re-run ${packageManager} install. Ids that moved between the two builds are`,
+    "  then checked against the wrong game.",
   ];
 }
 
@@ -212,8 +227,9 @@ function nextSteps(
 
   if (resolved.installPath === undefined) {
     lines.push(
-      "No Stellaris install was used, so vanilla ids are unchecked strings.",
-      "Set STELLARIS_PATH and see the README to turn checking on.",
+      "No Stellaris install was used, so vanilla ids are checked against the game",
+      `build this scaffolder ships against (${VERIFIED_STELLARIS_BUILD}), not yours. Set`,
+      "STELLARIS_PATH and see the README if your game is a different build.",
       ""
     );
   }

@@ -1,5 +1,5 @@
 import type { Resolved } from "../options.ts";
-import { idsRange } from "./project.ts";
+import { idsGameVersion, idsRange } from "./project.ts";
 
 export function readme(resolved: Resolved): string {
   const p = resolved.prefix;
@@ -82,32 +82,32 @@ export function readme(resolved: Resolved): string {
     ""
   );
 
+  const pinned = idsGameVersion(resolved);
+  lines.push(
+    "`@pdx-ts/stellaris-ids` carries every identifier vanilla Stellaris defines,",
+    "and `@pdx-ts/sdk` reads its tables to check every vanilla reference. That is",
+    'what makes `vanilla.technology("tech_lasers_1")` compile and',
+    '`vanilla.technology("tech_lazers_1")` an error.',
+    "",
+    `It is pinned to game build ${pinned} through \`${idsRange(pinned)}\`; published`,
+    "versions append an `-r.<n>` revision to the game version, and the range selects",
+    "the newest revision of that build."
+  );
   if (resolved.gameVersion === undefined) {
     lines.push(
-      "This project was scaffolded without a detected Stellaris install, so vanilla",
-      "ids are unchecked strings. To turn checking on, install the identifier",
-      "package matching your game build and import it once in `src/mod.ts`:",
+      "",
+      "That build is the one this scaffolder was verified against, because no",
+      "Stellaris install was detected when the project was created. If your game is",
+      "a different build, install the matching identifier package:",
       "",
       "```bash",
       `npm install "@pdx-ts/stellaris-ids@${idsRange("<your game version>")}"`,
-      "```",
-      "",
-      "```ts",
-      'import "@pdx-ts/stellaris-ids";',
-      "```",
-      ""
+      "```"
     );
   } else {
-    lines.push(
-      `\`@pdx-ts/stellaris-ids\` is pinned to game build ${resolved.gameVersion} through`,
-      `\`${idsRange(resolved.gameVersion)}\`. Published versions append an \`-r.<n>\` revision`,
-      "to the game version and are imported once in `src/mod.ts` for their type-level",
-      'side effect. That is what makes `vanilla.technology("tech_lasers_1")` compile',
-      'and `vanilla.technology("tech_lazers_1")` an error. After a game update,',
-      "install the matching version.",
-      ""
-    );
+    lines.push("", "After a game update, install the matching version.");
   }
+  lines.push("");
 
   lines.push(
     "## Testing",

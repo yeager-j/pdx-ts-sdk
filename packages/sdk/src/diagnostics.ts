@@ -6,6 +6,6 @@ export interface ModWarning {
     | "unstable-desc-key"
     | "loc-key-looks-like-text"
     | "assumed-patch-rule"
-    | "unchecked-vanilla-ids";
+    | "mismatched-vanilla-ids";
   readonly message: string;
 }

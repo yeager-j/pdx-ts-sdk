@@ -8,17 +8,8 @@
 import type { Resolved } from "../options.ts";
 import { PROJECT_CONTENT_DIRECTORY_PATTERN } from "../project-layout.ts";
 import { quoteTs } from "../quote.ts";
-import { canPinIds } from "./project.ts";
 
 export function modTs(resolved: Resolved): string {
-  // The same predicate the dependency uses: importing a package the manifest
-  // declined to add would fail the build rather than degrade.
-  const idsImport = !canPinIds(resolved)
-    ? ""
-    : `// One line, for its type-level side effect: it merges the real game's id\n` +
-      `// unions into the SDK, so \`vanilla.technology("tech_lazers_1")\` stops being\n` +
-      `// a string and starts being a compile error.\nimport "@pdx-ts/stellaris-ids";\n`;
-
   const vanillaWiring =
     resolved.installPath === undefined ? "" : `import { loadVanilla } from "./vanilla.ts";\n`;
   const vanillaUse =
@@ -58,7 +49,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMod, discoverFeatures, type PureMod } from "@pdx-ts/sdk";
 import manifest from "../stellaris-mod.json" with { type: "json" };
-${idsImport}${vanillaWiring}
+${vanillaWiring}
 const prefixes = Object.keys(manifest.mod);
 if (prefixes.length !== 1) {
   throw new Error(

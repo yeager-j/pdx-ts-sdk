@@ -587,9 +587,9 @@ function uncomment(
  * an intentional vanilla reference expressible, so a dead id typechecks and
  * builds and only fails when the game silently ignores the definition.
  *
- * Read as text rather than imported: `packages/stellaris-ids` is outside this
- * program on purpose — its module augmentation is global — and this needs the
- * committed bytes, not the types.
+ * Read as text rather than imported: this needs the committed bytes of the
+ * generated unions, not the types, and the scaffolder has no runtime dependency
+ * on the identifier package.
  */
 describe("the vanilla ids the examples cite", () => {
   const ID_REGISTRIES = path.resolve(import.meta.dirname, "../../stellaris-ids/src/registries");

@@ -149,9 +149,7 @@ describe("generated output", () => {
         if (!line.startsWith("import")) {
           continue;
         }
-        expect(line.startsWith("import type ") || line === 'import "./augment.ts";', name).toBe(
-          true
-        );
+        expect(line.startsWith("import type "), name).toBe(true);
       }
     }
   });
@@ -176,9 +174,6 @@ describe("generated output", () => {
           /^export const [A-Za-z_$][\w$]* = \/\*#__PURE__\*\/ scripted(Trigger|Effect)\("[\w.]+", (?:"[\w]+"|\["[\w]+"(?:, "[\w]+")*\])\);$/
         );
       }
-    }
-    for (const name of BINDING_FILES) {
-      expect(generated.files.get(name), name).toContain('import "./augment.ts";');
     }
   });
 });

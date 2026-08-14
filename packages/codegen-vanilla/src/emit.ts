@@ -314,10 +314,6 @@ export interface BindingsEmission {
  *
  * `/*#__PURE__*\/` because a mod imports a handful of these out of ~1,600 and
  * a bundler must be free to drop the rest.
- *
- * The side-effect import of `./augment.ts` is load-bearing: without it a
- * consumer who imports only this subpath gets bindings whose parameter types
- * resolve against the SDK's empty merge targets.
  */
 export function emitScriptedBindings(
   registry: string,
@@ -369,20 +365,19 @@ export function emitScriptedBindings(
     code:
       header(gameVersion) +
       `import { ${factory} } from "@pdx-ts/sdk";\n\n` +
-      `import "./augment.ts";\n\n` +
       `${lines.join("\n")}\n`,
     renamed,
     bySize,
   };
 }
 
-export interface AugmentPlan {
+export interface TablesPlan {
   /** Registry name -> its id union type and the file it lives in. */
   readonly ids: readonly { readonly registry: string; readonly file: string }[];
   /** Registry name -> its trie root type and file, for oversized registries. */
   readonly tries: readonly { readonly registry: string; readonly file: string }[];
   readonly enums: readonly { readonly name: string; readonly file: string }[];
-  /** SDK merge target -> the emitted params interface, e.g. scripted triggers. */
+  /** SDK table name -> the emitted params interface, e.g. scripted triggers. */
   readonly scripted: readonly {
     readonly target: string;
     readonly registry: string;
@@ -390,15 +385,26 @@ export interface AugmentPlan {
   }[];
 }
 
+/** Every table the SDK reads, in the order they are emitted. */
+export const TABLE_NAMES = [
+  "VanillaIds",
+  "VanillaEnums",
+  "VanillaScriptedTriggers",
+  "VanillaScriptedEffects",
+  "VanillaTries",
+] as const;
+
 /**
- * The single augmentation module.
+ * The lookup tables the SDK resolves every vanilla reference through.
  *
- * It is a `.ts` file with real imports on purpose: a file whose only statement
- * is `declare module` is a *script*, and a script's `declare module` declares a
- * new ambient module that shadows the SDK rather than merging into it. The
- * imports are what make this a module, and therefore an augmentation.
+ * Ordinary exported interfaces rather than a `declare module "@pdx-ts/sdk"`
+ * augmentation: the SDK imports this package (ADR-0006), so the types travel
+ * along the import rather than being merged into empty placeholders from the
+ * outside. Every table is emitted even when it has no members, because the SDK
+ * imports all five by name and a table that appears only when non-empty makes
+ * an empty install a compile error in the SDK rather than an empty union here.
  */
-export function emitAugment(plan: AugmentPlan, gate: Chokepoint, gameVersion: string): string {
+export function emitTables(plan: TablesPlan, gate: Chokepoint, gameVersion: string): string {
   const imports = [
     ...plan.ids.map(({ registry, file }) => ({ name: idTypeName(registry), file })),
     ...plan.tries.map(({ registry, file }) => ({ name: trieTypeName(registry), file })),
@@ -423,37 +429,46 @@ export function emitAugment(plan: AugmentPlan, gate: Chokepoint, gameVersion: st
   const enumMembers = plan.enums
     .map(({ name }) => `readonly ${gate.literal(name, "enum name")}: ${enumTypeName(name)};`)
     .join("\n");
-  const scriptedMembers = plan.scripted
-    .map(({ target, registry }) => `interface ${target} extends ${scriptedTypeName(registry)} {}`)
-    .join("\n");
+  const scripted = new Map(
+    plan.scripted.map((row) => [row.target, scriptedTypeName(row.registry)])
+  );
+
+  const table = (name: string, members: string): string => {
+    const base = scripted.get(name);
+    if (base !== undefined) {
+      return `export interface ${name} extends ${base} {}\n`;
+    }
+    return `export interface ${name} {\n${members}\n}\n`;
+  };
 
   return (
     header(gameVersion) +
     imports +
-    '\ndeclare module "@pdx-ts/sdk" {\n' +
-    `interface VanillaIds {\n${idMembers}\n}\n` +
-    (enumMembers === "" ? "" : `interface VanillaEnums {\n${enumMembers}\n}\n`) +
-    (scriptedMembers === "" ? "" : `${scriptedMembers}\n`) +
-    (plan.tries.length === 0 ? "" : `interface VanillaTries {\n${trieMembers}\n}\n`) +
-    "}\n"
+    "\n" +
+    table("VanillaIds", idMembers) +
+    table("VanillaEnums", enumMembers) +
+    table("VanillaScriptedTriggers", "") +
+    table("VanillaScriptedEffects", "") +
+    table("VanillaTries", trieMembers)
   );
 }
 
 /**
- * The barrel. The side-effect import of `./augment.ts` is the activation
- * guarantee — a type-only re-export would be erased in a build that never reads
- * the types, and the augmentation would silently not apply. Nothing else here
- * is a runtime export: the package is types and a version number.
+ * The barrel. Every export is type-only, so the emitted JavaScript is an empty
+ * module — the package is types and a version number. The tables come first
+ * because they are what `@pdx-ts/sdk` imports; the per-registry unions are
+ * re-exported for authors who want to name one directly.
  */
 export function emitIndex(
   exports: readonly { readonly name: string; readonly file: string }[],
   gameVersion: string
 ): string {
+  const tables = `export type { ${TABLE_NAMES.join(", ")} } from "./tables.ts";\n`;
   const lines = [...exports]
     .sort((left, right) => compareIdentifiers(left.name, right.name))
     .map(({ name, file }) => `export type { ${name} } from "./${file}";\n`)
     .join("");
-  return `${header(gameVersion)}import "./augment.ts";\n\n${lines}`;
+  return `${header(gameVersion)}${tables}\n${lines}`;
 }
 
 /**

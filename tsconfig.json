@@ -25,14 +25,10 @@
     "target": "ES2024",
     "types": ["node"]
   },
-  // The package-absent world. `packages/stellaris-ids` is excluded so its
-  // `declare module "@pdx-ts/sdk"` augmentation never joins this program, which
-  // is what lets `packages/sdk/tests/vanilla-refs.test-d.ts` assert the
-  // unchecked degradation. `examples/` is excluded for the mirror reason: the
-  // example imports that package, and a module augmentation is global to a
-  // program — one import anywhere would make this program the present world.
-  // The example compiles under `packages/stellaris-ids/tsconfig.json` instead,
-  // which is the world a real mod author is in.
+  // One program over every workspace member, `packages/stellaris-ids` and
+  // `examples/` included: the SDK imports the identifier package's tables
+  // (ADR-0006), so there is no longer a package-absent world to model by
+  // holding it out.
   // The scaffolder's golden fixture project and its recorded goldens are a mod
   // author's program, not this one: they compile under their own tsconfig with
   // `@pdx-ts/sdk` symlinked in, which is what the matrix harness runs `tsc -p`
@@ -40,8 +36,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "packages/stellaris-ids",
-    "examples",
     "packages/create-stellaris-mod/tests/fixtures",
     "packages/create-stellaris-mod/tests/goldens"
   ]

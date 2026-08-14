@@ -136,8 +136,8 @@ describe("emission order", () => {
 
 describe("effects", () => {
   it("records a bound effect through `run`", () => {
-    const setup = scriptedEffect("prepare_home_system_effect", "country");
-    const give = scriptedEffect("give_ascension_perk_effect", "country");
+    const setup = scriptedEffect.unchecked("prepare_home_system_effect", "country");
+    const give = scriptedEffect.unchecked("give_ascension_perk_effect", "country");
     expect(
       recorded((scope) => {
         scope.run(setup());
@@ -150,7 +150,7 @@ describe("effects", () => {
   });
 
   it("records inside a nested effect block like any other effect", () => {
-    const setup = scriptedEffect("prepare_home_system_effect", "country");
+    const setup = scriptedEffect.unchecked("prepare_home_system_effect", "country");
     expect(
       recorded((scope) => {
         scope.if(scriptedTrigger("is_fallen_empire", "country")(), (inner) => {

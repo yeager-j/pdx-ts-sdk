@@ -390,15 +390,13 @@ export function buildMod(
       config.acceptGameVersion
     );
   }
-  if (config.uncheckedVanillaIds !== true) {
-    const idsWarning = vanillaIdsCheckWarning(
-      installedVanillaPackageVersion(),
-      options.vanilla?.gameVersion,
-      config.acceptGameVersion
-    );
-    if (idsWarning !== undefined) {
-      warnings.push({ code: "unchecked-vanilla-ids", message: idsWarning });
-    }
+  const idsWarning = vanillaIdsCheckWarning(
+    installedVanillaPackageVersion(),
+    options.vanilla?.gameVersion,
+    config.acceptGameVersion
+  );
+  if (idsWarning !== undefined) {
+    warnings.push({ code: "mismatched-vanilla-ids", message: idsWarning });
   }
 
   for (const file of contentFiles) {

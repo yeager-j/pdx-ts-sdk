@@ -1,5 +1,5 @@
 /**
- * The version-pin gate for the optional `@pdx-ts/stellaris-ids` package
+ * The version-pin gate for the `@pdx-ts/stellaris-ids` package
  * (SDK-12). Distinct from the rule-table staleness gate in `compiler/compile.ts`: that
  * one guards patch emission against an unverified CWT rule table, and only
  * fires when patches exist. This one guards every authored vanilla
@@ -15,12 +15,17 @@ import { vanillaPackageGameVersion, vanillaPackageInstallRange } from "./version
 
 /**
  * The version pinned by the installed `@pdx-ts/stellaris-ids` package,
- * read from its `package.json` at runtime via `createRequire` — never
- * imported as a module, so this resolves correctly whether or not the
- * package is present. Any failure (not installed, no such export in the
- * resolver, malformed `package.json`, missing or non-string `version`)
- * silently returns `undefined`: an absent package is a legal, fully
- * supported configuration (see `contracts.ts`'s per-registry degradation).
+ * read from its `package.json` at runtime via `createRequire` — a runtime
+ * read rather than an import, because the version is data and the package's
+ * types are what the SDK imports.
+ *
+ * Any failure (no such export in the resolver, malformed `package.json`,
+ * missing or non-string `version`) returns `undefined`, and every check below
+ * then passes silently. That is not tolerance for an absent package — the
+ * package is a hard dependency, and a project without it fails to typecheck on
+ * the SDK's own import of it. It is that a runtime version read is the wrong
+ * place to re-litigate a compile-time fact, and has nothing useful to say when
+ * it cannot read one.
  *
  * `specifier` exists for tests: point it at a fixture `package.json` path to
  * exercise this without touching the workspace-installed package.
@@ -52,9 +57,8 @@ export function installedVanillaPackageVersion(
  * unless the mod config explicitly accepts that install version.
  *
  * Silent pass when:
- * - `packageVersion` is `undefined` — the package is not installed; every
- *   `VanillaId<K>` already degrades to plain `string` in that world, so
- *   there is nothing to enforce here either.
+ * - `packageVersion` is `undefined` — no version could be read; see
+ *   {@link installedVanillaPackageVersion}.
  * - `packageVersion` is `"0.0.0"` — the UNSTAMPED SENTINEL: 0.0.0 means no
  *   generation has produced this package; there is no pin to enforce.
  * - `installGameVersion` is `undefined` — a hermetic or metadata-less view
@@ -91,69 +95,32 @@ export function checkVanillaPackagePin(
 }
 
 /**
- * The canary for compile-time vanilla id checking being *inactive*, as a
- * warning message, or `undefined` when it is doing its job.
+ * The canary for vanilla ids being checked against the *wrong game build*, as
+ * a warning message, or `undefined` when the pin matches.
  *
- * The gate above refuses a build; this only reports, because both worlds it
- * describes are legal ones an author may have chosen. What makes it worth
- * reporting is that neither announces itself: without the package every
- * `VanillaId<K>` degrades to plain `string` (`contracts.ts`), by design and
- * silently, so a typo'd vanilla reference typechecks, builds, ships, and does
- * nothing in game. A protection that can switch itself off unnoticed is worth
- * one line on `mod.warnings`.
- *
- * Two ways it is off:
- * - the package does not resolve at runtime — not installed, so nothing is
- *   merged into `VanillaIds` and every registry is unchecked.
- * - it resolves but pins a different game build than the install this mod is
- *   being built against. Reachable only with `acceptGameVersion` set, since
- *   the gate above refuses that build otherwise; the ids then typecheck
- *   against a build that is not the one being shipped for.
+ * The gate above refuses that build; this reports it, because it is reachable
+ * only with `acceptGameVersion` set — a legal state an author chose
+ * deliberately. What makes it worth a line on `mod.warnings` anyway is that
+ * the checking still looks like it is working: ids that moved between the two
+ * builds typecheck cleanly against the pinned package and are still wrong in
+ * the game being shipped for.
  *
  * `"0.0.0"` — the unstamped sentinel — reports nothing, the same reading the
  * gate above takes: no generation has produced that package, so there is no
- * pin to compare and no claim about ids to weigh it against.
- *
- * **What this cannot see: installed but never imported.** Checking is active
- * only once the package's `declare module "@pdx-ts/sdk"` augmentation joins
- * the consumer's TypeScript *program*, which takes an import of
- * `@pdx-ts/stellaris-ids` somewhere in it. A consumer who installs the
- * package and never imports it is in exactly the state this canary exists to
- * expose, and gets no warning: resolution is a runtime fact, program
- * membership is a compile-time one, and this runs at neither the right time
- * nor with the right information to observe the second. Nothing in the
- * package announces itself at runtime either — its entry is an `import
- * "./augment.ts"` plus type-only re-exports, and `augment.ts` is `import
- * type` and `declare module` alone, so loading it executes nothing. (The
- * `/triggers` and `/effects` subpaths do call back into `scriptedTrigger`
- * per definition, but that is unsound as a signal in both directions: a
- * root-only import activates every id check while calling nothing, and the
- * same public function is the SDK's own documented hand-declaration hatch,
- * so a call proves nothing about the package.) Closing this needs the
- * generator to emit a runtime registration the SDK can observe — a
- * `@pdx-ts/codegen-vanilla` change with an install-gated regeneration and a
- * `licensing.test.ts` shape update behind it. Until then both messages below
- * say "installed *and* imported" rather than pretending resolution is the
- * whole story.
+ * pin to compare and no claim about ids to weigh it against. An unreadable
+ * version reports nothing either, for the reason
+ * {@link installedVanillaPackageVersion} gives.
  */
 export function vanillaIdsCheckWarning(
   packageVersion: string | undefined,
   installGameVersion: string | undefined,
   acceptGameVersion: string | undefined
 ): string | undefined {
-  if (packageVersion === undefined) {
-    return (
-      "Vanilla ids are not checked: @pdx-ts/stellaris-ids is not installed, so every vanilla " +
-      "id parameter — technologies, buildings, sprites, scripted trigger and effect names — " +
-      "is an unchecked plain string, and a misspelled one builds cleanly and reaches the game " +
-      "as a reference to nothing. Install @pdx-ts/stellaris-ids matching your Stellaris " +
-      "version, and import it somewhere in the project — checking starts only once its " +
-      "declaration merge is part of your TypeScript program, which an installed-but-unimported " +
-      "package never joins. Or set uncheckedVanillaIds: true on the mod config to acknowledge " +
-      "authoring without it."
-    );
-  }
-  if (packageVersion === "0.0.0" || installGameVersion === undefined) {
+  if (
+    packageVersion === undefined ||
+    packageVersion === "0.0.0" ||
+    installGameVersion === undefined
+  ) {
     return undefined;
   }
   const pinned = vanillaPackageGameVersion(packageVersion);
@@ -166,9 +133,6 @@ export function vanillaIdsCheckWarning(
     `${pinned} but this build's install is Stellaris ${installGameVersion}, accepted via ` +
     `acceptGameVersion: "${acceptGameVersion}". Ids that moved between those builds typecheck ` +
     `here and are still wrong in game. Install "@pdx-ts/stellaris-ids": ` +
-    `"${vanillaPackageInstallRange(installGameVersion)}" to ` +
-    `match the install (and import it somewhere in the project — an installed package that is ` +
-    `never imported checks nothing at all), or set uncheckedVanillaIds: true on the mod config ` +
-    `to acknowledge building on mismatched identifier types.`
+    `"${vanillaPackageInstallRange(installGameVersion)}" to match the install.`
   );
 }

@@ -21,6 +21,7 @@ import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { describe, expect, it } from "vitest";
 
 import { buildVanillaFacts } from "../src/build-facts.ts";
+import { TABLE_NAMES } from "../src/emit.ts";
 import { formatEmitted } from "../src/format.ts";
 import { generateVanillaPackage } from "../src/generate.ts";
 import { VANILLA_MANIFEST, type VanillaIdRow } from "../src/manifest.ts";
@@ -60,9 +61,9 @@ function registryReport(name: string) {
 }
 
 describe("emitted file set", () => {
-  it("emits one file per registry, plus the barrel and the augmentation", () => {
+  it("emits one file per registry, plus the barrel and the tables", () => {
     expect(files.has("index.ts")).toBe(true);
-    expect(files.has("augment.ts")).toBe(true);
+    expect(files.has("tables.ts")).toBe(true);
     for (const row of generated.report.registries) {
       expect(files.has(`registries/${row.registry.replaceAll("_", "-")}.ts`)).toBe(true);
     }
@@ -71,24 +72,38 @@ describe("emitted file set", () => {
     expect(files.has("events/index.ts")).toBe(true);
   });
 
-  it("names every emitted registry in the augmentation", () => {
-    const augment = file("augment.ts");
+  it("names every emitted registry in the tables", () => {
+    const tables = file("tables.ts");
     for (const row of generated.report.registries) {
-      expect(augment).toContain(`readonly ${row.registry}:`);
+      expect(tables).toContain(`readonly ${row.registry}:`);
     }
-    expect(augment).toContain(
-      "interface VanillaScriptedTriggers extends VanillaScriptedTriggerParams {}"
+    expect(tables).toContain(
+      "export interface VanillaScriptedTriggers extends VanillaScriptedTriggerParams {}"
     );
-    expect(augment).toContain(
-      "interface VanillaScriptedEffects extends VanillaScriptedEffectParams {}"
+    expect(tables).toContain(
+      "export interface VanillaScriptedEffects extends VanillaScriptedEffectParams {}"
     );
-    expect(augment).toContain("readonly event: VanillaEventTrie;");
-    expect(augment).toContain("readonly ship_class: VanillaShipClassMember;");
+    expect(tables).toContain("readonly event: VanillaEventTrie;");
+    expect(tables).toContain("readonly ship_class: VanillaShipClassMember;");
+  });
+
+  it("exports every table the SDK imports, so an empty one is not a missing one", () => {
+    // `@pdx-ts/sdk` imports all five by name (ADR-0006). A table emitted only
+    // when it has members would make an install that defines none of something
+    // a compile error in the SDK rather than an empty set here.
+    const tables = file("tables.ts");
+    for (const name of TABLE_NAMES) {
+      expect(tables, name).toContain(`export interface ${name}`);
+    }
   });
 
   it("re-exports every public type from the barrel with no runtime exports", () => {
     const barrel = file("index.ts");
-    expect(barrel).toContain('import "./augment.ts";');
+    const tablesExport = /export type \{([^}]*)\} from "\.\/tables\.ts";/.exec(barrel);
+    expect(tablesExport, "the barrel re-exports the tables").not.toBeNull();
+    for (const name of TABLE_NAMES) {
+      expect(tablesExport![1], name).toContain(name);
+    }
     expect(barrel).toContain(
       'export type { VanillaSpriteTrie } from "./registries/sprite/index.ts";'
     );

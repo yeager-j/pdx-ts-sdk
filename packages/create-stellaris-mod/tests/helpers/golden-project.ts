@@ -55,13 +55,15 @@ const GOLDEN_PROJECT: Resolved = {
 
 /**
  * The packages the fixture resolves through `node_modules`. `@pdx-ts/pdxscript`
- * is here because `@pdx-ts/sdk` declares it as a dependency, so resolving the
- * SDK's sources means resolving that too; `@types` is what makes `"types":
- * ["node"]` findable without an install.
+ * and `@pdx-ts/stellaris-ids` are here because `@pdx-ts/sdk` declares them —
+ * the first as a dependency, the second as the peer whose id tables it imports
+ * (ADR-0006) — so resolving the SDK's sources means resolving both; `@types` is
+ * what makes `"types": ["node"]` findable without an install.
  */
 const LINKS: readonly (readonly [string, string])[] = [
   ["@pdx-ts/sdk", "packages/sdk"],
   ["@pdx-ts/pdxscript", "packages/pdxscript"],
+  ["@pdx-ts/stellaris-ids", "packages/stellaris-ids"],
   ["@types", "node_modules/@types"],
   ["vitest", "node_modules/vitest"],
 ];

@@ -1813,10 +1813,9 @@ describe("generated content registries", () => {
   it("lowers scriptedTriggerModifier's checked trigger/parameters into a complex_trigger_modifier row (bug bash #16 finding 5)", () => {
     const cap = capabilityFor(configFor("Weight block scripted trigger modifier test", "wb_test"));
     // scriptedTriggerModifier checks the name and parameter bag against
-    // @pdx-ts/stellaris-ids's scripted triggers when installed (see
-    // packages/stellaris-ids/tests/present.test-d.ts for the checked-world
-    // compile-time evidence, and vanilla-refs.test-d.ts for the
-    // package-absent world) — this is the runtime half: its return value
+    // @pdx-ts/stellaris-ids's scripted triggers (see
+    // packages/stellaris-ids/tests/present.test-d.ts for the compile-time
+    // evidence) — this is the runtime half: its return value
     // spreads into an ordinary ComplexTriggerModifier row and lowers exactly
     // like one authored by hand. has_crisis_stage is a real vanilla scripted
     // trigger (common/scripted_triggers/00_scripted_triggers.txt) with one

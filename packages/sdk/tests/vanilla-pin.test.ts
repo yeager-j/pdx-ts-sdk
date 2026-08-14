@@ -1,9 +1,9 @@
 /**
- * The two guards over the optional `@pdx-ts/stellaris-ids` package (SDK-12):
- * the version-pin gate that refuses a mismatched package
- * (`checkVanillaPackagePin`), and the canary that reports one which is not
- * checking anything at all (`vanillaIdsCheckWarning`). A pure matrix over
- * each, the runtime resolver `installedVanillaPackageVersion`, and a capability's
+ * The two guards over the `@pdx-ts/stellaris-ids` package (SDK-12): the
+ * version-pin gate that refuses a mismatched package
+ * (`checkVanillaPackagePin`), and the canary that reports one checking against
+ * the wrong game build (`vanillaIdsCheckWarning`). A pure matrix over each,
+ * the runtime resolver `installedVanillaPackageVersion`, and a capability's
  * hooks for both. Hermetic throughout — no install is required.
  */
 
@@ -67,7 +67,10 @@ describe("checkVanillaPackagePin", () => {
     expect(() => checkVanillaPackagePin("0.0.0", "4.5.0", undefined)).not.toThrow();
   });
 
-  it("passes when no package is installed", () => {
+  it("passes when no package version could be read", () => {
+    // The package is a hard dependency, so this is a broken install rather
+    // than a supported one — and a runtime version read has nothing useful to
+    // say about it. The SDK's own import is what refuses that project.
     expect(() => checkVanillaPackagePin(undefined, "4.5.0", undefined)).not.toThrow();
   });
 
@@ -87,29 +90,16 @@ describe("checkVanillaPackagePin", () => {
 });
 
 describe("vanillaIdsCheckWarning", () => {
-  it("warns when the package does not resolve at all", () => {
-    // The package-absent world, which no test in this workspace can reach
-    // through a mod capability (the package is a workspace sibling and always
-    // resolves), but every consumer that has not installed it lives in.
-    const warning = vanillaIdsCheckWarning(undefined, "4.4.6", undefined);
-    expect(warning).toBeDefined();
-    expect(warning).toContain("@pdx-ts/stellaris-ids is not installed");
-    expect(warning).toContain("uncheckedVanillaIds: true");
-  });
-
-  it("tells the reader installing is not the whole remedy", () => {
-    // The state this canary provably cannot detect — installed but never
-    // imported, so the declaration merge never joins the consumer's program —
-    // is at least named in the remedy of both messages, rather than left to
-    // read "installed" as "checked".
-    expect(vanillaIdsCheckWarning(undefined, "4.4.6", undefined)).toContain("import it");
-    expect(vanillaIdsCheckWarning("4.4.6", "4.5.0", "4.5.0")).toContain("import it");
-  });
-
   it("warns when the package resolves but pins a different build than the install", () => {
     const warning = vanillaIdsCheckWarning("4.4.6", "4.5.0", "4.5.0");
     expect(warning).toContain("4.4.6");
     expect(warning).toContain("4.5.0");
+    // The remedy is the range that resolves a revision of the right build.
+    expect(warning).toContain(">=4.5.0-0 <4.5.0");
+  });
+
+  it("stays silent when no package version could be read", () => {
+    expect(vanillaIdsCheckWarning(undefined, "4.4.6", undefined)).toBeUndefined();
   });
 
   it("stays silent when the package pins the install's own version", () => {
@@ -218,39 +208,23 @@ describe("the mod capability's version-pin hook", () => {
   });
 
   /**
-   * The other half of the same subject: the gate above refuses a *mismatched*
-   * package, and this reports an *inactive* one. Nothing else would — vanilla
-   * id checking degrades to plain `string` silently and by design, so a build
-   * with no identifier protection is indistinguishable from one with it.
-   *
-   * The unresolvable world is covered by the pure matrix rather than here:
-   * the workspace installs `@pdx-ts/stellaris-ids` as a sibling, so no test
-   * running in this repo can make a capability fail to resolve it. What is
-   * reachable end to end is the mismatch arm, since `acceptGameVersion` lets
-   * a mismatched build past the gate and into exactly the state worth warning
-   * about.
+   * The other half of the same subject: the gate above refuses a mismatched
+   * package outright, and this reports the one an author let through. Reaching
+   * it end to end takes `acceptGameVersion`, which is the only way past the
+   * gate and into exactly the state worth warning about — ids that typecheck
+   * against a build the mod is not being shipped for.
    */
   describe("the vanilla-ids canary", () => {
-    const uncheckedWarnings = (mod: { warnings: readonly { code: string; message: string }[] }) =>
-      mod.warnings.filter((warning) => warning.code === "unchecked-vanilla-ids");
+    const mismatchWarnings = (mod: { warnings: readonly { code: string; message: string }[] }) =>
+      mod.warnings.filter((warning) => warning.code === "mismatched-vanilla-ids");
 
     it("warns when ids are checked against a build the author accepted a mismatch on", () => {
       const vanilla = viewFromFiles(FILES, { gameVersion: "4.5.0" });
       const { mod, technologies } = technologyFeature(makeConfig({ acceptGameVersion: "4.5.0" }));
-      const warnings = uncheckedWarnings(mod.compile([technologies], { vanilla }));
+      const warnings = mismatchWarnings(mod.compile([technologies], { vanilla }));
       expect(warnings).toHaveLength(1);
       expect(warnings[0]!.message).toContain("4.5.0");
       expect(warnings[0]!.message).toContain(installedGameVersion());
-      // Warnings are data, and the message says how to get the protection back.
-      expect(warnings[0]!.message).toContain("uncheckedVanillaIds: true");
-    });
-
-    it("stays quiet when the mod acknowledges authoring without checked ids", () => {
-      const vanilla = viewFromFiles(FILES, { gameVersion: "4.5.0" });
-      const { mod, technologies } = technologyFeature(
-        makeConfig({ acceptGameVersion: "4.5.0", uncheckedVanillaIds: true })
-      );
-      expect(uncheckedWarnings(mod.compile([technologies], { vanilla }))).toEqual([]);
     });
 
     it("stays quiet when the installed package matches the install", () => {
@@ -258,12 +232,12 @@ describe("the mod capability's version-pin hook", () => {
       // a warning every ordinary build carries.
       const vanilla = viewFromFiles(FILES, { gameVersion: installedGameVersion() });
       const { mod, technologies } = technologyFeature();
-      expect(uncheckedWarnings(mod.compile([technologies], { vanilla }))).toEqual([]);
+      expect(mismatchWarnings(mod.compile([technologies], { vanilla }))).toEqual([]);
     });
 
     it("stays quiet on a build with no vanilla view at all", () => {
       const { mod, technologies } = technologyFeature();
-      expect(uncheckedWarnings(mod.compile([technologies]))).toEqual([]);
+      expect(mismatchWarnings(mod.compile([technologies]))).toEqual([]);
     });
   });
 

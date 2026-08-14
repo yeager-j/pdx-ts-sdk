@@ -253,13 +253,13 @@ describe("scope safety for scripted bindings", () => {
     // The binding is an ordinary `Trigger` once called, so the contravariant
     // brand does the work — nothing about scripted triggers needs its own
     // checking mechanism.
-    planetSlot(scriptedTrigger("pd_habitability_check", "planet")());
+    planetSlot(scriptedTrigger.unchecked("pd_habitability_check", "planet")());
     // @ts-expect-error — a country assertion does not fit a planet slot
     planetSlot(scriptedTrigger("is_fallen_empire", "country")());
   });
 
   it("lets `any` fit everywhere, which is what makes it the opt-out", () => {
-    const anywhere = scriptedTrigger("some_trigger", "any");
+    const anywhere = scriptedTrigger.unchecked("some_trigger", "any");
     countrySlot(anywhere());
     planetSlot(anywhere());
     situationSlot(anywhere());
@@ -269,9 +269,9 @@ describe("scope safety for scripted bindings", () => {
     // `and` intersects its operands' scopes, and a universal operand is the
     // identity — so reaching for the opt-out on one condition does not widen
     // the clause around it.
-    expectTypeOf(and(scriptedTrigger("some_trigger", "any")(), hasCountryFlag("x"))).toEqualTypeOf<
-      Trigger<"country">
-    >();
+    expectTypeOf(
+      and(scriptedTrigger.unchecked("some_trigger", "any")(), hasCountryFlag("x"))
+    ).toEqualTypeOf<Trigger<"country">>();
   });
 
   it("rejects a wrong-scope effect call at `run`", () => {

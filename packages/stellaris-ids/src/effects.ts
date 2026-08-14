@@ -2,8 +2,6 @@
 
 import { scriptedEffect } from "@pdx-ts/sdk";
 
-import "./augment.ts";
-
 export const stormFeverEnableChallenge2 = /*#__PURE__*/ scriptedEffect(
   "STORM_FEVER_ENABLE_CHALLENGE_2",
   "country"
