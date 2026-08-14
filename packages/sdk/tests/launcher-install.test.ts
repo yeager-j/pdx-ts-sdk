@@ -22,6 +22,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -118,8 +119,13 @@ async function refusal(operation: Promise<unknown>): Promise<MaterializationErro
 }
 
 const temps: string[] = [];
+/**
+ * Physical from the start: `install` resolves the mod directory through every
+ * symlink before it reports one, and the system temp directory is a symlink on
+ * macOS, so a raw `mkdtemp` path would differ from every reported path.
+ */
 function tempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), "pdx-launcher-"));
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), "pdx-launcher-")));
   temps.push(dir);
   return dir;
 }

@@ -24,6 +24,7 @@ import {
   type MaterializationDrift,
 } from "../errors.ts";
 import { compareUtf8, portableIdentity } from "../ordering.ts";
+import { assertRepresentableMaterialization } from "./preflight.ts";
 import {
   issueReceipt,
   openReceipt,
@@ -36,6 +37,12 @@ import {
   type OwnedSnapshotEntry,
 } from "./receipt.ts";
 import { renderedFileBytes, type RenderedMod } from "./rendered.ts";
+import {
+  acquireTransaction,
+  lockPathFor,
+  type MaterializationJournal,
+  type MaterializationTransaction,
+} from "./transaction.ts";
 
 const MANIFEST_VERSION = 1;
 
@@ -135,7 +142,12 @@ export interface MaterializationReport {
 }
 
 export interface WriteReport extends MaterializationReport {
-  /** The authoritative absolute output path, whatever form the caller gave. */
+  /**
+   * The physical output path: the caller's path with its parent resolved
+   * through every symlink, which is the form the lock, the staging siblings
+   * and the journal all use. Two spellings of one directory report the same
+   * `outDir`, and that is what makes them one materialization rather than two.
+   */
   readonly outDir: string;
 }
 
@@ -159,34 +171,98 @@ export interface StagedMaterialization {
 
 const materializationTails = new Map<string, Promise<void>>();
 
-/** Serialize exact materializations that resolve to the same physical target. */
-export async function withMaterializationLock<T>(
-  target: string,
+/**
+ * Queue same-process materializations that touch any of the same physical
+ * targets. This is cooperation, not exclusion: the transaction lock file is
+ * what stops a second OS process, and it fails fast rather than waiting.
+ * Callers that need more than one target — an install, which activates
+ * content and descriptor — hand them all over at once, and they are taken in
+ * one global order so two overlapping sets cannot deadlock against each other.
+ */
+export async function withMaterializationLocks<T>(
+  targets: readonly string[],
   operation: () => Promise<T>
 ): Promise<T> {
-  const parent = path.dirname(target);
-  await mkdir(parent, { recursive: true });
-  const key = path.join(await realpath(parent), path.basename(target));
-  const previous = materializationTails.get(key) ?? Promise.resolve();
-  let release!: () => void;
-  const tail = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  materializationTails.set(key, tail);
-  await previous;
-  try {
-    return await operation();
-  } finally {
-    release();
-    if (materializationTails.get(key) === tail) {
-      materializationTails.delete(key);
+  const ordered = [...targets].sort((left, right) =>
+    compareUtf8(lockPathFor(left), lockPathFor(right))
+  );
+  const acquire = async (index: number): Promise<T> => {
+    const key = ordered[index];
+    if (key === undefined) {
+      return operation();
     }
+    const previous = materializationTails.get(key) ?? Promise.resolve();
+    let release!: () => void;
+    const tail = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    materializationTails.set(key, tail);
+    await previous;
+    try {
+      return await acquire(index + 1);
+    } finally {
+      release();
+      if (materializationTails.get(key) === tail) {
+        materializationTails.delete(key);
+      }
+    }
+  };
+  return acquire(0);
+}
+
+/**
+ * The physical target, resolved once at the entry point: the parent through
+ * every symlink, joined to the basename exactly as the caller spelled it. The
+ * basename stays verbatim on purpose — the lock name derives from it, so two
+ * aliases of one directory must produce one lock name and not a sanitized
+ * form that collapses unrelated names together.
+ */
+export async function canonicalTarget(target: string | URL): Promise<string> {
+  const resolved = resolveTarget(target);
+  const parent = path.dirname(resolved);
+  await mkdir(parent, { recursive: true });
+  return path.join(await realpath(parent), path.basename(resolved));
+}
+
+/**
+ * Which lock disposition a failed transaction earns. Residue the journal
+ * named and that is still on disk is the whole reason to keep a journal: the
+ * next writer reads it and refuses with `"recovery-required"` instead of
+ * materializing over an unfinished swap. A failure that left nothing behind
+ * releases the lock, so an ordinary refusal is not turned into a recovery.
+ *
+ * Disposing is itself best effort. The caller is about to rethrow the failure
+ * that brought it here, and that failure is the news: a lock file that could
+ * not be written or unlinked — often for the same reason the materialization
+ * failed — must not become the error the author sees instead.
+ */
+export async function disposeAfterFailure(
+  transaction: MaterializationTransaction,
+  journaled: readonly string[],
+  error: unknown
+): Promise<void> {
+  try {
+    const surviving: string[] = [];
+    for (const candidate of journaled) {
+      if ((await lstatOrUndefined(candidate)) !== undefined) {
+        surviving.push(candidate);
+      }
+    }
+    if (surviving.length === 0) {
+      await transaction.releaseClean();
+      return;
+    }
+    const reason = error instanceof Error ? error.message : String(error);
+    await transaction.preserveAsEvidence(`${reason} Left behind: ${surviving.join(", ")}.`);
+  } catch {
+    // Deliberately swallowed; see above. The lock file stays either way,
+    // which is the conservative outcome.
   }
 }
 
 /** Replace an SDK-owned output tree with exactly one rendered snapshot. */
 export async function write(outDir: string | URL, rendered: RenderedMod): Promise<WriteReport> {
-  return materialize(resolveTarget(outDir), rendered, undefined);
+  return materialize(outDir, rendered, undefined);
 }
 
 /**
@@ -204,33 +280,58 @@ export async function replaceMaterialization(
   rendered: RenderedMod,
   receipt: MaterializationReceipt
 ): Promise<WriteReport> {
-  return materialize(resolveTarget(outDir), rendered, openReceipt(receipt));
+  return materialize(outDir, rendered, openReceipt(receipt));
 }
 
 async function materialize(
-  target: string,
+  outDir: string | URL,
   rendered: RenderedMod,
   receipt: OpenedReceipt | undefined
 ): Promise<WriteReport> {
-  return withMaterializationLock(target, async () => {
-    const inspection = await validateExistingMaterialization(target, rendered, "build", {
-      receipt,
+  const target = await canonicalTarget(outDir);
+  assertRepresentableMaterialization(target, rendered);
+  return withMaterializationLocks([target], async () => {
+    const transaction = await acquireTransaction({
+      target,
+      mode: "build",
+      prefix: rendered.prefix,
+      renderedSha256: rendered.sha256,
     });
-    const common = {
-      manifestPath: path.join(target, MATERIALIZATION_MANIFEST_PATH),
-      foreignEntries: reportForeign(inspection.foreign),
-    };
-    if (ownedSetMatches(inspection, rendered)) {
-      return freezeReport({ status: "unchanged", outDir: target, ...common, warnings: [] });
+    const paths = stagingPaths(target);
+    try {
+      const inspection = await validateExistingMaterialization(target, rendered, "build", {
+        receipt,
+      });
+      const common = {
+        manifestPath: path.join(target, MATERIALIZATION_MANIFEST_PATH),
+        foreignEntries: reportForeign(inspection.foreign),
+      };
+      if (ownedSetMatches(inspection, rendered)) {
+        await transaction.releaseClean();
+        return freezeReport({ status: "unchanged", outDir: target, ...common, warnings: [] });
+      }
+      await transaction.journalStaging({
+        ...paths,
+        hadPrevious: inspection.kind !== "absent",
+        ...(inspection.manifest === undefined
+          ? {}
+          : { previousManifestSha256: inspection.manifest.sha256 }),
+      });
+      const staged = await stageMaterialization(target, rendered, "build", inspection, { paths });
+      await transaction.record("staged");
+      await activateMaterialization(staged, transaction);
+      await transaction.record("committed");
+      const warnings = await discardPrevious(staged);
+      // The commit already happened, so a leftover nobody could remove is
+      // news for the report. Keeping the lock would turn this success into
+      // the next writer's recovery-required.
+      await transaction.record("done");
+      await transaction.releaseClean();
+      return freezeReport({ status: "written", outDir: target, ...common, warnings });
+    } catch (error) {
+      await disposeAfterFailure(transaction, [paths.staging, paths.previous], error);
+      throw error;
     }
-    const staged = await stageMaterialization(target, rendered, "build", inspection);
-    await activateMaterialization(staged);
-    return freezeReport({
-      status: "written",
-      outDir: target,
-      ...common,
-      warnings: await discardPrevious(staged),
-    });
   });
 }
 
@@ -268,9 +369,31 @@ export function freezeReport<T extends MaterializationReport>(report: T): T {
   });
 }
 
+/** The two sibling paths one activation moves through. */
+export interface MaterializationPaths {
+  readonly staging: string;
+  readonly previous: string;
+}
+
+/**
+ * Name the siblings before anything creates them, so the caller can journal
+ * the names first. Recovery may only delete a path the journal named, and a
+ * name written down after the directory exists proves nothing about a
+ * transaction that died in between.
+ */
+export function stagingPaths(target: string): MaterializationPaths {
+  const parent = path.dirname(target);
+  return {
+    staging: path.join(parent, `.pdx-staging-${randomUUID()}`),
+    previous: path.join(parent, `.pdx-previous-${randomUUID()}`),
+  };
+}
+
 export interface StageOptions {
   /** Install mode only: the descriptor record the manifest must record. */
   readonly launcherDescriptor?: LauncherDescriptorRecord;
+  /** Sibling paths the caller already journaled; minted here when absent. */
+  readonly paths?: MaterializationPaths;
 }
 
 /**
@@ -287,14 +410,16 @@ export async function stageMaterialization(
 ): Promise<StagedMaterialization> {
   const launcherDescriptor = options.launcherDescriptor;
   await mkdir(path.dirname(target), { recursive: true });
-  const staging = path.join(path.dirname(target), `.pdx-staging-${randomUUID()}`);
-  const previous = path.join(path.dirname(target), `.pdx-previous-${randomUUID()}`);
+  const { staging, previous } = options.paths ?? stagingPaths(target);
   let preserved: readonly PreservedEntry[];
   try {
     await writeRenderedTree(staging, rendered, mode, launcherDescriptor);
     preserved = await preserveForeign(target, staging, inspection.foreign);
   } catch (error) {
-    await rm(staging, { recursive: true, force: true });
+    // Best effort, and quiet: a cleanup that fails must not replace the error
+    // explaining why staging failed in the first place. What survives is
+    // decided by whoever holds the transaction, from the paths on disk.
+    await removeQuietly(staging);
     throw error;
   }
   return {
@@ -311,9 +436,18 @@ export async function stageMaterialization(
   };
 }
 
-export async function activateMaterialization(staged: StagedMaterialization): Promise<void> {
+/**
+ * The two content renames, each announced to the journal immediately before
+ * it happens. No completion record follows either one: a rename is atomic,
+ * and the set-aside name is a UUID, so what landed is readable from disk.
+ */
+export async function activateMaterialization(
+  staged: StagedMaterialization,
+  journal?: MaterializationJournal
+): Promise<void> {
   await revalidateTarget(staged);
   if (staged.hadPrevious) {
+    await journal?.record("content-deactivating");
     try {
       await rename(staged.target, staged.previous);
     } catch (error) {
@@ -326,11 +460,13 @@ export async function activateMaterialization(staged: StagedMaterialization): Pr
       );
     }
   }
+  await journal?.record("content-activating");
   try {
     await rename(staged.staging, staged.target);
   } catch (error) {
     let rolledBack = true;
     if (staged.hadPrevious) {
+      await journal?.record("rolling-back");
       try {
         await rename(staged.previous, staged.target);
       } catch {
@@ -339,6 +475,7 @@ export async function activateMaterialization(staged: StagedMaterialization): Pr
     }
     if (rolledBack) {
       await removeQuietly(staged.staging);
+      await journal?.record("rolled-back");
     }
     throw new MaterializationError(
       staged.target,

@@ -23,6 +23,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   symlinkSync,
@@ -94,8 +95,15 @@ const EXTRA_FILE = "common/technology/mz_probe_extra.txt";
 const MANIFEST = ".pdx-sdk-manifest.json";
 
 const temps: string[] = [];
+/**
+ * Physical from the start. Materialization resolves the target's parent
+ * through every symlink, and the system temp directory is one on macOS, so a
+ * raw `mkdtemp` path would make every reported path differ from the one a
+ * test built its expectation from — a difference about `/var` rather than
+ * about the SDK.
+ */
 function tempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), "pdx-materialize-"));
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), "pdx-materialize-")));
   temps.push(dir);
   return dir;
 }
