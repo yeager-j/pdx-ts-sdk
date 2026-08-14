@@ -30,6 +30,7 @@ import {
   parse,
   scalarText as renderScalarText,
   type PdxContainer,
+  type PdxItem,
   type PdxValue,
 } from "@pdx-ts/pdxscript";
 
@@ -631,6 +632,39 @@ export interface ConformanceReport {
   readonly coverage: number;
 }
 
+/** One registry's file layout, as its CWT type declares it. */
+export interface RegistryLayout {
+  /** `path_extension`, dotted. Absent means the game's `.txt` default. */
+  readonly extension?: string;
+  /**
+   * `skip_root_key`: the definitions sit one level inside a root block with one
+   * of these keys. `any` matches every top-level block.
+   */
+  readonly skipRootKeys?: readonly string[];
+}
+
+/**
+ * The items a file offers as definitions.
+ *
+ * Without `skip_root_key` that is the file's own top level. With one, the
+ * definitions are the children of the matching root blocks, and a top-level
+ * entry matching no root key belongs to something else in the same file, so it
+ * is not counted at all.
+ */
+function rootDefinitions(items: readonly PdxItem[], skipRootKeys: readonly string[]): PdxItem[] {
+  if (skipRootKeys.length === 0) {
+    return [...items];
+  }
+  const any = skipRootKeys.includes("any");
+  return items.flatMap((item) =>
+    item.kind === "entry" &&
+    item.value.kind === "container" &&
+    (any || skipRootKeys.includes(item.key))
+      ? item.value.items
+      : []
+  );
+}
+
 /**
  * Reads every definition a registry's directory contains.
  *
@@ -642,6 +676,11 @@ export interface ConformanceReport {
  * `descents` names this registry's block-valued fields (if any), so their
  * contents are visible too instead of collapsing into one opaque top-level key
  * — see {@link DescentNode}.
+ *
+ * `layout` is the registry's file layout as the rules declare it: which
+ * extension its files carry, and which root block its definitions sit inside.
+ * Both change what counts as a definition, so a reader given neither would
+ * measure a `.gfx` registry as empty rather than as unread.
  */
 export function readRegistryCorpus(
   root: string,
@@ -656,9 +695,11 @@ export function readRegistryCorpus(
    * `common/solar_system_initializers`. Counting one as a definition would
    * measure another type's body against this registry's fields.
    */
-  excludedKey: string | null = null
+  excludedKey: string | null = null,
+  layout: RegistryLayout = {}
 ): RegistryCorpus {
   const dir = path.join(root, registryPath);
+  const extension = layout.extension ?? ".txt";
   let names: string[];
   try {
     // Sorted because `readdirSync` order is filesystem-dependent and the
@@ -666,7 +707,7 @@ export function readRegistryCorpus(
     // whichever scalars arrive first, so an unstable read order would diff on
     // every re-extraction of an unchanged install.
     names = readdirSync(dir)
-      .filter((name) => name.endsWith(".txt"))
+      .filter((name) => name.endsWith(extension))
       .sort();
   } catch {
     return { definitions: 0, files: 0, occurrences: new Map() };
@@ -677,7 +718,7 @@ export function readRegistryCorpus(
   let definitions = 0;
   for (const name of names) {
     const parsed = parse(readFileSync(path.join(dir, name), "utf8"));
-    for (const item of parsed.items) {
+    for (const item of rootDefinitions(parsed.items, layout.skipRootKeys ?? [])) {
       if (item.kind !== "entry" || item.value.kind !== "container") {
         continue;
       }

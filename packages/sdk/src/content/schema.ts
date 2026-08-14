@@ -391,6 +391,24 @@ export interface ContentRegistryDescriptor {
   readonly referenceName: string;
   readonly outputDir: string;
   readonly fileStem: string;
+  /**
+   * The emitted file's extension, dotted and always present — `".txt"` for
+   * almost every registry, `".gfx"` or `".asset"` for the few the rules give a
+   * `path_extension`. Resolved at generation time rather than defaulted here,
+   * so the fold reads the extension off the descriptor and holds no default of
+   * its own.
+   */
+  readonly fileExtension: string;
+  /**
+   * Set when the registry's definitions live one level inside a file-level
+   * wrapper block instead of at the top level — sprites sit inside
+   * `spriteTypes = { ... }`. The fold wraps a whole emitted file in one such
+   * block.
+   *
+   * Two registries share an envelope exactly when they agree on
+   * (`outputDir`, `rootEnvelope`); nothing records the membership separately.
+   */
+  readonly rootEnvelope?: string;
   readonly fields: readonly ContentField[];
   readonly localisation: readonly ContentLocalisation[];
   /**

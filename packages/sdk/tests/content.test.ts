@@ -2850,6 +2850,7 @@ describe("alias-struct serialization", () => {
     referenceName: "civic_or_origin",
     outputDir: "common/governments/civics",
     fileStem: "civics",
+    fileExtension: ".txt",
     fields: [
       {
         key: "potential",

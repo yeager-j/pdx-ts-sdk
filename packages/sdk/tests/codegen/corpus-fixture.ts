@@ -239,6 +239,10 @@ export interface RegistryMeasurement {
   readonly keyword: string | null;
   readonly nameField: string | null;
   readonly excludedKey: string | null;
+  /** `path_extension`, dotted and resolved — which files in the directory count. */
+  readonly pathExtension: string;
+  /** `skip_root_key`: the root blocks the definitions sit one level inside. */
+  readonly skipRootKeys: readonly string[];
   /** Which block-valued fields the corpus reader must descend into, from the emission. */
   readonly descents: readonly DescentNode[];
   /** Which spliced blocks the corpus reader must descend into. */
@@ -281,6 +285,8 @@ export const MEASUREMENTS: readonly RegistryMeasurement[] = CONTENT_MANIFEST.map
     keyword: entry.keyword ?? null,
     nameField: type?.nameField ?? null,
     excludedKey: type?.keyFilter?.negated === true ? type.keyFilter.key : null,
+    pathExtension: type?.pathExtension ?? ".txt",
+    skipRootKeys: type?.skipRootKeys ?? [],
     descents: emission?.corpusDescents ?? [],
     // Which blocks the reader must descend into is the emitter's answer: a
     // registry splicing `planet_initializer` writes `planet = { ... }` trees
@@ -519,11 +525,11 @@ function sha256(text: string): string {
  * A drift-detectable statement of the registry directory's content: sorted
  * `name:sha256(bytes)` lines, hashed. The bytes reach nothing but the hash.
  */
-function fingerprintRegistryDir(dir: string): string {
+function fingerprintRegistryDir(dir: string, extension: string): string {
   let names: string[];
   try {
     names = readdirSync(dir)
-      .filter((name) => name.endsWith(".txt"))
+      .filter((name) => name.endsWith(extension))
       .sort(compareUtf8);
   } catch {
     return "missing";
@@ -563,9 +569,13 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
         measurement.nameField,
         measurement.descents,
         measurement.spliceMembers,
-        measurement.excludedKey
+        measurement.excludedKey,
+        { extension: measurement.pathExtension, skipRootKeys: measurement.skipRootKeys }
       ),
-      fingerprintRegistryDir(path.join(installPath, measurement.registryPath)),
+      fingerprintRegistryDir(
+        path.join(installPath, measurement.registryPath),
+        measurement.pathExtension
+      ),
       scalarTuples(installPath, measurement, variables)
     )
   );
