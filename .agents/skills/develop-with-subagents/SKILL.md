@@ -98,7 +98,7 @@ Launch one smaller-model implementation agent. Give it:
 - an instruction to stop and report if the plan conflicts with source evidence or requires broader
   scope.
 
-Tell the agent it is not alone in the worktree and must not revert edits it did not create. Require it
+Tell the agent to run the `/engineering-principles` Skill before writing any code. Require it
 to implement, run the assigned checks, inspect its diff, and report changed files, verification
 results, and remaining concerns. Require it to commit its work on the feature branch before
 finishing — never push or open a pull request. An uncommitted worktree is the only copy of the work,
@@ -115,7 +115,7 @@ After the implementation agent finishes:
 1. Inspect the complete diff and every changed file.
 2. Compare the result against the user contract, repository instructions, and the written plan.
 3. Hunt for correctness faults, missed edge cases, accidental scope, weak tests, and misleading
-   names or comments.
+   names or comments. Use the `/engineering-principles` Skill to find faults.
 4. Run the checks that observe each changed contract. Treat the agent's reported results as context,
    not proof.
 5. If the changed behavior has an executable user interface in the current environment, verify it
