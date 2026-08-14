@@ -25,6 +25,7 @@ import path from "node:path";
 import { MaterializationError, type MaterializationLockHolder } from "../errors.ts";
 import { compareUtf8 } from "../ordering.ts";
 import type { DescriptorSnapshot } from "./receipt.ts";
+import { _materializationTestPoint } from "./test-hooks.ts";
 import type { MaterializationMode } from "./write.ts";
 
 export const JOURNAL_VERSION = 1;
@@ -38,21 +39,28 @@ export const LOCK_BASENAME_PREFIX = ".pdx-lock-";
  * because a rename is atomic and its outcome is readable from disk — the
  * set-aside names are UUIDs, so "both the old and the new tree are at the
  * target" is not a state that can exist.
+ *
+ * Data rather than a bare union because the phase names are also the names of
+ * the journal fault-injection points, and the crash matrix asserts its own
+ * table against this list: a phase added here without a row there fails.
  */
-export type MaterializationPhase =
-  | "inspecting"
-  | "staging"
-  | "staged"
-  | "content-deactivating"
-  | "content-activating"
-  | "descriptor-deactivating"
-  | "descriptor-activating"
-  | "committed"
-  | "done"
-  | "rolling-back"
-  | "rolled-back"
-  | "failed"
-  | "recovering";
+export const MATERIALIZATION_PHASES = [
+  "inspecting",
+  "staging",
+  "staged",
+  "content-deactivating",
+  "content-activating",
+  "descriptor-deactivating",
+  "descriptor-activating",
+  "committed",
+  "done",
+  "rolling-back",
+  "rolled-back",
+  "failed",
+  "recovering",
+] as const;
+
+export type MaterializationPhase = (typeof MATERIALIZATION_PHASES)[number];
 
 /** Line 1 of a primary journal: who is writing, to where, and what. */
 export interface JournalHeader {
@@ -375,6 +383,20 @@ async function appendRecord(handle: FileHandle, record: JournalRecord): Promise<
     written += bytesWritten;
   }
   await handle.sync();
+  await announce(record);
+}
+
+/**
+ * The instant a journal record is on the disk and the action it announces has
+ * not happened yet. That is the only moment worth killing a writer at:
+ * everything the journal claims is true, and nothing after it is. The point is
+ * named after the record's own phase, so the crash matrix reads as the phase
+ * list it is testing. A marker carries no phase and announces nothing.
+ */
+async function announce(record: JournalRecord): Promise<void> {
+  if ("phase" in record) {
+    await _materializationTestPoint(record.phase);
+  }
 }
 
 /**
