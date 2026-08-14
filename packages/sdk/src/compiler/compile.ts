@@ -7,6 +7,7 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { AssetFileItem } from "../authoring/assets.ts";
 import { flattenItems, type ModItemInput } from "../authoring/feature.ts";
 import { LOCALIZATION_LANGUAGES } from "../authoring/localization.ts";
 import { ContentAuthoring } from "../content/authoring.ts";
@@ -121,6 +122,12 @@ export function buildMod(
 ): PureMod {
   const config = resolveConfig(callerConfig);
   const flat = flattenItems(features);
+  const assets = flat
+    .filter(
+      (placed): placed is { item: AssetFileItem; stem: string | undefined } =>
+        placed.item.itemKind === "asset"
+    )
+    .sort((a, b) => compareUtf8(a.item.path, b.item.path));
   const warnings: ModWarning[] = [];
   const localization = createLocalizationAccumulator(warnings);
   const refUses: ReferenceUse[] = [];
@@ -472,6 +479,16 @@ export function buildMod(
       producer: { kind: "descriptor", stems: [], detail: "the mod descriptor" },
     },
   ];
+  for (const { item, stem } of assets) {
+    claims.push({
+      path: item.path,
+      producer: {
+        kind: "asset",
+        stems: stem === undefined ? [] : [stem],
+        detail: `Asset file ${item.path}`,
+      },
+    });
+  }
   for (const file of contentFiles) {
     claims.push({
       path: file.relPath,
@@ -638,6 +655,7 @@ export function buildMod(
   freezeItems(onActions);
 
   const frozenWarnings = Object.freeze(warnings.map((warning) => Object.freeze({ ...warning })));
+  const frozenAssets = Object.freeze([...assets.map(({ item }) => item)]);
   const frozenContentFiles = Object.freeze(
     contentFiles.map((file) =>
       Object.freeze({
@@ -668,6 +686,7 @@ export function buildMod(
   return Object.freeze({
     config,
     warnings: frozenWarnings,
+    assets: frozenAssets,
     contentFiles: frozenContentFiles,
     eventFiles: frozenEventFiles,
     events: frozenEvents,

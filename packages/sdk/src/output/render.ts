@@ -6,6 +6,7 @@
 
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 
+import { takeAssetBytes } from "../authoring/assets.ts";
 import type { PureMod } from "../compiler/model.ts";
 import { DESCRIPTOR_PATH } from "../compiler/paths.ts";
 import { PdxSdkError } from "../errors.ts";
@@ -21,6 +22,9 @@ export function render(mod: PureMod): RenderedMod {
   const { prefix } = mod.config;
   const files: RenderedClaim[] = [];
   files.push({ path: DESCRIPTOR_PATH, text: renderDescriptor(mod) });
+  for (const asset of mod.assets) {
+    files.push({ path: asset.path, captured: takeAssetBytes(asset) });
+  }
   for (const file of mod.contentFiles) {
     files.push({
       path: file.relPath,

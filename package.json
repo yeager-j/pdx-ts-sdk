@@ -20,6 +20,7 @@
     "corpus:check": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-check.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:asset-scale": "node --expose-gc --conditions=pdx-source packages/sdk/tests/assets-scale.ts",
     "test:watch": "vitest",
     "example": "node --conditions=pdx-source examples/hello-galaxy/build.ts",
     "scaffold": "node --conditions=pdx-source packages/create-stellaris-mod/src/bin.ts",
