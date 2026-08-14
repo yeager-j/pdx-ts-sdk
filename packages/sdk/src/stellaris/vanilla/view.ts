@@ -324,6 +324,13 @@ export interface ViewOptions {
   readonly gameVersion?: string;
   /** Set by the loader when the parse was skipped via the content cache. */
   readonly fromCache?: boolean;
+  /**
+   * Every path the loaded install occupies (loose files and DLC archive
+   * entries), from {@link scanInstallPaths}. Optional, live evidence on top of
+   * the packaged vanilla path inventory the Fold always checks (ADR-0006): a
+   * hermetic view built from `viewFromFiles` carries none.
+   */
+  readonly pathInventory?: readonly string[];
 }
 
 export class VanillaView {
@@ -333,6 +340,12 @@ export class VanillaView {
   readonly gameVersion?: string;
   /** True when this view was rebuilt from cached parse results. */
   readonly fromCache: boolean;
+  /**
+   * Every path the install that produced this view occupies, when a live
+   * install was scanned — optional evidence on top of the packaged vanilla
+   * path inventory the Fold always checks. `undefined` for a hermetic view.
+   */
+  readonly pathInventory?: readonly string[];
   /**
    * sha256 over the (path, sha256) manifest: two views over byte-identical
    * inputs share it, so a build can tell "same vanilla" from "different loads".
@@ -347,6 +360,8 @@ export class VanillaView {
     this.installPath = options.installPath;
     this.gameVersion = options.gameVersion;
     this.fromCache = options.fromCache ?? false;
+    this.pathInventory =
+      options.pathInventory === undefined ? undefined : Object.freeze([...options.pathInventory]);
 
     const normalized = sources.map((source) => {
       const path = normalizeLogicalPath(source.path);

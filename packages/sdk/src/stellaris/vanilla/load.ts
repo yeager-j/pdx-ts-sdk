@@ -1,8 +1,9 @@
 /**
  * `stellaris.load()`: locate the install, hash and parse the files this
- * slice models (`common/scripted_variables` plus every parsed registry), and
- * hand back the typed view. Synchronous by design — the workload is ~65 files —
- * and eager like everything downstream of it.
+ * slice models (`common/scripted_variables` plus every parsed registry), scan
+ * every path the install occupies, and hand back the typed view. Synchronous
+ * by design — the workload is ~65 files — and eager like everything
+ * downstream of it.
  *
  * Reads are non-recursive by evidence: the resolver-evaluation spike
  * measured `common/technology` flat, so a subdirectory appearing there is a
@@ -10,12 +11,18 @@
  * `launcher-settings.json` (see `version.ts`) and carried on the view; the
  * rule-table staleness check happens where win-assertions are made, not here —
  * parsing is version-agnostic, which is why this side takes the lenient reader.
+ *
+ * The path scan (SDK-173) is live install evidence on top of the packaged
+ * vanilla path inventory the Fold always checks — it is not covered by the
+ * parse cache, since it names files rather than reading them, and it runs on
+ * both the cache hit and cache miss below.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { locateInstall } from "../installation/locate.ts";
+import { scanInstallPaths } from "../installation/scan-paths.ts";
 import { readGameVersion } from "../installation/version.ts";
 import { cacheKey, readCache, writeCache } from "./cache.ts";
 import {
@@ -60,6 +67,12 @@ const PARSED_DIRS: readonly { readonly dir: string; readonly knownSubdirs: Reado
 export function load(options: LoadOptions = {}): VanillaView {
   const installPath = locateInstall(options.installPath);
   const gameVersion = readGameVersion(installPath);
+  // Not part of the parse cache: the cache key covers the parsed registries
+  // only, and a scan is cheap enough (names, never bytes) to redo on every
+  // load regardless of cache hit. `VanillaPathInventoryError` propagates from
+  // here uncaught — a bad archive or an unreadable directory is never treated
+  // as an install with no path evidence.
+  const scan = scanInstallPaths(installPath);
 
   const manifest: { path: string; sha256: string; source: string }[] = [];
   for (const { dir, knownSubdirs } of PARSED_DIRS) {
@@ -97,7 +110,12 @@ export function load(options: LoadOptions = {}): VanillaView {
   if (cacheDir !== undefined) {
     const cached = readCache(cacheDir, key);
     if (cached !== undefined) {
-      return new VanillaView(cached, { installPath, gameVersion, fromCache: true });
+      return new VanillaView(cached, {
+        installPath,
+        gameVersion,
+        fromCache: true,
+        pathInventory: scan.paths,
+      });
     }
   }
 
@@ -107,5 +125,5 @@ export function load(options: LoadOptions = {}): VanillaView {
   if (cacheDir !== undefined) {
     writeCache(cacheDir, key, sources);
   }
-  return new VanillaView(sources, { installPath, gameVersion });
+  return new VanillaView(sources, { installPath, gameVersion, pathInventory: scan.paths });
 }

@@ -22,7 +22,12 @@ import {
   installedVanillaPackageVersion,
   vanillaIdsCheckWarning,
 } from "../identifiers/package-pin.ts";
+import {
+  checkVanillaPathInventoryConsistency,
+  packagedVanillaPaths,
+} from "../identifiers/vanilla-paths.ts";
 import { compareUtf8, normalizeLogicalPath, type LogicalPath } from "../ordering.ts";
+import type { VanillaView } from "../stellaris/vanilla/view.ts";
 import {
   resolveConfig,
   type BuildOptions,
@@ -575,11 +580,33 @@ export function buildMod(
     });
   }
 
-  const vanillaOrigin = options.vanilla ?? patches[0]?.source.origin;
-  const vanillaPaths =
-    vanillaOrigin === undefined
-      ? undefined
-      : immutableSet(vanillaOrigin.files.map((file) => file.path));
+  // The packaged vanilla path inventory is always present (ADR-0006): every
+  // build checks its claims against it, whether or not the build loaded a
+  // `VanillaView`. On top of that, every accepted origin adds its own
+  // evidence — `options.vanilla` when supplied, and every patch's own view —
+  // rather than only one of them: SDK-119's resolution states the rule
+  // ("Assembly unions every matching inventory available"), and
+  // `collectPatches` only enforces that every origin shares one
+  // `manifestKey`, not that they are the same object. A hermetic
+  // `options.vanilla` and a live-loaded patch origin can share a
+  // `manifestKey` while carrying different `pathInventory`s, so picking just
+  // one (`options.vanilla ?? patches[0]?.source.origin`) could silently drop
+  // the other's live evidence. Deduped by reference first — several patches
+  // usually share one origin object — so the (files, pathInventory) union is
+  // built at most once per distinct view, not once per patch.
+  const vanillaOrigins = new Set<VanillaView>();
+  if (options.vanilla !== undefined) {
+    vanillaOrigins.add(options.vanilla);
+  }
+  for (const patched of patches) {
+    vanillaOrigins.add(patched.source.origin);
+  }
+  checkVanillaPathInventoryConsistency(installedVanillaPackageVersion());
+  const vanillaPaths = immutableSet([
+    ...packagedVanillaPaths(),
+    ...[...vanillaOrigins].flatMap((origin) => origin.files.map((file) => file.path)),
+    ...[...vanillaOrigins].flatMap((origin) => origin.pathInventory ?? []),
+  ]);
 
   // The last thing the fold decides. Everything above minted a path; this rules
   // on the whole set at once, so the `PureMod` below cannot exist unless every

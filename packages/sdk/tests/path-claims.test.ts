@@ -36,7 +36,7 @@ function claim(path: string, kind: PathProducerKind = "content", stems: string[]
 /** The conflict set, or a failure if the claims were somehow legal. */
 function conflictsOf(
   claims: readonly PathClaim[],
-  vanillaPaths?: ReadonlySet<string>
+  vanillaPaths: ReadonlySet<string> = new Set()
 ): readonly PathOwnershipConflict[] {
   try {
     adjudicatePaths({ claims, vanillaPaths });
@@ -50,7 +50,7 @@ function conflictsOf(
 function reasonsAt(
   claims: readonly PathClaim[],
   path: string,
-  vanillaPaths?: ReadonlySet<string>
+  vanillaPaths: ReadonlySet<string> = new Set()
 ): PathConflictReason[] {
   return conflictsOf(claims, vanillaPaths)
     .filter((conflict) => conflict.path === path)
@@ -83,7 +83,7 @@ describe("exclusive ownership", () => {
   it("accepts one producer per path and hands back enumeration order", () => {
     const adjudicated = adjudicatePaths({
       claims: [claim("common/technology/b.txt"), claim("common/technology/a.txt")],
-      vanillaPaths: undefined,
+      vanillaPaths: new Set(),
     });
     expect(adjudicated.map((entry) => entry.path)).toEqual([
       "common/technology/a.txt",
@@ -180,7 +180,7 @@ describe("reserved mod-root paths", () => {
     expect(() =>
       adjudicatePaths({
         claims: [claim("descriptor.mod", "descriptor"), claim("common/technology/a.txt")],
-        vanillaPaths: undefined,
+        vanillaPaths: new Set(),
       })
     ).not.toThrow();
   });
@@ -204,7 +204,7 @@ describe("reserved mod-root paths", () => {
     expect(() =>
       adjudicatePaths({
         claims: [claim("descriptor.mod.txt"), claim(".pdx-sdk-manifest.jsonx")],
-        vanillaPaths: undefined,
+        vanillaPaths: new Set(),
       })
     ).not.toThrow();
   });
@@ -272,11 +272,14 @@ describe("vanilla evidence", () => {
     ).not.toThrow();
   });
 
-  it("checks nothing when the build loaded no vanilla evidence", () => {
+  it("an empty inventory checks nothing", () => {
+    // `adjudicatePaths` no longer takes an absent-evidence state at all
+    // (SDK-173, ADR-0006): a caller with nothing to check passes the empty
+    // set, not `undefined`.
     expect(() =>
       adjudicatePaths({
         claims: [claim("common/technology/00_physics_tech.txt")],
-        vanillaPaths: undefined,
+        vanillaPaths: new Set(),
       })
     ).not.toThrow();
   });
@@ -428,7 +431,7 @@ describe("adjudication at Asset-tree scale", () => {
   }
 
   it("accepts a large conflict-free tree", () => {
-    expect(adjudicatePaths({ claims: corpus(1200), vanillaPaths: undefined })).toHaveLength(1200);
+    expect(adjudicatePaths({ claims: corpus(1200), vanillaPaths: new Set() })).toHaveLength(1200);
   });
 
   it("finds the one alias hidden in a large tree", () => {
