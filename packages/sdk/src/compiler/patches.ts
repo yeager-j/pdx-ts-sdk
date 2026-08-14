@@ -3,7 +3,12 @@ import { serialize } from "@pdx-ts/pdxscript";
 import type { PlacedItem } from "../authoring/feature.ts";
 import { StaleRuleTableError } from "../errors.ts";
 import type { ContentTypeName } from "../generated/content-registry.ts";
-import { compareLogicalPaths, compareUtf8, normalizeLogicalPath } from "../ordering.ts";
+import {
+  compareLogicalPaths,
+  compareUtf8,
+  normalizeLogicalPath,
+  type LogicalPath,
+} from "../ordering.ts";
 import {
   collectVarRefs,
   planPatchEmission,
@@ -80,11 +85,14 @@ export function collectPatches(
 export function planPatches(
   config: ResolvedModConfig,
   contentFiles: readonly ContentFile[],
-  patchesByRegistry: ReadonlyMap<string, readonly PatchedContent[]>
+  patchesByRegistry: ReadonlyMap<string, readonly PatchedContent[]>,
+  occupiedPaths: readonly LogicalPath[]
 ): PatchPlan[] {
   const plans = [...patchesByRegistry]
     .filter(([, patches]) => patches.length > 0)
-    .map(([registry, patches]) => planRegistry(config, contentFiles, registry, patches));
+    .map(([registry, patches]) =>
+      planRegistry(config, contentFiles, registry, patches, occupiedPaths)
+    );
   return plans.sort((a, b) => compareLogicalPaths(a.relPath, b.relPath));
 }
 
@@ -92,7 +100,8 @@ function planRegistry(
   config: ResolvedModConfig,
   contentFiles: readonly ContentFile[],
   registry: string,
-  patches: readonly PatchedContent[]
+  patches: readonly PatchedContent[],
+  occupiedPaths: readonly LogicalPath[]
 ): PatchPlan {
   const { prefix } = config;
   const origin = patches[0]!.source.origin;
@@ -113,7 +122,7 @@ function planRegistry(
   const enumeration: VanillaFile[] = [
     ...origin.files.filter((file) => file.path.startsWith(`${dir}/`)),
     ...ownFiles.map((file) => ({
-      path: normalizeLogicalPath(file.relPath),
+      path: file.relPath,
       sha256: sha256Hex(serialize(file.entries)),
       keys: file.ids,
     })),
@@ -140,7 +149,7 @@ function planRegistry(
       };
     }),
     enumeration,
-    reservedPaths: ownFiles.map((file) => file.relPath),
+    reservedPaths: occupiedPaths,
     prefix,
   });
 }

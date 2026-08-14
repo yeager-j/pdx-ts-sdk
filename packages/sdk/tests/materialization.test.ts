@@ -449,6 +449,32 @@ describe("a rendered claim never lands on a foreign entry", () => {
       },
     ]);
   });
+
+  it("refuses a foreign path that only an uppercasing filesystem would collapse", async () => {
+    // Greek final and medial sigma: distinct under lowercasing, one name under
+    // NTFS's uppercase table. Comparing by lowercase alone called these two
+    // files and let the swap destroy the author's. The shared portability
+    // identity folds through both cases, so the refusal holds on every volume.
+    const out = await bare();
+    const claimed = "assets/σigma.txt";
+    const foreign = "assets/ςigma.txt";
+    mkdirSync(join(out, "assets"));
+    writeFileSync(join(out, foreign), "author's own", "utf8");
+    const claiming = createRenderedMod("mz_probe", "", [
+      { path: claimed, owner: "test", text: "rendered\n" },
+    ]);
+
+    const error = await refusal(write(out, claiming));
+
+    expect(error.reason).toBe("foreign-conflict");
+    if (error.failure.reason !== "foreign-conflict") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.conflicts).toEqual([
+      { claimPath: claimed, foreignPath: foreign, kind: "occupied" },
+    ]);
+    expect(readFileSync(join(out, foreign), "utf8")).toBe("author's own");
+  });
 });
 
 describe("OS metadata is an ordinary foreign entry", () => {

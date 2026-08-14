@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { ContentFile } from "../src/compiler/model.ts";
-import { createMod, PathOwnershipError, render, type PureMod } from "../src/index.ts";
+import {
+  createMod,
+  normalizeLogicalPath,
+  PathOwnershipError,
+  render,
+  type PureMod,
+} from "../src/index.ts";
 import {
   CapturedBytes,
   createRenderedMod,
@@ -51,14 +57,31 @@ describe("RenderedMod", () => {
     ["reserved manifest portable alias", ".PDX-SDK-MANIFEST.JSON"],
   ])("rejects a %s before any sink sees it", (_label, relPath) => {
     const first = compiled.contentFiles[0]!;
-    const forgedFile: ContentFile = { ...first, relPath };
+    const forgedFile: ContentFile = { ...first, relPath: normalizeLogicalPath(relPath) };
     const forged = { ...compiled, contentFiles: [...compiled.contentFiles, forgedFile] } as PureMod;
     expect(() => render(forged)).toThrow(PathOwnershipError);
   });
 
+  it("rejects two claims only an uppercasing filesystem would collapse", () => {
+    // Greek medial and final sigma: distinct under lowercasing, one name under
+    // NTFS's uppercase table. Adjudicating by lowercase alone accepted both,
+    // and materializing on Windows then wrote two claims to one entry and lost
+    // a file's bytes. Claim versus claim, not claim versus a foreign entry —
+    // the sink's check is a separate gate and cannot stand in for this one.
+    expect(() =>
+      createRenderedMod("rendered_probe", "", [
+        { path: "assets/σigma.txt", owner: "medial", text: "one" },
+        { path: "assets/ςigma.txt", owner: "final", text: "two" },
+      ])
+    ).toThrow(PathOwnershipError);
+  });
+
   it("reports ownership conflicts independently of claim order", () => {
     const first = compiled.contentFiles[0]!;
-    const alias: ContentFile = { ...first, relPath: first.relPath.toUpperCase() };
+    const alias: ContentFile = {
+      ...first,
+      relPath: normalizeLogicalPath(first.relPath.toUpperCase()),
+    };
     const forward = { ...compiled, contentFiles: [first, alias] } as PureMod;
     const backward = { ...compiled, contentFiles: [alias, first] } as PureMod;
 

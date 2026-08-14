@@ -21,7 +21,7 @@ import {
   installedVanillaPackageVersion,
   vanillaIdsCheckWarning,
 } from "../identifiers/package-pin.ts";
-import { compareUtf8 } from "../ordering.ts";
+import { compareUtf8, normalizeLogicalPath, type LogicalPath } from "../ordering.ts";
 import {
   resolveConfig,
   type BuildOptions,
@@ -32,13 +32,19 @@ import { freezeItems, immutableSet } from "./freeze.ts";
 import { createLocalizationAccumulator } from "./localization.ts";
 import type { ContentFile, DefinedGroup, EmittedFile, PureMod } from "./model.ts";
 import { collectPatches, planPatches } from "./patches.ts";
+import {
+  DESCRIPTOR_PATH,
+  MATERIALIZATION_MANIFEST_PATH,
+  onActionsPath,
+  shipOfSizeLimitsPath,
+} from "./paths.ts";
 import { validateReferences, type ReferenceUse } from "./references.ts";
 
 export { type BuildOptions, type ModConfig } from "./config.ts";
 export { type EmittedFile, type LocalizationFile, type PureMod } from "./model.ts";
 
-function emissionPath(prefix: string, outputDir: string, stem: string): string {
-  return `${outputDir}/${prefix}_${stem}.txt`;
+function emissionPath(prefix: string, outputDir: string, stem: string): LogicalPath {
+  return normalizeLogicalPath(`${outputDir}/${prefix}_${stem}.txt`);
 }
 
 function eventNumber(event: EventItemBase, namespace: string): number {
@@ -80,7 +86,7 @@ export function buildMod(
   const ownIdsByDir = new Map<string, Map<string, ContentTypeName>>();
   const rawByType = new Map<
     ContentTypeName,
-    Map<string, { items: Array<{ item: ContentItem; stem: string | undefined }> }>
+    Map<LogicalPath, { items: Array<{ item: ContentItem; stem: string | undefined }> }>
   >();
 
   // Pass 1: collect and validate items without defining them. Definition is
@@ -115,7 +121,7 @@ export function buildMod(
     const relPath = emissionPath(config.prefix, descriptor.outputDir, stem ?? descriptor.fileStem);
     const byPath =
       rawByType.get(item.type) ??
-      new Map<string, { items: Array<{ item: ContentItem; stem: string | undefined }> }>();
+      new Map<LogicalPath, { items: Array<{ item: ContentItem; stem: string | undefined }> }>();
     const group = byPath.get(relPath) ?? { items: [] };
     group.items.push({ item, stem });
     byPath.set(relPath, group);
@@ -153,10 +159,10 @@ export function buildMod(
 
   // Pass 3: lower after every definition has registered its localization.
   const filesByPath = new Map<
-    string,
+    LogicalPath,
     { types: ContentTypeName[]; ids: string[]; entries: PdxEntry[] }
   >();
-  const pathOrder: string[] = [];
+  const pathOrder: LogicalPath[] = [];
   for (const group of definedGroups) {
     let file = filesByPath.get(group.relPath);
     if (file === undefined) {
@@ -184,7 +190,7 @@ export function buildMod(
       placed.item.itemKind === "event"
   );
   const eventStem = new Map(placedEvents.map(({ item, stem }) => [item, stem] as const));
-  const eventsByPath = new Map<string, { namespace: string; events: EventItemBase[] }>();
+  const eventsByPath = new Map<LogicalPath, { namespace: string; events: EventItemBase[] }>();
   for (const { item, stem } of placedEvents) {
     const relPath = emissionPath(config.prefix, "events", stem ?? "events");
     const group = eventsByPath.get(relPath);
@@ -343,6 +349,11 @@ export function buildMod(
       }
     }
   }
+  // Resolved before patch planning, not after, because localization paths are
+  // the last ones this fold mints and the patch plan has to steer its computed
+  // filename clear of every path the mod already occupies.
+  const localizationFiles = localization.finish(config.prefix);
+
   validateReferences({
     prefix: config.prefix,
     contentFiles,
@@ -353,8 +364,25 @@ export function buildMod(
     refUses,
   });
 
+  // Every path the mod occupies apart from the patch plans themselves. A
+  // computed patch filename that landed on one of these would emit two files
+  // at one path, and `winningPath` can only steer around what it is shown.
+  const occupiedPaths: LogicalPath[] = [
+    DESCRIPTOR_PATH,
+    MATERIALIZATION_MANIFEST_PATH,
+    ...contentFiles.map((file) => file.relPath),
+    ...eventFiles.map((file) => file.relPath),
+    ...localizationFiles.map((file) => file.relPath),
+  ];
+  if (onActions.length > 0) {
+    occupiedPaths.push(onActionsPath(config.prefix));
+  }
+  if (shipOfSizeLimits.size > 0) {
+    occupiedPaths.push(shipOfSizeLimitsPath(config.prefix));
+  }
+
   const patchPlans = Object.freeze(
-    planPatches(config, contentFiles, patchesByRegistry).map((plan) =>
+    planPatches(config, contentFiles, patchesByRegistry, occupiedPaths).map((plan) =>
       Object.freeze({
         ...plan,
         assertions: Object.freeze(
@@ -406,8 +434,6 @@ export function buildMod(
     freezeItems(file.entries);
   }
   freezeItems(onActions);
-
-  const localizationFiles = localization.finish(config.prefix);
 
   const frozenWarnings = Object.freeze(warnings.map((warning) => Object.freeze({ ...warning })));
   const frozenContentFiles = Object.freeze(

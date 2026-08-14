@@ -119,6 +119,56 @@ export function compareLogicalPaths(a: LogicalPath, b: LogicalPath): -1 | 0 | 1 
   return compareUtf8(a, b);
 }
 
+/** Enough rounds for the fold below to settle; the observed worst case is two. */
+const FOLD_ROUNDS = 4;
+
+/**
+ * The portability identity of one path component: what a case-insensitive
+ * filesystem may collapse. Game identity stays the exact normalized path
+ * (`compareLogicalPaths` above); this is the second, weaker identity that
+ * detects aliases, and it is deliberately more aggressive than either platform.
+ *
+ * macOS APFS/HFS+ collapse names that agree under simple lowercasing; Windows
+ * NTFS collapses names that agree under its `$UpCase` table, which is closer to
+ * uppercasing. Neither relation contains the other — `ς` and `σ` differ under
+ * lowercasing and agree under uppercasing — so the SDK needs a relation that
+ * contains both, or a mod authored on one platform can emit two names that
+ * merge into one file on the other. Round-tripping through both cases gives
+ * that: measured over every code point, `lower(a) === lower(b)` implies
+ * `fold(a) === fold(b)` and `upper(a) === upper(b)` implies the same, with no
+ * exceptions. `toUpperCase`/`toLowerCase` are locale-independent by spec, and
+ * the locale-sensitive variants must never be used here — they would fold the
+ * Turkish dotless `ı` and `i` differently on a Turkish machine.
+ *
+ * The round repeats to a fixpoint because one pass is not idempotent: `ẞ`
+ * (U+1E9E) lowercases to `ß`, and `ß` uppercases to `SS`. That single code
+ * point — the only one of the 1,114,112 that moves twice — would otherwise
+ * make `STRAẞE.txt` and `Straße.txt` distinct, two names every case-insensitive
+ * filesystem collapses.
+ *
+ * Being a superset costs some over-refusal: `ß`/`ss` and compatibility
+ * ligatures such as `ﬁ`/`fi` are treated as aliases though no shipping
+ * filesystem collapses them. That trade is deliberate. Refusing a legal pair
+ * costs the author one rename; admitting an illegal one destroys a file on a
+ * machine the author does not own.
+ */
+export function portableIdentity(component: string): string {
+  let folded = component.normalize("NFC");
+  for (let round = 0; round < FOLD_ROUNDS; round++) {
+    const next = folded.toUpperCase().toLowerCase().normalize("NFC");
+    if (next === folded) {
+      return folded;
+    }
+    folded = next;
+  }
+  return folded;
+}
+
+/** The portability identity of a whole path: its components, folded, rejoined. */
+export function portablePathKey(path: LogicalPath): string {
+  return path.split("/").map(portableIdentity).join("/");
+}
+
 /**
  * Normalizes every raw path and returns them in enumeration order. Two raw
  * paths that normalize to one logical path are a collision the caller must

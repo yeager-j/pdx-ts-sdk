@@ -1,15 +1,16 @@
 import { createHash } from "node:crypto";
 
+import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import { PathOwnershipError, type PathOwnershipConflict } from "../errors.ts";
 import {
   compareLogicalPaths,
   compareUtf8,
   normalizeLogicalPath,
+  portableIdentity,
   type LogicalPath,
 } from "../ordering.ts";
 
 const encoder = new TextEncoder();
-const MANIFEST_PATH = ".pdx-sdk-manifest.json";
 
 export interface RenderedFile {
   readonly path: LogicalPath;
@@ -188,8 +189,8 @@ export function createRenderedMod(
   const normalized = [
     ...claims.map((claim) => ({ claim, path: normalizeLogicalPath(claim.path), reserved: false })),
     {
-      claim: { path: MANIFEST_PATH, owner: "materializer", text: "" },
-      path: normalizeLogicalPath(MANIFEST_PATH),
+      claim: { path: MATERIALIZATION_MANIFEST_PATH, owner: "materializer", text: "" },
+      path: MATERIALIZATION_MANIFEST_PATH,
       reserved: true,
     },
   ];
@@ -197,11 +198,11 @@ export function createRenderedMod(
   for (let leftIndex = 0; leftIndex < normalized.length; leftIndex++) {
     const left = normalized[leftIndex]!;
     const leftComponents = left.path.split("/");
-    const leftPortable = leftComponents.map((component) => component.toLowerCase());
+    const leftPortable = leftComponents.map(portableIdentity);
     for (let rightIndex = leftIndex + 1; rightIndex < normalized.length; rightIndex++) {
       const right = normalized[rightIndex]!;
       const rightComponents = right.path.split("/");
-      const rightPortable = rightComponents.map((component) => component.toLowerCase());
+      const rightPortable = rightComponents.map(portableIdentity);
       const shared = Math.min(leftPortable.length, rightPortable.length);
       let common = 0;
       let alias = false;

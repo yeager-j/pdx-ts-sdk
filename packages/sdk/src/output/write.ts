@@ -16,13 +16,14 @@ import {
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import {
   MaterializationError,
   type ForeignClaimConflict,
   type ForeignRefusedEntry,
   type MaterializationDrift,
 } from "../errors.ts";
-import { compareUtf8 } from "../ordering.ts";
+import { compareUtf8, portableIdentity } from "../ordering.ts";
 import {
   issueReceipt,
   openReceipt,
@@ -36,7 +37,6 @@ import {
 } from "./receipt.ts";
 import { renderedFileBytes, type RenderedMod } from "./rendered.ts";
 
-export const MATERIALIZATION_MANIFEST = ".pdx-sdk-manifest.json";
 const MANIFEST_VERSION = 1;
 
 /**
@@ -217,7 +217,7 @@ async function materialize(
       receipt,
     });
     const common = {
-      manifestPath: path.join(target, MATERIALIZATION_MANIFEST),
+      manifestPath: path.join(target, MATERIALIZATION_MANIFEST_PATH),
       foreignEntries: reportForeign(inspection.foreign),
     };
     if (ownedSetMatches(inspection, rendered)) {
@@ -430,12 +430,12 @@ export async function validateExistingMaterialization(
     };
   }
 
-  const manifestPath = path.join(target, MATERIALIZATION_MANIFEST);
+  const manifestPath = path.join(target, MATERIALIZATION_MANIFEST_PATH);
   const manifestStats = await lstatOrUndefined(manifestPath);
   if (manifestStats === undefined || !manifestStats.isFile() || manifestStats.isSymbolicLink()) {
     throw unowned(
       target,
-      `Refusing to replace nonempty ${target}: it has no regular ${MATERIALIZATION_MANIFEST} ownership manifest.`
+      `Refusing to replace nonempty ${target}: it has no regular ${MATERIALIZATION_MANIFEST_PATH} ownership manifest.`
     );
   }
   const manifest = await readManifest(manifestPath, target);
@@ -534,7 +534,7 @@ async function classifyTarget(
   const owned: OwnedSnapshotEntry[] = [];
   const foreignSnapshot: ForeignSnapshotEntry[] = [];
   const seen = new Set<string>();
-  const known = new Set<string>([MATERIALIZATION_MANIFEST]);
+  const known = new Set<string>([MATERIALIZATION_MANIFEST_PATH]);
 
   /**
    * An owned path found as a directory is drift, but which directory it is
@@ -558,7 +558,7 @@ async function classifyTarget(
     const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
     for (const name of await readdir(dir)) {
       const relPath = relative === "" ? name : `${relative}/${name}`;
-      if (relPath === MATERIALIZATION_MANIFEST) {
+      if (relPath === MATERIALIZATION_MANIFEST_PATH) {
         continue;
       }
       const absolute = path.join(dir, name);
@@ -699,9 +699,9 @@ function describesState(
 /**
  * A rendered claim that lands on a foreign entry is a refusal, not a
  * replacement — the author's file would be silently destroyed by activation.
- * Comparison uses the lowercased portable component mapping `createRenderedMod`
- * already uses, because that is what the filesystem may collapse. Foreign
- * names are normalized as well as folded: logical paths are NFC, and macOS
+ * Comparison uses `portableIdentity`, the same identity the fold adjudicates
+ * claims by, because that is what the filesystem may collapse. It normalizes as
+ * well as folds, which foreign names need: logical paths are NFC, and macOS
  * hands back decomposed names for the same file.
  */
 function findClaimConflicts(
@@ -711,7 +711,7 @@ function findClaimConflicts(
   const claimByPortable = new Map<string, string>();
   const claimsBelow = new Map<string, string>();
   for (const file of rendered.values()) {
-    const components = file.path.split("/").map(portableComponent);
+    const components = file.path.split("/").map(portableIdentity);
     claimByPortable.set(components.join("/"), file.path);
     for (let index = 1; index < components.length; index++) {
       const ancestor = components.slice(0, index).join("/");
@@ -724,7 +724,7 @@ function findClaimConflicts(
 
   const conflicts: ForeignClaimConflict[] = [];
   for (const entry of foreign) {
-    const components = entry.path.split("/").map(portableComponent);
+    const components = entry.path.split("/").map(portableIdentity);
     const portable = components.join("/");
     const claimed = claimByPortable.get(portable);
     if (claimed !== undefined) {
@@ -760,10 +760,6 @@ function findClaimConflicts(
         compareUtf8(a.foreignPath, b.foreignPath) ||
         compareUtf8(a.kind, b.kind)
     );
-}
-
-function portableComponent(component: string): string {
-  return component.normalize("NFC").toLowerCase();
 }
 
 function ancestorClaim(
@@ -981,7 +977,7 @@ async function writeRenderedTree(
     ...(launcherDescriptor === undefined ? {} : { launcherDescriptor }),
   };
   await writeFile(
-    path.join(staging, MATERIALIZATION_MANIFEST),
+    path.join(staging, MATERIALIZATION_MANIFEST_PATH),
     `${JSON.stringify(manifest, null, 2)}\n`,
     "utf8"
   );
@@ -997,7 +993,7 @@ async function readManifest(source: string, target: string): Promise<Materializa
   } catch (error) {
     throw unowned(
       target,
-      `Refusing to replace ${target}: ${MATERIALIZATION_MANIFEST} is invalid (${error instanceof Error ? error.message : String(error)}).`
+      `Refusing to replace ${target}: ${MATERIALIZATION_MANIFEST_PATH} is invalid (${error instanceof Error ? error.message : String(error)}).`
     );
   }
 }
