@@ -134,7 +134,8 @@ function newNode(key: string): Node {
 
 /**
  * Adjudicates every claim against every other, against the reserved paths, and
- * against whatever vanilla evidence the build has.
+ * against the vanilla path evidence the build has — always at least the
+ * packaged inventory (ADR-0006), plus whatever a loaded `VanillaView` adds.
  *
  * Returns the claims in canonical enumeration order on success; throws one
  * `PathOwnershipError` carrying the complete conflict set otherwise.
@@ -147,8 +148,14 @@ function newNode(key: string): Node {
  */
 export function adjudicatePaths(args: {
   readonly claims: readonly PathClaim[];
-  /** Logical paths vanilla occupies; `undefined` when the build loaded none. */
-  readonly vanillaPaths: ReadonlySet<string> | undefined;
+  /**
+   * Logical paths vanilla occupies. Always present (ADR-0006): the caller
+   * builds this from the packaged vanilla path inventory, unioned with
+   * whatever live-install evidence the build loaded — never absent, so the
+   * empty set is how a caller states "check against nothing" rather than
+   * `undefined` standing in for it.
+   */
+  readonly vanillaPaths: ReadonlySet<string>;
 }): readonly PathClaim[] {
   const root = newNode("");
   for (const claim of args.claims) {
@@ -179,19 +186,20 @@ export function adjudicatePaths(args: {
     }
   }
 
-  // Folded once rather than per node: SDK-173 grows this to every path the base
-  // game and its DLC occupy, and a lookup is all the tree needs. It maps back to
-  // the real spelling rather than being a set of keys, because a conflict has to
-  // name a file the author can go and look at — the fold of `Straße.txt` is
-  // `strasse.txt`, which is nothing on disk. Two vanilla paths can share one
-  // key, so the byte-least wins, the same way a node picks among its spellings.
-  const vanillaByKey = args.vanillaPaths === undefined ? undefined : new Map<string, LogicalPath>();
-  for (const raw of args.vanillaPaths ?? []) {
+  // Folded once rather than per node: every path the base game and its DLC
+  // occupy (SDK-173: the packaged inventory plus any live-install evidence),
+  // and a lookup is all the tree needs. It maps back to the real spelling
+  // rather than being a set of keys, because a conflict has to name a file the
+  // author can go and look at — the fold of `Straße.txt` is `strasse.txt`,
+  // which is nothing on disk. Two vanilla paths can share one key, so the
+  // byte-least wins, the same way a node picks among its spellings.
+  const vanillaByKey = new Map<string, LogicalPath>();
+  for (const raw of args.vanillaPaths) {
     const path = raw as LogicalPath;
     const key = portablePathKey(path);
-    const seen = vanillaByKey!.get(key);
+    const seen = vanillaByKey.get(key);
     if (seen === undefined || compareUtf8(path, seen) < 0) {
-      vanillaByKey!.set(key, path);
+      vanillaByKey.set(key, path);
     }
   }
 
@@ -224,7 +232,7 @@ export function adjudicatePaths(args: {
  */
 function collectConflicts(
   node: Node,
-  vanillaByKey: ReadonlyMap<string, LogicalPath> | undefined,
+  vanillaByKey: ReadonlyMap<string, LogicalPath>,
   conflicts: PathOwnershipConflict[]
 ): void {
   const spellings = [...node.spellings.values()].sort((a, b) => compareUtf8(a.prefix, b.prefix));
@@ -291,7 +299,7 @@ function collectConflicts(
     // Emitting over a vanilla file replaces that file wholesale. Reserved nodes
     // are exempt: `descriptor.mod` is every mod's own and never lands in the
     // game's own tree.
-    const occupied = vanillaByKey?.get(node.key);
+    const occupied = vanillaByKey.get(node.key);
     if (occupied !== undefined && reserved === undefined && files.length > 0) {
       conflicts.push({
         path: nodePath,

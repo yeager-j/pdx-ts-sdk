@@ -22,6 +22,10 @@ import {
   installedVanillaPackageVersion,
   vanillaIdsCheckWarning,
 } from "../identifiers/package-pin.ts";
+import {
+  checkVanillaPathInventoryConsistency,
+  packagedVanillaPaths,
+} from "../identifiers/vanilla-paths.ts";
 import { compareUtf8, normalizeLogicalPath, type LogicalPath } from "../ordering.ts";
 import {
   resolveConfig,
@@ -575,11 +579,19 @@ export function buildMod(
     });
   }
 
+  // The packaged vanilla path inventory is always present (ADR-0006): every
+  // build checks its claims against it, whether or not the build loaded a
+  // `VanillaView`. A view — from `options.vanilla` or, failing that, whatever
+  // patch's own view — adds two further sources on top: the files that view
+  // parsed, and (when the view came from a live install rather than
+  // `viewFromFiles`) that install's full path scan.
   const vanillaOrigin = options.vanilla ?? patches[0]?.source.origin;
-  const vanillaPaths =
-    vanillaOrigin === undefined
-      ? undefined
-      : immutableSet(vanillaOrigin.files.map((file) => file.path));
+  checkVanillaPathInventoryConsistency(installedVanillaPackageVersion());
+  const vanillaPaths = immutableSet([
+    ...packagedVanillaPaths(),
+    ...(vanillaOrigin === undefined ? [] : vanillaOrigin.files.map((file) => file.path)),
+    ...(vanillaOrigin?.pathInventory ?? []),
+  ]);
 
   // The last thing the fold decides. Everything above minted a path; this rules
   // on the whole set at once, so the `PureMod` below cannot exist unless every

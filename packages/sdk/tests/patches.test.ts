@@ -321,11 +321,13 @@ describe("the vanilla path guard without any patch", () => {
     expect(render(mod.compile([techs(mod)], { vanilla })).size).toBeGreaterThan(0);
   });
 
-  it("does not check at all without a vanilla view", () => {
+  it("still checks the packaged inventory without a loaded vanilla view (SDK-173)", () => {
     const mod = createMod(makeConfig());
-    // Unchanged behavior: nothing was loaded, so nothing is known to collide.
-    // The path this build emits is the one the clashing view above squats on,
-    // so a build that checked without evidence would refuse here.
+    // The Fold checks every claim against the packaged vanilla path inventory
+    // unconditionally (ADR-0006), whether or not a `VanillaView` was loaded —
+    // but that inventory is real game filenames, never a mod-prefixed path
+    // like `pp_mod_technology.txt` above, which only the *loaded view* above
+    // squats on. So this build is unaffected by the packaged check.
     expect(mod.compile([techs(mod)]).paths.map((claim) => claim.path)).toContain(squattedPath);
     expect(render(mod.compile([techs(mod)])).size).toBeGreaterThan(0);
   });
