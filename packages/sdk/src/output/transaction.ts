@@ -18,7 +18,7 @@
 
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { open, readFile, unlink, type FileHandle } from "node:fs/promises";
+import { lstat, open, readFile, unlink, type FileHandle } from "node:fs/promises";
 import { hostname } from "node:os";
 import path from "node:path";
 
@@ -603,7 +603,7 @@ export async function claimRecovery(
     await handle.sync();
 
     const journal = parseJournal(lockPath, await readWholeFile(handle));
-    if (!isTransaction(journal, expected)) {
+    if (!isTransaction(journal, expected) || !(await pathStillNames(handle, lockPath))) {
       return "gone";
     }
     const claims = journal.records.filter(
@@ -621,6 +621,31 @@ export async function claimRecovery(
   } finally {
     await handle.close();
   }
+}
+
+/**
+ * Whether `lockPath` still names the file behind `handle`.
+ *
+ * Everything a claim reads goes through the handle, which keeps it reading
+ * one file rather than one name — but the winner then acts on the *name*: the
+ * recovery that wins unlinks the lock by path when it finishes. A handle can
+ * outlive its directory entry, so a claim that verified only through the
+ * handle can win on an inode nothing points at any more, and go on to unlink
+ * whatever a fresh writer has since created at that path. The verdict has to
+ * be about the file the path names, so it is checked here before one is given.
+ */
+export async function pathStillNames(handle: FileHandle, lockPath: string): Promise<boolean> {
+  let named;
+  try {
+    named = await lstat(lockPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+  const held = await handle.stat();
+  return named.dev === held.dev && named.ino === held.ino;
 }
 
 function isTransaction(journal: Journal, expected: TransactionIdentity): boolean {

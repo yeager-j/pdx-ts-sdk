@@ -29,6 +29,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { open } from "node:fs/promises";
 import { hostname, tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -50,6 +51,7 @@ import {
   claimRecovery,
   lockPathFor,
   parseJournal,
+  pathStillNames,
   processIsAlive,
   readJournal,
   type MaterializationPhase,
@@ -778,6 +780,33 @@ describe("recovery reads the journal and nothing else", () => {
     expect(claim).toBe("gone");
     expect(readFileSync(lockPath, "utf8")).toBe(successor);
   });
+
+  it.skipIf(process.platform === "win32")(
+    "gives no verdict about a lock file the path has stopped naming",
+    async () => {
+      // A handle outlives its directory entry. The recovery that wins unlinks
+      // the lock by path when it finishes, so a claim that verified only
+      // through its own handle could win on an inode nothing points at any
+      // more and then unlink whatever a fresh writer had created at that path.
+      //
+      // The swap has to happen inside one claim to be the real race, which
+      // takes the fault-injection seam PR B adds. What the verdict rests on is
+      // pinned here instead: the comparison itself, in all three states.
+      const lockPath = join(tempDir(), ".pdx-lock-out");
+      writeFileSync(lockPath, "one writer's lock\n", "utf8");
+      const handle = await open(lockPath, "r");
+
+      try {
+        expect(await pathStillNames(handle, lockPath)).toBe(true);
+        rmSync(lockPath);
+        expect(await pathStillNames(handle, lockPath)).toBe(false);
+        writeFileSync(lockPath, "a different writer's lock\n", "utf8");
+        expect(await pathStillNames(handle, lockPath)).toBe(false);
+      } finally {
+        await handle.close();
+      }
+    }
+  );
 
   it("reports residue no journal names, and never removes it", async () => {
     const parent = tempDir();
