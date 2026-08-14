@@ -73,9 +73,14 @@ export async function install(
 }
 
 /**
- * `install`, plus the authority to replace owned entries that drifted. Kept a
- * separate entry point rather than an `install` option: replacing a reviewed
- * drift is a deliberate act, and must never ride inside an ordinary install.
+ * `install`, plus the authority to replace owned entries that drifted, on
+ * either half — content or launcher descriptor.
+ *
+ * The receipt converts a drift refusal and nothing else, so a receipt that
+ * does not describe the state found now, or a target that never drifted,
+ * waives nothing and this is `install`. Kept a separate entry point rather
+ * than an `install` option all the same: replacing a reviewed drift is a
+ * deliberate act, and must never ride inside an ordinary install.
  */
 export async function replaceInstallation(
   rendered: RenderedMod,
@@ -191,7 +196,15 @@ async function installUnlocked(
  * The launcher descriptor is the second half of an installed materialization,
  * so the same ownership rules cover it: it may only exist beside owned
  * content, and it drifts on the content directory's own receipt — which is
- * also what a replay receipt covering that state waives.
+ * what a replay receipt covering that state waives.
+ *
+ * One state is beyond a receipt's authority. `absent`, `symlink` and `file`
+ * are each one reviewable thing: the receipt digests the file's bytes, and a
+ * moved-aside symlink is removed as a link, never as its referent. `other` is
+ * a directory or a device the snapshot reduces to the word "other", so no
+ * receipt can be evidence about what is inside it — and replacing it means
+ * renaming it aside and deleting it whole. The author removes it by hand; the
+ * SDK does not delete a subtree nobody reviewed.
  */
 function validateCurrentDescriptor(
   contentDir: string,
@@ -210,6 +223,9 @@ function validateCurrentDescriptor(
     }
     return;
   }
+  if (descriptor.state === "other") {
+    throw descriptorDrift(contentDir, rendered, inspection, basename, "type-changed");
+  }
   if (inspection.receiptAccepted) {
     return;
   }
@@ -219,9 +235,6 @@ function validateCurrentDescriptor(
   }
   if (descriptor.state === "symlink") {
     throw descriptorDrift(contentDir, rendered, inspection, basename, "symlink");
-  }
-  if (descriptor.state === "other") {
-    throw descriptorDrift(contentDir, rendered, inspection, basename, "type-changed");
   }
   if (!sameDescriptor(inspection.manifest?.launcherDescriptor, descriptor)) {
     throw descriptorDrift(contentDir, rendered, inspection, basename, "modified");

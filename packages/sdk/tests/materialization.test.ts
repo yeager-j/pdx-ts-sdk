@@ -802,6 +802,29 @@ describe("a receipt replaces exactly the state it reviewed", () => {
     expect(readFileSync(join(second, OWNED_FILE), "utf8")).toBe("hand edited");
   });
 
+  it("never replays over a descriptor that became a directory", async () => {
+    // The snapshot reduces a directory to the word "other", so no receipt can
+    // be evidence about what is inside it — and replacing it means renaming it
+    // aside and deleting it whole. This is the one drift a receipt cannot
+    // convert; the author removes the directory by hand.
+    const root = tempDir();
+    const { descriptorPath } = await install(renderedMod, { modDir: root });
+    rmSync(descriptorPath);
+    mkdirSync(descriptorPath);
+    writeFileSync(join(descriptorPath, "inside.txt"), "not reviewed", "utf8");
+
+    const receipt = await driftReceipt(install(renderedMod, { modDir: root }));
+    const again = await refusal(replaceInstallation(renderedMod, receipt, { modDir: root }));
+
+    expect(again.reason).toBe("drift");
+    if (again.failure.reason !== "drift") {
+      throw new Error("unreachable");
+    }
+    expect(again.failure.drift).toEqual([{ path: "mz_probe.mod", kind: "type-changed" }]);
+    expect(statSync(descriptorPath).isDirectory()).toBe(true);
+    expect(readFileSync(join(descriptorPath, "inside.txt"), "utf8")).toBe("not reviewed");
+  });
+
   it("replays an install over a hand-edited launcher descriptor", async () => {
     // The descriptor drifts on the content directory's receipt, so replaying
     // it has to rewrite both halves back into agreement.

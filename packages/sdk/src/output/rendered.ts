@@ -110,7 +110,12 @@ class ImmutableRenderedFile implements RenderedFile {
 /** The claim's one source of bytes, copied only where the caller kept theirs. */
 function adopt(claim: RenderedClaim): Uint8Array {
   if (claim.captured !== undefined) {
-    return claim.captured.take();
+    // Rewrapped over the same memory, never copied. A capture producer reading
+    // a file gets a `Buffer`, whose `slice` returns a shared view rather than a
+    // copy — so storing one directly would make `bytes()` hand out a window
+    // onto content already published under a hash taken once.
+    const taken = claim.captured.take();
+    return new Uint8Array(taken.buffer, taken.byteOffset, taken.byteLength);
   }
   return claim.bytes === undefined ? encoder.encode(claim.text) : Uint8Array.from(claim.bytes);
 }

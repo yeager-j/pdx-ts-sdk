@@ -105,9 +105,8 @@ describe("a rendered file's bytes", () => {
     const file = withClaim({ captured: new CapturedBytes(source) });
 
     expect(file.kind).toBe("bytes");
-    expect(renderedFileBytes(file)).toBe(source);
+    expect(renderedFileBytes(file).buffer).toBe(source.buffer);
     const handed = file.bytes();
-    expect(handed).not.toBe(source);
     handed[0] = 9;
     expect(file.bytes()[0]).toBe(1);
   });
@@ -118,9 +117,27 @@ describe("a rendered file's bytes", () => {
 
     const file = withClaim({ captured: new CapturedBytes(view) });
 
-    expect(renderedFileBytes(file)).toBe(view);
+    expect(renderedFileBytes(file).buffer).toBe(backing.buffer);
+    expect(renderedFileBytes(file).byteOffset).toBe(view.byteOffset);
     expect(file.byteLength).toBe(3);
     expect([...file.bytes()]).toEqual([2, 3, 4]);
+  });
+
+  it("adopts a captured Buffer as a plain view, keeping the defensive copy", () => {
+    // A capture producer that read a file hands over a `Buffer`, whose `slice`
+    // returns a shared window rather than a copy. Stored as-is, `bytes()` would
+    // dispatch to it and let a caller rewrite content already hashed.
+    const source = Buffer.from([1, 2, 3]);
+    const file = withClaim({ captured: new CapturedBytes(source) });
+
+    const handed = file.bytes();
+    handed[0] = 9;
+    expect(file.bytes()[0]).toBe(1);
+    // And the adoption is still zero-copy: one write through the original
+    // buffer is visible to the write path, which never copies either.
+    expect(renderedFileBytes(file).buffer).toBe(source.buffer);
+    source[0] = 7;
+    expect(renderedFileBytes(file)[0]).toBe(7);
   });
 
   it("lets exactly one rendered file own a captured buffer", () => {

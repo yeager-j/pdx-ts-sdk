@@ -104,6 +104,22 @@ describe("the public authoring surface", () => {
     }>();
   });
 
+  it("takes no receipt a caller could have written themselves", () => {
+    // The brand is required, not optional. An optional one lets `{}` satisfy
+    // the parameter, which turns a forged review into a runtime error at the
+    // replay call — the place a caller has least reason to expect one.
+    expectTypeOf({}).not.toExtend<sdk.MaterializationReceipt>();
+    expectTypeOf<
+      Parameters<typeof sdk.replaceMaterialization>[2]
+    >().toEqualTypeOf<sdk.MaterializationReceipt>();
+    expectTypeOf<
+      Parameters<typeof sdk.replaceInstallation>[1]
+    >().toEqualTypeOf<sdk.MaterializationReceipt>();
+    const replay = (_receipt: sdk.MaterializationReceipt): void => {};
+    // @ts-expect-error — a plain object is not evidence of an observed state.
+    replay({});
+  });
+
   it("does not re-export legacy authoring values", () => {
     // @ts-expect-error — assembly is owned by the capability's compile method.
     void sdk.buildMod;

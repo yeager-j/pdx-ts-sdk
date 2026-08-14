@@ -190,9 +190,14 @@ export async function write(outDir: string | URL, rendered: RenderedMod): Promis
 }
 
 /**
- * `write`, plus the authority to replace owned entries that drifted. The
- * receipt converts one refusal and nothing else: it must describe exactly the
- * state found now, and an unowned target is never replaceable at all.
+ * `write`, plus the authority to replace owned entries that drifted.
+ *
+ * The receipt converts a drift refusal and nothing else. It has to describe
+ * the state found now to convert one; a receipt that does not, or a target
+ * that never drifted, simply waives nothing and this is `write`. That is safe
+ * because ordinary materialization already destroys nothing: an owned set
+ * matching the manifest is output the SDK wrote, and everything else is either
+ * preserved or refused. An unowned target is never replaceable at all.
  */
 export async function replaceMaterialization(
   outDir: string | URL,
@@ -652,6 +657,9 @@ function refuse(
       entries: classified.refused,
     });
   }
+  // A receipt only ever subtracts a refusal, so an unmatched one is not itself
+  // an error: it waives nothing, and every refusal below fires as it would
+  // have without it.
   const accepted =
     receipt !== undefined && describesState(receipt, target, mode, prefix, classified.snapshot);
   if (classified.drift.length > 0 && !accepted) {
